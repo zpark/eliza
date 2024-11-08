@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-community/notes" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.6.0">
+<title data-rh="true">Notes | eliza</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://ai16z.github.io/eliza/docs/community/notes/"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Notes | eliza"><meta data-rh="true" name="description" content="Discord Stream 11-6-24"><meta data-rh="true" property="og:description" content="Discord Stream 11-6-24"><link data-rh="true" rel="icon" href="/eliza/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://ai16z.github.io/eliza/docs/community/notes/"><link data-rh="true" rel="alternate" href="https://ai16z.github.io/eliza/docs/community/notes/" hreflang="en"><link data-rh="true" rel="alternate" href="https://ai16z.github.io/eliza/docs/community/notes/" hreflang="x-default"><link rel="stylesheet" href="/eliza/assets/css/styles.6c849ea8.css">
+<script src="/eliza/assets/js/runtime~main.2632c4c6.js" defer="defer"></script>
+<script src="/eliza/assets/js/main.b51fb643.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):window.matchMedia("(prefers-color-scheme: light)").matches?t("light"):t("dark")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/eliza/"><div class="navbar__logo"><img src="/eliza/img/favicon.ico" alt="Eliza Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/eliza/img/favicon.ico" alt="Eliza Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">eliza</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/eliza/docs/intro/">Documentation</a><a class="navbar__item navbar__link" href="/eliza/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/ai16z/eliza" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input id="search_input_react" type="search" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/eliza/docs/intro/">Introduction</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/eliza/docs/quickstart/">Getting Started</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/quickstart/">Quickstart</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/installation/">Installation</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/eliza/docs/core/characterfile/">Core Concepts</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/core/characterfile/">Character Files</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/core/agents/">Agents</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/core/providers/">Providers</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/core/actions/">Actions</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/core/evaluators/">Evaluators</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/eliza/docs/guides/basic-usage/">Guides</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/guides/basic-usage/">Basic Usage</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/guides/configuration/">Configuration</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/guides/advanced/">Advanced Usage</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/guides/secrets-management/">Secrets Management</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/guides/local-development/">Local Development</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/eliza/docs/advanced/fine-tuning/">Advanced Topics</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/advanced/fine-tuning/">Fine-tuning</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/advanced/infrastructure/">Infrastructure</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/advanced/trust-engine/">Trust Engine</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/advanced/autonomous-trading/">Autonomous Trading</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/eliza/docs/community/creator-fund/">Community</a></div><ul style="display:block;overflow:visible;height:auto" class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/community/creator-fund/">Creator Fund</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/eliza/docs/community/notes/">Notes</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/community/changelog/">Changelog</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/community/faq/">Frequently Asked Questions</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/eliza/docs/community/contributing/">Contributing</a></li></ul></li></ul></nav><button type="button" title="Collapse sidebar" aria-label="Collapse sidebar" class="button button--secondary button--outline collapseSidebarButton_PEFL"><svg width="20" height="20" aria-hidden="true" class="collapseSidebarButtonIcon_kv0_"><g fill="#7a7a7a"><path d="M9.992 10.023c0 .2-.062.399-.172.547l-4.996 7.492a.982.982 0 01-.828.454H1c-.55 0-1-.453-1-1 0-.2.059-.403.168-.551l4.629-6.942L.168 3.078A.939.939 0 010 2.528c0-.548.45-.997 1-.997h2.996c.352 0 .649.18.828.45L9.82 9.472c.11.148.172.347.172.55zm0 0"></path><path d="M19.98 10.023c0 .2-.058.399-.168.547l-4.996 7.492a.987.987 0 01-.828.454h-3c-.547 0-.996-.453-.996-1 0-.2.059-.403.168-.551l4.625-6.942-4.625-6.945a.939.939 0 01-.168-.55 1 1 0 01.996-.997h3c.348 0 .649.18.828.45l4.996 7.492c.11.148.168.347.168.55zm0 0"></path></g></svg></button></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/eliza/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">Community</span><meta itemprop="position" content="1"></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">Notes</span><meta itemprop="position" content="2"></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Notes</h1></header>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="discord-stream-11-6-24">Discord Stream 11-6-24<a href="#discord-stream-11-6-24" class="hash-link" aria-label="Direct link to Discord Stream 11-6-24" title="Direct link to Discord Stream 11-6-24">​</a></h2>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="part-1">Part 1<a href="#part-1" class="hash-link" aria-label="Direct link to Part 1" title="Direct link to Part 1">​</a></h4>
+<p>Watch: <a href="https://www.youtube.com/watch?v=oqq5H0HRF_A" target="_blank" rel="noopener noreferrer">Youtube</a></p>
+<p>00:00:00 - Overview</p>
+<ul>
+<li>Eliza is moving to a plugin architecture to enable developers to easily add integrations (e.g. Ethereum wallets, NFTs, Obsidian, etc.) without modifying core code</li>
+<li>Plugins allow devs to focus on specific areas of interest</li>
+<li>Core changes will focus on enabling more flexibility and features to support plugins</li>
+</ul>
+<p>00:01:27 - Core abstractions</p>
+<ul>
+<li>Characters: Way to input information to enable multi-agent systems</li>
+<li>Actions, evaluators, providers</li>
+<li>Existing capabilities: Document reading, audio transcription, video summarization, long-form context, timed message summarization</li>
+</ul>
+<p>00:02:50 - Eliza as an agent, not just a chatbot</p>
+<ul>
+<li>Designed to act human-like and interact with the world using human tools</li>
+<li>Aim is to enable natural interactions without reliance on slash commands</li>
+</ul>
+<p>00:04:44 - Advanced usage and services</p>
+<ul>
+<li>Memory and vector search db (SQLite, Postgres with pgVector)</li>
+<li>Browser service to summarize website content, get through CAPTCHAs</li>
+<li>Services are tools leveraged by actions, attached to runtime</li>
+</ul>
+<p>00:06:06 - Character-centric configuration</p>
+<ul>
+<li>Moving secrets, API keys, model provider to character config</li>
+<li>Clients will become plugins, selectable per character</li>
+<li>Allows closed-source custom plugins while still contributing to open-source</li>
+</ul>
+<p>00:10:13 - Providers</p>
+<ul>
+<li>Inject dynamic, real-time context into the agent</li>
+<li>Examples: Time, wallet, marketplace trust score, token balances, boredom/cringe detection</li>
+<li>Easy to add and register with the agent</li>
+</ul>
+<p>00:15:12 - Setting up providers and default actions</p>
+<ul>
+<li>Default providers imported in runtime.ts</li>
+<li>CLI loads characters and default actions (to be made more flexible)</li>
+<li>Character config will define custom action names to load</li>
+</ul>
+<p>00:18:13 - Actions
+Q: How does each client decide which action to call?
+A: Agent response can include text, action, or both. Process actions checks the action name/similes and executes the corresponding handler. Action description is injected into agent context to guide usage.</p>
+<p>00:22:27 - Action execution flow</p>
+<ul>
+<li>Check if action should be taken (validation)</li>
+<li>Determine action outcome</li>
+<li>Compose context and send follow-up if continuing</li>
+<li>Execute desired functionality (mint token, generate image, etc.)</li>
+<li>Use callback to send messages back to the connector (Discord, Twitter, etc.)</li>
+</ul>
+<p>00:24:47 - Choosing actions
+Q: How does it choose which action to run?
+A: The &quot;generate method response&quot; includes the action to run. Message handler template includes action examples, facts, generated dialogue actions, and more to guide the agent.</p>
+<p>00:28:22 - Custom actions
+Q: How to create a custom action (e.g. send USDC to a wallet)?
+A: Use existing actions (like token swap) as a template. Actions don&#x27;t have input fields, but use secondary prompts to gather parameters. The &quot;generate object&quot; converts language to API calls.</p>
+<p>00:32:21 - Limitations of action-only approaches</p>
+<ul>
+<li>Shaw believes half of the PhD papers on action-only models are not reproducible</li>
+<li>Many public claims of superior models are exaggerated; use Eliza if it&#x27;s better</li>
+</ul>
+<p>00:36:40 - Next steps</p>
+<ul>
+<li>Shaw to make a tutorial to better communicate key concepts</li>
+<li>Debugging and improvements based on the discussion</li>
+<li>Attendee to document their experience and suggest doc enhancements</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="part-2">Part 2<a href="#part-2" class="hash-link" aria-label="Direct link to Part 2" title="Direct link to Part 2">​</a></h3>
+<p>Watch: <a href="https://www.youtube.com/watch?v=yE8Mzq3BnUc" target="_blank" rel="noopener noreferrer">Youtube</a></p>
+<p>00:00:00 - Dealing with OpenAI rate limits for new accounts</p>
+<ul>
+<li>New accounts have very low rate limits</li>
+<li>Options to increase limits:<!-- -->
+<ol>
+<li>Have a friend at OpenAI age your account</li>
+<li>Use an older account</li>
+<li>Consistently use the API and limits will increase quickly</li>
+</ol>
+</li>
+<li>Can also email OpenAI to request limit increases</li>
+</ul>
+<p>00:00:43 - Alternatives to OpenAI to avoid rate limits</p>
+<ul>
+<li>Amazon Bedrock or Google Vertex likely have same models without strict rate limits</li>
+<li>Switching to these is probably a one-line change</li>
+<li>Project 89 got unlimited free access to Vertex</li>
+</ul>
+<p>00:01:25 - Memory management best practices
+Q: Suggestions for memory management best practices across users/rooms?
+A: Most memory systems are user-agent based, with no room concept. Eliza uses a room abstraction (like a Discord channel/server or Twitter thread) to enable multi-agent simulation. Memories are stored per-agent to avoid collisions.</p>
+<p>00:02:57 - Using memories in Eliza</p>
+<ul>
+<li>Memories are used in the <code>composeState</code> function</li>
+<li>Pulls memories from various sources (recent messages, facts, goals, etc.) into a large state object</li>
+<li>State object is used to hydrate templates</li>
+<li>Custom memory providers can be added to pull from other sources (Obsidian, databases)</li>
+</ul>
+<p>00:05:11 - Evaluators vs. Action validation</p>
+<ul>
+<li>Actions have a <code>validate</code> function to check if the action is valid to run (e.g., check if agent has a wallet before a swap)</li>
+<li>Evaluators are a separate abstraction that run a &quot;reflection&quot; step</li>
+<li>Example: Fact extraction evaluator runs every N messages to store facts about the user as memories</li>
+<li>Allows agent to &quot;get to know&quot; the user without needing full conversation history</li>
+</ul>
+<p>00:07:58 - Example use case: Order book evaluator</p>
+<ul>
+<li>Evaluator looks at chats sent to an agent and extracts information about &quot;shields&quot; (tokens?)</li>
+<li>Uses this to build an order book and &quot;marketplace of trust&quot;</li>
+</ul>
+<p>00:09:15 - Mapping Eliza abstractions to OODA loop</p>
+<ul>
+<li>Providers: Observe/Orient stages (merged since agent is a data machine)</li>
+<li>Actions &amp; response handling: Decide stage</li>
+<li>Action execution: Act stage</li>
+<li>Evaluators: Update state, then loop back to Decide</li>
+</ul>
+<p>00:10:03 - Wrap up</p>
+<ul>
+<li>Shaw considers making a video to explain these concepts in depth</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="part-3">Part 3<a href="#part-3" class="hash-link" aria-label="Direct link to Part 3" title="Direct link to Part 3">​</a></h3>
+<p>Watch: <a href="https://www.youtube.com/watch?v=7FiKJPyaMJI" target="_blank" rel="noopener noreferrer">Youtube</a></p>
+<p>00:00:00 - Managing large context sizes</p>
+<ul>
+<li>State object can get very large, especially with long user posts</li>
+<li>Eliza uses &quot;trim tokens&quot; and a maximum content length (120k tokens) to cap context size<!-- -->
+<ul>
+<li>New models have 128k-200k context, which is a lot (equivalent to 10 YouTube videos + full conversation)</li>
+</ul>
+</li>
+<li>Conversation length is typically capped at 32 messages<!-- -->
+<ul>
+<li>Fact extraction allows recalling information beyond this window</li>
+<li>Per-channel conversation access</li>
+</ul>
+</li>
+<li>Increasing conversation length risks more aggressive token trimming from the top of the prompt<!-- -->
+<ul>
+<li>Keep instructions at the bottom to avoid trimming them</li>
+</ul>
+</li>
+</ul>
+<p>00:01:53 - Billing costs for cloud/GPT models
+Q: What billing costs have you experienced with cloud/GPT model integration?
+A:</p>
+<ul>
+<li>Open Router has a few always-free models limited to 8k context and rate-limited<!-- -->
+<ul>
+<li>Plan to re-implement and use these for the tiny/check model with fallback for rate limiting</li>
+</ul>
+</li>
+<li>8k context unlikely to make a good agent; preference for smaller model over largest 8k one</li>
+<li>Locally-run models are free for MacBooks with 16GB RAM, but not feasible for Linux/AMD users</li>
+</ul>
+<p>00:03:35 - Cost management strategies</p>
+<ul>
+<li>Very cost-scalable depending on model size</li>
+<li>Use very cheap model (1000x cheaper than GPT-4) for should_respond handler<!-- -->
+<ul>
+<li>Runs AI on every message, so cost is a consideration</li>
+</ul>
+</li>
+<li>Consider running a local Llama 3B model for should_respond to minimize costs<!-- -->
+<ul>
+<li>Only pay for valid generations</li>
+</ul>
+</li>
+</ul>
+<p>00:04:32 - Model provider and class configuration</p>
+<ul>
+<li><code>ModelProvider</code> class with <code>ModelClass</code> (small, medium, large, embedding)</li>
+<li>Configured in <code>models.ts</code></li>
+<li>Example: OpenAI small = GPT-4-mini, medium = GPT-4</li>
+<li>Approach: Check if model class can handle everything in less than 8k context<!-- -->
+<ul>
+<li>If yes (should_respond), default to free tier</li>
+<li>Else, use big models</li>
+</ul>
+</li>
+</ul>
+<p>00:06:23 - Fine-tuned model support</p>
+<ul>
+<li>Extend <code>ModelProvider</code> to support fine-tuned instances of small Llama models for specific tasks</li>
+<li>In progress, to be added soon</li>
+<li>Model endpoint override exists; will add per-model provider override<!-- -->
+<ul>
+<li>Allows pointing small model to fine-tuned Llama 3.1B for should_respond</li>
+</ul>
+</li>
+</ul>
+<p>00:07:10 - Avoiding cringey model loops</p>
+<ul>
+<li>Fine-tuning is a form of anti-slop (avoiding low-quality responses)</li>
+<li>For detecting cringey model responses, use the &quot;boredom provider&quot;<!-- -->
+<ul>
+<li>Has a list of cringe words; if detected, agent disengages</li>
+</ul>
+</li>
+<li>JSON file exists with words disproportionately high in the dataset<!-- -->
+<ul>
+<li>To be shared for a more comprehensive solution</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="part-4">Part 4<a href="#part-4" class="hash-link" aria-label="Direct link to Part 4" title="Direct link to Part 4">​</a></h3>
+<p>Watch: <a href="https://www.youtube.com/watch?v=ZlzZzDU1drM" target="_blank" rel="noopener noreferrer">Youtube</a></p>
+<p>00:00:00 - Setting up an autonomous agent loop
+Q: How to set up an agent to constantly loop and explore based on objectives/goals?
+A: Create a new &quot;autonomous&quot; client:</p>
+<ol>
+<li>Initialize with just the runtime (no Express app needed)</li>
+<li>Set a timer to call a <code>step</code> function every 10 seconds</li>
+<li>In the <code>step</code> function:<!-- -->
+<ul>
+<li>Compose state</li>
+<li>Decide on action</li>
+<li>Execute action</li>
+<li>Update state</li>
+<li>Run evaluators</li>
+</ul>
+</li>
+</ol>
+<p>00:01:56 - Creating an auto template</p>
+<ul>
+<li>Create an <code>autoTemplate</code> with agent info (bio, lore, goals, actions)</li>
+<li>Prompt: &quot;What does the agent want to do? Your response should only be the name of the action to call.&quot;</li>
+<li>Compose state using <code>runtime.composeState</code></li>
+</ul>
+<p>00:03:38 - Passing a message object</p>
+<ul>
+<li>Need to pass a message object with <code>userId</code>, <code>agentId</code>, <code>content</code>, and <code>roomId</code></li>
+<li>Create a unique <code>roomId</code> for the autonomous agent using <code>crypto.randomUUID()</code></li>
+<li>Set <code>userId</code> and <code>agentId</code> using the runtime</li>
+<li>Set <code>content</code> to a default message</li>
+</ul>
+<p>00:04:33 - Composing context</p>
+<ul>
+<li>Compose context using the runtime, state, and auto template</li>
+</ul>
+<p>00:05:02 - Type error</p>
+<ul>
+<li>Getting a type error: &quot;is missing the following from type state&quot;</li>
+<li>(Transcript ends before resolution)</li>
+</ul>
+<p>The key steps are:</p>
+<ol>
+<li>Create a dedicated autonomous client</li>
+<li>Set up a loop to continuously step through the runtime</li>
+<li>In each step, compose state, decide &amp; execute actions, update state, and run evaluators</li>
+<li>Create a custom auto template to guide the agent&#x27;s decisions</li>
+<li>Pass a properly formatted message object</li>
+<li>Compose context using the runtime, state, and auto template</li>
+</ol>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="x-space-10-29-24">X Space 10-29-24<a href="#x-space-10-29-24" class="hash-link" aria-label="Direct link to X Space 10-29-24" title="Direct link to X Space 10-29-24">​</a></h2>
+<p>Space: <a href="https://x.com/weremeow/status/1851365658916708616" target="_blank" rel="noopener noreferrer">https://x.com/weremeow/status/1851365658916708616</a></p>
+<ul>
+<li>00:04:03 - Keeping up with rapid AI agent growth</li>
+<li>00:09:01 - Imran from Alliance DAO on consumer AI incubators</li>
+<li>00:14:04 - Discussion on Goatsea and Opus AI system</li>
+<li>00:14:34 - Exponential growth accelerates AI progress</li>
+<li>00:17:10 - Entertainers and AI as modern &quot;religions&quot;</li>
+<li>00:28:45 - Mathis on Opus and &quot;Goatse Gospels&quot;</li>
+<li>00:35:11 - Base vs. instruct/chat-tuned models</li>
+<li>00:59:42 - <a href="http://ai16z.vc" target="_blank" rel="noopener noreferrer">http://ai16z.vc</a> approach to memecoins fund</li>
+<li>01:17:06 - Balancing chaotic vs. orderly AI systems</li>
+<li>01:25:38 - AI controlling blockchain keys/wallets</li>
+<li>01:36:10 - Creation story of ai16z</li>
+<li>01:40:27 - AI / Crypto tipping points</li>
+<li>01:49:54 - Preserving Opus on-chain before potential takedown</li>
+<li>01:58:46 - Shinkai Protocol’s decentralized AI wallet</li>
+<li>02:17:02 - Fee-sharing model to sustain DAOs</li>
+<li>02:21:18 - DAO token liquidity pools as passive income</li>
+<li>02:27:02 - AI bots for DAO treasury oversight</li>
+<li>02:31:30 - AI-facilitated financial freedom for higher pursuits</li>
+<li>02:41:51 - Call to build on <a href="http://DAO.fun" target="_blank" rel="noopener noreferrer">http://DAO.fun</a> for team-friendly economics</li>
+</ul>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="x-space-10-27-24">X Space 10-27-24<a href="#x-space-10-27-24" class="hash-link" aria-label="Direct link to X Space 10-27-24" title="Direct link to X Space 10-27-24">​</a></h2>
+<p>Space: <a href="https://x.com/shawmakesmagic/status/1850609680558805422" target="_blank" rel="noopener noreferrer">https://x.com/shawmakesmagic/status/1850609680558805422</a></p>
+<p>00:00:00 - Opening</p>
+<ul>
+<li>Co-hosts: Shaw and Jin</li>
+<li>Purpose: Structured FAQ session about AI16Z and DegenAI</li>
+<li>Format: Pre-collected questions followed by audience Q&amp;A</li>
+</ul>
+<p>00:06:40 - AI16Z vs DegenAI Relationship
+Q: What&#x27;s the difference between AI16Z and DegenAI?
+A:</p>
+<ul>
+<li>ai16z: DAO-based investment vehicle, more PvE focused, community driven</li>
+<li>DegenAI: Individual trading agent, PvP focused, more aggressive strategy</li>
+<li>Both use same codebase but different personalities</li>
+<li>DAO is a large holder of DegenAI</li>
+<li>Management fees (1%) used to buy more DegenAI</li>
+<li>Carry fees reinvested in DegenAI</li>
+<li>Projects intentionally interlinked but serve different purposes</li>
+</ul>
+<p>00:10:45 - Trust Engine Mechanics
+Q: How does the trust engine work?
+A:</p>
+<ul>
+<li>Users share contract addresses with confidence levels</li>
+<li>System tracks recommendation performance</li>
+<li>Low conviction recommendations = low penalty if wrong</li>
+<li>High conviction failures severely impact trust score</li>
+<li>Historical performance tracked for trust calculation</li>
+<li>Trust scores influence agent&#x27;s future decision-making</li>
+</ul>
+<p>00:21:45 - Technical Infrastructure
+Q: Where do the agents live?
+A:</p>
+<ul>
+<li>Currently: Test servers and local development</li>
+<li>Future: Trusted Execution Environment (TEE)</li>
+<li>Partnership with TreasureDAO for infrastructure</li>
+<li>Goal: Fully autonomous agents without developer control</li>
+<li>Private keys generated within TEE for security</li>
+</ul>
+<p>00:34:20 - Trading Implementation
+Q: When will Mark start trading?
+A:</p>
+<ul>
+<li>Three phase approach:</li>
+</ul>
+<ol>
+<li>Testing tech infrastructure</li>
+<li>Virtual order book/paper trading</li>
+<li>Live trading with real assets</li>
+</ol>
+<ul>
+<li>Using Jupiter API for swaps</li>
+<li>Initial focus on basic trades before complex strategies</li>
+<li>Trading decisions based on community trust scores</li>
+</ul>
+<p>00:54:15 - Development Status
+Q: Who&#x27;s building this?
+A:</p>
+<ul>
+<li>Open source project with multiple contributors</li>
+<li>Key maintainers: Circuitry, Nate Martin</li>
+<li>Community developers incentivized through token ownership</li>
+<li>Focus on reusable components and documentation</li>
+</ul>
+<p>01:08:35 - AI Model Architecture
+Q: What models power the agents?
+A:</p>
+<ul>
+<li>DegenAI: Llama 70B</li>
+<li>Using Together.xyz for model marketplace</li>
+<li>Continuous fine-tuning planned</li>
+<li>Different personalities require different model approaches</li>
+<li>Avoiding GPT-4 due to distinct &quot;voice&quot;</li>
+</ul>
+<p>01:21:35 - Ethics Framework
+Q: What ethical guidelines are being followed?
+A:</p>
+<ul>
+<li>Rejecting traditional corporate AI ethics frameworks</li>
+<li>Focus on community-driven standards</li>
+<li>Emphasis on transparency and open source</li>
+<li>Goal: Multiple competing approaches rather than single standard</li>
+<li>Priority on practical utility over theoretical ethics</li>
+</ul>
+<p>01:28:30 - Wrap-up</p>
+<ul>
+<li>Discord: AI16z.vc</li>
+<li>Future spaces planned with DAOs.fun team</li>
+<li>Focus on responsible growth</li>
+<li>Community engagement continuing in Discord</li>
+</ul>
+<p>The space emphasized technical implementation details while addressing community concerns about governance, ethics, and practical functionality.</p>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="x-space-10-25-24">X Space 10-25-24<a href="#x-space-10-25-24" class="hash-link" aria-label="Direct link to X Space 10-25-24" title="Direct link to X Space 10-25-24">​</a></h2>
+<ul>
+<li><a href="https://x.com/shawmakesmagic/status/1848553697611301014" target="_blank" rel="noopener noreferrer">https://x.com/shawmakesmagic/status/1848553697611301014</a>
+<ul>
+<li><a href="https://www.youtube.com/live/F3IZ3ikacWM?feature=share" target="_blank" rel="noopener noreferrer">https://www.youtube.com/live/F3IZ3ikacWM?feature=share</a></li>
+</ul>
+</li>
+</ul>
+<p><strong>Overview</strong></p>
+<ul>
+<li>00:00-30:00 Talks about Eliza framework. The bot is able to tweet, reply to tweets, search Twitter for topics, and generate new posts on its own every few hours. It works autonomously without human input (except to fix the occasional issues)</li>
+<li>30:00-45:00 Deep dive into creating the bots personality which is defined by character files containing bios, lore, example conversations, and specific directions. Some alpha for those</li>
+<li>45:00-60:00 working on adding capabilities for the bot to make crypto token swaps and trades. This requires providing the bot wallet balances, token prices, market data, and a swap action. Some live coding for showing how new features can get implemented.</li>
+<li>60:00-75:00 Discussion around the symbiosis between the AI and crypto communities. AI developers are realizing they can monetize their work through tokens vs traditional VC funding route. Crypto people are learning about AI advancements.</li>
+</ul>
+<p><strong>Notes</strong></p>
+<ol>
+<li>A large amount of $degenai tokens were moved to the DAO, which the AI bot &quot;Marc&quot; will hold and eventually trade with.</li>
+<li>The goal is to make the AI bot a genuinely good venture capitalist that funds cool projects and buys interesting tokens. They want it to be high fidelity and real, bringing in Marc Andreeson&#x27;s real knowledge by training a model on his writings.</li>
+<li>Shaw thinks the only way to make an authentic / legitimate AI version of Marc Andreessen is to also have it outperform the real Marc Andreessen financially.</li>
+<li>AI Marc Andreessen (or AI Marc) will be in a Discord channel (Telegram was also mentioned). DAO token holders above a certain threshold get access to interact with him, pitch ideas, and try to influence his investing decisions.</li>
+<li>AI Marc decides how much to trust people&#x27;s investment advice based on a &quot;virtual Marcetplace of trust&quot;. He tracks how much money he would have made following their recommendations. Successful tips increase trust; failed ones decrease it.</li>
+<li>The amount of DAO tokens someone holds also influences their sway with AI Marc. The two balancing factors are the virtual Marcetplace of trust performance and DAO token holdings.</li>
+<li>The core tech behind AI Marc AIndreessen is the same agent system that allows him to pull in relevant knowledge, interact with people, and make decisions (<a href="http://github.com/ai16z" target="_blank" rel="noopener noreferrer">http://github.com/ai16z</a>)</li>
+<li>AI Marc should be able to autonomously execute on-chain activities, not just have humans execute actions on his behalf.</li>
+<li>In the near future, AI Marc will be able to execute trades autonomously based on the information and recommendations gathered from the community. Human intervention will be minimized.</li>
+<li>They are working on getting AI Marc on-chain as soon as possible using trusted execution environments for him to take actions like approving trades.</li>
+<li>The plan is for AI Marc to eventually participate in a &quot;futarchy&quot; style governance market within the DAO, allowing humans to influence decisions but not fully control the AI.</li>
+</ol></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/ai16z/eliza/tree/main/docs/docs/community/notes.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/eliza/docs/community/creator-fund/"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Creator Fund</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/eliza/docs/community/changelog/"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Changelog</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#discord-stream-11-6-24" class="table-of-contents__link toc-highlight">Discord Stream 11-6-24</a><ul><li><a href="#part-2" class="table-of-contents__link toc-highlight">Part 2</a></li><li><a href="#part-3" class="table-of-contents__link toc-highlight">Part 3</a></li><li><a href="#part-4" class="table-of-contents__link toc-highlight">Part 4</a></li></ul></li><li><a href="#x-space-10-29-24" class="table-of-contents__link toc-highlight">X Space 10-29-24</a></li><li><a href="#x-space-10-27-24" class="table-of-contents__link toc-highlight">X Space 10-27-24</a></li><li><a href="#x-space-10-25-24" class="table-of-contents__link toc-highlight">X Space 10-25-24</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Docs</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/eliza/docs/community/notes/">General</a></li></ul></div><div class="col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://discord.gg/NQHKW7US" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://twitter.com/pmairca" target="_blank" rel="noopener noreferrer" class="footer__link-item">Twitter<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div><div class="col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/ai16z/eliza" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2024 ai16z.ai</div></div></div></footer></div>
+</body>
+</html>
