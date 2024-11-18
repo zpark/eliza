@@ -114,6 +114,7 @@ export type Models = {
     [ModelProviderName.REDPILL]: Model;
     [ModelProviderName.OPENROUTER]: Model;
     [ModelProviderName.OLLAMA]: Model;
+    [ModelProviderName.HEURIST]: Model;
 };
 
 export enum ModelProviderName {
@@ -128,6 +129,7 @@ export enum ModelProviderName {
     REDPILL = "redpill",
     OPENROUTER = "openrouter",
     OLLAMA = "ollama",
+    HEURIST = "heurist",
 }
 
 /**
@@ -157,6 +159,7 @@ export interface State {
     responseData?: Content; // An optional content object representing the agent's response in the current state.
     recentInteractionsData?: Memory[]; // An optional array of memory objects representing recent interactions in the conversation.
     recentInteractions?: string; // An optional string representation of recent interactions in the conversation.
+    formattedConversation?: string; // An optional string representation of the formatted Twitter thread conversation.
     [key: string]: unknown; // Allows for additional properties to be included dynamically.
 }
 
@@ -315,6 +318,7 @@ export type Plugin = {
     providers?: Provider[];
     evaluators?: Evaluator[];
     services?: Service[];
+    clients?: Client[];
 };
 
 export enum Clients {
@@ -352,10 +356,26 @@ export type Character = {
         model?: string;
         embeddingModel?: string;
     };
+    clientConfig?: {
+        discord?: {
+            shouldIgnoreBotMessages?: boolean;
+            shouldIgnoreDirectMessages?: boolean;
+        };
+        telegram?: {
+            shouldIgnoreBotMessages?: boolean;
+            shouldIgnoreDirectMessages?: boolean;
+        };
+    };
     style: {
         all: string[];
         chat: string[];
         post: string[];
+    };
+    twitterProfile?: {
+        username: string;
+        screenName: string;
+        bio: string;
+        nicknames?: string[];
     };
 };
 
@@ -650,4 +670,10 @@ export enum ServiceType {
     BROWSER = "browser",
     SPEECH_GENERATION = "speech_generation",
     PDF = "pdf",
+}
+
+export enum LoggingLevel {
+    DEBUG = "debug",
+    VERBOSE = "verbose",
+    NONE = "none",
 }

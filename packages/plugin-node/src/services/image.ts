@@ -1,11 +1,7 @@
 // Current image recognition service -- local recognition working, no openai recognition
-import models from "@ai16z/eliza/src/models.ts";
-import { Service } from "@ai16z/eliza/src/types.ts";
-import {
-    IAgentRuntime,
-    ModelProviderName,
-    ServiceType,
-} from "@ai16z/eliza/src/types.ts";
+import { models } from "@ai16z/eliza";
+import { Service } from "@ai16z/eliza";
+import { IAgentRuntime, ModelProviderName, ServiceType } from "@ai16z/eliza";
 import {
     AutoProcessor,
     AutoTokenizer,
@@ -47,9 +43,9 @@ export class ImageDescriptionService extends Service {
             return;
         }
 
-        const model = models[runtime.character.settings.model];
+        const model = models[runtime?.character?.modelProvider];
 
-        if (model === ModelProviderName.LLAMALOCAL) {
+        if (model === models[ModelProviderName.LLAMALOCAL]) {
             this.modelId = "onnx-community/Florence-2-base-ft";
 
             env.allowLocalModels = false;

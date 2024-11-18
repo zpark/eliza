@@ -1,6 +1,6 @@
 import { composeContext } from "@ai16z/eliza/src/context.ts";
 import { generateObjectArray } from "@ai16z/eliza/src/generation.ts";
-import { MemoryManager } from "@ai16z/eliza/src/memory.ts";
+import { MemoryManager } from "@ai16z/eliza";
 import {
     ActionExample,
     Content,
@@ -8,7 +8,7 @@ import {
     Memory,
     ModelClass,
     Evaluator,
-} from "@ai16z/eliza/src/types.ts";
+} from "@ai16z/eliza";
 
 export const formatFacts = (facts: Memory[]) => {
     const messageStrings = facts

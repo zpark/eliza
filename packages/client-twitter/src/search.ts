@@ -1,11 +1,8 @@
 import { SearchMode } from "agent-twitter-client";
 import fs from "fs";
-import { composeContext } from "@ai16z/eliza/src/context.ts";
-import {
-    generateMessageResponse,
-    generateText,
-} from "@ai16z/eliza/src/generation.ts";
-import { messageCompletionFooter } from "@ai16z/eliza/src/parsing.ts";
+import { composeContext } from "@ai16z/eliza";
+import { generateMessageResponse, generateText } from "@ai16z/eliza";
+import { messageCompletionFooter } from "@ai16z/eliza";
 import {
     Content,
     HandlerCallback,
@@ -14,8 +11,8 @@ import {
     ModelClass,
     ServiceType,
     State,
-} from "@ai16z/eliza/src/types.ts";
-import { stringToUuid } from "@ai16z/eliza/src/uuid.ts";
+} from "@ai16z/eliza";
+import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base.ts";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 

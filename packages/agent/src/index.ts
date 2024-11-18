@@ -1,26 +1,27 @@
-import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres/src/index.ts";
-import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite/src/index.ts";
-import { DirectClientInterface } from "@ai16z/client-direct/src/index.ts";
-import { DiscordClientInterface } from "@ai16z/client-discord/src/index.ts";
-import { AutoClientInterface } from "@ai16z/client-auto/src/index.ts";
-import { TelegramClientInterface } from "@ai16z/client-telegram/src/index.ts";
-import { TwitterClientInterface } from "@ai16z/client-twitter/src/index.ts";
-import { defaultCharacter } from "@ai16z/eliza/src/defaultCharacter.ts";
-import { AgentRuntime } from "@ai16z/eliza/src/runtime.ts";
-import settings from "@ai16z/eliza/src/settings.ts";
+import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
+import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
+import { DirectClientInterface } from "@ai16z/client-direct";
+import { DiscordClientInterface } from "@ai16z/client-discord";
+import { AutoClientInterface } from "@ai16z/client-auto";
+import { TelegramClientInterface } from "@ai16z/client-telegram";
+import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { defaultCharacter } from "@ai16z/eliza";
+import { AgentRuntime } from "@ai16z/eliza";
+import { settings } from "@ai16z/eliza";
 import {
     Character,
     IAgentRuntime,
     IDatabaseAdapter,
     ModelProviderName,
-} from "@ai16z/eliza/src/types.ts";
-import { bootstrapPlugin } from "@ai16z/plugin-bootstrap/src/index.ts";
-import { solanaPlugin } from "@ai16z/plugin-solana/src/index.ts";
-import { nodePlugin } from "@ai16z/plugin-node/src/index.ts";
+} from "@ai16z/eliza";
+import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
+import { solanaPlugin } from "@ai16z/plugin-solana";
+import { nodePlugin } from "@ai16z/plugin-node";
 import Database from "better-sqlite3";
 import fs from "fs";
 import readline from "readline";
 import yargs from "yargs";
+import { character } from "./character.ts";
 
 export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     const waitTime =
@@ -150,27 +151,17 @@ export function getTokenForProvider(
                 character.settings?.secrets?.GROK_API_KEY ||
                 settings.GROK_API_KEY
             );
+        case ModelProviderName.HEURIST:
+            return (
+                character.settings?.secrets?.HEURIST_API_KEY ||
+                settings.HEURIST_API_KEY
+            );
+        case ModelProviderName.GROQ:
+            return (
+                character.settings?.secrets?.GROQ_API_KEY ||
+                settings.GROQ_API_KEY
+            );
     }
-}
-
-export async function createDirectRuntime(
-    character: Character,
-    db: IDatabaseAdapter,
-    token: string
-) {
-    console.log("Creating runtime for character", character.name);
-    return new AgentRuntime({
-        databaseAdapter: db,
-        token,
-        modelProvider: character.modelProvider,
-        evaluators: [],
-        character,
-        plugins: [],
-        providers: [],
-        actions: [],
-        services: [],
-        managers: [],
-    });
 }
 
 function initializeDatabase() {
@@ -208,6 +199,16 @@ export async function initializeClients(
     if (clientTypes.includes("twitter")) {
         const twitterClients = await TwitterClientInterface.start(runtime);
         clients.push(twitterClients);
+    }
+
+    if (character.plugins?.length > 0) {
+        for (const plugin of character.plugins) {
+            if (plugin.clients) {
+                for (const client of plugin.clients) {
+                    clients.push(await client.start(runtime));
+                }
+            }
+        }
     }
 
     return clients;
@@ -257,7 +258,7 @@ async function startAgent(character: Character, directClient: any) {
             `Error starting agent for character ${character.name}:`,
             error
         );
-        throw error; // Re-throw after logging
+        throw error;
     }
 }
 
@@ -267,7 +268,7 @@ const startAgents = async () => {
 
     let charactersArg = args.characters || args.character;
 
-    let characters = [defaultCharacter];
+    let characters = [character];
 
     if (charactersArg) {
         characters = await loadCharacters(charactersArg);
