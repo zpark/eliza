@@ -6,6 +6,10 @@ interface Settings {
     [key: string]: string | undefined;
 }
 
+interface NamespacedSettings {
+    [namespace: string]: Settings;
+}
+
 let environmentSettings: Settings = {};
 
 /**
@@ -81,6 +85,15 @@ export function loadEnvConfig(): Settings {
     }
 
     console.log(`Loaded .env file from: ${envPath}`);
+    
+    // Parse namespaced settings
+    const namespacedSettings = parseNamespacedSettings(process.env as Settings);
+    
+    // Attach to process.env for backward compatibility
+    Object.entries(namespacedSettings).forEach(([namespace, settings]) => {
+        process.env[`__namespaced_${namespace}`] = JSON.stringify(settings);
+    });
+
     return process.env as Settings;
 }
 
@@ -115,3 +128,21 @@ export function hasEnvVariable(key: string): boolean {
 // Initialize settings based on environment
 export const settings = isBrowser() ? environmentSettings : loadEnvConfig();
 export default settings;
+
+// Add this function to parse namespaced settings
+function parseNamespacedSettings(env: Settings): NamespacedSettings {
+    const namespaced: NamespacedSettings = {};
+    
+    for (const [key, value] of Object.entries(env)) {
+        if (!value) continue;
+        
+        const [namespace, ...rest] = key.split('.');
+        if (!namespace || rest.length === 0) continue;
+        
+        const settingKey = rest.join('.');
+        namespaced[namespace] = namespaced[namespace] || {};
+        namespaced[namespace][settingKey] = value;
+    }
+    
+    return namespaced;
+}
