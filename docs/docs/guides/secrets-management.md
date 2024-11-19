@@ -13,9 +13,9 @@ A comprehensive guide for managing secrets, API keys, and sensitive configuratio
 Eliza uses a hierarchical environment variable system:
 
 1. Character-specific namespaced environment variables (highest priority)
-1. Character-specific secrets
-2. Environment variables
-3. Default values (lowest priority)
+2. Character-specific secrets
+3. Environment variables
+4. Default values (lowest priority)
 
 ### Secret Types
 
