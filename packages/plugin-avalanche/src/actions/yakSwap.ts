@@ -1,11 +1,11 @@
 import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
-import { getQuote, swap } from "..";
+import { approve, getQuote, swap, getTxReceipt } from "..";
 import { Address } from "viem";
 
 export interface SwapContent extends Content {
     fromTokenAddress: string;
     toTokenAddress: string;
-    recipient: string;
+    recipient?: string;
     amount: string | number;
 }
 
@@ -17,7 +17,7 @@ function isSwapContent(
     return (
         typeof content.fromTokenAddress === "string" &&
         typeof content.toTokenAddress === "string" &&
-        typeof content.recipient === "string" &&
+        (typeof content.recipient === "string" || !content.recipient) &&
         (typeof content.amount === "string" ||
             typeof content.amount === "number")
     );
@@ -26,6 +26,16 @@ function isSwapContent(
 const transferTemplate = `Respond with a JSON markdown block containing only the extracted values
 - Use null for any values that cannot be determined.
 - Use address zero for native AVAX transfers.
+
+Example response for a 10 AVAX to USDC swap:
+\`\`\`json
+{
+    "fromTokenAddress": "0x0000000000000000000000000000000000000000",
+    "toTokenAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+    "recipient": null,
+    "amount": "10"
+}
+\`\`\`
 
 Example response for a 10 WAVAX to USDC swap:
 \`\`\`json
@@ -62,7 +72,7 @@ Example response to sell 5 USDC for gmYAK:
 Given the recent messages, extract the following information about the requested token transfer:
 - From token address (the token to sell)
 - To token address (the token to buy)
-- Recipient wallet address
+- Recipient wallet address (optional)
 - Amount to sell
 
 Respond with a JSON markdown block containing only the extracted values.`;
@@ -121,10 +131,20 @@ export default {
 
         if (content.fromTokenAddress === "0x0000000000000000000000000000000000000000") {
             // todo: swap from native
+            console.log("Swapping from native AVAX")
         } else if (content.toTokenAddress === "0x0000000000000000000000000000000000000000") {
             // todo: swap to native
+            console.log("Swapping to native AVAX")
         } else {
-            await swap(quote)
+            const yakRouterAddress = "0xC4729E56b831d74bBc18797e0e17A295fA77488c"
+            let tx = await approve(content.fromTokenAddress as Address, yakRouterAddress, content.amount as number)
+            if (tx) {
+                let receipt = await getTxReceipt(tx)
+
+                if (receipt.status === "success") {
+                    await swap(quote)
+                }
+            }
         }
 
         return true;

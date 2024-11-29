@@ -1,5 +1,5 @@
 import { Plugin } from "@ai16z/eliza";
-import { Address, createPublicClient, createWalletClient, http, parseUnits } from 'viem'
+import { Address, createPublicClient, createWalletClient, http, parseUnits, Hash } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { avalanche } from 'viem/chains'
 import 'dotenv/config'
@@ -117,7 +117,63 @@ const getQuote = async (fromTokenAddress: Address, toTokenAddress: Address, amou
     return quote as YakSwapQuote
 }
 
-const swap = async (quote: YakSwapQuote) => {
+const getTxReceipt = async (tx: Hash) => {
+    const receipt = await publicClient.waitForTransactionReceipt({
+        hash: tx
+    })
+    return receipt
+}
+
+const approve = async (tokenAddress: Address, spender: Address, amount: number) => {
+    try {
+        const decimals = await getDecimals(tokenAddress);
+        const { result, request } = await publicClient.simulateContract({
+            account,
+            address: tokenAddress,
+            abi: [{
+                "inputs": [
+                    {
+                        "internalType": "address",
+                        "name": "_spender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "_value",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "approve",
+                "outputs": [
+                    {
+                        "internalType": "bool",
+                        "name": "",
+                        "type": "bool"
+                    }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }],
+            functionName: 'approve',
+            args: [spender, parseUnits(amount.toString(), decimals)]
+        })
+
+        if (!result) {
+            throw new Error('Approve failed')
+        }
+
+        console.log('Request:', request)
+
+        const tx = await walletClient.writeContract(request)
+        console.log('Transaction:', tx)
+        return tx
+    } catch (error) {
+        console.error('Error approving:', error)
+        return
+    }
+}
+
+const swap = async (quote: YakSwapQuote, recipient?: Address) => {
     const trade = {
         amountIn: quote.amounts[0],
         amountOut: quote.amounts[quote.amounts.length - 1],
@@ -126,6 +182,7 @@ const swap = async (quote: YakSwapQuote) => {
     }
     try {
         const { result, request } = await publicClient.simulateContract({
+            account,
             address: "0xC4729E56b831d74bBc18797e0e17A295fA77488c",
             abi: [{
                 "inputs": [
@@ -175,16 +232,10 @@ const swap = async (quote: YakSwapQuote) => {
             functionName: "swapNoSplit",
             args: [
                 trade,
-                account.address,
+                recipient || account.address,
                 0n
             ]
         })
-
-        if (!result) {
-            throw new Error('Swap failed')
-        }
-
-        console.log('Request:', request)
 
         const tx = await walletClient.writeContract(request)
         console.log('Transaction:', tx)
@@ -275,7 +326,18 @@ const sendToken = async (tokenAddress: Address, recipient: Address, amount: numb
 console.log('Wallet public address:', account.address)
 console.log('Balance:', await getBalance())
 
-export { client, account, getQuote, swap, getBalance, sendNativeAsset, sendToken, publicClient }
+export { 
+    client, 
+    account, 
+    getQuote, 
+    getTxReceipt,
+    approve, 
+    swap, 
+    getBalance, 
+    sendNativeAsset, 
+    sendToken, 
+    publicClient 
+}
 
 export const avalanchePlugin: Plugin = {
     name: "avalanche",
