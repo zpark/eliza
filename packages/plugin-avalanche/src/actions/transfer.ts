@@ -97,6 +97,7 @@ export default {
 
         // Log the transfer content
         console.log("Transfer content:", content);
+        // return
 
         if (content.tokenAddress === "0x0000000000000000000000000000000000000000") {
             await sendNativeAsset(content.recipient as Address, content.amount as number);
