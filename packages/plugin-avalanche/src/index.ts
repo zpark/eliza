@@ -4,6 +4,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { avalanche } from 'viem/chains'
 import 'dotenv/config'
 import transfer from './actions/transfer'
+import { tokensProvider } from './providers/tokens'
 
 // Ensure private key exists
 const privateKey = process.env.AVALANCHE_PRIVATE_KEY
@@ -44,7 +45,65 @@ const sendNativeAsset = async (recipient: Address, amount: string | number) => {
 }
 
 const sendToken = async (tokenAddress: Address, recipient: Address, amount: number) => {
-    // todo
+    const decimals = await publicClient.readContract({
+        address: tokenAddress,
+        abi: [{
+            "inputs": [],
+            "name": "decimals",
+            "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+            "stateMutability": "view",
+            "type": "function"
+        }],
+        functionName: 'decimals',
+    })
+    console.log('Decimals:', decimals)
+
+    try {
+        const { result, request } = await publicClient.simulateContract({
+            account,
+            address: tokenAddress,
+            abi: [{
+                "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "dst",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                }
+                ],
+                "name": "transfer",
+                "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }],
+            functionName: 'transfer',
+            args: [recipient, parseUnits(amount.toString(), decimals)],
+        })
+
+        if (!result) {
+            throw new Error('Transfer failed')
+        }
+
+        console.log('Request:', request)
+
+        const tx = await walletClient.writeContract(request)
+        console.log('Transaction:', tx)
+        return tx
+
+    } catch (error) {
+        console.error('Error simulating contract:', error)
+        return
+    }
 }
 
 // Log the public address
@@ -60,7 +119,9 @@ export const avalanchePlugin: Plugin = {
         transfer
     ],
     evaluators: [],
-    providers: [],
+    providers: [
+        tokensProvider
+    ],
 };
 
 export default avalanchePlugin;
