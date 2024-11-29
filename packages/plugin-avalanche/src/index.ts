@@ -5,7 +5,9 @@ import { avalanche } from 'viem/chains'
 import 'dotenv/config'
 import transfer from './actions/transfer'
 import yakSwap from './actions/yakSwap'
+import yakStrategy from './actions/yakStrategy'
 import { tokensProvider } from './providers/tokens'
+import { strategiesProvider } from './providers/strategies'
 
 // Ensure private key exists
 const privateKey = process.env.AVALANCHE_PRIVATE_KEY
@@ -173,6 +175,45 @@ const approve = async (tokenAddress: Address, spender: Address, amount: number) 
     }
 }
 
+const deposit = async (depositTokenAddress: Address, strategyAddress: Address, amount: number) => {
+    try {
+        const decimals = await getDecimals(depositTokenAddress);
+        const { result, request } = await publicClient.simulateContract({
+            account,
+            address: strategyAddress,
+            abi: [{
+                "inputs": [
+                  {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                  }
+                ],
+                "name": "deposit",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }],
+            functionName: 'deposit',
+            args: [parseUnits(amount.toString(), decimals)]
+        })
+
+        // if (!result) {
+        //     throw new Error('Deposit failed')
+        // }
+
+        console.log('Request:', request)
+
+        const tx = await walletClient.writeContract(request)
+        console.log('Transaction:', tx)
+        return tx
+    }
+    catch (error) {
+        console.error('Error depositing:', error)
+        return
+    }
+}
+
 const swap = async (quote: YakSwapQuote, recipient?: Address) => {
     const trade = {
         amountIn: quote.amounts[0],
@@ -336,6 +377,7 @@ export {
     getBalance, 
     sendNativeAsset, 
     sendToken, 
+    deposit,
     publicClient 
 }
 
@@ -344,11 +386,13 @@ export const avalanchePlugin: Plugin = {
     description: "Avalanche Plugin for Eliza",
     actions: [
         transfer,
-        yakSwap
+        yakSwap,
+        yakStrategy
     ],
     evaluators: [],
     providers: [
-        tokensProvider
+        tokensProvider,
+        strategiesProvider
     ],
 };
 
