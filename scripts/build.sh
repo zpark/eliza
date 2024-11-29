@@ -45,6 +45,7 @@ PACKAGES=(
     "client-discord"
     "client-telegram"
     "client-twitter"
+    "plugin-avalanche"
 )
 
 # Build packages in specified order
