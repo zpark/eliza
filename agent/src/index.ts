@@ -35,6 +35,7 @@ import { evmPlugin } from "@ai16z/plugin-evm";
 import { createNodePlugin } from "@ai16z/plugin-node";
 import { solanaPlugin } from "@ai16z/plugin-solana";
 import { teePlugin } from "@ai16z/plugin-tee";
+import { avalanchePlugin } from "@ai16z/plugin-avalanche";
 
 import buttplugPlugin from "@ai16z/plugin-buttplug";
 import Database from "better-sqlite3";
@@ -334,6 +335,7 @@ export function createAgent(
             getSecret(character, "COINBASE_PRIVATE_KEY")
                 ? [coinbaseMassPaymentsPlugin, tradePlugin]
                 : []),
+            getSecret(character, "AVALANCHE_PRIVATE_KEY") ? avalanchePlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
