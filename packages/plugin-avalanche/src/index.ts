@@ -1,5 +1,5 @@
 import { Plugin } from "@ai16z/eliza";
-import { createPublicClient, createWalletClient, http } from 'viem'
+import { Address, createPublicClient, createWalletClient, http, parseUnits } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { avalanche } from 'viem/chains'
 import 'dotenv/config'
@@ -20,7 +20,7 @@ const publicClient = createPublicClient({
 })
 
 // Create wallet client
-const client = createWalletClient({
+const walletClient = createWalletClient({
   account,
   chain: avalanche,
   transport: http()
@@ -34,11 +34,24 @@ const getBalance = async () => {
     return balance
 }
 
+const sendNativeAsset = async (recipient: Address, amount: string | number) => {
+    const tx = await walletClient.sendTransaction({
+        to: recipient,
+        value: parseUnits(amount.toString(), 18),
+    });
+    console.log('Transaction:', tx)
+    return tx
+}
+
+const sendToken = async (tokenAddress: Address, recipient: Address, amount: number) => {
+    // todo
+}
+
 // Log the public address
 console.log('Wallet public address:', account.address)
 console.log('Balance:', await getBalance())
 
-export { client, account, getBalance, publicClient }
+export { client, account, getBalance, sendNativeAsset, sendToken, publicClient }
 
 export const avalanchePlugin: Plugin = {
     name: "avalanche",
