@@ -8,6 +8,7 @@ import yakSwap from './actions/yakSwap'
 import yakStrategy from './actions/yakStrategy'
 import { tokensProvider } from './providers/tokens'
 import { strategiesProvider } from './providers/strategies'
+import { walletProvider } from './providers/wallet'
 
 // Ensure private key exists
 const privateKey = process.env.AVALANCHE_PRIVATE_KEY
@@ -37,11 +38,29 @@ const walletClient = createWalletClient({
     transport: http()
 })
 
-const getBalance = async () => {
+const getNativeBalance = async (owner: Address) => {
     const balance = await publicClient.getBalance({
-        address: account.address,
+        address: owner,
     })
-    console.log('Balance:', balance)
+    return balance
+}
+
+const getTokenBalance = async (tokenAddress: Address, owner: Address) => {
+    if (tokenAddress === "0x0000000000000000000000000000000000000000") {
+        return getNativeBalance(owner)
+    }
+    const balance = await publicClient.readContract({
+        address: tokenAddress,
+        abi: [{
+            "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+            "name": "balanceOf",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+        }],
+        functionName: 'balanceOf',
+        args: [owner]
+    })
     return balance
 }
 
@@ -297,6 +316,9 @@ const sendNativeAsset = async (recipient: Address, amount: string | number) => {
 }
 
 const getDecimals = async (tokenAddress: Address) => {
+    if (tokenAddress === "0x0000000000000000000000000000000000000000") {
+        return avalanche.nativeCurrency.decimals
+    }
     const decimals = await publicClient.readContract({
         address: tokenAddress,
         abi: [{
@@ -308,7 +330,6 @@ const getDecimals = async (tokenAddress: Address) => {
         }],
         functionName: 'decimals',
     })
-    console.log('Decimals:', decimals)
     return decimals
 }
 
@@ -363,18 +384,15 @@ const sendToken = async (tokenAddress: Address, recipient: Address, amount: numb
     }
 }
 
-// Log the public address
-console.log('Wallet public address:', account.address)
-console.log('Balance:', await getBalance())
-
 export { 
     client, 
     account, 
     getQuote, 
     getTxReceipt,
+    getDecimals,
     approve, 
     swap, 
-    getBalance, 
+    getTokenBalance,
     sendNativeAsset, 
     sendToken, 
     deposit,
@@ -392,7 +410,8 @@ export const avalanchePlugin: Plugin = {
     evaluators: [],
     providers: [
         tokensProvider,
-        strategiesProvider
+        strategiesProvider,
+        walletProvider,
     ],
 };
 
