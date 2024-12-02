@@ -174,13 +174,14 @@ export default {
                         content: { error: "Approve failed" },
                     })
                 }
+            } else {
+                callback?.({
+                    text: "approve failed",
+                    content: { error: "Approve failed" },
+                })
             }
         }
-
-        callback?.({
-            text: "something went wrong",
-            content: { error: "Swap failed" },
-        })
+        
         return true;
     },
     examples: [
