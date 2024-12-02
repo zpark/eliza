@@ -1,5 +1,5 @@
 import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
-import { sendNativeAsset, sendToken } from "..";
+import { getTxReceipt, sendNativeAsset, sendToken } from "..";
 import { Address } from "viem";
 
 export interface TransferContent extends Content {
@@ -56,12 +56,28 @@ export default {
     name: "SEND_TOKEN",
     similes: ["TRANSFER_TOKEN_ON_AVALANCHE", "TRANSFER_TOKENS_ON_AVALANCHE", "SEND_TOKENS_ON_AVALANCHE", "SEND_AVAX_ON_AVALANCHE", "PAY_ON_AVALANCHE"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
+        console.log("Validating transfer from message:", message);
         console.log("Validating transfer from user:", message.userId);
-        return true;
+        if (message.content.source === "direct") {
+            return true
+        }
+        return false
     },
     description: "MUST use this action if the user requests send a token or transfer a token, the request might be varied, but it will always be a token transfer.",
     handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
+
+        // Validate transfer
+        if (message.content.source === "direct") {
+            //
+        }
+        else {
+            callback?.({
+                text: "i can't do that for you.",
+                content: { error: "Transfer not allowed" },
+            });
+            return false
+        }
 
         // Initialize or update state
         if (!state) {
@@ -86,12 +102,10 @@ export default {
         // Validate transfer content
         if (!isTransferContent(runtime, content)) {
             console.error("Invalid content for TRANSFER_TOKEN action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process transfer request. Invalid content provided.",
-                    content: { error: "Invalid transfer content" },
-                });
-            }
+            callback?.({
+                text: "Unable to process transfer request. Invalid content provided.",
+                content: { error: "Invalid transfer content" },
+            });
             return false;
         }
 
@@ -99,10 +113,26 @@ export default {
         console.log("Transfer content:", content);
         // return
 
+        let tx;
         if (content.tokenAddress === "0x0000000000000000000000000000000000000000") {
-            await sendNativeAsset(content.recipient as Address, content.amount as number);
+            tx = await sendNativeAsset(content.recipient as Address, content.amount as number);
         } else {
-            await sendToken(content.tokenAddress as Address, content.recipient as Address, content.amount as number);
+            tx = await sendToken(content.tokenAddress as Address, content.recipient as Address, content.amount as number);
+        }
+        
+        if (tx) {
+            let receipt = await getTxReceipt(tx)
+            if (receipt.status === "success") {
+                callback?.({
+                    text: "transfer successful",
+                    content: { success: true, txHash: tx },
+                })
+            } else {
+                callback?.({
+                    text: "transfer failed",
+                    content: { error: "Transfer failed" },
+                })
+            }
         }
 
         return true;
