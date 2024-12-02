@@ -10,7 +10,8 @@ const TOKEN_ADDRESSES = {
     gmYAK: "0x3A30784c1af928CdFce678eE49370220aA716DC3",
     USDC: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     JOE: "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
-    AUSD: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a"
+    AUSD: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
+    PRINCESS: "0xB310Ed3A7F4Ae79E59dCa99784b312c2D19fFC7C",
 }
 
 const walletProvider: Provider = {
@@ -21,12 +22,12 @@ const walletProvider: Provider = {
             throw new Error("AVALANCHE_PRIVATE_KEY not found in environment variables")
         }
 
-        let output = `# Wallet Balances\n\n`
-        
         const account = privateKeyToAccount(`0x${privateKey.replace('0x', '')}`)
-        output += `## Wallet Address\n\n${account.address}\n\n`
+
+        let output = `# Wallet Balances\n\n`
+        output += `## Wallet Address\n\n\`${account.address}\`\n\n`
         
-        output += `## Token Balances\n\n`
+        output += `## Latest Token Balances\n\n`
         for (const [token, address] of Object.entries(TOKEN_ADDRESSES)) {
             const decimals = await getDecimals(address as Address)
             const balance = await getTokenBalance(address as Address, account.address)

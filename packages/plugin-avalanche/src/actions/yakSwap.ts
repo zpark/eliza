@@ -159,14 +159,12 @@ export default {
                                 text: "swap successful",
                                 content: { success: true, txHash: swapTx },
                             })
-                            return true
                         } else {
                             console.error("Swap failed")
                             callback?.({
                                 text: "swap failed",
                                 content: { error: "Swap failed" },
                             })
-                            return true
                         }
                     }
                 } else {
@@ -175,7 +173,6 @@ export default {
                         text: "approve failed",
                         content: { error: "Approve failed" },
                     })
-                    return true
                 }
             }
         }
