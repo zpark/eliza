@@ -192,6 +192,7 @@ export type Models = {
     [ModelProviderName.GROK]: Model;
     [ModelProviderName.GROQ]: Model;
     [ModelProviderName.LLAMACLOUD]: Model;
+    [ModelProviderName.TOGETHER]: Model;
     [ModelProviderName.LLAMALOCAL]: Model;
     [ModelProviderName.GOOGLE]: Model;
     [ModelProviderName.CLAUDE_VERTEX]: Model;
@@ -199,6 +200,11 @@ export type Models = {
     [ModelProviderName.OPENROUTER]: Model;
     [ModelProviderName.OLLAMA]: Model;
     [ModelProviderName.HEURIST]: Model;
+    [ModelProviderName.GALADRIEL]: Model;
+    [ModelProviderName.FAL]: Model;
+    [ModelProviderName.GAIANET]: Model;
+    [ModelProviderName.ALI_BAILIAN]: Model;
+    [ModelProviderName.VOLENGINE]: Model;
 };
 
 /**
@@ -211,6 +217,7 @@ export enum ModelProviderName {
     GROK = "grok",
     GROQ = "groq",
     LLAMACLOUD = "llama_cloud",
+    TOGETHER = "together",
     LLAMALOCAL = "llama_local",
     GOOGLE = "google",
     CLAUDE_VERTEX = "claude_vertex",
@@ -218,6 +225,11 @@ export enum ModelProviderName {
     OPENROUTER = "openrouter",
     OLLAMA = "ollama",
     HEURIST = "heurist",
+    GALADRIEL = "galadriel",
+    FAL = "falai",
+    GAIANET = "gaianet",
+    ALI_BAILIAN = "ali_bailian",
+    VOLENGINE = "volengine",
 }
 
 /**
@@ -610,6 +622,9 @@ export type Character = {
     /** Model provider to use */
     modelProvider: ModelProviderName;
 
+    /** Image model provider to use, if different from modelProvider */
+    imageModelProvider?: ModelProviderName;
+
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
 
@@ -647,9 +662,6 @@ export type Character = {
     /** Example posts */
     postExamples: string[];
 
-    /** Known people */
-    people: string[];
-
     /** Known topics */
     topics: string[];
 
@@ -670,8 +682,17 @@ export type Character = {
         secrets?: { [key: string]: string };
         buttplug?: boolean;
         voice?: {
-            model?: string;
-            url?: string;
+            model?: string; // For VITS
+            url?: string; // Legacy VITS support
+            elevenlabs?: {
+                // New structured ElevenLabs config
+                voiceId: string;
+                model?: string;
+                stability?: string;
+                similarityBoost?: string;
+                style?: string;
+                useSpeakerBoost?: string;
+            };
         };
         model?: string;
         embeddingModel?: string;
@@ -959,6 +980,7 @@ export interface IAgentRuntime {
     databaseAdapter: IDatabaseAdapter;
     token: string | null;
     modelProvider: ModelProviderName;
+    imageModelProvider: ModelProviderName;
     character: Character;
     providers: Provider[];
     actions: Action[];
@@ -1094,6 +1116,23 @@ export interface IPdfService extends Service {
     getInstance(): IPdfService;
     convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
+
+export type SearchResult = {
+    title: string;
+    url: string;
+    content: string;
+    score: number;
+    raw_content: string | null;
+};
+
+export type SearchResponse = {
+    query: string;
+    follow_up_questions: string[] | null;
+    answer: string | null;
+    images: string[];
+    results: SearchResult[];
+    response_time: number;
+};
 
 export enum ServiceType {
     IMAGE_DESCRIPTION = "image_description",

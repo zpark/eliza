@@ -74,12 +74,14 @@ export const CharacterSchema = z.object({
     lore: z.array(z.string()),
     messageExamples: z.array(z.array(MessageExampleSchema)),
     postExamples: z.array(z.string()),
-    people: z.array(z.string()),
     topics: z.array(z.string()),
     adjectives: z.array(z.string()),
     knowledge: z.array(z.string()).optional(),
     clients: z.array(z.nativeEnum(Clients)),
-    plugins: z.array(PluginSchema),
+    plugins: z.union([
+      z.array(z.string()),
+      z.array(PluginSchema),
+    ]),
     settings: z
         .object({
             secrets: z.record(z.string()).optional(),
