@@ -234,9 +234,12 @@ const deposit = async (depositTokenAddress: Address, strategyAddress: Address, a
 }
 
 const swap = async (quote: YakSwapQuote, recipient?: Address) => {
+    const slippageBips = 20n;
+    const amountOut = quote.amounts[quote.amounts.length - 1];
+    const allowedSlippage = amountOut * slippageBips / 10000n;
     const trade = {
         amountIn: quote.amounts[0],
-        amountOut: quote.amounts[quote.amounts.length - 1],
+        amountOut: amountOut - allowedSlippage,
         path: quote.path,
         adapters: quote.adapters
     }

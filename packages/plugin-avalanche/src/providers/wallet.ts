@@ -16,15 +16,17 @@ const TOKEN_ADDRESSES = {
 const walletProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         console.log("walletProvider::get")
-        let output = `Wallet Balances\n\n`
         const privateKey = runtime.getSetting("AVALANCHE_PRIVATE_KEY")
         if (!privateKey) {
             throw new Error("AVALANCHE_PRIVATE_KEY not found in environment variables")
         }
 
-        const account = privateKeyToAccount(`0x${privateKey.replace('0x', '')}`)
-        output += `Wallet Address: ${account.address}\n\n`
+        let output = `# Wallet Balances\n\n`
         
+        const account = privateKeyToAccount(`0x${privateKey.replace('0x', '')}`)
+        output += `## Wallet Address\n\n${account.address}\n\n`
+        
+        output += `## Token Balances\n\n`
         for (const [token, address] of Object.entries(TOKEN_ADDRESSES)) {
             const decimals = await getDecimals(address as Address)
             const balance = await getTokenBalance(address as Address, account.address)

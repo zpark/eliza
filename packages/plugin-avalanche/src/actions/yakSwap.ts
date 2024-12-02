@@ -26,6 +26,7 @@ function isSwapContent(
 const transferTemplate = `Respond with a JSON markdown block containing only the extracted values
 - Use null for any values that cannot be determined.
 - Use address zero for native AVAX transfers.
+- If our balance is not enough, use null for the amount.
 
 Example response for a 10 AVAX to USDC swap:
 \`\`\`json
@@ -80,8 +81,8 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "SWAP_TOKEN",
     similes: [
-        "TRADE_TOKEN", 
-        "BUY_TOKEN", 
+        "TRADE_TOKEN",
+        "BUY_TOKEN",
         "SELL_TOKEN",
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
@@ -115,12 +116,10 @@ export default {
         // Validate swap content
         if (!isSwapContent(runtime, content)) {
             console.error("Invalid content for SWAP_TOKEN action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process swap request. Invalid content provided.",
-                    content: { error: "Invalid swap content" },
-                });
-            }
+            callback?.({
+                text: "Unable to process swap request. Invalid content provided.",
+                content: { error: "Invalid swap content" },
+            });
             return false;
         }
 
@@ -138,15 +137,53 @@ export default {
         } else {
             const yakRouterAddress = "0xC4729E56b831d74bBc18797e0e17A295fA77488c"
             let tx = await approve(content.fromTokenAddress as Address, yakRouterAddress, content.amount as number)
+            callback?.({
+                text: "approving token...",
+                content: { success: true },
+            })
+
             if (tx) {
                 let receipt = await getTxReceipt(tx)
 
                 if (receipt.status === "success") {
-                    await swap(quote)
+                    callback?.({
+                        text: "token approved, swapping...",
+                        content: { success: true, txHash: tx },
+                    })
+                    let swapTx = await swap(quote)
+                    if (swapTx) {
+                        receipt = await getTxReceipt(swapTx)
+                        if (receipt.status === "success") {
+                            console.log("Swap successful")
+                            callback?.({
+                                text: "swap successful",
+                                content: { success: true, txHash: swapTx },
+                            })
+                            return true
+                        } else {
+                            console.error("Swap failed")
+                            callback?.({
+                                text: "swap failed",
+                                content: { error: "Swap failed" },
+                            })
+                            return true
+                        }
+                    }
+                } else {
+                    console.error("Approve failed")
+                    callback?.({
+                        text: "approve failed",
+                        content: { error: "Approve failed" },
+                    })
+                    return true
                 }
             }
         }
 
+        callback?.({
+            text: "something went wrong",
+            content: { error: "Swap failed" },
+        })
         return true;
     },
     examples: [
