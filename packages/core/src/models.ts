@@ -285,7 +285,7 @@ export const models: Models = {
             [ModelClass.MEDIUM]: "meta-llama/llama-3-70b-instruct",
             [ModelClass.LARGE]: "meta-llama/llama-3.1-405b-instruct",
             [ModelClass.EMBEDDING]: "", //Add later,
-            [ModelClass.IMAGE]: "PepeXL",
+            [ModelClass.IMAGE]: "FLUX.1-dev",
         },
     },
     [ModelProviderName.GALADRIEL]: {
