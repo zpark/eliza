@@ -1,6 +1,8 @@
 import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
-import { approve, deposit, getTxReceipt } from "..";
+import { approve, deposit, getTxReceipt } from "../utils"
 import { Address } from "viem";
+import { validateAvalancheConfig } from "../environment";
+import { STRATEGY_ADDRESSES, TOKEN_ADDRESSES } from "../utils/constants";
 
 export interface StrategyContent extends Content {
     depositTokenAddress: string;
@@ -43,6 +45,16 @@ Example response for a 10 WAVAX deposit into a strategy:
 }
 \`\`\`
 
+## Token Addresses
+
+${Object.entries(TOKEN_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+
+## Strategy Addresses
+
+${Object.entries(STRATEGY_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+
+## Recent Messages
+
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested strategy management:
@@ -55,11 +67,11 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "DEPOSIT_TO_STRATEGY",
     similes: [
-        "DEPOSIT_FOR_YIELD", 
+        "DEPOSIT_FOR_YIELD",
         "DEPOSIT_TOKENS",
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating DEPOSIT_TO_STRATEGY from user:", message.userId);
+        await validateAvalancheConfig(runtime);
         return true;
     },
     description: "MUST use this action if the user requests to deposit into a yield-earning strategy, the request might be varied, but it will always be a deposit into a strategy.",
@@ -89,12 +101,10 @@ export default {
         // Validate content
         if (!isStrategyContent(runtime, content)) {
             console.error("Invalid content for DEPOSIT_TO_STRATEGY action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process deposit request. Invalid content provided.",
-                    content: { error: "Invalid deposit content" },
-                });
-            }
+            callback?.({
+                text: "Unable to process deposit request. Invalid content provided.",
+                content: { error: "Invalid deposit content" },
+            });
             return false;
         }
 
@@ -105,13 +115,47 @@ export default {
             // todo: deposit from native
             console.log("Swapping from native AVAX")
         } else {
-            let tx = await approve(content.depositTokenAddress as Address, content.strategyAddress as Address, content.amount as number)
+            let tx = await approve(runtime, content.depositTokenAddress as Address, content.strategyAddress as Address, content.amount as number)
+            callback?.({
+                text: "approving token...",
+                content: { success: true },
+            })
+
             if (tx) {
-                let receipt = await getTxReceipt(tx)
+                let receipt = await getTxReceipt(runtime, tx)
 
                 if (receipt.status === "success") {
-                    await deposit(content.depositTokenAddress as Address,content.strategyAddress as Address, content.amount as number)
+                    callback?.({
+                        text: "token approved, depositing...",
+                        content: { success: true, txHash: tx },
+                    })
+
+                    let depositTx = await deposit(runtime, content.depositTokenAddress as Address,content.strategyAddress as Address, content.amount as number)
+                    if (depositTx) {
+                        receipt = await getTxReceipt(runtime, depositTx)
+                        if (receipt.status === "success") {
+                            callback?.({
+                                text: "deposit successful",
+                                content: { success: true, txHash: depositTx },
+                            })
+                        } else {
+                            callback?.({
+                                text: "deposit failed",
+                                content: { error: "Deposit failed" },
+                            })
+                        }
+                    }
+                } else {
+                    callback?.({
+                        text: "approve failed",
+                        content: { error: "Approve failed" },
+                    })
                 }
+            } else {
+                callback?.({
+                    text: "approve failed",
+                    content: { error: "Approve failed" },
+                })
             }
         }
 

@@ -1,6 +1,8 @@
 import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
-import { getTxReceipt, sendNativeAsset, sendToken } from "..";
+import { getTxReceipt, sendNativeAsset, sendToken } from "../utils";
 import { Address } from "viem";
+import { validateAvalancheConfig } from "../environment";
+import { TOKEN_ADDRESSES } from "../utils/constants";
 
 export interface TransferContent extends Content {
     tokenAddress: string;
@@ -43,6 +45,12 @@ Example response for a 0.1 AVAX transfer:
 }
 \`\`\`
 
+## Token Addresses
+
+${Object.entries(TOKEN_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+
+## Recent Messages
+
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested token transfer:
@@ -54,14 +62,16 @@ Respond with a JSON markdown block containing only the extracted values.`;
 
 export default {
     name: "SEND_TOKEN",
-    similes: ["TRANSFER_TOKEN_ON_AVALANCHE", "TRANSFER_TOKENS_ON_AVALANCHE", "SEND_TOKENS_ON_AVALANCHE", "SEND_AVAX_ON_AVALANCHE", "PAY_ON_AVALANCHE"],
+    similes: [
+        "TRANSFER_TOKEN_ON_AVALANCHE",
+        "TRANSFER_TOKENS_ON_AVALANCHE",
+        "SEND_TOKENS_ON_AVALANCHE",
+        "SEND_AVAX_ON_AVALANCHE",
+        "PAY_ON_AVALANCHE"
+    ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating transfer from message:", message);
-        console.log("Validating transfer from user:", message.userId);
-        if (message.content.source === "direct") {
-            return true
-        }
-        return false
+        await validateAvalancheConfig(runtime);
+        return true;
     },
     description: "MUST use this action if the user requests send a token or transfer a token, the request might be varied, but it will always be a token transfer.",
     handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
@@ -99,6 +109,8 @@ export default {
             modelClass: ModelClass.SMALL,
         });
 
+        elizaLogger.debug("Transfer content:", content);
+
         // Validate transfer content
         if (!isTransferContent(runtime, content)) {
             console.error("Invalid content for TRANSFER_TOKEN action.");
@@ -109,19 +121,15 @@ export default {
             return false;
         }
 
-        // Log the transfer content
-        console.log("Transfer content:", content);
-        // return
-
         let tx;
         if (content.tokenAddress === "0x0000000000000000000000000000000000000000") {
-            tx = await sendNativeAsset(content.recipient as Address, content.amount as number);
+            tx = await sendNativeAsset(runtime, content.recipient as Address, content.amount as number);
         } else {
-            tx = await sendToken(content.tokenAddress as Address, content.recipient as Address, content.amount as number);
+            tx = await sendToken(runtime, content.tokenAddress as Address, content.recipient as Address, content.amount as number);
         }
-        
+
         if (tx) {
-            let receipt = await getTxReceipt(tx)
+            let receipt = await getTxReceipt(runtime, tx)
             if (receipt.status === "success") {
                 callback?.({
                     text: "transfer successful",
@@ -133,6 +141,11 @@ export default {
                     content: { error: "Transfer failed" },
                 })
             }
+        } else {
+            callback?.({
+                text: "transfer failed",
+                content: { error: "Transfer failed" },
+            })
         }
 
         return true;
