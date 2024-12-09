@@ -1,14 +1,6 @@
-import {
-    Action,
-    elizaLogger,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    Plugin,
-    State,
-} from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory, Plugin, State } from "@ai16z/eliza";
 import { ClientProvider } from "./providers/client";
-import { Address } from "genlayer-js/types";
+import { ReadContractParams } from "./types";
 
 export class ReadContractAction {
     private readonly provider: ClientProvider;
@@ -16,15 +8,11 @@ export class ReadContractAction {
         this.provider = provider;
     }
 
-    async readContract(
-        contractAddress: string,
-        functionName: string,
-        functionArgs: any[]
-    ) {
+    async readContract(options: ReadContractParams) {
         return this.provider.client.readContract({
-            address: contractAddress as Address,
-            functionName,
-            args: functionArgs,
+            address: options.contractAddress,
+            functionName: options.functionName,
+            args: options.functionArgs,
         });
     }
 }
@@ -41,19 +29,15 @@ const readContractAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: {
-            contractAddress: string;
-            functionName: string;
-            functionArgs: any[];
-        }
+        options: any
     ) => {
         const clientProvider = new ClientProvider(runtime);
         const action = new ReadContractAction(clientProvider);
-        return action.readContract(
-            options.contractAddress,
-            options.functionName,
-            options.functionArgs
+        console.error(options);
+        console.error(
+            `Reading contract ${options.contractAddress} with function ${options.functionName} and args ${options.functionArgs}`
         );
+        return action.readContract(options);
     },
     examples: [
         [
