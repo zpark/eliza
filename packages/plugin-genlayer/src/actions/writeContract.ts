@@ -10,7 +10,6 @@ import {
 } from "@ai16z/eliza";
 import { WriteContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
-import { ContractActions } from "./contractActions";
 
 export const writeContractTemplate = `
 # Task: Determine the contract address, function name, function arguments, and value for writing to the contract.
@@ -71,11 +70,16 @@ export const writeContractAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const clientProvider = new ClientProvider(runtime);
-        const action = new ContractActions(clientProvider);
         const options = await getWriteParams(runtime, message, state);
         if (!options)
             throw new Error("Failed to parse write contract parameters");
-        return action.writeContract(options);
+        return clientProvider.client.writeContract({
+            address: options.contractAddress,
+            functionName: options.functionName,
+            args: options.functionArgs,
+            value: options.value,
+            leaderOnly: options.leaderOnly,
+        });
     },
     examples: [
         [

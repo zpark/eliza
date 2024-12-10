@@ -1,6 +1,5 @@
 import { Action, IAgentRuntime, Memory } from "@ai16z/eliza";
 import { ClientProvider } from "../providers/client";
-import { ContractActions } from "./contractActions";
 
 export const getCurrentNonceAction: Action = {
     name: "GET_CURRENT_NONCE",
@@ -12,11 +11,12 @@ export const getCurrentNonceAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory) => {
         const clientProvider = new ClientProvider(runtime);
-        const action = new ContractActions(clientProvider);
         // Extract address from message
         const addressMatch = message.content.text.match(/0x[a-fA-F0-9]{40}/);
         if (!addressMatch) throw new Error("No valid address found in message");
-        return action.getCurrentNonce({ address: addressMatch[0] });
+        return clientProvider.client.getCurrentNonce({
+            address: addressMatch[0],
+        });
     },
     examples: [
         [

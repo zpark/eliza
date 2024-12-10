@@ -10,7 +10,6 @@ import {
 } from "@ai16z/eliza";
 import { DeployContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
-import { ContractActions } from "./contractActions";
 
 export const deployContractTemplate = `
 # Task: Determine the contract code and constructor arguments for deploying a contract.
@@ -69,11 +68,14 @@ export const deployContractAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const clientProvider = new ClientProvider(runtime);
-        const action = new ContractActions(clientProvider);
         const options = await getDeployParams(runtime, message, state);
         if (!options)
             throw new Error("Failed to parse deploy contract parameters");
-        return action.deployContract(options);
+        return clientProvider.client.deployContract({
+            code: options.code,
+            args: options.args,
+            leaderOnly: options.leaderOnly,
+        });
     },
     examples: [
         [

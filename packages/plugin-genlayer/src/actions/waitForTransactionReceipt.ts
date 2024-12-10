@@ -1,7 +1,6 @@
 import { Action, IAgentRuntime, Memory } from "@ai16z/eliza";
 import { TransactionHash } from "genlayer-js/types";
 import { ClientProvider } from "../providers/client";
-import { ContractActions } from "./contractActions";
 
 export const waitForTransactionReceiptAction: Action = {
     name: "WAIT_FOR_TRANSACTION_RECEIPT",
@@ -13,12 +12,11 @@ export const waitForTransactionReceiptAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory) => {
         const clientProvider = new ClientProvider(runtime);
-        const action = new ContractActions(clientProvider);
         // Extract transaction hash from message
         const hashMatch = message.content.text.match(/0x[a-fA-F0-9]{64}/);
         if (!hashMatch)
             throw new Error("No valid transaction hash found in message");
-        return action.waitForTransactionReceipt({
+        return clientProvider.client.waitForTransactionReceipt({
             hash: hashMatch[0] as TransactionHash,
         });
     },
