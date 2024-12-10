@@ -1,14 +1,12 @@
 import { Plugin } from "@ai16z/eliza";
 import { clientProvider } from "./providers/client";
 import { readContractAction } from "./actions/readContract";
-import {
-    writeContractAction,
-    deployContractAction,
-    getTransactionAction,
-    getCurrentNonceAction,
-    waitForTransactionReceiptAction,
-    getContractSchemaAction,
-} from "./actions/contractActions";
+import { writeContractAction } from "./actions/writeContract";
+import { deployContractAction } from "./actions/deployContract";
+import { getTransactionAction } from "./actions/getTransaction";
+import { getCurrentNonceAction } from "./actions/getCurrentNonce";
+import { waitForTransactionReceiptAction } from "./actions/waitForTransactionReceipt";
+import { getContractSchemaAction } from "./actions/getContractSchema";
 
 export const genLayerPlugin: Plugin = {
     name: "genlayer",
