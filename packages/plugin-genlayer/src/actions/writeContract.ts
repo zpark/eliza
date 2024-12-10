@@ -1,4 +1,10 @@
-import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
+import {
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    State,
+} from "@ai16z/eliza";
 import { WriteContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
 import { getParamsWithLLM } from "../utils/llm";
@@ -22,6 +28,7 @@ Here is the user's request:
 }
 \`\`\`
 `;
+
 export const writeContractAction: Action = {
     name: "WRITE_CONTRACT",
     similes: ["WRITE_CONTRACT"],
@@ -30,7 +37,13 @@ export const writeContractAction: Action = {
         const privateKey = runtime.getSetting("GENLAYER_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: any,
+        callback: HandlerCallback
+    ) => {
         const clientProvider = new ClientProvider(runtime);
         const options = await getParamsWithLLM<WriteContractParams>(
             runtime,
@@ -39,13 +52,19 @@ export const writeContractAction: Action = {
         );
         if (!options)
             throw new Error("Failed to parse write contract parameters");
-        return clientProvider.client.writeContract({
+        const result = await clientProvider.client.writeContract({
             address: options.contractAddress,
             functionName: options.functionName,
             args: options.functionArgs,
             value: options.value,
             leaderOnly: options.leaderOnly,
         });
+        await callback(
+            {
+                text: `Successfully wrote to contract. Transaction hash: ${result}`,
+            },
+            []
+        );
     },
     examples: [
         [

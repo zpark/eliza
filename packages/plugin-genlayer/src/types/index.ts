@@ -3,8 +3,6 @@ import {
     CalldataEncodable,
     TransactionHash,
     TransactionStatus,
-    ContractSchema,
-    GenLayerTransaction,
 } from "genlayer-js/types";
 
 // Action parameters

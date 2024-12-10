@@ -1,4 +1,4 @@
-import { Action, IAgentRuntime, Memory } from "@ai16z/eliza";
+import { Action, HandlerCallback, IAgentRuntime, Memory } from "@ai16z/eliza";
 import { ClientProvider } from "../providers/client";
 
 export const getContractSchemaAction: Action = {
@@ -9,12 +9,26 @@ export const getContractSchemaAction: Action = {
         const privateKey = runtime.getSetting("GENLAYER_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
-    handler: async (runtime: IAgentRuntime, message: Memory) => {
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        _state: any,
+        _options: any,
+        callback: HandlerCallback
+    ) => {
         const clientProvider = new ClientProvider(runtime);
         // Extract address from message
         const addressMatch = message.content.text.match(/0x[a-fA-F0-9]{40}/);
         if (!addressMatch) throw new Error("No valid address found in message");
-        return clientProvider.client.getContractSchema(addressMatch[0]);
+        const result = await clientProvider.client.getContractSchema(
+            addressMatch[0]
+        );
+        await callback(
+            {
+                text: `Contract schema: ${JSON.stringify(result, null, 2)}`,
+            },
+            []
+        );
     },
     examples: [
         [

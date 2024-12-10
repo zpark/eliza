@@ -1,4 +1,10 @@
-import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
+import {
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    State,
+} from "@ai16z/eliza";
 import { ReadContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
 import { getParamsWithLLM } from "../utils/llm";
@@ -29,7 +35,13 @@ export const readContractAction: Action = {
         const privateKey = runtime.getSetting("GENLAYER_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: any,
+        callback: HandlerCallback
+    ) => {
         const clientProvider = new ClientProvider(runtime);
         const options = await getParamsWithLLM<ReadContractParams>(
             runtime,
@@ -38,11 +50,17 @@ export const readContractAction: Action = {
         );
         if (!options)
             throw new Error("Failed to parse read contract parameters");
-        return clientProvider.client.readContract({
+        const result = await clientProvider.client.readContract({
             address: options.contractAddress,
             functionName: options.functionName,
             args: options.functionArgs,
         });
+        await callback(
+            {
+                text: `Here is the result of the contract call: ${result}`,
+            },
+            []
+        );
     },
     examples: [
         [

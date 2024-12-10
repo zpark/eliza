@@ -1,4 +1,10 @@
-import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
+import {
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    State,
+} from "@ai16z/eliza";
 import { DeployContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
 import { getParamsWithLLM } from "../utils/llm";
@@ -29,7 +35,13 @@ export const deployContractAction: Action = {
         const privateKey = runtime.getSetting("GENLAYER_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: any,
+        callback: HandlerCallback
+    ) => {
         const clientProvider = new ClientProvider(runtime);
         const options = await getParamsWithLLM<DeployContractParams>(
             runtime,
@@ -38,11 +50,17 @@ export const deployContractAction: Action = {
         );
         if (!options)
             throw new Error("Failed to parse deploy contract parameters");
-        return clientProvider.client.deployContract({
+        const result = await clientProvider.client.deployContract({
             code: options.code,
             args: options.args,
             leaderOnly: options.leaderOnly,
         });
+        await callback(
+            {
+                text: `Successfully deployed contract at address: ${result}`,
+            },
+            []
+        );
     },
     examples: [
         [
