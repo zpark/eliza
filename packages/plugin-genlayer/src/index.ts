@@ -1,7 +1,69 @@
-import { Action, IAgentRuntime, Memory, Plugin, State } from "@ai16z/eliza";
-import { ClientProvider } from "./providers/client";
+import {
+    Action,
+    composeContext,
+    generateText,
+    IAgentRuntime,
+    Memory,
+    ModelClass,
+    parseJSONObjectFromText,
+    Plugin,
+    State,
+} from "@ai16z/eliza";
+import { clientProvider, ClientProvider } from "./providers/client";
 import { ReadContractParams } from "./types";
 
+export const readContractTemplate = `
+# Task: Determine the contract address, function name, and function arguments to read from the contract.
+
+# Instructions: The user is requesting to read a contract from the GenLayer protocol.
+
+Here is the user's request:
+{{userMessage}}
+
+# Your response must be formatted as a JSON block with this structure:
+\`\`\`json
+{
+  "contractAddress": "<Contract Address>",
+  "functionName": "<Function Name>",
+  "functionArgs": [<Function Args>]
+}
+\`\`\`
+`;
+
+const getReadParams = async (
+    runtime: IAgentRuntime,
+    message: Memory,
+    state: State
+): Promise<ReadContractParams> => {
+    // console.error("getReadParams", message, state);
+
+    // TODO: evaluate adding the whole state to allow requests among many messages
+    const context = composeContext({
+        state: {
+            // ...state,
+            userMessage: message.content.text,
+        } as unknown as State, // copied approach from joinvoice.ts
+        template: readContractTemplate,
+    });
+
+    for (let i = 0; i < 5; i++) {
+        const response = await generateText({
+            runtime,
+            context,
+            modelClass: ModelClass.SMALL,
+        });
+        console.log("response", response);
+
+        const parsedResponse = parseJSONObjectFromText(
+            response
+        ) as ReadContractParams | null;
+
+        if (parsedResponse) {
+            return parsedResponse;
+        }
+    }
+    return null;
+};
 export class ReadContractAction {
     private readonly provider: ClientProvider;
     constructor(provider: ClientProvider) {
@@ -9,11 +71,13 @@ export class ReadContractAction {
     }
 
     async readContract(options: ReadContractParams) {
-        return this.provider.client.readContract({
+        const out = await this.provider.client.readContract({
             address: options.contractAddress,
             functionName: options.functionName,
             args: options.functionArgs,
         });
+        console.error("out", out);
+        return out;
     }
 }
 
@@ -25,15 +89,11 @@ const readContractAction: Action = {
         const privateKey = runtime.getSetting("GENLAYER_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
-    handler: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State,
-        options: any
-    ) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const clientProvider = new ClientProvider(runtime);
         const action = new ReadContractAction(clientProvider);
-        console.error(options);
+        const options = await getReadParams(runtime, message, state);
+        console.error(`options: ${JSON.stringify(options)}`);
         console.error(
             `Reading contract ${options.contractAddress} with function ${options.functionName} and args ${options.functionArgs}`
         );
@@ -63,7 +123,7 @@ export const genLayerPlugin: Plugin = {
     description: "Plugin for interacting with GenLayer protocol",
     actions: [readContractAction],
     evaluators: [],
-    providers: [],
+    providers: [clientProvider],
 };
 
 export default genLayerPlugin;
