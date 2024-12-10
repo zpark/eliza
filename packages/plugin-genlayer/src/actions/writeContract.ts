@@ -1,17 +1,9 @@
-import {
-    Action,
-    composeContext,
-    generateText,
-    IAgentRuntime,
-    Memory,
-    ModelClass,
-    parseJSONObjectFromText,
-    State,
-} from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
 import { WriteContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
+import { getParamsWithLLM } from "../utils/llm";
 
-export const writeContractTemplate = `
+const writeContractTemplate = `
 # Task: Determine the contract address, function name, function arguments, and value for writing to the contract.
 
 # Instructions: The user is requesting to write to a contract in the GenLayer protocol.
@@ -30,36 +22,6 @@ Here is the user's request:
 }
 \`\`\`
 `;
-
-const getWriteParams = async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State
-): Promise<WriteContractParams | null> => {
-    const context = composeContext({
-        state: {
-            userMessage: message.content.text,
-        } as unknown as State,
-        template: writeContractTemplate,
-    });
-
-    for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
-            context,
-            modelClass: ModelClass.SMALL,
-        });
-
-        const parsedResponse = parseJSONObjectFromText(
-            response
-        ) as WriteContractParams | null;
-        if (parsedResponse) {
-            return parsedResponse;
-        }
-    }
-    return null;
-};
-
 export const writeContractAction: Action = {
     name: "WRITE_CONTRACT",
     similes: ["WRITE_CONTRACT"],
@@ -70,7 +32,11 @@ export const writeContractAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const clientProvider = new ClientProvider(runtime);
-        const options = await getWriteParams(runtime, message, state);
+        const options = await getParamsWithLLM<WriteContractParams>(
+            runtime,
+            message,
+            writeContractTemplate
+        );
         if (!options)
             throw new Error("Failed to parse write contract parameters");
         return clientProvider.client.writeContract({

@@ -1,17 +1,9 @@
-import {
-    Action,
-    composeContext,
-    generateText,
-    IAgentRuntime,
-    Memory,
-    ModelClass,
-    parseJSONObjectFromText,
-    State,
-} from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
 import { DeployContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
+import { getParamsWithLLM } from "../utils/llm";
 
-export const deployContractTemplate = `
+const deployContractTemplate = `
 # Task: Determine the contract code and constructor arguments for deploying a contract.
 
 # Instructions: The user is requesting to deploy a contract to the GenLayer protocol.
@@ -29,35 +21,6 @@ Here is the user's request:
 \`\`\`
 `;
 
-const getDeployParams = async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State
-): Promise<DeployContractParams | null> => {
-    const context = composeContext({
-        state: {
-            userMessage: message.content.text,
-        } as unknown as State,
-        template: deployContractTemplate,
-    });
-
-    for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
-            context,
-            modelClass: ModelClass.SMALL,
-        });
-
-        const parsedResponse = parseJSONObjectFromText(
-            response
-        ) as DeployContractParams | null;
-        if (parsedResponse) {
-            return parsedResponse;
-        }
-    }
-    return null;
-};
-
 export const deployContractAction: Action = {
     name: "DEPLOY_CONTRACT",
     similes: ["DEPLOY_CONTRACT"],
@@ -68,7 +31,11 @@ export const deployContractAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const clientProvider = new ClientProvider(runtime);
-        const options = await getDeployParams(runtime, message, state);
+        const options = await getParamsWithLLM<DeployContractParams>(
+            runtime,
+            message,
+            deployContractTemplate
+        );
         if (!options)
             throw new Error("Failed to parse deploy contract parameters");
         return clientProvider.client.deployContract({
