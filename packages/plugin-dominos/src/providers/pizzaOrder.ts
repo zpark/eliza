@@ -1,5 +1,5 @@
 import { IAgentRuntime, Memory, Provider } from "@ai16z/eliza";
-import { OrderStatus } from "dominos";
+import { OrderStatus } from "../types";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 
 export const pizzaOrderProvider: Provider = {
@@ -36,6 +36,8 @@ export const pizzaOrderProvider: Provider = {
         } else if (order.status === OrderStatus.PROCESSING) {
             context += "Order is being processed but needs confirmation.\n";
         }
+
+        console.log("Order context:\n", context);
 
         return context;
     },

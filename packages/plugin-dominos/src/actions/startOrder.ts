@@ -9,7 +9,9 @@ import {
     ModelClass,
     State,
 } from "@ai16z/eliza";
-import { Customer, Item, Order, PizzaCrust, PizzaSize } from "dominos";
+import { Customer, Item, Order } from "dominos";
+import { PizzaCrust, PizzaSize } from "../types";
+
 import { z } from "zod";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 
@@ -26,6 +28,8 @@ const handler: Handler = async (
     if (existingOrder) {
         return "There is already an active order. Please complete or cancel the existing order before starting a new one.";
     }
+
+    console.log("Existing order: ", existingOrder);
 
     // Extract order details from message using LLM
     const extractionTemplate = `
@@ -80,7 +84,7 @@ const handler: Handler = async (
         })) as z.infer<typeof PizzaOrderSchema>;
 
         // Create new order
-        const customer = new Customer();
+        const customer = new Customer({});
         await orderManager.saveCustomer(userId, customer);
 
         const order = new Order(customer);
@@ -107,7 +111,7 @@ const handler: Handler = async (
         return response;
     } catch (error) {
         // Fallback to basic order if extraction fails
-        const customer = new Customer();
+        const customer = new Customer({});
         await orderManager.saveCustomer(userId, customer);
 
         const order = new Order(customer);

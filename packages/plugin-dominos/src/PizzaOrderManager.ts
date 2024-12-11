@@ -1,7 +1,6 @@
 import { IAgentRuntime, UUID } from "@ai16z/eliza";
+import { NearbyStores, Order } from "dominos";
 import {
-    NearbyStores,
-    Order,
     Customer,
     ErrorType,
     OrderError,
@@ -15,7 +14,7 @@ import {
     PizzaSize,
     PizzaTopping,
     ToppingPortion,
-} from "dominos";
+} from "./types";
 
 export class PizzaOrderManager implements OrderManager {
     storeId: string;
@@ -231,6 +230,7 @@ export class PizzaOrderManager implements OrderManager {
 
     // Get next required action based on order state
     getNextRequiredAction(order: Order, customer: Customer): string {
+        console.log("getNextRequiredAction: ", order, customer);
         if (!order.items || order.items.length === 0) {
             return "Collect initial pizza order details - show size, crust, and topping options to customer";
         }
@@ -270,6 +270,7 @@ export class PizzaOrderManager implements OrderManager {
     }
 
     getNextRequiredActionDialogue(order: Order, customer: Customer): string {
+        console.log("getNextRequiredActionDialogue: ", order, customer);
         if (!order.items || order.items.length === 0) {
             return "Let me help you build your perfect pizza! What size would you like? We have Small, Medium, Large and Extra Large. Then I can help you choose your crust type and toppings.";
         }
@@ -352,7 +353,7 @@ export class PizzaOrderManager implements OrderManager {
 
     // Format currency
     private formatCurrency(amount: number): string {
-        return `$${amount.toFixed(2)}`;
+        return `$${amount?.toFixed(2) || "?"}`;
     }
 
     // Format topping for display with category
@@ -375,10 +376,11 @@ export class PizzaOrderManager implements OrderManager {
 
     // Generate detailed order summary
     getOrderSummary(order: Order, customer: Customer): string {
+        console.log("getOrderSummary: ", order, customer);
         let summary = "===== CURRENT ORDER =====\n\n";
 
         // Add items
-        order.items.forEach((item, index) => {
+        order.items?.forEach((item, index) => {
             summary += `PIZZA ${index + 1}\n`;
             summary += `==================\n`;
             summary += `Size: ${item.size} (${this.formatCurrency(this.menuConfig.basePrices[item.size])})\n`;
@@ -393,7 +395,7 @@ export class PizzaOrderManager implements OrderManager {
 
             if (item.toppings && item.toppings.length > 0) {
                 summary += "\nTOPPINGS:\n";
-                item.toppings.forEach((topping) => {
+                item.toppings?.forEach((topping) => {
                     const toppingInfo = this.getToppingInfo(topping.code);
                     summary += `• ${this.formatTopping(topping)} `;
                     summary += `(+${this.formatCurrency(
@@ -427,7 +429,7 @@ export class PizzaOrderManager implements OrderManager {
             if (customer.phone) summary += `Phone: ${customer.phone}\n`;
             if (customer.address) {
                 summary += "Delivery Address:\n";
-                summary += `${customer.address}\n`;
+                summary += `${(customer?.address && JSON.stringify(customer.address)) || "Not provided"}\n`;
             }
             if (customer.email) summary += `Email: ${customer.email}\n`;
             summary += "==================\n\n";
@@ -626,6 +628,7 @@ export class PizzaOrderManager implements OrderManager {
 
     // Calculate order progress
     calculateOrderProgress(order: Order, customer: Customer): OrderProgress {
+        console.log("calculateOrderProgress: ", order, customer);
         return {
             hasCustomerInfo: !this.validateCustomerInfo(customer),
             hasPaymentMethod: order.paymentMethod !== undefined,
@@ -642,46 +645,54 @@ export class PizzaOrderManager implements OrderManager {
         customer: Customer
     ): Promise<Order | OrderError> {
         // Validate pizza configuration
-        for (const item of order.items) {
-            // Validate size
-            if (!Object.values(PizzaSize).includes(item.size)) {
-                return {
-                    type: ErrorType.VALIDATION_FAILED,
-                    message: `Invalid pizza size: ${item.size}`,
-                    code: "INVALID_SIZE",
-                };
-            }
+        if (order && order.items) {
+            for (const item of order.items) {
+                // Validate size
+                if (!Object.values(PizzaSize).includes(item.size)) {
+                    return {
+                        type: ErrorType.VALIDATION_FAILED,
+                        message: `Invalid pizza size: ${item.size}`,
+                        code: "INVALID_SIZE",
+                    };
+                }
 
-            // Validate crust
-            if (!Object.values(PizzaCrust).includes(item.crust)) {
-                return {
-                    type: ErrorType.VALIDATION_FAILED,
-                    message: `Invalid crust type: ${item.crust}`,
-                    code: "INVALID_CRUST",
-                };
-            }
+                // Validate crust
+                if (!Object.values(PizzaCrust).includes(item.crust)) {
+                    return {
+                        type: ErrorType.VALIDATION_FAILED,
+                        message: `Invalid crust type: ${item.crust}`,
+                        code: "INVALID_CRUST",
+                    };
+                }
 
-            // Validate toppings
-            if (item.toppings) {
-                const toppingError = this.validateToppings(item.toppings);
-                if (toppingError) return toppingError;
-            }
+                // Validate toppings
+                if (item.toppings) {
+                    const toppingError = this.validateToppings(item.toppings);
+                    if (toppingError) return toppingError;
+                }
 
-            // Validate quantity
-            if (item.quantity < 1 || item.quantity > 10) {
-                return {
-                    type: ErrorType.VALIDATION_FAILED,
-                    message: "Quantity must be between 1 and 10",
-                    code: "INVALID_QUANTITY",
-                };
+                // Validate quantity
+                if (item.quantity < 1 || item.quantity > 10) {
+                    return {
+                        type: ErrorType.VALIDATION_FAILED,
+                        message: "Quantity must be between 1 and 10",
+                        code: "INVALID_QUANTITY",
+                    };
+                }
             }
+        } else {
+            console.warn("No order items found");
         }
 
         // Calculate total price
-        order.total = order.items.reduce(
-            (total, item) => total + this.calculatePizzaPrice(item),
-            0
-        );
+        if (order.items) {
+            order.total = order.items?.reduce(
+                (total, item) => total + this.calculatePizzaPrice(item),
+                0
+            );
+        } else {
+            console.warn("No order items found");
+        }
 
         // Validate customer information
         const customerError = this.validateCustomerInfo(customer);

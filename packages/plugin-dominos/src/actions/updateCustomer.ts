@@ -40,7 +40,7 @@ export const handler: Handler = async (
 
     let customer = await orderManager.getCustomer(userId);
     if (!customer) {
-        customer = new Customer();
+        customer = new Customer({});
     }
 
     // Extract customer details using LLM and schema

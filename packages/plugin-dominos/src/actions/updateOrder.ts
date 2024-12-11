@@ -9,7 +9,9 @@ import {
     ModelClass,
     State,
 } from "@ai16z/eliza";
-import { Item, PizzaCrust, PizzaSize, ToppingPortion } from "dominos";
+import { Item } from "dominos";
+import { PizzaCrust, PizzaSize, ToppingPortion } from "../types";
+
 import { z } from "zod";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 
@@ -152,7 +154,7 @@ export const handler: Handler = async (
 
         // Apply modifications
         for (const mod of orderUpdates.modifications) {
-            const item = order.items[mod.itemIndex];
+            const item = order.items && order.items[mod.itemIndex];
             if (!item) continue;
 
             switch (mod.type) {
