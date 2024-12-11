@@ -6,12 +6,13 @@ import {
     State,
     elizaLogger,
 } from "@ai16z/eliza";
+import fs from "fs";
 import { DeployContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
 import { getParamsWithLLM } from "../utils/llm";
 
 const deployContractTemplate = `
-# Task: Determine the contract code and constructor arguments for deploying a contract.
+# Task: Determine the contract code file path and constructor arguments for deploying a contract.
 
 # Instructions: The user is requesting to deploy a contract to the GenLayer protocol.
 
@@ -21,7 +22,7 @@ Here is the user's request:
 # Your response must be formatted as a JSON block with this structure:
 \`\`\`json
 {
-  "code": "<Contract Code>",
+  "code_file": "<Contract Code File Path>",
   "args": [<Constructor Args>],
   "leaderOnly": <true/false>
 }
@@ -61,21 +62,23 @@ export const deployContractAction: Action = {
         elizaLogger.debug("Parsed parameters:", options);
         elizaLogger.info(
             "Deploying contract with code length:",
-            options.code.length
+            options.code_file.length
         );
 
+        const code = await fs.readFileSync(options.code_file, "utf8");
+
         const result = await clientProvider.client.deployContract({
-            code: options.code,
+            code: code,
             args: options.args,
             leaderOnly: options.leaderOnly,
         });
 
         elizaLogger.success(
-            `Successfully deployed contract at address: ${result}`
+            `Successfully sent contract for deployment. Transaction hash: ${result}`
         );
         await callback(
             {
-                text: `Successfully deployed contract at address: ${result}`,
+                text: `Successfully sent contract for deployment. Transaction hash: ${result}`,
             },
             []
         );

@@ -42,7 +42,7 @@ export const getTransactionAction: Action = {
         });
 
         elizaLogger.success("Successfully retrieved transaction details");
-        elizaLogger.success("Transaction details:", result);
+        elizaLogger.debug("Transaction details:", result);
         await callback(
             {
                 text: `Transaction details: ${JSON.stringify(

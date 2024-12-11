@@ -21,7 +21,7 @@ export interface WriteContractParams {
 }
 
 export interface DeployContractParams {
-    code: string;
+    code_file: string;
     args: CalldataEncodable[];
     leaderOnly?: boolean;
 }
