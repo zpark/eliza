@@ -16,8 +16,13 @@ const deployContractTemplate = `
 
 # Instructions: The user is requesting to deploy a contract to the GenLayer protocol.
 
-Here is the user's request:
+<latest user message>
 {{userMessage}}
+</latest user message>
+
+<data from recent messages>
+{{recentMessagesData}}
+</data from recent messages>
 
 # Your response must be formatted as a JSON block with this structure:
 \`\`\`json
@@ -51,7 +56,8 @@ export const deployContractAction: Action = {
         const options = await getParamsWithLLM<DeployContractParams>(
             runtime,
             message,
-            deployContractTemplate
+            deployContractTemplate,
+            state
         );
 
         if (!options) {
@@ -88,13 +94,54 @@ export const deployContractAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Deploy a new contract with code 'contract MyContract { uint256 value; function set(uint256 v) public { value = v; } }' and no constructor arguments",
+                    text: "Deploy a new contract from /home/az/yeagerai/genlayer-studio/examples/contracts/wizard_of_coin.py with the argument 'true'",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
                     text: "Deploying contract...",
+                    action: "DEPLOY_CONTRACT",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Please help me deploy a contract",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Sure! I'll help you deploy a contract. Please provide the code file path and constructor arguments.",
+                    action: "CONTINUE",
+                },
+            },
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "The code file is /home/az/yeagerai/genlayer-studio/examples/contracts/wizard_of_coin.py",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Understood, I'll help you deploy the contract from /home/az/yeagerai/genlayer-studio/examples/contracts/wizard_of_coin.py. Now, please provide the constructor arguments.",
+                    action: "CONTINUE",
+                },
+            },
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "The constructor argument is 'true'",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Perfect, I'll help you deploy the contract from /home/az/yeagerai/genlayer-studio/examples/contracts/wizard_of_coin.py with the argument 'true'.",
                     action: "DEPLOY_CONTRACT",
                 },
             },
