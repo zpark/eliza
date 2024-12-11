@@ -1,4 +1,10 @@
-import { Action, HandlerCallback, IAgentRuntime, Memory } from "@ai16z/eliza";
+import {
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    elizaLogger,
+} from "@ai16z/eliza";
 import { TransactionHash } from "genlayer-js/types";
 import { ClientProvider } from "../providers/client";
 
@@ -17,14 +23,26 @@ export const getTransactionAction: Action = {
         _options: any,
         callback: HandlerCallback
     ) => {
+        elizaLogger.info("Starting get transaction action");
+        elizaLogger.debug("User message:", message.content.text);
+
         const clientProvider = new ClientProvider(runtime);
         // Extract transaction hash from message
         const hashMatch = message.content.text.match(/0x[a-fA-F0-9]{64}/);
-        if (!hashMatch)
+        if (!hashMatch) {
+            elizaLogger.error("No valid transaction hash found in message");
             throw new Error("No valid transaction hash found in message");
+        }
+
+        elizaLogger.info(
+            `Getting transaction details for hash: ${hashMatch[0]}`
+        );
         const result = await clientProvider.client.getTransaction({
             hash: hashMatch[0] as TransactionHash,
         });
+
+        elizaLogger.success("Successfully retrieved transaction details");
+        elizaLogger.debug("Transaction details:", result);
         await callback(
             {
                 text: `Transaction details: ${JSON.stringify(result, null, 2)}`,

@@ -1,4 +1,10 @@
-import { Action, HandlerCallback, IAgentRuntime, Memory } from "@ai16z/eliza";
+import {
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    elizaLogger,
+} from "@ai16z/eliza";
 import { ClientProvider } from "../providers/client";
 
 export const getContractSchemaAction: Action = {
@@ -16,13 +22,26 @@ export const getContractSchemaAction: Action = {
         _options: any,
         callback: HandlerCallback
     ) => {
+        elizaLogger.info("Starting get contract schema action");
+        elizaLogger.debug("User message:", message.content.text);
+
         const clientProvider = new ClientProvider(runtime);
         // Extract address from message
         const addressMatch = message.content.text.match(/0x[a-fA-F0-9]{40}/);
-        if (!addressMatch) throw new Error("No valid address found in message");
+        if (!addressMatch) {
+            elizaLogger.error("No valid address found in message");
+            throw new Error("No valid address found in message");
+        }
+
+        elizaLogger.info(
+            `Getting contract schema for address: ${addressMatch[0]}`
+        );
         const result = await clientProvider.client.getContractSchema(
             addressMatch[0]
         );
+
+        elizaLogger.success("Successfully retrieved contract schema");
+        elizaLogger.debug("Contract schema:", result);
         await callback(
             {
                 text: `Contract schema: ${JSON.stringify(result, null, 2)}`,

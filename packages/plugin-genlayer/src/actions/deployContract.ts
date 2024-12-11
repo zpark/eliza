@@ -4,6 +4,7 @@ import {
     IAgentRuntime,
     Memory,
     State,
+    elizaLogger,
 } from "@ai16z/eliza";
 import { DeployContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
@@ -42,19 +43,36 @@ export const deployContractAction: Action = {
         _options: any,
         callback: HandlerCallback
     ) => {
+        elizaLogger.info("Starting deploy contract action");
+        elizaLogger.debug("User message:", message.content.text);
+
         const clientProvider = new ClientProvider(runtime);
         const options = await getParamsWithLLM<DeployContractParams>(
             runtime,
             message,
             deployContractTemplate
         );
-        if (!options)
+
+        if (!options) {
+            elizaLogger.error("Failed to parse deploy contract parameters");
             throw new Error("Failed to parse deploy contract parameters");
+        }
+
+        elizaLogger.debug("Parsed parameters:", options);
+        elizaLogger.info(
+            "Deploying contract with code length:",
+            options.code.length
+        );
+
         const result = await clientProvider.client.deployContract({
             code: options.code,
             args: options.args,
             leaderOnly: options.leaderOnly,
         });
+
+        elizaLogger.success(
+            `Successfully deployed contract at address: ${result}`
+        );
         await callback(
             {
                 text: `Successfully deployed contract at address: ${result}`,

@@ -4,6 +4,7 @@ import {
     IAgentRuntime,
     Memory,
     State,
+    elizaLogger,
 } from "@ai16z/eliza";
 import { WriteContractParams } from "../types";
 import { ClientProvider } from "../providers/client";
@@ -44,14 +45,26 @@ export const writeContractAction: Action = {
         _options: any,
         callback: HandlerCallback
     ) => {
+        elizaLogger.info("Starting write contract action");
+        elizaLogger.debug("User message:", message.content.text);
+
         const clientProvider = new ClientProvider(runtime);
         const options = await getParamsWithLLM<WriteContractParams>(
             runtime,
             message,
             writeContractTemplate
         );
-        if (!options)
+
+        if (!options) {
+            elizaLogger.error("Failed to parse write contract parameters");
             throw new Error("Failed to parse write contract parameters");
+        }
+
+        elizaLogger.debug("Parsed parameters:", options);
+        elizaLogger.info(
+            `Writing to contract ${options.contractAddress} with function ${options.functionName}`
+        );
+
         const result = await clientProvider.client.writeContract({
             address: options.contractAddress,
             functionName: options.functionName,
@@ -59,6 +72,10 @@ export const writeContractAction: Action = {
             value: options.value,
             leaderOnly: options.leaderOnly,
         });
+
+        elizaLogger.success(
+            `Successfully wrote to contract. Transaction hash: ${result}`
+        );
         await callback(
             {
                 text: `Successfully wrote to contract. Transaction hash: ${result}`,
