@@ -228,11 +228,9 @@ export class PizzaOrderManager implements OrderManager {
         );
     }
 
-    // Get next required action based on order state
     getNextRequiredAction(order: Order, customer: Customer): string {
-        console.log("getNextRequiredAction: ", order, customer);
         if (!order.items || order.items.length === 0) {
-            return "Collect initial pizza order details - show size, crust, and topping options to customer";
+            return "Collect initial pizza order details";
         }
 
         if (!customer.name) {
@@ -251,18 +249,11 @@ export class PizzaOrderManager implements OrderManager {
             return "Request email for order confirmation";
         }
 
-        if (order.paymentStatus === PaymentStatus.NOT_PROVIDED) {
-            return "Request credit card information";
+        if (!customer.paymentMethod) {
+            return "Request credit card information for payment";
         }
 
-        if (order.paymentStatus === PaymentStatus.INVALID) {
-            return "Request alternative payment method";
-        }
-
-        if (
-            !order.progress.isConfirmed &&
-            order.paymentStatus === PaymentStatus.VALID
-        ) {
+        if (!order.progress.isConfirmed) {
             return "Review order details with customer and obtain final confirmation";
         }
 
@@ -270,9 +261,8 @@ export class PizzaOrderManager implements OrderManager {
     }
 
     getNextRequiredActionDialogue(order: Order, customer: Customer): string {
-        console.log("getNextRequiredActionDialogue: ", order, customer);
         if (!order.items || order.items.length === 0) {
-            return "Let me help you build your perfect pizza! What size would you like? We have Small, Medium, Large and Extra Large. Then I can help you choose your crust type and toppings.";
+            return "Let me help you build your perfect pizza! What size would you like?";
         }
 
         if (!customer.name) {
@@ -284,29 +274,22 @@ export class PizzaOrderManager implements OrderManager {
         }
 
         if (!customer.address) {
-            return "Where would you like your pizza delivered? Please provide your complete delivery address.";
+            return "Where would you like your pizza delivered?";
         }
 
         if (!customer.email) {
             return "What email address should we send your order confirmation to?";
         }
 
-        if (order.paymentStatus === PaymentStatus.NOT_PROVIDED) {
-            return "Great! To process your order, I'll need your credit card information. Could you please provide your card number?";
+        if (!customer.paymentMethod) {
+            return "To complete your order, I'll need your credit card information. Could you please provide your card number, expiration date (MM/YY), CVV, and billing zip code?";
         }
 
-        if (order.paymentStatus === PaymentStatus.INVALID) {
-            return "I apologize, but there seems to be an issue with that payment method. Could you please provide a different credit card?";
+        if (!order.progress.isConfirmed) {
+            return "Great! I have all your information. Would you like me to review everything before placing your order?";
         }
 
-        if (
-            !order.progress.isConfirmed &&
-            order.paymentStatus === PaymentStatus.VALID
-        ) {
-            return "Perfect! I have all your order details. Would you like me to review everything with you before finalizing your order?";
-        }
-
-        return "Great news! Your order is confirmed. Let me get your confirmation number and estimated delivery time for you.";
+        return "Your order is confirmed! Let me get your confirmation number and estimated delivery time.";
     }
 
     // Get topping category and price
@@ -628,13 +611,17 @@ export class PizzaOrderManager implements OrderManager {
 
     // Calculate order progress
     calculateOrderProgress(order: Order, customer: Customer): OrderProgress {
-        console.log("calculateOrderProgress: ", order, customer);
         return {
-            hasCustomerInfo: !this.validateCustomerInfo(customer),
-            hasPaymentMethod: order.paymentMethod !== undefined,
-            hasValidPayment:
-                order.paymentStatus === PaymentStatus.VALID ||
-                order.paymentStatus === PaymentStatus.PROCESSED,
+            hasCustomerInfo: Boolean(
+                customer.name &&
+                    customer.phone &&
+                    customer.email &&
+                    customer.address
+            ),
+            hasPaymentMethod: Boolean(customer.paymentMethod),
+            hasValidPayment: Boolean(
+                customer.paymentMethod && order.payments?.[0]?.isValid
+            ),
             isConfirmed: order.status === OrderStatus.CONFIRMED,
         };
     }
@@ -714,14 +701,16 @@ export class PizzaOrderManager implements OrderManager {
         order.progress = this.calculateOrderProgress(order, customer);
 
         // Update order status based on current state
-        if (!order.progress.hasCustomerInfo) {
-            order.status = OrderStatus.AWAITING_CUSTOMER_INFO;
-        } else if (!order.progress.hasValidPayment) {
-            order.status = OrderStatus.AWAITING_PAYMENT;
-        } else if (!order.progress.isConfirmed) {
-            order.status = OrderStatus.PROCESSING;
-        } else {
-            order.status = OrderStatus.CONFIRMED;
+        if (order.progress) {
+            if (!order.progress.hasCustomerInfo) {
+                order.status = OrderStatus.AWAITING_CUSTOMER_INFO;
+            } else if (!order.progress.hasValidPayment) {
+                order.status = OrderStatus.AWAITING_PAYMENT;
+            } else if (!order.progress.isConfirmed) {
+                order.status = OrderStatus.PROCESSING;
+            } else {
+                order.status = OrderStatus.CONFIRMED;
+            }
         }
 
         return order;

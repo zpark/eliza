@@ -3,9 +3,18 @@ enum OrderStatus {
     NEW = "NEW",
     AWAITING_CUSTOMER_INFO = "AWAITING_CUSTOMER_INFO",
     AWAITING_PAYMENT = "AWAITING_PAYMENT",
+    AWAITING_CONFIRMATION = "AWAITING_CONFIRMATION",
     PROCESSING = "PROCESSING",
     CONFIRMED = "CONFIRMED",
     FAILED = "FAILED",
+}
+
+interface Order {
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    paymentMethod?: PaymentMethod;
+    customer?: Customer;
+    items?: OrderItem[];
 }
 
 // Order progress tracking
@@ -42,7 +51,12 @@ interface Customer {
     phone: string;
     email: string;
     address: string;
-    paymentMethods?: PaymentMethod[];
+    paymentMethod?: {
+        cardNumber?: string;
+        expiryDate?: string;
+        cvv?: string;
+        postalCode?: string;
+    };
     isReturning: boolean;
 }
 

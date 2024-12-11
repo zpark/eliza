@@ -9,7 +9,7 @@ import {
     ModelClass,
     State,
 } from "@ai16z/eliza";
-import { Customer } from "dominos";
+import { Customer, Payment } from "dominos";
 import { z } from "zod";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 
@@ -22,6 +22,14 @@ const CustomerSchema = z.object({
         .optional(),
     email: z.string().email().optional(),
     address: z.string().min(10).optional(),
+    paymentMethod: z
+        .object({
+            cardNumber: z.string().regex(/^\d{16}$/),
+            expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/([0-9]{2})$/),
+            cvv: z.string().regex(/^\d{3,4}$/),
+            postalCode: z.string().regex(/^\d{5}$/),
+        })
+        .optional(),
 });
 
 export const handler: Handler = async (
@@ -45,24 +53,31 @@ export const handler: Handler = async (
 
     // Extract customer details using LLM and schema
     const extractionTemplate = `
-    Extract customer information from the following conversation. Keep existing information if not mentioned in the update.
+Extract customer information from the following conversation. Keep existing information if not mentioned in the update.
 
-    Current customer information:
-    Name: ${customer.name || "Not provided"}
-    Phone: ${customer.phone || "Not provided"}
-    Email: ${customer.email || "Not provided"}
-    Address: ${customer.address || "Not provided"}
+Current customer information:
+Name: ${customer.name || "Not provided"}
+Phone: ${customer.phone || "Not provided"}
+Email: ${customer.email || "Not provided"}
+Address: ${customer.address || "Not provided"}
+Payment: ${customer.paymentMethod ? "Provided" : "Not provided"}
 
-    {{recentConversation}}
+{{recentConversation}}
 
-    Provide updated customer information as a JSON object, including only fields that should be changed:
-    {
-        "name": string (optional),
-        "phone": string (optional, format: XXX-XXX-XXXX),
-        "email": string (optional, valid email),
-        "address": string (optional, full delivery address)
+Provide updated customer information as a JSON object, including only fields that should be changed:
+{
+    "name": string (optional),
+    "phone": string (optional, format: XXX-XXX-XXXX),
+    "email": string (optional, valid email),
+    "address": string (optional, full delivery address),
+    "paymentMethod": {
+        "cardNumber": string (16 digits),
+        "expiryDate": string (MM/YY),
+        "cvv": string (3-4 digits),
+        "postalCode": string (5 digits)
     }
-    `;
+}
+`;
 
     const context = composeContext({
         state,
@@ -82,6 +97,24 @@ export const handler: Handler = async (
         if (customerUpdates.phone) customer.phone = customerUpdates.phone;
         if (customerUpdates.email) customer.email = customerUpdates.email;
         if (customerUpdates.address) customer.address = customerUpdates.address;
+
+        // Update the handler logic
+        if (customerUpdates.paymentMethod) {
+            // Create Dominos Payment object
+            const payment = new Payment({
+                number: customerUpdates.paymentMethod.cardNumber,
+                expiration: customerUpdates.paymentMethod.expiryDate,
+                securityCode: customerUpdates.paymentMethod.cvv,
+                postalCode: customerUpdates.paymentMethod.postalCode,
+                amount: order.amountsBreakdown.customer,
+            });
+
+            // Clear existing payments and add new one
+            order.payments = [payment];
+
+            // Update customer payment method
+            customer.paymentMethod = customerUpdates.paymentMethod;
+        }
 
         await orderManager.saveCustomer(userId, customer);
 
