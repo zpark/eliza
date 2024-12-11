@@ -9,9 +9,9 @@ import {
     ModelClass,
     State,
 } from "@ai16z/eliza";
-import { Customer, Order, Item, PizzaSize, PizzaCrust } from "dominos";
-import { PizzaOrderManager } from "../PizzaOrderManager";
+import { Customer, Item, Order, PizzaCrust, PizzaSize } from "dominos";
 import { z } from "zod";
+import { PizzaOrderManager } from "../PizzaOrderManager";
 
 const handler: Handler = async (
     runtime: IAgentRuntime,

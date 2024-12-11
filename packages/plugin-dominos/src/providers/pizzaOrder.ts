@@ -1,6 +1,6 @@
 import { IAgentRuntime, Memory, Provider } from "@ai16z/eliza";
+import { OrderStatus } from "dominos";
 import { PizzaOrderManager } from "../PizzaOrderManager";
-import { OrderStatus } from "../types";
 
 export const pizzaOrderProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory) => {

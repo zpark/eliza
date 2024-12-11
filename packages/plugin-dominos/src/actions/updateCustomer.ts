@@ -1,13 +1,8 @@
-// TODO:
-// Fix the LLM extraction to extract data using the runtime model, not gpt-4o
-// Instead of a text array, generate an object with the customer fields
-
 import {
     Action,
     ActionExample,
     composeContext,
     generateObjectV2,
-    generateTextArray,
     Handler,
     IAgentRuntime,
     Memory,
@@ -15,8 +10,8 @@ import {
     State,
 } from "@ai16z/eliza";
 import { Customer } from "dominos";
-import { PizzaOrderManager } from "../PizzaOrderManager";
 import { z } from "zod";
+import { PizzaOrderManager } from "../PizzaOrderManager";
 
 // Shared schemas
 const CustomerSchema = z.object({

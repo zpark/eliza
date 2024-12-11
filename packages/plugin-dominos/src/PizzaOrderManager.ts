@@ -1,6 +1,7 @@
 import { IAgentRuntime, UUID } from "@ai16z/eliza";
-import { NearbyStores } from "dominos";
 import {
+    NearbyStores,
+    Order,
     Customer,
     ErrorType,
     OrderError,
@@ -14,8 +15,7 @@ import {
     PizzaSize,
     PizzaTopping,
     ToppingPortion,
-} from "./types";
-import { Order } from "dominos";
+} from "dominos";
 
 export class PizzaOrderManager implements OrderManager {
     storeId: string;
