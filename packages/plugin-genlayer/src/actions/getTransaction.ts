@@ -42,10 +42,15 @@ export const getTransactionAction: Action = {
         });
 
         elizaLogger.success("Successfully retrieved transaction details");
-        elizaLogger.debug("Transaction details:", result);
+        elizaLogger.success("Transaction details:", result);
         await callback(
             {
-                text: `Transaction details: ${JSON.stringify(result, null, 2)}`,
+                text: `Transaction details: ${JSON.stringify(
+                    result,
+                    (_key, value) =>
+                        typeof value === "bigint" ? Number(value) : value,
+                    2
+                )}`,
             },
             []
         );
