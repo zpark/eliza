@@ -3,10 +3,33 @@ import {
     HandlerCallback,
     IAgentRuntime,
     Memory,
+    State,
     elizaLogger,
 } from "@ai16z/eliza";
 import { TransactionHash } from "genlayer-js/types";
 import { ClientProvider } from "../providers/client";
+import { getParamsWithLLM } from "../utils/llm";
+
+const getTransactionTemplate = `
+# Task: Extract the transaction hash from the user's message.
+
+# Instructions: The user is requesting transaction details from the GenLayer protocol.
+
+<latest user message>
+{{userMessage}}
+</latest user message>
+
+<data from recent messages>
+{{recentMessagesData}}
+</data from recent messages>
+
+# Your response must be formatted as a JSON block with this structure:
+\`\`\`json
+{
+  "hash": "<Transaction Hash>"
+}
+\`\`\`
+`;
 
 export const getTransactionAction: Action = {
     name: "GET_TRANSACTION",
@@ -19,7 +42,7 @@ export const getTransactionAction: Action = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state: any,
+        state: State,
         _options: any,
         callback: HandlerCallback
     ) => {
@@ -27,18 +50,28 @@ export const getTransactionAction: Action = {
         elizaLogger.debug("User message:", message.content.text);
 
         const clientProvider = new ClientProvider(runtime);
-        // Extract transaction hash from message
-        const hashMatch = message.content.text.match(/0x[a-fA-F0-9]{64}/);
-        if (!hashMatch) {
+
+        const options = await getParamsWithLLM<{ hash: TransactionHash }>(
+            runtime,
+            message,
+            getTransactionTemplate,
+            state
+        );
+
+        if (
+            !options ||
+            !options.hash ||
+            !/^0x[a-fA-F0-9]{64}$/.test(options.hash)
+        ) {
             elizaLogger.error("No valid transaction hash found in message");
             throw new Error("No valid transaction hash found in message");
         }
 
         elizaLogger.info(
-            `Getting transaction details for hash: ${hashMatch[0]}`
+            `Getting transaction details for hash: ${options.hash}`
         );
         const result = await clientProvider.client.getTransaction({
-            hash: hashMatch[0] as TransactionHash,
+            hash: options.hash,
         });
 
         elizaLogger.success("Successfully retrieved transaction details");

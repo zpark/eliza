@@ -12,12 +12,14 @@ export async function getParamsWithLLM<T>(
     runtime: IAgentRuntime,
     message: Memory,
     template: string,
+    state: State = null,
     maxAttempts: number = 5
 ): Promise<T | null> {
     const context = composeContext({
         state: {
+            ...state,
             userMessage: message.content.text,
-        } as unknown as State,
+        },
         template,
     });
 
