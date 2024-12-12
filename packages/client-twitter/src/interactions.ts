@@ -17,6 +17,14 @@ import {
 } from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
+import {
+    generateText
+} from "@ai16z/eliza/src/generation.ts";
+import { PizzaAPI } from "./pizza.ts";
+import {
+    pizzaDecisionFooter,
+    parsePizzaDecisionFromText
+} from "@ai16z/eliza/src/parsing.ts";
 
 export const twitterMessageHandlerTemplate =
     `
@@ -378,6 +386,49 @@ export class TwitterInteractionClient {
                 createdAt: tweet.timestamp * 1000,
             };
             this.client.saveRequestMessage(message, state);
+        }
+
+        const pizzaCheck =
+            `
+        You are checking to see if someone is asking you to order a pizza.
+        They should explicitly ask for a pizza order.
+
+        Here is the tweet they posted:
+        ${currentPost}` + pizzaDecisionFooter;
+
+        const pizzaCheckResponse = await generateText({
+            runtime: this.runtime,
+            context: pizzaCheck,
+            modelClass: ModelClass.LARGE,
+        });
+
+        console.log(
+            "[PIZZA-GEN][INTERACTIONS CLIENT] PIZZA check response: ",
+            pizzaCheckResponse,
+            " ",
+            currentPost
+        );
+
+        const pizzaCheckResult = parsePizzaDecisionFromText(pizzaCheckResponse);
+
+        console.log(
+            "[PIZZA-GEN][INTERACTIONS CLIENT] PIZZA check result:",
+            pizzaCheckResult
+        );
+
+        if (pizzaCheckResult === "YES") {
+            console.log(
+                "[PIZZA-GEN][INTERACTIONS CLIENT] PIZZA check result is YES, generating pizza order"
+            );
+
+            const pizzaAPI = new PizzaAPI(this.runtime);
+
+            const result = await pizzaAPI.orderPizza();
+
+            console.log(
+                "[PIZZA-GEN][INTERACTIONS CLIENT] Order result: ",
+                result
+            );
         }
 
         // get usernames into str

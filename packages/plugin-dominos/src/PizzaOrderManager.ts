@@ -1,12 +1,13 @@
-import { IAgentRuntime, UUID } from "@ai16z/eliza";
-import { NearbyStores, Order } from "dominos";
+import { IAgentRuntime } from "@ai16z/eliza";
 import {
     Customer,
     ErrorType,
+    Order,
     OrderError,
     OrderItem,
     OrderManager,
     OrderProgress,
+    OrderRequest,
     OrderStatus,
     PaymentMethod,
     PaymentStatus,
@@ -14,10 +15,13 @@ import {
     PizzaSize,
     PizzaTopping,
     ToppingPortion,
+    DominosPayment,
+    DominosAddress,
+    DominosProduct
 } from "./types";
 
 export class PizzaOrderManager implements OrderManager {
-    storeId: string;
+    storeId: string = "";
 
     // System state
     availability = {
@@ -100,7 +104,6 @@ export class PizzaOrderManager implements OrderManager {
             GREEN_PEPPERS: "Green Peppers",
             BLACK_OLIVES: "Black Olives",
             TOMATOES: "Diced Tomatoes",
-
             // Premium Toppings
             ITALIAN_SAUSAGE: "Italian Sausage",
             BACON: "Applewood Smoked Bacon",
@@ -109,7 +112,6 @@ export class PizzaOrderManager implements OrderManager {
             HAM: "Premium Ham",
             PINEAPPLE: "Sweet Pineapple",
             JALAPENOS: "Fresh Jalapeños",
-
             // Specialty Toppings
             GRILLED_CHICKEN: "Grilled Chicken Breast",
             PHILLY_STEAK: "Premium Philly Steak",
@@ -158,141 +160,43 @@ export class PizzaOrderManager implements OrderManager {
             },
         },
         incompatibleToppings: [
-            ["ANCHOVIES", "CHICKEN"], // Example of toppings that don't go well together
+            ["ANCHOVIES", "CHICKEN"],
             ["PINEAPPLE", "ANCHOVIES"],
             ["ARTICHOKE_HEARTS", "GROUND_BEEF"],
         ],
     };
 
+    // API Configuration
+    private readonly BASE_URL: string;
+    private readonly TRACKER_URL: string;
+
+    private readonly headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Referer': 'order.dominos.com'
+    };
+
+    private readonly trackerHeaders = {
+        'dpz-language': 'en',
+        'dpz-market': 'UNITED_STATES',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8'
+    };
+
     constructor(private runtime: IAgentRuntime) {
-        this.runtime = runtime;
+        this.BASE_URL = this.runtime.getSetting('API_BASE_URL') || 'https://order.dominos.com/power';
+        this.TRACKER_URL = this.runtime.getSetting('API_TRACKER_URL') || 'https://tracker.dominos.com/tracker-presentation-service/v2';
     }
 
-    async getNearestStoreId(address: string): Promise<string> {
-        try {
-            const nearbyStores = await new NearbyStores(address);
-
-            if (nearbyStores.stores.length === 0) {
-                throw new Error("No nearby stores found.");
-            }
-
-            let nearestStore: any = null;
-            let minDistance = Infinity;
-
-            for (const store of nearbyStores.stores) {
-                if (
-                    store.IsOnlineCapable &&
-                    store.IsDeliveryStore &&
-                    store.IsOpen &&
-                    store.ServiceIsOpen.Delivery &&
-                    store.MinDistance < minDistance
-                ) {
-                    minDistance = store.MinDistance;
-                    nearestStore = store;
-                }
-            }
-
-            if (!nearestStore) {
-                throw new Error("No open stores found for delivery.");
-            }
-
-            return nearestStore.StoreID;
-        } catch (error) {
-            console.error("Error finding nearest store:", error);
-            throw error;
+    // Helper Methods
+    private getRequiredSetting(name: string): string {
+        const value = this.runtime.getSetting(name);
+        if (!value) {
+            throw new Error(`Required setting ${name} is not configured`);
         }
+        return value;
     }
 
-    async getOrder(userId: UUID): Promise<Order | null> {
-        const cachedOrder = await this.runtime.cacheManager.get<Order>(
-            `pizza-order-${userId}`
-        );
-        return cachedOrder || null;
-    }
-
-    async saveOrder(userId: UUID, order: Order): Promise<void> {
-        await this.runtime.cacheManager.set(`pizza-order-${userId}`, order);
-    }
-
-    async getCustomer(userId: UUID): Promise<Customer | null> {
-        const customer = this.runtime.cacheManager.get<Customer>(
-            `pizza-customer-${userId}`
-        );
-        return customer || null;
-    }
-
-    async saveCustomer(userId: UUID, customer: Customer): Promise<void> {
-        await this.runtime.cacheManager.set(
-            `pizza-customer-${userId}`,
-            customer
-        );
-    }
-
-    getNextRequiredAction(order: Order, customer: Customer): string {
-        if (!order.items || order.items.length === 0) {
-            return "Collect initial pizza order details";
-        }
-
-        if (!customer.name) {
-            return "Request customer name";
-        }
-
-        if (!customer.phone) {
-            return "Request customer phone number";
-        }
-
-        if (!customer.address) {
-            return "Request delivery address";
-        }
-
-        if (!customer.email) {
-            return "Request email for order confirmation";
-        }
-
-        if (!customer.paymentMethod) {
-            return "Request credit card information for payment";
-        }
-
-        if (!order.progress.isConfirmed) {
-            return "Review order details with customer and obtain final confirmation";
-        }
-
-        return "Provide order confirmation number and estimated delivery time";
-    }
-
-    getNextRequiredActionDialogue(order: Order, customer: Customer): string {
-        if (!order.items || order.items.length === 0) {
-            return "Let me help you build your perfect pizza! What size would you like?";
-        }
-
-        if (!customer.name) {
-            return "Could you please tell me your name for the order?";
-        }
-
-        if (!customer.phone) {
-            return "What phone number can we reach you at if needed?";
-        }
-
-        if (!customer.address) {
-            return "Where would you like your pizza delivered?";
-        }
-
-        if (!customer.email) {
-            return "What email address should we send your order confirmation to?";
-        }
-
-        if (!customer.paymentMethod) {
-            return "To complete your order, I'll need your credit card information. Could you please provide your card number, expiration date (MM/YY), CVV, and billing zip code?";
-        }
-
-        if (!order.progress.isConfirmed) {
-            return "Great! I have all your information. Would you like me to review everything before placing your order?";
-        }
-
-        return "Your order is confirmed! Let me get your confirmation number and estimated delivery time.";
-    }
-
-    // Get topping category and price
     private getToppingInfo(toppingCode: string): {
         category: string;
         price: number;
@@ -318,14 +222,11 @@ export class PizzaOrderManager implements OrderManager {
         throw new Error(`Invalid topping code: ${toppingCode}`);
     }
 
-    // Check for special combinations
     private checkSpecialCombos(toppings: PizzaTopping[]): number {
         const toppingCodes = toppings.map((t) => t.code);
         let maxDiscount = 0;
 
-        for (const [_, combo] of Object.entries(
-            this.menuConfig.specialCombos
-        )) {
+        for (const [_, combo] of Object.entries(this.menuConfig.specialCombos)) {
             if (combo.requiredToppings.every((t) => toppingCodes.includes(t))) {
                 maxDiscount = Math.max(maxDiscount, combo.discount);
             }
@@ -334,12 +235,10 @@ export class PizzaOrderManager implements OrderManager {
         return maxDiscount;
     }
 
-    // Format currency
     private formatCurrency(amount: number): string {
         return `$${amount?.toFixed(2) || "?"}`;
     }
 
-    // Format topping for display with category
     private formatTopping(topping: PizzaTopping): string {
         const toppingInfo = this.getToppingInfo(topping.code);
         const amount = topping.amount > 1 ? "Extra " : "";
@@ -357,94 +256,96 @@ export class PizzaOrderManager implements OrderManager {
         );
     }
 
-    // Generate detailed order summary
-    getOrderSummary(order: Order, customer: Customer): string {
-        console.log("getOrderSummary: ", order, customer);
-        let summary = "===== CURRENT ORDER =====\n\n";
-
-        // Add items
-        order.items?.forEach((item, index) => {
-            summary += `PIZZA ${index + 1}\n`;
-            summary += `==================\n`;
-            summary += `Size: ${item.size} (${this.formatCurrency(this.menuConfig.basePrices[item.size])})\n`;
-            summary += `Crust: ${item.crust.replace("_", " ")}`;
-
-            const crustPrice = this.menuConfig.crustPrices[item.crust];
-            if (crustPrice > 0) {
-                summary += ` (+${this.formatCurrency(crustPrice)})\n`;
-            } else {
-                summary += "\n";
-            }
-
-            if (item.toppings && item.toppings.length > 0) {
-                summary += "\nTOPPINGS:\n";
-                item.toppings?.forEach((topping) => {
-                    const toppingInfo = this.getToppingInfo(topping.code);
-                    summary += `• ${this.formatTopping(topping)} `;
-                    summary += `(+${this.formatCurrency(
-                        toppingInfo.price *
-                            topping.amount *
-                            (topping.portion === ToppingPortion.ALL ? 1 : 0.5)
-                    )})\n`;
-                });
-
-                const comboDiscount = this.checkSpecialCombos(item.toppings);
-                if (comboDiscount > 0) {
-                    summary += `\nSpecial Combination Discount: -${this.formatCurrency(comboDiscount)}\n`;
-                }
-            } else {
-                summary += "\nClassic Cheese Pizza (No extra toppings)\n";
-            }
-
-            if (item.specialInstructions) {
-                summary += `\nSpecial Instructions:\n${item.specialInstructions}\n`;
-            }
-
-            summary += `\nItem Total: ${this.formatCurrency(this.calculatePizzaPrice(item))}\n`;
-            summary += "==================\n\n";
-        });
-
-        // Add customer info if available
-        if (customer) {
-            summary += "CUSTOMER INFORMATION\n";
-            summary += "==================\n";
-            if (customer.name) summary += `Name: ${customer.name}\n`;
-            if (customer.phone) summary += `Phone: ${customer.phone}\n`;
-            if (customer.address) {
-                summary += "Delivery Address:\n";
-                summary += `${(customer?.address && JSON.stringify(customer.address)) || "Not provided"}\n`;
-            }
-            if (customer.email) summary += `Email: ${customer.email}\n`;
-            summary += "==================\n\n";
-        }
-
-        // Add payment info if available
-        if (order.paymentMethod) {
-            summary += "PAYMENT INFORMATION\n";
-            summary += "==================\n";
-            summary += `Card: ****${order.paymentMethod.cardNumber.slice(-4)}\n`;
-            summary += `Status: ${order.paymentStatus}\n`;
-            summary += "==================\n\n";
-        }
-
-        // Add order totals
-        summary += "ORDER TOTALS\n";
-        summary += "==================\n";
-        summary += `Subtotal: ${this.formatCurrency(order.total)}\n`;
-        const tax = order.total * 0.08; // Example tax rate
-        summary += `Tax (8%): ${this.formatCurrency(tax)}\n`;
-        const deliveryFee = 3.99;
-        summary += `Delivery Fee: ${this.formatCurrency(deliveryFee)}\n`;
-        summary += `Total: ${this.formatCurrency(order.total + tax + deliveryFee)}\n`;
-        summary += "==================\n";
-
-        return summary;
+    // Cache Methods
+    async getOrder(userId: string): Promise<Order | null> {
+        const cachedOrder = await this.runtime.cacheManager.get<Order>(
+            `pizza-order-${userId}`
+        );
+        return cachedOrder || null;
     }
 
-    // Validate pizza toppings
+    async saveOrder(userId: string, order: Order): Promise<void> {
+        await this.runtime.cacheManager.set(`pizza-order-${userId}`, order);
+    }
+
+    async getCustomer(userId: string): Promise<Customer | null> {
+        const customer = await this.runtime.cacheManager.get<Customer>(
+            `pizza-customer-${userId}`
+        );
+        return customer || null;
+    }
+
+    async saveCustomer(userId: string, customer: Customer): Promise<void> {
+        await this.runtime.cacheManager.set(
+            `pizza-customer-${userId}`,
+            customer
+        );
+    }
+
+    // API Integration Methods
+    private async findNearestStore(address: string, city: string, state: string): Promise<any> {
+        const encodedAddress = encodeURIComponent(address);
+        const encodedCityState = encodeURIComponent(`${city}, ${state}`);
+        const url = `${this.BASE_URL}/store-locator?s=${encodedAddress}&c=${encodedCityState}&type=Delivery`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.headers
+        });
+        return response.json();
+    }
+
+    private async getStoreInfo(storeId: string): Promise<any> {
+        const url = `${this.BASE_URL}/store/${storeId}/profile`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.headers
+        });
+        return response.json();
+    }
+
+    private async validateOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
+        const url = `${this.BASE_URL}/validate-order`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: this.headers,
+            body: JSON.stringify({ Order: orderRequest })
+        });
+        return response.json();
+    }
+
+    private async priceOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
+        const url = `${this.BASE_URL}/price-order`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: this.headers,
+            body: JSON.stringify({ Order: orderRequest })
+        });
+        return response.json();
+    }
+
+    private async placeOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
+        const url = `${this.BASE_URL}/place-order`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: this.headers,
+            body: JSON.stringify({ Order: orderRequest })
+        });
+        return response.json();
+    }
+
+    private async trackOrderWithAPI(phoneNumber: string): Promise<any> {
+        const url = `${this.TRACKER_URL}/orders?phonenumber=${phoneNumber.replace(/\D/g, '')}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: this.trackerHeaders
+        });
+        return response.json();
+    }
+
+    // Validation Methods
     private validateToppings(toppings: PizzaTopping[]): OrderError | null {
         for (const topping of toppings) {
-            // Check if topping code exists
             if (!this.menuConfig.availableToppings[topping.code]) {
                 return {
                     type: ErrorType.VALIDATION_FAILED,
@@ -453,7 +354,6 @@ export class PizzaOrderManager implements OrderManager {
                 };
             }
 
-            // Check if portion is valid
             if (!Object.values(ToppingPortion).includes(topping.portion)) {
                 return {
                     type: ErrorType.VALIDATION_FAILED,
@@ -462,7 +362,6 @@ export class PizzaOrderManager implements OrderManager {
                 };
             }
 
-            // Check if amount is valid (1 for normal, 2 for extra)
             if (topping.amount !== 1 && topping.amount !== 2) {
                 return {
                     type: ErrorType.VALIDATION_FAILED,
@@ -472,7 +371,6 @@ export class PizzaOrderManager implements OrderManager {
             }
         }
 
-        // Check maximum number of toppings
         if (toppings.length > 10) {
             return {
                 type: ErrorType.VALIDATION_FAILED,
@@ -484,33 +382,6 @@ export class PizzaOrderManager implements OrderManager {
         return null;
     }
 
-    // Calculate pizza price including toppings and discounts
-    private calculatePizzaPrice(item: OrderItem): number {
-        let price =
-            this.menuConfig.basePrices[item.size] ||
-            this.menuConfig.basePrices[PizzaSize.MEDIUM];
-
-        // Add crust price
-        price += this.menuConfig.crustPrices[item.crust] || 0;
-
-        // Calculate topping prices (continuing calculatePizzaPrice)
-        if (item.toppings) {
-            for (const topping of item.toppings) {
-                const toppingInfo = this.getToppingInfo(topping.code);
-                const portionMultiplier =
-                    topping.portion === ToppingPortion.ALL ? 1 : 0.5;
-                price += toppingInfo.price * topping.amount * portionMultiplier;
-            }
-
-            // Apply combo discounts
-            const comboDiscount = this.checkSpecialCombos(item.toppings);
-            price -= comboDiscount;
-        }
-
-        return price * item.quantity;
-    }
-
-    // Validate customer information
     private validateCustomerInfo(customer: Customer): OrderError | null {
         const phoneRegex = /^\d{3}[-.]?\d{3}[-.]?\d{4}$/;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -551,7 +422,6 @@ export class PizzaOrderManager implements OrderManager {
         return null;
     }
 
-    // Validate payment method
     private validatePaymentMethod(payment: PaymentMethod): OrderError | null {
         const cardNumberRegex = /^\d{16}$/;
         const cvvRegex = /^\d{3,4}$/;
@@ -609,110 +479,251 @@ export class PizzaOrderManager implements OrderManager {
         return null;
     }
 
-    // Calculate order progress
-    calculateOrderProgress(order: Order, customer: Customer): OrderProgress {
+    private calculatePizzaPrice(item: OrderItem): number {
+        let price = this.menuConfig.basePrices[item.size];
+        price += this.menuConfig.crustPrices[item.crust] || 0;
+
+        if (item.toppings) {
+            for (const topping of item.toppings) {
+                const toppingInfo = this.getToppingInfo(topping.code);
+                const portionMultiplier =
+                    topping.portion === ToppingPortion.ALL ? 1 : 0.5;
+                price += toppingInfo.price * topping.amount * portionMultiplier;
+            }
+
+            const comboDiscount = this.checkSpecialCombos(item.toppings);
+            price -= comboDiscount;
+        }
+
+        return price * item.quantity;
+    }
+
+    private convertItemToProduct(item: OrderItem): DominosProduct {
+        const sizeMap = {
+            [PizzaSize.SMALL]: '10',
+            [PizzaSize.MEDIUM]: '12',
+            [PizzaSize.LARGE]: '14',
+            [PizzaSize.XLARGE]: '16'
+        };
+
+        const crustMap = {
+            [PizzaCrust.HAND_TOSSED]: 'HANDTOSS',
+            [PizzaCrust.THIN]: 'THIN',
+            [PizzaCrust.PAN]: 'PAN',
+            [PizzaCrust.GLUTEN_FREE]: 'GLUTENF',
+            [PizzaCrust.BROOKLYN]: 'BK'
+        };
+
+        const code = `${sizeMap[item.size]}${crustMap[item.crust]}`;
+        const options: { [key: string]: { [key: string]: string } } = {
+            C: { '1/1': '1' }, // Base cheese
+        };
+
+        item.toppings?.forEach((topping) => {
+            const coverage = topping.portion === ToppingPortion.ALL ? '1/1' : '1/2';
+            options[topping.code] = { [coverage]: topping.amount.toString() };
+        });
+
         return {
-            hasCustomerInfo: Boolean(
-                customer.name &&
-                    customer.phone &&
-                    customer.email &&
-                    customer.address
-            ),
-            hasPaymentMethod: Boolean(customer.paymentMethod),
-            hasValidPayment: Boolean(
-                customer.paymentMethod && order.payments?.[0]?.isValid
-            ),
-            isConfirmed: order.status === OrderStatus.CONFIRMED,
+            Code: code,
+            Options: options
         };
     }
 
-    // Process the order
-    async processOrder(
-        order: Order,
-        customer: Customer
-    ): Promise<Order | OrderError> {
-        // Validate pizza configuration
-        if (order && order.items) {
-            for (const item of order.items) {
-                // Validate size
-                if (!Object.values(PizzaSize).includes(item.size)) {
-                    return {
-                        type: ErrorType.VALIDATION_FAILED,
-                        message: `Invalid pizza size: ${item.size}`,
-                        code: "INVALID_SIZE",
-                    };
-                }
+    private convertToOrderRequest(order: Order, customer: Customer): OrderRequest {
+        const [firstName, ...lastNameParts] = customer.name.split(' ');
+        const lastName = lastNameParts.join(' ');
 
-                // Validate crust
-                if (!Object.values(PizzaCrust).includes(item.crust)) {
-                    return {
-                        type: ErrorType.VALIDATION_FAILED,
-                        message: `Invalid crust type: ${item.crust}`,
-                        code: "INVALID_CRUST",
-                    };
-                }
+        const addressParts = customer.address.split(',').map(part => part.trim());
+        const street = addressParts[0];
+        const cityStateZip = addressParts[1].split(' ');
+        const postalCode = cityStateZip.pop() || '';
+        const state = cityStateZip.pop() || '';
+        const city = cityStateZip.join(' ');
 
-                // Validate toppings
-                if (item.toppings) {
-                    const toppingError = this.validateToppings(item.toppings);
-                    if (toppingError) return toppingError;
-                }
+        const orderRequest: OrderRequest = {
+            Address: {
+                Street: street,
+                City: city,
+                Region: state,
+                PostalCode: postalCode
+            },
+            StoreID: this.storeId,
+            Products: order.items?.map(item => this.convertItemToProduct(item)) || [],
+            OrderChannel: 'OLO',
+            OrderMethod: 'Web',
+            LanguageCode: 'en',
+            ServiceMethod: 'Delivery',
+            FirstName: firstName,
+            LastName: lastName,
+            Email: customer.email,
+            Phone: customer.phone
+        };
 
-                // Validate quantity
-                if (item.quantity < 1 || item.quantity > 10) {
-                    return {
-                        type: ErrorType.VALIDATION_FAILED,
-                        message: "Quantity must be between 1 and 10",
-                        code: "INVALID_QUANTITY",
-                    };
+        if (order.paymentMethod && order.paymentMethod.cardNumber) {
+            orderRequest.Payments = [{
+                Type: 'CreditCard',
+                Amount: order.total,
+                CardType: this.detectCardType(order.paymentMethod.cardNumber),
+                Number: order.paymentMethod.cardNumber,
+                Expiration: order.paymentMethod.expiryDate?.replace('/', '') || '',
+                SecurityCode: order.paymentMethod.cvv || '',
+                PostalCode: order.paymentMethod.postalCode || '',
+                TipAmount: 0
+            }];
+        }
+
+        return orderRequest;
+    }
+
+    private detectCardType(cardNumber: string): string {
+        if (cardNumber.startsWith('4')) return 'VISA';
+        if (cardNumber.startsWith('5')) return 'MASTERCARD';
+        if (cardNumber.startsWith('34') || cardNumber.startsWith('37')) return 'AMEX';
+        if (cardNumber.startsWith('6')) return 'DISCOVER';
+        return 'UNKNOWN';
+    }
+
+    async getNearestStoreId(address: string): Promise<string> {
+        try {
+            const parts = address.split(',').map(part => part.trim());
+            const street = parts[0];
+            const cityState = parts[1].split(' ');
+            const state = cityState.pop() || '';
+            const city = cityState.join(' ');
+
+            const storeResponse = await this.findNearestStore(street, city, state);
+
+            if (!storeResponse.Stores || storeResponse.Stores.length === 0) {
+                throw new Error("No nearby stores found.");
+            }
+
+            const deliveryStore = storeResponse.Stores.find((store: any) =>
+                store.IsOnlineCapable &&
+                store.IsDeliveryStore &&
+                store.IsOpen &&
+                store.ServiceIsOpen.Delivery
+            );
+
+            if (!deliveryStore) {
+                throw new Error("No open stores found for delivery.");
+            }
+
+            this.storeId = deliveryStore.StoreID;
+            return this.storeId;
+
+        } catch (error) {
+            console.error("Error finding nearest store:", error);
+            throw error;
+        }
+    }
+
+    async processOrder(order: Order, customer: Customer): Promise<Order | OrderError> {
+        try {
+            // Validate customer information
+            const customerError = this.validateCustomerInfo(customer);
+            if (customerError) return customerError;
+
+            // Validate order items
+            if (order.items) {
+                for (const item of order.items) {
+                    // Validate size
+                    if (!Object.values(PizzaSize).includes(item.size)) {
+                        return {
+                            type: ErrorType.VALIDATION_FAILED,
+                            message: `Invalid pizza size: ${item.size}`,
+                            code: "INVALID_SIZE",
+                        };
+                    }
+
+                    // Validate crust
+                    if (!Object.values(PizzaCrust).includes(item.crust)) {
+                        return {
+                            type: ErrorType.VALIDATION_FAILED,
+                            message: `Invalid crust type: ${item.crust}`,
+                            code: "INVALID_CRUST",
+                        };
+                    }
+
+                    // Validate toppings
+                    if (item.toppings) {
+                        const toppingError = this.validateToppings(item.toppings);
+                        if (toppingError) return toppingError;
+                    }
+
+                    // Validate quantity
+                    if (item.quantity < 1 || item.quantity > 10) {
+                        return {
+                            type: ErrorType.VALIDATION_FAILED,
+                            message: "Quantity must be between 1 and 10",
+                            code: "INVALID_QUANTITY",
+                        };
+                    }
                 }
             }
-        } else {
-            console.warn("No order items found");
-        }
 
-        // Calculate total price
-        if (order.items) {
-            order.total = order.items?.reduce(
-                (total, item) => total + this.calculatePizzaPrice(item),
-                0
-            );
-        } else {
-            console.warn("No order items found");
-        }
-
-        // Validate customer information
-        const customerError = this.validateCustomerInfo(customer);
-        if (customerError) return customerError;
-
-        // Validate payment if provided
-        if (order.paymentMethod) {
-            const paymentError = this.validatePaymentMethod(
-                order.paymentMethod
-            );
-            if (paymentError) {
-                order.paymentStatus = PaymentStatus.INVALID;
-                return paymentError;
+            // Get store ID if not already set
+            if (!this.storeId) {
+                this.storeId = await this.getNearestStoreId(customer.address);
             }
-            order.paymentStatus = PaymentStatus.VALID;
-        }
 
-        // Update order progress
-        order.progress = this.calculateOrderProgress(order, customer);
+            // Convert to API format
+            const orderRequest = this.convertToOrderRequest(order, customer);
 
-        // Update order status based on current state
-        if (order.progress) {
-            if (!order.progress.hasCustomerInfo) {
-                order.status = OrderStatus.AWAITING_CUSTOMER_INFO;
-            } else if (!order.progress.hasValidPayment) {
-                order.status = OrderStatus.AWAITING_PAYMENT;
-            } else if (!order.progress.isConfirmed) {
-                order.status = OrderStatus.PROCESSING;
-            } else {
+            // Validate with API
+            const validatedOrder = await this.validateOrderWithAPI(orderRequest);
+            if (validatedOrder.Status !== 'Success') {
+                return {
+                    type: ErrorType.VALIDATION_FAILED,
+                    message: validatedOrder.StatusItems.join(', '),
+                    code: 'API_VALIDATION_FAILED'
+                };
+            }
+
+            // Price the order
+            const pricedOrder = await this.priceOrderWithAPI(orderRequest);
+            if (pricedOrder.Status !== 'Success') {
+                return {
+                    type: ErrorType.VALIDATION_FAILED,
+                    message: pricedOrder.StatusItems.join(', '),
+                    code: 'API_PRICING_FAILED'
+                };
+            }
+
+            // Update total with API price
+            order.total = pricedOrder.Order.Amounts.Customer;
+
+            // If payment is provided and valid, attempt to place order
+            if (order.paymentMethod) {
+                const paymentError = this.validatePaymentMethod(order.paymentMethod);
+                if (paymentError) {
+                    order.paymentStatus = PaymentStatus.INVALID;
+                    return paymentError;
+                }
+
+                const placedOrder = await this.placeOrderWithAPI(orderRequest);
+                if (placedOrder.Status !== 'Success') {
+                    return {
+                        type: ErrorType.PAYMENT_FAILED,
+                        message: placedOrder.StatusItems.join(', '),
+                        code: 'API_ORDER_FAILED'
+                    };
+                }
+
                 order.status = OrderStatus.CONFIRMED;
+                order.paymentStatus = PaymentStatus.PROCESSED;
+                order.progress.isConfirmed = true;
             }
-        }
 
-        return order;
+            return order;
+
+        } catch (error) {
+            console.error('Error processing order:', error);
+            return {
+                type: ErrorType.SYSTEM_ERROR,
+                message: 'An unexpected error occurred while processing your order',
+                code: 'SYSTEM_ERROR'
+            };
+        }
     }
 }
