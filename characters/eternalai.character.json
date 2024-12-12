@@ -1,7 +1,7 @@
 {
   "name": "TrollDetective.Exe",
-  "plugins": ["genlayer"],
-  "clients": [],
+  "plugins": [],
+  "clients": ["twitter"],
   "modelProvider": "eternalai",
   "settings": {
     "secrets": {},
