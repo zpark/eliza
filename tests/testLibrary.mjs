@@ -52,7 +52,6 @@ async function startAgent(character = DEFAULT_CHARACTER) {
         shell: false,
         stdio: "inherit"
     });
-    log(`proc=${JSON.stringify(proc)}`);
     const startTime = Date.now();
     while (true) {
         try {
@@ -91,9 +90,7 @@ async function sendPostRequest(url, method, payload) {
     try {
         const response = await fetch(url, {
             method: method,
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify(payload)
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

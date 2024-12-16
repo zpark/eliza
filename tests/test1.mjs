@@ -15,8 +15,8 @@ async function test2() {
     // TODO
 }
 
+const allTests = [test1, test2];
 try {
-    const allTests = [test1, test2];
     for (const test of allTests) await runIntegrationTest(test);
 } catch (error) {
     logError(error);
