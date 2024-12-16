@@ -16,8 +16,7 @@ async function test2() {
 }
 
 try {
-    // const allTests = [test1, test2];
-    const allTests = [test2];
+    const allTests = [test1]; // [test1, test2];
     allTests.forEach(runIntegrationTest);
 } catch (error) {
     logError(error);

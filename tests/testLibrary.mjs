@@ -54,14 +54,13 @@ async function startAgent(character = DEFAULT_CHARACTER) {
     });
     log(`proc=${JSON.stringify(proc)}`);
     const startTime = Date.now();
-    const url = "http://127.0.0.1:3000/";
     while (true) {
         try {
-            const response = await fetch(url, {method: "GET"});
+            const response = await fetch("http://127.0.0.1:3000/", {method: "GET"});
             if (response.ok) break;
         } catch (error) {}
         if (Date.now() - startTime > 120000) {
-            throw new Error("Timeout 120s waiting for server to start");
+            throw new Error("Timeout waiting for server to start");
         } else {
             log("Waiting for the server to be ready...");
             await sleep(1000);
