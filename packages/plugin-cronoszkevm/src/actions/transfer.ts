@@ -143,7 +143,7 @@ export default {
 
             web3.registerPlugin(
               new ZKsyncPlugin(
-                Web3ZKsyncL2.initWithDefaultProvider(types.Network.Mainnet),
+                  new Web3ZKsyncL2('https://mainnet.zkevm.cronos.org'),
               ),
             );
 
