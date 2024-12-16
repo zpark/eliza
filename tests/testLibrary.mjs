@@ -1,7 +1,8 @@
-import { $, fs, path, chalk } from 'zx';
-import { DEFAULT_AGENT_ID, DEFAULT_CHARACTER } from './test1.mjs';
 import { spawn } from 'node:child_process';
-$.verbose = false; // Suppress command output unless there's an error
+import { stringToUuid } from '../packages/core/dist/index.js';
+
+export const DEFAULT_CHARACTER = "trump"
+export const DEFAULT_AGENT_ID = stringToUuid(DEFAULT_CHARACTER ?? uuidv4());
 
 function projectRoot() {
     return path.join(import.meta.dirname, "..");
@@ -9,7 +10,8 @@ function projectRoot() {
 
 async function runProcess(command, args = [], directory = projectRoot()) {
     try {
-        const result = await $`cd ${directory} && ${command} ${args}`;
+        throw new Exception("Not implemented yet"); // TODO
+        // const result = await $`cd ${directory} && ${command} ${args}`;
         return result.stdout.trim();
     } catch (error) {
         throw new Error(`Command failed: ${error.message}`);
@@ -17,12 +19,12 @@ async function runProcess(command, args = [], directory = projectRoot()) {
 }
 
 async function installProjectDependencies() {
-    console.log(chalk.blue('Installing dependencies...'));
+    console.log('Installing dependencies...');
     return await runProcess('pnpm', ['install', '-r']);
 }
 
 async function buildProject() {
-    console.log(chalk.blue('Building project...'));
+    console.log('Building project...');
     return await runProcess('pnpm', ['build']);
 }
 
@@ -34,18 +36,21 @@ async function writeEnvFile(entries) {
 }
 
 async function startAgent(character = DEFAULT_CHARACTER) {
-    console.log(chalk.blue(`Starting agent for character: ${character}`));
+    console.log(`Starting agent for character: ${character}`);
     const proc = spawn('pnpm', ['start', `--character=characters/${character}.character.json`, '--non-interactive'], { shell: true, "stdio": "inherit" });
     log(`proc=${JSON.stringify(proc)}`);
 
-    // Wait for server to be ready
-    await new Promise(resolve => setTimeout(resolve, 60000));
+    sleep(60000); // Wait for server to be ready
     return proc;
 }
 
 async function stopAgent(proc) {
-    console.log(chalk.blue('Stopping agent...'));
-    proc.kill('SIGTERM')
+    console.log('Stopping agent...');
+    proc.kill('SIGTERM');
+}
+
+async function sleep(ms) {
+    await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function send(message) {
@@ -76,8 +81,18 @@ async function send(message) {
     }
 }
 
-function log(message) {
-    console.log(message);
+async function runIntegrationTest(fn) {
+    const proc = await startAgent();
+    try {
+        fn();
+        console.log('✓ Test passed');
+    } catch (error) {
+        console.error(`✗ Test failed: ${error.message}`);
+        console.log(error);
+        process.exit(1);
+    } finally {
+        await stopAgent(proc);
+    }
 }
 
 export {
@@ -89,5 +104,6 @@ export {
     startAgent,
     stopAgent,
     send,
+    runIntegrationTest,
     log
 }

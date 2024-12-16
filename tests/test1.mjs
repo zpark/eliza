@@ -1,33 +1,22 @@
-import { $, chalk } from 'zx';
 import assert from 'assert';
 import {
-    startAgent,
-    stopAgent,
     send
 } from "./testLibrary.mjs";
-import { stringToUuid } from '../packages/core/dist/index.js'
-
-export const DEFAULT_CHARACTER = "trump"
-export const DEFAULT_AGENT_ID = stringToUuid(DEFAULT_CHARACTER ?? uuidv4());
 
 async function test1() {
-    const proc = await startAgent();
-    try {
+    const reply = await send("Hi");
+    assert(reply.length > 10);
+}
 
-        const reply = await send("Hi");
-        assert(reply.length > 10);
-        console.log(chalk.green('✓ Test 1 passed'));
-    } catch (error) {
-        console.error(chalk.red(`✗ Test 1 failed: ${error.message}`));
-        process.exit(1);
-    } finally {
-        await stopAgent(proc);
-    }
+async function test2() {
+    // TODO
 }
 
 try {
-    await test1();
+    const allTests = [test1, test2];
+    allTests.forEach(runIntegrationTest);
 } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
+    console.error(`Error: ${error.message}`);
+    console.log(error);
     process.exit(1);
 }
