@@ -1,4 +1,4 @@
-import { Provider, IAgentRuntime, Memory, State } from "@ai16z/eliza";
+import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@ai16z/eliza";
 import { GitBookResponse, GitBookClientConfig } from '../types';
 
 function cleanText(text: string): string {
@@ -54,11 +54,11 @@ async function validateQuery(runtime: IAgentRuntime, text: string): Promise<bool
 
         const isValid = hasProjectTerm || hasDocTrigger || hasGeneralQuery;
 
-        console.log('✅ Validation Result:', isValid);
+        elizaLogger.info(`✅ Is GitBook Validation Result: ${isValid}`)
         return isValid;
 
     } catch (error) {
-        console.error("❌ Error in validation:", error);
+        elizaLogger.warn(`❌ Error in GitBook validation:\n${error}`)
         return false;
     }
 }
@@ -68,7 +68,7 @@ export const gitbookProvider: Provider = {
         try {
             const spaceId = runtime.getSetting("GITBOOK_SPACE_ID");
             if (!spaceId) {
-                console.error("❌ GitBook Space ID not configured");
+                elizaLogger.error('⚠️ GitBook Space ID not configured')
                 return "";
             }
 
@@ -76,7 +76,7 @@ export const gitbookProvider: Provider = {
             const isValidQuery = await validateQuery(runtime, text);
 
             if (!isValidQuery) {
-                console.log('⚠️ Query validation failed');
+                elizaLogger.info('⚠️ GitBook Query validation failed')
                 return "";
             }
 
