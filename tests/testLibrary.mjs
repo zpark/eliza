@@ -47,9 +47,9 @@ async function writeEnvFile(entries) {
 
 async function startAgent(character = DEFAULT_CHARACTER) {
     log(`Starting agent for character: ${character}`);
-    const proc = spawn("pnpm", ["start", `--character=characters/${character}.character.json`, '--non-interactive'], {
-        cwd: projectRoot(),
-        shell: true,
+    const proc = spawn("node", ["--loader", "ts-node/esm", "src/index.ts", "--isRoot", `--character=characters/${character}.character.json`, "--non-interactive"], {
+        cwd: path.join(projectRoot(), "agent"),
+        shell: false,
         stdio: "inherit"
     });
     log(`proc=${JSON.stringify(proc)}`);
@@ -60,21 +60,27 @@ async function startAgent(character = DEFAULT_CHARACTER) {
             if (response.ok) break;
         } catch (error) {}
         if (Date.now() - startTime > 120000) {
-            throw new Error("Timeout waiting for server to start");
+            throw new Error("Timeout waiting for process to start");
         } else {
-            log("Waiting for the server to be ready...");
             await sleep(1000);
         }
     }
-    log("Server is ready");
     await sleep(1000);
     return proc;
 }
 
 async function stopAgent(proc) {
-    log("Stopping agent..." + JSON.stringify(proc));
-    const q = proc.kill("SIGKILL");
-    console.log(q);
+    log("Stopping agent..." + JSON.stringify(proc.pid));
+    proc.kill();
+    const startTime = Date.now();
+    while (true) {
+        if (proc.killed) break;
+        if (Date.now() - startTime > 60000) {
+            throw new Error("Timeout waiting for the process to terminate");
+        }
+        await sleep(1000);
+    }
+    await sleep(1000);
 }
 
 async function sleep(ms) {
@@ -110,12 +116,11 @@ async function send(message) {
 async function runIntegrationTest(fn) {
     const proc = await startAgent();
     try {
-        fn();
+        await fn();
         log("✓ Test passed");
     } catch (error) {
         log("✗ Test failed");
         logError(error);
-        process.exit(1);
     } finally {
         await stopAgent(proc);
     }
