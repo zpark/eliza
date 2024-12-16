@@ -39,7 +39,7 @@ async function startAgent(character = DEFAULT_CHARACTER) {
     log(`proc=${JSON.stringify(proc)}`);
 
     // Wait for server to be ready
-    await new Promise(resolve => setTimeout(resolve, 20000));
+    await new Promise(resolve => setTimeout(resolve, 60000));
     return proc;
 }
 
