@@ -208,6 +208,7 @@ export type Models = {
     [ModelProviderName.NANOGPT]: Model;
     [ModelProviderName.HYPERBOLIC]: Model;
     [ModelProviderName.VENICE]: Model;
+    [ModelProviderName.AKASH_CHAT_API]: Model;
 };
 
 /**
@@ -236,6 +237,7 @@ export enum ModelProviderName {
     NANOGPT = "nanogpt",
     HYPERBOLIC = "hyperbolic",
     VENICE = "venice",
+    AKASH_CHAT_API = "akash_chat_api",
 }
 
 /**
@@ -731,6 +733,7 @@ export type Character = {
         discord?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
             messageSimilarityThreshold?: number;
             isPartOfTeam?: boolean;
             teamAgentIds?: string[];
@@ -740,6 +743,9 @@ export type Character = {
         telegram?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
+            shouldOnlyJoinInAllowedGroups?: boolean;
+            allowedGroupIds?: string[];
             messageSimilarityThreshold?: number;
             isPartOfTeam?: boolean;
             teamAgentIds?: string[];
@@ -749,6 +755,7 @@ export type Character = {
         slack?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+
         };
     };
 
