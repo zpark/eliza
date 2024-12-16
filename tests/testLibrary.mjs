@@ -1,5 +1,6 @@
-import { spawn } from 'node:child_process';
-import { stringToUuid } from '../packages/core/dist/index.js';
+import { spawn } from "node:child_process";
+import { stringToUuid } from "../packages/core/dist/index.js";
+import path from "path";
 
 export const DEFAULT_CHARACTER = "trump"
 export const DEFAULT_AGENT_ID = stringToUuid(DEFAULT_CHARACTER ?? uuidv4());
@@ -46,9 +47,12 @@ async function writeEnvFile(entries) {
 
 async function startAgent(character = DEFAULT_CHARACTER) {
     log(`Starting agent for character: ${character}`);
-    const proc = spawn("pnpm", ["start", `--character=characters/${character}.character.json`, '--non-interactive'], { shell: true, "stdio": "inherit" });
+    const proc = spawn("pnpm", ["start", `--character=characters/${character}.character.json`, '--non-interactive'], {
+        cwd: projectRoot(),
+        shell: true,
+        stdio: "inherit"
+    });
     log(`proc=${JSON.stringify(proc)}`);
-
     const startTime = Date.now();
     const url = "http://127.0.0.1:3000/";
     while (true) {
@@ -110,7 +114,7 @@ async function runIntegrationTest(fn) {
         fn();
         log("✓ Test passed");
     } catch (error) {
-        logError(`✗ Test failed: ${error.message}`);
+        log("✗ Test failed");
         logError(error);
         process.exit(1);
     } finally {
