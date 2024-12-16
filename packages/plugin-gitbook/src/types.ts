@@ -1,21 +1,18 @@
-// Keywords configuration interface
-export interface GitBookKeywords {
-    contractQueries?: string[];
-    generalQueries?: string[];
-    mustInclude?: string[];
-    shouldInclude?: string[];
-}
-
-// Client configuration in character.json
-export interface GitBookClientConfig {
-    keywords?: GitBookKeywords;
-    documentTriggers?: string[];
-}
-
 // GitBook API response type
 export interface GitBookResponse {
     answer?: {
         text: string;
     };
     error?: string;
+}
+
+// Client configuration in character.json (all optional)
+export interface GitBookKeywords {
+    projectTerms?: string[];
+    generalQueries?: string[];
+}
+
+export interface GitBookClientConfig {
+    keywords?: GitBookKeywords;
+    documentTriggers?: string[];
 }

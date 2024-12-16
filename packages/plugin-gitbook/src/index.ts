@@ -11,5 +11,4 @@ export const gitbookPlugin: Plugin = {
 
 export default gitbookPlugin;
 
-// Export types for external use
 export * from './types';
