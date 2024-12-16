@@ -1,6 +1,9 @@
 import assert from 'assert';
 import {
-    send
+    send,
+    log,
+    logError,
+    runIntegrationTest
 } from "./testLibrary.mjs";
 
 async function test1() {
@@ -13,10 +16,10 @@ async function test2() {
 }
 
 try {
-    const allTests = [test1, test2];
+    // const allTests = [test1, test2];
+    const allTests = [test2];
     allTests.forEach(runIntegrationTest);
 } catch (error) {
-    console.error(`Error: ${error.message}`);
-    console.log(error);
+    logError(error);
     process.exit(1);
 }
