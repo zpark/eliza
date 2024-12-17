@@ -6,18 +6,18 @@ import {
     runIntegrationTest
 } from "./testLibrary.mjs";
 
-async function test1() {
+async function helloTrump() {
     const reply = await send("Hi");
     assert(reply.length > 10);
 }
 
-async function test2() {
+async function coinbaseTest() {
     // TODO
 }
 
-const allTests = [test1, test2];
+const testSuite = [helloTrump]; // Add tests here
 try {
-    for (const test of allTests) await runIntegrationTest(test);
+    for (const test of testSuite) await runIntegrationTest(test);
 } catch (error) {
     logError(error);
     process.exit(1);
