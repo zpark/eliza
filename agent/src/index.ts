@@ -70,7 +70,8 @@ export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
 
 const logFetch = async (url: string, options: any) => {
     elizaLogger.info(`Fetching ${url}`);
-    elizaLogger.info(JSON.stringify(options, null, 2));
+    // Disabled to avoid disclosure of sensitive information such as API keys
+    // elizaLogger.info(JSON.stringify(options, null, 2));
     return fetch(url, options);
 };
 
