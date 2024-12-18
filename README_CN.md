@@ -32,6 +32,7 @@
 
 ```
 git clone https://github.com/ai16z/eliza-starter.git
+cd eliza-starter
 cp .env.example .env
 ```
 
@@ -39,7 +40,7 @@ cp .env.example .env
 
 ```
 git clone https://github.com/ai16z/eliza.git
-
+cd eliza
 # 切换最新发布的版本(Checkout the latest release)
 # Eliza的迭代速度非常快, 所以我们建议经常性的切换到最新的发布版本以免出现问题(This project iterates fast, so we recommend checking out the latest release)
 git checkout $(git describe --tags --abbrev=0)
