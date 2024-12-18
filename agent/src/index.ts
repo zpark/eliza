@@ -304,6 +304,10 @@ export function getTokenForProvider(
                 character.settings?.secrets?.AKASH_CHAT_API_KEY ||
                 settings.AKASH_CHAT_API_KEY
             );
+        default:
+            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`
+            elizaLogger.error(errorMessage)
+            throw new Error(errorMessage)
     }
 }
 

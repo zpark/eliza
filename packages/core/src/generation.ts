@@ -176,7 +176,8 @@ export async function generateText({
             case ModelProviderName.LLAMACLOUD:
             case ModelProviderName.NANOGPT:
             case ModelProviderName.HYPERBOLIC:
-            case ModelProviderName.TOGETHER: {
+            case ModelProviderName.TOGETHER:
+            case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model.");
                 const openai = createOpenAI({
                     apiKey,
