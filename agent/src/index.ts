@@ -70,8 +70,8 @@ export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
 };
 
 const logFetch = async (url: string, options: any) => {
-    elizaLogger.info(`Fetching ${url}`);
-    elizaLogger.info(JSON.stringify(options, null, 2));
+    elizaLogger.debug(`Fetching ${url}`);
+    elizaLogger.debug(JSON.stringify(options, null, 2));
     return fetch(url, options);
 };
 
@@ -299,6 +299,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.VENICE_API_KEY ||
                 settings.VENICE_API_KEY
+            );
+        case ModelProviderName.AKASH_CHAT_API:
+            return (
+                character.settings?.secrets?.AKASH_CHAT_API_KEY ||
+                settings.AKASH_CHAT_API_KEY
             );
     }
 }
@@ -644,10 +649,16 @@ const startAgents = async () => {
         elizaLogger.error("Error starting agents:", error);
     }
 
+    // upload some agent functionality into directClient
+    directClient.startAgent = async (character) => {
+        // wrap it so we don't have to inject directClient later
+        return startAgent(character, directClient);
+    };
     directClient.start(serverPort);
 
-    elizaLogger.log("Visit the following URL to chat with your agents:");
-    elizaLogger.log(`http://localhost:5173`);
+    elizaLogger.log(
+        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents"
+    );
 };
 
 startAgents().catch((error) => {
