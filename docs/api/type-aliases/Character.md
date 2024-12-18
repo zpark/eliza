@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Character
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / Character
 
 # Type Alias: Character
 
@@ -304,6 +304,10 @@ Optional client-specific config
 
 > `optional` **shouldIgnoreDirectMessages**: `boolean`
 
+### clientConfig.discord.shouldRespondOnlyToMentions?
+
+> `optional` **shouldRespondOnlyToMentions**: `boolean`
+
 ### clientConfig.discord.messageSimilarityThreshold?
 
 > `optional` **messageSimilarityThreshold**: `number`
@@ -335,6 +339,18 @@ Optional client-specific config
 ### clientConfig.telegram.shouldIgnoreDirectMessages?
 
 > `optional` **shouldIgnoreDirectMessages**: `boolean`
+
+### clientConfig.telegram.shouldRespondOnlyToMentions?
+
+> `optional` **shouldRespondOnlyToMentions**: `boolean`
+
+### clientConfig.telegram.shouldOnlyJoinInAllowedGroups?
+
+> `optional` **shouldOnlyJoinInAllowedGroups**: `boolean`
+
+### clientConfig.telegram.allowedGroupIds?
+
+> `optional` **allowedGroupIds**: `string`[]
 
 ### clientConfig.telegram.messageSimilarityThreshold?
 
@@ -424,4 +440,4 @@ Optional NFT prompt
 
 ## Defined in
 
-[packages/core/src/types.ts:627](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L627)
+[packages/core/src/types.ts:629](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L629)
