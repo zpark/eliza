@@ -19,12 +19,12 @@ import {
     keypairIdentity,
     percentAmount,
     publicKey,
-    sol,
+    // sol,
     TransactionBuilder,
     Umi,
 } from "@metaplex-foundation/umi";
 import { getExplorerLink } from "@solana-developers/helpers";
-import { transferSol } from "@metaplex-foundation/mpl-toolbox";
+// import { transferSol } from "@metaplex-foundation/mpl-toolbox";
 import bs58 from "bs58";
 import { elizaLogger } from "@ai16z/eliza";
 
@@ -56,7 +56,7 @@ export class WalletSolana {
     }
 
     async getBalance() {
-        let balance = await this.connection.getBalance(this.walletPublicKey);
+        const balance = await this.connection.getBalance(this.walletPublicKey);
         return {
             value: balance,
             formater: `${balance / LAMPORTS_PER_SOL} SOL`,
