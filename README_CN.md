@@ -23,14 +23,13 @@
 
 **前置要求（必须）:**
 
+-   [Python 2.7+](https://www.python.org/downloads/)
 -   [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
--   Nodejs安装
 -   [pnpm](https://pnpm.io/installation)
--   使用pnpm
 
 ### 编辑.env文件
 
--   -   将 .env.example 复制为 .env 并填写适当的值
+-   将 .env.example 复制为 .env 并填写适当的值
 -   编辑推特环境并输入你的推特账号和密码
 
 ### 编辑角色文件
