@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Service
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / Service
 
 # Class: `abstract` Service
 
@@ -38,7 +38,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:998](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L998)
+[packages/core/src/types.ts:1005](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1005)
 
 ***
 
@@ -54,7 +54,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1009](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1009)
+[packages/core/src/types.ts:1016](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1016)
 
 ## Methods
 
@@ -72,7 +72,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1002](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1002)
+[packages/core/src/types.ts:1009](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1009)
 
 ***
 
@@ -92,4 +92,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1014](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1014)
+[packages/core/src/types.ts:1021](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1021)
