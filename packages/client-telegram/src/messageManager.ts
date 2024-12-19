@@ -684,7 +684,9 @@ export class MessageManager {
     ): Promise<Message.TextMessage[]> {
         if (content.attachments && content.attachments.length > 0) {
             content.attachments.map(async (attachment: Media) => {
-                this.sendImage(ctx, attachment.url, attachment.description);
+                if (attachment.contentType.startsWith("image")) {
+                    this.sendImage(ctx, attachment.url, attachment.description);
+                }
             });
         } else {
             const chunks = this.splitMessage(content.text);
