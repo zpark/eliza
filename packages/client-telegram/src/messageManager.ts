@@ -622,22 +622,34 @@ export class MessageManager {
         caption?: string
     ): Promise<void> {
         try {
-            if (!fs.existsSync(imagePath)) {
-                throw new Error(`File not found: ${imagePath}`);
-            }
-
-            const fileStream = fs.createReadStream(imagePath);
-
-            await ctx.telegram.sendPhoto(
-                ctx.chat.id,
-                {
-                    source: fileStream,
-                },
-                {
-                    caption,
+            if (/^(http|https):\/\//.test(imagePath)) {
+                // Handle HTTP URLs
+                await ctx.telegram.sendPhoto(
+                    ctx.chat.id,
+                    imagePath,
+                    {
+                        caption,
+                    }
+                );
+            } else {
+                // Handle local file paths 
+                if (!fs.existsSync(imagePath)) {
+                    throw new Error(`File not found: ${imagePath}`);
                 }
-            );
-
+    
+                const fileStream = fs.createReadStream(imagePath);
+    
+                await ctx.telegram.sendPhoto(
+                    ctx.chat.id,
+                    {
+                        source: fileStream,
+                    },
+                    {
+                        caption,
+                    }
+                );
+            }
+            
             elizaLogger.info(`Image sent successfully: ${imagePath}`);
         } catch (error) {
             elizaLogger.error("Error sending image:", error);
