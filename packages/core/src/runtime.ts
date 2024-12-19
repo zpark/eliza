@@ -234,6 +234,10 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.#conversationLength =
             opts.conversationLength ?? this.#conversationLength;
+
+        if (!opts.databaseAdapter) {
+            throw new Error("No database adapter provided");
+        }
         this.databaseAdapter = opts.databaseAdapter;
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -249,15 +253,14 @@ export class AgentRuntime implements IAgentRuntime {
             this.agentId,
             this.character.name,
             this.character.name
-        );
-        this.ensureParticipantExists(this.agentId, this.agentId);
+        ).then(() => {
+            // postgres needs the user to exist before you can add a participant
+            this.ensureParticipantExists(this.agentId, this.agentId);
+        });
 
         elizaLogger.success("Agent ID", this.agentId);
 
         this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
-        if (!opts.databaseAdapter) {
-            throw new Error("No database adapter provided");
-        }
 
         this.cacheManager = opts.cacheManager;
 
