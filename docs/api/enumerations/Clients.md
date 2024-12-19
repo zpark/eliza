@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Clients
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / Clients
 
 # Enumeration: Clients
 
@@ -12,7 +12,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:610](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L610)
+[packages/core/src/types.ts:612](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L612)
 
 ***
 
@@ -22,7 +22,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:611](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L611)
+[packages/core/src/types.ts:613](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L613)
 
 ***
 
@@ -32,7 +32,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:612](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L612)
+[packages/core/src/types.ts:614](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L614)
 
 ***
 
@@ -42,7 +42,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:613](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L613)
+[packages/core/src/types.ts:615](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L615)
 
 ***
 
@@ -52,7 +52,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:614](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L614)
+[packages/core/src/types.ts:616](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L616)
 
 ***
 
@@ -62,7 +62,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:615](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L615)
+[packages/core/src/types.ts:617](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L617)
 
 ***
 
@@ -72,7 +72,7 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:616](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L616)
+[packages/core/src/types.ts:618](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L618)
 
 ***
 
@@ -82,4 +82,4 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:617](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L617)
+[packages/core/src/types.ts:619](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L619)
