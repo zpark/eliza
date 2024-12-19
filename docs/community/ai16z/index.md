@@ -1,9 +1,9 @@
 ---
 sidebar_position: 3
-title: AI Agents
+title: ai16z Agents
 ---
 
-# AI Agents
+# ai16z Agents
 
 AI agents are at the heart of the ai16z ecosystem, empowering developers and community members to create intelligent entities that can interact, learn, and perform various tasks across different platforms. Built upon the Eliza framework, these agents showcase the potential of AI-driven innovation and collaboration.
 
