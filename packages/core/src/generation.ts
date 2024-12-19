@@ -1361,6 +1361,7 @@ export async function handleProvider(
         case ModelProviderName.LLAMACLOUD:
         case ModelProviderName.TOGETHER:
         case ModelProviderName.NANOGPT:
+        case ModelProviderName.AKASH_CHAT_API:
             return await handleOpenAI(options);
         case ModelProviderName.ANTHROPIC:
             return await handleAnthropic(options);
