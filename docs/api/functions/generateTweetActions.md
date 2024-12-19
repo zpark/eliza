@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / generateTweetActions
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / generateTweetActions
 
 # Function: generateTweetActions()
 
@@ -20,4 +20,4 @@
 
 ## Defined in
 
-[packages/core/src/generation.ts:1614](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L1614)
+[packages/core/src/generation.ts:1615](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L1615)
