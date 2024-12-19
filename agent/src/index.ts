@@ -578,7 +578,7 @@ function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
 
 async function startAgent(
     character: Character,
-    directClient
+    directClient: DirectClient
 ): Promise<AgentRuntime> {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
@@ -653,7 +653,7 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async (character) => {
+    directClient.startAgent = async (character: Character) => {
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
