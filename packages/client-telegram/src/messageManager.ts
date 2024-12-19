@@ -606,6 +606,7 @@ export class MessageManager {
                             i === 0 && replyToMessageId
                                 ? { message_id: replyToMessageId }
                                 : undefined,
+                        parse_mode:'Markdown'
                     }
                 )) as Message.TextMessage;
 
