@@ -7,6 +7,7 @@ import { LensAgentClient } from "@ai16z/client-lens";
 import { SlackClientInterface } from "@ai16z/client-slack";
 import { TelegramClientInterface } from "@ai16z/client-telegram";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { JeeterClientInterface } from "@ai16z/client-simsai";
 import {
     AgentRuntime,
     CacheManager,
@@ -382,10 +383,16 @@ export async function initializeClients(
             clients.farcaster = farcasterClient;
         }
     }
+
     if (clientTypes.includes("lens")) {
         const lensClient = new LensAgentClient(runtime);
         lensClient.start();
         clients.lens = lensClient;
+    }
+
+    if (clientTypes.includes(Clients.SIMSAI)) {
+        const simsaiClient = await JeeterClientInterface.start(runtime);
+        if (simsaiClient) clients.simsai = simsaiClient;
     }
 
     elizaLogger.log("client keys", Object.keys(clients));
@@ -648,9 +655,9 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async character => {
-      // wrap it so we don't have to inject directClient later
-      return startAgent(character, directClient)
+    directClient.startAgent = async (character) => {
+        // wrap it so we don't have to inject directClient later
+        return startAgent(character, directClient);
     };
     directClient.start(serverPort);
 
