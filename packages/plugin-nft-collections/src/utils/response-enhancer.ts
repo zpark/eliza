@@ -24,5 +24,25 @@ export function enhanceResponse(response: string, state: State): string {
             " I can explain rarity factors in NFT collections if you're interested.";
     }
 
+    if (nftKnowledge?.mentionsMarketTrends) {
+        response +=
+            " I can show you the latest market trends and price movements.";
+    }
+
+    if (nftKnowledge?.mentionsTraders) {
+        response +=
+            " Would you like to see recent whale activity and notable trades?";
+    }
+
+    if (nftKnowledge?.mentionsSentiment) {
+        response +=
+            " I can provide current market sentiment analysis and trader mood indicators.";
+    }
+
+    if (nftKnowledge?.mentionsMarketCap) {
+        response +=
+            " I can show you market cap rankings and valuation metrics.";
+    }
+
     return response;
 }

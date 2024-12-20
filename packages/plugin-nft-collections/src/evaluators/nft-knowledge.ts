@@ -4,16 +4,20 @@ import { NFTKnowledge } from "../types";
 export const nftKnowledgeEvaluator: Evaluator = {
     name: "nft-collection-evaluator",
     description: "Evaluates NFT-related content in messages",
-    similes: ["nft-evaluator", "nft-knowledge"],
+    similes: ["nft-evaluator", "nft-knowledge", "market-analysis"],
     alwaysRun: false,
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         const content = message.content.text.toLowerCase();
-        return content.includes("nft") || content.includes("collection");
+        return (
+            content.includes("nft") ||
+            content.includes("collection") ||
+            content.includes("market") ||
+            content.includes("trading")
+        );
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const content = message.content.text.toLowerCase();
 
-        // Extract relevant NFT information
         const extractedInfo: NFTKnowledge = {
             mentionsCollection:
                 content.includes("collection") || content.includes("nft"),
@@ -24,9 +28,25 @@ export const nftKnowledgeEvaluator: Evaluator = {
                 content.includes("trading volume"),
             mentionsRarity:
                 content.includes("rare") || content.includes("rarity"),
+            mentionsMarketTrends:
+                content.includes("trend") ||
+                content.includes("market") ||
+                content.includes("movement"),
+            mentionsTraders:
+                content.includes("trader") ||
+                content.includes("whale") ||
+                content.includes("investor"),
+            mentionsSentiment:
+                content.includes("bull") ||
+                content.includes("bear") ||
+                content.includes("sentiment") ||
+                content.includes("mood"),
+            mentionsMarketCap:
+                content.includes("market cap") ||
+                content.includes("marketcap") ||
+                content.includes("valuation"),
         };
 
-        // Update state with extracted information
         return {
             ...state,
             nftKnowledge: extractedInfo,
@@ -34,21 +54,21 @@ export const nftKnowledgeEvaluator: Evaluator = {
     },
     examples: [
         {
-            context: "Evaluating NFT-related content in messages",
+            context: "Evaluating NFT market trends",
             messages: [
                 {
                     user: "{{user1}}",
-                    content: { text: "Tell me about NFT collections" },
+                    content: { text: "How's the NFT market sentiment today?" },
                 },
                 {
                     user: "{{user2}}",
                     content: {
-                        text: "I'll help you understand NFT collections.",
+                        text: "Let me check the market trends and whale activity.",
                     },
                 },
             ],
             outcome:
-                "The message contains NFT-related content and should be evaluated.",
+                "The message contains market-related content and should be evaluated.",
         },
     ],
 };

@@ -25,11 +25,30 @@ export interface NFTListing {
     validUntil: number;
 }
 
+export interface NFTMarketStats {
+    totalVolume24h: number;
+    totalMarketCap: number;
+    activeTraders24h: number;
+    topGainers: Array<{
+        collection: string;
+        percentageChange: number;
+    }>;
+    topLosers: Array<{
+        collection: string;
+        percentageChange: number;
+    }>;
+    marketSentiment: "bullish" | "bearish" | "neutral";
+}
+
 export interface NFTKnowledge {
     mentionsCollection: boolean;
     mentionsFloorPrice: boolean;
     mentionsVolume: boolean;
     mentionsRarity: boolean;
+    mentionsMarketTrends: boolean;
+    mentionsTraders: boolean;
+    mentionsSentiment: boolean;
+    mentionsMarketCap: boolean;
 }
 
 export interface NFTService {
@@ -52,4 +71,5 @@ export interface NFTService {
             status: "complete" | "incomplete";
         }>;
     }>;
+    getMarketStats(): Promise<NFTMarketStats>;
 }
