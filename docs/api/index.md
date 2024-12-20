@@ -1,4 +1,4 @@
-# @ai16z/eliza v0.1.5-alpha.5
+# @ai16z/eliza v0.1.6-alpha.4
 
 ## Enumerations
 

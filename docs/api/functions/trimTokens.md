@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / trimTokens
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / trimTokens
 
 # Function: trimTokens()
 
@@ -28,4 +28,4 @@ The truncated text
 
 ## Defined in
 
-[packages/core/src/generation.ts:580](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L580)
+[packages/core/src/generation.ts:580](https://github.com/IkigaiLabsETH/eliza/blob/main/packages/core/src/generation.ts#L580)
