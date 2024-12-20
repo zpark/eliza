@@ -40,7 +40,9 @@ export const sweepFloorAction: Action = {
                 throw new Error("No valid collection address found in message");
             }
 
-            const nftService = runtime.services.get("nft") as any as NFTService;
+            const nftService = runtime.services.get(
+                "nft" as any
+            ) as unknown as NFTService;
             if (!nftService) {
                 throw new Error("NFT service not found");
             }

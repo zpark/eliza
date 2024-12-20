@@ -1,8 +1,8 @@
 import { Service } from "@ai16z/eliza";
 
 declare module "@ai16z/eliza" {
-    interface Service {
-        serviceType: "nft";
+    interface ServiceTypeMap {
+        nft: Service & NFTService;
     }
 }
 
