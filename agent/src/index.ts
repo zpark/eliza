@@ -598,6 +598,7 @@ export async function createAgent(
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
 <<<<<<< HEAD
+<<<<<<< HEAD
             getSecret(character, "FUEL_PRIVATE_KEY") ? fuelPlugin : null,
             getSecret(character, "AVALANCHE_PRIVATE_KEY")
                 ? avalanchePlugin
@@ -606,6 +607,11 @@ export async function createAgent(
             getSecret(character, "AVAIL_SEED") ? availPlugin : null,
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
 >>>>>>> 28b923da (add avail plugin support)
+=======
+            getSecret(character, "AVAIL_SEED") && 
+            getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
+
+>>>>>>> b986c296 (tidy up agent/index.ts)
         ].filter(Boolean),
         providers: [],
         actions: [],
