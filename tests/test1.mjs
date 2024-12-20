@@ -3,7 +3,7 @@ import {
     send,
     log,
     logError,
-    runIntegrationTest
+    runIntegrationTest,
 } from "./testLibrary.mjs";
 
 // Validation function to check required environment variables
@@ -25,10 +25,11 @@ async function helloTrump() {
 
 }
 
-async function coinbaseCreateChargeTest() {
+async function coinbaseCommerceChargeTest() {
     await validateEnvironment(['COINBASE_COMMERCE_KEY']);
 
-    const chargeRequest = "Create a charge for $100 USD for Digital Art NFT with description 'Exclusive digital artwork collection'";
+    const chargeDescription = "Exclusive digital artwork collection";
+    const chargeRequest = `Create a charge for $100 USD for Digital Art NFT with description '${chargeDescription}'`;
     const response = await send(chargeRequest);
 
     // Verify response structure
@@ -56,9 +57,57 @@ async function coinbaseCreateChargeTest() {
     assert(attachment.description.startsWith("Charge ID:"), "Should have charge ID description");
     assert(attachment.text.startsWith("Pay here:"), "Should have payment URL");
     assert(attachment.text.includes("https://commerce.coinbase.com/pay/"), "Should have valid Coinbase Commerce URL");
+
+    // Store the created charge ID for later comparison
+    const createdChargeId = attachment.id;
+    const createdChargeUrl = attachment.url;
+
+    // Fetch and verify all charges
+    const chargesResponse = await send("Fetch all charges");
+
+    // Verify response structure
+    assert(Array.isArray(chargesResponse), "Charges response should be an array");
+    assert(chargesResponse.length === 2, "Should have two messages (prompt and response)");
+
+    // Verify charges data
+    const charges = chargesResponse[1].attachments;
+    assert(Array.isArray(charges), "Charges should be an array");
+    assert(charges.length > 0, "Should have at least one charge");
+
+    // Verify each charge has required properties
+    charges.forEach(charge => {
+        assert(charge.id, "Each charge should have an id");
+        assert(charge.hosted_url, "Each charge should have a hosted_url");
+        assert(charge.hosted_url.includes('commerce.coinbase.com/pay/'), "hosted_url should be a valid Coinbase URL");
+        assert(charge.web3_data, "Each charge should have web3_data object");
+    });
+
+    // Verify the previously created charge exists in the list
+    const foundCharge = charges.find(charge => charge.id === createdChargeId);
+    assert(foundCharge, "Previously created charge should exist in the list");
+    assert.strictEqual(foundCharge.hosted_url, createdChargeUrl, "Hosted URL should match");
+    assert.strictEqual(foundCharge.description, chargeDescription, "Description should match");
+
+    // Test GetChargeDetails action
+    const getDetailsResponse = await send(`Get details for charge ID: ${createdChargeId}`);
+
+    // Verify response structure for charge details
+    assert(Array.isArray(getDetailsResponse), "GetChargeDetails response should be an array");
+    assert(getDetailsResponse.length === 2, "Should have two messages (prompt and response)");
+
+    // Verify charge details response
+    const detailsResponse = getDetailsResponse[1];
+    assert(Array.isArray(detailsResponse.attachments), "Should have attachments array");
+
+    const detailsAttachment = detailsResponse.attachments[0];
+
+    const chargeData = JSON.parse(detailsAttachment.description);
+
+    assert.equal(chargeData.data.hosted_url, createdChargeUrl, "Hosted URLs should match");
+    assert.equal(chargeData.data.description, chargeDescription, "Charge description should match")
 }
 
-const testSuite = [helloTrump, coinbaseCreateChargeTest]; // Add tests here
+const testSuite = [helloTrump, coinbaseCommerceChargeTest]; // Add tests here
 try {
     for (const test of testSuite) await runIntegrationTest(test);
 } catch (error) {
