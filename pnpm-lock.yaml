@@ -1018,9 +1018,6 @@ importers:
       '@ai16z/eliza':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-nft-collections':
-        specifier: workspace:*
-        version: link:../plugin-nft-collections
       '@lifi/data-types':
         specifier: 5.15.5
         version: 5.15.5
