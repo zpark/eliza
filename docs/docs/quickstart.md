@@ -170,6 +170,8 @@ TWITTER_PASSWORD=  # Account password
 TWITTER_EMAIL=    # Account email
 ```
 
+**Important:** Log in to the [Twitter Developer Portal](https://developer.twitter.com) and enable the "Automated" label for your account to avoid being flagged as inauthentic.
+
 ### Telegram Bot
 
 1. Create a bot

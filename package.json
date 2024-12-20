@@ -40,8 +40,7 @@
         "typedoc": "0.26.11",
         "typescript": "5.6.3",
         "vite": "5.4.11",
-        "vitest": "2.1.5",
-        "zx": "^8.2.4"
+        "vitest": "2.1.5"
     },
     "pnpm": {
         "overrides": {
@@ -53,6 +52,7 @@
     },
     "dependencies": {
         "@0glabs/0g-ts-sdk": "0.2.1",
+        "@ai16z/adapter-postgres": "0.1.6-alpha.4",
         "@coinbase/coinbase-sdk": "0.10.0",
         "@deepgram/sdk": "^3.9.0",
         "@vitest/eslint-plugin": "1.0.1",

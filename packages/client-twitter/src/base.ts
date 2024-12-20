@@ -156,6 +156,10 @@ export class ClientBase extends EventEmitter {
         const username = this.runtime.getSetting("TWITTER_USERNAME");
         const password = this.runtime.getSetting("TWITTER_PASSWORD");
         const email = this.runtime.getSetting("TWITTER_EMAIL");
+        let retries = parseInt(
+            this.runtime.getSetting("TWITTER_RETRY_LIMIT") || "5",
+            10
+        );
         const twitter2faSecret =
             this.runtime.getSetting("TWITTER_2FA_SECRET") || undefined;
 
@@ -171,7 +175,6 @@ export class ClientBase extends EventEmitter {
         }
 
         elizaLogger.log("Waiting for Twitter login");
-        let retries = 5; // Optional: Set a retry limit
         while (retries > 0) {
             try {
                 await this.twitterClient.login(
