@@ -5,6 +5,7 @@ import {
     IAgentRuntime,
     Memory,
     State,
+    ServiceType,
 } from "@ai16z/eliza";
 import axios from "axios";
 
@@ -13,6 +14,23 @@ interface NFTCollection {
     totalSupply: number;
     floorPrice: number;
     volume24h: number;
+}
+
+interface INFTMarketplaceService {
+    getFloorNFTs(collectionAddress: string, quantity: number): Promise<any[]>;
+    batchPurchaseNFTs(nfts: any[]): Promise<string[]>;
+}
+
+// Helper function to extract NFT details from the message
+function extractNFTDetails(text: string): {
+    collectionAddress: string;
+    quantity: number;
+} {
+    // TODO: Implement proper extraction logic
+    return {
+        collectionAddress: "0x...", // Extract from text
+        quantity: 5, // Extract from text
+    };
 }
 
 const fetchNFTCollections = async (): Promise<NFTCollection[]> => {
@@ -32,6 +50,74 @@ const fetchNFTCollections = async (): Promise<NFTCollection[]> => {
         floorPrice: collection.floorAsk.price.amount.native,
         volume24h: collection.volume["1day"],
     }));
+};
+
+const sweepFloorNFTAction: Action = {
+    name: "SWEEP_FLOOR_NFT",
+    similes: ["BUY_FLOOR_NFT", "PURCHASE_FLOOR_NFT"],
+    description:
+        "Sweeps the floor of a specified EVM NFT collection by purchasing the lowest-priced available NFTs.",
+
+    validate: async (runtime: IAgentRuntime, message: Memory) => {
+        const content = message.content.text.toLowerCase();
+        return content.includes("sweep") && content.includes("nft");
+    },
+
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
+        try {
+            // Extract collection address and quantity from the message
+            const { collectionAddress, quantity } = extractNFTDetails(
+                message.content.text
+            );
+
+            // Get NFT marketplace service
+            const nftService = runtime.getService<INFTMarketplaceService>(
+                ServiceType.NFT_MARKETPLACE
+            );
+
+            // Fetch floor NFTs
+            const floorNFTs = await nftService.getFloorNFTs(
+                collectionAddress,
+                quantity
+            );
+
+            // Purchase floor NFTs
+            const transactions = await nftService.batchPurchaseNFTs(floorNFTs);
+
+            // Prepare response
+            const response = `Successfully swept ${quantity} floor NFTs from collection ${collectionAddress}. Transaction hashes: ${transactions.join(", ")}`;
+
+            // Send response
+            await runtime.sendMessage(message.roomId, response);
+
+            return true;
+        } catch (error) {
+            console.error("Floor sweep failed:", error);
+            await runtime.sendMessage(
+                message.roomId,
+                "Failed to sweep floor NFTs. Please try again later."
+            );
+            return false;
+        }
+    },
+
+    examples: [
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Can you sweep the floor of the Bored Ape Yacht Club NFT collection? I want to buy 5 of the cheapest ones.",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "Certainly! I'll sweep the floor of the Bored Ape Yacht Club NFT collection and purchase the 5 cheapest NFTs available.",
+                    action: "SWEEP_FLOOR_NFT",
+                },
+            },
+        ],
+    ],
 };
 
 const nftCollectionAction: Action = {
@@ -101,7 +187,7 @@ const nftCollectionPlugin: Plugin = {
     name: "nft-collection-plugin",
     description:
         "Provides information about curated NFT collections on Ethereum",
-    actions: [nftCollectionAction],
+    actions: [nftCollectionAction, sweepFloorNFTAction],
     providers: [nftCollectionProvider],
 };
 
