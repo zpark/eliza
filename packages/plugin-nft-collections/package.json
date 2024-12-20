@@ -1,0 +1,19 @@
+{
+    "name": "@ai16z/plugin-nft-collections",
+    "version": "0.1.0",
+    "description": "NFT collections plugin for Eliza",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest"
+    },
+    "dependencies": {
+        "@ai16z/eliza": "workspace:*",
+        "axios": "^1.6.7"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.3",
+        "@types/node": "^20.11.16"
+    }
+}
