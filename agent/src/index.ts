@@ -47,6 +47,7 @@ import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
 import { multiversxPlugin } from "@ai16z/plugin-multiversx";
 import { nearPlugin } from "@ai16z/plugin-near";
 import { nftGenerationPlugin } from "@ai16z/plugin-nft-generation";
+import nftCollectionsPlugin from "@ai16z/plugin-nft-collections";
 import { createNodePlugin } from "@ai16z/plugin-node";
 import { solanaPlugin } from "@ai16z/plugin-solana";
 import { suiPlugin } from "@ai16z/plugin-sui";
@@ -549,6 +550,9 @@ export async function createAgent(
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
+            getSecret(character, "NFT_COLLECTIONS_API_KEY")
+                ? nftCollectionsPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
@@ -648,9 +652,9 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async character => {
-      // wrap it so we don't have to inject directClient later
-      return startAgent(character, directClient)
+    directClient.startAgent = async (character) => {
+        // wrap it so we don't have to inject directClient later
+        return startAgent(character, directClient);
     };
     directClient.start(serverPort);
 
