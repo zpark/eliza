@@ -1,4 +1,4 @@
-import { Service } from "@ai16z/eliza";
+import { Service, ServiceType } from "@ai16z/eliza";
 
 declare module "@ai16z/eliza" {
     interface ServiceTypeMap {
