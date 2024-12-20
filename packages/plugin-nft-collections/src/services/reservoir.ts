@@ -118,6 +118,100 @@ export class ReservoirService extends Service implements NFTService {
         );
     }
 
+    async createListing(options: {
+        tokenId: string;
+        collectionAddress: string;
+        price: number;
+        expirationTime?: number;
+        marketplace: "ikigailabs";
+        currency?: string;
+        quantity?: number;
+    }): Promise<{
+        listingId: string;
+        status: string;
+        transactionHash?: string;
+        marketplaceUrl: string;
+    }> {
+        // First, get the order kind and other details from Reservoir
+        const orderKind = await this.fetchFromReservoir(`/execute/list/v5`, {
+            maker: options.collectionAddress,
+            token: `${options.collectionAddress}:${options.tokenId}`,
+            weiPrice: options.price.toString(),
+            orderKind: "seaport-v1.5",
+            orderbook: "ikigailabs",
+            currency: options.currency || "ETH",
+            quantity: options.quantity || "1",
+        });
+
+        // Create the listing using the order data
+        const listingData = await this.fetchFromReservoir(`/order/v3`, {
+            kind: orderKind.kind,
+            data: {
+                ...orderKind.data,
+                expirationTime:
+                    options.expirationTime ||
+                    Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+            },
+        });
+
+        return {
+            listingId: listingData.order.hash,
+            status: listingData.order.status,
+            transactionHash: listingData.order.transactionHash,
+            marketplaceUrl: `https://ikigailabs.xyz/assets/${options.collectionAddress}/${options.tokenId}`,
+        };
+    }
+
+    async cancelListing(options: {
+        listingId: string;
+        marketplace: "ikigailabs";
+    }): Promise<{
+        status: string;
+        transactionHash?: string;
+    }> {
+        const cancelData = await this.fetchFromReservoir(`/order/v3/cancel`, {
+            orderHash: options.listingId,
+            orderbook: "ikigailabs",
+        });
+
+        return {
+            status: cancelData.status,
+            transactionHash: cancelData.transactionHash,
+        };
+    }
+
+    async getOwnedNFTs(owner: string): Promise<
+        Array<{
+            tokenId: string;
+            collectionAddress: string;
+            name: string;
+            imageUrl?: string;
+            attributes?: Record<string, string>;
+        }>
+    > {
+        const data = await this.fetchFromReservoir(
+            `/users/${owner}/tokens/v7`,
+            {
+                limit: 100,
+                includeAttributes: true,
+            }
+        );
+
+        return data.tokens.map((token: any) => ({
+            tokenId: token.tokenId,
+            collectionAddress: token.contract,
+            name: token.name || `${token.collection.name} #${token.tokenId}`,
+            imageUrl: token.image,
+            attributes: token.attributes?.reduce(
+                (acc: Record<string, string>, attr: any) => {
+                    acc[attr.key] = attr.value;
+                    return acc;
+                },
+                {}
+            ),
+        }));
+    }
+
     async getFloorListings(options: {
         collection: string;
         limit: number;

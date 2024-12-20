@@ -41,6 +41,36 @@ export interface NFTService {
             status: string;
         }>;
     }>;
+    createListing(options: {
+        tokenId: string;
+        collectionAddress: string;
+        price: number;
+        expirationTime?: number; // Unix timestamp
+        marketplace: "ikigailabs";
+        currency?: string; // Default to ETH
+        quantity?: number; // Default to 1 for ERC721
+    }): Promise<{
+        listingId: string;
+        status: string;
+        transactionHash?: string;
+        marketplaceUrl: string;
+    }>;
+    cancelListing(options: {
+        listingId: string;
+        marketplace: "ikigailabs";
+    }): Promise<{
+        status: string;
+        transactionHash?: string;
+    }>;
+    getOwnedNFTs(owner: string): Promise<
+        Array<{
+            tokenId: string;
+            collectionAddress: string;
+            name: string;
+            imageUrl?: string;
+            attributes?: Record<string, string>;
+        }>
+    >;
 }
 
 export interface NFTKnowledge {

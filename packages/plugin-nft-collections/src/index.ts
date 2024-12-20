@@ -3,6 +3,8 @@ import { ReservoirService } from "./services/reservoir";
 import { MarketIntelligenceService } from "./services/market-intelligence";
 import { SocialAnalyticsService } from "./services/social-analytics";
 import { nftCollectionProvider } from "./providers/nft-collections";
+import { sweepFloorAction } from "./actions/sweep-floor";
+import { listNFTAction } from "./actions/list-nft";
 
 export default class NFTCollectionsPlugin extends Plugin {
     public override readonly name = "nft-collections";
@@ -80,6 +82,9 @@ export default class NFTCollectionsPlugin extends Plugin {
 
         (character as any).providers = (character as any).providers || [];
         (character as any).providers.push(nftCollectionProvider);
+
+        (character as any).actions = (character as any).actions || [];
+        (character as any).actions.push(sweepFloorAction, listNFTAction);
     }
 
     async teardown(): Promise<void> {
