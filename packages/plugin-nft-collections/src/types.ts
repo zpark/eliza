@@ -3,122 +3,44 @@ import { Service, ServiceType } from "@ai16z/eliza";
 declare module "@ai16z/eliza" {
     interface ServiceTypeMap {
         nft: Service & NFTService;
+        nft_market_intelligence: Service & MarketIntelligenceService;
+        nft_social_analytics: Service & SocialAnalyticsService;
     }
 }
 
-export interface NFTArtist {
-    id: string;
-    name: string;
-    bio: string;
-    socialLinks: {
-        twitter?: string;
-        instagram?: string;
-        website?: string;
-    };
-    previousCollections: string[];
-    collaborations: string[];
-}
-
-export interface OnChainAnalytics {
-    holdersCount: number;
-    averageHoldingPeriod: number;
-    whaleHolders: Array<{
-        address: string;
-        tokenCount: number;
-        holdingSince: number;
-    }>;
-    transferVolume24h: number;
-    uniqueBuyers24h: number;
-    uniqueSellers24h: number;
-    liquidityDepth: Array<{
-        priceLevel: number;
-        tokenCount: number;
-    }>;
-    traitDistribution: Record<string, Record<string, number>>;
-    rarityScores: Record<string, number>;
-}
-
-export interface MarketActivity {
-    lastSales: Array<{
-        tokenId: string;
-        price: number;
-        timestamp: number;
-        buyer: string;
-        seller: string;
-        marketplace: string;
-    }>;
-    priceHistory: Array<{
-        timestamp: number;
-        floorPrice: number;
-        avgPrice: number;
-        maxPrice: number;
-    }>;
-    washTradingScore: number;
-    marketplaceDistribution: Record<string, number>;
-}
-
-export interface CollectionNews {
-    id: string;
-    title: string;
-    source: string;
-    url: string;
-    timestamp: number;
-    sentiment: "positive" | "negative" | "neutral";
-    relevanceScore: number;
-}
-
-export interface NFTCollection {
-    id: string;
-    name: string;
-    address: string;
-    floorPrice: number;
-    volume24h: number;
-    imageUrl: string;
-    tokenCount: number;
-    artist: NFTArtist;
-    description: string;
-    launchDate: number;
-    category: string[];
-    onChainData: OnChainAnalytics;
-    marketActivity: MarketActivity;
-    news: CollectionNews[];
-    socialMetrics: {
-        twitterFollowers: number;
-        discordMembers: number;
-        telegramMembers: number;
-        sentiment24h: "positive" | "negative" | "neutral";
-    };
-    contractMetadata: {
-        standard: "ERC721" | "ERC1155";
-        hasSecondaryRoyalties: boolean;
-        royaltyBps: number;
-        verifiedContract: boolean;
-        implementedInterfaces: string[];
-    };
-}
-
-export interface NFTListing {
-    id: string;
-    tokenId: string;
-    price: number;
-    source: string;
-    validFrom: number;
-    validUntil: number;
-}
-
-export interface NFTMarketStats {
-    totalVolume24h: number;
-    totalMarketCap: number;
-    activeTraders24h: number;
-    topGainers: Array<{
+export interface NFTService {
+    getTopCollections(): Promise<NFTCollection[]>;
+    getMarketStats(): Promise<MarketStats>;
+    getCollectionActivity(collectionAddress: string): Promise<any>;
+    getCollectionTokens(collectionAddress: string): Promise<any>;
+    getCollectionAttributes(collectionAddress: string): Promise<any>;
+    getFloorListings(options: {
         collection: string;
-        percentageChange: number;
+        limit: number;
+        sortBy: "price" | "rarity";
+    }): Promise<
+        Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>
+    >;
+    executeBuy(options: {
+        listings: Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>;
+        taker: string;
+    }): Promise<{
+        path: string;
+        steps: Array<{
+            action: string;
+            status: string;
+        }>;
     }>;
-    topLosers: Array<{
-        collection: string;
-        percentageChange: number;
-    }>;
-    marketSentiment: "bullish" | "bearish" | "neutral";
 }
 
 export interface NFTKnowledge {
@@ -137,38 +59,235 @@ export interface NFTKnowledge {
     mentionsContract: boolean;
 }
 
-export interface NFTService {
-    getTopCollections(options?: { limit?: number }): Promise<NFTCollection[]>;
-    getFloorListings(params: {
-        collection: string;
-        limit: number;
-        sortBy?: "price" | "rarity";
-    }): Promise<NFTListing[]>;
-    executeBuy(params: {
-        listings: NFTListing[];
-        taker: string;
-        source?: string;
-    }): Promise<{
-        path: string;
-        steps: Array<{
-            id: string;
-            action: string;
-            description: string;
-            status: "complete" | "incomplete";
+export interface MarketIntelligenceService {
+    getMarketIntelligence(
+        collectionAddress: string
+    ): Promise<MarketIntelligence>;
+    getTraitAnalytics(collectionAddress: string): Promise<TraitAnalytics>;
+    detectWashTrading(collectionAddress: string): Promise<{
+        suspiciousAddresses: string[];
+        suspiciousTransactions: Array<{
+            hash: string;
+            from: string;
+            to: string;
+            price: number;
+            confidence: number;
         }>;
     }>;
-    getMarketStats(): Promise<NFTMarketStats>;
-    getCollectionAnalytics(address: string): Promise<OnChainAnalytics>;
-    getCollectionNews(
-        address: string,
-        options?: { limit?: number; minRelevance?: number }
-    ): Promise<CollectionNews[]>;
-    getArtistInfo(artistId: string): Promise<NFTArtist>;
-    getMarketActivity(
-        address: string,
-        options?: {
-            timeframe?: "24h" | "7d" | "30d";
-            excludeWashTrading?: boolean;
-        }
-    ): Promise<MarketActivity>;
+    getWhaleActivity(collectionAddress: string): Promise<{
+        whales: Array<{
+            address: string;
+            holdings: number;
+            avgHoldingTime: number;
+            tradingVolume: number;
+            lastTrade: number;
+        }>;
+        impact: {
+            priceImpact: number;
+            volumeShare: number;
+            holdingsShare: number;
+        };
+    }>;
+    getLiquidityAnalysis(collectionAddress: string): Promise<{
+        depth: Array<{
+            price: number;
+            quantity: number;
+            totalValue: number;
+        }>;
+        metrics: {
+            totalLiquidity: number;
+            averageSpread: number;
+            volatility24h: number;
+        };
+    }>;
+}
+
+export interface SocialAnalyticsService {
+    getSocialMetrics(collectionAddress: string): Promise<SocialMetrics>;
+    getNews(collectionAddress: string): Promise<NewsItem[]>;
+    getCommunityMetrics(
+        collectionAddress: string,
+        discordId?: string,
+        telegramId?: string
+    ): Promise<CommunityMetrics>;
+    analyzeSentiment(collectionAddress: string): Promise<{
+        overall: number;
+        breakdown: {
+            positive: number;
+            neutral: number;
+            negative: number;
+        };
+        trends: Array<{
+            topic: string;
+            sentiment: number;
+            volume: number;
+        }>;
+    }>;
+    trackSocialPerformance(collectionAddress: string): Promise<{
+        metrics: {
+            reach: number;
+            engagement: number;
+            influence: number;
+        };
+        trends: Array<{
+            platform: string;
+            metric: string;
+            values: number[];
+        }>;
+    }>;
+}
+
+export interface NFTCollection {
+    address: string;
+    name: string;
+    symbol: string;
+    description?: string;
+    imageUrl?: string;
+    floorPrice: number;
+    volume24h: number;
+    marketCap: number;
+    holders: number;
+}
+
+export interface MarketStats {
+    totalVolume24h: number;
+    totalMarketCap: number;
+    totalCollections: number;
+    totalHolders: number;
+    averageFloorPrice: number;
+}
+
+export interface MarketIntelligence {
+    priceHistory: Array<{
+        timestamp: number;
+        price: number;
+        volume: number;
+    }>;
+    washTradingMetrics: {
+        suspiciousVolume24h: number;
+        suspiciousTransactions24h: number;
+        washTradingScore: number;
+    };
+    marketplaceActivity: {
+        [marketplace: string]: {
+            volume24h: number;
+            trades24h: number;
+            marketShare: number;
+        };
+    };
+    whaleActivity: Array<{
+        address: string;
+        type: "buy" | "sell";
+        amount: number;
+        timestamp: number;
+    }>;
+    liquidityMetrics: {
+        depth: Array<{
+            price: number;
+            quantity: number;
+        }>;
+        bidAskSpread: number;
+        bestBid: number;
+        bestAsk: number;
+    };
+}
+
+export interface TraitAnalytics {
+    distribution: {
+        [trait: string]: {
+            [value: string]: number;
+        };
+    };
+    rarityScores: {
+        [tokenId: string]: number;
+    };
+    combinations: {
+        total: number;
+        unique: number;
+        rarest: Array<{
+            traits: { [key: string]: string };
+            count: number;
+        }>;
+    };
+    priceByRarity: Array<{
+        rarityRange: [number, number];
+        avgPrice: number;
+        volume: number;
+    }>;
+}
+
+export interface SocialMetrics {
+    twitter: {
+        followers: number;
+        engagement: {
+            likes: number;
+            retweets: number;
+            replies: number;
+            mentions: number;
+        };
+        sentiment: {
+            positive: number;
+            neutral: number;
+            negative: number;
+        };
+    };
+    mentions: Array<{
+        platform: string;
+        content: string;
+        author: string;
+        timestamp: number;
+        reach: number;
+    }>;
+    influencers: Array<{
+        address: string;
+        platform: string;
+        followers: number;
+        engagement: number;
+        sentiment: number;
+    }>;
+    trending: boolean;
+}
+
+export interface NewsItem {
+    title: string;
+    source: string;
+    url: string;
+    timestamp: Date;
+    sentiment: "positive" | "negative" | "neutral";
+    relevance: number;
+}
+
+export interface CommunityMetrics {
+    discord: {
+        members: number;
+        activity: {
+            messagesPerDay: number;
+            activeUsers: number;
+            growthRate: number;
+        };
+        channels: Array<{
+            name: string;
+            members: number;
+            activity: number;
+        }>;
+    } | null;
+    telegram: {
+        members: number;
+        activity: {
+            messagesPerDay: number;
+            activeUsers: number;
+            growthRate: number;
+        };
+    } | null;
+    totalMembers: number;
+    growthRate: number;
+    engagement: {
+        activeUsers: number;
+        messagesPerDay: number;
+        topChannels: Array<{
+            platform: string;
+            name: string;
+            activity: number;
+        }>;
+    };
 }

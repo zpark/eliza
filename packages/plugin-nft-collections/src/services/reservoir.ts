@@ -1,14 +1,5 @@
 import { Service, ServiceType } from "@ai16z/eliza";
-import {
-    NFTCollection,
-    NFTListing,
-    NFTMarketStats,
-    NFTService,
-    OnChainAnalytics,
-    MarketActivity,
-    CollectionNews,
-    NFTArtist,
-} from "../types";
+import type { NFTCollection, MarketStats, NFTService } from "../types";
 
 export class ReservoirService extends Service implements NFTService {
     private apiKey: string;
@@ -27,17 +18,17 @@ export class ReservoirService extends Service implements NFTService {
         // No initialization needed
     }
 
-    private async fetch<T>(
+    private async fetchFromReservoir(
         endpoint: string,
         params: Record<string, any> = {}
-    ): Promise<T> {
+    ): Promise<any> {
         const queryString = new URLSearchParams(params).toString();
         const url = `${this.baseUrl}${endpoint}${queryString ? `?${queryString}` : ""}`;
 
         const response = await fetch(url, {
             headers: {
-                "x-api-key": this.apiKey,
                 accept: "*/*",
+                "x-api-key": this.apiKey,
             },
         });
 
@@ -45,98 +36,151 @@ export class ReservoirService extends Service implements NFTService {
             throw new Error(`Reservoir API error: ${response.statusText}`);
         }
 
-        return response.json();
+        return await response.json();
     }
 
-    async getTopCollections({ limit = 10 } = {}): Promise<NFTCollection[]> {
-        const data = await this.fetch<any>("/collections/v7", {
-            limit: limit.toString(),
+    async getTopCollections(): Promise<NFTCollection[]> {
+        const data = await this.fetchFromReservoir("/collections/v7", {
+            limit: 20,
             sortBy: "1DayVolume",
-            includeTopBid: "true",
-            normalizeRoyalties: "true",
+            includeTopBid: true,
+            normalizeRoyalties: true,
         });
 
         return data.collections.map((collection: any) => ({
-            id: collection.id,
+            address: collection.id,
             name: collection.name,
-            address: collection.primaryContract,
-            floorPrice: collection.floorAsk?.price?.amount?.native || 0,
-            volume24h: collection.volume?.["1day"] || 0,
-            imageUrl: collection.image,
-            tokenCount: collection.tokenCount,
+            symbol: collection.symbol || "",
             description: collection.description,
-            // Map other fields as needed
+            imageUrl: collection.image,
+            floorPrice: collection.floorAsk?.price?.amount?.native || 0,
+            volume24h: collection.volume["1day"] || 0,
+            marketCap: collection.marketCap || 0,
+            holders: collection.ownerCount || 0,
         }));
     }
 
-    async getFloorListings({
-        collection,
-        limit,
-        sortBy = "price",
-    }: {
-        collection: string;
-        limit: number;
-        sortBy?: "price" | "rarity";
-    }): Promise<NFTListing[]> {
-        const data = await this.fetch<any>("/orders/asks/v5", {
-            collection,
-            limit: limit.toString(),
-            sortBy: sortBy === "price" ? "price" : "tokenRank",
+    async getMarketStats(): Promise<MarketStats> {
+        const data = await this.fetchFromReservoir("/collections/v7", {
+            limit: 500,
+            sortBy: "1DayVolume",
         });
 
-        return data.orders.map((order: any) => ({
-            id: order.id,
-            tokenId: order.token.tokenId,
-            price: order.price?.amount?.native || 0,
-            source: order.source?.name || "unknown",
-            validFrom: order.validFrom,
-            validUntil: order.validUntil,
+        const stats = data.collections.reduce(
+            (acc: any, collection: any) => {
+                acc.totalVolume24h += collection.volume["1day"] || 0;
+                acc.totalMarketCap += collection.marketCap || 0;
+                acc.totalHolders += collection.ownerCount || 0;
+                acc.floorPrices.push(
+                    collection.floorAsk?.price?.amount?.native || 0
+                );
+                return acc;
+            },
+            {
+                totalVolume24h: 0,
+                totalMarketCap: 0,
+                totalHolders: 0,
+                floorPrices: [],
+            }
+        );
+
+        return {
+            totalVolume24h: stats.totalVolume24h,
+            totalMarketCap: stats.totalMarketCap,
+            totalCollections: data.collections.length,
+            totalHolders: stats.totalHolders,
+            averageFloorPrice:
+                stats.floorPrices.reduce((a: number, b: number) => a + b, 0) /
+                stats.floorPrices.length,
+        };
+    }
+
+    async getCollectionActivity(collectionAddress: string): Promise<any> {
+        return await this.fetchFromReservoir(`/collections/activity/v6`, {
+            collection: collectionAddress,
+            limit: 100,
+            includeMetadata: true,
+        });
+    }
+
+    async getCollectionTokens(collectionAddress: string): Promise<any> {
+        return await this.fetchFromReservoir(`/tokens/v7`, {
+            collection: collectionAddress,
+            limit: 100,
+            includeAttributes: true,
+            includeTopBid: true,
+        });
+    }
+
+    async getCollectionAttributes(collectionAddress: string): Promise<any> {
+        return await this.fetchFromReservoir(
+            `/collections/${collectionAddress}/attributes/v3`
+        );
+    }
+
+    async getFloorListings(options: {
+        collection: string;
+        limit: number;
+        sortBy: "price" | "rarity";
+    }): Promise<
+        Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>
+    > {
+        const data = await this.fetchFromReservoir(`/tokens/v7`, {
+            collection: options.collection,
+            limit: options.limit,
+            sortBy: options.sortBy === "price" ? "floorAskPrice" : "rarity",
+            includeTopBid: true,
+            status: "listed",
+        });
+
+        return data.tokens.map((token: any) => ({
+            tokenId: token.tokenId,
+            price: token.floorAsk.price.amount.native,
+            seller: token.floorAsk.maker,
+            marketplace: token.floorAsk.source.name,
         }));
     }
 
-    // Implement other methods as needed
-    async executeBuy(params: {
-        listings: NFTListing[];
+    async executeBuy(options: {
+        listings: Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>;
         taker: string;
-        source?: string;
     }): Promise<{
         path: string;
-        steps: {
-            id: string;
+        steps: Array<{
             action: string;
-            description: string;
-            status: "complete" | "incomplete";
-        }[];
+            status: string;
+        }>;
     }> {
-        throw new Error("Method not implemented.");
-    }
+        // Execute buy orders through Reservoir API
+        const orders = options.listings.map((listing) => ({
+            tokenId: listing.tokenId,
+            maker: listing.seller,
+            price: listing.price,
+        }));
 
-    async getMarketStats(): Promise<NFTMarketStats> {
-        throw new Error("Method not implemented.");
-    }
+        const data = await this.fetchFromReservoir(`/execute/bulk/v1`, {
+            taker: options.taker,
+            items: orders,
+            skipBalanceCheck: false,
+            currency: "ETH",
+        });
 
-    async getCollectionAnalytics(address: string): Promise<OnChainAnalytics> {
-        throw new Error("Method not implemented.");
-    }
-
-    async getCollectionNews(
-        address: string,
-        options?: { limit?: number; minRelevance?: number }
-    ): Promise<CollectionNews[]> {
-        throw new Error("Method not implemented.");
-    }
-
-    async getArtistInfo(artistId: string): Promise<NFTArtist> {
-        throw new Error("Method not implemented.");
-    }
-
-    async getMarketActivity(
-        address: string,
-        options?: {
-            timeframe?: "24h" | "7d" | "30d";
-            excludeWashTrading?: boolean;
-        }
-    ): Promise<MarketActivity> {
-        throw new Error("Method not implemented.");
+        return {
+            path: data.path,
+            steps: data.steps.map((step: any) => ({
+                action: step.type,
+                status: step.status,
+            })),
+        };
     }
 }

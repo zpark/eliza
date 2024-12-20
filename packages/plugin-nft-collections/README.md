@@ -1,283 +1,294 @@
 # NFT Collections Plugin
 
-A powerful Eliza plugin that provides deep insights into NFT collections, combining on-chain analytics, market data, artist information, and social metrics.
+A comprehensive NFT collections plugin powered by Reservoir Tools API, with optional integrations for enhanced market intelligence and social analytics.
 
 ## Features
 
-### Collection Data
+### Core Features (Reservoir Tools API)
 
-- Comprehensive collection metadata and statistics
-- Artist profiles and background information
-- Real-time floor prices and volume metrics
-- Social media engagement tracking
-- Contract verification and standards
+- Real-time NFT collection data and market stats
+- Floor prices, volume, and market cap tracking
+- Collection activity monitoring
+- Token-level data and attributes
+- Collection statistics and rankings
 
-### On-Chain Analytics
+### Optional Enhancements
 
-- Holder distribution analysis
-- Whale tracking and monitoring
-- Trading volume and patterns
-- Liquidity depth analysis
-- Trait distribution and rarity scores
+- Market Intelligence (requires additional API keys)
 
-### Market Intelligence
+    - Wash trading detection
+    - Whale activity tracking
+    - Liquidity analysis
+    - Multi-marketplace activity tracking
+    - Price history and trends
 
-- Price history and trends
-- Wash trading detection
-- Multi-marketplace activity tracking
-- Market sentiment analysis
-- Top gainers and losers tracking
+- Social Analytics (requires additional API keys)
+    - Twitter metrics and engagement
+    - Discord community stats
+    - Telegram group analytics
+    - Social sentiment analysis
+    - Community growth tracking
 
-### News & Social
+## Setup
 
-- Curated collection news feed
-- Sentiment analysis on news
-- Community engagement metrics
-- Social media performance tracking
+### Required Configuration
 
-## Installation
+```typescript
+{
+  "secrets": {
+    "RESERVOIR_API_KEY": "your-reservoir-api-key" // Required
+  }
+}
+```
 
-```bash
-npm install @ai16z/plugin-nft-collections
+### Optional API Keys
+
+```typescript
+{
+  "secrets": {
+    // Market Intelligence
+    "NANSEN_API_KEY": "your-nansen-api-key",
+    "DUNE_API_KEY": "your-dune-api-key",
+    "ALCHEMY_API_KEY": "your-alchemy-api-key",
+    "CHAINBASE_API_KEY": "your-chainbase-api-key",
+    "NFTSCAN_API_KEY": "your-nftscan-api-key",
+
+    // Social Analytics
+    "TWITTER_API_KEY": "your-twitter-api-key",
+    "DISCORD_API_KEY": "your-discord-api-key",
+    "TELEGRAM_API_KEY": "your-telegram-api-key"
+  }
+}
 ```
 
 ## Usage
 
+### Basic Usage
+
 ```typescript
-import nftCollectionPlugin from "@ai16z/plugin-nft-collections";
-import { Eliza } from "@ai16z/eliza";
+import { NFTCollectionsPlugin } from "@ai16z/plugin-nft-collections";
 
-// Initialize Eliza with the plugin
-const eliza = new Eliza({
-    plugins: [nftCollectionPlugin],
-});
-
-// Access NFT services
-const nftService = eliza.services.nft;
-
-// Get collection data with all analytics
-const collection = await nftService.getTopCollections({ limit: 1 });
-const analytics = await nftService.getCollectionAnalytics(
-    collection[0].address
-);
-const news = await nftService.getCollectionNews(collection[0].address, {
-    limit: 10,
-    minRelevance: 0.8,
-});
+// Initialize the plugin with required Reservoir API key
+const plugin = new NFTCollectionsPlugin();
+await plugin.setup(character);
 ```
 
-## API Reference
+### Data Access
 
-### Collection Methods
+```typescript
+// Get top collections
+const collections = await nftService.getTopCollections();
 
-#### `getTopCollections(options?: { limit?: number })`
+// Get market stats
+const stats = await nftService.getMarketStats();
 
-Fetches top NFT collections with comprehensive data.
+// Get collection activity
+const activity = await nftService.getCollectionActivity(collectionAddress);
 
-Returns: `Promise<NFTCollection[]>`
+// Get collection tokens
+const tokens = await nftService.getCollectionTokens(collectionAddress);
+
+// Get collection attributes
+const attributes = await nftService.getCollectionAttributes(collectionAddress);
+```
+
+### Enhanced Features (when available)
+
+#### Market Intelligence
+
+```typescript
+// Get market intelligence data
+const intelligence =
+    await marketIntelligenceService.getMarketIntelligence(collectionAddress);
+
+// Detect wash trading
+const washTrading =
+    await marketIntelligenceService.detectWashTrading(collectionAddress);
+
+// Get whale activity
+const whales =
+    await marketIntelligenceService.getWhaleActivity(collectionAddress);
+
+// Get liquidity analysis
+const liquidity =
+    await marketIntelligenceService.getLiquidityAnalysis(collectionAddress);
+```
+
+#### Social Analytics
+
+```typescript
+// Get social metrics
+const social = await socialAnalyticsService.getSocialMetrics(collectionAddress);
+
+// Get community metrics
+const community =
+    await socialAnalyticsService.getCommunityMetrics(collectionAddress);
+
+// Get sentiment analysis
+const sentiment =
+    await socialAnalyticsService.analyzeSentiment(collectionAddress);
+
+// Track social performance
+const performance =
+    await socialAnalyticsService.trackSocialPerformance(collectionAddress);
+```
+
+## API Response Types
+
+### Core Types
 
 ```typescript
 interface NFTCollection {
-    id: string;
-    name: string;
     address: string;
+    name: string;
+    symbol: string;
+    description?: string;
+    imageUrl?: string;
     floorPrice: number;
     volume24h: number;
-    imageUrl: string;
-    tokenCount: number;
-    artist: NFTArtist;
-    description: string;
-    launchDate: number;
-    category: string[];
-    onChainData: OnChainAnalytics;
-    marketActivity: MarketActivity;
-    news: CollectionNews[];
-    socialMetrics: {
-        twitterFollowers: number;
-        discordMembers: number;
-        telegramMembers: number;
-        sentiment24h: "positive" | "negative" | "neutral";
-    };
-    contractMetadata: {
-        standard: "ERC721" | "ERC1155";
-        hasSecondaryRoyalties: boolean;
-        royaltyBps: number;
-        verifiedContract: boolean;
-        implementedInterfaces: string[];
-    };
+    marketCap: number;
+    holders: number;
 }
-```
 
-#### `getCollectionAnalytics(address: string)`
-
-Fetches detailed on-chain analytics for a collection.
-
-Returns: `Promise<OnChainAnalytics>`
-
-```typescript
-interface OnChainAnalytics {
-    holdersCount: number;
-    averageHoldingPeriod: number;
-    whaleHolders: Array<{
-        address: string;
-        tokenCount: number;
-        holdingSince: number;
-    }>;
-    transferVolume24h: number;
-    uniqueBuyers24h: number;
-    uniqueSellers24h: number;
-    liquidityDepth: Array<{
-        priceLevel: number;
-        tokenCount: number;
-    }>;
-    traitDistribution: Record<string, Record<string, number>>;
-    rarityScores: Record<string, number>;
-}
-```
-
-#### `getMarketActivity(address: string, options?: { timeframe?: "24h" | "7d" | "30d", excludeWashTrading?: boolean })`
-
-Fetches market activity with optional wash trading filtering.
-
-Returns: `Promise<MarketActivity>`
-
-```typescript
-interface MarketActivity {
-    lastSales: Array<{
-        tokenId: string;
-        price: number;
-        timestamp: number;
-        buyer: string;
-        seller: string;
-        marketplace: string;
-    }>;
-    priceHistory: Array<{
-        timestamp: number;
-        floorPrice: number;
-        avgPrice: number;
-        maxPrice: number;
-    }>;
-    washTradingScore: number;
-    marketplaceDistribution: Record<string, number>;
-}
-```
-
-#### `getCollectionNews(address: string, options?: { limit?: number; minRelevance?: number })`
-
-Fetches curated news for a collection with relevance filtering.
-
-Returns: `Promise<CollectionNews[]>`
-
-```typescript
-interface CollectionNews {
-    id: string;
-    title: string;
-    source: string;
-    url: string;
-    timestamp: number;
-    sentiment: "positive" | "negative" | "neutral";
-    relevanceScore: number;
-}
-```
-
-#### `getArtistInfo(artistId: string)`
-
-Fetches detailed artist information.
-
-Returns: `Promise<NFTArtist>`
-
-```typescript
-interface NFTArtist {
-    id: string;
-    name: string;
-    bio: string;
-    socialLinks: {
-        twitter?: string;
-        instagram?: string;
-        website?: string;
-    };
-    previousCollections: string[];
-    collaborations: string[];
-}
-```
-
-### Market Methods
-
-#### `getMarketStats()`
-
-Fetches overall NFT market statistics.
-
-Returns: `Promise<NFTMarketStats>`
-
-```typescript
-interface NFTMarketStats {
+interface MarketStats {
     totalVolume24h: number;
     totalMarketCap: number;
-    activeTraders24h: number;
-    topGainers: Array<{
-        collection: string;
-        percentageChange: number;
-    }>;
-    topLosers: Array<{
-        collection: string;
-        percentageChange: number;
-    }>;
-    marketSentiment: "bullish" | "bearish" | "neutral";
+    totalCollections: number;
+    totalHolders: number;
+    averageFloorPrice: number;
 }
 ```
 
-#### `getFloorListings(params: { collection: string; limit: number; sortBy?: "price" | "rarity" })`
-
-Fetches floor listings with optional sorting.
-
-Returns: `Promise<NFTListing[]>`
+### Market Intelligence Types
 
 ```typescript
-interface NFTListing {
-    id: string;
-    tokenId: string;
-    price: number;
-    source: string;
-    validFrom: number;
-    validUntil: number;
+interface MarketIntelligence {
+    priceHistory: Array<{
+        timestamp: number;
+        price: number;
+        volume: number;
+    }>;
+    washTradingMetrics: {
+        suspiciousVolume24h: number;
+        suspiciousTransactions24h: number;
+        washTradingScore: number;
+    };
+    marketplaceActivity: {
+        [marketplace: string]: {
+            volume24h: number;
+            trades24h: number;
+            marketShare: number;
+        };
+    };
+    whaleActivity: Array<{
+        address: string;
+        type: "buy" | "sell";
+        amount: number;
+        timestamp: number;
+    }>;
+    liquidityMetrics: {
+        depth: Array<{
+            price: number;
+            quantity: number;
+        }>;
+        bidAskSpread: number;
+        bestBid: number;
+        bestAsk: number;
+    };
 }
 ```
 
-### Trading Methods
+### Social Analytics Types
 
-#### `executeBuy(params: { listings: NFTListing[]; taker: string; source?: string })`
+```typescript
+interface SocialMetrics {
+    twitter: {
+        followers: number;
+        engagement: {
+            likes: number;
+            retweets: number;
+            replies: number;
+            mentions: number;
+        };
+        sentiment: {
+            positive: number;
+            neutral: number;
+            negative: number;
+        };
+    };
+    mentions: Array<{
+        platform: string;
+        content: string;
+        author: string;
+        timestamp: number;
+        reach: number;
+    }>;
+    influencers: Array<{
+        address: string;
+        platform: string;
+        followers: number;
+        engagement: number;
+        sentiment: number;
+    }>;
+    trending: boolean;
+}
 
-Executes NFT purchase transactions.
+interface CommunityMetrics {
+    discord: {
+        members: number;
+        activity: {
+            messagesPerDay: number;
+            activeUsers: number;
+            growthRate: number;
+        };
+        channels: Array<{
+            name: string;
+            members: number;
+            activity: number;
+        }>;
+    } | null;
+    telegram: {
+        members: number;
+        activity: {
+            messagesPerDay: number;
+            activeUsers: number;
+            growthRate: number;
+        };
+    } | null;
+    totalMembers: number;
+    growthRate: number;
+    engagement: {
+        activeUsers: number;
+        messagesPerDay: number;
+        topChannels: Array<{
+            platform: string;
+            name: string;
+            activity: number;
+        }>;
+    };
+}
+```
 
-Returns: `Promise<{ path: string; steps: Array<{ id: string; action: string; description: string; status: "complete" | "incomplete" }> }>`
+## Error Handling
 
-## Plugin Components
+The plugin includes robust error handling for both required and optional services:
 
-The plugin consists of:
+- Required Reservoir API errors are thrown and must be handled by the application
+- Optional service errors are caught and logged, allowing the application to continue with reduced functionality
+- Network errors and API rate limits are handled gracefully
+- Invalid API keys trigger clear error messages during setup
 
-- **Actions**: `getCollections` and `sweepFloor` for collection data and trading
-- **Providers**: `nftCollectionProvider` for data aggregation
-- **Evaluators**: `nftKnowledgeEvaluator` for context-aware responses
+## Rate Limits
+
+- Reservoir API: Refer to [Reservoir API docs](https://docs.reservoir.tools/reference/rate-limits) for current limits
+- Optional APIs: Refer to respective API documentation for rate limits
+- Implement appropriate caching strategies for high-traffic applications
 
 ## Best Practices
 
-1. **Data Freshness**
-
-    - Always check timestamps on market data
-    - Use real-time floor prices for trading
-    - Consider wash trading scores for volume analysis
-
-2. **Analytics Usage**
-
-    - Filter out wash trading for accurate market analysis
-    - Use relevance scores for news filtering
-    - Consider holding periods for whale analysis
-
-3. **Performance**
-    - Cache collection metadata when possible
-    - Stream large datasets for trait analysis
-    - Batch on-chain queries for efficiency
-
-## License
-
-MIT
+1. Always provide the Reservoir API key during setup
+2. Implement appropriate error handling for required services
+3. Use optional services only when needed to minimize API calls
+4. Cache frequently accessed data when appropriate
+5. Monitor API usage to stay within rate limits
+6. Keep API keys secure and never expose them in client-side code
