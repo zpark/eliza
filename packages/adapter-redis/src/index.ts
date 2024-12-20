@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import { IDatabaseCacheAdapter, UUID } from "@ai16z/eliza";
+import { IDatabaseCacheAdapter, UUID, elizaLogger } from "@ai16z/eliza";
 
 export class RedisClient implements IDatabaseCacheAdapter {
     private client: Redis;
@@ -8,11 +8,11 @@ export class RedisClient implements IDatabaseCacheAdapter {
         this.client = new Redis(redisUrl);
 
         this.client.on("connect", () => {
-            console.log("Connected to Redis");
+            elizaLogger.success("Connected to Redis");
         });
 
         this.client.on("error", (err) => {
-            console.error("Redis error:", err);
+            elizaLogger.error("Redis error:", err);
         });
     }
 
@@ -25,7 +25,7 @@ export class RedisClient implements IDatabaseCacheAdapter {
             const value = await this.client.get(redisKey);
             return value || undefined;
         } catch (err) {
-            console.error("Error getting cache:", err);
+            elizaLogger.error("Error getting cache:", err);
             return undefined;
         }
     }
@@ -40,7 +40,7 @@ export class RedisClient implements IDatabaseCacheAdapter {
             await this.client.set(redisKey, params.value);
             return true;
         } catch (err) {
-            console.error("Error setting cache:", err);
+            elizaLogger.error("Error setting cache:", err);
             return false;
         }
     }
@@ -54,7 +54,7 @@ export class RedisClient implements IDatabaseCacheAdapter {
             const result = await this.client.del(redisKey);
             return result > 0;
         } catch (err) {
-            console.error("Error deleting cache:", err);
+            elizaLogger.error("Error deleting cache:", err);
             return false;
         }
     }
@@ -62,9 +62,9 @@ export class RedisClient implements IDatabaseCacheAdapter {
     async disconnect(): Promise<void> {
         try {
             await this.client.quit();
-            console.log("Disconnected from Redis");
+            elizaLogger.success("Disconnected from Redis");
         } catch (err) {
-            console.error("Error disconnecting from Redis:", err);
+            elizaLogger.error("Error disconnecting from Redis:", err);
         }
     }
 
