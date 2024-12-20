@@ -44,5 +44,30 @@ export function enhanceResponse(response: string, state: State): string {
             " I can show you market cap rankings and valuation metrics.";
     }
 
+    if (nftKnowledge?.mentionsArtist) {
+        response +=
+            " I can provide detailed information about the artist, their background, and previous collections.";
+    }
+
+    if (nftKnowledge?.mentionsOnChainData) {
+        response +=
+            " I can show you detailed on-chain analytics including holder distribution and trading patterns.";
+    }
+
+    if (nftKnowledge?.mentionsNews) {
+        response +=
+            " I can share the latest news and announcements about this collection.";
+    }
+
+    if (nftKnowledge?.mentionsSocial) {
+        response +=
+            " I can provide social media metrics and community engagement data.";
+    }
+
+    if (nftKnowledge?.mentionsContract) {
+        response +=
+            " I can show you contract details including standards, royalties, and verification status.";
+    }
+
     return response;
 }
