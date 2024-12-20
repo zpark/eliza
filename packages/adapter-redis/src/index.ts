@@ -4,8 +4,8 @@ import { IDatabaseCacheAdapter, UUID } from "@ai16z/eliza";
 export class RedisClient implements IDatabaseCacheAdapter {
     private client: Redis;
 
-    constructor() {
-        this.client = new Redis();
+    constructor(redisUrl: string) {
+        this.client = new Redis(redisUrl);
 
         this.client.on("connect", () => {
             console.log("Connected to Redis");
