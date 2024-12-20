@@ -392,9 +392,12 @@ importers:
         specifier: workspace:*
         version: link:../core
       ioredis:
-        specifier: ^5.4.2
+        specifier: 5.4.2
         version: 5.4.2
     devDependencies:
+      '@types/ioredis':
+        specifier: ^5.0.0
+        version: 5.0.0
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.1)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
@@ -7481,6 +7484,10 @@ packages:
 
   '@types/http-proxy@1.17.15':
     resolution: {integrity: sha512-25g5atgiVNTIv0LBDTg1H74Hvayx0ajtJPLLcYE3whFv75J0pWNtOBzaXJQgDTmrX1bx5U9YC2w/n65BN1HwRQ==}
+
+  '@types/ioredis@5.0.0':
+    resolution: {integrity: sha512-zJbJ3FVE17CNl5KXzdeSPtdltc4tMT3TzC6fxQS0sQngkbFZ6h+0uTafsRqu+eSLIugf6Yb0Ea0SUuRr42Nk9g==}
+    deprecated: This is a stub types definition. ioredis provides its own type definitions, so you do not need this installed.
 
   '@types/is-stream@1.1.0':
     resolution: {integrity: sha512-jkZatu4QVbR60mpIzjINmtS1ZF4a/FqdTUTBeQDVOQ2PYyidtwFKr0B5G6ERukKwliq+7mIXvxyppwzG5EgRYg==}
@@ -27491,6 +27498,12 @@ snapshots:
   '@types/http-proxy@1.17.15':
     dependencies:
       '@types/node': 20.17.9
+
+  '@types/ioredis@5.0.0':
+    dependencies:
+      ioredis: 5.4.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@types/is-stream@1.1.0':
     dependencies:
