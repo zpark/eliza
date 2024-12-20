@@ -4,10 +4,9 @@ import { NFTCollection, NFTService } from "../types";
 export const nftCollectionProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory) => {
         try {
-            const nftService = runtime.services.get("nft") as any as NFTService;
-            if (!nftService) {
-                throw new Error("NFT service not configured");
-            }
+            const nftService = (runtime.services as any).get(
+                "nft"
+            ) as NFTService;
 
             const collections = await nftService.getTopCollections({
                 limit: 10,

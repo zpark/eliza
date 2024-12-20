@@ -1,5 +1,11 @@
 import { Service } from "@ai16z/eliza";
 
+declare module "@ai16z/eliza" {
+    interface Service {
+        serviceType: "nft";
+    }
+}
+
 export interface NFTCollection {
     id: string;
     name: string;
