@@ -112,15 +112,22 @@ async function send(message) {
 }
 
 async function runIntegrationTest(fn) {
-    const proc = await startAgent();
-    try {
-        await fn();
-        log("✓ Test passed");
-    } catch (error) {
-        log("✗ Test failed");
-        logError(error);
-    } finally {
-        await stopAgent(proc);
+    const skip = fn.hasOwnProperty("skipIf") ? fn.skipIf : false;
+    const description = fn.description ?? "unnamed";
+    if (skip) {
+        log(fn.description ? `Skipping test ${fn.description}...` : "Skipping test...");
+    } else {
+        log(fn.description ? `Running test ${fn.description}...` : "Running test...");
+        const proc = await startAgent();
+        try {
+            await fn();
+            log(fn.description ? `✓ Test ${fn.description} passed` : "✓ Test passed");
+        } catch (error) {
+            log(fn.description ? `✗ Test ${fn.description} failed` : "✗ Test failed");
+            logError(error);
+        } finally {
+            await stopAgent(proc);
+        }
     }
 }
 

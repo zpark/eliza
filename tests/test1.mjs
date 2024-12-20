@@ -6,28 +6,19 @@ import {
     runIntegrationTest,
 } from "./testLibrary.mjs";
 
-// Validation function to check required environment variables
-async function validateEnvironment(requiredVars) {
-    const missing = requiredVars.filter(varName => !process.env[varName]);
-    if (missing.length > 0) {
-        throw new Error(`Required environment variables not set: ${missing.join(', ')}\nPlease set these variables before running the tests.`);
-    }
-    return true;
-}
 
 async function helloTrump() {
     const reply = await send("Hi");
-
     assert(reply.length > 0, "Response should not be empty");
     const response = reply[0];
     assert(response.text, "Response should have text property");
     assert(response.text.length > 10, `Response should be longer than 10 characters, is ${reply.length}`);
-
 }
+helloTrump.description = "Hello Trump";
+helloTrump.skipIf = !process.env.OPENAI_API_KEY;
+
 
 async function coinbaseCommerceChargeTest() {
-    await validateEnvironment(['COINBASE_COMMERCE_KEY']);
-
     const chargeDescription = "Exclusive digital artwork collection";
     const chargeRequest = `Create a charge for $100 USD for Digital Art NFT with description '${chargeDescription}'`;
     const response = await send(chargeRequest);
@@ -106,8 +97,15 @@ async function coinbaseCommerceChargeTest() {
     assert.equal(chargeData.data.hosted_url, createdChargeUrl, "Hosted URLs should match");
     assert.equal(chargeData.data.description, chargeDescription, "Charge description should match")
 }
+coinbaseCommerceChargeTest.description = "Coinbase Charge";
+coinbaseCommerceChargeTest.skipIf = !process.env.OPENAI_API_KEY || !process.env.COINBASE_COMMERCE_KEY;
 
-const testSuite = [helloTrump, coinbaseCommerceChargeTest]; // Add tests here
+
+
+const testSuite = [
+    helloTrump,
+    coinbaseCommerceChargeTest,
+];
 try {
     for (const test of testSuite) await runIntegrationTest(test);
 } catch (error) {
