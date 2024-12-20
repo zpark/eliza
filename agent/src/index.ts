@@ -18,7 +18,7 @@ type IAgentRuntime = any;
 type ICacheManager = any;
 type IDatabaseAdapter = any;
 type IDatabaseCacheAdapter = any;
-type ModelProvider = typeof ModelProviderName;
+type ModelProvider = ModelProviderName;
 
 import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
 import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
