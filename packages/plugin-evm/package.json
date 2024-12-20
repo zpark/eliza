@@ -11,7 +11,8 @@
         "@lifi/types": "16.3.0",
         "axios": "^1.6.2",
         "tsup": "8.3.5",
-        "viem": "2.21.53"
+        "viem": "2.21.53",
+        "@ai16z/plugin-nft-collections": "workspace:*"
     },
     "scripts": {
         "build": "tsup --format esm --dts",

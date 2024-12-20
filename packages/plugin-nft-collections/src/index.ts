@@ -4,8 +4,9 @@ import {
     IAgentRuntime,
     Memory,
     State,
-    ServiceType,
+    Service,
     Evaluator,
+    ServiceType,
 } from "@ai16z/eliza";
 import { nftCollectionProvider } from "./providers/nft-collections";
 
@@ -16,14 +17,15 @@ interface NFTKnowledge {
     mentionsRarity: boolean;
 }
 
-interface INFTMarketplaceService {
+interface INFTMarketplaceService extends Service {
+    serviceType: ServiceType;
     getFloorNFTs(collectionAddress: string, quantity: number): Promise<any[]>;
     batchPurchaseNFTs(nfts: any[]): Promise<string[]>;
 }
 
 // Helper function to enhance responses based on NFT knowledge
 const enhanceResponse = (response: string, state: State) => {
-    const { nftKnowledge } = state;
+    const nftKnowledge = state.nftKnowledge as NFTKnowledge;
 
     if (nftKnowledge?.mentionsCollection) {
         response +=
@@ -49,7 +51,15 @@ const enhanceResponse = (response: string, state: State) => {
 };
 
 const nftCollectionEvaluator: Evaluator = {
-    evaluate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    name: "nft-collection-evaluator",
+    description: "Evaluates NFT-related content in messages",
+    similes: ["nft-evaluator", "nft-knowledge"],
+    alwaysRun: false,
+    validate: async (runtime: IAgentRuntime, message: Memory) => {
+        const content = message.content.text.toLowerCase();
+        return content.includes("nft") || content.includes("collection");
+    },
+    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
         const content = message.content.text.toLowerCase();
 
         // Extract relevant NFT information
@@ -68,12 +78,28 @@ const nftCollectionEvaluator: Evaluator = {
         // Update state with extracted information
         return {
             ...state,
-            nftKnowledge: {
-                ...state.nftKnowledge,
-                ...extractedInfo,
-            },
+            nftKnowledge: extractedInfo,
         };
     },
+    examples: [
+        {
+            context: "Evaluating NFT-related content in messages",
+            messages: [
+                {
+                    user: "{{user1}}",
+                    content: { text: "Tell me about NFT collections" },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "I'll help you understand NFT collections.",
+                    },
+                },
+            ],
+            outcome:
+                "The message contains NFT-related content and should be evaluated.",
+        },
+    ],
 };
 
 // Helper function to extract NFT details from the message
@@ -107,9 +133,12 @@ const sweepFloorNFTAction: Action = {
             );
 
             // Get NFT marketplace service
-            const nftService = runtime.getService<INFTMarketplaceService>(
-                ServiceType.NFT_MARKETPLACE
-            );
+            const nftService = (runtime.services as any).get(
+                "nft_marketplace"
+            ) as INFTMarketplaceService;
+            if (!nftService) {
+                throw new Error("NFT marketplace service not found");
+            }
 
             // Fetch floor NFTs
             const floorNFTs = await nftService.getFloorNFTs(
@@ -124,15 +153,26 @@ const sweepFloorNFTAction: Action = {
             const response = `Successfully swept ${quantity} floor NFTs from collection ${collectionAddress}. Transaction hashes: ${transactions.join(", ")}`;
 
             // Send response
-            await runtime.sendMessage(message.roomId, response);
+            await runtime.messageManager.createMemory({
+                id: message.id,
+                content: { text: response },
+                roomId: message.roomId,
+                userId: message.userId,
+                agentId: runtime.agentId,
+            });
 
             return true;
         } catch (error) {
             console.error("Floor sweep failed:", error);
-            await runtime.sendMessage(
-                message.roomId,
-                "Failed to sweep floor NFTs. Please try again later."
-            );
+            await runtime.messageManager.createMemory({
+                id: message.id,
+                content: {
+                    text: "Failed to sweep floor NFTs. Please try again later.",
+                },
+                roomId: message.roomId,
+                userId: message.userId,
+                agentId: runtime.agentId,
+            });
             return false;
         }
     },
@@ -158,6 +198,7 @@ const sweepFloorNFTAction: Action = {
 
 const nftCollectionAction: Action = {
     name: "GET_NFT_COLLECTIONS",
+    similes: ["LIST_NFT_COLLECTIONS", "SHOW_NFT_COLLECTIONS"],
     description:
         "Fetches information about curated NFT collections on Ethereum",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
@@ -166,14 +207,23 @@ const nftCollectionAction: Action = {
     handler: async (runtime: IAgentRuntime, message: Memory) => {
         try {
             const response = await nftCollectionProvider.get(runtime, message);
-            await runtime.sendMessage(message.roomId, response);
+            await runtime.messageManager.createMemory({
+                id: message.id,
+                content: { text: response },
+                roomId: message.roomId,
+                userId: message.userId,
+                agentId: runtime.agentId,
+            });
             return true;
         } catch (error) {
             console.error("Error fetching NFT collections:", error);
-            await runtime.sendMessage(
-                message.roomId,
-                "Failed to fetch NFT collection data."
-            );
+            await runtime.messageManager.createMemory({
+                id: message.id,
+                content: { text: "Failed to fetch NFT collection data." },
+                roomId: message.roomId,
+                userId: message.userId,
+                agentId: runtime.agentId,
+            });
             return false;
         }
     },
