@@ -6,14 +6,24 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "test": "jest"
+        "test": "jest",
+        "lint": "eslint src --ext .ts",
+        "format": "prettier --write src/**/*.ts"
     },
     "dependencies": {
         "@ai16z/eliza": "workspace:*",
+        "@ai16z/plugin-evm": "workspace:*",
         "axios": "^1.6.7"
     },
     "devDependencies": {
-        "typescript": "^5.3.3",
-        "@types/node": "^20.11.16"
+        "@types/node": "^20.11.16",
+        "@typescript-eslint/eslint-plugin": "^6.21.0",
+        "@typescript-eslint/parser": "^6.21.0",
+        "eslint": "^8.56.0",
+        "prettier": "^3.2.5",
+        "typescript": "^5.3.3"
+    },
+    "peerDependencies": {
+        "@ai16z/eliza": "workspace:*"
     }
 }
