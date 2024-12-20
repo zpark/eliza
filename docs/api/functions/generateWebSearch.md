@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / generateWebSearch
+[@ai16z/eliza v0.1.6-alpha.4](../index.md) / generateWebSearch
 
 # Function: generateWebSearch()
 
@@ -16,4 +16,4 @@
 
 ## Defined in
 
-[packages/core/src/generation.ts:1199](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L1199)
+[packages/core/src/generation.ts:1200](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L1200)
