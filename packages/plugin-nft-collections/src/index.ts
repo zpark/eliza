@@ -1,21 +1,13 @@
 import {
     Plugin,
     Action,
-    Provider,
     IAgentRuntime,
     Memory,
     State,
     ServiceType,
     Evaluator,
 } from "@ai16z/eliza";
-import axios from "axios";
-
-interface NFTCollection {
-    name: string;
-    totalSupply: number;
-    floorPrice: number;
-    volume24h: number;
-}
+import { nftCollectionProvider } from "./providers/nft-collections";
 
 interface NFTKnowledge {
     mentionsCollection: boolean;
@@ -96,25 +88,6 @@ function extractNFTDetails(text: string): {
     };
 }
 
-const fetchNFTCollections = async (): Promise<NFTCollection[]> => {
-    const API_KEY = process.env.RESERVOIR_API_KEY;
-    const response = await axios.get(
-        "https://api.reservoir.tools/collections/v6",
-        {
-            headers: {
-                accept: "application/json",
-                "x-api-key": API_KEY,
-            },
-        }
-    );
-    return response.data.collections.map((collection: any) => ({
-        name: collection.name,
-        totalSupply: collection.totalSupply,
-        floorPrice: collection.floorAsk.price.amount.native,
-        volume24h: collection.volume["1day"],
-    }));
-};
-
 const sweepFloorNFTAction: Action = {
     name: "SWEEP_FLOOR_NFT",
     similes: ["BUY_FLOOR_NFT", "PURCHASE_FLOOR_NFT"],
@@ -192,13 +165,7 @@ const nftCollectionAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory) => {
         try {
-            const collections = await fetchNFTCollections();
-            const response = collections
-                .map(
-                    (c) =>
-                        `${c.name}: Supply: ${c.totalSupply}, Floor: ${c.floorPrice.toFixed(2)} ETH, 24h Volume: ${c.volume24h.toFixed(2)} ETH`
-                )
-                .join("\n");
+            const response = await nftCollectionProvider.get(runtime, message);
             await runtime.sendMessage(message.roomId, response);
             return true;
         } catch (error) {
@@ -227,23 +194,6 @@ const nftCollectionAction: Action = {
             },
         ],
     ],
-};
-
-const nftCollectionProvider: Provider = {
-    get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        try {
-            const collections = await fetchNFTCollections();
-            return `Current top NFT collections on Ethereum:\n${collections
-                .map(
-                    (c) =>
-                        `${c.name}: Supply: ${c.totalSupply}, Floor: ${c.floorPrice.toFixed(2)} ETH, 24h Volume: ${c.volume24h.toFixed(2)} ETH`
-                )
-                .join("\n")}`;
-        } catch (error) {
-            console.error("Error in NFT collection provider:", error);
-            return "Unable to fetch NFT collection data at the moment.";
-        }
-    },
 };
 
 const nftCollectionPlugin: Plugin = {
