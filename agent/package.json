@@ -6,7 +6,8 @@
     "scripts": {
         "start": "node --loader ts-node/esm src/index.ts",
         "dev": "node --loader ts-node/esm src/index.ts",
-        "check-types": "tsc --noEmit"
+        "check-types": "tsc --noEmit",
+        "build": "tsup src/index.ts --format cjs,esm --dts"
     },
     "nodemonConfig": {
         "watch": [
