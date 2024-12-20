@@ -1,6 +1,6 @@
 # NFT Collections Plugin
 
-A comprehensive NFT collections plugin powered by Reservoir Tools API, with optional integrations for enhanced market intelligence and social analytics.
+A comprehensive NFT collections plugin powered by Reservoir Tools API, with optional integrations for enhanced market intelligence and social analytics. Features automated NFT trading capabilities with ikigailabs.xyz integration.
 
 ## Features
 
@@ -11,6 +11,21 @@ A comprehensive NFT collections plugin powered by Reservoir Tools API, with opti
 - Collection activity monitoring
 - Token-level data and attributes
 - Collection statistics and rankings
+
+### Trading Features
+
+- Automated Floor Sweeping
+
+    - Buy NFTs at floor price
+    - Batch purchase support
+    - Multi-marketplace execution
+
+- Automated Listing (ikigailabs.xyz)
+    - Automatic 2x purchase price listing
+    - Manual price override option
+    - Purchase history tracking
+    - Ownership verification
+    - 30-day listing duration
 
 ### Optional Enhancements
 
@@ -73,6 +88,25 @@ const plugin = new NFTCollectionsPlugin();
 await plugin.setup(character);
 ```
 
+### Trading Commands
+
+#### Sweep Floor
+
+```
+// Buy NFTs at floor price
+"Sweep 5 NFTs from collection 0x1234...abcd at floor price"
+```
+
+#### List NFT
+
+```
+// Automatic listing at 2x purchase price
+"List token #123 from collection 0x1234...abcd"
+
+// Manual price override
+"List token #123 from collection 0x1234...abcd for 5 ETH"
+```
+
 ### Data Access
 
 ```typescript
@@ -90,6 +124,33 @@ const tokens = await nftService.getCollectionTokens(collectionAddress);
 
 // Get collection attributes
 const attributes = await nftService.getCollectionAttributes(collectionAddress);
+```
+
+### Trading Methods
+
+```typescript
+// Sweep floor
+const buyResult = await nftService.executeBuy({
+    listings: floorListings,
+    taker: walletAddress,
+});
+
+// List NFT
+const listingResult = await nftService.createListing({
+    tokenId: "123",
+    collectionAddress: "0x...",
+    price: 2.5,
+    marketplace: "ikigailabs",
+});
+
+// Cancel listing
+const cancelResult = await nftService.cancelListing({
+    listingId: "listing-id",
+    marketplace: "ikigailabs",
+});
+
+// Get owned NFTs
+const ownedNFTs = await nftService.getOwnedNFTs(walletAddress);
 ```
 
 ### Enhanced Features (when available)
@@ -133,139 +194,40 @@ const performance =
     await socialAnalyticsService.trackSocialPerformance(collectionAddress);
 ```
 
-## API Response Types
+## Trading Response Types
 
-### Core Types
+### Buy Response
 
 ```typescript
-interface NFTCollection {
-    address: string;
+interface BuyResponse {
+    path: string;
+    steps: Array<{
+        action: string;
+        status: string;
+    }>;
+}
+```
+
+### Listing Response
+
+```typescript
+interface ListingResponse {
+    listingId: string;
+    status: string;
+    transactionHash?: string;
+    marketplaceUrl: string;
+}
+```
+
+### NFT Ownership
+
+```typescript
+interface OwnedNFT {
+    tokenId: string;
+    collectionAddress: string;
     name: string;
-    symbol: string;
-    description?: string;
     imageUrl?: string;
-    floorPrice: number;
-    volume24h: number;
-    marketCap: number;
-    holders: number;
-}
-
-interface MarketStats {
-    totalVolume24h: number;
-    totalMarketCap: number;
-    totalCollections: number;
-    totalHolders: number;
-    averageFloorPrice: number;
-}
-```
-
-### Market Intelligence Types
-
-```typescript
-interface MarketIntelligence {
-    priceHistory: Array<{
-        timestamp: number;
-        price: number;
-        volume: number;
-    }>;
-    washTradingMetrics: {
-        suspiciousVolume24h: number;
-        suspiciousTransactions24h: number;
-        washTradingScore: number;
-    };
-    marketplaceActivity: {
-        [marketplace: string]: {
-            volume24h: number;
-            trades24h: number;
-            marketShare: number;
-        };
-    };
-    whaleActivity: Array<{
-        address: string;
-        type: "buy" | "sell";
-        amount: number;
-        timestamp: number;
-    }>;
-    liquidityMetrics: {
-        depth: Array<{
-            price: number;
-            quantity: number;
-        }>;
-        bidAskSpread: number;
-        bestBid: number;
-        bestAsk: number;
-    };
-}
-```
-
-### Social Analytics Types
-
-```typescript
-interface SocialMetrics {
-    twitter: {
-        followers: number;
-        engagement: {
-            likes: number;
-            retweets: number;
-            replies: number;
-            mentions: number;
-        };
-        sentiment: {
-            positive: number;
-            neutral: number;
-            negative: number;
-        };
-    };
-    mentions: Array<{
-        platform: string;
-        content: string;
-        author: string;
-        timestamp: number;
-        reach: number;
-    }>;
-    influencers: Array<{
-        address: string;
-        platform: string;
-        followers: number;
-        engagement: number;
-        sentiment: number;
-    }>;
-    trending: boolean;
-}
-
-interface CommunityMetrics {
-    discord: {
-        members: number;
-        activity: {
-            messagesPerDay: number;
-            activeUsers: number;
-            growthRate: number;
-        };
-        channels: Array<{
-            name: string;
-            members: number;
-            activity: number;
-        }>;
-    } | null;
-    telegram: {
-        members: number;
-        activity: {
-            messagesPerDay: number;
-            activeUsers: number;
-            growthRate: number;
-        };
-    } | null;
-    totalMembers: number;
-    growthRate: number;
-    engagement: {
-        activeUsers: number;
-        messagesPerDay: number;
-        topChannels: Array<{
-            platform: string;
-            name: string;
-            activity: number;
-        }>;
-    };
+    attributes?: Record<string, string>;
 }
 ```
 
@@ -277,6 +239,11 @@ The plugin includes robust error handling for both required and optional service
 - Optional service errors are caught and logged, allowing the application to continue with reduced functionality
 - Network errors and API rate limits are handled gracefully
 - Invalid API keys trigger clear error messages during setup
+- Trading errors include detailed messages for:
+    - Ownership verification failures
+    - Missing purchase history
+    - Price determination issues
+    - Transaction failures
 
 ## Rate Limits
 
@@ -292,3 +259,7 @@ The plugin includes robust error handling for both required and optional service
 4. Cache frequently accessed data when appropriate
 5. Monitor API usage to stay within rate limits
 6. Keep API keys secure and never expose them in client-side code
+7. Verify NFT ownership before attempting to list
+8. Handle transaction failures gracefully
+9. Monitor listing status and expiration
+10. Implement proper gas price management for transactions
