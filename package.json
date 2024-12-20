@@ -2,9 +2,9 @@
     "name": "eliza",
     "scripts": {
         "preinstall": "npx only-allow pnpm",
-        "build": "turbo run build --filter=!eliza-docs",
+        "build": "tsc",
         "build-docker": "turbo run build",
-        "start": "pnpm --filter \"@ai16z/agent\" start --isRoot",
+        "start": "node dist/index.js",
         "start:client": "pnpm --dir client dev",
         "start:debug": "cross-env NODE_ENV=development VERBOSE=true DEBUG=eliza:* pnpm --filter \"@ai16z/agent\" start --isRoot",
         "dev": "bash ./scripts/dev.sh",

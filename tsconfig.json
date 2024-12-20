@@ -5,11 +5,16 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./dist"
     },
     "files": [],
     "references": [
-        { "path": "packages/core" },
-        { "path": "packages/client-slack" }
+        {
+            "path": "packages/core"
+        },
+        {
+            "path": "packages/client-slack"
+        }
     ]
-} 
+}
