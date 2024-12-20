@@ -6,6 +6,7 @@ import {
     Memory,
     State,
     ServiceType,
+    Evaluator,
 } from "@ai16z/eliza";
 import axios from "axios";
 
@@ -16,10 +17,72 @@ interface NFTCollection {
     volume24h: number;
 }
 
+interface NFTKnowledge {
+    mentionsCollection: boolean;
+    mentionsFloorPrice: boolean;
+    mentionsVolume: boolean;
+    mentionsRarity: boolean;
+}
+
 interface INFTMarketplaceService {
     getFloorNFTs(collectionAddress: string, quantity: number): Promise<any[]>;
     batchPurchaseNFTs(nfts: any[]): Promise<string[]>;
 }
+
+// Helper function to enhance responses based on NFT knowledge
+const enhanceResponse = (response: string, state: State) => {
+    const { nftKnowledge } = state;
+
+    if (nftKnowledge?.mentionsCollection) {
+        response +=
+            " Would you like to know more about specific NFT collections?";
+    }
+
+    if (nftKnowledge?.mentionsFloorPrice) {
+        response +=
+            " I can provide information on floor prices for popular collections.";
+    }
+
+    if (nftKnowledge?.mentionsVolume) {
+        response +=
+            " I can share recent trading volume data for NFT collections.";
+    }
+
+    if (nftKnowledge?.mentionsRarity) {
+        response +=
+            " I can explain rarity factors in NFT collections if you're interested.";
+    }
+
+    return response;
+};
+
+const nftCollectionEvaluator: Evaluator = {
+    evaluate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+        const content = message.content.text.toLowerCase();
+
+        // Extract relevant NFT information
+        const extractedInfo: NFTKnowledge = {
+            mentionsCollection:
+                content.includes("collection") || content.includes("nft"),
+            mentionsFloorPrice:
+                content.includes("floor price") || content.includes("floor"),
+            mentionsVolume:
+                content.includes("volume") ||
+                content.includes("trading volume"),
+            mentionsRarity:
+                content.includes("rare") || content.includes("rarity"),
+        };
+
+        // Update state with extracted information
+        return {
+            ...state,
+            nftKnowledge: {
+                ...state.nftKnowledge,
+                ...extractedInfo,
+            },
+        };
+    },
+};
 
 // Helper function to extract NFT details from the message
 function extractNFTDetails(text: string): {
@@ -189,6 +252,7 @@ const nftCollectionPlugin: Plugin = {
         "Provides information about curated NFT collections on Ethereum",
     actions: [nftCollectionAction, sweepFloorNFTAction],
     providers: [nftCollectionProvider],
+    evaluators: [nftCollectionEvaluator],
 };
 
 export default nftCollectionPlugin;
