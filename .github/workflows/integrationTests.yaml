@@ -46,5 +46,6 @@ jobs:
             - name: Run integration tests
               env:
                   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+                  COINBASE_COMMERCE_KEY: ${{ secrets.COINBASE_COMMERCE_KEY }}
               run: |
                   pnpm run integrationTests
