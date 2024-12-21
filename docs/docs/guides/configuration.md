@@ -46,7 +46,6 @@ DISCORD_API_TOKEN=         # Discord bot token
 TWITTER_USERNAME=          # Bot Twitter username
 TWITTER_PASSWORD=          # Bot Twitter password
 TWITTER_EMAIL=            # Twitter account email
-TWITTER_COOKIES=          # Twitter auth cookies
 TWITTER_DRY_RUN=false    # Test mode without posting
 ```
 
