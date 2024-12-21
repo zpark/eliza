@@ -27,7 +27,13 @@ export class ReservoirService extends Service implements NFTService {
         return "nft" as ServiceType;
     }
 
-    async initialize(): Promise<void> {
+    setRuntime(runtime: IAgentRuntime): void {
+        this.runtime = runtime;
+    }
+
+    async initialize(runtime: IAgentRuntime): Promise<void> {
+        this.runtime = runtime;
+
         // Register NFT-related actions
         const actions: Action[] = [
             {
@@ -51,9 +57,18 @@ export class ReservoirService extends Service implements NFTService {
                     _options: any,
                     callback?: HandlerCallback
                 ) => {
-                    const collections = await this.getTopCollections();
-                    callback?.({ text: JSON.stringify(collections, null, 2) });
-                    return true;
+                    try {
+                        const collections = await this.getTopCollections();
+                        callback?.({
+                            text: JSON.stringify(collections, null, 2),
+                        });
+                        return true;
+                    } catch (error) {
+                        callback?.({
+                            text: `Error fetching collections: ${error}`,
+                        });
+                        return false;
+                    }
                 },
                 validate: async () => true,
             },
@@ -78,22 +93,26 @@ export class ReservoirService extends Service implements NFTService {
                     _options: any,
                     callback?: HandlerCallback
                 ) => {
-                    const stats = await this.getMarketStats();
-                    callback?.({ text: JSON.stringify(stats, null, 2) });
-                    return true;
+                    try {
+                        const stats = await this.getMarketStats();
+                        callback?.({ text: JSON.stringify(stats, null, 2) });
+                        return true;
+                    } catch (error) {
+                        callback?.({
+                            text: `Error fetching market stats: ${error}`,
+                        });
+                        return false;
+                    }
                 },
                 validate: async () => true,
             },
-            // Add other actions similarly...
         ];
 
-        if (!this.runtime) {
-            throw new Error("Runtime not initialized");
+        // Register each action and log the registration
+        for (const action of actions) {
+            runtime.registerAction(action);
+            console.log(`✓ Registering NFT action: ${action.name}`);
         }
-
-        actions.forEach((action) => {
-            this.runtime?.registerAction(action);
-        });
     }
 
     private async fetchFromReservoir(
