@@ -99,7 +99,6 @@ const mintNFTAction: Action = {
                 return false;
             }
 
-            elizaLogger.log("mint content", content);
 
             const publicKey = runtime.getSetting("SOLANA_PUBLIC_KEY");
             const privateKey = runtime.getSetting("SOLANA_PRIVATE_KEY");
