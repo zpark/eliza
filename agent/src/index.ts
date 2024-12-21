@@ -217,6 +217,8 @@ export function getTokenForProvider(
         // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
             return "";
+        case ModelProviderName.OLLAMA:
+            return "";
         case ModelProviderName.GAIANET:
             return "";
         case ModelProviderName.OPENAI:
