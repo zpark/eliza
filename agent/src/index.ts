@@ -554,7 +554,7 @@ export async function createAgent(
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
-            getSecret(character, "NFT_COLLECTIONS_API_KEY")
+            getSecret(character, "RESERVOIR_API_KEY")
                 ? nftCollectionsPlugin
                 : null,
         ].filter(Boolean),
