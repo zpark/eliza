@@ -1,57 +1,37 @@
-interface CacheConfig {
-    ttl: number;
-    maxSize: number;
+export interface CacheManager {
+    get<T>(key: string): Promise<T | null>;
+    set<T>(key: string, value: T, ttl?: number): Promise<void>;
+    clear(): Promise<void>;
 }
 
-interface CacheEntry<T> {
-    data: T;
-    timestamp: number;
-}
+export class MemoryCacheManager implements CacheManager {
+    private cache: Map<string, { value: any; expiry: number }>;
+    private defaultTtl: number;
 
-export class CacheManager {
-    private cache: Map<string, CacheEntry<any>>;
-    private config: CacheConfig;
-
-    constructor(config: CacheConfig) {
-        this.config = config;
+    constructor(defaultTtl: number = 3600000) {
+        // 1 hour default
         this.cache = new Map();
+        this.defaultTtl = defaultTtl;
     }
 
     async get<T>(key: string): Promise<T | null> {
-        const entry = this.cache.get(key);
-        if (!entry) return null;
+        const item = this.cache.get(key);
+        if (!item) return null;
 
-        // Check if entry has expired
-        if (Date.now() - entry.timestamp > this.config.ttl) {
+        if (Date.now() > item.expiry) {
             this.cache.delete(key);
             return null;
         }
 
-        return entry.data;
+        return item.value as T;
     }
 
-    async set<T>(key: string, data: T): Promise<void> {
-        // Implement LRU eviction if cache is full
-        if (this.cache.size >= this.config.maxSize) {
-            const oldestKey = this.cache.keys().next().value;
-            this.cache.delete(oldestKey);
-        }
-
-        this.cache.set(key, {
-            data,
-            timestamp: Date.now(),
-        });
-    }
-
-    async delete(key: string): Promise<void> {
-        this.cache.delete(key);
+    async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+        const expiry = Date.now() + (ttl || this.defaultTtl);
+        this.cache.set(key, { value, expiry });
     }
 
     async clear(): Promise<void> {
         this.cache.clear();
-    }
-
-    async has(key: string): Promise<boolean> {
-        return this.cache.has(key);
     }
 }

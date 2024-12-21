@@ -7,7 +7,7 @@ import {
 import { ReservoirService } from "./services/reservoir";
 import { MarketIntelligenceService } from "./services/market-intelligence";
 import { SocialAnalyticsService } from "./services/social-analytics";
-import { CacheManager } from "./services/cache-manager";
+import { MemoryCacheManager } from "./services/cache-manager";
 import { RateLimiter } from "./services/rate-limiter";
 import { SecurityManager } from "./services/security-manager";
 import { nftCollectionProvider } from "./providers/nft-collections";
@@ -27,6 +27,9 @@ interface NFTCollectionsPluginConfig {
             windowMs?: number;
         };
     };
+    maxConcurrent?: number;
+    maxRetries?: number;
+    batchSize?: number;
 }
 
 interface ExtendedCharacter extends Character {
@@ -43,7 +46,7 @@ export class NFTCollectionsPlugin implements Plugin {
     private reservoirService?: ReservoirService;
     private marketIntelligenceService?: MarketIntelligenceService;
     private socialAnalyticsService?: SocialAnalyticsService;
-    private cacheManager?: CacheManager;
+    private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
     private securityManager?: SecurityManager;
 
@@ -54,10 +57,9 @@ export class NFTCollectionsPlugin implements Plugin {
     private initializeServices(): void {
         // Initialize caching if enabled
         if (this.config.caching?.enabled) {
-            this.cacheManager = new CacheManager({
-                ttl: this.config.caching.ttl || 3600000, // 1 hour default
-                maxSize: this.config.caching.maxSize || 1000,
-            });
+            this.cacheManager = new MemoryCacheManager(
+                this.config.caching.ttl || 3600000 // 1 hour default
+            );
         }
 
         // Initialize rate limiter if enabled
@@ -82,15 +84,18 @@ export class NFTCollectionsPlugin implements Plugin {
             throw new Error("RESERVOIR_API_KEY is required");
         }
 
-        // Initialize Reservoir service
+        // Initialize Reservoir service with enhanced configuration
         this.reservoirService = new ReservoirService(reservoirApiKey, {
             cacheManager: this.cacheManager,
             rateLimiter: this.rateLimiter,
+            maxConcurrent: this.config.maxConcurrent,
+            maxRetries: this.config.maxRetries,
+            batchSize: this.config.batchSize,
         });
         await this.reservoirService.initialize(character.runtime);
         await character.runtime.registerService(this.reservoirService);
 
-        // Initialize optional services
+        // Initialize optional services with enhanced configuration
         const marketApiKeys = {
             nansen: character.settings.secrets?.NANSEN_API_KEY,
             dune: character.settings.secrets?.DUNE_API_KEY,

@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach, jest } from "@jest/globals";
 import { ReservoirService } from "../services/reservoir";
 import { SocialAnalyticsService } from "../services/social-analytics";
-import { CacheManager } from "../services/cache-manager";
+import {
+    MemoryCacheManager,
+    type CacheManager,
+} from "../services/cache-manager";
 import { RateLimiter } from "../services/rate-limiter";
 import type { NFTCollection } from "../types";
 
@@ -13,10 +16,7 @@ describe("NFT Services", () => {
         let rateLimiter: RateLimiter;
 
         beforeEach(() => {
-            cacheManager = new CacheManager({
-                ttl: 3600000,
-                maxSize: 1000,
-            });
+            cacheManager = new MemoryCacheManager(3600000);
             rateLimiter = new RateLimiter({
                 maxRequests: 100,
                 windowMs: 60000,
@@ -65,10 +65,7 @@ describe("NFT Services", () => {
         let rateLimiter: RateLimiter;
 
         beforeEach(() => {
-            cacheManager = new CacheManager({
-                ttl: 3600000,
-                maxSize: 1000,
-            });
+            cacheManager = new MemoryCacheManager(3600000);
             rateLimiter = new RateLimiter({
                 maxRequests: 100,
                 windowMs: 60000,

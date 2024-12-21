@@ -1914,3 +1914,10 @@ export function getShareableCollectionLink(
     const url = getCollectionViewUrl(address, options);
     return `View this NFT collection on IkigaiLabs: ${url}`;
 }
+
+// Set of curated collection addresses (lowercase)
+export const curatedCollections = new Set<string>([
+    // Add your curated collection addresses here
+    // Example:
+    // "0x1234...".toLowerCase(),
+]);
