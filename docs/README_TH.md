@@ -98,7 +98,6 @@ TWITTER_DRY_RUN=false
 TWITTER_USERNAME= # ชื่อผู้ใช้บัญชี
 TWITTER_PASSWORD= # รหัสผ่าน
 TWITTER_EMAIL= # อีเมล
-TWITTER_COOKIES= # คุกกี้
 
 X_SERVER_URL=
 XAI_API_KEY=
