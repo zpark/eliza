@@ -1,6 +1,6 @@
 {
     "name": "trump",
-    "clients": ["slack"],
+    "clients": [],
     "modelProvider": "openai",
     "settings": {
         "secrets": {},
