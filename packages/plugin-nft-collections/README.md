@@ -1547,3 +1547,191 @@ graph TD
     L --> P
     M --> P
 ```
+
+## Caching Layer
+
+### Cache Configuration
+
+```typescript
+// Configure multi-level caching
+const cacheConfig = plugin.cache.configure({
+    layers: {
+        memory: {
+            type: "memory",
+            maxSize: "1GB",
+            ttl: "1m",
+            priority: 1,
+        },
+        redis: {
+            type: "redis",
+            connection: {
+                host: process.env.REDIS_HOST,
+                port: 6379,
+                password: process.env.REDIS_PASSWORD,
+            },
+            ttl: "5m",
+            priority: 2,
+        },
+        disk: {
+            type: "disk",
+            path: "./cache",
+            maxSize: "10GB",
+            ttl: "1h",
+            priority: 3,
+        },
+    },
+    strategies: {
+        preload: ["top_collections", "trending_collections"],
+        warmup: {
+            interval: "10m",
+            concurrency: 5,
+        },
+    },
+});
+
+// Configure per-collection caching
+const collectionCache = plugin.cache.createCollectionCache({
+    collection: "0x1234",
+    rules: {
+        metadata: {
+            ttl: "1d",
+            invalidateOn: ["metadata_update"],
+        },
+        floorPrice: {
+            ttl: "30s",
+            invalidateOn: ["new_listing", "sale"],
+        },
+        holders: {
+            ttl: "1h",
+            invalidateOn: ["transfer"],
+        },
+    },
+});
+```
+
+### Smart Caching Strategies
+
+```typescript
+// Implement predictive caching
+const predictiveCache = plugin.cache.enablePredictiveCaching({
+    features: {
+        userBehavior: true,
+        timePatterns: true,
+        marketActivity: true,
+    },
+    ml: {
+        model: "cache_prediction",
+        updateInterval: "1h",
+        minConfidence: 0.8,
+    },
+});
+
+// Configure cache warming
+const cacheWarmer = plugin.cache.createWarmer({
+    schedule: "*/10 * * * *", // Every 10 minutes
+    strategy: {
+        type: "smart",
+        priorities: {
+            popularity: 0.4,
+            recentActivity: 0.3,
+            userRequests: 0.3,
+        },
+    },
+    limits: {
+        maxConcurrent: 5,
+        maxItems: 1000,
+    },
+});
+```
+
+### Cache Monitoring
+
+```typescript
+// Monitor cache performance
+const cacheMetrics = plugin.cache.monitor({
+    metrics: ["hit_rate", "miss_rate", "latency", "size"],
+    alerts: {
+        hitRate: {
+            threshold: 0.8,
+            window: "5m",
+            action: "adjust_ttl",
+        },
+        latency: {
+            threshold: 100,
+            window: "1m",
+            action: "scale_cache",
+        },
+    },
+});
+
+// Cache analytics dashboard
+const cacheDashboard = plugin.cache.createDashboard({
+    realtime: true,
+    metrics: {
+        performance: true,
+        storage: true,
+        invalidations: true,
+    },
+    visualization: {
+        graphs: true,
+        heatmaps: true,
+    },
+});
+```
+
+### Cache Optimization
+
+```typescript
+// Optimize cache storage
+const storageOptimizer = plugin.cache.optimizeStorage({
+    compression: {
+        enabled: true,
+        algorithm: "lz4",
+        level: "medium",
+    },
+    deduplication: true,
+    partitioning: {
+        strategy: "access_pattern",
+        shards: 4,
+    },
+});
+
+// Implement cache coherency
+const coherencyManager = plugin.cache.manageCoherency({
+    strategy: "write_through",
+    consistency: "eventual",
+    propagation: {
+        method: "pub_sub",
+        maxDelay: "100ms",
+    },
+});
+```
+
+### Cache Architecture
+
+```mermaid
+graph TD
+    A[Cache Manager] --> B[Memory Cache]
+    A --> C[Redis Cache]
+    A --> D[Disk Cache]
+
+    E[Cache Warmer] --> A
+    F[Predictive Engine] --> A
+    G[Monitoring] --> A
+
+    B --> H[Fast Access Layer]
+    C --> I[Distributed Layer]
+    D --> J[Persistence Layer]
+
+    K[Optimization] --> B
+    K --> C
+    K --> D
+
+    L[Coherency Manager] --> M[Write Through]
+    L --> N[Invalidation]
+    L --> O[Propagation]
+
+    P[Analytics] --> Q[Performance]
+    P --> R[Usage Patterns]
+    P --> S[Optimization Suggestions]
+```
