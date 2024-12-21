@@ -78,7 +78,6 @@ export const addHeader = (header: string, body: string) => {
  * in the provided template with these names. Placeholders in the template should follow the format `{{userX}}`
  * where `X` is the position of the user (e.g., `{{user1}}`, `{{user2}}`).
  *
- * @param {Object} params - The parameters for generating the composed string.
  * @param {string} params.template - The template string containing placeholders for random user names.
  * @param {number} params.length - The number of random user names to generate.
  * @returns {string} The template string with placeholders replaced by random user names.
