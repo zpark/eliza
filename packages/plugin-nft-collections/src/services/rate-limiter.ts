@@ -1,76 +1,98 @@
-interface RateLimitConfig {
-    maxRequests: number;
-    windowMs: number;
-}
+import { RateLimiterMemory } from "rate-limiter-flexible";
 
-interface RateLimitEntry {
-    count: number;
-    resetTime: number;
+interface RateLimiterConfig {
+    maxRequests?: number;
+    windowMs?: number;
+    maxRetries?: number;
+    retryDelay?: number;
 }
 
 export class RateLimiter {
-    private limits: Map<string, RateLimitEntry>;
-    private config: RateLimitConfig;
+    private limiter: RateLimiterMemory;
+    private maxRetries: number;
+    private retryDelay: number;
 
-    constructor(config: RateLimitConfig) {
-        this.config = config;
-        this.limits = new Map();
+    constructor(config: RateLimiterConfig = {}) {
+        this.limiter = new RateLimiterMemory({
+            points: config.maxRequests || 100,
+            duration: (config.windowMs || 60000) / 1000, // Convert ms to seconds
+        });
+        this.maxRetries = config.maxRetries || 3;
+        this.retryDelay = config.retryDelay || 1000;
     }
 
-    async checkLimit(key: string): Promise<boolean> {
-        const now = Date.now();
-        let entry = this.limits.get(key);
-
-        // If no entry exists or the window has expired, create a new one
-        if (!entry || now > entry.resetTime) {
-            entry = {
-                count: 0,
-                resetTime: now + this.config.windowMs,
-            };
-            this.limits.set(key, entry);
+    async consume(key: string, points: number = 1): Promise<void> {
+        try {
+            await this.limiter.consume(key, points);
+        } catch (error: any) {
+            if (error.remainingPoints === 0) {
+                const retryAfter = Math.ceil(error.msBeforeNext / 1000);
+                throw new Error(
+                    `Rate limit exceeded. Retry after ${retryAfter} seconds`
+                );
+            }
+            throw error;
         }
-
-        // Check if limit is exceeded
-        if (entry.count >= this.config.maxRequests) {
-            const waitTime = entry.resetTime - now;
-            throw new Error(
-                `Rate limit exceeded. Please wait ${Math.ceil(
-                    waitTime / 1000
-                )} seconds.`
-            );
-        }
-
-        // Increment the counter
-        entry.count++;
-        return true;
     }
 
-    async resetLimit(key: string): Promise<void> {
-        this.limits.delete(key);
-    }
+    async executeWithRetry<T>(
+        key: string,
+        operation: () => Promise<T>,
+        points: number = 1
+    ): Promise<T> {
+        let lastError: Error | null = null;
+        let retries = 0;
 
-    async getRemainingRequests(key: string): Promise<number> {
-        const entry = this.limits.get(key);
-        if (!entry || Date.now() > entry.resetTime) {
-            return this.config.maxRequests;
-        }
-        return Math.max(0, this.config.maxRequests - entry.count);
-    }
+        while (retries <= this.maxRetries) {
+            try {
+                await this.consume(key, points);
+                return await operation();
+            } catch (error: any) {
+                lastError = error;
+                retries++;
 
-    async getResetTime(key: string): Promise<number> {
-        const entry = this.limits.get(key);
-        if (!entry || Date.now() > entry.resetTime) {
-            return Date.now() + this.config.windowMs;
+                if (error.message?.includes("Rate limit exceeded")) {
+                    const retryAfter = parseInt(
+                        error.message.match(/\d+/)?.[0] || "1",
+                        10
+                    );
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, retryAfter * 1000)
+                    );
+                } else if (retries <= this.maxRetries) {
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, this.retryDelay * retries)
+                    );
+                } else {
+                    break;
+                }
+            }
         }
-        return entry.resetTime;
+
+        throw new Error(
+            `Operation failed after ${retries} retries. Last error: ${lastError?.message}`
+        );
     }
 
     async cleanup(): Promise<void> {
-        const now = Date.now();
-        for (const [key, entry] of this.limits.entries()) {
-            if (now > entry.resetTime) {
-                this.limits.delete(key);
-            }
+        // Cleanup any resources if needed
+    }
+
+    async getRemainingPoints(key: string): Promise<number> {
+        const res = await this.limiter.get(key);
+        return res?.remainingPoints ?? 0;
+    }
+
+    async reset(key: string): Promise<void> {
+        await this.limiter.delete(key);
+    }
+
+    async isRateLimited(key: string): Promise<boolean> {
+        try {
+            await this.limiter.get(key);
+            return false;
+        } catch {
+            return true;
         }
     }
 }

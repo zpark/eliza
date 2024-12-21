@@ -14,7 +14,8 @@
     "dependencies": {
         "@ai16z/eliza": "workspace:*",
         "@ai16z/plugin-evm": "workspace:*",
-        "axios": "^1.6.7"
+        "axios": "^1.6.7",
+        "rate-limiter-flexible": "^5.0.4"
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",

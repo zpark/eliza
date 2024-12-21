@@ -57,16 +57,17 @@ export class NFTCollectionsPlugin implements Plugin {
     private initializeServices(): void {
         // Initialize caching if enabled
         if (this.config.caching?.enabled) {
-            this.cacheManager = new MemoryCacheManager(
-                this.config.caching.ttl || 3600000 // 1 hour default
-            );
+            this.cacheManager = new MemoryCacheManager({
+                ttl: this.config.caching.ttl,
+                maxSize: this.config.caching.maxSize,
+            });
         }
 
         // Initialize rate limiter if enabled
         if (this.config.security?.rateLimit?.enabled) {
             this.rateLimiter = new RateLimiter({
-                maxRequests: this.config.security.rateLimit.maxRequests || 100,
-                windowMs: this.config.security.rateLimit.windowMs || 60000,
+                maxRequests: this.config.security.rateLimit.maxRequests,
+                windowMs: this.config.security.rateLimit.windowMs,
             });
         }
     }

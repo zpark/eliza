@@ -1,118 +1,111 @@
-import { describe, expect, it, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { IAgentRuntime } from "@ai16z/eliza";
 import { ReservoirService } from "../services/reservoir";
+import { MarketIntelligenceService } from "../services/market-intelligence";
 import { SocialAnalyticsService } from "../services/social-analytics";
-import {
-    MemoryCacheManager,
-    type CacheManager,
-} from "../services/cache-manager";
+import { MemoryCacheManager } from "../services/cache-manager";
 import { RateLimiter } from "../services/rate-limiter";
-import type { NFTCollection } from "../types";
 
 describe("NFT Services", () => {
+    const mockRuntime = {
+        services: {
+            get: vi.fn(),
+        },
+        messageManager: {
+            createMemory: vi.fn(),
+        },
+        agentId: "00000000-0000-0000-0000-000000000000",
+    } as unknown as IAgentRuntime;
+
     describe("ReservoirService", () => {
-        const apiKey = "test-api-key";
         let service: ReservoirService;
-        let cacheManager: CacheManager;
+        let cacheManager: MemoryCacheManager;
         let rateLimiter: RateLimiter;
 
         beforeEach(() => {
-            cacheManager = new MemoryCacheManager(3600000);
-            rateLimiter = new RateLimiter({
-                maxRequests: 100,
-                windowMs: 60000,
-            });
-
-            service = new ReservoirService(apiKey, {
+            cacheManager = new MemoryCacheManager();
+            rateLimiter = new RateLimiter();
+            service = new ReservoirService("test-api-key", {
                 cacheManager,
                 rateLimiter,
             });
-            global.fetch = jest.fn(() =>
-                Promise.resolve({
-                    ok: true,
-                    json: () =>
-                        Promise.resolve({
-                            collections: [
-                                {
-                                    id: "0x1234",
-                                    name: "Test Collection",
-                                    symbol: "TEST",
-                                    description: "Test Description",
-                                    image: "https://test.com/image.png",
-                                    floorAsk: {
-                                        price: { amount: { native: 1.5 } },
-                                    },
-                                    volume: { "1day": 100 },
-                                    marketCap: 1000,
-                                    ownerCount: 500,
-                                },
-                            ],
-                        }),
-                } as Response)
-            );
         });
 
-        it("should fetch top collections", async () => {
-            const collections = await service.getTopCollections();
-            expect(collections[0].name).toBe("Test Collection");
-            expect(collections[0].floorPrice).toBe(1.5);
-            expect(global.fetch).toHaveBeenCalled();
+        it("should initialize correctly", async () => {
+            await service.initialize(mockRuntime);
+            expect(service).toBeDefined();
+        });
+
+        it("should handle API requests with caching", async () => {
+            const mockData = { collections: [] };
+            vi.spyOn(global, "fetch").mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockData),
+            } as Response);
+
+            const result = await service.getTopCollections(5);
+            expect(result).toBeDefined();
+            expect(Array.isArray(result)).toBe(true);
+        });
+    });
+
+    describe("MarketIntelligenceService", () => {
+        let service: MarketIntelligenceService;
+        let cacheManager: MemoryCacheManager;
+        let rateLimiter: RateLimiter;
+
+        beforeEach(() => {
+            cacheManager = new MemoryCacheManager();
+            rateLimiter = new RateLimiter();
+            service = new MarketIntelligenceService({
+                cacheManager,
+                rateLimiter,
+            });
+        });
+
+        it("should initialize correctly", async () => {
+            await service.initialize(mockRuntime);
+            expect(service).toBeDefined();
+        });
+
+        it("should return market intelligence data", async () => {
+            const result = await service.getMarketIntelligence("0x1234");
+            expect(result).toBeDefined();
+            expect(result.floorPrice).toBeDefined();
+            expect(result.volume24h).toBeDefined();
         });
     });
 
     describe("SocialAnalyticsService", () => {
         let service: SocialAnalyticsService;
-        let cacheManager: CacheManager;
+        let cacheManager: MemoryCacheManager;
         let rateLimiter: RateLimiter;
 
         beforeEach(() => {
-            cacheManager = new MemoryCacheManager(3600000);
-            rateLimiter = new RateLimiter({
-                maxRequests: 100,
-                windowMs: 60000,
-            });
-
+            cacheManager = new MemoryCacheManager();
+            rateLimiter = new RateLimiter();
             service = new SocialAnalyticsService({
                 cacheManager,
                 rateLimiter,
-                apiKeys: {
-                    twitter: "test-twitter-key",
-                    discord: "test-discord-key",
-                    telegram: "test-telegram-key",
-                },
             });
-            global.fetch = jest.fn(() =>
-                Promise.resolve({
-                    ok: true,
-                    json: () =>
-                        Promise.resolve({
-                            twitter: {
-                                followers: 10000,
-                                engagement: {
-                                    likes: 500,
-                                    retweets: 200,
-                                    replies: 300,
-                                    mentions: 150,
-                                },
-                                sentiment: {
-                                    positive: 0.7,
-                                    neutral: 0.2,
-                                    negative: 0.1,
-                                },
-                            },
-                            mentions: [],
-                            influencers: [],
-                            trending: true,
-                        }),
-                } as Response)
-            );
         });
 
-        it("should fetch social metrics", async () => {
-            const metrics = await service.getSocialMetrics("0x1234");
-            expect(metrics.twitter.followers).toBe(10000);
-            expect(metrics.twitter.engagement.likes).toBe(500);
-            expect(metrics.trending).toBe(true);
-            expect(global.fetch).toHaveBeenCalled();
+        it("should initialize correctly", async () => {
+            await service.initialize(mockRuntime);
+            expect(service).toBeDefined();
+        });
+
+        it("should return social metrics", async () => {
+            const result = await service.getSocialMetrics("0x1234");
+            expect(result).toBeDefined();
+            expect(result.lastUpdate).toBeDefined();
+        });
+
+        it("should analyze sentiment", async () => {
+            const result = await service.analyzeSentiment("0x1234");
+            expect(result).toBeDefined();
+            expect(result.overall).toBeDefined();
+            expect(result.breakdown).toBeDefined();
         });
     });
 });

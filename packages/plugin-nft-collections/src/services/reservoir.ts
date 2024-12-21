@@ -1,47 +1,46 @@
-import axios, { AxiosError } from "axios";
-import { Service, ServiceType, IAgentRuntime } from "@ai16z/eliza";
-import type { CacheManager } from "./cache-manager";
-import type { RateLimiter } from "./rate-limiter";
-import { NFTCollection } from "../constants/collections";
-import { COLLECTIONS_BY_ADDRESS } from "../constants/curated-collections";
+import { Service, IAgentRuntime, ServiceType } from "@ai16z/eliza";
 import pRetry from "p-retry";
 import pQueue from "p-queue";
+import { PerformanceMonitor } from "../utils/performance";
+import {
+    ErrorHandler,
+    NFTErrorFactory,
+    ErrorType,
+    ErrorCode,
+} from "../utils/error-handler";
+import { MemoryCacheManager } from "./cache-manager";
+import { RateLimiter } from "./rate-limiter";
+import { NFTCollection } from "../types";
 
-interface ReservoirConfig {
-    cacheManager?: CacheManager;
+interface ReservoirServiceConfig {
+    cacheManager?: MemoryCacheManager;
     rateLimiter?: RateLimiter;
     maxConcurrent?: number;
     maxRetries?: number;
     batchSize?: number;
 }
 
-interface RequestQueueItem {
-    priority: number;
-    fn: () => Promise<any>;
-}
-
 export class ReservoirService extends Service {
     private apiKey: string;
-    private baseUrl = "https://api.reservoir.tools";
-    private cacheManager?: CacheManager;
+    private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
-    protected runtime?: IAgentRuntime;
-    private requestQueue: pQueue;
+    private queue: pQueue;
     private maxRetries: number;
     private batchSize: number;
+    private performanceMonitor: PerformanceMonitor;
+    private errorHandler: ErrorHandler;
+    protected runtime?: IAgentRuntime;
 
-    constructor(apiKey: string, config?: ReservoirConfig) {
+    constructor(apiKey: string, config: ReservoirServiceConfig = {}) {
         super();
         this.apiKey = apiKey;
-        this.cacheManager = config?.cacheManager;
-        this.rateLimiter = config?.rateLimiter;
-        this.maxRetries = config?.maxRetries || 3;
-        this.batchSize = config?.batchSize || 20;
-
-        // Initialize request queue with concurrency control
-        this.requestQueue = new pQueue({
-            concurrency: config?.maxConcurrent || 5,
-        });
+        this.cacheManager = config.cacheManager;
+        this.rateLimiter = config.rateLimiter;
+        this.queue = new pQueue({ concurrency: config.maxConcurrent || 5 });
+        this.maxRetries = config.maxRetries || 3;
+        this.batchSize = config.batchSize || 20;
+        this.performanceMonitor = PerformanceMonitor.getInstance();
+        this.errorHandler = ErrorHandler.getInstance();
     }
 
     static override get serviceType(): ServiceType {
@@ -55,196 +54,175 @@ export class ReservoirService extends Service {
         }
     }
 
-    private getRequestPriority(address: string): number {
-        return COLLECTIONS_BY_ADDRESS.has(address.toLowerCase()) ? 1 : 0;
-    }
-
-    private async makeRequest<T>(
+    async makeRequest<T>(
         endpoint: string,
         params: Record<string, any> = {},
         priority: number = 0
     ): Promise<T> {
-        const cacheKey = `reservoir:${endpoint}:${JSON.stringify(params)}`;
+        const endOperation = this.performanceMonitor.startOperation(
+            "makeRequest",
+            {
+                endpoint,
+                params,
+                priority,
+            }
+        );
 
-        // Check cache first
-        if (this.cacheManager) {
-            const cached = await this.cacheManager.get<T>(cacheKey);
-            if (cached) return cached;
-        }
+        try {
+            const cacheKey = `reservoir:${endpoint}:${JSON.stringify(params)}`;
 
-        // Add request to queue with priority
-        return this.requestQueue.add(
-            async () => {
-                // Check rate limit
-                if (this.rateLimiter) {
-                    await this.rateLimiter.checkLimit("reservoir");
+            // Check cache first
+            if (this.cacheManager) {
+                const cached = await this.cacheManager.get<T>(cacheKey);
+                if (cached) {
+                    endOperation();
+                    return cached;
                 }
+            }
 
-                // Implement retry logic with exponential backoff
-                return pRetry(
-                    async () => {
-                        try {
-                            const response = await axios.get(
-                                `${this.baseUrl}${endpoint}`,
+            // Check rate limit
+            if (this.rateLimiter) {
+                await this.rateLimiter.consume("reservoir", 1);
+            }
+
+            // Make the request with retries
+            const result = await this.queue.add(
+                () =>
+                    pRetry(
+                        async () => {
+                            const response = await fetch(
+                                `https://api.reservoir.tools${endpoint}?${new URLSearchParams(
+                                    params
+                                ).toString()}`,
                                 {
-                                    params,
                                     headers: {
                                         "x-api-key": this.apiKey,
                                     },
                                 }
                             );
 
-                            // Cache successful response
-                            if (this.cacheManager) {
-                                const ttl = priority > 0 ? 3600000 : 1800000; // Longer TTL for curated collections (1h vs 30m)
-                                await this.cacheManager.set(
-                                    cacheKey,
-                                    response.data,
-                                    ttl
+                            if (!response.ok) {
+                                throw new Error(
+                                    `Reservoir API error: ${response.status}`
                                 );
                             }
 
-                            return response.data;
-                        } catch (error) {
-                            if (error instanceof AxiosError) {
-                                // Retry on specific error codes
-                                if (
-                                    error.response?.status === 429 ||
-                                    error.response?.status >= 500
-                                ) {
-                                    throw error;
-                                }
-                            }
-                            console.error("Reservoir API error:", error, {
-                                endpoint,
-                                params,
-                            });
-                            throw error;
-                        }
-                    },
-                    {
-                        retries: this.maxRetries,
-                        onFailedAttempt: (error) => {
-                            console.warn(
-                                `Attempt ${error.attemptNumber} failed. ${
-                                    this.maxRetries - error.attemptNumber
-                                } attempts remaining.`
-                            );
+                            return response.json();
                         },
-                    }
-                );
-            },
-            { priority }
-        );
-    }
+                        {
+                            retries: this.maxRetries,
+                            onFailedAttempt: (error) => {
+                                console.error(
+                                    `Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
+                                );
+                            },
+                        }
+                    ),
+                { priority }
+            );
 
-    async getCollections(addresses: string[]): Promise<NFTCollection[]> {
-        // Split addresses into batches
-        const batches = [];
-        for (let i = 0; i < addresses.length; i += this.batchSize) {
-            batches.push(addresses.slice(i, i + this.batchSize));
+            // Cache the result
+            if (this.cacheManager) {
+                await this.cacheManager.set(cacheKey, result);
+            }
+
+            endOperation();
+            return result;
+        } catch (error) {
+            this.performanceMonitor.recordMetric({
+                operation: "makeRequest",
+                duration: 0,
+                success: false,
+                metadata: {
+                    error: error.message,
+                    endpoint,
+                    params,
+                },
+            });
+
+            const nftError = NFTErrorFactory.create(
+                ErrorType.API,
+                ErrorCode.API_ERROR,
+                `API request failed: ${endpoint}`,
+                { originalError: error },
+                true
+            );
+            this.errorHandler.handleError(nftError);
+            throw error;
         }
-
-        // Process batches with priority
-        const results = await Promise.all(
-            batches.map(async (batch) => {
-                const priority = Math.max(
-                    ...batch.map((addr) => this.getRequestPriority(addr))
-                );
-                const data = await this.makeRequest<any>(
-                    `/collections/v6`,
-                    { contract: batch.join(",") },
-                    priority
-                );
-                return data.collections;
-            })
-        );
-
-        // Flatten and transform results
-        return results.flat().map((collection: any) => ({
-            address: collection.id,
-            name: collection.name,
-            symbol: collection.symbol,
-            description: collection.description,
-            imageUrl: collection.image,
-            externalUrl: collection.externalUrl,
-            twitterUsername: collection.twitterUsername,
-            discordUrl: collection.discordUrl,
-            verified: collection.openseaVerificationStatus === "verified",
-            floorPrice: collection.floorAsk?.price?.amount?.native || 0,
-            volume24h: collection.volume24h || 0,
-            marketCap: collection.marketCap || 0,
-            totalSupply: collection.tokenCount || 0,
-        }));
-    }
-
-    async getCollection(address: string): Promise<NFTCollection> {
-        const collections = await this.getCollections([address]);
-        return collections[0];
     }
 
     async getTopCollections(limit: number = 10): Promise<NFTCollection[]> {
-        const priority = 1; // High priority for top collections
-        const data = await this.makeRequest<any>(
-            `/collections/v6`,
-            {
-                limit,
-                sortBy: "volume24h",
-            },
-            priority
+        const endOperation = this.performanceMonitor.startOperation(
+            "getTopCollections",
+            { limit }
         );
 
-        return data.collections.map((collection: any) => ({
-            address: collection.id,
-            name: collection.name,
-            symbol: collection.symbol,
-            description: collection.description,
-            imageUrl: collection.image,
-            externalUrl: collection.externalUrl,
-            twitterUsername: collection.twitterUsername,
-            discordUrl: collection.discordUrl,
-            verified: collection.openseaVerificationStatus === "verified",
-            floorPrice: collection.floorAsk?.price?.amount?.native || 0,
-            volume24h: collection.volume24h || 0,
-            marketCap: collection.marketCap || 0,
-            totalSupply: collection.tokenCount || 0,
-        }));
-    }
+        try {
+            const batchSize = 20; // Optimal batch size for Reservoir API
+            const batches = Math.ceil(limit / batchSize);
+            const promises = [];
 
-    async getMarketStats(address: string) {
-        const priority = this.getRequestPriority(address);
-        return this.makeRequest<any>(
-            `/collections/v6/stats`,
-            { contract: address },
-            priority
-        );
-    }
+            for (let i = 0; i < batches; i++) {
+                const offset = i * batchSize;
+                const currentLimit = Math.min(batchSize, limit - offset);
 
-    async getCollectionActivity(address: string, limit: number = 20) {
-        const priority = this.getRequestPriority(address);
-        return this.makeRequest<any>(
-            `/collections/v6/activity`,
-            { contract: address, limit },
-            priority
-        );
-    }
+                promises.push(
+                    this.makeRequest<any>(
+                        `/collections/v6`,
+                        {
+                            limit: currentLimit,
+                            offset,
+                            sortBy: "volume24h",
+                        },
+                        1
+                    )
+                );
+            }
 
-    async getTokens(address: string, limit: number = 20) {
-        const priority = this.getRequestPriority(address);
-        return this.makeRequest<any>(
-            `/tokens/v6`,
-            { contract: address, limit },
-            priority
-        );
-    }
+            const results = await Promise.all(promises);
+            const collections = results.flatMap((data) => data.collections);
 
-    async getFloorPrice(address: string) {
-        const priority = this.getRequestPriority(address);
-        const data = await this.makeRequest<any>(
-            `/collections/v6/floor-ask`,
-            { contract: address },
-            priority
-        );
-        return data.floorAsk?.price?.amount?.native || 0;
+            const mappedCollections = collections
+                .slice(0, limit)
+                .map((collection: any) => ({
+                    address: collection.id,
+                    name: collection.name,
+                    symbol: collection.symbol,
+                    description: collection.description,
+                    imageUrl: collection.image,
+                    externalUrl: collection.externalUrl,
+                    twitterUsername: collection.twitterUsername,
+                    discordUrl: collection.discordUrl,
+                    verified:
+                        collection.openseaVerificationStatus === "verified",
+                    floorPrice: collection.floorAsk?.price?.amount?.native || 0,
+                    volume24h: collection.volume24h || 0,
+                    marketCap: collection.marketCap || 0,
+                    totalSupply: collection.tokenCount || 0,
+                    holders: collection.ownerCount || 0,
+                    lastUpdate: new Date().toISOString(),
+                }));
+
+            endOperation(); // Record successful completion
+            return mappedCollections;
+        } catch (error) {
+            this.performanceMonitor.recordMetric({
+                operation: "getTopCollections",
+                duration: 0,
+                success: false,
+                metadata: { error: error.message },
+            });
+
+            const nftError = NFTErrorFactory.create(
+                ErrorType.API,
+                ErrorCode.API_ERROR,
+                "Failed to fetch top collections",
+                { originalError: error },
+                true
+            );
+            this.errorHandler.handleError(nftError);
+            throw error;
+        }
     }
 }
