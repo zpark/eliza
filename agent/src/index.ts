@@ -647,7 +647,7 @@ async function startAgent(
         await db.init();
 
         const cache = initializeCache(
-            process.env.CACHE_STORE,
+            process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",
             db
