@@ -327,7 +327,7 @@ MIT
 
 ## Support
 
-For support, please open an issue in the repository or contact the team at support@ai16z.com.
+For support, please open an issue in the repository.
 
 ## Performance Benchmarks
 
