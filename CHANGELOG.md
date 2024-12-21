@@ -1,5 +1,94 @@
 # Changelog
 
+## [v0.1.6](https://github.com/ai16z/eliza/tree/v0.1.6) (2024-12-21)
+
+[Full Changelog](https://github.com/ai16z/eliza/compare/v0.1.6-alpha.5...v0.1.6)
+
+**Merged pull requests:**
+
+- feat: release version 0.1.6 [\#1300](https://github.com/ai16z/eliza/pull/1300) ([shakkernerd](https://github.com/shakkernerd))
+
+## [v0.1.6-alpha.5](https://github.com/ai16z/eliza/tree/v0.1.6-alpha.5) (2024-12-21)
+
+[Full Changelog](https://github.com/ai16z/eliza/compare/v0.1.6-alpha.4...v0.1.6-alpha.5)
+
+**Implemented enhancements:**
+
+- Add @eliza/agent to npm registry [\#1281](https://github.com/ai16z/eliza/issues/1281)
+- Implement Redis Caching for Performance [\#1277](https://github.com/ai16z/eliza/issues/1277)
+- Improve logging for the Coinbase plugin [\#1261](https://github.com/ai16z/eliza/issues/1261)
+- doc: Add Twitter automation label requirement to quickstart guide [\#1253](https://github.com/ai16z/eliza/issues/1253)
+- Enhance Logging in /packages/plugin-coinbase/src/plugins Using elizaLogger [\#1192](https://github.com/ai16z/eliza/issues/1192)
+- Improve Logging in /packages/plugin-coinbase/src/plugins [\#1189](https://github.com/ai16z/eliza/issues/1189)
+- Feat: add github client to core agent [\#1130](https://github.com/ai16z/eliza/issues/1130)
+
+**Fixed bugs:**
+
+- SCAM project [\#1286](https://github.com/ai16z/eliza/issues/1286)
+- pnpm start --character="characters/trump.character.json" [\#1161](https://github.com/ai16z/eliza/issues/1161)
+- REQUIRED\_NODE\_VERSION: No such file [\#1151](https://github.com/ai16z/eliza/issues/1151)
+- Discord agents knock each other out of VC [\#1145](https://github.com/ai16z/eliza/issues/1145)
+- Missing required secret OPENAI\_API\_KEY in PR workflow [\#1027](https://github.com/ai16z/eliza/issues/1027)
+
+**Closed issues:**
+
+- Bug: Application crashes on startup [\#1173](https://github.com/ai16z/eliza/issues/1173)
+- Bug: Application crashes on startup [\#1172](https://github.com/ai16z/eliza/issues/1172)
+
+**Merged pull requests:**
+
+- fix: default character model to LLAMALOCAL [\#1299](https://github.com/ai16z/eliza/pull/1299) ([shakkernerd](https://github.com/shakkernerd))
+- fix: remove clients from default character [\#1297](https://github.com/ai16z/eliza/pull/1297) ([shakkernerd](https://github.com/shakkernerd))
+- chore: bump version to 0.1.6-alpha.5 [\#1296](https://github.com/ai16z/eliza/pull/1296) ([shakkernerd](https://github.com/shakkernerd))
+- feat: Add caching support for Redis [\#1295](https://github.com/ai16z/eliza/pull/1295) ([shakkernerd](https://github.com/shakkernerd))
+- fix: output checkable variable for conditional [\#1294](https://github.com/ai16z/eliza/pull/1294) ([twilwa](https://github.com/twilwa))
+- fix: add missing claude vertex case to handleProvider [\#1293](https://github.com/ai16z/eliza/pull/1293) ([shakkernerd](https://github.com/shakkernerd))
+- fix: pnpm lock file [\#1292](https://github.com/ai16z/eliza/pull/1292) ([shakkernerd](https://github.com/shakkernerd))
+- fix: integration tests fix [\#1291](https://github.com/ai16z/eliza/pull/1291) ([twilwa](https://github.com/twilwa))
+- feat: Update main for v0.1.6-alpha.5 [\#1290](https://github.com/ai16z/eliza/pull/1290) ([odilitime](https://github.com/odilitime))
+- chore: clean up merged PR1168 [\#1289](https://github.com/ai16z/eliza/pull/1289) ([odilitime](https://github.com/odilitime))
+- fix: fix lockfile [\#1283](https://github.com/ai16z/eliza/pull/1283) ([odilitime](https://github.com/odilitime))
+- feat: Redis Cache Implementation [\#1279](https://github.com/ai16z/eliza/pull/1279) ([shakkernerd](https://github.com/shakkernerd))
+- chore: Revert "fix: pnpm lockfile" [\#1275](https://github.com/ai16z/eliza/pull/1275) ([shakkernerd](https://github.com/shakkernerd))
+- fix: pnpm lockfile [\#1273](https://github.com/ai16z/eliza/pull/1273) ([shakkernerd](https://github.com/shakkernerd))
+- fix: fix ENABLE\_ACTION\_PROCESSING logic [\#1268](https://github.com/ai16z/eliza/pull/1268) ([oxSaturn](https://github.com/oxSaturn))
+- feat: add README\_DE.md in docs directory [\#1262](https://github.com/ai16z/eliza/pull/1262) ([derRizzMeister](https://github.com/derRizzMeister))
+- fix: unsupported model provider: claude\_vertex [\#1258](https://github.com/ai16z/eliza/pull/1258) ([tcm390](https://github.com/tcm390))
+- doc: add Twitter automation label notice \(\#1253\) [\#1254](https://github.com/ai16z/eliza/pull/1254) ([julienbrs](https://github.com/julienbrs))
+- Update trump.character.json [\#1252](https://github.com/ai16z/eliza/pull/1252) ([lalalune](https://github.com/lalalune))
+- fix: Fix local\_llama key warning [\#1250](https://github.com/ai16z/eliza/pull/1250) ([odilitime](https://github.com/odilitime))
+- feat: upgrade Tavily API with comprehensive input and constrain the token consumption [\#1246](https://github.com/ai16z/eliza/pull/1246) ([tomguluson92](https://github.com/tomguluson92))
+- feat: make express payload limit configurable [\#1245](https://github.com/ai16z/eliza/pull/1245) ([renlulu](https://github.com/renlulu))
+- feat: make twitter login retry times as env [\#1244](https://github.com/ai16z/eliza/pull/1244) ([renlulu](https://github.com/renlulu))
+- Fix visibility issue github image cicd [\#1243](https://github.com/ai16z/eliza/pull/1243) ([luisalrp](https://github.com/luisalrp))
+- fix: twitterShouldRespondTemplate Fails When Defined as a String in JSON Character Config [\#1242](https://github.com/ai16z/eliza/pull/1242) ([tcm390](https://github.com/tcm390))
+- fix: Sync UI Client with server port env [\#1239](https://github.com/ai16z/eliza/pull/1239) ([jonathangus](https://github.com/jonathangus))
+- Update trump.character.json - Enhance terminology in the project for clarity and inclusivity [\#1237](https://github.com/ai16z/eliza/pull/1237) ([yjshi2015](https://github.com/yjshi2015))
+- Update README for french, spanish and italian language [\#1236](https://github.com/ai16z/eliza/pull/1236) ([azurwastaken](https://github.com/azurwastaken))
+- feat: add parse mode=Markdown, enhance telegram bot output [\#1229](https://github.com/ai16z/eliza/pull/1229) ([simpletrontdip](https://github.com/simpletrontdip))
+- fix: CircuitBreaker.ts [\#1226](https://github.com/ai16z/eliza/pull/1226) ([tomguluson92](https://github.com/tomguluson92))
+- fix: Allow the bot to post messages with images generated by the imageGenerationPlugin on Telegram. [\#1220](https://github.com/ai16z/eliza/pull/1220) ([tcm390](https://github.com/tcm390))
+- fix: postgres needs the user to exist before you can add a participant [\#1219](https://github.com/ai16z/eliza/pull/1219) ([odilitime](https://github.com/odilitime))
+- chore: clean up scripts [\#1218](https://github.com/ai16z/eliza/pull/1218) ([danbednarski](https://github.com/danbednarski))
+- fix: improve twitter post generation prompt [\#1217](https://github.com/ai16z/eliza/pull/1217) ([cygaar](https://github.com/cygaar))
+- fix: fail when cannot get token, add Akash to generateText switch [\#1214](https://github.com/ai16z/eliza/pull/1214) ([vpavlin](https://github.com/vpavlin))
+- chore: New docs [\#1211](https://github.com/ai16z/eliza/pull/1211) ([madjin](https://github.com/madjin))
+- docs: Update README.md [\#1209](https://github.com/ai16z/eliza/pull/1209) ([marcNY](https://github.com/marcNY))
+- fix: gitpod cicd bug [\#1207](https://github.com/ai16z/eliza/pull/1207) ([v1xingyue](https://github.com/v1xingyue))
+- fix: write summary file before trying to cache it [\#1205](https://github.com/ai16z/eliza/pull/1205) ([tobbelobb](https://github.com/tobbelobb))
+- fix: optional chaining on search to avoid startup errors when search is not enabled [\#1202](https://github.com/ai16z/eliza/pull/1202) ([netdragonx](https://github.com/netdragonx))
+- docs\(cn\): add python 3.7 [\#1201](https://github.com/ai16z/eliza/pull/1201) ([9547](https://github.com/9547))
+- docs: Update "CN README" with more details [\#1196](https://github.com/ai16z/eliza/pull/1196) ([tomguluson92](https://github.com/tomguluson92))
+- docs: fixed CONTRIBUTING.md file Issue: 1048 [\#1191](https://github.com/ai16z/eliza/pull/1191) ([ileana-pr](https://github.com/ileana-pr))
+- test: adding tests for runtime.ts. Modified README since we switched to vitest [\#1190](https://github.com/ai16z/eliza/pull/1190) ([ai16z-demirix](https://github.com/ai16z-demirix))
+- fix: Fix client.push issue and update README for Slack client verification [\#1182](https://github.com/ai16z/eliza/pull/1182) ([SumeetChougule](https://github.com/SumeetChougule))
+- feat: integration tests fixes + library improvements [\#1177](https://github.com/ai16z/eliza/pull/1177) ([jzvikart](https://github.com/jzvikart))
+- docs: Update "What Did You Get Done This Week? 5" spaces notes [\#1174](https://github.com/ai16z/eliza/pull/1174) ([YoungPhlo](https://github.com/YoungPhlo))
+- fix: Fix typo in multiversx plugin prompt for creating token [\#1170](https://github.com/ai16z/eliza/pull/1170) ([thomasWos](https://github.com/thomasWos))
+- feat: make script dash compatible [\#1165](https://github.com/ai16z/eliza/pull/1165) ([shakkernerd](https://github.com/shakkernerd))
+- chore: print commands to start the client and remove unused --non-itera… [\#1163](https://github.com/ai16z/eliza/pull/1163) ([yang-han](https://github.com/yang-han))
+- fix: Enable multiple bots to join Discord voice channels [\#1156](https://github.com/ai16z/eliza/pull/1156) ([tcm390](https://github.com/tcm390))
+
 ## [v0.1.6-alpha.4](https://github.com/ai16z/eliza/tree/v0.1.6-alpha.4) (2024-12-17)
 
 [Full Changelog](https://github.com/ai16z/eliza/compare/v0.1.6-alpha.3...v0.1.6-alpha.4)
@@ -116,7 +205,7 @@
 - feat: add support for handlebars templating engine as an option [\#1136](https://github.com/ai16z/eliza/pull/1136) ([erise133](https://github.com/erise133))
 - feat: allow agents to create/buy/sell tokens on FOMO.fund's bonding curve in plugin-solana [\#1135](https://github.com/ai16z/eliza/pull/1135) ([0xNerd](https://github.com/0xNerd))
 - fix: fix the name [\#1133](https://github.com/ai16z/eliza/pull/1133) ([n00b21337](https://github.com/n00b21337))
-- Add `chatapi.akash.network` to available list of model providers \(FREE LLAMA API ACCESS!\) [\#1131](https://github.com/ai16z/eliza/pull/1131) ([MbBrainz](https://github.com/MbBrainz))
+- feat: Add `chatapi.akash.network` to available list of model providers \(FREE LLAMA API ACCESS!\) [\#1131](https://github.com/ai16z/eliza/pull/1131) ([MbBrainz](https://github.com/MbBrainz))
 - fix: discord client duplicate function removal [\#1125](https://github.com/ai16z/eliza/pull/1125) ([azep-ninja](https://github.com/azep-ninja))
 - fix: add more heplful default agents \(Dobby and C3PO\) [\#1124](https://github.com/ai16z/eliza/pull/1124) ([n00b21337](https://github.com/n00b21337))
 - fix: Refactor to prevent unnecessary lockfile changes [\#1120](https://github.com/ai16z/eliza/pull/1120) ([monilpat](https://github.com/monilpat))
