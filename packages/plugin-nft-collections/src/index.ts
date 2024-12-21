@@ -20,10 +20,24 @@ export default class NFTCollectionsPlugin extends Plugin {
     }
 
     async setup(character: Character): Promise<void> {
-        const reservoirApiKey = character.settings.secrets?.RESERVOIR_API_KEY;
+        console.log(
+            "Character settings:",
+            JSON.stringify(character.settings, null, 2)
+        );
+        console.log(
+            "Environment RESERVOIR_API_KEY:",
+            process.env.RESERVOIR_API_KEY
+        );
+
+        // Try to get the API key from character settings or environment variable
+        const reservoirApiKey =
+            character.settings?.secrets?.RESERVOIR_API_KEY ||
+            process.env.RESERVOIR_API_KEY;
+        console.log("Final reservoirApiKey:", reservoirApiKey);
+
         if (!reservoirApiKey) {
             throw new Error(
-                "RESERVOIR_API_KEY is required in character settings"
+                "RESERVOIR_API_KEY is required in either character settings or environment variables"
             );
         }
 

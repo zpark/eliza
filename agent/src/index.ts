@@ -190,6 +190,16 @@ export async function loadCharacters(
                     character.plugins = importedPlugins;
                 }
 
+                // Ensure settings are properly merged
+                character.settings = {
+                    ...defaultCharacter.settings,
+                    ...character.settings,
+                    secrets: {
+                        ...defaultCharacter.settings.secrets,
+                        ...character.settings?.secrets,
+                    },
+                };
+
                 loadedCharacters.push(character);
                 elizaLogger.info(
                     `Successfully loaded character from: ${resolvedPath}`
@@ -478,6 +488,12 @@ export async function createAgent(
         );
     }
 
+    let nftCollectionsPluginInstance: any | undefined;
+    if (getSecret(character, "RESERVOIR_API_KEY")) {
+        nftCollectionsPluginInstance = new nftCollectionsPlugin();
+        await nftCollectionsPluginInstance.setup(character);
+    }
+
     return new AgentRuntime({
         databaseAdapter: db,
         token,
@@ -554,9 +570,7 @@ export async function createAgent(
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
-            getSecret(character, "RESERVOIR_API_KEY")
-                ? nftCollectionsPlugin
-                : null,
+            nftCollectionsPluginInstance,
         ].filter(Boolean),
         providers: [],
         actions: [],

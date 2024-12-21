@@ -1,12 +1,25 @@
-import { Service, ServiceType } from "@ai16z/eliza";
+import {
+    Service,
+    ServiceType,
+    Action,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    State,
+    ActionExample,
+} from "@ai16z/eliza";
 import type { NFTCollection, MarketStats, NFTService } from "../types";
 
 export class ReservoirService extends Service implements NFTService {
     private apiKey: string;
     private baseUrl = "https://api.reservoir.tools";
+    protected runtime: IAgentRuntime | undefined;
 
     constructor(apiKey: string) {
         super();
+        if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
+            throw new Error("Invalid Reservoir API key provided");
+        }
         this.apiKey = apiKey;
     }
 
@@ -15,7 +28,72 @@ export class ReservoirService extends Service implements NFTService {
     }
 
     async initialize(): Promise<void> {
-        // No initialization needed
+        // Register NFT-related actions
+        const actions: Action[] = [
+            {
+                name: "GET_TOP_COLLECTIONS",
+                description: "Get top NFT collections by volume",
+                similes: ["FETCH_TOP_COLLECTIONS", "LIST_TOP_COLLECTIONS"],
+                examples: [
+                    [
+                        {
+                            user: "user",
+                            content: {
+                                text: "Show me the top NFT collections",
+                            },
+                        },
+                    ],
+                ],
+                handler: async (
+                    _runtime: IAgentRuntime,
+                    _message: Memory,
+                    _state: State,
+                    _options: any,
+                    callback?: HandlerCallback
+                ) => {
+                    const collections = await this.getTopCollections();
+                    callback?.({ text: JSON.stringify(collections, null, 2) });
+                    return true;
+                },
+                validate: async () => true,
+            },
+            {
+                name: "GET_MARKET_STATS",
+                description: "Get NFT market statistics",
+                similes: ["FETCH_MARKET_STATS", "GET_NFT_STATS"],
+                examples: [
+                    [
+                        {
+                            user: "user",
+                            content: {
+                                text: "What are the current NFT market statistics?",
+                            },
+                        },
+                    ],
+                ],
+                handler: async (
+                    _runtime: IAgentRuntime,
+                    _message: Memory,
+                    _state: State,
+                    _options: any,
+                    callback?: HandlerCallback
+                ) => {
+                    const stats = await this.getMarketStats();
+                    callback?.({ text: JSON.stringify(stats, null, 2) });
+                    return true;
+                },
+                validate: async () => true,
+            },
+            // Add other actions similarly...
+        ];
+
+        if (!this.runtime) {
+            throw new Error("Runtime not initialized");
+        }
+
+        actions.forEach((action) => {
+            this.runtime?.registerAction(action);
+        });
     }
 
     private async fetchFromReservoir(
@@ -25,18 +103,31 @@ export class ReservoirService extends Service implements NFTService {
         const queryString = new URLSearchParams(params).toString();
         const url = `${this.baseUrl}${endpoint}${queryString ? `?${queryString}` : ""}`;
 
-        const response = await fetch(url, {
-            headers: {
-                accept: "*/*",
-                "x-api-key": this.apiKey,
-            },
-        });
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    accept: "*/*",
+                    "x-api-key": this.apiKey,
+                },
+            });
 
-        if (!response.ok) {
-            throw new Error(`Reservoir API error: ${response.statusText}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error("Invalid or expired Reservoir API key");
+                }
+                throw new Error(
+                    `Reservoir API error: ${response.status} - ${errorText}`
+                );
+            }
+
+            return await response.json();
+        } catch (error) {
+            if (error instanceof Error) {
+                throw error;
+            }
+            throw new Error("Failed to fetch data from Reservoir API");
         }
-
-        return await response.json();
     }
 
     async getTopCollections(): Promise<NFTCollection[]> {
