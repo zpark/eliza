@@ -102,6 +102,9 @@ importers:
       '@ai16z/adapter-postgres':
         specifier: workspace:*
         version: link:../packages/adapter-postgres
+      '@ai16z/adapter-redis':
+        specifier: workspace:*
+        version: link:../packages/adapter-redis
       '@ai16z/adapter-sqlite':
         specifier: workspace:*
         version: link:../packages/adapter-sqlite
