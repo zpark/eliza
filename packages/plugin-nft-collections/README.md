@@ -453,3 +453,162 @@ graph TD
     F --> G
     D --> G
 ```
+
+## Integrations
+
+### GraphQL Support
+
+```env
+# GraphQL Configuration
+GRAPHQL_ENDPOINT=your-graphql-endpoint
+GRAPHQL_API_KEY=your-graphql-key
+```
+
+```typescript
+// Query collections using GraphQL
+const collections = await plugin.graphql.query(
+    `
+  query GetCollections($first: Int!) {
+    collections(first: $first) {
+      id
+      name
+      floorPrice
+      volume24h
+    }
+  }
+`,
+    { first: 10 }
+);
+
+// Subscribe to collection updates
+const subscription = plugin.graphql.subscribe(
+    `
+  subscription OnFloorPriceChange($collectionId: ID!) {
+    floorPriceChanged(collectionId: $collectionId) {
+      newPrice
+      oldPrice
+      timestamp
+    }
+  }
+`,
+    { collectionId: "0x1234" }
+);
+```
+
+### WebSocket Real-time Updates
+
+```env
+# WebSocket Configuration
+WS_ENDPOINT=your-websocket-endpoint
+WS_API_KEY=your-websocket-key
+```
+
+```typescript
+// Subscribe to real-time collection updates
+plugin.ws.subscribe("collection:0x1234", (update) => {
+    console.log("New floor price:", update.floorPrice);
+});
+
+// Subscribe to multiple events
+plugin.ws.subscribeMany(
+    ["sales:0x1234", "listings:0x1234", "transfers:0x1234"],
+    (event) => {
+        console.log("Event type:", event.type);
+        console.log("Event data:", event.data);
+    }
+);
+
+// Custom event filters
+plugin.ws.subscribe(
+    "sales:*",
+    {
+        priceAbove: "10 ETH",
+        marketplace: ["opensea", "blur"],
+    },
+    (sale) => {
+        console.log("Whale sale detected:", sale);
+    }
+);
+```
+
+### IPFS Integration
+
+```env
+# IPFS Configuration
+IPFS_GATEWAY=your-ipfs-gateway
+IPFS_API_KEY=your-ipfs-key
+IPFS_FALLBACK_GATEWAYS=["https://ipfs.io", "https://cloudflare-ipfs.com"]
+```
+
+```typescript
+// Fetch metadata from IPFS
+const metadata = await plugin.ipfs.getMetadata("ipfs://Qm...");
+
+// Upload metadata to IPFS
+const cid = await plugin.ipfs.uploadMetadata({
+    name: "Cool NFT",
+    description: "Very cool NFT",
+    image: "ipfs://Qm...",
+});
+
+// Pin content across multiple providers
+await plugin.ipfs.pin(cid, {
+    providers: ["pinata", "web3.storage"],
+    replicas: 3,
+});
+
+// Smart gateway selection
+const image = await plugin.ipfs.getImage(cid, {
+    preferredGateway: "cloudflare",
+    size: "thumbnail",
+    format: "webp",
+});
+```
+
+### Integration Best Practices
+
+1. **GraphQL**
+
+    - Use fragments for reusable queries
+    - Implement proper error boundaries
+    - Cache complex queries
+    - Use persisted queries for production
+
+2. **WebSocket**
+
+    - Implement reconnection logic
+    - Handle backpressure
+    - Use heartbeats
+    - Batch small updates
+    - Implement message queue for offline scenarios
+
+3. **IPFS**
+    - Use multiple gateway fallbacks
+    - Implement proper timeout handling
+    - Cache frequently accessed content
+    - Use appropriate gateway for content type
+    - Monitor gateway health
+
+### Integration Architecture
+
+```mermaid
+graph TD
+    A[Plugin Core] --> B[GraphQL Client]
+    A --> C[WebSocket Manager]
+    A --> D[IPFS Gateway]
+
+    B --> E[Query Builder]
+    B --> F[Subscription Manager]
+
+    C --> G[Event Stream]
+    C --> H[Connection Pool]
+
+    D --> I[Gateway Router]
+    D --> J[Content Cache]
+
+    E --> K[API Endpoint]
+    F --> K
+    G --> L[WS Endpoint]
+    H --> L
+    I --> M[IPFS Network]
+```
