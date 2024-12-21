@@ -1,6 +1,6 @@
 # NFT Collections Plugin
 
-A powerful plugin for interacting with NFT collections, providing comprehensive market data, social analytics, and trading capabilities through various APIs including Reservoir, CoinGecko, and more.
+A powerful plugin for interacting with NFT collections, providing comprehensive market data, social analytics, and trading capabilities through various APIs including Reservoir, CoinGecko, and more. While designed to work with any EVM NFT collection, the plugin includes special support for 420+ curated collections featured on ikigailabs.xyz.
 
 ## Features
 
@@ -11,6 +11,15 @@ A powerful plugin for interacting with NFT collections, providing comprehensive 
 - Collection activity monitoring
 - Token-level data and attributes
 - Collection statistics and rankings
+
+### Curated Collections Support
+
+- 420+ verified NFT collections featured on ikigailabs.xyz
+- Enhanced metadata and social information
+- Prioritized data fetching and caching
+- Pre-verified contract addresses
+- Featured collections highlighting
+- Quick lookup and validation functions
 
 ### Market Data
 
@@ -104,6 +113,21 @@ agent.registerPlugin(plugin);
 ### Fetching Collection Data
 
 ```typescript
+// Check if a collection is in our curated list
+const isCurated = isCuratedCollection("0x1234...abcd");
+
+// Get metadata for a curated collection
+const metadata = getCuratedCollection("0x1234...abcd");
+
+// Get all curated collection addresses
+const curatedAddresses = getCuratedAddresses();
+
+// Get featured collection addresses
+const featuredAddresses = getFeaturedAddresses();
+
+// Get verified collection addresses
+const verifiedAddresses = getVerifiedAddresses();
+
 // Get top collections
 const collections = await nftService.getTopCollections();
 
