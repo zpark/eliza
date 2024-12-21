@@ -1,6 +1,6 @@
 # NFT Collections Plugin
 
-A comprehensive NFT collections plugin powered by Reservoir Tools API, with optional integrations for enhanced market intelligence and social analytics. Features automated NFT trading capabilities with ikigailabs.xyz integration.
+A powerful plugin for interacting with NFT collections, providing comprehensive market data, social analytics, and trading capabilities through various APIs including Reservoir, CoinGecko, and more.
 
 ## Features
 
@@ -12,39 +12,47 @@ A comprehensive NFT collections plugin powered by Reservoir Tools API, with opti
 - Token-level data and attributes
 - Collection statistics and rankings
 
+### Market Data
+
+- Real-time floor prices and volume tracking
+- Market cap and holder statistics
+- Price history and trends
+- Multi-marketplace activity tracking
+- Wash trading detection
+- Liquidity analysis
+- Whale activity monitoring
+
+### Social Analytics
+
+- Twitter engagement metrics
+- Discord community stats
+- Telegram group analytics
+- Sentiment analysis
+- Influencer tracking
+- Community growth metrics
+
 ### Trading Features
 
-- Automated Floor Sweeping
-
+- Floor sweeping with best price routing
     - Buy NFTs at floor price
     - Batch purchase support
     - Multi-marketplace execution
-
-- Automated Listing (ikigailabs.xyz)
+    - Gas optimization
+    - Price suggestions
+- Listing Management (ikigailabs.xyz)
     - Automatic 2x purchase price listing
     - Manual price override option
     - Purchase history tracking
     - Ownership verification
     - 30-day listing duration
 
-### Optional Enhancements
+## Installation
 
-- Market Intelligence (requires additional API keys)
+```bash
+pnpm add @ai16z/plugin-nft-collections
+```
 
-    - Wash trading detection
-    - Whale activity tracking
-    - Liquidity analysis
-    - Multi-marketplace activity tracking
-    - Price history and trends
-
-- Social Analytics (requires additional API keys)
-    - Twitter metrics and engagement
-    - Discord community stats
-    - Telegram group analytics
-    - Social sentiment analysis
-    - Community growth tracking
-
-## Setup
+## Configuration
 
 ### Required Configuration
 
@@ -60,54 +68,40 @@ A comprehensive NFT collections plugin powered by Reservoir Tools API, with opti
 
 ```typescript
 {
-  "secrets": {
-    // Market Intelligence
-    "NANSEN_API_KEY": "your-nansen-api-key",
-    "DUNE_API_KEY": "your-dune-api-key",
-    "ALCHEMY_API_KEY": "your-alchemy-api-key",
-    "CHAINBASE_API_KEY": "your-chainbase-api-key",
-    "NFTSCAN_API_KEY": "your-nftscan-api-key",
-
-    // Social Analytics
-    "TWITTER_API_KEY": "your-twitter-api-key",
-    "DISCORD_API_KEY": "your-discord-api-key",
-    "TELEGRAM_API_KEY": "your-telegram-api-key"
-  }
+    reservoir: "your-reservoir-api-key",
+    coingecko: "your-coingecko-api-key", // Optional
+    social: {
+        twitter: "your-twitter-api-key", // Optional
+        discord: "your-discord-api-key", // Optional
+        telegram: "your-telegram-api-key", // Optional
+    },
+    market: {
+        nansen: "your-nansen-api-key", // Optional
+        dune: "your-dune-api-key", // Optional
+        alchemy: "your-alchemy-api-key", // Optional
+        chainbase: "your-chainbase-api-key", // Optional
+        nftscan: "your-nftscan-api-key", // Optional
+    }
 }
 ```
 
 ## Usage
 
-### Basic Usage
+### Basic Setup
 
 ```typescript
 import { NFTCollectionsPlugin } from "@ai16z/plugin-nft-collections";
 
-// Initialize the plugin with required Reservoir API key
-const plugin = new NFTCollectionsPlugin();
-await plugin.setup(character);
+// Initialize the plugin
+const plugin = new NFTCollectionsPlugin({
+    reservoir: "your-reservoir-api-key",
+});
+
+// Register with your agent
+agent.registerPlugin(plugin);
 ```
 
-### Trading Commands
-
-#### Sweep Floor
-
-```
-// Buy NFTs at floor price
-"Sweep 5 NFTs from collection 0x1234...abcd at floor price"
-```
-
-#### List NFT
-
-```
-// Automatic listing at 2x purchase price
-"List token #123 from collection 0x1234...abcd"
-
-// Manual price override
-"List token #123 from collection 0x1234...abcd for 5 ETH"
-```
-
-### Data Access
+### Fetching Collection Data
 
 ```typescript
 // Get top collections
@@ -124,23 +118,47 @@ const tokens = await nftService.getCollectionTokens(collectionAddress);
 
 // Get collection attributes
 const attributes = await nftService.getCollectionAttributes(collectionAddress);
+
+// Get detailed market intelligence
+const details =
+    await marketIntelligenceService.getMarketIntelligence("0x1234...abcd");
 ```
 
-### Trading Methods
+### Social Analytics
 
 ```typescript
-// Sweep floor
-const buyResult = await nftService.executeBuy({
-    listings: floorListings,
-    taker: walletAddress,
+// Get social metrics
+const socialMetrics =
+    await socialAnalyticsService.getSocialMetrics("0x1234...abcd");
+
+// Get community stats
+const communityMetrics =
+    await socialAnalyticsService.getCommunityMetrics("0x1234...abcd");
+
+// Get sentiment analysis
+const sentiment =
+    await socialAnalyticsService.analyzeSentiment("0x1234...abcd");
+
+// Track social performance
+const performance =
+    await socialAnalyticsService.trackSocialPerformance("0x1234...abcd");
+```
+
+### Trading Operations
+
+```typescript
+// List an NFT
+const listing = await nftService.createListing({
+    tokenId: "123",
+    collectionAddress: "0x1234...abcd",
+    price: 1.5,
+    marketplace: "ikigailabs",
 });
 
-// List NFT
-const listingResult = await nftService.createListing({
-    tokenId: "123",
-    collectionAddress: "0x...",
-    price: 2.5,
-    marketplace: "ikigailabs",
+// Sweep floor
+const sweep = await nftService.executeBuy({
+    listings: floorListings,
+    taker: "0xdef...789",
 });
 
 // Cancel listing
@@ -153,48 +171,7 @@ const cancelResult = await nftService.cancelListing({
 const ownedNFTs = await nftService.getOwnedNFTs(walletAddress);
 ```
 
-### Enhanced Features (when available)
-
-#### Market Intelligence
-
-```typescript
-// Get market intelligence data
-const intelligence =
-    await marketIntelligenceService.getMarketIntelligence(collectionAddress);
-
-// Detect wash trading
-const washTrading =
-    await marketIntelligenceService.detectWashTrading(collectionAddress);
-
-// Get whale activity
-const whales =
-    await marketIntelligenceService.getWhaleActivity(collectionAddress);
-
-// Get liquidity analysis
-const liquidity =
-    await marketIntelligenceService.getLiquidityAnalysis(collectionAddress);
-```
-
-#### Social Analytics
-
-```typescript
-// Get social metrics
-const social = await socialAnalyticsService.getSocialMetrics(collectionAddress);
-
-// Get community metrics
-const community =
-    await socialAnalyticsService.getCommunityMetrics(collectionAddress);
-
-// Get sentiment analysis
-const sentiment =
-    await socialAnalyticsService.analyzeSentiment(collectionAddress);
-
-// Track social performance
-const performance =
-    await socialAnalyticsService.trackSocialPerformance(collectionAddress);
-```
-
-## Trading Response Types
+## Response Types
 
 ### Buy Response
 
@@ -231,6 +208,46 @@ interface OwnedNFT {
 }
 ```
 
+## Available Actions
+
+1. `LIST_NFT`: Create a listing on ikigailabs.xyz
+
+    ```typescript
+    // Example message
+    "List NFT #123 from collection 0x1234...abcd for 1.5 ETH";
+    ```
+
+2. `SWEEP_FLOOR`: Sweep floor listings
+
+    ```typescript
+    // Example message
+    "Sweep 5 NFTs from collection 0x1234...abcd with max price 2 ETH";
+    ```
+
+3. `GET_STATS`: Get collection statistics
+    ```typescript
+    // Example message
+    "Show me stats for collection 0x1234...abcd";
+    ```
+
+## Market Intelligence Features
+
+- Wash Trading Detection
+- Whale Activity Tracking
+- Liquidity Analysis
+- Price Predictions
+- Rarity Analysis
+- Multi-marketplace Data Aggregation
+
+## Social Analytics Features
+
+- Engagement Metrics
+- Sentiment Analysis
+- Community Growth Tracking
+- Influencer Analysis
+- Content Performance
+- Cross-platform Analytics
+
 ## Error Handling
 
 The plugin includes robust error handling for both required and optional services:
@@ -263,3 +280,33 @@ The plugin includes robust error handling for both required and optional service
 8. Handle transaction failures gracefully
 9. Monitor listing status and expiration
 10. Implement proper gas price management for transactions
+
+## Development
+
+### Running Tests
+
+```bash
+pnpm test
+```
+
+### Building
+
+```bash
+pnpm build
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT
+
+## Support
+
+For support, please open an issue in the repository or contact the team at support@ai16z.com.
