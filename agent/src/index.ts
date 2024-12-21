@@ -214,8 +214,10 @@ export function getTokenForProvider(
     character: Character
 ): string {
     switch (provider) {
-        // no key needed for llama_local
+        // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
+            return "";
+        case ModelProviderName.GAIANET:
             return "";
         case ModelProviderName.OPENAI:
             return (
@@ -310,6 +312,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.AKASH_CHAT_API_KEY ||
                 settings.AKASH_CHAT_API_KEY
+            );
+        case ModelProviderName.GOOGLE:
+            return (
+                character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
+                settings.GOOGLE_GENERATIVE_AI_API_KEY
             );
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
@@ -645,7 +652,7 @@ async function startAgent(
         await db.init();
 
         const cache = initializeCache(
-            process.env.CACHE_STORE,
+            process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",
             db
