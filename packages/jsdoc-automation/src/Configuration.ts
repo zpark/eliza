@@ -49,7 +49,7 @@ export class Configuration implements Omit<ConfigurationData, 'rootDirectory'> {
     public pullRequestLabels: string[] = ['documentation', 'automated-pr'];
     public pullRequestReviewers: string[] = [];
     public excludedFiles: string[] = ["index.d.ts"];
-    public branch: string = 'main';
+    public branch: string = 'develop';
 
     constructor() {
         this.repoRoot = getRepoRoot();
