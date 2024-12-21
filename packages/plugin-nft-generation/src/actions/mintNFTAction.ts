@@ -1,9 +1,8 @@
 import {
     Action,
     composeContext,
-    Content,
     elizaLogger,
-    generateObjectDeprecated,
+    generateObject,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -15,34 +14,10 @@ import { verifyNFT } from "../handlers/verifyNFT.ts";
 import { sleep } from "../index.ts";
 import WalletSolana from "../provider/wallet/walletSolana.ts";
 import { PublicKey } from "@solana/web3.js";
+import { mintNFTTemplate } from "../templates.ts";
+import { MintNFTContent, MintNFTSchema } from "../types.ts";
 
-const mintTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
-
-Example response:
-\`\`\`json
-{
-    "collectionAddress": "D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
-}
-\`\`\`
-
-{{recentMessages}}
-
-Given the recent messages, extract the following information about the requested mint nft:
-- collection contract address
-
-Respond with a JSON markdown block containing only the extracted values.
-
-Note: Make sure to extract the collection address from the most recent messages whenever possible.`;
-
-export interface MintContent extends Content {
-    collectionAddress: string;
-}
-
-function isMintNFTContent(
-    runtime: IAgentRuntime,
-    content: any
-): content is MintContent {
-    console.log("Content for mint", content);
+function isMintNFTContent(content: any): content is MintNFTContent {
     return typeof content.collectionAddress === "string";
 }
 
@@ -60,18 +35,26 @@ const mintNFTAction: Action = {
     ],
     description: "Mint NFTs for the collection",
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
-        const AwsAccessKeyIdOk = !!runtime.getSetting("AWS_ACCESS_KEY_ID");
-        const AwsSecretAccessKeyOk = !!runtime.getSetting(
+        const awsAccessKeyIdOk = !!runtime.getSetting("AWS_ACCESS_KEY_ID");
+        const awsSecretAccessKeyOk = !!runtime.getSetting(
             "AWS_SECRET_ACCESS_KEY"
         );
-        const AwsRegionOk = !!runtime.getSetting("AWS_REGION");
-        const AwsS3BucketOk = !!runtime.getSetting("AWS_S3_BUCKET");
+        const awsRegionOk = !!runtime.getSetting("AWS_REGION");
+        const awsS3BucketOk = !!runtime.getSetting("AWS_S3_BUCKET");
+        const solanaAdminPrivateKeyOk = !!runtime.getSetting(
+            "SOLANA_ADMIN_PRIVATE_KEY"
+        );
+        const solanaAdminPublicKeyOk = !!runtime.getSetting(
+            "SOLANA_ADMIN_PUBLIC_KEY"
+        );
 
         return (
-            AwsAccessKeyIdOk ||
-            AwsSecretAccessKeyOk ||
-            AwsRegionOk ||
-            AwsS3BucketOk
+            awsAccessKeyIdOk ||
+            awsSecretAccessKeyOk ||
+            awsRegionOk ||
+            awsS3BucketOk ||
+            solanaAdminPrivateKeyOk ||
+            solanaAdminPublicKeyOk
         );
     },
     handler: async (
@@ -92,18 +75,20 @@ const mintNFTAction: Action = {
             // Compose transfer context
             const transferContext = composeContext({
                 state,
-                template: mintTemplate,
+                template: mintNFTTemplate,
             });
 
-            const content = await generateObjectDeprecated({
+            const res = await generateObject({
                 runtime,
                 context: transferContext,
                 modelClass: ModelClass.LARGE,
+                schema: MintNFTSchema,
             });
+            const content = res.object;
 
-            elizaLogger.log("generateObjectDeprecated:", transferContext);
+            elizaLogger.log("Generate Object:", content);
 
-            if (!isMintNFTContent(runtime, content)) {
+            if (!isMintNFTContent(content)) {
                 elizaLogger.error("Invalid content for MINT_NFT action.");
                 if (callback) {
                     callback({
@@ -137,7 +122,6 @@ const mintNFTAction: Action = {
                 return false;
             }
             if (metadata) {
-                elizaLogger.log("nft params", {});
                 const nftRes = await createNFT({
                     runtime,
                     collectionName: metadata.name,
@@ -176,10 +160,9 @@ const mintNFTAction: Action = {
             }
             return [];
         } catch (e: any) {
-            console.log(e);
+            elizaLogger.log(e);
+            throw e;
         }
-
-        // callback();
     },
     examples: [
         [
