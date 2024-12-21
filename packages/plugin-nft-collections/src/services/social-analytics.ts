@@ -1,227 +1,239 @@
-import { Service, ServiceType } from "@ai16z/eliza";
-import { SocialMetrics, NewsItem, CommunityMetrics } from "../types";
+import axios from "axios";
+import { Service, ServiceType, IAgentRuntime } from "@ai16z/eliza";
+import type { CacheManager } from "./cache-manager";
+import type { RateLimiter } from "./rate-limiter";
 
-export class SocialAnalyticsService extends Service {
-    private twitterApiKey: string;
-    private discordApiKey: string;
-    private telegramApiKey: string;
-    private alchemyApiKey: string;
-    private nftscanApiKey: string;
-
-    constructor(apiKeys: {
+interface SocialAnalyticsConfig {
+    cacheManager?: CacheManager;
+    rateLimiter?: RateLimiter;
+    apiKeys?: {
         twitter?: string;
         discord?: string;
         telegram?: string;
-        alchemy?: string;
-        nftscan?: string;
-    }) {
+    };
+}
+
+interface SocialData {
+    twitter: {
+        followers: number;
+        engagement: number;
+        sentiment: number;
+        recentTweets: Array<{
+            id: string;
+            text: string;
+            likes: number;
+            retweets: number;
+            replies: number;
+        }>;
+    };
+    discord: {
+        members: number;
+        activeUsers: number;
+        messageVolume: number;
+        topChannels: Array<{
+            name: string;
+            messages: number;
+            users: number;
+        }>;
+    };
+    telegram?: {
+        members: number;
+        activeUsers: number;
+        messageVolume: number;
+    };
+    sentiment: {
+        overall: number;
+        twitter: number;
+        discord: number;
+        telegram?: number;
+    };
+}
+
+interface SocialMetrics {
+    twitter: {
+        followers: number;
+        engagement: {
+            likes: number;
+            retweets: number;
+            replies: number;
+            mentions: number;
+        };
+        sentiment: {
+            positive: number;
+            neutral: number;
+            negative: number;
+        };
+    };
+    mentions: Array<{
+        platform: string;
+        text: string;
+        timestamp: Date;
+        author: string;
+        engagement: number;
+    }>;
+    influencers: Array<{
+        address: string;
+        platform: string;
+        followers: number;
+        engagement: number;
+        sentiment: number;
+    }>;
+    trending: boolean;
+}
+
+export class SocialAnalyticsService extends Service {
+    private cacheManager?: CacheManager;
+    private rateLimiter?: RateLimiter;
+    protected runtime?: IAgentRuntime;
+    private apiKeys: Required<NonNullable<SocialAnalyticsConfig["apiKeys"]>>;
+
+    constructor(config?: SocialAnalyticsConfig) {
         super();
-        this.twitterApiKey = apiKeys.twitter || "";
-        this.discordApiKey = apiKeys.discord || "";
-        this.telegramApiKey = apiKeys.telegram || "";
-        this.alchemyApiKey = apiKeys.alchemy || "";
-        this.nftscanApiKey = apiKeys.nftscan || "";
+        this.cacheManager = config?.cacheManager;
+        this.rateLimiter = config?.rateLimiter;
+        this.apiKeys = {
+            twitter: config?.apiKeys?.twitter || "",
+            discord: config?.apiKeys?.discord || "",
+            telegram: config?.apiKeys?.telegram || "",
+        };
     }
 
-    static get serviceType(): ServiceType {
+    static override get serviceType(): ServiceType {
         return "nft_social_analytics" as ServiceType;
     }
 
-    async initialize(): Promise<void> {
-        // Initialize API clients if needed
+    override async initialize(runtime: IAgentRuntime): Promise<void> {
+        this.runtime = runtime;
+        // Initialize any required resources
     }
 
-    private async fetchTwitterMetrics(collectionAddress: string): Promise<{
-        followers: number;
-        engagement: any;
-        sentiment: any;
-    }> {
-        // TODO: Implement Twitter API v2 calls
-        // GET /2/users/{id}/followers
-        // GET /2/tweets/search/recent
+    private async makeRequest<T>(
+        endpoint: string,
+        params: Record<string, any> = {}
+    ): Promise<T> {
+        const cacheKey = `social:${endpoint}:${JSON.stringify(params)}`;
+
+        // Check cache first
+        if (this.cacheManager) {
+            const cached = await this.cacheManager.get<T>(cacheKey);
+            if (cached) return cached;
+        }
+
+        // Check rate limit
+        if (this.rateLimiter) {
+            await this.rateLimiter.checkLimit("social");
+        }
+
+        try {
+            const response = await axios.get(endpoint, { params });
+
+            // Cache the response
+            if (this.cacheManager) {
+                await this.cacheManager.set(cacheKey, response.data);
+            }
+
+            return response.data;
+        } catch (error) {
+            console.error("Social Analytics API error:", error);
+            throw error;
+        }
+    }
+
+    async getAnalytics(address: string): Promise<SocialData> {
+        // Combine data from multiple sources
+        const [twitterData, discordData, telegramData, sentimentData] =
+            await Promise.all([
+                this.getTwitterData(address),
+                this.getDiscordData(address),
+                this.getTelegramData(address),
+                this.getSentimentData(address),
+            ]);
+
         return {
-            followers: 0,
-            engagement: {
-                likes: 0,
-                retweets: 0,
-                replies: 0,
-                mentions: 0,
-            },
-            sentiment: {
-                positive: 0,
-                neutral: 0,
-                negative: 0,
-            },
+            twitter: twitterData,
+            discord: discordData,
+            telegram: telegramData,
+            sentiment: sentimentData,
         };
     }
 
-    private async fetchDiscordMetrics(serverId: string): Promise<{
-        members: number;
-        activity: any;
-        channels: any[];
-    }> {
-        // TODO: Implement Discord API calls
-        // GET /guilds/{guild.id}
-        // GET /guilds/{guild.id}/channels
-        return {
-            members: 0,
-            activity: {
-                messagesPerDay: 0,
-                activeUsers: 0,
-                growthRate: 0,
-            },
-            channels: [],
-        };
+    private async getTwitterData(address: string) {
+        return this.makeRequest<any>(`/api/twitter/${address}`);
     }
 
-    private async fetchTelegramMetrics(groupId: string): Promise<{
-        members: number;
-        activity: any;
-    }> {
-        // TODO: Implement Telegram Bot API calls
-        // getChatMemberCount
-        // getChatMembersCount
-        return {
-            members: 0,
-            activity: {
-                messagesPerDay: 0,
-                activeUsers: 0,
-                growthRate: 0,
-            },
-        };
+    private async getDiscordData(address: string) {
+        return this.makeRequest<any>(`/api/discord/${address}`);
     }
 
-    private async fetchNFTScanSocial(collectionAddress: string): Promise<{
-        mentions: any[];
-        influencers: any[];
-        trending: boolean;
-    }> {
-        // TODO: Implement NFTScan Social API calls
-        // GET /v1/social/collection/{address}/mentions
-        // GET /v1/social/collection/{address}/influencers
-        return {
-            mentions: [],
-            influencers: [],
-            trending: false,
-        };
+    private async getTelegramData(address: string) {
+        return this.makeRequest<any>(`/api/telegram/${address}`);
     }
 
-    async getSocialMetrics(collectionAddress: string): Promise<SocialMetrics> {
-        const [twitterData, nftscanData] = await Promise.all([
-            this.fetchTwitterMetrics(collectionAddress),
-            this.fetchNFTScanSocial(collectionAddress),
+    private async getSentimentData(address: string) {
+        return this.makeRequest<any>(`/api/sentiment/${address}`);
+    }
+
+    async getEngagementMetrics(address: string) {
+        return this.makeRequest<any>(`/api/engagement/${address}`);
+    }
+
+    async getSentimentAnalysis(address: string) {
+        return this.makeRequest<any>(`/api/sentiment-analysis/${address}`);
+    }
+
+    async getCommunityGrowth(address: string) {
+        return this.makeRequest<any>(`/api/community-growth/${address}`);
+    }
+
+    async getInfluencerAnalysis(address: string) {
+        return this.makeRequest<any>(`/api/influencers/${address}`);
+    }
+
+    async getContentPerformance(address: string) {
+        return this.makeRequest<any>(`/api/content/${address}`);
+    }
+
+    async getCrossPlatformAnalytics(address: string) {
+        return this.makeRequest<any>(`/api/cross-platform/${address}`);
+    }
+
+    async getSocialMetrics(address: string): Promise<SocialMetrics> {
+        const [twitterData, mentions, influencers] = await Promise.all([
+            this.getTwitterData(address),
+            this.makeRequest<any>(`/api/mentions/${address}`),
+            this.makeRequest<any>(`/api/influencers/${address}`),
         ]);
 
         return {
             twitter: {
                 followers: twitterData.followers,
-                engagement: twitterData.engagement,
-                sentiment: twitterData.sentiment,
+                engagement: {
+                    likes: twitterData.engagement?.likes || 0,
+                    retweets: twitterData.engagement?.retweets || 0,
+                    replies: twitterData.engagement?.replies || 0,
+                    mentions: twitterData.engagement?.mentions || 0,
+                },
+                sentiment: {
+                    positive: twitterData.sentiment?.positive || 0,
+                    neutral: twitterData.sentiment?.neutral || 0,
+                    negative: twitterData.sentiment?.negative || 0,
+                },
             },
-            mentions: nftscanData.mentions,
-            influencers: nftscanData.influencers,
-            trending: nftscanData.trending,
-        };
-    }
-
-    async getNews(collectionAddress: string): Promise<NewsItem[]> {
-        const nftscanData = await this.fetchNFTScanSocial(collectionAddress);
-
-        // Transform mentions and social data into news items
-        return nftscanData.mentions.map((mention) => ({
-            title: "",
-            source: "",
-            url: "",
-            timestamp: new Date(),
-            sentiment: "neutral",
-            relevance: 1,
-        }));
-    }
-
-    async getCommunityMetrics(
-        collectionAddress: string,
-        discordId?: string,
-        telegramId?: string
-    ): Promise<CommunityMetrics> {
-        const [discordData, telegramData] = await Promise.all([
-            discordId ? this.fetchDiscordMetrics(discordId) : null,
-            telegramId ? this.fetchTelegramMetrics(telegramId) : null,
-        ]);
-
-        return {
-            discord: discordData
-                ? {
-                      members: discordData.members,
-                      activity: discordData.activity,
-                      channels: discordData.channels,
-                  }
-                : null,
-            telegram: telegramData
-                ? {
-                      members: telegramData.members,
-                      activity: telegramData.activity,
-                  }
-                : null,
-            totalMembers:
-                (discordData?.members || 0) + (telegramData?.members || 0),
-            growthRate: 0, // Calculate from historical data
-            engagement: {
-                activeUsers: 0,
-                messagesPerDay: 0,
-                topChannels: [],
-            },
-        };
-    }
-
-    async analyzeSentiment(collectionAddress: string): Promise<{
-        overall: number;
-        breakdown: {
-            positive: number;
-            neutral: number;
-            negative: number;
-        };
-        trends: Array<{
-            topic: string;
-            sentiment: number;
-            volume: number;
-        }>;
-    }> {
-        const [twitterData, nftscanData] = await Promise.all([
-            this.fetchTwitterMetrics(collectionAddress),
-            this.fetchNFTScanSocial(collectionAddress),
-        ]);
-
-        return {
-            overall: 0, // Calculate weighted average
-            breakdown: twitterData.sentiment,
-            trends: [], // Extract from mentions and social data
-        };
-    }
-
-    async trackSocialPerformance(collectionAddress: string): Promise<{
-        metrics: {
-            reach: number;
-            engagement: number;
-            influence: number;
-        };
-        trends: Array<{
-            platform: string;
-            metric: string;
-            values: number[];
-        }>;
-    }> {
-        const [twitterData, nftscanData] = await Promise.all([
-            this.fetchTwitterMetrics(collectionAddress),
-            this.fetchNFTScanSocial(collectionAddress),
-        ]);
-
-        return {
-            metrics: {
-                reach: twitterData.followers,
-                engagement: 0, // Calculate from engagement data
-                influence: 0, // Calculate from influencer data
-            },
-            trends: [], // Compile historical data
+            mentions: mentions.map((mention: any) => ({
+                platform: mention.platform,
+                text: mention.text,
+                timestamp: new Date(mention.timestamp),
+                author: mention.author,
+                engagement: mention.engagement,
+            })),
+            influencers: influencers.map((influencer: any) => ({
+                address: influencer.address,
+                platform: influencer.platform,
+                followers: influencer.followers,
+                engagement: influencer.engagement,
+                sentiment: influencer.sentiment,
+            })),
+            trending: mentions.length > 100 || influencers.length > 10,
         };
     }
 }

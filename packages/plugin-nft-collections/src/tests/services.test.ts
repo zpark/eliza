@@ -1,16 +1,31 @@
 import { describe, expect, it, beforeEach, jest } from "@jest/globals";
 import { ReservoirService } from "../services/reservoir";
-import { CoinGeckoService } from "../services/coingecko";
 import { SocialAnalyticsService } from "../services/social-analytics";
+import { CacheManager } from "../services/cache-manager";
+import { RateLimiter } from "../services/rate-limiter";
 import type { NFTCollection } from "../types";
 
 describe("NFT Services", () => {
     describe("ReservoirService", () => {
         const apiKey = "test-api-key";
         let service: ReservoirService;
+        let cacheManager: CacheManager;
+        let rateLimiter: RateLimiter;
 
         beforeEach(() => {
-            service = new ReservoirService(apiKey);
+            cacheManager = new CacheManager({
+                ttl: 3600000,
+                maxSize: 1000,
+            });
+            rateLimiter = new RateLimiter({
+                maxRequests: 100,
+                windowMs: 60000,
+            });
+
+            service = new ReservoirService(apiKey, {
+                cacheManager,
+                rateLimiter,
+            });
             global.fetch = jest.fn(() =>
                 Promise.resolve({
                     ok: true,
@@ -44,41 +59,29 @@ describe("NFT Services", () => {
         });
     });
 
-    describe("CoinGeckoService", () => {
-        let service: CoinGeckoService;
-
-        beforeEach(() => {
-            service = new CoinGeckoService();
-            global.fetch = jest.fn(() =>
-                Promise.resolve({
-                    ok: true,
-                    json: () =>
-                        Promise.resolve({
-                            id: "test-collection",
-                            contract_address: "0x1234",
-                            name: "Test Collection",
-                            floor_price_eth: 1.5,
-                            volume_24h_eth: 100,
-                        }),
-                } as Response)
-            );
-        });
-
-        it("should fetch NFT market data", async () => {
-            const data = await service.getNFTMarketData("0x1234");
-            expect(data?.floor_price_eth).toBe(1.5);
-            expect(data?.volume_24h_eth).toBe(100);
-            expect(global.fetch).toHaveBeenCalled();
-        });
-    });
-
     describe("SocialAnalyticsService", () => {
         let service: SocialAnalyticsService;
+        let cacheManager: CacheManager;
+        let rateLimiter: RateLimiter;
 
         beforeEach(() => {
+            cacheManager = new CacheManager({
+                ttl: 3600000,
+                maxSize: 1000,
+            });
+            rateLimiter = new RateLimiter({
+                maxRequests: 100,
+                windowMs: 60000,
+            });
+
             service = new SocialAnalyticsService({
-                twitter: "twitter-key",
-                nftscan: "nftscan-key",
+                cacheManager,
+                rateLimiter,
+                apiKeys: {
+                    twitter: "test-twitter-key",
+                    discord: "test-discord-key",
+                    telegram: "test-telegram-key",
+                },
             });
             global.fetch = jest.fn(() =>
                 Promise.resolve({

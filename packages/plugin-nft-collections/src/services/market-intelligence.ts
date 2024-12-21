@@ -1,199 +1,127 @@
-import { Service, ServiceType } from "@ai16z/eliza";
-import { MarketIntelligence, TraitAnalytics } from "../types";
+import axios from "axios";
+import { Service, ServiceType, IAgentRuntime } from "@ai16z/eliza";
+import type { CacheManager } from "./cache-manager";
+import type { RateLimiter } from "./rate-limiter";
+
+interface MarketIntelligenceConfig {
+    cacheManager?: CacheManager;
+    rateLimiter?: RateLimiter;
+}
+
+interface MarketData {
+    floorPrice: number;
+    volume24h: number;
+    marketCap: number;
+    holders: number;
+    whaleHolders: number;
+    washTradingScore: number;
+    liquidityScore: number;
+    priceHistory: Array<{
+        timestamp: number;
+        price: number;
+    }>;
+}
 
 export class MarketIntelligenceService extends Service {
-    private nansenApiKey: string;
-    private duneApiKey: string;
-    private alchemyApiKey: string;
-    private chainbaseApiKey: string;
-    private nftscanApiKey: string;
+    private cacheManager?: CacheManager;
+    private rateLimiter?: RateLimiter;
+    protected runtime?: IAgentRuntime;
 
-    constructor(apiKeys: {
-        nansen?: string;
-        dune?: string;
-        alchemy?: string;
-        chainbase?: string;
-        nftscan?: string;
-    }) {
+    constructor(config?: MarketIntelligenceConfig) {
         super();
-        this.nansenApiKey = apiKeys.nansen || "";
-        this.duneApiKey = apiKeys.dune || "";
-        this.alchemyApiKey = apiKeys.alchemy || "";
-        this.chainbaseApiKey = apiKeys.chainbase || "";
-        this.nftscanApiKey = apiKeys.nftscan || "";
+        this.cacheManager = config?.cacheManager;
+        this.rateLimiter = config?.rateLimiter;
     }
 
-    static get serviceType(): ServiceType {
+    static override get serviceType(): ServiceType {
         return "nft_market_intelligence" as ServiceType;
     }
 
-    async initialize(): Promise<void> {
-        // Initialize API clients if needed
+    override async initialize(runtime: IAgentRuntime): Promise<void> {
+        this.runtime = runtime;
+        // Initialize any required resources
     }
 
-    private async fetchNansenData(collectionAddress: string): Promise<{
-        whaleActivity: any[];
-        washTrading: any;
-    }> {
-        // TODO: Implement Nansen API calls
-        // GET /v1/nft/collection/{address}/whales
-        // GET /v1/nft/collection/{address}/wash-trading
-        return {
-            whaleActivity: [],
-            washTrading: {
-                suspiciousVolume24h: 0,
-                suspiciousTransactions24h: 0,
-                washTradingScore: 0,
-            },
-        };
+    private async makeRequest<T>(
+        endpoint: string,
+        params: Record<string, any> = {}
+    ): Promise<T> {
+        const cacheKey = `market:${endpoint}:${JSON.stringify(params)}`;
+
+        // Check cache first
+        if (this.cacheManager) {
+            const cached = await this.cacheManager.get<T>(cacheKey);
+            if (cached) return cached;
+        }
+
+        // Check rate limit
+        if (this.rateLimiter) {
+            await this.rateLimiter.checkLimit("market");
+        }
+
+        try {
+            const response = await axios.get(endpoint, { params });
+
+            // Cache the response
+            if (this.cacheManager) {
+                await this.cacheManager.set(cacheKey, response.data);
+            }
+
+            return response.data;
+        } catch (error) {
+            console.error("Market Intelligence API error:", error);
+            throw error;
+        }
     }
 
-    private async fetchDuneAnalytics(collectionAddress: string): Promise<{
-        priceHistory: any[];
-        marketplaceActivity: any;
-    }> {
-        // TODO: Implement Dune Analytics API calls
-        // Execute custom SQL queries for analytics
-        return {
-            priceHistory: [],
-            marketplaceActivity: {},
-        };
-    }
-
-    private async fetchAlchemyData(collectionAddress: string): Promise<{
-        traits: any;
-        rarity: any;
-    }> {
-        // TODO: Implement Alchemy NFT API calls
-        // GET /v2/{apiKey}/getNFTMetadata
-        // GET /v2/{apiKey}/computeRarity
-        return {
-            traits: {},
-            rarity: {},
-        };
-    }
-
-    private async fetchChainbaseData(collectionAddress: string): Promise<{
-        holders: any[];
-        transfers: any[];
-        liquidity: any;
-    }> {
-        // TODO: Implement Chainbase API calls
-        // GET /v1/nft/collection/{address}/holders
-        // GET /v1/nft/collection/{address}/transfers
-        return {
-            holders: [],
-            transfers: [],
-            liquidity: {
-                depth: [],
-                bidAskSpread: 0,
-                bestBid: 0,
-                bestAsk: 0,
-            },
-        };
-    }
-
-    async getMarketIntelligence(
-        collectionAddress: string
-    ): Promise<MarketIntelligence> {
-        const [nansenData, duneData, chainbaseData] = await Promise.all([
-            this.fetchNansenData(collectionAddress),
-            this.fetchDuneAnalytics(collectionAddress),
-            this.fetchChainbaseData(collectionAddress),
+    async getMarketData(address: string): Promise<MarketData> {
+        // Combine data from multiple sources
+        const [priceData, holderData, tradingData] = await Promise.all([
+            this.getPriceData(address),
+            this.getHolderData(address),
+            this.getTradingData(address),
         ]);
 
         return {
-            priceHistory: duneData.priceHistory,
-            washTradingMetrics: nansenData.washTrading,
-            marketplaceActivity: duneData.marketplaceActivity,
-            whaleActivity: nansenData.whaleActivity,
-            liquidityMetrics: chainbaseData.liquidity,
+            ...priceData,
+            ...holderData,
+            ...tradingData,
         };
     }
 
-    async getTraitAnalytics(
-        collectionAddress: string
-    ): Promise<TraitAnalytics> {
-        const alchemyData = await this.fetchAlchemyData(collectionAddress);
-
-        return {
-            distribution: alchemyData.traits,
-            rarityScores: alchemyData.rarity,
-            combinations: {
-                total: Object.keys(alchemyData.traits).length,
-                unique: 0, // Calculate from traits data
-                rarest: [], // Extract from rarity data
-            },
-            priceByRarity: [], // Combine with market data
-        };
+    private async getPriceData(address: string) {
+        return this.makeRequest<any>(`/api/price/${address}`);
     }
 
-    async detectWashTrading(collectionAddress: string): Promise<{
-        suspiciousAddresses: string[];
-        suspiciousTransactions: Array<{
-            hash: string;
-            from: string;
-            to: string;
-            price: number;
-            confidence: number;
-        }>;
-    }> {
-        const nansenData = await this.fetchNansenData(collectionAddress);
-        return {
-            suspiciousAddresses: [], // Extract from Nansen data
-            suspiciousTransactions: [], // Extract from Nansen data
-        };
+    private async getHolderData(address: string) {
+        return this.makeRequest<any>(`/api/holders/${address}`);
     }
 
-    async getWhaleActivity(collectionAddress: string): Promise<{
-        whales: Array<{
-            address: string;
-            holdings: number;
-            avgHoldingTime: number;
-            tradingVolume: number;
-            lastTrade: number;
-        }>;
-        impact: {
-            priceImpact: number;
-            volumeShare: number;
-            holdingsShare: number;
-        };
-    }> {
-        const [nansenData, chainbaseData] = await Promise.all([
-            this.fetchNansenData(collectionAddress),
-            this.fetchChainbaseData(collectionAddress),
-        ]);
-
-        return {
-            whales: [], // Combine Nansen and Chainbase data
-            impact: {
-                priceImpact: 0,
-                volumeShare: 0,
-                holdingsShare: 0,
-            },
-        };
+    private async getTradingData(address: string) {
+        return this.makeRequest<any>(`/api/trading/${address}`);
     }
 
-    async getLiquidityAnalysis(collectionAddress: string): Promise<{
-        depth: Array<{
-            price: number;
-            quantity: number;
-            totalValue: number;
-        }>;
-        metrics: {
-            totalLiquidity: number;
-            averageSpread: number;
-            volatility24h: number;
-        };
-    }> {
-        const chainbaseData = await this.fetchChainbaseData(collectionAddress);
-        return {
-            depth: chainbaseData.liquidity.depth,
-            metrics: {
-                totalLiquidity: 0, // Calculate from depth data
-                averageSpread: chainbaseData.liquidity.bidAskSpread,
-                volatility24h: 0, // Calculate from price history
-            },
-        };
+    async detectWashTrading(address: string) {
+        return this.makeRequest<any>(`/api/wash-trading/${address}`);
+    }
+
+    async trackWhaleActivity(address: string) {
+        return this.makeRequest<any>(`/api/whale-activity/${address}`);
+    }
+
+    async analyzeLiquidity(address: string) {
+        return this.makeRequest<any>(`/api/liquidity/${address}`);
+    }
+
+    async predictPrices(address: string) {
+        return this.makeRequest<any>(`/api/price-prediction/${address}`);
+    }
+
+    async getRarityAnalysis(address: string) {
+        return this.makeRequest<any>(`/api/rarity/${address}`);
+    }
+
+    async getMarketplaceData(address: string) {
+        return this.makeRequest<any>(`/api/marketplace/${address}`);
     }
 }

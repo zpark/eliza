@@ -1,390 +1,148 @@
-import {
-    Service,
-    ServiceType,
-    Action,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    State,
-    ActionExample,
-} from "@ai16z/eliza";
-import type { NFTCollection, MarketStats, NFTService } from "../types";
+import axios from "axios";
+import { Service, ServiceType, IAgentRuntime } from "@ai16z/eliza";
+import type { CacheManager } from "./cache-manager";
+import type { RateLimiter } from "./rate-limiter";
+import { NFTCollection } from "../constants/collections";
 
-export class ReservoirService extends Service implements NFTService {
+interface ReservoirConfig {
+    cacheManager?: CacheManager;
+    rateLimiter?: RateLimiter;
+}
+
+export class ReservoirService extends Service {
     private apiKey: string;
     private baseUrl = "https://api.reservoir.tools";
-    protected runtime: IAgentRuntime | undefined;
+    private cacheManager?: CacheManager;
+    private rateLimiter?: RateLimiter;
+    protected runtime?: IAgentRuntime;
 
-    constructor(apiKey: string) {
+    constructor(apiKey: string, config?: ReservoirConfig) {
         super();
-        if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
-            throw new Error("Invalid Reservoir API key provided");
-        }
         this.apiKey = apiKey;
+        this.cacheManager = config?.cacheManager;
+        this.rateLimiter = config?.rateLimiter;
     }
 
-    static get serviceType(): ServiceType {
+    static override get serviceType(): ServiceType {
         return "nft" as ServiceType;
     }
 
-    setRuntime(runtime: IAgentRuntime): void {
+    override async initialize(runtime: IAgentRuntime): Promise<void> {
         this.runtime = runtime;
-    }
-
-    async initialize(runtime: IAgentRuntime): Promise<void> {
-        this.runtime = runtime;
-
-        // Register NFT-related actions
-        const actions: Action[] = [
-            {
-                name: "GET_TOP_COLLECTIONS",
-                description: "Get top NFT collections by volume",
-                similes: ["FETCH_TOP_COLLECTIONS", "LIST_TOP_COLLECTIONS"],
-                examples: [
-                    [
-                        {
-                            user: "user",
-                            content: {
-                                text: "Show me the top NFT collections",
-                            },
-                        },
-                    ],
-                ],
-                handler: async (
-                    _runtime: IAgentRuntime,
-                    _message: Memory,
-                    _state: State,
-                    _options: any,
-                    callback?: HandlerCallback
-                ) => {
-                    try {
-                        const collections = await this.getTopCollections();
-                        callback?.({
-                            text: JSON.stringify(collections, null, 2),
-                        });
-                        return true;
-                    } catch (error) {
-                        callback?.({
-                            text: `Error fetching collections: ${error}`,
-                        });
-                        return false;
-                    }
-                },
-                validate: async () => true,
-            },
-            {
-                name: "GET_MARKET_STATS",
-                description: "Get NFT market statistics",
-                similes: ["FETCH_MARKET_STATS", "GET_NFT_STATS"],
-                examples: [
-                    [
-                        {
-                            user: "user",
-                            content: {
-                                text: "What are the current NFT market statistics?",
-                            },
-                        },
-                    ],
-                ],
-                handler: async (
-                    _runtime: IAgentRuntime,
-                    _message: Memory,
-                    _state: State,
-                    _options: any,
-                    callback?: HandlerCallback
-                ) => {
-                    try {
-                        const stats = await this.getMarketStats();
-                        callback?.({ text: JSON.stringify(stats, null, 2) });
-                        return true;
-                    } catch (error) {
-                        callback?.({
-                            text: `Error fetching market stats: ${error}`,
-                        });
-                        return false;
-                    }
-                },
-                validate: async () => true,
-            },
-        ];
-
-        // Register each action and log the registration
-        for (const action of actions) {
-            runtime.registerAction(action);
-            console.log(`✓ Registering NFT action: ${action.name}`);
+        // Initialize any required resources
+        if (!this.apiKey) {
+            throw new Error("Reservoir API key is required");
         }
     }
 
-    private async fetchFromReservoir(
+    private async makeRequest<T>(
         endpoint: string,
         params: Record<string, any> = {}
-    ): Promise<any> {
-        const queryString = new URLSearchParams(params).toString();
-        const url = `${this.baseUrl}${endpoint}${queryString ? `?${queryString}` : ""}`;
+    ): Promise<T> {
+        const cacheKey = `reservoir:${endpoint}:${JSON.stringify(params)}`;
+
+        // Check cache first
+        if (this.cacheManager) {
+            const cached = await this.cacheManager.get<T>(cacheKey);
+            if (cached) return cached;
+        }
+
+        // Check rate limit
+        if (this.rateLimiter) {
+            await this.rateLimiter.checkLimit("reservoir");
+        }
 
         try {
-            const response = await fetch(url, {
+            const response = await axios.get(`${this.baseUrl}${endpoint}`, {
+                params,
                 headers: {
-                    accept: "*/*",
                     "x-api-key": this.apiKey,
                 },
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                if (response.status === 401 || response.status === 403) {
-                    throw new Error("Invalid or expired Reservoir API key");
-                }
-                throw new Error(
-                    `Reservoir API error: ${response.status} - ${errorText}`
-                );
+            // Cache the response
+            if (this.cacheManager) {
+                await this.cacheManager.set(cacheKey, response.data);
             }
 
-            return await response.json();
+            return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error("Failed to fetch data from Reservoir API");
+            console.error("Reservoir API error:", error);
+            throw error;
         }
     }
 
-    async getTopCollections(): Promise<NFTCollection[]> {
-        const data = await this.fetchFromReservoir("/collections/v7", {
-            limit: 20,
-            sortBy: "1DayVolume",
-            includeTopBid: true,
-            normalizeRoyalties: true,
+    async getCollection(address: string): Promise<NFTCollection> {
+        const data = await this.makeRequest<any>(`/collections/v6`, {
+            contract: address,
+        });
+
+        return {
+            address: data.collections[0].id,
+            name: data.collections[0].name,
+            symbol: data.collections[0].symbol,
+            description: data.collections[0].description,
+            imageUrl: data.collections[0].image,
+            externalUrl: data.collections[0].externalUrl,
+            twitterUsername: data.collections[0].twitterUsername,
+            discordUrl: data.collections[0].discordUrl,
+            verified:
+                data.collections[0].openseaVerificationStatus === "verified",
+            floorPrice:
+                data.collections[0].floorAsk?.price?.amount?.native || 0,
+            volume24h: data.collections[0].volume24h || 0,
+            marketCap: data.collections[0].marketCap || 0,
+            totalSupply: data.collections[0].tokenCount || 0,
+        };
+    }
+
+    async getTopCollections(limit: number = 10): Promise<NFTCollection[]> {
+        const data = await this.makeRequest<any>(`/collections/v6`, {
+            limit,
+            sortBy: "volume24h",
         });
 
         return data.collections.map((collection: any) => ({
             address: collection.id,
             name: collection.name,
-            symbol: collection.symbol || "",
+            symbol: collection.symbol,
             description: collection.description,
             imageUrl: collection.image,
+            externalUrl: collection.externalUrl,
+            twitterUsername: collection.twitterUsername,
+            discordUrl: collection.discordUrl,
+            verified: collection.openseaVerificationStatus === "verified",
             floorPrice: collection.floorAsk?.price?.amount?.native || 0,
-            volume24h: collection.volume["1day"] || 0,
+            volume24h: collection.volume24h || 0,
             marketCap: collection.marketCap || 0,
-            holders: collection.ownerCount || 0,
+            totalSupply: collection.tokenCount || 0,
         }));
     }
 
-    async getMarketStats(): Promise<MarketStats> {
-        const data = await this.fetchFromReservoir("/collections/v7", {
-            limit: 500,
-            sortBy: "1DayVolume",
-        });
-
-        const stats = data.collections.reduce(
-            (acc: any, collection: any) => {
-                acc.totalVolume24h += collection.volume["1day"] || 0;
-                acc.totalMarketCap += collection.marketCap || 0;
-                acc.totalHolders += collection.ownerCount || 0;
-                acc.floorPrices.push(
-                    collection.floorAsk?.price?.amount?.native || 0
-                );
-                return acc;
-            },
-            {
-                totalVolume24h: 0,
-                totalMarketCap: 0,
-                totalHolders: 0,
-                floorPrices: [],
-            }
-        );
-
-        return {
-            totalVolume24h: stats.totalVolume24h,
-            totalMarketCap: stats.totalMarketCap,
-            totalCollections: data.collections.length,
-            totalHolders: stats.totalHolders,
-            averageFloorPrice:
-                stats.floorPrices.reduce((a: number, b: number) => a + b, 0) /
-                stats.floorPrices.length,
-        };
-    }
-
-    async getCollectionActivity(collectionAddress: string): Promise<any> {
-        return await this.fetchFromReservoir(`/collections/activity/v6`, {
-            collection: collectionAddress,
-            limit: 100,
-            includeMetadata: true,
+    async getMarketStats(address: string) {
+        return this.makeRequest<any>(`/collections/v6/stats`, {
+            contract: address,
         });
     }
 
-    async getCollectionTokens(collectionAddress: string): Promise<any> {
-        return await this.fetchFromReservoir(`/tokens/v7`, {
-            collection: collectionAddress,
-            limit: 100,
-            includeAttributes: true,
-            includeTopBid: true,
+    async getCollectionActivity(address: string, limit: number = 20) {
+        return this.makeRequest<any>(`/collections/v6/activity`, {
+            contract: address,
+            limit,
         });
     }
 
-    async getCollectionAttributes(collectionAddress: string): Promise<any> {
-        return await this.fetchFromReservoir(
-            `/collections/${collectionAddress}/attributes/v3`
-        );
+    async getTokens(address: string, limit: number = 20) {
+        return this.makeRequest<any>(`/tokens/v6`, {
+            contract: address,
+            limit,
+        });
     }
 
-    async createListing(options: {
-        tokenId: string;
-        collectionAddress: string;
-        price: number;
-        expirationTime?: number;
-        marketplace: "ikigailabs";
-        currency?: string;
-        quantity?: number;
-    }): Promise<{
-        listingId: string;
-        status: string;
-        transactionHash?: string;
-        marketplaceUrl: string;
-    }> {
-        // First, get the order kind and other details from Reservoir
-        const orderKind = await this.fetchFromReservoir(`/execute/list/v5`, {
-            maker: options.collectionAddress,
-            token: `${options.collectionAddress}:${options.tokenId}`,
-            weiPrice: options.price.toString(),
-            orderKind: "seaport-v1.5",
-            orderbook: "ikigailabs",
-            currency: options.currency || "ETH",
-            quantity: options.quantity || "1",
+    async getFloorPrice(address: string) {
+        const data = await this.makeRequest<any>(`/collections/v6/floor-ask`, {
+            contract: address,
         });
-
-        // Create the listing using the order data
-        const listingData = await this.fetchFromReservoir(`/order/v3`, {
-            kind: orderKind.kind,
-            data: {
-                ...orderKind.data,
-                expirationTime:
-                    options.expirationTime ||
-                    Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
-            },
-        });
-
-        return {
-            listingId: listingData.order.hash,
-            status: listingData.order.status,
-            transactionHash: listingData.order.transactionHash,
-            marketplaceUrl: `https://ikigailabs.xyz/assets/${options.collectionAddress}/${options.tokenId}`,
-        };
-    }
-
-    async cancelListing(options: {
-        listingId: string;
-        marketplace: "ikigailabs";
-    }): Promise<{
-        status: string;
-        transactionHash?: string;
-    }> {
-        const cancelData = await this.fetchFromReservoir(`/order/v3/cancel`, {
-            orderHash: options.listingId,
-            orderbook: "ikigailabs",
-        });
-
-        return {
-            status: cancelData.status,
-            transactionHash: cancelData.transactionHash,
-        };
-    }
-
-    async getOwnedNFTs(owner: string): Promise<
-        Array<{
-            tokenId: string;
-            collectionAddress: string;
-            name: string;
-            imageUrl?: string;
-            attributes?: Record<string, string>;
-        }>
-    > {
-        const data = await this.fetchFromReservoir(
-            `/users/${owner}/tokens/v7`,
-            {
-                limit: 100,
-                includeAttributes: true,
-            }
-        );
-
-        return data.tokens.map((token: any) => ({
-            tokenId: token.tokenId,
-            collectionAddress: token.contract,
-            name: token.name || `${token.collection.name} #${token.tokenId}`,
-            imageUrl: token.image,
-            attributes: token.attributes?.reduce(
-                (acc: Record<string, string>, attr: any) => {
-                    acc[attr.key] = attr.value;
-                    return acc;
-                },
-                {}
-            ),
-        }));
-    }
-
-    async getFloorListings(options: {
-        collection: string;
-        limit: number;
-        sortBy: "price" | "rarity";
-    }): Promise<
-        Array<{
-            tokenId: string;
-            price: number;
-            seller: string;
-            marketplace: string;
-        }>
-    > {
-        const data = await this.fetchFromReservoir(`/tokens/v7`, {
-            collection: options.collection,
-            limit: options.limit,
-            sortBy: options.sortBy === "price" ? "floorAskPrice" : "rarity",
-            includeTopBid: true,
-            status: "listed",
-        });
-
-        return data.tokens.map((token: any) => ({
-            tokenId: token.tokenId,
-            price: token.floorAsk.price.amount.native,
-            seller: token.floorAsk.maker,
-            marketplace: token.floorAsk.source.name,
-        }));
-    }
-
-    async executeBuy(options: {
-        listings: Array<{
-            tokenId: string;
-            price: number;
-            seller: string;
-            marketplace: string;
-        }>;
-        taker: string;
-    }): Promise<{
-        path: string;
-        steps: Array<{
-            action: string;
-            status: string;
-        }>;
-    }> {
-        // Execute buy orders through Reservoir API
-        const orders = options.listings.map((listing) => ({
-            tokenId: listing.tokenId,
-            maker: listing.seller,
-            price: listing.price,
-        }));
-
-        const data = await this.fetchFromReservoir(`/execute/bulk/v1`, {
-            taker: options.taker,
-            items: orders,
-            skipBalanceCheck: false,
-            currency: "ETH",
-        });
-
-        return {
-            path: data.path,
-            steps: data.steps.map((step: any) => ({
-                action: step.type,
-                status: step.status,
-            })),
-        };
+        return data.floorAsk?.price?.amount?.native || 0;
     }
 }

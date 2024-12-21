@@ -12,6 +12,23 @@ export const NFTCollectionSchema = z.object({
     verified: z.boolean().default(true),
     featured: z.boolean().default(false),
     createdAt: z.string().optional(),
+    // Market data
+    floorPrice: z.number().optional(),
+    volume24h: z.number().optional(),
+    marketCap: z.number().optional(),
+    holders: z.number().optional(),
+    totalSupply: z.number().optional(),
+    // Social metrics
+    twitterFollowers: z.number().optional(),
+    discordMembers: z.number().optional(),
+    // Trading features
+    supportedMarketplaces: z.array(z.string()).optional(),
+    hasRoyalties: z.boolean().optional(),
+    royaltyPercentage: z.number().optional(),
+    // Metadata
+    traits: z.record(z.string(), z.array(z.string())).optional(),
+    categories: z.array(z.string()).optional(),
+    lastUpdate: z.string().optional(),
 });
 
 export type NFTCollection = z.infer<typeof NFTCollectionSchema>;
