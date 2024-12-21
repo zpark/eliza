@@ -20,5 +20,5 @@ jobs:
         stale-pr-message: 'This pull request has been automatically marked as stale due to inactivity.'
         stale-issue-label: 'no-issue-activity'
         stale-pr-label: 'no-pr-activity'
-        days-before-stale: 45  # Marks issues and PRs as stale after X days of inactivity
-        days-before-close: 15  # Closes issues and PRs X days after being marked as stale
+        days-before-stale: 30  # Marks issues and PRs as stale after X days of inactivity
+        days-before-close: 7  # Closes issues and PRs X days after being marked as stale
