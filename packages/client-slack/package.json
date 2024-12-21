@@ -1,6 +1,6 @@
 {
   "name": "@ai16z/client-slack",
-  "version": "0.1.6-alpha.4",
+  "version": "0.1.6",
   "description": "Slack client plugin for Eliza framework",
   "main": "dist/index.js",
   "type": "module",
