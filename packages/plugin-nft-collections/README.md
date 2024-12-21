@@ -1360,3 +1360,190 @@ graph TD
     J --> O[Role Manager]
     K --> P[Log Storage]
 ```
+
+## Trading Agents
+
+### Agent Configuration
+
+```typescript
+// Configure a trading agent
+const tradingAgent = plugin.agents.createTradingAgent({
+    name: "WhaleWatcher",
+    personality: {
+        style: "aggressive",
+        riskTolerance: "high",
+        tradingHours: "24/7",
+    },
+    strategies: [
+        {
+            name: "whale_following",
+            config: {
+                minTransactionValue: "100 ETH",
+                followDelay: "1m",
+                maxExposure: "500 ETH",
+            },
+        },
+        {
+            name: "floor_sweeping",
+            config: {
+                targetCollections: ["0x1234", "0x5678"],
+                maxPricePerItem: "2 ETH",
+                totalBudget: "50 ETH",
+            },
+        },
+    ],
+});
+
+// Configure agent communication
+const agentNetwork = plugin.agents.createNetwork({
+    agents: [tradingAgent, otherAgent],
+    communicationRules: {
+        shareMarketInsights: true,
+        coordinateTrading: true,
+        profitSharing: 0.5,
+    },
+});
+
+// Set up agent behaviors
+tradingAgent.on("whale_movement", async (event) => {
+    const analysis = await plugin.ml.analyzeWhaleMovement(event);
+    if (analysis.confidence > 0.8) {
+        await tradingAgent.executeStrategy("whale_following", {
+            collection: event.collection,
+            amount: analysis.recommendedAmount,
+        });
+    }
+});
+```
+
+### Multi-Agent Trading Strategies
+
+```typescript
+// Collaborative floor sweeping
+const floorSweepTeam = plugin.agents.createTeam({
+    name: "FloorSweepers",
+    members: [agent1, agent2, agent3],
+    strategy: {
+        type: "distributed_sweep",
+        config: {
+            totalBudget: "100 ETH",
+            maxPricePerAgent: "35 ETH",
+            targetCollections: ["0x1234"],
+            coordination: {
+                type: "price_zones",
+                zones: [
+                    { range: "0-1 ETH", agent: "agent1" },
+                    { range: "1-2 ETH", agent: "agent2" },
+                    { range: "2+ ETH", agent: "agent3" },
+                ],
+            },
+        },
+    },
+});
+
+// Market making strategy
+const marketMaker = plugin.agents.createMarketMaker({
+    collections: ["0x1234"],
+    strategy: {
+        spreadTarget: 0.05,
+        maxInventory: "10 ETH",
+        rebalanceThreshold: 0.02,
+        hedging: {
+            enabled: true,
+            instruments: ["wETH", "NFT indexes"],
+        },
+    },
+});
+```
+
+### Agent Learning & Adaptation
+
+```typescript
+// Train agent on historical data
+await tradingAgent.learn({
+    dataset: "historical_trades",
+    timeframe: "90d",
+    features: ["whale_movements", "price_action", "social_sentiment"],
+    reinforcementConfig: {
+        rewardFunction: "profit_and_risk",
+        episodes: 1000,
+        batchSize: 64,
+    },
+});
+
+// Adaptive strategy adjustment
+tradingAgent.enableAdaptation({
+    metrics: ["profit_loss", "win_rate", "drawdown"],
+    adjustmentPeriod: "1d",
+    thresholds: {
+        drawdown: {
+            max: 0.1,
+            action: "reduce_exposure",
+        },
+        profitTarget: {
+            min: 0.2,
+            action: "increase_aggression",
+        },
+    },
+});
+```
+
+### Agent Monitoring & Analytics
+
+```typescript
+// Monitor agent performance
+const performance = await plugin.agents.getPerformance({
+    agentId: tradingAgent.id,
+    timeframe: "30d",
+    metrics: ["total_profit", "win_rate", "avg_position_size", "max_drawdown"],
+});
+
+// Agent activity dashboard
+const dashboard = plugin.agents.createDashboard({
+    agents: [tradingAgent, marketMaker],
+    realtime: true,
+    metrics: {
+        performance: true,
+        activities: true,
+        insights: true,
+    },
+    alerts: {
+        profitThreshold: "5 ETH",
+        lossThreshold: "2 ETH",
+        unusualActivity: true,
+    },
+});
+```
+
+### Agent Architecture
+
+```mermaid
+graph TD
+    A[Trading Agent] --> B[Strategy Manager]
+    A --> C[Learning Module]
+    A --> D[Communication Hub]
+
+    B --> E[Whale Following]
+    B --> F[Floor Sweeping]
+    B --> G[Market Making]
+
+    C --> H[Historical Analysis]
+    C --> I[Reinforcement Learning]
+    C --> J[Strategy Adaptation]
+
+    D --> K[Agent Network]
+    D --> L[Team Coordination]
+    D --> M[Market Updates]
+
+    E --> N[Execution Engine]
+    F --> N
+    G --> N
+
+    H --> O[Performance Analytics]
+    I --> O
+    J --> O
+
+    K --> P[Multi-Agent System]
+    L --> P
+    M --> P
+```
