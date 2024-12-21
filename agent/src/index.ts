@@ -24,7 +24,9 @@ import {
     settings,
     stringToUuid,
     validateCharacterConfig,
+    CacheStore,
 } from "@ai16z/eliza";
+import { RedisClient } from "@ai16z/adapter-redis";
 import { zgPlugin } from "@ai16z/plugin-0g";
 import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
 import createGoatPlugin from "@ai16z/plugin-goat";
@@ -210,11 +212,11 @@ export async function loadCharacters(
 export function getTokenForProvider(
     provider: ModelProviderName,
     character: Character
-):string {
+): string {
     switch (provider) {
         // no key needed for llama_local
         case ModelProviderName.LLAMALOCAL:
-            return ''
+            return "";
         case ModelProviderName.OPENAI:
             return (
                 character.settings?.secrets?.OPENAI_API_KEY ||
@@ -310,9 +312,9 @@ export function getTokenForProvider(
                 settings.AKASH_CHAT_API_KEY
             );
         default:
-            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`
-            elizaLogger.error(errorMessage)
-            throw new Error(errorMessage)
+            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
+            elizaLogger.error(errorMessage);
+            throw new Error(errorMessage);
     }
 }
 
@@ -401,7 +403,6 @@ export async function initializeClients(
 
     // TODO: Add Slack client to the list
     // Initialize clients as an object
-
 
     if (clientTypes.includes("slack")) {
         const slackClient = await SlackClientInterface.start(runtime);
@@ -583,6 +584,45 @@ function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
     return cache;
 }
 
+function initializeCache(
+    cacheStore: string,
+    character: Character,
+    baseDir?: string,
+    db?: IDatabaseCacheAdapter
+) {
+    switch (cacheStore) {
+        case CacheStore.REDIS:
+            if (process.env.REDIS_URL) {
+                elizaLogger.info("Connecting to Redis...");
+                const redisClient = new RedisClient(process.env.REDIS_URL);
+                return new CacheManager(
+                    new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
+                );
+            } else {
+                throw new Error("REDIS_URL environment variable is not set.");
+            }
+
+        case CacheStore.DATABASE:
+            if (db) {
+                elizaLogger.info("Using Database Cache...");
+                return initializeDbCache(character, db);
+            } else {
+                throw new Error(
+                    "Database adapter is not provided for CacheStore.Database."
+                );
+            }
+
+        case CacheStore.FILESYSTEM:
+            elizaLogger.info("Using File System Cache...");
+            return initializeFsCache(baseDir, character);
+
+        default:
+            throw new Error(
+                `Invalid cache store: ${cacheStore} or required configuration missing.`
+            );
+    }
+}
+
 async function startAgent(
     character: Character,
     directClient: DirectClient
@@ -604,7 +644,12 @@ async function startAgent(
 
         await db.init();
 
-        const cache = initializeDbCache(character, db);
+        const cache = initializeCache(
+            process.env.CACHE_STORE,
+            character,
+            "",
+            db
+        ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
         const runtime: AgentRuntime = await createAgent(
             character,
             db,
