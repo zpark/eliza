@@ -612,3 +612,231 @@ graph TD
     H --> L
     I --> M[IPFS Network]
 ```
+
+## Extended Features
+
+### Webhooks
+
+```env
+# Webhook Configuration
+WEBHOOK_SECRET=your-webhook-secret
+WEBHOOK_RETRY_COUNT=3
+WEBHOOK_TIMEOUT=5000
+```
+
+```typescript
+// Register webhook endpoints
+const webhook = plugin.webhooks.create({
+    url: "https://api.yourdomain.com/webhooks/nft",
+    events: ["floor_change", "volume_spike", "whale_transfer"],
+    secret: process.env.WEBHOOK_SECRET,
+    metadata: {
+        name: "Price Monitor",
+        description: "Monitor floor price changes",
+    },
+});
+
+// Configure event filters
+webhook.addFilter({
+    event: "floor_change",
+    conditions: {
+        percentageChange: ">5%",
+        timeWindow: "1h",
+        minVolume: "10 ETH",
+    },
+});
+
+webhook.addFilter({
+    event: "whale_transfer",
+    conditions: {
+        value: ">100 ETH",
+        fromAddress: ["!0x0000000000000000000000000000000000000000"],
+        toAddress: ["!0x0000000000000000000000000000000000000000"],
+    },
+});
+
+// Handle webhook delivery status
+webhook.on("delivered", (event) => {
+    console.log("Webhook delivered:", event.id);
+});
+
+webhook.on("failed", (event, error) => {
+    console.error("Webhook failed:", error);
+});
+```
+
+### ML-Powered Price Predictions
+
+```typescript
+// Get price prediction for a collection
+const prediction = await plugin.ml.predictPrice("0x1234", {
+    timeframe: "24h",
+    confidence: 0.8,
+    includeFactors: true,
+});
+
+// Response type
+interface PricePrediction {
+    timeframe: "1h" | "24h" | "7d";
+    currentPrice: number;
+    predictedPrice: number;
+    confidence: number;
+    factors: {
+        reason: string;
+        impact: number;
+        confidence: number;
+    }[];
+    marketConditions: {
+        trend: "bullish" | "bearish" | "neutral";
+        volatility: "high" | "medium" | "low";
+        liquidity: "high" | "medium" | "low";
+    };
+}
+
+// Batch predictions for multiple collections
+const predictions = await plugin.ml.batchPredictPrice([
+    { address: "0x1234", timeframe: "1h" },
+    { address: "0x5678", timeframe: "24h" },
+]);
+
+// Get historical prediction accuracy
+const accuracy = await plugin.ml.getPredictionAccuracy("0x1234", {
+    timeframe: "7d",
+    startDate: "2024-01-01",
+    endDate: "2024-01-07",
+});
+
+// Train custom prediction model
+const model = await plugin.ml.trainCustomModel({
+    collections: ["0x1234", "0x5678"],
+    features: ["volume", "social_sentiment", "whale_activity"],
+    timeframe: "24h",
+    trainingPeriod: "30d",
+});
+```
+
+### Advanced Analytics
+
+```typescript
+// Rarity analysis with ML
+const rarityScore = await plugin.ml.analyzeRarity("0x1234", "tokenId", {
+    method: "trait_rarity" | "statistical" | "neural",
+    includeExplanation: true,
+});
+
+// Wash trading detection
+const tradeAnalysis = await plugin.ml.analyzeTrades("0x1234", {
+    timeframe: "24h",
+    minConfidence: 0.8,
+    includeEvidence: true,
+});
+
+// Market manipulation detection
+const manipulationScore = await plugin.ml.detectManipulation("0x1234", {
+    indicators: ["wash_trading", "price_manipulation", "fake_volume"],
+    sensitivity: "high" | "medium" | "low",
+});
+```
+
+### Custom Alerts
+
+```typescript
+// Set up custom alerts
+const alert = plugin.alerts.create({
+    name: "Whale Alert",
+    conditions: {
+        event: "transfer",
+        filters: {
+            value: ">50 ETH",
+            collectionAddress: "0x1234",
+        },
+    },
+    actions: [
+        {
+            type: "webhook",
+            url: "https://api.yourdomain.com/alerts",
+        },
+        {
+            type: "email",
+            to: "trader@domain.com",
+        },
+    ],
+});
+
+// Alert with ML insights
+const smartAlert = plugin.alerts.createWithML({
+    name: "Smart Price Alert",
+    conditions: {
+        event: "price_prediction",
+        filters: {
+            confidence: ">0.8",
+            priceChange: ">10%",
+            timeframe: "24h",
+        },
+    },
+    mlConfig: {
+        model: "price_prediction",
+        features: ["market_sentiment", "whale_activity"],
+    },
+});
+```
+
+### Feature Configuration
+
+```typescript
+interface ExtendedFeatureConfig {
+    webhooks: {
+        maxRetries: number;
+        timeout: number;
+        batchSize: number;
+        rateLimits: {
+            perSecond: number;
+            perMinute: number;
+        };
+    };
+    ml: {
+        models: {
+            price: string;
+            rarity: string;
+            manipulation: string;
+        };
+        updateFrequency: number;
+        minConfidence: number;
+        maxBatchSize: number;
+    };
+    alerts: {
+        maxPerUser: number;
+        cooldown: number;
+        maxActions: number;
+    };
+}
+```
+
+### Extended Features Architecture
+
+```mermaid
+graph TD
+    A[Plugin Core] --> B[Webhook Manager]
+    A --> C[ML Engine]
+    A --> D[Alert System]
+
+    B --> E[Event Filter]
+    B --> F[Delivery Manager]
+
+    C --> G[Price Predictor]
+    C --> H[Rarity Analyzer]
+    C --> I[Manipulation Detector]
+
+    D --> J[Condition Evaluator]
+    D --> K[Action Executor]
+
+    E --> L[Event Stream]
+    F --> M[Retry Queue]
+
+    G --> N[Model Registry]
+    H --> N
+    I --> N
+
+    J --> O[Alert Queue]
+    K --> P[Notification Service]
+```
