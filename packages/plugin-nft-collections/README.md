@@ -65,33 +65,29 @@ pnpm add @ai16z/plugin-nft-collections
 
 ### Required Configuration
 
-```typescript
-{
-  "secrets": {
-    "RESERVOIR_API_KEY": "your-reservoir-api-key" // Required
-  }
-}
+```env
+# Required
+RESERVOIR_API_KEY=your-reservoir-api-key
 ```
 
 ### Optional API Keys
 
-```typescript
-{
-    reservoir: "your-reservoir-api-key",
-    coingecko: "your-coingecko-api-key", // Optional
-    social: {
-        twitter: "your-twitter-api-key", // Optional
-        discord: "your-discord-api-key", // Optional
-        telegram: "your-telegram-api-key", // Optional
-    },
-    market: {
-        nansen: "your-nansen-api-key", // Optional
-        dune: "your-dune-api-key", // Optional
-        alchemy: "your-alchemy-api-key", // Optional
-        chainbase: "your-chainbase-api-key", // Optional
-        nftscan: "your-nftscan-api-key", // Optional
-    }
-}
+```env
+# Market Data APIs
+RESERVOIR_API_KEY=your-reservoir-api-key
+COINGECKO_API_KEY=your-coingecko-api-key
+
+# Social APIs
+TWITTER_API_KEY=your-twitter-api-key
+DISCORD_API_KEY=your-discord-api-key
+TELEGRAM_API_KEY=your-telegram-api-key
+
+# Market Intelligence APIs
+NANSEN_API_KEY=your-nansen-api-key
+DUNE_API_KEY=your-dune-api-key
+ALCHEMY_API_KEY=your-alchemy-api-key
+CHAINBASE_API_KEY=your-chainbase-api-key
+NFTSCAN_API_KEY=your-nftscan-api-key
 ```
 
 ## Usage
@@ -101,10 +97,8 @@ pnpm add @ai16z/plugin-nft-collections
 ```typescript
 import { NFTCollectionsPlugin } from "@ai16z/plugin-nft-collections";
 
-// Initialize the plugin
-const plugin = new NFTCollectionsPlugin({
-    reservoir: "your-reservoir-api-key",
-});
+// Initialize the plugin - it will automatically read from process.env
+const plugin = new NFTCollectionsPlugin();
 
 // Register with your agent
 agent.registerPlugin(plugin);
