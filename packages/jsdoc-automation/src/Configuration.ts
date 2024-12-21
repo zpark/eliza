@@ -39,7 +39,7 @@ export class Configuration implements Omit<ConfigurationData, 'rootDirectory'> {
 
     public excludedDirectories: string[] = [];
     public repository: Repository = {
-        owner: 'AudixAI',
+        owner: 'ai16z',
         name: 'eliza',
         pullNumber: undefined
     };
