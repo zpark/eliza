@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.6](https://github.com/ai16z/eliza/tree/v0.1.6) (2024-12-21)
+
+[Full Changelog](https://github.com/ai16z/eliza/compare/v0.1.6-alpha.5...v0.1.6)
+
+**Merged pull requests:**
+
+- feat: release version 0.1.6 [\#1300](https://github.com/ai16z/eliza/pull/1300) ([shakkernerd](https://github.com/shakkernerd))
+
 ## [v0.1.6-alpha.5](https://github.com/ai16z/eliza/tree/v0.1.6-alpha.5) (2024-12-21)
 
 [Full Changelog](https://github.com/ai16z/eliza/compare/v0.1.6-alpha.4...v0.1.6-alpha.5)
