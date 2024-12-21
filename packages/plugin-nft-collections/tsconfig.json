@@ -3,12 +3,10 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
-        "baseUrl": "./src",
-        "paths": {
-            "*": [
-                "*"
-            ]
-        }
+        "module": "ESNext",
+        "target": "ESNext",
+        "moduleResolution": "Node",
+        "esModuleInterop": true
     },
     "include": [
         "src/**/*"

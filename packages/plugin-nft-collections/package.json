@@ -2,10 +2,11 @@
     "name": "@ai16z/plugin-nft-collections",
     "version": "0.1.0",
     "description": "NFT collections plugin for Eliza",
+    "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc",
+        "build": "tsup src/index.ts --format esm --dts",
         "test": "jest",
         "lint": "eslint src --ext .ts",
         "format": "prettier --write src/**/*.ts"
@@ -21,7 +22,8 @@
         "@typescript-eslint/parser": "^6.21.0",
         "eslint": "^8.56.0",
         "prettier": "^3.2.5",
-        "typescript": "^5.3.3"
+        "typescript": "^5.3.3",
+        "tsup": "^8.0.1"
     },
     "peerDependencies": {
         "@ai16z/eliza": "workspace:*"

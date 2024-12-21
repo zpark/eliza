@@ -579,10 +579,7 @@ export type Client = {
     stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
 
-/**
- * Plugin for extending agent functionality
- */
-export type Plugin = {
+export type IPlugin = {
     /** Plugin name */
     name: string;
 
@@ -604,6 +601,21 @@ export type Plugin = {
     /** Optional clients */
     clients?: Client[];
 };
+
+export abstract class Plugin implements IPlugin {
+    abstract readonly name: string;
+    abstract readonly description: string;
+    actions?: Action[] = [];
+    providers?: Provider[] = [];
+    evaluators?: Evaluator[] = [];
+    services?: Service[] = [];
+    clients?: Client[] = [];
+
+    constructor() {}
+
+    async setup(_character: Character): Promise<void> {}
+    async teardown(): Promise<void> {}
+}
 
 /**
  * Available client platforms
@@ -755,7 +767,6 @@ export type Character = {
         slack?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
-
         };
     };
 
@@ -777,7 +788,7 @@ export type Character = {
     /** Optional NFT prompt */
     nft?: {
         prompt: string;
-    }
+    };
 };
 
 /**
