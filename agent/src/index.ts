@@ -486,11 +486,9 @@ export async function createAgent(
         );
     }
 
-    let nftCollectionsPluginInstance: any | undefined;
-    if (getSecret(character, "RESERVOIR_API_KEY")) {
-        nftCollectionsPluginInstance = nftCollectionsPlugin;
-        await nftCollectionsPluginInstance.setup(character);
-    }
+    let nftCollectionsPluginInstance = getSecret(character, "RESERVOIR_API_KEY")
+        ? nftCollectionsPlugin
+        : null;
 
     return new AgentRuntime({
         databaseAdapter: db,
