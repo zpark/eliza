@@ -4,7 +4,7 @@ A powerful plugin for interacting with NFT collections, providing comprehensive 
 
 ## Recent Improvements
 
-### Core Optimizations
+### Performance Optimizations
 
 - Implemented batch processing with configurable batch sizes for collection data
 - Added parallel request handling with queue management
@@ -140,6 +140,8 @@ RESERVOIR_API_KEY=your-reservoir-api-key
 NANSEN_API_KEY=your-nansen-api-key
 DUNE_API_KEY=your-dune-api-key
 ALCHEMY_API_KEY=your-alchemy-api-key
+CHAINBASE_API_KEY=your-chainbase-api-key
+NFTSCAN_API_KEY=your-nftscan-api-key
 
 # Social Analytics
 TWITTER_API_KEY=your-twitter-api-key
@@ -177,7 +179,7 @@ try {
 }
 ```
 
-### Performance Monitoring
+### NFT Ownership
 
 ```typescript
 // Listen for performance alerts
@@ -202,12 +204,10 @@ Market Stats         400ms     75ms     3.0s
 Social Metrics       350ms     60ms     2.8s
 ```
 
-### Cache Performance
+### Building
 
-```
-Type     Hit Rate    Miss Rate    TTL
-Redis    95%         5%          5min
-Memory   90%         10%         1min
+```bash
+pnpm build
 ```
 
 ### Resource Usage
@@ -245,6 +245,8 @@ Requests/s  10      100      1000
     - Check Ethereum addresses
 
 ## Architecture
+
+### System Components
 
 ```mermaid
 graph TD
