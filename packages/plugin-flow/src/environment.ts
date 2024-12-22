@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/eliza";
 import { z } from "zod";
 
 const FLOW_MAINNET_PUBLIC_RPC = "https://mainnet.onflow.org";

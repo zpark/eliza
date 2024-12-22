@@ -1,8 +1,8 @@
-import { composeContext } from "@ai16z/eliza";
-import { generateText, splitChunks, trimTokens } from "@ai16z/eliza";
-import { getActorDetails } from "@ai16z/eliza";
-import { models } from "@ai16z/eliza";
-import { parseJSONObjectFromText } from "@ai16z/eliza";
+import { composeContext } from "@elizaos/eliza";
+import { generateText, splitChunks, trimTokens } from "@elizaos/eliza";
+import { getActorDetails } from "@elizaos/eliza";
+import { models } from "@elizaos/eliza";
+import { parseJSONObjectFromText } from "@elizaos/eliza";
 import {
     Action,
     ActionExample,
@@ -13,7 +13,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
 
