@@ -1,4 +1,4 @@
-import { Plugin } from "@elizaos/eliza";
+import { Plugin } from "@elizaos/core";
 import { transfer } from "./actions/transfer";
 import { bridgeTransfer } from "./actions/bridgeTransfer";
 import { confiPump } from "./actions/confiPump";

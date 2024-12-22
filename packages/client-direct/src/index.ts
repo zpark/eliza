@@ -2,20 +2,20 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
 import multer, { File } from "multer";
-import { elizaLogger, generateCaption, generateImage } from "@elizaos/eliza";
-import { composeContext } from "@elizaos/eliza";
-import { generateMessageResponse } from "@elizaos/eliza";
-import { messageCompletionFooter } from "@elizaos/eliza";
-import { AgentRuntime } from "@elizaos/eliza";
+import { elizaLogger, generateCaption, generateImage } from "@elizaos/core";
+import { composeContext } from "@elizaos/core";
+import { generateMessageResponse } from "@elizaos/core";
+import { messageCompletionFooter } from "@elizaos/core";
+import { AgentRuntime } from "@elizaos/core";
 import {
     Content,
     Memory,
     ModelClass,
     Client,
     IAgentRuntime,
-} from "@elizaos/eliza";
-import { stringToUuid } from "@elizaos/eliza";
-import { settings } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { stringToUuid } from "@elizaos/core";
+import { settings } from "@elizaos/core";
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";

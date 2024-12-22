@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { WalletProvider } from "../providers/wallet.ts";
 
-import { defaultCharacter } from "@elizaos/eliza";
+import { defaultCharacter } from "@elizaos/core";
 import BigNumber from "bignumber.js";
 import { SUI_DECIMALS } from "@mysten/sui/utils";
 import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";

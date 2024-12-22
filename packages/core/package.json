@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/eliza",
+    "name": "@elizaos/core",
     "version": "0.1.6",
     "description": "",
     "main": "dist/index.js",

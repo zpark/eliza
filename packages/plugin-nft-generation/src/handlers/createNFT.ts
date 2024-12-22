@@ -10,7 +10,7 @@ import {
     ModelClass,
     ServiceType,
     stringToUuid,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import {
     saveBase64Image,
     saveHeuristImage,

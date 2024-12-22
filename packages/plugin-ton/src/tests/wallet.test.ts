@@ -1,4 +1,4 @@
-import { defaultCharacter } from "@elizaos/eliza";
+import { defaultCharacter } from "@elizaos/core";
 
 import {
     describe,

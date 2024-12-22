@@ -12,7 +12,7 @@ import {
     type Memory,
     type Relationship,
     type UUID,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { v4 } from "uuid";
 import { sqliteTables } from "./sqliteTables.ts";
 import { Database } from "./types.ts";

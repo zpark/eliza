@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@elizaos/plugin-trustdb": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
         "@coral-xyz/anchor": "0.30.1",

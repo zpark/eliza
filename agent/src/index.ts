@@ -25,7 +25,7 @@ import {
     stringToUuid,
     validateCharacterConfig,
     CacheStore,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { zgPlugin } from "@elizaos/plugin-0g";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";

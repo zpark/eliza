@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "agent-twitter-client": "0.0.17",
         "glob": "11.0.0",
         "zod": "3.23.8"

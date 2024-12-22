@@ -4,8 +4,8 @@ import {
     Memory,
     State,
     HandlerCallback,
-} from "@elizaos/eliza";
-import { generateObject, composeContext, ModelClass } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { generateObject, composeContext, ModelClass } from "@elizaos/core";
 import {
     createPublicClient,
     createWalletClient,

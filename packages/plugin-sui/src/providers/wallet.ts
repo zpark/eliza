@@ -4,7 +4,7 @@ import {
     Memory,
     Provider,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";

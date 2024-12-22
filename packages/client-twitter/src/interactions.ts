@@ -14,7 +14,7 @@ import {
     stringToUuid,
     elizaLogger,
     getEmbeddingZeroVector,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 

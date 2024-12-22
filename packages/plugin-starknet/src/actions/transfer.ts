@@ -13,7 +13,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { getStarknetAccount } from "../utils";
 import { ERC20Token } from "../utils/ERC20Token";
 import { validateStarknetConfig } from "../environment";

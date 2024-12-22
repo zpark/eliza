@@ -10,7 +10,7 @@ import {
     composeContext,
     generateObject,
     type Action,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { validateMultiversxConfig } from "../enviroment";
 

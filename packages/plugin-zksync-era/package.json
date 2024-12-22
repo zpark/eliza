@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@elizaos/plugin-trustdb": "workspace:*",
         "tsup": "^8.3.5",
         "web3": "^4.15.0",
