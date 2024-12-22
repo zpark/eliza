@@ -1,4 +1,4 @@
-import { Plugin } from "@elizaos/eliza";
+import { Plugin } from "@elizaos/core";
 import { icpWalletProvider } from "./providers/wallet";
 import { executeCreateToken } from "./actions/createToken";
 

@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@types/pg": "8.11.10",
         "pg": "8.13.1"
     },

@@ -17,8 +17,8 @@ import {
     TradePerformance,
     TokenRecommendation,
 } from "@elizaos/plugin-trustdb";
-import { settings } from "@elizaos/eliza";
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { settings } from "@elizaos/core";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { getTokenBalance } from "../utils/index.ts";
 import { TokenProvider } from "./token.ts";
 

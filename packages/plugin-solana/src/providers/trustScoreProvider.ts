@@ -18,8 +18,8 @@ import {
     TradePerformance,
     TokenRecommendation,
 } from "@elizaos/plugin-trustdb";
-import { settings } from "@elizaos/eliza";
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { settings } from "@elizaos/core";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
 const Wallet = settings.MAIN_WALLET_ADDRESS;

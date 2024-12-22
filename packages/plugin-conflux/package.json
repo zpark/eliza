@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "cive": "0.7.1"
     },
     "scripts": {

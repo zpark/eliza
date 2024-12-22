@@ -1,7 +1,7 @@
-import { composeContext } from "@elizaos/eliza";
-import { generateText, trimTokens } from "@elizaos/eliza";
-import { models } from "@elizaos/eliza";
-import { parseJSONObjectFromText } from "@elizaos/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateText, trimTokens } from "@elizaos/core";
+import { models } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -11,7 +11,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import * as fs from "fs";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)

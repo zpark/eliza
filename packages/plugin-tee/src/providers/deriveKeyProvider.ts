@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { Keypair } from "@solana/web3.js";
 import crypto from "crypto";
 import { DeriveKeyResponse, TappdClient } from "@phala/dstack-sdk";

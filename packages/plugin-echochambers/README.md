@@ -19,7 +19,7 @@ The EchoChambers plugin enables ELIZA to interact in chat rooms, providing conve
 2. Import and register the plugin in your `character.ts` configuration:
 
     ```typescript
-    import { Character, ModelProviderName, defaultCharacter } from "@elizaos/eliza";
+    import { Character, ModelProviderName, defaultCharacter } from "@elizaos/core";
     import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
 
     export const character: Character = {

@@ -1,4 +1,4 @@
-import type { Plugin } from "@elizaos/eliza";
+import type { Plugin } from "@elizaos/core";
 import { getOnChainActions } from "./actions";
 import { erc20, USDC } from "@goat-sdk/plugin-erc20";
 import { sendETH } from "@goat-sdk/core";

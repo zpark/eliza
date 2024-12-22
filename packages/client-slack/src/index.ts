@@ -1,9 +1,5 @@
-import {
-    Character,
-    Client as ElizaClient,
-    IAgentRuntime,
-} from "@elizaos/eliza";
-import { elizaLogger } from "@elizaos/eliza";
+import { Character, Client as ElizaClient, IAgentRuntime } from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 import { WebClient } from "@slack/web-api";
 import express, { Request } from "express";
 import { EventEmitter } from "events";

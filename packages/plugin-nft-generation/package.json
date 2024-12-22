@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@elizaos/plugin-image-generation": "workspace:*",
         "@elizaos/plugin-node": "workspace:*",
         "@metaplex-foundation/mpl-token-metadata": "^3.3.0",

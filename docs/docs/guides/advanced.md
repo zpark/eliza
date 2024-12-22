@@ -13,7 +13,7 @@ This guide covers advanced features and capabilities of Eliza, including complex
 Eliza supports advanced video processing capabilities through the `VideoService`:
 
 ```typescript
-import { VideoService } from "@elizaos/eliza/plugin-node";
+import { VideoService } from "@elizaos/core/plugin-node";
 
 // Initialize service
 const videoService = new VideoService();
@@ -35,7 +35,7 @@ Key features:
 The `ImageDescriptionService` provides advanced image analysis:
 
 ```typescript
-import { ImageDescriptionService } from "@elizaos/eliza/plugin-node";
+import { ImageDescriptionService } from "@elizaos/core/plugin-node";
 
 const imageService = new ImageDescriptionService();
 const description = await imageService.describeImage(imageUrl, "gpu", runtime);
@@ -55,7 +55,7 @@ Features:
 The Solana plugin provides comprehensive blockchain functionality:
 
 ```typescript
-import { solanaPlugin } from "@elizaos/eliza/plugin-solana";
+import { solanaPlugin } from "@elizaos/core/plugin-solana";
 
 // Initialize plugin
 runtime.registerPlugin(solanaPlugin);

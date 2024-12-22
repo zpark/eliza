@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@lifi/data-types": "5.15.5",
         "@lifi/sdk": "3.4.1",
         "@lifi/types": "16.3.0",

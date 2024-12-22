@@ -1,5 +1,5 @@
-import { IAgentRuntime } from "@elizaos/eliza";
-import { elizaLogger } from "@elizaos/eliza";
+import { IAgentRuntime } from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 import { z } from "zod";
 
 export const slackEnvSchema = z.object({

@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@ref-finance/ref-sdk": "^1.4.6",
         "tsup": "8.3.5",
         "near-api-js": "5.0.1",
