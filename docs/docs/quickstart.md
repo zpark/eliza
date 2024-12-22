@@ -232,8 +232,6 @@ pnpm start --characters="characters/trump.character.json,characters/tate.charact
    ```
    to force it to use the correct one.
 
-   
-
 2. **Sharp Installation**
    If you see Sharp-related errors:
 
