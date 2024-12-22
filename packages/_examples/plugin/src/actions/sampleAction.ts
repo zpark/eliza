@@ -8,7 +8,7 @@ import {
     generateObject,
     ModelClass,
     elizaLogger,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 
 import { CreateResourceSchema, isCreateResourceContent } from "../types";
 

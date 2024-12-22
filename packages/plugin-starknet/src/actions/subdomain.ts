@@ -12,7 +12,7 @@ import {
     generateObjectDeprecated,
     Content,
     elizaLogger,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 import { getStarknetAccount } from "../utils";
 import { validateStarknetConfig } from "../environment";
 import { getTransferSubdomainCall, isStarkDomain } from "../utils/starknetId";

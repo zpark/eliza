@@ -1,4 +1,4 @@
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/eliza";
 import {
     Action,
     HandlerCallback,
@@ -6,9 +6,9 @@ import {
     Memory,
     Plugin,
     State,
-} from "@ai16z/eliza";
-import { generateWebSearch } from "@ai16z/eliza";
-import { SearchResult } from "@ai16z/eliza";
+} from "@elizaos/eliza";
+import { generateWebSearch } from "@elizaos/eliza";
+import { SearchResult } from "@elizaos/eliza";
 import { encodingForModel, TiktokenModel } from "js-tiktoken";
 
 const DEFAULT_MAX_WEB_SEARCH_TOKENS = 4000;
@@ -17,21 +17,20 @@ const DEFAULT_MODEL_ENCODING = "gpt-3.5-turbo";
 function getTotalTokensFromString(
     str: string,
     encodingName: TiktokenModel = DEFAULT_MODEL_ENCODING
-  ) {
+) {
     const encoding = encodingForModel(encodingName);
     return encoding.encode(str).length;
-  }
+}
 
 function MaxTokens(
     data: string,
     maxTokens: number = DEFAULT_MAX_WEB_SEARCH_TOKENS
-  ): string {
-    
+): string {
     if (getTotalTokensFromString(data) >= maxTokens) {
         return data.slice(0, maxTokens);
     }
     return data;
-  }
+}
 
 const webSearch: Action = {
     name: "WEB_SEARCH",

@@ -1,5 +1,5 @@
-import { elizaLogger } from "@ai16z/eliza";
-import { Client, IAgentRuntime } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/eliza";
+import { Client, IAgentRuntime } from "@elizaos/eliza";
 import { TelegramClient } from "./telegramClient.ts";
 import { validateTelegramConfig } from "./environment.ts";
 
