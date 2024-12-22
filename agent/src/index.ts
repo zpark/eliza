@@ -11,15 +11,6 @@ import {
     stringToUuid,
     validateCharacterConfig,
 } from "@ai16z/eliza";
-
-// Temporary type definitions to unblock development
-type Character = any;
-type IAgentRuntime = any;
-type ICacheManager = any;
-type IDatabaseAdapter = any;
-type IDatabaseCacheAdapter = any;
-type ModelProvider = ModelProviderName;
-
 import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
 import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
 import { AutoClientInterface } from "@ai16z/client-auto";
@@ -32,7 +23,6 @@ import { TwitterClientInterface } from "@ai16z/client-twitter";
 import { zgPlugin } from "@ai16z/plugin-0g";
 import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
 import createGoatPlugin from "@ai16z/plugin-goat";
-// import { intifacePlugin } from "@ai16z/plugin-intiface";
 import { DirectClient } from "@ai16z/client-direct";
 import { aptosPlugin } from "@ai16z/plugin-aptos";
 import {
@@ -63,6 +53,14 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+
+// Temporary type definitions to unblock development
+type Character = any;
+type IAgentRuntime = any;
+type ICacheManager = any;
+type IDatabaseAdapter = any;
+type IDatabaseCacheAdapter = any;
+type ModelProvider = ModelProviderName;
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
