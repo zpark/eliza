@@ -175,7 +175,7 @@ npx --no node-llama-cpp source download --gpu cuda
 ### Сообщество и контакты
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). Лучше всего подходит для: сообщений об ошибках при использовании Eliza и предложений новых функций.
-- [Discord](https://discord.gg/elizaos). Лучше всего подходит для: обмена своими приложениями и общения с сообществом.
+- [Discord](https://discord.gg/ai16z). Лучше всего подходит для: обмена своими приложениями и общения с сообществом.
 
 ## Контрибьюторы
 

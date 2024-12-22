@@ -173,7 +173,7 @@ pnpm install --include=optional sharp
 
 [GitHub Issues](https://github.com/elizaos/eliza/issues) מתאים ביותר עבור: באגים ופרופוזיציות לתכונות -
 
-[Discord](https://discord.gg/elizaos) מתאים ביותר עבור: שיתוף היישומים שלך והשתתפות בקהילה -
+[Discord](https://discord.gg/ai16z) מתאים ביותר עבור: שיתוף היישומים שלך והשתתפות בקהילה -
 
 </div>
 

@@ -121,5 +121,5 @@ As an MIT licensed project, users should understand:
 ## Contact
 
 - Security Issues: security@eliza.builders
-- General Questions: Join our [Discord](https://discord.gg/elizaos)
+- General Questions: Join our [Discord](https://discord.gg/ai16z)
 - Updates: Follow our [security advisory page](https://github.com/elizaos/eliza/security/advisories)

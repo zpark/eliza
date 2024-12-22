@@ -116,7 +116,7 @@ pnpm install --include=optional sharp
 ### Community & contact
 
 - [Github Issues](https://github.com/elizaos/eliza/issues). 용도: Eliza 사용 중 발견된 버그 리포트, 기능 제안.
-- [Discord](https://discord.gg/elizaos). 용도: 애플리케이션 공유 및 커뮤니티 활동.
+- [Discord](https://discord.gg/ai16z). 용도: 애플리케이션 공유 및 커뮤니티 활동.
 
 ## 컨트리뷰터
 
