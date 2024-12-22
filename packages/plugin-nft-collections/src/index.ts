@@ -158,5 +158,3 @@ export { ReservoirService } from "./services/reservoir";
 export { MarketIntelligenceService } from "./services/market-intelligence";
 export { SocialAnalyticsService } from "./services/social-analytics";
 export * from "./types";
-
-export default nftCollectionsPlugin;
