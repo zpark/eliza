@@ -305,4 +305,4 @@ Once you have your agent running, explore:
 
 For detailed API documentation, troubleshooting, and advanced features, check out our [full documentation](https://elizaos.github.io/eliza/).
 
-Join our [Discord community](https://discord.gg/elizaos) for support and updates!
+Join our [Discord community](https://discord.gg/ai16z) for support and updates!

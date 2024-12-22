@@ -71,7 +71,7 @@ pnpm install --include=optional sharp
 ### Communauté et réseaux sociaux
 
 - [GitHub](https://github.com/elizaos/eliza/issues). Pour partager les bugs découverts lors de l'utilisation d'Eliza, et proposer de nouvelles fonctionnalités.
-- [Discord](https://discord.gg/elizaos). Pour partager ses applications et rencontrer la communauté.
+- [Discord](https://discord.gg/ai16z). Pour partager ses applications et rencontrer la communauté.
 
 ## Contributeurs
 

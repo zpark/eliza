@@ -95,7 +95,7 @@ There are several ways to contribute to the Eliza framework, including:
 - Submitting bug reports and feature requests through the [issue tracker](https://github.com/elizaos/eliza/issues)
 - Fixing bugs, implementing new features, and submitting pull requests on [GitHub](https://github.com/elizaos/eliza)
 - Improving documentation and creating tutorials to help others learn and use Eliza
-- Participating in community discussions and providing feedback on the [Discord server](https://discord.gg/elizaos)
+- Participating in community discussions and providing feedback on the [Discord server](https://discord.gg/ai16z)
 
 ### Where can I find help and support?
 
@@ -103,7 +103,7 @@ If you need help or support, you can:
 
 - Check the rest of the documentation for guides, tutorials, and API references
 - Search the [issue tracker](https://github.com/elizaos/eliza/issues) to see if your question has already been answered
-- Join the [elizaos Discord server](https://discord.gg/elizaos) and ask for help in the relevant channels
+- Join the [elizaos Discord server](https://discord.gg/ai16z) and ask for help in the relevant channels
 
 ### How can I report a bug or suggest a new feature?
 

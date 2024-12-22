@@ -79,7 +79,7 @@ pnpm install --include=optional sharp
 ### Comunità e contatti
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). Ideale per segnalare bug riscontrati durante l’utilizzo di Eliza e proporre nuove funzionalità.
-- [Discord](https://discord.gg/elizaos). Ideale per condividere le tue applicazioni e interagire con la comunità.
+- [Discord](https://discord.gg/ai16z). Ideale per condividere le tue applicazioni e interagire con la comunità.
 
 ## Contributori
 

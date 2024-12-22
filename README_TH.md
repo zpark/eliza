@@ -116,7 +116,7 @@ pnpm install --include=optional sharp
 ### ชุมชนและข้อมูลการติดต่อ
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). เหมาะสำหรับ: เมื่อปัญหาที่พบเมื่อใช้ Eliza และข้อเสนอแนะเกี่ยวกับฟีเจอร์เพิ่มเติม
-- [Discord](https://discord.gg/elizaos). เหมาะสำหรับ: แชร์ผลงานแอปพลิเคชั่นและพบปะกับคอมมูนิตี้
+- [Discord](https://discord.gg/ai16z). เหมาะสำหรับ: แชร์ผลงานแอปพลิเคชั่นและพบปะกับคอมมูนิตี้
 
 ## ผู้มีส่วนร่วม
 
