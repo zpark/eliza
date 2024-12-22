@@ -1,4 +1,4 @@
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/eliza";
 import {
     ActionExample,
     Content,
@@ -8,9 +8,9 @@ import {
     ModelClass,
     State,
     type Action,
-} from "@ai16z/eliza";
-import { composeContext } from "@ai16z/eliza";
-import { generateObjectDeprecated } from "@ai16z/eliza";
+} from "@elizaos/eliza";
+import { composeContext } from "@elizaos/eliza";
+import { generateObjectDeprecated } from "@elizaos/eliza";
 import {
     Account,
     Aptos,

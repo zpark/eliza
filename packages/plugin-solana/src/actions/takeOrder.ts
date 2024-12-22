@@ -4,9 +4,9 @@ import {
     Memory,
     Content,
     ModelClass,
-} from "@ai16z/eliza";
-import { composeContext } from "@ai16z/eliza";
-import { generateText } from "@ai16z/eliza";
+} from "@elizaos/eliza";
+import { composeContext } from "@elizaos/eliza";
+import { generateText } from "@elizaos/eliza";
 
 interface Order {
     userId: string;

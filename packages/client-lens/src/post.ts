@@ -5,7 +5,7 @@ import {
     ModelClass,
     stringToUuid,
     elizaLogger,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 import { LensClient } from "./client";
 import { formatTimeline, postTemplate } from "./prompts";
 import { publicationUuid } from "./utils";
