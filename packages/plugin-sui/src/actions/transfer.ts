@@ -10,7 +10,7 @@ import {
     elizaLogger,
     generateObject,
     type Action,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 import { z } from "zod";
 
 import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";

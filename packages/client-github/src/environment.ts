@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/eliza";
 import { z } from "zod";
 
 export const githubEnvSchema = z.object({

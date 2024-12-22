@@ -1,4 +1,4 @@
-import { stringToUuid } from "@ai16z/eliza";
+import { stringToUuid } from "@elizaos/eliza";
 
 export const MAX_CAST_LENGTH = 1024; // Updated to Twitter's current character limit
 
