@@ -120,6 +120,9 @@ const imageGeneration: Action = {
         const imagePrompt = message.content.text;
         elizaLogger.log("Image prompt received:", imagePrompt);
 
+        const imageSettings = runtime.character?.settings?.imageSettings || {};
+        elizaLogger.log("Image settings:", imageSettings);
+
         // TODO: Generate a prompt for the image
 
         const res: { image: string; caption: string }[] = [];
