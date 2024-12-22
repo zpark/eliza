@@ -6,7 +6,7 @@
 
 <div align="center">
 
-  📖 [Documentation](https://ai16z.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
+  📖 [Documentation](https://elizaOS.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
 
 </div>
 
@@ -55,7 +55,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-Then read the [Documentation](https://ai16z.github.io/eliza/) to learn how to customize your Eliza.
+Then read the [Documentation](https://elizaOS.github.io/eliza/) to learn how to customize your Eliza.
 
 ### Manually Start Eliza (Only recommended if you know what you are doing)
 
