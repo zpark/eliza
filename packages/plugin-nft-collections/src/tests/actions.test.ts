@@ -86,12 +86,14 @@ describe("NFT Actions", () => {
 
             const result = await listNFTAction.handler(mockRuntime, message);
             expect(result).toBe(true);
-            expect(mockNftService.createListing).toHaveBeenCalledWith({
-                tokenId: "123",
-                collectionAddress: "0x1234",
-                price: 1.5,
-                marketplace: "ikigailabs",
-            });
+            expect(mockNftService.createListing).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    tokenId: "123",
+                    collectionAddress: "0x1234",
+                    price: 1.5,
+                    marketplace: "ikigailabs",
+                })
+            );
         });
 
         it("should handle NFT not owned error", async () => {

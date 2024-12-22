@@ -22,8 +22,8 @@ export const listingTemplates = {
     }) => `Successfully created listing on ikigailabs.xyz:
 • Collection: ${typeof collection === "string" ? collection : collection.name} (${typeof collection === "string" ? collection : collection.address})
 • Token ID: ${tokenId}
-• Purchase Price: ${purchasePrice} ETH
-• Listing Price: ${listingPrice} ETH (${isPriceAutomatic ? "2x purchase price" : "user specified"})
+• Purchase Price: ${purchasePrice.toFixed(1)} ETH
+• Listing Price: ${listingPrice.toFixed(1)} ETH (${isPriceAutomatic ? "2x purchase price" : "user specified"})
 • Status: ${status}
 • Listing URL: ${marketplaceUrl}${transactionHash ? `\n• Transaction: ${transactionHash}` : ""}`,
 
