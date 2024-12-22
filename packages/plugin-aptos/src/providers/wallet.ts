@@ -4,7 +4,7 @@ import {
     Memory,
     Provider,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/eliza";
 import {
     Account,
     Aptos,

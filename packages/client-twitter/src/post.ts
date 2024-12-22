@@ -7,12 +7,12 @@ import {
     ModelClass,
     stringToUuid,
     parseBooleanFromText,
-} from "@ai16z/eliza";
-import { elizaLogger } from "@ai16z/eliza";
+} from "@elizaos/eliza";
+import { elizaLogger } from "@elizaos/eliza";
 import { ClientBase } from "./base.ts";
-import { postActionResponseFooter } from "@ai16z/eliza";
-import { generateTweetActions } from "@ai16z/eliza";
-import { IImageDescriptionService, ServiceType } from "@ai16z/eliza";
+import { postActionResponseFooter } from "@elizaos/eliza";
+import { generateTweetActions } from "@elizaos/eliza";
+import { IImageDescriptionService, ServiceType } from "@elizaos/eliza";
 import { buildConversationThread } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
@@ -174,7 +174,8 @@ export class TwitterPostClient {
         generateNewTweetLoop();
 
         // Add check for ENABLE_ACTION_PROCESSING before starting the loop
-        const enableActionProcessing = this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
+        const enableActionProcessing =
+            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
 
         if (enableActionProcessing) {
             processActionsLoop().catch((error) => {
@@ -279,7 +280,8 @@ export class TwitterPostClient {
             // Use the helper function to truncate to complete sentence
             const content = truncateToCompleteSentence(
                 cleanedContent,
-                parseInt(this.runtime.getSetting("MAX_TWEET_LENGTH")) || DEFAULT_MAX_TWEET_LENGTH
+                parseInt(this.runtime.getSetting("MAX_TWEET_LENGTH")) ||
+                    DEFAULT_MAX_TWEET_LENGTH
             );
 
             const removeQuotes = (str: string) =>
