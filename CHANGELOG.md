@@ -15,6 +15,8 @@
 
 **Merged pull requests:**
 
+- chore: bump version to v0.1.7-alpha.1 [\#1361](https://github.com/elizaOS/eliza/pull/1361) ([shakkernerd](https://github.com/shakkernerd))
+- chore: New version 0.1.7 alpha.1 [\#1360](https://github.com/elizaOS/eliza/pull/1360) ([shakkernerd](https://github.com/shakkernerd))
 - chore: develop -\> main, change elizaos/eliza to elizaos/core [\#1359](https://github.com/elizaOS/eliza/pull/1359) ([lalalune](https://github.com/lalalune))
 - feat: change @elizaos/eliza to @elizaos/core [\#1357](https://github.com/elizaOS/eliza/pull/1357) ([lalalune](https://github.com/lalalune))
 - chore: Merge Develop into Main [\#1356](https://github.com/elizaOS/eliza/pull/1356) ([lalalune](https://github.com/lalalune))
