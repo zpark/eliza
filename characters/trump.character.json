@@ -1,7 +1,7 @@
 {
     "name": "trump",
     "clients": [],
-    "modelProvider": "ollama",
+    "modelProvider": "openai",
     "settings": {
         "secrets": {},
         "voice": {
