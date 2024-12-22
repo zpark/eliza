@@ -1,4 +1,4 @@
-[@elizaos/eliza v0.1.6-alpha.4](../index.md) / formatEvaluatorExamples
+[@elizaos/core v0.1.6-alpha.4](../index.md) / formatEvaluatorExamples
 
 # Function: formatEvaluatorExamples()
 

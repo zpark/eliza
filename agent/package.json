@@ -28,7 +28,7 @@
         "@elizaos/client-telegram": "workspace:*",
         "@elizaos/client-twitter": "workspace:*",
         "@elizaos/client-slack": "workspace:*",
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@elizaos/plugin-0g": "workspace:*",
         "@elizaos/plugin-aptos": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",

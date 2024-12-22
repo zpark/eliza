@@ -10,7 +10,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import Exception from "../types/exception";
 import { getFlowConnectorInstance } from "../providers/connector.provider";
 import {

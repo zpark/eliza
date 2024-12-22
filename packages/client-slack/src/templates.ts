@@ -1,4 +1,4 @@
-import { messageCompletionFooter, shouldRespondFooter } from "@elizaos/eliza";
+import { messageCompletionFooter, shouldRespondFooter } from "@elizaos/core";
 
 export const slackShouldRespondTemplate =
     `# Task: Decide if {{agentName}} should respond.

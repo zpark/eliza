@@ -1,4 +1,4 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/eliza";
+import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 import {
     AnyPublicationFragment,
     LensClient as LensClientCore,

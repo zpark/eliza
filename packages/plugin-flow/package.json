@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "@onflow/config": "1.5.1",
         "@onflow/fcl": "1.13.1",
         "@onflow/typedefs": "1.4.0",

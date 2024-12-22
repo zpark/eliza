@@ -11,7 +11,7 @@
         "lint": "eslint --fix  --cache ."
     },
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "axios": "1.7.8"
     },
     "devDependencies": {

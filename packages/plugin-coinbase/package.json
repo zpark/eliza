@@ -5,7 +5,7 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
-        "@elizaos/eliza": "workspace:*",
+        "@elizaos/core": "workspace:*",
         "coinbase-api": "1.0.5",
         "coinbase-advanced-sdk": "file:../../packages/plugin-coinbase/advanced-sdk-ts",
         "jsonwebtoken": "^9.0.2",

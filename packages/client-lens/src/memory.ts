@@ -5,7 +5,7 @@ import {
     stringToUuid,
     type Memory,
     type UUID,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { publicationUuid } from "./utils";
 import { LensClient } from "./client";
 import { AnyPublicationFragment } from "@lens-protocol/client";

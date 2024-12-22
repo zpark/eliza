@@ -5,7 +5,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type UUID,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { textOnly } from "@lens-protocol/metadata";
 import { createPublicationMemory } from "./memory";
 import { AnyPublicationFragment } from "@lens-protocol/client";

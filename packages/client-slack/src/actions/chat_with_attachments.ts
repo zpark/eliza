@@ -3,8 +3,8 @@ import {
     generateText,
     trimTokens,
     parseJSONObjectFromText,
-} from "@elizaos/eliza";
-import { models } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { models } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -15,7 +15,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
