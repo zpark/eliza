@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { TdxQuoteResponse, TappdClient } from "@phala/dstack-sdk";
 import { RemoteAttestationQuote, TEEMode } from "../types/tee";
 

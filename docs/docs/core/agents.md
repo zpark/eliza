@@ -70,7 +70,7 @@ Each element in the runtime interface plays a crucial role:
 This section demonstrates setting up an agent with basic and optional configurations. It provides a working example and sample code that helps users quickly start building:
 
 ```typescript
-import { AgentRuntime, ModelProviderName } from "@elizaos/eliza";
+import { AgentRuntime, ModelProviderName } from "@elizaos/core";
 
 // Configuration example
 const runtime = new AgentRuntime({

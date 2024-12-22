@@ -452,7 +452,7 @@ const chainedAction: Action = {
 ## Example: Complete Action Implementation
 
 ```typescript
-import { Action, IAgentRuntime, Memory, State } from "@elizaos/eliza";
+import { Action, IAgentRuntime, Memory, State } from "@elizaos/core";
 
 const documentAnalysisAction: Action = {
     name: "ANALYZE_DOCUMENT",

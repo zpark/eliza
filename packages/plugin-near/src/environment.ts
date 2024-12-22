@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@elizaos/eliza";
+import { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
 
 // Add ENV variable at the top

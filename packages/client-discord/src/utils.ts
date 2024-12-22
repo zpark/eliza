@@ -5,7 +5,7 @@ import {
     generateText,
     trimTokens,
     parseJSONObjectFromText,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import {
     ChannelType,
     Message as DiscordMessage,

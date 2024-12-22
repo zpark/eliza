@@ -7,8 +7,8 @@ import {
 import { Connection, PublicKey } from "@solana/web3.js";
 // Assuming TokenProvider and IAgentRuntime are available
 import { TokenProvider } from "./token.ts";
-// import { settings } from "@elizaos/eliza";
-import { IAgentRuntime } from "@elizaos/eliza";
+// import { settings } from "@elizaos/core";
+import { IAgentRuntime } from "@elizaos/core";
 import { WalletProvider } from "./wallet.ts";
 import * as amqp from "amqplib";
 import { ProcessedTokenData } from "../types/token.ts";

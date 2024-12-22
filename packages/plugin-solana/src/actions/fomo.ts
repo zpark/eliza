@@ -1,4 +1,4 @@
-import { generateImage } from "@elizaos/eliza";
+import { generateImage } from "@elizaos/core";
 import {
     Connection,
     Keypair,
@@ -20,7 +20,7 @@ import {
     generateObject,
     composeContext,
     type Action,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 import { walletProvider } from "../providers/wallet.ts";
 

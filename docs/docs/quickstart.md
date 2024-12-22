@@ -257,7 +257,7 @@ pnpm start --characters="characters/trump.character.json,characters/tate.charact
     pnpm add -D ts-node typescript @types/node --filter "@elizaos/agent"
 
     # Also add to the core package since it's needed there too
-    pnpm add -D ts-node typescript @types/node --filter "@elizaos/eliza"
+    pnpm add -D ts-node typescript @types/node --filter "@elizaos/core"
 
     # First clean everything
     pnpm clean

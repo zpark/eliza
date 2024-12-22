@@ -2,7 +2,7 @@ import {
     composeContext,
     generateText,
     parseJSONObjectFromText,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -13,7 +13,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 export const transcriptionTemplate = `# Transcription of media file
 {{mediaTranscript}}

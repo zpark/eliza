@@ -1,8 +1,8 @@
 // THIS IS INCOMPLETE
 // Look for the TODOs to see what needs to be updated
 
-import { settings } from "@elizaos/eliza";
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { settings } from "@elizaos/core";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import {
     DexScreenerData,
     DexScreenerPair,

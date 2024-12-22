@@ -608,7 +608,7 @@ console.log("Webhook creation response:", response);
 Create a new plugin by implementing the Plugin interface:
 
 ```typescript
-import { Plugin, Action, Evaluator, Provider } from "@elizaos/eliza";
+import { Plugin, Action, Evaluator, Provider } from "@elizaos/core";
 
 const myCustomPlugin: Plugin = {
     name: "my-custom-plugin",

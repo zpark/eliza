@@ -1,4 +1,4 @@
-[@elizaos/eliza v0.1.6-alpha.4](../index.md) / ISpeechService
+[@elizaos/core v0.1.6-alpha.4](../index.md) / ISpeechService
 
 # Interface: ISpeechService
 

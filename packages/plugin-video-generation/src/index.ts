@@ -1,4 +1,4 @@
-import { elizaLogger } from "@elizaos/eliza";
+import { elizaLogger } from "@elizaos/core";
 import {
     Action,
     HandlerCallback,
@@ -6,7 +6,7 @@ import {
     Memory,
     Plugin,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import fs from "fs";
 import { LUMA_CONSTANTS } from "./constants";
 

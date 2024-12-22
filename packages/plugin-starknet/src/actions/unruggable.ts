@@ -9,7 +9,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { Percent } from "@uniswap/sdk-core";
 import {
     getStarknetAccount,

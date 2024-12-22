@@ -1,7 +1,7 @@
-import { composeContext } from "@elizaos/eliza";
-import { generateText } from "@elizaos/eliza";
-import { getGoals } from "@elizaos/eliza";
-import { parseJsonArrayFromText } from "@elizaos/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateText } from "@elizaos/core";
+import { getGoals } from "@elizaos/core";
+import { parseJsonArrayFromText } from "@elizaos/core";
 import {
     IAgentRuntime,
     Memory,
@@ -10,7 +10,7 @@ import {
     type Goal,
     type State,
     Evaluator,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 const goalsTemplate = `TASK: Update Goal
 Analyze the conversation and update the status of the goals based on the new information provided.

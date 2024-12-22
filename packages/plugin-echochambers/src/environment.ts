@@ -1,4 +1,4 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/eliza";
+import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 
 export async function validateEchoChamberConfig(
     runtime: IAgentRuntime
