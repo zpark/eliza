@@ -4,11 +4,11 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
-    elizaLogger
-} from "@ai16z/eliza";
+    elizaLogger,
+} from "@elizaos/core";
 import { FarcasterClient } from "./client";
 import { formatTimeline, postTemplate } from "./prompts";
-import {castUuid, MAX_CAST_LENGTH} from "./utils";
+import { castUuid, MAX_CAST_LENGTH } from "./utils";
 import { createCastMemory } from "./memory";
 import { sendCast } from "./actions";
 
@@ -27,7 +27,7 @@ export class FarcasterPostManager {
             try {
                 await this.generateNewCast();
             } catch (error) {
-                elizaLogger.error(error)
+                elizaLogger.error(error);
                 return;
             }
 
@@ -117,11 +117,8 @@ export class FarcasterPostManager {
                 content = content.slice(0, content.lastIndexOf("."));
             }
 
-
             if (this.runtime.getSetting("FARCASTER_DRY_RUN") === "true") {
-                elizaLogger.info(
-                    `Dry run: would have cast: ${content}`
-                );
+                elizaLogger.info(`Dry run: would have cast: ${content}`);
                 return;
             }
 
@@ -147,7 +144,9 @@ export class FarcasterPostManager {
                     roomId
                 );
 
-                elizaLogger.info(`[Farcaster Neynar Client] Published cast ${cast.hash}`);
+                elizaLogger.info(
+                    `[Farcaster Neynar Client] Published cast ${cast.hash}`
+                );
 
                 await this.runtime.messageManager.createMemory(
                     createCastMemory({
@@ -157,10 +156,10 @@ export class FarcasterPostManager {
                     })
                 );
             } catch (error) {
-                elizaLogger.error("Error sending cast:", error)
+                elizaLogger.error("Error sending cast:", error);
             }
         } catch (error) {
-            elizaLogger.error("Error generating new cast:", error)
+            elizaLogger.error("Error generating new cast:", error);
         }
     }
 }
