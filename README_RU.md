@@ -114,7 +114,6 @@ TWITTER_DRY_RUN=false
 TWITTER_USERNAME= # Имя пользователя аккаунта
 TWITTER_PASSWORD= # Пароль аккаунта
 TWITTER_EMAIL= # Email аккаунта
-TWITTER_COOKIES= # Cookies аккаунта
 
 X_SERVER_URL=
 XAI_API_KEY=

@@ -19,6 +19,7 @@
             "dependsOn": ["@ai16z/plugin-trustdb#build"]
         },
         "@ai16z/plugin-nft-generation#build": {
+            "outputs": ["dist/**"],
             "dependsOn": ["@ai16z/plugin-node#build"]
         },
         "eliza-docs#build": {
