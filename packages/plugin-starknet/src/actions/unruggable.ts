@@ -3,13 +3,13 @@ import {
     ActionExample,
     composeContext,
     elizaLogger,
-    generateObject,
+    generateObjectDeprecated,
     HandlerCallback,
     IAgentRuntime,
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { Percent } from "@uniswap/sdk-core";
 import {
     getStarknetAccount,
@@ -20,7 +20,7 @@ import {
 import { DeployData, Factory } from "@unruggable_starknet/core";
 import { AMM, QUOTE_TOKEN_SYMBOL } from "@unruggable_starknet/core/constants";
 import { ACCOUNTS, TOKENS } from "../utils/constants.ts";
-import { validateStarknetConfig } from "../enviroment.ts";
+import { validateStarknetConfig } from "../environment.ts";
 
 export function isDeployTokenContent(
     content: DeployData
@@ -102,7 +102,7 @@ export const deployToken: Action = {
             template: deployTemplate,
         });
 
-        const response = await generateObject({
+        const response = await generateObjectDeprecated({
             runtime,
             context: deployContext,
             modelClass: ModelClass.MEDIUM,

@@ -12,8 +12,8 @@ import {
     IAgentRuntime,
     knowledge,
     stringToUuid,
-} from "@ai16z/eliza";
-import { validateGithubConfig } from "./enviroment";
+} from "@elizaos/core";
+import { validateGithubConfig } from "./environment";
 
 export interface GitHubConfig {
     owner: string;

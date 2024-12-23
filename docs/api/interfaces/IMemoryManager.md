@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / IMemoryManager
+[@elizaos/core v0.1.6-alpha.4](../index.md) / IMemoryManager
 
 # Interface: IMemoryManager
 
@@ -10,9 +10,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:903](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L903)
+[packages/core/src/types.ts:953](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L953)
 
-***
+---
 
 ### tableName
 
@@ -20,9 +20,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:904](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L904)
+[packages/core/src/types.ts:954](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L954)
 
-***
+---
 
 ### constructor
 
@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:905](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L905)
+[packages/core/src/types.ts:955](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L955)
 
 ## Methods
 
@@ -48,9 +48,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:907](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L907)
+[packages/core/src/types.ts:957](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L957)
 
-***
+---
 
 ### getMemories()
 
@@ -76,9 +76,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:909](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L909)
+[packages/core/src/types.ts:959](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L959)
 
-***
+---
 
 ### getCachedEmbeddings()
 
@@ -94,9 +94,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:917](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L917)
+[packages/core/src/types.ts:967](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L967)
 
-***
+---
 
 ### getMemoryById()
 
@@ -112,9 +112,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:921](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L921)
+[packages/core/src/types.ts:971](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L971)
 
-***
+---
 
 ### getMemoriesByRoomIds()
 
@@ -132,9 +132,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:922](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L922)
+[packages/core/src/types.ts:972](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L972)
 
-***
+---
 
 ### searchMemoriesByEmbedding()
 
@@ -146,7 +146,7 @@
 
 • **opts**
 
-• **opts.match\_threshold?**: `number`
+• **opts.match_threshold?**: `number`
 
 • **opts.count?**: `number`
 
@@ -160,9 +160,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:923](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L923)
+[packages/core/src/types.ts:973](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L973)
 
-***
+---
 
 ### createMemory()
 
@@ -180,9 +180,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:933](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L933)
+[packages/core/src/types.ts:983](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L983)
 
-***
+---
 
 ### removeMemory()
 
@@ -198,9 +198,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:935](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L935)
+[packages/core/src/types.ts:985](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L985)
 
-***
+---
 
 ### removeAllMemories()
 
@@ -216,9 +216,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:937](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L937)
+[packages/core/src/types.ts:987](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L987)
 
-***
+---
 
 ### countMemories()
 
@@ -236,4 +236,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:939](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L939)
+[packages/core/src/types.ts:989](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L989)

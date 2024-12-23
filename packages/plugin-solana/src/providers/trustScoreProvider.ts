@@ -17,9 +17,9 @@ import {
     TokenPerformance,
     TradePerformance,
     TokenRecommendation,
-} from "@ai16z/plugin-trustdb";
-import { settings } from "@ai16z/eliza";
-import { IAgentRuntime, Memory, Provider, State } from "@ai16z/eliza";
+} from "@elizaos/plugin-trustdb";
+import { settings } from "@elizaos/core";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
 const Wallet = settings.MAIN_WALLET_ADDRESS;
@@ -349,7 +349,6 @@ export class TrustScoreManager {
         runtime: IAgentRuntime,
         tokenAddress: string,
         recommenderId: string,
-        username: string,
         data: TradeData
     ): Promise<TradePerformance> {
         const recommender =
@@ -460,7 +459,7 @@ export class TrustScoreManager {
             recommenderId
         );
         // api call to update trade performance
-        this.createTradeInBe(tokenAddress, recommenderId, username, data);
+        this.createTradeInBe(tokenAddress, recommenderId, data);
         return creationData;
     }
 
@@ -471,7 +470,6 @@ export class TrustScoreManager {
     async createTradeInBe(
         tokenAddress: string,
         recommenderId: string,
-        username: string,
         data: TradeData,
         retries = 3,
         delayMs = 2000
@@ -490,7 +488,6 @@ export class TrustScoreManager {
                             tokenAddress: tokenAddress,
                             tradeData: data,
                             recommenderId: recommenderId,
-                            username: username,
                         }),
                     }
                 );

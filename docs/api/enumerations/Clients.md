@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / Clients
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Clients
 
 # Enumeration: Clients
 
@@ -12,9 +12,9 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:599](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L599)
+[packages/core/src/types.ts:612](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L612)
 
-***
+---
 
 ### DIRECT
 
@@ -22,9 +22,9 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:600](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L600)
+[packages/core/src/types.ts:613](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L613)
 
-***
+---
 
 ### TWITTER
 
@@ -32,9 +32,9 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:601](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L601)
+[packages/core/src/types.ts:614](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L614)
 
-***
+---
 
 ### TELEGRAM
 
@@ -42,4 +42,44 @@ Available client platforms
 
 #### Defined in
 
-[packages/core/src/types.ts:602](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L602)
+[packages/core/src/types.ts:615](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L615)
+
+---
+
+### FARCASTER
+
+> **FARCASTER**: `"farcaster"`
+
+#### Defined in
+
+[packages/core/src/types.ts:616](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L616)
+
+---
+
+### LENS
+
+> **LENS**: `"lens"`
+
+#### Defined in
+
+[packages/core/src/types.ts:617](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L617)
+
+---
+
+### AUTO
+
+> **AUTO**: `"auto"`
+
+#### Defined in
+
+[packages/core/src/types.ts:618](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L618)
+
+---
+
+### SLACK
+
+> **SLACK**: `"slack"`
+
+#### Defined in
+
+[packages/core/src/types.ts:619](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L619)

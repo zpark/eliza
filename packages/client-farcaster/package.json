@@ -1,20 +1,18 @@
 {
-    "name": "@ai16z/client-farcaster",
-    "version": "0.1.4-alpha.3",
-    "main": "dist/index.js",
-    "type": "module",
-    "types": "dist/index.d.ts",
-    "dependencies": {
-        "@ai16z/eliza": "workspace:*",
-        "@farcaster/hub-nodejs": "0.12.7",
-        "viem": "2.21.53"
-    },
-    "devDependencies": {
-        "tsup": "8.3.5"
-    },
-    "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --watch"
-    },
-    "peerDependencies": {}
+  "name": "@elizaos/client-farcaster",
+  "version": "0.1.7-alpha.1",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "@neynar/nodejs-sdk": "^2.0.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5"
+  },
+  "scripts": {
+    "build": "tsup --format esm --dts",
+    "dev": "tsup --format esm --dts --watch"
+  }
 }

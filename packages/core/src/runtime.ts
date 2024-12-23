@@ -142,6 +142,7 @@ export class AgentRuntime implements IAgentRuntime {
     services: Map<ServiceType, Service> = new Map();
     memoryManagers: Map<string, IMemoryManager> = new Map();
     cacheManager: ICacheManager;
+    clients: Record<string, any>;
 
     registerMemoryManager(manager: IMemoryManager): void {
         if (!manager.tableName) {
@@ -233,6 +234,10 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.#conversationLength =
             opts.conversationLength ?? this.#conversationLength;
+
+        if (!opts.databaseAdapter) {
+            throw new Error("No database adapter provided");
+        }
         this.databaseAdapter = opts.databaseAdapter;
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -248,15 +253,14 @@ export class AgentRuntime implements IAgentRuntime {
             this.agentId,
             this.character.name,
             this.character.name
-        );
-        this.ensureParticipantExists(this.agentId, this.agentId);
+        ).then(() => {
+            // postgres needs the user to exist before you can add a participant
+            this.ensureParticipantExists(this.agentId, this.agentId);
+        });
 
         elizaLogger.success("Agent ID", this.agentId);
 
         this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
-        if (!opts.databaseAdapter) {
-            throw new Error("No database adapter provided");
-        }
 
         this.cacheManager = opts.cacheManager;
 
@@ -405,6 +409,25 @@ export class AgentRuntime implements IAgentRuntime {
         }
     }
 
+    async stop() {
+      elizaLogger.debug('runtime::stop - character', this.character)
+      // stop services, they don't have a stop function
+        // just initialize
+
+      // plugins
+        // have actions, providers, evaluators (no start/stop)
+        // services (just initialized), clients
+
+      // client have a start
+      for(const cStr in this.clients) {
+        const c = this.clients[cStr]
+        elizaLogger.log('runtime::stop - requesting', cStr, 'client stop for', this.character.name)
+        c.stop()
+      }
+      // we don't need to unregister with directClient
+      // don't need to worry about knowledge
+    }
+
     /**
      * Processes character knowledge by creating document memories and fragment memories.
      * This function takes an array of knowledge items, creates a document memory for each item if it doesn't exist,
@@ -498,67 +521,73 @@ export class AgentRuntime implements IAgentRuntime {
         state?: State,
         callback?: HandlerCallback
     ): Promise<void> {
-        if (!responses[0].content?.action) {
-            elizaLogger.warn("No action found in the response content.");
-            return;
-        }
+        for (const response of responses) {
+            if (!response.content?.action) {
+                elizaLogger.warn("No action found in the response content.");
+                continue;
+            }
 
-        const normalizedAction = responses[0].content.action
-            .toLowerCase()
-            .replace("_", "");
+            const normalizedAction = response.content.action
+                .toLowerCase()
+                .replace("_", "");
 
-        elizaLogger.success(`Normalized action: ${normalizedAction}`);
+            elizaLogger.success(`Normalized action: ${normalizedAction}`);
 
-        let action = this.actions.find(
-            (a: { name: string }) =>
-                a.name
-                    .toLowerCase()
-                    .replace("_", "")
-                    .includes(normalizedAction) ||
-                normalizedAction.includes(a.name.toLowerCase().replace("_", ""))
-        );
+            let action = this.actions.find(
+                (a: { name: string }) =>
+                    a.name
+                        .toLowerCase()
+                        .replace("_", "")
+                        .includes(normalizedAction) ||
+                    normalizedAction.includes(
+                        a.name.toLowerCase().replace("_", "")
+                    )
+            );
 
-        if (!action) {
-            elizaLogger.info("Attempting to find action in similes.");
-            for (const _action of this.actions) {
-                const simileAction = _action.similes.find(
-                    (simile) =>
-                        simile
-                            .toLowerCase()
-                            .replace("_", "")
-                            .includes(normalizedAction) ||
-                        normalizedAction.includes(
-                            simile.toLowerCase().replace("_", "")
-                        )
-                );
-                if (simileAction) {
-                    action = _action;
-                    elizaLogger.success(
-                        `Action found in similes: ${action.name}`
+            if (!action) {
+                elizaLogger.info("Attempting to find action in similes.");
+                for (const _action of this.actions) {
+                    const simileAction = _action.similes.find(
+                        (simile) =>
+                            simile
+                                .toLowerCase()
+                                .replace("_", "")
+                                .includes(normalizedAction) ||
+                            normalizedAction.includes(
+                                simile.toLowerCase().replace("_", "")
+                            )
                     );
-                    break;
+                    if (simileAction) {
+                        action = _action;
+                        elizaLogger.success(
+                            `Action found in similes: ${action.name}`
+                        );
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!action) {
-            elizaLogger.error(
-                "No action found for",
-                responses[0].content.action
-            );
-            return;
-        }
+            if (!action) {
+                elizaLogger.error(
+                    "No action found for",
+                    response.content.action
+                );
+                continue;
+            }
 
-        if (!action.handler) {
-            elizaLogger.error(`Action ${action.name} has no handler.`);
-            return;
-        }
+            if (!action.handler) {
+                elizaLogger.error(`Action ${action.name} has no handler.`);
+                continue;
+            }
 
-        try {
-            elizaLogger.info(`Executing handler for action: ${action.name}`);
-            await action.handler(this, message, state, {}, callback);
-        } catch (error) {
-            elizaLogger.error(error);
+            try {
+                elizaLogger.info(
+                    `Executing handler for action: ${action.name}`
+                );
+                await action.handler(this, message, state, {}, callback);
+            } catch (error) {
+                elizaLogger.error(error);
+            }
         }
     }
 
@@ -566,10 +595,16 @@ export class AgentRuntime implements IAgentRuntime {
      * Evaluate the message and state using the registered evaluators.
      * @param message The message to evaluate.
      * @param state The state of the agent.
-     * @param didRespond Whether the agent responded to the message.
+     * @param didRespond Whether the agent responded to the message.~
+     * @param callback The handler callback
      * @returns The results of the evaluation.
      */
-    async evaluate(message: Memory, state?: State, didRespond?: boolean) {
+    async evaluate(
+        message: Memory,
+        state?: State,
+        didRespond?: boolean,
+        callback?: HandlerCallback
+    ) {
         const evaluatorPromises = this.evaluators.map(
             async (evaluator: Evaluator) => {
                 elizaLogger.log("Evaluating", evaluator.name);
@@ -595,17 +630,12 @@ export class AgentRuntime implements IAgentRuntime {
             return [];
         }
 
-        const evaluators = formatEvaluators(evaluatorsData as Evaluator[]);
-        const evaluatorNames = formatEvaluatorNames(
-            evaluatorsData as Evaluator[]
-        );
-
         const context = composeContext({
             state: {
                 ...state,
-                evaluators,
-                evaluatorNames,
-            } as State,
+                evaluators: formatEvaluators(evaluatorsData),
+                evaluatorNames: formatEvaluatorNames(evaluatorsData),
+            },
             template:
                 this.character.templates?.evaluationTemplate ||
                 evaluationTemplate,
@@ -617,21 +647,18 @@ export class AgentRuntime implements IAgentRuntime {
             modelClass: ModelClass.SMALL,
         });
 
-        const parsedResult = parseJsonArrayFromText(
+        const evaluators = parseJsonArrayFromText(
             result
         ) as unknown as string[];
 
-        this.evaluators
-            .filter((evaluator: Evaluator) =>
-                parsedResult?.includes(evaluator.name)
-            )
-            .forEach((evaluator: Evaluator) => {
-                if (!evaluator?.handler) return;
+        for (const evaluator of this.evaluators) {
+            if (!evaluators.includes(evaluator.name)) continue;
 
-                evaluator.handler(this, message);
-            });
+            if (evaluator.handler)
+                await evaluator.handler(this, message, state, {}, callback);
+        }
 
-        return parsedResult;
+        return evaluators;
     }
 
     /**
