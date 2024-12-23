@@ -184,6 +184,7 @@ export class TwitterPostClient {
                     error
                 );
             });
+            generateNewTweetLoop();
         } else {
             elizaLogger.log("Action processing loop disabled by configuration");
         }
