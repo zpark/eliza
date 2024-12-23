@@ -68,7 +68,7 @@ function getActionHandler(
                 maxSteps: 10,
                 // Uncomment to see the log each tool call when debugging
                 // onStepFinish: (step) => {
-                //     console.log(step.toolCalls);
+                //     console.log(step.toolResults);
                 // },
                 modelClass: ModelClass.LARGE,
             });

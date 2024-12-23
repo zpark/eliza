@@ -1,4 +1,4 @@
-import { WalletClient } from "@goat-sdk/core";
+import { WalletClientBase } from "@goat-sdk/core";
 import { viem } from "@goat-sdk/wallet-viem";
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -26,7 +26,7 @@ export function getWalletClient(
     return viem(wallet);
 }
 
-export function getWalletProvider(walletClient: WalletClient) {
+export function getWalletProvider(walletClient: WalletClientBase) {
     return {
         async get(): Promise<string | null> {
             try {
