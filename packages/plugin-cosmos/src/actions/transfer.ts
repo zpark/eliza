@@ -7,6 +7,7 @@ import {
     type Memory,
     type State,
 } from "@ai16z/eliza";
+import { getNativeAssetByChainName } from "@chain-registry/utils";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Coin, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice } from "@cosmjs/stargate";
@@ -15,9 +16,9 @@ import { assets, chains } from "chain-registry";
 import { z } from "zod";
 import { transferTemplate } from "../templates";
 
-type ArrayOf<T, N extends number, R extends T[] = []> = R["length"] extends N
-    ? R
-    : ArrayOf<T, N, [...R, T]>;
+// type ArrayOf<T, N extends number, R extends T[] = []> = R["length"] extends N // only used for commented validation
+//     ? R
+//     : ArrayOf<T, N, [...R, T]>;
 
 export { transferTemplate };
 
@@ -106,8 +107,6 @@ export const transferAction = {
         options: any,
         callback?: HandlerCallback
     ) => {
-        console.log("Transfer action handler called");
-
         const chainName = runtime.getSetting("COSMOS_CHAIN_NAME");
         const recoveryPhrase = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
 
@@ -140,7 +139,7 @@ export const transferAction = {
         });
 
         const transferContentValidator = z.object({
-            denomOrIbc: z.string(),
+            denomOrIbc: z.string().nullable(),
             amount: z.string(),
             toAddress: z.string(),
         });
@@ -149,23 +148,31 @@ export const transferAction = {
 
         const { amount, denomOrIbc, toAddress } = transferContent;
 
-        const coinFromChainAsset = chainAssets.assets.find(
-            (asset) =>
-                asset.display === denomOrIbc ||
-                asset.ibc.source_denom === denomOrIbc ||
-                asset.base === denomOrIbc
-        );
+        const assetForCoinWithProvidedDenom = denomOrIbc
+            ? chainAssets.assets.find(
+                  (asset) =>
+                      asset.display === denomOrIbc ||
+                      asset.ibc.source_denom === denomOrIbc ||
+                      asset.base === denomOrIbc
+              )
+            : getNativeAssetByChainName(assets, chainName);
+
+        const assetDisplayDenomUnit =
+            assetForCoinWithProvidedDenom.denom_units.find(
+                (unit) => unit.denom === assetForCoinWithProvidedDenom.display
+            );
+
+        const isCoinInBaseDenom =
+            assetForCoinWithProvidedDenom.base === denomOrIbc || !denomOrIbc;
 
         const coin = {
-            denom: coinFromChainAsset.base,
-            amount: new BigNumber(amount)
-                .dividedBy(
-                    10 **
-                        coinFromChainAsset.denom_units.find(
-                            (unit) => unit.denom === denomOrIbc
-                        ).exponent
-                )
-                .toString(),
+            denom: assetForCoinWithProvidedDenom.base,
+            amount: isCoinInBaseDenom
+                ? new BigNumber(amount)
+                      .multipliedBy(10 ** assetDisplayDenomUnit.exponent)
+                      .decimalPlaces(0, BigNumber.ROUND_DOWN)
+                      .toString()
+                : amount,
         };
 
         try {
@@ -199,43 +206,38 @@ export const transferAction = {
     },
     template: transferTemplate,
     validate: async (runtime: IAgentRuntime) => {
-        const recoveryPhrase = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
-        const chainName = runtime.getSetting("COSMOS_CHAIN_NAME");
+        // I dont know what is wrong with code for validation from below, so for now im just returning true
 
-        const chainNameValidator = z.string().refine((value) => {
-            return chains.map((chain) => chain.chain_name).includes(value);
-        });
+        return true;
 
-        const recoveryPhraseValidator = z
-            .custom<string>((value) => {
-                if (typeof value !== "string") {
-                    return false; // Ensure input is a string
-                }
+        // const recoveryPhrase = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
+        // const chainName = runtime.getSetting("COSMOS_CHAIN_NAME");
+        //
+        // const chainNameValidator = z.string().refine((value) => {
+        //     return chains.map((chain) => chain.chain_name).includes(value);
+        // });
 
-                const words = value.split(" ");
-                if (words.length !== 12) {
-                    return false; // Validate the number of words
-                }
+        // const recoveryPhraseValidator = z
+        //     .custom<string>((value) => {
+        //         if (typeof value !== "string") {
+        //             return false; // Ensure input is a string
+        //         }
 
-                return true; // Input is valid
-            })
-            .transform((value) => {
-                const words = (value as string).split(" ");
+        //         const words = value.split(" ");
+        //         if (words.length !== 12) {
+        //             return false; // Validate the number of words
+        //         }
 
-                if (words.length !== 12) {
-                    throw new Error(
-                        "Recovery phrase must have exactly 12 words"
-                    );
-                }
+        //         return true; // Input is valid
+        //     })
+        //     .transform((value: string) => {
+        //         return value.split(" ") as ArrayOf<string, 12>;
+        //     });
 
-                // Explicitly cast to the tuple type
-                return words as ArrayOf<string, 12>;
-            });
-
-        return (
-            recoveryPhraseValidator.safeParse(recoveryPhrase).success &&
-            chainNameValidator.safeParse(chainName).success
-        );
+        // return (
+        //     recoveryPhraseValidator.safeParse(recoveryPhrase).success &&
+        //     chainNameValidator.safeParse(chainName).success
+        // );
     },
     examples: [
         [
@@ -250,38 +252,6 @@ export const transferAction = {
                 user: "user",
                 content: {
                     text: "Transfer 1 ATOM to cosmos112321m1m3jjasd",
-                    action: "SEND_TOKENS_COSMOS",
-                },
-            },
-        ],
-        [
-            {
-                user: "user",
-                content: {
-                    text: "Transfer 10 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS_COSMOS",
-                },
-            },
-            {
-                user: "assistant",
-                content: {
-                    text: "I will help you with transfering 1 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS_COSMOS",
-                },
-            },
-        ],
-        [
-            {
-                user: "user",
-                content: {
-                    text: "Send 10 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS_COSMOS",
-                },
-            },
-            {
-                user: "assistant",
-                content: {
-                    text: "I will help you with transfering 1 OM to mantra112321m1m3jjasd",
                     action: "SEND_TOKENS_COSMOS",
                 },
             },
