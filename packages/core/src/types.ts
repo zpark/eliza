@@ -707,6 +707,18 @@ export type Character = {
     settings?: {
         secrets?: { [key: string]: string };
         intiface?: boolean;
+        imageSettings?: {
+            steps?: number;
+            width?: number;
+            height?: number;
+            negativePrompt?: string;
+            numIterations?: number;
+            guidanceScale?: number;
+            seed?: number;
+            modelId?: string;
+            jobId?: string;
+            count?: number;
+        };
         voice?: {
             model?: string; // For VITS
             url?: string; // Legacy VITS support
