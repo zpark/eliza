@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Content } from "@ai16z/eliza";
+import { Content } from "@elizaos/core";
 
 
 export interface MintNFTContent extends Content {

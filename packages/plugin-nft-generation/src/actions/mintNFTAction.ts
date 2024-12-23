@@ -8,7 +8,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { createNFT } from "../handlers/createNFT.ts";
 import { verifyNFT } from "../handlers/verifyNFT.ts";
 import { sleep } from "../index.ts";

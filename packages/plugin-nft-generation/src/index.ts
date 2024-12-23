@@ -1,4 +1,4 @@
-import { Plugin } from "@ai16z/eliza";
+import { Plugin } from "@elizaos/core";
 import nftCollectionGeneration from "./actions/nftCollectionGeneration.ts";
 import mintNFTAction from "./actions/mintNFTAction.ts";
 
