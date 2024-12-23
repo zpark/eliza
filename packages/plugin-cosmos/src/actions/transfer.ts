@@ -253,6 +253,8 @@ export const transferAction = {
                     action: "SEND_TOKENS",
                 },
             },
+        ],
+        [
             {
                 user: "user",
                 content: {
@@ -267,10 +269,19 @@ export const transferAction = {
                     action: "SEND_TOKENS",
                 },
             },
+        ],
+        [
             {
                 user: "user",
                 content: {
                     text: "Send 10 OM to mantra112321m1m3jjasd",
+                    action: "SEND_TOKENS",
+                },
+            },
+            {
+                user: "assistant",
+                content: {
+                    text: "I will help you with transfering 1 OM to mantra112321m1m3jjasd",
                     action: "SEND_TOKENS",
                 },
             },
