@@ -1,7 +1,7 @@
 name: Generate Readme Translations
 on:
     push:
-        - 1222--README-ci-auto-translation
+      - "1222--README-ci-auto-translation"
 jobs:
     translation:
         runs-on: ubuntu-latest
