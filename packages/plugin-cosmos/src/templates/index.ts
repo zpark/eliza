@@ -1,4 +1,4 @@
-export const transferTemplate = `Given the recent messages and wallet information below:
+export const transferTemplate = `Given the recent messages and cosmos wallet information below:
 
 {{recentMessages}}
 

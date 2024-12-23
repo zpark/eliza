@@ -97,7 +97,7 @@ async function sendTokens(
 }
 
 export const transferAction = {
-    name: "transfer",
+    name: "transferCosmos",
     description: "Transfer tokens between addresses on the same chain",
     handler: async (
         runtime: IAgentRuntime,
@@ -243,14 +243,14 @@ export const transferAction = {
                 user: "assistant",
                 content: {
                     text: "I'll help you transfer 1 ATOM to cosmos112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
             {
                 user: "user",
                 content: {
                     text: "Transfer 1 ATOM to cosmos112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
         ],
@@ -259,14 +259,14 @@ export const transferAction = {
                 user: "user",
                 content: {
                     text: "Transfer 10 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
             {
                 user: "assistant",
                 content: {
                     text: "I will help you with transfering 1 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
         ],
@@ -275,17 +275,21 @@ export const transferAction = {
                 user: "user",
                 content: {
                     text: "Send 10 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
             {
                 user: "assistant",
                 content: {
                     text: "I will help you with transfering 1 OM to mantra112321m1m3jjasd",
-                    action: "SEND_TOKENS",
+                    action: "SEND_TOKENS_COSMOS",
                 },
             },
         ],
     ],
-    similes: ["SEND_TOKENS", "TOKEN_TRANSFER", "MOVE_TOKENS"],
+    similes: [
+        "SEND_TOKENS_COSMOS",
+        "TOKEN_TRANSFER_COSMOS",
+        "MOVE_TOKENS_COSMOS",
+    ],
 };
