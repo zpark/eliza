@@ -161,11 +161,11 @@ export class TwitterPostClient {
 
         if (
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
-            this.runtime.getSetting("POST_IMMEDIATELY") != ""
+            this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            // Retrieve setting, default to false if not set or if the value is not "true"
+            postImmediately = this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
+
         }
 
         if (postImmediately) {
