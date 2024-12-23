@@ -1,4 +1,4 @@
-# @ai16z/plugin-0g
+# @elizaos/plugin-0g
 
 A plugin for storing data using the 0G protocol within the ElizaOS ecosystem.
 
