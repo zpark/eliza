@@ -162,12 +162,12 @@ export const transferAction = {
                 (unit) => unit.denom === assetForCoinWithProvidedDenom.display
             );
 
-        const isCoinInBaseDenom =
-            assetForCoinWithProvidedDenom.base === denomOrIbc || !denomOrIbc;
+        const isCoinInDisplayDenom =
+            assetForCoinWithProvidedDenom.base !== denomOrIbc;
 
         const coin = {
             denom: assetForCoinWithProvidedDenom.base,
-            amount: isCoinInBaseDenom
+            amount: isCoinInDisplayDenom
                 ? new BigNumber(amount)
                       .multipliedBy(10 ** assetDisplayDenomUnit.exponent)
                       .decimalPlaces(0, BigNumber.ROUND_DOWN)
