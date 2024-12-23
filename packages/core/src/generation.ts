@@ -985,6 +985,8 @@ export const generateImage = async (
         seed?: number;
         modelId?: string;
         jobId?: string;
+        stylePreset?: string;
+        hideWatermark?: boolean;
     },
     runtime: IAgentRuntime
 ): Promise<{
@@ -1171,9 +1173,12 @@ export const generateImage = async (
                         model: data.modelId || "fluently-xl",
                         prompt: data.prompt,
                         negative_prompt: data.negativePrompt,
-                        width: data.width || 1024,
-                        height: data.height || 1024,
-                        steps: data.numIterations || 20,
+                        width: data.width,
+                        height: data.height,
+                        steps: data.numIterations,
+                        seed: data.seed,
+                        style_preset: data.stylePreset,
+                        hide_watermark: data.hideWatermark,
                     }),
                 }
             );
