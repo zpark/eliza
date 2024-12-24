@@ -439,6 +439,18 @@ export class TwitterPostClient {
                 return;
             }
 
+            // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
+            const maxTweetLength = parseInt(
+                this.runtime.getSetting("MAX_TWEET_LENGTH"),
+                10
+            );
+            if (maxTweetLength) {
+                cleanedContent = truncateToCompleteSentence(
+                    cleanedContent,
+                    maxTweetLength
+                );
+            }
+
             const removeQuotes = (str: string) =>
                 str.replace(/^['"](.*)['"]$/, "$1");
 
