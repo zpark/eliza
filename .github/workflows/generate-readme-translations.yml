@@ -33,7 +33,7 @@ jobs:
                   token: ${{ secrets.GH_TOKEN }}
 
             - name: Translate to ${{ matrix.language.name }}
-              uses: 0xjord4n/aixion@v1.2.0
+              uses: 0xjord4n/aixion@v1.2.1
               id: aixion
               with:
                 config: >
