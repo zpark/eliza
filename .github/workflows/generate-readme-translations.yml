@@ -32,23 +32,8 @@ jobs:
                   ref: main
                   token: ${{ secrets.GH_TOKEN }}
 
-            - name: Read README content
-              id: readme
-              run: |
-                content=$(cat README.md)
-                # Escape quotes first
-                content="${content//\"/\\\"}"
-                # Then handle other special characters
-                content="${content//'%'/'%25'}"
-                content="${content//$'\n'/'%0A'}"
-                content="${content//$'\r'/'%0D'}"
-                # Escape HTML attributes
-                content="${content//align=\"/align=\\\"}"
-                content="${content//width=\"/width=\\\"}"
-                echo "content=$content" >> $GITHUB_OUTPUT
-
             - name: Translate to ${{ matrix.language.name }}
-              uses: 0xjord4n/aixion@v1.0.2
+              uses: 0xjord4n/aixion@v1.2.0
               id: aixion
               with:
                 config: >
@@ -64,31 +49,40 @@ jobs:
                       },
                       {
                         "role": "user",
-                        "content": "${{ steps.readme.outputs.content }}"
+                        "content_path": "README.md"
                       }
                     ],
+                    "save_path": "README_${{ matrix.language.code }}.md",
                     "model": "gpt-4o"
                   }
 
-            - name: Save translation
-              run: |
-                # Create a temporary variable with the translation
-                translation='${{ steps.aixion.outputs.text }}'
-                # Escape any quotes and special characters
-                translation="${translation//\"/\\\"}"
-                translation="${translation//'%'/'%25'}"
-                translation="${translation//$'\n'/'%0A'}"
-                translation="${translation//$'\r'/'%0D'}"
-                # Write the escaped content to file
-                echo "$translation" > README_${{ matrix.language.code }}.md
+            # Upload each translated file as an artifact
+            - name: Upload translation
+              uses: actions/upload-artifact@v4
+              with:
+                name: readme-${{ matrix.language.code }}
+                path: README_${{ matrix.language.code }}.md
 
-            - name: List README translations
-              run: ls README_*.md || echo "No translation files found"
+    commit:
+        needs: translation
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: main
+                  token: ${{ secrets.GH_TOKEN }}
 
-            - name: Commit translations
+            # Download all translation artifacts
+            - name: Download all translations
+              uses: actions/download-artifact@v4
+              with:
+                pattern: readme-*
+                merge-multiple: true
+
+            - name: Commit all translations
               uses: stefanzweifel/git-auto-commit-action@v5
               with:
-                  commit_message: "chore: update ${{ matrix.language.name }} translation"
+                  commit_message: "chore: update all README translations"
                   branch: main
-                  file_pattern: "README_${{ matrix.language.code }}.md"
+                  file_pattern: "README_*.md"
                   commit_author: "GitHub Action <actions@github.com>"
