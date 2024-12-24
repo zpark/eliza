@@ -17,6 +17,13 @@ import { Address, createWalletClient, http, parseEther } from "viem";
 import { abstractTestnet } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { eip712WalletActions } from "viem/zksync";
+import { z } from "zod";
+
+const TransferSchema = z.object({
+    tokenAddress: z.string(),
+    recipient: z.string(),
+    amount: z.string(),
+});
 
 export interface TransferContent extends Content {
     tokenAddress: string;
@@ -94,7 +101,7 @@ export default {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting SEND_TOKEN handler...");
+        elizaLogger.log("Starting Abstract SEND_TOKEN handler...");
 
         // Initialize or update state
         if (!state) {
@@ -110,11 +117,14 @@ export default {
         });
 
         // Generate transfer content
-        const content = (await generateObject({
-            runtime,
-            context: transferContext,
-            modelClass: ModelClass.SMALL,
-        })) as unknown as TransferContent;
+        const content = (
+            await generateObject({
+                runtime,
+                context: transferContext,
+                modelClass: ModelClass.SMALL,
+                schema: TransferSchema,
+            })
+        ).object as unknown as TransferContent;
 
         // Validate transfer content
         if (!isTransferContent(content)) {
@@ -145,10 +155,14 @@ export default {
                 kzg: undefined,
             });
 
-            elizaLogger.success("Transfer completed successfully! tx: " + hash);
+            elizaLogger.success(
+                "Transfer completed successfully! Transaction hash: " + hash
+            );
             if (callback) {
                 callback({
-                    text: "Transfer completed successfully! tx: " + hash,
+                    text:
+                        "Transfer completed successfully! Transaction hash: " +
+                        hash,
                     content: {},
                 });
             }
