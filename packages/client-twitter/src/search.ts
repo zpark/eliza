@@ -1,7 +1,7 @@
 import { SearchMode } from "agent-twitter-client";
-import {composeContext, elizaLogger} from "@ai16z/eliza";
-import { generateMessageResponse, generateText } from "@ai16z/eliza";
-import { messageCompletionFooter } from "@ai16z/eliza";
+import {composeContext, elizaLogger} from "@elizaos/core";
+import { generateMessageResponse, generateText } from "@elizaos/core";
+import { messageCompletionFooter } from "@elizaos/core";
 import {
     Content,
     HandlerCallback,
