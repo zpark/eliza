@@ -429,33 +429,6 @@ export async function initializeClients(
     return clients;
 }
 
-// no needed for now
-//
-// function isFalsish(input: any): boolean {
-//     // If the input is exactly NaN, return true
-//     if (Number.isNaN(input)) {
-//         return true;
-//     }
-//
-//     // Convert input to a string if it's not null or undefined
-//     const value = input == null ? "" : String(input);
-//
-//     // List of common falsish string representations
-//     const falsishValues = [
-//         "false",
-//         "0",
-//         "no",
-//         "n",
-//         "off",
-//         "null",
-//         "undefined",
-//         "",
-//     ];
-//
-//     // Check if the value (trimmed and lowercased) is in the falsish list
-//     return falsishValues.includes(value.trim().toLowerCase());
-// }
-
 function getSecret(character: Character, secret: string) {
     return character.settings?.secrets?.[secret] || process.env[secret];
 }
