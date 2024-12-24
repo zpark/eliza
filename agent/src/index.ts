@@ -1,12 +1,12 @@
-import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
-import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
-import { AutoClientInterface } from "@ai16z/client-auto";
-import { DiscordClientInterface } from "@ai16z/client-discord";
-import { FarcasterAgentClient } from "@ai16z/client-farcaster";
-import { LensAgentClient } from "@ai16z/client-lens";
-import { SlackClientInterface } from "@ai16z/client-slack";
-import { TelegramClientInterface } from "@ai16z/client-telegram";
-import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { AutoClientInterface } from "@elizaos/client-auto";
+import { DiscordClientInterface } from "@elizaos/client-discord";
+import { FarcasterAgentClient } from "@elizaos/client-farcaster";
+import { LensAgentClient } from "@elizaos/client-lens";
+import { SlackClientInterface } from "@elizaos/client-slack";
+import { TelegramClientInterface } from "@elizaos/client-telegram";
+import { TwitterClientInterface } from "@elizaos/client-twitter";
 import {
     AgentRuntime,
     CacheManager,
@@ -25,14 +25,14 @@ import {
     stringToUuid,
     validateCharacterConfig,
     CacheStore,
-} from "@ai16z/eliza";
-import { RedisClient } from "@ai16z/adapter-redis";
-import { zgPlugin } from "@ai16z/plugin-0g";
-import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
-import createGoatPlugin from "@ai16z/plugin-goat";
-// import { intifacePlugin } from "@ai16z/plugin-intiface";
-import { DirectClient } from "@ai16z/client-direct";
-import { aptosPlugin } from "@ai16z/plugin-aptos";
+} from "@elizaos/core";
+import { RedisClient } from "@elizaos/adapter-redis";
+import { zgPlugin } from "@elizaos/plugin-0g";
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import createGoatPlugin from "@elizaos/plugin-goat";
+// import { intifacePlugin } from "@elizaos/plugin-intiface";
+import { DirectClient } from "@elizaos/client-direct";
+import { aptosPlugin } from "@elizaos/plugin-aptos";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -40,21 +40,21 @@ import {
     tokenContractPlugin,
     tradePlugin,
     webhookPlugin,
-} from "@ai16z/plugin-coinbase";
-import { confluxPlugin } from "@ai16z/plugin-conflux";
-import { evmPlugin } from "@ai16z/plugin-evm";
-import { storyPlugin } from "@ai16z/plugin-story";
-import { flowPlugin } from "@ai16z/plugin-flow";
-import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
-import { multiversxPlugin } from "@ai16z/plugin-multiversx";
-import { nearPlugin } from "@ai16z/plugin-near";
-import { nftGenerationPlugin } from "@ai16z/plugin-nft-generation";
-import { createNodePlugin } from "@ai16z/plugin-node";
-import { solanaPlugin } from "@ai16z/plugin-solana";
-import { suiPlugin } from "@ai16z/plugin-sui";
-import { TEEMode, teePlugin } from "@ai16z/plugin-tee";
-import { tonPlugin } from "@ai16z/plugin-ton";
-import { zksyncEraPlugin } from "@ai16z/plugin-zksync-era";
+} from "@elizaos/plugin-coinbase";
+import { confluxPlugin } from "@elizaos/plugin-conflux";
+import { evmPlugin } from "@elizaos/plugin-evm";
+import { storyPlugin } from "@elizaos/plugin-story";
+import { flowPlugin } from "@elizaos/plugin-flow";
+import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { multiversxPlugin } from "@elizaos/plugin-multiversx";
+import { nearPlugin } from "@elizaos/plugin-near";
+import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
+import { createNodePlugin } from "@elizaos/plugin-node";
+import { solanaPlugin } from "@elizaos/plugin-solana";
+import { suiPlugin } from "@elizaos/plugin-sui";
+import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { tonPlugin } from "@elizaos/plugin-ton";
+import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -217,6 +217,8 @@ export function getTokenForProvider(
         // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
             return "";
+        case ModelProviderName.OLLAMA:
+            return "";
         case ModelProviderName.GAIANET:
             return "";
         case ModelProviderName.OPENAI:
@@ -312,6 +314,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.AKASH_CHAT_API_KEY ||
                 settings.AKASH_CHAT_API_KEY
+            );
+        case ModelProviderName.GOOGLE:
+            return (
+                character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
+                settings.GOOGLE_GENERATIVE_AI_API_KEY
             );
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
@@ -647,7 +654,7 @@ async function startAgent(
         await db.init();
 
         const cache = initializeCache(
-            process.env.CACHE_STORE,
+            process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",
             db

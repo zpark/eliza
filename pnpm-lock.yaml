@@ -99,106 +99,106 @@ importers:
 
   agent:
     dependencies:
-      '@ai16z/adapter-postgres':
+      '@elizaos/adapter-postgres':
         specifier: workspace:*
         version: link:../packages/adapter-postgres
-      '@ai16z/adapter-redis':
+      '@elizaos/adapter-redis':
         specifier: workspace:*
         version: link:../packages/adapter-redis
-      '@ai16z/adapter-sqlite':
+      '@elizaos/adapter-sqlite':
         specifier: workspace:*
         version: link:../packages/adapter-sqlite
-      '@ai16z/client-auto':
+      '@elizaos/client-auto':
         specifier: workspace:*
         version: link:../packages/client-auto
-      '@ai16z/client-direct':
+      '@elizaos/client-direct':
         specifier: workspace:*
         version: link:../packages/client-direct
-      '@ai16z/client-discord':
+      '@elizaos/client-discord':
         specifier: workspace:*
         version: link:../packages/client-discord
-      '@ai16z/client-farcaster':
+      '@elizaos/client-farcaster':
         specifier: workspace:*
         version: link:../packages/client-farcaster
-      '@ai16z/client-lens':
+      '@elizaos/client-lens':
         specifier: workspace:*
         version: link:../packages/client-lens
-      '@ai16z/client-slack':
+      '@elizaos/client-slack':
         specifier: workspace:*
         version: link:../packages/client-slack
-      '@ai16z/client-telegram':
+      '@elizaos/client-telegram':
         specifier: workspace:*
         version: link:../packages/client-telegram
-      '@ai16z/client-twitter':
+      '@elizaos/client-twitter':
         specifier: workspace:*
         version: link:../packages/client-twitter
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../packages/core
-      '@ai16z/plugin-0g':
+      '@elizaos/plugin-0g':
         specifier: workspace:*
         version: link:../packages/plugin-0g
-      '@ai16z/plugin-aptos':
+      '@elizaos/plugin-aptos':
         specifier: workspace:*
         version: link:../packages/plugin-aptos
-      '@ai16z/plugin-bootstrap':
+      '@elizaos/plugin-bootstrap':
         specifier: workspace:*
         version: link:../packages/plugin-bootstrap
-      '@ai16z/plugin-coinbase':
+      '@elizaos/plugin-coinbase':
         specifier: workspace:*
         version: link:../packages/plugin-coinbase
-      '@ai16z/plugin-conflux':
+      '@elizaos/plugin-conflux':
         specifier: workspace:*
         version: link:../packages/plugin-conflux
-      '@ai16z/plugin-evm':
+      '@elizaos/plugin-evm':
         specifier: workspace:*
         version: link:../packages/plugin-evm
-      '@ai16z/plugin-flow':
+      '@elizaos/plugin-flow':
         specifier: workspace:*
         version: link:../packages/plugin-flow
-      '@ai16z/plugin-goat':
+      '@elizaos/plugin-goat':
         specifier: workspace:*
         version: link:../packages/plugin-goat
-      '@ai16z/plugin-icp':
+      '@elizaos/plugin-icp':
         specifier: workspace:*
         version: link:../packages/plugin-icp
-      '@ai16z/plugin-image-generation':
+      '@elizaos/plugin-image-generation':
         specifier: workspace:*
         version: link:../packages/plugin-image-generation
-      '@ai16z/plugin-intiface':
+      '@elizaos/plugin-intiface':
         specifier: workspace:*
         version: link:../packages/plugin-intiface
-      '@ai16z/plugin-multiversx':
+      '@elizaos/plugin-multiversx':
         specifier: workspace:*
         version: link:../packages/plugin-multiversx
-      '@ai16z/plugin-near':
+      '@elizaos/plugin-near':
         specifier: workspace:*
         version: link:../packages/plugin-near
-      '@ai16z/plugin-nft-generation':
+      '@elizaos/plugin-nft-generation':
         specifier: workspace:*
         version: link:../packages/plugin-nft-generation
-      '@ai16z/plugin-node':
+      '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../packages/plugin-node
-      '@ai16z/plugin-solana':
+      '@elizaos/plugin-solana':
         specifier: workspace:*
         version: link:../packages/plugin-solana
-      '@ai16z/plugin-starknet':
+      '@elizaos/plugin-starknet':
         specifier: workspace:*
         version: link:../packages/plugin-starknet
-      '@ai16z/plugin-story':
+      '@elizaos/plugin-story':
         specifier: workspace:*
         version: link:../packages/plugin-story
-      '@ai16z/plugin-sui':
+      '@elizaos/plugin-sui':
         specifier: workspace:*
         version: link:../packages/plugin-sui
-      '@ai16z/plugin-tee':
+      '@elizaos/plugin-tee':
         specifier: workspace:*
         version: link:../packages/plugin-tee
-      '@ai16z/plugin-ton':
+      '@elizaos/plugin-ton':
         specifier: workspace:*
         version: link:../packages/plugin-ton
-      '@ai16z/plugin-zksync-era':
+      '@elizaos/plugin-zksync-era':
         specifier: workspace:*
         version: link:../packages/plugin-zksync-era
       readline:
@@ -220,7 +220,7 @@ importers:
 
   client:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../packages/core
       '@radix-ui/react-dialog':
@@ -375,7 +375,7 @@ importers:
 
   packages/adapter-postgres:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/pg':
@@ -391,7 +391,7 @@ importers:
 
   packages/adapter-redis:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       ioredis:
@@ -410,7 +410,7 @@ importers:
 
   packages/adapter-sqlite:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/better-sqlite3':
@@ -432,7 +432,7 @@ importers:
 
   packages/adapter-sqljs:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/sql.js':
@@ -454,7 +454,7 @@ importers:
 
   packages/adapter-supabase:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@supabase/supabase-js':
@@ -470,7 +470,7 @@ importers:
 
   packages/client-auto:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/body-parser':
@@ -501,10 +501,10 @@ importers:
 
   packages/client-direct:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-image-generation':
+      '@elizaos/plugin-image-generation':
         specifier: workspace:*
         version: link:../plugin-image-generation
       '@types/body-parser':
@@ -541,10 +541,10 @@ importers:
 
   packages/client-discord:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-node':
+      '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../plugin-node
       '@discordjs/opus':
@@ -578,7 +578,7 @@ importers:
 
   packages/client-farcaster:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@neynar/nodejs-sdk':
@@ -591,7 +591,7 @@ importers:
 
   packages/client-github:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@octokit/rest':
@@ -616,7 +616,7 @@ importers:
 
   packages/client-lens:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@lens-protocol/client':
@@ -638,7 +638,7 @@ importers:
 
   packages/client-slack:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@ffmpeg-installer/ffmpeg':
@@ -699,7 +699,7 @@ importers:
 
   packages/client-telegram:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@telegraf/types':
@@ -718,12 +718,12 @@ importers:
 
   packages/client-twitter:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       agent-twitter-client:
-        specifier: 0.0.16
-        version: 0.0.16
+        specifier: 0.0.17
+        version: 0.0.17
       glob:
         specifier: 11.0.0
         version: 11.0.0
@@ -931,7 +931,7 @@ importers:
       '@0glabs/0g-ts-sdk':
         specifier: 0.2.1
         version: 0.2.1(bufferutil@4.0.8)(ethers@6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       ethers:
@@ -943,7 +943,7 @@ importers:
 
   packages/plugin-aptos:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@aptos-labs/ts-sdk':
@@ -973,7 +973,7 @@ importers:
 
   packages/plugin-bootstrap:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -985,7 +985,7 @@ importers:
 
   packages/plugin-coinbase:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/jsonwebtoken':
@@ -1013,7 +1013,7 @@ importers:
 
   packages/plugin-conflux:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       cive:
@@ -1022,16 +1022,16 @@ importers:
 
   packages/plugin-echochambers:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-node':
+      '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../plugin-node
 
   packages/plugin-evm:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@lifi/data-types':
@@ -1055,7 +1055,7 @@ importers:
 
   packages/plugin-flow:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@onflow/config':
@@ -1107,7 +1107,7 @@ importers:
 
   packages/plugin-goat:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@goat-sdk/core':
@@ -1134,7 +1134,7 @@ importers:
 
   packages/plugin-icp:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@dfinity/agent':
@@ -1165,7 +1165,7 @@ importers:
 
   packages/plugin-image-generation:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1177,7 +1177,7 @@ importers:
 
   packages/plugin-intiface:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       buttplug:
@@ -1195,7 +1195,7 @@ importers:
 
   packages/plugin-multiversx:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@multiversx/sdk-core':
@@ -1225,7 +1225,7 @@ importers:
 
   packages/plugin-near:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@ref-finance/ref-sdk':
@@ -1252,13 +1252,13 @@ importers:
 
   packages/plugin-nft-generation:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-image-generation':
+      '@elizaos/plugin-image-generation':
         specifier: workspace:*
         version: link:../plugin-image-generation
-      '@ai16z/plugin-node':
+      '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../plugin-node
       '@metaplex-foundation/mpl-token-metadata':
@@ -1297,7 +1297,7 @@ importers:
 
   packages/plugin-node:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@aws-sdk/client-s3':
@@ -1475,13 +1475,13 @@ importers:
 
   packages/plugin-solana:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-tee':
+      '@elizaos/plugin-tee':
         specifier: workspace:*
         version: link:../plugin-tee
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       '@coral-xyz/anchor':
@@ -1526,10 +1526,10 @@ importers:
 
   packages/plugin-starknet:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       '@avnu/avnu-sdk':
@@ -1556,10 +1556,10 @@ importers:
 
   packages/plugin-story:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       '@pinata/sdk':
@@ -1584,10 +1584,10 @@ importers:
 
   packages/plugin-sui:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       '@mysten/sui':
@@ -1617,7 +1617,7 @@ importers:
 
   packages/plugin-tee:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@phala/dstack-sdk':
@@ -1656,10 +1656,10 @@ importers:
 
   packages/plugin-ton:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       '@ton/crypto':
@@ -1686,7 +1686,7 @@ importers:
 
   packages/plugin-trustdb:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       dompurify:
@@ -1711,7 +1711,7 @@ importers:
 
   packages/plugin-video-generation:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1723,7 +1723,7 @@ importers:
 
   packages/plugin-web-search:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1735,7 +1735,7 @@ importers:
 
   packages/plugin-whatsapp:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       axios:
@@ -1766,10 +1766,10 @@ importers:
 
   packages/plugin-zksync-era:
     dependencies:
-      '@ai16z/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
-      '@ai16z/plugin-trustdb':
+      '@elizaos/plugin-trustdb':
         specifier: workspace:*
         version: link:../plugin-trustdb
       tsup:
@@ -8247,8 +8247,8 @@ packages:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
     engines: {node: '>= 14'}
 
-  agent-twitter-client@0.0.16:
-    resolution: {integrity: sha512-Clgb/N2LXoGMlId6GDUaaR05eJ0PqSifM6wikl/FiQ2+3+6I2ZhZB7KRulc8R4xvYFe6h0wNWe6FZiF48r124w==}
+  agent-twitter-client@0.0.17:
+    resolution: {integrity: sha512-IxLtNyy+fHmh5uHcaybcfXYkvPMP2h7y79sV2N6JpoAY40GKcy60iey6lsL7NO506MnnYDaqlG1JHMjqbfrOxA==}
 
   agentkeepalive@4.5.0:
     resolution: {integrity: sha512-5GG/5IbQQpC9FpkRGsSvZI5QYeSCzlJHdpBQntCsuTOxhKD8lqKhrleg2Yi7yvMIf82Ycmmqln9U8V9qwEiJew==}
@@ -17993,6 +17993,10 @@ packages:
   undici@6.19.8:
     resolution: {integrity: sha512-U8uCCl2x9TK3WANvmBavymRzxbfFYG+tAu+fgx3zxQy3qdagQqBLwJVrdyO1TBfUXvfKveMKJZhpvUYoOjM+4g==}
     engines: {node: '>=18.17'}
+
+  undici@7.2.0:
+    resolution: {integrity: sha512-klt+0S55GBViA9nsq48/NSCo4YX5mjydjypxD7UmHh/brMu8h/Mhd/F7qAeoH2NOO8SDTk6kjnTFc4WpzmfYpQ==}
+    engines: {node: '>=20.18.1'}
 
   unenv@1.10.0:
     resolution: {integrity: sha512-wY5bskBQFL9n3Eca5XnhH6KbUo/tfvkwm9OpcdCvLaeA7piBNbavbOKJySEwQ1V0RH6HvNlSAFRTpvTqgKRQXQ==}
@@ -28634,7 +28638,7 @@ snapshots:
 
   agent-base@7.1.3: {}
 
-  agent-twitter-client@0.0.16:
+  agent-twitter-client@0.0.17:
     dependencies:
       '@sinclair/typebox': 0.32.35
       headers-polyfill: 3.3.0
@@ -28645,6 +28649,7 @@ snapshots:
       tough-cookie: 4.1.4
       tslib: 2.8.1
       twitter-api-v2: 1.18.2
+      undici: 7.2.0
 
   agentkeepalive@4.5.0:
     dependencies:
@@ -41156,6 +41161,8 @@ snapshots:
       '@fastify/busboy': 2.1.1
 
   undici@6.19.8: {}
+
+  undici@7.2.0: {}
 
   unenv@1.10.0:
     dependencies:

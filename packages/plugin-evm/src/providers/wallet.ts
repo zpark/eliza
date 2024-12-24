@@ -5,7 +5,7 @@ import {
     http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import type { IAgentRuntime, Provider, Memory, State } from "@ai16z/eliza";
+import type { IAgentRuntime, Provider, Memory, State } from "@elizaos/core";
 import type {
     Address,
     WalletClient,
