@@ -85,7 +85,7 @@ Ito ay magse-setup ng proyekto at sisimulan ang bot gamit ang kusang mapagpipili
 sh scripts/start.sh
 ```
 
-### Ipasadya ang Character File
+### Ipasadya ang Karakter File
 
 1. Buksan ang `packages/core/src/defaultCharacter.ts` para baguhin ang kusang mapagpipilian na karakter. 
 2. Mag-load ng pasadya na mga karakter:
