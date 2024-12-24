@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Account
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Account
 
 # Interface: Account
 
@@ -14,9 +14,9 @@ Unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:503](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L503)
+[packages/core/src/types.ts:505](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L505)
 
-***
+---
 
 ### name
 
@@ -26,9 +26,9 @@ Display name
 
 #### Defined in
 
-[packages/core/src/types.ts:506](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L506)
+[packages/core/src/types.ts:508](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L508)
 
-***
+---
 
 ### username
 
@@ -38,9 +38,9 @@ Username
 
 #### Defined in
 
-[packages/core/src/types.ts:509](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L509)
+[packages/core/src/types.ts:511](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L511)
 
-***
+---
 
 ### details?
 
@@ -50,13 +50,13 @@ Optional additional details
 
 #### Index Signature
 
- \[`key`: `string`\]: `any`
+\[`key`: `string`\]: `any`
 
 #### Defined in
 
-[packages/core/src/types.ts:512](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L512)
+[packages/core/src/types.ts:514](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L514)
 
-***
+---
 
 ### email?
 
@@ -66,9 +66,9 @@ Optional email
 
 #### Defined in
 
-[packages/core/src/types.ts:515](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L515)
+[packages/core/src/types.ts:517](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L517)
 
-***
+---
 
 ### avatarUrl?
 
@@ -78,4 +78,4 @@ Optional avatar URL
 
 #### Defined in
 
-[packages/core/src/types.ts:518](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L518)
+[packages/core/src/types.ts:520](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L520)
