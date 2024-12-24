@@ -36,9 +36,15 @@ jobs:
               id: readme
               run: |
                 content=$(cat README.md)
+                # Escape quotes first
+                content="${content//\"/\\\"}"
+                # Then handle other special characters
                 content="${content//'%'/'%25'}"
                 content="${content//$'\n'/'%0A'}"
                 content="${content//$'\r'/'%0D'}"
+                # Escape HTML attributes
+                content="${content//align=\"/align=\\\"}"
+                content="${content//width=\"/width=\\\"}"
                 echo "content=$content" >> $GITHUB_OUTPUT
 
             - name: Translate to ${{ matrix.language.name }}
