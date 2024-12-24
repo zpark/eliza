@@ -42,7 +42,7 @@ jobs:
                 echo "content=$content" >> $GITHUB_OUTPUT
 
             - name: Translate to ${{ matrix.language.name }}
-              uses: 0xjord4n/aixion@v1.0.1
+              uses: 0xjord4n/aixion@v1.0.2
               id: aixion
               with:
                 config: >
