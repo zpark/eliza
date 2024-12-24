@@ -1,4 +1,4 @@
-import { elizaLogger, generateText } from "@ai16z/eliza";
+import { elizaLogger, generateText } from "@elizaos/core";
 import {
     Action,
     HandlerCallback,
@@ -6,10 +6,9 @@ import {
     Memory,
     Plugin,
     State,
-    ModelClass,
-} from "@ai16z/eliza";
-import { generateImage } from "@ai16z/eliza";
-
+    ModelClass
+} from "@elizaos/core";
+import { generateImage } from "@elizaos/core";
 import fs from "fs";
 import path from "path";
 import { validateImageGenConfig } from "./environment";
@@ -85,13 +84,15 @@ const imageGeneration: Action = {
         const heuristApiKeyOk = !!runtime.getSetting("HEURIST_API_KEY");
         const falApiKeyOk = !!runtime.getSetting("FAL_API_KEY");
         const openAiApiKeyOk = !!runtime.getSetting("OPENAI_API_KEY");
+        const veniceApiKeyOk = !!runtime.getSetting("VENICE_API_KEY");
 
         return (
             anthropicApiKeyOk ||
             togetherApiKeyOk ||
             heuristApiKeyOk ||
             falApiKeyOk ||
-            openAiApiKeyOk
+            openAiApiKeyOk ||
+            veniceApiKeyOk
         );
     },
     handler: async (
@@ -108,6 +109,8 @@ const imageGeneration: Action = {
             seed?: number;
             modelId?: string;
             jobId?: string;
+            stylePreset?: string;
+            hideWatermark?: boolean;
         },
         callback: HandlerCallback
     ) => {
@@ -139,7 +142,7 @@ To generate the image prompt, follow these steps:\n\n1. Analyze the content text
    - Considering metaphorical representations of abstract concepts
    - Selecting a subject that best captures the content's essence
 
-    3. Determine an appropriate environment or setting based on the content's context and your chosen subject.
+3. Determine an appropriate environment or setting based on the content's context and your chosen subject.
 
 4. Decide on suitable lighting that enhances the mood or atmosphere of the scene.
 
@@ -172,6 +175,8 @@ Ensure that your prompt is detailed, vivid, and incorporates all the elements me
         });
 
         elizaLogger.log("Image prompt received:", imagePrompt);
+        const imageSettings = runtime.character?.settings?.imageSettings || {};
+        elizaLogger.log("Image settings:", imageSettings);
 
         const res: { image: string; caption: string }[] = [];
 
@@ -179,23 +184,17 @@ Ensure that your prompt is detailed, vivid, and incorporates all the elements me
         const images = await generateImage(
             {
                 prompt: imagePrompt,
-                width: options.width || 1024,
-                height: options.height || 1024,
-                ...(options.count != null ? { count: options.count || 1 } : {}),
-                ...(options.negativePrompt != null
-                    ? { negativePrompt: options.negativePrompt }
-                    : {}),
-                ...(options.numIterations != null
-                    ? { numIterations: options.numIterations }
-                    : {}),
-                ...(options.guidanceScale != null
-                    ? { guidanceScale: options.guidanceScale }
-                    : {}),
-                ...(options.seed != null ? { seed: options.seed } : {}),
-                ...(options.modelId != null
-                    ? { modelId: options.modelId }
-                    : {}),
-                ...(options.jobId != null ? { jobId: options.jobId } : {}),
+                width: options.width || imageSettings.width || 1024,
+                height: options.height || imageSettings.height || 1024,
+                ...(options.count != null || imageSettings.count != null ? { count: options.count || imageSettings.count || 1 } : {}),
+                ...(options.negativePrompt != null || imageSettings.negativePrompt != null ? { negativePrompt: options.negativePrompt || imageSettings.negativePrompt } : {}),
+                ...(options.numIterations != null || imageSettings.numIterations != null ? { numIterations: options.numIterations || imageSettings.numIterations } : {}),
+                ...(options.guidanceScale != null || imageSettings.guidanceScale != null ? { guidanceScale: options.guidanceScale || imageSettings.guidanceScale } : {}),
+                ...(options.seed != null || imageSettings.seed != null ? { seed: options.seed || imageSettings.seed } : {}),
+                ...(options.modelId != null || imageSettings.modelId != null ? { modelId: options.modelId || imageSettings.modelId } : {}),
+                ...(options.jobId != null || imageSettings.jobId != null ? { jobId: options.jobId || imageSettings.jobId } : {}),
+                ...(options.stylePreset != null || imageSettings.stylePreset != null ? { stylePreset: options.stylePreset || imageSettings.stylePreset } : {}),
+                ...(options.hideWatermark != null || imageSettings.hideWatermark != null ? { hideWatermark: options.hideWatermark || imageSettings.hideWatermark } : {}),
             },
             runtime
         );
@@ -258,6 +257,7 @@ Ensure that your prompt is detailed, vivid, and incorporates all the elements me
                                 source: "imageGeneration",
                                 description: "...", //caption.title,
                                 text: "...", //caption.description,
+                                contentType: "image/png",
                             },
                         ],
                     },

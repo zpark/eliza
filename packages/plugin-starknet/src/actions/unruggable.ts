@@ -3,13 +3,13 @@ import {
     ActionExample,
     composeContext,
     elizaLogger,
-    generateObject,
+    generateObjectDeprecated,
     HandlerCallback,
     IAgentRuntime,
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { Percent } from "@uniswap/sdk-core";
 import {
     getStarknetAccount,
@@ -102,7 +102,7 @@ export const deployToken: Action = {
             template: deployTemplate,
         });
 
-        const response = await generateObject({
+        const response = await generateObjectDeprecated({
             runtime,
             context: deployContext,
             modelClass: ModelClass.MEDIUM,

@@ -4,8 +4,8 @@ import {
     Memory,
     State,
     HandlerCallback,
-} from "@ai16z/eliza";
-import { generateObjectV2, composeContext, ModelClass } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { generateObject, composeContext, ModelClass } from "@elizaos/core";
 import {
     createPublicClient,
     createWalletClient,
@@ -184,7 +184,7 @@ export const confiPump: Action = {
             template: confluxTransferTemplate,
         });
 
-        const content = await generateObjectV2({
+        const content = await generateObject({
             runtime,
             context,
             modelClass: ModelClass.LARGE,

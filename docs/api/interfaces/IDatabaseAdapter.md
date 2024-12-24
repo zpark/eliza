@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / IDatabaseAdapter
+[@elizaos/core v0.1.6-alpha.4](../index.md) / IDatabaseAdapter
 
 # Interface: IDatabaseAdapter
 
@@ -14,7 +14,7 @@ Database instance
 
 #### Defined in
 
-[packages/core/src/types.ts:738](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L738)
+[packages/core/src/types.ts:788](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L788)
 
 ## Methods
 
@@ -30,9 +30,9 @@ Optional initialization
 
 #### Defined in
 
-[packages/core/src/types.ts:741](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L741)
+[packages/core/src/types.ts:791](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L791)
 
-***
+---
 
 ### close()
 
@@ -46,9 +46,9 @@ Close database connection
 
 #### Defined in
 
-[packages/core/src/types.ts:744](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L744)
+[packages/core/src/types.ts:794](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L794)
 
-***
+---
 
 ### getAccountById()
 
@@ -66,9 +66,9 @@ Get account by ID
 
 #### Defined in
 
-[packages/core/src/types.ts:747](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L747)
+[packages/core/src/types.ts:797](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L797)
 
-***
+---
 
 ### createAccount()
 
@@ -86,9 +86,9 @@ Create new account
 
 #### Defined in
 
-[packages/core/src/types.ts:750](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L750)
+[packages/core/src/types.ts:800](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L800)
 
-***
+---
 
 ### getMemories()
 
@@ -120,9 +120,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:753](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L753)
+[packages/core/src/types.ts:803](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L803)
 
-***
+---
 
 ### getMemoryById()
 
@@ -138,9 +138,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:763](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L763)
+[packages/core/src/types.ts:813](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L813)
 
-***
+---
 
 ### getMemoriesByRoomIds()
 
@@ -162,9 +162,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:765](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L765)
+[packages/core/src/types.ts:815](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L815)
 
-***
+---
 
 ### getCachedEmbeddings()
 
@@ -174,17 +174,17 @@ Get memories matching criteria
 
 • **params**
 
-• **params.query\_table\_name**: `string`
+• **params.query_table_name**: `string`
 
-• **params.query\_threshold**: `number`
+• **params.query_threshold**: `number`
 
-• **params.query\_input**: `string`
+• **params.query_input**: `string`
 
-• **params.query\_field\_name**: `string`
+• **params.query_field_name**: `string`
 
-• **params.query\_field\_sub\_name**: `string`
+• **params.query_field_sub_name**: `string`
 
-• **params.query\_match\_count**: `number`
+• **params.query_match_count**: `number`
 
 #### Returns
 
@@ -192,9 +192,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:771](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L771)
+[packages/core/src/types.ts:821](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L821)
 
-***
+---
 
 ### log()
 
@@ -218,9 +218,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:780](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L780)
+[packages/core/src/types.ts:830](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L830)
 
-***
+---
 
 ### getActorDetails()
 
@@ -238,9 +238,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:787](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L787)
+[packages/core/src/types.ts:837](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L837)
 
-***
+---
 
 ### searchMemories()
 
@@ -258,9 +258,9 @@ Get memories matching criteria
 
 • **params.embedding**: `number`[]
 
-• **params.match\_threshold**: `number`
+• **params.match_threshold**: `number`
 
-• **params.match\_count**: `number`
+• **params.match_count**: `number`
 
 • **params.unique**: `boolean`
 
@@ -270,9 +270,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:789](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L789)
+[packages/core/src/types.ts:839](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L839)
 
-***
+---
 
 ### updateGoalStatus()
 
@@ -292,9 +292,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:799](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L799)
+[packages/core/src/types.ts:849](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L849)
 
-***
+---
 
 ### searchMemoriesByEmbedding()
 
@@ -306,7 +306,7 @@ Get memories matching criteria
 
 • **params**
 
-• **params.match\_threshold?**: `number`
+• **params.match_threshold?**: `number`
 
 • **params.count?**: `number`
 
@@ -324,9 +324,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:804](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L804)
+[packages/core/src/types.ts:854](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L854)
 
-***
+---
 
 ### createMemory()
 
@@ -346,9 +346,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:816](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L816)
+[packages/core/src/types.ts:866](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L866)
 
-***
+---
 
 ### removeMemory()
 
@@ -366,9 +366,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:822](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L822)
+[packages/core/src/types.ts:872](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L872)
 
-***
+---
 
 ### removeAllMemories()
 
@@ -386,9 +386,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:824](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L824)
+[packages/core/src/types.ts:874](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L874)
 
-***
+---
 
 ### countMemories()
 
@@ -408,9 +408,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:826](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L826)
+[packages/core/src/types.ts:876](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L876)
 
-***
+---
 
 ### getGoals()
 
@@ -436,9 +436,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:832](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L832)
+[packages/core/src/types.ts:882](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L882)
 
-***
+---
 
 ### updateGoal()
 
@@ -454,9 +454,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:840](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L840)
+[packages/core/src/types.ts:890](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L890)
 
-***
+---
 
 ### createGoal()
 
@@ -472,9 +472,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:842](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L842)
+[packages/core/src/types.ts:892](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L892)
 
-***
+---
 
 ### removeGoal()
 
@@ -490,9 +490,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:844](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L844)
+[packages/core/src/types.ts:894](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L894)
 
-***
+---
 
 ### removeAllGoals()
 
@@ -508,9 +508,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:846](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L846)
+[packages/core/src/types.ts:896](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L896)
 
-***
+---
 
 ### getRoom()
 
@@ -526,9 +526,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:848](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L848)
+[packages/core/src/types.ts:898](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L898)
 
-***
+---
 
 ### createRoom()
 
@@ -544,9 +544,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:850](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L850)
+[packages/core/src/types.ts:900](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L900)
 
-***
+---
 
 ### removeRoom()
 
@@ -562,9 +562,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:852](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L852)
+[packages/core/src/types.ts:902](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L902)
 
-***
+---
 
 ### getRoomsForParticipant()
 
@@ -580,9 +580,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:854](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L854)
+[packages/core/src/types.ts:904](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L904)
 
-***
+---
 
 ### getRoomsForParticipants()
 
@@ -598,9 +598,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:856](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L856)
+[packages/core/src/types.ts:906](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L906)
 
-***
+---
 
 ### addParticipant()
 
@@ -618,9 +618,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:858](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L858)
+[packages/core/src/types.ts:908](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L908)
 
-***
+---
 
 ### removeParticipant()
 
@@ -638,9 +638,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:860](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L860)
+[packages/core/src/types.ts:910](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L910)
 
-***
+---
 
 ### getParticipantsForAccount()
 
@@ -656,9 +656,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:862](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L862)
+[packages/core/src/types.ts:912](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L912)
 
-***
+---
 
 ### getParticipantsForRoom()
 
@@ -674,9 +674,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:864](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L864)
+[packages/core/src/types.ts:914](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L914)
 
-***
+---
 
 ### getParticipantUserState()
 
@@ -694,9 +694,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:866](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L866)
+[packages/core/src/types.ts:916](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L916)
 
-***
+---
 
 ### setParticipantUserState()
 
@@ -716,9 +716,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:871](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L871)
+[packages/core/src/types.ts:921](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L921)
 
-***
+---
 
 ### createRelationship()
 
@@ -738,9 +738,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:877](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L877)
+[packages/core/src/types.ts:927](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L927)
 
-***
+---
 
 ### getRelationship()
 
@@ -760,9 +760,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:879](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L879)
+[packages/core/src/types.ts:929](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L929)
 
-***
+---
 
 ### getRelationships()
 
@@ -780,4 +780,4 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:884](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L884)
+[packages/core/src/types.ts:934](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L934)

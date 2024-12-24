@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / AgentRuntime
+[@elizaos/core v0.1.6-alpha.4](../index.md) / AgentRuntime
 
 # Class: AgentRuntime
 
@@ -83,7 +83,7 @@ Custom fetch function to use for making requests.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:208](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L208)
+[packages/core/src/runtime.ts:209](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L209)
 
 ## Properties
 
@@ -99,9 +99,9 @@ The ID of the agent
 
 #### Defined in
 
-[packages/core/src/runtime.ts:63](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L63)
+[packages/core/src/runtime.ts:63](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L63)
 
-***
+---
 
 ### serverUrl
 
@@ -115,9 +115,9 @@ The base URL of the server where the agent's requests are processed.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:67](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L67)
+[packages/core/src/runtime.ts:67](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L67)
 
-***
+---
 
 ### databaseAdapter
 
@@ -131,9 +131,9 @@ The database adapter used for interacting with the database.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:72](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L72)
+[packages/core/src/runtime.ts:72](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L72)
 
-***
+---
 
 ### token
 
@@ -147,9 +147,9 @@ Authentication token used for securing requests.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:77](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L77)
+[packages/core/src/runtime.ts:77](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L77)
 
-***
+---
 
 ### actions
 
@@ -163,9 +163,9 @@ Custom actions that the agent can perform.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:82](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L82)
+[packages/core/src/runtime.ts:82](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L82)
 
-***
+---
 
 ### evaluators
 
@@ -179,9 +179,9 @@ Evaluators used to assess and guide the agent's responses.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:87](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L87)
+[packages/core/src/runtime.ts:87](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L87)
 
-***
+---
 
 ### providers
 
@@ -195,9 +195,9 @@ Context providers used to provide context for message generation.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:92](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L92)
+[packages/core/src/runtime.ts:92](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L92)
 
-***
+---
 
 ### plugins
 
@@ -209,9 +209,9 @@ Context providers used to provide context for message generation.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:94](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L94)
+[packages/core/src/runtime.ts:94](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L94)
 
-***
+---
 
 ### modelProvider
 
@@ -225,9 +225,9 @@ The model to use for generateText.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:99](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L99)
+[packages/core/src/runtime.ts:99](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L99)
 
-***
+---
 
 ### imageModelProvider
 
@@ -241,13 +241,13 @@ The model to use for generateImage.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:104](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L104)
+[packages/core/src/runtime.ts:104](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L104)
 
-***
+---
 
 ### fetch()
 
-> **fetch**: (`input`, `init`?) => `Promise`\<`Response`\>(`input`, `init`?) => `Promise`\<`Response`\>
+> **fetch**: (`input`, `init`?) => `Promise`\<`Response`\>
 
 Fetch function to use
 Some environments may not have access to the global fetch function and need a custom fetch override.
@@ -264,21 +264,15 @@ Some environments may not have access to the global fetch function and need a cu
 
 `Promise`\<`Response`\>
 
-#### Parameters
+#### Implementation of
 
-• **input**: `string` \| `Request` \| `URL`
-
-• **init?**: `RequestInit`
-
-#### Returns
-
-`Promise`\<`Response`\>
+[`IAgentRuntime`](../interfaces/IAgentRuntime.md).[`fetch`](../interfaces/IAgentRuntime.md#fetch)
 
 #### Defined in
 
-[packages/core/src/runtime.ts:110](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L110)
+[packages/core/src/runtime.ts:110](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L110)
 
-***
+---
 
 ### character
 
@@ -292,9 +286,9 @@ The character to use for the agent
 
 #### Defined in
 
-[packages/core/src/runtime.ts:115](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L115)
+[packages/core/src/runtime.ts:115](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L115)
 
-***
+---
 
 ### messageManager
 
@@ -308,9 +302,9 @@ Store messages that are sent and received by the agent.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:120](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L120)
+[packages/core/src/runtime.ts:120](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L120)
 
-***
+---
 
 ### descriptionManager
 
@@ -324,9 +318,9 @@ Store and recall descriptions of users based on conversations.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:125](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L125)
+[packages/core/src/runtime.ts:125](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L125)
 
-***
+---
 
 ### loreManager
 
@@ -340,9 +334,9 @@ Manage the creation and recall of static information (documents, historical game
 
 #### Defined in
 
-[packages/core/src/runtime.ts:130](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L130)
+[packages/core/src/runtime.ts:130](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L130)
 
-***
+---
 
 ### documentsManager
 
@@ -356,9 +350,9 @@ Hold large documents that can be referenced
 
 #### Defined in
 
-[packages/core/src/runtime.ts:135](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L135)
+[packages/core/src/runtime.ts:135](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L135)
 
-***
+---
 
 ### knowledgeManager
 
@@ -372,9 +366,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:140](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L140)
+[packages/core/src/runtime.ts:140](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L140)
 
-***
+---
 
 ### services
 
@@ -386,9 +380,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:142](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L142)
+[packages/core/src/runtime.ts:142](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L142)
 
-***
+---
 
 ### memoryManagers
 
@@ -396,9 +390,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:143](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L143)
+[packages/core/src/runtime.ts:143](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L143)
 
-***
+---
 
 ### cacheManager
 
@@ -410,7 +404,24 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:144](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L144)
+[packages/core/src/runtime.ts:144](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L144)
+
+---
+
+### clients
+
+> **clients**: `Record`\<`string`, `any`\>
+
+any could be EventEmitter
+but I think the real solution is forthcoming as a base client interface
+
+#### Implementation of
+
+[`IAgentRuntime`](../interfaces/IAgentRuntime.md).[`clients`](../interfaces/IAgentRuntime.md#clients)
+
+#### Defined in
+
+[packages/core/src/runtime.ts:145](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L145)
 
 ## Methods
 
@@ -432,9 +443,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:146](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L146)
+[packages/core/src/runtime.ts:147](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L147)
 
-***
+---
 
 ### getMemoryManager()
 
@@ -454,9 +465,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:161](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L161)
+[packages/core/src/runtime.ts:162](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L162)
 
-***
+---
 
 ### getService()
 
@@ -464,7 +475,7 @@ Searchable document fragments
 
 #### Type Parameters
 
-• **T** *extends* [`Service`](Service.md)
+• **T** _extends_ [`Service`](Service.md)
 
 #### Parameters
 
@@ -480,9 +491,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:165](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L165)
+[packages/core/src/runtime.ts:166](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L166)
 
-***
+---
 
 ### registerService()
 
@@ -502,9 +513,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:174](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L174)
+[packages/core/src/runtime.ts:175](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L175)
 
-***
+---
 
 ### initialize()
 
@@ -520,9 +531,23 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:375](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L375)
+[packages/core/src/runtime.ts:376](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L376)
 
-***
+---
+
+### stop()
+
+> **stop**(): `Promise`\<`void`\>
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[packages/core/src/runtime.ts:409](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L409)
+
+---
 
 ### getSetting()
 
@@ -542,9 +567,9 @@ Searchable document fragments
 
 #### Defined in
 
-[packages/core/src/runtime.ts:439](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L439)
+[packages/core/src/runtime.ts:459](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L459)
 
-***
+---
 
 ### getConversationLength()
 
@@ -564,9 +589,9 @@ The number of recent messages to be kept in memory.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:461](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L461)
+[packages/core/src/runtime.ts:481](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L481)
 
-***
+---
 
 ### registerAction()
 
@@ -590,9 +615,9 @@ The action to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:469](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L469)
+[packages/core/src/runtime.ts:489](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L489)
 
-***
+---
 
 ### registerEvaluator()
 
@@ -612,9 +637,9 @@ The evaluator to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:478](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L478)
+[packages/core/src/runtime.ts:498](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L498)
 
-***
+---
 
 ### registerContextProvider()
 
@@ -634,9 +659,9 @@ The context provider to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:486](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L486)
+[packages/core/src/runtime.ts:506](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L506)
 
-***
+---
 
 ### processActions()
 
@@ -666,13 +691,13 @@ The message to process.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:495](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L495)
+[packages/core/src/runtime.ts:515](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L515)
 
-***
+---
 
 ### evaluate()
 
-> **evaluate**(`message`, `state`?, `didRespond`?): `Promise`\<`string`[]\>
+> **evaluate**(`message`, `state`?, `didRespond`?, `callback`?): `Promise`\<`string`[]\>
 
 Evaluate the message and state using the registered evaluators.
 
@@ -688,7 +713,11 @@ The state of the agent.
 
 • **didRespond?**: `boolean`
 
-Whether the agent responded to the message.
+Whether the agent responded to the message.~
+
+• **callback?**: [`HandlerCallback`](../type-aliases/HandlerCallback.md)
+
+The handler callback
 
 #### Returns
 
@@ -702,9 +731,9 @@ The results of the evaluation.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:572](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L572)
+[packages/core/src/runtime.ts:599](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L599)
 
-***
+---
 
 ### ensureParticipantExists()
 
@@ -734,9 +763,9 @@ An error if the participant cannot be added.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:642](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L642)
+[packages/core/src/runtime.ts:666](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L666)
 
-***
+---
 
 ### ensureUserExists()
 
@@ -770,9 +799,9 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:658](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L658)
+[packages/core/src/runtime.ts:682](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L682)
 
-***
+---
 
 ### ensureParticipantInRoom()
 
@@ -794,9 +823,9 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:678](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L678)
+[packages/core/src/runtime.ts:702](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L702)
 
-***
+---
 
 ### ensureConnection()
 
@@ -824,9 +853,9 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:695](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L695)
+[packages/core/src/runtime.ts:719](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L719)
 
-***
+---
 
 ### ensureRoomExists()
 
@@ -855,9 +884,9 @@ An error if the room cannot be created.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:731](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L731)
+[packages/core/src/runtime.ts:755](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L755)
 
-***
+---
 
 ### composeState()
 
@@ -885,9 +914,9 @@ The state of the agent.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:744](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L744)
+[packages/core/src/runtime.ts:768](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L768)
 
-***
+---
 
 ### updateRecentMessageState()
 
@@ -907,4 +936,4 @@ The state of the agent.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1190](https://github.com/ai16z/eliza/blob/main/packages/core/src/runtime.ts#L1190)
+[packages/core/src/runtime.ts:1214](https://github.com/elizaos/eliza/blob/main/packages/core/src/runtime.ts#L1214)
