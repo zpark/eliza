@@ -22,7 +22,7 @@
 - ☁️ Sinusuportahan ang maraming modelo (lokal na Llama, OpenAI, Anthropic, Groq, atbp.)
 - 📦 Madaling gamitin!
 
-## Mga Tutorial sa Video
+## Mga Tutorial sa Bidyo
 
 [AI Agent Dev School](https://www.youtube.com/watch?v=ArptLpQiKfI&list=PLx5pnFXdPTRzWla0RaOxALTSTnVq53fKL)
 
@@ -31,7 +31,7 @@
 - 🤖 [Mga Chatbot](https://en.wikipedia.org/wiki/Chatbot)
 - 🕵️ Mga Awtonomikong Ahente
 - 📈 Pagproseso ng Negosyo
-- 🎮 [Mga NPC sa mga Laro sa Kompyuter](https://en.wikipedia.org/wiki/Non-player_character)
+- 🎮 [Mga NPC sa mga Larong Kompyuter](https://en.wikipedia.org/wiki/Non-player_character)
 - 🧠 Pangangalakal
 
 ## 🚀 Pangkalahatang-ideya
@@ -79,7 +79,7 @@ cp .env.example .env
 
 ### Awtomatikong Simulan ang Eliza
 
-Ito ay magse-setup ng proyekto at sisimulan ang bot gamit ang default na karakter.
+Ito ay magse-setup ng proyekto at sisimulan ang bot gamit ang kusang mapagpipilian na karakter.
 
 ```bash
 sh scripts/start.sh
@@ -87,12 +87,12 @@ sh scripts/start.sh
 
 ### Ipasadya ang Character File
 
-1. Buksan ang `packages/core/src/defaultCharacter.ts` para baguhin ang default na karakter. 
-2. Mag-load ng custom na mga karakter:
+1. Buksan ang `packages/core/src/defaultCharacter.ts` para baguhin ang kusang mapagpipilian na karakter. 
+2. Mag-load ng pasadya na mga karakter:
     - Gamitin ang `pnpm start --characters="landas/sa/inyong/character.json"`
-    - Puwedeng mag-load ng maraming character file sabay-sabay.
+    - Puwedeng mag-load ng maraming karakter file sabay-sabay.
 3. Ikonekta ang Twitter (X):
-    - Baguhin ang `"clients": []` sa `"clients": ["twitter"]` sa character file upang ikonekta ang Twitter.
+    - Baguhin ang `"clients": []` sa `"clients": ["twitter"]` sa karakter file upang ikonekta ang Twitter.
 
 ### Manwal na Pag-simula ng Eliza
 
@@ -115,7 +115,7 @@ pnpm install --include=optional sharp
 
 ### Komunidad at Kontak
 
-- [GitHub Issues](https://github.com/elizaos/eliza/issues): Para sa mga bug at mungkahi sa tampok.
+- [Mga Isyu sa GitHub](https://github.com/elizaos/eliza/issues): Para sa mga bug at mungkahi sa tampok.
 - [Discord](https://discord.gg/ai16z): Para sa pagbabahagi ng aplikasyon at pakikihalubilo sa komunidad.
 
 ## Mga Kontribyutor
@@ -126,4 +126,4 @@ pnpm install --include=optional sharp
 
 ## Kasaysayan ng mga Bituin
 
-[![Star History Chart](https://api.star-history.com/svg?repos=elizaos/eliza&type=Date)](https://star-history.com/#elizaos/eliza&Date)
+[![Tsart ng Kasaysayan ng mga Bituin](https://api.star-history.com/svg?repos=elizaos/eliza&type=Date)](https://star-history.com/#elizaos/eliza&Date)
