@@ -13,7 +13,7 @@ import {
 } from "@elizaos/core";
 import { validateAbstractConfig } from "../environment";
 
-import { Address, createWalletClient, http, parseEther } from "viem";
+import { Address, createWalletClient, erc20Abi, http, parseEther } from "viem";
 import { abstractTestnet } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { eip712WalletActions } from "viem/zksync";
@@ -77,6 +77,14 @@ Given the recent messages, extract the following information about the requested
 - Amount to transfer
 
 Respond with a JSON markdown block containing only the extracted values.`;
+
+const ETH_ADDRESS = "0x000000000000000000000000000000000000800A";
+const ERC20_OVERRIDE_INFO = {
+    "0xe4c7fbb0a626ed208021ccaba6be1566905e2dfc": {
+        name: "USDC",
+        decimals: 6,
+    },
+};
 
 export default {
     name: "SEND_TOKEN",
@@ -147,13 +155,35 @@ export default {
                 transport: http(),
             }).extend(eip712WalletActions());
 
-            const hash = await walletClient.sendTransaction({
-                account: account,
-                chain: abstractTestnet,
-                to: content.recipient as Address,
-                value: parseEther(content.amount.toString()),
-                kzg: undefined,
-            });
+            let hash;
+            if (
+                content.tokenAddress.toLowerCase() !== ETH_ADDRESS.toLowerCase()
+            ) {
+                // Convert amount to proper token decimals
+                const tokenInfo =
+                    ERC20_OVERRIDE_INFO[content.tokenAddress.toLowerCase()];
+                const decimals = tokenInfo?.decimals ?? 18; // Default to 18 decimals if not specified
+                const tokenAmount =
+                    BigInt(content.amount) * BigInt(10 ** decimals);
+
+                // Execute ERC20 transfer
+                hash = await walletClient.writeContract({
+                    account,
+                    chain: abstractTestnet,
+                    address: content.tokenAddress as Address,
+                    abi: erc20Abi,
+                    functionName: "transfer",
+                    args: [content.recipient as Address, tokenAmount],
+                });
+            } else {
+                hash = await walletClient.sendTransaction({
+                    account: account,
+                    chain: abstractTestnet,
+                    to: content.recipient as Address,
+                    value: parseEther(content.amount.toString()),
+                    kzg: undefined,
+                });
+            }
 
             elizaLogger.success(
                 "Transfer completed successfully! Transaction hash: " + hash
