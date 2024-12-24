@@ -115,7 +115,7 @@ declare class Statement {
     run(values?: BindParams): void;
 
     /**
-     * Execute the statement, fetching the the next line of result, that can
+     * Execute the statement, fetching the next line of result, that can
      * be retrieved with `Statement.get`.
      * @see [https://sql.js.org/documentation/Statement.html#["step"]](https://sql.js.org/documentation/Statement.html#%5B%22step%22%5D)
      */
