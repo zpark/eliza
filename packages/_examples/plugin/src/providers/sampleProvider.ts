@@ -4,7 +4,7 @@ import {
     Memory,
     State,
     elizaLogger,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 export const sampleProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state: State) => {

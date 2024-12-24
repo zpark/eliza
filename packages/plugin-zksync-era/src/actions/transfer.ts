@@ -10,7 +10,7 @@ import {
     elizaLogger,
     composeContext,
     generateObject,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { validateZKsyncConfig } from "../enviroment";
 
 import { Web3 } from "web3";

@@ -4,7 +4,7 @@ import {
     Memory,
     State,
     elizaLogger,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 export const sampleEvaluator: Evaluator = {
     alwaysRun: false,

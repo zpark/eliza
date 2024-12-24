@@ -132,7 +132,7 @@ importers:
       '@elizaos/client-twitter':
         specifier: workspace:*
         version: link:../packages/client-twitter
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../packages/core
       '@elizaos/plugin-0g':
@@ -220,7 +220,7 @@ importers:
 
   client:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../packages/core
       '@radix-ui/react-dialog':
@@ -375,7 +375,7 @@ importers:
 
   packages/adapter-postgres:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/pg':
@@ -391,7 +391,7 @@ importers:
 
   packages/adapter-redis:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       ioredis:
@@ -410,7 +410,7 @@ importers:
 
   packages/adapter-sqlite:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/better-sqlite3':
@@ -432,7 +432,7 @@ importers:
 
   packages/adapter-sqljs:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/sql.js':
@@ -454,7 +454,7 @@ importers:
 
   packages/adapter-supabase:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@supabase/supabase-js':
@@ -470,7 +470,7 @@ importers:
 
   packages/client-auto:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/body-parser':
@@ -501,7 +501,7 @@ importers:
 
   packages/client-direct:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-image-generation':
@@ -541,7 +541,7 @@ importers:
 
   packages/client-discord:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-node':
@@ -578,7 +578,7 @@ importers:
 
   packages/client-farcaster:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@neynar/nodejs-sdk':
@@ -591,7 +591,7 @@ importers:
 
   packages/client-github:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@octokit/rest':
@@ -616,7 +616,7 @@ importers:
 
   packages/client-lens:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@lens-protocol/client':
@@ -638,7 +638,7 @@ importers:
 
   packages/client-slack:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@ffmpeg-installer/ffmpeg':
@@ -699,7 +699,7 @@ importers:
 
   packages/client-telegram:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@telegraf/types':
@@ -718,7 +718,7 @@ importers:
 
   packages/client-twitter:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       agent-twitter-client:
@@ -931,7 +931,7 @@ importers:
       '@0glabs/0g-ts-sdk':
         specifier: 0.2.1
         version: 0.2.1(bufferutil@4.0.8)(ethers@6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       ethers:
@@ -943,7 +943,7 @@ importers:
 
   packages/plugin-aptos:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@aptos-labs/ts-sdk':
@@ -973,7 +973,7 @@ importers:
 
   packages/plugin-bootstrap:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -985,7 +985,7 @@ importers:
 
   packages/plugin-coinbase:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@types/jsonwebtoken':
@@ -1013,7 +1013,7 @@ importers:
 
   packages/plugin-conflux:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       cive:
@@ -1022,7 +1022,7 @@ importers:
 
   packages/plugin-echochambers:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-node':
@@ -1031,7 +1031,7 @@ importers:
 
   packages/plugin-evm:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@lifi/data-types':
@@ -1055,7 +1055,7 @@ importers:
 
   packages/plugin-flow:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@onflow/config':
@@ -1107,7 +1107,7 @@ importers:
 
   packages/plugin-goat:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@goat-sdk/core':
@@ -1134,7 +1134,7 @@ importers:
 
   packages/plugin-icp:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@dfinity/agent':
@@ -1165,7 +1165,7 @@ importers:
 
   packages/plugin-image-generation:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1177,7 +1177,7 @@ importers:
 
   packages/plugin-intiface:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       buttplug:
@@ -1195,7 +1195,7 @@ importers:
 
   packages/plugin-multiversx:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@multiversx/sdk-core':
@@ -1225,7 +1225,7 @@ importers:
 
   packages/plugin-near:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@ref-finance/ref-sdk':
@@ -1252,7 +1252,7 @@ importers:
 
   packages/plugin-nft-generation:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-image-generation':
@@ -1297,7 +1297,7 @@ importers:
 
   packages/plugin-node:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@aws-sdk/client-s3':
@@ -1475,7 +1475,7 @@ importers:
 
   packages/plugin-solana:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-tee':
@@ -1526,7 +1526,7 @@ importers:
 
   packages/plugin-starknet:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-trustdb':
@@ -1556,7 +1556,7 @@ importers:
 
   packages/plugin-story:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-trustdb':
@@ -1584,7 +1584,7 @@ importers:
 
   packages/plugin-sui:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-trustdb':
@@ -1617,7 +1617,7 @@ importers:
 
   packages/plugin-tee:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@phala/dstack-sdk':
@@ -1656,7 +1656,7 @@ importers:
 
   packages/plugin-ton:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-trustdb':
@@ -1686,7 +1686,7 @@ importers:
 
   packages/plugin-trustdb:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       dompurify:
@@ -1711,7 +1711,7 @@ importers:
 
   packages/plugin-video-generation:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1723,7 +1723,7 @@ importers:
 
   packages/plugin-web-search:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       tsup:
@@ -1735,7 +1735,7 @@ importers:
 
   packages/plugin-whatsapp:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       axios:
@@ -1766,7 +1766,7 @@ importers:
 
   packages/plugin-zksync-era:
     dependencies:
-      '@elizaos/eliza':
+      '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       '@elizaos/plugin-trustdb':

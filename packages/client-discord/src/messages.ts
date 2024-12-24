@@ -1,5 +1,5 @@
-import { composeContext } from "@elizaos/eliza";
-import { generateMessageResponse, generateShouldRespond } from "@elizaos/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateMessageResponse, generateShouldRespond } from "@elizaos/core";
 import {
     Content,
     HandlerCallback,
@@ -13,15 +13,15 @@ import {
     ServiceType,
     State,
     UUID,
-} from "@elizaos/eliza";
-import { stringToUuid, getEmbeddingZeroVector } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { stringToUuid, getEmbeddingZeroVector } from "@elizaos/core";
 import {
     ChannelType,
     Client,
     Message as DiscordMessage,
     TextChannel,
 } from "discord.js";
-import { elizaLogger } from "@elizaos/eliza";
+import { elizaLogger } from "@elizaos/core";
 import { AttachmentManager } from "./attachments.ts";
 import { VoiceManager } from "./voice.ts";
 import {

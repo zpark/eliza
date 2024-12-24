@@ -10,7 +10,7 @@ import {
     Memory,
     ModelClass,
     Evaluator,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { TrustScoreManager } from "../providers/trustScoreProvider.ts";
 import { TokenProvider } from "../providers/token.ts";
 import { WalletProvider } from "../providers/wallet.ts";

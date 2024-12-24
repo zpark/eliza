@@ -1,4 +1,4 @@
-import { elizaLogger } from "@elizaos/eliza";
+import { elizaLogger } from "@elizaos/core";
 import {
     Action,
     HandlerCallback,
@@ -6,8 +6,8 @@ import {
     Memory,
     Plugin,
     State,
-} from "@elizaos/eliza";
-import { generateImage } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { generateImage } from "@elizaos/core";
 
 import fs from "fs";
 import path from "path";

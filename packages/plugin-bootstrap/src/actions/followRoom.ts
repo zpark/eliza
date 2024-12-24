@@ -1,6 +1,6 @@
-import { composeContext } from "@elizaos/eliza";
-import { generateTrueOrFalse } from "@elizaos/eliza";
-import { booleanFooter } from "@elizaos/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateTrueOrFalse } from "@elizaos/core";
+import { booleanFooter } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -8,7 +8,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 export const shouldFollowTemplate =
     `Based on the conversation so far:

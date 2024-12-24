@@ -8,7 +8,7 @@ import {
     type Action,
     composeContext,
     generateObject,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import { connect, keyStores, utils } from "near-api-js";
 import {
     init_env,

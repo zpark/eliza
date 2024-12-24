@@ -1,11 +1,11 @@
-import { elizaLogger, models } from "@elizaos/eliza";
-import { Service } from "@elizaos/eliza";
+import { elizaLogger, models } from "@elizaos/core";
+import { Service } from "@elizaos/core";
 import {
     IAgentRuntime,
     ModelProviderName,
     ServiceType,
     IImageDescriptionService,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import {
     AutoProcessor,
     AutoTokenizer,

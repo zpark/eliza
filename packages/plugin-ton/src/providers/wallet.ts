@@ -4,7 +4,7 @@ import {
     Memory,
     Provider,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 
 import { TonClient, WalletContractV4 } from "@ton/ton";
 import { KeyPair, mnemonicToPrivateKey } from "@ton/crypto";

@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/eliza";
+import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 
 interface SlackEvent {
     channel: string;

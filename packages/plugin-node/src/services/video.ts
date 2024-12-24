@@ -1,12 +1,12 @@
-import { Service } from "@elizaos/eliza";
+import { Service } from "@elizaos/core";
 import {
     IAgentRuntime,
     ITranscriptionService,
     Media,
     ServiceType,
     IVideoService,
-} from "@elizaos/eliza";
-import { stringToUuid } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { stringToUuid } from "@elizaos/core";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import path from "path";

@@ -4,7 +4,7 @@ import {
     Memory,
     Provider,
     State,
-} from "@elizaos/eliza";
+} from "@elizaos/core";
 import {
     Account,
     Aptos,

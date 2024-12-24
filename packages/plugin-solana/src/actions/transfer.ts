@@ -2,7 +2,7 @@ import {
     getAssociatedTokenAddressSync,
     createTransferInstruction,
 } from "@solana/spl-token";
-import { elizaLogger, settings } from "@elizaos/eliza";
+import { elizaLogger, settings } from "@elizaos/core";
 
 import {
     Connection,
@@ -20,10 +20,10 @@ import {
     ModelClass,
     State,
     type Action,
-} from "@elizaos/eliza";
-import { composeContext } from "@elizaos/eliza";
+} from "@elizaos/core";
+import { composeContext } from "@elizaos/core";
 import { getWalletKey } from "../keypairUtils";
-import { generateObjectDeprecated } from "@elizaos/eliza";
+import { generateObjectDeprecated } from "@elizaos/core";
 
 export interface TransferContent extends Content {
     tokenAddress: string;

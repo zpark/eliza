@@ -1,4 +1,4 @@
-import { Client, IAgentRuntime, elizaLogger } from "@elizaos/eliza";
+import { Client, IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { FarcasterClient } from "./client";
 import { FarcasterPostManager } from "./post";
 import { FarcasterInteractionManager } from "./interactions";

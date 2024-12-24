@@ -1,4 +1,4 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/eliza";
+import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { NeynarAPIClient, isApiErrorResponse } from "@neynar/nodejs-sdk";
 import { NeynarCastResponse, Cast, Profile, FidRequest, CastId } from "./types";
 
