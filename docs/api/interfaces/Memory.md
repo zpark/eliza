@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.5](../index.md) / Memory
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Memory
 
 # Interface: Memory
 
@@ -14,9 +14,9 @@ Optional unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:331](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L331)
+[packages/core/src/types.ts:333](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L333)
 
-***
+---
 
 ### userId
 
@@ -26,9 +26,9 @@ Associated user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:334](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L334)
+[packages/core/src/types.ts:336](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L336)
 
-***
+---
 
 ### agentId
 
@@ -38,9 +38,9 @@ Associated agent ID
 
 #### Defined in
 
-[packages/core/src/types.ts:337](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L337)
+[packages/core/src/types.ts:339](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L339)
 
-***
+---
 
 ### createdAt?
 
@@ -50,9 +50,9 @@ Optional creation timestamp
 
 #### Defined in
 
-[packages/core/src/types.ts:340](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L340)
+[packages/core/src/types.ts:342](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L342)
 
-***
+---
 
 ### content
 
@@ -62,9 +62,9 @@ Memory content
 
 #### Defined in
 
-[packages/core/src/types.ts:343](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L343)
+[packages/core/src/types.ts:345](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L345)
 
-***
+---
 
 ### embedding?
 
@@ -74,9 +74,9 @@ Optional embedding vector
 
 #### Defined in
 
-[packages/core/src/types.ts:346](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L346)
+[packages/core/src/types.ts:348](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L348)
 
-***
+---
 
 ### roomId
 
@@ -86,9 +86,9 @@ Associated room ID
 
 #### Defined in
 
-[packages/core/src/types.ts:349](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L349)
+[packages/core/src/types.ts:351](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L351)
 
-***
+---
 
 ### unique?
 
@@ -98,9 +98,9 @@ Whether memory is unique
 
 #### Defined in
 
-[packages/core/src/types.ts:352](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L352)
+[packages/core/src/types.ts:354](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L354)
 
-***
+---
 
 ### similarity?
 
@@ -110,4 +110,4 @@ Embedding similarity score
 
 #### Defined in
 
-[packages/core/src/types.ts:355](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L355)
+[packages/core/src/types.ts:357](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L357)

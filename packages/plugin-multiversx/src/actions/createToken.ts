@@ -10,7 +10,7 @@ import {
     generateObject,
     composeContext,
     type Action,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { validateMultiversxConfig } from "../enviroment";
 
@@ -146,7 +146,7 @@ export default {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Create a token TEST with ticker TST, 18 decimals and su of 10000",
+                    text: "Create a token TEST with ticker TST, 18 decimals and supply of 10000",
                     action: "CREATE_TOKEN",
                 },
             },

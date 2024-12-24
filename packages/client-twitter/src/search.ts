@@ -10,8 +10,8 @@ import {
     ModelClass,
     ServiceType,
     State,
-} from "@ai16z/eliza";
-import { stringToUuid } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { stringToUuid } from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 

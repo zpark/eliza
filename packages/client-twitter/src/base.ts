@@ -8,7 +8,7 @@ import {
     getEmbeddingZeroVector,
     elizaLogger,
     stringToUuid,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import {
     QueryTweetsResponse,
     Scraper,
@@ -153,39 +153,29 @@ export class ClientBase extends EventEmitter {
     }
 
     async init() {
-        //test
         const username = this.runtime.getSetting("TWITTER_USERNAME");
         const password = this.runtime.getSetting("TWITTER_PASSWORD");
         const email = this.runtime.getSetting("TWITTER_EMAIL");
-        const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET") || undefined;
-        const cookies = this.runtime.getSetting("TWITTER_COOKIES");
-
+        let retries = parseInt(
+            this.runtime.getSetting("TWITTER_RETRY_LIMIT") || "5",
+            10
+        );
+        const twitter2faSecret =
+            this.runtime.getSetting("TWITTER_2FA_SECRET") || undefined;
 
         if (!username) {
             throw new Error("Twitter username not configured");
         }
-        // Check for Twitter cookies
-        if (cookies) {
-            const cookiesArray = JSON.parse(cookies);
 
-            await this.setCookiesFromArray(cookiesArray);
-        } else {
-            const cachedCookies = await this.getCachedCookies(username);
-            if (cachedCookies) {
-                await this.setCookiesFromArray(cachedCookies);
-            }
+        const cachedCookies = await this.getCachedCookies(username);
+
+        if (cachedCookies) {
+            elizaLogger.info("Using cached cookies");
+            await this.setCookiesFromArray(cachedCookies);
         }
 
         elizaLogger.log("Waiting for Twitter login");
-        let retries = 5; // Optional: Set a retry limit
         while (retries > 0) {
-            const cookies = await this.twitterClient.getCookies();
-            if (await this.twitterClient.isLoggedIn() || !!cookies) {
-                await this.cacheCookies(username, cookies);
-                elizaLogger.info("Successfully logged in and cookies cached.");
-                break;
-            }
-
             try {
                 await this.twitterClient.login(
                     username,
@@ -193,15 +183,30 @@ export class ClientBase extends EventEmitter {
                     email,
                     twitter2faSecret
                 );
+                if (await this.twitterClient.isLoggedIn()) {
+                    elizaLogger.info("Successfully logged in.");
+                    if (!cachedCookies) {
+                        elizaLogger.info("Caching cookies");
+                        await this.cacheCookies(
+                            username,
+                            await this.twitterClient.getCookies()
+                        );
+                    }
+                    break;
+                }
             } catch (error) {
                 elizaLogger.error(`Login attempt failed: ${error.message}`);
             }
 
             retries--;
-            elizaLogger.error(`Failed to login to Twitter. Retrying... (${retries} attempts left)`);
+            elizaLogger.error(
+                `Failed to login to Twitter. Retrying... (${retries} attempts left)`
+            );
 
             if (retries === 0) {
-                elizaLogger.error("Max retries reached. Exiting login process.");
+                elizaLogger.error(
+                    "Max retries reached. Exiting login process."
+                );
                 throw new Error("Twitter login failed after maximum retries.");
             }
 
@@ -243,63 +248,72 @@ export class ClientBase extends EventEmitter {
 
     async fetchHomeTimeline(count: number): Promise<Tweet[]> {
         elizaLogger.debug("fetching home timeline");
-        const homeTimeline = await this.twitterClient.fetchHomeTimeline(count, []);
+        const homeTimeline = await this.twitterClient.fetchHomeTimeline(
+            count,
+            []
+        );
 
         elizaLogger.debug(homeTimeline, { depth: Infinity });
         const processedTimeline = homeTimeline
-        .filter((t) => t.__typename !== "TweetWithVisibilityResults") // what's this about?
-        .map((tweet) => {
-            //console.log("tweet is", tweet);
-            const obj = {
-                id: tweet.id,
-                name:
-                    tweet.name ??
-                    tweet?.user_results?.result?.legacy.name,
-                username:
-                    tweet.username ??
-                    tweet.core?.user_results?.result?.legacy.screen_name,
-                text: tweet.text ?? tweet.legacy?.full_text,
-                inReplyToStatusId:
-                    tweet.inReplyToStatusId ??
-                    tweet.legacy?.in_reply_to_status_id_str ??
-                    null,
-                timestamp: new Date(tweet.legacy?.created_at).getTime() / 1000,
-                createdAt: tweet.createdAt ?? tweet.legacy?.created_at ?? tweet.core?.user_results?.result?.legacy.created_at,
-                userId: tweet.userId ?? tweet.legacy?.user_id_str,
-                conversationId:
-                    tweet.conversationId ??
-                    tweet.legacy?.conversation_id_str,
-                permanentUrl: `https://x.com/${tweet.core?.user_results?.result?.legacy?.screen_name}/status/${tweet.rest_id}`,
-                hashtags: tweet.hashtags ?? tweet.legacy?.entities.hashtags,
-                mentions:
-                    tweet.mentions ?? tweet.legacy?.entities.user_mentions,
-                photos:
-                    tweet.photos ??
-                    tweet.legacy?.entities.media?.filter(
-                        (media) => media.type === "photo"
-                    ) ??
-                    [],
-                thread: tweet.thread || [],
-                urls: tweet.urls ?? tweet.legacy?.entities.urls,
-                videos:
-                    tweet.videos ??
-                    tweet.legacy?.entities.media?.filter(
-                        (media) => media.type === "video"
-                    ) ??
-                    [],
-            };
-            //console.log("obj is", obj);
-            return obj;
-        });
+            .filter((t) => t.__typename !== "TweetWithVisibilityResults") // what's this about?
+            .map((tweet) => {
+                //console.log("tweet is", tweet);
+                const obj = {
+                    id: tweet.id,
+                    name:
+                        tweet.name ?? tweet?.user_results?.result?.legacy.name,
+                    username:
+                        tweet.username ??
+                        tweet.core?.user_results?.result?.legacy.screen_name,
+                    text: tweet.text ?? tweet.legacy?.full_text,
+                    inReplyToStatusId:
+                        tweet.inReplyToStatusId ??
+                        tweet.legacy?.in_reply_to_status_id_str ??
+                        null,
+                    timestamp:
+                        new Date(tweet.legacy?.created_at).getTime() / 1000,
+                    createdAt:
+                        tweet.createdAt ??
+                        tweet.legacy?.created_at ??
+                        tweet.core?.user_results?.result?.legacy.created_at,
+                    userId: tweet.userId ?? tweet.legacy?.user_id_str,
+                    conversationId:
+                        tweet.conversationId ??
+                        tweet.legacy?.conversation_id_str,
+                    permanentUrl: `https://x.com/${tweet.core?.user_results?.result?.legacy?.screen_name}/status/${tweet.rest_id}`,
+                    hashtags: tweet.hashtags ?? tweet.legacy?.entities.hashtags,
+                    mentions:
+                        tweet.mentions ?? tweet.legacy?.entities.user_mentions,
+                    photos:
+                        tweet.photos ??
+                        tweet.legacy?.entities.media?.filter(
+                            (media) => media.type === "photo"
+                        ) ??
+                        [],
+                    thread: tweet.thread || [],
+                    urls: tweet.urls ?? tweet.legacy?.entities.urls,
+                    videos:
+                        tweet.videos ??
+                        tweet.legacy?.entities.media?.filter(
+                            (media) => media.type === "video"
+                        ) ??
+                        [],
+                };
+                //console.log("obj is", obj);
+                return obj;
+            });
         //elizaLogger.debug("process homeTimeline", processedTimeline);
         return processedTimeline;
     }
 
     async fetchTimelineForActions(count: number): Promise<Tweet[]> {
         elizaLogger.debug("fetching timeline for actions");
-        const homeTimeline = await this.twitterClient.fetchHomeTimeline(count, []);
+        const homeTimeline = await this.twitterClient.fetchHomeTimeline(
+            count,
+            []
+        );
 
-        return homeTimeline.map(tweet => ({
+        return homeTimeline.map((tweet) => ({
             id: tweet.rest_id,
             name: tweet.core?.user_results?.result?.legacy?.name,
             username: tweet.core?.user_results?.result?.legacy?.screen_name,
@@ -311,10 +325,16 @@ export class ClientBase extends EventEmitter {
             permanentUrl: `https://twitter.com/${tweet.core?.user_results?.result?.legacy?.screen_name}/status/${tweet.rest_id}`,
             hashtags: tweet.legacy?.entities?.hashtags || [],
             mentions: tweet.legacy?.entities?.user_mentions || [],
-            photos: tweet.legacy?.entities?.media?.filter(media => media.type === "photo") || [],
+            photos:
+                tweet.legacy?.entities?.media?.filter(
+                    (media) => media.type === "photo"
+                ) || [],
             thread: tweet.thread || [],
             urls: tweet.legacy?.entities?.urls || [],
-            videos: tweet.legacy?.entities?.media?.filter(media => media.type === "video") || []
+            videos:
+                tweet.legacy?.entities?.media?.filter(
+                    (media) => media.type === "video"
+                ) || [],
         }));
     }
 
