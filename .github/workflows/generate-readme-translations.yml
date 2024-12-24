@@ -72,7 +72,15 @@ jobs:
 
             - name: Save translation
               run: |
-                mv translated.md README_${{ matrix.language.code }}.md
+                # Create a temporary variable with the translation
+                translation='${{ steps.aixion.outputs.text }}'
+                # Escape any quotes and special characters
+                translation="${translation//\"/\\\"}"
+                translation="${translation//'%'/'%25'}"
+                translation="${translation//$'\n'/'%0A'}"
+                translation="${translation//$'\r'/'%0D'}"
+                # Write the escaped content to file
+                echo "$translation" > README_${{ matrix.language.code }}.md
 
             - name: List README translations
               run: ls README_*.md || echo "No translation files found"
