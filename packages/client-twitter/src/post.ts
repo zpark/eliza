@@ -7,14 +7,15 @@ import {
     ModelClass,
     stringToUuid,
     parseBooleanFromText,
-} from "@ai16z/eliza";
-import { elizaLogger } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
-import { postActionResponseFooter } from "@ai16z/eliza";
-import { generateTweetActions } from "@ai16z/eliza";
-import { IImageDescriptionService, ServiceType } from "@ai16z/eliza";
+import { postActionResponseFooter } from "@elizaos/core";
+import { generateTweetActions } from "@elizaos/core";
+import { IImageDescriptionService, ServiceType } from "@elizaos/core";
 import { buildConversationThread } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
+import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -57,8 +58,6 @@ Tweet:
 {{currentTweet}}
 
 # Respond with qualifying action tags only.` + postActionResponseFooter;
-
-const MAX_TWEET_LENGTH = 240;
 
 /**
  * Truncate text to fit within the Twitter character limit, ensuring it ends at a complete sentence.
@@ -162,11 +161,11 @@ export class TwitterPostClient {
 
         if (
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
-            this.runtime.getSetting("POST_IMMEDIATELY") != ""
+            this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            // Retrieve setting, default to false if not set or if the value is not "true"
+            postImmediately = this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
+
         }
 
         if (postImmediately) {
@@ -175,7 +174,8 @@ export class TwitterPostClient {
         generateNewTweetLoop();
 
         // Add check for ENABLE_ACTION_PROCESSING before starting the loop
-        const enableActionProcessing = this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
+        const enableActionProcessing =
+            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
 
         if (enableActionProcessing) {
             processActionsLoop().catch((error) => {
@@ -184,10 +184,10 @@ export class TwitterPostClient {
                     error
                 );
             });
+            generateNewTweetLoop();
         } else {
             elizaLogger.log("Action processing loop disabled by configuration");
         }
-        generateNewTweetLoop();
     }
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
@@ -280,7 +280,8 @@ export class TwitterPostClient {
             // Use the helper function to truncate to complete sentence
             const content = truncateToCompleteSentence(
                 cleanedContent,
-                MAX_TWEET_LENGTH
+                parseInt(this.runtime.getSetting("MAX_TWEET_LENGTH")) ||
+                    DEFAULT_MAX_TWEET_LENGTH
             );
 
             const removeQuotes = (str: string) =>
