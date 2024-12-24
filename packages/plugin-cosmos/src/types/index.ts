@@ -1,4 +1,4 @@
-import { CosmosTransferParams } from "../actions/cosmosTransfer";
+import { CosmosTransferParams } from "../services/cosmos-transfer-params-validator";
 import { assets } from "chain-registry";
 
 export type Asset = Pick<

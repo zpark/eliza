@@ -1,86 +1,154 @@
-import { describe, it, expect, vi } from "vitest";
-import {
-    TransferAction,
-    CosmosTransferParams,
-} from "../actions/cosmosTransfer";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { TransferAction } from "../actions/cosmosTransfer";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { AssetsPicker } from "../services/assets-picker";
+import { AssetsAdapter } from "../services/assets-adapter";
+import { FeeEstimator } from "../services/fee-estimator";
+import { PaidFee } from "../services/paid-fee";
+import { Asset } from "../types";
 
-const TRANSFER_OPERATION_TIMEOUT = 15000;
-const RPC_URL = "https://rpc.testcosmos.directory/mantrachaintestnet2";
-const CHAIN_NAME = "mantrachaintestnet2";
-const BECH_32_PREFIX = "mantra";
+const ASSETS_LIST_MOCK: Asset[] = [
+    {
+        base: "uatom",
+        display: "uatom",
+        denom_units: [{ denom: "uatom", exponent: 6 }],
+    },
+];
 
-const recoveryPhrases =
-    "all kind segment tank shove fury develop neck thank ability raccoon live";
+vi.mock("@cosmjs/cosmwasm-stargate", () => ({
+    SigningCosmWasmClient: {
+        connectWithSigner: vi.fn(),
+    },
+}));
 
-const receiver = "mantra17vaml5p0gfj4aaur3rq2qqhc4pxynwtmp9vrw6";
+vi.mock("../services/assets-picker");
+vi.mock("../services/assets-adapter");
+vi.mock("../services/fee-estimator");
+vi.mock("../services/paid-fee");
 
-describe("TransferAction", async () => {
-    const directSecp256k1HdWallet = await DirectSecp256k1HdWallet.fromMnemonic(
-        recoveryPhrases,
-        {
-            prefix: BECH_32_PREFIX,
-        }
+describe("TransferAction", () => {
+    const mockWalletProvider = {
+        getAccounts: vi.fn(),
+    } as unknown as DirectSecp256k1HdWallet;
+
+    const mockRpcEndpoint = "http://localhost:26657";
+    const mockChainName = "cosmoshub-4";
+
+    const transferAction = new TransferAction(
+        mockWalletProvider,
+        mockRpcEndpoint,
+        mockChainName,
+        ASSETS_LIST_MOCK
     );
 
-    describe("transfer", () => {
-        it("should throw an error if receiver address is not available", async () => {
-            const transferAction = new TransferAction(
-                directSecp256k1HdWallet,
-                RPC_URL,
-                CHAIN_NAME
-            );
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
-            const params: CosmosTransferParams = {
-                denomOrIbc: "denom1",
+    it("should throw an error if no sender address is found", async () => {
+        // @ts-ignore
+        mockWalletProvider.getAccounts.mockResolvedValue([]);
+
+        await expect(
+            transferAction.transfer({
+                amount: "1000",
+                toAddress: "cosmos1receiveraddress",
+                denomOrIbc: "uatom",
+            })
+        ).rejects.toThrow("No sender address");
+    });
+
+    it("should throw an error if no receiver address is provided", async () => {
+        // @ts-ignore
+        mockWalletProvider.getAccounts.mockResolvedValue([
+            { address: "cosmos1senderaddress" },
+        ]);
+
+        await expect(
+            transferAction.transfer({
                 amount: "1000",
                 toAddress: "",
-            };
+                denomOrIbc: "uatom",
+            })
+        ).rejects.toThrow("No receiver address");
+    });
 
-            await expect(transferAction.transfer(params)).rejects.toThrowError(
-                "No receiver address"
-            );
+    it("should perform a successful transfer", async () => {
+        const mockSigningClient = {
+            sendTokens: vi.fn().mockResolvedValue({
+                transactionHash: "mockTxHash",
+            }),
+        };
+
+        const mockFeeEstimator = {
+            estimateGasForSendTokens: vi.fn().mockResolvedValue(200000),
+        };
+        // @ts-ignore
+
+        SigningCosmWasmClient.connectWithSigner.mockResolvedValue(
+            mockSigningClient
+        );
+        // @ts-ignore
+        mockWalletProvider.getAccounts.mockResolvedValue([
+            { address: "cosmos1senderaddress" },
+        ]);
+        // @ts-ignore
+        (AssetsPicker as vi.Mock).mockImplementation(() => ({
+            getAssetByDenom: vi.fn().mockReturnValue({
+                denom: "uatom",
+                decimals: 6,
+            }),
+        }));
+        // @ts-ignore
+        (AssetsAdapter as vi.Mock).mockImplementation(() => ({
+            amountToAmountInBaseDenom: vi.fn().mockReturnValue({
+                amount: "1000000",
+                denom: "uatom",
+            }),
+        }));
+        // @ts-ignore
+        (FeeEstimator as vi.Mock).mockImplementation(() => mockFeeEstimator);
+        // @ts-ignore
+        (PaidFee.getInstanceWithDefaultEvents as vi.Mock).mockReturnValue({
+            getPaidFeeFromReceipt: vi.fn().mockReturnValue("1"),
         });
 
-        it(
-            "should perform a transfer and return the transaction details",
-            async () => {
-                const transferAction = new TransferAction(
-                    directSecp256k1HdWallet,
-                    RPC_URL,
-                    CHAIN_NAME
-                );
-                const params: CosmosTransferParams = {
-                    denomOrIbc: "uom",
-                    amount: "1000",
-                    toAddress: receiver,
-                };
+        const result = await transferAction.transfer({
+            amount: "1000",
+            toAddress: "cosmos1receiveraddress",
+            denomOrIbc: "uatom",
+        });
 
-                const result = await transferAction.transfer(params);
-                expect(result.to).toEqual(receiver);
+        expect(result).toEqual({
+            from: "cosmos1senderaddress",
+            to: "cosmos1receiveraddress",
+            gasPaidInUOM: "1",
+            txHash: "mockTxHash",
+        });
+    });
+
+    it("should throw an error if transfer fails", async () => {
+        const mockSigningClient = {
+            sendTokens: () => {
+                throw new Error("Transaction failed");
             },
-            { timeout: TRANSFER_OPERATION_TIMEOUT }
+        };
+        // @ts-ignore
+        SigningCosmWasmClient.connectWithSigner.mockResolvedValue(
+            mockSigningClient
         );
+        // @ts-ignore
+        mockWalletProvider.getAccounts.mockResolvedValue([
+            { address: "cosmos1senderaddress" },
+        ]);
 
-        it(
-            "should throw an error if insufficient funds",
-            async () => {
-                const transferAction = new TransferAction(
-                    directSecp256k1HdWallet,
-                    RPC_URL,
-                    CHAIN_NAME
-                );
-                const params: CosmosTransferParams = {
-                    denomOrIbc: "uom",
-                    amount: `${1_000_000_000_000_000}`,
-                    toAddress: receiver,
-                };
-
-                await expect(
-                    transferAction.transfer(params)
-                ).rejects.toThrowError();
-            },
-            { timeout: TRANSFER_OPERATION_TIMEOUT }
-        );
+        await expect(
+            transferAction.transfer({
+                amount: "1000",
+                toAddress: "cosmos1receiveraddress",
+                denomOrIbc: "uatom",
+            })
+        ).rejects.toThrow("Transfer failed with error: {}");
     });
 });

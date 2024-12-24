@@ -1,50 +1,30 @@
-import { elizaLogger } from "@ai16z/eliza";
 import { transferTemplate } from "../templates";
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { z } from "zod";
-import { Transaction } from "../types";
+import { Asset, CosmosTransferParams, Transaction } from "../types";
 import { PaidFee } from "../services/paid-fee";
 import { AssetsPicker } from "../services/assets-picker";
-import { assets } from "chain-registry";
 import { AssetsAdapter } from "../services/assets-adapter";
 import { FeeEstimator } from "../services/fee-estimator";
 
 export { transferTemplate };
 
-const cosmosTransferParamsSchema = z.object({
-    denomOrIbc: z.string(),
-    amount: z.string(),
-    toAddress: z.string(),
-});
-
-export type CosmosTransferParams = z.infer<typeof cosmosTransferParamsSchema>;
-
-export class TransferActionParamsValidator {
-    validate(params: any): CosmosTransferParams {
-        try {
-            const validParams = cosmosTransferParamsSchema.parse(params);
-
-            return validParams;
-        } catch (error) {
-            elizaLogger.error(JSON.stringify(error, undefined, 4));
-        }
-    }
-}
-
 export class TransferAction {
     private walletProvider: DirectSecp256k1HdWallet;
     readonly rpcEndpoint: string;
     readonly chainName: string;
+    readonly assets: Asset[];
 
     constructor(
         walletProvider: DirectSecp256k1HdWallet,
         rpcEndpoint: string,
-        chainName: string
+        chainName: string,
+        assets: Asset[]
     ) {
         this.walletProvider = walletProvider;
         this.chainName = chainName;
         this.rpcEndpoint = rpcEndpoint;
+        this.assets = assets;
     }
 
     async transfer(params: CosmosTransferParams): Promise<Transaction> {
@@ -57,8 +37,8 @@ export class TransferAction {
                 this.rpcEndpoint,
                 this.walletProvider
             );
-        const accounts = await this.walletProvider.getAccounts();
 
+        const accounts = await this.walletProvider.getAccounts();
         const senderAddress = accounts[0]?.address;
 
         if (!senderAddress) {
@@ -70,12 +50,8 @@ export class TransferAction {
         }
 
         try {
-            const assetList = assets.find(
-                (asset) => asset.chain_name === this.chainName
-            );
-
             const assetToTransfer = new AssetsPicker(
-                assetList.assets
+                this.assets
             ).getAssetByDenom(params.denomOrIbc);
 
             const coin = AssetsAdapter.amountToAmountInBaseDenom({
@@ -90,6 +66,7 @@ export class TransferAction {
                 params.toAddress,
                 [coin]
             );
+
             const safeFee = (fee * 1.2).toFixed();
 
             const txDeliveryResponse = await signingCosmWasmClient.sendTokens(
@@ -112,12 +89,13 @@ export class TransferAction {
             };
         } catch (error: unknown) {
             throw new Error(
-                `Transfer failed with error: ${JSON.stringify(error, undefined, 4)}`
+                `Transfer failed with error: ${JSON.stringify(error)}`
             );
         }
     }
 }
-// TODO
+// TODO - can be done when wallet provider is ready
+
 // export const transferAction = {
 //     name: "transfer",
 //     description: "Transfer tokens between addresses on the same chain",
