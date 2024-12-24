@@ -138,6 +138,9 @@ importers:
       '@elizaos/plugin-0g':
         specifier: workspace:*
         version: link:../packages/plugin-0g
+      '@elizaos/plugin-abstract':
+        specifier: workspace:*
+        version: link:../packages/plugin-abstract
       '@elizaos/plugin-aptos':
         specifier: workspace:*
         version: link:../packages/plugin-aptos
