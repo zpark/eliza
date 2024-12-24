@@ -10,7 +10,7 @@ import {
     elizaLogger,
     composeContext,
     generateObject,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { validateAbstractConfig } from "../environment";
 
 import { Address, createWalletClient, http, parseEther } from "viem";
