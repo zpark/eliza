@@ -31,8 +31,8 @@
 - 🤖 [Mga Chatbot](https://en.wikipedia.org/wiki/Chatbot)
 - 🕵️ Mga Awtonomikong Ahente
 - 📈 Pagproseso ng Negosyo
-- 🎮 [Mga NPC sa Video Game](https://en.wikipedia.org/wiki/Non-player_character)
-- 🧠 Trading
+- 🎮 [Mga NPC sa mga Laro sa Kompyuter](https://en.wikipedia.org/wiki/Non-player_character)
+- 🧠 Pangangalakal
 
 ## 🚀 Pangkalahatang-ideya
 
@@ -53,7 +53,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-Basahin ang [Dokumentasyon](https://elizaos.github.io/eliza/) upang matutunan kung paano i-customize ang Eliza.
+Basahin ang [Dokumentasyon](https://elizaos.github.io/eliza/) upang matutunan kung paano ipasadya ang Eliza.
 
 ### Manwal na Pag-simula ng Eliza (Inirerekomenda lamang kung alam mo ang ginagawa mo)
 
@@ -69,7 +69,7 @@ git checkout $(git describe --tags --abbrev=0)
 
 [![Buksan sa Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
 
-### I-edit ang .env File
+### Ipasadya ang .env File
 
 Kopyahin ang `.env.example` sa `.env` at punan ang tamang mga halaga.
 
@@ -85,7 +85,7 @@ Ito ay magse-setup ng proyekto at sisimulan ang bot gamit ang default na karakte
 sh scripts/start.sh
 ```
 
-### I-edit ang Character File
+### Ipasadya ang Character File
 
 1. Buksan ang `packages/core/src/defaultCharacter.ts` para baguhin ang default na karakter. 
 2. Mag-load ng custom na mga karakter:
@@ -107,7 +107,7 @@ pnpm clean
 
 #### Karagdagang Mga Kinakailangan
 
-Puwede mong kailangang mag-install ng [Sharp](https://sharp.pixelplumbing.com/). Kung may error, subukang i-install ito gamit ang:
+Puwede mong kailangang mag-install ng [Sharp](https://sharp.pixelplumbing.com/). Kung may pagkakamali, subukang i-install ito gamit ang:
 
 ```bash
 pnpm install --include=optional sharp
