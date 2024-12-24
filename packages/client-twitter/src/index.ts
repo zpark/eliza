@@ -37,11 +37,15 @@ export const TwitterClientInterface: Client = {
         // enableSearch is just set previous to this call
         // so enableSearch can change over time
         // and changing it won't stop the SearchClient in the existing instance
-        const manager = new TwitterManager(runtime, this.enableSearch);
+
+        const manager = new TwitterManager(runtime, runtime.getSetting("TWITTER_SEARCH_ENABLE") === "true");
 
         await manager.client.init();
 
         await manager.post.start();
+
+        if (manager.search)
+            await manager.search.start();
 
         await manager.interaction.start();
 
