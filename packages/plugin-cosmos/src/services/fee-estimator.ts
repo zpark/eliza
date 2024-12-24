@@ -2,10 +2,7 @@ import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Coin, MsgSendEncodeObject, StdFee } from "@cosmjs/stargate";
 
 export class FeeEstimator {
-    private signingCosmWasmClient: SigningCosmWasmClient;
-    constructor(signingCosmWasmClient: SigningCosmWasmClient) {
-        this.signingCosmWasmClient = signingCosmWasmClient;
-    }
+    constructor(private signingCosmWasmClient: SigningCosmWasmClient) {}
 
     estimateGasForSendTokens(
         senderAddress: string,

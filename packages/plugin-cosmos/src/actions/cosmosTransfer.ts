@@ -28,10 +28,6 @@ export class TransferAction {
     }
 
     async transfer(params: CosmosTransferParams): Promise<Transaction> {
-        console.log(
-            `Transferring: ${params.amount} tokens to ${params.toAddress}`
-        );
-
         const signingCosmWasmClient =
             await SigningCosmWasmClient.connectWithSigner(
                 this.rpcEndpoint,

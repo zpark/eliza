@@ -1,3 +1,4 @@
+import type { Coin as AminoCoin } from "@cosmjs/amino";
 import { CosmosTransferParams } from "../services/cosmos-transfer-params-validator";
 import { assets } from "chain-registry";
 
@@ -6,10 +7,7 @@ export type Asset = Pick<
     "base" | "denom_units" | "display"
 >;
 
-export type Coin = {
-    denom: string;
-    amount: string;
-};
+export type Coin = AminoCoin;
 
 export interface Transaction {
     from: string;
