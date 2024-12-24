@@ -34,10 +34,6 @@ export const TwitterClientInterface: Client = {
 
         elizaLogger.log("Twitter client started");
 
-        // enableSearch is just set previous to this call
-        // so enableSearch can change over time
-        // and changing it won't stop the SearchClient in the existing instance
-
         const manager = new TwitterManager(runtime, runtime.getSetting("TWITTER_SEARCH_ENABLE") === "true");
 
         await manager.client.init();

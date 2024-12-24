@@ -428,6 +428,8 @@ export async function initializeClients(
     return clients;
 }
 
+// no needed for now
+//
 // function isFalsish(input: any): boolean {
 //     // If the input is exactly NaN, return true
 //     if (Number.isNaN(input)) {
