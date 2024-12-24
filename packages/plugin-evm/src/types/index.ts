@@ -112,6 +112,7 @@ export interface EvmPluginConfig {
         taiko?: string;
         zksync?: string;
         canto?: string;
+        alienx?: string;
     };
     secrets?: {
         EVM_PRIVATE_KEY: string;
