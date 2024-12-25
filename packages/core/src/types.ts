@@ -707,6 +707,20 @@ export type Character = {
     settings?: {
         secrets?: { [key: string]: string };
         intiface?: boolean;
+        imageSettings?: {
+            steps?: number;
+            width?: number;
+            height?: number;
+            negativePrompt?: string;
+            numIterations?: number;
+            guidanceScale?: number;
+            seed?: number;
+            modelId?: string;
+            jobId?: string;
+            count?: number;
+            stylePreset?: string;
+            hideWatermark?: boolean;
+        };
         voice?: {
             model?: string; // For VITS
             url?: string; // Legacy VITS support
@@ -999,6 +1013,12 @@ export interface IMemoryManager {
 export type CacheOptions = {
     expires?: number;
 };
+
+export enum CacheStore {
+    REDIS = "redis",
+    DATABASE = "database",
+    FILESYSTEM = "filesystem",
+}
 
 export interface ICacheManager {
     get<T = unknown>(key: string): Promise<T | undefined>;
