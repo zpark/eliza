@@ -13,6 +13,7 @@ export default defineConfig({
         "process",
         "@reflink/reflink",
         "@node-llama-cpp",
+        "@fal-ai/client",
         "https",
         "http",
         "agentkeepalive",
