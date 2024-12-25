@@ -7,6 +7,6 @@ export default defineConfig({
     clean: true,
     format: ["esm"],
     external: [
-        "@ai16z/eliza"
+        "@elizaos/eliza"
     ],
 });
