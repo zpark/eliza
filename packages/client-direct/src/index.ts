@@ -229,34 +229,23 @@ export class DirectClient {
                 const shouldSuppressInitialMessage =
                     action?.suppressInitialMessage;
 
-                if (!shouldSuppressInitialMessage) {
-                    const _result = await runtime.processActions(
-                        memory,
-                        [responseMessage],
-                        state,
-                        async (newMessages) => {
-                            message = newMessages;
-                            return [memory];
-                        }
-                    );
+                const _result = await runtime.processActions(
+                    memory,
+                    [responseMessage],
+                    state,
+                    async (newMessages) => {
+                        message = newMessages;
+                        return [memory];
+                    }
+                );
 
+                if (!shouldSuppressInitialMessage) {
                     if (message) {
                         res.json([response, message]);
                     } else {
                         res.json([response]);
                     }
                 } else {
-                    // Only process the action without sending initial response
-                    const _result = await runtime.processActions(
-                        memory,
-                        [responseMessage],
-                        state,
-                        async (newMessages) => {
-                            message = newMessages;
-                            return [memory];
-                        }
-                    );
-
                     if (message) {
                         res.json([message]);
                     } else {
