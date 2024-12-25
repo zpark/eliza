@@ -23,7 +23,7 @@ The TEE Plugin in the Eliza Framework is built on top of the [Dstack SDK](https:
 
 ## Core Components
 
-Eliza's TEE implementation consists of two primary providers that handle secure key managementoperations and remote attestations.
+Eliza's TEE implementation consists of two primary providers that handle secure key management operations and remote attestations.
 
 These components work together to provide:
 
