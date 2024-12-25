@@ -222,20 +222,46 @@ export class DirectClient {
 
                 await runtime.evaluate(memory, state);
 
-                const _result = await runtime.processActions(
-                    memory,
-                    [responseMessage],
-                    state,
-                    async (newMessages) => {
-                        message = newMessages;
-                        return [memory];
-                    }
+                // Check if we should suppress the initial message
+                const action = runtime.actions.find(
+                    (a) => a.name === response.action
                 );
+                const shouldSuppressInitialMessage =
+                    action?.suppressInitialMessage;
 
-                if (message) {
-                    res.json([response, message]);
+                if (!shouldSuppressInitialMessage) {
+                    const _result = await runtime.processActions(
+                        memory,
+                        [responseMessage],
+                        state,
+                        async (newMessages) => {
+                            message = newMessages;
+                            return [memory];
+                        }
+                    );
+
+                    if (message) {
+                        res.json([response, message]);
+                    } else {
+                        res.json([response]);
+                    }
                 } else {
-                    res.json([response]);
+                    // Only process the action without sending initial response
+                    const _result = await runtime.processActions(
+                        memory,
+                        [responseMessage],
+                        state,
+                        async (newMessages) => {
+                            message = newMessages;
+                            return [memory];
+                        }
+                    );
+
+                    if (message) {
+                        res.json([message]);
+                    } else {
+                        res.json([]);
+                    }
                 }
             }
         );
