@@ -200,7 +200,7 @@ const config = {
             },
             {
               label: "Twitter",
-              href: "https://twitter.com/elizaosdao",
+              href: "https://twitter.com/ai16zdao",
             },
           ],
         },
@@ -214,7 +214,6 @@ const config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} elizaos.ai`,
     },
     prism: {
       theme: prismThemes.github,
