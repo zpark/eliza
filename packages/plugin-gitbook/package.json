@@ -1,5 +1,5 @@
 {
-    "name": "@ai16z/plugin-gitbook",
+    "name": "@elizaos/plugin-gitbook",
     "version": "0.1.0",
     "main": "dist/index.js",
     "type": "module",
@@ -14,7 +14,7 @@
         "dist"
     ],
     "dependencies": {
-        "@ai16z/eliza": "workspace:*",
+        "@elizaos/eliza": "workspace:*",
         "tsup": "8.3.5"
     },
     "scripts": {
