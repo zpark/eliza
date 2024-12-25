@@ -7,6 +7,6 @@ export default defineConfig({
     clean: true,
     format: ["esm"],
     external: [
-        "@elizaos/eliza"
+        "@elizaos/core"
     ],
 });
