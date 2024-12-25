@@ -109,6 +109,8 @@ const imageGeneration: Action = {
             seed?: number;
             modelId?: string;
             jobId?: string;
+            stylePreset?: string;
+            hideWatermark?: boolean;
         },
         callback: HandlerCallback
     ) => {
@@ -140,6 +142,8 @@ const imageGeneration: Action = {
                 ...(options.seed != null || imageSettings.seed != null ? { seed: options.seed || imageSettings.seed } : {}),
                 ...(options.modelId != null || imageSettings.modelId != null ? { modelId: options.modelId || imageSettings.modelId } : {}),
                 ...(options.jobId != null || imageSettings.jobId != null ? { jobId: options.jobId || imageSettings.jobId } : {}),
+                ...(options.stylePreset != null || imageSettings.stylePreset != null ? { stylePreset: options.stylePreset || imageSettings.stylePreset } : {}),
+                ...(options.hideWatermark != null || imageSettings.hideWatermark != null ? { hideWatermark: options.hideWatermark || imageSettings.hideWatermark } : {}),
             },
             runtime
         );

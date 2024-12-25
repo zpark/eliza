@@ -718,6 +718,8 @@ export type Character = {
             modelId?: string;
             jobId?: string;
             count?: number;
+            stylePreset?: string;
+            hideWatermark?: boolean;
         };
         voice?: {
             model?: string; // For VITS
