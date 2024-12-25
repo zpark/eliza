@@ -1,4 +1,4 @@
-import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@ai16z/eliza";
+import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/eliza";
 import { GitBookResponse, GitBookClientConfig } from '../types';
 
 function cleanText(text: string): string {
