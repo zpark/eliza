@@ -5,67 +5,48 @@ import {
     State,
     composeContext,
     elizaLogger,
-    generateText,
     ModelClass,
     formatMessages,
+    generateObject,
 } from "@elizaos/core";
 import { Scraper } from "agent-twitter-client";
+import { tweetTemplate } from "../templates";
+import { isTweetContent, TweetSchema } from "../types";
 
 async function composeTweet(
     runtime: IAgentRuntime,
-    message: Memory,
+    _message: Memory,
     state?: State
 ): Promise<string> {
     try {
-        // Get recent conversation history
-        const recentMessages = await runtime.messageManager.getMemories({
-            roomId: message.roomId,
-            count: 5,
-        });
-
-        const formattedHistory = formatMessages({
-            messages: recentMessages,
-            actors: state?.actorsData,
-        });
-
-        // Template for generating the tweet
-        const tweetTemplate = `
-# Context
-Recent conversation:
-${formattedHistory}
-
-Character style:
-${runtime.character.style.post.join("\n")}
-
-Topics of expertise:
-${runtime.character.topics.join(", ")}
-
-# Task
-Generate a tweet that:
-1. Relates to the recent conversation or requested topic
-2. Matches the character's style and voice
-3. Is concise and engaging
-4. Must be UNDER 180 characters (this is a strict requirement)
-5. Speaks from the perspective of ${runtime.character.name}
-
-Generate only the tweet text, no other commentary.`;
-
-        const context = await composeContext({
+        const context = composeContext({
             state,
             template: tweetTemplate,
         });
 
-        const tweetContent = await generateText({
+        const tweetContentObject = await generateObject({
             runtime,
             context,
             modelClass: ModelClass.SMALL,
+            schema: TweetSchema,
             stop: ["\n"],
         });
 
-        const trimmedContent = tweetContent.trim();
+        if (!isTweetContent(tweetContentObject.object)) {
+            elizaLogger.error(
+                "Invalid tweet content:",
+                tweetContentObject.object
+            );
+            return;
+        }
 
-        // Enforce character limit
-        if (trimmedContent.length > 180) {
+        const trimmedContent = tweetContentObject.object.text.trim();
+
+        // Skip truncation if TWITTER_PREMIUM is true
+        if (
+            process.env.TWITTER_PREMIUM?.toLowerCase() !== "true" &&
+            trimmedContent.length > 180
+        ) {
             elizaLogger.warn(
                 `Tweet too long (${trimmedContent.length} chars), truncating...`
             );
@@ -88,15 +69,17 @@ async function postTweet(content: string): Promise<boolean> {
         const twitter2faSecret = process.env.TWITTER_2FA_SECRET;
 
         if (!username || !password) {
-            throw new Error(
+            elizaLogger.error(
                 "Twitter credentials not configured in environment"
             );
+            return false;
         }
 
         // Login with credentials
         await scraper.login(username, password, email, twitter2faSecret);
         if (!(await scraper.isLoggedIn())) {
-            throw new Error("Failed to login to Twitter");
+            elizaLogger.error("Failed to login to Twitter");
+            return false;
         }
 
         // Send the tweet
@@ -109,16 +92,18 @@ async function postTweet(content: string): Promise<boolean> {
         // Check for Twitter API errors
         if (body.errors) {
             const error = body.errors[0];
-            throw new Error(
+            elizaLogger.error(
                 `Twitter API error (${error.code}): ${error.message}`
             );
+            return false;
         }
 
         // Check for successful tweet creation
         if (!body?.data?.create_tweet?.tweet_results?.result) {
-            throw new Error(
+            elizaLogger.error(
                 "Failed to post tweet: No tweet result in response"
             );
+            return false;
         }
 
         return true;
@@ -186,12 +171,64 @@ export const postAction: Action = {
         [
             {
                 user: "{{user1}}",
-                content: { text: "Share your thoughts on AI" },
+                content: { text: "You should tweet that" },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "The future of AI lies in responsible development and ethical considerations. We must ensure it benefits all of humanity.",
+                    text: "I'll share this update with my followers right away!",
+                    action: "POST_TWEET",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: { text: "Post this tweet" },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "I'll post that as a tweet now.",
+                    action: "POST_TWEET",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: { text: "Share that on Twitter" },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "I'll share this message on Twitter.",
+                    action: "POST_TWEET",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: { text: "Post that on X" },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "I'll post this message on X right away.",
+                    action: "POST_TWEET",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: { text: "You should put that on X dot com" },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "I'll put this message up on X.com now.",
                     action: "POST_TWEET",
                 },
             },
