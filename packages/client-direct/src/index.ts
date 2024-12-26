@@ -182,7 +182,7 @@ export class DirectClient {
                 };
 
                 const memory: Memory = {
-                    id: stringToUuid(messageId + "-" + runtime.agentId),
+                    id: stringToUuid(messageId + "-" + userId),
                     ...userMessage,
                     agentId: runtime.agentId,
                     userId,
@@ -218,6 +218,7 @@ export class DirectClient {
 
                 // save response to memory
                 const responseMessage: Memory = {
+                    id: stringToUuid(messageId + "-" + runtime.agentId),
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,
