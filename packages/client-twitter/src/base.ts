@@ -313,6 +313,8 @@ export class ClientBase extends EventEmitter {
 
     async fetchTimelineForActions(count: number): Promise<Tweet[]> {
         elizaLogger.debug("fetching timeline for actions");
+
+        const agentUsername = this.runtime.getSetting("TWITTER_USERNAME");
         const homeTimeline = await this.twitterClient.fetchHomeTimeline(
             count,
             []
@@ -340,7 +342,7 @@ export class ClientBase extends EventEmitter {
                 tweet.legacy?.entities?.media?.filter(
                     (media) => media.type === "video"
                 ) || [],
-        }));
+        })).filter(tweet => tweet.username !== agentUsername); // do not perform action on self-tweets
     }
 
     async fetchSearchTweets(
