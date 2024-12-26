@@ -19,9 +19,9 @@ export class SquidRouterProvider {
 
     constructor(
         private squidSDKUrl: string,
-        private squidIntergatorID: string
+        private squidIntegratorID: string
     ) {
-        this.squid = getSDK(squidSDKUrl,squidIntergatorID);
+        this.squid = getSDK(squidSDKUrl,squidIntegratorID);
     }
 
     async initialize(): Promise<void> {

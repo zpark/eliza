@@ -15,7 +15,7 @@ export default defineConfig({
         "https",
         "http",
         "agentkeepalive",
-        "viem",
+        "@0xsquid/squid-types",
         "@0xsquid/sdk",
     ],
 });
