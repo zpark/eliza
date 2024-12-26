@@ -160,7 +160,7 @@ export async function generateText({
         modelConfiguration?.maxInputTokens ||
         models[provider].settings.maxInputTokens;
     const max_response_length =
-        modelConfiguration.max_response_length ||
+        modelConfiguration?.max_response_length ||
         models[provider].settings.maxOutputTokens;
 
     const apiKey = runtime.token;
