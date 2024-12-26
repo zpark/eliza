@@ -21,7 +21,7 @@ export const EmbeddingProvider = {
     BGE: "BGE",
 } as const;
 
-export type EmbeddingProvider =
+export type EmbeddingProviderType =
     (typeof EmbeddingProvider)[keyof typeof EmbeddingProvider];
 
 export namespace EmbeddingProvider {
@@ -34,7 +34,7 @@ export namespace EmbeddingProvider {
 export type EmbeddingConfig = {
     readonly dimensions: number;
     readonly model: string;
-    readonly provider: EmbeddingProvider;
+    readonly provider: EmbeddingProviderType;
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
