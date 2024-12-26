@@ -249,12 +249,14 @@ export class ClientBase extends EventEmitter {
         return homeTimeline.tweets;
     }
 
-    async fetchHomeTimeline(count: number): Promise<Tweet[]> {
+    /**
+     * Fetch timeline for twitter account, optionally only from followed accounts
+     */
+    async fetchHomeTimeline(count: number, following?: boolean): Promise<Tweet[]> {
         elizaLogger.debug("fetching home timeline");
-        const homeTimeline = await this.twitterClient.fetchHomeTimeline(
-            count,
-            []
-        );
+        const homeTimeline = following
+            ? await this.twitterClient.fetchFollowingTimeline(count, [])
+            : await this.twitterClient.fetchHomeTimeline(count, []);
 
         elizaLogger.debug(homeTimeline, { depth: Infinity });
         const processedTimeline = homeTimeline
