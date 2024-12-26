@@ -29,12 +29,6 @@ export function isXChainSwapContent(
     content: XChainSwapContent
 ): boolean {
 
-    console.log("content.fromChain: ",typeof content.fromChain);
-    console.log("content.toChain: ",typeof content.toChain);
-    console.log("content.fromToken: ",typeof content.fromToken);
-    console.log("content.toToken: ",typeof content.toToken);
-    console.log("content.toAddress: ",typeof content.toAddress);
-    console.log("content.amount: ",typeof content.amount);
     // Validate types
     const validTypes =
         typeof content.fromChain === "string" &&

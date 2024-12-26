@@ -9,7 +9,7 @@ import {nativeTokenConstant, SquidToken} from "../types";
 const getSDK = (baseUrl: string, integratorId: string): Squid => {
     const squid = new Squid({
         baseUrl: baseUrl,
-        integratorId: integratorId,
+        integratorId: integratorId
     });
     return squid;
 };
@@ -28,6 +28,10 @@ export class SquidRouterProvider {
         if(!this.squid.initialized) {
             await this.squid.init();
         }
+    }
+
+    getSquidObject(): Squid {
+        return this.squid;
     }
 
     getChains(): ChainData[] {

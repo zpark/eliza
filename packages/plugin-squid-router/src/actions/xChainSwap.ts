@@ -15,6 +15,8 @@ import {initSquidRouterProvider} from "../providers/squidRouter.ts";
 
 export { xChainSwapTemplate };
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const approveSpending = async (transactionRequestTarget: string, fromToken: string, fromAmount: string, signer: ethers.Signer) => {
     const erc20Abi = [
         "function approve(address spender, uint256 amount) public returns (bool)"
@@ -124,10 +126,13 @@ export const xChainSwapAction = {
                 toChain: toChainObject.chainId,
                 toToken: toTokenObject.address,
                 toAddress: content.toAddress,
-                enableBoost: true,
+                quoteOnly: false
             };
 
             console.log("Parameters:", params); // Printing the parameters for QA
+
+            //Wait 500ms to avoid rate limiting
+            await delay(1000);
 
             // Get the swap route using Squid SDK
             const {route} = await squidRouter.getRoute(params);
@@ -146,6 +151,9 @@ export const xChainSwapAction = {
                 );
             }
 
+            //Wait 500ms to avoid rate limiting
+            await delay(1000);
+
             // Execute the swap transaction
             const tx = (await squidRouter.executeRoute({
                 signer,
@@ -156,6 +164,14 @@ export const xChainSwapAction = {
             // Show the transaction receipt with Axelarscan link
             const axelarScanLink = "https://axelarscan.io/gmp/" + txReceipt.hash;
             elizaLogger.log(`Finished! Check Axelarscan for details: ${axelarScanLink}`);
+
+            if (callback) {
+                callback({
+                    text:
+                        "Swap completed successfully! Check Axelarscan for details:\n " + axelarScanLink,
+                    content: {},
+                });
+            }
 
 
 

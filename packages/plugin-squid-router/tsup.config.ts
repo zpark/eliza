@@ -14,8 +14,6 @@ export default defineConfig({
         "@node-llama-cpp",
         "https",
         "http",
-        "agentkeepalive",
-        "@0xsquid/squid-types",
-        "@0xsquid/sdk",
+        "agentkeepalive"
     ],
 });
