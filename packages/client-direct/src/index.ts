@@ -177,7 +177,8 @@ export class DirectClient {
                 };
 
                 const memory: Memory = {
-                    id: messageId,
+                    id: stringToUuid(messageId + "-" + runtime.agentId),
+                    ...userMessage,
                     agentId: runtime.agentId,
                     userId,
                     roomId,
