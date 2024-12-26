@@ -1,6 +1,6 @@
-import { composeContext, elizaLogger } from "@ai16z/eliza";
-import { generateMessageResponse, generateTrueOrFalse } from "@ai16z/eliza";
-import { booleanFooter, messageCompletionFooter } from "@ai16z/eliza";
+import { composeContext, elizaLogger } from "@elizaos/core";
+import { generateMessageResponse, generateTrueOrFalse } from "@elizaos/core";
+import { booleanFooter, messageCompletionFooter } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -10,7 +10,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 const maxContinuesInARow = 3;
 
@@ -61,7 +61,6 @@ export const continueAction: Action = {
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         const recentMessagesData = await runtime.messageManager.getMemories({
             roomId: message.roomId,
-            agentId: runtime.agentId,
             count: 10,
             unique: false,
         });
@@ -139,7 +138,7 @@ export const continueAction: Action = {
         const response = await generateMessageResponse({
             runtime,
             context,
-            modelClass: ModelClass.SMALL,
+            modelClass: ModelClass.LARGE,
         });
 
         response.inReplyTo = message.id;

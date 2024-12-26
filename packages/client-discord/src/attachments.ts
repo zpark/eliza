@@ -1,5 +1,5 @@
-import { generateText, trimTokens } from "@ai16z/eliza";
-import { parseJSONObjectFromText } from "@ai16z/eliza";
+import { generateText, trimTokens } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     IAgentRuntime,
     IImageDescriptionService,
@@ -8,9 +8,8 @@ import {
     IVideoService,
     Media,
     ModelClass,
-    Service,
     ServiceType,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { Attachment, Collection } from "discord.js";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
@@ -23,11 +22,11 @@ async function generateSummary(
     text = trimTokens(text, 100000, "gpt-4o-mini"); // TODO: clean this up
 
     const prompt = `Please generate a concise summary for the following text:
-  
+
   Text: """
   ${text}
   """
-  
+
   Respond with a JSON object in the following format:
   \`\`\`json
   {
@@ -336,7 +335,10 @@ export class AttachmentManager {
         }
 
         if (videoService.isVideoUrl(attachment.url)) {
-            const videoInfo = await videoService.processVideo(attachment.url);
+            const videoInfo = await videoService.processVideo(
+                attachment.url,
+                this.runtime
+            );
             return {
                 id: attachment.id,
                 url: attachment.url,

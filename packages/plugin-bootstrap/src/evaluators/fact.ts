@@ -1,19 +1,18 @@
-import { composeContext } from "@ai16z/eliza";
-import { generateObjectArray } from "@ai16z/eliza";
-import { MemoryManager } from "@ai16z/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateObjectArray } from "@elizaos/core";
+import { MemoryManager } from "@elizaos/core";
 import {
     ActionExample,
-    Content,
     IAgentRuntime,
     Memory,
     ModelClass,
     Evaluator,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 export const formatFacts = (facts: Memory[]) => {
     const messageStrings = facts
         .reverse()
-        .map((fact: Memory) => `${(fact.content as Content)?.content}`);
+        .map((fact: Memory) => fact.content.text);
     const finalMessageStrings = messageStrings.join("\n");
     return finalMessageStrings;
 };
@@ -65,7 +64,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     const facts = await generateObjectArray({
         runtime,
         context,
-        modelClass: ModelClass.SMALL,
+        modelClass: ModelClass.LARGE,
     });
 
     const factsManager = new MemoryManager({

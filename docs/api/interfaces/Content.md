@@ -1,8 +1,8 @@
-[@ai16z/eliza v1.0.0](../index.md) / Content
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Content
 
 # Interface: Content
 
-Represents the content of a message, including its main text (`content`), any associated action (`action`), and the source of the content (`source`), if applicable.
+Represents the content of a message or communication
 
 ## Indexable
 
@@ -14,9 +14,11 @@ Represents the content of a message, including its main text (`content`), any as
 
 > **text**: `string`
 
+The main text content
+
 #### Defined in
 
-[packages/core/src/types.ts:12](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L12)
+[packages/core/src/types.ts:13](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L13)
 
 ---
 
@@ -24,9 +26,11 @@ Represents the content of a message, including its main text (`content`), any as
 
 > `optional` **action**: `string`
 
+Optional action associated with the message
+
 #### Defined in
 
-[packages/core/src/types.ts:13](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L13)
+[packages/core/src/types.ts:16](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L16)
 
 ---
 
@@ -34,9 +38,11 @@ Represents the content of a message, including its main text (`content`), any as
 
 > `optional` **source**: `string`
 
+Optional source/origin of the content
+
 #### Defined in
 
-[packages/core/src/types.ts:14](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L14)
+[packages/core/src/types.ts:19](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L19)
 
 ---
 
@@ -44,9 +50,11 @@ Represents the content of a message, including its main text (`content`), any as
 
 > `optional` **url**: `string`
 
+URL of the original message/post (e.g. tweet URL, Discord message link)
+
 #### Defined in
 
-[packages/core/src/types.ts:15](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L15)
+[packages/core/src/types.ts:22](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L22)
 
 ---
 
@@ -54,9 +62,11 @@ Represents the content of a message, including its main text (`content`), any as
 
 > `optional` **inReplyTo**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
+UUID of parent message if this is a reply/thread
+
 #### Defined in
 
-[packages/core/src/types.ts:16](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L16)
+[packages/core/src/types.ts:25](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L25)
 
 ---
 
@@ -64,6 +74,8 @@ Represents the content of a message, including its main text (`content`), any as
 
 > `optional` **attachments**: [`Media`](../type-aliases/Media.md)[]
 
+Array of media attachments
+
 #### Defined in
 
-[packages/core/src/types.ts:17](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L17)
+[packages/core/src/types.ts:28](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L28)

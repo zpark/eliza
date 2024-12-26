@@ -1,4 +1,4 @@
-[@ai16z/eliza v1.0.0](../index.md) / MemoryManager
+[@elizaos/core v0.1.6-alpha.4](../index.md) / MemoryManager
 
 # Class: MemoryManager
 
@@ -36,7 +36,7 @@ The AgentRuntime instance associated with this manager.
 
 #### Defined in
 
-[packages/core/src/memory.ts:35](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L35)
+[packages/core/src/memory.ts:33](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L33)
 
 ## Properties
 
@@ -52,7 +52,7 @@ The AgentRuntime instance associated with this manager.
 
 #### Defined in
 
-[packages/core/src/memory.ts:22](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L22)
+[packages/core/src/memory.ts:20](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L20)
 
 ---
 
@@ -68,7 +68,7 @@ The name of the database table this manager operates on.
 
 #### Defined in
 
-[packages/core/src/memory.ts:27](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L27)
+[packages/core/src/memory.ts:25](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L25)
 
 ## Methods
 
@@ -76,19 +76,25 @@ The name of the database table this manager operates on.
 
 > **addEmbeddingToMemory**(`memory`): `Promise`\<[`Memory`](../interfaces/Memory.md)\>
 
-Adds an embedding vector to a memory object. If the memory already has an embedding, it is returned as is.
+Adds an embedding vector to a memory object if one doesn't already exist.
+The embedding is generated from the memory's text content using the runtime's
+embedding model. If the memory has no text content, an error is thrown.
 
 #### Parameters
 
 • **memory**: [`Memory`](../interfaces/Memory.md)
 
-The memory object to add an embedding to.
+The memory object to add an embedding to
 
 #### Returns
 
 `Promise`\<[`Memory`](../interfaces/Memory.md)\>
 
-A Promise resolving to the memory object, potentially updated with an embedding vector.
+The memory object with an embedding vector added
+
+#### Throws
+
+Error if the memory content is empty
 
 #### Implementation of
 
@@ -96,7 +102,7 @@ A Promise resolving to the memory object, potentially updated with an embedding 
 
 #### Defined in
 
-[packages/core/src/memory.ts:45](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L45)
+[packages/core/src/memory.ts:52](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L52)
 
 ---
 
@@ -124,8 +130,6 @@ The number of memories to retrieve.
 
 Whether to retrieve unique memories only.
 
-• **opts.agentId?**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
 • **opts.start?**: `number`
 
 • **opts.end?**: `number`
@@ -142,7 +146,7 @@ A Promise resolving to an array of Memory objects.
 
 #### Defined in
 
-[packages/core/src/memory.ts:66](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L66)
+[packages/core/src/memory.ts:87](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L87)
 
 ---
 
@@ -164,7 +168,7 @@ A Promise resolving to an array of Memory objects.
 
 #### Defined in
 
-[packages/core/src/memory.ts:93](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L93)
+[packages/core/src/memory.ts:111](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L111)
 
 ---
 
@@ -187,8 +191,6 @@ Options including match threshold, count, user IDs, and uniqueness.
 • **opts.match_threshold?**: `number`
 
 The similarity threshold for matching memories.
-
-• **opts.agentId?**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
 • **opts.count?**: `number`
 
@@ -214,7 +216,7 @@ A Promise resolving to an array of Memory objects that match the embedding.
 
 #### Defined in
 
-[packages/core/src/memory.ts:120](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L120)
+[packages/core/src/memory.ts:137](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L137)
 
 ---
 
@@ -246,7 +248,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:158](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L158)
+[packages/core/src/memory.ts:172](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L172)
 
 ---
 
@@ -257,8 +259,6 @@ A Promise that resolves when the operation completes.
 #### Parameters
 
 • **params**
-
-• **params.agentId?**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
 • **params.roomIds**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`[]
 
@@ -272,7 +272,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:173](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L173)
+[packages/core/src/memory.ts:192](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L192)
 
 ---
 
@@ -294,7 +294,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:184](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L184)
+[packages/core/src/memory.ts:200](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L200)
 
 ---
 
@@ -322,7 +322,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:194](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L194)
+[packages/core/src/memory.ts:211](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L211)
 
 ---
 
@@ -350,7 +350,7 @@ A Promise that resolves when the operation completes.
 
 #### Defined in
 
-[packages/core/src/memory.ts:206](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L206)
+[packages/core/src/memory.ts:223](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L223)
 
 ---
 
@@ -382,4 +382,4 @@ A Promise resolving to the count of memories.
 
 #### Defined in
 
-[packages/core/src/memory.ts:219](https://github.com/ai16z/eliza/blob/main/packages/core/src/memory.ts#L219)
+[packages/core/src/memory.ts:236](https://github.com/elizaos/eliza/blob/main/packages/core/src/memory.ts#L236)

@@ -1,4 +1,4 @@
-[@ai16z/eliza v1.0.0](../index.md) / stringArrayFooter
+[@elizaos/core v0.1.6-alpha.4](../index.md) / stringArrayFooter
 
 # Variable: stringArrayFooter
 
@@ -6,4 +6,4 @@
 
 ## Defined in
 
-[packages/core/src/parsing.ts:41](https://github.com/ai16z/eliza/blob/main/packages/core/src/parsing.ts#L41)
+[packages/core/src/parsing.ts:42](https://github.com/elizaos/eliza/blob/main/packages/core/src/parsing.ts#L42)

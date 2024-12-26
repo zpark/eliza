@@ -1,24 +1,15 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "lib": ["ESNext", "dom"],
-        "moduleResolution": "Bundler",
-        "outDir": "./dist",
-        "rootDir": ".",
-        "strict": false,
+        "target": "ES2020",
+        "module": "commonjs",
+        "moduleResolution": "node",
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": false,
-        "allowImportingTsExtensions": true,
-        "declaration": true,
-        "emitDeclarationOnly": true,
-        "resolveJsonModule": true,
-        "noImplicitAny": false,
-        "allowJs": true,
-        "checkJs": false,
-        "noEmitOnError": false,
-        "moduleDetection": "force",
-        "allowArbitraryExtensions": true
-    }
-}
+        "forceConsistentCasingInFileNames": true
+    },
+    "files": [],
+    "references": [
+        { "path": "packages/core" },
+        { "path": "packages/client-slack" }
+    ]
+} 

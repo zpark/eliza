@@ -1,4 +1,4 @@
-[@ai16z/eliza v1.0.0](../index.md) / Service
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Service
 
 # Class: `abstract` Service
 
@@ -11,6 +11,8 @@
 - [`IBrowserService`](../interfaces/IBrowserService.md)
 - [`ISpeechService`](../interfaces/ISpeechService.md)
 - [`IPdfService`](../interfaces/IPdfService.md)
+- [`IAwsS3Service`](../interfaces/IAwsS3Service.md)
+- [`ISlackService`](../interfaces/ISlackService.md)
 
 ## Constructors
 
@@ -22,15 +24,37 @@
 
 [`Service`](Service.md)
 
-## Properties
+## Accessors
 
 ### serviceType
 
-> `static` **serviceType**: [`ServiceType`](../enumerations/ServiceType.md)
+#### Get Signature
+
+> **get** `static` **serviceType**(): [`ServiceType`](../enumerations/ServiceType.md)
+
+##### Returns
+
+[`ServiceType`](../enumerations/ServiceType.md)
 
 #### Defined in
 
-[packages/core/src/types.ts:519](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L519)
+[packages/core/src/types.ts:1005](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1005)
+
+---
+
+### serviceType
+
+#### Get Signature
+
+> **get** **serviceType**(): [`ServiceType`](../enumerations/ServiceType.md)
+
+##### Returns
+
+[`ServiceType`](../enumerations/ServiceType.md)
+
+#### Defined in
+
+[packages/core/src/types.ts:1016](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1016)
 
 ## Methods
 
@@ -48,4 +72,24 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:521](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L521)
+[packages/core/src/types.ts:1009](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1009)
+
+---
+
+### initialize()
+
+> `abstract` **initialize**(`runtime`): `Promise`\<`void`\>
+
+Add abstract initialize method that must be implemented by derived classes
+
+#### Parameters
+
+• **runtime**: [`IAgentRuntime`](../interfaces/IAgentRuntime.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[packages/core/src/types.ts:1021](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1021)

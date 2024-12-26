@@ -1,4 +1,4 @@
-[@ai16z/eliza v1.0.0](../index.md) / booleanFooter
+[@elizaos/core v0.1.6-alpha.4](../index.md) / booleanFooter
 
 # Variable: booleanFooter
 
@@ -6,4 +6,4 @@
 
 ## Defined in
 
-[packages/core/src/parsing.ts:34](https://github.com/ai16z/eliza/blob/main/packages/core/src/parsing.ts#L34)
+[packages/core/src/parsing.ts:35](https://github.com/elizaos/eliza/blob/main/packages/core/src/parsing.ts#L35)

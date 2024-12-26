@@ -1,4 +1,4 @@
-[@ai16z/eliza v1.0.0](../index.md) / ServiceType
+[@elizaos/core v0.1.6-alpha.4](../index.md) / ServiceType
 
 # Enumeration: ServiceType
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:658](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L658)
+[packages/core/src/types.ts:1206](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1206)
 
 ---
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:659](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L659)
+[packages/core/src/types.ts:1207](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1207)
 
 ---
 
@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:660](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L660)
+[packages/core/src/types.ts:1208](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1208)
 
 ---
 
@@ -40,7 +40,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:661](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L661)
+[packages/core/src/types.ts:1209](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1209)
 
 ---
 
@@ -50,7 +50,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:662](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L662)
+[packages/core/src/types.ts:1210](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1210)
 
 ---
 
@@ -60,7 +60,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:663](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L663)
+[packages/core/src/types.ts:1211](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1211)
 
 ---
 
@@ -70,4 +70,44 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:664](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L664)
+[packages/core/src/types.ts:1212](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1212)
+
+---
+
+### INTIFACE
+
+> **INTIFACE**: `"intiface"`
+
+#### Defined in
+
+[packages/core/src/types.ts:1213](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1213)
+
+---
+
+### AWS_S3
+
+> **AWS_S3**: `"aws_s3"`
+
+#### Defined in
+
+[packages/core/src/types.ts:1214](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1214)
+
+---
+
+### BUTTPLUG
+
+> **BUTTPLUG**: `"buttplug"`
+
+#### Defined in
+
+[packages/core/src/types.ts:1215](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1215)
+
+---
+
+### SLACK
+
+> **SLACK**: `"slack"`
+
+#### Defined in
+
+[packages/core/src/types.ts:1216](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L1216)

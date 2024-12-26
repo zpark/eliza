@@ -24,7 +24,7 @@
 **Pré-requisitos (OBRIGATÓRIO):**
 
 -   [Python 2.7+](https://www.python.org/downloads/)
--   [Node.js 23.1+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+-   [Node.js 23.3+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 -   [pnpm](https://pnpm.io/installation)
 
 ### Edite o arquivo .env
@@ -98,7 +98,6 @@ TWITTER_DRY_RUN=false
 TWITTER_USERNAME= # Nome de usuário da conta
 TWITTER_PASSWORD= # Senha da conta
 TWITTER_EMAIL= # Email da conta
-TWITTER_COOKIES= # Cookies da conta
 
 X_SERVER_URL=
 XAI_API_KEY=
@@ -108,6 +107,14 @@ XAI_MODEL=
 # Para perguntar coisas ao Claude
 ANTHROPIC_API_KEY=
 
+# EVM
+EVM_PRIVATE_KEY=EXAMPLE_WALLET_PRIVATE_KEY
+
+# Solana
+SOLANA_PRIVATE_KEY=EXAMPLE_WALLET_PRIVATE_KEY
+SOLANA_PUBLIC_KEY=EXAMPLE_WALLET_PUBLIC_KEY
+
+# Fallback Wallet Configuration (deprecated)
 WALLET_PRIVATE_KEY=EXAMPLE_WALLET_PRIVATE_KEY
 WALLET_PUBLIC_KEY=EXAMPLE_WALLET_PUBLIC_KEY
 

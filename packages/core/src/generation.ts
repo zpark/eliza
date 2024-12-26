@@ -2,6 +2,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
@@ -10,7 +11,7 @@ import {
 import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
-import { encoding_for_model, TiktokenModel } from "tiktoken";
+import { encodingForModel, TiktokenModel } from "js-tiktoken";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -20,6 +21,7 @@ import {
     parseJsonArrayFromText,
     parseJSONObjectFromText,
     parseShouldRespondFromText,
+    parseActionResponseFromText,
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
@@ -30,7 +32,10 @@ import {
     ModelClass,
     ModelProviderName,
     ServiceType,
+    SearchResponse,
+    ActionResponse,
 } from "./types.ts";
+import { fal } from "@fal-ai/client";
 
 /**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
@@ -61,25 +66,85 @@ export async function generateText({
         return "";
     }
 
+    elizaLogger.log("Generating text...");
+
+    elizaLogger.info("Generating text with options:", {
+        modelProvider: runtime.modelProvider,
+        model: modelClass,
+    });
+
     const provider = runtime.modelProvider;
     const endpoint =
         runtime.character.modelEndpointOverride || models[provider].endpoint;
     let model = models[provider].model[modelClass];
 
-    // if runtime.getSetting("LLAMACLOUD_MODEL_LARGE") is true and modelProvider is LLAMACLOUD, then use the large model
-    if (
-        runtime.getSetting("LLAMACLOUD_MODEL_LARGE") &&
-        provider === ModelProviderName.LLAMACLOUD
-    ) {
-        model = runtime.getSetting("LLAMACLOUD_MODEL_LARGE");
+    // allow character.json settings => secrets to override models
+    // FIXME: add MODEL_MEDIUM support
+    switch (provider) {
+        // if runtime.getSetting("LLAMACLOUD_MODEL_LARGE") is true and modelProvider is LLAMACLOUD, then use the large model
+        case ModelProviderName.LLAMACLOUD:
+            {
+                switch (modelClass) {
+                    case ModelClass.LARGE:
+                        {
+                            model =
+                                runtime.getSetting("LLAMACLOUD_MODEL_LARGE") ||
+                                model;
+                        }
+                        break;
+                    case ModelClass.SMALL:
+                        {
+                            model =
+                                runtime.getSetting("LLAMACLOUD_MODEL_SMALL") ||
+                                model;
+                        }
+                        break;
+                }
+            }
+            break;
+        case ModelProviderName.TOGETHER:
+            {
+                switch (modelClass) {
+                    case ModelClass.LARGE:
+                        {
+                            model =
+                                runtime.getSetting("TOGETHER_MODEL_LARGE") ||
+                                model;
+                        }
+                        break;
+                    case ModelClass.SMALL:
+                        {
+                            model =
+                                runtime.getSetting("TOGETHER_MODEL_SMALL") ||
+                                model;
+                        }
+                        break;
+                }
+            }
+            break;
+        case ModelProviderName.OPENROUTER:
+            {
+                switch (modelClass) {
+                    case ModelClass.LARGE:
+                        {
+                            model =
+                                runtime.getSetting("LARGE_OPENROUTER_MODEL") ||
+                                model;
+                        }
+                        break;
+                    case ModelClass.SMALL:
+                        {
+                            model =
+                                runtime.getSetting("SMALL_OPENROUTER_MODEL") ||
+                                model;
+                        }
+                        break;
+                }
+            }
+            break;
     }
 
-    if (
-        runtime.getSetting("LLAMACLOUD_MODEL_SMALL") &&
-        provider === ModelProviderName.LLAMACLOUD
-    ) {
-        model = runtime.getSetting("LLAMACLOUD_MODEL_SMALL");
-    }
+    elizaLogger.info("Selected model:", model);
 
     const temperature = models[provider].settings.temperature;
     const frequency_penalty = models[provider].settings.frequency_penalty;
@@ -103,10 +168,22 @@ export async function generateText({
         );
 
         switch (provider) {
+            // OPENAI & LLAMACLOUD shared same structure.
             case ModelProviderName.OPENAI:
-            case ModelProviderName.LLAMACLOUD: {
+            case ModelProviderName.ETERNALAI:
+            case ModelProviderName.ALI_BAILIAN:
+            case ModelProviderName.VOLENGINE:
+            case ModelProviderName.LLAMACLOUD:
+            case ModelProviderName.NANOGPT:
+            case ModelProviderName.HYPERBOLIC:
+            case ModelProviderName.TOGETHER:
+            case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model.");
-                const openai = createOpenAI({ apiKey, baseURL: endpoint });
+                const openai = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    fetch: runtime.fetch,
+                });
 
                 const { text: openaiResponse } = await aiGenerateText({
                     model: openai.languageModel(model),
@@ -127,9 +204,11 @@ export async function generateText({
             }
 
             case ModelProviderName.GOOGLE: {
-                const google = createGoogleGenerativeAI();
+                const google = createGoogleGenerativeAI({
+                    fetch: runtime.fetch,
+                });
 
-                const { text: anthropicResponse } = await aiGenerateText({
+                const { text: googleResponse } = await aiGenerateText({
                     model: google(model),
                     prompt: context,
                     system:
@@ -142,14 +221,18 @@ export async function generateText({
                     presencePenalty: presence_penalty,
                 });
 
-                response = anthropicResponse;
+                response = googleResponse;
+                elizaLogger.debug("Received response from Google model.");
                 break;
             }
 
             case ModelProviderName.ANTHROPIC: {
                 elizaLogger.debug("Initializing Anthropic model.");
 
-                const anthropic = createAnthropic({ apiKey });
+                const anthropic = createAnthropic({
+                    apiKey,
+                    fetch: runtime.fetch,
+                });
 
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
@@ -172,7 +255,10 @@ export async function generateText({
             case ModelProviderName.CLAUDE_VERTEX: {
                 elizaLogger.debug("Initializing Claude Vertex model.");
 
-                const anthropic = createAnthropic({ apiKey });
+                const anthropic = createAnthropic({
+                    apiKey,
+                    fetch: runtime.fetch,
+                });
 
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
@@ -196,7 +282,11 @@ export async function generateText({
 
             case ModelProviderName.GROK: {
                 elizaLogger.debug("Initializing Grok model.");
-                const grok = createOpenAI({ apiKey, baseURL: endpoint });
+                const grok = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    fetch: runtime.fetch,
+                });
 
                 const { text: grokResponse } = await aiGenerateText({
                     model: grok.languageModel(model, {
@@ -219,8 +309,7 @@ export async function generateText({
             }
 
             case ModelProviderName.GROQ: {
-                console.log("Initializing Groq model.");
-                const groq = createGroq({ apiKey });
+                const groq = createGroq({ apiKey, fetch: runtime.fetch });
 
                 const { text: groqResponse } = await aiGenerateText({
                     model: groq.languageModel(model),
@@ -236,7 +325,6 @@ export async function generateText({
                 });
 
                 response = groqResponse;
-                console.log("Received response from Groq model.");
                 break;
             }
 
@@ -244,11 +332,10 @@ export async function generateText({
                 elizaLogger.debug(
                     "Using local Llama model for text completion."
                 );
-                const textGenerationService = runtime
-                    .getService<ITextGenerationService>(
+                const textGenerationService =
+                    runtime.getService<ITextGenerationService>(
                         ServiceType.TEXT_GENERATION
-                    )
-                    .getInstance();
+                    );
 
                 if (!textGenerationService) {
                     throw new Error("Text generation service not found");
@@ -269,9 +356,13 @@ export async function generateText({
             case ModelProviderName.REDPILL: {
                 elizaLogger.debug("Initializing RedPill model.");
                 const serverUrl = models[provider].endpoint;
-                const openai = createOpenAI({ apiKey, baseURL: serverUrl });
+                const openai = createOpenAI({
+                    apiKey,
+                    baseURL: serverUrl,
+                    fetch: runtime.fetch,
+                });
 
-                const { text: openaiResponse } = await aiGenerateText({
+                const { text: redpillResponse } = await aiGenerateText({
                     model: openai.languageModel(model),
                     prompt: context,
                     temperature: temperature,
@@ -284,15 +375,19 @@ export async function generateText({
                     presencePenalty: presence_penalty,
                 });
 
-                response = openaiResponse;
-                elizaLogger.debug("Received response from OpenAI model.");
+                response = redpillResponse;
+                elizaLogger.debug("Received response from redpill model.");
                 break;
             }
 
             case ModelProviderName.OPENROUTER: {
                 elizaLogger.debug("Initializing OpenRouter model.");
                 const serverUrl = models[provider].endpoint;
-                const openrouter = createOpenAI({ apiKey, baseURL: serverUrl });
+                const openrouter = createOpenAI({
+                    apiKey,
+                    baseURL: serverUrl,
+                    fetch: runtime.fetch,
+                });
 
                 const { text: openrouterResponse } = await aiGenerateText({
                     model: openrouter.languageModel(model),
@@ -314,14 +409,15 @@ export async function generateText({
 
             case ModelProviderName.OLLAMA:
                 {
-                    console.debug("Initializing Ollama model.");
+                    elizaLogger.debug("Initializing Ollama model.");
 
                     const ollamaProvider = createOllama({
                         baseURL: models[provider].endpoint + "/api",
+                        fetch: runtime.fetch,
                     });
                     const ollama = ollamaProvider(model);
 
-                    console.debug("****** MODEL\n", model);
+                    elizaLogger.debug("****** MODEL\n", model);
 
                     const { text: ollamaResponse } = await aiGenerateText({
                         model: ollama,
@@ -334,7 +430,7 @@ export async function generateText({
 
                     response = ollamaResponse;
                 }
-                console.debug("Received response from Ollama model.");
+                elizaLogger.debug("Received response from Ollama model.");
                 break;
 
             case ModelProviderName.HEURIST: {
@@ -342,6 +438,7 @@ export async function generateText({
                 const heurist = createOpenAI({
                     apiKey: apiKey,
                     baseURL: endpoint,
+                    fetch: runtime.fetch,
                 });
 
                 const { text: heuristResponse } = await aiGenerateText({
@@ -361,6 +458,104 @@ export async function generateText({
                 elizaLogger.debug("Received response from Heurist model.");
                 break;
             }
+            case ModelProviderName.GAIANET: {
+                elizaLogger.debug("Initializing GAIANET model.");
+
+                var baseURL = models[provider].endpoint;
+                if (!baseURL) {
+                    switch (modelClass) {
+                        case ModelClass.SMALL:
+                            baseURL =
+                                settings.SMALL_GAIANET_SERVER_URL ||
+                                "https://llama3b.gaia.domains/v1";
+                            break;
+                        case ModelClass.MEDIUM:
+                            baseURL =
+                                settings.MEDIUM_GAIANET_SERVER_URL ||
+                                "https://llama8b.gaia.domains/v1";
+                            break;
+                        case ModelClass.LARGE:
+                            baseURL =
+                                settings.LARGE_GAIANET_SERVER_URL ||
+                                "https://qwen72b.gaia.domains/v1";
+                            break;
+                    }
+                }
+
+                elizaLogger.debug("Using GAIANET model with baseURL:", baseURL);
+
+                const openai = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    fetch: runtime.fetch,
+                });
+
+                const { text: openaiResponse } = await aiGenerateText({
+                    model: openai.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+
+                response = openaiResponse;
+                elizaLogger.debug("Received response from GAIANET model.");
+                break;
+            }
+
+            case ModelProviderName.GALADRIEL: {
+                elizaLogger.debug("Initializing Galadriel model.");
+                const galadriel = createOpenAI({
+                    apiKey: apiKey,
+                    baseURL: endpoint,
+                    fetch: runtime.fetch,
+                });
+
+                const { text: galadrielResponse } = await aiGenerateText({
+                    model: galadriel.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+
+                response = galadrielResponse;
+                elizaLogger.debug("Received response from Galadriel model.");
+                break;
+            }
+
+            case ModelProviderName.VENICE: {
+                elizaLogger.debug("Initializing Venice model.");
+                const venice = createOpenAI({
+                    apiKey: apiKey,
+                    baseURL: endpoint,
+                });
+
+                const { text: veniceResponse } = await aiGenerateText({
+                    model: venice.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                });
+
+                response = veniceResponse;
+                elizaLogger.debug("Received response from Venice model.");
+                break;
+            }
 
             default: {
                 const errorMessage = `Unsupported provider: ${provider}`;
@@ -378,23 +573,43 @@ export async function generateText({
 
 /**
  * Truncate the context to the maximum length allowed by the model.
- * @param model The model to use for generateText.
- * @param context The context of the message to be completed.
- * @param max_context_length The maximum length of the context to apply to the generateText.
- * @returns
+ * @param context The text to truncate
+ * @param maxTokens Maximum number of tokens to keep
+ * @param model The tokenizer model to use
+ * @returns The truncated text
  */
-export function trimTokens(context, maxTokens, model) {
-    // Count tokens and truncate context if necessary
-    const encoding = encoding_for_model(model as TiktokenModel);
-    let tokens = encoding.encode(context);
-    const textDecoder = new TextDecoder();
-    if (tokens.length > maxTokens) {
-        tokens = tokens.reverse().slice(maxTokens).reverse();
+export function trimTokens(
+    context: string,
+    maxTokens: number,
+    model: TiktokenModel
+): string {
+    if (!context) return "";
+    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
-        context = textDecoder.decode(encoding.decode(tokens));
+    // Get the tokenizer for the model
+    const encoding = encodingForModel(model);
+
+    try {
+        // Encode the text into tokens
+        const tokens = encoding.encode(context);
+
+        // If already within limits, return unchanged
+        if (tokens.length <= maxTokens) {
+            return context;
+        }
+
+        // Keep the most recent tokens by slicing from the end
+        const truncatedTokens = tokens.slice(-maxTokens);
+
+        // Decode back to text - js-tiktoken decode() returns a string directly
+        return encoding.decode(truncatedTokens);
+    } catch (error) {
+        console.error("Error in trimTokens:", error);
+        // Return truncated string if tokenization fails
+        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
-    return context;
 }
+
 /**
  * Sends a message to the model to determine if it should respond to the given context.
  * @param opts - The options for the generateText request
@@ -462,36 +677,19 @@ export async function generateShouldRespond({
  * @param content - The text content to split into chunks
  * @param chunkSize - The maximum size of each chunk in tokens
  * @param bleed - Number of characters to overlap between chunks (default: 100)
- * @param model - The model name to use for tokenization (default: runtime.model)
  * @returns Promise resolving to array of text chunks with bleed sections
  */
 export async function splitChunks(
     content: string,
-    chunkSize: number,
-    bleed: number = 100
+    chunkSize: number = 512,
+    bleed: number = 20
 ): Promise<string[]> {
-    const encoding = encoding_for_model("gpt-4o-mini");
+    const textSplitter = new RecursiveCharacterTextSplitter({
+        chunkSize: Number(chunkSize),
+        chunkOverlap: Number(bleed),
+    });
 
-    const tokens = encoding.encode(content);
-    const chunks: string[] = [];
-    const textDecoder = new TextDecoder();
-
-    for (let i = 0; i < tokens.length; i += chunkSize) {
-        const chunk = tokens.slice(i, i + chunkSize);
-        const decodedChunk = textDecoder.decode(encoding.decode(chunk));
-
-        // Append bleed characters from the previous chunk
-        const startBleed = i > 0 ? content.slice(i - bleed, i) : "";
-        // Append bleed characters from the next chunk
-        const endBleed =
-            i + chunkSize < tokens.length
-                ? content.slice(i + chunkSize, i + chunkSize + bleed)
-                : "";
-
-        chunks.push(startBleed + decodedChunk + endBleed);
-    }
-
-    return chunks;
+    return textSplitter.splitText(content);
 }
 
 /**
@@ -519,7 +717,6 @@ export async function generateTrueOrFalse({
     modelClass: string;
 }): Promise<boolean> {
     let retryDelay = 1000;
-    console.log("modelClass", modelClass);
 
     const stop = Array.from(
         new Set([
@@ -601,7 +798,7 @@ export async function generateTextArray({
     }
 }
 
-export async function generateObject({
+export async function generateObjectDeprecated({
     runtime,
     context,
     modelClass,
@@ -611,7 +808,7 @@ export async function generateObject({
     modelClass: string;
 }): Promise<any> {
     if (!context) {
-        elizaLogger.error("generateObject context is empty");
+        elizaLogger.error("generateObjectDeprecated context is empty");
         return null;
     }
     let retryDelay = 1000;
@@ -700,11 +897,14 @@ export async function generateMessageResponse({
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
+            elizaLogger.log("Generating message response..");
+
             const response = await generateText({
                 runtime,
                 context,
                 modelClass,
             });
+
             // try parsing the response as JSON, if null then try again
             const parsedContent = parseJSONObjectFromText(response) as Content;
             if (!parsedContent) {
@@ -735,6 +935,8 @@ export const generateImage = async (
         seed?: number;
         modelId?: string;
         jobId?: string;
+        stylePreset?: string;
+        hideWatermark?: boolean;
     },
     runtime: IAgentRuntime
 ): Promise<{
@@ -742,21 +944,40 @@ export const generateImage = async (
     data?: string[];
     error?: any;
 }> => {
-    const { prompt, width, height } = data;
-    let { count } = data;
-    if (!count) {
-        count = 1;
-    }
+    const model = getModel(runtime.imageModelProvider, ModelClass.IMAGE);
+    const modelSettings = models[runtime.imageModelProvider].imageSettings;
 
-    const model = getModel(runtime.character.modelProvider, ModelClass.IMAGE);
-    const modelSettings = models[runtime.character.modelProvider].imageSettings;
+    elizaLogger.info("Generating image with options:", {
+        imageModelProvider: model,
+    });
+
     const apiKey =
-        runtime.token ??
-        runtime.getSetting("HEURIST_API_KEY") ??
-        runtime.getSetting("TOGETHER_API_KEY") ??
-        runtime.getSetting("OPENAI_API_KEY");
+    runtime.imageModelProvider === runtime.modelProvider
+        ? runtime.token
+        : (() => {
+            // First try to match the specific provider
+            switch (runtime.imageModelProvider) {
+                case ModelProviderName.HEURIST:
+                    return runtime.getSetting("HEURIST_API_KEY");
+                case ModelProviderName.TOGETHER:
+                    return runtime.getSetting("TOGETHER_API_KEY");
+                case ModelProviderName.FAL:
+                    return runtime.getSetting("FAL_API_KEY");
+                case ModelProviderName.OPENAI:
+                    return runtime.getSetting("OPENAI_API_KEY");
+                case ModelProviderName.VENICE:
+                    return runtime.getSetting("VENICE_API_KEY");
+                default:
+                    // If no specific match, try the fallback chain
+                    return (runtime.getSetting("HEURIST_API_KEY") ??
+                           runtime.getSetting("TOGETHER_API_KEY") ??
+                           runtime.getSetting("FAL_API_KEY") ??
+                           runtime.getSetting("OPENAI_API_KEY") ??
+                           runtime.getSetting("VENICE_API_KEY"));
+            }
+        })();
     try {
-        if (runtime.character.modelProvider === ModelProviderName.HEURIST) {
+        if (runtime.imageModelProvider === ModelProviderName.HEURIST) {
             const response = await fetch(
                 "http://sequencer.heurist.xyz/submit_job",
                 {
@@ -794,37 +1015,158 @@ export const generateImage = async (
             const imageURL = await response.json();
             return { success: true, data: [imageURL] };
         } else if (
-            runtime.character.modelProvider === ModelProviderName.LLAMACLOUD
+            runtime.imageModelProvider === ModelProviderName.TOGETHER ||
+            // for backwards compat
+            runtime.imageModelProvider === ModelProviderName.LLAMACLOUD
         ) {
             const together = new Together({ apiKey: apiKey as string });
             const response = await together.images.create({
                 model: "black-forest-labs/FLUX.1-schnell",
-                prompt,
-                width,
-                height,
+                prompt: data.prompt,
+                width: data.width,
+                height: data.height,
                 steps: modelSettings?.steps ?? 4,
-                n: count,
+                n: data.count,
             });
-            const urls: string[] = [];
-            for (let i = 0; i < response.data.length; i++) {
-                const json = response.data[i].b64_json;
-                // decode base64
-                const base64 = Buffer.from(json, "base64").toString("base64");
-                urls.push(base64);
+
+            // Add type assertion to handle the response properly
+            const togetherResponse =
+                response as unknown as TogetherAIImageResponse;
+
+            if (
+                !togetherResponse.data ||
+                !Array.isArray(togetherResponse.data)
+            ) {
+                throw new Error("Invalid response format from Together AI");
             }
+
+            // Rest of the code remains the same...
             const base64s = await Promise.all(
-                urls.map(async (url) => {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    const buffer = await blob.arrayBuffer();
-                    let base64 = Buffer.from(buffer).toString("base64");
-                    base64 = "data:image/jpeg;base64," + base64;
-                    return base64;
+                togetherResponse.data.map(async (image) => {
+                    if (!image.url) {
+                        elizaLogger.error("Missing URL in image data:", image);
+                        throw new Error("Missing URL in Together AI response");
+                    }
+
+                    // Fetch the image from the URL
+                    const imageResponse = await fetch(image.url);
+                    if (!imageResponse.ok) {
+                        throw new Error(
+                            `Failed to fetch image: ${imageResponse.statusText}`
+                        );
+                    }
+
+                    // Convert to blob and then to base64
+                    const blob = await imageResponse.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+                    // Return with proper MIME type
+                    return `data:image/jpeg;base64,${base64}`;
                 })
             );
+
+            if (base64s.length === 0) {
+                throw new Error("No images generated by Together AI");
+            }
+
+            elizaLogger.debug(`Generated ${base64s.length} images`);
+            return { success: true, data: base64s };
+        } else if (runtime.imageModelProvider === ModelProviderName.FAL) {
+            fal.config({
+                credentials: apiKey as string,
+            });
+
+            // Prepare the input parameters according to their schema
+            const input = {
+                prompt: data.prompt,
+                image_size: "square" as const,
+                num_inference_steps: modelSettings?.steps ?? 50,
+                guidance_scale: data.guidanceScale || 3.5,
+                num_images: data.count,
+                enable_safety_checker:
+                    runtime.getSetting("FAL_AI_ENABLE_SAFETY_CHECKER") ===
+                    "true",
+                safety_tolerance: Number(
+                    runtime.getSetting("FAL_AI_SAFETY_TOLERANCE") || "2"
+                ),
+                output_format: "png" as const,
+                seed: data.seed ?? 6252023,
+                ...(runtime.getSetting("FAL_AI_LORA_PATH")
+                    ? {
+                          loras: [
+                              {
+                                  path: runtime.getSetting("FAL_AI_LORA_PATH"),
+                                  scale: 1,
+                              },
+                          ],
+                      }
+                    : {}),
+            };
+
+            // Subscribe to the model
+            const result = await fal.subscribe(model, {
+                input,
+                logs: true,
+                onQueueUpdate: (update) => {
+                    if (update.status === "IN_PROGRESS") {
+                        elizaLogger.info(update.logs.map((log) => log.message));
+                    }
+                },
+            });
+
+            // Convert the returned image URLs to base64 to match existing functionality
+            const base64Promises = result.data.images.map(async (image) => {
+                const response = await fetch(image.url);
+                const blob = await response.blob();
+                const buffer = await blob.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString("base64");
+                return `data:${image.content_type};base64,${base64}`;
+            });
+
+            const base64s = await Promise.all(base64Promises);
+            return { success: true, data: base64s };
+        } else if (runtime.imageModelProvider === ModelProviderName.VENICE) {
+            const response = await fetch(
+                "https://api.venice.ai/api/v1/image/generate",
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: data.modelId || "fluently-xl",
+                        prompt: data.prompt,
+                        negative_prompt: data.negativePrompt,
+                        width: data.width,
+                        height: data.height,
+                        steps: data.numIterations,
+                        seed: data.seed,
+                        style_preset: data.stylePreset,
+                        hide_watermark: data.hideWatermark,
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.images || !Array.isArray(result.images)) {
+                throw new Error("Invalid response format from Venice AI");
+            }
+
+            const base64s = result.images.map((base64String) => {
+                if (!base64String) {
+                    throw new Error(
+                        "Empty base64 string in Venice AI response"
+                    );
+                }
+                return `data:image/png;base64,${base64String}`;
+            });
+
             return { success: true, data: base64s };
         } else {
-            let targetSize = `${width}x${height}`;
+            let targetSize = `${data.width}x${data.height}`;
             if (
                 targetSize !== "1024x1024" &&
                 targetSize !== "1792x1024" &&
@@ -832,12 +1174,18 @@ export const generateImage = async (
             ) {
                 targetSize = "1024x1024";
             }
-            const openai = new OpenAI({ apiKey: apiKey as string });
+            const openaiApiKey = runtime.getSetting("OPENAI_API_KEY") as string;
+            if (!openaiApiKey) {
+                throw new Error("OPENAI_API_KEY is not set");
+            }
+            const openai = new OpenAI({
+                apiKey: openaiApiKey as string,
+            });
             const response = await openai.images.generate({
                 model,
-                prompt,
+                prompt: data.prompt,
                 size: targetSize as "1024x1024" | "1792x1024" | "1024x1792",
-                n: count,
+                n: data.count,
                 response_format: "b64_json",
             });
             const base64s = response.data.map(
@@ -859,9 +1207,10 @@ export const generateCaption = async (
     description: string;
 }> => {
     const { imageUrl } = data;
-    const imageDescriptionService = runtime
-        .getService<IImageDescriptionService>(ServiceType.IMAGE_DESCRIPTION)
-        .getInstance();
+    const imageDescriptionService =
+        runtime.getService<IImageDescriptionService>(
+            ServiceType.IMAGE_DESCRIPTION
+        );
 
     if (!imageDescriptionService) {
         throw new Error("Image description service not found");
@@ -872,6 +1221,43 @@ export const generateCaption = async (
         title: resp.title.trim(),
         description: resp.description.trim(),
     };
+};
+
+export const generateWebSearch = async (
+    query: string,
+    runtime: IAgentRuntime
+): Promise<SearchResponse> => {
+    const apiUrl = "https://api.tavily.com/search";
+    const apiKey = runtime.getSetting("TAVILY_API_KEY");
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                api_key: apiKey,
+                query,
+                include_answer: true,
+                max_results: 3, // 5 (default)
+                topic: "general", // "general"(default) "news"
+                search_depth: "basic", // "basic"(default) "advanced"
+                include_images: false, // false (default) true
+            }),
+        });
+
+        if (!response.ok) {
+            throw new elizaLogger.error(
+                `HTTP error! status: ${response.status}`
+            );
+        }
+
+        const data: SearchResponse = await response.json();
+        return data;
+    } catch (error) {
+        elizaLogger.error("Error:", error);
+    }
 };
 /**
  * Configuration options for generating objects with a model.
@@ -907,7 +1293,7 @@ interface ModelSettings {
  * @returns {Promise<any[]>} - A promise that resolves to an array of generated objects.
  * @throws {Error} - Throws an error if the provider is unsupported or if generation fails.
  */
-export const generateObjectV2 = async ({
+export const generateObject = async ({
     runtime,
     context,
     modelClass,
@@ -924,7 +1310,10 @@ export const generateObjectV2 = async ({
     }
 
     const provider = runtime.modelProvider;
-    const model = models[provider].model[modelClass];
+    const model = models[provider].model[modelClass] as TiktokenModel;
+    if (!model) {
+        throw new Error(`Unsupported model class: ${modelClass}`);
+    }
     const temperature = models[provider].settings.temperature;
     const frequency_penalty = models[provider].settings.frequency_penalty;
     const presence_penalty = models[provider].settings.presence_penalty;
@@ -933,7 +1322,7 @@ export const generateObjectV2 = async ({
     const apiKey = runtime.token;
 
     try {
-        context = await trimTokens(context, max_context_length, modelClass);
+        context = trimTokens(context, max_context_length, model);
 
         const modelOptions: ModelSettings = {
             prompt: context,
@@ -995,16 +1384,23 @@ export async function handleProvider(
     const { provider, runtime, context, modelClass } = options;
     switch (provider) {
         case ModelProviderName.OPENAI:
+        case ModelProviderName.ETERNALAI:
+        case ModelProviderName.ALI_BAILIAN:
+        case ModelProviderName.VOLENGINE:
         case ModelProviderName.LLAMACLOUD:
+        case ModelProviderName.TOGETHER:
+        case ModelProviderName.NANOGPT:
+        case ModelProviderName.AKASH_CHAT_API:
             return await handleOpenAI(options);
         case ModelProviderName.ANTHROPIC:
+        case ModelProviderName.CLAUDE_VERTEX:
             return await handleAnthropic(options);
         case ModelProviderName.GROK:
             return await handleGrok(options);
         case ModelProviderName.GROQ:
             return await handleGroq(options);
         case ModelProviderName.LLAMALOCAL:
-            return await generateObject({
+            return await generateObjectDeprecated({
                 runtime,
                 context,
                 modelClass,
@@ -1039,7 +1435,8 @@ async function handleOpenAI({
     mode,
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const openai = createOpenAI({ apiKey });
+    const baseURL = models.openai.endpoint || undefined;
+    const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
         schema,
@@ -1236,4 +1633,58 @@ async function handleOllama({
         mode,
         ...modelOptions,
     });
+}
+
+// Add type definition for Together AI response
+interface TogetherAIImageResponse {
+    data: Array<{
+        url: string;
+        content_type?: string;
+        image_type?: string;
+    }>;
+}
+
+export async function generateTweetActions({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: string;
+}): Promise<ActionResponse | null> {
+    let retryDelay = 1000;
+    while (true) {
+        try {
+            const response = await generateText({
+                runtime,
+                context,
+                modelClass,
+            });
+            console.debug(
+                "Received response from generateText for tweet actions:",
+                response
+            );
+            const { actions } = parseActionResponseFromText(response.trim());
+            if (actions) {
+                console.debug("Parsed tweet actions:", actions);
+                return actions;
+            } else {
+                elizaLogger.debug("generateTweetActions no valid response");
+            }
+        } catch (error) {
+            elizaLogger.error("Error in generateTweetActions:", error);
+            if (
+                error instanceof TypeError &&
+                error.message.includes("queueTextCompletion")
+            ) {
+                elizaLogger.error(
+                    "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
+                );
+            }
+        }
+        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay *= 2;
+    }
 }

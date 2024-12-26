@@ -1,3 +1,4 @@
+// eslint-disable-next-line
 // @ts-nocheck
 // src/actions/joinVoice
 import {
@@ -7,7 +8,7 @@ import {
     IAgentRuntime,
     Memory,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import {
     Channel,
     ChannelType,
@@ -167,7 +168,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const datestr = new Date().toUTCString().replace(/:/g, "-");
+            const _datestr = new Date().toUTCString().replace(/:/g, "-");
 
             const responseContent = await generateText({
                 runtime,

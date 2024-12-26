@@ -1,14 +1,20 @@
-[@ai16z/eliza v1.0.0](../index.md) / Models
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Models
 
 # Type Alias: Models
 
 > **Models**: `object`
+
+Model configurations by provider
 
 ## Type declaration
 
 ### openai
 
 > **openai**: [`Model`](Model.md)
+
+### eternalai
+
+> **eternalai**: [`Model`](Model.md)
 
 ### anthropic
 
@@ -25,6 +31,10 @@
 ### llama_cloud
 
 > **llama_cloud**: [`Model`](Model.md)
+
+### together
+
+> **together**: [`Model`](Model.md)
 
 ### llama_local
 
@@ -54,6 +64,42 @@
 
 > **heurist**: [`Model`](Model.md)
 
+### galadriel
+
+> **galadriel**: [`Model`](Model.md)
+
+### falai
+
+> **falai**: [`Model`](Model.md)
+
+### gaianet
+
+> **gaianet**: [`Model`](Model.md)
+
+### ali_bailian
+
+> **ali_bailian**: [`Model`](Model.md)
+
+### volengine
+
+> **volengine**: [`Model`](Model.md)
+
+### nanogpt
+
+> **nanogpt**: [`Model`](Model.md)
+
+### hyperbolic
+
+> **hyperbolic**: [`Model`](Model.md)
+
+### venice
+
+> **venice**: [`Model`](Model.md)
+
+### akash_chat_api
+
+> **akash_chat_api**: [`Model`](Model.md)
+
 ## Defined in
 
-[packages/core/src/types.ts:105](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L105)
+[packages/core/src/types.ts:188](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L188)

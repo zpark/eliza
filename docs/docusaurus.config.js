@@ -1,12 +1,15 @@
 import { themes as prismThemes } from "prism-react-renderer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const config = {
   title: "eliza",
   tagline: "Flexible, scalable AI agents for everyone",
   favicon: "img/favicon.ico",
-  url: "https://ai16z.github.io",
+  url: "https://elizaos.github.io",
   baseUrl: "/eliza/",
-  organizationName: "ai16z",
+  organizationName: "elizaos",
   projectName: "eliza",
   deploymentBranch: "gh-pages",
   trailingSlash: true,
@@ -23,10 +26,44 @@ const config = {
   themes: ["@docusaurus/theme-mermaid"],
   plugins: [
     [
+      "@docusaurus/plugin-content-docs",
+      {
+        id: "community",
+        path: "community",
+        routeBasePath: "community",
+        sidebarItemsGenerator: async function ({defaultSidebarItemsGenerator, ...args}) {
+          const sidebarItems = await defaultSidebarItemsGenerator(args);
+          return sidebarItems.map(item => {
+            if (item.type === 'category') {
+              switch(item.label.toLowerCase()) {
+                case 'streams':
+                  item.label = '📺 ' + item.label;
+                  break;
+                case 'development':
+                  item.label = '💻 ' + item.label;
+                  break;
+                case 'the_arena':
+                  item.label = '🏟️ ' + item.label;
+                  break;
+                default:
+                  item.label = '📄 ' + item.label;
+              }
+            }
+            return item;
+          })
+          .sort((a, b) => {
+            const labelA = a.label || ''; // Ensure `label` exists
+            const labelB = b.label || ''; // Ensure `label` exists
+            return labelA.localeCompare(labelB, undefined, { numeric: true });
+          });
+        }
+      }
+    ],
+    [
       "docusaurus-plugin-typedoc",
       {
         entryPoints: ["../packages/core/src/index.ts"],
-        tsconfig: "../tsconfig.json",
+        tsconfig: "../packages/core/tsconfig.json",
         out: "./api",
         skipErrorChecking: true,
         excludeExternals: false,
@@ -65,7 +102,7 @@ const config = {
         treatValidationWarningsAsErrors: true,
         searchInComments: true,
         navigationLinks: {
-          GitHub: "https://github.com/ai16z/eliza",
+          GitHub: "https://github.com/elizaos/eliza",
           Documentation: "/docs/intro",
         },
       },
@@ -86,7 +123,7 @@ const config = {
       {
         docs: {
           sidebarPath: "./sidebars.js",
-          editUrl: "https://github.com/ai16z/eliza/tree/main/docs/",
+          editUrl: "https://github.com/elizaos/eliza/tree/main/docs/",
           routeBasePath: "docs",
           exclude: ["**/_media/**"],
         },
@@ -129,7 +166,14 @@ const config = {
           docId: "index",
         },
         {
-          href: "https://github.com/ai16z/eliza",
+          type: "doc",
+          docsPluginId: "community",
+          position: "left",
+          label: "Community",
+          docId: "index",
+        },
+        {
+          href: "https://github.com/elizaos/eliza",
           label: "GitHub",
           position: "right",
         },
@@ -156,7 +200,7 @@ const config = {
             },
             {
               label: "Twitter",
-              href: "https://twitter.com/ai16zdao",
+              href: "https://twitter.com/elizaosdao",
             },
           ],
         },
@@ -165,17 +209,20 @@ const config = {
           items: [
             {
               label: "GitHub",
-              href: "https://github.com/ai16z/eliza",
+              href: "https://github.com/elizaos/eliza",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} ai16z.ai`,
+      copyright: `Copyright © ${new Date().getFullYear()} elizaos.ai`,
     },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
     },
+  },
+  customFields: {
+    GITHUB_ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
   },
 };
 

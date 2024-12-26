@@ -1,27 +1,71 @@
-import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
-import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
-import { DirectClientInterface } from "@ai16z/client-direct";
-import { DiscordClientInterface } from "@ai16z/client-discord";
-import { AutoClientInterface } from "@ai16z/client-auto";
-import { TelegramClientInterface } from "@ai16z/client-telegram";
-import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { AutoClientInterface } from "@elizaos/client-auto";
+import { DiscordClientInterface } from "@elizaos/client-discord";
+import { FarcasterAgentClient } from "@elizaos/client-farcaster";
+import { LensAgentClient } from "@elizaos/client-lens";
+import { SlackClientInterface } from "@elizaos/client-slack";
+import { TelegramClientInterface } from "@elizaos/client-telegram";
+import { TwitterClientInterface } from "@elizaos/client-twitter";
 import {
-    defaultCharacter,
     AgentRuntime,
-    settings,
+    CacheManager,
     Character,
-    IAgentRuntime,
-    ModelProviderName,
+    Clients,
+    DbCacheAdapter,
+    defaultCharacter,
     elizaLogger,
-} from "@ai16z/eliza";
-import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
-import { solanaPlugin } from "@ai16z/plugin-solana";
-import { nodePlugin } from "@ai16z/plugin-node";
+    FsCacheAdapter,
+    IAgentRuntime,
+    ICacheManager,
+    IDatabaseAdapter,
+    IDatabaseCacheAdapter,
+    ModelProviderName,
+    settings,
+    stringToUuid,
+    validateCharacterConfig,
+    CacheStore,
+} from "@elizaos/core";
+import { RedisClient } from "@elizaos/adapter-redis";
+import { zgPlugin } from "@elizaos/plugin-0g";
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import createGoatPlugin from "@elizaos/plugin-goat";
+// import { intifacePlugin } from "@elizaos/plugin-intiface";
+import { DirectClient } from "@elizaos/client-direct";
+import { aptosPlugin } from "@elizaos/plugin-aptos";
+import {
+    advancedTradePlugin,
+    coinbaseCommercePlugin,
+    coinbaseMassPaymentsPlugin,
+    tokenContractPlugin,
+    tradePlugin,
+    webhookPlugin,
+} from "@elizaos/plugin-coinbase";
+import { confluxPlugin } from "@elizaos/plugin-conflux";
+import { evmPlugin } from "@elizaos/plugin-evm";
+import { storyPlugin } from "@elizaos/plugin-story";
+import { flowPlugin } from "@elizaos/plugin-flow";
+import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
+import { multiversxPlugin } from "@elizaos/plugin-multiversx";
+import { nearPlugin } from "@elizaos/plugin-near";
+import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
+import { createNodePlugin } from "@elizaos/plugin-node";
+import { solanaPlugin } from "@elizaos/plugin-solana";
+import { suiPlugin } from "@elizaos/plugin-sui";
+import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { tonPlugin } from "@elizaos/plugin-ton";
+import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+import { abstractPlugin } from "@elizaos/plugin-abstract";
 import Database from "better-sqlite3";
 import fs from "fs";
-import readline from "readline";
+import path from "path";
+import { fileURLToPath } from "url";
 import yargs from "yargs";
-import { character } from "./character.ts";
+import net from "net";
+
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
 
 export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     const waitTime =
@@ -29,12 +73,19 @@ export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     return new Promise((resolve) => setTimeout(resolve, waitTime));
 };
 
+const logFetch = async (url: string, options: any) => {
+    elizaLogger.debug(`Fetching ${url}`);
+    // Disabled to avoid disclosure of sensitive information such as API keys
+    // elizaLogger.debug(JSON.stringify(options, null, 2));
+    return fetch(url, options);
+};
+
 export function parseArguments(): {
     character?: string;
     characters?: string;
 } {
     try {
-        return yargs(process.argv.slice(2))
+        return yargs(process.argv.slice(3))
             .option("character", {
                 type: "string",
                 description: "Path to the character JSON file",
@@ -46,9 +97,21 @@ export function parseArguments(): {
             })
             .parseSync();
     } catch (error) {
-        console.error("Error parsing arguments:", error);
+        elizaLogger.error("Error parsing arguments:", error);
         return {};
     }
+}
+
+function tryLoadFile(filePath: string): string | null {
+    try {
+        return fs.readFileSync(filePath, "utf8");
+    } catch (e) {
+        return null;
+    }
+}
+
+function isAllStrings(arr: unknown[]): boolean {
+    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
 
 export async function loadCharacters(
@@ -56,46 +119,93 @@ export async function loadCharacters(
 ): Promise<Character[]> {
     let characterPaths = charactersArg
         ?.split(",")
-        .map((path) => path.trim())
-        .map((path) => {
-            if (path[0] === "/") return path; // handle absolute paths
-            // assume relative to the project root where pnpm is ran
-            return `../${path}`;
-        });
+        .map((filePath) => filePath.trim());
     const loadedCharacters = [];
 
     if (characterPaths?.length > 0) {
-        for (const path of characterPaths) {
+        for (const characterPath of characterPaths) {
+            let content = null;
+            let resolvedPath = "";
+
+            // Try different path resolutions in order
+            const pathsToTry = [
+                characterPath, // exact path as specified
+                path.resolve(process.cwd(), characterPath), // relative to cwd
+                path.resolve(process.cwd(), "agent", characterPath), // Add this
+                path.resolve(__dirname, characterPath), // relative to current script
+                path.resolve(
+                    __dirname,
+                    "characters",
+                    path.basename(characterPath)
+                ), // relative to agent/characters
+                path.resolve(
+                    __dirname,
+                    "../characters",
+                    path.basename(characterPath)
+                ), // relative to characters dir from agent
+                path.resolve(
+                    __dirname,
+                    "../../characters",
+                    path.basename(characterPath)
+                ), // relative to project root characters dir
+            ];
+
+            elizaLogger.info(
+                "Trying paths:",
+                pathsToTry.map((p) => ({
+                    path: p,
+                    exists: fs.existsSync(p),
+                }))
+            );
+
+            for (const tryPath of pathsToTry) {
+                content = tryLoadFile(tryPath);
+                if (content !== null) {
+                    resolvedPath = tryPath;
+                    break;
+                }
+            }
+
+            if (content === null) {
+                elizaLogger.error(
+                    `Error loading character from ${characterPath}: File not found in any of the expected locations`
+                );
+                elizaLogger.error("Tried the following paths:");
+                pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
+                process.exit(1);
+            }
+
             try {
-                const character = JSON.parse(fs.readFileSync(path, "utf8"));
+                const character = JSON.parse(content);
+                validateCharacterConfig(character);
 
-                // is there a "plugins" field?
-                if (character.plugins) {
-                    console.log("Plugins are: ", character.plugins);
-
+                // Handle plugins
+                if (isAllStrings(character.plugins)) {
+                    elizaLogger.info("Plugins are: ", character.plugins);
                     const importedPlugins = await Promise.all(
                         character.plugins.map(async (plugin) => {
-                            // if the plugin name doesnt start with @eliza,
-
                             const importedPlugin = await import(plugin);
-                            return importedPlugin;
+                            return importedPlugin.default;
                         })
                     );
-
                     character.plugins = importedPlugins;
                 }
 
                 loadedCharacters.push(character);
+                elizaLogger.info(
+                    `Successfully loaded character from: ${resolvedPath}`
+                );
             } catch (e) {
-                console.error(`Error loading character from ${path}: ${e}`);
-                // don't continue to load if a specified file is not found
+                elizaLogger.error(
+                    `Error parsing character from ${resolvedPath}: ${e}`
+                );
                 process.exit(1);
             }
         }
     }
 
     if (loadedCharacters.length === 0) {
-        console.log("No characters found, using default character");
+        elizaLogger.info("No characters found, using default character");
         loadedCharacters.push(defaultCharacter);
     }
 
@@ -105,14 +215,27 @@ export async function loadCharacters(
 export function getTokenForProvider(
     provider: ModelProviderName,
     character: Character
-) {
+): string {
     switch (provider) {
+        // no key needed for llama_local or gaianet
+        case ModelProviderName.LLAMALOCAL:
+            return "";
+        case ModelProviderName.OLLAMA:
+            return "";
+        case ModelProviderName.GAIANET:
+            return "";
         case ModelProviderName.OPENAI:
             return (
                 character.settings?.secrets?.OPENAI_API_KEY ||
                 settings.OPENAI_API_KEY
             );
+        case ModelProviderName.ETERNALAI:
+            return (
+                character.settings?.secrets?.ETERNALAI_API_KEY ||
+                settings.ETERNALAI_API_KEY
+            );
         case ModelProviderName.LLAMACLOUD:
+        case ModelProviderName.TOGETHER:
             return (
                 character.settings?.secrets?.LLAMACLOUD_API_KEY ||
                 settings.LLAMACLOUD_API_KEY ||
@@ -123,6 +246,7 @@ export function getTokenForProvider(
                 character.settings?.secrets?.OPENAI_API_KEY ||
                 settings.OPENAI_API_KEY
             );
+        case ModelProviderName.CLAUDE_VERTEX:
         case ModelProviderName.ANTHROPIC:
             return (
                 character.settings?.secrets?.ANTHROPIC_API_KEY ||
@@ -155,51 +279,150 @@ export function getTokenForProvider(
                 character.settings?.secrets?.GROQ_API_KEY ||
                 settings.GROQ_API_KEY
             );
+        case ModelProviderName.GALADRIEL:
+            return (
+                character.settings?.secrets?.GALADRIEL_API_KEY ||
+                settings.GALADRIEL_API_KEY
+            );
+        case ModelProviderName.FAL:
+            return (
+                character.settings?.secrets?.FAL_API_KEY || settings.FAL_API_KEY
+            );
+        case ModelProviderName.ALI_BAILIAN:
+            return (
+                character.settings?.secrets?.ALI_BAILIAN_API_KEY ||
+                settings.ALI_BAILIAN_API_KEY
+            );
+        case ModelProviderName.VOLENGINE:
+            return (
+                character.settings?.secrets?.VOLENGINE_API_KEY ||
+                settings.VOLENGINE_API_KEY
+            );
+        case ModelProviderName.NANOGPT:
+            return (
+                character.settings?.secrets?.NANOGPT_API_KEY ||
+                settings.NANOGPT_API_KEY
+            );
+        case ModelProviderName.HYPERBOLIC:
+            return (
+                character.settings?.secrets?.HYPERBOLIC_API_KEY ||
+                settings.HYPERBOLIC_API_KEY
+            );
+        case ModelProviderName.VENICE:
+            return (
+                character.settings?.secrets?.VENICE_API_KEY ||
+                settings.VENICE_API_KEY
+            );
+        case ModelProviderName.AKASH_CHAT_API:
+            return (
+                character.settings?.secrets?.AKASH_CHAT_API_KEY ||
+                settings.AKASH_CHAT_API_KEY
+            );
+        case ModelProviderName.GOOGLE:
+            return (
+                character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
+                settings.GOOGLE_GENERATIVE_AI_API_KEY
+            );
+        default:
+            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
+            elizaLogger.error(errorMessage);
+            throw new Error(errorMessage);
     }
 }
 
-function initializeDatabase() {
+function initializeDatabase(dataDir: string) {
     if (process.env.POSTGRES_URL) {
-        return new PostgresDatabaseAdapter({
+        elizaLogger.info("Initializing PostgreSQL connection...");
+        const db = new PostgresDatabaseAdapter({
             connectionString: process.env.POSTGRES_URL,
+            parseInputs: true,
         });
+
+        // Test the connection
+        db.init()
+            .then(() => {
+                elizaLogger.success(
+                    "Successfully connected to PostgreSQL database"
+                );
+            })
+            .catch((error) => {
+                elizaLogger.error("Failed to connect to PostgreSQL:", error);
+            });
+
+        return db;
     } else {
-        return new SqliteDatabaseAdapter(new Database("./db.sqlite"));
+        const filePath =
+            process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
+        // ":memory:";
+        const db = new SqliteDatabaseAdapter(new Database(filePath));
+        return db;
     }
 }
 
+// also adds plugins from character file into the runtime
 export async function initializeClients(
     character: Character,
     runtime: IAgentRuntime
 ) {
-    const clients = [];
-    const clientTypes =
+    // each client can only register once
+    // and if we want two we can explicitly support it
+    const clients: Record<string, any> = {};
+    const clientTypes: string[] =
         character.clients?.map((str) => str.toLowerCase()) || [];
+    elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
-    if (clientTypes.includes("auto")) {
+    if (clientTypes.includes(Clients.DIRECT)) {
         const autoClient = await AutoClientInterface.start(runtime);
-        if (autoClient) clients.push(autoClient);
+        if (autoClient) clients.auto = autoClient;
     }
 
-    if (clientTypes.includes("discord")) {
-        clients.push(await DiscordClientInterface.start(runtime));
+    if (clientTypes.includes(Clients.DISCORD)) {
+        const discordClient = await DiscordClientInterface.start(runtime);
+        if (discordClient) clients.discord = discordClient;
     }
 
-    if (clientTypes.includes("telegram")) {
+    if (clientTypes.includes(Clients.TELEGRAM)) {
         const telegramClient = await TelegramClientInterface.start(runtime);
-        if (telegramClient) clients.push(telegramClient);
+        if (telegramClient) clients.telegram = telegramClient;
     }
 
-    if (clientTypes.includes("twitter")) {
-        const twitterClients = await TwitterClientInterface.start(runtime);
-        clients.push(twitterClients);
+    if (clientTypes.includes(Clients.TWITTER)) {
+        const twitterClient = await TwitterClientInterface.start(runtime);
+        if (twitterClient) {
+            clients.twitter = twitterClient;
+        }
+    }
+
+    if (clientTypes.includes(Clients.FARCASTER)) {
+        // why is this one different :(
+        const farcasterClient = new FarcasterAgentClient(runtime);
+        if (farcasterClient) {
+            farcasterClient.start();
+            clients.farcaster = farcasterClient;
+        }
+    }
+    if (clientTypes.includes("lens")) {
+        const lensClient = new LensAgentClient(runtime);
+        lensClient.start();
+        clients.lens = lensClient;
+    }
+
+    elizaLogger.log("client keys", Object.keys(clients));
+
+    // TODO: Add Slack client to the list
+    // Initialize clients as an object
+
+    if (clientTypes.includes("slack")) {
+        const slackClient = await SlackClientInterface.start(runtime);
+        if (slackClient) clients.slack = slackClient; // Use object property instead of push
     }
 
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
                 for (const client of plugin.clients) {
-                    clients.push(await client.start(runtime));
+                    const startedClient = await client.start(runtime);
+                    clients[client.name] = startedClient; // Assuming client has a name property
                 }
             }
         }
@@ -208,65 +431,272 @@ export async function initializeClients(
     return clients;
 }
 
+function getSecret(character: Character, secret: string) {
+    return character.settings?.secrets?.[secret] || process.env[secret];
+}
+
+let nodePlugin: any | undefined;
+
 export async function createAgent(
     character: Character,
-    db: any,
+    db: IDatabaseAdapter,
+    cache: ICacheManager,
     token: string
-) {
+): Promise<AgentRuntime> {
     elizaLogger.success(
         elizaLogger.successesTitle,
         "Creating runtime for character",
         character.name
     );
+
+    nodePlugin ??= createNodePlugin();
+
+    const teeMode = getSecret(character, "TEE_MODE") || "OFF";
+    const walletSecretSalt = getSecret(character, "WALLET_SECRET_SALT");
+
+    // Validate TEE configuration
+    if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
+        elizaLogger.error(
+            "WALLET_SECRET_SALT required when TEE_MODE is enabled"
+        );
+        throw new Error("Invalid TEE configuration");
+    }
+
+    let goatPlugin: any | undefined;
+    if (getSecret(character, "EVM_PROVIDER_URL")) {
+        goatPlugin = await createGoatPlugin((secret) =>
+            getSecret(character, secret)
+        );
+    }
+
     return new AgentRuntime({
         databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
         evaluators: [],
         character,
+        // character.plugins are handled when clients are added
         plugins: [
             bootstrapPlugin,
+            getSecret(character, "CONFLUX_CORE_PRIVATE_KEY")
+                ? confluxPlugin
+                : null,
             nodePlugin,
-            character.settings.secrets?.WALLET_PUBLIC_KEY ? solanaPlugin : null,
+            getSecret(character, "SOLANA_PUBLIC_KEY") ||
+            (getSecret(character, "WALLET_PUBLIC_KEY") &&
+                !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
+                ? solanaPlugin
+                : null,
+            (getSecret(character, "NEAR_ADDRESS") ||
+                getSecret(character, "NEAR_WALLET_PUBLIC_KEY")) &&
+            getSecret(character, "NEAR_WALLET_SECRET_KEY")
+                ? nearPlugin
+                : null,
+            getSecret(character, "EVM_PUBLIC_KEY") ||
+            (getSecret(character, "WALLET_PUBLIC_KEY") &&
+                getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
+                ? evmPlugin
+                : null,
+            (getSecret(character, "SOLANA_PUBLIC_KEY") ||
+                (getSecret(character, "WALLET_PUBLIC_KEY") &&
+                    !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith(
+                        "0x"
+                    ))) &&
+            getSecret(character, "SOLANA_ADMIN_PUBLIC_KEY") &&
+            getSecret(character, "SOLANA_PRIVATE_KEY") &&
+            getSecret(character, "SOLANA_ADMIN_PRIVATE_KEY")
+                ? nftGenerationPlugin
+                : null,
+            getSecret(character, "ZEROG_PRIVATE_KEY") ? zgPlugin : null,
+            getSecret(character, "COINBASE_COMMERCE_KEY")
+                ? coinbaseCommercePlugin
+                : null,
+            getSecret(character, "FAL_API_KEY") ||
+            getSecret(character, "OPENAI_API_KEY") ||
+            getSecret(character, "VENICE_API_KEY") ||
+            getSecret(character, "HEURIST_API_KEY")
+                ? imageGenerationPlugin
+                : null,
+            getSecret(character, "FAL_API_KEY") 
+                ? ThreeDGenerationPlugin
+                : null,
+            ...(getSecret(character, "COINBASE_API_KEY") &&
+            getSecret(character, "COINBASE_PRIVATE_KEY")
+                ? [
+                      coinbaseMassPaymentsPlugin,
+                      tradePlugin,
+                      tokenContractPlugin,
+                      advancedTradePlugin,
+                  ]
+                : []),
+            ...(teeMode !== TEEMode.OFF && walletSecretSalt
+                ? [teePlugin, solanaPlugin]
+                : []),
+            getSecret(character, "COINBASE_API_KEY") &&
+            getSecret(character, "COINBASE_PRIVATE_KEY") &&
+            getSecret(character, "COINBASE_NOTIFICATION_URI")
+                ? webhookPlugin
+                : null,
+            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
+            getSecret(character, "ABSTRACT_PRIVATE_KEY")
+                ? abstractPlugin
+                : null,
+            getSecret(character, "FLOW_ADDRESS") &&
+            getSecret(character, "FLOW_PRIVATE_KEY")
+                ? flowPlugin
+                : null,
+            getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
+            getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
+            getSecret(character, "ZKSYNC_PRIVATE_KEY") ? zksyncEraPlugin : null,
+            getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
+            getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
+            getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
         services: [],
         managers: [],
+        cacheManager: cache,
+        fetch: logFetch,
     });
 }
 
-async function startAgent(character: Character, directClient: any) {
+function initializeFsCache(baseDir: string, character: Character) {
+    const cacheDir = path.resolve(baseDir, character.id, "cache");
+
+    const cache = new CacheManager(new FsCacheAdapter(cacheDir));
+    return cache;
+}
+
+function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
+    const cache = new CacheManager(new DbCacheAdapter(db, character.id));
+    return cache;
+}
+
+function initializeCache(
+    cacheStore: string,
+    character: Character,
+    baseDir?: string,
+    db?: IDatabaseCacheAdapter
+) {
+    switch (cacheStore) {
+        case CacheStore.REDIS:
+            if (process.env.REDIS_URL) {
+                elizaLogger.info("Connecting to Redis...");
+                const redisClient = new RedisClient(process.env.REDIS_URL);
+                return new CacheManager(
+                    new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
+                );
+            } else {
+                throw new Error("REDIS_URL environment variable is not set.");
+            }
+
+        case CacheStore.DATABASE:
+            if (db) {
+                elizaLogger.info("Using Database Cache...");
+                return initializeDbCache(character, db);
+            } else {
+                throw new Error(
+                    "Database adapter is not provided for CacheStore.Database."
+                );
+            }
+
+        case CacheStore.FILESYSTEM:
+            elizaLogger.info("Using File System Cache...");
+            return initializeFsCache(baseDir, character);
+
+        default:
+            throw new Error(
+                `Invalid cache store: ${cacheStore} or required configuration missing.`
+            );
+    }
+}
+
+async function startAgent(
+    character: Character,
+    directClient: DirectClient
+): Promise<AgentRuntime> {
+    let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
+        character.id ??= stringToUuid(character.name);
+        character.username ??= character.name;
+
         const token = getTokenForProvider(character.modelProvider, character);
-        const db = initializeDatabase();
+        const dataDir = path.join(__dirname, "../data");
 
-        const runtime = await createAgent(character, db, token);
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir, { recursive: true });
+        }
 
-        const clients = await initializeClients(
+        db = initializeDatabase(dataDir) as IDatabaseAdapter &
+            IDatabaseCacheAdapter;
+
+        await db.init();
+
+        const cache = initializeCache(
+            process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
-            runtime as IAgentRuntime
+            "",
+            db
+        ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
+        const runtime: AgentRuntime = await createAgent(
+            character,
+            db,
+            cache,
+            token
         );
 
-        directClient.registerAgent(await runtime);
+        // start services/plugins/process knowledge
+        await runtime.initialize();
 
-        return clients;
+        // start assigned clients
+        runtime.clients = await initializeClients(character, runtime);
+
+        // add to container
+        directClient.registerAgent(runtime);
+
+        // report to console
+        elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`);
+
+        return runtime;
     } catch (error) {
-        console.error(
+        elizaLogger.error(
             `Error starting agent for character ${character.name}:`,
             error
         );
+        elizaLogger.error(error);
+        if (db) {
+            await db.close();
+        }
         throw error;
     }
 }
 
+const checkPortAvailable = (port: number): Promise<boolean> => {
+    return new Promise((resolve) => {
+        const server = net.createServer();
+
+        server.once("error", (err: NodeJS.ErrnoException) => {
+            if (err.code === "EADDRINUSE") {
+                resolve(false);
+            }
+        });
+
+        server.once("listening", () => {
+            server.close();
+            resolve(true);
+        });
+
+        server.listen(port);
+    });
+};
+
 const startAgents = async () => {
-    const directClient = await DirectClientInterface.start();
+    const directClient = new DirectClient();
+    let serverPort = parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
-
     let charactersArg = args.characters || args.character;
-
-    let characters = [character];
+    let characters = [defaultCharacter];
 
     if (charactersArg) {
         characters = await loadCharacters(charactersArg);
@@ -280,55 +710,32 @@ const startAgents = async () => {
         elizaLogger.error("Error starting agents:", error);
     }
 
-    function chat() {
-        const agentId = characters[0].name ?? "Agent";
-        rl.question("You: ", async (input) => {
-            await handleUserInput(input, agentId);
-            if (input.toLowerCase() !== "exit") {
-                chat(); // Loop back to ask another question
-            }
-        });
+    // Find available port
+    while (!(await checkPortAvailable(serverPort))) {
+        elizaLogger.warn(
+            `Port ${serverPort} is in use, trying ${serverPort + 1}`
+        );
+        serverPort++;
     }
 
-    elizaLogger.log("Chat started. Type 'exit' to quit.");
-    chat();
+    // upload some agent functionality into directClient
+    directClient.startAgent = async (character: Character) => {
+        // wrap it so we don't have to inject directClient later
+        return startAgent(character, directClient);
+    };
+
+    directClient.start(serverPort);
+
+    if (serverPort !== parseInt(settings.SERVER_PORT || "3000")) {
+        elizaLogger.log(`Server started on alternate port ${serverPort}`);
+    }
+
+    elizaLogger.log(
+        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 pnpm start:client`"
+    );
 };
 
 startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
-    process.exit(1); // Exit the process after logging
+    process.exit(1);
 });
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
-
-async function handleUserInput(input, agentId) {
-    if (input.toLowerCase() === "exit") {
-        rl.close();
-        return;
-    }
-
-    try {
-        const serverPort = parseInt(settings.SERVER_PORT || "3000");
-
-        const response = await fetch(
-            `http://localhost:${serverPort}/${agentId}/message`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    text: input,
-                    userId: "user",
-                    userName: "User",
-                }),
-            }
-        );
-
-        const data = await response.json();
-        data.forEach((message) => console.log(`${"Agent"}: ${message.text}`));
-    } catch (error) {
-        console.error("Error fetching response:", error);
-    }
-}

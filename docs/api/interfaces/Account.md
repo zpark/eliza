@@ -1,8 +1,8 @@
-[@ai16z/eliza v1.0.0](../index.md) / Account
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Account
 
 # Interface: Account
 
-Represents a user, including their name, details, and a unique identifier.
+Represents a user account
 
 ## Properties
 
@@ -10,9 +10,11 @@ Represents a user, including their name, details, and a unique identifier.
 
 > **id**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
+Unique identifier
+
 #### Defined in
 
-[packages/core/src/types.ts:275](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L275)
+[packages/core/src/types.ts:505](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L505)
 
 ---
 
@@ -20,9 +22,11 @@ Represents a user, including their name, details, and a unique identifier.
 
 > **name**: `string`
 
+Display name
+
 #### Defined in
 
-[packages/core/src/types.ts:276](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L276)
+[packages/core/src/types.ts:508](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L508)
 
 ---
 
@@ -30,9 +34,11 @@ Represents a user, including their name, details, and a unique identifier.
 
 > **username**: `string`
 
+Username
+
 #### Defined in
 
-[packages/core/src/types.ts:277](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L277)
+[packages/core/src/types.ts:511](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L511)
 
 ---
 
@@ -40,13 +46,15 @@ Represents a user, including their name, details, and a unique identifier.
 
 > `optional` **details**: `object`
 
+Optional additional details
+
 #### Index Signature
 
 \[`key`: `string`\]: `any`
 
 #### Defined in
 
-[packages/core/src/types.ts:278](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L278)
+[packages/core/src/types.ts:514](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L514)
 
 ---
 
@@ -54,9 +62,11 @@ Represents a user, including their name, details, and a unique identifier.
 
 > `optional` **email**: `string`
 
+Optional email
+
 #### Defined in
 
-[packages/core/src/types.ts:279](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L279)
+[packages/core/src/types.ts:517](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L517)
 
 ---
 
@@ -64,6 +74,8 @@ Represents a user, including their name, details, and a unique identifier.
 
 > `optional` **avatarUrl**: `string`
 
+Optional avatar URL
+
 #### Defined in
 
-[packages/core/src/types.ts:280](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L280)
+[packages/core/src/types.ts:520](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L520)

@@ -1,6 +1,8 @@
-[@ai16z/eliza v1.0.0](../index.md) / Clients
+[@elizaos/core v0.1.6-alpha.4](../index.md) / Clients
 
 # Enumeration: Clients
+
+Available client platforms
 
 ## Enumeration Members
 
@@ -10,7 +12,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:323](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L323)
+[packages/core/src/types.ts:612](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L612)
 
 ---
 
@@ -20,7 +22,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:324](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L324)
+[packages/core/src/types.ts:613](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L613)
 
 ---
 
@@ -30,7 +32,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:325](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L325)
+[packages/core/src/types.ts:614](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L614)
 
 ---
 
@@ -40,4 +42,44 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:326](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L326)
+[packages/core/src/types.ts:615](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L615)
+
+---
+
+### FARCASTER
+
+> **FARCASTER**: `"farcaster"`
+
+#### Defined in
+
+[packages/core/src/types.ts:616](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L616)
+
+---
+
+### LENS
+
+> **LENS**: `"lens"`
+
+#### Defined in
+
+[packages/core/src/types.ts:617](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L617)
+
+---
+
+### AUTO
+
+> **AUTO**: `"auto"`
+
+#### Defined in
+
+[packages/core/src/types.ts:618](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L618)
+
+---
+
+### SLACK
+
+> **SLACK**: `"slack"`
+
+#### Defined in
+
+[packages/core/src/types.ts:619](https://github.com/elizaos/eliza/blob/main/packages/core/src/types.ts#L619)

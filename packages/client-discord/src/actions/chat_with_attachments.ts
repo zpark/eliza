@@ -1,8 +1,7 @@
-import fs from "fs";
-import { composeContext } from "@ai16z/eliza";
-import { generateText, trimTokens } from "@ai16z/eliza";
-import { models } from "@ai16z/eliza";
-import { parseJSONObjectFromText } from "@ai16z/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateText, trimTokens } from "@elizaos/core";
+import { models } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -12,7 +11,9 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
+import * as fs from "fs";
+
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
 
@@ -23,7 +24,7 @@ Summarization objective: {{objective}}
 
 # Instructions: Summarize the attachments. Return the summary. Do not acknowledge this request, just summarize and continue the existing summary if there is one. Capture any important details based on the objective. Only respond with the new summary text.`;
 
-export const attachmentIdsTemplate = `# Messages we are summarizing 
+export const attachmentIdsTemplate = `# Messages we are summarizing
 {{recentMessages}}
 
 # Instructions: {{senderName}} is requesting a summary of specific attachments. Your goal is to determine their objective, along with the list of attachment IDs to summarize.
@@ -92,7 +93,11 @@ const summarizeAction = {
     ],
     description:
         "Answer a user request informed by specific attachments based on their IDs. If a user asks to chat with a PDF, or wants more specific information about a link or video or anything else they've attached, this is the action to use.",
-    validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    validate: async (
+        _runtime: IAgentRuntime,
+        message: Memory,
+        _state: State
+    ) => {
         if (message.content.source !== "discord") {
             return false;
         }
@@ -222,16 +227,39 @@ ${currentSummary.trim()}
 `;
             await callback(callbackData);
         } else if (currentSummary.trim()) {
-            const summaryFilename = `content_cache/summary_${Date.now()}.txt`;
-            // save the summary to a file
-            fs.writeFileSync(summaryFilename, currentSummary);
-            await callback(
-                {
-                    ...callbackData,
-                    text: `I've attached the summary of the requested attachments as a text file.`,
-                },
-                [summaryFilename]
-            );
+            const summaryFilename = `content/summary_${Date.now()}.md`;
+
+            try {
+                // Debug: Log before file operations
+                console.log("Creating summary file:", {
+                    filename: summaryFilename,
+                    summaryLength: currentSummary.length,
+                });
+
+                // Write file directly first
+                await fs.promises.writeFile(
+                    summaryFilename,
+                    currentSummary,
+                    "utf8"
+                );
+                console.log("File written successfully");
+
+                // Then cache it
+                await runtime.cacheManager.set(summaryFilename, currentSummary);
+                console.log("Cache set operation completed");
+
+                await callback(
+                    {
+                        ...callbackData,
+                        text: `I've attached the summary of the requested attachments as a text file.`,
+                    },
+                    [summaryFilename]
+                );
+                console.log("Callback completed with summary file");
+            } catch (error) {
+                console.error("Error in file/cache process:", error);
+                throw error;
+            }
         } else {
             console.warn(
                 "Empty response from chat with attachments action, skipping"
