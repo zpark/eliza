@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import "./App.css";
 
 type TextResponse = {
