@@ -204,6 +204,13 @@ export class DirectClient {
                     modelClass: ModelClass.LARGE,
                 });
 
+                if (!response) {
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
+                    return;
+                }
+
                 // save response to memory
                 const responseMessage = {
                     ...userMessage,
@@ -212,13 +219,6 @@ export class DirectClient {
                 };
 
                 await runtime.messageManager.createMemory(responseMessage);
-
-                if (!response) {
-                    res.status(500).send(
-                        "No response from generateMessageResponse"
-                    );
-                    return;
-                }
 
                 let message = null as Content | null;
 
