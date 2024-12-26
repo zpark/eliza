@@ -192,10 +192,10 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
+                    temperature: runtime.character.modelConfig.temperature || temperature,
+                    maxTokens: runtime.character.modelConfig.max_response_length || max_response_length,
+                    frequencyPenalty: runtime.character.modelConfig.frequency_penalty || frequency_penalty,
+                    presencePenalty: runtime.character.modelConfig.presence_penalty || presence_penalty,
                 });
 
                 response = openaiResponse;
