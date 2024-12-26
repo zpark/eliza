@@ -54,6 +54,7 @@ import { solanaPlugin } from "@elizaos/plugin-solana";
 import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import Database from "better-sqlite3";
@@ -557,6 +558,11 @@ export async function createAgent(
                 ? [teePlugin, solanaPlugin]
                 : []),
             getSecret(character, "SGX") ? sgxPlugin : null,
+            (getSecret(character, "ENABLE_TEE_LOG") &&
+                ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                    getSecret(character, "SGX")))
+                ? teeLogPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
