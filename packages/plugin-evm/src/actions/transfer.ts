@@ -7,7 +7,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 import { initWalletProvider, WalletProvider } from "../providers/wallet";
 import type { Transaction, TransferParams } from "../types";

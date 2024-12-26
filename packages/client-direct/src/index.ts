@@ -2,20 +2,20 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
 import multer, { File } from "multer";
-import { elizaLogger, generateCaption, generateImage } from "@ai16z/eliza";
-import { composeContext } from "@ai16z/eliza";
-import { generateMessageResponse } from "@ai16z/eliza";
-import { messageCompletionFooter } from "@ai16z/eliza";
-import { AgentRuntime } from "@ai16z/eliza";
+import { elizaLogger, generateCaption, generateImage } from "@elizaos/core";
+import { composeContext } from "@elizaos/core";
+import { generateMessageResponse } from "@elizaos/core";
+import { messageCompletionFooter } from "@elizaos/core";
+import { AgentRuntime } from "@elizaos/core";
 import {
     Content,
     Memory,
     ModelClass,
     Client,
     IAgentRuntime,
-} from "@ai16z/eliza";
-import { stringToUuid } from "@ai16z/eliza";
-import { settings } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { stringToUuid } from "@elizaos/core";
+import { settings } from "@elizaos/core";
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
@@ -222,6 +222,13 @@ export class DirectClient {
 
                 await runtime.evaluate(memory, state);
 
+                // Check if we should suppress the initial message
+                const action = runtime.actions.find(
+                    (a) => a.name === response.action
+                );
+                const shouldSuppressInitialMessage =
+                    action?.suppressInitialMessage;
+
                 const _result = await runtime.processActions(
                     memory,
                     [responseMessage],
@@ -232,10 +239,18 @@ export class DirectClient {
                     }
                 );
 
-                if (message) {
-                    res.json([response, message]);
+                if (!shouldSuppressInitialMessage) {
+                    if (message) {
+                        res.json([response, message]);
+                    } else {
+                        res.json([response]);
+                    }
                 } else {
-                    res.json([response]);
+                    if (message) {
+                        res.json([message]);
+                    } else {
+                        res.json([]);
+                    }
                 }
             }
         );
