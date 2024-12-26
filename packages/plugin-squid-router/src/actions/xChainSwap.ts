@@ -1,7 +1,7 @@
 import {
     composeContext,
     elizaLogger,
-    generateObject, generateObjectDeprecated,
+    generateObjectDeprecated,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -10,10 +10,7 @@ import {
 } from "@elizaos/core";
 import {xChainSwapTemplate} from "../templates";
 import {convertToWei, isXChainSwapContent, validateSquidRouterConfig} from "../helpers/utils.ts";
-import {Squid} from "@0xsquid/sdk";
-import {ChainData, ChainType, Token} from "@0xsquid/squid-types";
 import {ethers} from "ethers";
-import {nativeTokenConstant, SquidToken} from "../types";
 import {initSquidRouterProvider} from "../providers/squidRouter.ts";
 
 export { xChainSwapTemplate };
@@ -153,11 +150,11 @@ export const xChainSwapAction = {
             const tx = (await squidRouter.executeRoute({
                 signer,
                 route,
-            })) as unknown as ethers.providers.TransactionResponse;
+            })) as unknown as ethers.TransactionResponse;
             const txReceipt = await tx.wait();
 
             // Show the transaction receipt with Axelarscan link
-            const axelarScanLink = "https://axelarscan.io/gmp/" + txReceipt.transactionHash;
+            const axelarScanLink = "https://axelarscan.io/gmp/" + txReceipt.hash;
             elizaLogger.log(`Finished! Check Axelarscan for details: ${axelarScanLink}`);
 
 

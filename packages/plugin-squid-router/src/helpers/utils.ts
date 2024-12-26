@@ -15,7 +15,7 @@ export function convertToWei(amount: string | number, token: SquidToken): string
         const amountString = typeof amount === 'number' ? amount.toString() : amount;
 
         // Use ethers.js to parse the amount into the smallest unit
-        const parsedAmount = ethers.utils.parseUnits(amountString, token.decimals);
+        const parsedAmount = ethers.parseUnits(amountString, token.decimals);
 
         // Return the parsed amount as a string
         return parsedAmount.toString();
@@ -53,7 +53,7 @@ export function isXChainSwapContent(
 // Helper Validation Functions
 
 const isValidEvmAddress = (address: string): boolean => {
-    return ethers.utils.isAddress(address);
+    return ethers.isAddress(address);
 };
 
 const isValidEvmPrivateKey = (key: string): boolean => {
