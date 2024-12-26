@@ -76,12 +76,21 @@ export const extractContractAddresses = (text: string): string[] => {
     const addresses: string[] = [];
 
     for (const word of words) {
-        // Ethereum-like addresses (0x...)
+        // Ethereum-like addresses (0x...) - for Ethereum, Arbitrum, Avalanche, BSC, Optimism, Polygon, Base, zkSync
         if (/^0x[a-fA-F0-9]{40}$/i.test(word)) {
             addresses.push(word);
         }
         // Solana addresses (base58, typically 32-44 chars)
-        if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(word)) {
+        else if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(word)) {
+            addresses.push(word);
+        }
+        // Sui addresses - both formats:
+        // 1. Simple object ID: 0x followed by 64 hex chars
+        // 2. Full token format: 0x<package_id>::<module>::<type>
+        else if (
+            /^0x[a-fA-F0-9]{64}$/i.test(word) ||
+            /^0x[a-fA-F0-9]{64}::[a-zA-Z0-9_]+::[a-zA-Z0-9_]+$/i.test(word)
+        ) {
             addresses.push(word);
         }
     }
@@ -249,12 +258,12 @@ export async function makeApiRequest<T>(
     url: string,
     options: {
         apiKey: string;
-        chain: Chain;
+        chain?: Chain;
         method?: "GET" | "POST";
         body?: any;
     }
 ): Promise<T> {
-    const { apiKey, chain, method = "GET", body } = options;
+    const { apiKey, chain = "solana", method = "GET", body } = options;
 
     try {
         const response = await fetch(url, {
@@ -280,13 +289,9 @@ export async function makeApiRequest<T>(
             );
         }
 
-        const data: ApiResponse<T> = await response.json();
+        const responseJson: T = await response.json();
 
-        if (!data.success) {
-            throw new Error(data.error || "Unknown API error");
-        }
-
-        return data.data;
+        return responseJson;
     } catch (error) {
         if (error instanceof BirdeyeApiError) {
             elizaLogger.error(`API Error (${error.status}):`, error.message);

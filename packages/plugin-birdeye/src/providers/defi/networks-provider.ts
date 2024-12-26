@@ -7,20 +7,6 @@ import {
 } from "@elizaos/core";
 import { BASE_URL, makeApiRequest } from "../utils";
 
-// Types
-interface NetworkInfo {
-    name: string;
-    chainId: string;
-    rpcUrl: string;
-    explorerUrl: string;
-    status: "active" | "maintenance" | "deprecated";
-    features: string[];
-}
-
-interface NetworksResponse {
-    networks: NetworkInfo[];
-}
-
 // Constants
 const NETWORK_KEYWORDS = [
     "supported networks",
@@ -44,69 +30,22 @@ const containsNetworkKeyword = (text: string): boolean => {
     );
 };
 
-const getNetworks = async (
-    apiKey: string
-): Promise<NetworksResponse | null> => {
-    try {
-        const url = `${BASE_URL}/defi/networks`;
-
-        elizaLogger.info("Fetching supported networks from:", url);
-
-        return await makeApiRequest<NetworksResponse>(url, {
-            apiKey,
-            chain: "solana",
-        });
-    } catch (error) {
-        if (error instanceof Error) {
-            elizaLogger.error("Error fetching networks:", error.message);
-        }
-        return null;
-    }
-};
-
-const formatNetworkResponse = (data: NetworksResponse): string => {
-    let response = "Supported Networks on Birdeye\n\n";
-
-    // Group networks by status
-    const activeNetworks = data.networks.filter((n) => n.status === "active");
-    const maintenanceNetworks = data.networks.filter(
-        (n) => n.status === "maintenance"
-    );
-    const deprecatedNetworks = data.networks.filter(
-        (n) => n.status === "deprecated"
-    );
-
-    // Format active networks
-    if (activeNetworks.length > 0) {
-        response += "🟢 Active Networks\n";
-        activeNetworks.forEach((network) => {
-            response += `• ${network.name}\n`;
-            response += `  - Chain ID: ${network.chainId}\n`;
-            response += `  - Features: ${network.features.join(", ")}\n`;
-            response += `  - Explorer: ${network.explorerUrl}\n\n`;
-        });
-    }
-
-    // Format maintenance networks
-    if (maintenanceNetworks.length > 0) {
-        response += "🟡 Networks Under Maintenance\n";
-        maintenanceNetworks.forEach((network) => {
-            response += `• ${network.name}\n`;
-            response += `  - Chain ID: ${network.chainId}\n`;
-            response += `  - Features: ${network.features.join(", ")}\n\n`;
-        });
-    }
-
-    // Format deprecated networks
-    if (deprecatedNetworks.length > 0) {
-        response += "🔴 Deprecated Networks\n";
-        deprecatedNetworks.forEach((network) => {
-            response += `• ${network.name}\n`;
-            response += `  - Chain ID: ${network.chainId}\n\n`;
-        });
-    }
-
-    return response.trim();
+// use sample response to simplify type generation
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const sampleResponse = {
+    data: [
+        "solana",
+        "ethereum",
+        "arbitrum",
+        "avalanche",
+        "bsc",
+        "optimism",
+        "polygon",
+        "base",
+        "zksync",
+        "sui",
+    ],
+    success: true,
 };
 
 export const networksProvider: Provider = {
@@ -129,12 +68,20 @@ export const networksProvider: Provider = {
 
         elizaLogger.info("NETWORKS provider activated");
 
-        const networksData = await getNetworks(apiKey);
+        const url = `${BASE_URL}/defi/networks`;
+
+        elizaLogger.info("Fetching supported networks from:", url);
+
+        const networksData = await makeApiRequest<typeof sampleResponse>(url, {
+            apiKey,
+        });
+
+        console.log(JSON.stringify(networksData, null, 2));
 
         if (!networksData) {
             return null;
         }
 
-        return formatNetworkResponse(networksData);
+        return `Currently supported networks for information about tokens, swaps, prices, gainers and losers are: ${networksData.data.join(", ")}`;
     },
 };

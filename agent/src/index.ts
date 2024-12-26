@@ -32,6 +32,7 @@ import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import createGoatPlugin from "@elizaos/plugin-goat";
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
 import { DirectClient } from "@elizaos/client-direct";
+import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { aptosPlugin } from "@elizaos/plugin-aptos";
 import { birdeyePlugin } from "@elizaos/plugin-birdeye";
 import {
@@ -56,13 +57,12 @@ import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-import { abstractPlugin } from "@elizaos/plugin-abstract";
 import Database from "better-sqlite3";
 import fs from "fs";
+import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-import net from "net";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -482,9 +482,7 @@ export async function createAgent(
                 ? confluxPlugin
                 : null,
             nodePlugin,
-            getSecret(character, "BIRDEYE_API_KEY")
-                ? birdeyePlugin
-                : null,
+            getSecret(character, "BIRDEYE_API_KEY") ? birdeyePlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
                 !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
