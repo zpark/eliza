@@ -212,10 +212,12 @@ export class DirectClient {
                 }
 
                 // save response to memory
-                const responseMessage = {
+                const responseMessage: Memory = {
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,
+                    embedding: getEmbeddingZeroVector(),
+                    createdAt: Date.now(),
                 };
 
                 await runtime.messageManager.createMemory(responseMessage);
