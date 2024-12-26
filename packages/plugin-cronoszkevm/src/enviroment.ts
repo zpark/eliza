@@ -1,9 +1,11 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/eliza";
 import { z } from "zod";
 
 export const CronosZkEVMEnvSchema = z.object({
     CRONOSZKEVM_ADDRESS: z.string().min(1, "Cronos zkEVM address is required"),
-    CRONOSZKEVM_PRIVATE_KEY: z.string().min(1, "Cronos zkEVM private key is required"),
+    CRONOSZKEVM_PRIVATE_KEY: z
+        .string()
+        .min(1, "Cronos zkEVM private key is required"),
 });
 
 export type CronoszkEVMConfig = z.infer<typeof CronosZkEVMEnvSchema>;
@@ -18,7 +20,7 @@ export async function validateCronosZkevmConfig(
                 process.env.CRONOSZKEVM_ADDRESS,
             CRONOSZKEVM_PRIVATE_KEY:
                 runtime.getSetting("CRONOSZKEVM_PRIVATE_KEY") ||
-                process.env.CRONOSZKEVM_PRIVATE_KEY
+                process.env.CRONOSZKEVM_PRIVATE_KEY,
         };
 
         return CronosZkEVMEnvSchema.parse(config);
