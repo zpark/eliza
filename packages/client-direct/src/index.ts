@@ -2,7 +2,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
 import multer, { File } from "multer";
-import { elizaLogger, generateCaption, generateImage } from "@elizaos/core";
+import {
+    elizaLogger,
+    generateCaption,
+    generateImage,
+    getEmbeddingZeroVector,
+} from "@elizaos/core";
 import { composeContext } from "@elizaos/core";
 import { generateMessageResponse } from "@elizaos/core";
 import { messageCompletionFooter } from "@elizaos/core";
@@ -189,7 +194,7 @@ export class DirectClient {
                 await runtime.messageManager.addEmbeddingToMemory(memory);
                 await runtime.messageManager.createMemory(memory);
 
-                const state = await runtime.composeState(userMessage, {
+                let state = await runtime.composeState(userMessage, {
                     agentName: runtime.character.name,
                 });
 
@@ -221,6 +226,8 @@ export class DirectClient {
                 };
 
                 await runtime.messageManager.createMemory(responseMessage);
+
+                state = await runtime.updateRecentMessageState(state);
 
                 let message = null as Content | null;
 
