@@ -7,6 +7,7 @@ import {
     ModelClass,
     stringToUuid,
     parseBooleanFromText,
+    TemplateType,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
@@ -164,8 +165,8 @@ export class TwitterPostClient {
             this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
             // Retrieve setting, default to false if not set or if the value is not "true"
-            postImmediately = this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
-
+            postImmediately =
+                this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
         }
 
         if (postImmediately) {
@@ -379,7 +380,7 @@ export class TwitterPostClient {
     private async generateTweetContent(
         tweetState: any,
         options?: {
-            template?: string;
+            template?: TemplateType;
             context?: string;
         }
     ): Promise<string> {
