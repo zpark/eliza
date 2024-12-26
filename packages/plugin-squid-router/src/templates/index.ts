@@ -10,6 +10,8 @@ Extract the following information about the requested cross chain swap:
 - Amount to swap, denominated in the token to be sent
 - Destination address (if specified)
 
+If the destination address is not specified, the EVM address of the runtime should be used.
+
 Respond with a JSON markdown block containing only the extracted values:
 
 \`\`\`json

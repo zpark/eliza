@@ -27,7 +27,14 @@ export function convertToWei(amount: string | number, token: SquidToken): string
 
 export function isXChainSwapContent(
     content: XChainSwapContent
-): content is XChainSwapContent {
+): boolean {
+
+    console.log("content.fromChain: ",typeof content.fromChain);
+    console.log("content.toChain: ",typeof content.toChain);
+    console.log("content.fromToken: ",typeof content.fromToken);
+    console.log("content.toToken: ",typeof content.toToken);
+    console.log("content.toAddress: ",typeof content.toAddress);
+    console.log("content.amount: ",typeof content.amount);
     // Validate types
     const validTypes =
         typeof content.fromChain === "string" &&
@@ -37,9 +44,10 @@ export function isXChainSwapContent(
         typeof content.toAddress === "string" &&
         (typeof content.amount === "string" ||
             typeof content.amount === "number");
-    if (!validTypes) {
-        return false;
+    if (validTypes) {
+        return true;
     }
+    return false
 }
 
 // Helper Validation Functions

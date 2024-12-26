@@ -67,6 +67,10 @@ export const xChainSwapAction = {
             modelClass: ModelClass.SMALL,
         });
 
+        if(content.toAddress === null) {
+            content.toAddress = runtime.getSetting("SQUID_EVM_ADDRESS");
+        }
+
         // Validate transfer content
         if (!isXChainSwapContent(content)) {
             console.error("Invalid content for X_CHAIN_SWAP action.");
