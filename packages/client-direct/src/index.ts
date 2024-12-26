@@ -2,7 +2,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
 import multer, { File } from "multer";
-import { elizaLogger, generateCaption, generateImage } from "@elizaos/core";
+import {
+    elizaLogger,
+    generateCaption,
+    generateImage,
+    getEmbeddingZeroVector,
+} from "@elizaos/core";
 import { composeContext } from "@elizaos/core";
 import { generateMessageResponse } from "@elizaos/core";
 import { messageCompletionFooter } from "@elizaos/core";
@@ -177,7 +182,8 @@ export class DirectClient {
                 };
 
                 const memory: Memory = {
-                    id: messageId,
+                    id: stringToUuid(messageId + "-" + userId),
+                    ...userMessage,
                     agentId: runtime.agentId,
                     userId,
                     roomId,
@@ -185,9 +191,10 @@ export class DirectClient {
                     createdAt: Date.now(),
                 };
 
+                await runtime.messageManager.addEmbeddingToMemory(memory);
                 await runtime.messageManager.createMemory(memory);
 
-                const state = await runtime.composeState(userMessage, {
+                let state = await runtime.composeState(userMessage, {
                     agentName: runtime.character.name,
                 });
 
@@ -202,15 +209,6 @@ export class DirectClient {
                     modelClass: ModelClass.LARGE,
                 });
 
-                // save response to memory
-                const responseMessage = {
-                    ...userMessage,
-                    userId: runtime.agentId,
-                    content: response,
-                };
-
-                await runtime.messageManager.createMemory(responseMessage);
-
                 if (!response) {
                     res.status(500).send(
                         "No response from generateMessageResponse"
@@ -218,11 +216,23 @@ export class DirectClient {
                     return;
                 }
 
+                // save response to memory
+                const responseMessage: Memory = {
+                    id: stringToUuid(messageId + "-" + runtime.agentId),
+                    ...userMessage,
+                    userId: runtime.agentId,
+                    content: response,
+                    embedding: getEmbeddingZeroVector(),
+                    createdAt: Date.now(),
+                };
+
+                await runtime.messageManager.createMemory(responseMessage);
+
+                state = await runtime.updateRecentMessageState(state);
+
                 let message = null as Content | null;
 
-                await runtime.evaluate(memory, state);
-
-                const _result = await runtime.processActions(
+                await runtime.processActions(
                     memory,
                     [responseMessage],
                     state,
@@ -232,10 +242,27 @@ export class DirectClient {
                     }
                 );
 
-                if (message) {
-                    res.json([response, message]);
+                await runtime.evaluate(memory, state);
+
+                // Check if we should suppress the initial message
+                const action = runtime.actions.find(
+                    (a) => a.name === response.action
+                );
+                const shouldSuppressInitialMessage =
+                    action?.suppressInitialMessage;
+
+                if (!shouldSuppressInitialMessage) {
+                    if (message) {
+                        res.json([response, message]);
+                    } else {
+                        res.json([response]);
+                    }
                 } else {
-                    res.json([response]);
+                    if (message) {
+                        res.json([message]);
+                    } else {
+                        res.json([]);
+                    }
                 }
             }
         );
