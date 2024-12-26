@@ -1,8 +1,9 @@
 ### NFT Collection Generation Plugin
-A plugin for handling NFT collection generation, NFT creation, anNFT Collection Generation Plugin
+
 A plugin for handling NFT collection generation, NFT creation, and verification on the Solana blockchain.
 
 ## Handlers
+
 ### createCollection
 The createCollection handler generates an NFT collection logo, uploads it to AWS S3, and creates a Solana blockchain collection.
 
@@ -18,7 +19,9 @@ const result = await createCollection({
 
 console.log("Collection created:", result);
 ```
+
 #### Features
+
 Image Generation: Automatically generates a collection logo based on the provided name and theme.
 AWS S3 Integration: Uploads the generated logo and metadata to AWS S3.
 Solana Blockchain: Creates a collection with the generated logo and metadata on the Solana blockchain.
@@ -26,6 +29,7 @@ Solana Blockchain: Creates a collection with the generated logo and metadata on 
 The createNFT handler generates individual NFTs for a collection. It includes metadata creation and uploads the NFT information to AWS S3.
 
 #### Usage
+
 ```typescript
 import { createNFT } from "./handlers/createNFT.ts";
 
@@ -42,9 +46,11 @@ console.log("NFT created:", nftResult);
 ```
 
 ### verifyNFT
+
 The verifyNFT handler verifies an NFT against its collection using the Solana blockchain.
 
 #### Usage
+
 ```typescript
 import { verifyNFT } from "./handlers/verifyNFT.ts";
 
@@ -59,6 +65,7 @@ console.log("NFT verified:", verificationResult);
 ---
 
 ### Example Workflow
+
 The plugin provides a streamlined process for generating and verifying NFT collections:
 
 ```typescript
@@ -115,6 +122,7 @@ SOLANA_ADMIN_PUBLIC_KEY	Admin public key for Solana operations
 SOLANA_ADMIN_PRIVATE_KEY	Admin private key for Solana operations
 ```
 #### Example Prompts
+
 Here are some examples of user prompts to trigger NFT collection generation:
 
 "Generate a collection named MyCollection."
@@ -124,6 +132,7 @@ Here are some examples of user prompts to trigger NFT collection generation:
 
 
 #### Local Testing with TEE Simulator
+
 To test locally using a Trusted Execution Environment (TEE) simulator, follow these steps:
 
 Pull the simulator Docker image:
@@ -142,13 +151,16 @@ DSTACK_SIMULATOR_ENDPOINT="http://localhost:8090"
 ```
 
 #### Dependencies
+
 This plugin relies on the following services and libraries:
 
-[@ai16z/plugin-node]
-[@ai16z/eliza]
-[@ai16z/plugin-image-generation]
+[@elizaos/plugin-node]
+[@elizaos/eliza]
+[@elizaos/plugin-image-generation]
 [@solana/web3.js]
+
 ### Action Configuration
+
 #### GENERATE_COLLECTION
 The action for generating NFT collections is configured with the following parameters:
 
