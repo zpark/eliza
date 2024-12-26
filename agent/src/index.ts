@@ -56,11 +56,13 @@ import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+import { abstractPlugin } from "@elizaos/plugin-abstract";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import net from "net";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -386,12 +388,8 @@ export async function initializeClients(
 
     if (clientTypes.includes(Clients.TWITTER)) {
         const twitterClient = await TwitterClientInterface.start(runtime);
-
         if (twitterClient) {
             clients.twitter = twitterClient;
-            (twitterClient as any).enableSearch = !isFalsish(
-                getSecret(character, "TWITTER_SEARCH_ENABLE")
-            );
         }
     }
 
@@ -433,31 +431,6 @@ export async function initializeClients(
     return clients;
 }
 
-function isFalsish(input: any): boolean {
-    // If the input is exactly NaN, return true
-    if (Number.isNaN(input)) {
-        return true;
-    }
-
-    // Convert input to a string if it's not null or undefined
-    const value = input == null ? "" : String(input);
-
-    // List of common falsish string representations
-    const falsishValues = [
-        "false",
-        "0",
-        "no",
-        "n",
-        "off",
-        "null",
-        "undefined",
-        "",
-    ];
-
-    // Check if the value (trimmed and lowercased) is in the falsish list
-    return falsishValues.includes(value.trim().toLowerCase());
-}
-
 function getSecret(character: Character, secret: string) {
     return character.settings?.secrets?.[secret] || process.env[secret];
 }
@@ -490,7 +463,7 @@ export async function createAgent(
     }
 
     let goatPlugin: any | undefined;
-    if (getSecret(character, "ALCHEMY_API_KEY")) {
+    if (getSecret(character, "EVM_PROVIDER_URL")) {
         goatPlugin = await createGoatPlugin((secret) =>
             getSecret(character, secret)
         );
@@ -564,7 +537,10 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-            getSecret(character, "ALCHEMY_API_KEY") ? goatPlugin : null,
+            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
+            getSecret(character, "ABSTRACT_PRIVATE_KEY")
+                ? abstractPlugin
+                : null,
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
@@ -696,13 +672,30 @@ async function startAgent(
     }
 }
 
+const checkPortAvailable = (port: number): Promise<boolean> => {
+    return new Promise((resolve) => {
+        const server = net.createServer();
+
+        server.once("error", (err: NodeJS.ErrnoException) => {
+            if (err.code === "EADDRINUSE") {
+                resolve(false);
+            }
+        });
+
+        server.once("listening", () => {
+            server.close();
+            resolve(true);
+        });
+
+        server.listen(port);
+    });
+};
+
 const startAgents = async () => {
     const directClient = new DirectClient();
-    const serverPort = parseInt(settings.SERVER_PORT || "3000");
+    let serverPort = parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
-
     let charactersArg = args.characters || args.character;
-
     let characters = [defaultCharacter];
 
     if (charactersArg) {
@@ -717,19 +710,32 @@ const startAgents = async () => {
         elizaLogger.error("Error starting agents:", error);
     }
 
+    // Find available port
+    while (!(await checkPortAvailable(serverPort))) {
+        elizaLogger.warn(
+            `Port ${serverPort} is in use, trying ${serverPort + 1}`
+        );
+        serverPort++;
+    }
+
     // upload some agent functionality into directClient
     directClient.startAgent = async (character: Character) => {
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
+
     directClient.start(serverPort);
 
+    if (serverPort !== parseInt(settings.SERVER_PORT || "3000")) {
+        elizaLogger.log(`Server started on alternate port ${serverPort}`);
+    }
+
     elizaLogger.log(
-        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents"
+        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 pnpm start:client`"
     );
 };
 
 startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
-    process.exit(1); // Exit the process after logging
+    process.exit(1);
 });
