@@ -56,7 +56,7 @@ import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkEVM";
+import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { squidRouterPlugin } from "@elizaos/plugin-squid-router";
 import Database from "better-sqlite3";
