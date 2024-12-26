@@ -46,6 +46,7 @@
     "@elizaos/plugin-solana": "workspace:*",
     "@elizaos/plugin-starknet": "workspace:*",
     "@elizaos/plugin-ton": "workspace:*",
+    "@elizaos/plugin-sgx": "workspace:*",
     "@elizaos/plugin-sui": "workspace:*",
     "@elizaos/plugin-tee": "workspace:*",
     "@elizaos/plugin-multiversx": "workspace:*",
