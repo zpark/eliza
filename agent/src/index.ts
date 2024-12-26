@@ -57,6 +57,7 @@ import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
+import { squidRouterPlugin } from "@elizaos/plugin-squid-router";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -536,7 +537,7 @@ export async function createAgent(
             getSecret(character, "HEURIST_API_KEY")
                 ? imageGenerationPlugin
                 : null,
-            getSecret(character, "FAL_API_KEY") 
+            getSecret(character, "FAL_API_KEY")
                 ? ThreeDGenerationPlugin
                 : null,
             ...(getSecret(character, "COINBASE_API_KEY") &&
@@ -570,6 +571,12 @@ export async function createAgent(
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
+            getSecret(character, "SQUID_SDK_URL") &&
+            getSecret(character, "SQUID_INTEGRATOR_ID") &&
+            getSecret(character, "SQUID_EVM_ADDRESS") &&
+            getSecret(character, "SQUID_EVM_PRIVATE_KEY")
+                ? squidRouterPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],

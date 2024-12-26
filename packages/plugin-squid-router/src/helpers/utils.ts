@@ -84,43 +84,25 @@ export const squidRouterEnvSchema = z
         SQUID_INTEGRATOR_ID: z.string().min(1, "Squid Integrator ID is required"),
         SQUID_SDK_URL: z.string().min(1, "Squid SDK URL is required"),
 
-        EVM_ADDRESS: z.string().optional(),
-        EVM_PRIVATE_KEY: z.string().optional(),
-
-        SOLANA_ADDRESS: z.string().optional(),
-        SOLANA_PRIVATE_KEY: z.string().optional(),
-
-        COSMOS_ADDRESS: z.string().optional(),
-        COSMOS_PRIVATE_KEY: z.string().optional(),
+        SQUID_EVM_ADDRESS: z.string().min(1, "Squid Integrator ID is required"),
+        SQUID_EVM_PRIVATE_KEY: z.string().min(1, "Squid Integrator ID is required"),
     })
     .refine((data) => {
         // Check if EVM pair is valid
         const evmValid =
-            (data.EVM_ADDRESS && data.EVM_PRIVATE_KEY) &&
-            isValidEvmAddress(data.EVM_ADDRESS) &&
-            isValidEvmPrivateKey(data.EVM_PRIVATE_KEY);
+            (data.SQUID_EVM_ADDRESS && data.SQUID_EVM_PRIVATE_KEY) &&
+            isValidEvmAddress(data.SQUID_EVM_ADDRESS) &&
+            isValidEvmPrivateKey(data.SQUID_EVM_PRIVATE_KEY);
 
-        // Check if Solana pair is valid
-        const solanaValid =
-            (data.SOLANA_ADDRESS && data.SOLANA_PRIVATE_KEY) &&
-            isValidSolanaAddress(data.SOLANA_ADDRESS) &&
-            isValidSolanaPrivateKey(data.SOLANA_PRIVATE_KEY);
-
-        // Check if Cosmos pair is valid
-        const cosmosValid =
-            (data.COSMOS_ADDRESS && data.COSMOS_PRIVATE_KEY) &&
-            isValidCosmosAddress(data.COSMOS_ADDRESS) &&
-            isValidCosmosPrivateKey(data.COSMOS_PRIVATE_KEY);
-
-        return evmValid || solanaValid || cosmosValid;
+        return evmValid;
     }, {
         message: "At least one valid address and private key pair is required: EVM, Solana, or Cosmos.",
         path: [], // Global error
     })
     .superRefine((data, ctx) => {
         // EVM Validation
-        if (data.EVM_ADDRESS || data.EVM_PRIVATE_KEY) {
-            if (data.EVM_ADDRESS && !isValidEvmAddress(data.EVM_ADDRESS)) {
+        if (data.SQUID_EVM_ADDRESS || data.SQUID_EVM_PRIVATE_KEY) {
+            if (data.SQUID_EVM_ADDRESS && !isValidEvmAddress(data.SQUID_EVM_ADDRESS)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: "EVM_ADDRESS is invalid or not checksummed correctly.",
@@ -128,7 +110,7 @@ export const squidRouterEnvSchema = z
                 });
             }
 
-            if (data.EVM_PRIVATE_KEY && !isValidEvmPrivateKey(data.EVM_PRIVATE_KEY)) {
+            if (data.SQUID_EVM_PRIVATE_KEY && !isValidEvmPrivateKey(data.SQUID_EVM_PRIVATE_KEY)) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: "EVM_PRIVATE_KEY must be a 64-character hexadecimal string.",
@@ -136,91 +118,19 @@ export const squidRouterEnvSchema = z
                 });
             }
 
-            if ((data.EVM_ADDRESS && !data.EVM_PRIVATE_KEY) || (!data.EVM_ADDRESS && data.EVM_PRIVATE_KEY)) {
-                if (!data.EVM_ADDRESS) {
+            if ((data.SQUID_EVM_ADDRESS && !data.SQUID_EVM_PRIVATE_KEY) || (!data.SQUID_EVM_ADDRESS && data.SQUID_EVM_PRIVATE_KEY)) {
+                if (!data.SQUID_EVM_ADDRESS) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message: "EVM_ADDRESS is required when EVM_PRIVATE_KEY is provided.",
                         path: ["EVM_ADDRESS"],
                     });
                 }
-                if (!data.EVM_PRIVATE_KEY) {
+                if (!data.SQUID_EVM_PRIVATE_KEY) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
                         message: "EVM_PRIVATE_KEY is required when EVM_ADDRESS is provided.",
                         path: ["EVM_PRIVATE_KEY"],
-                    });
-                }
-            }
-        }
-
-        // Solana Validation
-        if (data.SOLANA_ADDRESS || data.SOLANA_PRIVATE_KEY) {
-            if (data.SOLANA_ADDRESS && !isValidSolanaAddress(data.SOLANA_ADDRESS)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "SOLANA_ADDRESS is invalid.",
-                    path: ["SOLANA_ADDRESS"],
-                });
-            }
-
-            if (data.SOLANA_PRIVATE_KEY && !isValidSolanaPrivateKey(data.SOLANA_PRIVATE_KEY)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "SOLANA_PRIVATE_KEY must be a 64-character hexadecimal string.",
-                    path: ["SOLANA_PRIVATE_KEY"],
-                });
-            }
-
-            if ((data.SOLANA_ADDRESS && !data.SOLANA_PRIVATE_KEY) || (!data.SOLANA_ADDRESS && data.SOLANA_PRIVATE_KEY)) {
-                if (!data.SOLANA_ADDRESS) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "SOLANA_ADDRESS is required when SOLANA_PRIVATE_KEY is provided.",
-                        path: ["SOLANA_ADDRESS"],
-                    });
-                }
-                if (!data.SOLANA_PRIVATE_KEY) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "SOLANA_PRIVATE_KEY is required when SOLANA_ADDRESS is provided.",
-                        path: ["SOLANA_PRIVATE_KEY"],
-                    });
-                }
-            }
-        }
-
-        // Cosmos Validation
-        if (data.COSMOS_ADDRESS || data.COSMOS_PRIVATE_KEY) {
-            if (data.COSMOS_ADDRESS && !isValidCosmosAddress(data.COSMOS_ADDRESS)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "COSMOS_ADDRESS is invalid.",
-                    path: ["COSMOS_ADDRESS"],
-                });
-            }
-
-            if (data.COSMOS_PRIVATE_KEY && !isValidCosmosPrivateKey(data.COSMOS_PRIVATE_KEY)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "COSMOS_PRIVATE_KEY must be a 64-character hexadecimal string.",
-                    path: ["COSMOS_PRIVATE_KEY"],
-                });
-            }
-
-            if ((data.COSMOS_ADDRESS && !data.COSMOS_PRIVATE_KEY) || (!data.COSMOS_ADDRESS && data.COSMOS_PRIVATE_KEY)) {
-                if (!data.COSMOS_ADDRESS) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "COSMOS_ADDRESS is required when COSMOS_PRIVATE_KEY is provided.",
-                        path: ["COSMOS_ADDRESS"],
-                    });
-                }
-                if (!data.COSMOS_PRIVATE_KEY) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: "COSMOS_PRIVATE_KEY is required when COSMOS_ADDRESS is provided.",
-                        path: ["COSMOS_PRIVATE_KEY"],
                     });
                 }
             }
@@ -236,12 +146,8 @@ export async function validateSquidRouterConfig(
         const config = {
             SQUID_INTEGRATOR_ID: runtime.getSetting("SQUID_INTEGRATOR_ID"),
             SQUID_SDK_URL: runtime.getSetting("SQUID_SDK_URL"),
-            EVM_ADDRESS: runtime.getSetting("EVM_ADDRESS"),
-            EVM_PRIVATE_KEY: runtime.getSetting("EVM_PRIVATE_KEY"),
-            SOLANA_ADDRESS: runtime.getSetting("SOLANA_ADDRESS"),
-            SOLANA_PRIVATE_KEY: runtime.getSetting("SOLANA_PRIVATE_KEY"),
-            COSMOS_ADDRESS: runtime.getSetting("COSMOS_ADDRESS"),
-            COSMOS_PRIVATE_KEY: runtime.getSetting("COSMOS_PRIVATE_KEY"),
+            SQUID_EVM_ADDRESS: runtime.getSetting("SQUID_EVM_ADDRESS"),
+            SQUID_EVM_PRIVATE_KEY: runtime.getSetting("SQUID_EVM_PRIVATE_KEY"),
         };
 
         return squidRouterEnvSchema.parse(config);

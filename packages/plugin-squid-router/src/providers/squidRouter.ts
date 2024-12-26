@@ -79,7 +79,7 @@ export class SquidRouterProvider {
         try {
             if(chain.chainType === ChainType.EVM) {
                 const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
-                return new ethers.Wallet(runtime.getSetting("EVM_PRIVATE_KEY"), provider);
+                return new ethers.Wallet(runtime.getSetting("SQUID_EVM_PRIVATE_KEY"), provider);
             } else {
                 throw Error("Cannot instantiate EVM signer for non-EVM chain");
             }

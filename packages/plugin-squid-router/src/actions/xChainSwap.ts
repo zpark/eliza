@@ -154,7 +154,7 @@ export const xChainSwapAction = {
 
             // Show the transaction receipt with Axelarscan link
             const axelarScanLink = "https://axelarscan.io/gmp/" + txReceipt.transactionHash;
-            console.log(`Finished! Check Axelarscan for details: ${axelarScanLink}`);
+            elizaLogger.log(`Finished! Check Axelarscan for details: ${axelarScanLink}`);
 
 
 

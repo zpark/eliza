@@ -32,8 +32,8 @@ describe("SquidRouterProvider", () => {
                 if (key === "SQUID_SDK_URL") return "test_sdk_url";
                 if (key === "SQUID_INTEGRATOR_ID") return "test_integrator_id";
                 //public/private key for testing
-                if (key === "EVM_PRIVATE_KEY") return "9a2bb49ab3fc4084e61a73c061b8a64041ce22ad57d8b99d938be2ac3143f2fa";
-                if (key === "EVM_ADDRESS") return "0xbb5F4ddaBbbb0AcD2086527A887b208b06A3BFdb";
+                if (key === "SQUID_EVM_PRIVATE_KEY") return "9a2bb49ab3fc4084e61a73c061b8a64041ce22ad57d8b99d938be2ac3143f2fa";
+                if (key === "SQUID_EVM_ADDRESS") return "0xbb5F4ddaBbbb0AcD2086527A887b208b06A3BFdb";
                 return undefined;
             }),
         };
