@@ -1,7 +1,8 @@
-import { composeContext } from "@ai16z/eliza";
-import { generateText, trimTokens } from "@ai16z/eliza";
-import { models } from "@ai16z/eliza";
-import { parseJSONObjectFromText } from "@ai16z/eliza";
+import { composeContext } from "@elizaos/core";
+import { generateText, trimTokens } from "@elizaos/core";
+import type { TiktokenModel } from "js-tiktoken";
+import { models } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -11,8 +12,8 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
-import * as fs from 'fs';
+} from "@elizaos/core";
+import * as fs from "fs";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
@@ -24,7 +25,7 @@ Summarization objective: {{objective}}
 
 # Instructions: Summarize the attachments. Return the summary. Do not acknowledge this request, just summarize and continue the existing summary if there is one. Capture any important details based on the objective. Only respond with the new summary text.`;
 
-export const attachmentIdsTemplate = `# Messages we are summarizing 
+export const attachmentIdsTemplate = `# Messages we are summarizing
 {{recentMessages}}
 
 # Instructions: {{senderName}} is requesting a summary of specific attachments. Your goal is to determine their objective, along with the list of attachment IDs to summarize.
@@ -194,10 +195,12 @@ const summarizeAction = {
         const context = composeContext({
             state,
             // make sure it fits, we can pad the tokens a bit
+            // Get the model's tokenizer based on the current model being used
             template: trimTokens(
                 summarizationTemplate,
                 chunkSize + 500,
-                "gpt-4o-mini" // TODO: make this dynamic and generic
+                (model.model[ModelClass.SMALL] ||
+                    "gpt-4o-mini") as TiktokenModel // Use the same model as generation; Fallback if no SMALL model configured
             ),
         });
 
@@ -233,11 +236,15 @@ ${currentSummary.trim()}
                 // Debug: Log before file operations
                 console.log("Creating summary file:", {
                     filename: summaryFilename,
-                    summaryLength: currentSummary.length
+                    summaryLength: currentSummary.length,
                 });
 
                 // Write file directly first
-                await fs.promises.writeFile(summaryFilename, currentSummary, 'utf8');
+                await fs.promises.writeFile(
+                    summaryFilename,
+                    currentSummary,
+                    "utf8"
+                );
                 console.log("File written successfully");
 
                 // Then cache it

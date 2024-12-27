@@ -1,12 +1,12 @@
-import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
-import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
-import { AutoClientInterface } from "@ai16z/client-auto";
-import { DiscordClientInterface } from "@ai16z/client-discord";
-import { FarcasterAgentClient } from "@ai16z/client-farcaster";
-import { LensAgentClient } from "@ai16z/client-lens";
-import { SlackClientInterface } from "@ai16z/client-slack";
-import { TelegramClientInterface } from "@ai16z/client-telegram";
-import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { AutoClientInterface } from "@elizaos/client-auto";
+import { DiscordClientInterface } from "@elizaos/client-discord";
+import { FarcasterAgentClient } from "@elizaos/client-farcaster";
+import { LensAgentClient } from "@elizaos/client-lens";
+import { SlackClientInterface } from "@elizaos/client-slack";
+import { TelegramClientInterface } from "@elizaos/client-telegram";
+import { TwitterClientInterface } from "@elizaos/client-twitter";
 import {
     AgentRuntime,
     CacheManager,
@@ -25,14 +25,14 @@ import {
     stringToUuid,
     validateCharacterConfig,
     CacheStore,
-} from "@ai16z/eliza";
-import { RedisClient } from "@ai16z/adapter-redis";
-import { zgPlugin } from "@ai16z/plugin-0g";
-import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
-import createGoatPlugin from "@ai16z/plugin-goat";
-// import { intifacePlugin } from "@ai16z/plugin-intiface";
-import { DirectClient } from "@ai16z/client-direct";
-import { aptosPlugin } from "@ai16z/plugin-aptos";
+} from "@elizaos/core";
+import { RedisClient } from "@elizaos/adapter-redis";
+import { zgPlugin } from "@elizaos/plugin-0g";
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import createGoatPlugin from "@elizaos/plugin-goat";
+// import { intifacePlugin } from "@elizaos/plugin-intiface";
+import { DirectClient } from "@elizaos/client-direct";
+import { aptosPlugin } from "@elizaos/plugin-aptos";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -40,26 +40,30 @@ import {
     tokenContractPlugin,
     tradePlugin,
     webhookPlugin,
-} from "@ai16z/plugin-coinbase";
-import { confluxPlugin } from "@ai16z/plugin-conflux";
-import { evmPlugin } from "@ai16z/plugin-evm";
-import { storyPlugin } from "@ai16z/plugin-story";
-import { flowPlugin } from "@ai16z/plugin-flow";
-import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
-import { multiversxPlugin } from "@ai16z/plugin-multiversx";
-import { nearPlugin } from "@ai16z/plugin-near";
-import { nftGenerationPlugin } from "@ai16z/plugin-nft-generation";
-import { createNodePlugin } from "@ai16z/plugin-node";
-import { solanaPlugin } from "@ai16z/plugin-solana";
-import { suiPlugin } from "@ai16z/plugin-sui";
-import { TEEMode, teePlugin } from "@ai16z/plugin-tee";
-import { tonPlugin } from "@ai16z/plugin-ton";
-import { zksyncEraPlugin } from "@ai16z/plugin-zksync-era";
+} from "@elizaos/plugin-coinbase";
+import { confluxPlugin } from "@elizaos/plugin-conflux";
+import { evmPlugin } from "@elizaos/plugin-evm";
+import { storyPlugin } from "@elizaos/plugin-story";
+import { flowPlugin } from "@elizaos/plugin-flow";
+import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
+import { multiversxPlugin } from "@elizaos/plugin-multiversx";
+import { nearPlugin } from "@elizaos/plugin-near";
+import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
+import { createNodePlugin } from "@elizaos/plugin-node";
+import { solanaPlugin } from "@elizaos/plugin-solana";
+import { suiPlugin } from "@elizaos/plugin-sui";
+import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { tonPlugin } from "@elizaos/plugin-ton";
+import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
+import { abstractPlugin } from "@elizaos/plugin-abstract";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import net from "net";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -176,6 +180,25 @@ export async function loadCharacters(
                 const character = JSON.parse(content);
                 validateCharacterConfig(character);
 
+                // .id isn't really valid
+                const characterId = character.id || character.name;
+                const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
+
+                const characterSettings = Object.entries(process.env)
+                    .filter(([key]) => key.startsWith(characterPrefix))
+                    .reduce((settings, [key, value]) => {
+                        const settingKey = key.slice(characterPrefix.length);
+                        return { ...settings, [settingKey]: value };
+                    }, {});
+
+                if (Object.keys(characterSettings).length > 0) {
+                    character.settings = character.settings || {};
+                    character.settings.secrets = {
+                        ...characterSettings,
+                        ...character.settings.secrets,
+                    };
+                }
+
                 // Handle plugins
                 if (isAllStrings(character.plugins)) {
                     elizaLogger.info("Plugins are: ", character.plugins);
@@ -216,6 +239,8 @@ export function getTokenForProvider(
     switch (provider) {
         // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
+            return "";
+        case ModelProviderName.OLLAMA:
             return "";
         case ModelProviderName.GAIANET:
             return "";
@@ -383,12 +408,8 @@ export async function initializeClients(
 
     if (clientTypes.includes(Clients.TWITTER)) {
         const twitterClient = await TwitterClientInterface.start(runtime);
-
         if (twitterClient) {
             clients.twitter = twitterClient;
-            (twitterClient as any).enableSearch = !isFalsish(
-                getSecret(character, "TWITTER_SEARCH_ENABLE")
-            );
         }
     }
 
@@ -430,31 +451,6 @@ export async function initializeClients(
     return clients;
 }
 
-function isFalsish(input: any): boolean {
-    // If the input is exactly NaN, return true
-    if (Number.isNaN(input)) {
-        return true;
-    }
-
-    // Convert input to a string if it's not null or undefined
-    const value = input == null ? "" : String(input);
-
-    // List of common falsish string representations
-    const falsishValues = [
-        "false",
-        "0",
-        "no",
-        "n",
-        "off",
-        "null",
-        "undefined",
-        "",
-    ];
-
-    // Check if the value (trimmed and lowercased) is in the falsish list
-    return falsishValues.includes(value.trim().toLowerCase());
-}
-
 function getSecret(character: Character, secret: string) {
     return character.settings?.secrets?.[secret] || process.env[secret];
 }
@@ -487,7 +483,7 @@ export async function createAgent(
     }
 
     let goatPlugin: any | undefined;
-    if (getSecret(character, "ALCHEMY_API_KEY")) {
+    if (getSecret(character, "EVM_PROVIDER_URL")) {
         goatPlugin = await createGoatPlugin((secret) =>
             getSecret(character, secret)
         );
@@ -541,6 +537,7 @@ export async function createAgent(
             getSecret(character, "HEURIST_API_KEY")
                 ? imageGenerationPlugin
                 : null,
+            getSecret(character, "FAL_API_KEY") ? ThreeDGenerationPlugin : null,
             ...(getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY")
                 ? [
@@ -558,7 +555,10 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-            getSecret(character, "ALCHEMY_API_KEY") ? goatPlugin : null,
+            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
+            getSecret(character, "ABSTRACT_PRIVATE_KEY")
+                ? abstractPlugin
+                : null,
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
@@ -566,6 +566,9 @@ export async function createAgent(
             getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
             getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
             getSecret(character, "ZKSYNC_PRIVATE_KEY") ? zksyncEraPlugin : null,
+            getSecret(character, "CRONOSZKEVM_PRIVATE_KEY")
+                ? cronosZkEVMPlugin
+                : null,
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
@@ -690,13 +693,30 @@ async function startAgent(
     }
 }
 
+const checkPortAvailable = (port: number): Promise<boolean> => {
+    return new Promise((resolve) => {
+        const server = net.createServer();
+
+        server.once("error", (err: NodeJS.ErrnoException) => {
+            if (err.code === "EADDRINUSE") {
+                resolve(false);
+            }
+        });
+
+        server.once("listening", () => {
+            server.close();
+            resolve(true);
+        });
+
+        server.listen(port);
+    });
+};
+
 const startAgents = async () => {
     const directClient = new DirectClient();
-    const serverPort = parseInt(settings.SERVER_PORT || "3000");
+    let serverPort = parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
-
     let charactersArg = args.characters || args.character;
-
     let characters = [defaultCharacter];
 
     if (charactersArg) {
@@ -711,19 +731,32 @@ const startAgents = async () => {
         elizaLogger.error("Error starting agents:", error);
     }
 
+    // Find available port
+    while (!(await checkPortAvailable(serverPort))) {
+        elizaLogger.warn(
+            `Port ${serverPort} is in use, trying ${serverPort + 1}`
+        );
+        serverPort++;
+    }
+
     // upload some agent functionality into directClient
     directClient.startAgent = async (character: Character) => {
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
+
     directClient.start(serverPort);
 
+    if (serverPort !== parseInt(settings.SERVER_PORT || "3000")) {
+        elizaLogger.log(`Server started on alternate port ${serverPort}`);
+    }
+
     elizaLogger.log(
-        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents"
+        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 pnpm start:client`"
     );
 };
 
 startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
-    process.exit(1); // Exit the process after logging
+    process.exit(1);
 });

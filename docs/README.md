@@ -1,6 +1,6 @@
 # Eliza - Multi-agent simulation framework
 
-# https://github.com/ai16z/eliza
+# https://github.com/elizaos/eliza
 
 # Visit https://eliza.builders for support
 
@@ -67,7 +67,7 @@ You can run Grok models by setting the `XAI_MODEL` environment variable to `grok
 
 ### Run with OpenAI
 
-You can run OpenAI models by setting the `XAI_MODEL` environment variable to `gpt-4o-mini` or `gpt-4o`
+You can run OpenAI models by setting the `XAI_MODEL` environment variable to `gpt-4-mini` or `gpt-4o`
 
 ## Additional Requirements
 
