@@ -169,7 +169,7 @@ export declare class Database {
     getRowsModified(): number;
 
     /**
-     * Analyze a result code, return null if no error occured, and throw an
+     * Analyze a result code, return null if no error occurred, and throw an
      * error with a descriptive message otherwise
      * @see [https://sql.js.org/documentation/Database.html#["handleError"]](https://sql.js.org/documentation/Database.html#%5B%22handleError%22%5D)
      */
