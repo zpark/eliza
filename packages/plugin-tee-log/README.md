@@ -12,6 +12,31 @@ Since the TEE Logging is based on the TEE, it is necessary to have a TEE enabled
 - using Intel SGX (Gramine), you need to enable the plugin-sgx in the Eliza runtime, which is enabled in SGX env automatically.
 - using Intel TDX (dstack), you need to enable the plugin-tee in the Eliza runtime.
 
+## TEE Logging Mechanism
+
+## TEE Logging Mechanism
+
+1. **Key Pair Generation and Attestation**:
+   - During startup, each agent generates a key pair and creates a remote attestation for the public key. The private key is securely stored in the TEE's encrypted memory. The agent's relevant information, along with the public key and attestation, is recorded in a local database. A new key pair is generated each time the agent is updated or restarted to ensure key security.
+
+2. **Log Recording**:
+   - For each log entry, basic information is recorded, including `agentId`, `roomId`, `userId`, `type`, `content`, and `timestamp`. This information is concatenated and signed using the agent's corresponding private key to ensure verifiability. The verification process follows this trust chain:
+     - Verify the attestation.
+     - Trust the public key contained in the attestation.
+     - Use the public key to verify the signature.
+     - Trust the complete log record.
+
+3. **Data Storage**:
+   - All log data must be stored in the TEE's encrypted file system in production environments. Storing data in plaintext is prohibited to prevent tampering.
+
+4. **Log Extraction for Verification**:
+   - Third parties can extract TEE logs for verification purposes. Two types of information can be extracted:
+     - **Agent Information**: This includes the agent's metadata, public key, and attestation, which can be used to verify the agent's public key.
+     - **Log Information**: Required logs can be extracted, with the agent's attestation and public key used to verify the signature, ensuring that each record remains untampered.
+
+5. **Integrity Protection**:
+   - When users extract TEE logs via the REST API, the results are hashed, and an attestation is generated. After extraction, users can verify the attestation by comparing the hash value contained within it to the extracted results, thereby ensuring the integrity of the data.
+
 ## Services
 
 - **[TeeLogService]**: This service is responsible for generating and storing TEE logs for agents.
