@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.6-alpha.4](../index.md) / IAgentConfig
+[@elizaos/core v0.1.7-alpha.1](../index.md) / IAgentConfig
 
 # Interface: IAgentConfig
 

@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.6-alpha.4](../index.md) / Model
+[@elizaos/core v0.1.7-alpha.1](../index.md) / Model
 
 # Type Alias: Model
 
@@ -100,4 +100,4 @@ Model names by size class
 
 ## Defined in
 
-[packages/core/src/types.ts:142](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L142)
+[packages/core/src/types.ts:142](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L142)
