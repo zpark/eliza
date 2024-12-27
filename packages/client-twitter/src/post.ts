@@ -824,12 +824,6 @@ export class TwitterPostClient {
         tweetState: any,
         executedActions: string[]
     ) {
-        if (this.isDryRun) {
-            elizaLogger.info(`Dry run: would have processed reply to tweet ${tweet.id}`);
-            executedActions.push("reply (dry run)");
-            return;
-        }
-
         try {
             // Build conversation thread for context
             const thread = await buildConversationThread(tweet, this.client);
@@ -906,9 +900,8 @@ export class TwitterPostClient {
             }
 
             if (this.isDryRun) {
-                elizaLogger.info(
-                    `Dry run: would have posted reply: ${replyText}`
-                );
+                elizaLogger.info(`Dry run: reply to tweet ${tweet.id} would have been: ${replyText}`);
+                executedActions.push("reply (dry run)");
                 return;
             }
 
