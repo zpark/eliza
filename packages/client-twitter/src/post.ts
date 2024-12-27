@@ -112,12 +112,24 @@ export class TwitterPostClient {
         // Log configuration on initialization
         elizaLogger.log("Twitter Client Configuration:");
         elizaLogger.log(`- Username: ${this.twitterUsername}`);
-        elizaLogger.log(`- Dry Run Mode: ${this.isDryRun ? "enabled" : "disabled"}`);
-        elizaLogger.log(`- Post Interval: ${runtime.getSetting("POST_INTERVAL_MIN") || "90"}-${runtime.getSetting("POST_INTERVAL_MAX") || "180"} minutes`);
-        elizaLogger.log(`- Action Processing: ${parseBooleanFromText(runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? "false") ? "enabled" : "disabled"}`);
-        elizaLogger.log(`- Action Interval: ${(parseInt(runtime.getSetting("ACTION_INTERVAL") ?? "300000") / 1000).toFixed(0)} seconds`);
-        elizaLogger.log(`- Post Immediately: ${parseBooleanFromText(runtime.getSetting("POST_IMMEDIATELY") ?? "false") ? "enabled" : "disabled"}`);
-        elizaLogger.log(`- Search Enabled: ${parseBooleanFromText(runtime.getSetting("TWITTER_SEARCH_ENABLE") ?? "false") ? "enabled" : "disabled"}`);
+        elizaLogger.log(
+            `- Dry Run Mode: ${this.isDryRun ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Post Interval: ${runtime.getSetting("POST_INTERVAL_MIN") || "90"}-${runtime.getSetting("POST_INTERVAL_MAX") || "180"} minutes`
+        );
+        elizaLogger.log(
+            `- Action Processing: ${parseBooleanFromText(runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? "false") ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Action Interval: ${(parseInt(runtime.getSetting("ACTION_INTERVAL") ?? "300000") / 1000).toFixed(0)} seconds`
+        );
+        elizaLogger.log(
+            `- Post Immediately: ${parseBooleanFromText(runtime.getSetting("POST_IMMEDIATELY") ?? "false") ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Search Enabled: ${parseBooleanFromText(runtime.getSetting("TWITTER_SEARCH_ENABLE") ?? "false") ? "enabled" : "disabled"}`
+        );
 
         const targetUsers = runtime.getSetting("TWITTER_TARGET_USERS");
         if (targetUsers) {
@@ -125,7 +137,9 @@ export class TwitterPostClient {
         }
 
         if (this.isDryRun) {
-            elizaLogger.log("Twitter client initialized in dry run mode - no actual tweets will be posted");
+            elizaLogger.log(
+                "Twitter client initialized in dry run mode - no actual tweets will be posted"
+            );
         }
     }
 
@@ -190,11 +204,11 @@ export class TwitterPostClient {
 
         if (
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
-            this.runtime.getSetting("POST_IMMEDIATELY") != ""
+            this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            // Retrieve setting, default to false if not set or if the value is not "true"
+            postImmediately =
+                this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
         }
 
         if (postImmediately) {
@@ -223,9 +237,13 @@ export class TwitterPostClient {
             });
         } else {
             if (this.isDryRun) {
-                elizaLogger.log("Action processing loop disabled (dry run mode)");
+                elizaLogger.log(
+                    "Action processing loop disabled (dry run mode)"
+                );
             } else {
-                elizaLogger.log("Action processing loop disabled by configuration");
+                elizaLogger.log(
+                    "Action processing loop disabled by configuration"
+                );
             }
         }
     }
@@ -571,10 +589,14 @@ export class TwitterPostClient {
                     if (actionResponse.like) {
                         try {
                             if (this.isDryRun) {
-                                elizaLogger.info(`Dry run: would have liked tweet ${tweet.id}`);
+                                elizaLogger.info(
+                                    `Dry run: would have liked tweet ${tweet.id}`
+                                );
                                 executedActions.push("like (dry run)");
                             } else {
-                                await this.client.twitterClient.likeTweet(tweet.id);
+                                await this.client.twitterClient.likeTweet(
+                                    tweet.id
+                                );
                                 executedActions.push("like");
                                 elizaLogger.log(`Liked tweet ${tweet.id}`);
                             }
@@ -589,10 +611,14 @@ export class TwitterPostClient {
                     if (actionResponse.retweet) {
                         try {
                             if (this.isDryRun) {
-                                elizaLogger.info(`Dry run: would have retweeted tweet ${tweet.id}`);
+                                elizaLogger.info(
+                                    `Dry run: would have retweeted tweet ${tweet.id}`
+                                );
                                 executedActions.push("retweet (dry run)");
                             } else {
-                                await this.client.twitterClient.retweet(tweet.id);
+                                await this.client.twitterClient.retweet(
+                                    tweet.id
+                                );
                                 executedActions.push("retweet");
                                 elizaLogger.log(`Retweeted tweet ${tweet.id}`);
                             }
@@ -900,7 +926,9 @@ export class TwitterPostClient {
             }
 
             if (this.isDryRun) {
-                elizaLogger.info(`Dry run: reply to tweet ${tweet.id} would have been: ${replyText}`);
+                elizaLogger.info(
+                    `Dry run: reply to tweet ${tweet.id} would have been: ${replyText}`
+                );
                 executedActions.push("reply (dry run)");
                 return;
             }
