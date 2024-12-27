@@ -271,8 +271,6 @@ export class TwitterPostClient {
                     twitterPostTemplate,
             });
 
-            console.log("twitter context:\n" + context);
-
             elizaLogger.debug("generate post prompt:\n" + context);
 
             const newTweetContent = await generateText({
@@ -433,7 +431,7 @@ export class TwitterPostClient {
             context: options?.context || context,
             modelClass: ModelClass.SMALL,
         });
-        console.log("generate tweet content response:\n" + response);
+        elizaLogger.debug("generate tweet content response:\n" + response);
 
         // First clean up any markdown and newlines
         const cleanedResponse = response
