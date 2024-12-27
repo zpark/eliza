@@ -1,19 +1,32 @@
-import {CosmosWalletProvider} from "../providers/wallet.ts";
-import type {IAgentRuntime, Memory, State} from "@ai16z/eliza";
-
+import {
+    CosmosWalletProvider, genCosmosChainsFromRuntime,
+    initWalletProvider,
+} from "../providers/wallet.ts";
+import {
+    composeContext,
+    generateObjectDeprecated,
+    IAgentRuntime,
+    Memory,
+    ModelClass,
+    State,
+} from "@ai16z/eliza";
+import { balanceTemplate } from "../templates";
+import { z } from "zod";
 
 export class BalanceAction {
-    constructor(private cosmosWalletProvider: CosmosWalletProvider) {
-        // here configuration can be done in similar manner to `plugin-evm/actions/BridgeAction`
-    }
+    constructor(private cosmosWalletProvider: CosmosWalletProvider) {}
 
     async getBalance() {
         try {
-        const chainName = this.cosmosWalletProvider.getActiveChain();
-        const address = this.cosmosWalletProvider.getAddress();
-        const balance = await this.cosmosWalletProvider.getWalletBalance(chainName);
+            const activeChain = this.cosmosWalletProvider.getActiveChain();
+            const address = this.cosmosWalletProvider.getAddress();
+            const balance = await this.cosmosWalletProvider.getWalletBalance();
 
-        return `Address: ${address}\nBalance: ${balance}, chain name: ${chainName}`;
+            console.log(
+                `BALANCE_ACTION: \nAddress: ${address}\nBalance: ${JSON.stringify(balance, null, 2)}, chain name: ${activeChain}`
+            );
+
+            return `Address: ${address}\nBalance: ${JSON.stringify(balance, null, 2)}, chain name: ${activeChain}`;
         } catch (error) {
             console.error("Error in Cosmos wallet provider:", error);
             return null;
@@ -22,36 +35,79 @@ export class BalanceAction {
 }
 
 export const balanceAction = {
-    name: "WalletBalance",
-    description: "Action for fetching wallet balance",
-    handler: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State,
-        options: any    // there can be passed setting as desired chain extracted from user prompt to chat
-    ) => {
-        const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
-        const chainName =
-            runtime.getSetting("COSMOS_CHAIN_NAME") || "cosmoshub";
-        const provider = new CosmosWalletProvider(mnemonic);
-        await provider.initialize(chainName);
-        const action = new BalanceAction(provider);
-        console.log(action.getBalance());
+    name: "COSMOS_WALLET_BALANCE",
+    description: "Action for fetching wallet balance on given chain",
+    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+        console.log("COSMOS_WALLET_BALANCE action handler called");
+
+        // Compose transfer context
+        const transferContext = composeContext({
+            state,
+            template: balanceTemplate,
+        });
+
+        // Generate transfer content
+        const content = await generateObjectDeprecated({
+            runtime,
+            context: transferContext,
+            modelClass: ModelClass.LARGE,
+        });
+
+        const balanceContentValidator = z.object({
+            chainName: z.string(),
+        });
+
+        const transferContent = balanceContentValidator.parse(content);
+
+        const { chainName } = transferContent;
+        const activeChain = chainName;
+        console.log(
+            "transferContent",
+            JSON.stringify(transferContent, null, 2)
+        );
+
+        const walletProvider = await initWalletProvider(runtime, activeChain);
+        const action = new BalanceAction(walletProvider);
         return action.getBalance();
     },
     validate: async (runtime: IAgentRuntime) => {
-        return true;
+        const recoveryPhrase = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
+        const chains = genCosmosChainsFromRuntime(runtime);
+        return recoveryPhrase !== undefined && Object.keys(chains).length > 0;
     },
     examples: [
         [
             {
                 user: "User",
                 content: {
-                    text: "Show me balance for my cosmos wallet",
-                    action: "walletProviderTestAction",
-                }
-            }
-        ]
+                    text: "Show me balance of my cosmos wallet for chain mantrachaintestnet2",
+                    action: "COSMOS_WALLET_BALANCE",
+                },
+            },
+            {
+                user: "assistant",
+                content: {
+                    text: "Your wallet balance for chain ${name} is ${10000000} ${uom}",
+                    action: "COSMOS_WALLET_BALANCE",
+                },
+            },
+        ],
+        [
+            {
+                user: "User",
+                content: {
+                    text: "Show me balance of my cosmos wallet for chain mantrachaintestnet2 use COSMOS_WALLET_BALANCE action",
+                    action: "COSMOS_WALLET_BALANCE",
+                },
+            },
+            {
+                user: "assistant",
+                content: {
+                    text: "Your wallet balance for chain mantrachaintestnet2 is 1234567 uom",
+                    action: "COSMOS_WALLET_BALANCE",
+                },
+            },
+        ],
     ],
-    similes: ["COSMOS_BALANCE", "COSMOS_WALLET_BALANCE", "COSMOS_WALLET_TOKENS"],
-}
+    similes: ["COSMOS_BALANCE", "COSMOS_WALLET_TOKENS"],
+};
