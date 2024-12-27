@@ -70,6 +70,8 @@ export const xChainSwapAction = {
             content.toAddress = runtime.getSetting("SQUID_EVM_ADDRESS");
         }
 
+        elizaLogger.log("swap content: ",JSON.stringify(content));
+
         // Validate transfer content
         if (!isXChainSwapContent(content)) {
             console.error("Invalid content for X_CHAIN_SWAP action.");
@@ -131,8 +133,9 @@ export const xChainSwapAction = {
 
             console.log("Parameters:", params); // Printing the parameters for QA
 
-            //Wait 500ms to avoid rate limiting
-            await delay(1000);
+            const throttleInterval = runtime.getSetting("SQUID_API_THROTTLE_INTERVAL") ? Number(runtime.getSetting("SQUID_API_THROTTLE_INTERVAL")) : 0
+
+            await delay(throttleInterval);
 
             // Get the swap route using Squid SDK
             const {route} = await squidRouter.getRoute(params);
@@ -151,8 +154,7 @@ export const xChainSwapAction = {
                 );
             }
 
-            //Wait 500ms to avoid rate limiting
-            await delay(1000);
+            await delay(throttleInterval);
 
             // Execute the swap transaction
             const tx = (await squidRouter.executeRoute({

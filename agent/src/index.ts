@@ -576,7 +576,8 @@ export async function createAgent(
             getSecret(character, "SQUID_SDK_URL") &&
             getSecret(character, "SQUID_INTEGRATOR_ID") &&
             getSecret(character, "SQUID_EVM_ADDRESS") &&
-            getSecret(character, "SQUID_EVM_PRIVATE_KEY")
+            getSecret(character, "SQUID_EVM_PRIVATE_KEY") &&
+            getSecret(character, "SQUID_API_THROTTLE_INTERVAL")
                 ? squidRouterPlugin
                 : null,
 
