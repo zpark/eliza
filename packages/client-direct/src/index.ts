@@ -1,7 +1,7 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
-import multer, { File } from "multer";
+import multer from "multer";
 import {
     elizaLogger,
     generateCaption,
