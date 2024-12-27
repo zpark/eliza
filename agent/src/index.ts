@@ -17,7 +17,6 @@ import {
     elizaLogger,
     FsCacheAdapter,
     IAgentRuntime,
-    ICacheManager,
     IDatabaseAdapter,
     IDatabaseCacheAdapter,
     ModelProviderName,
@@ -25,6 +24,8 @@ import {
     stringToUuid,
     validateCharacterConfig,
     CacheStore,
+    Client,
+    ICacheManager,
 } from "@elizaos/core";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { zgPlugin } from "@elizaos/plugin-0g";
@@ -437,12 +438,30 @@ export async function initializeClients(
         if (slackClient) clients.slack = slackClient; // Use object property instead of push
     }
 
+    function determineClientType(client: Client): string {
+        // Check if client has a direct type identifier
+        if ('type' in client) {
+            return (client as any).type;
+        }
+
+        // Check constructor name
+        const constructorName = client.constructor?.name;
+        if (constructorName && !constructorName.includes('Object')) {
+            return constructorName.toLowerCase().replace('client', '');
+        }
+
+        // Fallback: Generate a unique identifier
+        return `client_${Date.now()}`;
+    }
+
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
-                    clients[client.name] = startedClient; // Assuming client has a name property
+                    const clientType = determineClientType(client);
+                    elizaLogger.debug(`Initializing client of type: ${clientType}`);
+                    clients[clientType] = startedClient;
                 }
             }
         }
