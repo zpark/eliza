@@ -6,7 +6,7 @@
     "types": "dist/index.d.ts",
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "agent-twitter-client": "^1.0.0",
+        "agent-twitter-client": "0.0.17",
         "tsup": "8.3.5"
     },
     "scripts": {
