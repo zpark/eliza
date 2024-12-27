@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import "./App.css";
 import path from "path";
 
@@ -78,7 +78,7 @@ export default function Chat() {
                         messages.map((message, index) => (
                             <div
                                 key={index}
-                                className={`flex ${
+                                className={`text-left flex ${
                                     message.user === "user"
                                         ? "justify-end"
                                         : "justify-start"
@@ -107,6 +107,9 @@ export default function Chat() {
                                             />
                                         )
                                     ))}
+                                    <pre className="whitespace-pre-wrap break-words font-sans m-0">
+                                        {message.text}
+                                    </pre>
                                 </div>
                             </div>
                         ))
