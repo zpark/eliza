@@ -99,6 +99,49 @@ export class TwitterPostClient {
     private isProcessing: boolean = false;
     private lastProcessTime: number = 0;
     private stopProcessingActions: boolean = false;
+    private isDryRun: boolean;
+
+    constructor(client: ClientBase, runtime: IAgentRuntime) {
+        this.client = client;
+        this.runtime = runtime;
+        this.twitterUsername = runtime.getSetting("TWITTER_USERNAME");
+        this.isDryRun = parseBooleanFromText(
+            runtime.getSetting("TWITTER_DRY_RUN") ?? "false"
+        );
+
+        // Log configuration on initialization
+        elizaLogger.log("Twitter Client Configuration:");
+        elizaLogger.log(`- Username: ${this.twitterUsername}`);
+        elizaLogger.log(
+            `- Dry Run Mode: ${this.isDryRun ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Post Interval: ${runtime.getSetting("POST_INTERVAL_MIN") || "90"}-${runtime.getSetting("POST_INTERVAL_MAX") || "180"} minutes`
+        );
+        elizaLogger.log(
+            `- Action Processing: ${parseBooleanFromText(runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? "false") ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Action Interval: ${(parseInt(runtime.getSetting("ACTION_INTERVAL") ?? "300000") / 1000).toFixed(0)} seconds`
+        );
+        elizaLogger.log(
+            `- Post Immediately: ${parseBooleanFromText(runtime.getSetting("POST_IMMEDIATELY") ?? "false") ? "enabled" : "disabled"}`
+        );
+        elizaLogger.log(
+            `- Search Enabled: ${parseBooleanFromText(runtime.getSetting("TWITTER_SEARCH_ENABLE") ?? "false") ? "enabled" : "disabled"}`
+        );
+
+        const targetUsers = runtime.getSetting("TWITTER_TARGET_USERS");
+        if (targetUsers) {
+            elizaLogger.log(`- Target Users: ${targetUsers}`);
+        }
+
+        if (this.isDryRun) {
+            elizaLogger.log(
+                "Twitter client initialized in dry run mode - no actual tweets will be posted"
+            );
+        }
+    }
 
     async start(postImmediately: boolean = false) {
         if (!this.client.profile) {
@@ -161,23 +204,31 @@ export class TwitterPostClient {
 
         if (
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
-            this.runtime.getSetting("POST_IMMEDIATELY") != ""
+            this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            // Retrieve setting, default to false if not set or if the value is not "true"
+            postImmediately =
+                this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
         }
 
         if (postImmediately) {
             await this.generateNewTweet();
         }
-        generateNewTweetLoop();
+
+        // Only start tweet generation loop if not in dry run mode
+        if (!this.isDryRun) {
+            generateNewTweetLoop();
+            elizaLogger.log("Tweet generation loop started");
+        } else {
+            elizaLogger.log("Tweet generation loop disabled (dry run mode)");
+        }
 
         // Add check for ENABLE_ACTION_PROCESSING before starting the loop
-        const enableActionProcessing =
-            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
+        const enableActionProcessing = parseBooleanFromText(
+            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? "false"
+        );
 
-        if (enableActionProcessing) {
+        if (enableActionProcessing && !this.isDryRun) {
             processActionsLoop().catch((error) => {
                 elizaLogger.error(
                     "Fatal error in process actions loop:",
@@ -185,17 +236,21 @@ export class TwitterPostClient {
                 );
             });
         } else {
-            elizaLogger.log("Action processing loop disabled by configuration");
+            if (this.isDryRun) {
+                elizaLogger.log(
+                    "Action processing loop disabled (dry run mode)"
+                );
+            } else {
+                elizaLogger.log(
+                    "Action processing loop disabled by configuration"
+                );
+            }
         }
-        generateNewTweetLoop();
     }
 
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
-        this.client = client;
-        this.runtime = runtime;
-        this.twitterUsername = runtime.getSetting("TWITTER_USERNAME");
-    }
-
+    /**
+     * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
+     */
     private async generateNewTweet() {
         elizaLogger.log("Generating new tweet");
 
@@ -233,8 +288,6 @@ export class TwitterPostClient {
                     this.runtime.character.templates?.twitterPostTemplate ||
                     twitterPostTemplate,
             });
-
-            console.log("twitter context:\n" + context);
 
             elizaLogger.debug("generate post prompt:\n" + context);
 
@@ -292,7 +345,7 @@ export class TwitterPostClient {
             // Final cleaning
             cleanedContent = removeQuotes(fixNewLines(content));
 
-            if (this.runtime.getSetting("TWITTER_DRY_RUN") === "true") {
+            if (this.isDryRun) {
                 elizaLogger.info(
                     `Dry run: would have posted tweet: ${cleanedContent}`
                 );
@@ -396,7 +449,7 @@ export class TwitterPostClient {
             context: options?.context || context,
             modelClass: ModelClass.SMALL,
         });
-        console.log("generate tweet content response:\n" + response);
+        elizaLogger.debug("generate tweet content response:\n" + response);
 
         // First clean up any markdown and newlines
         const cleanedResponse = response
@@ -447,6 +500,10 @@ export class TwitterPostClient {
         );
     }
 
+    /**
+     * Processes tweet actions (likes, retweets, quotes, replies). If isDryRun is true,
+     * only simulates and logs actions without making API calls.
+     */
     private async processTweetActions() {
         if (this.isProcessing) {
             elizaLogger.log("Already processing tweet actions, skipping");
@@ -458,6 +515,11 @@ export class TwitterPostClient {
             this.lastProcessTime = Date.now();
 
             elizaLogger.log("Processing tweet actions");
+
+            if (this.isDryRun) {
+                elizaLogger.log("Dry run mode: simulating tweet actions");
+                return [];
+            }
 
             await this.runtime.ensureUserExists(
                 this.runtime.agentId,
@@ -526,9 +588,18 @@ export class TwitterPostClient {
                     // Execute actions
                     if (actionResponse.like) {
                         try {
-                            await this.client.twitterClient.likeTweet(tweet.id);
-                            executedActions.push("like");
-                            elizaLogger.log(`Liked tweet ${tweet.id}`);
+                            if (this.isDryRun) {
+                                elizaLogger.info(
+                                    `Dry run: would have liked tweet ${tweet.id}`
+                                );
+                                executedActions.push("like (dry run)");
+                            } else {
+                                await this.client.twitterClient.likeTweet(
+                                    tweet.id
+                                );
+                                executedActions.push("like");
+                                elizaLogger.log(`Liked tweet ${tweet.id}`);
+                            }
                         } catch (error) {
                             elizaLogger.error(
                                 `Error liking tweet ${tweet.id}:`,
@@ -539,9 +610,18 @@ export class TwitterPostClient {
 
                     if (actionResponse.retweet) {
                         try {
-                            await this.client.twitterClient.retweet(tweet.id);
-                            executedActions.push("retweet");
-                            elizaLogger.log(`Retweeted tweet ${tweet.id}`);
+                            if (this.isDryRun) {
+                                elizaLogger.info(
+                                    `Dry run: would have retweeted tweet ${tweet.id}`
+                                );
+                                executedActions.push("retweet (dry run)");
+                            } else {
+                                await this.client.twitterClient.retweet(
+                                    tweet.id
+                                );
+                                executedActions.push("retweet");
+                                elizaLogger.log(`Retweeted tweet ${tweet.id}`);
+                            }
                         } catch (error) {
                             elizaLogger.error(
                                 `Error retweeting tweet ${tweet.id}:`,
@@ -552,6 +632,15 @@ export class TwitterPostClient {
 
                     if (actionResponse.quote) {
                         try {
+                            // Check for dry run mode
+                            if (this.isDryRun) {
+                                elizaLogger.info(
+                                    `Dry run: would have posted quote tweet for ${tweet.id}`
+                                );
+                                executedActions.push("quote (dry run)");
+                                continue;
+                            }
+
                             // Build conversation thread for context
                             const thread = await buildConversationThread(
                                 tweet,
@@ -752,6 +841,10 @@ export class TwitterPostClient {
         }
     }
 
+    /**
+     * Handles text-only replies to tweets. If isDryRun is true, only logs what would
+     * have been replied without making API calls.
+     */
     private async handleTextOnlyReply(
         tweet: Tweet,
         tweetState: any,
@@ -829,6 +922,14 @@ export class TwitterPostClient {
 
             if (!replyText) {
                 elizaLogger.error("Failed to generate valid reply content");
+                return;
+            }
+
+            if (this.isDryRun) {
+                elizaLogger.info(
+                    `Dry run: reply to tweet ${tweet.id} would have been: ${replyText}`
+                );
+                executedActions.push("reply (dry run)");
                 return;
             }
 
