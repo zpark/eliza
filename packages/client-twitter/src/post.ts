@@ -161,21 +161,20 @@ export class TwitterPostClient {
 
         if (
             this.runtime.getSetting("POST_IMMEDIATELY") != null &&
-            this.runtime.getSetting("POST_IMMEDIATELY") != ""
+            this.runtime.getSetting("POST_IMMEDIATELY") !== ""
         ) {
-            postImmediately = parseBooleanFromText(
-                this.runtime.getSetting("POST_IMMEDIATELY")
-            );
+            // Retrieve setting, default to false if not set or if the value is not "true"
+            postImmediately = this.runtime.getSetting("POST_IMMEDIATELY") === "true" || false;
+
         }
 
         if (postImmediately) {
             await this.generateNewTweet();
         }
-        generateNewTweetLoop();
 
         // Add check for ENABLE_ACTION_PROCESSING before starting the loop
         const enableActionProcessing =
-            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") ?? false;
+            this.runtime.getSetting("ENABLE_ACTION_PROCESSING") === "true" || false;
 
         if (enableActionProcessing) {
             processActionsLoop().catch((error) => {
@@ -187,6 +186,7 @@ export class TwitterPostClient {
         } else {
             elizaLogger.log("Action processing loop disabled by configuration");
         }
+        
         generateNewTweetLoop();
     }
 
