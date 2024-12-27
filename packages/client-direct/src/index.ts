@@ -1,12 +1,13 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Request as ExpressRequest } from "express";
-import multer, { File } from "multer";
+import multer from "multer";
 import {
     elizaLogger,
     generateCaption,
     generateImage,
-    getEmbeddingZeroVector,
+    Media,
+    getEmbeddingZeroVector
 } from "@elizaos/core";
 import { composeContext } from "@elizaos/core";
 import { generateMessageResponse } from "@elizaos/core";
@@ -24,7 +25,23 @@ import { settings } from "@elizaos/core";
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
-const upload = multer({ storage: multer.memoryStorage() });
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(process.cwd(), "data", "uploads");
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        cb(null, `${uniqueSuffix}-${file.originalname}`);
+    },
+});
+
+const upload = multer({ storage });
 
 export const messageHandlerTemplate =
     // {{goals}}
@@ -71,12 +88,22 @@ export class DirectClient {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: true }));
 
+        // Serve both uploads and generated images
+        this.app.use(
+            "/media/uploads",
+            express.static(path.join(process.cwd(), "/data/uploads"))
+        );
+        this.app.use(
+            "/media/generated",
+            express.static(path.join(process.cwd(), "/generatedImages"))
+        );
+
         const apiRouter = createApiRouter(this.agents, this);
         this.app.use(apiRouter);
 
         // Define an interface that extends the Express Request interface
         interface CustomRequest extends ExpressRequest {
-            file: File;
+            file?: Express.Multer.File;
         }
 
         // Update the route handler to use CustomRequest instead of express.Request
@@ -133,6 +160,7 @@ export class DirectClient {
 
         this.app.post(
             "/:agentId/message",
+            upload.single("file"),
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
                 const roomId = stringToUuid(
@@ -167,9 +195,29 @@ export class DirectClient {
                 const text = req.body.text;
                 const messageId = stringToUuid(Date.now().toString());
 
+                const attachments: Media[] = [];
+                if (req.file) {
+                    const filePath = path.join(
+                        process.cwd(),
+                        "agent",
+                        "data",
+                        "uploads",
+                        req.file.filename
+                    );
+                    attachments.push({
+                        id: Date.now().toString(),
+                        url: filePath,
+                        title: req.file.originalname,
+                        source: "direct",
+                        description: `Uploaded file: ${req.file.originalname}`,
+                        text: "",
+                        contentType: req.file.mimetype,
+                    });
+                }
+
                 const content: Content = {
                     text,
-                    attachments: [],
+                    attachments,
                     source: "direct",
                     inReplyTo: undefined,
                 };
