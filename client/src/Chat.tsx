@@ -107,10 +107,7 @@ export default function Chat() {
                                             />
                                         )
                                     ))}
-                                    <pre className="whitespace-pre-wrap break-words font-sans m-0">
-                                        {message.text}
-                                    </pre>
-                                </div>
+                                 </div>
                             </div>
                         ))
                     ) : (
