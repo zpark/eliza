@@ -483,11 +483,8 @@ export async function createAgent(
     }
 
     let goatPlugin: any | undefined;
-<<<<<<< HEAD
+
     if (getSecret(character, "EVM_PRIVATE_KEY")) {
-=======
-    if (getSecret(character, "EVM_PROVIDER_URL")) {
->>>>>>> origin/develop
         goatPlugin = await createGoatPlugin((secret) =>
             getSecret(character, secret)
         );
@@ -559,14 +556,10 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-<<<<<<< HEAD
             goatPlugin,
-=======
-            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
->>>>>>> origin/develop
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
