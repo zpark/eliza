@@ -247,7 +247,7 @@ export async function sendTweet(
             sentTweets.push(finalTweet);
             previousTweetId = finalTweet.id;
         } else {
-            console.error("Error sending chunk", chunk, "repsonse:", body);
+            console.error("Error sending chunk", chunk, "response:", body);
         }
 
         // Wait a bit between tweets to avoid rate limiting issues
