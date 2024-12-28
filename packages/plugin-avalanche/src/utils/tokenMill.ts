@@ -1,9 +1,4 @@
-import {
-    getAccount,
-    getWalletClient,
-    getTxReceipt,
-    getPublicClient,
-} from "./index";
+import { getAccount, getWalletClient, getPublicClient } from "./index";
 import { TOKEN_ADDRESSES, TOKEN_MILL_CONFIG } from "./constants";
 import { IAgentRuntime } from "@elizaos/core";
 import { TokenMillMarketCreationParameters } from "../types";

@@ -20,7 +20,7 @@ export const getAccount = (runtime: IAgentRuntime) => {
     return privateKeyToAccount(`0x${privateKey.replace("0x", "")}`);
 };
 
-export const getPublicClient = (runtime: IAgentRuntime) => {
+export const getPublicClient = (_runtime: IAgentRuntime) => {
     return createPublicClient({
         chain: avalanche,
         transport: http(),
@@ -351,7 +351,7 @@ export const swap = async (
     try {
         const account = getAccount(runtime);
         const publicClient = getPublicClient(runtime);
-        const { result, request } = await publicClient.simulateContract({
+        const { _result, request } = await publicClient.simulateContract({
             account: account,
             address: YAK_SWAP_CONFIG.router,
             abi: [
@@ -426,7 +426,7 @@ export const deposit = async (
     try {
         const decimals = await getDecimals(runtime, depositTokenAddress);
         const publicClient = getPublicClient(runtime);
-        const { result, request } = await publicClient.simulateContract({
+        const { _result, request } = await publicClient.simulateContract({
             account: getAccount(runtime),
             address: strategyAddress,
             abi: [
