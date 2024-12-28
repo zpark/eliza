@@ -233,3 +233,13 @@ Available model providers
 #### Defined in
 
 [packages/core/src/types.ts:240](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L240)
+
+***
+
+### LIVEPEER
+
+> **LIVEPEER**: `"livepeer"`
+
+#### Defined in
+
+[packages/core/src/types.ts:241](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L241)
