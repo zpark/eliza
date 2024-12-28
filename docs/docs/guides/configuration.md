@@ -72,6 +72,9 @@ TOGETHER_API_KEY=
 # Heurist Settings
 HEURIST_API_KEY=
 
+# Livepeer Settings
+LIVEPEER_GATEWAY_URL=
+
 # Local Model Settings
 XAI_MODEL=meta-llama/Llama-3.1-7b-instruct
 ```

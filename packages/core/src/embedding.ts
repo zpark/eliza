@@ -21,20 +21,13 @@ export const EmbeddingProvider = {
     BGE: "BGE",
 } as const;
 
-export type EmbeddingProvider =
+export type EmbeddingProviderType =
     (typeof EmbeddingProvider)[keyof typeof EmbeddingProvider];
-
-export namespace EmbeddingProvider {
-    export type OpenAI = typeof EmbeddingProvider.OpenAI;
-    export type Ollama = typeof EmbeddingProvider.Ollama;
-    export type GaiaNet = typeof EmbeddingProvider.GaiaNet;
-    export type BGE = typeof EmbeddingProvider.BGE;
-}
 
 export type EmbeddingConfig = {
     readonly dimensions: number;
     readonly model: string;
-    readonly provider: EmbeddingProvider;
+    readonly provider: EmbeddingProviderType;
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
@@ -196,7 +189,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     if (config.provider === EmbeddingProvider.OpenAI) {
         return await getRemoteEmbedding(input, {
             model: config.model,
-            endpoint: "https://api.openai.com/v1",
+            endpoint: settings.OPENAI_API_URL || "https://api.openai.com/v1",
             apiKey: settings.OPENAI_API_KEY,
             dimensions: config.dimensions,
         });
