@@ -1,30 +1,57 @@
-import { Provider, IAgentRuntime, Memory, State, elizaLogger } from "@elizaos/core";
-import { GitBookResponse, GitBookClientConfig } from '../types';
+import {
+    Provider,
+    IAgentRuntime,
+    Memory,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
+import { GitBookResponse, GitBookClientConfig } from "../types";
 
 function cleanText(text: string): string {
     const cleaned = text
-        .replace(/<@!?\d+>/g, '')        // Discord mentions
-        .replace(/<#\d+>/g, '')          // Discord channels
-        .replace(/<@&\d+>/g, '')         // Discord roles
-        .replace(/(?:^|\s)@[\w_]+/g, '') // Platform mentions
+        .replace(/<@!?\d+>/g, "") // Discord mentions
+        .replace(/<#\d+>/g, "") // Discord channels
+        .replace(/<@&\d+>/g, "") // Discord roles
+        .replace(/(?:^|\s)@[\w_]+/g, "") // Platform mentions
         .trim();
 
     return cleaned;
 }
 
-async function validateQuery(runtime: IAgentRuntime, text: string): Promise<boolean> {
+async function validateQuery(
+    runtime: IAgentRuntime,
+    text: string
+): Promise<boolean> {
     // Default general queries - everything else comes from config
     const keywords = {
         generalQueries: [
-            'how', 'what', 'where', 'explain', 'show', 'tell',
-            'can', 'does', 'is', 'are', 'will', 'why',
-            'benefits', 'features', 'cost', 'price',
-            'use', 'using', 'work', 'access', 'get'
-        ]
+            "how",
+            "what",
+            "where",
+            "explain",
+            "show",
+            "tell",
+            "can",
+            "does",
+            "is",
+            "are",
+            "will",
+            "why",
+            "benefits",
+            "features",
+            "cost",
+            "price",
+            "use",
+            "using",
+            "work",
+            "access",
+            "get",
+        ],
     };
 
     try {
-        const gitbookConfig = runtime.character.clientConfig?.gitbook as GitBookClientConfig;
+        const gitbookConfig = runtime.character.clientConfig
+            ?.gitbook as GitBookClientConfig;
 
         // Get project terms and document triggers from config
         const projectTerms = gitbookConfig?.keywords?.projectTerms || [];
@@ -34,18 +61,21 @@ async function validateQuery(runtime: IAgentRuntime, text: string): Promise<bool
         if (gitbookConfig?.keywords?.generalQueries) {
             keywords.generalQueries = [
                 ...keywords.generalQueries,
-                ...gitbookConfig.keywords.generalQueries
+                ...gitbookConfig.keywords.generalQueries,
             ];
         }
 
         const containsAnyWord = (text: string, words: string[] = []) => {
-            return words.length === 0 || words.some(word => {
-                if (word.includes(' ')) {
-                    return text.includes(word.toLowerCase());
-                }
-                const regex = new RegExp(`\\b${word}\\b`, 'i');
-                return regex.test(text);
-            });
+            return (
+                words.length === 0 ||
+                words.some((word) => {
+                    if (word.includes(" ")) {
+                        return text.includes(word.toLowerCase());
+                    }
+                    const regex = new RegExp(`\\b${word}\\b`, "i");
+                    return regex.test(text);
+                })
+            );
         };
 
         const hasProjectTerm = containsAnyWord(text, projectTerms);
@@ -54,21 +84,24 @@ async function validateQuery(runtime: IAgentRuntime, text: string): Promise<bool
 
         const isValid = hasProjectTerm || hasDocTrigger || hasGeneralQuery;
 
-        elizaLogger.info(`✅ Is GitBook Validation Result: ${isValid}`)
+        elizaLogger.info(`✅ Is GitBook Validation Result: ${isValid}`);
         return isValid;
-
     } catch (error) {
-        elizaLogger.warn(`❌ Error in GitBook validation:\n${error}`)
+        elizaLogger.warn(`❌ Error in GitBook validation:\n${error}`);
         return false;
     }
 }
 
 export const gitbookProvider: Provider = {
-    get: async (runtime: IAgentRuntime, message: Memory, _state?: State): Promise<string> => {
+    get: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        _state?: State
+    ): Promise<string> => {
         try {
             const spaceId = runtime.getSetting("GITBOOK_SPACE_ID");
             if (!spaceId) {
-                elizaLogger.error('⚠️ GitBook Space ID not configured')
+                elizaLogger.error("⚠️ GitBook Space ID not configured");
                 return "";
             }
 
@@ -76,7 +109,7 @@ export const gitbookProvider: Provider = {
             const isValidQuery = await validateQuery(runtime, text);
 
             if (!isValidQuery) {
-                elizaLogger.info('⚠️ GitBook Query validation failed')
+                elizaLogger.info("⚠️ GitBook Query validation failed");
                 return "";
             }
 
@@ -87,17 +120,17 @@ export const gitbookProvider: Provider = {
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                         query: cleanedQuery,
-                        variables: {}
-                    })
+                        variables: {},
+                    }),
                 }
             );
 
             if (!response.ok) {
-                console.error('❌ GitBook API error:', response.status);
+                elizaLogger.error("❌ GitBook API error:", response.status);
                 return "";
             }
 
@@ -105,8 +138,8 @@ export const gitbookProvider: Provider = {
 
             return result.answer?.text || "";
         } catch (error) {
-            console.error("❌ Error in GitBook provider:", error);
+            elizaLogger.error("❌ Error in GitBook provider:", error);
             return "";
         }
-    }
+    },
 };
