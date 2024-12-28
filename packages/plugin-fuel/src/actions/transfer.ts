@@ -105,5 +105,5 @@ export const transferAction: Action = {
             },
         ],
     ],
-    similes: ["SEND_FUEL_ETH", "FUEL_TRANSFER", "SEND_ETH"],
+    similes: ["TRANSFER_FUEL_ETH"],
 };
