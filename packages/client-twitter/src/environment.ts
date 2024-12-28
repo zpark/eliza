@@ -12,10 +12,7 @@ export const twitterEnvSchema = z.object({
     TWITTER_USERNAME: z.string().min(1, "Twitter username is required"),
     TWITTER_PASSWORD: z.string().min(1, "Twitter password is required"),
     TWITTER_EMAIL: z.string().email("Valid Twitter email is required"),
-    MAX_TWEET_LENGTH: z
-        .string()
-        .pipe(z.coerce.number().min(1).int())
-        .default(DEFAULT_MAX_TWEET_LENGTH.toString()),
+    MAX_TWEET_LENGTH: z.number().int().default(DEFAULT_MAX_TWEET_LENGTH),
     TWITTER_SEARCH_ENABLE: z.boolean().default(false),
     TWITTER_2FA_SECRET: z.string(),
     TWITTER_RETRY_LIMIT: z.number().int(),
@@ -106,9 +103,10 @@ export async function validateTwitterConfig(
                 runtime.getSetting("TWITTER_EMAIL") ||
                 process.env.TWITTER_EMAIL,
             MAX_TWEET_LENGTH: // number as string?
-                runtime.getSetting("MAX_TWEET_LENGTH") ||
-                process.env.MAX_TWEET_LENGTH ||
-                DEFAULT_MAX_TWEET_LENGTH.toString(),
+                safeParseInt(
+                    runtime.getSetting("MAX_TWEET_LENGTH") ||
+                    process.env.MAX_TWEET_LENGTH
+                , DEFAULT_MAX_TWEET_LENGTH),
             TWITTER_SEARCH_ENABLE: // bool
                 parseBooleanFromText(
                     runtime.getSetting("TWITTER_SEARCH_ENABLE") ||
