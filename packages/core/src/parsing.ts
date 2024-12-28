@@ -44,10 +44,11 @@ export const booleanFooter = `Respond with only a YES or a NO.`;
  * @returns {boolean|null} - Returns `true` for affirmative inputs, `false` for negative inputs, and `null` for unrecognized inputs or null/undefined.
  */
 export const parseBooleanFromText = (text: string) => {
+    // "NULL", "UNDEFINED"
     if (!text) return null; // Handle null or undefined input
 
-    const affirmative = ["YES", "Y", "TRUE", "T", "1", "ON", "ENABLE"];
-    const negative = ["NO", "N", "FALSE", "F", "0", "OFF", "DISABLE"];
+    const affirmative = ["YES", "Y", "TRUE",  "T", "1", "ON",  "ENABLE"];
+    const negative =    ["NO",  "N", "FALSE", "F", "0", "OFF", "DISABLE", ""];
 
     const normalizedText = text.trim().toUpperCase();
 
@@ -205,28 +206,3 @@ export const parseActionResponseFromText = (
 
     return { actions };
 };
-
-export const isFalsish = (input: any): boolean => {
-    // If the input is exactly NaN, return true
-    if (Number.isNaN(input)) {
-        return true;
-    }
-
-    // Convert input to a string if it's not null or undefined
-    const value = input == null ? "" : String(input);
-
-    // List of common falsish string representations
-    const falsishValues = [
-        "false",
-        "0",
-        "no",
-        "n",
-        "off",
-        "null",
-        "undefined",
-        "",
-    ];
-
-    // Check if the value (trimmed and lowercased) is in the falsish list
-    return falsishValues.includes(value.trim().toLowerCase());
-}
