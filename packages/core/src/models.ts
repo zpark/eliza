@@ -3,7 +3,7 @@ import { Models, ModelProviderName, ModelClass } from "./types.ts";
 
 export const models: Models = {
     [ModelProviderName.OPENAI]: {
-        endpoint: "https://api.openai.com/v1",
+        endpoint: settings.OPENAI_API_URL || "https://api.openai.com/v1",
         settings: {
             stop: [],
             maxInputTokens: 128000,
