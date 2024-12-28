@@ -83,7 +83,7 @@ export default {
         "SEND_AVAX_ON_AVALANCHE",
         "PAY_ON_AVALANCHE",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },

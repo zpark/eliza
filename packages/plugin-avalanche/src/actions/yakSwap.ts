@@ -103,7 +103,7 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "SWAP_TOKEN",
     similes: ["TRADE_TOKEN", "BUY_TOKEN", "SELL_TOKEN"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },

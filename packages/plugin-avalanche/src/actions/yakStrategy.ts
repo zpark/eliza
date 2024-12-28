@@ -83,7 +83,7 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "DEPOSIT_TO_STRATEGY",
     similes: ["DEPOSIT_FOR_YIELD", "DEPOSIT_TOKENS"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
