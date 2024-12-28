@@ -7,7 +7,6 @@
     "dependencies": {
         "@elizaos/core": "^0.1.7-alpha.1",
         "tsup": "^8.3.5",
-        "typescript": "^5.7.2",
         "ws": "^8.18.0"
     },
     "scripts": {
