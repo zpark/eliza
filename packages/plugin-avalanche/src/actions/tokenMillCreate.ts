@@ -11,10 +11,7 @@ import {
     ModelClass,
     Content,
 } from "@elizaos/core";
-import { getTxReceipt, sendNativeAsset, sendToken } from "../utils";
-import { Address } from "viem";
 import { validateAvalancheConfig } from "../environment";
-import { TOKEN_ADDRESSES } from "../utils/constants";
 import { createMarketAndToken } from "../utils/tokenMill";
 
 export interface TokenMillCreateContent extends Content {
@@ -62,7 +59,7 @@ export default {
         "CREATE_MEMECOIN",
         "CREATE_MEME_TOKEN",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
