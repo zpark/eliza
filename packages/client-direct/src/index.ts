@@ -445,6 +445,160 @@ export class DirectClient {
                 }
             }
         );
+
+        this.app.post("/:agentId/speak", async (req, res) => {
+            const agentId = req.params.agentId;
+            const roomId = stringToUuid(req.body.roomId ?? "default-room-" + agentId);
+            const userId = stringToUuid(req.body.userId ?? "user");
+            const text = req.body.text;
+
+            if (!text) {
+                res.status(400).send("No text provided");
+                return;
+            }
+
+            let runtime = this.agents.get(agentId);
+
+            // if runtime is null, look for runtime with the same name
+            if (!runtime) {
+                runtime = Array.from(this.agents.values()).find(
+                    (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                );
+            }
+
+            if (!runtime) {
+                res.status(404).send("Agent not found");
+                return;
+            }
+
+            try {
+                // Process message through agent (same as /message endpoint)
+                await runtime.ensureConnection(
+                    userId,
+                    roomId,
+                    req.body.userName,
+                    req.body.name,
+                    "direct"
+                );
+
+                const messageId = stringToUuid(Date.now().toString());
+
+                const content: Content = {
+                    text,
+                    attachments: [],
+                    source: "direct",
+                    inReplyTo: undefined,
+                };
+
+                const userMessage = {
+                    content,
+                    userId,
+                    roomId,
+                    agentId: runtime.agentId,
+                };
+
+                const memory: Memory = {
+                    id: messageId,
+                    agentId: runtime.agentId,
+                    userId,
+                    roomId,
+                    content,
+                    createdAt: Date.now(),
+                };
+
+                await runtime.messageManager.createMemory(memory);
+
+                const state = await runtime.composeState(userMessage, {
+                    agentName: runtime.character.name,
+                });
+
+                const context = composeContext({
+                    state,
+                    template: messageHandlerTemplate,
+                });
+
+                const response = await generateMessageResponse({
+                    runtime: runtime,
+                    context,
+                    modelClass: ModelClass.LARGE,
+                });
+
+                // save response to memory
+                const responseMessage = {
+                    ...userMessage,
+                    userId: runtime.agentId,
+                    content: response,
+                };
+
+                await runtime.messageManager.createMemory(responseMessage);
+
+                if (!response) {
+                    res.status(500).send("No response from generateMessageResponse");
+                    return;
+                }
+
+                await runtime.evaluate(memory, state);
+
+                const _result = await runtime.processActions(
+                    memory,
+                    [responseMessage],
+                    state,
+                    async () => {
+                        return [memory];
+                    }
+                );
+
+                // Get the text to convert to speech
+                const textToSpeak = response.text;
+
+                // Convert to speech using ElevenLabs
+                const elevenLabsApiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`;
+                const apiKey = process.env.ELEVENLABS_XI_API_KEY;
+
+                if (!apiKey) {
+                    throw new Error("ELEVENLABS_XI_API_KEY not configured");
+                }
+
+                const speechResponse = await fetch(elevenLabsApiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "xi-api-key": apiKey,
+                    },
+                    body: JSON.stringify({
+                        text: textToSpeak,
+                        model_id: process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2",
+                        voice_settings: {
+                            stability: parseFloat(process.env.ELEVENLABS_VOICE_STABILITY || "0.5"),
+                            similarity_boost: parseFloat(process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST || "0.9"),
+                            style: parseFloat(process.env.ELEVENLABS_VOICE_STYLE || "0.66"),
+                            use_speaker_boost: process.env.ELEVENLABS_VOICE_USE_SPEAKER_BOOST === "true",
+                        },
+                    }),
+                });
+
+                if (!speechResponse.ok) {
+                    throw new Error(`ElevenLabs API error: ${speechResponse.statusText}`);
+                }
+
+                const audioBuffer = await speechResponse.arrayBuffer();
+
+                // Set appropriate headers for audio streaming
+                res.set({
+                    'Content-Type': 'audio/mpeg',
+                    'Transfer-Encoding': 'chunked'
+                });
+
+                res.send(Buffer.from(audioBuffer));
+
+            } catch (error) {
+                console.error("Error processing message or generating speech:", error);
+                res.status(500).json({
+                    error: "Error processing message or generating speech",
+                    details: error.message
+                });
+            }
+        });
     }
 
     // agent/src/index.ts:startAgent calls this
