@@ -48,7 +48,7 @@ export const parseBooleanFromText = (text: string) => {
     if (!text) return null; // Handle null or undefined input
 
     const affirmative = ["YES", "Y", "TRUE",  "T", "1", "ON",  "ENABLE"];
-    const negative =    ["NO",  "N", "FALSE", "F", "0", "OFF", "DISABLE", ""];
+    const negative =    ["NO",  "N", "FALSE", "F", "0", "OFF", "DISABLE"];
 
     const normalizedText = text.trim().toUpperCase();
 
