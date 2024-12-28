@@ -4,7 +4,7 @@ import { getAccount, getDecimals, getTokenBalance } from "../utils";
 import { STRATEGY_ADDRESSES, TOKEN_ADDRESSES } from "../utils/constants";
 
 const walletProvider: Provider = {
-    get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
+    get: async (runtime: IAgentRuntime, _message: Memory, _state?: State) => {
         console.log("walletProvider::get");
         const privateKey = runtime.getSetting("AVALANCHE_PRIVATE_KEY");
         if (!privateKey) {
