@@ -80,7 +80,7 @@ export class GitHubClient {
                 await this.git.clone(repositoryUrl, this.repoPath);
                 elizaLogger.log(`Successfully cloned repository from ${repositoryUrl}`);
                 return;
-            } catch (error) {
+            } catch {
                 elizaLogger.error(`Failed to clone repository from ${repositoryUrl}. Retrying...`);
                 retries++;
                 if (retries === maxRetries) {
