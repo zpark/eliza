@@ -122,11 +122,11 @@ export async function validateTwitterConfig(
                     runtime.getSetting("TWITTER_RETRY_LIMIT") ||
                     process.env.TWITTER_RETRY_LIMIT
                 , 5),
-            TWITTER_POLL_INTERVAL: // int in minutes
+            TWITTER_POLL_INTERVAL: // int in seconds
                 safeParseInt(
                     runtime.getSetting("TWITTER_POLL_INTERVAL") ||
                     process.env.TWITTER_POLL_INTERVAL
-                , 120), // 2h
+                , 120), // 2m
             TWITTER_TARGET_USERS: // comma separated string
                 parseTargetUsers(
                     runtime.getSetting("TWITTER_TARGET_USERS") ||
