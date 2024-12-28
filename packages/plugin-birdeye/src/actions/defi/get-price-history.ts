@@ -9,18 +9,18 @@ import {
     Memory,
     State,
 } from "@elizaos/core";
+import { getTokenMetadata } from "../../services";
+import { BirdeyeChain } from "../../types/shared";
+import { TokenMetadataResponse } from "../../types/token-metadata";
 import {
     BASE_URL,
-    Chain,
     extractChain,
     extractContractAddresses,
     extractTimeRange,
     formatTimestamp,
     formatValue,
     makeApiRequest,
-} from "../../providers/utils";
-import { getTokenMetadata, TokenMetadataResponse } from "./get-token-metadata";
-
+} from "../../utils";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const exampleResponse = {
     success: true,
@@ -137,7 +137,7 @@ const getPriceHistory = async (
     contractAddress: string,
     startTime: number,
     endTime: number,
-    chain: Chain,
+    chain: BirdeyeChain,
     interval: TimeInterval = DEFAULT_INTERVAL
 ): Promise<PriceHistoryResponse | null> => {
     try {
@@ -174,7 +174,7 @@ const formatPriceHistoryResponse = (
     data: PriceHistoryResponse,
     tokenMetadata: TokenMetadataResponse | null,
     timeRange: { start: number; end: number },
-    chain: Chain,
+    chain: BirdeyeChain,
     interval: TimeInterval
 ): string => {
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
@@ -188,7 +188,7 @@ const formatPriceHistoryResponse = (
         const { name, symbol, extensions } = tokenMetadata.data;
         tokenInfo = `${name} (${symbol})`;
 
-        const links = [];
+        const links: string[] = [];
         if (extensions.website) links.push(`[Website](${extensions.website})`);
         if (extensions.coingecko_id)
             links.push(
@@ -346,8 +346,8 @@ export const getPriceHistoryAction: Action = {
         // First fetch token metadata
         const tokenMetadata = await getTokenMetadata(
             apiKey,
-            addresses[0],
-            chain
+            addresses[0].toString(),
+            chain as BirdeyeChain
         );
 
         elizaLogger.info(
@@ -360,10 +360,10 @@ export const getPriceHistoryAction: Action = {
 
         const priceData = await getPriceHistory(
             apiKey,
-            addresses[0],
+            addresses[0].toString(),
             timeRange.start,
             timeRange.end,
-            chain,
+            chain as BirdeyeChain,
             interval
         );
 
@@ -378,7 +378,7 @@ export const getPriceHistoryAction: Action = {
             priceData,
             tokenMetadata,
             timeRange,
-            chain,
+            chain as BirdeyeChain,
             interval
         );
         await callback(callbackData);

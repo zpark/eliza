@@ -9,16 +9,17 @@ import {
     Memory,
     State,
 } from "@elizaos/core";
+import { getTokenMetadata } from "../../services";
+import { BirdeyeChain } from "../../types/shared";
+import { TokenMetadataResponse } from "../../types/token-metadata";
 import {
     BASE_URL,
-    Chain,
     extractChain,
     extractContractAddresses,
     formatTimestamp,
     formatValue,
     makeApiRequest,
-} from "../../providers/utils";
-import { getTokenMetadata, TokenMetadataResponse } from "./get-token-metadata";
+} from "../../utils";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const exampleResponse = {
@@ -134,7 +135,7 @@ const formatVolume = (volume: number): string => {
 const getOHLCVData = async (
     apiKey: string,
     contractAddress: string,
-    chain: Chain,
+    chain: BirdeyeChain,
     interval: TimeInterval = DEFAULT_INTERVAL
 ): Promise<OHLCVResponse | null> => {
     try {
@@ -162,7 +163,7 @@ const getOHLCVData = async (
 const formatOHLCVResponse = (
     data: OHLCVResponse,
     tokenMetadata: TokenMetadataResponse | null,
-    chain: Chain,
+    chain: BirdeyeChain,
     interval: TimeInterval
 ): string => {
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
@@ -174,7 +175,7 @@ const formatOHLCVResponse = (
         const { name, symbol, extensions } = tokenMetadata.data;
         tokenInfo = `${name} (${symbol})`;
 
-        const links = [];
+        const links: string[] = [];
         if (extensions.website) links.push(`[Website](${extensions.website})`);
         if (extensions.coingecko_id)
             links.push(
@@ -306,8 +307,8 @@ export const getOHLCVAction: Action = {
         // First fetch token metadata
         const tokenMetadata = await getTokenMetadata(
             apiKey,
-            addresses[0],
-            chain
+            addresses[0].toString(),
+            chain as BirdeyeChain
         );
 
         elizaLogger.info(
@@ -316,8 +317,8 @@ export const getOHLCVAction: Action = {
 
         const ohlcvData = await getOHLCVData(
             apiKey,
-            addresses[0],
-            chain,
+            addresses[0].toString(),
+            chain as BirdeyeChain,
             interval
         );
 
@@ -331,7 +332,7 @@ export const getOHLCVAction: Action = {
         callbackData.text = formatOHLCVResponse(
             ohlcvData,
             tokenMetadata,
-            chain,
+            chain as BirdeyeChain,
             interval
         );
         await callback(callbackData);

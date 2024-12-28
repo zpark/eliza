@@ -2,54 +2,15 @@ import {
     Action,
     ActionExample,
     Content,
+    elizaLogger,
     Handler,
     HandlerCallback,
     IAgentRuntime,
     Memory,
     State,
-    elizaLogger,
 } from "@elizaos/core";
-import { BASE_URL, makeApiRequest } from "../../providers/utils";
-
-// Constants for keyword matching
-const NETWORK_KEYWORDS = [
-    "supported networks",
-    "available networks",
-    "supported chains",
-    "available chains",
-    "which networks",
-    "which chains",
-    "list networks",
-    "list chains",
-    "show networks",
-    "show chains",
-    "network support",
-    "chain support",
-] as const;
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const exampleResponse = {
-    success: true,
-    data: [
-        "solana",
-        "ethereum",
-        "arbitrum",
-        "avalanche",
-        "bsc",
-        "optimism",
-        "polygon",
-        "base",
-        "zksync",
-        "sui",
-    ],
-};
-
-// Helper function to check if text contains network-related keywords
-const containsNetworkKeyword = (text: string): boolean => {
-    return NETWORK_KEYWORDS.some((keyword) =>
-        text.toLowerCase().includes(keyword.toLowerCase())
-    );
-};
+import { BASE_URL, makeApiRequest } from "../../utils.ts";
+import { containsNetworkKeyword, NetworksResponse } from "./networks.utils.ts";
 
 export const getSupportedNetworksAction: Action = {
     name: "GET_SUPPORTED_NETWORKS",
@@ -97,7 +58,7 @@ export const getSupportedNetworksAction: Action = {
         elizaLogger.info("Fetching supported networks");
         const url = `${BASE_URL}/defi/networks`;
 
-        const networksData = await makeApiRequest<typeof exampleResponse>(url, {
+        const networksData = await makeApiRequest<NetworksResponse>(url, {
             apiKey,
         });
 
@@ -108,7 +69,7 @@ export const getSupportedNetworksAction: Action = {
             return callbackData;
         }
 
-        callbackData.text = `Currently supported networks for information about tokens, swaps, prices, gainers and losers are: ${networksData.data.join(", ")}`;
+        callbackData.text = `Currently supported networks are: ${networksData.data.join(", ")}`;
         await callback(callbackData);
         return callbackData;
     }) as Handler,
