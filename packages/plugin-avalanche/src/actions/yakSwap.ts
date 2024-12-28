@@ -27,7 +27,7 @@ function isSwapContent(
     runtime: IAgentRuntime,
     content: any
 ): content is SwapContent {
-    console.log("Content for swap", content);
+    elizaLogger.debug("Content for swap", content);
     return (
         typeof content.fromTokenAddress === "string" &&
         typeof content.toTokenAddress === "string" &&
@@ -140,7 +140,7 @@ export default {
 
         // Validate swap content
         if (!isSwapContent(runtime, content)) {
-            console.error("Invalid content for SWAP_TOKEN action.");
+            elizaLogger.error("Invalid content for SWAP_TOKEN action.");
             callback?.({
                 text: "Unable to process swap request. Invalid content provided.",
                 content: { error: "Invalid swap content" },
@@ -149,7 +149,7 @@ export default {
         }
 
         // Log the swap content
-        console.log("Swap content:", content);
+        elizaLogger.debug("Swap content:", content);
         const quote = await getQuote(
             runtime,
             content.fromTokenAddress as Address,
@@ -163,13 +163,13 @@ export default {
             "0x0000000000000000000000000000000000000000"
         ) {
             // todo: swap from native
-            console.log("Swapping from native AVAX");
+            elizaLogger.log("Swapping from native AVAX");
         } else if (
             content.toTokenAddress ===
             "0x0000000000000000000000000000000000000000"
         ) {
             // todo: swap to native
-            console.log("Swapping to native AVAX");
+            elizaLogger.log("Swapping to native AVAX");
         } else {
             const yakRouterAddress = YAK_SWAP_CONFIG.router as Address;
             const tx = await approve(
@@ -195,13 +195,13 @@ export default {
                     if (swapTx) {
                         receipt = await getTxReceipt(runtime, swapTx);
                         if (receipt.status === "success") {
-                            console.log("Swap successful");
+                            elizaLogger.log("Swap successful");
                             callback?.({
                                 text: "swap successful",
                                 content: { success: true, txHash: swapTx },
                             });
                         } else {
-                            console.error("Swap failed");
+                            elizaLogger.error("Swap failed");
                             callback?.({
                                 text: "swap failed",
                                 content: { error: "Swap failed" },
@@ -209,7 +209,7 @@ export default {
                         }
                     }
                 } else {
-                    console.error("Approve failed");
+                    elizaLogger.error("Approve failed");
                     callback?.({
                         text: "approve failed",
                         content: { error: "Approve failed" },

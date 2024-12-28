@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@elizaos/core";
+import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 import {
     createPublicClient,
     createWalletClient,
@@ -11,7 +11,6 @@ import { privateKeyToAccount } from "viem/accounts";
 import { avalanche } from "viem/chains";
 import { YakSwapQuote } from "../types";
 import { YAK_SWAP_CONFIG } from "./constants";
-import { elizaLogger } from "@elizaos/core";
 
 export const getAccount = (runtime: IAgentRuntime) => {
     const privateKey =
@@ -196,7 +195,7 @@ export const getQuote = async (
             gasPrice,
         ],
     });
-    console.log("Quote:", quote);
+    elizaLogger.log("Quote:", quote);
     return quote as YakSwapQuote;
 };
 
@@ -264,11 +263,11 @@ export const sendToken = async (
             throw new Error("Transfer failed");
         }
 
-        console.log("Request:", request);
+        elizaLogger.debug("Request:", request);
 
         const walletClient = getWalletClient(runtime);
         const tx = await walletClient.writeContract(request);
-        console.log("Transaction:", tx);
+        elizaLogger.log("Transaction:", tx);
         return tx as Hash;
     } catch (error) {
         elizaLogger.error("Error simulating contract:", error);
@@ -322,11 +321,11 @@ export const approve = async (
             throw new Error("Approve failed");
         }
 
-        console.log("Request:", request);
+        elizaLogger.debug("Request:", request);
 
         const walletClient = getWalletClient(runtime);
         const tx = await walletClient.writeContract(request);
-        console.log("Transaction:", tx);
+        elizaLogger.log("Transaction:", tx);
         return tx;
     } catch (error) {
         elizaLogger.error("Error approving:", error);
@@ -405,11 +404,11 @@ export const swap = async (
             args: [trade, recipient || account.address, 0n],
         });
 
-        console.log("Request:", request);
+        elizaLogger.debug("Request:", request);
 
         const walletClient = getWalletClient(runtime);
         const tx = await walletClient.writeContract(request);
-        console.log("Transaction:", tx);
+        elizaLogger.log("Transaction:", tx);
         return tx;
     } catch (error) {
         elizaLogger.error("Error simulating contract:", error);
@@ -452,11 +451,11 @@ export const deposit = async (
         //     throw new Error('Deposit failed')
         // }
 
-        console.log("Request:", request);
+        elizaLogger.debug("Request:", request);
 
         const walletClient = getWalletClient(runtime);
         const tx = await walletClient.writeContract(request);
-        console.log("Transaction:", tx);
+        elizaLogger.log("Transaction:", tx);
         return tx;
     } catch (error) {
         elizaLogger.error("Error depositing:", error);

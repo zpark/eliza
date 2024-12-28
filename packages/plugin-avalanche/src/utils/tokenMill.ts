@@ -1,6 +1,6 @@
 import { getAccount, getWalletClient, getPublicClient } from "./index";
 import { TOKEN_ADDRESSES, TOKEN_MILL_CONFIG } from "./constants";
-import { IAgentRuntime } from "@elizaos/core";
+import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { TokenMillMarketCreationParameters } from "../types";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 
@@ -140,14 +140,14 @@ export const createMarketAndToken = async (
         throw new Error("Create failed");
     }
 
-    console.log("request", request);
-    console.log("result", result);
+    elizaLogger.debug("request", request);
+    elizaLogger.debug("result", result);
 
-    console.log("Request:", request);
+    elizaLogger.debug("Request:", request);
 
     const walletClient = getWalletClient(runtime);
     const tx = await walletClient.writeContract(request);
-    console.log("Transaction:", tx);
+    elizaLogger.log("Transaction:", tx);
 
     return {
         tx: tx,

@@ -26,7 +26,7 @@ function isStrategyContent(
     runtime: IAgentRuntime,
     content: any
 ): content is StrategyContent {
-    console.log("Content for strategy", content);
+    elizaLogger.debug("Content for strategy", content);
     return (
         typeof content.depositTokenAddress === "string" &&
         typeof content.strategyAddress === "string" &&
@@ -120,7 +120,9 @@ export default {
 
         // Validate content
         if (!isStrategyContent(runtime, content)) {
-            console.error("Invalid content for DEPOSIT_TO_STRATEGY action.");
+            elizaLogger.error(
+                "Invalid content for DEPOSIT_TO_STRATEGY action."
+            );
             callback?.({
                 text: "Unable to process deposit request. Invalid content provided.",
                 content: { error: "Invalid deposit content" },
@@ -129,14 +131,14 @@ export default {
         }
 
         // Log the swap content
-        console.log("Deposit content:", content);
+        elizaLogger.debug("Deposit content:", content);
 
         if (
             content.depositTokenAddress ===
             "0x0000000000000000000000000000000000000000"
         ) {
             // todo: deposit from native
-            console.log("Swapping from native AVAX");
+            elizaLogger.log("Swapping from native AVAX");
         } else {
             const tx = await approve(
                 runtime,

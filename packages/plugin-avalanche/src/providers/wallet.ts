@@ -1,11 +1,17 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
+import {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
 import { formatUnits } from "viem";
 import { getAccount, getDecimals, getTokenBalance } from "../utils";
 import { STRATEGY_ADDRESSES, TOKEN_ADDRESSES } from "../utils/constants";
 
 const walletProvider: Provider = {
     get: async (runtime: IAgentRuntime, _message: Memory, _state?: State) => {
-        console.log("walletProvider::get");
+        elizaLogger.debug("walletProvider::get");
         const privateKey = runtime.getSetting("AVALANCHE_PRIVATE_KEY");
         if (!privateKey) {
             throw new Error(
@@ -42,7 +48,7 @@ const walletProvider: Provider = {
         }
         output += `Note: These balances must be withdrawn from the strategy before they can be used.\n\n`;
 
-        console.log("walletProvider::get output:", output);
+        elizaLogger.debug("walletProvider::get output:", output);
         return output;
     },
 };

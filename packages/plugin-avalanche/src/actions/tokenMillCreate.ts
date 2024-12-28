@@ -23,7 +23,7 @@ function isTokenMillCreateContent(
     runtime: IAgentRuntime,
     content: any
 ): content is TokenMillCreateContent {
-    console.log("Content for create", content);
+    elizaLogger.debug("Content for create", content);
     return (
         typeof content.name === "string" && typeof content.symbol === "string"
     );
@@ -98,7 +98,7 @@ export default {
 
         // Validate transfer content
         if (!isTokenMillCreateContent(runtime, content)) {
-            console.error("Invalid content for CREATE_TOKEN action.");
+            elizaLogger.error("Invalid content for CREATE_TOKEN action.");
             callback?.({
                 text: "Unable to process transfer request. Invalid content provided.",
                 content: { error: "Invalid content" },

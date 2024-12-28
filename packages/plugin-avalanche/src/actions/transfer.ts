@@ -26,7 +26,7 @@ function isTransferContent(
     runtime: IAgentRuntime,
     content: any
 ): content is TransferContent {
-    console.log("Content for transfer", content);
+    elizaLogger.debug("Content for transfer", content);
     return (
         typeof content.tokenAddress === "string" &&
         typeof content.recipient === "string" &&
@@ -133,7 +133,7 @@ export default {
 
         // Validate transfer content
         if (!isTransferContent(runtime, content)) {
-            console.error("Invalid content for TRANSFER_TOKEN action.");
+            elizaLogger.error("Invalid content for TRANSFER_TOKEN action.");
             callback?.({
                 text: "Unable to process transfer request. Invalid content provided.",
                 content: { error: "Invalid transfer content" },
