@@ -1,7 +1,7 @@
 import { PassThrough } from "stream";
 import { Readable } from "node:stream";
 import { ReadableStream } from "node:stream/web";
-import { IAgentRuntime, ISpeechService, ServiceType } from "@ai16z/core";
+import { IAgentRuntime, ISpeechService, ServiceType } from "@elizaos/core";
 import { getWavHeader } from "./audioUtils.ts";
 import { Service } from "@elizaos/core";
 import { validateNodeConfig } from "../environment.ts";
