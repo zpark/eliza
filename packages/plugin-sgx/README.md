@@ -49,3 +49,50 @@ When Eliza starts, the `sgxAttestationProvider` will generate SGX attestation in
 const sgxAttestationProvider = new SgxAttestationProvider();
 const sgxAttestation = await sgxAttestationProvider.generateAttestation(userReport);
 ```
+
+## Quick Start
+
+First, you need to prepare a SGX enabled machine.
+
+Then, you can use the following command to start a Gramine Docker container:
+
+```bash
+sudo docker run -it --name eliza_sgx \
+    --mount type=bind,source={your_eliza_path},target=/root/eliza \
+    --device /dev/sgx/enclave \
+    --device /dev/sgx/provision \
+    gramineproject/gramine:stable-jammy
+```
+
+After entering the docker, you can use the following command to prepare the Eliza environment:
+
+```bash
+# Generate the private key for signing the SGX enclave
+gramine-sgx-gen-private-key
+
+cd /root/eliza/
+
+# Install nodejs and pnpm
+# Node.js will be installed at `/usr/bin/node`.
+# Gramine will utilize this path as the default Node.js location to run Eliza.
+# If you prefer to use nvm for installing Node.js, please ensure to specify the Node.js path in the Makefile, as the installation path for nvm is not `/usr/bin/node`.
+apt update
+apt install -y build-essential
+apt install -y curl
+curl -fsSL https://deb.nodesource.com/setup_23.x | bash -
+apt install -y nodejs=23.3.0-1nodesource1
+npm install -g pnpm
+
+# Build Eliza
+pnpm i
+# The build may fail on the first attempt due to the missing `plugin-tee` dependency in `plugin-tee-log`. Simply run the build command again to resolve the issue.
+# TODO: fix the build issue
+pnpm build
+
+# Copy the .env.example file to .env
+cp .env.example .env
+# Edit the .env file
+
+# Start Eliza in SGX
+SGX=1 make start -- --character "character/c3po.character.json"
+```
