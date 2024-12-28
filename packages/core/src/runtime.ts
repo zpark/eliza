@@ -924,6 +924,7 @@ Text: ${attachment.text}
             return await this.messageManager.getMemoriesByRoomIds({
                 // filter out the current room id from rooms
                 roomIds: rooms.filter((room) => room !== roomId),
+                limit: 20
             });
         };
 
