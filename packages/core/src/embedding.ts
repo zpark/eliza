@@ -14,22 +14,22 @@ interface EmbeddingOptions {
     provider?: string;
 }
 
-export const EmbeddingProvider = {
+// Define the providers as a const object
+export const EMBEDDING_PROVIDERS = {
     OpenAI: "OpenAI",
     Ollama: "Ollama",
     GaiaNet: "GaiaNet",
     BGE: "BGE",
 } as const;
 
-export type EmbeddingProvider =
-    (typeof EmbeddingProvider)[keyof typeof EmbeddingProvider];
+// Create type from the values
+export type EmbeddingProvider = typeof EMBEDDING_PROVIDERS[keyof typeof EMBEDDING_PROVIDERS];
 
-export namespace EmbeddingProvider {
-    export type OpenAI = typeof EmbeddingProvider.OpenAI;
-    export type Ollama = typeof EmbeddingProvider.Ollama;
-    export type GaiaNet = typeof EmbeddingProvider.GaiaNet;
-    export type BGE = typeof EmbeddingProvider.BGE;
-}
+// If you need individual types, use type aliases instead of namespace
+export type OpenAIProvider = typeof EMBEDDING_PROVIDERS.OpenAI;
+export type OllamaProvider = typeof EMBEDDING_PROVIDERS.Ollama;
+export type GaiaNetProvider = typeof EMBEDDING_PROVIDERS.GaiaNet;
+export type BGEProvider = typeof EMBEDDING_PROVIDERS.BGE;
 
 export type EmbeddingConfig = {
     readonly dimensions: number;
