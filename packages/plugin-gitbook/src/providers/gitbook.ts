@@ -14,7 +14,7 @@ function cleanText(text: string): string {
 
 async function validateQuery(runtime: IAgentRuntime, text: string): Promise<boolean> {
     // Default general queries - everything else comes from config
-    let keywords = {
+    const keywords = {
         generalQueries: [
             'how', 'what', 'where', 'explain', 'show', 'tell',
             'can', 'does', 'is', 'are', 'will', 'why',
