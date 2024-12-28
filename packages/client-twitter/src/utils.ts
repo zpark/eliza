@@ -4,7 +4,6 @@ import { Content, Memory, UUID } from "@elizaos/core";
 import { stringToUuid } from "@elizaos/core";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@elizaos/core";
-import { DEFAULT_MAX_TWEET_LENGTH } from "./environment";
 import { Media } from "@elizaos/core";
 import fs from "fs";
 import path from "path";
@@ -174,8 +173,7 @@ export async function sendTweet(
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(
         content.text,
-        Number(client.runtime.getSetting("MAX_TWEET_LENGTH")) ||
-            DEFAULT_MAX_TWEET_LENGTH
+        client.twitterConfig.MAX_TWEET_LENGTH
     );
     const sentTweets: Tweet[] = [];
     let previousTweetId = inReplyTo;
