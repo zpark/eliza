@@ -1,9 +1,9 @@
 import WebSocket from "ws";
-import { IAgentRuntime, Service, ServiceType } from "@elizaos/core";
+import { IAgentRuntime, Service } from "@elizaos/core";
 
 interface ChatResponse {
     answer: string;
-    chat_id: string;  
+    chat_id: string;
     representation?: Record<string, any>[];
     agent_api_name: string;
     query_summary: string;
@@ -24,7 +24,6 @@ interface FereResponse {
 }
 
 export class FereProService extends Service {
-
     private ws: WebSocket | null = null;
     private user: string = "1a5b4a29-9d95-44c8-aef3-05a8e515f43e";
     private runtime: IAgentRuntime | null = null;
@@ -38,9 +37,7 @@ export class FereProService extends Service {
     /**
      * Connect to WebSocket and send a message
      */
-    async sendMessage(
-        payload: FereMessage
-    ): Promise<FereResponse> {
+    async sendMessage(payload: FereMessage): Promise<FereResponse> {
         return new Promise((resolve, reject) => {
             try {
                 const url = `wss:/api.fereai.xyz/chat/v2/ws/${this.user}`;
