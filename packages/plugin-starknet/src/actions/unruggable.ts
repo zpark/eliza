@@ -9,7 +9,6 @@ import {
     Memory,
     ModelClass,
     State,
-    type Action,
 } from "@elizaos/core";
 import { Percent } from "@uniswap/sdk-core";
 import { createMemecoin, launchOnEkubo } from "unruggable-sdk";
