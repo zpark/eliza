@@ -543,8 +543,7 @@ export class DirectClient {
                     memory,
                     [responseMessage],
                     state,
-                    async (newMessages) => {
-                        message = newMessages;
+                    async () => {
                         return [memory];
                     }
                 );
