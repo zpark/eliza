@@ -168,12 +168,12 @@ importers:
       '@elizaos/plugin-flow':
         specifier: workspace:*
         version: link:../packages/plugin-flow
-      '@elizaos/plugin-gitbook':
-        specifier: workspace:*
-        version: link:../packages/plugin-gitbook
       '@elizaos/plugin-fuel':
         specifier: workspace:*
         version: link:../packages/plugin-fuel
+      '@elizaos/plugin-gitbook':
+        specifier: workspace:*
+        version: link:../packages/plugin-gitbook
       '@elizaos/plugin-goat':
         specifier: workspace:*
         version: link:../packages/plugin-goat
@@ -1224,15 +1224,6 @@ importers:
         specifier: 2.1.4
         version: 2.1.4(@types/node@22.10.2)(jsdom@25.0.1(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10))(terser@5.37.0)
 
-  packages/plugin-gitbook:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
-
   packages/plugin-fuel:
     dependencies:
       '@elizaos/core':
@@ -1253,6 +1244,15 @@ importers:
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
+
+  packages/plugin-gitbook:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.6.1)
 
   packages/plugin-goat:
     dependencies:
