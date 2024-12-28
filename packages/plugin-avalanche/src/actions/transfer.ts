@@ -1,4 +1,16 @@
-import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
+import {
+    Action,
+    ActionExample,
+    IAgentRuntime,
+    Memory,
+    State,
+    HandlerCallback,
+    elizaLogger,
+    composeContext,
+    generateObject,
+    ModelClass,
+    Content,
+} from "@elizaos/core";
 import { getTxReceipt, sendNativeAsset, sendToken } from "../utils";
 import { Address } from "viem";
 import { validateAvalancheConfig } from "../environment";
@@ -47,7 +59,9 @@ Example response for a 0.1 AVAX transfer:
 
 ## Token Addresses
 
-${Object.entries(TOKEN_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+${Object.entries(TOKEN_ADDRESSES)
+    .map(([key, value]) => `- ${key}: ${value}`)
+    .join("\n")}
 
 ## Recent Messages
 
@@ -67,26 +81,32 @@ export default {
         "TRANSFER_TOKENS_ON_AVALANCHE",
         "SEND_TOKENS_ON_AVALANCHE",
         "SEND_AVAX_ON_AVALANCHE",
-        "PAY_ON_AVALANCHE"
+        "PAY_ON_AVALANCHE",
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
-    description: "MUST use this action if the user requests send a token or transfer a token, the request might be varied, but it will always be a token transfer.",
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
+    description:
+        "MUST use this action if the user requests send a token or transfer a token, the request might be varied, but it will always be a token transfer.",
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: { [key: string]: unknown },
+        callback?: HandlerCallback
+    ) => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
 
         // Validate transfer
         if (message.content.source === "direct") {
             //
-        }
-        else {
+        } else {
             callback?.({
                 text: "i can't do that for you.",
                 content: { error: "Transfer not allowed" },
             });
-            return false
+            return false;
         }
 
         // Initialize or update state
@@ -122,30 +142,42 @@ export default {
         }
 
         let tx;
-        if (content.tokenAddress === "0x0000000000000000000000000000000000000000") {
-            tx = await sendNativeAsset(runtime, content.recipient as Address, content.amount as number);
+        if (
+            content.tokenAddress ===
+            "0x0000000000000000000000000000000000000000"
+        ) {
+            tx = await sendNativeAsset(
+                runtime,
+                content.recipient as Address,
+                content.amount as number
+            );
         } else {
-            tx = await sendToken(runtime, content.tokenAddress as Address, content.recipient as Address, content.amount as number);
+            tx = await sendToken(
+                runtime,
+                content.tokenAddress as Address,
+                content.recipient as Address,
+                content.amount as number
+            );
         }
 
         if (tx) {
-            let receipt = await getTxReceipt(runtime, tx)
+            let receipt = await getTxReceipt(runtime, tx);
             if (receipt.status === "success") {
                 callback?.({
                     text: "transfer successful",
                     content: { success: true, txHash: tx },
-                })
+                });
             } else {
                 callback?.({
                     text: "transfer failed",
                     content: { error: "Transfer failed" },
-                })
+                });
             }
         } else {
             callback?.({
                 text: "transfer failed",
                 content: { error: "Transfer failed" },
-            })
+            });
         }
 
         return true;
@@ -154,7 +186,9 @@ export default {
         [
             {
                 user: "{{user1}}",
-                content: { text: "Send 10 AVAX to 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7" },
+                content: {
+                    text: "Send 10 AVAX to 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+                },
             },
         ],
     ] as ActionExample[][],

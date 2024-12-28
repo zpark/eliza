@@ -1,4 +1,4 @@
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/core";
 import {
     Action,
     HandlerCallback,
@@ -6,8 +6,8 @@ import {
     Memory,
     Plugin,
     State,
-} from "@ai16z/eliza";
-import { generateImage } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { generateImage } from "@elizaos/core";
 
 import fs from "fs";
 import path from "path";
@@ -76,6 +76,7 @@ const imageGeneration: Action = {
         "MAKE_A",
     ],
     description: "Generate an image to go along with the message.",
+    suppressInitialMessage: true,
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateImageGenConfig(runtime);
 
@@ -84,13 +85,15 @@ const imageGeneration: Action = {
         const heuristApiKeyOk = !!runtime.getSetting("HEURIST_API_KEY");
         const falApiKeyOk = !!runtime.getSetting("FAL_API_KEY");
         const openAiApiKeyOk = !!runtime.getSetting("OPENAI_API_KEY");
+        const veniceApiKeyOk = !!runtime.getSetting("VENICE_API_KEY");
 
         return (
             anthropicApiKeyOk ||
             togetherApiKeyOk ||
             heuristApiKeyOk ||
             falApiKeyOk ||
-            openAiApiKeyOk
+            openAiApiKeyOk ||
+            veniceApiKeyOk
         );
     },
     handler: async (
@@ -107,6 +110,8 @@ const imageGeneration: Action = {
             seed?: number;
             modelId?: string;
             jobId?: string;
+            stylePreset?: string;
+            hideWatermark?: boolean;
         },
         callback: HandlerCallback
     ) => {
@@ -118,6 +123,9 @@ const imageGeneration: Action = {
         const imagePrompt = message.content.text;
         elizaLogger.log("Image prompt received:", imagePrompt);
 
+        const imageSettings = runtime.character?.settings?.imageSettings || {};
+        elizaLogger.log("Image settings:", imageSettings);
+
         // TODO: Generate a prompt for the image
 
         const res: { image: string; caption: string }[] = [];
@@ -126,23 +134,17 @@ const imageGeneration: Action = {
         const images = await generateImage(
             {
                 prompt: imagePrompt,
-                width: options.width || 1024,
-                height: options.height || 1024,
-                ...(options.count != null ? { count: options.count || 1 } : {}),
-                ...(options.negativePrompt != null
-                    ? { negativePrompt: options.negativePrompt }
-                    : {}),
-                ...(options.numIterations != null
-                    ? { numIterations: options.numIterations }
-                    : {}),
-                ...(options.guidanceScale != null
-                    ? { guidanceScale: options.guidanceScale }
-                    : {}),
-                ...(options.seed != null ? { seed: options.seed } : {}),
-                ...(options.modelId != null
-                    ? { modelId: options.modelId }
-                    : {}),
-                ...(options.jobId != null ? { jobId: options.jobId } : {}),
+                width: options.width || imageSettings.width || 1024,
+                height: options.height || imageSettings.height || 1024,
+                ...(options.count != null || imageSettings.count != null ? { count: options.count || imageSettings.count || 1 } : {}),
+                ...(options.negativePrompt != null || imageSettings.negativePrompt != null ? { negativePrompt: options.negativePrompt || imageSettings.negativePrompt } : {}),
+                ...(options.numIterations != null || imageSettings.numIterations != null ? { numIterations: options.numIterations || imageSettings.numIterations } : {}),
+                ...(options.guidanceScale != null || imageSettings.guidanceScale != null ? { guidanceScale: options.guidanceScale || imageSettings.guidanceScale } : {}),
+                ...(options.seed != null || imageSettings.seed != null ? { seed: options.seed || imageSettings.seed } : {}),
+                ...(options.modelId != null || imageSettings.modelId != null ? { modelId: options.modelId || imageSettings.modelId } : {}),
+                ...(options.jobId != null || imageSettings.jobId != null ? { jobId: options.jobId || imageSettings.jobId } : {}),
+                ...(options.stylePreset != null || imageSettings.stylePreset != null ? { stylePreset: options.stylePreset || imageSettings.stylePreset } : {}),
+                ...(options.hideWatermark != null || imageSettings.hideWatermark != null ? { hideWatermark: options.hideWatermark || imageSettings.hideWatermark } : {}),
             },
             runtime
         );
@@ -205,6 +207,7 @@ const imageGeneration: Action = {
                                 source: "imageGeneration",
                                 description: "...", //caption.title,
                                 text: "...", //caption.description,
+                                contentType: "image/png",
                             },
                         ],
                     },

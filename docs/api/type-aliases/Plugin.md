@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / Plugin
+[@elizaos/core v0.1.7-alpha.1](../index.md) / Plugin
 
 # Type Alias: Plugin
 
@@ -52,4 +52,4 @@ Optional clients
 
 ## Defined in
 
-[packages/core/src/types.ts:572](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L572)
+[packages/core/src/types.ts:585](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L585)

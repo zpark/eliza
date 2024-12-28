@@ -2,16 +2,34 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 
-import { AgentRuntime } from "@ai16z/eliza";
+import {
+    AgentRuntime,
+    elizaLogger,
+    getEnvVariable,
+    validateCharacterConfig,
+} from "@elizaos/core";
 
 import { REST, Routes } from "discord.js";
+import { DirectClient } from ".";
 
-export function createApiRouter(agents: Map<string, AgentRuntime>) {
+export function createApiRouter(
+    agents: Map<string, AgentRuntime>,
+    directClient: DirectClient
+) {
     const router = express.Router();
 
     router.use(cors());
     router.use(bodyParser.json());
     router.use(bodyParser.urlencoded({ extended: true }));
+    router.use(
+        express.json({
+            limit: getEnvVariable("EXPRESS_MAX_PAYLOAD") || "100kb",
+        })
+    );
+
+    router.get("/", (req, res) => {
+        res.send("Welcome, this is the REST API!");
+    });
 
     router.get("/hello", (req, res) => {
         res.json({ message: "Hello World!" });
@@ -21,6 +39,7 @@ export function createApiRouter(agents: Map<string, AgentRuntime>) {
         const agentsList = Array.from(agents.values()).map((agent) => ({
             id: agent.agentId,
             name: agent.character.name,
+            clients: Object.keys(agent.clients),
         }));
         res.json({ agents: agentsList });
     });
@@ -37,6 +56,42 @@ export function createApiRouter(agents: Map<string, AgentRuntime>) {
         res.json({
             id: agent.agentId,
             character: agent.character,
+        });
+    });
+
+    router.post("/agents/:agentId/set", async (req, res) => {
+        const agentId = req.params.agentId;
+        console.log("agentId", agentId);
+        let agent: AgentRuntime = agents.get(agentId);
+
+        // update character
+        if (agent) {
+            // stop agent
+            agent.stop();
+            directClient.unregisterAgent(agent);
+            // if it has a different name, the agentId will change
+        }
+
+        // load character from body
+        const character = req.body;
+        try {
+            validateCharacterConfig(character);
+        } catch (e) {
+            elizaLogger.error(`Error parsing character: ${e}`);
+            res.status(400).json({
+                success: false,
+                message: e.message,
+            });
+            return;
+        }
+
+        // start it up (and register it)
+        agent = await directClient.startAgent(character);
+        elizaLogger.log(`${character.name} started`);
+
+        res.json({
+            id: character.id,
+            character: character,
         });
     });
 

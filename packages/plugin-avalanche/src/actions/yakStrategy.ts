@@ -1,5 +1,17 @@
-import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
-import { approve, deposit, getTxReceipt } from "../utils"
+import {
+    Action,
+    ActionExample,
+    IAgentRuntime,
+    Memory,
+    State,
+    HandlerCallback,
+    elizaLogger,
+    composeContext,
+    generateObject,
+    ModelClass,
+    Content,
+} from "@elizaos/core";
+import { approve, deposit, getTxReceipt } from "../utils";
 import { Address } from "viem";
 import { validateAvalancheConfig } from "../environment";
 import { STRATEGY_ADDRESSES, TOKEN_ADDRESSES } from "../utils/constants";
@@ -47,11 +59,15 @@ Example response for a 10 WAVAX deposit into a strategy:
 
 ## Token Addresses
 
-${Object.entries(TOKEN_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+${Object.entries(TOKEN_ADDRESSES)
+    .map(([key, value]) => `- ${key}: ${value}`)
+    .join("\n")}
 
 ## Strategy Addresses
 
-${Object.entries(STRATEGY_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+${Object.entries(STRATEGY_ADDRESSES)
+    .map(([key, value]) => `- ${key}: ${value}`)
+    .join("\n")}
 
 ## Recent Messages
 
@@ -66,16 +82,20 @@ Respond with a JSON markdown block containing only the extracted values.`;
 
 export default {
     name: "DEPOSIT_TO_STRATEGY",
-    similes: [
-        "DEPOSIT_FOR_YIELD",
-        "DEPOSIT_TOKENS",
-    ],
+    similes: ["DEPOSIT_FOR_YIELD", "DEPOSIT_TOKENS"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
-    description: "MUST use this action if the user requests to deposit into a yield-earning strategy, the request might be varied, but it will always be a deposit into a strategy.",
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
+    description:
+        "MUST use this action if the user requests to deposit into a yield-earning strategy, the request might be varied, but it will always be a deposit into a strategy.",
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: { [key: string]: unknown },
+        callback?: HandlerCallback
+    ) => {
         elizaLogger.log("Starting DEPOSIT_TO_STRATEGY handler...");
 
         // Initialize or update state
@@ -111,51 +131,64 @@ export default {
         // Log the swap content
         console.log("Deposit content:", content);
 
-        if (content.depositTokenAddress === "0x0000000000000000000000000000000000000000") {
+        if (
+            content.depositTokenAddress ===
+            "0x0000000000000000000000000000000000000000"
+        ) {
             // todo: deposit from native
-            console.log("Swapping from native AVAX")
+            console.log("Swapping from native AVAX");
         } else {
-            let tx = await approve(runtime, content.depositTokenAddress as Address, content.strategyAddress as Address, content.amount as number)
+            let tx = await approve(
+                runtime,
+                content.depositTokenAddress as Address,
+                content.strategyAddress as Address,
+                content.amount as number
+            );
             callback?.({
                 text: "approving token...",
                 content: { success: true },
-            })
+            });
 
             if (tx) {
-                let receipt = await getTxReceipt(runtime, tx)
+                let receipt = await getTxReceipt(runtime, tx);
 
                 if (receipt.status === "success") {
                     callback?.({
                         text: "token approved, depositing...",
                         content: { success: true, txHash: tx },
-                    })
+                    });
 
-                    let depositTx = await deposit(runtime, content.depositTokenAddress as Address,content.strategyAddress as Address, content.amount as number)
+                    let depositTx = await deposit(
+                        runtime,
+                        content.depositTokenAddress as Address,
+                        content.strategyAddress as Address,
+                        content.amount as number
+                    );
                     if (depositTx) {
-                        receipt = await getTxReceipt(runtime, depositTx)
+                        receipt = await getTxReceipt(runtime, depositTx);
                         if (receipt.status === "success") {
                             callback?.({
                                 text: "deposit successful",
                                 content: { success: true, txHash: depositTx },
-                            })
+                            });
                         } else {
                             callback?.({
                                 text: "deposit failed",
                                 content: { error: "Deposit failed" },
-                            })
+                            });
                         }
                     }
                 } else {
                     callback?.({
                         text: "approve failed",
                         content: { error: "Approve failed" },
-                    })
+                    });
                 }
             } else {
                 callback?.({
                     text: "approve failed",
                     content: { error: "Approve failed" },
-                })
+                });
             }
         }
 

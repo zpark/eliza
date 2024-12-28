@@ -1,4 +1,16 @@
-import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
+import {
+    Action,
+    ActionExample,
+    IAgentRuntime,
+    Memory,
+    State,
+    HandlerCallback,
+    elizaLogger,
+    composeContext,
+    generateObject,
+    ModelClass,
+    Content,
+} from "@elizaos/core";
 import { getTxReceipt, sendNativeAsset, sendToken } from "../utils";
 import { Address } from "viem";
 import { validateAvalancheConfig } from "../environment";
@@ -16,8 +28,7 @@ function isTokenMillCreateContent(
 ): content is TokenMillCreateContent {
     console.log("Content for create", content);
     return (
-        typeof content.name === "string" &&
-        typeof content.symbol === "string"
+        typeof content.name === "string" && typeof content.symbol === "string"
     );
 }
 
@@ -49,14 +60,21 @@ export default {
         "LAUNCH_TOKEN",
         "NEW_TOKEN",
         "CREATE_MEMECOIN",
-        "CREATE_MEME_TOKEN"
+        "CREATE_MEME_TOKEN",
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
-    description: "MUST use this action if the user requests to create a new token, the request might be varied, but it will always be a token creation.",
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
+    description:
+        "MUST use this action if the user requests to create a new token, the request might be varied, but it will always be a token creation.",
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: { [key: string]: unknown },
+        callback?: HandlerCallback
+    ) => {
         elizaLogger.log("Starting CREATE_TOKEN handler...");
 
         // Initialize or update state
@@ -91,27 +109,33 @@ export default {
             return false;
         }
 
-        const { tx, baseToken, market} = await createMarketAndToken(runtime, content.name, content.symbol)
+        const { tx, baseToken, market } = await createMarketAndToken(
+            runtime,
+            content.name,
+            content.symbol
+        );
         callback?.({
             text: `Created token ${content.name} with symbol ${content.symbol}. CA: ${baseToken}`,
-            content: { tx, baseToken, market }
-        })
+            content: { tx, baseToken, market },
+        });
         return true;
     },
     examples: [
         [
             {
                 user: "{{user1}}",
-                content: { text: "Create a new memecoin called 'Test Token' with the symbol 'TEST'" },
+                content: {
+                    text: "Create a new memecoin called 'Test Token' with the symbol 'TEST'",
+                },
             },
             {
                 user: "{{user2}}",
                 content: {
                     action: "CREATE_TOKEN",
                     name: "Test Token",
-                    symbol: "TEST"
-                }
-            }
+                    symbol: "TEST",
+                },
+            },
         ],
         [
             {
@@ -123,9 +147,9 @@ export default {
                 content: {
                     action: "CREATE_TOKEN",
                     name: "News Token",
-                    symbol: "NEWS"
-                }
-            }
+                    symbol: "NEWS",
+                },
+            },
         ],
         [
             {
@@ -137,9 +161,9 @@ export default {
                 content: {
                     action: "CREATE_TOKEN",
                     name: "Okay",
-                    symbol: "OK"
-                }
-            }
+                    symbol: "OK",
+                },
+            },
         ],
     ] as ActionExample[][],
 } as Action;

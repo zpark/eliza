@@ -205,6 +205,10 @@ export type Models = {
     [ModelProviderName.GAIANET]: Model;
     [ModelProviderName.ALI_BAILIAN]: Model;
     [ModelProviderName.VOLENGINE]: Model;
+    [ModelProviderName.NANOGPT]: Model;
+    [ModelProviderName.HYPERBOLIC]: Model;
+    [ModelProviderName.VENICE]: Model;
+    [ModelProviderName.AKASH_CHAT_API]: Model;
 };
 
 /**
@@ -230,6 +234,10 @@ export enum ModelProviderName {
     GAIANET = "gaianet",
     ALI_BAILIAN = "ali_bailian",
     VOLENGINE = "volengine",
+    NANOGPT = "nanogpt",
+    HYPERBOLIC = "hyperbolic",
+    VENICE = "venice",
+    AKASH_CHAT_API = "akash_chat_api",
 }
 
 /**
@@ -409,6 +417,9 @@ export interface Action {
 
     /** Validation function */
     validate: Validator;
+
+    /** Whether to suppress the initial message when this action is used */
+    suppressInitialMessage?: boolean;
 }
 
 /**
@@ -555,6 +566,9 @@ export type Media = {
 
     /** Text content */
     text: string;
+
+    /** Content type */
+    contentType?: string;
 };
 
 /**
@@ -562,10 +576,10 @@ export type Media = {
  */
 export type Client = {
     /** Start client connection */
-    start: (runtime?: IAgentRuntime) => Promise<unknown>;
+    start: (runtime: IAgentRuntime) => Promise<unknown>;
 
     /** Stop client connection */
-    stop: (runtime?: IAgentRuntime) => Promise<unknown>;
+    stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
 
 /**
@@ -602,7 +616,24 @@ export enum Clients {
     DIRECT = "direct",
     TWITTER = "twitter",
     TELEGRAM = "telegram",
+    FARCASTER = "farcaster",
+    LENS = "lens",
+    AUTO = "auto",
+    SLACK = "slack",
 }
+
+export interface IAgentConfig {
+    [key: string]: string;
+}
+
+export interface ModelConfiguration {
+    temperature?: number;
+    max_response_length?: number;
+    frequency_penalty?: number;
+    presence_penalty?: number;
+    maxInputTokens?: number;
+}
+
 /**
  * Configuration for an agent character
  */
@@ -637,17 +668,23 @@ export type Character = {
         continueMessageHandlerTemplate?: string;
         evaluationTemplate?: string;
         twitterSearchTemplate?: string;
+        twitterActionTemplate?: string;
         twitterPostTemplate?: string;
         twitterMessageHandlerTemplate?: string;
         twitterShouldRespondTemplate?: string;
         farcasterPostTemplate?: string;
+        lensPostTemplate?: string;
         farcasterMessageHandlerTemplate?: string;
+        lensMessageHandlerTemplate?: string;
         farcasterShouldRespondTemplate?: string;
+        lensShouldRespondTemplate?: string;
         telegramMessageHandlerTemplate?: string;
         telegramShouldRespondTemplate?: string;
         discordVoiceHandlerTemplate?: string;
         discordShouldRespondTemplate?: string;
         discordMessageHandlerTemplate?: string;
+        slackMessageHandlerTemplate?: string;
+        slackShouldRespondTemplate?: string;
     };
 
     /** Character biography */
@@ -680,7 +717,21 @@ export type Character = {
     /** Optional configuration */
     settings?: {
         secrets?: { [key: string]: string };
-        buttplug?: boolean;
+        intiface?: boolean;
+        imageSettings?: {
+            steps?: number;
+            width?: number;
+            height?: number;
+            negativePrompt?: string;
+            numIterations?: number;
+            guidanceScale?: number;
+            seed?: number;
+            modelId?: string;
+            jobId?: string;
+            count?: number;
+            stylePreset?: string;
+            hideWatermark?: boolean;
+        };
         voice?: {
             model?: string; // For VITS
             url?: string; // Legacy VITS support
@@ -695,6 +746,7 @@ export type Character = {
             };
         };
         model?: string;
+        modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
             evm?: any[];
@@ -708,8 +760,26 @@ export type Character = {
         discord?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
+            messageSimilarityThreshold?: number;
+            isPartOfTeam?: boolean;
+            teamAgentIds?: string[];
+            teamLeaderId?: string;
+            teamMemberInterestKeywords?: string[];
         };
         telegram?: {
+            shouldIgnoreBotMessages?: boolean;
+            shouldIgnoreDirectMessages?: boolean;
+            shouldRespondOnlyToMentions?: boolean;
+            shouldOnlyJoinInAllowedGroups?: boolean;
+            allowedGroupIds?: string[];
+            messageSimilarityThreshold?: number;
+            isPartOfTeam?: boolean;
+            teamAgentIds?: string[];
+            teamLeaderId?: string;
+            teamMemberInterestKeywords?: string[];
+        };
+        slack?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
         };
@@ -729,6 +799,10 @@ export type Character = {
         screenName: string;
         bio: string;
         nicknames?: string[];
+    };
+    /** Optional NFT prompt */
+    nft?: {
+        prompt: string;
     };
 };
 
@@ -945,6 +1019,12 @@ export type CacheOptions = {
     expires?: number;
 };
 
+export enum CacheStore {
+    REDIS = "redis",
+    DATABASE = "database",
+    FILESYSTEM = "filesystem",
+}
+
 export interface ICacheManager {
     get<T = unknown>(key: string): Promise<T | undefined>;
     set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
@@ -987,6 +1067,8 @@ export interface IAgentRuntime {
     evaluators: Evaluator[];
     plugins: Plugin[];
 
+    fetch?: typeof fetch | null;
+
     messageManager: IMemoryManager;
     descriptionManager: IMemoryManager;
     documentsManager: IMemoryManager;
@@ -996,6 +1078,9 @@ export interface IAgentRuntime {
     cacheManager: ICacheManager;
 
     services: Map<ServiceType, Service>;
+    // any could be EventEmitter
+    // but I think the real solution is forthcoming as a base client interface
+    clients: Record<string, any>;
 
     initialize(): Promise<void>;
 
@@ -1022,7 +1107,8 @@ export interface IAgentRuntime {
     evaluate(
         message: Memory,
         state?: State,
-        didRespond?: boolean
+        didRespond?: boolean,
+        callback?: HandlerCallback
     ): Promise<string[]>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
@@ -1117,6 +1203,20 @@ export interface IPdfService extends Service {
     convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
 
+export interface IAwsS3Service extends Service {
+    uploadFile(
+        imagePath: string,
+        subDirectory: string,
+        useSignedUrl: boolean,
+        expiresIn: number
+    ): Promise<{
+        success: boolean;
+        url?: string;
+        error?: string;
+    }>;
+    generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
+}
+
 export type SearchResult = {
     title: string;
     url: string;
@@ -1142,7 +1242,10 @@ export enum ServiceType {
     BROWSER = "browser",
     SPEECH_GENERATION = "speech_generation",
     PDF = "pdf",
+    INTIFACE = "intiface",
+    AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
+    SLACK = "slack",
 }
 
 export enum LoggingLevel {
@@ -1155,3 +1258,14 @@ export type KnowledgeItem = {
     id: UUID;
     content: Content;
 };
+
+export interface ActionResponse {
+    like: boolean;
+    retweet: boolean;
+    quote?: boolean;
+    reply?: boolean;
+}
+
+export interface ISlackService extends Service {
+    client: any;
+}

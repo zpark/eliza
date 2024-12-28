@@ -1,4 +1,16 @@
-import { Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, elizaLogger, composeContext, generateObject, ModelClass, Content } from "@ai16z/eliza";
+import {
+    Action,
+    ActionExample,
+    IAgentRuntime,
+    Memory,
+    State,
+    HandlerCallback,
+    elizaLogger,
+    composeContext,
+    generateObject,
+    ModelClass,
+    Content,
+} from "@elizaos/core";
 import { approve, getTxReceipt, swap, getQuote } from "../utils";
 import { Address } from "viem";
 import { validateAvalancheConfig } from "../environment";
@@ -72,7 +84,9 @@ Example response to sell 5 USDC for gmYAK:
 
 ## Token Addresses
 
-${Object.entries(TOKEN_ADDRESSES).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
+${Object.entries(TOKEN_ADDRESSES)
+    .map(([key, value]) => `- ${key}: ${value}`)
+    .join("\n")}
 
 ## Recent Messages
 
@@ -88,17 +102,20 @@ Respond with a JSON markdown block containing only the extracted values.`;
 
 export default {
     name: "SWAP_TOKEN",
-    similes: [
-        "TRADE_TOKEN",
-        "BUY_TOKEN",
-        "SELL_TOKEN",
-    ],
+    similes: ["TRADE_TOKEN", "BUY_TOKEN", "SELL_TOKEN"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateAvalancheConfig(runtime);
         return true;
     },
-    description: "MUST use this action if the user requests swap a token, the request might be varied, but it will always be a token swap.",
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State, _options: { [key: string]: unknown }, callback?: HandlerCallback) => {
+    description:
+        "MUST use this action if the user requests swap a token, the request might be varied, but it will always be a token swap.",
+    handler: async (
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
+        _options: { [key: string]: unknown },
+        callback?: HandlerCallback
+    ) => {
         elizaLogger.log("Starting SWAP_TOKEN handler...");
 
         // Initialize or update state
@@ -133,60 +150,76 @@ export default {
 
         // Log the swap content
         console.log("Swap content:", content);
-        const quote = await getQuote(runtime, content.fromTokenAddress as Address, content.toTokenAddress as Address, content.amount as number);
+        const quote = await getQuote(
+            runtime,
+            content.fromTokenAddress as Address,
+            content.toTokenAddress as Address,
+            content.amount as number
+        );
         // return
 
-        if (content.fromTokenAddress === "0x0000000000000000000000000000000000000000") {
+        if (
+            content.fromTokenAddress ===
+            "0x0000000000000000000000000000000000000000"
+        ) {
             // todo: swap from native
-            console.log("Swapping from native AVAX")
-        } else if (content.toTokenAddress === "0x0000000000000000000000000000000000000000") {
+            console.log("Swapping from native AVAX");
+        } else if (
+            content.toTokenAddress ===
+            "0x0000000000000000000000000000000000000000"
+        ) {
             // todo: swap to native
-            console.log("Swapping to native AVAX")
+            console.log("Swapping to native AVAX");
         } else {
-            const yakRouterAddress = YAK_SWAP_CONFIG.router as Address
-            let tx = await approve(runtime, content.fromTokenAddress as Address, yakRouterAddress, content.amount as number)
+            const yakRouterAddress = YAK_SWAP_CONFIG.router as Address;
+            let tx = await approve(
+                runtime,
+                content.fromTokenAddress as Address,
+                yakRouterAddress,
+                content.amount as number
+            );
             callback?.({
                 text: "approving token...",
                 content: { success: true },
-            })
+            });
 
             if (tx) {
-                let receipt = await getTxReceipt(runtime, tx)
+                let receipt = await getTxReceipt(runtime, tx);
 
                 if (receipt.status === "success") {
                     callback?.({
                         text: "token approved, swapping...",
                         content: { success: true, txHash: tx },
-                    })
-                    let swapTx = await swap(runtime, quote)
+                    });
+                    let swapTx = await swap(runtime, quote);
                     if (swapTx) {
-                        receipt = await getTxReceipt(runtime, swapTx)
+                        receipt = await getTxReceipt(runtime, swapTx);
                         if (receipt.status === "success") {
-                            console.log("Swap successful")
+                            console.log("Swap successful");
                             callback?.({
                                 text: "swap successful",
                                 content: { success: true, txHash: swapTx },
-                            })
+                            });
                         } else {
-                            console.error("Swap failed")
+                            console.error("Swap failed");
                             callback?.({
                                 text: "swap failed",
                                 content: { error: "Swap failed" },
-                            })
+                            });
                         }
                     }
                 } else {
-                    console.error("Approve failed")
+                    console.error("Approve failed");
                     callback?.({
                         text: "approve failed",
                         content: { error: "Approve failed" },
-                    })
+                    });
                 }
             } else {
                 callback?.({
                     text: "approve failed",
                     content: { error: "Approve failed" },
-                })
+                });
             }
         }
 
