@@ -51,9 +51,7 @@ export const addressSearchProvider: Provider = {
             }).then((results) => ({
                 searchTerm: address.address,
                 address: address.address,
-                // find the result that matches the address
-                result:
-                    results.find((r) => r.address === address.address) || null,
+                result: results[0] || null,
             }))
         );
 
@@ -66,8 +64,7 @@ export const addressSearchProvider: Provider = {
                 searchTerm: symbol,
                 symbol: results[0]?.symbol || null,
                 address: results[0]?.address || null,
-                // find the result that matches the symbol
-                result: results.find((r) => r.symbol === symbol) || null,
+                result: results[0] || null,
             }))
         );
 
@@ -76,6 +73,12 @@ export const addressSearchProvider: Provider = {
             ...searchSymbolsForTokenMatch,
         ]);
         const validResults = results.filter((r) => r.result !== null);
+
+        elizaLogger.info(
+            `Found ${validResults.length} valid results for ${addresses.length} addresses and ${symbols.length} symbols`
+        );
+
+        console.log(JSON.stringify(validResults, null, 2));
 
         // bail if no valid results
         if (validResults.length === 0) return null;

@@ -437,23 +437,43 @@ export const formatTokenInfo = (
 export const extractSymbols = (text: string): string[] => {
     const symbols = new Set<string>();
 
-    // Match symbols after "a" or "an" (e.g., "a BTC" or "an ETH")
-    const afterArticles = text.matchAll(/\b(?:a|an)\s+([A-Z]{2,10})\b/gi);
-    for (const match of afterArticles) {
-        symbols.add(match[1].toUpperCase());
-    }
+    // Common words to exclude (avoid false positives)
+    const excludeWords = new Set([
+        "USD",
+        "APY",
+        "API",
+        "NFT",
+        "DEX",
+        "CEX",
+        "APR",
+        "TVL",
+    ]);
 
-    // Match standalone acronyms (2-10 chars, all caps)
-    const acronyms = text.matchAll(/\b[A-Z]{2,10}\b/g);
-    for (const match of acronyms) {
-        symbols.add(match[0]);
-    }
+    // Match patterns:
+    const patterns = [
+        // $SYMBOL format
+        /\$([A-Z0-9]{2,10})\b/gi,
+        // After articles (a/an)
+        /\b(?:a|an)\s+([A-Z0-9]{2,10})\b/gi,
+        // Standalone caps
+        /\b[A-Z0-9]{2,10}\b/g,
+        // Quoted symbols
+        /["']([A-Z0-9]{2,10})["']/gi,
+        // Common price patterns
+        /\b([A-Z0-9]{2,10})\/USD\b/gi,
+        /\b([A-Z0-9]{2,10})-USD\b/gi,
+    ];
 
-    // Match token symbols in quotes (e.g., "BTC" or 'ETH')
-    const quotedSymbols = text.matchAll(/["']([A-Z]{2,10})["']/gi);
-    for (const match of quotedSymbols) {
-        symbols.add(match[1].toUpperCase());
-    }
+    // Extract all matches
+    patterns.forEach((pattern) => {
+        const matches = text.matchAll(pattern);
+        for (const match of matches) {
+            const symbol = (match[1] || match[0]).toUpperCase();
+            if (!excludeWords.has(symbol)) {
+                symbols.add(symbol);
+            }
+        }
+    });
 
     return Array.from(symbols);
 };

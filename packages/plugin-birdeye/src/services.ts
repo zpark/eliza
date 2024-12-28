@@ -43,8 +43,6 @@ export const searchTokens = async (
 
         const data = (await response.json()) as SearchTokenResponse;
 
-        elizaLogger.info("Birdeye response:", data);
-
         // Extract tokens from the response
         // if the search type is address, we only want to return the token that matches the address
         const tokens =
@@ -53,11 +51,17 @@ export const searchTokens = async (
                       .filter(
                           (item) =>
                               item.type === "token" &&
+                              // only return the token that matches the address
                               item.result[0].address === keyword.toLowerCase()
                       )
                       .flatMap((item) => item.result)
                 : data.data.items
-                      .filter((item) => item.type === "token")
+                      .filter(
+                          (item) =>
+                              item.type === "token" &&
+                              // only return the token that matches the symbol
+                              item.result[0].symbol === keyword
+                      )
                       .flatMap((item) => item.result);
 
         elizaLogger.info("Found tokens:", tokens);
