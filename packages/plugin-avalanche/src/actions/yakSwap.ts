@@ -172,7 +172,7 @@ export default {
             console.log("Swapping to native AVAX");
         } else {
             const yakRouterAddress = YAK_SWAP_CONFIG.router as Address;
-            let tx = await approve(
+            const tx = await approve(
                 runtime,
                 content.fromTokenAddress as Address,
                 yakRouterAddress,
@@ -191,7 +191,7 @@ export default {
                         text: "token approved, swapping...",
                         content: { success: true, txHash: tx },
                     });
-                    let swapTx = await swap(runtime, quote);
+                    const swapTx = await swap(runtime, quote);
                     if (swapTx) {
                         receipt = await getTxReceipt(runtime, swapTx);
                         if (receipt.status === "success") {

@@ -161,7 +161,7 @@ export default {
         }
 
         if (tx) {
-            let receipt = await getTxReceipt(runtime, tx);
+            const receipt = await getTxReceipt(runtime, tx);
             if (receipt.status === "success") {
                 callback?.({
                     text: "transfer successful",

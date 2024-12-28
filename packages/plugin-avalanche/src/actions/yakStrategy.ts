@@ -138,7 +138,7 @@ export default {
             // todo: deposit from native
             console.log("Swapping from native AVAX");
         } else {
-            let tx = await approve(
+            const tx = await approve(
                 runtime,
                 content.depositTokenAddress as Address,
                 content.strategyAddress as Address,
@@ -158,7 +158,7 @@ export default {
                         content: { success: true, txHash: tx },
                     });
 
-                    let depositTx = await deposit(
+                    const depositTx = await deposit(
                         runtime,
                         content.depositTokenAddress as Address,
                         content.strategyAddress as Address,
