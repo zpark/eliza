@@ -82,9 +82,10 @@ export class GitHubClient {
                     `Successfully cloned repository from ${repositoryUrl}`
                 );
                 return;
-            } catch {
+            } catch (error) {
                 elizaLogger.error(
                     `Failed to clone repository from ${repositoryUrl}. Retrying...`,
+                    error
                 );
                 retries++;
                 if (retries === maxRetries) {
