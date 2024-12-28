@@ -44,11 +44,10 @@ export const booleanFooter = `Respond with only a YES or a NO.`;
  * @returns {boolean|null} - Returns `true` for affirmative inputs, `false` for negative inputs, and `null` for unrecognized inputs or null/undefined.
  */
 export const parseBooleanFromText = (text: string) => {
-    // "NULL", "UNDEFINED"
     if (!text) return null; // Handle null or undefined input
 
-    const affirmative = ["YES", "Y", "TRUE",  "T", "1", "ON",  "ENABLE"];
-    const negative =    ["NO",  "N", "FALSE", "F", "0", "OFF", "DISABLE"];
+    const affirmative = ["YES", "Y", "TRUE", "T", "1", "ON", "ENABLE"];
+    const negative = ["NO", "N", "FALSE", "F", "0", "OFF", "DISABLE"];
 
     const normalizedText = text.trim().toUpperCase();
 
