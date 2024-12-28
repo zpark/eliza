@@ -34,7 +34,7 @@ export type BGEProvider = typeof EMBEDDING_PROVIDERS.BGE;
 export type EmbeddingConfig = {
     readonly dimensions: number;
     readonly model: string;
-    readonly provider: EmbeddingProvider;
+    readonly provider: EmbeddingProviderType;
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
