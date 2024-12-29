@@ -88,6 +88,11 @@ function safeParseInt(value: string | undefined | null, defaultValue: number): n
  * Validates or constructs a TwitterConfig object using zod,
  * taking values from the IAgentRuntime or process.env as needed.
  */
+// This also is organized to serve as a point of documentation for the client
+// most of the inputs from the framework (env/character)
+
+// we also do a lot of typing/parsing here
+// so we can do it once and only once per character
 export async function validateTwitterConfig(runtime: IAgentRuntime): Promise<TwitterConfig> {
     try {
         const twitterConfig = {
@@ -109,7 +114,7 @@ export async function validateTwitterConfig(runtime: IAgentRuntime): Promise<Twi
                 runtime.getSetting("TWITTER_EMAIL") ||
                 process.env.TWITTER_EMAIL,
 
-            MAX_TWEET_LENGTH:
+            MAX_TWEET_LENGTH: // number as string?
                 safeParseInt(
                     runtime.getSetting("MAX_TWEET_LENGTH") ||
                     process.env.MAX_TWEET_LENGTH,
@@ -122,58 +127,58 @@ export async function validateTwitterConfig(runtime: IAgentRuntime): Promise<Twi
                     process.env.TWITTER_SEARCH_ENABLE
                 ) ?? false,
 
-            TWITTER_2FA_SECRET:
+            TWITTER_2FA_SECRET: // string passthru
                 runtime.getSetting("TWITTER_2FA_SECRET") ||
                 process.env.TWITTER_2FA_SECRET || "",
 
-            TWITTER_RETRY_LIMIT:
+            TWITTER_RETRY_LIMIT: // int
                 safeParseInt(
                     runtime.getSetting("TWITTER_RETRY_LIMIT") ||
                     process.env.TWITTER_RETRY_LIMIT,
                     5
                 ),
 
-            TWITTER_POLL_INTERVAL:
+            TWITTER_POLL_INTERVAL: // int in seconds
                 safeParseInt(
                     runtime.getSetting("TWITTER_POLL_INTERVAL") ||
                     process.env.TWITTER_POLL_INTERVAL,
-                    120
+                    120 // 2m
                 ),
 
-            TWITTER_TARGET_USERS:
+            TWITTER_TARGET_USERS: // comma separated string
                 parseTargetUsers(
                     runtime.getSetting("TWITTER_TARGET_USERS") ||
                     process.env.TWITTER_TARGET_USERS
                 ),
 
-            POST_INTERVAL_MIN:
+            POST_INTERVAL_MIN: // int in minutes
                 safeParseInt(
                     runtime.getSetting("POST_INTERVAL_MIN") ||
                     process.env.POST_INTERVAL_MIN,
-                    90
+                    90 // 1.5 hours
                 ),
 
-            POST_INTERVAL_MAX:
+            POST_INTERVAL_MAX: // int in minutes
                 safeParseInt(
                     runtime.getSetting("POST_INTERVAL_MAX") ||
                     process.env.POST_INTERVAL_MAX,
-                    180
+                    180 // 3 hours
                 ),
 
-            ENABLE_ACTION_PROCESSING:
+            ENABLE_ACTION_PROCESSING: // bool
                 parseBooleanFromText(
                     runtime.getSetting("ENABLE_ACTION_PROCESSING") ||
                     process.env.ENABLE_ACTION_PROCESSING
                 ) ?? false,
 
-            ACTION_INTERVAL:
+            ACTION_INTERVAL: // init in minutes (min 1m)
                 safeParseInt(
                     runtime.getSetting("ACTION_INTERVAL") ||
                     process.env.ACTION_INTERVAL,
-                    5
+                    5 // 5 minutes
                 ),
 
-            POST_IMMEDIATELY:
+            POST_IMMEDIATELY: // bool
                 parseBooleanFromText(
                     runtime.getSetting("POST_IMMEDIATELY") ||
                     process.env.POST_IMMEDIATELY
