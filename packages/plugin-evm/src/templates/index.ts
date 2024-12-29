@@ -1,5 +1,8 @@
-export const transferTemplate = `Given the recent messages and wallet information below:
+export const transferTemplate = `You are an AI assistant specialized in processing cryptocurrency transfer requests. Your task is to extract specific information from user messages and format it into a structured JSON response.
 
+First, review the recent messages from the conversation:
+
+<recent_messages>
 {{recentMessages}}
 
 {{walletInfo}}
@@ -14,12 +17,20 @@ Respond with a JSON markdown block containing only the extracted values. All fie
 
 \`\`\`json
 {
-    "fromChain": SUPPORTED_CHAINS,
+    "fromChain": string,
     "amount": string,
     "toAddress": string,
     "token": string | null
 }
 \`\`\`
+
+Remember:
+- The chain name must be a string and must exactly match one of the supported chains.
+- The amount should be a string representing the number without any currency symbol.
+- The recipient address must be a valid Ethereum address starting with "0x".
+- If no specific token is mentioned (i.e., it's a native token transfer), set the "token" field to null.
+
+Now, process the user's request and provide your response.
 `;
 
 export const bridgeTemplate = `Given the recent messages and wallet information below:
