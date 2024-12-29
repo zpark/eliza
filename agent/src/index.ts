@@ -526,7 +526,7 @@ export async function createAgent(
             modelProvider: character.modelProvider,
             token,
         });
-        console.log("Verifiable inference adapter initialized");
+        elizaLogger.log("Verifiable inference adapter initialized");
     }
 
     return new AgentRuntime({
