@@ -4,6 +4,8 @@ import {
     composeContext,
     generateText,
     ModelClass,
+    ServiceType,
+    ITranscriptionService,
 } from "@elizaos/core";
 import { ClientBase } from "./base";
 import {
@@ -11,10 +13,12 @@ import {
     Space,
     SpaceConfig,
     RecordToDiskPlugin,
-    SttTtsPlugin,
     IdleMonitorPlugin,
     SpeakerRequest,
 } from "agent-twitter-client";
+import {
+    SttTtsPlugin
+} from './plugins/SttTtsSpacesPlugin.ts';
 
 interface SpaceDecisionOptions {
     maxSpeakers?: number;
@@ -305,6 +309,9 @@ export class TwitterSpaceClient {
                     gptModel: this.decisionOptions.gptModel,
                     systemPrompt: this.decisionOptions.systemPrompt,
                     sttLanguage: this.decisionOptions.sttLanguage,
+                    transcriptionService: this.client.runtime.getService<ITranscriptionService>(
+                        ServiceType.TRANSCRIPTION,
+                    )
                 });
             }
 
