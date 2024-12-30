@@ -36,7 +36,7 @@ export class CosmosWalletProvider {
     }
 
     async getWallet() {
-        const { bech32Prefix } = fetchChainDetails(this.activeChain);
+        const { bech32Prefix } = this.characterChains[this.activeChain];
         return await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
             prefix: bech32Prefix,
         });
@@ -59,7 +59,7 @@ export class CosmosWalletProvider {
     }
 
     async getSigningCosmWasmClient(): Promise<SigningCosmWasmClient> {
-        const { rpcUrl } = fetchChainDetails(this.activeChain);
+        const { rpcUrl } = this.characterChains[this.activeChain];
         return await SigningCosmWasmClient.connectWithSigner(
             rpcUrl,
             this.wallet
@@ -67,18 +67,13 @@ export class CosmosWalletProvider {
     }
 
     async getWalletBalance(): Promise<Coin> {
-        if (!this.client) {
+        if (!this.client || !this.address) {
             throw new Error(
                 "CosmWasm client is not initialized. Please call `initialize` first."
             );
         }
-        if (!this.address) {
-            throw new Error(
-                "Wallet address is not initialized. Please call `initialize` first."
-            );
-        }
 
-        const { feeToken } = fetchChainDetails(this.activeChain);
+        const { feeToken } = this.characterChains[this.activeChain];
 
         return await this.client.getBalance(this.address, feeToken.denom);
     }
@@ -159,8 +154,9 @@ export const cosmosWalletProvider: Provider = {
     ): Promise<string | null> {
         try {
             const transferContext = composeContext({
-                state,
+                state: state,
                 template: balanceTemplate,
+                templatingEngine: "handlebars",
             });
 
             // Generate transfer content
