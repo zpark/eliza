@@ -41,6 +41,7 @@ import {
 } from "@ai16z/plugin-coinbase";
 import { confluxPlugin } from "@ai16z/plugin-conflux";
 import { evmPlugin } from "@ai16z/plugin-evm";
+import { cosmosPlugin } from "@ai16z/plugin-cosmos";
 import { storyPlugin } from "@ai16z/plugin-story";
 import { flowPlugin } from "@ai16z/plugin-flow";
 import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
@@ -510,6 +511,7 @@ export async function createAgent(
                 getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? evmPlugin
                 : null,
+            cosmosPlugin,
             (getSecret(character, "SOLANA_PUBLIC_KEY") ||
                 (getSecret(character, "WALLET_PUBLIC_KEY") &&
                     !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith(
