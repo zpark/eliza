@@ -13,8 +13,8 @@ import { BirdeyeChain } from "../../types/shared";
 import {
     CHAIN_ALIASES,
     CHAIN_KEYWORDS,
+    extractAddressesFromString,
     extractChain,
-    extractContractAddresses,
 } from "../../utils";
 
 // Constants for keyword matching
@@ -89,7 +89,7 @@ export const getTokenMetadataAction: Action = {
         }
 
         const messageText = message.content.text;
-        const addresses = extractContractAddresses(messageText);
+        const addresses = extractAddressesFromString(messageText);
         const chain = extractChain(messageText);
 
         // Check if a specific chain was mentioned (including aliases)

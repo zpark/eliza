@@ -14,11 +14,11 @@ export interface WalletDataItem {
     uiAmount: number;
     chainId: string;
     logoURI: string;
-    priceUsd: number;
-    valueUsd: number;
+    priceUsd?: number;
+    valueUsd?: number;
 }
 
 export interface WalletDataOptions {
     wallet: string;
-    chain?: string;
+    chain: string;
 }

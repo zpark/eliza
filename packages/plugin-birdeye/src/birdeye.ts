@@ -1,40 +1,18 @@
-import {
-    elizaLogger,
-    IAgentRuntime,
-    ICacheManager,
-    Memory,
-    Provider,
-    settings,
-    State,
-} from "@elizaos/core";
+import { elizaLogger, ICacheManager, settings } from "@elizaos/core";
 import NodeCache from "node-cache";
 import * as path from "path";
-import { SearchTokensOptions } from "../types/search-token";
-import { BirdeyeChain } from "../types/shared";
-import { WalletDataOptions } from "../types/wallet";
-
-const DEFAULT_MAX_RETRIES = 3;
-
-const DEFAULT_SUPPORTED_SYMBOLS = {
-    SOL: "So11111111111111111111111111111111111111112",
-    BTC: "qfnqNqs3nCAHjnyCgLRDbBtq4p2MtHZxw8YjSyYhPoL",
-    ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
-    Example: "2weMjPLLybRMMva1fM3U31goWWrCpF59CHWNhnCJ9Vyh",
-};
-
-const API_BASE_URL = "https://public-api.birdeye.so";
-const ENDPOINT_MAP = {
-    price: "/defi/price?address=",
-    security: "/defi/token_security?address=",
-    volume: "/defi/v3/token/trade-data/single?address=",
-    portfolio: "/v1/wallet/token_list?wallet=",
-    tokens: "/defi/tokenlist",
-};
-
-const RETRY_DELAY_MS = 2_000;
-
-const waitFor = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+import {
+    API_BASE_URL,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_SUPPORTED_SYMBOLS,
+    ENDPOINT_MAP,
+    RETRY_DELAY_MS,
+} from "./constants";
+import { SearchTokenResponse, SearchTokensOptions } from "./types/search-token";
+import { BirdeyeChain } from "./types/shared";
+import { TokenMetadataResponse } from "./types/token-metadata";
+import { WalletDataOptions, WalletDataResponse } from "./types/wallet";
+import { waitFor } from "./utils";
 
 class BaseCachedProvider {
     private cache: NodeCache;
@@ -201,8 +179,15 @@ export class BirdeyeProvider extends BaseCachedProvider {
         return this.fetchWithCacheAndRetry("portfolio", address);
     }
 
-    public async fetchSearchTokens(options: SearchTokensOptions) {
-        const { keyword, chain = "all", limit = 1, offset = 0, type } = options;
+    /**
+     * Fetches token data for a given keyword and chain.
+     * @param options - The options for the token data.
+     * @returns The token data.
+     */
+    public async fetchSearchTokens(
+        options: SearchTokensOptions
+    ): Promise<SearchTokenResponse | null> {
+        const { keyword, chain = "all", limit = 1, offset = 0 } = options;
         const params = new URLSearchParams({
             keyword,
             limit: limit.toString(),
@@ -211,41 +196,42 @@ export class BirdeyeProvider extends BaseCachedProvider {
         });
 
         const url = `${API_BASE_URL}/defi/v3/search?${params.toString()}`;
-        const data = await this.fetchWithRetry(url);
-
-        return type === "address"
-            ? data.data.items
-                  .filter(
-                      (item) =>
-                          item.type === "token" &&
-                          item.result[0].address === keyword.toLowerCase()
-                  )
-                  .flatMap((item) => item.result)
-            : data.data.items
-                  .filter(
-                      (item) =>
-                          item.type === "token" &&
-                          item.result[0].symbol === keyword
-                  )
-                  .flatMap((item) => item.result);
+        const response: SearchTokenResponse = await this.fetchWithRetry(url);
+        return response;
     }
 
-    public async fetchSearchWallets(options: WalletDataOptions) {
-        const { wallet, chain = "solana" } = options;
+    /**
+     * Fetches wallet portfolio data for a given wallet address and chains.
+     * @param options - The options for the wallet portfolio data.
+     * @returns The wallet portfolio data.
+     */
+    public async fetchSearchWallets(
+        options: WalletDataOptions
+    ): Promise<WalletDataResponse | null> {
+        const { wallet, chain } = options;
+
         const params = new URLSearchParams({
             wallet,
-            chain: chain,
         });
 
         const url = `${API_BASE_URL}/v1/wallet/token_list?${params.toString()}`;
-        const data = await this.fetchWithRetry(url, {
+        const response = await this.fetchWithRetry(url, {
             headers: { "x-chain": chain },
         });
 
-        return data.data.items;
+        return response;
     }
 
-    public async fetchTokenMetadata(address: string, chain: BirdeyeChain) {
+    /**
+     * Fetches token metadata for a given address and chain.
+     * @param address - The address of the token.
+     * @param chain - The chain of the token.
+     * @returns The token metadata.
+     */
+    public async fetchTokenMetadata(
+        address: string,
+        chain: BirdeyeChain
+    ): Promise<TokenMetadataResponse | null> {
         const isValidAddress = (() => {
             switch (chain) {
                 case "solana":
@@ -276,49 +262,17 @@ export class BirdeyeProvider extends BaseCachedProvider {
         const params = new URLSearchParams({ address });
         const url = `${API_BASE_URL}/defi/v3/token/meta-data/single?${params.toString()}`;
 
-        return this.fetchWithRetry(url, {
+        const response: TokenMetadataResponse = await this.fetchWithRetry(url, {
             headers: { "x-chain": chain },
         }).catch(() => null);
+
+        if (!response) {
+            elizaLogger.error(
+                `Failed to fetch token metadata for ${address} on ${chain}`
+            );
+            return null;
+        }
+
+        return response;
     }
 }
-
-export const birdeyeProvider: Provider = {
-    get: async (
-        runtime: IAgentRuntime,
-        _message: Memory,
-        _state?: State
-    ): Promise<string> => {
-        try {
-            const provider = new BirdeyeProvider(runtime.cacheManager);
-
-            const walletAddr = runtime.getSetting("BIRDEYE_WALLET_ADDR");
-
-            const resp = await provider.fetchTokenList().catch((err) => {
-                elizaLogger.warn("Couldn't update symbol map", err);
-            });
-
-            resp?.data?.tokens?.forEach((item) => {
-                DEFAULT_SUPPORTED_SYMBOLS[item.symbol] = item.address;
-            });
-
-            const supportedTokens = Object.keys(DEFAULT_SUPPORTED_SYMBOLS).join(
-                ", "
-            );
-
-            if (!walletAddr) {
-                console.warn("No Birdeye wallet was specified");
-
-                return `Birdeye enabled, no wallet found, supported tokens: [${supportedTokens}]`;
-            }
-            const response = await provider.fetchWalletPortfolio(walletAddr);
-            const portfolio = response?.data.items
-                .map((e) => e.symbol)
-                .join(", ");
-
-            return `Birdeye enabled, wallet addr: ${walletAddr}, portfolio: [${portfolio}], supported tokens: [${supportedTokens}]`;
-        } catch (error) {
-            console.error("Error fetching token data:", error);
-            return "Unable to fetch token information. Please try again later.";
-        }
-    },
-};

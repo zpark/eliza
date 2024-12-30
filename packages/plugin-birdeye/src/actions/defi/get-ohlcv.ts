@@ -14,8 +14,8 @@ import { BirdeyeChain } from "../../types/shared";
 import { TokenMetadataResponse } from "../../types/token-metadata";
 import {
     BASE_URL,
+    extractAddressesFromString,
     extractChain,
-    extractContractAddresses,
     formatTimestamp,
     formatValue,
     makeApiRequest,
@@ -293,7 +293,7 @@ export const getOHLCVAction: Action = {
         }
 
         const messageText = message.content.text;
-        const addresses = extractContractAddresses(messageText);
+        const addresses = extractAddressesFromString(messageText);
         if (addresses.length === 0) {
             callbackData.text =
                 "I couldn't find a valid token address in your message.";

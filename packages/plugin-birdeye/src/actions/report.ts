@@ -9,7 +9,7 @@ import {
     type Memory,
     type State,
 } from "@elizaos/core";
-import { BirdeyeProvider } from "../providers/birdeye";
+import { BirdeyeProvider } from "../birdeye";
 
 const extractTokenSymbolTemplate = `Given the recent message below:
 {{recentMessages}}
@@ -146,7 +146,7 @@ export const reportToken = {
             return false;
         }
     },
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, _message: Memory) => {
         // todo: validate the token symbol
         // for example, this action should not be triggered when the message is a wallet address
         return true;

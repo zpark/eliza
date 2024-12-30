@@ -1,4 +1,4 @@
-export interface SearchToken {
+export interface SearchTokenItem {
     address: string;
     name: string;
     symbol: string;
@@ -28,7 +28,7 @@ export interface SearchTokenResponse {
     data: {
         items: Array<{
             type: string;
-            result: SearchToken[];
+            result: SearchTokenItem[];
         }>;
     };
     success: boolean;

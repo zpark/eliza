@@ -1,6 +1,6 @@
 import { ICacheManager } from "@elizaos/core";
 import NodeCache from "node-cache";
-import { BirdeyeProvider } from "../providers/birdeye";
+import { BirdeyeProvider } from "../birdeye";
 
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 

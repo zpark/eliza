@@ -1,7 +1,8 @@
 import { elizaLogger } from "@elizaos/core";
-import { SearchToken } from "./types/search-token";
+import { SearchTokenItem } from "./types/search-token";
 import { BaseAddress, BirdeyeChain } from "./types/shared";
 import { TokenMetadataResponse } from "./types/token-metadata";
+import { WalletDataItem } from "./types/wallet";
 
 // Constants
 export const BASE_URL = "https://public-api.birdeye.so";
@@ -119,7 +120,7 @@ export const extractChain = (text: string): BirdeyeChain => {
     return "solana";
 };
 
-export const extractContractAddresses = (text: string): BaseAddress[] => {
+export const extractAddressesFromString = (text: string): BaseAddress[] => {
     const addresses: BaseAddress[] = [];
 
     // EVM-compatible chains (Ethereum, Arbitrum, Avalanche, BSC, Optimism, Polygon, Base, zkSync)
@@ -128,7 +129,7 @@ export const extractContractAddresses = (text: string): BaseAddress[] => {
         addresses.push(
             ...evmAddresses.map((address) => ({
                 address,
-                chain: extractChain(address),
+                chain: "evm" as BirdeyeChain, // we don't yet know the chain but can assume it's EVM-compatible
             }))
         );
     }
@@ -365,7 +366,7 @@ export async function makeApiRequest<T>(
 
 // Formatting helpers
 export const formatTokenInfo = (
-    token: SearchToken,
+    token: SearchTokenItem,
     metadata?: TokenMetadataResponse
 ): string => {
     const priceFormatted =
@@ -434,44 +435,41 @@ export const formatTokenInfo = (
 };
 
 // Extract symbols from text
-export const extractSymbols = (text: string): string[] => {
+export const extractSymbols = (
+    text: string,
+    // loose mode will try to extract more symbols but may include false positives
+    // strict mode will only extract symbols that are clearly formatted as a symbol using $SOL format
+    mode: "strict" | "loose" = "strict"
+): string[] => {
     const symbols = new Set<string>();
 
-    // Common words to exclude (avoid false positives)
-    const excludeWords = new Set([
-        "USD",
-        "APY",
-        "API",
-        "NFT",
-        "DEX",
-        "CEX",
-        "APR",
-        "TVL",
-    ]);
-
-    // Match patterns:
-    const patterns = [
-        // $SYMBOL format
-        /\$([A-Z0-9]{2,10})\b/gi,
-        // After articles (a/an)
-        /\b(?:a|an)\s+([A-Z0-9]{2,10})\b/gi,
-        // Standalone caps
-        /\b[A-Z0-9]{2,10}\b/g,
-        // Quoted symbols
-        /["']([A-Z0-9]{2,10})["']/gi,
-        // Common price patterns
-        /\b([A-Z0-9]{2,10})\/USD\b/gi,
-        /\b([A-Z0-9]{2,10})-USD\b/gi,
-    ];
+    // Match patterns - this may
+    const patterns =
+        mode === "strict"
+            ? [
+                  // $SYMBOL format
+                  /\$([A-Z0-9]{2,10})\b/gi,
+              ]
+            : [
+                  // $SYMBOL format
+                  /\$([A-Z0-9]{2,10})\b/gi,
+                  // After articles (a/an)
+                  /\b(?:a|an)\s+([A-Z0-9]{2,10})\b/gi,
+                  // // Standalone caps
+                  /\b[A-Z0-9]{2,10}\b/g,
+                  // // Quoted symbols
+                  /["']([A-Z0-9]{2,10})["']/gi,
+                  // // Common price patterns
+                  /\b([A-Z0-9]{2,10})\/USD\b/gi,
+                  /\b([A-Z0-9]{2,10})-USD\b/gi,
+              ];
 
     // Extract all matches
     patterns.forEach((pattern) => {
         const matches = text.matchAll(pattern);
         for (const match of matches) {
             const symbol = (match[1] || match[0]).toUpperCase();
-            if (!excludeWords.has(symbol)) {
-                symbols.add(symbol);
-            }
+            symbols.add(symbol);
         }
     });
 
@@ -563,4 +561,22 @@ const formatSocialLinks = (data: TokenMetadataResponse["data"]): string => {
     }
 
     return links.length > 0 ? links.join("\n") : "No social links available";
+};
+
+export const waitFor = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+export const formatPortfolio = (items: WalletDataItem[]) => {
+    if (!items?.length) return "No tokens found in portfolio";
+
+    return items
+        .map((item) => {
+            const value = item.valueUsd?.toFixed(2);
+            const amount = item.uiAmount?.toFixed(4);
+            return (
+                `• ${item.symbol || "Unknown Token"}: ${amount} tokens` +
+                `${value !== "0.00" ? ` (Value: $${value || "unknown"})` : ""}`
+            );
+        })
+        .join("\n");
 };
