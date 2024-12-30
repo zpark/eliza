@@ -16,6 +16,7 @@ import type {
     PrivateKeyAccount,
 } from "viem";
 import * as viemChains from "viem/chains";
+import { DeriveKeyProvider, TEEMode } from "@elizaos/plugin-tee";
 
 import type { SupportedChain } from "../types";
 
@@ -24,9 +25,9 @@ export class WalletProvider {
     chains: Record<string, Chain> = { mainnet: viemChains.mainnet };
     account: PrivateKeyAccount;
 
-    constructor(privateKey: `0x${string}`, chains?: Record<string, Chain>) {
-        this.setAccount(privateKey);
+    constructor(account: PrivateKeyAccount, chains?: Record<string, Chain>) {
         this.setChains(chains);
+        this.account = account;
 
         if (chains && Object.keys(chains).length > 0) {
             this.setCurrentChain(Object.keys(chains)[0] as SupportedChain);
@@ -197,15 +198,36 @@ const genChainsFromRuntime = (
     return chains;
 };
 
-export const initWalletProvider = (runtime: IAgentRuntime) => {
-    const privateKey = runtime.getSetting("EVM_PRIVATE_KEY");
-    if (!privateKey) {
-        throw new Error("EVM_PRIVATE_KEY is missing");
-    }
+export const initWalletProvider = async (runtime: IAgentRuntime) => {
+    const teeMode = runtime.getSetting("TEE_MODE") || TEEMode.OFF;
 
     const chains = genChainsFromRuntime(runtime);
 
-    return new WalletProvider(privateKey as `0x${string}`, chains);
+    if (teeMode !== TEEMode.OFF) {
+        const walletSecretSalt = runtime.getSetting("WALLET_SECRET_SALT");
+        if (!walletSecretSalt) {
+            throw new Error(
+                "WALLET_SECRET_SALT required when TEE_MODE is enabled"
+            );
+        }
+
+        const deriveKeyProvider = new DeriveKeyProvider(teeMode);
+        const deriveKeyResult = await deriveKeyProvider.deriveEcdsaKeypair(
+            "/",
+            walletSecretSalt,
+            runtime.agentId
+        );
+        return new WalletProvider(deriveKeyResult.keypair, chains);
+    } else {
+        const privateKey = runtime.getSetting(
+            "EVM_PRIVATE_KEY"
+        ) as `0x${string}`;
+        if (!privateKey) {
+            throw new Error("EVM_PRIVATE_KEY is missing");
+        }
+        const account = privateKeyToAccount(privateKey);
+        return new WalletProvider(account, chains);
+    }
 };
 
 export const evmWalletProvider: Provider = {
@@ -215,7 +237,7 @@ export const evmWalletProvider: Provider = {
         _state?: State
     ): Promise<string | null> {
         try {
-            const walletProvider = initWalletProvider(runtime);
+            const walletProvider = await initWalletProvider(runtime);
             const address = walletProvider.getAddress();
             const balance = await walletProvider.getWalletBalance();
             const chain = walletProvider.getCurrentChain();
