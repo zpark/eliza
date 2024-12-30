@@ -25,9 +25,12 @@ export class WalletProvider {
     chains: Record<string, Chain> = { mainnet: viemChains.mainnet };
     account: PrivateKeyAccount;
 
-    constructor(account: PrivateKeyAccount, chains?: Record<string, Chain>) {
+    constructor(
+        accountOrPrivateKey: PrivateKeyAccount | `0x${string}`,
+        chains?: Record<string, Chain>
+    ) {
+        this.setAccount(accountOrPrivateKey);
         this.setChains(chains);
-        this.account = account;
 
         if (chains && Object.keys(chains).length > 0) {
             this.setCurrentChain(Object.keys(chains)[0] as SupportedChain);
@@ -119,8 +122,14 @@ export class WalletProvider {
         this.setCurrentChain(chainName);
     }
 
-    private setAccount = (pk: `0x${string}`) => {
-        this.account = privateKeyToAccount(pk);
+    private setAccount = (
+        accountOrPrivateKey: PrivateKeyAccount | `0x${string}`
+    ) => {
+        if (typeof accountOrPrivateKey === "string") {
+            this.account = privateKeyToAccount(accountOrPrivateKey);
+        } else {
+            this.account = accountOrPrivateKey;
+        }
     };
 
     private setChains = (chains?: Record<string, Chain>) => {
@@ -225,8 +234,7 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
         if (!privateKey) {
             throw new Error("EVM_PRIVATE_KEY is missing");
         }
-        const account = privateKeyToAccount(privateKey);
-        return new WalletProvider(account, chains);
+        return new WalletProvider(privateKey, chains);
     }
 };
 
