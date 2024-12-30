@@ -10,85 +10,85 @@ import { FeeEstimator } from "../services/fee-estimator";
 export { transferTemplate };
 
 export class TransferAction {
-    private walletProvider: DirectSecp256k1HdWallet;
-    readonly rpcEndpoint: string;
-    readonly chainName: string;
-    readonly assets: Asset[];
+  private walletProvider: DirectSecp256k1HdWallet;
+  readonly rpcEndpoint: string;
+  readonly chainName: string;
+  readonly assets: Asset[];
 
-    constructor(
-        walletProvider: DirectSecp256k1HdWallet,
-        rpcEndpoint: string,
-        chainName: string,
-        assets: Asset[]
-    ) {
-        this.walletProvider = walletProvider;
-        this.chainName = chainName;
-        this.rpcEndpoint = rpcEndpoint;
-        this.assets = assets;
+  constructor(
+    walletProvider: DirectSecp256k1HdWallet,
+    rpcEndpoint: string,
+    chainName: string,
+    assets: Asset[]
+  ) {
+    this.walletProvider = walletProvider;
+    this.chainName = chainName;
+    this.rpcEndpoint = rpcEndpoint;
+    this.assets = assets;
+  }
+
+  async transfer(params: CosmosTransferParams): Promise<Transaction> {
+    const signingCosmWasmClient =
+            await SigningCosmWasmClient.connectWithSigner(
+              this.rpcEndpoint,
+              this.walletProvider
+            );
+
+    const accounts = await this.walletProvider.getAccounts();
+    const senderAddress = accounts[0]?.address;
+
+    if (!senderAddress) {
+      throw new Error("No sender address");
     }
 
-    async transfer(params: CosmosTransferParams): Promise<Transaction> {
-        const signingCosmWasmClient =
-            await SigningCosmWasmClient.connectWithSigner(
-                this.rpcEndpoint,
-                this.walletProvider
-            );
+    if (!params.toAddress) {
+      throw new Error("No receiver address");
+    }
 
-        const accounts = await this.walletProvider.getAccounts();
-        const senderAddress = accounts[0]?.address;
+    try {
+      const assetToTransfer = new AssetsPicker(
+        this.assets
+      ).getAssetByDenom(params.denomOrIbc);
 
-        if (!senderAddress) {
-            throw new Error("No sender address");
-        }
+      const coin = AssetsAdapter.amountToAmountInBaseDenom({
+        amount: params.amount,
+        asset: assetToTransfer,
+        denom: params.denomOrIbc,
+      });
 
-        if (!params.toAddress) {
-            throw new Error("No receiver address");
-        }
+      const feeEstimator = new FeeEstimator(signingCosmWasmClient);
+      const fee = await feeEstimator.estimateGasForSendTokens(
+        senderAddress,
+        params.toAddress,
+        [coin]
+      );
 
-        try {
-            const assetToTransfer = new AssetsPicker(
-                this.assets
-            ).getAssetByDenom(params.denomOrIbc);
+      const safeFee = (fee * 1.2).toFixed();
 
-            const coin = AssetsAdapter.amountToAmountInBaseDenom({
-                amount: params.amount,
-                asset: assetToTransfer,
-                denom: params.denomOrIbc,
-            });
+      const txDeliveryResponse = await signingCosmWasmClient.sendTokens(
+        senderAddress,
+        params.toAddress,
+        [coin],
+        { gas: safeFee, amount: [{ ...coin, amount: safeFee }] }
+      );
 
-            const feeEstimator = new FeeEstimator(signingCosmWasmClient);
-            const fee = await feeEstimator.estimateGasForSendTokens(
-                senderAddress,
-                params.toAddress,
-                [coin]
-            );
-
-            const safeFee = (fee * 1.2).toFixed();
-
-            const txDeliveryResponse = await signingCosmWasmClient.sendTokens(
-                senderAddress,
-                params.toAddress,
-                [coin],
-                { gas: safeFee, amount: [{ ...coin, amount: safeFee }] }
-            );
-
-            const gasPaidInUOM =
+      const gasPaidInUOM =
                 PaidFee.getInstanceWithDefaultEvents().getPaidFeeFromReceipt(
-                    txDeliveryResponse
+                  txDeliveryResponse
                 );
 
-            return {
-                from: senderAddress,
-                to: params.toAddress,
-                gasPaidInUOM,
-                txHash: txDeliveryResponse.transactionHash,
-            };
-        } catch (error: unknown) {
-            throw new Error(
-                `Transfer failed with error: ${JSON.stringify(error)}`
-            );
-        }
+      return {
+        from: senderAddress,
+        to: params.toAddress,
+        gasPaidInUOM,
+        txHash: txDeliveryResponse.transactionHash,
+      };
+    } catch (error: unknown) {
+      throw new Error(
+        `Transfer failed with error: ${JSON.stringify(error)}`
+      );
     }
+  }
 }
 // TODO - can be done when wallet provider is ready
 

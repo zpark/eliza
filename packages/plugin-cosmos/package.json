@@ -5,6 +5,8 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
+        "@cosmjs/cosmwasm-stargate": "^0.32.4",
+        "chain-registry": "^1.69.78",
         "tsup": "8.3.5"
     },
     "scripts": {
