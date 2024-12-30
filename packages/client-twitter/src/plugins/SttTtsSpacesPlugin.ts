@@ -1,7 +1,5 @@
 // src/plugins/SttTtsPlugin.ts
 
-import fs from 'fs';
-import path from 'path';
 import { spawn } from 'child_process';
 import { ITranscriptionService } from '@elizaos/core';
 import { Space, JanusClient, AudioDataWithUser } from 'agent-twitter-client';
@@ -35,7 +33,6 @@ export class SttTtsPlugin implements Plugin {
     private openAiApiKey?: string;
     private elevenLabsApiKey?: string;
 
-    private sttLanguage = 'en';
     private gptModel = 'gpt-3.5-turbo';
     private voiceId = '21m00Tcm4TlvDq8ikWAM';
     private elevenLabsModel = 'eleven_monolingual_v1';
@@ -82,7 +79,6 @@ export class SttTtsPlugin implements Plugin {
         this.openAiApiKey = config?.openAiApiKey;
         this.elevenLabsApiKey = config?.elevenLabsApiKey;
         this.transcriptionService = config.transcriptionService;
-        if (config?.sttLanguage) this.sttLanguage = config.sttLanguage;
         if (config?.gptModel) this.gptModel = config.gptModel;
         if (typeof config?.silenceThreshold === 'number') {
             this.silenceThreshold = config.silenceThreshold;
@@ -224,7 +220,7 @@ export class SttTtsPlugin implements Plugin {
         // Whisper STT
         const sttText = await this.transcriptionService.transcribe(wavBuffer);
 
-        if (!sttText.trim()) {
+        if (!sttText || !sttText.trim()) {
             console.log('[SttTtsPlugin] No speech recognized for user =>', userId);
             return;
         }
@@ -268,86 +264,6 @@ export class SttTtsPlugin implements Plugin {
             }
         }
         this.isSpeaking = false;
-    }
-
-    private convertPcmToWav(
-        samples: Int16Array,
-        sampleRate: number,
-    ): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const tmpPath = path.resolve('/tmp', `stt-${Date.now()}.wav`);
-            const ff = spawn('ffmpeg', [
-                '-f',
-                's16le',
-                '-ar',
-                sampleRate.toString(),
-                '-ac',
-                '1',
-                '-i',
-                'pipe:0',
-                '-y',
-                tmpPath,
-            ]);
-            ff.stdin.write(Buffer.from(samples.buffer));
-            ff.stdin.end();
-            ff.on('close', (code) => {
-                if (code === 0) resolve(tmpPath);
-                else reject(new Error(`ffmpeg error code=${code}`));
-            });
-        });
-    }
-
-    /**
-     * OpenAI Whisper STT
-     */
-    private async transcribeWithOpenAI(wavPath: string, language: string) {
-        if (!this.openAiApiKey) {
-            throw new Error('[SttTtsPlugin] No OpenAI API key available');
-        }
-
-        try {
-            console.log('[SttTtsPlugin] Transcribe =>', wavPath);
-
-            // Read file into buffer
-            const fileBuffer = fs.readFileSync(wavPath);
-            console.log(
-                '[SttTtsPlugin] File read, size:',
-                fileBuffer.length,
-                'bytes',
-            );
-
-            // Create blob from buffer
-            const blob = new Blob([fileBuffer], { type: 'audio/wav' });
-
-            // Create FormData
-            const formData = new FormData();
-            formData.append('file', blob, path.basename(wavPath));
-            formData.append('model', 'whisper-1');
-            formData.append('language', language);
-            formData.append('temperature', '0');
-
-            // Call OpenAI API
-            const response = await fetch(
-                'https://api.openai.com/v1/audio/transcriptions',
-                {
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${this.openAiApiKey}`,
-                    },
-                    body: formData,
-                },
-            );
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[SttTtsPlugin] OpenAI API Error:', errorText);
-                throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
-            }
-            const data = (await response.json()) as { text: string };
-            return data.text?.trim() || '';
-        } catch (err) {
-            console.error('[SttTtsPlugin] OpenAI STT Error =>', err);
-            throw new Error('OpenAI STT failed');
-        }
     }
 
     /**
