@@ -2,9 +2,9 @@ import {
     Action,
     ActionExample,
     elizaLogger,
-    type IAgentRuntime,
-    type Memory,
-    type State,
+    IAgentRuntime,
+    Memory,
+    State,
 } from "@elizaos/core";
 import { BirdeyeProvider } from "../birdeye";
 import { TokenResult } from "../types/api/search";
@@ -17,7 +17,12 @@ import {
 import {
     extractChain,
     extractSymbols,
+    formatPercentChange,
+    formatPrice,
+    formatTimestamp,
+    formatValue,
     getTokenResultFromSearchResponse,
+    shortenAddress,
 } from "../utils";
 
 const formatTokenReport = (
@@ -27,54 +32,54 @@ const formatTokenReport = (
     volume: TokenTradeDataSingleResponse,
     overview: TokenOverviewResponse
 ) => {
-    let output = `*Token Security and Trade Report*\n`;
-    output += `Token symbol: ${token.symbol}\n`;
-    output += `Token Address: ${token.address}\n\n`;
+    let output = `*🛡️ Token Security and Trade Report*\n`;
+    output += `🔖 Token symbol: ${token.symbol}\n`;
+    output += `🔗 Token Address: ${shortenAddress(token.address)}\n\n`;
 
     if (security?.data) {
-        output += `*Ownership Distribution:*\n`;
-        output += `- Owner Address: ${security.data.ownerAddress}\n`;
-        output += `- Creator Address: ${security.data.creatorAddress}\n`;
-        output += `- Total Supply: ${security.data.totalSupply}\n`;
-        output += `- Mintable: ${security.data.mintable}\n`;
-        output += `- Proxied: ${security.data.proxied}\n`;
-        output += `- Proxy: ${security.data.proxy}\n`;
+        output += `*👥 Ownership Distribution:*\n`;
+        output += `- 🏠 Owner Address: ${shortenAddress(security.data.ownerAddress)}\n`;
+        output += `- 👨‍💼 Creator Address: ${shortenAddress(security.data.creatorAddress)}\n`;
+        output += `- 📦 Total Supply: ${formatValue(security.data.totalSupply)}\n`;
+        output += `-  Mintable: ${security.data.mintable ?? "N/A"}\n`;
+        output += `- 🔄 Proxied: ${security.data.proxied ?? "N/A"}\n`;
+        output += `- 🔄 Proxy: ${security.data.proxy ?? "N/A"}\n`;
         if (security.data.securityChecks) {
-            output += `- Security Checks: ${JSON.stringify(security.data.securityChecks)}\n`;
+            output += `- 🔍 Security Checks: ${JSON.stringify(security.data.securityChecks)}\n`;
         }
     }
 
     if (volume?.data) {
-        output += `*Trade Data:*\n`;
-        output += `- Holders: ${volume.data.holder}\n`;
-        output += `- Unique Wallets (24h): ${volume.data.unique_wallet_24h}\n`;
-        output += `- Price Change (24h): ${volume.data.price_change_24h_percent}%\n`;
-        output += `- Volume (24h USD): $${volume.data.volume_24h_usd}\n`;
-        output += `- Current Price: $${volume.data.price}\n`;
+        output += `*📈 Trade Data:*\n`;
+        output += `- 👥 Holders: ${volume.data.holder}\n`;
+        output += `- 📊 Unique Wallets (24h): ${volume.data.unique_wallet_24h}\n`;
+        output += `- 📉 Price Change (24h): ${formatPercentChange(volume.data.price_change_24h_percent)}\n`;
+        output += `- 💸 Volume (24h USD): ${formatValue(volume.data.volume_24h_usd)}\n`;
+        output += `- 💵 Current Price: ${formatPrice(volume.data.price)}\n`;
     }
 
     if (metadata?.data) {
-        output += `*Market Data:*\n`;
-        output += `- Liquidity: ${metadata.data.liquidity}\n`;
-        output += `- Price: ${metadata.data.price}\n`;
-        output += `- Supply: ${metadata.data.supply}\n`;
-        output += `- Market Cap: ${metadata.data.marketcap}\n`;
-        output += `- Circulating Supply: ${metadata.data.circulating_supply}\n`;
-        output += `- Circulating Market Cap: ${metadata.data.circulating_marketcap}\n`;
+        output += `*📊 Market Data:*\n`;
+        output += `- 💧 Liquidity: ${formatValue(metadata.data.liquidity)}\n`;
+        output += `- 💵 Price: ${formatPrice(metadata.data.price)}\n`;
+        output += `- 📦 Supply: ${formatValue(metadata.data.supply)}\n`;
+        output += `- 💰 Market Cap: ${formatValue(metadata.data.marketcap)}\n`;
+        output += `- 🔄 Circulating Supply: ${formatValue(metadata.data.circulating_supply)}\n`;
+        output += `- 💰 Circulating Market Cap: ${formatValue(metadata.data.circulating_marketcap)}\n`;
     }
 
     if (overview?.data) {
-        output += `*Overview:*\n`;
-        output += `- Name: ${overview.data.name}\n`;
-        output += `- Symbol: ${overview.data.symbol}\n`;
-        output += `- Decimals: ${overview.data.decimals}\n`;
+        output += `*🔍 Overview:*\n`;
+        output += `- 📝 Name: ${overview.data.name}\n`;
+        output += `- 🔖 Symbol: ${overview.data.symbol}\n`;
+        output += `- 🔢 Decimals: ${overview.data.decimals}\n`;
         if (overview.data.extensions) {
-            output += `- Extensions: ${JSON.stringify(overview.data.extensions)}\n`;
+            output += `- 🔗 Extensions: ${JSON.stringify(overview.data.extensions)}\n`;
         }
-        output += `- Liquidity: ${overview.data.liquidity}\n`;
-        output += `- Last Trade Time: ${overview.data.lastTradeHumanTime}\n`;
-        output += `- Price: ${overview.data.price}\n`;
-        output += `- Description: ${overview.data.extensions?.description}\n`;
+        output += `- 💧 Liquidity: ${formatValue(overview.data.liquidity)}\n`;
+        output += `- ⏰ Last Trade Time: ${formatTimestamp(new Date(overview.data.lastTradeHumanTime).getTime() / 1000)}\n`;
+        output += `- 💵 Price: ${formatPrice(overview.data.price)}\n`;
+        output += `- 📜 Description: ${overview.data.extensions?.description ?? "N/A"}\n`;
     }
 
     return output;
