@@ -1,8 +1,4 @@
-import {
-    generateText,
-    trimTokens,
-    parseJSONObjectFromText,
-} from "@elizaos/core";
+import { generateText, parseJSONObjectFromText } from "@elizaos/core";
 import {
     IAgentRuntime,
     IImageDescriptionService,
@@ -12,6 +8,8 @@ import {
     Media,
     ModelClass,
     ServiceType,
+    ITokenizationService,
+    models,
 } from "@elizaos/core";
 import { WebClient } from "@slack/web-api";
 import ffmpeg from "fluent-ffmpeg";
@@ -21,7 +19,15 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
-    text = trimTokens(text, 100000, "gpt-4o-mini");
+    const model = models[runtime.character.modelProvider];
+    const tokenizationService = runtime.getService<ITokenizationService>(
+        ServiceType.TOKENIZATION
+    );
+    text = await tokenizationService.trimTokens(
+        text,
+        100000,
+        model.model[ModelClass.SMALL] || "gpt-4o-mini"
+    );
 
     const prompt = `Please generate a concise summary for the following text:
 
