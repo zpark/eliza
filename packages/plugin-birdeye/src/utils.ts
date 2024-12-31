@@ -1,13 +1,13 @@
 import { elizaLogger } from "@elizaos/core";
-import { SearchTokenItem } from "./types/search-token";
-import { BaseAddress, BirdeyeChain } from "./types/shared";
-import { TokenMetadataResponse } from "./types/token-metadata";
-import { WalletDataItem } from "./types/wallet";
+import { BirdeyeApiParams } from "./types/api/common";
+import { TokenMarketSearchResponse, TokenResult } from "./types/api/search";
+import { TokenMetadataSingleResponse } from "./types/api/token";
+import { BaseAddress, BirdeyeSupportedChain } from "./types/shared";
 
 // Constants
 export const BASE_URL = "https://public-api.birdeye.so";
 
-export const CHAIN_KEYWORDS = [
+export const BIRDEYE_SUPPORTED_CHAINS = [
     "solana",
     "ethereum",
     "arbitrum",
@@ -23,7 +23,7 @@ export const CHAIN_KEYWORDS = [
 ] as const;
 
 // Chain abbreviations and alternative names mapping
-export const CHAIN_ALIASES: Record<string, BirdeyeChain> = {
+export const CHAIN_ALIASES: Record<string, BirdeyeSupportedChain> = {
     // Solana
     sol: "solana",
 
@@ -107,7 +107,7 @@ export type TimeUnit = keyof typeof TIME_UNITS;
 export type Timeframe = keyof typeof TIMEFRAME_KEYWORDS;
 
 // Helper functions
-export const extractChain = (text: string): BirdeyeChain => {
+export const extractChain = (text: string): BirdeyeSupportedChain => {
     // Check for SUI address (0x followed by 64 hex chars)
     if (text.match(/0x[a-fA-F0-9]{64}/)) {
         return "sui";
@@ -129,7 +129,7 @@ export const extractAddressesFromString = (text: string): BaseAddress[] => {
         addresses.push(
             ...evmAddresses.map((address) => ({
                 address,
-                chain: "evm" as BirdeyeChain, // we don't yet know the chain but can assume it's EVM-compatible
+                chain: "evm" as BirdeyeSupportedChain, // we don't yet know the chain but can assume it's EVM-compatible
             }))
         );
     }
@@ -140,7 +140,7 @@ export const extractAddressesFromString = (text: string): BaseAddress[] => {
         addresses.push(
             ...solAddresses.map((address) => ({
                 address,
-                chain: "solana" as BirdeyeChain,
+                chain: "solana" as BirdeyeSupportedChain,
             }))
         );
     }
@@ -151,7 +151,7 @@ export const extractAddressesFromString = (text: string): BaseAddress[] => {
         addresses.push(
             ...suiAddresses.map((address) => ({
                 address,
-                chain: "sui" as BirdeyeChain,
+                chain: "sui" as BirdeyeSupportedChain,
             }))
         );
     }
@@ -320,7 +320,7 @@ export async function makeApiRequest<T>(
     url: string,
     options: {
         apiKey: string;
-        chain?: BirdeyeChain;
+        chain?: BirdeyeSupportedChain;
         method?: "GET" | "POST";
         body?: any;
     }
@@ -366,8 +366,8 @@ export async function makeApiRequest<T>(
 
 // Formatting helpers
 export const formatTokenInfo = (
-    token: SearchTokenItem,
-    metadata?: TokenMetadataResponse
+    token: TokenResult,
+    metadata?: TokenMetadataSingleResponse
 ): string => {
     const priceFormatted =
         token.price != null
@@ -396,16 +396,18 @@ export const formatTokenInfo = (
 
     const trades = token.trade_24h != null ? token.trade_24h.toString() : "N/A";
 
-    const age = token.last_trade_unix_time
-        ? `${Math.floor((Date.now() - new Date(token.last_trade_unix_time).getTime()) / (1000 * 60 * 60 * 24))}d`
+    const age = token.creation_time
+        ? `${Math.floor((Date.now() - new Date(token.creation_time).getTime()) / (1000 * 60 * 60 * 24))}d`
         : "N/A";
 
     let output =
         `🪙 ${token.name} @ ${token.symbol}\n` +
         `💰 USD: $${priceFormatted} (${priceChange})\n` +
         `💎 FDV: ${fdv}\n` +
+        `💦 MCap: ${token.market_cap ? `$${(token.market_cap / 1_000_000).toFixed(2)}M` : "N/A"}\n` +
         `💦 Liq: ${liquidity}\n` +
-        `📊 Vol: ${volume} 🕰️ Age: ${age}\n` +
+        `📊 Vol: ${volume}\n` +
+        `🕰️ Age: ${age}\n` +
         `🔄 Trades: ${trades}\n` +
         `🔗 Address: ${token.address}`;
 
@@ -439,7 +441,7 @@ export const extractSymbols = (
     text: string,
     // loose mode will try to extract more symbols but may include false positives
     // strict mode will only extract symbols that are clearly formatted as a symbol using $SOL format
-    mode: "strict" | "loose" = "strict"
+    mode: "strict" | "loose" = "loose"
 ): string[] => {
     const symbols = new Set<string>();
 
@@ -477,8 +479,8 @@ export const extractSymbols = (
 };
 
 export const formatMetadataResponse = (
-    data: TokenMetadataResponse,
-    chain: BirdeyeChain
+    data: TokenMetadataSingleResponse,
+    chain: BirdeyeSupportedChain
 ): string => {
     const tokenData = data.data;
     const chainName = chain.charAt(0).toUpperCase() + chain.slice(1);
@@ -534,7 +536,9 @@ export const formatMetadataResponse = (
     return response;
 };
 
-const formatSocialLinks = (data: TokenMetadataResponse["data"]): string => {
+const formatSocialLinks = (
+    data: TokenMetadataSingleResponse["data"]
+): string => {
     const links: string[] = [];
     const { extensions } = data;
 
@@ -566,17 +570,30 @@ const formatSocialLinks = (data: TokenMetadataResponse["data"]): string => {
 export const waitFor = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-export const formatPortfolio = (items: WalletDataItem[]) => {
+export const formatPortfolio = (data: TokenMarketSearchResponse) => {
+    const items = data.data?.items.filter(
+        (item) => item.type === "token"
+    ) as TokenResult[];
     if (!items?.length) return "No tokens found in portfolio";
 
     return items
         .map((item) => {
-            const value = item.valueUsd?.toFixed(2);
-            const amount = item.uiAmount?.toFixed(4);
+            const value = item?.price?.toFixed(2);
+            const amount = item?.liquidity?.toFixed(4);
             return (
                 `• ${item.symbol || "Unknown Token"}: ${amount} tokens` +
                 `${value !== "0.00" ? ` (Value: $${value || "unknown"})` : ""}`
             );
         })
         .join("\n");
+};
+
+export const convertToStringParams = (params: BirdeyeApiParams) => {
+    return Object.entries(params || {}).reduce(
+        (acc, [key, value]) => ({
+            ...acc,
+            [key]: value?.toString() || "",
+        }),
+        {} as Record<string, string>
+    );
 };

@@ -1,13 +1,13 @@
-import { CHAIN_KEYWORDS } from "../utils";
+import { BIRDEYE_SUPPORTED_CHAINS } from "../utils";
 
 // Types
-export type BirdeyeChain = (typeof CHAIN_KEYWORDS)[number];
+export type BirdeyeSupportedChain = (typeof BIRDEYE_SUPPORTED_CHAINS)[number];
 
 export interface BaseAddress {
     type?: "wallet" | "token" | "contract";
     symbol?: string;
     address: string;
-    chain: BirdeyeChain;
+    chain: BirdeyeSupportedChain;
 }
 
 export interface WalletAddress extends BaseAddress {

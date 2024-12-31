@@ -1,29 +1,19 @@
 import { Plugin } from "@elizaos/core";
-import { getSupportedNetworksAction } from "./actions/defi/networks";
-import { reportToken } from "./actions/report";
-import { addressSearchProvider } from "./providers/address-search-provider";
+import { searchTokensBySymbolAction } from "./actions/searchTokens";
+import { searchWalletsAction } from "./actions/searchWallets";
+import { testAllEndpointsAction } from "./actions/test-all-endpoints";
 import { agentPortfolioProvider } from "./providers/agent-portfolio-provider";
-import { symbolSearchProvider } from "./providers/symbol-search-provider";
-import { walletPortfolioProvider } from "./providers/wallet-portfolio-provider";
 
 export const birdeyePlugin: Plugin = {
     name: "birdeye",
     description: "Birdeye Plugin for token data and analytics",
     actions: [
-        reportToken,
-        getSupportedNetworksAction,
-        // getTokenMetadataAction,
-        // getPriceHistoryAction,
-        // getOHLCVAction,
-        // getTokenTradesAction,
+        searchTokensBySymbolAction,
+        searchWalletsAction,
+        testAllEndpointsAction,
     ],
     evaluators: [],
-    providers: [
-        symbolSearchProvider,
-        addressSearchProvider,
-        walletPortfolioProvider,
-        agentPortfolioProvider,
-    ],
+    providers: [agentPortfolioProvider],
 };
 
 export default birdeyePlugin;
