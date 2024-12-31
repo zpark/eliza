@@ -1,6 +1,28 @@
 import { ChatOpenAI } from "@langchain/openai";
 import dotenv from 'dotenv';
 import { ASTQueueItem, EnvUsage, OrganizedDocs, PluginDocumentation, TodoItem, TodoSection } from "./types/index.js";
+import path from "path";
+import { promises as fs } from 'fs';
+import { Configuration } from "./Configuration.js";
+
+// ToDo
+// - Vet readme
+// - Adding the Plugin to Your ElizaOS - sho adding to package.json in /agent + pnpm commands
+    // - DONE - verify
+// - Capabilities Provided by this Plugin: - seems wrong
+// - DONE - verify
+// - Verification Steps Needed?
+// - Common Use Cases Vs.
+// - look at API Reference prompt
+// - Debugging Tips - reference discord and eliz.gg
+// - https://claude.ai/chat/2e60e6d7-f8b1-4314-8b51-31b6da9097ee
+// - gh workflow - jsdoc & plugin docs - conditionally run either, dont write to files
+// - bash script cleaner - check if compile, bash, AI
+
+// New Todo - it should all be based around plugins src/index.ts file
+// me dumb for this
+
+
 
 dotenv.config();
 
@@ -13,9 +35,10 @@ export class AIService {
     /**
      * Constructor for initializing the ChatOpenAI instance.
      *
-     * @throws {Error} If OPENAI_API_KEY environment variable is not set.
+     * @param {Configuration} configuration - The configuration instance to be used
+     * @throws {Error} If OPENAI_API_KEY environment variable is not set
      */
-    constructor() {
+    constructor(private configuration: Configuration) {
         if (!process.env.OPENAI_API_KEY) {
             throw new Error('OPENAI_API_KEY is not set');
         }
@@ -52,6 +75,10 @@ export class AIService {
     }): Promise<PluginDocumentation & { todos: string }> {
         const organizedDocs = this.organizeDocumentation(existingDocs);
 
+        // write organizedDocs into a json in /here directory
+        const jsonPath = path.join(this.configuration.absolutePath, 'here', 'organizedDocs.json');
+        fs.writeFile(jsonPath, JSON.stringify(organizedDocs, null, 2));
+
         const [overview, installation, configuration, usage, apiRef, troubleshooting, todoSection] = await Promise.all([
             this.generateOverview(organizedDocs, packageJson),
             this.generateInstallation(packageJson),
@@ -73,29 +100,6 @@ export class AIService {
         };
     }
 
-    // should be moved to utils
-    private organizeDocumentation(docs: ASTQueueItem[]): OrganizedDocs {
-        return docs.reduce((acc: OrganizedDocs, doc) => {
-            // Use nodeType to determine the category
-            switch (doc.nodeType) {
-                case 'ClassDeclaration':
-                    acc.classes.push(doc);
-                    break;
-                case 'MethodDefinition':
-                case 'TSMethodSignature':
-                    acc.methods.push(doc);
-                    break;
-                case 'TSInterfaceDeclaration':
-                    acc.interfaces.push(doc);
-                    break;
-                case 'TSTypeAliasDeclaration':
-                    acc.types.push(doc);
-                    break;
-            }
-            return acc;
-        }, { classes: [], methods: [], interfaces: [], types: [] });
-    }
-
     private async generateOverview(docs: OrganizedDocs, packageJson: any): Promise<string> {
         const prompt = `Generate a comprehensive overview for a plugin/package based on the following information:
 
@@ -108,9 +112,7 @@ export class AIService {
 
         Generate a clear, concise overview that explains:
         1. The purpose of this plugin
-        2. Its main features and capabilities
-        3. When and why someone would use it
-        4. Any key dependencies or requirements
+        2. Its main features
 
         Format the response in markdown.`;
 
@@ -118,18 +120,79 @@ export class AIService {
     }
 
     private async generateInstallation(packageJson: any): Promise<string> {
-        const prompt = `Generate installation instructions for the following package:
+        const indexPath = path.join(this.configuration.absolutePath, 'src/index.ts');
+        let mainExport = 'plugin';
+        let exportName = packageJson.name.split('/').pop() + 'Plugin';
 
-        Package name: ${packageJson.name}
+        try {
+            const indexContent = await fs.readFile(indexPath, { encoding: 'utf8' });
+            const exportMatch = indexContent.match(/export const (\w+):/);
+            if (exportMatch) {
+                exportName = exportMatch[1];
+            }
+
+            const prompt = `Generate installation and integration instructions for this ElizaOS plugin:
+
+            Plugin name: ${packageJson.name}
+            Main export: ${exportName}
+            Index file exports:
+            ${indexContent}
+            Dependencies: ${JSON.stringify(packageJson.dependencies || {}, null, 2)}
+            Peer dependencies: ${JSON.stringify(packageJson.peerDependencies || {}, null, 2)}
+
+            This is a plugin for the ElizaOS agent system. Generate comprehensive installation instructions that include:
+
+            1. How to add the plugin to your ElizaOS project:
+               - First, explain that users need to add the following to their agent/package.json dependencies:
+                 \`\`\`json
+                 {
+                   "dependencies": {
+                     "${packageJson.name}": "workspace:*"
+                   }
+                 }
+                 \`\`\`
+               - Then, explain they need to:
+                 1. cd into the agent/ directory
+                 2. Run pnpm install to install the new dependency
+                 3. Run pnpm build to build the project with the new plugin
+
+            2. After installation, show how to import and use the plugin:
+               - Import syntax using: import { ${exportName} } from "${packageJson.name}";
+               - How to add it to the AgentRuntime plugins array
+
+            3. Integration example showing the complete setup:
+               \`\`\`typescript
+               import { ${exportName} } from "${packageJson.name}";
+
+               return new AgentRuntime({
+                   // other configuration...
+                   plugins: [
+                       ${exportName},
+                       // other plugins...
+                   ],
+               });
+               \`\`\`
+
+            4. Verification steps to ensure successful integration
+
+            Format the response in markdown, with clear section headers and step-by-step instructions. Emphasize that this is a workspace package that needs to be added to agent/package.json and then built.`;
+
+            return await this.generateComment(prompt);
+        } catch (error) {
+            console.error('Error reading index.ts:', error);
+            return this.generateBasicInstallPrompt(packageJson);
+        }
+    }
+
+    private async generateBasicInstallPrompt(packageJson: any): Promise<string> {
+        console.log('AIService::generateInstallation threw an error, generating basic install prompt');
+        const prompt = `Generate basic installation instructions for this ElizaOS plugin:
+
+        Plugin name: ${packageJson.name}
         Dependencies: ${JSON.stringify(packageJson.dependencies || {}, null, 2)}
         Peer dependencies: ${JSON.stringify(packageJson.peerDependencies || {}, null, 2)}
 
-        Include:
-        1. Package manager commands - we are using pnpm
-        2. Any prerequisite installations
-        4. Verification steps to ensure successful installation
-
-        Format the response in markdown.`;
+        This is a plugin for the ElizaOS agent system. Include basic setup instructions.`;
 
         return await this.generateComment(prompt);
     }
@@ -141,9 +204,8 @@ export class AIService {
         Full Context: ${item.fullContext}
         `).join('\n')}
         Create comprehensive configuration documentation that:
-        1. Lists all required environment variables
-        2. Explains the purpose of each variable
-        3. Provides example values where possible
+        1. Lists all required environment variables and their purpose
+        2. Return a full .env example file
 
         Inform the user that the configuration is done in the .env file.
         And to ensure the .env is set in the .gitignore file so it is not committed to the repository.
@@ -163,8 +225,7 @@ export class AIService {
         ${docs.methods.map(m => `${m.methodName}: ${m.jsDoc}`).join('\n')}
 
         Create:
-        1. Basic usage example
-        2. Common use cases with Code snippets demonstrating key features
+        1. Basic usage example showing Common use cases with Code snippets demonstrating key features
 
         Format the response in markdown with code examples.`;
 
@@ -199,7 +260,8 @@ export class AIService {
       /**
  * Generates troubleshooting guide based on documentation and common patterns
  */
-      private async generateTroubleshooting(docs: OrganizedDocs, packageJson: any): Promise<string> {
+    // toDo - integrate w/ @Jin's discord scraper to pull solutions for known issues
+    private async generateTroubleshooting(docs: OrganizedDocs, packageJson: any): Promise<string> {
         const prompt = `Generate a troubleshooting guide based on:
 
             Package dependencies: ${JSON.stringify(packageJson.dependencies || {}, null, 2)}
@@ -224,8 +286,9 @@ export class AIService {
     }
 
     /**
- * Generates TODO section documentation from found TODO comments
- */
+     * Generates TODO section documentation from found TODO comments
+     */
+    // toDo - integrate w/ @Jin's discord scraper to auto create GH issues/bounties
     private async generateTodoSection(todoItems: TodoItem[]): Promise<TodoSection> {
         if (todoItems.length === 0) {
             return {
@@ -234,18 +297,16 @@ export class AIService {
             };
         }
 
-        const prompt = `Generate a TODO section for documentation based on these TODO items:
+        const prompt = `I scraped the codebase for TODO comments, for each TODO comment and its associated code, Create a section that:
         ${todoItems.map(item => `
         TODO Comment: ${item.comment}
         Code Context: ${item.fullContext}
         `).join('\n')}
+
         Create a section that:
-        1. Lists all TODOs in a clear, organized way
-        2. Groups related TODOs if any
-        3. Provides context about what needs to be done
-        4. Suggests priority based on the code context
-        5. Includes the file location for reference
-        Format the response in markdown with proper headings and code blocks.`;
+        1. List the todo item
+        2. Provides context about what needs to be done
+        3. Tag the todo item (bug, feature, etc)`;
 
         const todos = await this.generateComment(prompt);
         return {
@@ -254,6 +315,31 @@ export class AIService {
         };
     }
 
+    // should be moved to utils
+    private organizeDocumentation(docs: ASTQueueItem[]): OrganizedDocs {
+        return docs.reduce((acc: OrganizedDocs, doc) => {
+            // Use nodeType to determine the category
+            switch (doc.nodeType) {
+                case 'ClassDeclaration':
+                    acc.classes.push(doc);
+                    break;
+                case 'MethodDefinition':
+                case 'TSMethodSignature':
+                    acc.methods.push(doc);
+                    break;
+                case 'TSInterfaceDeclaration':
+                    acc.interfaces.push(doc);
+                    break;
+                case 'TSTypeAliasDeclaration':
+                    acc.types.push(doc);
+                    break;
+                case 'FunctionDeclaration':
+                    acc.functions.push(doc);
+                    break;
+            }
+            return acc;
+        }, { classes: [], methods: [], interfaces: [], types: [], functions: [] });
+    }
 
 
 

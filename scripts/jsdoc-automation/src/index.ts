@@ -47,7 +47,7 @@ async function main() {
             );
             const typeScriptParser = new TypeScriptParser();
             const jsDocAnalyzer = new JsDocAnalyzer(typeScriptParser);
-            const aiService = new AIService();
+            const aiService = new AIService(configuration);
             const jsDocGenerator = new JsDocGenerator(aiService);
 
             const documentationGenerator = new DocumentationGenerator(
@@ -82,9 +82,6 @@ async function main() {
                     envUsages
                 );
             }
-
-            // Generate documentation
-            await documentationGenerator.generate(configuration.repository.pullNumber);
         } catch (error) {
             console.error('Error during documentation generation:', {
                 message: error instanceof Error ? error.message : String(error),

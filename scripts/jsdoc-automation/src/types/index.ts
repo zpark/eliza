@@ -35,6 +35,7 @@ export interface OrganizedDocs {
     methods: ASTQueueItem[];
     interfaces: ASTQueueItem[];
     types: ASTQueueItem[];
+    functions: ASTQueueItem[];
 }
 
 export interface TodoSection {
