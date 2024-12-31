@@ -136,6 +136,7 @@ export const getTokenInfoAction = {
                     sort_by: "volume_24h_usd",
                     sort_type: "desc",
                     chain: "all",
+                    limit: 15,
                 })
             );
 
@@ -173,7 +174,7 @@ export const getTokenInfoAction = {
                                 },
                                 {
                                     headers: {
-                                        chain,
+                                        "x-chain": chain,
                                     },
                                 }
                             ),
@@ -183,7 +184,7 @@ export const getTokenInfoAction = {
                                 },
                                 {
                                     headers: {
-                                        chain,
+                                        "x-chain": chain,
                                     },
                                 }
                             ),
@@ -193,7 +194,7 @@ export const getTokenInfoAction = {
                                 },
                                 {
                                     headers: {
-                                        chain,
+                                        "x-chain": chain,
                                     },
                                 }
                             ),
@@ -203,7 +204,7 @@ export const getTokenInfoAction = {
                                 },
                                 {
                                     headers: {
-                                        chain,
+                                        "x-chain": chain,
                                     },
                                 }
                             ),

@@ -609,6 +609,10 @@ export const getTokenResultFromSearchResponse = (
         .flat()
         .find(
             (r: TokenResult): r is TokenResult =>
-                r.symbol.toLowerCase() === symbol.toLowerCase()
+                r.symbol.toLowerCase() === symbol.toLowerCase() &&
+                // only show tokens with liquidity, fdv, and price to help filter out junk
+                Boolean(r.liquidity) &&
+                Boolean(r.fdv) &&
+                Boolean(r.price)
         );
 };
