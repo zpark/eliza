@@ -552,7 +552,7 @@ export interface NewListingResponse {
 // Top Traders Types
 export interface TopTradersParams {
     address: string;
-    time_frame: TimeInterval;
+    time_frame?: TimeInterval;
     sort_type?: "asc" | "desc";
     sort_by?: "volume" | "trade";
     offset?: number;

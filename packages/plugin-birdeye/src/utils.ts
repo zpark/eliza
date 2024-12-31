@@ -2,6 +2,7 @@ import { elizaLogger } from "@elizaos/core";
 import { BirdeyeApiParams } from "./types/api/common";
 import { TokenMarketSearchResponse, TokenResult } from "./types/api/search";
 import { TokenMetadataSingleResponse } from "./types/api/token";
+import { WalletPortfolioResponse } from "./types/api/wallet";
 import { BaseAddress, BirdeyeSupportedChain } from "./types/shared";
 
 // Constants
@@ -570,16 +571,14 @@ const formatSocialLinks = (
 export const waitFor = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-export const formatPortfolio = (data: TokenMarketSearchResponse) => {
-    const items = data.data?.items.filter(
-        (item) => item.type === "token"
-    ) as TokenResult[];
+export const formatPortfolio = (response: WalletPortfolioResponse) => {
+    const { items } = response.data;
     if (!items?.length) return "No tokens found in portfolio";
 
     return items
         .map((item) => {
-            const value = item?.price?.toFixed(2);
-            const amount = item?.liquidity?.toFixed(4);
+            const value = item?.priceUsd?.toFixed(2);
+            const amount = item?.uiAmount?.toFixed(4);
             return (
                 `• ${item.symbol || "Unknown Token"}: ${amount} tokens` +
                 `${value !== "0.00" ? ` (Value: $${value || "unknown"})` : ""}`
@@ -596,4 +595,20 @@ export const convertToStringParams = (params: BirdeyeApiParams) => {
         }),
         {} as Record<string, string>
     );
+};
+
+export const getTokenResultFromSearchResponse = (
+    response: TokenMarketSearchResponse,
+    symbol: string
+): TokenResult | undefined => {
+    const tokenResponses: TokenMarketSearchResponse["data"]["items"] =
+        response.data.items.filter((item) => item.type === "token");
+
+    return tokenResponses
+        .map((item) => item.result)
+        .flat()
+        .find(
+            (r: TokenResult): r is TokenResult =>
+                r.symbol.toLowerCase() === symbol.toLowerCase()
+        );
 };

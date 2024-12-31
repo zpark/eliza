@@ -53,8 +53,8 @@ const extractWalletAddressesFromMessage = async (
     }
 };
 
-export const searchWalletsAction = {
-    name: "SEARCH_WALLETS",
+export const getWalletInfoAction = {
+    name: "GET_WALLET_INFO",
     similes: ["CHECK_WALLET", "WALLET_HOLDINGS", "PORTFOLIO_CHECK"],
     description: "Check wallet portfolio and holdings information",
     handler: async (
@@ -87,9 +87,11 @@ export const searchWalletsAction = {
 
             // Search Birdeye services for wallet portfolio data
             const searchAddressesForTokenMatch = addresses.map((address) =>
-                provider.fetchSearchWallets({
+                provider.fetchWalletPortfolio({
                     wallet: address.address,
-                    chain: address.chain,
+                    headers: {
+                        chain: address.chain,
+                    },
                 })
             );
 

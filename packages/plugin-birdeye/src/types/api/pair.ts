@@ -59,6 +59,7 @@ export interface OHLCVPairResponse {
 // Pair Overview Types
 export interface PairOverviewMultiParams {
     list_address: string;
+    before_time?: number;
 }
 
 export interface PairOverviewSingleParams {

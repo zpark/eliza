@@ -1,57 +1,18 @@
 import {
     Action,
     ActionExample,
-    composeContext,
     elizaLogger,
-    generateText,
-    ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
 } from "@elizaos/core";
 import { BirdeyeProvider } from "../birdeye";
-import { extractChain, extractSymbols } from "../utils";
-
-const extractTokenSymbolsTemplate = `Given the recent message below:
-{{recentMessages}}
-Extract all token symbols mentioned in the message. Look for:
-- Symbols prefixed with $ (e.g. $SOL, $ETH)
-- Well-known symbols in any case (e.g. BTC, eth, SOL)
-- Other symbols that are in all caps (e.g. SOL, SUI, NUER)
-- Quoted symbols
-
-When symbols are in lowercase (btc, eth, sol), convert to well-known format (BTC, ETH, SOL).
-For mixed case symbols (SOl, eTH), include them as-is unless quoted.
-
-Respond with a JSON array containing only the extracted symbols, no extra description needed.
-Example:
-Message: "Check $SOL and btc prices"
-Response: ["SOL", "BTC"]`;
-
-const extractTokenSymbolsFromMessage = async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State
-) => {
-    const context = composeContext({
-        state,
-        template: extractTokenSymbolsTemplate,
-    });
-
-    const response = await generateText({
-        runtime,
-        context,
-        modelClass: ModelClass.LARGE,
-    });
-
-    try {
-        const regex = new RegExp(/\[(.+)\]/gms);
-        const normalized = response && regex.exec(response)?.[0];
-        return normalized ? JSON.parse(normalized) : [];
-    } catch {
-        return [];
-    }
-};
+import { TokenResult } from "../types/api/search";
+import {
+    extractChain,
+    extractSymbols,
+    getTokenResultFromSearchResponse,
+} from "../utils";
 
 const formatTokenReport = (token, metadata, security, volume) => {
     let output = `*Token Security and Trade Report*\n`;
@@ -89,8 +50,8 @@ const formatTokenReport = (token, metadata, security, volume) => {
     return output;
 };
 
-export const searchTokensBySymbolAction = {
-    name: "SEARCH_TOKENS_BY_SYMBOL",
+export const getTokenInfoAction = {
+    name: "GET_TOKEN_INFO",
     similes: [
         "FIND_TOKENS",
         "TOKEN_SEARCH",
@@ -98,6 +59,23 @@ export const searchTokensBySymbolAction = {
         "CHECK_TOKEN",
         "REVIEW_TOKEN",
         "TOKEN_DETAILS",
+        "GET_TOKEN_INFO",
+        "TOKEN_INFO",
+        "TOKEN_REPORT",
+        "TOKEN_ANALYSIS",
+        "TOKEN_OVERVIEW",
+        "TOKEN_SUMMARY",
+        "TOKEN_INSIGHT",
+        "TOKEN_DATA",
+        "TOKEN_STATS",
+        "TOKEN_METRICS",
+        "TOKEN_PROFILE",
+        "TOKEN_REVIEW",
+        "TOKEN_CHECK",
+        "TOKEN_LOOKUP",
+        "TOKEN_FIND",
+        "TOKEN_DISCOVER",
+        "TOKEN_EXPLORE",
     ],
     description:
         "Search for detailed token information including security and trade data by symbol",
@@ -111,11 +89,7 @@ export const searchTokensBySymbolAction = {
         try {
             const provider = new BirdeyeProvider(runtime.cacheManager);
 
-            const symbols = await extractTokenSymbolsFromMessage(
-                runtime,
-                message,
-                state
-            );
+            const symbols = extractSymbols(message.content.text, "loose");
 
             if (symbols.length === 0) {
                 callback?.({ text: "No token symbols found in the message" });
@@ -127,29 +101,30 @@ export const searchTokensBySymbolAction = {
             );
 
             const searchTokenResponses = symbols.map((symbol) =>
-                provider.fetchSearchTokens({
+                provider.fetchSearchTokenMarketData({
                     keyword: symbol,
                     limit: 1,
                 })
             );
 
             const results = await Promise.all(searchTokenResponses);
-            const validResults = results.map(
-                (r, index) =>
-                    r.data.items.find(
-                        (item) =>
-                            item.type === "token" &&
-                            item.result[0].symbol.toLowerCase() ===
-                                symbols[index].toLowerCase()
-                    )?.result[0]
+
+            // get only the token results where the symbol matches
+            const validResults = results.map((r, index) =>
+                getTokenResultFromSearchResponse(r, symbols[index])
             );
 
-            if (validResults.length === 0) {
+            // filter out undefined results
+            const filteredResults = validResults.filter(
+                (result): result is TokenResult => result !== undefined
+            );
+
+            if (filteredResults.length === 0) {
                 callback?.({ text: "No matching tokens found" });
                 return true;
             }
 
-            const resultsWithChains = validResults.map((result) => ({
+            const resultsWithChains = filteredResults.map((result) => ({
                 symbol: result.symbol,
                 address: result.address,
                 chain: extractChain(result.address),
@@ -157,11 +132,26 @@ export const searchTokensBySymbolAction = {
 
             // Fetch all data in parallel for each token
             const tokenData = await Promise.all(
-                resultsWithChains.map(async ({ address, chain, symbol }) => {
+                resultsWithChains.map(async ({ address, chain }) => {
                     const [metadata, security, volume] = await Promise.all([
-                        provider.fetchTokenMetadata(address, chain),
-                        provider.fetchTokenSecurityBySymbol(symbol),
-                        provider.fetchTokenTradeDataBySymbol(symbol),
+                        provider.fetchTokenMarketData({
+                            address,
+                            headers: {
+                                chain,
+                            },
+                        }),
+                        provider.fetchTokenSecurityByAddress({
+                            address,
+                            headers: {
+                                chain,
+                            },
+                        }),
+                        provider.fetchTokenTradeDataSingle({
+                            address,
+                            headers: {
+                                chain,
+                            },
+                        }),
                     ]);
                     return { metadata, security, volume };
                 })
@@ -219,6 +209,41 @@ export const searchTokensBySymbolAction = {
                 content: {
                     text: "Tell me about SOL",
                     action: "CHECK_TOKEN",
+                },
+            },
+            {
+                user: "user",
+                content: {
+                    text: "Give me details on $ADA",
+                    action: "TOKEN_DETAILS",
+                },
+            },
+            {
+                user: "user",
+                content: {
+                    text: "What can you tell me about $DOGE?",
+                    action: "TOKEN_INFO",
+                },
+            },
+            {
+                user: "user",
+                content: {
+                    text: "I need a report on $XRP",
+                    action: "TOKEN_REPORT",
+                },
+            },
+            {
+                user: "user",
+                content: {
+                    text: "Analyze $BNB for me",
+                    action: "TOKEN_ANALYSIS",
+                },
+            },
+            {
+                user: "user",
+                content: {
+                    text: "Overview of $LTC",
+                    action: "TOKEN_OVERVIEW",
                 },
             },
         ],

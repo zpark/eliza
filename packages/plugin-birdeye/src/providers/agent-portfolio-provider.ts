@@ -30,9 +30,11 @@ export const agentPortfolioProvider: Provider = {
 
             const chain = extractChain(walletAddr);
 
-            const resp = await provider.fetchSearchTokenMarketData({
-                keyword: walletAddr,
-                chain,
+            const resp = await provider.fetchWalletPortfolio({
+                wallet: walletAddr,
+                headers: {
+                    chain,
+                },
             });
 
             const portfolioText = formatPortfolio(resp);

@@ -73,7 +73,7 @@ export interface DefiHistoryPriceResponse {
 // Historical Price Unix Types
 export interface HistoricalPriceUnixParams {
     address: string;
-    unixtime: number;
+    unixtime?: number;
 }
 
 export interface HistoricalPriceUnixResponse {
@@ -112,7 +112,7 @@ export interface OHLCVResponse {
 // Price Volume Types
 export interface PriceVolumeParams {
     address: string;
-    type: TimeInterval;
+    type?: TimeInterval;
 }
 
 export interface PriceVolumeResponse {
@@ -175,6 +175,7 @@ export interface DefiTradesTokenParams {
     limit?: number;
     offset?: number;
     tx_type?: "swap" | "add" | "remove" | "all";
+    sort_type?: "asc" | "desc";
     before_time?: number;
     after_time?: number;
 }

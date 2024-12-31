@@ -103,7 +103,15 @@ export type TimeInterval =
     | "1D"
     | "3D"
     | "1W"
-    | "1M";
+    | "1M"
+    | "30m"
+    | "1h"
+    | "2h"
+    | "4h"
+    | "6h"
+    | "8h"
+    | "12h"
+    | "24h";
 
 export interface TokenTradeData {
     address: string;

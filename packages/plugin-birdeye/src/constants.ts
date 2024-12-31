@@ -58,7 +58,7 @@ export const BIRDEYE_ENDPOINTS = {
         transaction_simulation_POST: "/v1/wallet/simulate", // https://docs.birdeye.so/reference/post_v1-wallet-simulate
     },
     trader: {
-        gainers_losers: "/trader/gainers_losers", // https://docs.birdeye.so/reference/get_trader-gainers-losers
+        gainers_losers: "/trader/gainers-losers", // https://docs.birdeye.so/reference/get_trader-gainers-losers
         trades_seek: "/trader/txs/seek_by_time", // https://docs.birdeye.so/reference/get_trader-txs-seek-by-time
     },
     pair: {
@@ -69,11 +69,3 @@ export const BIRDEYE_ENDPOINTS = {
         token_market: "/defi/v3/search", // https://docs.birdeye.so/reference/get_defi-v3-search
     },
 };
-
-export type BirdeyeEndpoint =
-    | keyof (typeof BIRDEYE_ENDPOINTS)["defi"]
-    | keyof (typeof BIRDEYE_ENDPOINTS)["token"]
-    | keyof (typeof BIRDEYE_ENDPOINTS)["wallet"]
-    | keyof (typeof BIRDEYE_ENDPOINTS)["trader"]
-    | keyof (typeof BIRDEYE_ENDPOINTS)["pair"]
-    | keyof (typeof BIRDEYE_ENDPOINTS)["search"];

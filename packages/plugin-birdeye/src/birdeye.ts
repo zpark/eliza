@@ -38,8 +38,6 @@ import {
     PairOverviewMultiResponse,
     PairOverviewSingleParams,
     PairOverviewSingleResponse,
-    PairTradesParams,
-    PairTradesResponse,
 } from "./types/api/pair";
 import {
     TokenMarketSearchParams,
@@ -714,10 +712,10 @@ export class BirdeyeProvider extends BaseCachedProvider {
     }
 
     public async fetchPairOverviewMultiple(
-        params: FetchParams<PairTradesParams>
+        params: FetchParams<PairOverviewMultiParams>
     ) {
-        return this.fetchWithCacheAndRetry<PairTradesResponse>({
-            url: BIRDEYE_ENDPOINTS.defi.trades_pair,
+        return this.fetchWithCacheAndRetry<PairOverviewMultiResponse>({
+            url: BIRDEYE_ENDPOINTS.pair.overview_multi,
             params,
             headers: params.headers,
         });
