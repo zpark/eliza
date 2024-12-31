@@ -34,6 +34,7 @@ import {
     ServiceType,
     SearchResponse,
     ActionResponse,
+    TelemetrySettings,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 
@@ -164,6 +165,9 @@ export async function generateText({
     const max_response_length =
         modelConfiguration?.max_response_length ||
         models[provider].settings.maxOutputTokens;
+    const experimental_telemetry =
+        modelConfiguration?.experimental_telemetry ||
+        models[provider].settings.experimental_telemetry;
 
     const apiKey = runtime.token;
 
@@ -209,6 +213,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openaiResponse;
@@ -232,6 +237,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = googleResponse;
@@ -258,6 +264,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = anthropicResponse;
@@ -284,6 +291,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = anthropicResponse;
@@ -314,6 +322,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = grokResponse;
@@ -335,6 +344,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = groqResponse;
@@ -386,6 +396,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = redpillResponse;
@@ -413,6 +424,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openrouterResponse;
@@ -439,6 +451,7 @@ export async function generateText({
                         maxTokens: max_response_length,
                         frequencyPenalty: frequency_penalty,
                         presencePenalty: presence_penalty,
+                        experimental_telemetry: experimental_telemetry,
                     });
 
                     response = ollamaResponse;
@@ -466,6 +479,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = heuristResponse;
@@ -515,6 +529,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openaiResponse;
@@ -541,6 +556,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = galadrielResponse;
@@ -1357,6 +1373,7 @@ interface ModelSettings {
     frequencyPenalty: number;
     presencePenalty: number;
     stop?: string[];
+    experimental_telemetry?: TelemetrySettings;
 }
 
 /**
@@ -1392,6 +1409,7 @@ export const generateObject = async ({
     const presence_penalty = models[provider].settings.presence_penalty;
     const max_context_length = models[provider].settings.maxInputTokens;
     const max_response_length = models[provider].settings.maxOutputTokens;
+    const experimental_telemetry = models[provider].settings.experimental_telemetry;
     const apiKey = runtime.token;
 
     try {
@@ -1404,6 +1422,7 @@ export const generateObject = async ({
             frequencyPenalty: frequency_penalty,
             presencePenalty: presence_penalty,
             stop: stop || models[provider].settings.stop,
+            experimental_telemetry: experimental_telemetry,
         };
 
         const response = await handleProvider({
