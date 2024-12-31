@@ -1237,7 +1237,7 @@ export type SearchResult = {
     content: string;
     rawContent?: string;
     score: number;
-    publishedDate: string;
+    publishedDate?: string;
 };
 
 export type SearchResponse = {
