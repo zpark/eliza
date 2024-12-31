@@ -3,15 +3,15 @@ import { z } from "zod";
 export const DEFAULT_MAX_TWEET_LENGTH = 280;
 
 const twitterUsernameSchema = z.string()
-    .min(1)
-    .max(15)
-    .regex(/^[A-Za-z][A-Za-z0-9_]*[A-Za-z0-9]$|^[A-Za-z]$/, 'Invalid Twitter username format');
+    .min(4, 'An X/Twitter Username must be at least 4 characters long')
+    .max(15, 'n X/Twitter Username cannot exceed 15 characters')
+    .regex(/^[A-Za-z0-9_]*$/, 'n X Username can only contain letters, numbers, and underscores');
 
 export const twitterEnvSchema = z.object({
     TWITTER_DRY_RUN: z.boolean(),
-    TWITTER_USERNAME: z.string().min(1, "Twitter username is required"),
-    TWITTER_PASSWORD: z.string().min(1, "Twitter password is required"),
-    TWITTER_EMAIL: z.string().email("Valid Twitter email is required"),
+    TWITTER_USERNAME: z.string().min(1, "X/Twitter username is required"),
+    TWITTER_PASSWORD: z.string().min(1, "X/Twitter password is required"),
+    TWITTER_EMAIL: z.string().email("Valid X/Twitter email is required"),
     MAX_TWEET_LENGTH: z.number().int().default(DEFAULT_MAX_TWEET_LENGTH),
     TWITTER_SEARCH_ENABLE: z.boolean().default(false),
     TWITTER_2FA_SECRET: z.string(),
@@ -164,7 +164,7 @@ export async function validateTwitterConfig(
                 .map((err) => `${err.path.join(".")}: ${err.message}`)
                 .join("\n");
             throw new Error(
-                `Twitter configuration validation failed:\n${errorMessages}`
+                `X/Twitter configuration validation failed:\n${errorMessages}`
             );
         }
         throw error;
