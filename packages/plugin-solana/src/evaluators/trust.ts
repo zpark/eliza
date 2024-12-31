@@ -1,22 +1,22 @@
 import {
-    ActionExample,
-    booleanFooter,
     composeContext,
-    Content,
-    Evaluator,
     generateObjectArray,
     generateTrueOrFalse,
+    MemoryManager,
+    booleanFooter,
+    ActionExample,
+    Content,
     IAgentRuntime,
     Memory,
-    MemoryManager,
     ModelClass,
+    Evaluator,
 } from "@elizaos/core";
+import { TrustScoreManager } from "../providers/trustScoreProvider.ts";
+import { TokenProvider } from "../providers/token.ts";
+import { WalletProvider } from "../providers/wallet.ts";
 import { TrustScoreDatabase } from "@elizaos/plugin-trustdb";
 import { Connection } from "@solana/web3.js";
 import { getWalletKey } from "../keypairUtils.ts";
-import { TokenProvider } from "../providers/token.ts";
-import { TrustScoreManager } from "../providers/trustScoreProvider.ts";
-import { WalletProvider } from "../providers/wallet.ts";
 
 const shouldProcessTemplate =
     `# Task: Decide if the recent messages should be processed for token recommendations.
