@@ -133,7 +133,7 @@ export const continueAction: Action = {
         if ((lastAgentMessage && lastAgentMessage.content.text &&
             (lastAgentMessage.content.text.endsWith("?") ||
             lastAgentMessage.content.text.endsWith("!"))) || (message.content.text.endsWith("?") || message.content.text.endsWith("!"))) {
-            elizaLogger.log(`[CONTINUE] My last message had question/exclamation. Not proceeding.`);
+            elizaLogger.log(`[CONTINUE] Last message had question/exclamation. Not proceeding.`);
             return;
         }
 
