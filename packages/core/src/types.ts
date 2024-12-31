@@ -1255,21 +1255,26 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export type SearchImage = {
+    url: string;
+    description?: string;
+};
+
 export type SearchResult = {
     title: string;
     url: string;
     content: string;
+    rawContent?: string;
     score: number;
-    raw_content: string | null;
+    publishedDate?: string;
 };
 
 export type SearchResponse = {
+    answer?: string;
     query: string;
-    follow_up_questions: string[] | null;
-    answer: string | null;
-    images: string[];
+    responseTime: number;
+    images: SearchImage[];
     results: SearchResult[];
-    response_time: number;
 };
 
 export enum ServiceType {
