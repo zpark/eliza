@@ -1226,6 +1226,14 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export interface ITokenizationService extends Service {
+    trimTokens(
+        context: string,
+        maxTokens: number,
+        model?: string
+    ): Promise<string>;
+}
+
 export type SearchResult = {
     title: string;
     url: string;
@@ -1255,6 +1263,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    TOKENIZATION = "tokenization",
 }
 
 export enum LoggingLevel {
@@ -1277,4 +1286,9 @@ export interface ActionResponse {
 
 export interface ISlackService extends Service {
     client: any;
+}
+
+export enum TokenizerType {
+    Auto = "auto",
+    TikToken = "tiktoken",
 }
