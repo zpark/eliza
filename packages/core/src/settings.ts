@@ -3,6 +3,10 @@ import fs from "fs";
 import path from "path";
 import elizaLogger from "./logger.ts";
 
+console.log("I AM STARTING AGENT....");
+elizaLogger.log("LET US GOOOOOOOOOOOOOOOOOOOOOO");
+elizaLogger.log("I AM IN SETTINGSSSSSSSS");
+
 elizaLogger.info("Loading embedding settings:", {
     USE_OPENAI_EMBEDDING: process.env.USE_OPENAI_EMBEDDING,
     USE_OLLAMA_EMBEDDING: process.env.USE_OLLAMA_EMBEDDING,
@@ -156,10 +160,10 @@ function parseNamespacedSettings(env: Settings): NamespacedSettings {
     for (const [key, value] of Object.entries(env)) {
         if (!value) continue;
 
-        const [namespace, ...rest] = key.split('.');
+        const [namespace, ...rest] = key.split(".");
         if (!namespace || rest.length === 0) continue;
 
-        const settingKey = rest.join('.');
+        const settingKey = rest.join(".");
         namespaced[namespace] = namespaced[namespace] || {};
         namespaced[namespace][settingKey] = value;
     }
