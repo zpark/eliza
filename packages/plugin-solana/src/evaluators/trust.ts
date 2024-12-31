@@ -3,7 +3,6 @@ import {
     booleanFooter,
     composeContext,
     Content,
-    elizaLogger,
     Evaluator,
     generateObjectArray,
     generateTrueOrFalse,
@@ -81,13 +80,6 @@ Response should be a JSON object array inside a JSON markdown block. Correct res
 
 async function handler(runtime: IAgentRuntime, message: Memory) {
     console.log("Evaluating for trust");
-
-    // if the database type is postgres, we don't want to run this because it relies on sql queries that are currently specific to sqlite. This check can be removed once the trust score provider is updated to work with postgres.
-    if (runtime.getSetting("POSTGRES_URL")) {
-        elizaLogger.warn("skipping trust evaluator because db is postgres");
-        return [];
-    }
-
     const state = await runtime.composeState(message);
 
     const { agentId, roomId } = state;
@@ -194,6 +186,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         }
 
         // create the trust score manager
+
         const trustScoreDb = new TrustScoreDatabase(runtime.databaseAdapter.db);
         const trustScoreManager = new TrustScoreManager(
             runtime,
