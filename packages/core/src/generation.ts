@@ -11,7 +11,6 @@ import {
 import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
-import { encodingForModel, TiktokenModel } from "js-tiktoken";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -591,45 +590,6 @@ export async function generateText({
     } catch (error) {
         elizaLogger.error("Error in generateText:", error);
         throw error;
-    }
-}
-
-/**
- * Truncate the context to the maximum length allowed by the model.
- * @param context The text to truncate
- * @param maxTokens Maximum number of tokens to keep
- * @param model The tokenizer model to use
- * @returns The truncated text
- */
-export function trimTokens(
-    context: string,
-    maxTokens: number,
-    model: TiktokenModel
-): string {
-    if (!context) return "";
-    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
-
-    // Get the tokenizer for the model
-    const encoding = encodingForModel(model);
-
-    try {
-        // Encode the text into tokens
-        const tokens = encoding.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return encoding.decode(truncatedTokens);
-    } catch (error) {
-        console.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
 }
 
