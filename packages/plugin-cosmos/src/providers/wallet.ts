@@ -123,19 +123,16 @@ const fetchChainDetails = (chainName: string) => {
 
   const feeToken = chain.fees.fee_tokens?.[0];
 
-  if (!feeToken)
-    throw new Error(`Fee token not found for chain ${chainName}`);
+  if (!feeToken) throw new Error(`Fee token not found for chain ${chainName}`);
 
-  const rpcUrl = chain.apis.rpc?.[0].address;
+  const rpcUrl = chain.apis.rpc?.[0]?.address;
 
   if (!rpcUrl) throw new Error(`RPC URL not found for chain ${chainName}`);
-
-  const bech32Prefix = chain.bech32_prefix;
 
   return {
     chainName,
     rpcUrl,
-    bech32Prefix,
+    bech32Prefix: chain.bech32_prefix,
     feeToken,
   };
 };
@@ -149,8 +146,8 @@ export const initWalletProvider = async (
   if (!mnemonic) {
     throw new Error("COSMOS_RECOVERY_PHRASE is missing");
   }
-  const characterChains = genCosmosChainsFromRuntime(runtime);
 
+  const characterChains = genCosmosChainsFromRuntime(runtime);
   const provider = new CosmosWalletProvider(mnemonic, characterChains);
 
   await provider.initialize(chainName);
@@ -164,24 +161,25 @@ export const cosmosWalletProvider: Provider = {
     message: Memory,
     state?: State
   ): Promise<string | null> {
+
+    const transferContext = composeContext({
+      state: state,
+      template: balanceTemplate,
+      templatingEngine: "handlebars",
+    });
+
+    // Generate transfer content
+    const content = await generateObjectDeprecated({
+      runtime,
+      context: transferContext,
+      modelClass: ModelClass.SMALL,
+    });
+
+    const balanceContentValidator = z.object({
+      chainName: z.string(),
+    });
+
     try {
-      const transferContext = composeContext({
-        state: state,
-        template: balanceTemplate,
-        templatingEngine: "handlebars",
-      });
-
-      // Generate transfer content
-      const content = await generateObjectDeprecated({
-        runtime,
-        context: transferContext,
-        modelClass: ModelClass.LARGE,
-      });
-
-      const balanceContentValidator = z.object({
-        chainName: z.string(),
-      });
-
       const transferContent = balanceContentValidator.parse(content);
 
       const { chainName } = transferContent;
@@ -194,7 +192,7 @@ export const cosmosWalletProvider: Provider = {
 
       return `Address: ${address}\nBalance: ${balance.amount} ${balance.denom}\nActive Chain: ${activeChain}`;
     } catch (error) {
-      console.error("Error in Cosmos wallet provider:", error);
+      console.error("Error Initializing in Cosmos wallet provider:", error);
 
       return null;
     }

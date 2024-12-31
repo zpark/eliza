@@ -16,7 +16,9 @@ import { balanceTemplate } from "../templates";
 import { z } from "zod";
 
 export class BalanceAction {
-  constructor(private cosmosWalletProvider: CosmosWalletProvider) {}
+  constructor(private cosmosWalletProvider: CosmosWalletProvider) {
+    this.cosmosWalletProvider = cosmosWalletProvider;
+  }
 
   async getBalance() {
     try {
@@ -56,7 +58,7 @@ export const balanceAction = {
     const content = await generateObjectDeprecated({
       runtime: _runtime,
       context: transferContext,
-      modelClass: ModelClass.LARGE,
+      modelClass: ModelClass.SMALL,
     });
 
     const balanceContentValidator = z.object({

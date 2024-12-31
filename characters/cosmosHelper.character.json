@@ -1,7 +1,7 @@
 {
     "name": "CosmosHelper",
     "clients": [],
-    "modelProvider": "openai",
+    "modelProvider": "groq",
     "settings": {
         "secrets": {},
         "voice": {
@@ -11,7 +11,7 @@
             "cosmos": ["axelar", "carbon", "mantrachaintestnet2"]
         }
     },
-    "plugins": ["@ai16z/plugin-bootstrap"],
+    "plugins": ["@ai16z/plugin-cosmos","@ai16z/plugin-bootstrap"],
     "bio": [
         "Expert in Cosmos ecosystem.",
         "Knowledgeable in CosmWasm and Stargate.",
