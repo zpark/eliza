@@ -85,8 +85,6 @@ npm install -g pnpm
 
 # Build Eliza
 pnpm i
-# The build may fail on the first attempt due to the missing `plugin-tee` dependency in `plugin-tee-log`. Simply run the build command again to resolve the issue.
-# TODO: fix the build issue
 pnpm build
 
 # Copy the .env.example file to .env
