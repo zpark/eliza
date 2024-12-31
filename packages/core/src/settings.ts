@@ -3,10 +3,6 @@ import fs from "fs";
 import path from "path";
 import elizaLogger from "./logger.ts";
 
-console.log("I AM STARTING AGENT....");
-elizaLogger.log("LET US GOOOOOOOOOOOOOOOOOOOOOO");
-elizaLogger.log("I AM IN SETTINGSSSSSSSS");
-
 elizaLogger.info("Loading embedding settings:", {
     USE_OPENAI_EMBEDDING: process.env.USE_OPENAI_EMBEDDING,
     USE_OLLAMA_EMBEDDING: process.env.USE_OLLAMA_EMBEDDING,
