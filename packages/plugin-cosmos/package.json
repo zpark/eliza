@@ -5,9 +5,15 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
+        "@ai16z/eliza": "workspace:*",
+        "@chain-registry/utils": "^1.51.41",
         "@cosmjs/cosmwasm-stargate": "^0.32.4",
-        "chain-registry": "^1.69.78",
-        "tsup": "8.3.5"
+        "@cosmjs/proto-signing": "^0.32.4",
+        "@cosmjs/stargate": "^0.32.4",
+        "bignumber.js": "9.1.2",
+        "chain-registry": "^1.69.68",
+        "tsup": "8.3.5",
+        "zod": "3.23.8"
     },
     "scripts": {
         "build": "tsup --format esm --dts",
