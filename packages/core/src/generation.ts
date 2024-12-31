@@ -36,6 +36,7 @@ import {
     ActionResponse,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
+import { tavily } from "@tavily/core";
 
 /**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
@@ -1300,34 +1301,16 @@ export const generateWebSearch = async (
     query: string,
     runtime: IAgentRuntime
 ): Promise<SearchResponse> => {
-    const apiUrl = "https://api.tavily.com/search";
-    const apiKey = runtime.getSetting("TAVILY_API_KEY");
-
     try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                api_key: apiKey,
-                query,
-                include_answer: true,
-                max_results: 3, // 5 (default)
-                topic: "general", // "general"(default) "news"
-                search_depth: "basic", // "basic"(default) "advanced"
-                include_images: false, // false (default) true
-            }),
+        const tvly = tavily({ apiKey: runtime.getSetting("TAVILY_API_KEY") });
+        const response = await tvly.search(query, {
+            includeAnswer: true,
+            maxResults: 3, // 5 (default)
+            topic: "general", // "general"(default) "news"
+            searchDepth: "basic", // "basic"(default) "advanced"
+            includeImages: false, // false (default) true
         });
-
-        if (!response.ok) {
-            throw new elizaLogger.error(
-                `HTTP error! status: ${response.status}`
-            );
-        }
-
-        const data: SearchResponse = await response.json();
-        return data;
+        return response;
     } catch (error) {
         elizaLogger.error("Error:", error);
     }
