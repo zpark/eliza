@@ -169,8 +169,6 @@ videoGeneration.handler(runtime, {
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Generation Features**
    - Advanced style control
    - Multi-scene composition

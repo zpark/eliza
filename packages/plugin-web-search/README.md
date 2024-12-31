@@ -185,6 +185,23 @@ The plugin includes multiple search action similes:
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
+
+## Credits
+
+This plugin integrates with and builds upon several key technologies:
+
+- [Tavily API](https://tavily.com/): Advanced search and content analysis API
+- [js-tiktoken](https://github.com/dqbd/tiktoken): Token counting for API responses
+- [Zod](https://github.com/colinhacks/zod): TypeScript-first schema validation
+
+Special thanks to:
+- The Eliza community for their contributions and feedback
+
+For more information about the search capabilities and tools:
+- [Tavily API Documentation](https://docs.tavily.com/)
+- [Token Management Guide](https://github.com/dqbd/tiktoken#readme)
+- [Search API Best Practices](https://docs.tavily.com/docs/guides/best-practices)
+
 ## License
 
 This plugin is part of the Eliza project. See the main project repository for license information.

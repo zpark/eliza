@@ -199,10 +199,6 @@ npm run lint
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with and builds upon several key technologies:
@@ -218,3 +214,7 @@ For more information about WhatsApp Cloud API and its capabilities, visit:
 - [WhatsApp Business Platform Documentation](https://developers.facebook.com/docs/whatsapp/cloud-api/overview)
 - [Meta for Developers Blog](https://developers.facebook.com/blog/)
 - [WhatsApp Business API GitHub](https://github.com/WhatsApp/WhatsApp-Business-API-Setup-Scripts)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

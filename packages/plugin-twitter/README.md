@@ -179,8 +179,6 @@ Generate a tweet that:
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Content Generation**
    - Advanced context awareness
    - Multi-language support

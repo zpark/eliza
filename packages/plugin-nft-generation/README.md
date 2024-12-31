@@ -206,9 +206,6 @@ DSTACK_SIMULATOR_ENDPOINT="http://localhost:8090"
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
 
 ## Credits
 
@@ -216,3 +213,17 @@ This plugin integrates with:
 - [Solana Blockchain](https://solana.com)
 - [Metaplex Protocol](https://www.metaplex.com)
 - AWS S3 for asset storage
+
+Special thanks to:
+- The Solana ecosystem and all the open-source contributors who make these integrations possible.
+- The Eliza community for their contributions and feedback.
+
+For more information about Solana blockchain capabilities:
+- [Solana Documentation](https://docs.solana.com/)
+- [Solana Developer Portal](https://solana.com/developers)
+- [Solana Network Dashboard](https://solscan.io/)
+- [Solana GitHub Repository](https://github.com/solana-labs/solana)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

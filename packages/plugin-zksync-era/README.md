@@ -197,10 +197,6 @@ The plugin includes validation for:
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with and builds upon several key technologies:
@@ -210,11 +206,13 @@ This plugin integrates with and builds upon several key technologies:
 - [web3-plugin-zksync](https://www.npmjs.com/package/web3-plugin-zksync): Official ZKSync plugin for Web3.js
 
 Special thanks to:
-- The Matter Labs team for developing ZKSync Era
-- The Web3.js team for maintaining the core Ethereum library
 - The Eliza community for their contributions and feedback
 
 For more information about ZKSync Era and its capabilities, visit:
 - [ZKSync Documentation](https://docs.zksync.io/)
 - [Matter Labs Blog](https://blog.matter-labs.io/)
 - [ZKSync GitHub](https://github.com/matter-labs/zksync-era)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

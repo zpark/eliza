@@ -128,8 +128,6 @@ pnpm run lint
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Advanced DeFi Operations**
    - Multi-hop yield strategies
    - Auto-compounding features

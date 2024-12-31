@@ -160,10 +160,19 @@ pnpm test:watch
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with the [MultiversX blockchain](https://multiversx.com/) using their official SDK.
+
+Special thanks to:
+- The MultiversX team for developing the MultiversX blockchain
+- The Eliza community for their contributions and feedback.
+
+For more information about MultiversX blockchain capabilities:
+- [MultiversX Documentation](https://docs.multiversx.com/)
+- [MultiversX Developer Portal](https://docs.multiversx.com/developers/getting-started/introduction)
+- [MultiversX GitHub Repository](https://github.com/multiversx/mx-sdk-js)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

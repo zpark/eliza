@@ -141,8 +141,6 @@ pnpm run dev
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Advanced Token Management**
    - Batch token transfers
    - Token allowance management

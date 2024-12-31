@@ -108,8 +108,6 @@ pnpm run dev
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Advanced Generation Features**
    - Multi-object scene generation
    - Texture customization options

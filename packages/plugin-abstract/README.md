@@ -100,8 +100,6 @@ pnpm run dev
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Smart Account Features**
    - Multi-signature support
    - Account recovery mechanisms

@@ -129,10 +129,6 @@ const result = await runtime.executeAction("CREATE_SUBDOMAIN", {
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with and builds upon several key technologies:
@@ -145,4 +141,16 @@ This plugin integrates with and builds upon several key technologies:
 - [Birdeye](https://birdeye.so/) - Price feeds and analytics
 - [Helius](https://helius.xyz/) - Enhanced RPC services
 
-Special thanks to the Starknet ecosystem and all the open-source contributors who make these integrations possible.
+Special thanks to:
+-  The Starknet ecosystem and all the open-source contributors who make these integrations possible.
+- The Eliza community for their contributions and feedback.
+
+For more information about Starknet blockchain capabilities:
+- [Starknet Documentation](https://docs.starknet.io/)
+- [Starknet Developer Portal](https://starknet.io/developers)
+- [Starknet Network Dashboard](https://starknet.io/dashboard)
+- [Starknet GitHub Repository](https://github.com/starkware-libs/starknet)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

@@ -154,8 +154,6 @@ const PROVIDER_CONFIG = {
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Wallet Management**
    - Multi-wallet support
    - Hardware wallet integration

@@ -141,8 +141,6 @@ interface RemoteAttestationQuote {
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Key Management**
    - Advanced key derivation schemes
    - Multi-party computation support

@@ -193,7 +193,25 @@ The plugin includes comprehensive error handling for:
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
+## Credits
+
+This plugin integrates with and builds upon several key technologies:
+
+- [IPFS](https://ipfs.tech/): InterPlanetary File System
+- [Filecoin](https://filecoin.io/): Decentralized storage network
+- [Web3.Storage](https://web3.storage/): Decentralized storage service
+
+Special thanks to:
+- The Protocol Labs team for IPFS and Filecoin
+- The Web3.Storage team
+- The decentralized storage community
+- The Eliza community for their contributions and feedback
+
+For more information about Ferepro capabilities:
+- [IPFS Documentation](https://docs.ipfs.tech/)
+- [Filecoin Documentation](https://docs.filecoin.io/)
+- [Web3.Storage Documentation](https://web3.storage/docs/)
+
 ## License
 
 This plugin is part of the Eliza project. See the main project repository for license information.
-

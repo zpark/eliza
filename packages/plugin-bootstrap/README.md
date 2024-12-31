@@ -83,8 +83,6 @@ pnpm run lint
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Enhanced Conversation Management**
    - Advanced context tracking
    - Multi-thread conversation support

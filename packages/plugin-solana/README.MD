@@ -291,10 +291,6 @@ For issues and feature requests, please:
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with and builds upon several key technologies:
@@ -309,4 +305,16 @@ This plugin integrates with and builds upon several key technologies:
 - [FOMO](https://fomo.fund/) - Token creation and trading
 - [Pump.fun](https://pump.fun/) - Token creation and trading
 
-Special thanks to the Solana ecosystem and all the open-source contributors who make these integrations possible.
+Special thanks to:
+- The Solana ecosystem and all the open-source contributors who make these integrations possible.
+- The Eliza community for their contributions and feedback.
+
+For more information about Solana blockchain capabilities:
+- [Solana Documentation](https://docs.solana.com/)
+- [Solana Developer Portal](https://solana.com/developers)
+- [Solana Network Dashboard](https://solscan.io/)
+- [Solana GitHub Repository](https://github.com/solana-labs/solana)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.

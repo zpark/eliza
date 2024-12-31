@@ -112,8 +112,6 @@ pnpm run dev
 
 ## Future Enhancements
 
-The following features and improvements are planned for future releases:
-
 1. **Storage Management**
    - Multi-file upload optimization
    - Folder structure preservation

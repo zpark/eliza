@@ -147,6 +147,20 @@ pnpm test-via-bun
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
+
+## Credits
+
+This plugin integrates with [Buttplug.io](https://buttplug.io) and [Intiface Engine](https://github.com/intiface/intiface-engine), developed by Nonpolynomial Labs, LLC.
+
+Special thanks to:
+- The Buttplug.io team for developing the Buttplug.io protocol
+- The Intiface Engine team for developing the Intiface Engine
+- The Eliza community for their contributions and feedback.
+
+For more information about Buttplug.io and Intiface Engine:
+- [Buttplug.io](https://buttplug.io)
+- [Intiface Engine](https://github.com/intiface/intiface-engine)
+
 ## License
 
 This plugin is part of the Eliza project. See the main project repository for license information.
@@ -184,7 +198,3 @@ Buttplug and Intiface are BSD licensed.
     OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-## Credits
-
-This plugin integrates with [Buttplug.io](https://buttplug.io) and [Intiface Engine](https://github.com/intiface/intiface-engine), developed by Nonpolynomial Labs, LLC.

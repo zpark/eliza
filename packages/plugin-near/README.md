@@ -187,10 +187,6 @@ pnpm test:watch
 
 Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## License
-
-This plugin is part of the Eliza project. See the main project repository for license information.
-
 ## Credits
 
 This plugin integrates with:
@@ -208,3 +204,7 @@ For more information about NEAR blockchain capabilities:
 - [NEAR Developer Portal](https://near.org/developers)
 - [NEAR Network Dashboard](https://nearscan.io/)
 - [NEAR GitHub Repository](https://github.com/nearprotocol/near-api-js)
+
+## License
+
+This plugin is part of the Eliza project. See the main project repository for license information.
