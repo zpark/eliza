@@ -1,4 +1,9 @@
-import { generateText, IBrowserService, trimTokens } from "@elizaos/core";
+import {
+    generateText,
+    IBrowserService,
+    ITokenizationService,
+    models,
+} from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import { Service } from "@elizaos/core";
 import { settings } from "@elizaos/core";
@@ -12,8 +17,16 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
+    const tokenizationService = runtime.getService<ITokenizationService>(
+        ServiceType.TOKENIZATION
+    );
+    const model = models[runtime.character.modelProvider];
     // make sure text is under 128k characters
-    text = trimTokens(text, 100000, "gpt-4o-mini"); // TODO: clean this up
+    text = await tokenizationService.trimTokens(
+        text,
+        100000,
+        model.model[ModelClass.SMALL] || "gpt-4o-mini"
+    );
 
     const prompt = `Please generate a concise summary for the following text:
 
