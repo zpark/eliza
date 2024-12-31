@@ -32,7 +32,6 @@ export const testAllEndpointsAction = {
                 token: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
                 address: "MfDuWeqSHEqTFVYZ7LoexgAK9dxk7cy4DFJWjWMGVWa",
                 network: "solana",
-                headers: { "x-chain": "solana" },
                 list_address: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
                 address_type: "token",
                 type: "1D",
@@ -316,7 +315,10 @@ export const testAllEndpointsAction = {
 
             elizaLogger.info("fetchWalletTransactionSimulate_POST");
             await birdeyeProvider.fetchWalletTransactionSimulate_POST({
-                ...sampleParams,
+                from: sampleParams.token,
+                to: sampleParams.token,
+                data: JSON.stringify({ test: "ok" }),
+                value: "100000",
             });
             elizaLogger.success(
                 "fetchWalletTransactionSimulate_POST: SUCCESS!"

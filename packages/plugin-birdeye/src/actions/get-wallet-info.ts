@@ -87,12 +87,16 @@ export const getWalletInfoAction = {
 
             // Search Birdeye services for wallet portfolio data
             const searchAddressesForTokenMatch = addresses.map((address) =>
-                provider.fetchWalletPortfolio({
-                    wallet: address.address,
-                    headers: {
-                        chain: address.chain,
+                provider.fetchWalletPortfolio(
+                    {
+                        wallet: address.address,
                     },
-                })
+                    {
+                        headers: {
+                            chain: address.chain,
+                        },
+                    }
+                )
             );
 
             const results = await Promise.all(searchAddressesForTokenMatch);

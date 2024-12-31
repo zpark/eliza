@@ -9,24 +9,39 @@ import {
 import { BirdeyeProvider } from "../birdeye";
 import { TokenResult } from "../types/api/search";
 import {
+    TokenMarketDataResponse,
+    TokenOverviewResponse,
+    TokenSecurityResponse,
+    TokenTradeDataSingleResponse,
+} from "../types/api/token";
+import {
     extractChain,
     extractSymbols,
     getTokenResultFromSearchResponse,
 } from "../utils";
 
-const formatTokenReport = (token, metadata, security, volume) => {
+const formatTokenReport = (
+    token,
+    metadata: TokenMarketDataResponse,
+    security: TokenSecurityResponse,
+    volume: TokenTradeDataSingleResponse,
+    overview: TokenOverviewResponse
+) => {
     let output = `*Token Security and Trade Report*\n`;
     output += `Token symbol: ${token.symbol}\n`;
     output += `Token Address: ${token.address}\n\n`;
 
     if (security?.data) {
         output += `*Ownership Distribution:*\n`;
-        output += `- Owner Balance: ${security.data.ownerBalance}\n`;
-        output += `- Creator Balance: ${security.data.creatorBalance}\n`;
-        output += `- Owner Percentage: ${security.data.ownerPercentage}%\n`;
-        output += `- Creator Percentage: ${security.data.creatorPercentage}%\n`;
-        output += `- Top 10 Holders Balance: ${security.data.top10HolderBalance}\n`;
-        output += `- Top 10 Holders Percentage: ${security.data.top10HolderPercent}%\n\n`;
+        output += `- Owner Address: ${security.data.ownerAddress}\n`;
+        output += `- Creator Address: ${security.data.creatorAddress}\n`;
+        output += `- Total Supply: ${security.data.totalSupply}\n`;
+        output += `- Mintable: ${security.data.mintable}\n`;
+        output += `- Proxied: ${security.data.proxied}\n`;
+        output += `- Proxy: ${security.data.proxy}\n`;
+        if (security.data.securityChecks) {
+            output += `- Security Checks: ${JSON.stringify(security.data.securityChecks)}\n`;
+        }
     }
 
     if (volume?.data) {
@@ -34,17 +49,32 @@ const formatTokenReport = (token, metadata, security, volume) => {
         output += `- Holders: ${volume.data.holder}\n`;
         output += `- Unique Wallets (24h): ${volume.data.unique_wallet_24h}\n`;
         output += `- Price Change (24h): ${volume.data.price_change_24h_percent}%\n`;
-        output += `- Price Change (12h): ${volume.data.price_change_12h_percent}%\n`;
         output += `- Volume (24h USD): $${volume.data.volume_24h_usd}\n`;
-        output += `- Current Price: $${volume.data.price}\n\n`;
+        output += `- Current Price: $${volume.data.price}\n`;
     }
 
-    if (metadata) {
-        output += `*Additional Info:*\n`;
-        output += `- Name: ${metadata.name}\n`;
-        output += `- Chain: ${metadata.chain}\n`;
-        if (metadata.website) output += `- Website: ${metadata.website}\n`;
-        if (metadata.twitter) output += `- Twitter: ${metadata.twitter}\n`;
+    if (metadata?.data) {
+        output += `*Market Data:*\n`;
+        output += `- Liquidity: ${metadata.data.liquidity}\n`;
+        output += `- Price: ${metadata.data.price}\n`;
+        output += `- Supply: ${metadata.data.supply}\n`;
+        output += `- Market Cap: ${metadata.data.marketcap}\n`;
+        output += `- Circulating Supply: ${metadata.data.circulating_supply}\n`;
+        output += `- Circulating Market Cap: ${metadata.data.circulating_marketcap}\n`;
+    }
+
+    if (overview?.data) {
+        output += `*Overview:*\n`;
+        output += `- Name: ${overview.data.name}\n`;
+        output += `- Symbol: ${overview.data.symbol}\n`;
+        output += `- Decimals: ${overview.data.decimals}\n`;
+        if (overview.data.extensions) {
+            output += `- Extensions: ${JSON.stringify(overview.data.extensions)}\n`;
+        }
+        output += `- Liquidity: ${overview.data.liquidity}\n`;
+        output += `- Last Trade Time: ${overview.data.lastTradeHumanTime}\n`;
+        output += `- Price: ${overview.data.price}\n`;
+        output += `- Description: ${overview.data.extensions?.description}\n`;
     }
 
     return output;
@@ -89,7 +119,7 @@ export const getTokenInfoAction = {
         try {
             const provider = new BirdeyeProvider(runtime.cacheManager);
 
-            const symbols = extractSymbols(message.content.text, "loose");
+            const symbols = extractSymbols(message.content.text, "strict");
 
             if (symbols.length === 0) {
                 callback?.({ text: "No token symbols found in the message" });
@@ -103,7 +133,9 @@ export const getTokenInfoAction = {
             const searchTokenResponses = symbols.map((symbol) =>
                 provider.fetchSearchTokenMarketData({
                     keyword: symbol,
-                    limit: 1,
+                    sort_by: "volume_24h_usd",
+                    sort_type: "desc",
+                    chain: "all",
                 })
             );
 
@@ -133,27 +165,50 @@ export const getTokenInfoAction = {
             // Fetch all data in parallel for each token
             const tokenData = await Promise.all(
                 resultsWithChains.map(async ({ address, chain }) => {
-                    const [metadata, security, volume] = await Promise.all([
-                        provider.fetchTokenMarketData({
-                            address,
-                            headers: {
-                                chain,
-                            },
-                        }),
-                        provider.fetchTokenSecurityByAddress({
-                            address,
-                            headers: {
-                                chain,
-                            },
-                        }),
-                        provider.fetchTokenTradeDataSingle({
-                            address,
-                            headers: {
-                                chain,
-                            },
-                        }),
-                    ]);
-                    return { metadata, security, volume };
+                    const [metadata, security, volume, overview] =
+                        await Promise.all([
+                            provider.fetchTokenMarketData(
+                                {
+                                    address,
+                                },
+                                {
+                                    headers: {
+                                        chain,
+                                    },
+                                }
+                            ),
+                            provider.fetchTokenSecurityByAddress(
+                                {
+                                    address,
+                                },
+                                {
+                                    headers: {
+                                        chain,
+                                    },
+                                }
+                            ),
+                            provider.fetchTokenTradeDataSingle(
+                                {
+                                    address,
+                                },
+                                {
+                                    headers: {
+                                        chain,
+                                    },
+                                }
+                            ),
+                            provider.fetchTokenOverview(
+                                {
+                                    address,
+                                },
+                                {
+                                    headers: {
+                                        chain,
+                                    },
+                                }
+                            ),
+                        ]);
+                    return { metadata, security, volume, overview };
                 })
             );
 
@@ -164,7 +219,8 @@ export const getTokenInfoAction = {
                             result!,
                             tokenData[index].metadata,
                             tokenData[index].security,
-                            tokenData[index].volume
+                            tokenData[index].volume,
+                            tokenData[index].overview
                         )}`
                 )
                 .join("\n\n")}`;

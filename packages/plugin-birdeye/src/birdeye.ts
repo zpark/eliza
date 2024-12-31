@@ -1,4 +1,4 @@
-import { ICacheManager, settings } from "@elizaos/core";
+import { elizaLogger, ICacheManager, settings } from "@elizaos/core";
 import NodeCache from "node-cache";
 import * as path from "path";
 import {
@@ -240,17 +240,19 @@ export class BirdeyeProvider extends BaseCachedProvider {
         const val = await this.readFromCache(cacheKey);
         if (val) return val as T;
 
-        const data = await this.fetchWithRetry<T>(
+        const urlWithParams =
             method === "GET" && params
                 ? `${fullUrl}?${new URLSearchParams(stringParams)}`
-                : fullUrl,
-            {
-                method,
-                headers,
-                ...(method === "POST" &&
-                    params && { body: JSON.stringify(params) }),
-            }
-        );
+                : fullUrl;
+
+        elizaLogger.info(`Birdeye fetch: ${urlWithParams}`);
+
+        const data = await this.fetchWithRetry<T>(urlWithParams, {
+            method,
+            headers,
+            ...(method === "POST" &&
+                params && { body: JSON.stringify(params) }),
+        });
 
         await this.writeToCache(cacheKey, data);
         return data as T;
@@ -268,147 +270,171 @@ export class BirdeyeProvider extends BaseCachedProvider {
     }
 
     // Get price update of a token.
-    public async fetchDefiPrice(params: FetchParams<DefiPriceParams>) {
+    public async fetchDefiPrice(
+        params: DefiPriceParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<DefiPriceResponse>({
             url: BIRDEYE_ENDPOINTS.defi.price,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get price updates of multiple tokens in a single API call. Maximum 100 tokens
     public async fetchDefiPriceMultiple(
-        params: FetchParams<DefiMultiPriceParams>
+        params: DefiMultiPriceParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiMultiPriceResponse>({
             url: BIRDEYE_ENDPOINTS.defi.price_multi,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get price updates of multiple tokens in a single API call. Maximum 100 tokens
     public async fetchDefiPriceMultiple_POST(
-        params: FetchParams<DefiMultiPriceParamsPOST>
+        params: DefiMultiPriceParamsPOST,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiMultiPriceResponse>({
             url: BIRDEYE_ENDPOINTS.defi.price_multi_POST,
             params,
-            headers: params.headers,
+            headers: options.headers,
             method: "POST",
         });
     }
 
     // Get historical price line chart of a token.
     public async fetchDefiPriceHistorical(
-        params: FetchParams<DefiHistoryPriceParams>
+        params: DefiHistoryPriceParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiHistoryPriceResponse>({
             url: BIRDEYE_ENDPOINTS.defi.history_price,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get historical price by unix timestamp
     public async fetchDefiPriceHistoricalByUnixTime(
-        params: FetchParams<HistoricalPriceUnixParams>
+        params: HistoricalPriceUnixParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<HistoricalPriceUnixResponse>({
             url: BIRDEYE_ENDPOINTS.defi.historical_price_unix,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get list of trades of a certain token.
     public async fetchDefiTradesToken(
-        params: FetchParams<DefiTradesTokenParams>
+        params: DefiTradesTokenParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiTradesTokenResponse>({
             url: BIRDEYE_ENDPOINTS.defi.trades_token,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get list of trades of a certain pair or market.
     public async fetchDefiTradesPair(
-        params: FetchParams<DefiTradesTokenParams>
+        params: DefiTradesTokenParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiTradesTokenResponse>({
             url: BIRDEYE_ENDPOINTS.defi.trades_token,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get list of trades of a token with time bound option.
     public async fetchDefiTradesTokenSeekByTime(
-        params: FetchParams<DefiTradesTokenParams>
+        params: DefiTradesTokenParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiTradesTokenResponse>({
             url: BIRDEYE_ENDPOINTS.defi.trades_token_seek,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get list of trades of a certain pair or market with time bound option.
     public async fetchDefiTradesPairSeekByTime(
-        params: FetchParams<DefiTradesTokenParams>
+        params: DefiTradesTokenParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiTradesTokenResponse>({
             url: BIRDEYE_ENDPOINTS.defi.trades_pair_seek,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get OHLCV price of a token.
-    public async fetchDefiOHLCV(params: FetchParams<OHLCVParams>) {
+    public async fetchDefiOHLCV(
+        params: OHLCVParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<OHLCVResponse>({
             url: BIRDEYE_ENDPOINTS.defi.ohlcv,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get OHLCV price of a pair.
-    public async fetchDefiOHLCVPair(params: FetchParams<OHLCVPairParams>) {
+    public async fetchDefiOHLCVPair(
+        params: OHLCVPairParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<OHLCVPairResponse>({
             url: BIRDEYE_ENDPOINTS.defi.ohlcv_pair,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get OHLCV price of a base-quote pair.
-    public async fetchDefiOHLCVBaseQuote(params: FetchParams<BaseQuoteParams>) {
+    public async fetchDefiOHLCVBaseQuote(
+        params: BaseQuoteParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<BaseQuoteResponse>({
             url: BIRDEYE_ENDPOINTS.defi.ohlcv_base_quote,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get price and volume of a token.
-    public async fetchDefiPriceVolume(params: FetchParams<PriceVolumeParams>) {
+    public async fetchDefiPriceVolume(
+        params: PriceVolumeParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<PriceVolumeResponse>({
             url: BIRDEYE_ENDPOINTS.defi.price_volume,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get price and volume updates of maximum 50 tokens
     public async fetchDefiPriceVolumeMulti_POST(
-        params: FetchParams<MultiPriceVolumeParams>
+        params: MultiPriceVolumeParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<MultiPriceVolumeResponse>({
             url: BIRDEYE_ENDPOINTS.defi.price_volume_multi_POST,
             params,
-            headers: params.headers,
+            headers: options.headers,
             method: "POST",
         });
     }
@@ -418,51 +444,62 @@ export class BirdeyeProvider extends BaseCachedProvider {
      */
 
     // Get token list of any supported chains.
-    public async fetchTokenList(params: FetchParams<TokenListParams>) {
+    public async fetchTokenList(
+        params: TokenListParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<TokenListResponse>({
             url: BIRDEYE_ENDPOINTS.token.list_all,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get token security of any supported chains.
     public async fetchTokenSecurityByAddress(
-        params: FetchParams<TokenSecurityParams>
+        params: TokenSecurityParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenSecurityResponse>({
             url: BIRDEYE_ENDPOINTS.token.security,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get overview of a token.
-    public async fetchTokenOverview(params: FetchParams<TokenOverviewParams>) {
+    public async fetchTokenOverview(
+        params: TokenOverviewParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<TokenOverviewResponse>({
             url: BIRDEYE_ENDPOINTS.token.overview,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get creation info of token
     public async fetchTokenCreationInfo(
-        params: FetchParams<TokenCreationInfoParams>
+        params: TokenCreationInfoParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenCreationInfoResponse>({
             url: BIRDEYE_ENDPOINTS.token.creation_info,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Retrieve a dynamic and up-to-date list of trending tokens based on specified sorting criteria.
-    public async fetchTokenTrending(params?: FetchParams<TokenTrendingParams>) {
+    public async fetchTokenTrending(
+        params?: TokenTrendingParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<TokenTrendingResponse>({
             url: BIRDEYE_ENDPOINTS.token.trending,
             params,
-            headers: params?.headers,
+            headers: options.headers,
         });
     }
 
@@ -479,104 +516,122 @@ export class BirdeyeProvider extends BaseCachedProvider {
     }
 
     // Get newly listed tokens of any supported chains.
-    public async fetchTokenNewListing(params?: FetchParams<NewListingParams>) {
+    public async fetchTokenNewListing(
+        params?: NewListingParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<NewListingResponse>({
             url: BIRDEYE_ENDPOINTS.token.new_listing,
             params,
-            headers: params?.headers,
+            headers: options?.headers,
         });
     }
 
     // Get top traders of given token.
-    public async fetchTokenTopTraders(params: FetchParams<TopTradersParams>) {
+    public async fetchTokenTopTraders(
+        params: TopTradersParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<TopTradersResponse>({
             url: BIRDEYE_ENDPOINTS.token.top_traders,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // The API provides detailed information about the markets for a specific cryptocurrency token on a specified blockchain. Users can retrieve data for one or multiple markets related to a single token. This endpoint requires the specification of a token address and the blockchain to filter results. Additionally, it supports optional query parameters such as offset, limit, and required sorting by liquidity or sort type (ascending or descending) to refine the output.
     public async fetchTokenAllMarketsList(
-        params: FetchParams<AllMarketsParams>
+        params: AllMarketsParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<AllMarketsResponse>({
             url: BIRDEYE_ENDPOINTS.token.all_markets,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get metadata of single token
     public async fetchTokenMetadataSingle(
-        params: FetchParams<TokenMetadataSingleParams>
+        params: TokenMetadataSingleParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenMetadataSingleResponse>({
             url: BIRDEYE_ENDPOINTS.token.metadata_single,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get metadata of multiple tokens
     public async fetchTokenMetadataMulti(
-        params: FetchParams<TokenMetadataMultiParams>
+        params: TokenMetadataMultiParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenMetadataMultiResponse>({
             url: BIRDEYE_ENDPOINTS.token.metadata_multi,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get market data of single token
     public async fetchTokenMarketData(
-        params: FetchParams<TokenMarketDataParams>
+        params: TokenMarketDataParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenMarketDataResponse>({
             url: BIRDEYE_ENDPOINTS.token.market_data,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get trade data of single token
     public async fetchTokenTradeDataSingle(
-        params: FetchParams<TokenTradeDataSingleParams>
+        params: TokenTradeDataSingleParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenTradeDataSingleResponse>({
             url: BIRDEYE_ENDPOINTS.token.trade_data_single,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get trade data of multiple tokens
     public async fetchTokenTradeDataMultiple(
-        params: FetchParams<TokenTradeDataMultiParams>
+        params: TokenTradeDataMultiParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenTradeDataMultiResponse>({
             url: BIRDEYE_ENDPOINTS.token.trade_data_multi,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get top holder list of the given token
-    public async fetchTokenHolders(params: FetchParams<TokenHoldersParams>) {
+    public async fetchTokenHolders(
+        params: TokenHoldersParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<TokenHoldersResponse>({
             url: BIRDEYE_ENDPOINTS.token.holders,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get mint/burn transaction list of the given token. Only support solana currently
-    public async fetchTokenMintBurn(params: FetchParams<MintBurnParams>) {
+    public async fetchTokenMintBurn(
+        params: MintBurnParams,
+        options: { headers?: Record<string, string> } = {}
+    ) {
         return this.fetchWithCacheAndRetry<MintBurnResponse>({
             url: BIRDEYE_ENDPOINTS.token.mint_burn,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
@@ -584,21 +639,22 @@ export class BirdeyeProvider extends BaseCachedProvider {
      * WALLET FETCH FUNCTIONS
      */
     public async fetchWalletSupportedNetworks(
-        params?: FetchParams<Record<string, never>>
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<DefiNetworksResponse>({
             url: BIRDEYE_ENDPOINTS.defi.networks,
-            headers: params?.headers,
+            headers: options.headers,
         });
     }
 
     public async fetchWalletPortfolio(
-        params: FetchParams<WalletPortfolioParams>
+        params: WalletPortfolioParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletPortfolioResponse>({
             url: BIRDEYE_ENDPOINTS.wallet.portfolio,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
@@ -606,32 +662,35 @@ export class BirdeyeProvider extends BaseCachedProvider {
      * @deprecated This endpoint will be decommissioned on Feb 1st, 2025.
      */
     public async fetchWalletPortfolioMultichain(
-        params: FetchParams<WalletPortfolioMultichainParams>
+        params: WalletPortfolioMultichainParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletPortfolioMultichainResponse>({
             url: BIRDEYE_ENDPOINTS.wallet.portfolio_multichain,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     public async fetchWalletTokenBalance(
-        params: FetchParams<WalletTokenBalanceParams>
+        params: WalletTokenBalanceParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletTokenBalanceResponse>({
             url: BIRDEYE_ENDPOINTS.wallet.token_balance,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     public async fetchWalletTransactionHistory(
-        params: FetchParams<WalletTransactionHistoryParams>
+        params: WalletTransactionHistoryParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletTransactionHistoryResponse>({
             url: BIRDEYE_ENDPOINTS.wallet.transaction_history,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
@@ -639,24 +698,26 @@ export class BirdeyeProvider extends BaseCachedProvider {
      * @deprecated This endpoint will be decommissioned on Feb 1st, 2025.
      */
     public async fetchWalletTransactionHistoryMultichain(
-        params: FetchParams<WalletTransactionHistoryMultichainParams>
+        params: WalletTransactionHistoryMultichainParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletTransactionHistoryMultichainResponse>(
             {
                 url: BIRDEYE_ENDPOINTS.wallet.transaction_history_multichain,
                 params,
-                headers: params.headers,
+                headers: options.headers,
             }
         );
     }
 
     public async fetchWalletTransactionSimulate_POST(
-        params: FetchParams<WalletSimulationParams>
+        params: WalletSimulationParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<WalletSimulationResponse>({
             url: BIRDEYE_ENDPOINTS.wallet.transaction_simulation_POST,
             params,
-            headers: params.headers,
+            headers: options.headers,
             method: "POST",
         });
     }
@@ -667,23 +728,25 @@ export class BirdeyeProvider extends BaseCachedProvider {
 
     // The API provides detailed information top gainers/losers
     public async fetchTraderGainersLosers(
-        params: FetchParams<GainersLosersParams>
+        params: GainersLosersParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<GainersLosersResponse>({
             url: BIRDEYE_ENDPOINTS.trader.gainers_losers,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get list of trades of a trader with time bound option.
     public async fetchTraderTransactionsSeek(
-        params: FetchParams<TraderTransactionsSeekParams>
+        params: TraderTransactionsSeekParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TraderTransactionsSeekResponse>({
             url: BIRDEYE_ENDPOINTS.trader.trades_seek,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
@@ -691,33 +754,36 @@ export class BirdeyeProvider extends BaseCachedProvider {
      * PAIR FETCH FUNCTIONS
      */
     public async fetchPairOverviewSingle(
-        params: FetchParams<PairOverviewSingleParams>
+        params: PairOverviewSingleParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<PairOverviewSingleResponse>({
             url: BIRDEYE_ENDPOINTS.pair.overview_single,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     // Get overview of multiple pairs
     public async fetchMultiPairOverview(
-        params: FetchParams<PairOverviewMultiParams>
+        params: PairOverviewMultiParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<PairOverviewMultiResponse>({
             url: BIRDEYE_ENDPOINTS.pair.overview_multi,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
     public async fetchPairOverviewMultiple(
-        params: FetchParams<PairOverviewMultiParams>
+        params: PairOverviewMultiParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<PairOverviewMultiResponse>({
             url: BIRDEYE_ENDPOINTS.pair.overview_multi,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 
@@ -725,12 +791,13 @@ export class BirdeyeProvider extends BaseCachedProvider {
      * SEARCH FETCH FUNCTIONS
      */
     public async fetchSearchTokenMarketData(
-        params: FetchParams<TokenMarketSearchParams>
+        params: TokenMarketSearchParams,
+        options: { headers?: Record<string, string> } = {}
     ) {
         return this.fetchWithCacheAndRetry<TokenMarketSearchResponse>({
             url: BIRDEYE_ENDPOINTS.search.token_market,
             params,
-            headers: params.headers,
+            headers: options.headers,
         });
     }
 }
