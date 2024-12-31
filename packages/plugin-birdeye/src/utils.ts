@@ -284,8 +284,9 @@ export const extractLimit = (text: string): number => {
 };
 
 // Formatting helpers
-export const formatValue = (value: number): string => {
-    if (value >= 1_000_000_000) {
+export const formatValue = (value?: number): string => {
+    if (!value) return "N/A";
+    if (value && value >= 1_000_000_000) {
         return `$${(value / 1_000_000_000).toFixed(2)}B`;
     }
     if (value >= 1_000_000) {
@@ -303,17 +304,21 @@ export const formatPercentChange = (change?: number): string => {
     return `${symbol} ${Math.abs(change).toFixed(2)}%`;
 };
 
-export const shortenAddress = (address: string): string => {
+export const shortenAddress = (address?: string): string => {
     if (!address || address.length <= 12) return address || "Unknown";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-export const formatTimestamp = (timestamp: number): string => {
-    return new Date(timestamp * 1000).toLocaleString();
+export const formatTimestamp = (timestamp?: number): string => {
+    return timestamp ? new Date(timestamp * 1000).toLocaleString() : "N/A";
 };
 
-export const formatPrice = (price: number): string => {
-    return price < 0.01 ? price.toExponential(2) : price.toFixed(2);
+export const formatPrice = (price?: number): string => {
+    return price
+        ? price < 0.01
+            ? price.toExponential(2)
+            : price.toFixed(2)
+        : "N/A";
 };
 
 // API helpers
