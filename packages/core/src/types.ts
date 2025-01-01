@@ -1273,6 +1273,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    IRYS = "irys",
 }
 
 export enum LoggingLevel {

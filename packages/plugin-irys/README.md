@@ -27,7 +27,7 @@ pnpm add @elizaos/plugin-irys
 The plugin requires the following environment variables:
 
 - `EVM_WALLET_PRIVATE_KEY`: Your EVM wallet private key
-- `AGENTS_WALLET_PUBLIC_KEYS`: The public keys of the agents that will be used to retrieve the data
+- `AGENTS_WALLET_PUBLIC_KEYS`: The public keys of the agents that will be used to retrieve the data (string separated by commas)
 
 For this plugin to work, you need to have an EVM (Base network)wallet with a private key and public address. To prevent any security issues, we recommend using a dedicated wallet for this plugin.
 
@@ -40,7 +40,7 @@ To upload data to the Irys network, you can use the `uploadData` function. This 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');
 
-const irysService = runtime.getService(ServiceType.IRYS)
+const irysService : IrysService = runtime.getService(ServiceType.IRYS)
 const data = "Hello, world!";
 const transactionResult = await irysService.uploadStringToIrys(data);
 console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
@@ -54,7 +54,7 @@ To retrieve data from the Irys network, you can use the `getDataFromAnAgent` fun
 const { IrysService } = require('@elizaos/plugin-irys');
 
 const irysService = runtime.getService(ServiceType.IRYS)
-const agentsWalletPublicKeys = runtime.getSetting("AGENTS_WALLET_PUBLIC_KEYS");
+const agentsWalletPublicKeys = runtime.getSetting("AGENTS_WALLET_PUBLIC_KEYS").split(",");
 const data = await irysService.getDataFromAnAgent(agentsWalletPublicKeys);
 console.log(`Data retrieved successfully. Data: ${data}`);
 ```

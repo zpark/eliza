@@ -10,7 +10,6 @@ import { Uploader } from "@irys/upload";
 import { BaseEth } from "@irys/upload-ethereum";
 import { GraphQLClient, gql } from 'graphql-request';
 
-
 interface TransactionsId {
     success: boolean;
     transactions: string[];
@@ -32,14 +31,16 @@ export class IrysService extends Service implements IIrysService {
 
     private runtime: IAgentRuntime | null = null;
     private irysUploader: any | null = null;
-    private endpoint: string = "https://gateway.irys.xyz/";
+    private endpointForTransactionId: string = "https://uploader.irys.xyz/graphql";
+    private endpointForData: string = "https://gateway.irys.xyz";
+
     async initialize(runtime: IAgentRuntime): Promise<void> {
         console.log("Initializing IrysService");
         this.runtime = runtime;
     }
 
     private async getTransactionId(owners: string[]): Promise<TransactionsId> {
-        const graphQLClient = new GraphQLClient(this.endpoint);
+        const graphQLClient = new GraphQLClient(this.endpointForTransactionId);
         const QUERY = gql`
             query($owners: [String!]) {
                 transactions(owners: $owners) {
@@ -83,9 +84,9 @@ export class IrysService extends Service implements IIrysService {
     }
 
     private async fetchDataFromTransactionId(transactionId: string): Promise<DataIrysFetchedFromGQL> {
-        const response = await fetch(`${this.endpoint}/${transactionId}`);
+        const response = await fetch(`${this.endpointForData}/${transactionId}`);
         if (!response.ok) return { success: false, data: null, error: "Error fetching data from transaction ID" };
-        const data = await response.json();
+        const data = await response.text();
         return {
             success: true,
             data: data,
