@@ -5,27 +5,25 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: true,
     clean: true,
-    format: ["esm"],
-    dts: true,
-    minify: false,
-    splitting: false,
+    format: ["esm"], // Ensure you're targeting CommonJS
     external: [
-        "@elizaos/core",
-        "@aptos-labs/ts-sdk",
-        "bignumber",
-        "bignumber.js",
-        "node-cache",
-        "dotenv",
-        "fs",
-        "path",
+        "dotenv", // Externalize dotenv to prevent bundling
+        "fs", // Externalize fs to use Node.js built-in module
+        "path", // Externalize other built-ins if necessary
+        "@reflink/reflink",
+        "@node-llama-cpp",
         "https",
         "http",
+        "agentkeepalive",
+        "safe-buffer",
+        "base-x",
+        "bs58",
+        "borsh",
+        "@solana/buffer-layout",
         "stream",
         "buffer",
-        "querystring"
+        "querystring",
+        "amqplib",
+        // Add other modules you want to externalize
     ],
-    noExternal: [],
-    esbuildOptions(options) {
-        options.platform = 'node'
-    }
 });
