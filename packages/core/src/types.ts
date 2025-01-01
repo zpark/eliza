@@ -1226,6 +1226,24 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+
+export interface UploadIrysResult {
+    success: boolean;
+    url?: string;
+    error?: string;
+}
+
+export interface DataIrysFetchedFromGQL {
+    success: boolean;
+    data: any;
+    error?: string;
+}
+
+export interface IIrysService extends Service {
+    uploadStringToIrys(data: string): Promise<UploadIrysResult>;
+    getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<DataIrysFetchedFromGQL>;
+}
+
 export type SearchResult = {
     title: string;
     url: string;
