@@ -100,6 +100,10 @@ Model configurations by provider
 
 > **akash\_chat\_api**: [`Model`](Model.md)
 
+### livepeer
+
+> **livepeer**: [`Model`](Model.md)
+
 ## Defined in
 
 [packages/core/src/types.ts:188](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L188)
