@@ -10,6 +10,7 @@ import { Configuration } from './Configuration.js';
 import path from 'path';
 import { AIService } from './AIService.js';
 import { PluginDocumentationGenerator } from './PluginDocumentationGenerator.js';
+import { JSDocValidator } from './JSDocValidator.js';
 
 /**
  * Class representing a Documentation Generator.
@@ -23,6 +24,7 @@ export class DocumentationGenerator {
     public branchName: string = '';
     private fileOffsets: Map<string, number> = new Map();
     private typeScriptFiles: string[] = [];
+    private jsDocValidator: JSDocValidator;
 
     /**
      * Constructor for initializing the object with necessary dependencies.
@@ -46,6 +48,7 @@ export class DocumentationGenerator {
         public aiService: AIService,
     ) {
         this.typeScriptFiles = this.directoryTraversal.traverse();
+        this.jsDocValidator = new JSDocValidator(aiService);
     }
 
     /**
@@ -107,7 +110,6 @@ export class DocumentationGenerator {
                 const fileContent = await this.getFileContent(fileChange.contents_url);
                 this.fileContents.set(filePath, fileContent);
             } else {
-                console.log('Getting file content from local file system');
                 const fileContent = fs.readFileSync(filePath, 'utf-8');
                 this.fileContents.set(filePath, fileContent);
             }
@@ -128,8 +130,13 @@ export class DocumentationGenerator {
 
         // Process nodes that need JSDoc
         if (this.missingJsDocQueue.length > 0) {
-            this.branchName = `docs-update-${pullNumber || 'full'}-${Date.now()}`;
-            await this.gitManager.createBranch(this.branchName, this.configuration.branch);
+            // Always create branch if we have missing JSDoc, even if we're only generating README
+            // This way we have a branch for either JSDoc commits or README commits
+
+            if (this.configuration.generateJsDoc) {
+                this.branchName = `docs-update-${pullNumber || 'full'}-${Date.now()}`;
+                await this.gitManager.createBranch(this.branchName, this.configuration.branch);
+            }
 
             // Process each node
             for (const queueItem of this.missingJsDocQueue) {
@@ -139,15 +146,18 @@ export class DocumentationGenerator {
                 } else {
                     comment = await this.jsDocGenerator.generateComment(queueItem);
                 }
-                await this.updateFileWithJSDoc(queueItem.filePath, comment, queueItem.startLine);
+
+                // Only update the actual files with JSDoc if generateJsDoc flag is true
+                if (this.configuration.generateJsDoc) {
+                    await this.updateFileWithJSDoc(queueItem.filePath, comment, queueItem.startLine);
+                    this.hasChanges = true;
+                }
 
                 queueItem.jsDoc = comment;
                 this.existingJsDocQueue.push(queueItem);
-
-                this.hasChanges = true;
             }
 
-            // Commit changes if any updates were made
+            // Only commit and create PR for JSDoc changes if generateJsDoc is true
             if (this.hasChanges && this.branchName) {
                 for (const [filePath, content] of this.fileContents) {
                     await this.gitManager.commitFile(
@@ -168,6 +178,8 @@ export class DocumentationGenerator {
                     reviewers: this.configuration.pullRequestReviewers || []
                 });
             }
+
+
         }
         return {
             documentedItems: this.existingJsDocQueue,
@@ -229,12 +241,33 @@ export class DocumentationGenerator {
         const content = this.fileContents.get(filePath) || '';
         const lines = content.split('\n');
         const currentOffset = this.fileOffsets.get(filePath) || 0;
-        const newLines = (jsDoc.match(/\n/g) || []).length + 1;
         const adjustedLine = insertLine + currentOffset;
+        const fileName = filePath.split('/').pop() || '';
 
+        // Insert the comment
         lines.splice(adjustedLine - 1, 0, jsDoc);
-        this.fileOffsets.set(filePath, currentOffset + newLines);
-        this.fileContents.set(filePath, lines.join('\n'));
+        const newContent = lines.join('\n');
+
+        try {
+            // Validate and fix if necessary
+            const validatedJSDoc = await this.jsDocValidator.validateAndFixJSDoc(fileName,newContent, jsDoc);
+
+            if (validatedJSDoc !== jsDoc) {
+                // If the comment was fixed, update the content
+                lines[adjustedLine - 1] = validatedJSDoc;
+                const newLines = (validatedJSDoc.match(/\n/g) || []).length + 1;
+                this.fileOffsets.set(filePath, currentOffset + newLines);
+            } else {
+                // console log just the file name from the path, and that the comment was valid
+                const newLines = (jsDoc.match(/\n/g) || []).length + 1;
+                this.fileOffsets.set(filePath, currentOffset + newLines);
+            }
+
+            this.fileContents.set(filePath, lines.join('\n'));
+        } catch (error) {
+            console.error(`Error validating JSDoc in ${filePath}:`, error);
+            throw error;
+        }
     }
 
     /**

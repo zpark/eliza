@@ -73,14 +73,40 @@ async function main() {
                 configuration.repository.pullNumber
             );
 
-            if (branchName) { // Only generate plugin docs if we have JSDoc changes
-                // Then generate plugin documentation on the same branch
-                await pluginDocGenerator.generate(
-                    documentedItems,
-                    branchName, // Use the same branch as JSDoc changes
-                    todoItems,
-                    envUsages
-                );
+        // If both are true, use JSDoc branch for README
+        // If only README is true, create new branch
+        if (configuration.generateReadme) {
+            const targetBranch = (configuration.generateJsDoc && branchName)
+                ? branchName
+                : `docs-update-readme-${Date.now()}`;
+
+            if (!configuration.generateJsDoc) {
+                await gitManager.createBranch(targetBranch, configuration.branch);
+            }
+
+            await pluginDocGenerator.generate(
+                documentedItems,
+                targetBranch,
+                todoItems,
+                envUsages
+            );
+
+            // Only create PR if we're not also generating JSDoc (otherwise changes go in JSDoc PR)
+            if (!configuration.generateJsDoc) {
+                const prContent = {
+                    title: "docs: Update plugin documentation",
+                    body: "Updates plugin documentation with latest changes"
+                };
+
+                await gitManager.createPullRequest({
+                    title: prContent.title,
+                    body: prContent.body,
+                    head: targetBranch,
+                    base: configuration.branch,
+                    labels: ['documentation', 'automated-pr'],
+                    reviewers: configuration.pullRequestReviewers || []
+                });
+                }
             }
         } catch (error) {
             console.error('Error during documentation generation:', {
