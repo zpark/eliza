@@ -3,6 +3,7 @@ import {
     IAgentRuntime,
     ITranscriptionService,
     settings,
+    TranscriptionProvider,
 } from "@elizaos/core";
 import { Service, ServiceType } from "@elizaos/core";
 import { exec } from "child_process";
@@ -32,16 +33,41 @@ export class TranscriptionService
     private DEBUG_AUDIO_DIR: string;
     private TARGET_SAMPLE_RATE = 16000; // Common sample rate for speech recognition
     private isCudaAvailable: boolean = false;
+    private transcriptionProvider: TranscriptionProvider;
+    private deepgram: DeepgramClient | null = null;
     private openai: OpenAI | null = null;
-    private deepgram?: DeepgramClient;
 
     private queue: { audioBuffer: ArrayBuffer; resolve: Function }[] = [];
     private processing: boolean = false;
 
     async initialize(_runtime: IAgentRuntime): Promise<void> {
         this.runtime = _runtime;
-        const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
-        this.deepgram = deepgramKey ? createClient(deepgramKey) : null;
+
+        switch (this.runtime.character.settings.transcription) {
+            case TranscriptionProvider.Deepgram:
+                const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
+                if (deepgramKey) {
+                    this.deepgram = createClient(deepgramKey);
+                    this.transcriptionProvider = TranscriptionProvider.Deepgram;
+                } else {
+                    this.transcriptionProvider = TranscriptionProvider.Local; // fall back to local transcription
+                }
+                break;
+            case TranscriptionProvider.OpenAI:
+                const openAIKey = this.runtime.getSetting("OPENAI_API_KEY");
+                if (openAIKey) {
+                    this.openai = new OpenAI({
+                        apiKey: this.runtime.getSetting("OPENAI_API_KEY"),
+                    });
+                    this.transcriptionProvider = TranscriptionProvider.OpenAI;
+                } else {
+                    this.transcriptionProvider = TranscriptionProvider.Local; // fall back to local transcription
+                }
+                break;
+            default:
+                this.transcriptionProvider = TranscriptionProvider.Local;
+                break;
+        }
     }
 
     constructor() {
@@ -201,12 +227,17 @@ export class TranscriptionService
         while (this.queue.length > 0) {
             const { audioBuffer, resolve } = this.queue.shift()!;
             let result: string | null = null;
-            if (this.deepgram) {
-                result = await this.transcribeWithDeepgram(audioBuffer);
-            } else if (this.openai) {
-                result = await this.transcribeWithOpenAI(audioBuffer);
-            } else {
-                result = await this.transcribeLocally(audioBuffer);
+
+            switch (this.transcriptionProvider) {
+                case TranscriptionProvider.Deepgram:
+                    result = await this.transcribeWithDeepgram(audioBuffer);
+                    break;
+                case TranscriptionProvider.OpenAI:
+                    result = await this.transcribeWithOpenAI(audioBuffer);
+                    break;
+                default:
+                    result = await this.transcribeLocally(audioBuffer);
+                    break;
             }
 
             resolve(result);
