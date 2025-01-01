@@ -17,7 +17,8 @@ import {
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
 import * as path from "path";
-import { APT_DECIMALS } from "../constants";
+import { APT_DECIMALS, MOVEMENT_NETWORK } from "../constants";
+import { isMovementNetwork, getMovementNetworkType } from "../utils";
 
 // Provider configuration
 const PROVIDER_CONFIG = {
@@ -235,10 +236,18 @@ const walletProvider: Provider = {
         const network = runtime.getSetting("APTOS_NETWORK") as Network;
 
         try {
+            console.log("Network:", network);
             const aptosClient = new Aptos(
-                new AptosConfig({
-                    network,
-                })
+                new AptosConfig(
+                    isMovementNetwork(network)
+                        ? {
+                            network: Network.CUSTOM,
+                            fullnode: MOVEMENT_NETWORK[getMovementNetworkType(network)].fullnode
+                          }
+                        : {
+                            network
+                          }
+                )
             );
             const provider = new WalletProvider(
                 aptosClient,

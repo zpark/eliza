@@ -3,7 +3,7 @@ import { z } from "zod";
 
 export const aptosEnvSchema = z.object({
     APTOS_PRIVATE_KEY: z.string().min(1, "Aptos private key is required"),
-    APTOS_NETWORK: z.enum(["mainnet", "testnet"]),
+    APTOS_NETWORK: z.enum(["mainnet", "testnet", "movement_mainnet", "movement_testnet"]),
 });
 
 export type AptosConfig = z.infer<typeof aptosEnvSchema>;
