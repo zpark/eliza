@@ -786,6 +786,7 @@ export type Character = {
             solana?: any[];
             [key: string]: any[];
         };
+        transcription?: TranscriptionProvider;
     };
 
     /** Optional client-specific config */
@@ -1313,4 +1314,10 @@ export interface ActionResponse {
 
 export interface ISlackService extends Service {
     client: any;
+}
+
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
 }
