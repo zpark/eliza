@@ -43,31 +43,29 @@ export class TranscriptionService
     async initialize(_runtime: IAgentRuntime): Promise<void> {
         this.runtime = _runtime;
 
+        let transcriptionProvider = TranscriptionProvider.Local;
+
         switch (this.runtime.character.settings.transcription) {
-            case TranscriptionProvider.Deepgram:
+            case TranscriptionProvider.Deepgram: {
                 const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
                 if (deepgramKey) {
                     this.deepgram = createClient(deepgramKey);
-                    this.transcriptionProvider = TranscriptionProvider.Deepgram;
-                } else {
-                    this.transcriptionProvider = TranscriptionProvider.Local; // fall back to local transcription
+                    transcriptionProvider = TranscriptionProvider.Deepgram;
                 }
                 break;
-            case TranscriptionProvider.OpenAI:
+            }
+            case TranscriptionProvider.OpenAI: {
                 const openAIKey = this.runtime.getSetting("OPENAI_API_KEY");
                 if (openAIKey) {
                     this.openai = new OpenAI({
-                        apiKey: this.runtime.getSetting("OPENAI_API_KEY"),
+                        apiKey: openAIKey,
                     });
-                    this.transcriptionProvider = TranscriptionProvider.OpenAI;
-                } else {
-                    this.transcriptionProvider = TranscriptionProvider.Local; // fall back to local transcription
+                    transcriptionProvider = TranscriptionProvider.OpenAI;
                 }
                 break;
-            default:
-                this.transcriptionProvider = TranscriptionProvider.Local;
-                break;
+            }
         }
+        this.transcriptionProvider = transcriptionProvider;
     }
 
     constructor() {
