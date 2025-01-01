@@ -1,5 +1,7 @@
 import { TSESTree } from "@typescript-eslint/types";
 
+import { TSESTree } from "@typescript-eslint/types";
+
 export interface ASTQueueItem {
     name: string;
     filePath: string;

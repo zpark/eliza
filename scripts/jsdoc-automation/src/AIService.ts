@@ -507,6 +507,7 @@ export class AIService {
     /**
      * Handle API errors by logging the error message and throwing the error.
      *
+     *
      * @param {Error} error The error object to handle
      * @returns {void}
      */

@@ -1,6 +1,7 @@
 import type { TSESTree } from '@typescript-eslint/types';
 import { TypeScriptParser } from './TypeScriptParser.js';
 import { ASTQueueItem, EnvUsage, TodoItem } from './types/index.js';
+import { ASTQueueItem, EnvUsage, TodoItem } from './types/index.js';
 
 type AST_NODE_TYPES = {
     ClassDeclaration: 'ClassDeclaration';
@@ -156,6 +157,8 @@ export class JsDocAnalyzer {
 
 
     public missingJsDocNodes: TSESTree.Node[] = [];
+    public todoItems: TodoItem[] = [];
+    public envUsages: EnvUsage[] = [];
     public todoItems: TodoItem[] = [];
     public envUsages: EnvUsage[] = [];
 
