@@ -19,7 +19,6 @@
     },
     "dependencies": {
         "@elizaos/adapter-postgres": "workspace:*",
-        "@elizaos/adapter-reclaim": "workspace:*",
         "@elizaos/adapter-redis": "workspace:*",
         "@elizaos/adapter-sqlite": "workspace:*",
         "@elizaos/client-auto": "workspace:*",
@@ -60,6 +59,7 @@
         "@elizaos/plugin-3d-generation": "workspace:*",
         "@elizaos/plugin-fuel": "workspace:*",
         "@elizaos/plugin-avalanche": "workspace:*",
+        "@elizaos/plugin-opacity": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"
