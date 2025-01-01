@@ -482,11 +482,6 @@ public findEnvUsages(ast: TSESTree.Program, sourceCode: string): void {
             // Get the containing function/block for full context
             const containingBlock = this.findContainingBlock(node);
 
-            // Add logging to debug
-            console.log('Found process.env at line:', node.loc.start.line);
-            console.log('Context node type:', contextNode?.type);
-            console.log('Containing block type:', containingBlock?.type);
-
             // Get just the process.env reference
             const code = this.extractNodeCode(sourceCode, node);
 

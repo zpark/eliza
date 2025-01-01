@@ -31,9 +31,12 @@ export class PluginDocumentationGenerator {
         // Read package.json
         const packageJsonPath = path.join(this.configuration.absolutePath, 'package.json');
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        if (!packageJson) {
+            console.error('package.json not found');
+        }
 
         // Read existing README if it exists
-        const readmePath = path.join(this.configuration.absolutePath, 'README.md');
+        const readmePath = path.join(this.configuration.absolutePath, 'README-automated.md');
         const readmeContent = fs.existsSync(readmePath)
             ? fs.readFileSync(readmePath, 'utf-8')
             : undefined;
@@ -48,36 +51,55 @@ export class PluginDocumentationGenerator {
         });
 
         // Generate and write markdown
-        const markdownContent = this.generateMarkdownContent(documentation);
+        const markdownContent = this.generateMarkdownContent(documentation, packageJson);
         fs.writeFileSync(readmePath, markdownContent);
 
         // Commit if we're in a branch
         if (branchName) {
             await this.gitManager.commitFile(
                 branchName,
-                'README-automated.md',
+                'README.md',
                 markdownContent,
                 'docs: Update plugin documentation'
             );
         }
     }
 
-    private generateMarkdownContent(docs: PluginDocumentation & { todos: string }): string {
-        return `# Plugin Documentation
-## Overview and Purpose
+    private generateMarkdownContent(docs: PluginDocumentation, packageJson: any): string {
+        return `# ${packageJson.name} Documentation
+
+## Overview
 ${docs.overview}
+
 ## Installation
 ${docs.installation}
+
 ## Configuration
 ${docs.configuration}
+
+## Features
+
+### Actions
+${docs.actionsDocumentation}
+
+### Providers
+${docs.providersDocumentation}
+
+### Evaluators
+${docs.evaluatorsDocumentation}
+
 ## Usage Examples
 ${docs.usage}
+
 ## API Reference
 ${docs.apiReference}
-## Common Issues & Troubleshooting
-${docs.troubleshooting}
-## TODO Items
+
+## Development
+
+### TODO Items
 ${docs.todos}
-`;
-    }
+
+### Troubleshooting
+${docs.troubleshooting}`;
+}
 }

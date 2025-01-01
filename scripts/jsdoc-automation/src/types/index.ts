@@ -81,4 +81,7 @@ export interface PluginDocumentation {
     apiReference: string;
     troubleshooting: string;
     todos: string;
+    actionsDocumentation: string;
+    providersDocumentation: string;
+    evaluatorsDocumentation: string;
 }

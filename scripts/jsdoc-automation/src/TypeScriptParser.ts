@@ -7,7 +7,7 @@ import { parse, ParserOptions } from '@typescript-eslint/parser';
 export class TypeScriptParser {
     /**
      * Parses the content of a file using the given file path.
-     * 
+     *
      * @param {string} file - The file path containing the content to be parsed.
      * @returns {any} The abstract syntax tree (AST) representation of the parsed content.
      */
@@ -44,9 +44,38 @@ export class TypeScriptParser {
         }
     }
 
+    public extractExports(file: string): { actions: string[], providers: string[], evaluators: string[] } {
+        //const content = fs.readFileSync(file, 'utf-8');
+        const ast = this.parse(file);
+
+        const exports: { actions: string[], providers: string[], evaluators: string[] } = {
+            actions: [],
+            providers: [],
+            evaluators: [],
+          };
+
+        if (ast) {
+          // Traverse the AST to find export declarations
+          ast.body.forEach((node: any) => {
+            if (node.type === 'ImportDeclaration') {
+                const source = node.source.value;
+                if (source.startsWith('./actions/')) {
+                  exports.actions.push(source);
+                } else if (source.startsWith('./providers/')) {
+                  exports.providers.push(source);
+                } else if (source.startsWith('./evaluators/')) {
+                  exports.evaluators.push(source);
+                }
+              }
+          });
+        }
+
+        return exports;
+      }
+
     /**
      * Handles a parse error that occurs during TypeScript parsing.
-     * 
+     *
      * @param {Error} error - The error that occurred during parsing
      * @returns {void}
      */
