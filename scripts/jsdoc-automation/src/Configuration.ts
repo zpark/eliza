@@ -101,10 +101,10 @@ export class Configuration implements Omit<ConfigurationData, 'rootDirectory'> {
         const rootDirectory = process.env.INPUT_ROOT_DIRECTORY;
         this._generateJsDoc = process.env.INPUT_JSDOC
             ? process.env.INPUT_JSDOC.toUpperCase() === 'T'
-            : true; // Default from workflow
+            : false; // Default from workflow
         this._generateReadme = process.env.INPUT_README
             ? process.env.INPUT_README.toUpperCase() === 'T'
-            : false;  // Default from workflow
+            : true;  // Default from workflow
 
         console.log('Documentation flags:', {
             generateJsDoc: this._generateJsDoc,

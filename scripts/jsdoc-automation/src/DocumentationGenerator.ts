@@ -185,10 +185,6 @@ export class DocumentationGenerator {
             documentedItems: this.existingJsDocQueue,
             branchName: this.branchName
         };
-        return {
-            documentedItems: this.existingJsDocQueue,
-            branchName: this.branchName
-        };
     }
 
     /**
