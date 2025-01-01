@@ -206,7 +206,7 @@ export class ImageDescriptionService
                         },
                     },
                 ];
-                // If model provider is openai, use the endpoint, otherwise use the default openai endpoint
+                // If model provider is openai, use the endpoint, otherwise use the default openai endpoint.
                 const endpoint =
                     this.runtime.imageModelProvider === ModelProviderName.OPENAI
                     ? models[this.runtime.imageModelProvider].endpoint
