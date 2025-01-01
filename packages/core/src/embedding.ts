@@ -21,20 +21,13 @@ export const EmbeddingProvider = {
     BGE: "BGE",
 } as const;
 
-export type EmbeddingProvider =
+export type EmbeddingProviderType =
     (typeof EmbeddingProvider)[keyof typeof EmbeddingProvider];
-
-export namespace EmbeddingProvider {
-    export type OpenAI = typeof EmbeddingProvider.OpenAI;
-    export type Ollama = typeof EmbeddingProvider.Ollama;
-    export type GaiaNet = typeof EmbeddingProvider.GaiaNet;
-    export type BGE = typeof EmbeddingProvider.BGE;
-}
 
 export type EmbeddingConfig = {
     readonly dimensions: number;
     readonly model: string;
-    readonly provider: EmbeddingProvider;
+    readonly provider: EmbeddingProviderType;
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
