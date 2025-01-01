@@ -425,6 +425,25 @@ importers:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
 
+  packages/adapter-reclaim:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@reclaimprotocol/js-sdk':
+        specifier: ^2.1.3
+        version: 2.1.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      '@reclaimprotocol/zk-fetch':
+        specifier: ^0.3.0
+        version: 0.3.0(@swc/helpers@0.5.15)(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+
   packages/adapter-redis:
     dependencies:
       '@elizaos/core':
@@ -3926,6 +3945,14 @@ packages:
     resolution: {integrity: sha512-qD9kvrL1xmce0iiiNEyqq2GW1qoksqvdOpww3Gsgqx/O9tdU/M2R78fji9opY+QU9u8OKH9L+ZzsOQdF5FixZA==}
     peerDependencies:
       onnxruntime-node: 1.20.1
+
+  '@elastic/ecs-helpers@2.1.1':
+    resolution: {integrity: sha512-ItoNazMnYdlUCmkBYTXc3SG6PF7UlVTbvMdHPvXkfTMPdwGv2G1Xtp5CjDHaGHGOZSwaDrW4RSCXvA/lMSU+rg==}
+    engines: {node: '>=10'}
+
+  '@elastic/ecs-pino-format@1.5.0':
+    resolution: {integrity: sha512-7MMVmT50ucEl7no8mUgCIl+pffBVNRl36uZi0vmalWa2xPWISBxM9k9WSP/WTgOkmGj9G35e5g3UfCS1zxshBg==}
+    engines: {node: '>=10'}
 
   '@elizaos/core@0.1.7-alpha.2':
     resolution: {integrity: sha512-gNvFw/Xnv4dlcfmmKxRa+baKq6en4TitAjUGvo8LgAUkSk156A0fffJ0lAsc1rX8zMB5NsIqdvMCbwKxDd54OQ==}
@@ -8139,6 +8166,9 @@ packages:
   '@types/node@20.17.9':
     resolution: {integrity: sha512-0JOXkRyLanfGPE2QRCwgxhzlBAvaRdCNMcvbd7jFfpmD4eEXll7LRwy5ymJmyeZqk7Nh7eD2LeUyQ68BbndmXw==}
 
+  '@types/node@20.5.1':
+    resolution: {integrity: sha512-4tT2UrL5LBqDwoed9wZ6N3umC4Yhz3W3FloMmiiG4JwmUJWpie0c7lcnUNd4gtMKuDEO4wRVS8B6Xa0uMRsMKg==}
+
   '@types/node@22.10.3':
     resolution: {integrity: sha512-DifAyw4BkrufCILvD3ucnuN8eydUfc/C1GlyrnI+LK6543w5/L3VeVgf05o3B4fqSXP1dKYLOZsKfutpxPzZrw==}
 
@@ -11312,6 +11342,9 @@ packages:
 
   error-polyfill@0.1.3:
     resolution: {integrity: sha512-XHJk60ufE+TG/ydwp4lilOog549iiQF2OAPhkk9DdiYWMrltz5yhDz/xnKuenNwP7gy3dsibssO5QpVhkrSzzg==}
+
+  error-stack-parser@2.1.4:
+    resolution: {integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==}
 
   es-abstract@1.23.8:
     resolution: {integrity: sha512-lfab8IzDn6EpI1ibZakcgS6WsfEBiB+43cuJo+wgylx1xKXf+Sp+YR3vFuQwC/u3sxYwV8Cxe3B0DpVUu/WiJQ==}
@@ -21962,6 +21995,22 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
+  '@commitlint/cli@17.8.1(@swc/core@1.10.4(@swc/helpers@0.5.15))':
+    dependencies:
+      '@commitlint/format': 17.8.1
+      '@commitlint/lint': 17.8.1
+      '@commitlint/load': 17.8.1(@swc/core@1.10.4(@swc/helpers@0.5.15))
+      '@commitlint/read': 17.8.1
+      '@commitlint/types': 17.8.1
+      execa: 5.1.1
+      lodash.isfunction: 3.0.9
+      resolve-from: 5.0.0
+      resolve-global: 1.0.0
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+
   '@commitlint/cli@18.6.1(@types/node@22.10.3)(typescript@5.6.3)':
     dependencies:
       '@commitlint/format': 18.6.1
@@ -22052,6 +22101,26 @@ snapshots:
       '@commitlint/parse': 18.6.1
       '@commitlint/rules': 18.6.1
       '@commitlint/types': 18.6.1
+
+  '@commitlint/load@17.8.1(@swc/core@1.10.4(@swc/helpers@0.5.15))':
+    dependencies:
+      '@commitlint/config-validator': 17.8.1
+      '@commitlint/execute-rule': 17.8.1
+      '@commitlint/resolve-extends': 17.8.1
+      '@commitlint/types': 17.8.1
+      '@types/node': 20.5.1
+      chalk: 4.1.2
+      cosmiconfig: 8.3.6(typescript@5.6.3)
+      cosmiconfig-typescript-loader: 4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.6.3))(ts-node@10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@20.5.1)(typescript@5.6.3))(typescript@5.6.3)
+      lodash.isplainobject: 4.0.6
+      lodash.merge: 4.6.2
+      lodash.uniq: 4.5.0
+      resolve-from: 5.0.0
+      ts-node: 10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@20.5.1)(typescript@5.6.3)
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
 
   '@commitlint/load@18.6.1(@types/node@22.10.3)(typescript@5.6.3)':
     dependencies:
@@ -23482,6 +23551,12 @@ snapshots:
     dependencies:
       '@huggingface/jinja': 0.2.2
       onnxruntime-node: 1.20.1
+
+  '@elastic/ecs-helpers@2.1.1': {}
+
+  '@elastic/ecs-pino-format@1.5.0':
+    dependencies:
+      '@elastic/ecs-helpers': 2.1.1
 
   '@elizaos/core@0.1.7-alpha.2(@google-cloud/vertexai@1.9.2(encoding@0.1.13))(@langchain/core@0.3.27(openai@4.73.0(encoding@0.1.13)(zod@3.23.8)))(axios@1.7.9)(encoding@0.1.13)(react@18.3.1)(sswr@2.1.0(svelte@5.16.0))(svelte@5.16.0)':
     dependencies:
@@ -26892,6 +26967,20 @@ snapshots:
       tslib: 2.8.1
       webcrypto-core: 1.8.1
 
+  '@peculiar/x509@1.12.3':
+    dependencies:
+      '@peculiar/asn1-cms': 2.3.15
+      '@peculiar/asn1-csr': 2.3.15
+      '@peculiar/asn1-ecc': 2.3.15
+      '@peculiar/asn1-pkcs9': 2.3.15
+      '@peculiar/asn1-rsa': 2.3.15
+      '@peculiar/asn1-schema': 2.3.15
+      '@peculiar/asn1-x509': 2.3.15
+      pvtsutils: 1.3.6
+      reflect-metadata: 0.2.2
+      tslib: 2.8.1
+      tsyringe: 4.8.0
+
   '@phala/dstack-sdk@0.1.6(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)':
     optionalDependencies:
       viem: 2.21.58(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)
@@ -27263,10 +27352,10 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  '@reclaimprotocol/attestor-core@3.1.1(@swc/core@1.10.1(@swc/helpers@0.5.15))(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
+  '@reclaimprotocol/attestor-core@3.1.1(@swc/core@1.10.4(@swc/helpers@0.5.15))(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
     dependencies:
       '@bufbuild/protobuf': 2.2.3
-      '@commitlint/cli': 17.8.1(@swc/core@1.10.1(@swc/helpers@0.5.15))
+      '@commitlint/cli': 17.8.1(@swc/core@1.10.4(@swc/helpers@0.5.15))
       '@commitlint/config-conventional': 17.8.1
       '@reclaimprotocol/tls': https://codeload.github.com/reclaimprotocol/tls/tar.gz/159300905f24d12503e3f7bf9c8a2be08d8cdf97
       '@reclaimprotocol/zk-symmetric-crypto': 2.0.5(koffi@2.10.0)(snarkjs@0.7.5)
@@ -27275,9 +27364,9 @@ snapshots:
       dotenv: 16.4.7
       elastic-apm-node: 4.10.0
       esprima-next: 5.8.4
-      ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ethers: 5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       https-proxy-agent: 7.0.6
-      jsdom: 24.1.3(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
+      jsdom: 24.1.3(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
       jsonpath-plus: 10.2.0
       p-queue: 8.0.1
       pino: 9.6.0
@@ -27285,7 +27374,7 @@ snapshots:
       re2: 1.21.4
       serve-static: 1.16.2
       snarkjs: 0.7.5
-      ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     optionalDependencies:
       koffi: 2.10.0
     transitivePeerDependencies:
@@ -27296,10 +27385,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@reclaimprotocol/js-sdk@2.1.3(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@reclaimprotocol/js-sdk@2.1.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       canonicalize: 2.0.0
-      ethers: 6.13.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       qs: 6.13.1
       url-parse: 1.5.10
       uuid: 9.0.1
@@ -27314,11 +27403,11 @@ snapshots:
       '@peculiar/x509': 1.12.3
       '@stablelib/chacha20poly1305': 1.0.1
 
-  '@reclaimprotocol/zk-fetch@0.3.0(@swc/helpers@0.5.15)(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
+  '@reclaimprotocol/zk-fetch@0.3.0(@swc/helpers@0.5.15)(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
     dependencies:
-      '@reclaimprotocol/attestor-core': 3.1.1(@swc/core@1.10.1(@swc/helpers@0.5.15))(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
-      '@swc/core': 1.10.1(@swc/helpers@0.5.15)
-      ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@reclaimprotocol/attestor-core': 3.1.1(@swc/core@1.10.4(@swc/helpers@0.5.15))(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
+      '@swc/core': 1.10.4(@swc/helpers@0.5.15)
+      ethers: 5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       pino: 8.21.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -29192,6 +29281,8 @@ snapshots:
   '@types/node@20.17.9':
     dependencies:
       undici-types: 6.19.8
+
+  '@types/node@20.5.1': {}
 
   '@types/node@22.10.3':
     dependencies:
@@ -32117,6 +32208,13 @@ snapshots:
     dependencies:
       layout-base: 2.0.1
 
+  cosmiconfig-typescript-loader@4.4.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.6.3))(ts-node@10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@20.5.1)(typescript@5.6.3))(typescript@5.6.3):
+    dependencies:
+      '@types/node': 20.5.1
+      cosmiconfig: 8.3.6(typescript@5.6.3)
+      ts-node: 10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@20.5.1)(typescript@5.6.3)
+      typescript: 5.6.3
+
   cosmiconfig-typescript-loader@5.1.0(@types/node@22.10.3)(cosmiconfig@8.3.6(typescript@5.6.3))(typescript@5.6.3):
     dependencies:
       '@types/node': 22.10.3
@@ -33207,7 +33305,7 @@ snapshots:
       '@opentelemetry/core': 1.30.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 1.30.0(@opentelemetry/api@1.9.0)
       after-all-results: 2.0.0
-      agentkeepalive: 4.5.0
+      agentkeepalive: 4.6.0
       async-value-promise: 1.1.1
       basic-auth: 2.0.1
       breadth-filter: 2.0.0
@@ -33336,6 +33434,10 @@ snapshots:
       capability: 0.2.5
       o3: 1.0.3
       u3: 0.1.1
+
+  error-stack-parser@2.1.4:
+    dependencies:
+      stackframe: 1.3.4
 
   es-abstract@1.23.8:
     dependencies:
@@ -34081,7 +34183,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.4.0(supports-color@8.1.1)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -36721,6 +36823,36 @@ snapshots:
   jsbn@1.1.0: {}
 
   jsdoc-type-pratt-parser@4.0.0: {}
+
+  jsdom@24.1.3(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10):
+    dependencies:
+      cssstyle: 4.1.0
+      data-urls: 5.0.0
+      decimal.js: 10.4.3
+      form-data: 4.0.1
+      html-encoding-sniffer: 4.0.0
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
+      is-potential-custom-element-name: 1.0.1
+      nwsapi: 2.2.16
+      parse5: 7.2.1
+      rrweb-cssom: 0.7.1
+      saxes: 6.0.0
+      symbol-tree: 3.2.4
+      tough-cookie: 4.1.4
+      w3c-xmlserializer: 5.0.0
+      webidl-conversions: 7.0.0
+      whatwg-encoding: 3.1.1
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 14.1.0
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      xml-name-validator: 5.0.0
+    optionalDependencies:
+      canvas: 2.11.2(encoding@0.1.13)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10):
     dependencies:
@@ -40808,6 +40940,14 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
+  re2@1.21.4:
+    dependencies:
+      install-artifact-from-github: 1.3.5
+      nan: 2.22.0
+      node-gyp: 10.3.1
+    transitivePeerDependencies:
+      - supports-color
+
   react-dev-utils@12.0.1(eslint@9.16.0(jiti@2.4.2))(typescript@5.6.3)(webpack@5.97.1(@swc/core@1.10.4(@swc/helpers@0.5.15))):
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -42940,6 +43080,26 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.10.4(@swc/helpers@0.5.15)
 
+  ts-node@10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@20.5.1)(typescript@5.6.3):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.11
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 20.5.1
+      acorn: 8.14.0
+      acorn-walk: 8.3.4
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.6.3
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    optionalDependencies:
+      '@swc/core': 1.10.4(@swc/helpers@0.5.15)
+
   ts-node@10.9.2(@swc/core@1.10.4(@swc/helpers@0.5.15))(@types/node@22.10.3)(typescript@5.6.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -43966,6 +44126,8 @@ snapshots:
   web-streams-polyfill@4.0.0-beta.3: {}
 
   web-vitals@3.5.2: {}
+
+  web-worker@1.2.0: {}
 
   web3-core@4.7.1(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10):
     dependencies:
