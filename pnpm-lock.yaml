@@ -873,6 +873,9 @@ importers:
       '@solana/web3.js':
         specifier: 1.95.8
         version: 1.95.8(bufferutil@4.0.8)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@tavily/core':
+        specifier: ^0.0.2
+        version: 0.0.2
       '@types/fluent-ffmpeg':
         specifier: 2.1.27
         version: 2.1.27
@@ -1134,6 +1137,9 @@ importers:
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
+      '@elizaos/plugin-tee':
+        specifier: workspace:*
+        version: link:../plugin-tee
       '@lifi/data-types':
         specifier: 5.15.5
         version: 5.15.5
@@ -7596,6 +7602,9 @@ packages:
     resolution: {integrity: sha512-SBzV27XAeCRBOQ8QcC94w2H1Md0+LI0gTWwc3qRJoaGuewKn5FNW4LSqwPFJZVEItfhMfGT7RpZuSFXjTi12pQ==}
     peerDependencies:
       react: ^18 || ^19
+
+  '@tavily/core@0.0.2':
+    resolution: {integrity: sha512-UabYbp57bdjEloA4efW9zTSzv+FZp13JVDHcfutUNR5XUZ+aDGupe2wpfABECnD+b7Ojp9v9zguZcm1o+h0//w==}
 
   '@telegraf/types@7.1.0':
     resolution: {integrity: sha512-kGevOIbpMcIlCDeorKGpwZmdH7kHbqlk/Yj6dEpJMKEQw5lk0KVQY0OLXaCswy8GqlIVLd5625OB+rAntP9xVw==}
@@ -28043,6 +28052,13 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.60.6
       react: 18.3.1
+
+  '@tavily/core@0.0.2':
+    dependencies:
+      axios: 1.7.9(debug@4.4.0)
+      js-tiktoken: 1.0.15
+    transitivePeerDependencies:
+      - debug
 
   '@telegraf/types@7.1.0': {}
 
