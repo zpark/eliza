@@ -5,7 +5,6 @@ node_modules
 .env.production
 .env.local
 .env_main
-.env.example
 concatenated-output.ts
 embedding-cache.json
 packages/plugin-buttplug/intiface-engine
@@ -41,12 +40,7 @@ timeline_cache.json
 *.sqlite
 
 characters/
-characterfile/
-gen-lang-client-0926033935-7fe5ed22b25a.json
-knowledge.json
-start-evelyn.sh
 
-update-character-knowledge.sh
 packages/core/src/providers/cache
 packages/core/src/providers/cache/*
 cache/*
