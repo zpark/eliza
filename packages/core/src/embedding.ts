@@ -34,7 +34,7 @@ export namespace EmbeddingProvider {
 export type EmbeddingConfig = {
     readonly dimensions: number;
     readonly model: string;
-    readonly provider: EmbeddingProviderType;
+    readonly provider: EmbeddingProvider;
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
