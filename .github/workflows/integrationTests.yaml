@@ -25,7 +25,7 @@ jobs:
                   cache: "pnpm"
 
             - name: Clean up
-              run: ./scripts/clean.sh
+              run: pnpm clean
 
             - name: Install dependencies
               run: pnpm install -r
