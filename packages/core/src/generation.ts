@@ -34,12 +34,14 @@ import {
     ServiceType,
     SearchResponse,
     ActionResponse,
+    TelemetrySettings,
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
     VerifiableInferenceResult,
     VerifiableInferenceProvider,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
+import { tavily } from "@tavily/core";
 
 /**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
@@ -198,6 +200,9 @@ export async function generateText({
     const max_response_length =
         modelConfiguration?.max_response_length ||
         models[provider].settings.maxOutputTokens;
+    const experimental_telemetry =
+        modelConfiguration?.experimental_telemetry ||
+        models[provider].settings.experimental_telemetry;
 
     const apiKey = runtime.token;
 
@@ -243,6 +248,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openaiResponse;
@@ -252,6 +258,7 @@ export async function generateText({
 
             case ModelProviderName.GOOGLE: {
                 const google = createGoogleGenerativeAI({
+                    apiKey,
                     fetch: runtime.fetch,
                 });
 
@@ -266,6 +273,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = googleResponse;
@@ -292,6 +300,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = anthropicResponse;
@@ -318,6 +327,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = anthropicResponse;
@@ -348,6 +358,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = grokResponse;
@@ -369,6 +380,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = groqResponse;
@@ -420,6 +432,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = redpillResponse;
@@ -447,6 +460,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openrouterResponse;
@@ -473,6 +487,7 @@ export async function generateText({
                         maxTokens: max_response_length,
                         frequencyPenalty: frequency_penalty,
                         presencePenalty: presence_penalty,
+                        experimental_telemetry: experimental_telemetry,
                     });
 
                     response = ollamaResponse;
@@ -500,6 +515,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = heuristResponse;
@@ -549,6 +565,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = openaiResponse;
@@ -575,6 +592,7 @@ export async function generateText({
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
                 });
 
                 response = galadrielResponse;
@@ -1339,34 +1357,20 @@ export const generateWebSearch = async (
     query: string,
     runtime: IAgentRuntime
 ): Promise<SearchResponse> => {
-    const apiUrl = "https://api.tavily.com/search";
-    const apiKey = runtime.getSetting("TAVILY_API_KEY");
-
     try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                api_key: apiKey,
-                query,
-                include_answer: true,
-                max_results: 3, // 5 (default)
-                topic: "general", // "general"(default) "news"
-                search_depth: "basic", // "basic"(default) "advanced"
-                include_images: false, // false (default) true
-            }),
-        });
-
-        if (!response.ok) {
-            throw new elizaLogger.error(
-                `HTTP error! status: ${response.status}`
-            );
+        const apiKey = runtime.getSetting("TAVILY_API_KEY") as string;
+        if (!apiKey) {
+            throw new Error("TAVILY_API_KEY is not set");
         }
-
-        const data: SearchResponse = await response.json();
-        return data;
+        const tvly = tavily({ apiKey });
+        const response = await tvly.search(query, {
+            includeAnswer: true,
+            maxResults: 3, // 5 (default)
+            topic: "general", // "general"(default) "news"
+            searchDepth: "basic", // "basic"(default) "advanced"
+            includeImages: false, // false (default) true
+        });
+        return response;
     } catch (error) {
         elizaLogger.error("Error:", error);
     }
@@ -1399,6 +1403,7 @@ interface ModelSettings {
     frequencyPenalty: number;
     presencePenalty: number;
     stop?: string[];
+    experimental_telemetry?: TelemetrySettings;
 }
 
 /**
@@ -1437,6 +1442,7 @@ export const generateObject = async ({
     const presence_penalty = models[provider].settings.presence_penalty;
     const max_context_length = models[provider].settings.maxInputTokens;
     const max_response_length = models[provider].settings.maxOutputTokens;
+    const experimental_telemetry = models[provider].settings.experimental_telemetry;
     const apiKey = runtime.token;
 
     try {
@@ -1449,6 +1455,7 @@ export const generateObject = async ({
             frequencyPenalty: frequency_penalty,
             presencePenalty: presence_penalty,
             stop: stop || models[provider].settings.stop,
+            experimental_telemetry: experimental_telemetry,
         };
 
         const response = await handleProvider({
