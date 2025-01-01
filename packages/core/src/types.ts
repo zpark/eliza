@@ -687,6 +687,10 @@ export type Character = {
     /** Image model provider to use, if different from modelProvider */
     imageModelProvider?: ModelProviderName;
 
+
+    /** Image Vision model provider to use, if different from modelProvider */
+    imageVisionModelProvider?: ModelProviderName;
+
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
 
