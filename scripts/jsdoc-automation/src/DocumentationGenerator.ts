@@ -4,7 +4,6 @@ import { JsDocAnalyzer } from './JsDocAnalyzer.js';
 import { JsDocGenerator } from './JsDocGenerator.js';
 import type { TSESTree } from '@typescript-eslint/types';
 import { ASTQueueItem, EnvUsage, FullModeFileChange, PrModeFileChange, TodoItem } from './types/index.js';
-import { ASTQueueItem, EnvUsage, FullModeFileChange, PrModeFileChange, TodoItem } from './types/index.js';
 import { GitManager } from './GitManager.js';
 import fs from 'fs';
 import { Configuration } from './Configuration.js';
@@ -22,7 +21,6 @@ export class DocumentationGenerator {
     public existingJsDocQueue: ASTQueueItem[] = [];
     private hasChanges: boolean = false;
     private fileContents: Map<string, string> = new Map();
-    public branchName: string = '';
     public branchName: string = '';
     private fileOffsets: Map<string, number> = new Map();
     private typeScriptFiles: string[] = [];
@@ -59,7 +57,6 @@ export class DocumentationGenerator {
      * @param pullNumber - Optional. The pull request number to generate JSDoc comments for.
      * @returns A promise that resolves once the JSDoc generation process is completed.
      */
-    public async generate(pullNumber?: number): Promise<{ documentedItems: ASTQueueItem[], branchName: string | undefined }> {
     public async generate(pullNumber?: number): Promise<{ documentedItems: ASTQueueItem[], branchName: string | undefined }> {
         let fileChanges: PrModeFileChange[] | FullModeFileChange[] = [];
         this.fileOffsets.clear();
@@ -419,31 +416,4 @@ export class DocumentationGenerator {
 
         return { todoItems, envUsages };
     }
-
-
-     /**
-     * Analyzes TODOs and environment variables in the code
-     */
-     public async analyzeCodebase(): Promise<{ todoItems: TodoItem[], envUsages: EnvUsage[] }> {
-        const todoItems: TodoItem[] = [];
-        const envUsages: EnvUsage[] = [];
-
-        for (const filePath of this.typeScriptFiles) {
-            const ast = this.typeScriptParser.parse(filePath);
-            if (!ast) continue;
-
-            const sourceCode = fs.readFileSync(filePath, 'utf-8');
-
-            // Find TODOs
-            this.jsDocAnalyzer.findTodoComments(ast, ast.comments || [], sourceCode);
-            todoItems.push(...this.jsDocAnalyzer.todoItems);
-
-            // Find env usages
-            this.jsDocAnalyzer.findEnvUsages(ast, sourceCode);
-            envUsages.push(...this.jsDocAnalyzer.envUsages);
-        }
-
-        return { todoItems, envUsages };
-    }
-
 }

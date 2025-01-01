@@ -32,6 +32,8 @@ export class JSDocValidator {
         if (this.isValidTypeScript(codeWithFixedComment)) {
             console.log(`✓ JSDoc comment in ${fileName} was fixed using regex patterns`);
             return fixedComment;
+        } else {
+            console.log(`❌JSDoc comment in ${fileName} regex patterns failed, making AI call for help`);
         }
 
         // If still invalid, try regenerating with AI

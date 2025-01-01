@@ -159,8 +159,6 @@ export class JsDocAnalyzer {
     public missingJsDocNodes: TSESTree.Node[] = [];
     public todoItems: TodoItem[] = [];
     public envUsages: EnvUsage[] = [];
-    public todoItems: TodoItem[] = [];
-    public envUsages: EnvUsage[] = [];
 
     /**
      * Constructor for initializing a new instance.

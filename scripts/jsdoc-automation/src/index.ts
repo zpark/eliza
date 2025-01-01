@@ -7,7 +7,6 @@ import { Configuration } from './Configuration.js';
 import { AIService } from './AIService.js';
 import { GitManager } from './GitManager.js';
 import { PluginDocumentationGenerator } from './PluginDocumentationGenerator.js';
-import { PluginDocumentationGenerator } from './PluginDocumentationGenerator.js';
 
 /**
  * Main function for generating documentation.
