@@ -24,7 +24,7 @@ jobs:
                   node-version: "23"
                   cache: "pnpm"
 
-            - name: Clean up
+            - name: Clean up 
               run: pnpm clean
 
             - name: Install dependencies
