@@ -147,6 +147,9 @@ importers:
       '@elizaos/plugin-aptos':
         specifier: workspace:*
         version: link:../packages/plugin-aptos
+      '@elizaos/plugin-avalanche':
+        specifier: workspace:*
+        version: link:../packages/plugin-avalanche
       '@elizaos/plugin-bootstrap':
         specifier: workspace:*
         version: link:../packages/plugin-bootstrap
@@ -168,6 +171,9 @@ importers:
       '@elizaos/plugin-fuel':
         specifier: workspace:*
         version: link:../packages/plugin-fuel
+      '@elizaos/plugin-gitbook':
+        specifier: workspace:*
+        version: link:../packages/plugin-gitbook
       '@elizaos/plugin-goat':
         specifier: workspace:*
         version: link:../packages/plugin-goat
@@ -867,6 +873,9 @@ importers:
       '@solana/web3.js':
         specifier: 1.95.8
         version: 1.95.8(bufferutil@4.0.8)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@tavily/core':
+        specifier: ^0.0.2
+        version: 0.0.2
       '@types/fluent-ffmpeg':
         specifier: 2.1.27
         version: 2.1.27
@@ -1028,6 +1037,22 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
 
+  packages/plugin-avalanche:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      viem:
+        specifier: 2.21.49
+        version: 2.21.49(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
+    devDependencies:
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.6.1)
+
   packages/plugin-bootstrap:
     dependencies:
       '@elizaos/core':
@@ -1112,6 +1137,9 @@ importers:
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
+      '@elizaos/plugin-tee':
+        specifier: workspace:*
+        version: link:../plugin-tee
       '@lifi/data-types':
         specifier: 5.15.5
         version: 5.15.5
@@ -1222,6 +1250,15 @@ importers:
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
+
+  packages/plugin-gitbook:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.6.1)
 
   packages/plugin-goat:
     dependencies:
@@ -7565,6 +7602,9 @@ packages:
     resolution: {integrity: sha512-SBzV27XAeCRBOQ8QcC94w2H1Md0+LI0gTWwc3qRJoaGuewKn5FNW4LSqwPFJZVEItfhMfGT7RpZuSFXjTi12pQ==}
     peerDependencies:
       react: ^18 || ^19
+
+  '@tavily/core@0.0.2':
+    resolution: {integrity: sha512-UabYbp57bdjEloA4efW9zTSzv+FZp13JVDHcfutUNR5XUZ+aDGupe2wpfABECnD+b7Ojp9v9zguZcm1o+h0//w==}
 
   '@telegraf/types@7.1.0':
     resolution: {integrity: sha512-kGevOIbpMcIlCDeorKGpwZmdH7kHbqlk/Yj6dEpJMKEQw5lk0KVQY0OLXaCswy8GqlIVLd5625OB+rAntP9xVw==}
@@ -18811,6 +18851,14 @@ packages:
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
 
+  viem@2.21.49:
+    resolution: {integrity: sha512-NNItYfTv4+yGE5DDKc+S/g2S7KeJn047GwgEYG60FAJlK0FzwuP6lQKSeQ8k7Y4VasfuKPqiT+XiilcCtTRiDQ==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   viem@2.21.53:
     resolution: {integrity: sha512-0pY8clBacAwzc59iV1vY4a6U4xvRlA5tAuhClJCKvqA6rXJzmNMMvxQ0EG79lkHr7WtBEruXz8nAmONXwnq4EQ==}
     peerDependencies:
@@ -28004,6 +28052,13 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.60.6
       react: 18.3.1
+
+  '@tavily/core@0.0.2':
+    dependencies:
+      axios: 1.7.9(debug@4.4.0)
+      js-tiktoken: 1.0.15
+    transitivePeerDependencies:
+      - debug
 
   '@telegraf/types@7.1.0': {}
 
@@ -42569,6 +42624,24 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
+
+  viem@2.21.49(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8):
+    dependencies:
+      '@noble/curves': 1.6.0
+      '@noble/hashes': 1.5.0
+      '@scure/bip32': 1.5.0
+      '@scure/bip39': 1.4.0
+      abitype: 1.0.6(typescript@5.6.3)(zod@3.23.8)
+      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      ox: 0.1.2(typescript@5.6.3)(zod@3.23.8)
+      webauthn-p256: 0.0.10
+      ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+    optionalDependencies:
+      typescript: 5.6.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
 
   viem@2.21.53(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8):
     dependencies:

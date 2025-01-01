@@ -60,6 +60,7 @@ import { tonPlugin } from "@elizaos/plugin-ton";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
+import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -441,14 +442,14 @@ export async function initializeClients(
 
     function determineClientType(client: Client): string {
         // Check if client has a direct type identifier
-        if ('type' in client) {
+        if ("type" in client) {
             return (client as any).type;
         }
 
         // Check constructor name
         const constructorName = client.constructor?.name;
-        if (constructorName && !constructorName.includes('Object')) {
-            return constructorName.toLowerCase().replace('client', '');
+        if (constructorName && !constructorName.includes("Object")) {
+            return constructorName.toLowerCase().replace("client", "");
         }
 
         // Fallback: Generate a unique identifier
@@ -461,7 +462,9 @@ export async function initializeClients(
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
                     const clientType = determineClientType(client);
-                    elizaLogger.debug(`Initializing client of type: ${clientType}`);
+                    elizaLogger.debug(
+                        `Initializing client of type: ${clientType}`
+                    );
                     clients[clientType] = startedClient;
                 }
             }
@@ -594,6 +597,9 @@ export async function createAgent(
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
             getSecret(character, "FUEL_PRIVATE_KEY") ? fuelPlugin : null,
+            getSecret(character, "AVALANCHE_PRIVATE_KEY")
+                ? avalanchePlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
