@@ -784,6 +784,7 @@ export type Character = {
             solana?: any[];
             [key: string]: any[];
         };
+        transcription?: TranscriptionProvider;
     };
 
     /** Optional client-specific config */
@@ -1325,4 +1326,10 @@ export interface ISlackService extends Service {
 export enum TokenizerType {
     Auto = "auto",
     TikToken = "tiktoken",
+}
+  
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
 }
