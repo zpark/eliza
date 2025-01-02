@@ -183,16 +183,23 @@ export class CosmosWalletProvider implements Provider {
                 const balances = await chainData.wallet.getWalletBalances();
 
                 const convertedCoinsToDisplayDenom = balances.map((balance) => {
-                    const symbol = getSymbolByDenom(assets, balance.denom);
+                    let symbol = "";
 
-                    const amountInDisplayUnit = convertBaseUnitToDisplayUnit(
-                        assets,
-                        symbol,
-                        balance.amount
-                    );
+                    try {
+                        symbol = getSymbolByDenom(assets, balance.denom);
+                    } catch {
+                        symbol = balance.denom;
+                    }
 
                     return {
-                        amount: amountInDisplayUnit,
+                        amount:
+                            balance.denom === symbol
+                                ? balance.amount
+                                : convertBaseUnitToDisplayUnit(
+                                      assets,
+                                      symbol,
+                                      balance.amount
+                                  ),
                         symbol,
                     };
                 });
