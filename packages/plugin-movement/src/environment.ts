@@ -15,11 +15,9 @@ export async function validateMovementConfig(
         const config = {
             MOVEMENT_PRIVATE_KEY:
                 runtime.getSetting("MOVEMENT_PRIVATE_KEY") ||
-                runtime.getSetting("APTOS_PRIVATE_KEY") ||  // Fallback for compatibility
                 process.env.MOVEMENT_PRIVATE_KEY,
             MOVEMENT_NETWORK:
                 runtime.getSetting("MOVEMENT_NETWORK") ||
-                runtime.getSetting("APTOS_NETWORK")?.replace("movement_", "") ||  // Handle movement_bardock -> bardock
                 process.env.MOVEMENT_NETWORK ||
                 "bardock",
         };

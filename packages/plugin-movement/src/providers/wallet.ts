@@ -17,8 +17,7 @@ import {
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
 import * as path from "path";
-import { APT_DECIMALS, MOVEMENT_NETWORK } from "../constants";
-import { isMovementNetwork, getMovementNetworkType } from "../utils";
+import { MOVE_DECIMALS, MOVEMENT_NETWORK_CONFIG } from "../constants";
 
 // Provider configuration
 const PROVIDER_CONFIG = {
@@ -28,16 +27,16 @@ const PROVIDER_CONFIG = {
 
 interface WalletPortfolio {
     totalUsd: string;
-    totalApt: string;
+    totalMove: string;
 }
 
 interface Prices {
-    apt: { usd: string };
+    move: { usd: string };
 }
 
 export class WalletProvider {
     private cache: NodeCache;
-    private cacheKey: string = "aptos/wallet";
+    private cacheKey: string = "movement/wallet";
 
     constructor(
         private aptosClient: Aptos,
@@ -91,10 +90,10 @@ export class WalletProvider {
 
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
             try {
-                const cellanaAptUsdcPoolAddr =
-                    "0x234f0be57d6acfb2f0f19c17053617311a8d03c9ce358bdf9cd5c460e4a02b7c";
+                const MoveUsdcPoolAddr =
+                    "0xA04d13F092f68F603A193832222898B0d9f52c71";
                 const response = await fetch(
-                    `https://api.dexscreener.com/latest/dex/pairs/aptos/${cellanaAptUsdcPoolAddr}`
+                    `https://api.dexscreener.com/latest/dex/pairs/ethereum/${MoveUsdcPoolAddr}`
                 );
 
                 if (!response.ok) {
@@ -137,26 +136,26 @@ export class WalletProvider {
             console.log("Cache miss for fetchPortfolioValue");
 
             const prices = await this.fetchPrices().catch((error) => {
-                console.error("Error fetching APT price:", error);
+                console.error("Error fetching Move price:", error);
                 throw error;
             });
-            const aptAmountOnChain = await this.aptosClient
+            const moveAmountOnChain = await this.aptosClient
                 .getAccountAPTAmount({
                     accountAddress: this.address,
                 })
                 .catch((error) => {
-                    console.error("Error fetching APT amount:", error);
+                    console.error("Error fetching Move amount:", error);
                     throw error;
                 });
 
-            const aptAmount = new BigNumber(aptAmountOnChain).div(
-                new BigNumber(10).pow(APT_DECIMALS)
+            const moveAmount = new BigNumber(moveAmountOnChain).div(
+                new BigNumber(10).pow(MOVE_DECIMALS)
             );
-            const totalUsd = new BigNumber(aptAmount).times(prices.apt.usd);
+            const totalUsd = new BigNumber(moveAmount).times(prices.move.usd);
 
             const portfolio = {
                 totalUsd: totalUsd.toString(),
-                totalApt: aptAmount.toString(),
+                totalMove: moveAmount.toString(),
             };
             this.setCachedData(cacheKey, portfolio);
             console.log("Fetched portfolio:", portfolio);
@@ -178,14 +177,14 @@ export class WalletProvider {
             }
             console.log("Cache miss for fetchPrices");
 
-            const aptPriceData = await this.fetchPricesWithRetry().catch(
+            const movePriceData = await this.fetchPricesWithRetry().catch(
                 (error) => {
-                    console.error("Error fetching APT price:", error);
+                    console.error("Error fetching Move price:", error);
                     throw error;
                 }
             );
             const prices: Prices = {
-                apt: { usd: aptPriceData.pair.priceUsd },
+                move: { usd: movePriceData.pair.priceUsd },
             };
             this.setCachedData(cacheKey, prices);
             return prices;
@@ -200,9 +199,9 @@ export class WalletProvider {
         output += `Wallet Address: ${this.address}\n`;
 
         const totalUsdFormatted = new BigNumber(portfolio.totalUsd).toFixed(2);
-        const totalAptFormatted = new BigNumber(portfolio.totalApt).toFixed(4);
+        const totalMoveFormatted = new BigNumber(portfolio.totalMove).toFixed(4);
 
-        output += `Total Value: $${totalUsdFormatted} (${totalAptFormatted} APT)\n`;
+        output += `Total Value: $${totalUsdFormatted} (${totalMoveFormatted} Move)\n`;
 
         return output;
     }
@@ -224,8 +223,8 @@ const walletProvider: Provider = {
         _message: Memory,
         _state?: State
     ): Promise<string | null> => {
-        const privateKey = runtime.getSetting("APTOS_PRIVATE_KEY");
-        const aptosAccount = Account.fromPrivateKey({
+        const privateKey = runtime.getSetting("MOVEMENT_PRIVATE_KEY");
+        const movementAccount = Account.fromPrivateKey({
             privateKey: new Ed25519PrivateKey(
                 PrivateKey.formatPrivateKey(
                     privateKey,
@@ -233,25 +232,18 @@ const walletProvider: Provider = {
                 )
             ),
         });
-        const network = runtime.getSetting("APTOS_NETWORK") as Network;
+        const network = runtime.getSetting("MOVEMENT_NETWORK") as Network;
 
         try {
-            console.log("Network:", network);
             const aptosClient = new Aptos(
-                new AptosConfig(
-                    isMovementNetwork(network)
-                        ? {
-                            network: Network.CUSTOM,
-                            fullnode: MOVEMENT_NETWORK[getMovementNetworkType(network)].fullnode
-                          }
-                        : {
-                            network
-                          }
-                )
+                new AptosConfig({
+                    network: Network.CUSTOM,
+                    fullnode: MOVEMENT_NETWORK_CONFIG[network].fullnode
+                })
             );
             const provider = new WalletProvider(
                 aptosClient,
-                aptosAccount.accountAddress.toStringLong(),
+                movementAccount.accountAddress.toStringLong(),
                 runtime.cacheManager
             );
             return await provider.getFormattedPortfolio(runtime);

@@ -21,6 +21,7 @@ import {
     PrivateKeyVariants,
 } from "@aptos-labs/ts-sdk";
 import { walletProvider } from "../providers/wallet";
+import { MOVEMENT_NETWORK_CONFIG, MOVE_DECIMALS, MOVEMENT_EXPLORER_URL } from "../constants";
 
 export interface TransferContent extends Content {
     recipient: string;
@@ -28,7 +29,7 @@ export interface TransferContent extends Content {
 }
 
 function isTransferContent(content: any): content is TransferContent {
-    console.log("Content for transfer", content);
+    elizaLogger.debug("Validating transfer content:", content);
     return (
         typeof content.recipient === "string" &&
         (typeof content.amount === "string" ||
@@ -36,55 +37,62 @@ function isTransferContent(content: any): content is TransferContent {
     );
 }
 
-const transferTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const transferTemplate = `You are processing a token transfer request. Extract the recipient address and amount from the message.
 
+Example request: "can you send 1 move to 0x123..."
 Example response:
 \`\`\`json
 {
-    "recipient": "0x2badda48c062e861ef17a96a806c451fd296a49f45b272dee17f85b0e32663fd",
-    "amount": "1000"
+    "recipient": "0x123...",
+    "amount": "1"
 }
 \`\`\`
 
+Rules:
+1. The recipient address always starts with "0x"
+2. The amount is typically a number less than 100
+3. Return exact values found in the message
+
+Recent messages:
 {{recentMessages}}
 
-Given the recent messages, extract the following information about the requested token transfer:
-- Recipient wallet address
-- Amount to transfer
+Extract and return ONLY the following in a JSON block:
+- recipient: The wallet address starting with 0x
+- amount: The number of tokens to send
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Return ONLY the JSON block with these two fields.`;
 
 export default {
-    name: "SEND_TOKEN",
+    name: "TRANSFER_MOVE",
     similes: [
+        "SEND_TOKEN",
         "TRANSFER_TOKEN",
         "TRANSFER_TOKENS",
         "SEND_TOKENS",
-        "SEND_APT",
+        "SEND_MOVE",
         "PAY",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating apt transfer from user:", message.userId);
-        //add custom validate logic here
-        /*
-            const adminIds = runtime.getSetting("ADMIN_USER_IDS")?.split(",") || [];
-            //console.log("Admin IDs from settings:", adminIds);
-
-            const isAdmin = adminIds.includes(message.userId);
-
-            if (isAdmin) {
-                //console.log(`Authorized transfer from user: ${message.userId}`);
-                return true;
-            }
-            else
-            {
-                //console.log(`Unauthorized transfer attempt from user: ${message.userId}`);
-                return false;
-            }
-            */
-        return false;
+    triggers: [
+        "send move",
+        "send 1 move",
+        "transfer move",
+        "send token",
+        "transfer token",
+        "can you send",
+        "please send",
+        "send"
+    ],
+    shouldHandle: (message: Memory) => {
+        const text = message.content?.text?.toLowerCase() || "";
+        return text.includes("send") && text.includes("move") && text.includes("0x");
     },
-    description: "Transfer tokens from the agent's wallet to another address",
+    validate: async (runtime: IAgentRuntime, message: Memory) => {
+        elizaLogger.debug("Starting transfer validation for user:", message.userId);
+        elizaLogger.debug("Message text:", message.content?.text);
+        return true; // Let the handler do the validation
+    },
+    priority: 1000, // High priority for transfer actions
+    description: "Transfer Move tokens from the agent's wallet to another address",
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -92,46 +100,22 @@ export default {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting SEND_TOKEN handler...");
-
-        const walletInfo = await walletProvider.get(runtime, message, state);
-        state.walletInfo = walletInfo;
-
-        // Initialize or update state
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
-        } else {
-            state = await runtime.updateRecentMessageState(state);
-        }
-
-        // Compose transfer context
-        const transferContext = composeContext({
-            state,
-            template: transferTemplate,
+        elizaLogger.debug("Starting TRANSFER_MOVE handler...");
+        elizaLogger.debug("Message:", {
+            text: message.content?.text,
+            userId: message.userId,
+            action: message.content?.action
         });
-
-        // Generate transfer content
-        const content = await generateObjectDeprecated({
-            runtime,
-            context: transferContext,
-            modelClass: ModelClass.SMALL,
-        });
-
-        // Validate transfer content
-        if (!isTransferContent(content)) {
-            console.error("Invalid content for TRANSFER_TOKEN action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process transfer request. Invalid content provided.",
-                    content: { error: "Invalid transfer content" },
-                });
-            }
-            return false;
-        }
 
         try {
-            const privateKey = runtime.getSetting("APTOS_PRIVATE_KEY");
-            const aptosAccount = Account.fromPrivateKey({
+            const privateKey = runtime.getSetting("MOVEMENT_PRIVATE_KEY");
+            elizaLogger.debug("Got private key:", privateKey ? "Present" : "Missing");
+
+            const network = runtime.getSetting("MOVEMENT_NETWORK");
+            elizaLogger.debug("Network config:", network);
+            elizaLogger.debug("Available networks:", Object.keys(MOVEMENT_NETWORK_CONFIG));
+
+            const movementAccount = Account.fromPrivateKey({
                 privateKey: new Ed25519PrivateKey(
                     PrivateKey.formatPrivateKey(
                         privateKey,
@@ -139,23 +123,60 @@ export default {
                     )
                 ),
             });
-            const network = runtime.getSetting("APTOS_NETWORK") as Network;
+            elizaLogger.debug("Created Movement account:", movementAccount.accountAddress.toStringLong());
+
             const aptosClient = new Aptos(
                 new AptosConfig({
-                    network,
+                    network: Network.CUSTOM,
+                    fullnode: MOVEMENT_NETWORK_CONFIG[network].fullnode
                 })
             );
+            elizaLogger.debug("Created Aptos client with network:", MOVEMENT_NETWORK_CONFIG[network].fullnode);
 
-            const APT_DECIMALS = 8;
+            const walletInfo = await walletProvider.get(runtime, message, state);
+            state.walletInfo = walletInfo;
+
+            // Initialize or update state
+            if (!state) {
+                state = (await runtime.composeState(message)) as State;
+            } else {
+                state = await runtime.updateRecentMessageState(state);
+            }
+
+            // Compose transfer context
+            const transferContext = composeContext({
+                state,
+                template: transferTemplate,
+            });
+
+            // Generate transfer content
+            const content = await generateObjectDeprecated({
+                runtime,
+                context: transferContext,
+                modelClass: ModelClass.SMALL,
+            });
+
+            // Validate transfer content
+            if (!isTransferContent(content)) {
+                console.error("Invalid content for TRANSFER_TOKEN action.");
+                if (callback) {
+                    callback({
+                        text: "Unable to process transfer request. Invalid content provided.",
+                        content: { error: "Invalid transfer content" },
+                    });
+                }
+                return false;
+            }
+
             const adjustedAmount = BigInt(
-                Number(content.amount) * Math.pow(10, APT_DECIMALS)
+                Number(content.amount) * Math.pow(10, MOVE_DECIMALS)
             );
             console.log(
                 `Transferring: ${content.amount} tokens (${adjustedAmount} base units)`
             );
 
             const tx = await aptosClient.transaction.build.simple({
-                sender: aptosAccount.accountAddress.toStringLong(),
+                sender: movementAccount.accountAddress.toStringLong(),
                 data: {
                     function: "0x1::aptos_account::transfer",
                     typeArguments: [],
@@ -164,23 +185,30 @@ export default {
             });
             const committedTransaction =
                 await aptosClient.signAndSubmitTransaction({
-                    signer: aptosAccount,
+                    signer: movementAccount,
                     transaction: tx,
                 });
             const executedTransaction = await aptosClient.waitForTransaction({
                 transactionHash: committedTransaction.hash,
             });
 
-            console.log("Transfer successful:", executedTransaction.hash);
+            const explorerUrl = `${MOVEMENT_EXPLORER_URL}/${executedTransaction.hash}?network=${MOVEMENT_NETWORK_CONFIG[network].explorerNetwork}`;
+            elizaLogger.debug("Transfer successful:", {
+                hash: executedTransaction.hash,
+                amount: content.amount,
+                recipient: content.recipient,
+                explorerUrl
+            });
 
             if (callback) {
                 callback({
-                    text: `Successfully transferred ${content.amount} APT to ${content.recipient}, Transaction: ${executedTransaction.hash}`,
+                    text: `Successfully transferred ${content.amount} MOVE to ${content.recipient}\nTransaction: ${executedTransaction.hash}\nView on Explorer: ${explorerUrl}`,
                     content: {
                         success: true,
                         hash: executedTransaction.hash,
                         amount: content.amount,
                         recipient: content.recipient,
+                        explorerUrl
                     },
                 });
             }
@@ -203,22 +231,31 @@ export default {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Send 69 APT tokens to 0x4f2e63be8e7fe287836e29cde6f3d5cbc96eefd0c0e3f3747668faa2ae7324b0",
+                    text: "can you send 1 move to 0xa07ab7d3739dc793f9d538f7d7163705176ba59f7a8c994a07357a3a7d97d843",
                 },
             },
             {
                 user: "{{user2}}",
                 content: {
-                    text: "I'll send 69 APT tokens now...",
-                    action: "SEND_TOKEN",
-                },
-            },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "Successfully sent 69 APT tokens to 0x4f2e63be8e7fe287836e29cde6f3d5cbc96eefd0c0e3f3747668faa2ae7324b0, Transaction: 0x39a8c432d9bdad993a33cc1faf2e9b58fb7dd940c0425f1d6db3997e4b4b05c0",
+                    text: "I'll help you transfer 1 Move token...",
+                    action: "TRANSFER_MOVE",
                 },
             },
         ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "send 1 move to 0xa07ab7d3739dc793f9d538f7d7163705176ba59f7a8c994a07357a3a7d97d843",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "Processing Move token transfer...",
+                    action: "TRANSFER_MOVE",
+                },
+            },
+        ]
     ] as ActionExample[][],
 } as Action;
