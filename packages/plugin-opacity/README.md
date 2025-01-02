@@ -13,13 +13,14 @@ pnpm add @elizaos/adapter-opacity
 Add the following environment variables to your `.env` file:
 
 ```env
-OPACITY_TEAM_ID=f309
+OPACITY_TEAM_ID=f309ac8ae8a9a14a7e62cd1a521b1c5f
 OPACITY_CLOUDFLARE_NAME=eigen-test
 OPACITY_PROVER_URL=https://opacity-ai-zktls-demo.vercel.app
 # Verifiable Inference Configuration
-VERIFIABLE_INFERENCE_ENABLED=false # Set to true to enable verifiable inference
+VERIFIABLE_INFERENCE_ENABLED=true # Set to true to enable verifiable inference
 VERIFIABLE_INFERENCE_PROVIDER=opacity # Options: opacity
 ```
+(make sure to VERIFIABLE_INFERENCE_ENABLED to true!)
 
 ## Usage
 
