@@ -187,22 +187,22 @@ export class ImageDescriptionService
     ): Promise<string> {
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
-                const shouldUseBase64 = isGif || isLocalFile;
+                const shouldUseBase64 = (isGif || isLocalFile)&& !(this.runtime.imageModelProvider === ModelProviderName.OPENAI);
                 const mimeType = isGif
                     ? "png"
                     : path.extname(imageUrl).slice(1) || "jpeg";
 
                 const base64Data = imageData.toString("base64");
-                //const imageUrlToUse = shouldUseBase64
-                  //  ? `data:image/${mimeType};base64,${base64Data}`
-                    //: imageUrl;
+                const imageUrlToUse = shouldUseBase64
+                    ? `data:image/${mimeType};base64,${base64Data}`
+                    : imageUrl;
 
                 const content = [
                     { type: "text", text: prompt },
                     {
                         type: "image_url",
                         image_url: {
-                            url: imageUrl,
+                            url: imageUrlToUse,
                         },
                     },
                 ];
