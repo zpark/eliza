@@ -13,7 +13,6 @@ function getSources(metadata, sourceCode) {
     const keys = Object.keys(metadata.sources);
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
-        console.log(key, fileName);
         if (key !== fileName) {
             obj[key] = {
                 content: loadOpenZeppelinFile(key),
@@ -28,8 +27,8 @@ export async function verifyEVMContract({
     sourceCode,
     metadata,
     constructorArgs = "",
+                                            apiEndpoint
 }) {
-    const apiEndpoint = "https://hal-explorer.alienxchain.io/api";
     const verificationData = {
         module: "contract",
         action: "verifysourcecode",
@@ -66,7 +65,6 @@ export async function verifyEVMContract({
                         guid: guid,
                     },
                 });
-                console.log(111, statusResponse.data);
                 return statusResponse.data;
             };
 

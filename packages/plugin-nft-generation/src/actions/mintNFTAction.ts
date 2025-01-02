@@ -16,9 +16,16 @@ import WalletSolana from "../provider/wallet/walletSolana.ts";
 import { PublicKey } from "@solana/web3.js";
 import { mintNFTTemplate } from "../templates.ts";
 import { MintNFTContent, MintNFTSchema } from "../types.ts";
+import * as viemChains from "viem/chains";
+import { createPublicClient, createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { mintNFT } from "../utils/deployEVMContract.ts";
+const _SupportedChainList = Object.keys(viemChains) as Array<
+    keyof typeof viemChains
+>;
 
 function isMintNFTContent(content: any): content is MintNFTContent {
-    return typeof content.collectionAddress === "string";
+    return typeof content.collectionAddress === "string" && typeof content.collectionAddress === "string";
 }
 
 const mintNFTAction: Action = {
@@ -72,19 +79,35 @@ const mintNFTAction: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
 
-            // Compose transfer context
-            const transferContext = composeContext({
+            const context = composeContext({
                 state,
                 template: mintNFTTemplate,
             });
 
+            const chains = _SupportedChainList;
+
+            const supportedChains: (
+                | (typeof chains)[number]
+                | "solana"
+                | null
+                )[] = [...chains, "solana", null];
+            const contextWithChains = context.replace(
+                "SUPPORTED_CHAINS",
+                supportedChains
+                    .map((item) => (item ? `"${item}"` : item))
+                    .join("|")
+            );
+
             const res = await generateObject({
                 runtime,
-                context: transferContext,
+                context: contextWithChains,
                 modelClass: ModelClass.LARGE,
                 schema: MintNFTSchema,
             });
-            const content = res.object;
+            const content = res.object as {
+                collectionAddress: string,
+                chainName: (typeof supportedChains)[number];
+            };
 
             elizaLogger.log("Generate Object:", content);
 
@@ -99,63 +122,111 @@ const mintNFTAction: Action = {
                 return false;
             }
 
+            if (content?.chainName === "solana") {
+                const publicKey = runtime.getSetting("SOLANA_PUBLIC_KEY");
+                const privateKey = runtime.getSetting("SOLANA_PRIVATE_KEY");
 
-            const publicKey = runtime.getSetting("SOLANA_PUBLIC_KEY");
-            const privateKey = runtime.getSetting("SOLANA_PRIVATE_KEY");
+                const wallet = new WalletSolana(
+                    new PublicKey(publicKey),
+                    privateKey
+                );
 
-            const wallet = new WalletSolana(
-                new PublicKey(publicKey),
-                privateKey
-            );
-
-            const collectionInfo = await wallet.fetchDigitalAsset(
-                content.collectionAddress
-            );
-            elizaLogger.log("Collection Info", collectionInfo);
-            const metadata = collectionInfo.metadata;
-            if (metadata.collection?.["value"]) {
-                callback({
-                    text: `Unable to process mint request. Invalid collection address ${content.collectionAddress}.`,
-                    content: { error: "Invalid collection address." },
-                });
-                return false;
-            }
-            if (metadata) {
-                const nftRes = await createNFT({
-                    runtime,
-                    collectionName: metadata.name,
-                    collectionAddress: content.collectionAddress,
-                    collectionAdminPublicKey: metadata.updateAuthority,
-                    collectionFee: metadata.sellerFeeBasisPoints,
-                    tokenId: 1,
-                });
-
-                elizaLogger.log("NFT Address:", nftRes);
-
-                if (nftRes) {
+                const collectionInfo = await wallet.fetchDigitalAsset(
+                    content.collectionAddress
+                );
+                elizaLogger.log("Collection Info", collectionInfo);
+                const metadata = collectionInfo.metadata;
+                if (metadata.collection?.["value"]) {
                     callback({
-                        text: `Congratulations to you! 🎉🎉🎉 \nCollection Address: ${content.collectionAddress}\n NFT Address: ${nftRes.address}\n NFT Link: ${nftRes.link}`, //caption.description,
-                        attachments: [],
-                    });
-                    await sleep(15000);
-                    await verifyNFT({
-                        runtime,
-                        collectionAddress: content.collectionAddress,
-                        NFTAddress: nftRes.address,
-                    });
-                } else {
-                    callback({
-                        text: `Mint NFT Error in ${content.collectionAddress}.`,
-                        content: { error: "Mint NFT Error." },
+                        text: `Unable to process mint request. Invalid collection address ${content.collectionAddress}.`,
+                        content: { error: "Invalid collection address." },
                     });
                     return false;
                 }
-            } else {
-                callback({
-                    text: "Unable to process mint request. Invalid collection address.",
-                    content: { error: "Invalid collection address." },
+                if (metadata) {
+                    const nftRes = await createNFT({
+                        runtime,
+                        collectionName: metadata.name,
+                        collectionAddress: content.collectionAddress,
+                        collectionAdminPublicKey: metadata.updateAuthority,
+                        collectionFee: metadata.sellerFeeBasisPoints,
+                        tokenId: 1,
+                    });
+
+                    elizaLogger.log("NFT Address:", nftRes);
+
+                    if (nftRes) {
+                        callback({
+                            text: `Congratulations to you! 🎉🎉🎉 \nCollection Address: ${content.collectionAddress}\n NFT Address: ${nftRes.address}\n NFT Link: ${nftRes.link}`, //caption.description,
+                            attachments: [],
+                        });
+                        await sleep(15000);
+                        await verifyNFT({
+                            runtime,
+                            collectionAddress: content.collectionAddress,
+                            NFTAddress: nftRes.address,
+                        });
+                    } else {
+                        callback({
+                            text: `Mint NFT Error in ${content.collectionAddress}.`,
+                            content: { error: "Mint NFT Error." },
+                        });
+                        return false;
+                    }
+                } else {
+                    callback({
+                        text: "Unable to process mint request. Invalid collection address.",
+                        content: { error: "Invalid collection address." },
+                    });
+                    return false;
+                }
+            } else if (chains.indexOf(content.chainName)) {
+                const privateKey = runtime.getSetting(
+                    "WALLET_PRIVATE_KEY"
+                ) as `0x${string}`;
+                if (!privateKey) return null;
+                const rpcUrl =
+                    viemChains[content.chainName].rpcUrls.default.http[0];
+                const chain = viemChains[content.chainName]; // 替换为目标链
+                const provider = http(rpcUrl);
+                const account = privateKeyToAccount(privateKey);
+                const walletClient = createWalletClient({
+                    account,
+                    chain: chain,
+                    transport: provider,
                 });
-                return false;
+
+                const publicClient = createPublicClient({
+                    chain: chain,
+                    transport: provider,
+                });
+                await mintNFT({
+                    walletClient,
+                    publicClient,
+                    contractAddress: content.collectionAddress,
+                    abi: [
+                        {
+                            "inputs": [
+                                {
+                                    "internalType": "address",
+                                    "name": "_to",
+                                    "type": "address"
+                                }
+                            ],
+                            "name": "mint",
+                            "outputs": [],
+                            "stateMutability": "nonpayable",
+                            "type": "function"
+                        }
+                    ],
+                    recipient: account.address,
+                })
+                if (callback) {
+                    callback({
+                        text: `Congratulations to you! 🎉🎉🎉 \nCollection Address: ${content.collectionAddress}\n `, //caption.description,
+                        attachments: [],
+                    });
+                }
             }
             return [];
         } catch (e: any) {
@@ -168,13 +239,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "mint nft for collection: D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "mint nft for collection: D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "I've minted a new NFT in your specified collection.",
+                    text: "I've minted a new NFT in your specified collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -183,13 +254,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Could you create an NFT in collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS?",
+                    text: "Could you create an NFT in collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana?",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "Successfully minted your NFT in the specified collection.",
+                    text: "Successfully minted your NFT in the specified collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -198,13 +269,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Please mint a new token in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection",
+                    text: "Please mint a new token in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "Your NFT has been minted in the collection successfully.",
+                    text: "Your NFT has been minted in the collection successfully on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -213,13 +284,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Generate NFT for D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "Generate NFT for D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "I've generated and minted your NFT in the collection.",
+                    text: "I've generated and minted your NFT in the collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -228,13 +299,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "I want to mint an NFT in collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "I want to mint an NFT in collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "Your NFT has been successfully minted in the collection.",
+                    text: "Your NFT has been successfully minted in the collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -243,13 +314,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Create a new NFT token in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection",
+                    text: "Create a new NFT token in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "The NFT has been created in your specified collection.",
+                    text: "The NFT has been created in your specified collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -258,13 +329,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Issue an NFT for collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "Issue an NFT for collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "I've issued your NFT in the requested collection.",
+                    text: "I've issued your NFT in the requested collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -273,13 +344,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Make a new NFT in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "Make a new NFT in D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "Your new NFT has been minted in the collection.",
+                    text: "Your new NFT has been minted in the collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -288,13 +359,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Can you mint an NFT for D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection?",
+                    text: "Can you mint an NFT for D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS collection on Solana?",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "I've completed minting your NFT in the collection.",
+                    text: "I've completed minting your NFT in the collection on Solana.",
                     action: "MINT_NFT",
                 },
             },
@@ -303,13 +374,13 @@ const mintNFTAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Add a new NFT to collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS",
+                    text: "Add a new NFT to collection D8j4ubQ3MKwmAqiJw83qT7KQNKjhsuoC7zJJdJa5BkvS on Solana",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
-                    text: "A new NFT has been added to your collection.",
+                    text: "A new NFT has been added to your collection on Solana.",
                     action: "MINT_NFT",
                 },
             },

@@ -24,7 +24,6 @@ import {
     generateERC721ContractCode,
 } from "../utils/deployEVMContract.ts";
 import { verifyEVMContract } from "../utils/verifyEVMContract.ts";
-// import { verifyEVMContract } from "../utils/verifyEVMContract.ts";
 
 const _SupportedChainList = Object.keys(viemChains) as Array<
     keyof typeof viemChains
@@ -101,7 +100,6 @@ const nftCollectionGeneration: Action = {
                 chainName: (typeof supportedChains)[number];
             };
 
-            console.log(111111, content);
             if (content?.chainName === "solana") {
                 const collectionInfo = await createCollectionMetadata({
                     runtime,
@@ -179,11 +177,13 @@ const nftCollectionGeneration: Action = {
                     `Deployed contract address: ${contractAddress}`
                 );
                 const constructorArgs = encodeConstructorArguments(abi, params);
+                const blockExplorers = chain.blockExplorers?.default
                 await verifyEVMContract({
                     contractAddress: contractAddress,
                     sourceCode,
                     metadata,
                     constructorArgs,
+                    apiEndpoint: (blockExplorers as typeof blockExplorers & { apiUrl?: string })?.apiUrl || `${chain.blockExplorers.default.url}/api`,
                 });
                 if (callback) {
                     callback({

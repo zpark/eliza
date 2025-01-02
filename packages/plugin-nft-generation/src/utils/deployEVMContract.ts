@@ -1,15 +1,6 @@
-import {
-    createPublicClient,
-    createWalletClient,
-    encodeAbiParameters,
-    http,
-} from "viem";
+import { encodeAbiParameters } from "viem";
 import { fileURLToPath } from "url";
-
-import { alienxHalTestnet } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
 import { compileWithImports } from "./generateERC721ContractCode.ts";
-import { verifyEVMContract } from "./verifyEVMContract.ts";
 import path from "path";
 import fs from "fs";
 
@@ -41,10 +32,9 @@ export async function deployContract({
     console.log("Deploying contract...");
 
     const txHash = await walletClient.deployContract({
-        abi: abi as any,
-        bytecode: bytecode as any,
-        args: args as any,
-        chain: undefined,
+        abi,
+        bytecode,
+        args,
     });
 
     console.log(`Deployment transaction hash: ${txHash}`);
@@ -56,7 +46,7 @@ export async function deployContract({
 }
 
 // 调用 mint 方法
-async function mintNFT({
+export async function mintNFT({
     walletClient,
     publicClient,
     contractAddress,
@@ -71,12 +61,10 @@ async function mintNFT({
 }) {
     console.log("Minting NFT...");
     const txHash = await walletClient.writeContract({
-        address: contractAddress as `0x${string}`,
-        abi: abi as any,
+        address: contractAddress,
+        abi: abi,
         functionName: "mint",
-        args: [recipient] as any,
-        chain: undefined,
-        account: undefined,
+        args: [recipient],
     });
 
     console.log(`Mint transaction hash: ${txHash}`);
@@ -93,4 +81,3 @@ export function encodeConstructorArguments(abi, args) {
 
     return argsData.slice(2);
 }
-
