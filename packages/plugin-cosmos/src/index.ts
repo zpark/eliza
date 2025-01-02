@@ -1,6 +1,6 @@
-import {cosmosWalletProvider} from "./providers/wallet.ts";
+import { transferAction } from "./actions/transfer";
 import type { Plugin } from "@ai16z/eliza";
-import { transferAction } from "./actions/transfer.ts";
+import { cosmosWalletProvider } from "./providers/wallet";
 
 export const cosmosPlugin: Plugin = {
     name: "cosmos",
