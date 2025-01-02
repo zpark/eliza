@@ -64,13 +64,11 @@ export class AIService {
     public async generatePluginDocumentation({
         existingDocs,
         packageJson,
-        readmeContent,
         todoItems,
         envUsages
     }: {
         existingDocs: ASTQueueItem[];
         packageJson: any;
-        readmeContent?: string;
         todoItems: TodoItem[];
         envUsages: EnvUsage[];
     }): Promise<PluginDocumentation & { todos: string }> {
@@ -90,11 +88,6 @@ export class AIService {
 
         // Generate documentation for evaluators
         const evaluatorsDocumentation = await this.generateEvaluatorsDocumentation(exports.evaluators);
-
-
-        // write organizedDocs into a json in /here directory
-        const jsonPath = path.join(this.configuration.absolutePath, 'here', 'organizedDocs.json');
-        fs.writeFile(jsonPath, JSON.stringify(organizedDocs, null, 2));
 
         const [overview, installation, configuration, usage, apiRef, troubleshooting, todoSection] = await Promise.all([
             this.generateOverview(organizedDocs, packageJson),
