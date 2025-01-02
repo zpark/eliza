@@ -55,7 +55,7 @@ cd eliza-starter
 cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
-Once the agent is running, You should see the message to run "pnpm start:client" at the end.
+Once the agent is running, you should see the message to run "pnpm start:client" at the end.
 Open another terminal and move to same directory and then run below command and follow the URL to chat to your agent. 
 ```bash
 pnpm start:client
@@ -86,7 +86,7 @@ Copy .env.example to .env and fill in the appropriate values.
 cp .env.example .env
 ```
 
-Note: .env is optional. If your planning to run multiple distinct agents, you can pass secrets through the character JSON
+Note: .env is optional. If you're planning to run multiple distinct agents, you can pass secrets through the character JSON
 
 ### Automatically Start Eliza
 
