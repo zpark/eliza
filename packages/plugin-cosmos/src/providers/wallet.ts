@@ -1,8 +1,9 @@
 import { IAgentRuntime, Provider } from "@ai16z/eliza";
+import { AssetList } from "@chain-registry/types";
 import { getChainByChainName } from "@chain-registry/utils";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Coin, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { chains } from "chain-registry";
+import { assets, chains } from "chain-registry";
 import { cosmos } from "interchain";
 
 type RPCQueryClient = Awaited<
@@ -126,10 +127,22 @@ export class CosmosWalletChainsData {
     public getSigningCosmWasmClient(chainName: string) {
         return this.chainsData[chainName].signingCosmWasmClient;
     }
+
+    public getAssetsList(chainName: string, customAssetList?: AssetList[]) {
+        const assetList = (customAssetList ?? assets).find(
+            (asset) => asset.chain_name === chainName
+        );
+
+        if (!assetList) {
+            throw new Error(`Assets for chain ${chainName} not found`);
+        }
+
+        return assetList;
+    }
 }
 
 export class CosmosWalletProvider implements Provider {
-    private async initWalletProvider(runtime: IAgentRuntime) {
+    private async initWalletChainsData(runtime: IAgentRuntime) {
         const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
         const availableChains = runtime.getSetting("COSMOS_AVAILABLE_CHAINS");
 
@@ -157,7 +170,7 @@ export class CosmosWalletProvider implements Provider {
         let providerContextMessage = "";
 
         try {
-            const provider = await this.initWalletProvider(runtime);
+            const provider = await this.initWalletChainsData(runtime);
 
             for (const [chainName, chainData] of Object.entries(
                 provider.chainsData

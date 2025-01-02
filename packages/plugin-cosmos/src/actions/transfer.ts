@@ -5,10 +5,8 @@ import { FeeEstimator } from "../services/fee-estimator";
 import { getNativeAssetByChainName } from "@chain-registry/utils";
 import { assets } from "chain-registry";
 import {
+    CosmosWalletChainsData,
     CosmosWalletProvider,
-    fetchChainDetails,
-    genCosmosChainsFromRuntime,
-    initWalletProvider,
 } from "../providers/wallet.ts";
 import {
     composeContext,
@@ -24,17 +22,17 @@ import { AssetList } from "@chain-registry/types";
 import { Coin } from "@cosmjs/stargate";
 
 export class TransferAction {
-    constructor(private cosmosWalletProvider: CosmosWalletProvider) {
-        this.cosmosWalletProvider = cosmosWalletProvider;
+    constructor(private cosmosChainsData: CosmosWalletChainsData) {
+        this.cosmosChainsData = cosmosChainsData;
     }
 
     async transfer(params: CosmosTransferParams): Promise<Transaction> {
         const signingCosmWasmClient =
-            await this.cosmosWalletProvider.getSigningCosmWasmClient();
+            this.cosmosChainsData.getSigningCosmWasmClient(params.fromChain);
 
-        const wallet = await this.cosmosWalletProvider.getWallet();
-        const accounts = await wallet.getAccounts();
-        const senderAddress = accounts[0]?.address;
+        const senderAddress = await this.cosmosChainsData.getWalletAddress(
+            params.fromChain
+        );
 
         if (!senderAddress) {
             throw new Error("No sender address");
@@ -44,9 +42,9 @@ export class TransferAction {
             throw new Error("No receiver address");
         }
 
-        const chainAssets: AssetList = fetchChainDetails(
+        const chainAssets: AssetList = this.cosmosChainsData.getAssetsList(
             params.fromChain
-        ).chainAssets;
+        );
 
         const assetToTransfer = params.denomOrIbc
             ? chainAssets.assets.find(
@@ -143,10 +141,9 @@ export const transferAction = {
             toAddress: content.toAddress,
         };
 
-        const walletProvider = await initWalletProvider(
-            _runtime,
-            paramOptions.fromChain
-        );
+        const walletProvider: CosmosWalletChainsData =
+            await CosmosWalletProvider.initWalletChainsData(_runtime);
+
         const action = new TransferAction(walletProvider);
 
         try {
@@ -177,10 +174,13 @@ export const transferAction = {
     },
     template: transferTemplate,
     validate: async (runtime: IAgentRuntime) => {
-        const recoveryPhrase = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
-        const chains = genCosmosChainsFromRuntime(runtime);
+        try {
+            await CosmosWalletProvider.initWalletChainsData(runtime);
 
-        return recoveryPhrase !== undefined && Object.keys(chains).length > 0;
+            return true;
+        } catch {
+            return false;
+        }
     },
     examples: [
         [
