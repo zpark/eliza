@@ -187,7 +187,7 @@ export class ImageDescriptionService
     ): Promise<string> {
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
-               const shouldUseBase64 = isLocalFile;
+               const shouldUseBase64 = isGif || isLocalFile;
                 const mimeType = isGif
                     ? "png"
                     : path.extname(imageUrl).slice(1) || "jpeg";
