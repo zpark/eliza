@@ -1,197 +1,211 @@
+import { IAgentRuntime, Provider } from "@ai16z/eliza";
+import { AssetList } from "@chain-registry/types";
+import {
+    convertBaseUnitToDisplayUnit,
+    getChainByChainName,
+    getSymbolByDenom,
+} from "@chain-registry/utils";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Coin, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { assets, chains } from "chain-registry";
-import {
-    composeContext,
-    generateObjectDeprecated,
-    IAgentRuntime,
-    Memory,
-    ModelClass,
-    Provider,
-    State,
-} from "@ai16z/eliza";
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { Chain } from "../types";
-import { balanceTemplate } from "../templates";
-import { z } from "zod";
+import { cosmos } from "interchain";
 
-export class CosmosWalletProvider {
-    private wallet: DirectSecp256k1HdWallet;
-    private client: SigningCosmWasmClient;
-    private address: string;
-    private activeChain: string;
-    private readonly mnemonic: string;
-    private characterChains: Record<string, Chain>;
+type RPCQueryClient = Awaited<
+    ReturnType<typeof cosmos.ClientFactory.createRPCQueryClient>
+>;
 
-    constructor(mnemonic: string, characterChains: Record<string, Chain>) {
-        this.mnemonic = mnemonic;
-        this.characterChains = characterChains;
+interface ICosmosWallet {
+    directSecp256k1HdWallet: DirectSecp256k1HdWallet;
+
+    getWalletAddress(): Promise<string>;
+    getWalletBalances(): Promise<Coin[]>;
+}
+
+interface ICosmosChainWallet {
+    wallet: ICosmosWallet;
+    signingCosmWasmClient: SigningCosmWasmClient;
+}
+
+interface ICosmosWalletProviderChainsData {
+    [chainName: string]: ICosmosChainWallet;
+}
+
+class CosmosWallet implements ICosmosWallet {
+    public rpcQueryClient: RPCQueryClient;
+    public directSecp256k1HdWallet: DirectSecp256k1HdWallet;
+
+    private constructor(
+        directSecp256k1HdWallet: DirectSecp256k1HdWallet,
+        rpcQueryClient: RPCQueryClient
+    ) {
+        this.directSecp256k1HdWallet = directSecp256k1HdWallet;
+        this.rpcQueryClient = rpcQueryClient;
     }
 
-    async initialize(chainName: string) {
-        await this.setActiveChain(chainName);
-        this.wallet = await this.getWallet();
-        const [account] = await this.wallet.getAccounts();
+    public static async create(
+        mnemonic: string,
+        chainPrefix: string,
+        rpcEndpoint: string
+    ) {
+        const directSecp256k1HdWallet =
+            await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+                prefix: chainPrefix,
+            });
 
-        this.address = account.address;
-        this.client = await this.getSigningCosmWasmClient();
-    }
-
-    async getWallet() {
-        const { bech32Prefix } = this.characterChains[this.activeChain];
-
-        return await DirectSecp256k1HdWallet.fromMnemonic(this.mnemonic, {
-            prefix: bech32Prefix,
+        const rpcQueryClient = await cosmos.ClientFactory.createRPCQueryClient({
+            rpcEndpoint,
         });
+
+        return new CosmosWallet(directSecp256k1HdWallet, rpcQueryClient);
     }
 
-    getAddress(): string {
-        if (this.address === undefined) {
-            throw new Error("No address provided");
-        } else {
-            return this.address;
-        }
+    public async getWalletAddress() {
+        const [account] = await this.directSecp256k1HdWallet.getAccounts();
+
+        return account.address;
     }
 
-    getActiveChain(): string {
-        if (this.activeChain === undefined) {
-            throw new Error("No active chain provided");
-        } else {
-            return this.activeChain;
-        }
-    }
+    public async getWalletBalances() {
+        const walletAddress = await this.getWalletAddress();
 
-    async getSigningCosmWasmClient(): Promise<SigningCosmWasmClient> {
-        const { rpcUrl } = this.characterChains[this.activeChain];
+        const allBalances =
+            await this.rpcQueryClient.cosmos.bank.v1beta1.allBalances({
+                address: walletAddress,
+            });
 
-        return await SigningCosmWasmClient.connectWithSigner(
-            rpcUrl,
-            this.wallet,
-        );
-    }
-
-    async getWalletBalance(): Promise<Coin> {
-        if (!this.client || !this.address) {
-            throw new Error(
-                "CosmWasm client is not initialized. Please call `initialize` first."
-            );
-        }
-
-        const { feeToken } = this.characterChains[this.activeChain];
-
-        return await this.client.getBalance(this.address, feeToken.denom);
-    }
-
-    async setActiveChain(chainName: string) {
-        if (this.characterChains[chainName] !== undefined) {
-            this.activeChain = chainName;
-            this.wallet = await this.getWallet();
-            const [account] = await this.wallet.getAccounts();
-
-            this.address = account.address;
-
-            return this.activeChain;
-        } else {
-            throw new Error(
-                `Character does not support chain ${chainName}. Add this chain to character.settings.chains.cosmos`
-            );
-        }
+        return allBalances.balances;
     }
 }
 
-export const genCosmosChainsFromRuntime = (
-    runtime: IAgentRuntime
-): Record<string, Chain> => {
-    const chainNames: string[] =
-        (runtime.character.settings.chains?.cosmos as string[]) || [];
-    const characterChains: Record<string, Chain> = {};
+export class CosmosWalletChainsData {
+    public chainsData: ICosmosWalletProviderChainsData = {};
 
-    chainNames.forEach((chainName) => {
-        characterChains[chainName] = fetchChainDetails(chainName);
-    });
-
-    return characterChains;
-};
-
-export const fetchChainDetails = (chainName: string): Chain => {
-    const chain = chains.find((c) => c.chain_name === chainName);
-
-    if (!chain) throw new Error(`Chain ${chainName} not found in registry`);
-
-    const assetList = assets.find((a) => a.chain_name === chainName);
-
-    if (!assetList) throw new Error(`Assets for chain ${chainName} not found`);
-
-    const feeToken = chain.fees.fee_tokens?.[0];
-
-    if (!feeToken)
-        throw new Error(`Fee token not found for chain ${chainName}`);
-
-    const rpcUrl = chain.apis.rpc?.[0]?.address;
-
-    if (!rpcUrl) throw new Error(`RPC URL not found for chain ${chainName}`);
-
-    return {
-        chainName,
-        rpcUrl,
-        bech32Prefix: chain.bech32_prefix,
-        feeToken,
-        chainAssets: assetList,
-    };
-};
-
-export const initWalletProvider = async (
-    runtime: IAgentRuntime,
-    chainName: string
-) => {
-    const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
-
-    if (!mnemonic) {
-        throw new Error("COSMOS_RECOVERY_PHRASE is missing");
+    private constructor(chainsData: ICosmosWalletProviderChainsData) {
+        this.chainsData = chainsData;
     }
 
-    const characterChains = genCosmosChainsFromRuntime(runtime);
-    const provider = new CosmosWalletProvider(mnemonic, characterChains);
+    public static async create(
+        mnemonic: string,
+        availableChainNames: string[]
+    ) {
+        const chainsData: ICosmosWalletProviderChainsData = {};
 
-    await provider.initialize(chainName);
+        for (const chainName of availableChainNames) {
+            const chain = getChainByChainName(chains, chainName);
 
-    return provider;
-};
+            if (!chain) {
+                throw new Error(`Chain ${chainName} not found`);
+            }
 
-export const cosmosWalletProvider: Provider = {
-    get: async function (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state?: State
-    ): Promise<string | null> {
-        const transferContext = composeContext({
-            state: state,
-            template: balanceTemplate,
-            templatingEngine: "handlebars",
-        });
+            const wallet = await CosmosWallet.create(
+                mnemonic,
+                chain.bech32_prefix,
+                chain.apis.rpc[0].address
+            );
 
-        // Generate transfer content
-        const content = await generateObjectDeprecated({
-            runtime,
-            context: transferContext,
-            modelClass: ModelClass.SMALL,
-        });
+            const chainRpcAddress = chain.apis?.rpc?.[0].address;
 
-        const balanceContentValidator = z.object({
-            chainName: z.string(),
-        });
+            if (!chainRpcAddress) {
+                throw new Error(`RPC address not found for chain ${chainName}`);
+            }
+
+            const signingCosmWasmClient =
+                await SigningCosmWasmClient.connectWithSigner(
+                    chain.apis.rpc[0].address,
+                    wallet.directSecp256k1HdWallet
+                );
+
+            chainsData[chainName] = {
+                wallet,
+                signingCosmWasmClient,
+            };
+        }
+
+        return new CosmosWalletChainsData(chainsData);
+    }
+
+    public async getWalletAddress(chainName: string) {
+        return await this.chainsData[chainName].wallet.getWalletAddress();
+    }
+
+    public getSigningCosmWasmClient(chainName: string) {
+        return this.chainsData[chainName].signingCosmWasmClient;
+    }
+
+    public getAssetsList(chainName: string, customAssetList?: AssetList[]) {
+        const assetList = (customAssetList ?? assets).find(
+            (asset) => asset.chain_name === chainName
+        );
+
+        if (!assetList) {
+            throw new Error(`Assets for chain ${chainName} not found`);
+        }
+
+        return assetList;
+    }
+}
+
+export class CosmosWalletProvider implements Provider {
+    public async initWalletChainsData(runtime: IAgentRuntime) {
+        const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
+        const availableChains = runtime.getSetting("COSMOS_AVAILABLE_CHAINS");
+
+        if (!mnemonic) {
+            throw new Error("COSMOS_RECOVERY_PHRASE is missing");
+        }
+
+        if (!availableChains) {
+            throw new Error("COSMOS_AVAILABLE_CHAINS is missing");
+        }
+
+        const availableChainsArray = availableChains.split(",");
+
+        if (!availableChainsArray.length) {
+            throw new Error("COSMOS_AVAILABLE_CHAINS is empty");
+        }
+
+        return await CosmosWalletChainsData.create(
+            mnemonic,
+            availableChainsArray
+        );
+    }
+
+    public async get(runtime: IAgentRuntime) {
+        let providerContextMessage = "";
 
         try {
-            const transferContent = balanceContentValidator.parse(content);
+            const provider = await this.initWalletChainsData(runtime);
 
-            const { chainName } = transferContent;
+            for (const [chainName, chainData] of Object.entries(
+                provider.chainsData
+            )) {
+                const address = await chainData.wallet.getWalletAddress();
+                const balances = await chainData.wallet.getWalletBalances();
 
-            const provider = await initWalletProvider(runtime, chainName);
+                const convertedCoinsToDisplayDenom = balances.map((balance) => {
+                    const symbol = getSymbolByDenom(assets, balance.denom, chainName);
 
-            const address = provider.getAddress();
-            const balance = await provider.getWalletBalance();
-            const activeChain = provider.getActiveChain();
+                    return {
+                        amount: symbol
+                            ? convertBaseUnitToDisplayUnit(
+                                  assets,
+                                  symbol,
+                                  balance.amount,
+                                  chainName
+                              )
+                            : balance.amount,
+                        symbol : symbol??balance.denom,
+                    };
+                });
 
-            return `Address: ${address}\nBalance: ${balance.amount} ${balance.denom}\nActive Chain: ${activeChain}`;
+                const balancesToString = convertedCoinsToDisplayDenom
+                    .map((balance) => `- ${balance.amount} ${balance.symbol}`)
+                    .join("\n");
+
+                providerContextMessage += `Chain: ${chainName}\nAddress: ${address}\nBalances:\n${balancesToString}\n________________\n`;
+            }
+
+            return providerContextMessage;
         } catch (error) {
             console.error(
                 "Error Initializing in Cosmos wallet provider:",
@@ -200,5 +214,7 @@ export const cosmosWalletProvider: Provider = {
 
             return null;
         }
-    },
-};
+    }
+}
+
+export const cosmosWalletProvider = new CosmosWalletProvider();
