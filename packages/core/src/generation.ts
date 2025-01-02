@@ -176,7 +176,7 @@ export async function generateText({
         elizaLogger.debug(
             `Trimming context to max length of ${max_context_length} tokens.`
         );
-        context = await trimTokens(context, max_context_length, "gpt-4o");
+        context = trimTokens(context, max_context_length, "gpt-4o");
 
         let response: string;
 
