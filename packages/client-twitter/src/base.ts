@@ -354,7 +354,7 @@ export class ClientBase extends EventEmitter {
             // Sometimes this fails because we are rate limited. in this case, we just need to return an empty array
             // if we dont get a response in 5 seconds, something is wrong
             const timeoutPromise = new Promise((resolve) =>
-                setTimeout(() => resolve({ tweets: [] }), 10000)
+                setTimeout(() => resolve({ tweets: [] }), 15000)
             );
 
             try {
