@@ -115,7 +115,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
                 }
             }
 
-            elizaLogger.log("Proof:", proof);
+            elizaLogger.log("Proof generated for text generation ID:", cloudflareLogId);
 
             // // get cloudflare response
             // // Extract text based on provider format
@@ -126,6 +126,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
                 id: cloudflareLogId,
                 provider: VerifiableInferenceProvider.OPACITY,
                 timestamp: timestamp,
+                proof: proof,
             };
         } catch (error) {
             console.error("Error in Opacity generateText:", error);
