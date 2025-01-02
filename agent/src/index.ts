@@ -7,7 +7,7 @@ import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
-import { OpacityAdapter } from "@elizaos/adapter-opacity";
+import { OpacityAdapter } from "@elizaos/plugin-opacity";
 import {
     AgentRuntime,
     CacheManager,
@@ -516,15 +516,17 @@ export async function createAgent(
     // Initialize Opacity adapter if environment variables are present
     let verifiableInferenceAdapter;
     if (
-        process.env.RECLAIM_APP_ID &&
-        process.env.RECLAIM_APP_SECRET &&
+        process.env.OPACITY_TEAM_ID &&
+        process.env.OPACITY_CLOUDFLARE_NAME &&
+        process.env.OPACITY_PROVER_URL &&
         process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
     ) {
         verifiableInferenceAdapter = new OpacityAdapter({
-            appId: process.env.RECLAIM_APP_ID,
-            appSecret: process.env.RECLAIM_APP_SECRET,
+            teamId: process.env.OPACITY_TEAM_ID,
+            teamName: process.env.OPACITY_CLOUDFLARE_NAME,
+            opacityProverUrl: process.env.OPACITY_PROVER_URL,
             modelProvider: character.modelProvider,
-            token,
+            token: token,
         });
         elizaLogger.log("Verifiable inference adapter initialized");
     }
