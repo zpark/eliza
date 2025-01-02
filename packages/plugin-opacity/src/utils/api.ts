@@ -1,11 +1,11 @@
 
 
-export async function verifyProof(baseUrl: string, tlsProof: string) {
+export async function verifyProof(baseUrl: string, textID: string, proof: string) {
     const response = await fetch(`${baseUrl}/api/verify`, {
         headers: {
             "Content-Type": "application/json",
         },
-        body: tlsProof,
+        body: JSON.stringify(proof),
         method: "POST",
     });
     if (!response.ok) {
