@@ -83,6 +83,8 @@ CREATE VIEW memories AS
     UNION ALL
     SELECT * FROM memories_1024
     UNION ALL
+    SELECT * FROM memories_768
+    UNION ALL
     SELECT * FROM memories_384;
 
 
