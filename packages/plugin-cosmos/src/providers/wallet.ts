@@ -65,7 +65,7 @@ export class CosmosWalletProvider {
 
         return await SigningCosmWasmClient.connectWithSigner(
             rpcUrl,
-            this.wallet
+            this.wallet,
         );
     }
 
@@ -112,7 +112,7 @@ export const genCosmosChainsFromRuntime = (
     return characterChains;
 };
 
-const fetchChainDetails = (chainName: string) => {
+export const fetchChainDetails = (chainName: string): Chain => {
     const chain = chains.find((c) => c.chain_name === chainName);
 
     if (!chain) throw new Error(`Chain ${chainName} not found in registry`);
@@ -135,6 +135,7 @@ const fetchChainDetails = (chainName: string) => {
         rpcUrl,
         bech32Prefix: chain.bech32_prefix,
         feeToken,
+        chainAssets: assetList,
     };
 };
 

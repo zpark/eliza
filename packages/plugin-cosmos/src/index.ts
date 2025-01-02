@@ -1,6 +1,7 @@
 import { cosmosWalletProvider } from "./providers/wallet.ts";
 import type { Plugin } from "@ai16z/eliza";
 import { balanceAction } from "./actions/walletProviderTestAction.ts";
+import {transferAction} from "./actions/transfer.ts";
 
 export const cosmosPlugin: Plugin = {
     name: "cosmos",
@@ -8,7 +9,7 @@ export const cosmosPlugin: Plugin = {
     providers: [cosmosWalletProvider],
     evaluators: [],
     services: [],
-    actions: [balanceAction],
+    actions: [transferAction, balanceAction],
 };
 
 export default cosmosPlugin;

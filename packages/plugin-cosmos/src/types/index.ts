@@ -1,6 +1,7 @@
 import type { Coin as AminoCoin } from "@cosmjs/amino";
 import { CosmosTransferParams } from "../services/cosmos-transfer-params-validator";
 import { assets } from "chain-registry";
+import { AssetList } from '@chain-registry/types';
 
 export type Asset = Pick<
     (typeof assets)[number]["assets"][number],
@@ -25,4 +26,5 @@ export type Chain = {
     feeToken: {
         denom: string;
     };
+    chainAssets: AssetList
 };
