@@ -1,6 +1,10 @@
 import { IAgentRuntime, Provider } from "@ai16z/eliza";
 import { AssetList } from "@chain-registry/types";
-import { getChainByChainName } from "@chain-registry/utils";
+import {
+    convertBaseUnitToDisplayUnit,
+    getChainByChainName,
+    getSymbolByDenom,
+} from "@chain-registry/utils";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Coin, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { assets, chains } from "chain-registry";
@@ -142,7 +146,7 @@ export class CosmosWalletChainsData {
 }
 
 export class CosmosWalletProvider implements Provider {
-    private async initWalletChainsData(runtime: IAgentRuntime) {
+    public async initWalletChainsData(runtime: IAgentRuntime) {
         const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
         const availableChains = runtime.getSetting("COSMOS_AVAILABLE_CHAINS");
 
@@ -178,8 +182,23 @@ export class CosmosWalletProvider implements Provider {
                 const address = await chainData.wallet.getWalletAddress();
                 const balances = await chainData.wallet.getWalletBalances();
 
-                const balancesToString = balances
-                    .map((balance) => `- ${balance.amount} ${balance.denom}`)
+                const convertedCoinsToDisplayDenom = balances.map((balance) => {
+                    const symbol = getSymbolByDenom(assets, balance.denom);
+
+                    const amountInDisplayUnit = convertBaseUnitToDisplayUnit(
+                        assets,
+                        symbol,
+                        balance.amount
+                    );
+
+                    return {
+                        amount: amountInDisplayUnit,
+                        symbol,
+                    };
+                });
+
+                const balancesToString = convertedCoinsToDisplayDenom
+                    .map((balance) => `- ${balance.amount} ${balance.symbol}`)
                     .join("\n");
 
                 providerContextMessage += `Chain: ${chainName}\nAddress: ${address}\nBalances:\n${balancesToString}\n________________\n`;

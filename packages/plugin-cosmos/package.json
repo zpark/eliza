@@ -22,7 +22,6 @@
         "test": "vitest run"
     },
     "devDependencies": {
-        "@chain-registry/types": "^0.50.44",
-        "interchain": "^1.10.4"
+        "@chain-registry/types": "^0.50.44"
     }
 }
