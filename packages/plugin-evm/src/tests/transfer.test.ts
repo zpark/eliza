@@ -20,7 +20,7 @@ describe("Transfer Action", () => {
 
         const pk = generatePrivateKey();
         const customChains = prepareChains();
-        wp = new WalletProvider(mockCacheManager as any, pk, customChains);
+        wp = new WalletProvider(pk, mockCacheManager as any, customChains);
     });
 
     afterEach(() => {
