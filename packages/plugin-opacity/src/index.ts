@@ -10,9 +10,9 @@ import {
 import { verifyProof } from "./utils/api";
 interface OpacityOptions {
     modelProvider?: ModelProviderName;
-    token: string;
-    teamId: string;
-    teamName: string;
+    token?: string;
+    teamId?: string;
+    teamName?: string;
     opacityProverUrl: string;
 }
 
@@ -35,12 +35,6 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         const model = models[provider].model[modelClass];
         const apiKey = this.options.token;
 
-        if (!apiKey) {
-            throw new Error(
-                `API key (token) is required for provider: ${provider}`
-            );
-        }
-
         elizaLogger.log("Generating text with options:", {
             modelProvider: provider,
             model: modelClass,
@@ -59,9 +53,6 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
         }
-
-
-
 
         try {
             let body;
@@ -86,6 +77,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
                 Authorization: authHeader,
                 ...options?.headers,
             };
+            // // get cloudflare response
             const cloudflareResponse = await fetch(endpoint, {
                 headers: headers,
                 body: JSON.stringify(body),
@@ -94,30 +86,13 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
             const cloudflareLogId =
             cloudflareResponse.headers.get("cf-aig-log-id");
             const cloudflareResponseJson = await cloudflareResponse.json();
-            let proof;
-            let attempts = 0;
-            const maxAttempts = 3;
 
-            while (!proof && attempts < maxAttempts) {
-                try {
-                    proof = await this.generateProof(
-                        this.options.opacityProverUrl,
-                        cloudflareLogId
-                    );
-                    break;
-                } catch (err) {
-                    elizaLogger.log("Attempt for Cloudflare log ID:", cloudflareLogId);
-                    elizaLogger.log("Opacity prover URL:", this.options.opacityProverUrl);
-                    attempts++;
-                    if (attempts === maxAttempts) {
-                        throw new Error("Failed to generate proof");
-                    }
-                }
-            }
+            const proof = await this.generateProof(
+                this.options.opacityProverUrl,
+                cloudflareLogId
+            );
+            elizaLogger.debug("Proof generated for text generation ID:", cloudflareLogId);
 
-            elizaLogger.log("Proof generated for text generation ID:", cloudflareLogId);
-
-            // // get cloudflare response
             // // Extract text based on provider format
             const text = cloudflareResponseJson.choices[0].message.content;
             const timestamp = Date.now();
