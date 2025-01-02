@@ -67,6 +67,7 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
+import { artheraPlugin } from "@elizaos/plugin-arthera";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -624,6 +625,9 @@ export async function createAgent(
                 : null,
             getSecret(character, "AVAIL_SEED") ? availPlugin : null,
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
+            getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+                ? artheraPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
