@@ -71,6 +71,10 @@ export class JSDocValidator {
      * Fixes common JSDoc formatting issues
      */
     private fixCommonJSDocIssues(comment: string): string {
+        // First remove any backtick code block markers
+        comment = comment.replace(/^```[\s\S]*?\n/, ''); // Remove opening code block
+        comment = comment.replace(/\n```$/, '');         // Remove closing code block
+
         const fixes = [
             // Fix opening format
             [/\/\*\*?(?!\*)/, '/**'],  // Ensure proper opening

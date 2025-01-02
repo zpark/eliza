@@ -46,16 +46,26 @@ export class AIService {
      */
     public async generateComment(prompt: string): Promise<string> {
         try {
-            let finalPrompt = prompt;
+            // Truncate the prompt if it contains code blocks
+            let finalPrompt = this.truncateCodeBlock(prompt);
 
             // Only append language instruction if not English
             if (this.configuration.language.toLowerCase() !== 'english') {
                 finalPrompt += `\n\nEverything except the JSDoc conventions and code should be in ${this.configuration.language}`;
             }
 
+            console.log(`Generating comment for prompt of length: ${finalPrompt.length}`);
+
             const response = await this.chatModel.invoke(finalPrompt);
             return response.content as string;
         } catch (error) {
+            if (error instanceof Error && error.message.includes('maximum context length')) {
+                console.warn('Token limit exceeded, attempting with further truncation...');
+                // Try again with more aggressive truncation
+                const truncatedPrompt = this.truncateCodeBlock(prompt, 4000);
+                const response = await this.chatModel.invoke(truncatedPrompt);
+                return response.content as string;
+            }
             this.handleAPIError(error as Error);
             return '';
         }
@@ -557,5 +567,36 @@ export class AIService {
     public handleAPIError(error: Error): void {
         console.error('API Error:', error.message);
         throw error;
+    }
+
+    private truncateCodeBlock(code: string, maxLength: number = 8000): string {
+        if (code.length <= maxLength) return code;
+
+        // Extract code blocks
+        const codeBlockRegex = /```[\s\S]*?```/g;
+        const codeBlocks = code.match(codeBlockRegex) || [];
+
+        for (let i = 0; i < codeBlocks.length; i++) {
+            const block = codeBlocks[i];
+            if (block.length > maxLength) {
+                // Keep the opening and closing parts of the code block
+                const lines = block.split('\n');
+                const header = lines[0]; // Keep the ```typescript or similar
+                const footer = lines[lines.length - 1]; // Keep the closing ```
+
+                // Take the first few lines of actual code
+                const codeStart = lines.slice(1, Math.floor(maxLength/60)).join('\n');
+                // Take some lines from the middle
+                const middleIndex = Math.floor(lines.length / 2);
+                const codeMiddle = lines.slice(middleIndex - 2, middleIndex + 2).join('\n');
+                // Take the last few lines
+                const codeEnd = lines.slice(lines.length - Math.floor(maxLength/60), -1).join('\n');
+
+                const truncatedBlock = `${header}\n${codeStart}\n\n// ... truncated ...\n\n${codeMiddle}\n\n// ... truncated ...\n\n${codeEnd}\n${footer}`;
+                code = code.replace(block, truncatedBlock);
+            }
+        }
+
+        return code;
     }
 }
