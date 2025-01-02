@@ -5,7 +5,7 @@ export const DEFAULT_MAX_TWEET_LENGTH = 280;
 const twitterUsernameSchema = z.string()
     .min(1)
     .max(15)
-    .regex(/^[A-Za-z][A-Za-z0-9_]*[A-Za-z0-9]$|^[A-Za-z]$/, 'Invalid Twitter username format');
+    .regex(/^[A-Za-z0-9_][A-Za-z0-9_]*[A-Za-z0-9]$/, 'Invalid Twitter username format');
 
 export const twitterEnvSchema = z.object({
     TWITTER_DRY_RUN: z.boolean(),
