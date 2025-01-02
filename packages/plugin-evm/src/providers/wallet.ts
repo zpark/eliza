@@ -5,7 +5,7 @@ import {
     http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import type { IAgentRuntime, Provider, Memory, State, ICacheManager } from "@elizaos/core";
+import { type IAgentRuntime, type Provider, type Memory, type State, type ICacheManager, elizaLogger } from "@elizaos/core";
 import type {
     Address,
     WalletClient,
@@ -91,7 +91,7 @@ export class WalletProvider {
         const cacheKey = "walletBalance_" + this.currentChain;
         const cachedData = await this.getCachedData<string>(cacheKey);
         if (cachedData) {
-            console.log("Returning cached wallet balance for chain: " + this.currentChain);
+            elizaLogger.log("Returning cached wallet balance for chain: " + this.currentChain);
             return cachedData;
         }
 
@@ -102,7 +102,7 @@ export class WalletProvider {
             });
             const balanceFormatted = formatUnits(balance, 18);
             this.setCachedData<string>(cacheKey, balanceFormatted);
-            console.log("Wallet balance cached for chain: ", this.currentChain);
+            elizaLogger.log("Wallet balance cached for chain: ", this.currentChain);
             return balanceFormatted;
         } catch (error) {
             console.error("Error getting wallet balance:", error);
