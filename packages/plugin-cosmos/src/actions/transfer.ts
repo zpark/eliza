@@ -48,13 +48,14 @@ export class TransferAction {
             params.fromChain
         ).chainAssets;
 
-        const assetToTransfer = params.denomOrIbc
+        const formatedDenom = params.denomOrIbc.toString();
+
+        const assetToTransfer = formatedDenom
             ? chainAssets.assets.find(
                   (asset) =>
-                      asset.display === params.denomOrIbc ||
-                      asset.ibc?.source_denom === params.denomOrIbc ||
-                      asset.base === params.denomOrIbc ||
-                      asset.symbol === params.denomOrIbc
+                      asset.display === formatedDenom ||
+                      asset.ibc?.source_denom === formatedDenom ||
+                      asset.base === formatedDenom
               )
             : getNativeAssetByChainName(assets, params.fromChain);
 
@@ -143,16 +144,17 @@ export const transferAction = {
             toAddress: content.toAddress,
         };
 
-        const walletProvider = await initWalletProvider(
-            _runtime,
-            paramOptions.fromChain
-        );
-        const action = new TransferAction(walletProvider);
-
         try {
+            const walletProvider = await initWalletProvider(
+                _runtime,
+                paramOptions.fromChain
+            );
+
+            const action = new TransferAction(walletProvider);
+
             const transferResp = await action.transfer(paramOptions);
             if (_callback) {
-                _callback({
+                await _callback({
                     text: `Successfully transferred ${paramOptions.amount} tokens to ${paramOptions.toAddress}\nTransaction Hash: ${transferResp.txHash}`,
                     content: {
                         success: true,
@@ -162,16 +164,39 @@ export const transferAction = {
                         chain: content.fromChain,
                     },
                 });
+
+                const newMemory: Memory = {
+                    userId: _message.agentId,
+                    agentId: _message.agentId,
+                    roomId: _message.roomId,
+                    content: {
+                        text: `Transaction ${paramOptions.amount} ${paramOptions.denomOrIbc} to address ${paramOptions.toAddress} on chain ${paramOptions.toAddress} was successful.`,
+                    },
+                };
+
+                await _runtime.messageManager.createMemory(newMemory);
             }
             return true;
         } catch (error) {
             console.error("Error during token transfer:", error);
             if (_callback) {
-                _callback({
+                await _callback({
                     text: `Error transferring tokens: ${error.message}`,
                     content: { error: error.message },
                 });
             }
+
+            const newMemory: Memory = {
+                userId: _message.agentId,
+                agentId: _message.agentId,
+                roomId: _message.roomId,
+                content: {
+                    text: `Transaction ${paramOptions.amount} ${paramOptions.denomOrIbc} to address ${paramOptions.toAddress} on chain ${paramOptions.toAddress} was unsuccessful.`,
+                },
+            };
+
+            await _runtime.messageManager.createMemory(newMemory);
+
             return false;
         }
     },
@@ -203,7 +228,7 @@ export const transferAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Transfer {{0.0001 OM}} to {{mantra1pcnw46km8m5amvf7jlk2ks5std75k73aralhcf}} on {{mantrachaintestnet2}}",
+                    text: "Send {{10 OSMO}} to {{osmo13248w8dtnn07sxc3gq4l3ts4rvfyat6f4qkdd6}} on {{osmosistestnet}}",
                     action: "COSMOS_TRANSFER",
                 },
             },
