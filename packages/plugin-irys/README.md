@@ -29,7 +29,9 @@ The plugin requires the following environment variables:
 - `EVM_WALLET_PRIVATE_KEY`: Your EVM wallet private key
 - `AGENTS_WALLET_PUBLIC_KEYS`: The public keys of the agents that will be used to retrieve the data (string separated by commas)
 
-For this plugin to work, you need to have an EVM (Base network)wallet with a private key and public address. To prevent any security issues, we recommend using a dedicated wallet for this plugin.
+For this plugin to work, you need to have an EVM (Base network) wallet with a private key and public address. To prevent any security issues, we recommend using a dedicated wallet for this plugin.
+
+> **Important**: The wallet address needs to have Base Sepolia ETH tokens to store images/files and any data larger than 100KB.
 
 ## Usage
 
@@ -52,8 +54,9 @@ To upload files or images to the Irys network, you can use the `uploadFileOrImag
 const { IrysService } = require('@elizaos/plugin-irys');
 
 const irysService : IrysService = runtime.getService(ServiceType.IRYS)
-const imageurl = "https://gateway.irys.xyz/QH3rksVhbFg5L9vvjGzb4POUibCEG-TGPInmofp-O-o";
-const transactionResult = await irysService.uploadFileOrImageOnIrys(imageurl);
+const userAttachmentToStore = state.recentMessagesData[1].content.attachments[0].url.replace("agent\\agent", "agent");
+            
+const transactionResult = await irysService.uploadFileOrImageOnIrys(userAttachmentToStore);
 console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
 ```
 
@@ -126,6 +129,10 @@ interface IrysService {
 
 - `uploadStringToIrys(data: string)`: Uploads a string to Irys and returns the transaction URL
 - `getDataFromAnAgent(agentsWalletPublicKeys: string[])`: Retrieves all data associated with the given wallet addresses
+
+## Testing
+
+While we don't currently have a formal test suite, all functions have been manually tested through agent actions to verify their functionality. Each function has been validated in real-world scenarios to ensure reliable performance.
 
 ## Contributing
 
