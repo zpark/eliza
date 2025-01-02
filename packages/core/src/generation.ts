@@ -90,13 +90,12 @@ export async function generateText({
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
         try {
-            const result =
+            const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
                     context,
                     modelClass,
                     verifiableInferenceOptions
                 );
-
             // Verify the proof
             const isValid =
                 await runtime.verifiableInferenceAdapter.verifyProof(result);
