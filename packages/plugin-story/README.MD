@@ -15,7 +15,7 @@ This plugin provides functionality to:
 ## Installation
 
 ```bash
-npm install @elizaos/plugin-story
+pnpm install @elizaos/plugin-story
 ```
 
 ## Configuration
@@ -113,13 +113,13 @@ Assistant: "Here are the available licenses...";
 ### Building
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### Testing
 
 ```bash
-npm run test
+pnpm run test
 ```
 
 ## Dependencies
