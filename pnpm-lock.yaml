@@ -105,9 +105,6 @@ importers:
       '@elizaos/adapter-postgres':
         specifier: workspace:*
         version: link:../packages/adapter-postgres
-      '@elizaos/adapter-reclaim':
-        specifier: workspace:*
-        version: link:../packages/adapter-reclaim
       '@elizaos/adapter-redis':
         specifier: workspace:*
         version: link:../packages/adapter-redis
@@ -204,6 +201,9 @@ importers:
       '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../packages/plugin-node
+      '@elizaos/plugin-opacity':
+        specifier: workspace:*
+        version: link:../packages/plugin-opacity
       '@elizaos/plugin-solana':
         specifier: workspace:*
         version: link:../packages/plugin-solana
@@ -425,24 +425,7 @@ importers:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
 
-  packages/adapter-reclaim:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      '@reclaimprotocol/js-sdk':
-        specifier: ^2.1.3
-        version: 2.1.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      '@reclaimprotocol/zk-fetch':
-        specifier: ^0.3.0
-        version: 0.3.0(@swc/helpers@0.5.15)(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.7
-    devDependencies:
-      tsup:
-        specifier: ^8.3.5
-        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+
 
   packages/adapter-redis:
     dependencies:
@@ -1636,6 +1619,19 @@ importers:
         version: 22.8.4
       tsup:
         specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+
+  packages/plugin-opacity:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
 
   packages/plugin-solana:
@@ -6709,30 +6705,6 @@ packages:
     resolution: {integrity: sha512-hxBI2UOuVaI3O/BhQfhtb4kcGn9ft12RWAFVMUeNjqqhLsHvFtzIkFaptBJpFDANTKoDfdVoHTKZDlwKCACbMQ==}
     peerDependencies:
       react: '*'
-
-  '@reclaimprotocol/attestor-core@3.1.1':
-    resolution: {integrity: sha512-JuK0MGIRo4AmjUZjg6UcmFxKgFLvS7EpNTtpfovbOBHhdtzT+wdLAYQzTdeJJrU0pa2fI+LWu2xDfzAVgSgCKg==}
-
-  '@reclaimprotocol/js-sdk@2.1.3':
-    resolution: {integrity: sha512-tTVtLFwuyAyi0MJg7xdhbPXViUczo211ZjgQkoaAZxm3StbVjaxKYmAk7/f8RvNzDxoLTRUJyGbza8X2k7WPKA==}
-
-  '@reclaimprotocol/tls@https://codeload.github.com/reclaimprotocol/tls/tar.gz/159300905f24d12503e3f7bf9c8a2be08d8cdf97':
-    resolution: {tarball: https://codeload.github.com/reclaimprotocol/tls/tar.gz/159300905f24d12503e3f7bf9c8a2be08d8cdf97}
-    version: 0.0.2
-
-  '@reclaimprotocol/zk-fetch@0.3.0':
-    resolution: {integrity: sha512-AlMaZ6vfNO1Z2aSlYhEapgatSGWFyox72Cc0npK5UybPCElhXgIrST2jhfIzrPVyKlL/OvwhRksSz2ytj69r3Q==}
-
-  '@reclaimprotocol/zk-symmetric-crypto@2.0.5':
-    resolution: {integrity: sha512-5SD/eaxDpmR3+BUhZhBHD0/MSHmI2qVawdsbJEzspArrjmg15jwslkGpj9bS2oZUpYYWOIbAHZvARdaYRe5A+A==}
-    peerDependencies:
-      koffi: '*'
-      snarkjs: '*'
-    peerDependenciesMeta:
-      koffi:
-        optional: true
-      snarkjs:
-        optional: true
 
   '@ref-finance/ref-sdk@1.4.6':
     resolution: {integrity: sha512-HVmcV+lhE+4+RwlDkgnFHwymrplHFlwsIwYZASE2XbGQjSY0sF3wceJkz671II3Us/KcRl1wp23ASSzza+/pbg==}
@@ -27351,79 +27323,6 @@ snapshots:
   '@react-icons/all-files@4.1.0(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@reclaimprotocol/attestor-core@3.1.1(@swc/core@1.10.4(@swc/helpers@0.5.15))(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
-    dependencies:
-      '@bufbuild/protobuf': 2.2.3
-      '@commitlint/cli': 17.8.1(@swc/core@1.10.4(@swc/helpers@0.5.15))
-      '@commitlint/config-conventional': 17.8.1
-      '@reclaimprotocol/tls': https://codeload.github.com/reclaimprotocol/tls/tar.gz/159300905f24d12503e3f7bf9c8a2be08d8cdf97
-      '@reclaimprotocol/zk-symmetric-crypto': 2.0.5(koffi@2.10.0)(snarkjs@0.7.5)
-      ajv: 8.17.1
-      canonicalize: 2.0.0
-      dotenv: 16.4.7
-      elastic-apm-node: 4.10.0
-      esprima-next: 5.8.4
-      ethers: 5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      https-proxy-agent: 7.0.6
-      jsdom: 24.1.3(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
-      jsonpath-plus: 10.2.0
-      p-queue: 8.0.1
-      pino: 9.6.0
-      protobufjs: 7.4.0
-      re2: 1.21.4
-      serve-static: 1.16.2
-      snarkjs: 0.7.5
-      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    optionalDependencies:
-      koffi: 2.10.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-      - bufferutil
-      - canvas
-      - supports-color
-      - utf-8-validate
-
-  '@reclaimprotocol/js-sdk@2.1.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
-    dependencies:
-      canonicalize: 2.0.0
-      ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      qs: 6.13.1
-      url-parse: 1.5.10
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@reclaimprotocol/tls@https://codeload.github.com/reclaimprotocol/tls/tar.gz/159300905f24d12503e3f7bf9c8a2be08d8cdf97':
-    dependencies:
-      '@peculiar/asn1-ecc': 2.3.15
-      '@peculiar/asn1-schema': 2.3.15
-      '@peculiar/x509': 1.12.3
-      '@stablelib/chacha20poly1305': 1.0.1
-
-  '@reclaimprotocol/zk-fetch@0.3.0(@swc/helpers@0.5.15)(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)':
-    dependencies:
-      '@reclaimprotocol/attestor-core': 3.1.1(@swc/core@1.10.4(@swc/helpers@0.5.15))(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10)
-      '@swc/core': 1.10.4(@swc/helpers@0.5.15)
-      ethers: 5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      pino: 8.21.0
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - '@swc/helpers'
-      - '@swc/wasm'
-      - bufferutil
-      - canvas
-      - supports-color
-      - utf-8-validate
-
-  '@reclaimprotocol/zk-symmetric-crypto@2.0.5(koffi@2.10.0)(snarkjs@0.7.5)':
-    dependencies:
-      js-base64: 3.7.7
-    optionalDependencies:
-      koffi: 2.10.0
-      snarkjs: 0.7.5
 
   '@ref-finance/ref-sdk@1.4.6(encoding@0.1.13)(react@18.3.1)':
     dependencies:
