@@ -14,7 +14,7 @@ on:
         default: 'T'
         type: string
       pull_number:
-        description: 'Pull Request Number (if not provided, scans root_directory) - PR must be merged to develop branch'
+        description: 'Pull Request Number (if not provided, scans root_directory) - PR must be merged to develop branch. DONT provide if `README documentation` is T from above'
         required: false
         type: string
       root_directory:
@@ -60,7 +60,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '23'
+          node-version: '20'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v2
@@ -86,14 +86,13 @@ jobs:
         working-directory: scripts/jsdoc-automation
         run: pnpm install --no-frozen-lockfile
 
+      - name: Build TypeScript
+        working-directory: scripts/jsdoc-automation
+        run: pnpm build
+
       - name: Run documentation generator
         working-directory: scripts/jsdoc-automation
-        run: |
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Directory contents:"
-          ls -la
-          NODE_OPTIONS='--experimental-vm-modules --no-warnings' pnpm start
+        run: pnpm start
         env:
           INPUT_ROOT_DIRECTORY: ${{ inputs.root_directory }}
           INPUT_PULL_NUMBER: ${{ inputs.pull_number }}
