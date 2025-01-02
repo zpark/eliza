@@ -190,7 +190,8 @@ export class CosmosWalletProvider implements Provider {
                             ? convertBaseUnitToDisplayUnit(
                                   assets,
                                   symbol,
-                                  balance.amount
+                                  balance.amount,
+                                  chainName
                               )
                             : balance.amount,
                         symbol,
