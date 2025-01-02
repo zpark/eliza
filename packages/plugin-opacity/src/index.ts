@@ -119,7 +119,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
 
             // // get cloudflare response
             // // Extract text based on provider format
-            const text = cloudflareResponseJson.choices[0].message;
+            const text = cloudflareResponseJson.choices[0].message.content;
             const timestamp = Date.now();
             return {
                 text: text,
@@ -145,10 +145,14 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
     async verifyProof(result: VerifiableInferenceResult): Promise<boolean> {
         const isValid = await verifyProof(
             `${this.options.opacityProverUrl}`,
-            result.id
+            result.id,
+            result.proof
         );
-        console.log("Proof is valid:", isValid);
-        return isValid;
+        console.log("Proof is valid:", isValid.success);
+        if (!isValid.success) {
+            throw new Error("Proof is invalid");
+        }
+        return isValid.success;
     }
 }
 
