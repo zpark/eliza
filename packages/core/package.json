@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/core",
-    "version": "0.1.7-alpha.1",
+    "version": "0.1.7-alpha.2",
     "description": "",
     "main": "dist/index.js",
     "type": "module",
@@ -26,6 +26,7 @@
         "@rollup/plugin-terser": "0.1.0",
         "@rollup/plugin-typescript": "11.1.6",
         "@solana/web3.js": "1.95.8",
+        "@tavily/core": "^0.0.2",
         "@types/fluent-ffmpeg": "2.1.27",
         "@types/jest": "29.5.14",
         "@types/mocha": "10.0.10",

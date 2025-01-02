@@ -165,6 +165,9 @@ export type Model = {
 
         /** Temperature setting */
         temperature: number;
+
+        /** Optional telemetry configuration (experimental) */
+        experimental_telemetry?: TelemetrySettings;
     };
 
     /** Optional image generation settings */
@@ -209,6 +212,7 @@ export type Models = {
     [ModelProviderName.HYPERBOLIC]: Model;
     [ModelProviderName.VENICE]: Model;
     [ModelProviderName.AKASH_CHAT_API]: Model;
+    [ModelProviderName.LIVEPEER]: Model;
 };
 
 /**
@@ -238,6 +242,7 @@ export enum ModelProviderName {
     HYPERBOLIC = "hyperbolic",
     VENICE = "venice",
     AKASH_CHAT_API = "akash_chat_api",
+    LIVEPEER = "livepeer",
 }
 
 /**
@@ -626,12 +631,38 @@ export interface IAgentConfig {
     [key: string]: string;
 }
 
+export type TelemetrySettings = {
+    /**
+     * Enable or disable telemetry. Disabled by default while experimental.
+     */
+    isEnabled?: boolean;
+    /**
+     * Enable or disable input recording. Enabled by default.
+     *
+     * You might want to disable input recording to avoid recording sensitive
+     * information, to reduce data transfers, or to increase performance.
+     */
+    recordInputs?: boolean;
+    /**
+     * Enable or disable output recording. Enabled by default.
+     *
+     * You might want to disable output recording to avoid recording sensitive
+     * information, to reduce data transfers, or to increase performance.
+     */
+    recordOutputs?: boolean;
+    /**
+     * Identifier for this function. Used to group telemetry data by function.
+     */
+    functionId?: string;
+};
+
 export interface ModelConfiguration {
     temperature?: number;
     max_response_length?: number;
     frequency_penalty?: number;
     presence_penalty?: number;
     maxInputTokens?: number;
+    experimental_telemetry?: TelemetrySettings;
 }
 
 /**
@@ -655,6 +686,10 @@ export type Character = {
 
     /** Image model provider to use, if different from modelProvider */
     imageModelProvider?: ModelProviderName;
+
+
+    /** Image Vision model provider to use, if different from modelProvider */
+    imageVisionModelProvider?: ModelProviderName;
 
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
@@ -753,6 +788,7 @@ export type Character = {
             solana?: any[];
             [key: string]: any[];
         };
+        transcription?: TranscriptionProvider;
     };
 
     /** Optional client-specific config */
@@ -782,6 +818,13 @@ export type Character = {
         slack?: {
             shouldIgnoreBotMessages?: boolean;
             shouldIgnoreDirectMessages?: boolean;
+        };
+        gitbook?: {
+            keywords?: {
+                projectTerms?: string[];
+                generalQueries?: string[];
+            };
+            documentTriggers?: string[];
         };
     };
 
@@ -1061,6 +1104,7 @@ export interface IAgentRuntime {
     token: string | null;
     modelProvider: ModelProviderName;
     imageModelProvider: ModelProviderName;
+    imageVisionModelProvider: ModelProviderName;
     character: Character;
     providers: Provider[];
     actions: Action[];
@@ -1217,21 +1261,26 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export type SearchImage = {
+    url: string;
+    description?: string;
+};
+
 export type SearchResult = {
     title: string;
     url: string;
     content: string;
+    rawContent?: string;
     score: number;
-    raw_content: string | null;
+    publishedDate?: string;
 };
 
 export type SearchResponse = {
+    answer?: string;
     query: string;
-    follow_up_questions: string[] | null;
-    answer: string | null;
-    images: string[];
+    responseTime: number;
+    images: SearchImage[];
     results: SearchResult[];
-    response_time: number;
 };
 
 export enum ServiceType {
@@ -1268,4 +1317,10 @@ export interface ActionResponse {
 
 export interface ISlackService extends Service {
     client: any;
+}
+
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
 }
