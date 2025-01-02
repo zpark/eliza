@@ -5,8 +5,7 @@ import { FeeEstimator } from "../services/fee-estimator";
 import { getNativeAssetByChainName } from "@chain-registry/utils";
 import { assets } from "chain-registry";
 import {
-    CosmosWalletChainsData,
-    CosmosWalletProvider,
+    CosmosWalletChainsData, cosmosWalletProvider,
 } from "../providers/wallet.ts";
 import {
     composeContext,
@@ -142,7 +141,7 @@ export const transferAction = {
         };
 
         const walletProvider: CosmosWalletChainsData =
-            await CosmosWalletProvider.initWalletChainsData(_runtime);
+            await cosmosWalletProvider.initWalletChainsData(_runtime);
 
         const action = new TransferAction(walletProvider);
 
@@ -174,13 +173,11 @@ export const transferAction = {
     },
     template: transferTemplate,
     validate: async (runtime: IAgentRuntime) => {
-        try {
-            await CosmosWalletProvider.initWalletChainsData(runtime);
+        const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
+        const availableChains = runtime.getSetting("COSMOS_AVAILABLE_CHAINS");
+        const availableChainsArray = availableChains?.split(",");
 
-            return true;
-        } catch {
-            return false;
-        }
+        return !(mnemonic && availableChains && availableChainsArray.length);
     },
     examples: [
         [
