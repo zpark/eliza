@@ -71,20 +71,18 @@ Format in markdown without adding any additional headers.`,
 
     actionDoc: `Generate documentation for this action with the following structure:
 
-### [action name - found in the name: [name] EXAMPLE: "EXAMPLE_ACTION"]
+### [action name]
 [Brief description of the action]
 
 #### Properties
-- Name: [action name - found in the name: [name] EXAMPLE: "EXAMPLE_ACTION"]
-- Similes: [list of similes - found in the similes: ["similes1", "similes2", "similes3"]]
+- Name: [action name]
+- Similes: [list of similes]
 
 #### Handler
 [Description of what the handler does]
 
 #### Examples
-[Use Examples object in Action code to give a Natural language example below]
-- user: "example user request"
-- agent: "example agent response"
+[Use Examples object in Action code to give a Natural language example replace {{user2}} with "Agent" and {{user1}} with "User"]
 
 Format in markdown without adding any additional headers.`,
 
@@ -118,16 +116,23 @@ Format in markdown without adding any additional headers.`,
     fileApiDoc: `Generate API reference documentation with the following structure:
 
 ### Classes
+\`\`\`typescript
 [List each class with its methods and properties]
-
+\`\`\`
 ### Interfaces
+\`\`\`typescript
 [List each interface with its properties]
+\`\`\`
 
 ### Types
+\`\`\`typescript
 [List each type with its definition]
+\`\`\`
 
 ### Functions
+\`\`\`typescript
 [List each function with its parameters and return type]
+\`\`\`
 
 
 Create a comprehensive API reference including:
@@ -144,10 +149,10 @@ Format the response in markdown with proper headings and code blocks.`,
 
 ### Items
 1. [First TODO item]
-   - Context: [context of the TODO]
+   - Context: [describe the TODO]
    - Type: [bug/feature/enhancement]
 2. [Second TODO item]
-   - Context: [context of the TODO]
+   - Context: [describe the TODO]
    - Type: [bug/feature/enhancement]
 
 Format in markdown without adding any additional headers.`,
@@ -162,6 +167,7 @@ Format in markdown without adding any additional headers.`,
 ### Debugging Tips
 - [First debugging tip]
 - [Second debugging tip]
+- Ask your questions at https://eliza.gg/ 🚀 or in our discord
 
 ### FAQ
 Q: [Common question]

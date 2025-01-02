@@ -37,6 +37,11 @@ on:
         required: false
         default: 'develop'
         type: string
+      language:
+        description: 'Documentation language (e.g., English, Spanish, French)'
+        required: true
+        default: 'English'
+        type: string
 
 jobs:
   generate-docs:

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { parse, ParserOptions } from '@typescript-eslint/parser';
+import { ActionBounds, ActionMetadata } from './types';
 
 /**
  * A class for parsing TypeScript files.
@@ -73,13 +74,51 @@ export class TypeScriptParser {
         return exports;
       }
 
-    /**
-     * Handles a parse error that occurs during TypeScript parsing.
-     *
-     * @param {Error} error - The error that occurred during parsing
-     * @returns {void}
-     */
-    public handleParseError(error: Error): void {
-        console.error('TypeScript Parsing Error:', error);
+    public findActionBounds(ast: any): ActionBounds | null {
+        let startLine: number | null = null;
+        let endLine: number | null = null;
+
+        const findActionTypeAnnotation = (node: any) => {
+            // Look for Action type annotation
+            if (node?.typeAnnotation?.typeAnnotation?.typeName?.name === 'Action') {
+                startLine = node.loc.start.line;
+            }
+
+            // Look for ActionExample type annotation to find the end
+            if (node?.typeAnnotation?.elementType?.elementType?.typeName?.name === 'ActionExample') {
+                endLine = node.loc.end.line;
+            }
+
+            // Recursively search in child nodes
+            for (const key in node) {
+                if (node[key] && typeof node[key] === 'object') {
+                    if (Array.isArray(node[key])) {
+                        node[key].forEach(findActionTypeAnnotation);
+                    } else {
+                        findActionTypeAnnotation(node[key]);
+                    }
+                }
+            }
+        };
+
+        findActionTypeAnnotation(ast);
+
+        if (startLine && endLine) {
+            return { startLine, endLine };
+        }
+
+        return null;
+    }
+
+    public extractActionCode(filePath: string, bounds: ActionBounds): string {
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const lines = fileContent.split('\n');
+
+        // Extract lines from start to end (inclusive)
+        return lines.slice(bounds.startLine - 1, bounds.endLine).join('\n');
+    }
+
+    private handleParseError(error: Error): void {
+        console.error('Error parsing TypeScript file:', error.message);
     }
 }

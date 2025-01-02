@@ -1,21 +1,11 @@
 import { ChatOpenAI } from "@langchain/openai";
 import dotenv from 'dotenv';
-import { ASTQueueItem, EnvUsage, OrganizedDocs, PluginDocumentation, TodoItem, TodoSection } from "./types/index.js";
+import { ActionMetadata, ASTQueueItem, EnvUsage, OrganizedDocs, PluginDocumentation, TodoItem, TodoSection } from "./types/index.js";
 import path from "path";
 import { promises as fs } from 'fs';
 import { Configuration } from "./Configuration.js";
 import { TypeScriptParser } from './TypeScriptParser.js';
 import { PROMPT_TEMPLATES } from "./utils/prompts.js";
-
-// ToDo
-// - Vet readme tomorrow
-// - Debugging Tips - reference discord and eliz.gg
-// - gh workflow - jsdoc & plugin docs - conditionally run either, dont write to files
-// - bash script cleaner - check if compile, bash, AI
-
-
-
-
 
 dotenv.config();
 
@@ -33,6 +23,7 @@ interface FileDocsGroup {
  */
 export class AIService {
     private chatModel: ChatOpenAI;
+    private typeScriptParser: TypeScriptParser;
 
     /**
      * Constructor for initializing the ChatOpenAI instance.
@@ -45,6 +36,7 @@ export class AIService {
             throw new Error('OPENAI_API_KEY is not set');
         }
         this.chatModel = new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        this.typeScriptParser = new TypeScriptParser();
     }
 
     /**
@@ -54,7 +46,14 @@ export class AIService {
      */
     public async generateComment(prompt: string): Promise<string> {
         try {
-            const response = await this.chatModel.invoke(prompt);
+            let finalPrompt = prompt;
+
+            // Only append language instruction if not English
+            if (this.configuration.language.toLowerCase() !== 'english') {
+                finalPrompt += `\n\nEverything except the JSDoc conventions and code should be in ${this.configuration.language}`;
+            }
+
+            const response = await this.chatModel.invoke(finalPrompt);
             return response.content as string;
         } catch (error) {
             this.handleAPIError(error as Error);
@@ -80,8 +79,7 @@ export class AIService {
         // Read the index.ts file
         // Read the index.ts file
         const indexPath = path.join(this.configuration.absolutePath, 'src', 'index.ts');
-        const typeScriptParser = new TypeScriptParser();
-        const exports = typeScriptParser.extractExports(indexPath);
+        const exports = this.typeScriptParser.extractExports(indexPath);
 
         // Extract actions, providers, and evaluators from the index.ts content
         // Generate documentation for actions
@@ -321,22 +319,26 @@ export class AIService {
             const filePath = path.join(this.configuration.absolutePath, 'src', relativePath + '.ts');
 
             try {
-                const content = await fs.readFile(filePath, 'utf-8');
-                // Create an action object with relevant information
-                const action = {
-                    fileName: relativePath,
-                    content: content,
-                    // Extract action properties like name, similes, etc.
-                    // You might want to parse the content to extract these
-                    name: relativePath.split('/').pop()?.replace('.ts', ''),
-                };
+                const ast = this.typeScriptParser.parse(filePath);
+                const bounds = this.typeScriptParser.findActionBounds(ast);
 
-                const actionDocumentation = await this.generateActionDoc(action);
+                if (!bounds) {
+                    console.warn(`No action bounds found in ${filePath}`);
+                    continue;
+                }
+
+                const actionCode = this.typeScriptParser.extractActionCode(filePath, bounds);
+
+                // Use PROMPT_TEMPLATES.actionDoc
+                const prompt = `${PROMPT_TEMPLATES.actionDoc}\n\nWith content:\n\`\`\`typescript\n${actionCode}\n\`\`\``;
+
+                const actionDocumentation = await this.generateComment(prompt);
                 if (actionDocumentation.trim()) {
                     documentation += actionDocumentation + '\n\n';
                 }
+
             } catch (error) {
-                console.warn(`Warning: Could not read action file ${filePath}:`, error);
+                console.warn(`Warning: Could not process action file ${filePath}:`, error);
                 continue;
             }
         }
@@ -456,9 +458,69 @@ export class AIService {
 
     private async generateFileApiDoc(fileGroup: FileDocsGroup): Promise<string> {
         const filePath = this.formatFilePath(fileGroup.filePath);
-        const prompt = `${PROMPT_TEMPLATES.fileApiDoc}\n\nFor file: ${filePath}\n\nWith components:\n${this.formatComponents(fileGroup)}`;
-        const doc = await this.generateComment(prompt);
-        return `### ${filePath}\n\n${doc}`;
+        const formattedDocs = this.formatApiComponents(fileGroup);
+        return formattedDocs ? `### ${filePath}\n\n${formattedDocs}` : '';
+    }
+
+    private formatApiComponents(fileGroup: FileDocsGroup): string {
+        const sections: string[] = [];
+
+        // Classes
+        if (fileGroup.classes.length > 0) {
+            sections.push('#### Classes\n');
+            fileGroup.classes.forEach(c => {
+                sections.push(`##### ${c.name}\n`);
+                if (c.jsDoc) sections.push(`\`\`\`\n${c.jsDoc}\n\`\`\`\n`);
+
+                // Add any methods belonging to this class
+                const classMethods = fileGroup.methods.filter(m => m.className === c.name);
+                if (classMethods.length > 0) {
+                    sections.push('Methods:\n');
+                    classMethods.forEach(m => {
+                        sections.push(`* \`${m.name}\`\n  \`\`\`\n  ${m.jsDoc || ''}\n  \`\`\`\n`);
+                    });
+                }
+            });
+        }
+
+        // Interfaces
+        if (fileGroup.interfaces.length > 0) {
+            sections.push('#### Interfaces\n');
+            fileGroup.interfaces.forEach(i => {
+                sections.push(`##### ${i.name}\n`);
+                if (i.jsDoc) sections.push(`\`\`\`\n${i.jsDoc}\n\`\`\`\n`);
+            });
+        }
+
+        // Types
+        if (fileGroup.types.length > 0) {
+            sections.push('#### Types\n');
+            fileGroup.types.forEach(t => {
+                sections.push(`##### ${t.name}\n`);
+                if (t.jsDoc) sections.push(`\`\`\`\n${t.jsDoc}\n\`\`\`\n`);
+            });
+        }
+
+        // Standalone Functions (not class methods)
+        if (fileGroup.functions.length > 0) {
+            sections.push('#### Functions\n');
+            fileGroup.functions.forEach(f => {
+                sections.push(`##### ${f.name}\n`);
+                if (f.jsDoc) sections.push(`\`\`\`\n${f.jsDoc}\n\`\`\`\n`);
+            });
+        }
+
+        // Standalone Methods (not belonging to any class)
+        const standaloneMethods = fileGroup.methods.filter(m => !m.className);
+        if (standaloneMethods.length > 0) {
+            sections.push('#### Methods\n');
+            standaloneMethods.forEach(m => {
+                sections.push(`##### ${m.name}\n`);
+                if (m.jsDoc) sections.push(`\`\`\`\n${m.jsDoc}\n\`\`\`\n`);
+            });
+        }
+
+        return sections.join('\n');
     }
 
     private formatComponents(fileGroup: FileDocsGroup): string {
@@ -487,23 +549,11 @@ export class AIService {
         return sections.join('\n\n');
     }
 
-    private async generateActionDoc(action: any): Promise<string> {
-        const prompt = `${PROMPT_TEMPLATES.actionDoc}\n\nWith content:\n${JSON.stringify(action, null, 2)}`;
-        return await this.generateComment(prompt);
-    }
 
     private async generateProviderDoc(provider: any): Promise<string> {
         const prompt = `${PROMPT_TEMPLATES.providerDoc}\n\nWith content:\n${JSON.stringify(provider, null, 2)}`;
         return await this.generateComment(prompt);
     }
-
-
-
-
-
-
-
-
     /**
      * Handle API errors by logging the error message and throwing the error.
      *

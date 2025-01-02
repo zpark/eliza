@@ -87,3 +87,17 @@ export interface PluginDocumentation {
     providersDocumentation: string;
     evaluatorsDocumentation: string;
 }
+
+export interface ActionMetadata {
+    name: string;
+    similes: string[];
+    validate: string;
+    handler: string;
+    examples: string[];
+    description: string;
+}
+
+export interface ActionBounds {
+    startLine: number;
+    endLine: number;
+}
