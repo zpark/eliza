@@ -34,34 +34,34 @@ export class PluginDocumentationGenerator {
         if (!packageJson) {
             console.error('package.json not found');
         }
-
-        // Read existing README if it exists
-        const readmePath = path.join(this.configuration.absolutePath, 'README-automated.md');
-        const readmeContent = fs.existsSync(readmePath)
-            ? fs.readFileSync(readmePath, 'utf-8')
-            : undefined;
-
         // Generate documentation
         const documentation = await this.aiService.generatePluginDocumentation({
             existingDocs,
             packageJson,
-            readmeContent,
             todoItems,
             envUsages
         });
 
-        // Generate and write markdown
+        // Generate markdown content
         const markdownContent = this.generateMarkdownContent(documentation, packageJson);
-        fs.writeFileSync(readmePath, markdownContent);
 
-        // Commit if we're in a branch
+        // Only commit the file if we're in a branch
         if (branchName) {
+            // Use the configuration's relative path to determine the correct README location
+            const relativeReadmePath = path.join(
+                this.configuration.relativePath,
+                'README-automated.md'
+            );
+
+            // Commit the file to the correct location
             await this.gitManager.commitFile(
                 branchName,
-                'README.md',
+                relativeReadmePath,
                 markdownContent,
                 'docs: Update plugin documentation'
             );
+        } else {
+            console.error('No branch name provided, skipping commit for README-automated.md');
         }
     }
 
