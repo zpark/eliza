@@ -1358,6 +1358,8 @@ export interface VerifiableInferenceResult {
     provider: VerifiableInferenceProvider;
     /** Timestamp */
     timestamp: number;
+    /** Proof */
+    proof: any;
 }
 
 /**
@@ -1384,4 +1386,5 @@ export interface IVerifiableInferenceAdapter {
      * @returns Promise indicating if the proof is valid
      */
     verifyProof(result: VerifiableInferenceResult): Promise<boolean>;
+
 }
