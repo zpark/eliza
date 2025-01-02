@@ -6,10 +6,10 @@ export const DEFAULT_MAX_TWEET_LENGTH = 280;
 const twitterUsernameSchema = z
     .string()
     .min(1, "An X/Twitter Username must be at least 1 characters long")
-    .max(15, "n X/Twitter Username cannot exceed 15 characters")
+    .max(15, "An X/Twitter Username cannot exceed 15 characters")
     .regex(
         /^[A-Za-z0-9_]*$/,
-        "n X Username can only contain letters, numbers, and underscores"
+        "An X Username can only contain letters, numbers, and underscores"
     );
 
 /**
