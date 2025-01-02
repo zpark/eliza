@@ -196,3 +196,5 @@ export class CosmosWalletProvider implements Provider {
         }
     }
 }
+
+export const cosmosWalletProvider = new CosmosWalletProvider();
