@@ -46,7 +46,7 @@ export class Configuration implements Omit<ConfigurationData, 'rootDirectory'> {
 
     public excludedDirectories: string[] = [];
     public repository: Repository = {
-        owner: 'Ed-Marcavage',
+        owner: 'elizaOS',
         name: 'eliza',
         pullNumber: undefined
     };

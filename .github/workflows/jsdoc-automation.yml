@@ -99,3 +99,6 @@ jobs:
           INPUT_EXCLUDED_DIRECTORIES: ${{ inputs.excluded_directories }}
           INPUT_REVIEWERS: ${{ inputs.reviewers }}
           INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_LANGUAGE: ${{ inputs.language }}
+          INPUT_JSDOC: ${{ inputs.jsdoc }}
+          INPUT_README: ${{ inputs.readme }}

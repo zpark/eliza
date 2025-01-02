@@ -39,7 +39,6 @@ async function checkStorageBalance(
     }
 }
 
-// TODO: add functionality to support multiple networks
 async function swapToken(
     runtime: IAgentRuntime,
     inputTokenId: string,
