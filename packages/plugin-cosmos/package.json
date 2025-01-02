@@ -20,5 +20,8 @@
         "dev": "tsup --format esm --dts --watch",
         "lint": "eslint --fix  --cache .",
         "test": "vitest run"
+    },
+    "devDependencies": {
+        "interchain": "^1.10.4"
     }
 }
