@@ -1240,8 +1240,9 @@ export interface DataIrysFetchedFromGQL {
 }
 
 export interface IIrysService extends Service {
-    uploadStringToIrys(data: string): Promise<UploadIrysResult>;
+    uploadDataOnIrys(data: any): Promise<UploadIrysResult>;
     getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<DataIrysFetchedFromGQL>;
+    uploadFileOrImageOnIrys(data: string): Promise<UploadIrysResult>;
 }
 
 export type SearchResult = {

@@ -35,20 +35,40 @@ For this plugin to work, you need to have an EVM (Base network)wallet with a pri
 
 ### Uploading Data
 
-To upload data to the Irys network, you can use the `uploadData` function. This function will upload the data to the Irys network and return the transaction hash.
+To upload data to the Irys network, you can use the `uploadDataOnIrys` function. This function will upload the data to the Irys network and return the transaction hash.
 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');
 
 const irysService : IrysService = runtime.getService(ServiceType.IRYS)
 const data = "Hello, world!";
-const transactionResult = await irysService.uploadStringToIrys(data);
+const transactionResult = await irysService.uploadDataOnIrys(data);
+console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
+```
+
+To upload files or images to the Irys network, you can use the `uploadFileOrImageOnIrys` function:
+
+```typescript
+const { IrysService } = require('@elizaos/plugin-irys');
+
+const irysService : IrysService = runtime.getService(ServiceType.IRYS)
+const imageurl = "https://gateway.irys.xyz/QH3rksVhbFg5L9vvjGzb4POUibCEG-TGPInmofp-O-o";
+const transactionResult = await irysService.uploadFileOrImageOnIrys(imageurl);
 console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
 ```
 
 ### Retrieving Data
 
-To retrieve data from the Irys network, you can use the `getDataFromAnAgent` function. This function will retrieve the data from the Irys network and return the data.
+To retrieve data from the Irys network, you can use the `getDataFromAnAgent` function. This function will retrieve all data associated with the given wallet addresses. The function automatically detects the content type and returns either JSON data or file URLs accordingly.
+
+- For files and images: Returns the URL of the stored content
+- For other data types: Returns a JSON object with the following structure:
+```typescript
+{
+  data: string,    // The stored data
+  timestamp: Date  // When the data was stored
+}
+```
 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');

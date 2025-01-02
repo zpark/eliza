@@ -4,7 +4,7 @@ import {
     ServiceType,
     IIrysService,
     UploadIrysResult,
-    DataIrysFetchedFromGQL
+    DataIrysFetchedFromGQL,
 } from "@elizaos/core";
 import { Uploader } from "@irys/upload";
 import { BaseEth } from "@irys/upload-ethereum";
@@ -84,16 +84,16 @@ export class IrysService extends Service implements IIrysService {
     }
 
     private async fetchDataFromTransactionId(transactionId: string): Promise<DataIrysFetchedFromGQL> {
+        console.log(`Fetching data from transaction ID: ${transactionId}`);
         const response = await fetch(`${this.endpointForData}/${transactionId}`);
         if (!response.ok) return { success: false, data: null, error: "Error fetching data from transaction ID" };
-        const data = await response.text();
         return {
             success: true,
-            data: data,
+            data: response,
         };
     }
 
-    async uploadStringToIrys(data: string): Promise<UploadIrysResult> {
+    async uploadDataOnIrys(data: any): Promise<UploadIrysResult> {
         if (!(await this.initializeIrysUploader())) {
             return {
                 success: false,
@@ -102,7 +102,28 @@ export class IrysService extends Service implements IIrysService {
         }
 
         try {
-            const receipt = await this.irysUploader.upload(data);
+            const dataToStore = {
+                data: data,
+                timestamp: new Date().toISOString()
+            };
+
+            const receipt = await this.irysUploader.upload(dataToStore);
+            return { success: true, url: `https://gateway.irys.xyz/${receipt.id}` };
+        } catch (error) {
+            return { success: false, error: "Error uploading to Irys" };
+        }
+    }
+
+    async uploadFileOrImageOnIrys(data: string): Promise<UploadIrysResult> {
+        if (!(await this.initializeIrysUploader())) {
+            return {
+                success: false,
+                error: "Irys uploader not initialized"
+            };
+        }
+
+        try {
+            const receipt = await this.irysUploader.uploadFile(data);
             return { success: true, url: `https://gateway.irys.xyz/${receipt.id}` };
         } catch (error) {
             return { success: false, error: "Error uploading to Irys" };
@@ -116,8 +137,13 @@ export class IrysService extends Service implements IIrysService {
             const transactionIds = transactionIdsResponse.transactions;
 
             const dataPromises: Promise<any>[] = transactionIds.map(async (id) => {
-                const fetchDataFromTransactionIdResponse : DataIrysFetchedFromGQL = await this.fetchDataFromTransactionId(id);
-                return fetchDataFromTransactionIdResponse.data;
+                const fetchDataFromTransactionIdResponse = await this.fetchDataFromTransactionId(id);
+                if (await fetchDataFromTransactionIdResponse.data.header['content-type'].include("json")) {
+                    return await fetchDataFromTransactionIdResponse.data.json();
+                }
+                else {
+                    return fetchDataFromTransactionIdResponse.data.url;
+                }
             });
             const data = await Promise.all(dataPromises);
             return { success: true, data: data };
