@@ -26,6 +26,7 @@ export class WalletProvider {
     private cache: NodeCache;
     private cacheKey: string = "evm/wallet";
     private currentChain: SupportedChain = "mainnet";
+    private CACHE_EXPIRY_SEC = 5;
     chains: Record<string, Chain> = { mainnet: viemChains.mainnet };
     account: PrivateKeyAccount;
 
@@ -41,7 +42,7 @@ export class WalletProvider {
             this.setCurrentChain(Object.keys(chains)[0] as SupportedChain);
         }
 
-        this.cache = new NodeCache({ stdTTL: 5 });
+        this.cache = new NodeCache({ stdTTL: this.CACHE_EXPIRY_SEC });
     }
 
     getAddress(): Address {
@@ -148,46 +149,7 @@ export class WalletProvider {
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
         await this.cacheManager.set(path.join(this.cacheKey, key), data, {
-            expires: Date.now() + 5 * 60 * 1000,
-        });
-    }
-
-    private async getCachedData<T>(key: string): Promise<T | null> {
-        // Check in-memory cache first
-        const cachedData = this.cache.get<T>(key);
-        if (cachedData) {
-            return cachedData;
-        }
-
-        // Check file-based cache
-        const fileCachedData = await this.readFromCache<T>(key);
-        if (fileCachedData) {
-            // Populate in-memory cache
-            this.cache.set(key, fileCachedData);
-            return fileCachedData;
-        }
-
-        return null;
-    }
-
-    private async setCachedData<T>(cacheKey: string, data: T): Promise<void> {
-        // Set in-memory cache
-        this.cache.set(cacheKey, data);
-
-        // Write to file-based cache
-        await this.writeToCache(cacheKey, data);
-    }
-
-    private async readFromCache<T>(key: string): Promise<T | null> {
-        const cached = await this.cacheManager.get<T>(
-            path.join(this.cacheKey, key)
-        );
-        return cached;
-    }
-
-    private async writeToCache<T>(key: string, data: T): Promise<void> {
-        await this.cacheManager.set(path.join(this.cacheKey, key), data, {
-            expires: Date.now() + 5 * 60 * 1000,
+            expires: Date.now() + this.CACHE_EXPIRY_SEC * 1000,
         });
     }
 
@@ -321,7 +283,7 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
             walletSecretSalt,
             runtime.agentId
         );
-        return new WalletProvider(deriveKeyResult.keypair, chains);
+        return new WalletProvider(deriveKeyResult.keypair, runtime.cacheManager, chains);
     } else {
         const privateKey = runtime.getSetting(
             "EVM_PRIVATE_KEY"
