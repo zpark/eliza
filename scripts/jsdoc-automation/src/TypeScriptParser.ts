@@ -74,9 +74,10 @@ export class TypeScriptParser {
         return exports;
       }
 
-    public findActionBounds(ast: any): ActionBounds | null {
+      public findActionBounds(ast: any): ActionBounds | null {
         let startLine: number | null = null;
         let endLine: number | null = null;
+        let actionNameStartLine: number | null = null;
 
         const findActionTypeAnnotation = (node: any) => {
             // Look for Action type annotation
@@ -87,6 +88,14 @@ export class TypeScriptParser {
             // Look for ActionExample type annotation to find the end
             if (node?.typeAnnotation?.elementType?.elementType?.typeName?.name === 'ActionExample') {
                 endLine = node.loc.end.line;
+            }
+
+            // Backup: Look for action name property
+            if (node?.type === 'Property' &&
+                node?.key?.type === 'Identifier' &&
+                node?.key?.name === 'name' &&
+                node?.value?.type === 'Literal') {
+                actionNameStartLine = node.loc.start.line;
             }
 
             // Recursively search in child nodes
@@ -102,6 +111,12 @@ export class TypeScriptParser {
         };
 
         findActionTypeAnnotation(ast);
+
+        // If we found a valid end line but no start line, use the action name line as fallback
+        if (!startLine && actionNameStartLine && endLine) {
+            console.log('Using action name line as fallback');
+            startLine = actionNameStartLine;
+        }
 
         if (startLine && endLine) {
             return { startLine, endLine };

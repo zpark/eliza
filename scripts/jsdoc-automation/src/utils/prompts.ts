@@ -145,14 +145,14 @@ Create a comprehensive API reference including:
 
 Format the response in markdown with proper headings and code blocks.`,
 
-    todos: `Generate TODO documentation with the following structure, do not return the context (code) rather a description of the code and how the todo is related to the code:
+    todos: `Generate TODO documentation with the following structure, DO NOT return the context/code rather a description of the code and how the todo is related to the code, if no todos are provided return "No todos found in the code":
 
 ### Items
 1. [First TODO item]
-   - Context: [describe the TODO]
+   - Context: [describe the code associated with the todo]
    - Type: [bug/feature/enhancement]
 2. [Second TODO item]
-   - Context: [describe the TODO]
+   - Context: [describe the code associated with the todo]
    - Type: [bug/feature/enhancement]
 
 Format in markdown without adding any additional headers.`,
