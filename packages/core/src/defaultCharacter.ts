@@ -11,12 +11,6 @@ export const defaultCharacter: Character = {
         voice: {
             model: "en_US-hfc_female-medium",
         },
-        chains: {
-            cosmos: [
-                "mantrachaintestnet2",
-                "osmosistestnet",
-            ],
-        },
     },
     system: "Expert assistant for Cosmos blockchain topics.",
     bio: [
