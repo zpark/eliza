@@ -1326,7 +1326,7 @@ export enum TranscriptionProvider {
  * Available verifiable inference providers
  */
 export enum VerifiableInferenceProvider {
-    RECLAIM = "opacity",
+    OPACITY = "opacity",
 }
 
 /**
