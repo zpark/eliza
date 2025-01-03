@@ -22,11 +22,7 @@ async function generateSummary(
     );
     const model = models[runtime.character.modelProvider];
     // make sure text is under 128k characters
-    text = await tokenizationService.trimTokens(
-        text,
-        100000,
-        model.model[ModelClass.SMALL] || "gpt-4o-mini"
-    );
+    text = await tokenizationService.trimTokens(text, 100000);
 
     const prompt = `Please generate a concise summary for the following text:
 

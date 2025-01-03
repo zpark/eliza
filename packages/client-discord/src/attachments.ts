@@ -10,7 +10,6 @@ import {
     ModelClass,
     ServiceType,
     ITokenizationService,
-    models,
 } from "@elizaos/core";
 import { Attachment, Collection } from "discord.js";
 import ffmpeg from "fluent-ffmpeg";
@@ -20,16 +19,11 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
-    const model = models[runtime.character.modelProvider];
     const tokenizationService = runtime.getService<ITokenizationService>(
         ServiceType.TOKENIZATION
     );
     // make sure text is under 128k characters
-    text = await tokenizationService.trimTokens(
-        text,
-        100000,
-        model.model[ModelClass.SMALL] || "gpt-4o-mini"
-    );
+    text = await tokenizationService.trimTokens(text, 100000);
 
     const prompt = `Please generate a concise summary for the following text:
 

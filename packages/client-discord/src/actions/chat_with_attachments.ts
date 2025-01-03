@@ -198,8 +198,7 @@ const summarizeAction = {
         );
         const template = await tokenizationService.trimTokens(
             summarizationTemplate,
-            chunkSize + 500,
-            model.model[ModelClass.SMALL] || "gpt-4o-mini"
+            chunkSize + 500
         );
         const context = composeContext({
             state,

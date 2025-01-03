@@ -194,8 +194,7 @@ export async function generateText({
 
         context = await tokenizationService.trimTokens(
             context,
-            max_context_length,
-            model
+            max_context_length
         );
 
         let response: string;
@@ -944,18 +943,13 @@ export async function generateMessageResponse({
     modelClass: string;
 }): Promise<Content> {
     const provider = runtime.modelProvider;
-    const model = models[provider].model[modelClass];
     const max_context_length = models[provider].settings.maxInputTokens;
 
     const tokenizationService = runtime.getService<ITokenizationService>(
         ServiceType.TOKENIZATION
     );
 
-    context = await tokenizationService.trimTokens(
-        context,
-        max_context_length,
-        model
-    );
+    context = await tokenizationService.trimTokens(context, max_context_length);
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
@@ -1429,7 +1423,8 @@ export const generateObject = async ({
     const presence_penalty = models[provider].settings.presence_penalty;
     const max_context_length = models[provider].settings.maxInputTokens;
     const max_response_length = models[provider].settings.maxOutputTokens;
-    const experimental_telemetry = models[provider].settings.experimental_telemetry;
+    const experimental_telemetry =
+        models[provider].settings.experimental_telemetry;
     const apiKey = runtime.token;
 
     try {
@@ -1439,8 +1434,7 @@ export const generateObject = async ({
 
         context = await tokenizationService.trimTokens(
             context,
-            max_context_length,
-            model
+            max_context_length
         );
 
         const modelOptions: ModelSettings = {
