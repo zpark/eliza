@@ -13,7 +13,9 @@ COSMOS_RECOVERY_PHRASE=your recovery phrase words
 COSMOS_AVAILABLE_CHAINS=chain1,chain2,chain3
   ```
 
-Run Eliza with `@ai16z/plugin-cosmos`
+Ensure the appropriate environment variables are added for the plugin. If they are correctly configured, the project will run with `@ai16z/plugin-cosmos`
+
+Run Eliza 
 ```
 pnpm run dev
 ```
