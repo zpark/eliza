@@ -1,6 +1,7 @@
 import {
     composeContext,
     generateText,
+    trimTokens,
     parseJSONObjectFromText,
 } from "@elizaos/core";
 import { models } from "@elizaos/core";
@@ -14,7 +15,6 @@ import {
     Memory,
     ModelClass,
     State,
-    trimTokens,
 } from "@elizaos/core";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
@@ -201,9 +201,9 @@ const summarizeAction: Action = {
         currentState.objective = objective;
 
         const template = await trimTokens(
-            runtime,
             summarizationTemplate,
-            chunkSize + 500
+            chunkSize + 500,
+            runtime
         );
         const context = composeContext({
             state: currentState,

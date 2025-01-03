@@ -1,4 +1,8 @@
-import { generateText, parseJSONObjectFromText } from "@elizaos/core";
+import {
+    generateText,
+    trimTokens,
+    parseJSONObjectFromText,
+} from "@elizaos/core";
 import {
     IAgentRuntime,
     IImageDescriptionService,
@@ -8,7 +12,6 @@ import {
     Media,
     ModelClass,
     ServiceType,
-    trimTokens,
 } from "@elizaos/core";
 import { WebClient } from "@slack/web-api";
 import ffmpeg from "fluent-ffmpeg";
@@ -18,7 +21,7 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
-    text = await trimTokens(runtime, text, 100000);
+    text = await trimTokens(text, 100000, runtime);
 
     const prompt = `Please generate a concise summary for the following text:
 

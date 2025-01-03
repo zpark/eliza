@@ -2,6 +2,7 @@ import {
     composeContext,
     generateText,
     splitChunks,
+    trimTokens,
     parseJSONObjectFromText,
 } from "@elizaos/core";
 import { models } from "@elizaos/core";
@@ -17,7 +18,6 @@ import {
     ModelClass,
     State,
     elizaLogger,
-    trimTokens,
 } from "@elizaos/core";
 import { ISlackService, SLACK_SERVICE_TYPE } from "../types/slack-types";
 
@@ -280,9 +280,9 @@ const summarizeAction: Action = {
             currentState.currentChunk = chunk;
 
             const template = await trimTokens(
-                runtime,
                 summarizationTemplate,
-                chunkSize + 500
+                chunkSize + 500,
+                runtime
             );
 
             const context = composeContext({

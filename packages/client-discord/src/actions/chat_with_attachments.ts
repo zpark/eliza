@@ -1,5 +1,5 @@
 import { composeContext } from "@elizaos/core";
-import { generateText } from "@elizaos/core";
+import { generateText, trimTokens } from "@elizaos/core";
 import type { TiktokenModel } from "js-tiktoken";
 import { models } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
@@ -12,7 +12,6 @@ import {
     Memory,
     ModelClass,
     State,
-    trimTokens,
 } from "@elizaos/core";
 import * as fs from "fs";
 
@@ -193,9 +192,9 @@ const summarizeAction = {
         state.attachmentsWithText = attachmentsWithText;
         state.objective = objective;
         const template = await trimTokens(
-            runtime,
             summarizationTemplate,
-            chunkSize + 500
+            chunkSize + 500,
+            runtime
         );
         const context = composeContext({
             state,

@@ -3,8 +3,8 @@ import {
     ModelClass,
     elizaLogger,
     generateText,
-    parseJSONObjectFromText,
     trimTokens,
+    parseJSONObjectFromText,
 } from "@elizaos/core";
 import {
     ChannelType,
@@ -47,7 +47,7 @@ export async function generateSummary(
     text: string
 ): Promise<{ title: string; description: string }> {
     // make sure text is under 128k characters
-    text = await trimTokens(runtime, text, 100000);
+    text = await trimTokens(text, 100000, runtime);
 
     const prompt = `Please generate a concise summary for the following text:
 

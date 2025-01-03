@@ -13,6 +13,8 @@ import {
 import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
+import { encodingForModel, TiktokenModel } from "js-tiktoken";
+import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -40,17 +42,14 @@ import {
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
-import { AutoTokenizer } from "@huggingface/transformers";
-
-import { encodingForModel, TiktokenModel } from "js-tiktoken";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
 export async function trimTokens(
-    runtime: IAgentRuntime,
     context: string,
-    maxTokens: number
+    maxTokens: number,
+    runtime: IAgentRuntime
 ) {
     const tokenizerModel = runtime.getSetting("TOKENIZER_MODEL");
     const tokenizerType = runtime.getSetting("TOKENIZER_TYPE");
@@ -274,7 +273,7 @@ export async function generateText({
             `Trimming context to max length of ${max_context_length} tokens.`
         );
 
-        context = await trimTokens(runtime, context, max_context_length);
+        context = await trimTokens(context, max_context_length, runtime);
 
         let response: string;
 
@@ -1024,7 +1023,7 @@ export async function generateMessageResponse({
     const provider = runtime.modelProvider;
     const max_context_length = models[provider].settings.maxInputTokens;
 
-    context = await trimTokens(runtime, context, max_context_length);
+    context = await trimTokens(context, max_context_length, runtime);
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
@@ -1503,7 +1502,7 @@ export const generateObject = async ({
     const apiKey = runtime.token;
 
     try {
-        context = await trimTokens(runtime, context, max_context_length);
+        context = await trimTokens(context, max_context_length, runtime);
 
         const modelOptions: ModelSettings = {
             prompt: context,
