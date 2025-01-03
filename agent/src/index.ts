@@ -64,6 +64,7 @@ import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";

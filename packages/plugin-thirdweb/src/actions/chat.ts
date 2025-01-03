@@ -5,7 +5,7 @@ import {
     Memory,
     State,
     type Action,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 const BASE_URL = "https://nebula-api.thirdweb.com";
 
