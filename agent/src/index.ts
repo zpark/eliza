@@ -13,12 +13,14 @@ import {
     CacheManager,
     CacheStore,
     Character,
+    Client,
     Clients,
     DbCacheAdapter,
     defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
     IAgentRuntime,
+    ICacheManager,
     IDatabaseAdapter,
     IDatabaseCacheAdapter,
     ModelProviderName,
@@ -46,6 +48,7 @@ import {
 } from "@elizaos/plugin-coinbase";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
+import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
 import { evmPlugin } from "@elizaos/plugin-evm";
 import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
@@ -59,6 +62,7 @@ import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
+import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import Database from "better-sqlite3";
 import fs from "fs";
@@ -505,7 +509,8 @@ export async function createAgent(
     }
 
     let goatPlugin: any | undefined;
-    if (getSecret(character, "EVM_PROVIDER_URL")) {
+
+    if (getSecret(character, "EVM_PRIVATE_KEY")) {
         goatPlugin = await createGoatPlugin((secret) =>
             getSecret(character, secret)
         );
@@ -524,6 +529,7 @@ export async function createAgent(
                 ? confluxPlugin
                 : null,
             nodePlugin,
+            getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
                 !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
@@ -578,7 +584,7 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
+            goatPlugin,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
@@ -600,6 +606,10 @@ export async function createAgent(
                 ? avalanchePlugin
                 : null,
             getSecret(character, "BIRDEYE_API_KEY") ? birdeyePlugin : null,
+            getSecret(character, "ECHOCHAMBERS_API_URL") &&
+            getSecret(character, "ECHOCHAMBERS_API_KEY")
+                ? echoChamberPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
