@@ -72,6 +72,9 @@ export async function trimTokens(
     maxTokens: number,
     runtime: IAgentRuntime
 ) {
+    if (!context) return "";
+    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
+
     const tokenizerModel = runtime.getSetting("TOKENIZER_MODEL");
     const tokenizerType = runtime.getSetting("TOKENIZER_TYPE");
 
