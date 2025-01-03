@@ -165,6 +165,9 @@ importers:
       '@elizaos/plugin-cronoszkevm':
         specifier: workspace:*
         version: link:../packages/plugin-cronoszkevm
+      '@elizaos/plugin-echochambers':
+        specifier: workspace:*
+        version: link:../packages/plugin-echochambers
       '@elizaos/plugin-evm':
         specifier: workspace:*
         version: link:../packages/plugin-evm
