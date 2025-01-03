@@ -20,7 +20,7 @@
   ],
   "dependencies": {
     "@elizaos/core": "workspace:*",
-    "agent-twitter-client": "0.0.17",
+    "agent-twitter-client": "0.0.18",
     "glob": "11.0.0",
     "zod": "3.23.8"
   },
