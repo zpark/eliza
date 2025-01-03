@@ -7,6 +7,7 @@ import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
+import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import {
     AgentRuntime,
     CacheManager,
@@ -26,6 +27,7 @@ import {
     CacheStore,
     Client,
     ICacheManager,
+    parseBooleanFromText,
 } from "@elizaos/core";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { zgPlugin } from "@elizaos/plugin-0g";
@@ -61,6 +63,7 @@ import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
+import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -506,7 +509,8 @@ export async function createAgent(
     }
 
     let goatPlugin: any | undefined;
-    if (getSecret(character, "EVM_PROVIDER_URL")) {
+
+    if (getSecret(character, "EVM_PRIVATE_KEY")) {
         goatPlugin = await createGoatPlugin((secret) =>
             getSecret(character, secret)
         );
@@ -521,10 +525,15 @@ export async function createAgent(
         // character.plugins are handled when clients are added
         plugins: [
             bootstrapPlugin,
+            parseBooleanFromText(getSecret(character, "ENABLE_WEBSEARCH")) ===
+            true
+                ? webSearchPlugin
+                : null,
             getSecret(character, "CONFLUX_CORE_PRIVATE_KEY")
                 ? confluxPlugin
                 : null,
             nodePlugin,
+            getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
                 !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
@@ -579,7 +588,7 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
+            goatPlugin,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
