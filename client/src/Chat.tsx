@@ -1,10 +1,10 @@
-import { useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { TextResponse } from "@/api";
 import { useSendMessageMutation } from "@/api";
+import { ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import "./App.css";
 
 export default function Chat() {
@@ -13,11 +13,20 @@ export default function Chat() {
     const [messages, setMessages] = useState<TextResponse[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const { mutate: sendMessage, isPending } = useSendMessageMutation({ setMessages, setSelectedFile });
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() && !selectedFile || !agentId) return;
+        if ((!input.trim() && !selectedFile) || !agentId) return;
 
         // Add user message immediately to state
         const userMessage: TextResponse = {
@@ -87,6 +96,7 @@ export default function Chat() {
                             No messages yet. Start a conversation!
                         </div>
                     )}
+                    <div ref={messagesEndRef} />
                 </div>
             </div>
 
