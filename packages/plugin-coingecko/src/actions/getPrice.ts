@@ -3,7 +3,7 @@ import {
     composeContext,
     Content,
     elizaLogger,
-    generateObject,
+    generateObjectDeprecated,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -12,50 +12,14 @@ import {
     type Action,
 } from "@elizaos/core";
 import axios from "axios";
-import { z } from "zod";
 import { validateCoingeckoConfig } from "../environment";
-
-const GetPriceSchema = z.object({
-    coinId: z.string(),
-    currency: z.string().default("usd"),
-});
+import { getPriceTemplate } from "../templates/price";
+import { normalizeCoinId } from "../utils/coin";
 
 export interface GetPriceContent extends Content {
     coinId: string;
     currency: string;
 }
-
-export function isGetPriceContent(
-    content: GetPriceContent
-): content is GetPriceContent {
-    return (
-        typeof content.coinId === "string" &&
-        typeof content.currency === "string"
-    );
-}
-
-const getPriceTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
-
-Here are several frequently used coin IDs. Use these for the corresponding tokens:
-- bitcoin/btc: bitcoin
-- ethereum/eth: ethereum
-- usdc: usd-coin
-
-Example response:
-\`\`\`json
-{
-    "coinId": "bitcoin",
-    "currency": "usd"
-}
-\`\`\`
-
-{{recentMessages}}
-
-Given the recent messages, extract the following information about the requested price check:
-- Coin ID
-- Currency (defaults to USD)
-
-Respond with a JSON markdown block containing only the extracted values.`;
 
 export default {
     name: "GET_PRICE",
@@ -79,65 +43,82 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting CoinGecko GET_PRICE handler...");
 
+        // Initialize or update state
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         } else {
             state = await runtime.updateRecentMessageState(state);
         }
 
-        const priceContext = composeContext({
-            state,
-            template: getPriceTemplate,
-        });
+        try {
+            // Compose price check context
+            elizaLogger.log("Composing price context...");
+            const priceContext = composeContext({
+                state,
+                template: getPriceTemplate,
+            });
 
-        const content = (
-            await generateObject({
+            elizaLogger.log("Composing content...");
+            const content = (await generateObjectDeprecated({
                 runtime,
                 context: priceContext,
-                modelClass: ModelClass.SMALL,
-                schema: GetPriceSchema,
-            })
-        ).object as unknown as GetPriceContent;
+                modelClass: ModelClass.LARGE,
+            })) as unknown as GetPriceContent;
 
-        if (!isGetPriceContent(content)) {
-            console.error("Invalid content for GET_PRICE action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process price check request. Invalid content provided.",
-                    content: { error: "Invalid price check content" },
-                });
+            // Validate content structure first
+            if (!content || typeof content !== "object") {
+                throw new Error("Invalid response format from model");
             }
-            return false;
-        }
 
-        try {
+            // Get and validate coin ID
+            const coinId = content.coinId
+                ? normalizeCoinId(content.coinId)
+                : null;
+            if (!coinId) {
+                throw new Error(
+                    `Unsupported or invalid cryptocurrency: ${content.coinId}`
+                );
+            }
+
+            // Normalize currency
+            const currency = (content.currency || "usd").toLowerCase();
+
+            // Fetch price from CoinGecko
             const config = await validateCoingeckoConfig(runtime);
+            elizaLogger.log(`Fetching price for ${coinId} in ${currency}...`);
+
             const response = await axios.get(
                 `https://api.coingecko.com/api/v3/simple/price`,
                 {
                     params: {
-                        ids: content.coinId,
-                        vs_currencies: content.currency,
+                        ids: coinId,
+                        vs_currencies: currency,
                         x_cg_demo_api_key: config.COINGECKO_API_KEY,
                     },
                 }
             );
 
-            const price = response.data[content.coinId][content.currency];
+            if (!response.data[coinId]?.[currency]) {
+                throw new Error(
+                    `No price data available for ${coinId} in ${currency}`
+                );
+            }
+
+            const price = response.data[coinId][currency];
             elizaLogger.success(
-                `Price retrieved successfully! ${content.coinId}: ${price} ${content.currency.toUpperCase()}`
+                `Price retrieved successfully! ${coinId}: ${price} ${currency.toUpperCase()}`
             );
 
             if (callback) {
                 callback({
-                    text: `The current price of ${content.coinId} is ${price} ${content.currency.toUpperCase()}`,
-                    content: { price, currency: content.currency },
+                    text: `The current price of ${coinId} is ${price} ${currency.toUpperCase()}`,
+                    content: { price, currency },
                 });
             }
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error fetching price:", error);
+            elizaLogger.error("Error in GET_PRICE handler:", error);
             if (callback) {
                 callback({
                     text: `Error fetching price: ${error.message}`,
@@ -159,14 +140,14 @@ export default {
             {
                 user: "{{agent}}",
                 content: {
-                    text: "Let me check the current Bitcoin price for you.",
+                    text: "I'll check the current Bitcoin price for you.",
                     action: "GET_PRICE",
                 },
             },
             {
                 user: "{{agent}}",
                 content: {
-                    text: "The current price of Bitcoin is 65,432.21 USD",
+                    text: "The current price of bitcoin is {{dynamic}} USD",
                 },
             },
         ],
@@ -180,14 +161,14 @@ export default {
             {
                 user: "{{agent}}",
                 content: {
-                    text: "I'll check the current Ethereum price in EUR.",
+                    text: "I'll check the current Ethereum price in EUR for you.",
                     action: "GET_PRICE",
                 },
             },
             {
                 user: "{{agent}}",
                 content: {
-                    text: "The current price of Ethereum is 2,345.67 EUR",
+                    text: "The current price of ethereum is {{dynamic}} EUR",
                 },
             },
         ],
