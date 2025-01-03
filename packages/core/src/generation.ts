@@ -46,6 +46,27 @@ import { tavily } from "@tavily/core";
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
+/**
+ * Trims the provided text context to a specified token limit using a tokenizer model and type.
+ *
+ * The function dynamically determines the truncation method based on the tokenizer settings
+ * provided by the runtime. If no tokenizer settings are defined, it defaults to using the
+ * TikToken truncation method with the "gpt-4o" model.
+ *
+ * @async
+ * @function trimTokens
+ * @param {string} context - The text to be tokenized and trimmed.
+ * @param {number} maxTokens - The maximum number of tokens allowed after truncation.
+ * @param {IAgentRuntime} runtime - The runtime interface providing tokenizer settings.
+ *
+ * @returns {Promise<string>} A promise that resolves to the trimmed text.
+ *
+ * @throws {Error} Throws an error if the runtime settings are invalid or missing required fields.
+ *
+ * @example
+ * const trimmedText = await trimTokens("This is an example text", 50, runtime);
+ * console.log(trimmedText); // Output will be a truncated version of the input text.
+ */
 export async function trimTokens(
     context: string,
     maxTokens: number,
