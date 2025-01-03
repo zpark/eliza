@@ -68,7 +68,7 @@ export class TokenizationService
             // Decode back to text - js-tiktoken decode() returns a string directly
             return tokenizer.decode(truncatedTokens);
         } catch (error) {
-            console.error("Error in trimTokens:", error);
+            elizaLogger.error("Error in trimTokens:", error);
             // Return truncated string if tokenization fails
             return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
         }
@@ -96,7 +96,7 @@ export class TokenizationService
             // Decode back to text - js-tiktoken decode() returns a string directly
             return encoding.decode(truncatedTokens);
         } catch (error) {
-            console.error("Error in trimTokens:", error);
+            elizaLogger.error("Error in trimTokens:", error);
             // Return truncated string if tokenization fails
             return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
         }
