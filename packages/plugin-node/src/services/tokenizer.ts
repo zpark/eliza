@@ -32,8 +32,8 @@ export class TokenizationService
         const tokenizerType = this.runtime.getSetting("TOKENIZER_TYPE");
 
         if (!tokenizerModel || !tokenizerType) {
-            // Default to TikToken truncation using the "gpt-4o-mini" model if tokenizer settings are not defined
-            return this.truncateTiktoken("gpt-4o-mini", context, maxTokens);
+            // Default to TikToken truncation using the "gpt-4o" model if tokenizer settings are not defined
+            return this.truncateTiktoken("gpt-4o", context, maxTokens);
         }
 
         // Choose the truncation method based on tokenizer type
@@ -49,7 +49,7 @@ export class TokenizationService
             );
         }
 
-        console.error(`Unsupported tokenizer type: ${tokenizerType}`);
+        elizaLogger.error(`Unsupported tokenizer type: ${tokenizerType}`);
     }
 
     async truncateAuto(modelPath: string, context: string, maxTokens: number) {
