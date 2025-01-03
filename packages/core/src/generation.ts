@@ -72,7 +72,8 @@ export async function trimTokens(
         );
     }
 
-    elizaLogger.error(`Unsupported tokenizer type: ${tokenizerType}`);
+    elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
+    return truncateTiktoken("gpt-4o", context, maxTokens);
 }
 
 async function truncateAuto(
