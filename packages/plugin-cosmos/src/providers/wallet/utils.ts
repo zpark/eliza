@@ -1,5 +1,5 @@
 import { IAgentRuntime } from "@ai16z/eliza";
-import { CosmosWalletChainsData } from "../../shared/entities/cosmos-wallet-chains-data";
+import { CosmosWalletChains } from "../../shared/entities/cosmos-wallet-chains-data";
 
 export const initWalletChainsData = async (runtime: IAgentRuntime) => {
     const mnemonic = runtime.getSetting("COSMOS_RECOVERY_PHRASE");
@@ -19,5 +19,5 @@ export const initWalletChainsData = async (runtime: IAgentRuntime) => {
         throw new Error("COSMOS_AVAILABLE_CHAINS is empty");
     }
 
-    return await CosmosWalletChainsData.create(mnemonic, availableChainsArray);
+    return await CosmosWalletChains.create(mnemonic, availableChainsArray);
 };

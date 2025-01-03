@@ -1,25 +1,31 @@
-import { AssetList } from "@chain-registry/types";
 import { getChainByChainName } from "@chain-registry/utils";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { assets, chains } from "chain-registry";
-import { ICosmosWalletProviderChainsData } from "../../providers/wallet/interfaces";
+import { chains } from "chain-registry";
 import { CosmosWallet } from "./cosmos-wallet";
+import type {
+    ICosmosPluginCustomChainData,
+    ICosmosWalletChains,
+    ICosmosWalletChainsData,
+} from "../interfaces";
+import { getAvailableChains } from "../helpers/cosmos-chains";
 
-export class CosmosWalletChainsData {
-    public chainsData: ICosmosWalletProviderChainsData = {};
+export class CosmosWalletChains implements ICosmosWalletChains {
+    public walletChainsData: ICosmosWalletChainsData = {};
 
-    private constructor(chainsData: ICosmosWalletProviderChainsData) {
-        this.chainsData = chainsData;
+    private constructor(walletChainsData: ICosmosWalletChainsData) {
+        this.walletChainsData = walletChainsData;
     }
 
     public static async create(
         mnemonic: string,
-        availableChainNames: string[]
+        availableChainNames: string[],
+        customChainsData?: ICosmosPluginCustomChainData["chainData"][]
     ) {
-        const chainsData: ICosmosWalletProviderChainsData = {};
+        const walletChainsData: ICosmosWalletChainsData = {};
+        const availableChains = getAvailableChains(chains, customChainsData);
 
         for (const chainName of availableChainNames) {
-            const chain = getChainByChainName(chains, chainName);
+            const chain = getChainByChainName(availableChains, chainName);
 
             if (!chain) {
                 throw new Error(`Chain ${chainName} not found`);
@@ -43,32 +49,20 @@ export class CosmosWalletChainsData {
                     wallet.directSecp256k1HdWallet
                 );
 
-            chainsData[chainName] = {
+            walletChainsData[chainName] = {
                 wallet,
                 signingCosmWasmClient,
             };
         }
 
-        return new CosmosWalletChainsData(chainsData);
+        return new CosmosWalletChains(walletChainsData);
     }
 
     public async getWalletAddress(chainName: string) {
-        return await this.chainsData[chainName].wallet.getWalletAddress();
+        return await this.walletChainsData[chainName].wallet.getWalletAddress();
     }
 
     public getSigningCosmWasmClient(chainName: string) {
-        return this.chainsData[chainName].signingCosmWasmClient;
-    }
-
-    public getAssetsList(chainName: string, customAssetList?: AssetList[]) {
-        const assetList = (customAssetList ?? assets).find(
-            (asset) => asset.chain_name === chainName
-        );
-
-        if (!assetList) {
-            throw new Error(`Assets for chain ${chainName} not found`);
-        }
-
-        return assetList;
+        return this.walletChainsData[chainName].signingCosmWasmClient;
     }
 }

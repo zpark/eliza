@@ -8,12 +8,15 @@ import {
     State,
 } from "@ai16z/eliza";
 import { initWalletChainsData } from "../../providers/wallet/utils";
-import { CosmosWalletChainsData } from "../../shared/entities/cosmos-wallet-chains-data";
 import { cosmosTransferTemplate } from "../../templates";
 import { CosmosTransferActionService } from "./services/cosmos-transfer-action-service";
 import type { CosmosTransferParams } from "./types";
+import type {
+    ICosmosPluginOptions,
+    ICosmosWalletChains,
+} from "../../shared/interfaces";
 
-export const transferAction = {
+export const createTransferAction = (pluginOptions: ICosmosPluginOptions) => ({
     name: "COSMOS_TRANSFER",
     description: "Transfer tokens between addresses on the same chain",
     handler: async (
@@ -43,16 +46,23 @@ export const transferAction = {
         };
 
         try {
-            const walletProvider: CosmosWalletChainsData =
+            const walletProvider: ICosmosWalletChains =
                 await initWalletChainsData(_runtime);
 
             const action = new CosmosTransferActionService(walletProvider);
 
-            const transferResp = await action.execute(paramOptions);
+            const customAssets = (pluginOptions?.customChainData ?? []).map(
+                (chainData) => chainData.assets
+            );
+
+            const transferResp = await action.execute(
+                paramOptions,
+                customAssets
+            );
 
             if (_callback) {
                 await _callback({
-                    text: `Successfully transferred ${paramOptions.amount} tokens to ${paramOptions.toAddress}\nTransaction Hash: ${transferResp.txHash}`,
+                    text: `Successfully transferred ${paramOptions.amount} tokens to ${paramOptions.toAddress}\nGas paid: ${transferResp.gasPaid}\nTransaction Hash: ${transferResp.txHash}`,
                     content: {
                         success: true,
                         hash: transferResp.txHash,
@@ -67,7 +77,7 @@ export const transferAction = {
                     agentId: _message.agentId,
                     roomId: _message.roomId,
                     content: {
-                        text: `Transaction ${paramOptions.amount} ${paramOptions.symbol} to address ${paramOptions.toAddress} on chain ${paramOptions.toAddress} was successful.`,
+                        text: `Transaction ${paramOptions.amount} ${paramOptions.symbol} to address ${paramOptions.toAddress} on chain ${paramOptions.toAddress} was successfully transfered.\n Gas paid: ${transferResp.gasPaid}. Tx hash: ${transferResp.txHash}`,
                     },
                 };
 
@@ -143,7 +153,7 @@ export const transferAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Send {{0.0001 OM}} on {{mantrachaintestnet2}} to {{mantra1pcnw46km8m5amvf7jlk2ks5std75k73aralhcf}}",
+                    text: "Send {{0.0001 OM}} on {{mantrachaintestnet2}} to {{mantra1pcnw46km8m5amvf7jlk2ks5std75k73aralhcf}}.",
                     action: "COSMOS_TRANSFER",
                 },
             },
@@ -161,4 +171,4 @@ export const transferAction = {
         "COSMOS_TOKEN_TRANSFER",
         "COSMOS_MOVE_TOKENS",
     ],
-};
+});
