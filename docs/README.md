@@ -1,16 +1,16 @@
 # Eliza - Multi-agent simulation framework
 
-# https://github.com/ai16z/eliza
+# https://github.com/elizaOS/eliza
 
 # Visit https://eliza.builders for support
 
 ## 🌍 README Translations
 
-[中文说明](./README_CN.md) | [Deutsch](./README_DE.md) | [Français](./README_FR.md) | [ไทย](./README_TH.md)
+[中文说明](./README_CN.md) | [Deutsch](./README_DE.md) | [Français](./README_FR.md) | [ไทย](./README_TH.md) | [Español](README_ES.md)
 
 # dev branch
 
-<img src="./docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
+<img src="static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
 
 _As seen powering [@DegenSpartanAI](https://x.com/degenspartanai) and [@MarcAIndreessen](https://x.com/pmairca)_
 
@@ -67,7 +67,7 @@ You can run Grok models by setting the `XAI_MODEL` environment variable to `grok
 
 ### Run with OpenAI
 
-You can run OpenAI models by setting the `XAI_MODEL` environment variable to `gpt-4o-mini` or `gpt-4o`
+You can run OpenAI models by setting the `XAI_MODEL` environment variable to `gpt-4-mini` or `gpt-4o`
 
 ## Additional Requirements
 
@@ -102,7 +102,6 @@ TWITTER_DRY_RUN=false
 TWITTER_USERNAME= # Account username
 TWITTER_PASSWORD= # Account password
 TWITTER_EMAIL= # Account email
-TWITTER_COOKIES= # Account cookies
 
 X_SERVER_URL=
 XAI_API_KEY=
