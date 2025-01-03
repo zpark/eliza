@@ -128,6 +128,20 @@ export const createTransferAction = (pluginOptions: ICosmosPluginOptions) => ({
             {
                 user: "{{user2}}",
                 content: {
+                    text: "Do you confirm the transfer action?",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Yes",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
                     text: "",
                     action: "COSMOS_TRANSFER",
                 },
@@ -144,6 +158,20 @@ export const createTransferAction = (pluginOptions: ICosmosPluginOptions) => ({
             {
                 user: "{{user2}}",
                 content: {
+                    text: "Do you confirm the transfer action?",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Yes",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
                     text: "",
                     action: "COSMOS_TRANSFER",
                 },
@@ -154,6 +182,20 @@ export const createTransferAction = (pluginOptions: ICosmosPluginOptions) => ({
                 user: "{{user1}}",
                 content: {
                     text: "Send {{0.0001 OM}} on {{mantrachaintestnet2}} to {{mantra1pcnw46km8m5amvf7jlk2ks5std75k73aralhcf}}.",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "Do you confirm the transfer action?",
+                    action: "COSMOS_TRANSFER",
+                },
+            },
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Yes",
                     action: "COSMOS_TRANSFER",
                 },
             },
