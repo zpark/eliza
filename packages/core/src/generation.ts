@@ -353,12 +353,22 @@ export async function generateText({
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
                         const fetching = await runtime.fetch(url, options);
-                        if (process.env.ETERNAL_AI_LOG_REQUEST) {
-                            elizaLogger.info("Request data: ", JSON.stringify(options, null, 2));
+                        if (
+                            parseBooleanFromText(
+                                runtime.getSetting("ETERNAL_AI_LOG_REQUEST")
+                            )
+                        ) {
+                            elizaLogger.info(
+                                "Request data: ",
+                                JSON.stringify(options, null, 2)
+                            );
                             const clonedResponse = fetching.clone();
-                            clonedResponse.json().then(data => {
-                                elizaLogger.info("Response data: ", JSON.stringify(data, null, 2));
-                            })
+                            clonedResponse.json().then((data) => {
+                                elizaLogger.info(
+                                    "Response data: ",
+                                    JSON.stringify(data, null, 2)
+                                );
+                            });
                         }
                         return fetching;
                     },
