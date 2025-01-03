@@ -16,24 +16,6 @@ import { getPriceTemplate } from "./template";
 import { GetPriceContent } from "./types";
 import { isGetPriceContent } from "./validation";
 
-const extractPriceContent = (response: string): GetPriceContent | null => {
-    try {
-        // Find JSON block between ```json and ```
-        const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
-        if (!jsonMatch) return null;
-
-        const content = JSON.parse(jsonMatch[1]);
-        return {
-            symbol: content.symbol,
-            currency: content.currency || "USD",
-            text: content.text || "",
-        };
-    } catch (error) {
-        elizaLogger.error("Error parsing price content:", error);
-        return null;
-    }
-};
-
 export default {
     name: "GET_PRICE",
     similes: [
@@ -78,11 +60,6 @@ export default {
                 modelClass: ModelClass.SMALL,
             })) as unknown as GetPriceContent;
 
-            elizaLogger.log(
-                "Generated content:",
-                JSON.stringify(content, null, 2)
-            );
-
             // Validate content
             if (!isGetPriceContent(content)) {
                 throw new Error("Invalid price check content");
@@ -118,11 +95,6 @@ export default {
                 return true;
             } catch (error) {
                 elizaLogger.error("Error in GET_PRICE handler:", error);
-                elizaLogger.error("Error details:", {
-                    message: error.message,
-                    stack: error.stack,
-                    content: content,
-                });
                 if (callback) {
                     callback({
                         text: `Error fetching price: ${error.message}`,
@@ -133,10 +105,6 @@ export default {
             }
         } catch (error) {
             elizaLogger.error("Error in GET_PRICE handler:", error);
-            elizaLogger.error("Error details:", {
-                message: error.message,
-                stack: error.stack,
-            });
             if (callback) {
                 callback({
                     text: `Error fetching price: ${error.message}`,
