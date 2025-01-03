@@ -27,7 +27,7 @@ export class TokenizationService
         this.runtime = runtime;
     }
 
-    async trimTokens(context: string, maxTokens: number, model: string) {
+    async trimTokens(context: string, maxTokens: number) {
         const tokenizerModel = this.runtime.getSetting("TOKENIZER_MODEL");
         const tokenizerType = this.runtime.getSetting("TOKENIZER_TYPE");
 
