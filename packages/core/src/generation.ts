@@ -107,9 +107,9 @@ async function truncateTiktoken(
     context: string,
     maxTokens: number
 ) {
-    const encoding = encodingForModel(model);
-
     try {
+        const encoding = encodingForModel(model);
+
         // Encode the text into tokens
         const tokens = encoding.encode(context);
 
