@@ -112,6 +112,7 @@ async function send(message) {
 }
 
 async function runIntegrationTest(fn) {
+    log(fn);
     const skip = fn.hasOwnProperty("skipIf") ? fn.skipIf : false;
     if (skip) {
         log(fn.description ? `Skipping test ${fn.description}...` : "Skipping test...");
