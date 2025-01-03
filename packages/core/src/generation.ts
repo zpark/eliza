@@ -6,12 +6,15 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
+    CoreTool,
     GenerateObjectResult,
+    StepResult as AIStepResult,
 } from "ai";
 import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, TiktokenModel } from "js-tiktoken";
+import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -35,6 +38,7 @@ import {
     SearchResponse,
     ActionResponse,
     TelemetrySettings,
+    TokenizerType,
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
     VerifiableInferenceResult,
@@ -42,6 +46,117 @@ import {
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
+
+type Tool = CoreTool<any, any>;
+type StepResult = AIStepResult<any>;
+
+/**
+ * Trims the provided text context to a specified token limit using a tokenizer model and type.
+ *
+ * The function dynamically determines the truncation method based on the tokenizer settings
+ * provided by the runtime. If no tokenizer settings are defined, it defaults to using the
+ * TikToken truncation method with the "gpt-4o" model.
+ *
+ * @async
+ * @function trimTokens
+ * @param {string} context - The text to be tokenized and trimmed.
+ * @param {number} maxTokens - The maximum number of tokens allowed after truncation.
+ * @param {IAgentRuntime} runtime - The runtime interface providing tokenizer settings.
+ *
+ * @returns {Promise<string>} A promise that resolves to the trimmed text.
+ *
+ * @throws {Error} Throws an error if the runtime settings are invalid or missing required fields.
+ *
+ * @example
+ * const trimmedText = await trimTokens("This is an example text", 50, runtime);
+ * console.log(trimmedText); // Output will be a truncated version of the input text.
+ */
+export async function trimTokens(
+    context: string,
+    maxTokens: number,
+    runtime: IAgentRuntime
+) {
+    if (!context) return "";
+    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
+
+    const tokenizerModel = runtime.getSetting("TOKENIZER_MODEL");
+    const tokenizerType = runtime.getSetting("TOKENIZER_TYPE");
+
+    if (!tokenizerModel || !tokenizerType) {
+        // Default to TikToken truncation using the "gpt-4o" model if tokenizer settings are not defined
+        return truncateTiktoken("gpt-4o", context, maxTokens);
+    }
+
+    // Choose the truncation method based on tokenizer type
+    if (tokenizerType === TokenizerType.Auto) {
+        return truncateAuto(tokenizerModel, context, maxTokens);
+    }
+
+    if (tokenizerType === TokenizerType.TikToken) {
+        return truncateTiktoken(
+            tokenizerModel as TiktokenModel,
+            context,
+            maxTokens
+        );
+    }
+
+    elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
+    return truncateTiktoken("gpt-4o", context, maxTokens);
+}
+
+async function truncateAuto(
+    modelPath: string,
+    context: string,
+    maxTokens: number
+) {
+    try {
+        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
+        const tokens = tokenizer.encode(context);
+
+        // If already within limits, return unchanged
+        if (tokens.length <= maxTokens) {
+            return context;
+        }
+
+        // Keep the most recent tokens by slicing from the end
+        const truncatedTokens = tokens.slice(-maxTokens);
+
+        // Decode back to text - js-tiktoken decode() returns a string directly
+        return tokenizer.decode(truncatedTokens);
+    } catch (error) {
+        elizaLogger.error("Error in trimTokens:", error);
+        // Return truncated string if tokenization fails
+        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+    }
+}
+
+async function truncateTiktoken(
+    model: TiktokenModel,
+    context: string,
+    maxTokens: number
+) {
+    try {
+        const encoding = encodingForModel(model);
+
+        // Encode the text into tokens
+        const tokens = encoding.encode(context);
+
+        // If already within limits, return unchanged
+        if (tokens.length <= maxTokens) {
+            return context;
+        }
+
+        // Keep the most recent tokens by slicing from the end
+        const truncatedTokens = tokens.slice(-maxTokens);
+
+        // Decode back to text - js-tiktoken decode() returns a string directly
+        return encoding.decode(truncatedTokens);
+    } catch (error) {
+        elizaLogger.error("Error in trimTokens:", error);
+        // Return truncated string if tokenization fails
+        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+    }
+}
 
 /**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
@@ -60,6 +175,9 @@ export async function generateText({
     runtime,
     context,
     modelClass,
+    tools = {},
+    onStepFinish,
+    maxSteps = 1,
     stop,
     customSystemPrompt,
     verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
@@ -68,6 +186,9 @@ export async function generateText({
     runtime: IAgentRuntime;
     context: string;
     modelClass: string;
+    tools?: Record<string, Tool>;
+    onStepFinish?: (event: StepResult) => Promise<void> | void;
+    maxSteps?: number;
     stop?: string[];
     customSystemPrompt?: string;
     verifiableInference?: boolean;
@@ -209,7 +330,8 @@ export async function generateText({
         elizaLogger.debug(
             `Trimming context to max length of ${max_context_length} tokens.`
         );
-        context = trimTokens(context, max_context_length, "gpt-4o");
+
+        context = await trimTokens(context, max_context_length, runtime);
 
         let response: string;
 
@@ -221,7 +343,6 @@ export async function generateText({
         switch (provider) {
             // OPENAI & LLAMACLOUD shared same structure.
             case ModelProviderName.OPENAI:
-            case ModelProviderName.ETERNALAI:
             case ModelProviderName.ALI_BAILIAN:
             case ModelProviderName.VOLENGINE:
             case ModelProviderName.LLAMACLOUD:
@@ -243,6 +364,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -251,7 +375,53 @@ export async function generateText({
                 });
 
                 response = openaiResponse;
-                console.log("Received response from OpenAI model.");
+                elizaLogger.debug("Received response from OpenAI model.");
+                break;
+            }
+
+            case ModelProviderName.ETERNALAI: {
+                elizaLogger.debug("Initializing EternalAI model.");
+                const openai = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    fetch: async (url: string, options: any) => {
+                        const fetching = await runtime.fetch(url, options);
+                        if (
+                            parseBooleanFromText(
+                                runtime.getSetting("ETERNAL_AI_LOG_REQUEST")
+                            )
+                        ) {
+                            elizaLogger.info(
+                                "Request data: ",
+                                JSON.stringify(options, null, 2)
+                            );
+                            const clonedResponse = fetching.clone();
+                            clonedResponse.json().then((data) => {
+                                elizaLogger.info(
+                                    "Response data: ",
+                                    JSON.stringify(data, null, 2)
+                                );
+                            });
+                        }
+                        return fetching;
+                    },
+                });
+
+                const { text: openaiResponse } = await aiGenerateText({
+                    model: openai.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+
+                response = openaiResponse;
+                elizaLogger.debug("Received response from EternalAI model.");
                 break;
             }
 
@@ -268,6 +438,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -295,6 +468,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -322,6 +498,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -353,6 +532,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -376,6 +558,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
@@ -428,6 +613,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
@@ -456,6 +644,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
@@ -482,7 +673,10 @@ export async function generateText({
                     const { text: ollamaResponse } = await aiGenerateText({
                         model: ollama,
                         prompt: context,
+                        tools: tools,
+                        onStepFinish: onStepFinish,
                         temperature: temperature,
+                        maxSteps: maxSteps,
                         maxTokens: max_response_length,
                         frequencyPenalty: frequency_penalty,
                         presencePenalty: presence_penalty,
@@ -510,8 +704,11 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
                     temperature: temperature,
                     maxTokens: max_response_length,
+                    maxSteps: maxSteps,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
                     experimental_telemetry: experimental_telemetry,
@@ -560,6 +757,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -587,6 +787,9 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -613,7 +816,10 @@ export async function generateText({
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
                     temperature: temperature,
+                    maxSteps: maxSteps,
                     maxTokens: max_response_length,
                 });
 
@@ -633,45 +839,6 @@ export async function generateText({
     } catch (error) {
         elizaLogger.error("Error in generateText:", error);
         throw error;
-    }
-}
-
-/**
- * Truncate the context to the maximum length allowed by the model.
- * @param context The text to truncate
- * @param maxTokens Maximum number of tokens to keep
- * @param model The tokenizer model to use
- * @returns The truncated text
- */
-export function trimTokens(
-    context: string,
-    maxTokens: number,
-    model: TiktokenModel
-): string {
-    if (!context) return "";
-    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
-
-    // Get the tokenizer for the model
-    const encoding = encodingForModel(model);
-
-    try {
-        // Encode the text into tokens
-        const tokens = encoding.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return encoding.decode(truncatedTokens);
-    } catch (error) {
-        console.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
 }
 
@@ -956,9 +1123,10 @@ export async function generateMessageResponse({
     context: string;
     modelClass: string;
 }): Promise<Content> {
-    const max_context_length =
-        models[runtime.modelProvider].settings.maxInputTokens;
-    context = trimTokens(context, max_context_length, "gpt-4o");
+    const provider = runtime.modelProvider;
+    const max_context_length = models[provider].settings.maxInputTokens;
+
+    context = await trimTokens(context, max_context_length, runtime);
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
@@ -1432,20 +1600,18 @@ export const generateObject = async ({
     }
 
     const provider = runtime.modelProvider;
-    const model = models[provider].model[modelClass] as TiktokenModel;
-    if (!model) {
-        throw new Error(`Unsupported model class: ${modelClass}`);
-    }
+    const model = models[provider].model[modelClass];
     const temperature = models[provider].settings.temperature;
     const frequency_penalty = models[provider].settings.frequency_penalty;
     const presence_penalty = models[provider].settings.presence_penalty;
     const max_context_length = models[provider].settings.maxInputTokens;
     const max_response_length = models[provider].settings.maxOutputTokens;
-    const experimental_telemetry = models[provider].settings.experimental_telemetry;
+    const experimental_telemetry =
+        models[provider].settings.experimental_telemetry;
     const apiKey = runtime.token;
 
     try {
-        context = trimTokens(context, max_context_length, model);
+        context = await trimTokens(context, max_context_length, runtime);
 
         const modelOptions: ModelSettings = {
             prompt: context,
