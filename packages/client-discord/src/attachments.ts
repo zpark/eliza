@@ -9,7 +9,7 @@ import {
     Media,
     ModelClass,
     ServiceType,
-    ITokenizationService,
+    trimTokens,
 } from "@elizaos/core";
 import { Attachment, Collection } from "discord.js";
 import ffmpeg from "fluent-ffmpeg";
@@ -19,11 +19,8 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
-    const tokenizationService = runtime.getService<ITokenizationService>(
-        ServiceType.TOKENIZATION
-    );
     // make sure text is under 128k characters
-    text = await tokenizationService.trimTokens(text, 100000);
+    text = await trimTokens(runtime, text, 100000);
 
     const prompt = `Please generate a concise summary for the following text:
 

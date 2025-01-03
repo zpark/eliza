@@ -17,8 +17,7 @@ import {
     ModelClass,
     State,
     elizaLogger,
-    ServiceType,
-    ITokenizationService,
+    trimTokens,
 } from "@elizaos/core";
 import { ISlackService, SLACK_SERVICE_TYPE } from "../types/slack-types";
 
@@ -273,9 +272,6 @@ const summarizeAction: Action = {
 
         currentState.memoriesWithAttachments = formattedMemories;
         currentState.objective = objective;
-        const tokenizationService = runtime.getService<ITokenizationService>(
-            ServiceType.TOKENIZATION
-        );
 
         // Only process one chunk at a time and stop after getting a valid summary
         for (let i = 0; i < chunks.length; i++) {
@@ -283,7 +279,8 @@ const summarizeAction: Action = {
             currentState.currentSummary = currentSummary;
             currentState.currentChunk = chunk;
 
-            const template = await tokenizationService.trimTokens(
+            const template = await trimTokens(
+                runtime,
                 summarizationTemplate,
                 chunkSize + 500
             );

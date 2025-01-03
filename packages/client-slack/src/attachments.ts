@@ -8,7 +8,7 @@ import {
     Media,
     ModelClass,
     ServiceType,
-    ITokenizationService,
+    trimTokens,
 } from "@elizaos/core";
 import { WebClient } from "@slack/web-api";
 import ffmpeg from "fluent-ffmpeg";
@@ -18,10 +18,7 @@ async function generateSummary(
     runtime: IAgentRuntime,
     text: string
 ): Promise<{ title: string; description: string }> {
-    const tokenizationService = runtime.getService<ITokenizationService>(
-        ServiceType.TOKENIZATION
-    );
-    text = await tokenizationService.trimTokens(text, 100000);
+    text = await trimTokens(runtime, text, 100000);
 
     const prompt = `Please generate a concise summary for the following text:
 

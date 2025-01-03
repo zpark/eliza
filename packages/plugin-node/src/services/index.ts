@@ -6,7 +6,6 @@ import { SpeechService } from "./speech.ts";
 import { TranscriptionService } from "./transcription.ts";
 import { VideoService } from "./video.ts";
 import { AwsS3Service } from "./awsS3.ts";
-import { TokenizationService } from "./tokenizer.ts";
 
 export {
     BrowserService,
@@ -17,5 +16,4 @@ export {
     TranscriptionService,
     VideoService,
     AwsS3Service,
-    TokenizationService,
 };

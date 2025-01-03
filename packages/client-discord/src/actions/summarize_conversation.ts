@@ -13,8 +13,7 @@ import {
     Memory,
     ModelClass,
     State,
-    ServiceType,
-    ITokenizationService,
+    trimTokens,
 } from "@elizaos/core";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
@@ -258,15 +257,13 @@ const summarizeAction = {
 
         state.memoriesWithAttachments = formattedMemories;
         state.objective = objective;
-        const tokenizationService = runtime.getService<ITokenizationService>(
-            ServiceType.TOKENIZATION
-        );
 
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
             state.currentSummary = currentSummary;
             state.currentChunk = chunk;
-            const template = await tokenizationService.trimTokens(
+            const template = await trimTokens(
+                runtime,
                 summarizationTemplate,
                 chunkSize + 500
             );

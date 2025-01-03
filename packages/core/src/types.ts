@@ -1260,10 +1260,6 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
-export interface ITokenizationService extends Service {
-    trimTokens(context: string, maxTokens: number): Promise<string>;
-}
-
 export type SearchImage = {
     url: string;
     description?: string;

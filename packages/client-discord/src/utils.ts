@@ -4,8 +4,7 @@ import {
     elizaLogger,
     generateText,
     parseJSONObjectFromText,
-    ServiceType,
-    ITokenizationService,
+    trimTokens,
 } from "@elizaos/core";
 import {
     ChannelType,
@@ -48,10 +47,7 @@ export async function generateSummary(
     text: string
 ): Promise<{ title: string; description: string }> {
     // make sure text is under 128k characters
-    const tokenizationService = runtime.getService<ITokenizationService>(
-        ServiceType.TOKENIZATION
-    );
-    text = await tokenizationService.trimTokens(text, 100000);
+    text = await trimTokens(runtime, text, 100000);
 
     const prompt = `Please generate a concise summary for the following text:
 
