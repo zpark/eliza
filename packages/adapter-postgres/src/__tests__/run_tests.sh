@@ -56,8 +56,8 @@ if [ ! -f "$SCHEMA_PATH" ]; then
     exit 1
 fi
 
-$DOCKER_COMPOSE_CMD -f docker-compose.test.yml exec -T postgres-test psql -U postgres -d eliza_test -f - < "$SCHEMA_PATH"
-if [ $? -ne 0 ]; then
+# Fix: Check exit code directly instead of using $?
+if ! $DOCKER_COMPOSE_CMD -f docker-compose.test.yml exec -T postgres-test psql -U postgres -d eliza_test -f - < "$SCHEMA_PATH"; then
     echo -e "${RED}Failed to load schema${NC}"
     exit 1
 fi
@@ -65,20 +65,14 @@ echo -e "${GREEN}Schema loaded successfully!${NC}"
 
 # Run the tests
 echo -e "${YELLOW}Running tests...${NC}"
-pnpm vitest vector-extension.test.ts
+if ! pnpm vitest vector-extension.test.ts; then
+    echo -e "${RED}Tests failed!${NC}"
+    $DOCKER_COMPOSE_CMD -f docker-compose.test.yml down
+    exit 1
+fi
 
-# Capture test exit code
-TEST_EXIT_CODE=$?
+echo -e "${GREEN}Tests completed successfully!${NC}"
 
 # Clean up
 echo -e "${YELLOW}Cleaning up test environment...${NC}"
-$DOCKER_COMPOSE_CMD -f docker-compose.test.yml down
-
-# Exit with test exit code
-if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo -e "${GREEN}Tests completed successfully!${NC}"
-else
-    echo -e "${RED}Tests failed!${NC}"
-fi
-
-exit $TEST_EXIT_CODE 
+$DOCKER_COMPOSE_CMD -f docker-compose.test.yml down 
