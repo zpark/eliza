@@ -28,28 +28,28 @@ export class TokenizationService
     }
 
     async trimTokens(context: string, maxTokens: number, model: string) {
-        const tokenizerModel =
-            this.runtime.getSetting("TOKENIZER_MODEL") || model;
+        const tokenizerModel = this.runtime.getSetting("TOKENIZER_MODEL");
         const tokenizerType = this.runtime.getSetting("TOKENIZER_TYPE");
 
-        switch (tokenizerType) {
-            case TokenizerType.Auto:
-                return this.truncateAuto(tokenizerModel, context, maxTokens);
-
-            case TokenizerType.TikToken:
-                return this.truncateTiktoken(
-                    tokenizerModel as TiktokenModel,
-                    context,
-                    maxTokens
-                );
-
-            default:
-                return this.truncateTiktoken(
-                    model as TiktokenModel,
-                    context,
-                    maxTokens
-                );
+        if (!tokenizerModel || !tokenizerType) {
+            // Default to TikToken truncation using the "gpt-4o-mini" model if tokenizer settings are not defined
+            return this.truncateTiktoken("gpt-4o-mini", context, maxTokens);
         }
+
+        // Choose the truncation method based on tokenizer type
+        if (tokenizerType === TokenizerType.Auto) {
+            return this.truncateAuto(tokenizerModel, context, maxTokens);
+        }
+
+        if (tokenizerType === TokenizerType.TikToken) {
+            return this.truncateTiktoken(
+                tokenizerModel as TiktokenModel,
+                context,
+                maxTokens
+            );
+        }
+
+        console.error(`Unsupported tokenizer type: ${tokenizerType}`);
     }
 
     async truncateAuto(modelPath: string, context: string, maxTokens: number) {
