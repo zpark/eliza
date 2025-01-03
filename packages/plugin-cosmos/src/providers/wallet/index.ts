@@ -5,23 +5,33 @@ import {
 } from "@chain-registry/utils";
 import { assets } from "chain-registry";
 import { initWalletChainsData } from "./utils";
+import { ICosmosPluginOptions } from "../../shared/interfaces";
+import { getAvailableAssets } from "../../shared/helpers/cosmos-assets";
 
-export const cosmosWalletProvider = {
+export const createCosmosWalletProvider = (
+    pluginOptions: ICosmosPluginOptions
+) => ({
     get: async (runtime: IAgentRuntime) => {
         let providerContextMessage = "";
+
+        const customAssets = (pluginOptions?.customChainData ?? []).map(
+            (chainData) => chainData.assets
+        );
+
+        const availableAssets = getAvailableAssets(assets, customAssets);
 
         try {
             const provider = await initWalletChainsData(runtime);
 
-            for (const [chainName, chainData] of Object.entries(
-                provider.chainsData
+            for (const [chainName, { wallet }] of Object.entries(
+                provider.walletChainsData
             )) {
-                const address = await chainData.wallet.getWalletAddress();
-                const balances = await chainData.wallet.getWalletBalances();
+                const address = await wallet.getWalletAddress();
+                const balances = await wallet.getWalletBalances();
 
                 const convertedCoinsToDisplayDenom = balances.map((balance) => {
                     const symbol = getSymbolByDenom(
-                        assets,
+                        availableAssets,
                         balance.denom,
                         chainName
                     );
@@ -29,7 +39,7 @@ export const cosmosWalletProvider = {
                     return {
                         amount: symbol
                             ? convertBaseUnitToDisplayUnit(
-                                  assets,
+                                  availableAssets,
                                   symbol,
                                   balance.amount,
                                   chainName
@@ -56,4 +66,4 @@ export const cosmosWalletProvider = {
             return null;
         }
     },
-};
+});

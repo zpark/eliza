@@ -7,22 +7,27 @@ import { assets } from "chain-registry";
 import { getPaidFeeFromReceipt } from "../../../shared/helpers/cosmos-transaction-receipt.ts";
 import type {
     ICosmosActionService,
+    ICosmosPluginCustomChainData,
     ICosmosTransaction,
+    ICosmosWalletChains,
 } from "../../../shared/interfaces.ts";
 import { CosmosTransactionFeeEstimator } from "../../../shared/services/cosmos-transaction-fee-estimator.ts";
 import type { CosmosTransferParams } from "../types.ts";
-import { CosmosWalletChainsData } from "../../../shared/entities/cosmos-wallet-chains-data.ts";
+import { getAvailableAssets } from "../../../shared/helpers/cosmos-assets.ts";
 
 export class CosmosTransferActionService implements ICosmosActionService {
-    constructor(private cosmosChainsData: CosmosWalletChainsData) {
-        this.cosmosChainsData = cosmosChainsData;
+    constructor(private cosmosWalletChains: ICosmosWalletChains) {
+        this.cosmosWalletChains = cosmosWalletChains;
     }
 
-    async execute(params: CosmosTransferParams): Promise<ICosmosTransaction> {
+    async execute(
+        params: CosmosTransferParams,
+        customChainAssets?: ICosmosPluginCustomChainData["assets"][]
+    ): Promise<ICosmosTransaction> {
         const signingCosmWasmClient =
-            this.cosmosChainsData.getSigningCosmWasmClient(params.chainName);
+            this.cosmosWalletChains.getSigningCosmWasmClient(params.chainName);
 
-        const senderAddress = await this.cosmosChainsData.getWalletAddress(
+        const senderAddress = await this.cosmosWalletChains.getWalletAddress(
             params.chainName
         );
 
@@ -40,11 +45,16 @@ export class CosmosTransferActionService implements ICosmosActionService {
             throw new Error("No symbol");
         }
 
+        const availableAssets = getAvailableAssets(assets, customChainAssets);
+
         const coin: Coin = {
-            denom: getAssetBySymbol(assets, params.symbol, params.chainName)
-                .base,
+            denom: getAssetBySymbol(
+                availableAssets,
+                params.symbol,
+                params.chainName
+            ).base,
             amount: convertDisplayUnitToBaseUnit(
-                assets,
+                availableAssets,
                 params.symbol,
                 params.amount,
                 params.chainName

@@ -1,6 +1,6 @@
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
-import { EncodeObject } from "@cosmjs/proto-signing";
-import { Coin, MsgSendEncodeObject } from "@cosmjs/stargate";
+import type { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import type { EncodeObject } from "@cosmjs/proto-signing";
+import type { Coin, MsgSendEncodeObject } from "@cosmjs/stargate";
 
 export class CosmosTransactionFeeEstimator {
     private static async estimateGasForTransaction<

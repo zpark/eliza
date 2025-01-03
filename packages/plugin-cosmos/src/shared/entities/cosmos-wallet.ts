@@ -1,6 +1,6 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { cosmos } from "interchain";
-import { ICosmosWallet } from "../interfaces";
+import type { ICosmosWallet } from "../interfaces";
 
 type RPCQueryClient = Awaited<
     ReturnType<typeof cosmos.ClientFactory.createRPCQueryClient>

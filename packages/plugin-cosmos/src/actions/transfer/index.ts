@@ -8,12 +8,15 @@ import {
     State,
 } from "@ai16z/eliza";
 import { initWalletChainsData } from "../../providers/wallet/utils";
-import { CosmosWalletChainsData } from "../../shared/entities/cosmos-wallet-chains-data";
 import { cosmosTransferTemplate } from "../../templates";
 import { CosmosTransferActionService } from "./services/cosmos-transfer-action-service";
 import type { CosmosTransferParams } from "./types";
+import type {
+    ICosmosPluginOptions,
+    ICosmosWalletChains,
+} from "../../shared/interfaces";
 
-export const transferAction = {
+export const createTransferAction = (pluginOptions: ICosmosPluginOptions) => ({
     name: "COSMOS_TRANSFER",
     description: "Transfer tokens between addresses on the same chain",
     handler: async (
@@ -43,12 +46,19 @@ export const transferAction = {
         };
 
         try {
-            const walletProvider: CosmosWalletChainsData =
+            const walletProvider: ICosmosWalletChains =
                 await initWalletChainsData(_runtime);
 
             const action = new CosmosTransferActionService(walletProvider);
 
-            const transferResp = await action.execute(paramOptions);
+            const customAssets = (pluginOptions?.customChainData ?? []).map(
+                (chainData) => chainData.assets
+            );
+
+            const transferResp = await action.execute(
+                paramOptions,
+                customAssets
+            );
 
             if (_callback) {
                 await _callback({
@@ -161,4 +171,4 @@ export const transferAction = {
         "COSMOS_TOKEN_TRANSFER",
         "COSMOS_MOVE_TOKENS",
     ],
-};
+});
