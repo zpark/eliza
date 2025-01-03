@@ -13,9 +13,9 @@ COSMOS_RECOVERY_PHRASE=your recovery phrase words
 COSMOS_AVAILABLE_CHAINS=chain1,chain2,chain3
   ```
 
-Run Eliza with `@ai16z/plugin-cosmos` character:
+Run Eliza with `@ai16z/plugin-cosmos`
 ```
-pnpm run dev --characters="../cosmosHelper.character.json"
+pnpm run dev
 ```
 
 ## Configuration
