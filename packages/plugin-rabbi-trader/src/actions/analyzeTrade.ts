@@ -5,8 +5,7 @@ import {
   generateText,
   ModelClass,
   parseJSONObjectFromText,
-} from "@ai16z/eliza";
-import { tradeAnalysisTemplate } from "../templates";
+} from "@elizaOS/eliza";
 
 export const analyzeTradeAction: Action = {
   name: "ANALYZE_TRADE",
@@ -28,32 +27,37 @@ export const analyzeTradeAction: Action = {
         state = await runtime.composeState(memory);
       } else state = await runtime.updateRecentMessageState(state);
 
-      // Compose the context with template and data
-      const context = composeContext({
-        template: tradeAnalysisTemplate,
-        state: {
-          ...state,
-          tokenData: JSON.stringify({
-            walletBalance: params.walletBalance,
-            tokenAddress: params.tokenAddress,
-            price: params.price,
-            volume: params.volume,
-            marketCap: params.marketCap,
-            liquidity: params.liquidity,
-            holderDistribution: params.holderDistribution,
-            trustScore: params.trustScore,
-            dexscreener: params.dexscreener,
-            position: params.position,
-          }),
-        },
-      });
+      const tokenData = {
+        walletBalance: params.walletBalance,
+        tokenAddress: params.tokenAddress,
+        price: params.price,
+        volume: params.volume,
+        marketCap: params.marketCap,
+        liquidity: params.liquidity,
+        holderDistribution: params.holderDistribution,
+        trustScore: params.trustScore,
+        dexscreener: params.dexscreener,
+        position: params.position,
+      };
 
-      elizaLogger.log(`Generated analysis context:`, context);
+      // Direct prompt instead of template
+      const prompt = `Analyze the following token data and provide a trading recommendation. 
+Return the response as a JSON object with the following structure:
+{
+  "recommendation": "BUY" | "SELL" | "HOLD",
+  "confidence": number (0-100),
+  "reasoning": string,
+  "risks": string[],
+  "opportunities": string[]
+}
 
-      // Generate upload content
+Token Data:
+${JSON.stringify(tokenData, null, 2)}`;
+
+      // Generate analysis using direct prompt
       const content = await generateText({
         runtime,
-        context: context,
+        context: prompt,
         modelClass: ModelClass.LARGE,
       });
 

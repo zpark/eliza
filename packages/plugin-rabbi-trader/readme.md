@@ -177,8 +177,3 @@ Key dependencies include:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Security
-
-Please report any security issues to the maintainers directly.
-
-Note: Never share private keys or sensitive credentials in the codebase or version control.
