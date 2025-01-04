@@ -1,6 +1,7 @@
 import { WebClient } from '@slack/web-api';
 import { SlackConfig, SlackClientContext } from '../types/slack-types';
 import { SlackUtils, RetryOptions } from '../utils/slack-utils';
+import { elizaLogger } from "@elizaos/core";
 
 export class SlackClientProvider {
   private client: WebClient;
@@ -34,7 +35,7 @@ export class SlackClientProvider {
 
       if (result.ok) {
         this.config.botId = result.user_id || this.config.botId;
-        console.log('Bot ID:', this.config.botId);
+        elizaLogger.log('Bot ID:', this.config.botId);
         return true;
       }
       return false;
