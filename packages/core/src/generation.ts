@@ -18,7 +18,7 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
-import { getModel, models } from "./models.ts";
+import { getModel, models, getModelSettings } from "./models.ts";
 import {
     parseBooleanFromText,
     parseJsonArrayFromText,
@@ -39,6 +39,7 @@ import {
     ActionResponse,
     TelemetrySettings,
     TokenizerType,
+    imageModelSettings,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
@@ -1144,9 +1145,11 @@ export const generateImage = async (
     data?: string[];
     error?: any;
 }> => {
-    const model = getModel(runtime.imageModelProvider, ModelClass.IMAGE);
-    const modelSettings = models[runtime.imageModelProvider].imageSettings;
-
+    const modelSettings = getModelSettings(
+        runtime.imageModelProvider,
+        ModelClass.IMAGE
+    ) as imageModelSettings;
+    const model = modelSettings.name;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
     });

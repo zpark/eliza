@@ -930,8 +930,11 @@ export const models: Models = {
     },
 };
 
-export function getModel(provider: ModelProviderName, type: ModelClass) {
-    return models[provider].model[type].name;
+export function getModelSettings(
+    provider: ModelProviderName,
+    type: ModelClass
+) {
+    return models[provider].model[type];
 }
 
 export function getEndpoint(provider: ModelProviderName) {
