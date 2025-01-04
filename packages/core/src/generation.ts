@@ -39,7 +39,6 @@ import {
     ActionResponse,
     TelemetrySettings,
     TokenizerType,
-    imageModelSettings,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
