@@ -354,3 +354,5 @@ export const imageGenerationPlugin: Plugin = {
     evaluators: [],
     providers: [],
 };
+
+export default imageGenerationPlugin;
