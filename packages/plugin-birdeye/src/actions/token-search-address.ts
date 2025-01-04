@@ -148,7 +148,7 @@ export const tokenSearchAddressAction = {
 
             console.log(results);
 
-            const completeResults = `I performed a search for the token symbols you requested and found the following results (for more details search by contract address):\n\n${results
+            const completeResults = `I performed a search for the token addresses you requested and found the following results:\n\n${results
                 .map(
                     (result, i) =>
                         `${formatTokenReport(addresses[i], i, result)}`
@@ -172,64 +172,36 @@ export const tokenSearchAddressAction = {
             {
                 user: "user",
                 content: {
-                    text: "Search for $SOL and $ETH",
-                    action: "SEARCH_TOKENS",
+                    text: "Search for 0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+                    action: "TOKEN_SEARCH_ADDRESS",
                 },
             },
             {
                 user: "user",
                 content: {
-                    text: "Find information about $BTC",
-                    action: "TOKEN_SEARCH",
+                    text: "Look up contract So11111111111111111111111111111111111111112",
+                    action: "TOKEN_ADDRESS_LOOKUP",
                 },
             },
             {
                 user: "user",
                 content: {
-                    text: "Look up $WETH token",
-                    action: "LOOKUP_TOKENS",
+                    text: "Check this address: 0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+                    action: "CHECK_TOKEN_ADDRESS",
                 },
             },
             {
                 user: "user",
                 content: {
-                    text: "Tell me about SOL",
-                    action: "CHECK_TOKEN",
+                    text: "Get info for 0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+                    action: "TOKEN_ADDRESS_INFO",
                 },
             },
             {
                 user: "user",
                 content: {
-                    text: "Give me details on $ADA",
-                    action: "TOKEN_DETAILS",
-                },
-            },
-            {
-                user: "user",
-                content: {
-                    text: "What can you tell me about $DOGE?",
-                    action: "TOKEN_INFO",
-                },
-            },
-            {
-                user: "user",
-                content: {
-                    text: "I need a report on $XRP",
-                    action: "TOKEN_REPORT",
-                },
-            },
-            {
-                user: "user",
-                content: {
-                    text: "Analyze $BNB for me",
-                    action: "TOKEN_ANALYSIS",
-                },
-            },
-            {
-                user: "user",
-                content: {
-                    text: "Overview of $LTC",
-                    action: "TOKEN_OVERVIEW",
+                    text: "Analyze contract 0x514910771af9ca656af840dff83e8264ecf986ca",
+                    action: "TOKEN_CONTRACT_SEARCH",
                 },
             },
         ],
