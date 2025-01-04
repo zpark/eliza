@@ -168,7 +168,7 @@ const formatWalletReport = (
     const tokenList = tokens
         .map(
             (token) =>
-                `• $${token.symbol}: $${token.valueUsd?.toLocaleString()} (${token.uiAmount?.toFixed(4)} tokens)`
+                `• $${token.symbol.toUpperCase()}: $${token.valueUsd?.toLocaleString()} (${token.uiAmount?.toFixed(4)} tokens)`
         )
         .join("\n");
 
