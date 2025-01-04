@@ -197,7 +197,7 @@ export const models: Models = {
             [ModelClass.LARGE]:
                 settings.LARGE_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
-                "gemini-exp-1206",
+                "gemini-2.0-flash-exp",
             [ModelClass.EMBEDDING]:
                 settings.EMBEDDING_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
