@@ -1,6 +1,5 @@
 import { composeContext } from "@elizaos/core";
 import { generateText, trimTokens } from "@elizaos/core";
-import type { TiktokenModel } from "js-tiktoken";
 import { models } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import {
