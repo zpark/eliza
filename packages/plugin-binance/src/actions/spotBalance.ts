@@ -58,8 +58,6 @@ export const spotBalance: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting Binance GET_SPOT_BALANCE handler...");
-
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         } else {

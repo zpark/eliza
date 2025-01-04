@@ -50,8 +50,6 @@ export const priceCheck: Action = {
         _options: Record<string, unknown>,
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting Binance GET_PRICE handler...");
-
         try {
             // Initialize or update state
             state = !state

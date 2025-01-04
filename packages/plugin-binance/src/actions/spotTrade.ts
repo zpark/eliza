@@ -57,8 +57,6 @@ export const spotTrade: Action = {
         _options: Record<string, unknown>,
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting EXECUTE_SPOT_TRADE handler...");
-
         let content;
         try {
             state = !state
@@ -76,20 +74,10 @@ export const spotTrade: Action = {
                 modelClass: ModelClass.SMALL,
             });
 
-            elizaLogger.log("Generated content:", content);
-
             // Convert quantity to number if it's a string
             if (content && typeof content.quantity === "string") {
                 content.quantity = parseFloat(content.quantity);
             }
-
-            elizaLogger.log("Attempting to parse content:", {
-                originalContent: content,
-                quantity: content?.quantity,
-                quantityType: content?.quantity
-                    ? typeof content.quantity
-                    : "undefined",
-            });
 
             const parseResult = SpotTradeSchema.safeParse(content);
             if (!parseResult.success) {
@@ -120,11 +108,9 @@ export const spotTrade: Action = {
             return true;
         } catch (error) {
             elizaLogger.error("Error executing trade:", {
-                error,
                 content,
                 message: error.message,
-                name: error.name,
-                stack: error.stack,
+                code: error.code,
             });
             if (callback) {
                 callback({

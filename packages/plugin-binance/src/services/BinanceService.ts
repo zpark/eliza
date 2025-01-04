@@ -49,12 +49,6 @@ export class BinanceService {
     async executeTrade(request: SpotTradeRequest): Promise<TradeResponse> {
         let minNotional: string | undefined;
         try {
-            // Log the incoming request
-            elizaLogger.log(
-                "Executing trade with request:",
-                JSON.stringify(request, null, 2)
-            );
-
             // Always check if the symbol is valid first
             const exchangeInfo = await this.client.exchangeInfo();
             const symbolInfo = exchangeInfo.data.symbols.find(
@@ -72,31 +66,13 @@ export class BinanceService {
                 (f: any) => f.filterType === "NOTIONAL"
             )?.minNotional;
 
-            if (minNotional) {
-                elizaLogger.log(
-                    `Minimum notional value for ${request.symbol}: ${minNotional} USDC`
-                );
-            }
-
             const orderParams = this.buildOrderParams(request);
-
-            // Log the final parameters being sent to Binance
-            elizaLogger.log(
-                "Sending order to Binance with params:",
-                JSON.stringify(orderParams, null, 2)
-            );
 
             const response = await this.client.newOrder(
                 orderParams.symbol,
                 orderParams.side,
                 orderParams.type,
                 orderParams
-            );
-
-            // Log the response
-            elizaLogger.log(
-                "Received response from Binance:",
-                JSON.stringify(response.data, null, 2)
             );
 
             return {
