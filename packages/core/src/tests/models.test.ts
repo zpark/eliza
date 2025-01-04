@@ -98,7 +98,7 @@ describe("Model Provider Configuration", () => {
             const googleModels = models[ModelProviderName.GOOGLE].model;
             expect(googleModels[ModelClass.SMALL]).toBe("gemini-2.0-flash-exp");
             expect(googleModels[ModelClass.MEDIUM]).toBe("gemini-2.0-flash-exp");
-            expect(googleModels[ModelClass.LARGE]).toBe("gemini-exp-1206");
+            expect(googleModels[ModelClass.LARGE]).toBe("gemini-2.0-flash-exp");
         });
     });
 });
