@@ -1,11 +1,10 @@
-import { useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import { ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import "./App.css";
-import path from "path";
 
 type TextResponse = {
     text: string;
@@ -19,6 +18,15 @@ export default function Chat() {
     const [messages, setMessages] = useState<TextResponse[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const mutation = useMutation({
         mutationFn: async (text: string) => {
@@ -84,8 +92,8 @@ export default function Chat() {
                                         : "justify-start"
                                 }`}
                             >
-                                <div
-                                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                                <pre
+                                    className={`max-w-[80%] rounded-lg px-4 py-2 whitespace-pre-wrap ${
                                         message.user === "user"
                                             ? "bg-primary text-primary-foreground"
                                             : "bg-muted"
@@ -107,7 +115,7 @@ export default function Chat() {
                                             />
                                         )
                                     ))}
-                                 </div>
+                                 </pre>
                             </div>
                         ))
                     ) : (
@@ -115,6 +123,7 @@ export default function Chat() {
                             No messages yet. Start a conversation!
                         </div>
                     )}
+                    <div ref={messagesEndRef} />
                 </div>
             </div>
 
