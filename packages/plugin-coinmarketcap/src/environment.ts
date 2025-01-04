@@ -2,6 +2,7 @@ import { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
 
 export const coinmarketcapEnvSchema = z.object({
+    COINGECKO_API_KEY: z.string().optional(),
     COINMARKETCAP_API_KEY: z.string().optional(),
 });
 
@@ -12,6 +13,7 @@ export async function validateCoinMarketCapConfig(
 ): Promise<CoinMarketCapConfig> {
     try {
         const config = {
+            COINGECKO_API_KEY: runtime.getSetting("COINGECKO_API_KEY"),
             COINMARKETCAP_API_KEY: runtime.getSetting("COINMARKETCAP_API_KEY"),
         };
 
@@ -22,7 +24,7 @@ export async function validateCoinMarketCapConfig(
                 .map((err) => `${err.path.join(".")}: ${err.message}`)
                 .join("\n");
             throw new Error(
-                `CoinMarketCap configuration validation failed:\n${errorMessages}`
+                `Configuration validation failed:\n${errorMessages}`
             );
         }
         throw error;

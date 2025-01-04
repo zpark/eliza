@@ -3,12 +3,21 @@ import { ApiResponse, PriceData } from "./types";
 
 const COINMARKETCAP_BASE_URL = "https://pro-api.coinmarketcap.com/v1";
 const COINCAP_BASE_URL = "https://api.coincap.io/v2";
+const COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3";
 
-export const createPriceService = (apiKey?: string) => {
-    const coinmarketcapClient = apiKey ? axios.create({
+export const createPriceService = (coingeckoApiKey?: string, coinmarketcapApiKey?: string) => {
+    const coingeckoClient = coingeckoApiKey ? axios.create({
+        baseURL: COINGECKO_BASE_URL,
+        headers: {
+            "x-cg-demo-api-key": coingeckoApiKey,
+            Accept: "application/json",
+        },
+    }) : null;
+
+    const coinmarketcapClient = coinmarketcapApiKey ? axios.create({
         baseURL: COINMARKETCAP_BASE_URL,
         headers: {
-            "X-CMC_PRO_API_KEY": apiKey,
+            "X-CMC_PRO_API_KEY": coinmarketcapApiKey,
             Accept: "application/json",
         },
     }) : null;
@@ -30,8 +39,33 @@ export const createPriceService = (apiKey?: string) => {
         const normalizedCurrency = currency.toUpperCase().trim();
 
         try {
-            if (coinmarketcapClient) {
-                // Try CoinMarketCap first if API key is available
+            // Try CoinGecko first if API key is available
+            if (coingeckoClient) {
+                const response = await coingeckoClient.get(`/simple/price`, {
+                    params: {
+                        ids: normalizedCrypto,
+                        vs_currencies: normalizedCurrency.toLowerCase(),
+                        include_market_cap: true,
+                        include_24hr_vol: true,
+                        include_24hr_change: true,
+                    },
+                });
+
+                const data = response.data[normalizedCrypto];
+                if (!data) {
+                    throw new Error(`No data found for cryptocurrency: ${normalizedCrypto}`);
+                }
+
+                const currencyKey = normalizedCurrency.toLowerCase();
+                return {
+                    price: data[currencyKey],
+                    marketCap: data[`${currencyKey}_market_cap`],
+                    volume24h: data[`${currencyKey}_24h_vol`],
+                    percentChange24h: data[`${currencyKey}_24h_change`],
+                };
+            }
+            // Try CoinMarketCap if API key is available
+            else if (coinmarketcapClient) {
                 const response = await coinmarketcapClient.get<ApiResponse>(
                     "/cryptocurrency/quotes/latest",
                     {
@@ -62,9 +96,10 @@ export const createPriceService = (apiKey?: string) => {
                     volume24h: quoteData.volume_24h,
                     percentChange24h: quoteData.percent_change_24h,
                 };
-            } else {
-                // Fallback to CoinCap API
-                // CoinCap only supports USD, so we'll need to handle currency conversion differently
+            }
+            // Fallback to CoinCap API
+            else {
+                // CoinCap only supports USD
                 if (normalizedCurrency !== "USD") {
                     throw new Error("CoinCap API only supports USD currency");
                 }

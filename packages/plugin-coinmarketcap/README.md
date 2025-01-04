@@ -18,12 +18,13 @@ npm install @elizaos/plugin-coinmarketcap
 
 ## Configuration
 
-1. Get your API key from [CoinMarketCap](https://pro.coinmarketcap.com)
+1. Get your API key from [CoinMarketCap](https://pro.coinmarketcap.com) or [CoinGecko](https://www.coingecko.com/en/api) (or fallback to CoinCap)
 
 2. Set up your environment variables:
 
 ```bash
 COINMARKETCAP_API_KEY=your_api_key
+COINGECKO_API_KEY=your_api_key
 ```
 
 3. Register the plugin in your Eliza configuration:
@@ -118,10 +119,11 @@ CoinMarketCap API has different rate limits based on your subscription plan. Ple
 
 For support, please open an issue in the repository or reach out to the maintainers:
 
-- Discord: 0xspit
+- Discord: proteanx, 0xspit
 
 ## Links
 
+- [CoinGecko API Documentation](https://www.coingecko.com/en/api)
+- [CoinCap API Documentation](https://docs.coincap.io/)
 - [CoinMarketCap API Documentation](https://coinmarketcap.com/api/documentation/v1/)
-
 - [GitHub Repository](https://github.com/elizaOS/eliza/tree/main/packages/plugin-coinmarketcap)

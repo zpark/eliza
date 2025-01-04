@@ -30,7 +30,7 @@ export default {
         // Always validate to true since we have a fallback API
         return true;
     },
-    description: "Get the current price of a cryptocurrency from CoinMarketCap or CoinCap",
+    description: "Get the current price of a cryptocurrency from CoinGecko, CoinMarketCap, or CoinCap",
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -65,9 +65,10 @@ export default {
                 throw new Error("Invalid price check content");
             }
 
-            // Get API key if available
-            const apiKey = runtime.getSetting("COINMARKETCAP_API_KEY");
-            const priceService = createPriceService(apiKey);
+            // Get API keys if available
+            const coingeckoApiKey = runtime.getSetting("COINGECKO_API_KEY");
+            const coinmarketcapApiKey = runtime.getSetting("COINMARKETCAP_API_KEY");
+            const priceService = createPriceService(coingeckoApiKey, coinmarketcapApiKey);
 
             try {
                 const priceData = await priceService.getPrice(
