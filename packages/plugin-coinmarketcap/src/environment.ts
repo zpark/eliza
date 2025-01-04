@@ -2,9 +2,7 @@ import { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
 
 export const coinmarketcapEnvSchema = z.object({
-    COINMARKETCAP_API_KEY: z
-        .string()
-        .min(1, "CoinMarketCap API key is required"),
+    COINMARKETCAP_API_KEY: z.string().optional(),
 });
 
 export type CoinMarketCapConfig = z.infer<typeof coinmarketcapEnvSchema>;

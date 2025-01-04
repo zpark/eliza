@@ -3,6 +3,7 @@ import { Content } from "@elizaos/core";
 export interface GetPriceContent extends Content {
     symbol: string;
     currency: string;
+    cryptoName: string;
 }
 
 export interface PriceData {

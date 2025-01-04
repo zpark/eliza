@@ -26,11 +26,11 @@ export default {
         "GET_TOKEN_PRICE",
         "CHECK_TOKEN_PRICE",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
-        await validateCoinMarketCapConfig(runtime);
+    validate: async (_runtime: IAgentRuntime, _message: Memory) => {
+        // Always validate to true since we have a fallback API
         return true;
     },
-    description: "Get the current price of a cryptocurrency from CoinMarketCap",
+    description: "Get the current price of a cryptocurrency from CoinMarketCap or CoinCap",
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -38,7 +38,7 @@ export default {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        elizaLogger.log("Starting CoinMarketCap GET_PRICE handler...");
+        elizaLogger.log("Starting crypto price check handler...");
 
         // Initialize or update state
         if (!state) {
@@ -65,27 +65,26 @@ export default {
                 throw new Error("Invalid price check content");
             }
 
-            // Get price from CoinMarketCap
-            const config = await validateCoinMarketCapConfig(runtime);
-
-            const priceService = createPriceService(
-                config.COINMARKETCAP_API_KEY
-            );
+            // Get API key if available
+            const apiKey = runtime.getSetting("COINMARKETCAP_API_KEY");
+            const priceService = createPriceService(apiKey);
 
             try {
                 const priceData = await priceService.getPrice(
                     content.symbol,
-                    content.currency
+                    content.currency,
+                    content.cryptoName
                 );
                 elizaLogger.success(
-                    `Price retrieved successfully! ${content.symbol}: ${priceData.price} ${content.currency.toUpperCase()}`
+                    `Price retrieved successfully! ${content.cryptoName}: ${priceData.price} ${content.currency.toUpperCase()}`
                 );
 
                 if (callback) {
                     callback({
-                        text: `The current price of ${content.symbol} is ${priceData.price} ${content.currency.toUpperCase()}`,
+                        text: `The current price of ${content.cryptoName} is ${priceData.price} ${content.currency.toUpperCase()}`,
                         content: {
                             symbol: content.symbol,
+                            cryptoName: content.cryptoName,
                             currency: content.currency,
                             ...priceData,
                         },

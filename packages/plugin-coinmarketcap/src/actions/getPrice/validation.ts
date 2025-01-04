@@ -4,6 +4,7 @@ import { GetPriceContent } from "./types";
 export const GetPriceSchema = z.object({
     symbol: z.string(),
     currency: z.string().default("USD"),
+    cryptoName: z.string(),
 });
 
 export function isGetPriceContent(
@@ -11,6 +12,7 @@ export function isGetPriceContent(
 ): content is GetPriceContent {
     return (
         typeof content.symbol === "string" &&
-        typeof content.currency === "string"
+        typeof content.currency === "string" &&
+        typeof content.cryptoName === "string"
     );
 }
