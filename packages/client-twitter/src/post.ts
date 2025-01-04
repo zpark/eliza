@@ -627,11 +627,12 @@ export class TwitterPostClient {
 
             const homeTimeline = await this.client.fetchTimelineForActions();
             const results = [];
-            let maxActionsProcessing =
+            let count = 0;
+            const maxActionsProcessing =
                 this.client.twitterConfig.MAX_ACTIONS_PROCESSING;
 
             for (const tweet of homeTimeline) {
-                if (maxActionsProcessing >= 2) {
+                if (count >= maxActionsProcessing) {
                     break;
                 }
                 try {
@@ -925,7 +926,7 @@ export class TwitterPostClient {
                         parsedActions: actionResponse,
                         executedActions,
                     });
-                    maxActionsProcessing++;
+                    count++;
                 } catch (error) {
                     elizaLogger.error(
                         `Error processing tweet ${tweet.id}:`,
