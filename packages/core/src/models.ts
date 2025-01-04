@@ -3,7 +3,7 @@ import {
     Models,
     ModelProviderName,
     ModelClass,
-    ModelSettins,
+    ModelSettings,
 } from "./types.ts";
 
 export const models: Models = {
@@ -939,7 +939,7 @@ export function getModelSettings(
     provider: ModelProviderName,
     type: ModelClass
 ): ModelSettins {
-    return models[provider].model[type] as ModelSettins;
+    return models[provider].model[type] as ModelSettings;
 }
 
 export function getImageModelSettings(provider: ModelProviderName) {

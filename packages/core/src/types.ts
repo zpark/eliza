@@ -139,7 +139,7 @@ export enum ModelClass {
 /**
  * Model settings
  */
-type ModelSettins = {
+export type ModelSettings = {
     /** Model name */
     name: string;
 
@@ -169,7 +169,7 @@ type ModelSettins = {
 };
 
 /** Image model settings */
-type imageModelSettings = {
+export type ImageModelSettings = {
     name: string;
     steps?: number;
 };
@@ -183,11 +183,11 @@ export type Model = {
 
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]?: ModelSettins;
-        [ModelClass.MEDIUM]?: ModelSettins;
-        [ModelClass.LARGE]?: ModelSettins;
-        [ModelClass.EMBEDDING]?: ModelSettins;
-        [ModelClass.IMAGE]?: imageModelSettings;
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: ModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };
 
