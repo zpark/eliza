@@ -18,7 +18,7 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
-import { getModel, models, getModelSettings } from "./models.ts";
+import { models, getModelSettings } from "./models.ts";
 import {
     parseBooleanFromText,
     parseJsonArrayFromText,
