@@ -1,11 +1,12 @@
 import os from "os";
+import { elizaLogger } from "@elizaos/core";
 const platform = os.platform();
 
 if (
     platform === "linux" &&
     !(os.release().includes("ubuntu") || os.release().includes("debian"))
 ) {
-    console.log(
+    elizaLogger.log(
         "Skipping playwright installation on unsupported platform:",
         platform
     );
