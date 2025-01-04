@@ -1,5 +1,10 @@
 import settings from "./settings.ts";
-import { Models, ModelProviderName, ModelClass } from "./types.ts";
+import {
+    Models,
+    ModelProviderName,
+    ModelClass,
+    ModelSettins,
+} from "./types.ts";
 
 export const models: Models = {
     [ModelProviderName.OPENAI]: {
@@ -933,8 +938,12 @@ export const models: Models = {
 export function getModelSettings(
     provider: ModelProviderName,
     type: ModelClass
-) {
-    return models[provider].model[type];
+): ModelSettins {
+    return models[provider].model[type] as ModelSettins;
+}
+
+export function getImageModelSettings(provider: ModelProviderName) {
+    return models[provider].model[ModelClass.IMAGE];
 }
 
 export function getEndpoint(provider: ModelProviderName) {

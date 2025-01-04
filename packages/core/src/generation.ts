@@ -18,7 +18,7 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
-import { models, getModelSettings } from "./models.ts";
+import { models, getModelSettings, getImageModelSettings } from "./models.ts";
 import {
     parseBooleanFromText,
     parseJsonArrayFromText,
@@ -180,7 +180,7 @@ export async function generateText({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
     tools?: Record<string, Tool>;
     onStepFinish?: (event: StepResult) => Promise<void> | void;
     maxSteps?: number;
@@ -202,7 +202,8 @@ export async function generateText({
     const provider = runtime.modelProvider;
     const endpoint =
         runtime.character.modelEndpointOverride || models[provider].endpoint;
-    let model = models[provider].model[modelClass];
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    let model = modelSettings.name;
 
     // allow character.json settings => secrets to override models
     // FIXME: add MODEL_MEDIUM support
@@ -274,23 +275,20 @@ export async function generateText({
 
     const modelConfiguration = runtime.character?.settings?.modelConfig;
     const temperature =
-        modelConfiguration?.temperature ||
-        models[provider].settings.temperature;
+        modelConfiguration?.temperature || modelSettings.temperature;
     const frequency_penalty =
         modelConfiguration?.frequency_penalty ||
-        models[provider].settings.frequency_penalty;
+        modelSettings.frequency_penalty;
     const presence_penalty =
-        modelConfiguration?.presence_penalty ||
-        models[provider].settings.presence_penalty;
+        modelConfiguration?.presence_penalty || modelSettings.presence_penalty;
     const max_context_length =
-        modelConfiguration?.maxInputTokens ||
-        models[provider].settings.maxInputTokens;
+        modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
         modelConfiguration?.max_response_length ||
-        models[provider].settings.maxOutputTokens;
+        modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
-        models[provider].settings.experimental_telemetry;
+        modelSettings.experimental_telemetry;
 
     const apiKey = runtime.token;
 
@@ -303,7 +301,7 @@ export async function generateText({
 
         let response: string;
 
-        const _stop = stop || models[provider].settings.stop;
+        const _stop = stop || modelSettings.stop;
         elizaLogger.debug(
             `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
         );
@@ -831,7 +829,7 @@ export async function generateShouldRespond({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
     let retryDelay = 1000;
     while (true) {
@@ -914,15 +912,12 @@ export async function generateTrueOrFalse({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<boolean> {
     let retryDelay = 1000;
-
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const stop = Array.from(
-        new Set([
-            ...(models[runtime.modelProvider].settings.stop || []),
-            ["\n"],
-        ])
+        new Set([...(modelSettings.stop || []), ["\n"]])
     ) as string[];
 
     while (true) {
@@ -969,7 +964,7 @@ export async function generateTextArray({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<string[]> {
     if (!context) {
         elizaLogger.error("generateTextArray context is empty");
@@ -1005,7 +1000,7 @@ export async function generateObjectDeprecated({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<any> {
     if (!context) {
         elizaLogger.error("generateObjectDeprecated context is empty");
@@ -1041,7 +1036,7 @@ export async function generateObjectArray({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<any[]> {
     if (!context) {
         elizaLogger.error("generateObjectArray context is empty");
@@ -1089,10 +1084,10 @@ export async function generateMessageResponse({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<Content> {
-    const provider = runtime.modelProvider;
-    const max_context_length = models[provider].settings.maxInputTokens;
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
     let retryLength = 1000; // exponential backoff
@@ -1145,10 +1140,7 @@ export const generateImage = async (
     data?: string[];
     error?: any;
 }> => {
-    const modelSettings = getModelSettings(
-        runtime.imageModelProvider,
-        ModelClass.IMAGE
-    ) as imageModelSettings;
+    const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     const model = modelSettings.name;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
@@ -1563,14 +1555,14 @@ export const generateObject = async ({
     }
 
     const provider = runtime.modelProvider;
-    const model = models[provider].model[modelClass];
-    const temperature = models[provider].settings.temperature;
-    const frequency_penalty = models[provider].settings.frequency_penalty;
-    const presence_penalty = models[provider].settings.presence_penalty;
-    const max_context_length = models[provider].settings.maxInputTokens;
-    const max_response_length = models[provider].settings.maxOutputTokens;
-    const experimental_telemetry =
-        models[provider].settings.experimental_telemetry;
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const model = modelSettings.name;
+    const temperature = modelSettings.temperature;
+    const frequency_penalty = modelSettings.frequency_penalty;
+    const presence_penalty = modelSettings.presence_penalty;
+    const max_context_length = modelSettings.maxInputTokens;
+    const max_response_length = modelSettings.maxOutputTokens;
+    const experimental_telemetry = modelSettings.experimental_telemetry;
     const apiKey = runtime.token;
 
     try {
@@ -1582,7 +1574,7 @@ export const generateObject = async ({
             maxTokens: max_response_length,
             frequencyPenalty: frequency_penalty,
             presencePenalty: presence_penalty,
-            stop: stop || models[provider].settings.stop,
+            stop: stop || modelSettings.stop,
             experimental_telemetry: experimental_telemetry,
         };
 
@@ -1621,7 +1613,7 @@ interface ProviderOptions {
     mode?: "auto" | "json" | "tool";
     experimental_providerMetadata?: Record<string, unknown>;
     modelOptions: ModelSettings;
-    modelClass: string;
+    modelClass: ModelClass;
     context: string;
 }
 
@@ -1904,7 +1896,7 @@ export async function generateTweetActions({
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: string;
+    modelClass: ModelClass;
 }): Promise<ActionResponse | null> {
     let retryDelay = 1000;
     while (true) {
