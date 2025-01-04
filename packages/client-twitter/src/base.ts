@@ -323,7 +323,7 @@ export class ClientBase extends EventEmitter {
         const agentUsername = this.twitterConfig.TWITTER_USERNAME;
         const homeTimeline = await this.twitterClient.fetchHomeTimeline(20, []);
 
-        const processedTweets = homeTimeline
+        return homeTimeline
             .map((tweet) => ({
                 id: tweet.rest_id,
                 name: tweet.core?.user_results?.result?.legacy?.name,
@@ -351,10 +351,8 @@ export class ClientBase extends EventEmitter {
                         (media) => media.type === "video"
                     ) || [],
             }))
-            .filter((tweet) => tweet.username !== agentUsername); // do not perform action on self-tweets
-
-        const shuffledTweets = processedTweets.sort(() => Math.random() - 0.5);
-        return shuffledTweets;
+            .filter((tweet) => tweet.username !== agentUsername) // do not perform action on self-tweets
+            .sort(() => Math.random() - 0.5);
     }
 
     async fetchSearchTweets(
