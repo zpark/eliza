@@ -1,5 +1,6 @@
 import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 import { AutoClientInterface } from "@elizaos/client-auto";
 import { DiscordClientInterface } from "@elizaos/client-discord";
 import { FarcasterAgentClient } from "@elizaos/client-farcaster";
@@ -375,6 +376,12 @@ function initializeDatabase(dataDir: string) {
                 elizaLogger.error("Failed to connect to PostgreSQL:", error);
             });
 
+        return db;
+    } else if (process.env.PGLITE_DATA_DIR) {
+        elizaLogger.info("Initializing PgLite adapter...");
+        const db = new PGLiteDatabaseAdapter({
+            dataDir: process.env.PGLITE_DATA_DIR,
+        });
         return db;
     } else {
         const filePath =

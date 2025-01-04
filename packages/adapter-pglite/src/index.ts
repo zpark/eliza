@@ -1,15 +1,5 @@
 import { v4 } from "uuid";
 
-// Import the entire module as default
-import pg from "pg";
-type Pool = pg.Pool;
-
-import {
-    QueryConfig,
-    QueryConfigValues,
-    QueryResult,
-    QueryResultRow,
-} from "pg";
 import {
     Account,
     Actor,
@@ -28,7 +18,14 @@ import {
 import fs from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
-import { PGlite, Results } from "@electric-sql/pglite";
+import {
+    PGlite,
+    PGliteOptions,
+    Results,
+    Transaction,
+} from "@electric-sql/pglite";
+import { vector } from "@electric-sql/pglite/vector";
+import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -37,21 +34,23 @@ export class PGLiteDatabaseAdapter
     extends DatabaseAdapter<PGlite>
     implements IDatabaseCacheAdapter
 {
-    private readonly maxRetries: number = 3;
-    private readonly baseDelay: number = 1000; // 1 second
-    private readonly maxDelay: number = 10000; // 10 seconds
-    private readonly jitterMax: number = 1000; // 1 second
-    private readonly connectionTimeout: number = 5000; // 5 seconds
-
-    constructor(db: PGlite) {
+    constructor(options: PGliteOptions) {
         super();
-        this.db = db;
+        this.db = new PGlite({
+            ...options,
+            // Add the vector and fuzzystrmatch extensions
+            extensions: {
+                ...(options.extensions ?? {}),
+                vector,
+                fuzzystrmatch,
+            },
+        });
     }
 
     async init() {
         await this.db.waitReady;
 
-        this.db.transaction(async (tx) => {
+        await this.withTransaction(async (tx) => {
             // Set application settings for embedding dimension
             const embeddingConfig = getEmbeddingConfig();
             if (embeddingConfig.provider === EmbeddingProvider.OpenAI) {
@@ -76,8 +75,8 @@ export class PGLiteDatabaseAdapter
                 path.resolve(__dirname, "../schema.sql"),
                 "utf8"
             );
-            await tx.query(schema);
-        });
+            await tx.exec(schema);
+        }, "init");
     }
 
     async close() {
@@ -89,72 +88,31 @@ export class PGLiteDatabaseAdapter
         context: string
     ): Promise<T> {
         return this.withCircuitBreaker(async () => {
-            return this.withRetry(operation);
+            return operation();
         }, context);
     }
 
-    private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error = new Error("Unknown error"); // Initialize with default
-
-        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-            try {
-                return await operation();
-            } catch (error) {
-                lastError = error as Error;
-
-                if (attempt < this.maxRetries) {
-                    // Calculate delay with exponential backoff
-                    const backoffDelay = Math.min(
-                        this.baseDelay * Math.pow(2, attempt - 1),
-                        this.maxDelay
-                    );
-
-                    // Add jitter to prevent thundering herd
-                    const jitter = Math.random() * this.jitterMax;
-                    const delay = backoffDelay + jitter;
-
-                    elizaLogger.warn(
-                        `Database operation failed (attempt ${attempt}/${this.maxRetries}):`,
-                        {
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
-                            nextRetryIn: `${(delay / 1000).toFixed(1)}s`,
-                        }
-                    );
-
-                    await new Promise((resolve) => setTimeout(resolve, delay));
-                } else {
-                    elizaLogger.error("Max retry attempts reached:", {
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                        totalAttempts: attempt,
-                    });
-                    throw error instanceof Error
-                        ? error
-                        : new Error(String(error));
-                }
-            }
-        }
-
-        throw lastError;
+    private async withTransaction<T>(
+        operation: (tx: Transaction) => Promise<T>,
+        context: string
+    ): Promise<T | undefined> {
+        return this.withCircuitBreaker(async () => {
+            return this.db.transaction(operation);
+        }, context);
     }
 
-    async query<R extends QueryResultRow = any, I = any[]>(
+    async query<R = any>(
         queryTextOrConfig: string,
-        values?: QueryConfigValues<I>
+        values?: any[]
     ): Promise<Results<R>> {
         return this.withDatabase(async () => {
-            return await this.db.query(queryTextOrConfig, values);
+            return await this.query<R>(queryTextOrConfig, values);
         }, "query");
     }
 
     async getRoom(roomId: UUID): Promise<UUID | null> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<{ id: UUID }>(
+            const { rows } = await this.query<{ id: UUID }>(
                 "SELECT id FROM rooms WHERE id = $1",
                 [roomId]
             );
@@ -164,7 +122,7 @@ export class PGLiteDatabaseAdapter
 
     async getParticipantsForAccount(userId: UUID): Promise<Participant[]> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<Participant>(
+            const { rows } = await this.query<Participant>(
                 `SELECT id, "userId", "roomId", "last_message_read"
                 FROM participants
                 WHERE "userId" = $1`,
@@ -179,7 +137,7 @@ export class PGLiteDatabaseAdapter
         userId: UUID
     ): Promise<"FOLLOWED" | "MUTED" | null> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<{
+            const { rows } = await this.query<{
                 userState: "FOLLOWED" | "MUTED";
             }>(
                 `SELECT "userState" FROM participants WHERE "roomId" = $1 AND "userId" = $2`,
@@ -208,7 +166,7 @@ export class PGLiteDatabaseAdapter
                 queryParams = [...queryParams, params.agentId];
             }
 
-            const { rows } = await this.db.query<Memory>(query, queryParams);
+            const { rows } = await this.query<Memory>(query, queryParams);
             return rows.map((row) => ({
                 ...row,
                 content:
@@ -225,7 +183,7 @@ export class PGLiteDatabaseAdapter
         state: "FOLLOWED" | "MUTED" | null
     ): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query(
+            await this.query(
                 `UPDATE participants SET "userState" = $1 WHERE "roomId" = $2 AND "userId" = $3`,
                 [state, roomId, userId]
             );
@@ -234,7 +192,7 @@ export class PGLiteDatabaseAdapter
 
     async getParticipantsForRoom(roomId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<{ userId: UUID }>(
+            const { rows } = await this.query<{ userId: UUID }>(
                 'SELECT "userId" FROM participants WHERE "roomId" = $1',
                 [roomId]
             );
@@ -244,7 +202,7 @@ export class PGLiteDatabaseAdapter
 
     async getAccountById(userId: UUID): Promise<Account | null> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<Account>(
+            const { rows } = await this.query<Account>(
                 "SELECT * FROM accounts WHERE id = $1",
                 [userId]
             );
@@ -273,7 +231,7 @@ export class PGLiteDatabaseAdapter
         return this.withDatabase(async () => {
             try {
                 const accountId = account.id ?? v4();
-                await this.db.query(
+                await this.query(
                     `INSERT INTO accounts (id, name, username, email, "avatarUrl", details)
                     VALUES ($1, $2, $3, $4, $5, $6)`,
                     [
@@ -303,7 +261,7 @@ export class PGLiteDatabaseAdapter
 
     async getActorById(params: { roomId: UUID }): Promise<Actor[]> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<Actor>(
+            const { rows } = await this.query<Actor>(
                 `SELECT a.id, a.name, a.username, a.details
                 FROM participants p
                 LEFT JOIN accounts a ON p."userId" = a.id
@@ -350,7 +308,7 @@ export class PGLiteDatabaseAdapter
 
     async getMemoryById(id: UUID): Promise<Memory | null> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<Memory>(
+            const { rows } = await this.query<Memory>(
                 "SELECT * FROM memories WHERE id = $1",
                 [id]
             );
@@ -388,7 +346,7 @@ export class PGLiteDatabaseAdapter
                 isUnique = similarMemories.length === 0;
             }
 
-            await this.db.query(
+            await this.query(
                 `INSERT INTO memories (
                     id, type, content, embedding, "userId", "roomId", "agentId", "unique", "createdAt"
                 ) VALUES ($1, $2, $3, $4, $5::uuid, $6::uuid, $7::uuid, $8, to_timestamp($9/1000.0))`,
@@ -497,7 +455,7 @@ export class PGLiteDatabaseAdapter
                 limit: params.count,
             });
 
-            const { rows } = await this.db.query<Memory>(sql, values);
+            const { rows } = await this.query<Memory>(sql, values);
             return rows.map((row) => ({
                 ...row,
                 content:
@@ -535,7 +493,7 @@ export class PGLiteDatabaseAdapter
                 values.push(params.count);
             }
 
-            const { rows } = await this.db.query<Goal>(sql, values);
+            const { rows } = await this.query<Goal>(sql, values);
             return rows.map((row) => ({
                 ...row,
                 objectives:
@@ -549,7 +507,7 @@ export class PGLiteDatabaseAdapter
     async updateGoal(goal: Goal): Promise<void> {
         return this.withDatabase(async () => {
             try {
-                await this.db.query(
+                await this.query(
                     `UPDATE goals SET name = $1, status = $2, objectives = $3 WHERE id = $4`,
                     [
                         goal.name,
@@ -572,7 +530,7 @@ export class PGLiteDatabaseAdapter
 
     async createGoal(goal: Goal): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query(
+            await this.query(
                 `INSERT INTO goals (id, "roomId", "userId", name, status, objectives)
                 VALUES ($1, $2, $3, $4, $5, $6)`,
                 [
@@ -592,7 +550,7 @@ export class PGLiteDatabaseAdapter
 
         return this.withDatabase(async () => {
             try {
-                const result = await this.db.query(
+                const result = await this.query(
                     "DELETE FROM goals WHERE id = $1 RETURNING id",
                     [goalId]
                 );
@@ -615,9 +573,7 @@ export class PGLiteDatabaseAdapter
     async createRoom(roomId?: UUID): Promise<UUID> {
         return this.withDatabase(async () => {
             const newRoomId = roomId || v4();
-            await this.db.query("INSERT INTO rooms (id) VALUES ($1)", [
-                newRoomId,
-            ]);
+            await this.query("INSERT INTO rooms (id) VALUES ($1)", [newRoomId]);
             return newRoomId as UUID;
         }, "createRoom");
     }
@@ -625,58 +581,53 @@ export class PGLiteDatabaseAdapter
     async removeRoom(roomId: UUID): Promise<void> {
         if (!roomId) throw new Error("Room ID is required");
 
-        return this.withDatabase(async () => {
-            await this.db.transaction(async (tx) => {
-                try {
-                    // First check if room exists
-                    const checkResult = await tx.query(
-                        "SELECT id FROM rooms WHERE id = $1",
-                        [roomId]
-                    );
+        return this.withTransaction(async (tx) => {
+            try {
+                // First check if room exists
+                const checkResult = await tx.query(
+                    "SELECT id FROM rooms WHERE id = $1",
+                    [roomId]
+                );
 
-                    if (checkResult.rows.length === 0) {
-                        elizaLogger.warn("No room found to remove:", {
-                            roomId,
-                        });
-                        throw new Error(`Room not found: ${roomId}`);
-                    }
-
-                    // Remove related data first (if not using CASCADE)
-                    await tx.query('DELETE FROM memories WHERE "roomId" = $1', [
+                if (checkResult.rows.length === 0) {
+                    elizaLogger.warn("No room found to remove:", {
                         roomId,
-                    ]);
-                    await tx.query(
-                        'DELETE FROM participants WHERE "roomId" = $1',
-                        [roomId]
-                    );
-                    await tx.query('DELETE FROM goals WHERE "roomId" = $1', [
-                        roomId,
-                    ]);
-
-                    // Finally remove the room
-                    const result = await tx.query(
-                        "DELETE FROM rooms WHERE id = $1 RETURNING id",
-                        [roomId]
-                    );
-
-                    elizaLogger.debug(
-                        "Room and related data removed successfully:",
-                        {
-                            roomId,
-                            removed: result?.affectedRows ?? 0 > 0,
-                        }
-                    );
-                } catch (error) {
-                    elizaLogger.error("Failed to remove room:", {
-                        roomId,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
                     });
-                    throw error;
+                    throw new Error(`Room not found: ${roomId}`);
                 }
-            });
+
+                // Remove related data first (if not using CASCADE)
+                await tx.query('DELETE FROM memories WHERE "roomId" = $1', [
+                    roomId,
+                ]);
+                await tx.query('DELETE FROM participants WHERE "roomId" = $1', [
+                    roomId,
+                ]);
+                await tx.query('DELETE FROM goals WHERE "roomId" = $1', [
+                    roomId,
+                ]);
+
+                // Finally remove the room
+                const result = await tx.query(
+                    "DELETE FROM rooms WHERE id = $1 RETURNING id",
+                    [roomId]
+                );
+
+                elizaLogger.debug(
+                    "Room and related data removed successfully:",
+                    {
+                        roomId,
+                        removed: result?.affectedRows ?? 0 > 0,
+                    }
+                );
+            } catch (error) {
+                elizaLogger.error("Failed to remove room:", {
+                    roomId,
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                });
+                throw error;
+            }
         }, "removeRoom");
     }
 
@@ -692,7 +643,7 @@ export class PGLiteDatabaseAdapter
         return this.withDatabase(async () => {
             try {
                 const relationshipId = v4();
-                await this.db.query(
+                await this.query(
                     `INSERT INTO relationships (id, "userA", "userB", "userId")
                     VALUES ($1, $2, $3, $4)
                     RETURNING id`,
@@ -743,7 +694,7 @@ export class PGLiteDatabaseAdapter
 
         return this.withDatabase(async () => {
             try {
-                const { rows } = await this.db.query<Relationship>(
+                const { rows } = await this.query<Relationship>(
                     `SELECT * FROM relationships
                     WHERE ("userA" = $1 AND "userB" = $2)
                     OR ("userA" = $2 AND "userB" = $1)`,
@@ -783,7 +734,7 @@ export class PGLiteDatabaseAdapter
 
         return this.withDatabase(async () => {
             try {
-                const { rows } = await this.db.query<Relationship>(
+                const { rows } = await this.query<Relationship>(
                     `SELECT * FROM relationships
                     WHERE "userA" = $1 OR "userB" = $1
                     ORDER BY "createdAt" DESC`, // Add ordering if you have this field
@@ -863,7 +814,10 @@ export class PGLiteDatabaseAdapter
                     LIMIT $5
                 `;
 
-                const { rows } = await this.db.query<{ embedding: number[], levenshtein_score: number }>(sql, [
+                const { rows } = await this.query<{
+                    embedding: number[];
+                    levenshtein_score: number;
+                }>(sql, [
                     opts.query_input,
                     opts.query_field_name,
                     opts.query_field_sub_name,
@@ -932,7 +886,7 @@ export class PGLiteDatabaseAdapter
         return this.withDatabase(async () => {
             try {
                 const logId = v4(); // Generate ID for tracking
-                await this.db.query(
+                await this.query(
                     `INSERT INTO logs (
                         id,
                         body,
@@ -1061,7 +1015,7 @@ export class PGLiteDatabaseAdapter
                 values.push(params.count);
             }
 
-            const { rows } = await this.db.query<Memory>(sql, values);
+            const { rows } = await this.query<Memory>(sql, values);
             return rows.map((row) => ({
                 ...row,
                 content:
@@ -1076,7 +1030,7 @@ export class PGLiteDatabaseAdapter
     async addParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                await this.db.query(
+                await this.query(
                     `INSERT INTO participants (id, "userId", "roomId")
                     VALUES ($1, $2, $3)`,
                     [v4(), userId, roomId]
@@ -1092,7 +1046,7 @@ export class PGLiteDatabaseAdapter
     async removeParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                await this.db.query(
+                await this.query(
                     `DELETE FROM participants WHERE "userId" = $1 AND "roomId" = $2`,
                     [userId, roomId]
                 );
@@ -1109,7 +1063,7 @@ export class PGLiteDatabaseAdapter
         status: GoalStatus;
     }): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query("UPDATE goals SET status = $1 WHERE id = $2", [
+            await this.query("UPDATE goals SET status = $1 WHERE id = $2", [
                 params.status,
                 params.goalId,
             ]);
@@ -1118,7 +1072,7 @@ export class PGLiteDatabaseAdapter
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query(
+            await this.query(
                 "DELETE FROM memories WHERE type = $1 AND id = $2",
                 [tableName, memoryId]
             );
@@ -1127,7 +1081,7 @@ export class PGLiteDatabaseAdapter
 
     async removeAllMemories(roomId: UUID, tableName: string): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query(
+            await this.query(
                 `DELETE FROM memories WHERE type = $1 AND "roomId" = $2`,
                 [tableName, roomId]
             );
@@ -1147,7 +1101,7 @@ export class PGLiteDatabaseAdapter
                 sql += ` AND "unique" = true`;
             }
 
-            const { rows } = await this.db.query<{ count: number }>(sql, [
+            const { rows } = await this.query<{ count: number }>(sql, [
                 tableName,
                 roomId,
             ]);
@@ -1157,15 +1111,13 @@ export class PGLiteDatabaseAdapter
 
     async removeAllGoals(roomId: UUID): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.query(`DELETE FROM goals WHERE "roomId" = $1`, [
-                roomId,
-            ]);
+            await this.query(`DELETE FROM goals WHERE "roomId" = $1`, [roomId]);
         }, "removeAllGoals");
     }
 
     async getRoomsForParticipant(userId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
-            const { rows } = await this.db.query<{ roomId: UUID }>(
+            const { rows } = await this.query<{ roomId: UUID }>(
                 `SELECT "roomId" FROM participants WHERE "userId" = $1`,
                 [userId]
             );
@@ -1176,7 +1128,7 @@ export class PGLiteDatabaseAdapter
     async getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const placeholders = userIds.map((_, i) => `$${i + 1}`).join(", ");
-            const { rows } = await this.db.query<{ roomId: UUID }>(
+            const { rows } = await this.query<{ roomId: UUID }>(
                 `SELECT DISTINCT "roomId" FROM participants WHERE "userId" IN (${placeholders})`,
                 userIds
             );
@@ -1204,7 +1156,7 @@ export class PGLiteDatabaseAdapter
                     ORDER BY a.name
                 `;
 
-                const result = await this.db.query<Actor>(sql, [params.roomId]);
+                const result = await this.query<Actor>(sql, [params.roomId]);
 
                 elizaLogger.debug("Retrieved actor details:", {
                     roomId: params.roomId,
@@ -1276,79 +1228,59 @@ export class PGLiteDatabaseAdapter
         agentId: UUID;
         value: string;
     }): Promise<boolean> {
-        return this.withDatabase(async () => {
-            return (
-                (await this.db.transaction(async (tx) => {
-                    try {
-                        try {
-                            await tx.query(
-                                `INSERT INTO cache ("key", "agentId", "value", "createdAt")
+        return (
+            (await this.withTransaction(async (tx) => {
+                try {
+                    await tx.query(
+                        `INSERT INTO cache ("key", "agentId", "value", "createdAt")
                                  VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
                                  ON CONFLICT ("key", "agentId")
                                  DO UPDATE SET "value" = EXCLUDED.value, "createdAt" = CURRENT_TIMESTAMP`,
-                                [params.key, params.agentId, params.value]
-                            );
-                            return true;
-                        } catch (error) {
-                            await tx.rollback();
-                            elizaLogger.error("Error setting cache", {
-                                error:
-                                    error instanceof Error
-                                        ? error.message
-                                        : String(error),
-                                key: params.key,
-                                agentId: params.agentId,
-                            });
-                            return false;
-                        }
-                    } catch (error) {
-                        elizaLogger.error(
-                            "Database connection error in setCache",
-                            error
-                        );
-                        return false;
-                    }
-                })) ?? false
-            );
-        }, "setCache");
+                        [params.key, params.agentId, params.value]
+                    );
+                    return true;
+                } catch (error) {
+                    await tx.rollback();
+                    elizaLogger.error("Error setting cache", {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
+                        key: params.key,
+                        agentId: params.agentId,
+                    });
+                    return false;
+                }
+            }, "setCache")) ?? false
+        );
     }
 
     async deleteCache(params: {
         key: string;
         agentId: UUID;
     }): Promise<boolean> {
-        return this.withDatabase(async () => {
-            return (
-                (await this.db.transaction(async (tx) => {
-                    try {
-                        try {
-                            await tx.query(
-                                `DELETE FROM cache WHERE "key" = $1 AND "agentId" = $2`,
-                                [params.key, params.agentId]
-                            );
-                            return true;
-                        } catch (error) {
-                            tx.rollback();
-                            elizaLogger.error("Error deleting cache", {
-                                error:
-                                    error instanceof Error
-                                        ? error.message
-                                        : String(error),
-                                key: params.key,
-                                agentId: params.agentId,
-                            });
-                            return false;
-                        }
-                    } catch (error) {
-                        elizaLogger.error(
-                            "Database connection error in deleteCache",
-                            error
-                        );
-                        return false;
-                    }
-                })) ?? false
-            );
-        }, "deleteCache");
+        return (
+            (await this.withTransaction(async (tx) => {
+                try {
+                    await tx.query(
+                        `DELETE FROM cache WHERE "key" = $1 AND "agentId" = $2`,
+                        [params.key, params.agentId]
+                    );
+                    return true;
+                } catch (error) {
+                    tx.rollback();
+                    elizaLogger.error("Error deleting cache", {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
+                        key: params.key,
+                        agentId: params.agentId,
+                    });
+                    return false;
+                }
+            }, "deleteCache")) ?? false
+        );
     }
 }
 
