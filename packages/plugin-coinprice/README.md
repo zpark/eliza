@@ -1,4 +1,4 @@
-# @elizaos/plugin-coinmarketcap
+# @elizaos/plugin-coinprice
 
 A plugin for Eliza that enables cryptocurrency price checking using the CoinMarketCap API.
 
@@ -13,12 +13,12 @@ A plugin for Eliza that enables cryptocurrency price checking using the CoinMark
 ## Installation
 
 ```bash
-npm install @elizaos/plugin-coinmarketcap
+npm install @elizaos/plugin-coinprice
 ```
 
 ## Configuration
 
-1. Get your API key from [CoinMarketCap](https://pro.coinmarketcap.com) or [CoinGecko](https://www.coingecko.com/en/api) (or fallback to CoinCap)
+1. Get your API key from [CoinGecko](https://www.coingecko.com/en/api) or [CoinMarketCap](https://pro.coinmarketcap.com) (or fallback to CoinCap)
 
 2. Set up your environment variables:
 
@@ -30,11 +30,11 @@ COINGECKO_API_KEY=your_api_key
 3. Register the plugin in your Eliza configuration:
 
 ```typescript
-import { CoinMarketCapPlugin } from "@elizaos/plugin-coinmarketcap";
+import { CoinPricePlugin } from "@elizaos/plugin-coinprice";
 
 // In your Eliza configuration
 plugins: [
-    new CoinMarketCapPlugin(),
+    new CoinPricePlugin(),
     // ... other plugins
 ];
 ```
@@ -83,7 +83,8 @@ Fetches the current price of a cryptocurrency.
 
 | Variable              | Description                | Required |
 | --------------------- | -------------------------- | -------- |
-| COINMARKETCAP_API_KEY | Your CoinMarketCap API key | Yes      |
+| COINMARKETCAP_API_KEY | Your CoinMarketCap API key | No       |
+| COINGECKO_API_KEY     | Your CoinGecko API key     | No       |
 
 ### Types
 
@@ -113,7 +114,11 @@ The plugin includes comprehensive error handling for:
 
 ## Rate Limits
 
+CoinGecko API has different rate limits based on your subscription plan. Please refer to [CoinGecko's pricing page](https://www.coingecko.com/en/api) for detailed information.
+
 CoinMarketCap API has different rate limits based on your subscription plan. Please refer to [CoinMarketCap's pricing page](https://coinmarketcap.com/api/pricing/) for detailed information.
+
+CoinCap API has different rate limits based on your subscription plan. Please refer to [CoinCap's pricing page](https://coincap.io/api) for detailed information.
 
 ## Support
 
@@ -126,4 +131,4 @@ For support, please open an issue in the repository or reach out to the maintain
 - [CoinGecko API Documentation](https://www.coingecko.com/en/api)
 - [CoinCap API Documentation](https://docs.coincap.io/)
 - [CoinMarketCap API Documentation](https://coinmarketcap.com/api/documentation/v1/)
-- [GitHub Repository](https://github.com/elizaOS/eliza/tree/main/packages/plugin-coinmarketcap)
+- [GitHub Repository](https://github.com/elizaOS/eliza/tree/main/packages/plugin-coinprice)

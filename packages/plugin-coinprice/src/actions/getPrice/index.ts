@@ -9,7 +9,6 @@ import {
     State,
     type Action,
 } from "@elizaos/core";
-import { validateCoinMarketCapConfig } from "../../environment";
 import { priceExamples } from "./examples";
 import { createPriceService } from "./service";
 import { getPriceTemplate } from "./template";
