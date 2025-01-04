@@ -1,6 +1,6 @@
 # @elizaos/plugin-coinprice
 
-A plugin for Eliza that enables cryptocurrency price checking using the CoinMarketCap API.
+A plugin for Eliza that enables cryptocurrency price checking. API provider options are CoinGecko, CoinMarketCap, and CoinCap. If no CoinGecko or CoinMarketCap API key is provided, CoinCap free API will be used.
 
 ## Features
 
