@@ -1746,7 +1746,7 @@ async function handleOpenAI({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1772,7 +1772,7 @@ async function handleAnthropic({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1798,7 +1798,7 @@ async function handleGrok({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1824,7 +1824,7 @@ async function handleGroq({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1850,7 +1850,7 @@ async function handleGoogle({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1876,7 +1876,7 @@ async function handleRedPill({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1905,7 +1905,7 @@ async function handleOpenRouter({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1934,7 +1934,7 @@ async function handleOllama({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
