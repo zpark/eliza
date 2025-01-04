@@ -43,6 +43,7 @@ export interface TokenResult {
     name?: string;
     symbol?: string;
     address?: string;
+    network?: string;
     fdv?: number;
     market_cap?: number;
     liquidity?: number;

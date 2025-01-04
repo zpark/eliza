@@ -457,6 +457,8 @@ export const extractSymbols = (
             ? [
                   // $SYMBOL format
                   /\$([A-Z0-9]{2,10})\b/gi,
+                  // $SYMBOL format with lowercase
+                  /\$([a-z0-9]{2,10})\b/gi,
               ]
             : [
                   // $SYMBOL format
@@ -603,21 +605,9 @@ export const convertToStringParams = (params: BirdeyeApiParams) => {
 };
 
 export const getTokenResultFromSearchResponse = (
-    response: TokenMarketSearchResponse,
-    symbol: string
-): TokenResult | undefined => {
-    const tokenResponses: TokenMarketSearchResponse["data"]["items"] =
-        response.data.items.filter((item) => item.type === "token");
-
-    return tokenResponses
-        .map((item) => item.result)
-        .flat()
-        .find(
-            (r: TokenResult): r is TokenResult =>
-                r.symbol.toLowerCase() === symbol.toLowerCase() &&
-                // only show tokens with liquidity, fdv, and price to help filter out junk
-                Boolean(r.liquidity) &&
-                Boolean(r.fdv) &&
-                Boolean(r.price)
-        );
+    response: TokenMarketSearchResponse
+): TokenResult[] | undefined => {
+    return response.data.items
+        .filter((item) => item.type === "token")
+        .flatMap((item) => item.result);
 };

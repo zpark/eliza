@@ -1,6 +1,6 @@
 import { Plugin } from "@elizaos/core";
-import { getTokenInfoAction } from "./actions/get-token-info";
 import { getWalletInfoAction } from "./actions/get-wallet-info";
+import { getTokenInfoAction } from "./actions/search-token-info";
 import { agentPortfolioProvider } from "./providers/agent-portfolio-provider";
 
 export const birdeyePlugin: Plugin = {
