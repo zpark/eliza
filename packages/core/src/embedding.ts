@@ -1,5 +1,5 @@
 import path from "node:path";
-import { models } from "./models.ts";
+import { getEndpoint, models } from "./models.ts";
 import { IAgentRuntime, ModelProviderName } from "./types.ts";
 import settings from "./settings.ts";
 import elizaLogger from "./logger.ts";
@@ -202,7 +202,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
             model: config.model,
             endpoint:
                 runtime.character.modelEndpointOverride ||
-                models[ModelProviderName.OLLAMA].endpoint,
+                getEndpoint(ModelProviderName.OLLAMA),
             isOllama: true,
             dimensions: config.dimensions,
         });
@@ -213,7 +213,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
             model: config.model,
             endpoint:
                 runtime.character.modelEndpointOverride ||
-                models[ModelProviderName.GAIANET].endpoint ||
+                getEndpoint(ModelProviderName.GAIANET) ||
                 settings.SMALL_GAIANET_SERVER_URL ||
                 settings.MEDIUM_GAIANET_SERVER_URL ||
                 settings.LARGE_GAIANET_SERVER_URL,
@@ -239,7 +239,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         model: config.model,
         endpoint:
             runtime.character.modelEndpointOverride ||
-            models[runtime.character.modelProvider].endpoint,
+            getEndpoint(runtime.character.modelProvider),
         apiKey: runtime.token,
         dimensions: config.dimensions,
     });

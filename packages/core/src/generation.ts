@@ -18,7 +18,12 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
-import { models, getModelSettings, getImageModelSettings } from "./models.ts";
+import {
+    models,
+    getModelSettings,
+    getImageModelSettings,
+    getEndpoint,
+} from "./models.ts";
 import {
     parseBooleanFromText,
     parseJsonArrayFromText,
@@ -200,7 +205,7 @@ export async function generateText({
 
     const provider = runtime.modelProvider;
     const endpoint =
-        runtime.character.modelEndpointOverride || models[provider].endpoint;
+        runtime.character.modelEndpointOverride || getEndpoint(provider);
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     let model = modelSettings.name;
 
@@ -563,7 +568,7 @@ export async function generateText({
 
             case ModelProviderName.REDPILL: {
                 elizaLogger.debug("Initializing RedPill model.");
-                const serverUrl = models[provider].endpoint;
+                const serverUrl = getEndpoint(provider);
                 const openai = createOpenAI({
                     apiKey,
                     baseURL: serverUrl,
@@ -594,7 +599,7 @@ export async function generateText({
 
             case ModelProviderName.OPENROUTER: {
                 elizaLogger.debug("Initializing OpenRouter model.");
-                const serverUrl = models[provider].endpoint;
+                const serverUrl = getEndpoint(provider);
                 const openrouter = createOpenAI({
                     apiKey,
                     baseURL: serverUrl,
@@ -628,7 +633,7 @@ export async function generateText({
                     elizaLogger.debug("Initializing Ollama model.");
 
                     const ollamaProvider = createOllama({
-                        baseURL: models[provider].endpoint + "/api",
+                        baseURL: getEndpoint(provider) + "/api",
                         fetch: runtime.fetch,
                     });
                     const ollama = ollamaProvider(model);
@@ -686,7 +691,7 @@ export async function generateText({
             case ModelProviderName.GAIANET: {
                 elizaLogger.debug("Initializing GAIANET model.");
 
-                var baseURL = models[provider].endpoint;
+                var baseURL = getEndpoint(provider);
                 if (!baseURL) {
                     switch (modelClass) {
                         case ModelClass.SMALL:
@@ -1866,7 +1871,7 @@ async function handleOllama({
     provider,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const ollamaProvider = createOllama({
-        baseURL: models[provider].endpoint + "/api",
+        baseURL: getEndpoint(provider) + "/api",
     });
     const ollama = ollamaProvider(model);
     return await aiGenerateObject({

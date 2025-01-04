@@ -1,4 +1,4 @@
-import { composeContext } from "@elizaos/core";
+import { composeContext, getModelSettings } from "@elizaos/core";
 import { generateText, splitChunks, trimTokens } from "@elizaos/core";
 import { getActorDetails } from "@elizaos/core";
 import { models } from "@elizaos/core";
@@ -247,8 +247,11 @@ const summarizeAction = {
 
         let currentSummary = "";
 
-        const model = models[runtime.character.settings.model];
-        const chunkSize = model.settings.maxContextLength - 1000;
+        const modelSettings = getModelSettings(
+            runtime.modelProvider,
+            ModelClass.SMALL
+        );
+        const chunkSize = modelSettings.maxOutputTokens - 1000;
 
         const chunks = await splitChunks(formattedMemories, chunkSize, 0);
 
