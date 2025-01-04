@@ -121,7 +121,7 @@ export const extractChain = (text: string): BirdeyeSupportedChain => {
     return "solana";
 };
 
-export const extractAddressesFromString = (text: string): BaseAddress[] => {
+export const extractAddresses = (text: string): BaseAddress[] => {
     const addresses: BaseAddress[] = [];
 
     // EVM-compatible chains (Ethereum, Arbitrum, Avalanche, BSC, Optimism, Polygon, Base, zkSync)
@@ -300,7 +300,7 @@ export const formatValue = (value?: number): string => {
 
 export const formatPercentChange = (change?: number): string => {
     if (change === undefined) return "N/A";
-    const symbol = change >= 0 ? "📈" : "📉";
+    const symbol = change >= 0 ? "↑" : "↓";
     return `${symbol} ${Math.abs(change).toFixed(2)}%`;
 };
 

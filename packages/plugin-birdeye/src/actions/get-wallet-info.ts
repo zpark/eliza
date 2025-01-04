@@ -10,7 +10,7 @@ import {
     type State,
 } from "@elizaos/core";
 import { BirdeyeProvider } from "../birdeye";
-import { extractAddressesFromString } from "../utils";
+import { extractAddresses } from "../utils";
 
 const extractWalletAddressTemplate = `Given the recent message below:
 {{recentMessages}}
@@ -144,7 +144,7 @@ export const getWalletInfoAction = {
     },
     validate: async (_runtime: IAgentRuntime, message: Memory) => {
         // Check if the message contains any potential wallet addresses
-        const addresses = extractAddressesFromString(message.content.text);
+        const addresses = extractAddresses(message.content.text);
         return addresses.length > 0;
     },
     examples: [

@@ -9,6 +9,7 @@ import {
 import { BirdeyeProvider } from "../birdeye";
 import { waitFor } from "../utils";
 
+// This is a dummy action generated solely to test all Birdeye endpoints and should not be used in production
 export const testAllEndpointsAction = {
     name: "BIRDEYE_TEST_ALL_ENDPOINTS",
     similes: [],
