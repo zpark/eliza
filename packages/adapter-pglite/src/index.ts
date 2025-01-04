@@ -101,12 +101,12 @@ export class PGLiteDatabaseAdapter
         }, context);
     }
 
-    async query<R = any>(
+    async query<R>(
         queryTextOrConfig: string,
-        values?: any[]
+        values?: unknown[]
     ): Promise<Results<R>> {
         return this.withDatabase(async () => {
-            return await this.query<R>(queryTextOrConfig, values);
+            return await this.db.query<R>(queryTextOrConfig, values);
         }, "query");
     }
 
@@ -400,7 +400,7 @@ export class PGLiteDatabaseAdapter
         return this.withDatabase(async () => {
             // Build query
             let sql = `SELECT * FROM memories WHERE type = $1 AND "roomId" = $2`;
-            const values: any[] = [params.tableName, params.roomId];
+            const values: unknown[] = [params.tableName, params.roomId];
             let paramCount = 2;
 
             // Add time range filters
@@ -474,7 +474,7 @@ export class PGLiteDatabaseAdapter
     }): Promise<Goal[]> {
         return this.withDatabase(async () => {
             let sql = `SELECT * FROM goals WHERE "roomId" = $1`;
-            const values: any[] = [params.roomId];
+            const values: unknown[] = [params.roomId];
             let paramCount = 1;
 
             if (params.userId) {
@@ -974,7 +974,7 @@ export class PGLiteDatabaseAdapter
                 WHERE type = $2
             `;
 
-            const values: any[] = [vectorStr, params.tableName];
+            const values: unknown[] = [vectorStr, params.tableName];
 
             // Log the query for debugging
             elizaLogger.debug("Query debug:", {

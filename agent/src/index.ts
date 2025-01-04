@@ -379,6 +379,7 @@ function initializeDatabase(dataDir: string) {
         return db;
     } else if (process.env.PGLITE_DATA_DIR) {
         elizaLogger.info("Initializing PgLite adapter...");
+        // `dataDir: memory://` for in memory pg
         const db = new PGLiteDatabaseAdapter({
             dataDir: process.env.PGLITE_DATA_DIR,
         });
