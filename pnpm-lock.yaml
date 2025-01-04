@@ -412,6 +412,22 @@ importers:
         specifier: 4.2.10
         version: 4.2.10(typedoc@0.26.11(typescript@5.6.3))
 
+  packages/adapter-pglite:
+    dependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.2.15
+        version: 0.2.15
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
+    devDependencies:
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+
   packages/adapter-postgres:
     dependencies:
       '@elizaos/core':
@@ -3870,6 +3886,9 @@ packages:
     resolution: {integrity: sha512-qD9kvrL1xmce0iiiNEyqq2GW1qoksqvdOpww3Gsgqx/O9tdU/M2R78fji9opY+QU9u8OKH9L+ZzsOQdF5FixZA==}
     peerDependencies:
       onnxruntime-node: 1.20.1
+
+  '@electric-sql/pglite@0.2.15':
+    resolution: {integrity: sha512-Jiq31Dnk+rg8rMhcSxs4lQvHTyizNo5b269c1gCC3ldQ0sCLrNVPGzy+KnmonKy1ZArTUuXZf23/UamzFMKVaA==}
 
   '@elizaos/core@0.1.7-alpha.2':
     resolution: {integrity: sha512-gNvFw/Xnv4dlcfmmKxRa+baKq6en4TitAjUGvo8LgAUkSk156A0fffJ0lAsc1rX8zMB5NsIqdvMCbwKxDd54OQ==}
@@ -23021,6 +23040,8 @@ snapshots:
     dependencies:
       '@huggingface/jinja': 0.2.2
       onnxruntime-node: 1.20.1
+
+  '@electric-sql/pglite@0.2.15': {}
 
   '@elizaos/core@0.1.7-alpha.2(@google-cloud/vertexai@1.9.2(encoding@0.1.13))(@langchain/core@0.3.27(openai@4.73.0(encoding@0.1.13)(zod@3.23.8)))(axios@1.7.9)(encoding@0.1.13)(react@18.3.1)(sswr@2.1.0(svelte@5.16.1))(svelte@5.16.1)':
     dependencies:
