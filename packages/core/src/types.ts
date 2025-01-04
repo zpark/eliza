@@ -137,51 +137,57 @@ export enum ModelClass {
 }
 
 /**
+ * Model settings
+ */
+type ModelSettins = {
+    /** Model name */
+    name: string;
+
+    /** Maximum input tokens */
+    maxInputTokens: number;
+
+    /** Maximum output tokens */
+    maxOutputTokens: number;
+
+    /** Optional frequency penalty */
+    frequency_penalty?: number;
+
+    /** Optional presence penalty */
+    presence_penalty?: number;
+
+    /** Optional repetition penalty */
+    repetition_penalty?: number;
+
+    /** Stop sequences */
+    stop: string[];
+
+    /** Temperature setting */
+    temperature: number;
+
+    /** Optional telemetry configuration (experimental) */
+    experimental_telemetry?: TelemetrySettings;
+};
+
+/** Image model settings */
+type imageModelSettings = {
+    name: string;
+    steps?: number;
+};
+
+/**
  * Configuration for an AI model
  */
 export type Model = {
     /** Optional API endpoint */
     endpoint?: string;
 
-    /** Model settings */
-    settings: {
-        /** Maximum input tokens */
-        maxInputTokens: number;
-
-        /** Maximum output tokens */
-        maxOutputTokens: number;
-
-        /** Optional frequency penalty */
-        frequency_penalty?: number;
-
-        /** Optional presence penalty */
-        presence_penalty?: number;
-
-        /** Optional repetition penalty */
-        repetition_penalty?: number;
-
-        /** Stop sequences */
-        stop: string[];
-
-        /** Temperature setting */
-        temperature: number;
-
-        /** Optional telemetry configuration (experimental) */
-        experimental_telemetry?: TelemetrySettings;
-    };
-
-    /** Optional image generation settings */
-    imageSettings?: {
-        steps?: number;
-    };
-
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]: string;
-        [ModelClass.MEDIUM]: string;
-        [ModelClass.LARGE]: string;
-        [ModelClass.EMBEDDING]?: string;
-        [ModelClass.IMAGE]?: string;
+        [ModelClass.SMALL]?: ModelSettins;
+        [ModelClass.MEDIUM]?: ModelSettins;
+        [ModelClass.LARGE]?: ModelSettins;
+        [ModelClass.EMBEDDING]?: ModelSettins;
+        [ModelClass.IMAGE]?: imageModelSettings;
     };
 };
 
