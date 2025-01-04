@@ -61,6 +61,7 @@ export const twitterEnvSchema = z.object({
     ACTION_INTERVAL: z.number().int(),
     POST_IMMEDIATELY: z.boolean(),
     TWITTER_SPACES_ENABLE: z.boolean().default(false),
+    MAX_ACTIONS_PROCESSING: z.number().int(),
 });
 
 export type TwitterConfig = z.infer<typeof twitterEnvSchema>;
@@ -199,6 +200,12 @@ export async function validateTwitterConfig(
                     runtime.getSetting("TWITTER_SPACES_ENABLE") ||
                         process.env.TWITTER_SPACES_ENABLE
                 ) ?? false,
+
+            MAX_ACTIONS_PROCESSING: safeParseInt(
+                runtime.getSetting("MAX_ACTIONS_PROCESSING") ||
+                    process.env.MAX_ACTIONS_PROCESSING,
+                1
+            ),
         };
 
         return twitterEnvSchema.parse(twitterConfig);
