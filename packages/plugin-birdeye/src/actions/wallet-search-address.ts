@@ -161,9 +161,9 @@ const formatWalletReport = (
         0
     );
 
-    let header = `Wallet Result ${totalResults > 1 ? `#${index + 1}` : ""}`;
+    let header = `Wallet Result ${totalResults > 1 ? `#${index + 1}` : ""}\n`;
     header += `👛 Address ${address.address}*\n`;
-    header += `💰 Total Value: $${totalValue.toLocaleString()}\n\n`;
+    header += `💰 Total Value: $${totalValue.toLocaleString()}\n`;
     header += `🔖 Top Holdings:`;
     const tokenList = tokens
         .map(

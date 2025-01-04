@@ -112,7 +112,7 @@ export const tokenSearchSymbolAction = {
                     (result, i) =>
                         `${formatTokenSummary(symbols[i], i, result)}`
                 )
-                .join("\n\n")}`;
+                .join("\n")}`;
 
             callback?.({ text: completeResults });
             return true;
@@ -204,8 +204,12 @@ const formatTokenSummary = (
     tokens: TokenResult[]
 ) => {
     return tokens
-        .map((token) => {
-            let output = `Search Result ${tokens.length > 0 ? index + 1 : ""} for ${symbol}:\n`;
+        .map((token, i) => {
+            let output = ``;
+            if (i === 0) {
+                output += `Search Results for ${symbol}:\n\n`;
+            }
+            output += `Search Result #${tokens.length > 0 ? i + 1 : ""}:\n`;
             output += `🔖 Symbol: $${token.symbol.toUpperCase()}\n`;
             output += `🔗 Address: ${token.address}\n`;
             output += `🌐 Network: ${token.network.toUpperCase()}\n`;
