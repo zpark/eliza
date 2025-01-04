@@ -79,16 +79,19 @@ import {
 //     return output;
 // };
 
-const formatTokenSummary = (token: TokenResult, index: number) => {
-    let output = `*🛡️ Potential Match ${index + 1}*\n`;
-    output += `🔖 Symbol: ${token.symbol}\n`;
-    output += `🔗 Address: ${token.address}\n\n`;
-    output += `🌐 Network: ${token.network}\n`;
-    output += `💵 Price: ${formatPrice(token.price)}\n`;
-    output += `💸 Price Change (24h): ${formatPercentChange(token.price_change_24h_percent)}\n`;
-    output += `💸 Volume (24h USD): ${formatValue(token.volume_24h_usd)}\n`;
-    output += `💰 Market Cap: ${formatValue(token.market_cap)}\n`;
-    return output;
+const formatTokenSummary = (tokens: TokenResult[]) => {
+    return tokens
+        .map((token, index) => {
+            let output = `*🛡️ Potential Match ${index + 1}*\n`;
+            output += `🔖 Symbol: ${token.symbol}\n`;
+            output += `🔗 Address: ${token.address}\n\n`;
+            output += `🌐 Network: ${token.network}\n`;
+            output += `💵 Price: ${formatPrice(token.price)} (${formatPercentChange(token.price_change_24h_percent)})\n`;
+            output += `💸 Volume (24h USD): ${formatValue(token.volume_24h_usd)}\n`;
+            output += `💰 Market Cap: ${formatValue(token.market_cap)}\n`;
+            return output;
+        })
+        .join("\n\n");
 };
 
 export const getTokenInfoAction = {
@@ -161,7 +164,7 @@ export const getTokenInfoAction = {
                 r.data.items
                     .filter((item) => item.type === "token")
                     .flatMap((item) => item.result)
-            ) as TokenResult[];
+            ) as TokenResult[][];
 
             if (validResults.length === 0) {
                 callback?.({ text: "No matching tokens found" });
@@ -226,7 +229,7 @@ export const getTokenInfoAction = {
             // );
 
             const completeResults = `Found the following tokens that could be a match information:\n\n${validResults
-                .map((result, index) => `${formatTokenSummary(result, index)}`)
+                .map((result) => `${formatTokenSummary(result)}`)
                 .join("\n\n")}`;
 
             callback?.({ text: completeResults });
