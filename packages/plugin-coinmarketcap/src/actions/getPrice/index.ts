@@ -81,7 +81,7 @@ export default {
 
                 if (callback) {
                     callback({
-                        text: `The current price of ${content.cryptoName} is ${priceData.price} ${content.currency.toUpperCase()}`,
+                        text: `The current price of ${content.cryptoName} ${content.symbol} is ${(priceData.price).toLocaleString()} ${content.currency.toUpperCase()} \nMarket Cap is ${(priceData.marketCap).toLocaleString()} ${content.currency.toUpperCase()} \n24h Volume is ${(priceData.volume24h).toLocaleString()} ${content.currency.toUpperCase()} \nThe 24h percent change is ${(priceData.percentChange24h).toFixed(2)}%`,
                         content: {
                             symbol: content.symbol,
                             cryptoName: content.cryptoName,

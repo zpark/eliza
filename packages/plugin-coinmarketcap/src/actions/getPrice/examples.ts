@@ -18,7 +18,7 @@ export const priceExamples: ActionExample[][] = [
         {
             user: "{{agent}}",
             content: {
-                text: "The current price of BTC is 65,432.21 USD",
+                text: "The current price of BTC is 65,432.21 USD. \nmarket cap is 1,234,567,890 USD \nvolume 24h is 1,234,567,890 USD \npercent change 24h is 1,234,567,890 USD",
             },
         },
     ],
