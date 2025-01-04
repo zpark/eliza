@@ -96,9 +96,9 @@ describe("Model Provider Configuration", () => {
     describe("Google Provider", () => {
         test("should have correct model mappings", () => {
             const googleModels = models[ModelProviderName.GOOGLE].model;
-            expect(googleModels[ModelClass.SMALL]).toBe("gemini-1.5-flash-latest");
-            expect(googleModels[ModelClass.MEDIUM]).toBe("gemini-1.5-flash-latest");
-            expect(googleModels[ModelClass.LARGE]).toBe("gemini-1.5-pro-latest");
+            expect(googleModels[ModelClass.SMALL]).toBe("gemini-2.0-flash-exp");
+            expect(googleModels[ModelClass.MEDIUM]).toBe("gemini-2.0-flash-exp");
+            expect(googleModels[ModelClass.LARGE]).toBe("gemini-2.0-flash-exp");
         });
     });
 });
