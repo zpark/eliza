@@ -189,15 +189,15 @@ export const models: Models = {
             [ModelClass.SMALL]:
                 settings.SMALL_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
-                "gemini-1.5-flash-latest",
+                "gemini-2.0-flash-exp",
             [ModelClass.MEDIUM]:
                 settings.MEDIUM_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
-                "gemini-1.5-flash-latest",
+                "gemini-2.0-flash-exp",
             [ModelClass.LARGE]:
                 settings.LARGE_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
-                "gemini-1.5-pro-latest",
+                "gemini-exp-1206",
             [ModelClass.EMBEDDING]:
                 settings.EMBEDDING_GOOGLE_MODEL ||
                 settings.GOOGLE_MODEL ||
