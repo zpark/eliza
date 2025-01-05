@@ -64,6 +64,7 @@ import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+import { availPlugin } from "@elizaos/plugin-avail";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -617,6 +618,8 @@ export async function createAgent(
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
+            getSecret(character, "AVAIL_SEED") ? availPlugin : null,
+            getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],

@@ -28,7 +28,7 @@ ZEROG_FLOW_ADDRESS=<0G Flow contract address>
 ### Basic Integration
 
 ```typescript
-import { zgPlugin } from "@ai16z/plugin-0g";
+import { zgPlugin } from "@eliza/plugin-0g";
 ```
 
 ### File Upload Example
