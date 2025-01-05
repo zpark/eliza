@@ -201,7 +201,7 @@ export class PostgresDatabaseAdapter
                 await client.query("SET app.use_openai_embedding = 'false'");
                 await client.query("SET app.use_ollama_embedding = 'true'");
                 await client.query("SET app.use_gaianet_embedding = 'false'");
-            } else if (embeddingConfig.provider === EmbeddingProvider.GaiaNet){
+            } else if (embeddingConfig.provider === EmbeddingProvider.GaiaNet) {
                 await client.query("SET app.use_openai_embedding = 'false'");
                 await client.query("SET app.use_ollama_embedding = 'false'");
                 await client.query("SET app.use_gaianet_embedding = 'true'");

@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-goat",
-    "version": "0.1.7-alpha.2",
+    "version": "0.1.7",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -27,7 +27,7 @@
         "@goat-sdk/wallet-evm": "0.2.0",
         "@goat-sdk/wallet-viem": "0.2.0",
         "tsup": "8.3.5",
-        "viem": "2.21.53"
+        "viem": "2.22.2"
     },
     "scripts": {
         "build": "tsup --format esm --dts",
