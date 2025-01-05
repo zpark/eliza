@@ -16,7 +16,7 @@ export default defineConfig({
         "http",
         "agentkeepalive",
         "safe-buffer",
-        "axios"
+        "viem",
         // Add other modules you want to externalize
     ],
 });
