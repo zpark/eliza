@@ -16,6 +16,13 @@ import { IImageDescriptionService, ServiceType } from "@elizaos/core";
 import { buildConversationThread } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
+import {
+    Client,
+    Events,
+    GatewayIntentBits,
+    TextChannel,
+    Partials,
+} from "discord.js";
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -62,7 +69,8 @@ Actions (respond only with tags):
 Tweet:
 {{currentTweet}}
 
-# Respond with qualifying action tags only. Default to NO action unless extremely confident of relevance.` + postActionResponseFooter;
+# Respond with qualifying action tags only. Default to NO action unless extremely confident of relevance.` +
+    postActionResponseFooter;
 
 /**
  * Truncate text to fit within the Twitter character limit, ensuring it ends at a complete sentence.
@@ -98,6 +106,17 @@ function truncateToCompleteSentence(
     return hardTruncated + "...";
 }
 
+interface PendingTweet {
+    cleanedContent: string;
+    roomId: UUID;
+    newTweetContent: string;
+    discordMessageId: string;
+    channelId: string;
+    timestamp: number;
+}
+
+type PendingTweetApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export class TwitterPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
@@ -106,12 +125,16 @@ export class TwitterPostClient {
     private lastProcessTime: number = 0;
     private stopProcessingActions: boolean = false;
     private isDryRun: boolean;
+    private discordClientForApproval: Client;
+    private approvalRequired: boolean = false;
+    private discordApprovalChannelId: string;
+    private approvalCheckInterval: number;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
         this.runtime = runtime;
         this.twitterUsername = this.client.twitterConfig.TWITTER_USERNAME;
-        this.isDryRun = this.client.twitterConfig.TWITTER_DRY_RUN
+        this.isDryRun = this.client.twitterConfig.TWITTER_DRY_RUN;
 
         // Log configuration on initialization
         elizaLogger.log("Twitter Client Configuration:");
@@ -145,6 +168,72 @@ export class TwitterPostClient {
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"
             );
         }
+
+        // Initialize Discord webhook
+        const approvalRequired: boolean =
+            this.runtime.getSetting("APPROVAL_ENABLED")?.toLocaleLowerCase() ===
+            "true";
+        if (approvalRequired) {
+            const discordToken = this.runtime.getSetting(
+                "DISCORD_APPROVAL_BOT_TOKEN"
+            );
+            const approvalChannelId = this.runtime.getSetting(
+                "DISCORD_APPROVAL_CHANNEL_ID"
+            );
+
+            const APPROVAL_CHECK_INTERVAL =
+                parseInt(this.runtime.getSetting("APPROVAL_CHECK_INTERVAL")) ||
+                5 * 60 * 1000; // 5 minutes
+
+            this.approvalCheckInterval = APPROVAL_CHECK_INTERVAL;
+
+            if (!discordToken || !approvalChannelId) {
+                throw new Error(
+                    "DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID are required for approval workflow"
+                );
+            }
+
+            this.approvalRequired = true;
+            this.discordApprovalChannelId = approvalChannelId;
+
+            // Set up Discord client event handlers
+            this.setupDiscordClient();
+        }
+    }
+
+    private setupDiscordClient() {
+        this.discordClientForApproval = new Client({
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.MessageContent,
+                GatewayIntentBits.GuildMessageReactions,
+            ],
+            partials: [Partials.Channel, Partials.Message, Partials.Reaction],
+        });
+        this.discordClientForApproval.once(
+            Events.ClientReady,
+            (readyClient) => {
+                elizaLogger.log(
+                    `Discord bot is ready as ${readyClient.user.tag}!`
+                );
+
+                // Generate invite link with required permissions
+                const invite = `https://discord.com/api/oauth2/authorize?client_id=${readyClient.user.id}&permissions=274877991936&scope=bot`;
+                // 274877991936 includes permissions for:
+                // - Send Messages
+                // - Read Messages/View Channels
+                // - Read Message History
+
+                elizaLogger.log(
+                    `Use this link to properly invite the Twitter Post Approval Discord bot: ${invite}`
+                );
+            }
+        );
+        // Login to Discord
+        this.discordClientForApproval.login(
+            this.runtime.getSetting("DISCORD_APPROVAL_BOT_TOKEN")
+        );
     }
 
     async start() {
@@ -153,6 +242,9 @@ export class TwitterPostClient {
         }
 
         const generateNewTweetLoop = async () => {
+            // Check for pending tweets first
+            await this.handlePendingTweet();
+
             const lastPost = await this.runtime.cacheManager.get<{
                 timestamp: number;
             }>("twitter/" + this.twitterUsername + "/lastPost");
@@ -188,8 +280,9 @@ export class TwitterPostClient {
                             `Next action processing scheduled in ${actionInterval} minutes`
                         );
                         // Wait for the full interval before next processing
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, actionInterval * 60 * 1000) // now in minutes
+                        await new Promise(
+                            (resolve) =>
+                                setTimeout(resolve, actionInterval * 60 * 1000) // now in minutes
                         );
                     }
                 } catch (error) {
@@ -215,7 +308,10 @@ export class TwitterPostClient {
             elizaLogger.log("Tweet generation loop disabled (dry run mode)");
         }
 
-        if (this.client.twitterConfig.ENABLE_ACTION_PROCESSING && !this.isDryRun) {
+        if (
+            this.client.twitterConfig.ENABLE_ACTION_PROCESSING &&
+            !this.isDryRun
+        ) {
             processActionsLoop().catch((error) => {
                 elizaLogger.error(
                     "Fatal error in process actions loop:",
@@ -233,6 +329,15 @@ export class TwitterPostClient {
                 );
             }
         }
+
+        // Start the pending tweet check loop
+        this.runPendingTweetCheckLoop();
+    }
+
+    private runPendingTweetCheckLoop() {
+        setInterval(async () => {
+            await this.handlePendingTweet();
+        }, this.approvalCheckInterval);
     }
 
     createTweetObject(
@@ -480,7 +585,7 @@ export class TwitterPostClient {
             }
 
             // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
-            const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH
+            const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
             if (maxTweetLength) {
                 cleanedContent = truncateToCompleteSentence(
                     cleanedContent,
@@ -504,15 +609,28 @@ export class TwitterPostClient {
             }
 
             try {
-                elizaLogger.log(`Posting new tweet:\n ${cleanedContent}`);
-                this.postTweet(
-                    this.runtime,
-                    this.client,
-                    cleanedContent,
-                    roomId,
-                    newTweetContent,
-                    this.twitterUsername
-                );
+                if (this.approvalRequired) {
+                    // Send for approval instead of posting directly
+                    elizaLogger.log(
+                        `Sending Tweet For Approval:\n ${cleanedContent}`
+                    );
+                    await this.sendForApproval(
+                        cleanedContent,
+                        roomId,
+                        newTweetContent
+                    );
+                    elizaLogger.log("Tweet sent for approval");
+                } else {
+                    elizaLogger.log(`Posting new tweet:\n ${cleanedContent}`);
+                    this.postTweet(
+                        this.runtime,
+                        this.client,
+                        cleanedContent,
+                        roomId,
+                        newTweetContent,
+                        this.twitterUsername
+                    );
+                }
             } catch (error) {
                 elizaLogger.error("Error sending tweet:", error);
             }
@@ -1063,5 +1181,256 @@ export class TwitterPostClient {
 
     async stop() {
         this.stopProcessingActions = true;
+    }
+
+    private async sendForApproval(
+        cleanedContent: string,
+        roomId: UUID,
+        newTweetContent: string
+    ): Promise<string | null> {
+        try {
+            const embed = {
+                title: "New Tweet Pending Approval",
+                description: cleanedContent,
+                fields: [
+                    {
+                        name: "Character",
+                        value: this.client.profile.username,
+                        inline: true,
+                    },
+                    {
+                        name: "Length",
+                        value: cleanedContent.length.toString(),
+                        inline: true,
+                    },
+                ],
+                footer: {
+                    text: "Reply with '👍' to post or '❌' to discard, This will automatically expire and remove after 24 hours if no response received",
+                },
+                timestamp: new Date().toISOString(),
+            };
+
+            const channel = await this.discordClientForApproval.channels.fetch(
+                this.discordApprovalChannelId
+            );
+
+            if (!channel || !(channel instanceof TextChannel)) {
+                throw new Error("Invalid approval channel");
+            }
+
+            const message = await channel.send({ embeds: [embed] });
+
+            // Store the pending tweet
+            const pendingTweetsKey = `twitter/${this.client.profile.username}/pendingTweet`;
+            const currentPendingTweets =
+                (await this.runtime.cacheManager.get<PendingTweet[]>(
+                    pendingTweetsKey
+                )) || [];
+            // Add new pending tweet
+            currentPendingTweets.push({
+                cleanedContent,
+                roomId,
+                newTweetContent,
+                discordMessageId: message.id,
+                channelId: this.discordApprovalChannelId,
+                timestamp: Date.now(),
+            });
+
+            // Store updated array
+            await this.runtime.cacheManager.set(
+                pendingTweetsKey,
+                currentPendingTweets
+            );
+
+            return message.id;
+        } catch (error) {
+            elizaLogger.error(
+                "Error Sending Twitter Post Approval Request:",
+                error
+            );
+            return null;
+        }
+    }
+
+    private async checkApprovalStatus(
+        discordMessageId: string
+    ): Promise<PendingTweetApprovalStatus> {
+        try {
+            // Fetch message and its replies from Discord
+            const channel = await this.discordClientForApproval.channels.fetch(
+                this.discordApprovalChannelId
+            );
+
+            elizaLogger.log(`channel ${JSON.stringify(channel)}`);
+
+            if (!(channel instanceof TextChannel)) {
+                elizaLogger.error("Invalid approval channel");
+                return "PENDING";
+            }
+
+            // Fetch the original message and its replies
+            const message = await channel.messages.fetch(discordMessageId);
+
+            // Look for thumbs up reaction ('👍')
+            const thumbsUpReaction = message.reactions.cache.find(
+                (reaction) => reaction.emoji.name === "👍"
+            );
+
+            // Look for reject reaction ('❌')
+            const rejectReaction = message.reactions.cache.find(
+                (reaction) => reaction.emoji.name === "❌"
+            );
+
+            // Check if the reaction exists and has reactions
+            if (rejectReaction) {
+                const count = rejectReaction.count;
+                if (count > 0) {
+                    return "REJECTED";
+                }
+            }
+
+            // Check if the reaction exists and has reactions
+            if (thumbsUpReaction) {
+                // You might want to check for specific users who can approve
+                // For now, we'll return true if anyone used thumbs up
+                const count = thumbsUpReaction.count;
+                if (count > 0) {
+                    return "APPROVED";
+                }
+            }
+
+            return "PENDING";
+        } catch (error) {
+            elizaLogger.error("Error checking approval status:", error);
+            return "PENDING";
+        }
+    }
+
+    private async cleanupPendingTweet(discordMessageId: string) {
+        const pendingTweetsKey = `twitter/${this.client.profile.username}/pendingTweet`;
+        const currentPendingTweets =
+            (await this.runtime.cacheManager.get<PendingTweet[]>(
+                pendingTweetsKey
+            )) || [];
+
+        // Remove the specific tweet
+        const updatedPendingTweets = currentPendingTweets.filter(
+            (tweet) => tweet.discordMessageId !== discordMessageId
+        );
+
+        if (updatedPendingTweets.length === 0) {
+            await this.runtime.cacheManager.delete(pendingTweetsKey);
+        } else {
+            await this.runtime.cacheManager.set(
+                pendingTweetsKey,
+                updatedPendingTweets
+            );
+        }
+    }
+
+    private async handlePendingTweet() {
+        elizaLogger.log("Checking Pending Tweets...");
+        const pendingTweetsKey = `twitter/${this.client.profile.username}/pendingTweet`;
+        const pendingTweets =
+            (await this.runtime.cacheManager.get<PendingTweet[]>(
+                pendingTweetsKey
+            )) || [];
+
+        for (const pendingTweet of pendingTweets) {
+            // Check if tweet is older than 24 hours
+            const isExpired =
+                Date.now() - pendingTweet.timestamp > 24 * 60 * 60 * 1000;
+
+            if (isExpired) {
+                elizaLogger.log("Pending tweet expired, cleaning up");
+
+                // Notify on Discord about expiration
+                try {
+                    const channel =
+                        await this.discordClientForApproval.channels.fetch(
+                            pendingTweet.channelId
+                        );
+                    if (channel instanceof TextChannel) {
+                        const originalMessage = await channel.messages.fetch(
+                            pendingTweet.discordMessageId
+                        );
+                        await originalMessage.reply(
+                            "This tweet approval request has expired (24h timeout)."
+                        );
+                    }
+                } catch (error) {
+                    elizaLogger.error(
+                        "Error sending expiration notification:",
+                        error
+                    );
+                }
+
+                await this.cleanupPendingTweet(pendingTweet.discordMessageId);
+                return;
+            }
+
+            // Check approval status
+            elizaLogger.log("Checking approval status...");
+            const approvalStatus: PendingTweetApprovalStatus =
+                await this.checkApprovalStatus(pendingTweet.discordMessageId);
+
+            if (approvalStatus === "APPROVED") {
+                elizaLogger.log("Tweet Approved, Posting");
+                await this.postTweet(
+                    this.runtime,
+                    this.client,
+                    pendingTweet.cleanedContent,
+                    pendingTweet.roomId,
+                    pendingTweet.newTweetContent,
+                    this.twitterUsername
+                );
+
+                // Notify on Discord about posting
+                try {
+                    const channel =
+                        await this.discordClientForApproval.channels.fetch(
+                            pendingTweet.channelId
+                        );
+                    if (channel instanceof TextChannel) {
+                        const originalMessage = await channel.messages.fetch(
+                            pendingTweet.discordMessageId
+                        );
+                        await originalMessage.reply(
+                            "Tweet has been posted successfully! ✅"
+                        );
+                    }
+                } catch (error) {
+                    elizaLogger.error(
+                        "Error sending post notification:",
+                        error
+                    );
+                }
+
+                await this.cleanupPendingTweet(pendingTweet.discordMessageId);
+            } else if (approvalStatus === "REJECTED") {
+                elizaLogger.log("Tweet Rejected, Cleaning Up");
+                await this.cleanupPendingTweet(pendingTweet.discordMessageId);
+                // Notify about Rejection of Tweet
+                try {
+                    const channel =
+                        await this.discordClientForApproval.channels.fetch(
+                            pendingTweet.channelId
+                        );
+                    if (channel instanceof TextChannel) {
+                        const originalMessage = await channel.messages.fetch(
+                            pendingTweet.discordMessageId
+                        );
+                        await originalMessage.reply(
+                            "Tweet has been rejected! ❌"
+                        );
+                    }
+                } catch (error) {
+                    elizaLogger.error(
+                        "Error sending rejection notification:",
+                        error
+                    );
+                }
+            }
+        }
     }
 }
