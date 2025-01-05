@@ -116,7 +116,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                         messages: [{ role: "user", content: context }],
                         temperature:
                             options?.providerOptions?.temperature ||
-                            models[provider].settings.temperature,
+                            models[provider].model[modelClass].temperature,
                     };
                     break;
                 case ModelProviderName.ANTHROPIC:
@@ -124,10 +124,10 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                     body = {
                         model,
                         messages: [{ role: "user", content: context }],
-                        max_tokens: models[provider].settings.maxOutputTokens,
+                        max_tokens: models[provider].model[modelClass].maxOutputTokens,
                         temperature:
                             options?.providerOptions?.temperature ||
-                            models[provider].settings.temperature,
+                            models[provider].model[modelClass].temperature,
                     };
                     break;
                 case ModelProviderName.GOOGLE:
@@ -139,7 +139,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                         generationConfig: {
                             temperature:
                                 options?.providerOptions?.temperature ||
-                                models[provider].settings.temperature,
+                                models[provider].model[modelClass].temperature,
                         },
                     };
                     break;
