@@ -349,6 +349,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
                 settings.GOOGLE_GENERATIVE_AI_API_KEY
             );
+        case ModelProviderName.INFERA:
+            return (
+                character.settings?.secrets?.INFERA_API_KEY ||
+                settings.INFERA_API_KEY
+            );
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);
