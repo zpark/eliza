@@ -178,7 +178,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
             console.log("Proof:", proof);
 
             // Extract text based on provider format
-            const response = JSON.parse(proof.extractedParameterValues.response);
+            const response = JSON.parse(proof?.extractedParameterValues.response);
             let text = "";
             switch (provider) {
                 case ModelProviderName.GOOGLE:

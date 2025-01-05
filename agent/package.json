@@ -19,7 +19,6 @@
     },
     "dependencies": {
         "@elizaos/adapter-postgres": "workspace:*",
-        "@elizaos/adapter-reclaim": "workspace:*",
         "@elizaos/adapter-redis": "workspace:*",
         "@elizaos/adapter-sqlite": "workspace:*",
         "@elizaos/client-auto": "workspace:*",
@@ -55,6 +54,7 @@
         "@elizaos/plugin-tee": "workspace:*",
         "@elizaos/plugin-multiversx": "workspace:*",
         "@elizaos/plugin-near": "workspace:*",
+        "@elizaos/plugin-reclaim": "workspace:*",
         "@elizaos/plugin-zksync-era": "workspace:*",
         "@elizaos/plugin-twitter": "workspace:*",
         "@elizaos/plugin-cronoszkevm": "workspace:*",

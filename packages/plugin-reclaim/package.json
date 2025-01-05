@@ -1,6 +1,6 @@
 {
-    "name": "@elizaos/adapter-reclaim",
-    "version": "0.1.7-alpha.2",
+    "name": "@elizaos/plugin-reclaim",
+    "version": "0.1.7",
     "description": "Reclaim Protocol adapter for ElizaOS",
     "main": "dist/index.js",
     "type": "module",

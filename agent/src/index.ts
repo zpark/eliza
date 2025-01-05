@@ -7,7 +7,7 @@ import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
-import { ReclaimAdapter } from "@elizaos/adapter-reclaim";
+import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
 import {
     AgentRuntime,
     CacheManager,

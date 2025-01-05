@@ -5,7 +5,7 @@ This adapter integrates Reclaim Protocol into ElizaOS, enabling verifiable infer
 ## Installation
 
 ```bash
-pnpm add @elizaos/adapter-reclaim
+pnpm add @elizaos/plugin-reclaim
 ```
 
 ## Configuration
@@ -15,6 +15,11 @@ Add the following environment variables to your `.env` file:
 ```env
 RECLAIM_APP_ID=your_app_id
 RECLAIM_APP_SECRET=your_app_secret
+
+
+# Verifiable Inference Configuration
+VERIFIABLE_INFERENCE_ENABLED=true # Set to true to enable verifiable inference
+VERIFIABLE_INFERENCE_PROVIDER=reclaim # Options: reclaim, opacity
 ```
 
 ## Usage
