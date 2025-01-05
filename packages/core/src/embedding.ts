@@ -1,5 +1,5 @@
 import path from "node:path";
-import { getEndpoint, models } from "./models.ts";
+import { getEndpoint } from "./models.ts";
 import { IAgentRuntime, ModelProviderName } from "./types.ts";
 import settings from "./settings.ts";
 import elizaLogger from "./logger.ts";
