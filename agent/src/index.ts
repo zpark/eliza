@@ -65,6 +65,8 @@ import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
+import { giphyPlugin } from "@elizaos/plugin-giphy";
+
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
 import Database from "better-sqlite3";
@@ -619,6 +621,7 @@ export async function createAgent(
                 ? echoChambersPlugin
                 : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
+            getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
