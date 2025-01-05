@@ -10,4 +10,4 @@
 
 ## Defined in
 
-[packages/core/src/embedding.ts:133](https://github.com/ai16z/eliza/blob/main/packages/core/src/embedding.ts#L133)
+[packages/core/src/embedding.ts:133](https://github.com/elizaOS/eliza/blob/main/packages/core/src/embedding.ts#L133)

@@ -49,4 +49,4 @@ console.log(trimmedText); // Output will be a truncated version of the input tex
 
 ## Defined in
 
-[packages/core/src/generation.ts:70](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L70)
+[packages/core/src/generation.ts:70](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L70)

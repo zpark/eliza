@@ -530,4 +530,4 @@ Optional NFT prompt
 
 ## Defined in
 
-[packages/core/src/types.ts:671](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L671)
+[packages/core/src/types.ts:671](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L671)

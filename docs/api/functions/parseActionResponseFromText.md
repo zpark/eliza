@@ -18,4 +18,4 @@
 
 ## Defined in
 
-[packages/core/src/parsing.ts:174](https://github.com/ai16z/eliza/blob/main/packages/core/src/parsing.ts#L174)
+[packages/core/src/parsing.ts:174](https://github.com/elizaOS/eliza/blob/main/packages/core/src/parsing.ts#L174)

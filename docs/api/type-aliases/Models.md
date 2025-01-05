@@ -106,4 +106,4 @@ Model configurations by provider
 
 ## Defined in
 
-[packages/core/src/types.ts:191](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L191)
+[packages/core/src/types.ts:191](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L191)

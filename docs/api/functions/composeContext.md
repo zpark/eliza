@@ -50,4 +50,4 @@ const contextSimple = composeContext({ state, template });
 
 ## Defined in
 
-[packages/core/src/context.ts:29](https://github.com/ai16z/eliza/blob/main/packages/core/src/context.ts#L29)
+[packages/core/src/context.ts:29](https://github.com/elizaOS/eliza/blob/main/packages/core/src/context.ts#L29)

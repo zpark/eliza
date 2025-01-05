@@ -6,4 +6,4 @@
 
 ## Defined in
 
-[packages/core/src/embedding.ts:24](https://github.com/ai16z/eliza/blob/main/packages/core/src/embedding.ts#L24)
+[packages/core/src/embedding.ts:24](https://github.com/elizaOS/eliza/blob/main/packages/core/src/embedding.ts#L24)

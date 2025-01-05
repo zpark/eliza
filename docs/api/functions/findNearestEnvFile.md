@@ -21,4 +21,4 @@ Path to the nearest .env file or null if not found
 
 ## Defined in
 
-[packages/core/src/settings.ts:47](https://github.com/ai16z/eliza/blob/main/packages/core/src/settings.ts#L47)
+[packages/core/src/settings.ts:47](https://github.com/elizaOS/eliza/blob/main/packages/core/src/settings.ts#L47)

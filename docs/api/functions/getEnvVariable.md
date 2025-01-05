@@ -24,4 +24,4 @@ The environment variable value or default value
 
 ## Defined in
 
-[packages/core/src/settings.ts:116](https://github.com/ai16z/eliza/blob/main/packages/core/src/settings.ts#L116)
+[packages/core/src/settings.ts:116](https://github.com/elizaOS/eliza/blob/main/packages/core/src/settings.ts#L116)

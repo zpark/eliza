@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1071](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1071)
+[packages/core/src/types.ts:1071](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1071)
 
 ---
 
@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1072](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1072)
+[packages/core/src/types.ts:1072](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1072)
 
 ---
 
@@ -66,4 +66,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1073](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L1073)
+[packages/core/src/types.ts:1073](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1073)
