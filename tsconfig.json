@@ -9,14 +9,7 @@
     },
     "files": [],
     "references": [
-        {
-            "path": "packages/core"
-        },
-        {
-            "path": "packages/client-slack"
-        },
-        {
-            "path": "packages/plugin-letzai"
-        }
+        { "path": "packages/core" },
+        { "path": "packages/client-slack" }
     ]
-}
+} 
