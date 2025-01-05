@@ -1,5 +1,11 @@
 /* This is an example of how WalletProvider can use DeriveKeyProvider to generate a Solana Keypair */
-import { IAgentRuntime, Memory, Provider, State, elizaLogger } from "@elizaos/core";
+import {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
@@ -203,7 +209,9 @@ export class WalletProvider {
                               : "ethereum"
                     ].usd = price;
                 } else {
-                    elizaLogger.warn(`No price data available for token: ${token}`);
+                    elizaLogger.warn(
+                        `No price data available for token: ${token}`
+                    );
                 }
             }
 

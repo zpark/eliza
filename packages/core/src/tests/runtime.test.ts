@@ -47,7 +47,7 @@ const mockDatabaseAdapter: IDatabaseAdapter = {
     setParticipantUserState: vi.fn().mockResolvedValue(undefined),
     createRelationship: vi.fn().mockResolvedValue(true),
     getRelationship: vi.fn().mockResolvedValue(null),
-    getRelationships: vi.fn().mockResolvedValue([])
+    getRelationships: vi.fn().mockResolvedValue([]),
 };
 
 const mockCacheManager = {
@@ -113,7 +113,11 @@ describe("AgentRuntime", () => {
                 userId: "123e4567-e89b-12d3-a456-426614174005",
                 agentId: "123e4567-e89b-12d3-a456-426614174005",
                 roomId: "123e4567-e89b-12d3-a456-426614174003",
-                content: { type: "text", text: "test response", action: "testAction" },
+                content: {
+                    type: "text",
+                    text: "test response",
+                    action: "testAction",
+                },
             };
 
             await runtime.processActions(message, [response], {
