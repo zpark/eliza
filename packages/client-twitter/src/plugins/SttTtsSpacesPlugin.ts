@@ -1,8 +1,8 @@
 // src/plugins/SttTtsPlugin.ts
 
-import { spawn } from "child_process";
-import { ITranscriptionService } from "@elizaos/core";
-import { Space, JanusClient, AudioDataWithUser } from "agent-twitter-client";
+import { spawn } from 'child_process';
+import { ITranscriptionService, elizaLogger } from '@elizaos/core';
+import { Space, JanusClient, AudioDataWithUser } from 'agent-twitter-client';
 
 interface PluginConfig {
     openAiApiKey?: string; // for STT & ChatGPT
@@ -63,13 +63,13 @@ export class SttTtsPlugin implements Plugin {
     private ttsQueue: string[] = [];
     private isSpeaking = false;
 
-    onAttach(_space: Space) {
-        console.log("[SttTtsPlugin] onAttach => space was attached");
+    onAttach(space: Space) {
+        elizaLogger.log('[SttTtsPlugin] onAttach => space was attached');
     }
 
     init(params: { space: Space; pluginConfig?: Record<string, any> }): void {
-        console.log(
-            "[SttTtsPlugin] init => Space fully ready. Subscribing to events."
+        elizaLogger.log(
+            '[SttTtsPlugin] init => Space fully ready. Subscribing to events.',
         );
 
         this.space = params.space;
@@ -97,16 +97,16 @@ export class SttTtsPlugin implements Plugin {
         if (config?.chatContext) {
             this.chatContext = config.chatContext;
         }
-        console.log("[SttTtsPlugin] Plugin config =>", config);
+        elizaLogger.log('[SttTtsPlugin] Plugin config =>', config);
 
         // Listen for mute events
         this.space.on(
             "muteStateChanged",
             (evt: { userId: string; muted: boolean }) => {
-                console.log("[SttTtsPlugin] Speaker muteStateChanged =>", evt);
+                elizaLogger.log('[SttTtsPlugin] Speaker muteStateChanged =>', evt);
                 if (evt.muted) {
                     this.handleMute(evt.userId).catch((err) =>
-                        console.error("[SttTtsPlugin] handleMute error =>", err)
+                        elizaLogger.error('[SttTtsPlugin] handleMute error =>', err),
                     );
                 } else {
                     this.speakerUnmuted.set(evt.userId, true);
@@ -201,11 +201,11 @@ export class SttTtsPlugin implements Plugin {
         this.pcmBuffers.set(userId, []);
 
         if (!chunks.length) {
-            console.log("[SttTtsPlugin] No audio chunks for user =>", userId);
+            elizaLogger.warn('[SttTtsPlugin] No audio chunks for user =>', userId);
             return;
         }
-        console.log(
-            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`
+        elizaLogger.log(
+            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`,
         );
 
         const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
@@ -223,19 +223,14 @@ export class SttTtsPlugin implements Plugin {
         const sttText = await this.transcriptionService.transcribe(wavBuffer);
 
         if (!sttText || !sttText.trim()) {
-            console.log(
-                "[SttTtsPlugin] No speech recognized for user =>",
-                userId
-            );
+            elizaLogger.warn('[SttTtsPlugin] No speech recognized for user =>', userId);
             return;
         }
-        console.log(`[SttTtsPlugin] STT => user=${userId}, text="${sttText}"`);
+        elizaLogger.log(`[SttTtsPlugin] STT => user=${userId}, text="${sttText}"`);
 
         // GPT answer
         const replyText = await this.askChatGPT(sttText);
-        console.log(
-            `[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`
-        );
+        elizaLogger.log(`[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`);
 
         // Use the standard speak method with queue
         await this.speakText(replyText);
@@ -249,7 +244,7 @@ export class SttTtsPlugin implements Plugin {
         if (!this.isSpeaking) {
             this.isSpeaking = true;
             this.processTtsQueue().catch((err) => {
-                console.error("[SttTtsPlugin] processTtsQueue error =>", err);
+                elizaLogger.error('[SttTtsPlugin] processTtsQueue error =>', err);
             });
         }
     }
@@ -267,7 +262,7 @@ export class SttTtsPlugin implements Plugin {
                 const pcm = await this.convertMp3ToPcm(ttsAudio, 48000);
                 await this.streamToJanus(pcm, 48000);
             } catch (err) {
-                console.error("[SttTtsPlugin] TTS streaming error =>", err);
+                elizaLogger.error('[SttTtsPlugin] TTS streaming error =>', err);
             }
         }
         this.isSpeaking = false;
@@ -415,7 +410,7 @@ export class SttTtsPlugin implements Plugin {
 
     public setSystemPrompt(prompt: string) {
         this.systemPrompt = prompt;
-        console.log("[SttTtsPlugin] setSystemPrompt =>", prompt);
+        elizaLogger.log('[SttTtsPlugin] setSystemPrompt =>', prompt);
     }
 
     /**
@@ -423,7 +418,7 @@ export class SttTtsPlugin implements Plugin {
      */
     public setGptModel(model: string) {
         this.gptModel = model;
-        console.log("[SttTtsPlugin] setGptModel =>", model);
+        elizaLogger.log('[SttTtsPlugin] setGptModel =>', model);
     }
 
     /**
@@ -432,8 +427,8 @@ export class SttTtsPlugin implements Plugin {
      */
     public addMessage(role: "system" | "user" | "assistant", content: string) {
         this.chatContext.push({ role, content });
-        console.log(
-            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`
+        elizaLogger.log(
+            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`,
         );
     }
 
@@ -442,11 +437,11 @@ export class SttTtsPlugin implements Plugin {
      */
     public clearChatContext() {
         this.chatContext = [];
-        console.log("[SttTtsPlugin] clearChatContext => done");
+        elizaLogger.log('[SttTtsPlugin] clearChatContext => done');
     }
 
     cleanup(): void {
-        console.log("[SttTtsPlugin] cleanup => releasing resources");
+        elizaLogger.log('[SttTtsPlugin] cleanup => releasing resources');
         this.pcmBuffers.clear();
         this.speakerUnmuted.clear();
         this.ttsQueue = [];
