@@ -293,26 +293,30 @@ export class RAGKnowledgeManager implements IRAGKnowledgeManager {
         type: 'pdf' | 'md' | 'txt';
         isShared?: boolean
     }): Promise<void> {
+        const timeMarker = (label: string) => {
+            const time = (Date.now() - startTime) / 1000;
+            elizaLogger.info(`[Timing] ${label}: ${time.toFixed(2)}s`);
+        };
+
+        const startTime = Date.now();
         let content = file.content;
 
         try {
-            // Process based on file type
-            switch(file.type) {
-                case 'pdf':
-                    //To-Do: Add native support for basic PDFs
-                    elizaLogger.warn(`PDF files not currently supported: ${file.type}`)
-                    break;
-                case 'md':
-                case 'txt':
-                    break;
-                default:
-                    elizaLogger.warn(`Unsupported file type: ${file.type}`);
-                    return;
-            }
+            const fileSizeKB = (new TextEncoder().encode(content)).length / 1024;
+            elizaLogger.info(`[File Progress] Starting ${file.path} (${fileSizeKB.toFixed(2)} KB)`);
 
-            elizaLogger.info(`[Processing Files] ${file.path} ${content} ${file.isShared}`)
+            // Step 1: Preprocessing
+            const preprocessStart = Date.now();
+            const processedContent = this.preprocess(content);
+            timeMarker('Preprocessing');
 
-            await this.createKnowledge({
+            // Step 2: Main document embedding
+            const mainEmbeddingArray = await embed(this.runtime, processedContent);
+            const mainEmbedding = new Float32Array(mainEmbeddingArray);
+            timeMarker('Main embedding');
+
+            // Step 3: Create main document
+            await this.runtime.databaseAdapter.createKnowledge({
                 id: stringToUuid(file.path),
                 agentId: this.runtime.agentId,
                 content: {
@@ -322,8 +326,63 @@ export class RAGKnowledgeManager implements IRAGKnowledgeManager {
                         type: file.type,
                         isShared: file.isShared || false
                     }
-                }
+                },
+                embedding: mainEmbedding,
+                createdAt: Date.now()
             });
+            timeMarker('Main document storage');
+
+            // Step 4: Generate chunks
+            const chunks = await splitChunks(processedContent, 512, 20);
+            const totalChunks = chunks.length;
+            elizaLogger.info(`Generated ${totalChunks} chunks`);
+            timeMarker('Chunk generation');
+
+            // Step 5: Process chunks with larger batches
+            const BATCH_SIZE = 10; // Increased batch size
+            let processedChunks = 0;
+
+            for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+                const batchStart = Date.now();
+                const batch = chunks.slice(i, Math.min(i + BATCH_SIZE, chunks.length));
+
+                // Process embeddings in parallel
+                const embeddings = await Promise.all(
+                    batch.map(chunk => embed(this.runtime, chunk))
+                );
+
+                // Batch database operations
+                await Promise.all(embeddings.map(async (embeddingArray, index) => {
+                    const chunkId = `${stringToUuid(file.path)}-chunk-${i + index}` as UUID;
+                    const chunkEmbedding = new Float32Array(embeddingArray);
+
+                    await this.runtime.databaseAdapter.createKnowledge({
+                        id: chunkId,
+                        agentId: this.runtime.agentId,
+                        content: {
+                            text: batch[index],
+                            metadata: {
+                                source: file.path,
+                                type: file.type,
+                                isShared: file.isShared || false,
+                                isChunk: true,
+                                originalId: stringToUuid(file.path),
+                                chunkIndex: i + index
+                            }
+                        },
+                        embedding: chunkEmbedding,
+                        createdAt: Date.now()
+                    });
+                }));
+
+                processedChunks += batch.length;
+                const batchTime = (Date.now() - batchStart) / 1000;
+                elizaLogger.info(`[Batch Progress] Processed ${processedChunks}/${totalChunks} chunks (${batchTime.toFixed(2)}s for batch)`);
+            }
+
+            const totalTime = (Date.now() - startTime) / 1000;
+            elizaLogger.info(`[Complete] Processed ${file.path} in ${totalTime.toFixed(2)}s`);
+
         } catch (error) {
             if (file.isShared && error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
                 elizaLogger.info(`Shared knowledge ${file.path} already exists in database, skipping creation`);

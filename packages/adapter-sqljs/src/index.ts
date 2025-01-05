@@ -18,7 +18,6 @@ import {
 import { v4 } from "uuid";
 import { sqliteTables } from "./sqliteTables.ts";
 import { Database } from "./types.ts";
-import { elizaLogger } from "@elizaos/core";
 
 export class SqlJsDatabaseAdapter
     extends DatabaseAdapter<Database>
