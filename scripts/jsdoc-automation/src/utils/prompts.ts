@@ -9,28 +9,44 @@ export const PROMPT_TEMPLATES = {
 
 Package Information:
 - Name: ${packageJson.name}
-- Description: ${packageJson.description || 'N/A'}
-- Version: ${packageJson.version || 'N/A'}
-- Keywords: ${(packageJson.keywords || []).join(', ')}
+- Description: ${packageJson.description || "N/A"}
+- Version: ${packageJson.version || "N/A"}
+- Keywords: ${(packageJson.keywords || []).join(", ")}
 
 ### Key Features
 
 Code Components:
-${docs.classes.length > 0 ? `
+${
+    docs.classes.length > 0
+        ? `
 Classes:
-${docs.classes.map(c => `- ${c.name}: ${c.jsDoc}`).join('\n')}` : ''}
+${docs.classes.map((c) => `- ${c.name}: ${c.jsDoc}`).join("\n")}`
+        : ""
+}
 
-${docs.interfaces.length > 0 ? `
+${
+    docs.interfaces.length > 0
+        ? `
 Interfaces:
-${docs.interfaces.map(i => `- ${i.name}: ${i.jsDoc}`).join('\n')}` : ''}
+${docs.interfaces.map((i) => `- ${i.name}: ${i.jsDoc}`).join("\n")}`
+        : ""
+}
 
-${docs.types.length > 0 ? `
+${
+    docs.types.length > 0
+        ? `
 Types:
-${docs.types.map(t => `- ${t.name}: ${t.jsDoc}`).join('\n')}` : ''}
+${docs.types.map((t) => `- ${t.name}: ${t.jsDoc}`).join("\n")}`
+        : ""
+}
 
-${docs.functions.length > 0 ? `
+${
+    docs.functions.length > 0
+        ? `
 Functions:
-${docs.functions.map(f => `- ${f.name}: ${f.jsDoc}`).join('\n')}` : ''}
+${docs.functions.map((f) => `- ${f.name}: ${f.jsDoc}`).join("\n")}`
+        : ""
+}
 
 Based on the above components, list the key features and capabilities of this plugin:
 - Feature 1: Brief description
@@ -173,5 +189,5 @@ Format in markdown without adding any additional headers.`,
 Q: [Common question]
 A: [Answer with example if applicable]
 
-Format in markdown without adding any additional headers.`
+Format in markdown without adding any additional headers.`,
 };

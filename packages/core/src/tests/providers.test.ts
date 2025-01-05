@@ -172,4 +172,68 @@ describe("getProviders", () => {
             getProviders(runtime, message, {} as State)
         ).rejects.toThrow("Provider error");
     });
+
+    it("should handle empty provider list", async () => {
+        runtime.providers = [];
+        const message: Memory = {
+            userId: "00000000-0000-0000-0000-000000000001",
+            content: { text: "" },
+            roomId,
+            agentId: "00000000-0000-0000-0000-000000000002",
+        };
+
+        const responses = await getProviders(runtime, message);
+        expect(responses).toBe("");
+    });
+
+    it("should filter out null and undefined responses", async () => {
+        const MockProviderWithMixedResponses: Provider = {
+            get: async (
+                _runtime: IAgentRuntime,
+                _message: Memory,
+                _state?: State
+            ) => {
+                return null;
+            },
+        };
+
+        runtime.providers = [
+            MockProvider1,
+            MockProviderWithMixedResponses,
+            MockProvider2,
+        ];
+
+        const message: Memory = {
+            userId: "00000000-0000-0000-0000-000000000001",
+            content: { text: "" },
+            roomId,
+            agentId: "00000000-0000-0000-0000-000000000002",
+        };
+
+        const responses = await getProviders(runtime, message);
+        expect(responses).toBe("Response from Provider 1\nResponse from Provider 2");
+    });
+
+    it("should handle provider throwing an error", async () => {
+        const MockProviderWithError: Provider = {
+            get: async (
+                _runtime: IAgentRuntime,
+                _message: Memory,
+                _state?: State
+            ) => {
+                throw new Error("Provider error");
+            },
+        };
+
+        runtime.providers = [MockProvider1, MockProviderWithError, MockProvider2];
+
+        const message: Memory = {
+            userId: "00000000-0000-0000-0000-000000000001",
+            content: { text: "" },
+            roomId,
+            agentId: "00000000-0000-0000-0000-000000000002",
+        };
+
+        await expect(getProviders(runtime, message)).rejects.toThrow("Provider error");
+    });
 });
