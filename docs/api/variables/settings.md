@@ -8,4 +8,4 @@ Initialize settings based on environment
 
 ## Defined in
 
-[packages/core/src/settings.ts:139](https://github.com/ai16z/eliza/blob/main/packages/core/src/settings.ts#L139)
+[packages/core/src/settings.ts:139](https://github.com/elizaOS/eliza/blob/main/packages/core/src/settings.ts#L139)

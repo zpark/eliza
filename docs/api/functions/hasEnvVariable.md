@@ -20,4 +20,4 @@ True if the environment variable exists
 
 ## Defined in
 
-[packages/core/src/settings.ts:131](https://github.com/ai16z/eliza/blob/main/packages/core/src/settings.ts#L131)
+[packages/core/src/settings.ts:131](https://github.com/elizaOS/eliza/blob/main/packages/core/src/settings.ts#L131)

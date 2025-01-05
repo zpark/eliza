@@ -40,4 +40,4 @@ The completed message.
 
 ## Defined in
 
-[packages/core/src/generation.ts:170](https://github.com/ai16z/eliza/blob/main/packages/core/src/generation.ts#L170)
+[packages/core/src/generation.ts:170](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L170)

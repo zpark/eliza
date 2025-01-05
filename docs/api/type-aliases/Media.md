@@ -52,4 +52,4 @@ Content type
 
 ## Defined in
 
-[packages/core/src/types.ts:556](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L556)
+[packages/core/src/types.ts:556](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L556)

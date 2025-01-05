@@ -35,6 +35,7 @@
         "@elizaos/plugin-aptos": "workspace:*",
         "@elizaos/plugin-avail": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
+        "@ai16z/plugin-cosmos": "workspace:*",
         "@elizaos/plugin-intiface": "workspace:*",
         "@elizaos/plugin-coinbase": "workspace:*",
         "@elizaos/plugin-conflux": "workspace:*",

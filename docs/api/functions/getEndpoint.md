@@ -14,4 +14,4 @@
 
 ## Defined in
 
-[packages/core/src/models.ts:523](https://github.com/ai16z/eliza/blob/main/packages/core/src/models.ts#L523)
+[packages/core/src/models.ts:523](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L523)

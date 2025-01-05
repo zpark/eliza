@@ -36,4 +36,4 @@ const result = composeRandomUser({ template, length });
 
 ## Defined in
 
-[packages/core/src/context.ts:94](https://github.com/ai16z/eliza/blob/main/packages/core/src/context.ts#L94)
+[packages/core/src/context.ts:94](https://github.com/elizaOS/eliza/blob/main/packages/core/src/context.ts#L94)
