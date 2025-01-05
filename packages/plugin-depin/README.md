@@ -30,16 +30,6 @@ Update character.json with the following:
 ]
 ```
 
-### Add dependencies
-
-Add to agent/package.json:
-
-```json
-"dependencies": {
-    "@elizaos/plugin-depin": "workspace:*"
-}
-```
-
 ## Providers
 
 ### DePINScan
