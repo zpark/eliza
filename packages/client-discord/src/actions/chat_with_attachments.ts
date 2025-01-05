@@ -185,7 +185,7 @@ const summarizeAction = {
         let currentSummary = "";
 
         const modelSettings = getModelSettings(
-            runtime.modelProvider,
+            runtime.character.modelProvider,
             ModelClass.SMALL
         );
         const chunkSize = modelSettings.maxOutputTokens;
