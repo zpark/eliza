@@ -62,7 +62,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-Once the agent is running, You should see the message to run "pnpm start:client" at the end.
+Once the agent is running, you should see the message to run "pnpm start:client" at the end.
 Open another terminal and move to same directory and then run below command and follow the URL to chat to your agent.
 
 ```bash
