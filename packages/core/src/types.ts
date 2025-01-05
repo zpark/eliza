@@ -137,51 +137,63 @@ export enum ModelClass {
 }
 
 /**
+ * Model settings
+ */
+export type ModelSettings = {
+    /** Model name */
+    name: string;
+
+    /** Maximum input tokens */
+    maxInputTokens: number;
+
+    /** Maximum output tokens */
+    maxOutputTokens: number;
+
+    /** Optional frequency penalty */
+    frequency_penalty?: number;
+
+    /** Optional presence penalty */
+    presence_penalty?: number;
+
+    /** Optional repetition penalty */
+    repetition_penalty?: number;
+
+    /** Stop sequences */
+    stop: string[];
+
+    /** Temperature setting */
+    temperature: number;
+
+    /** Optional telemetry configuration (experimental) */
+    experimental_telemetry?: TelemetrySettings;
+};
+
+/** Image model settings */
+export type ImageModelSettings = {
+    name: string;
+    steps?: number;
+};
+
+/** Embedding model settings */
+export type EmbeddingModelSettings = {
+    name: string;
+    dimensions?: number;
+};
+
+/**
  * Configuration for an AI model
  */
 export type Model = {
     /** Optional API endpoint */
     endpoint?: string;
 
-    /** Model settings */
-    settings: {
-        /** Maximum input tokens */
-        maxInputTokens: number;
-
-        /** Maximum output tokens */
-        maxOutputTokens: number;
-
-        /** Optional frequency penalty */
-        frequency_penalty?: number;
-
-        /** Optional presence penalty */
-        presence_penalty?: number;
-
-        /** Optional repetition penalty */
-        repetition_penalty?: number;
-
-        /** Stop sequences */
-        stop: string[];
-
-        /** Temperature setting */
-        temperature: number;
-
-        /** Optional telemetry configuration (experimental) */
-        experimental_telemetry?: TelemetrySettings;
-    };
-
-    /** Optional image generation settings */
-    imageSettings?: {
-        steps?: number;
-    };
-
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]: string;
-        [ModelClass.MEDIUM]: string;
-        [ModelClass.LARGE]: string;
-        [ModelClass.EMBEDDING]?: string;
-        [ModelClass.IMAGE]?: string;
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };
 
@@ -243,6 +255,7 @@ export enum ModelProviderName {
     VENICE = "venice",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
+    INFERA = "infera",
 }
 
 /**

@@ -106,8 +106,7 @@ export class AgentRuntime implements IAgentRuntime {
      */
     imageModelProvider: ModelProviderName;
 
-
-     /**
+    /**
      * The model to use for describing images.
      */
     imageVisionModelProvider: ModelProviderName;
@@ -337,14 +336,13 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         this.imageVisionModelProvider =
-        this.character.imageVisionModelProvider ?? this.modelProvider;
+            this.character.imageVisionModelProvider ?? this.modelProvider;
 
         elizaLogger.info("Selected model provider:", this.modelProvider);
-         elizaLogger.info(
+        elizaLogger.info(
             "Selected image model provider:",
             this.imageVisionModelProvider
-         );
-
+        );
 
         // Validate model provider
         if (!Object.values(ModelProviderName).includes(this.modelProvider)) {
