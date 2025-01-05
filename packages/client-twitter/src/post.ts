@@ -171,25 +171,27 @@ export class TwitterPostClient {
 
         // Initialize Discord webhook
         const approvalRequired: boolean =
-            this.runtime.getSetting("APPROVAL_ENABLED")?.toLocaleLowerCase() ===
-            "true";
+            this.runtime
+                .getSetting("TWITTER_APPROVAL_ENABLED")
+                ?.toLocaleLowerCase() === "true";
         if (approvalRequired) {
             const discordToken = this.runtime.getSetting(
-                "DISCORD_APPROVAL_BOT_TOKEN"
+                "TWITTER_APPROVAL_DISCORD_BOT_TOKEN"
             );
             const approvalChannelId = this.runtime.getSetting(
-                "DISCORD_APPROVAL_CHANNEL_ID"
+                "TWITTER_APPROVAL_DISCORD_CHANNEL_ID"
             );
 
             const APPROVAL_CHECK_INTERVAL =
-                parseInt(this.runtime.getSetting("APPROVAL_CHECK_INTERVAL")) ||
-                5 * 60 * 1000; // 5 minutes
+                parseInt(
+                    this.runtime.getSetting("TWITTER_APPROVAL_CHECK_INTERVAL")
+                ) || 5 * 60 * 1000; // 5 minutes
 
             this.approvalCheckInterval = APPROVAL_CHECK_INTERVAL;
 
             if (!discordToken || !approvalChannelId) {
                 throw new Error(
-                    "DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID are required for approval workflow"
+                    "TWITTER_APPROVAL_DISCORD_BOT_TOKEN and TWITTER_APPROVAL_DISCORD_CHANNEL_ID are required for approval workflow"
                 );
             }
 
@@ -232,7 +234,7 @@ export class TwitterPostClient {
         );
         // Login to Discord
         this.discordClientForApproval.login(
-            this.runtime.getSetting("DISCORD_APPROVAL_BOT_TOKEN")
+            this.runtime.getSetting("TWITTER_APPROVAL_DISCORD_BOT_TOKEN")
         );
     }
 
