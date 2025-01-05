@@ -64,8 +64,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
             case ModelProviderName.CLAUDE_VERTEX:
                 endpoint = `${baseEndpoint}/messages`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex =
-                    "\\r\\n\\r\\n[a-f0-9]+\\r\\n(?<response>\\{.*\\})";
+                responseRegex = '(?<response>\\{[\\s\\S]*?"id":\\s*"msg_[^"]*"[\\s\\S]*\\})';
                 break;
             case ModelProviderName.GOOGLE:
                 endpoint = `${baseEndpoint}/models/${model}:generateContent`;
@@ -157,7 +156,12 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                 },
                 {
                     headers: {
-                        "Authorization": authHeader,
+                        ...(provider === ModelProviderName.ANTHROPIC || provider === ModelProviderName.CLAUDE_VERTEX
+                            ? {
+                                "anthropic-version": "2023-06-01",
+                                "x-api-key": apiKey
+                              }
+                            : { "Authorization": authHeader }),
                     },
                     responseMatches: [
                         {
@@ -171,7 +175,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                 }
             );
 
-            // console.log("Proof:", proof);
+            console.log("Proof:", proof);
 
             // Extract text based on provider format
             const response = JSON.parse(proof.extractedParameterValues.response);
@@ -185,6 +189,10 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
                 case ModelProviderName.ANTHROPIC:
                 case ModelProviderName.CLAUDE_VERTEX:
                     text = response.content?.[0]?.text || "";
+                    if (!text && Array.isArray(response.content)) {
+                        const textContent = response.content.find(item => item.type === 'text');
+                        text = textContent?.text || "";
+                    }
                     break;
                 default:
                     text = response.choices?.[0]?.message?.content || "";
