@@ -193,7 +193,7 @@ Retrieves memories based on the specified parameters.
 
 • **params**
 
-An object containing parameters for the memory retrieval.
+An object containing parameters for memory retrieval.
 
 • **params.agentId**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
@@ -299,7 +299,7 @@ An object containing parameters for the embedding retrieval.
 
 `Promise`\<`object`[]\>
 
-A Promise that resolves to an array of objects containing embeddings and levenshtein scores.
+A Promise that resolves to an array of objects containing embeddings and Levenshtein scores.
 
 #### Implementation of
 
