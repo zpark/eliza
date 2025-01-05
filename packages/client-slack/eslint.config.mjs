@@ -1,3 +1,3 @@
 import eslintGlobalConfig from "../../eslint.config.mjs";
 
-export default [...eslintGlobalConfig]; 
+export default [...eslintGlobalConfig];

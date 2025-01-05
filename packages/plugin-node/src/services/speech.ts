@@ -115,7 +115,9 @@ async function textToSpeech(runtime: IAgentRuntime, text: string) {
                 status === 401 &&
                 errorBody.detail?.status === "quota_exceeded"
             ) {
-                elizaLogger.log("ElevenLabs quota exceeded, falling back to VITS");
+                elizaLogger.log(
+                    "ElevenLabs quota exceeded, falling back to VITS"
+                );
                 throw new Error("QUOTA_EXCEEDED");
             }
 

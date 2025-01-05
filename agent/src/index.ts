@@ -26,7 +26,7 @@ import {
     ModelProviderName,
     settings,
     stringToUuid,
-    validateCharacterConfig
+    validateCharacterConfig,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
