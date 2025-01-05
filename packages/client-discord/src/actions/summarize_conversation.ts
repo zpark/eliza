@@ -1,7 +1,6 @@
 import { composeContext, getModelSettings } from "@elizaos/core";
 import { generateText, splitChunks, trimTokens } from "@elizaos/core";
 import { getActorDetails } from "@elizaos/core";
-import { models } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     Action,
