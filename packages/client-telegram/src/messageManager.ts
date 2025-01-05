@@ -688,8 +688,11 @@ export class MessageManager {
     ): Promise<Message.TextMessage[]> {
         if (content.attachments && content.attachments.length > 0) {
             content.attachments.map(async (attachment: Media) => {
-                if (attachment.contentType.startsWith("image")) {
-                    this.sendImage(ctx, attachment.url, attachment.description);
+                if (attachment.contentType === "image/gif") {
+                    // Handle GIFs specifically
+                    await this.sendAnimation(ctx, attachment.url, attachment.description);
+                } else if (attachment.contentType.startsWith("image")) {
+                    await this.sendImage(ctx, attachment.url, attachment.description);
                 }
             });
         } else {
@@ -750,6 +753,42 @@ export class MessageManager {
             elizaLogger.info(`Image sent successfully: ${imagePath}`);
         } catch (error) {
             elizaLogger.error("Error sending image:", error);
+        }
+    }
+
+    private async sendAnimation(
+        ctx: Context,
+        animationPath: string,
+        caption?: string
+    ): Promise<void> {
+        try {
+            if (/^(http|https):\/\//.test(animationPath)) {
+                // Handle HTTP URLs
+                await ctx.telegram.sendAnimation(ctx.chat.id, animationPath, {
+                    caption,
+                });
+            } else {
+                // Handle local file paths
+                if (!fs.existsSync(animationPath)) {
+                    throw new Error(`File not found: ${animationPath}`);
+                }
+
+                const fileStream = fs.createReadStream(animationPath);
+
+                await ctx.telegram.sendAnimation(
+                    ctx.chat.id,
+                    {
+                        source: fileStream,
+                    },
+                    {
+                        caption,
+                    }
+                );
+            }
+
+            elizaLogger.info(`Animation sent successfully: ${animationPath}`);
+        } catch (error) {
+            elizaLogger.error("Error sending animation:", error);
         }
     }
 
