@@ -126,7 +126,7 @@ export class TwitterPostClient {
             `- Action Processing: ${this.client.twitterConfig.ENABLE_ACTION_PROCESSING ? "enabled" : "disabled"}`
         );
         elizaLogger.log(
-            `- Action Interval: ${this.client.twitterConfig.ACTION_INTERVAL} seconds`
+            `- Action Interval: ${this.client.twitterConfig.ACTION_INTERVAL} minutes`
         );
         elizaLogger.log(
             `- Post Immediately: ${this.client.twitterConfig.POST_IMMEDIATELY ? "enabled" : "disabled"}`
@@ -185,7 +185,7 @@ export class TwitterPostClient {
                     if (results) {
                         elizaLogger.log(`Processed ${results.length} tweets`);
                         elizaLogger.log(
-                            `Next action processing scheduled in ${actionInterval / 1000} seconds`
+                            `Next action processing scheduled in ${actionInterval} minutes`
                         );
                         // Wait for the full interval before next processing
                         await new Promise((resolve) =>
@@ -464,7 +464,7 @@ export class TwitterPostClient {
                     .replace(/^\s*{?\s*"text":\s*"|"\s*}?\s*$/g, "") // Remove JSON-like wrapper
                     .replace(/^['"](.*)['"]$/g, "$1") // Remove quotes
                     .replace(/\\"/g, '"') // Unescape quotes
-                    .replace(/\\n/g, "\n") // Unescape newlines
+                    .replace(/\\n/g, "\n\n") // Unescape newlines, ensures double spaces
                     .trim();
             }
 
@@ -491,7 +491,7 @@ export class TwitterPostClient {
             const removeQuotes = (str: string) =>
                 str.replace(/^['"](.*)['"]$/, "$1");
 
-            const fixNewLines = (str: string) => str.replaceAll(/\\n/g, "\n");
+            const fixNewLines = (str: string) => str.replaceAll(/\\n/g, "\n\n"); //ensures double spaces
 
             // Final cleaning
             cleanedContent = removeQuotes(fixNewLines(cleanedContent));
