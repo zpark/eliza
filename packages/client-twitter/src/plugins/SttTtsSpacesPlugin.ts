@@ -1,8 +1,9 @@
 // src/plugins/SttTtsPlugin.ts
 
-import { spawn } from 'child_process';
-import { ITranscriptionService, elizaLogger } from '@elizaos/core';
-import { Space, JanusClient, AudioDataWithUser } from 'agent-twitter-client';
+import { spawn } from "child_process";
+import { ITranscriptionService, elizaLogger } from "@elizaos/core";
+import { Space, JanusClient, AudioDataWithUser } from "agent-twitter-client";
+import { Plugin } from "@elizaos/core";
 
 interface PluginConfig {
     openAiApiKey?: string; // for STT & ChatGPT
@@ -64,12 +65,12 @@ export class SttTtsPlugin implements Plugin {
     private isSpeaking = false;
 
     onAttach(space: Space) {
-        elizaLogger.log('[SttTtsPlugin] onAttach => space was attached');
+        elizaLogger.log("[SttTtsPlugin] onAttach => space was attached");
     }
 
     init(params: { space: Space; pluginConfig?: Record<string, any> }): void {
         elizaLogger.log(
-            '[SttTtsPlugin] init => Space fully ready. Subscribing to events.',
+            "[SttTtsPlugin] init => Space fully ready. Subscribing to events."
         );
 
         this.space = params.space;
@@ -97,16 +98,22 @@ export class SttTtsPlugin implements Plugin {
         if (config?.chatContext) {
             this.chatContext = config.chatContext;
         }
-        elizaLogger.log('[SttTtsPlugin] Plugin config =>', config);
+        elizaLogger.log("[SttTtsPlugin] Plugin config =>", config);
 
         // Listen for mute events
         this.space.on(
             "muteStateChanged",
             (evt: { userId: string; muted: boolean }) => {
-                elizaLogger.log('[SttTtsPlugin] Speaker muteStateChanged =>', evt);
+                elizaLogger.log(
+                    "[SttTtsPlugin] Speaker muteStateChanged =>",
+                    evt
+                );
                 if (evt.muted) {
                     this.handleMute(evt.userId).catch((err) =>
-                        elizaLogger.error('[SttTtsPlugin] handleMute error =>', err),
+                        elizaLogger.error(
+                            "[SttTtsPlugin] handleMute error =>",
+                            err
+                        )
                     );
                 } else {
                     this.speakerUnmuted.set(evt.userId, true);
@@ -201,11 +208,14 @@ export class SttTtsPlugin implements Plugin {
         this.pcmBuffers.set(userId, []);
 
         if (!chunks.length) {
-            elizaLogger.warn('[SttTtsPlugin] No audio chunks for user =>', userId);
+            elizaLogger.warn(
+                "[SttTtsPlugin] No audio chunks for user =>",
+                userId
+            );
             return;
         }
         elizaLogger.log(
-            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`,
+            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`
         );
 
         const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
@@ -223,14 +233,21 @@ export class SttTtsPlugin implements Plugin {
         const sttText = await this.transcriptionService.transcribe(wavBuffer);
 
         if (!sttText || !sttText.trim()) {
-            elizaLogger.warn('[SttTtsPlugin] No speech recognized for user =>', userId);
+            elizaLogger.warn(
+                "[SttTtsPlugin] No speech recognized for user =>",
+                userId
+            );
             return;
         }
-        elizaLogger.log(`[SttTtsPlugin] STT => user=${userId}, text="${sttText}"`);
+        elizaLogger.log(
+            `[SttTtsPlugin] STT => user=${userId}, text="${sttText}"`
+        );
 
         // GPT answer
         const replyText = await this.askChatGPT(sttText);
-        elizaLogger.log(`[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`);
+        elizaLogger.log(
+            `[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`
+        );
 
         // Use the standard speak method with queue
         await this.speakText(replyText);
@@ -244,7 +261,10 @@ export class SttTtsPlugin implements Plugin {
         if (!this.isSpeaking) {
             this.isSpeaking = true;
             this.processTtsQueue().catch((err) => {
-                elizaLogger.error('[SttTtsPlugin] processTtsQueue error =>', err);
+                elizaLogger.error(
+                    "[SttTtsPlugin] processTtsQueue error =>",
+                    err
+                );
             });
         }
     }
@@ -262,7 +282,7 @@ export class SttTtsPlugin implements Plugin {
                 const pcm = await this.convertMp3ToPcm(ttsAudio, 48000);
                 await this.streamToJanus(pcm, 48000);
             } catch (err) {
-                elizaLogger.error('[SttTtsPlugin] TTS streaming error =>', err);
+                elizaLogger.error("[SttTtsPlugin] TTS streaming error =>", err);
             }
         }
         this.isSpeaking = false;
@@ -410,7 +430,7 @@ export class SttTtsPlugin implements Plugin {
 
     public setSystemPrompt(prompt: string) {
         this.systemPrompt = prompt;
-        elizaLogger.log('[SttTtsPlugin] setSystemPrompt =>', prompt);
+        elizaLogger.log("[SttTtsPlugin] setSystemPrompt =>", prompt);
     }
 
     /**
@@ -418,7 +438,7 @@ export class SttTtsPlugin implements Plugin {
      */
     public setGptModel(model: string) {
         this.gptModel = model;
-        elizaLogger.log('[SttTtsPlugin] setGptModel =>', model);
+        elizaLogger.log("[SttTtsPlugin] setGptModel =>", model);
     }
 
     /**
@@ -428,7 +448,7 @@ export class SttTtsPlugin implements Plugin {
     public addMessage(role: "system" | "user" | "assistant", content: string) {
         this.chatContext.push({ role, content });
         elizaLogger.log(
-            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`,
+            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`
         );
     }
 
@@ -437,11 +457,11 @@ export class SttTtsPlugin implements Plugin {
      */
     public clearChatContext() {
         this.chatContext = [];
-        elizaLogger.log('[SttTtsPlugin] clearChatContext => done');
+        elizaLogger.log("[SttTtsPlugin] clearChatContext => done");
     }
 
     cleanup(): void {
-        elizaLogger.log('[SttTtsPlugin] cleanup => releasing resources');
+        elizaLogger.log("[SttTtsPlugin] cleanup => releasing resources");
         this.pcmBuffers.clear();
         this.speakerUnmuted.clear();
         this.ttsQueue = [];

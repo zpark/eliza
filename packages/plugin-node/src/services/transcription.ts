@@ -80,26 +80,30 @@ export class TranscriptionService
 
         // 2) If not chosen from character, check .env
         if (!chosenProvider) {
-            const envProvider = this.runtime.getSetting("TRANSCRIPTION_PROVIDER");
+            const envProvider = this.runtime.getSetting(
+                "TRANSCRIPTION_PROVIDER"
+            );
             if (envProvider) {
                 switch (envProvider.toLowerCase()) {
                     case "deepgram":
-                    {
-                        const dgKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
-                        if (dgKey) {
-                            this.deepgram = createClient(dgKey);
-                            chosenProvider = TranscriptionProvider.Deepgram;
+                        {
+                            const dgKey =
+                                this.runtime.getSetting("DEEPGRAM_API_KEY");
+                            if (dgKey) {
+                                this.deepgram = createClient(dgKey);
+                                chosenProvider = TranscriptionProvider.Deepgram;
+                            }
                         }
-                    }
                         break;
                     case "openai":
-                    {
-                        const openaiKey = this.runtime.getSetting("OPENAI_API_KEY");
-                        if (openaiKey) {
-                            this.openai = new OpenAI({ apiKey: openaiKey });
-                            chosenProvider = TranscriptionProvider.OpenAI;
+                        {
+                            const openaiKey =
+                                this.runtime.getSetting("OPENAI_API_KEY");
+                            if (openaiKey) {
+                                this.openai = new OpenAI({ apiKey: openaiKey });
+                                chosenProvider = TranscriptionProvider.OpenAI;
+                            }
                         }
-                    }
                         break;
                     case "local":
                         chosenProvider = TranscriptionProvider.Local;
@@ -179,7 +183,7 @@ export class TranscriptionService
         } else if (platform === "win32") {
             const cudaPath = path.join(
                 settings.CUDA_PATH ||
-                "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.0",
+                    "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.0",
                 "bin",
                 "nvcc.exe"
             );
@@ -315,7 +319,9 @@ export class TranscriptionService
      * We'll keep transcribeUsingDefaultLogic() if needed by other code references,
      * but it’s no longer invoked in the new flow.
      */
-    private async transcribeUsingDefaultLogic(audioBuffer: ArrayBuffer): Promise<string | null> {
+    private async transcribeUsingDefaultLogic(
+        audioBuffer: ArrayBuffer
+    ): Promise<string | null> {
         if (this.deepgram) {
             return await this.transcribeWithDeepgram(audioBuffer);
         } else if (this.openai) {
