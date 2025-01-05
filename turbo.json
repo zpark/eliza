@@ -16,7 +16,10 @@
         },
         "@elizaos/plugin-solana#build": {
             "outputs": ["dist/**"],
-            "dependsOn": ["@elizaos/plugin-trustdb#build"]
+            "dependsOn": [
+                "@elizaos/plugin-trustdb#build",
+                "@elizaos/plugin-tee#build"
+            ]
         },
         "@elizaos/plugin-nft-generation#build": {
             "outputs": ["dist/**"],
@@ -25,6 +28,10 @@
         "@ai16z/client-direct#build": {
             "outputs": ["dist/**"],
             "dependsOn": ["@ai16z/plugin-tee-verifiable-log#build"]
+        },
+        "@elizaos/plugin-evm#build": {
+            "outputs": ["dist/**"],
+            "dependsOn": ["@elizaos/plugin-tee#build"]
         },
         "eliza-docs#build": {
             "outputs": ["build/**"]
