@@ -1,4 +1,4 @@
-import { elizaLogger, models } from "@elizaos/core";
+import { elizaLogger, getEndpoint, models } from "@elizaos/core";
 import { Service } from "@elizaos/core";
 import {
     IAgentRuntime,
@@ -214,7 +214,7 @@ export class ImageDescriptionService
                 // If model provider is openai, use the endpoint, otherwise use the default openai endpoint.
                 const endpoint =
                     this.runtime.imageModelProvider === ModelProviderName.OPENAI
-                        ? models[this.runtime.imageModelProvider].endpoint
+                        ? getEndpoint(this.runtime.imageModelProvider)
                         : "https://api.openai.com/v1";
                 const response = await fetch(endpoint + "/chat/completions", {
                     method: "POST",
