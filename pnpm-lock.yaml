@@ -231,6 +231,9 @@ importers:
       '@elizaos/plugin-tee':
         specifier: workspace:*
         version: link:../packages/plugin-tee
+      '@elizaos/plugin-tee-marlin':
+        specifier: workspace:*
+        version: link:../packages/plugin-tee-marlin
       '@elizaos/plugin-ton':
         specifier: workspace:*
         version: link:../packages/plugin-ton
@@ -1853,6 +1856,18 @@ importers:
       pumpdotfun-sdk:
         specifier: 1.3.2
         version: 1.3.2(bufferutil@4.0.8)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(rollup@4.28.1)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
+
+  packages/plugin-tee-marlin:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.1(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)

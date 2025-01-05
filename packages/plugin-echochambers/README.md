@@ -28,12 +28,12 @@ OR copy the plugin code into your eliza project node_modules directory. (node_mo
 
 ```typescript
 import { Character, ModelProviderName, defaultCharacter } from "@elizaos/core";
-import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 
 export const character: Character = {
   ...defaultCharacter,
   name: "Eliza",
-  plugins: [echoChamberPlugin],
+  plugins: [echoChambersPlugin],
   clients: [],
   modelProvider: ModelProviderName.OPENAI,
   settings: {
