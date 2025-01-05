@@ -174,6 +174,12 @@ export type ImageModelSettings = {
     steps?: number;
 };
 
+/** Embedding model settings */
+export type EmbeddingModelSettings = {
+    name: string;
+    dimensions?: number;
+};
+
 /**
  * Configuration for an AI model
  */
@@ -186,7 +192,7 @@ export type Model = {
         [ModelClass.SMALL]?: ModelSettings;
         [ModelClass.MEDIUM]?: ModelSettings;
         [ModelClass.LARGE]?: ModelSettings;
-        [ModelClass.EMBEDDING]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
         [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };

@@ -5,6 +5,7 @@ import {
     ModelClass,
     ModelSettings,
     ImageModelSettings,
+    EmbeddingModelSettings,
 } from "./types.ts";
 
 export const models: Models = {
@@ -41,12 +42,7 @@ export const models: Models = {
             [ModelClass.EMBEDDING]: {
                 name:
                     settings.EMBEDDING_OPENAI_MODEL || "text-embedding-3-small",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.0,
-                presence_penalty: 0.0,
-                temperature: 0.6,
+                dimensions: 1536,
             },
             [ModelClass.IMAGE]: {
                 name: settings.IMAGE_OPENAI_MODEL || "dall-e-3",
@@ -193,12 +189,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: settings.EMBEDDING_GROK_MODEL || "grok-2-1212", // not sure about this one
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.7,
             },
         },
     },
@@ -235,12 +225,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: settings.EMBEDDING_GROQ_MODEL || "llama-3.1-8b-instant",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8000,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.7,
             },
         },
     },
@@ -273,11 +257,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: "togethercomputer/m2-bert-80M-32k-retrieval",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                repetition_penalty: 0.4,
-                temperature: 0.7,
             },
             [ModelClass.IMAGE]: {
                 name: "black-forest-labs/FLUX.1-schnell",
@@ -314,11 +293,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: "togethercomputer/m2-bert-80M-32k-retrieval",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                repetition_penalty: 0.4,
-                temperature: 0.7,
             },
             [ModelClass.IMAGE]: {
                 name: "black-forest-labs/FLUX.1-schnell",
@@ -354,11 +328,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: "togethercomputer/m2-bert-80M-32k-retrieval",
-                stop: ["<|eot_id|>", "<|eom_id|>"],
-                maxInputTokens: 32768,
-                maxOutputTokens: 8192,
-                repetition_penalty: 0.4,
-                temperature: 0.7,
             },
         },
     },
@@ -405,12 +374,6 @@ export const models: Models = {
                     settings.EMBEDDING_GOOGLE_MODEL ||
                     settings.GOOGLE_MODEL ||
                     "text-embedding-004",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.7,
             },
         },
     },
@@ -459,12 +422,6 @@ export const models: Models = {
 
             [ModelClass.EMBEDDING]: {
                 name: "text-embedding-3-small",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.0,
-                presence_penalty: 0.0,
-                temperature: 0.6,
             },
         },
     },
@@ -511,12 +468,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: "text-embedding-3-small",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.7,
             },
         },
     },
@@ -563,12 +514,7 @@ export const models: Models = {
 
             [ModelClass.EMBEDDING]: {
                 name: settings.OLLAMA_EMBEDDING_MODEL || "mxbai-embed-large",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.7,
+                dimensions: 1024,
             },
         },
     },
@@ -643,12 +589,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: "gte-large-en-v1.5",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.5,
-                presence_penalty: 0.5,
-                temperature: 0.8,
             },
             [ModelClass.IMAGE]: {
                 name: "stabilityai/stable-diffusion-xl-base-1.0",
@@ -699,11 +639,7 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: settings.GAIANET_EMBEDDING_MODEL || "nomic-embed",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                repetition_penalty: 0.4,
-                temperature: 0.7,
+                dimensions: 768,
             },
         },
     },
@@ -785,12 +721,6 @@ export const models: Models = {
             },
             [ModelClass.EMBEDDING]: {
                 name: settings.VOLENGINE_EMBEDDING_MODEL || "doubao-embedding",
-                stop: [],
-                maxInputTokens: 128000,
-                maxOutputTokens: 8192,
-                frequency_penalty: 0.4,
-                presence_penalty: 0.4,
-                temperature: 0.6,
             },
         },
     },
@@ -948,6 +878,14 @@ export function getImageModelSettings(
 ): ImageModelSettings | undefined {
     return models[provider]?.model[ModelClass.IMAGE] as
         | ImageModelSettings
+        | undefined;
+}
+
+export function getEmbeddingModelSettings(
+    provider: ModelProviderName
+): EmbeddingModelSettings | undefined {
+    return models[provider]?.model[ModelClass.EMBEDDING] as
+        | EmbeddingModelSettings
         | undefined;
 }
 
