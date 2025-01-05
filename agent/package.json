@@ -33,6 +33,7 @@
         "@elizaos/plugin-0g": "workspace:*",
         "@elizaos/plugin-abstract": "workspace:*",
         "@elizaos/plugin-aptos": "workspace:*",
+        "@elizaos/plugin-avail": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
         "@elizaos/plugin-intiface": "workspace:*",
         "@elizaos/plugin-coinbase": "workspace:*",
@@ -49,6 +50,7 @@
         "@elizaos/plugin-node": "workspace:*",
         "@elizaos/plugin-solana": "workspace:*",
         "@elizaos/plugin-starknet": "workspace:*",
+        "@elizaos/plugin-stargaze": "workspace:*",
         "@elizaos/plugin-ton": "workspace:*",
         "@elizaos/plugin-sui": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
@@ -61,6 +63,7 @@
         "@elizaos/plugin-fuel": "workspace:*",
         "@elizaos/plugin-avalanche": "workspace:*",
         "@elizaos/plugin-web-search": "workspace:*",
+        "@elizaos/plugin-genlayer": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"
