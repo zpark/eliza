@@ -627,14 +627,11 @@ export class TwitterPostClient {
 
             const homeTimeline = await this.client.fetchTimelineForActions();
             const results = [];
-            let processedTweets = 0;
             const maxActionsProcessing =
                 this.client.twitterConfig.MAX_ACTIONS_PROCESSING;
+            const processedTimelines = [];
 
             for (const tweet of homeTimeline) {
-                if (processedTweets >= maxActionsProcessing) {
-                    break;
-                }
                 try {
                     // Skip if we've already processed this tweet
                     const memory =
@@ -685,9 +682,52 @@ export class TwitterPostClient {
                         );
                         continue;
                     }
+                    processedTimelines.push({
+                        tweet: tweet,
+                        actionResponse: actionResponse,
+                        tweetState: tweetState,
+                        roomId: roomId,
+                    });
+                } catch (error) {
+                    elizaLogger.error(
+                        `Error processing tweet ${tweet.id}:`,
+                        error
+                    );
+                    continue;
+                }
+            }
 
+            const sortProcessedTimeline = (arr: typeof processedTimelines) => {
+                return arr.sort((a, b) => {
+                    // Count the number of true values in the actionResponse object
+                    const countTrue = (obj: typeof a.actionResponse) =>
+                        Object.values(obj).filter(Boolean).length;
+
+                    const countA = countTrue(a.actionResponse);
+                    const countB = countTrue(b.actionResponse);
+
+                    // Primary sort by number of true values
+                    if (countA !== countB) {
+                        return countB - countA;
+                    }
+
+                    // Secondary sort by the "like" property
+                    if (a.actionResponse.like !== b.actionResponse.like) {
+                        return a.actionResponse.like ? -1 : 1;
+                    }
+
+                    // Tertiary sort keeps the remaining objects with equal weight
+                    return 0;
+                });
+            };
+            const sortedTimelines = sortProcessedTimeline(
+                processedTimelines
+            ).slice(0, maxActionsProcessing);
+
+            for (const timeline of sortedTimelines) {
+                const { actionResponse, tweetState, roomId, tweet } = timeline;
+                try {
                     const executedActions: string[] = [];
-
                     // Execute actions
                     if (actionResponse.like) {
                         try {
@@ -923,10 +963,9 @@ export class TwitterPostClient {
 
                     results.push({
                         tweetId: tweet.id,
-                        parsedActions: actionResponse,
+                        actionResponse: actionResponse,
                         executedActions,
                     });
-                    processedTweets++;
                 } catch (error) {
                     elizaLogger.error(
                         `Error processing tweet ${tweet.id}:`,
@@ -935,7 +974,6 @@ export class TwitterPostClient {
                     continue;
                 }
             }
-
             return results; // Return results array to indicate completion
         } catch (error) {
             elizaLogger.error("Error in processTweetActions:", error);

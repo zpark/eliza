@@ -351,8 +351,7 @@ export class ClientBase extends EventEmitter {
                         (media) => media.type === "video"
                     ) || [],
             }))
-            .filter((tweet) => tweet.username !== agentUsername) // do not perform action on self-tweets
-            .sort(() => Math.random() - 0.5);
+            .filter((tweet) => tweet.username !== agentUsername); // do not perform action on self-tweets
     }
 
     async fetchSearchTweets(
