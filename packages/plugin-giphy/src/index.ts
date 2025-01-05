@@ -1,6 +1,5 @@
 import { Plugin } from "@elizaos/core";
 import sendGif from "./actions/sendGif";
-import "./utils/cleanupGifs";
 
 export const giphyPlugin: Plugin = {
     name: "giphy",
