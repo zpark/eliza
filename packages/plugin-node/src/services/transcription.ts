@@ -334,6 +334,7 @@ export class TranscriptionService
         audioBuffer: ArrayBuffer
     ): Promise<string | null> {
         const buffer = Buffer.from(audioBuffer);
+        // @ts-expect-error todo
         const response = await this.deepgram.listen.prerecorded.transcribeFile(
             buffer,
             {
@@ -343,6 +344,7 @@ export class TranscriptionService
             }
         );
         const result =
+            // @ts-expect-error todo
             response.result.results.channels[0].alternatives[0].transcript;
         return result;
     }

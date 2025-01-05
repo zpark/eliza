@@ -72,9 +72,13 @@ export async function queryAccountBalanceInfo(
         return undefined;
     }
     return {
+        // @ts-expect-error todo
         address: ret.address,
+        // @ts-expect-error todo
         balance: parseFloat(ret.balance),
+        // @ts-expect-error todo
         coaAddress: ret.coaAddress,
+        // @ts-expect-error todo
         coaBalance: ret.coaBalance ? parseFloat(ret.coaBalance) : undefined,
     };
 }

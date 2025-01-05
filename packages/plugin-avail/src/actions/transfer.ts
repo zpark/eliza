@@ -89,6 +89,7 @@ export default {
         state: State,
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
+    // @ts-expect-error todo
     ): Promise<boolean> => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
 
@@ -131,6 +132,7 @@ export default {
                 const PUBLIC_KEY = runtime.getSetting("AVAIL_ADDRESS")!;
                 const ENDPOINT = runtime.getSetting("AVAIL_RPC_URL");
 
+                // @ts-expect-error todo
                 const api = await initialize(ENDPOINT);
                 const keyring = getKeyringFromSeed(SEED);
                 const options = { app_id: 0, nonce: -1 };

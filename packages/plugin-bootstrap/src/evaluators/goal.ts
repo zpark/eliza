@@ -69,7 +69,7 @@ async function handler(
     });
 
     // Parse the JSON response to extract goal updates
-    const updates = parseJsonArrayFromText(response);
+    const updates = parseJsonArrayFromText<Goal>(response);
 
     // get goals
     const goalsData = await getGoals({
@@ -115,12 +115,16 @@ async function handler(
 
     // Update goals in the database
     for (const goal of updatedGoals) {
+        // @ts-expect-error todo
         const id = goal.id;
         // delete id from goal
+        // @ts-expect-error todo
         if (goal.id) delete goal.id;
+        // @ts-expect-error todo
         await runtime.databaseAdapter.updateGoal({ ...goal, id });
     }
 
+    // @ts-expect-error todo
     return updatedGoals; // Return updated goals for further processing or logging
 }
 

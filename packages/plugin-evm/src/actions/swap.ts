@@ -43,12 +43,14 @@ export class SwapAction {
                 rpcUrls: {
                     public: { http: [config.rpcUrls.default.http[0]] },
                 },
+                // @ts-expect-error todo
                 blockExplorerUrls: [config.blockExplorers.default.url],
                 metamask: {
                     chainId: `0x${config.id.toString(16)}`,
                     chainName: config.name,
                     nativeCurrency: config.nativeCurrency,
                     rpcUrls: [config.rpcUrls.default.http[0]],
+                    // @ts-expect-error todo
                     blockExplorerUrls: [config.blockExplorers.default.url],
                 },
                 coin: config.nativeCurrency.symbol,

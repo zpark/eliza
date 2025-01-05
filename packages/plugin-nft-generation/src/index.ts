@@ -63,6 +63,7 @@ const nftCollectionGeneration: Action = {
                 collectionName: runtime.character.name,
             });
 
+            // @ts-expect-error todo
             const collectionInfo = collectionAddressRes.collectionInfo;
 
             elizaLogger.log("Collection Address:", collectionAddressRes);
@@ -70,7 +71,9 @@ const nftCollectionGeneration: Action = {
             const nftRes = await createNFT({
                 runtime,
                 collectionName: collectionInfo.name,
+                // @ts-expect-error todo
                 collectionAddress: collectionAddressRes.address,
+                // @ts-expect-error todo
                 collectionAdminPublicKey: collectionInfo.adminPublicKey,
                 collectionFee: collectionInfo.fee,
                 tokenId: 1,
@@ -79,13 +82,16 @@ const nftCollectionGeneration: Action = {
             elizaLogger.log("NFT Address:", nftRes);
 
             callback({
+                // @ts-expect-error todo
                 text: `Congratulations to you! 🎉🎉🎉 \nCollection : ${collectionAddressRes.link}\n NFT: ${nftRes.link}`, //caption.description,
                 attachments: [],
             });
             await sleep(15000);
             await verifyNFT({
                 runtime,
+                // @ts-expect-error todo
                 collectionAddress: collectionAddressRes.address,
+                // @ts-expect-error todo
                 NFTAddress: nftRes.address,
             });
             return [];

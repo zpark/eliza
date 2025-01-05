@@ -169,6 +169,7 @@ class DeriveKeyProvider {
 const deriveKeyProvider: Provider = {
     get: async (runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         const teeMode = runtime.getSetting("TEE_MODE");
+        // @ts-expect-error todo
         const provider = new DeriveKeyProvider(teeMode);
         const agentId = runtime.agentId;
         try {

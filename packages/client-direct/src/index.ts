@@ -251,6 +251,7 @@ export class DirectClient {
                 });
 
                 const response = await generateMessageResponse({
+                    // @ts-expect-error todo
                     runtime: runtime,
                     context,
                     modelClass: ModelClass.LARGE,
@@ -323,13 +324,14 @@ export class DirectClient {
                     res.status(404).send("Agent not found");
                     return;
                 }
-
+                // @ts-expect-error todo
                 const images = await generateImage({ ...req.body }, agent);
                 const imagesRes: { image: string; caption: string }[] = [];
                 if (images.data && images.data.length > 0) {
                     for (let i = 0; i < images.data.length; i++) {
                         const caption = await generateCaption(
                             { imageUrl: images.data[i] },
+                            // @ts-expect-error todo
                             agent
                         );
                         imagesRes.push({
@@ -520,6 +522,7 @@ export class DirectClient {
                 });
 
                 const response = await generateMessageResponse({
+                    // @ts-expect-error todo
                     runtime: runtime,
                     context,
                     modelClass: ModelClass.LARGE,

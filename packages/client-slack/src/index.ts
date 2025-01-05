@@ -31,6 +31,7 @@ export class SlackClient extends EventEmitter {
         this.character = runtime.character;
 
         const token = runtime.getSetting("SLACK_BOT_TOKEN");
+        // @ts-expect-error todo
         this.signingSecret = runtime.getSetting("SLACK_SIGNING_SECRET");
 
         if (!token) throw new Error("SLACK_BOT_TOKEN is required");

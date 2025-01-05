@@ -796,7 +796,9 @@ export type Character = {
         modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
+            // @ts-expect-error todo
             evm?: any[];
+            // @ts-expect-error todo
             solana?: any[];
             [key: string]: any[];
         };

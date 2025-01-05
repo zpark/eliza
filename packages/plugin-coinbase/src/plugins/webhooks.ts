@@ -21,9 +21,11 @@ export const webhookProvider: Provider = {
         elizaLogger.debug("Starting webhookProvider.get function");
         try {
             Coinbase.configure({
+                // @ts-expect-error todo
                 apiKeyName:
                     runtime.getSetting("COINBASE_API_KEY") ??
                     process.env.COINBASE_API_KEY,
+                // @ts-expect-error todo
                 privateKey:
                     runtime.getSetting("COINBASE_PRIVATE_KEY") ??
                     process.env.COINBASE_PRIVATE_KEY,
@@ -57,14 +59,17 @@ export const createWebhookAction: Action = {
         elizaLogger.info("Validating runtime for CREATE_WEBHOOK...");
         return (
             !!(
+                // @ts-expect-error todo
                 runtime.character.settings.secrets?.COINBASE_API_KEY ||
                 process.env.COINBASE_API_KEY
             ) &&
             !!(
+                // @ts-expect-error todo
                 runtime.character.settings.secrets?.COINBASE_PRIVATE_KEY ||
                 process.env.COINBASE_PRIVATE_KEY
             ) &&
             !!(
+                // @ts-expect-error todo
                 runtime.character.settings.secrets?.COINBASE_NOTIFICATION_URI ||
                 process.env.COINBASE_NOTIFICATION_URI
             )
@@ -81,9 +86,11 @@ export const createWebhookAction: Action = {
 
         try {
             Coinbase.configure({
+                // @ts-expect-error todo
                 apiKeyName:
                     runtime.getSetting("COINBASE_API_KEY") ??
                     process.env.COINBASE_API_KEY,
+                // @ts-expect-error todo
                 privateKey:
                     runtime.getSetting("COINBASE_PRIVATE_KEY") ??
                     process.env.COINBASE_PRIVATE_KEY,

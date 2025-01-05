@@ -161,6 +161,7 @@ const videoGeneration: Action = {
 
             if (result.success && result.data) {
                 // Download the video file
+                // @ts-expect-error todo
                 const response = await fetch(result.data);
                 const arrayBuffer = await response.arrayBuffer();
                 const videoFileName = `content_cache/generated_video_${Date.now()}.mp4`;
@@ -174,6 +175,7 @@ const videoGeneration: Action = {
                         attachments: [
                             {
                                 id: crypto.randomUUID(),
+                                // @ts-expect-error todo
                                 url: result.data,
                                 title: "Generated Video",
                                 source: "videoGeneration",

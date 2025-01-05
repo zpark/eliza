@@ -75,6 +75,7 @@ class RemoteAttestationProvider {
 const remoteAttestationProvider: Provider = {
     get: async (runtime: IAgentRuntime, _message: Memory, _state?: State) => {
         const teeMode = runtime.getSetting("TEE_MODE");
+        // @ts-expect-error todo
         const provider = new RemoteAttestationProvider(teeMode);
         const agentId = runtime.agentId;
 

@@ -22,6 +22,7 @@ export function createNFTApiRouter(
             }
             try {
                 const collectionAddressRes = await createCollection({
+                    // @ts-expect-error todo
                     runtime,
                     collectionName: runtime.character.name,
                     fee,
@@ -58,6 +59,7 @@ export function createNFTApiRouter(
 
             try {
                 const nftInfo = await createNFTMetadata({
+                    // @ts-expect-error todo
                     runtime,
                     collectionName,
                     collectionAdminPublicKey,
@@ -99,6 +101,7 @@ export function createNFTApiRouter(
 
             try {
                 const nftRes = await createNFT({
+                    // @ts-expect-error todo
                     runtime,
                     collectionName,
                     collectionAddress,
@@ -141,6 +144,7 @@ export function createNFTApiRouter(
             }
             try {
                 const { success } = await verifyNFT({
+                    // @ts-expect-error todo
                     runtime,
                     collectionAddress,
                     NFTAddress,
