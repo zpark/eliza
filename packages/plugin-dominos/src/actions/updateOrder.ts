@@ -2,7 +2,7 @@ import {
     Action,
     ActionExample,
     composeContext,
-    generateObjectV2,
+    generateObject,
     Handler,
     IAgentRuntime,
     Memory,
@@ -143,7 +143,7 @@ export const handler: Handler = async (
     });
 
     try {
-        const orderUpdates = (await generateObjectV2({
+        const orderUpdates = (await generateObject({
             runtime,
             context,
             modelClass: ModelClass.LARGE,

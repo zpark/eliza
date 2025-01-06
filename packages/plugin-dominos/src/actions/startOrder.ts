@@ -2,7 +2,7 @@ import {
     Action,
     ActionExample,
     composeContext,
-    generateObjectV2,
+    generateObject,
     Handler,
     IAgentRuntime,
     Memory,

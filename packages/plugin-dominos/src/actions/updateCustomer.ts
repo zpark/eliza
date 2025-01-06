@@ -2,7 +2,7 @@ import {
     Action,
     ActionExample,
     composeContext,
-    generateObjectV2,
+    generateObject,
     Handler,
     IAgentRuntime,
     Memory,
@@ -85,7 +85,7 @@ Provide updated customer information as a JSON object, including only fields tha
     });
 
     try {
-        const customerUpdates = (await generateObjectV2({
+        const customerUpdates = (await generateObject({
             runtime,
             context,
             modelClass: ModelClass.LARGE,

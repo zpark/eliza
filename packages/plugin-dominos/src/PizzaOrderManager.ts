@@ -764,4 +764,22 @@ export class PizzaOrderManager implements OrderManager {
             };
         }
     }
+
+    getOrderSummary(order: Order, customer: Customer): string {
+        // Format order details into readable summary
+        return `Order Summary:\n${order.items.map(item =>
+            `- ${item.quantity}x ${item.size} ${item.crust} Pizza${
+                item.toppings?.length ? ` with ${item.toppings.map(t =>
+                    `${t.amount}x ${t.code} (${t.portion})`).join(', ')}` : ''
+            }`
+        ).join('\n')}`;
+    }
+
+    getNextRequiredActionDialogue(order: Order, customer: Customer): string {
+        // Return appropriate next step prompt
+        if (!order.items[0].size) return "What size pizza would you like?";
+        if (!order.items[0].crust) return "What type of crust would you prefer?";
+        if (!order.items[0].toppings?.length) return "What toppings would you like?";
+        return "Would you like to add any more items to your order?";
+    }
 }
