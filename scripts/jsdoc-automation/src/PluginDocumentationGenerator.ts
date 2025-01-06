@@ -1,9 +1,14 @@
-import { ASTQueueItem, PluginDocumentation, TodoItem, EnvUsage } from './types/index.js';
-import { AIService } from './AIService.js';
-import { GitManager } from './GitManager.js';
-import { Configuration } from './Configuration.js';
-import fs from 'fs';
-import path from 'path';
+import {
+    ASTQueueItem,
+    PluginDocumentation,
+    TodoItem,
+    EnvUsage,
+} from "./types/index.js";
+import { AIService } from "./AIService.js";
+import { GitManager } from "./GitManager.js";
+import { Configuration } from "./Configuration.js";
+import fs from "fs";
+import path from "path";
 
 /**
  * Generates comprehensive plugin documentation based on existing JSDoc comments
@@ -13,7 +18,7 @@ export class PluginDocumentationGenerator {
         private aiService: AIService,
         private gitManager: GitManager,
         private configuration: Configuration
-    ) { }
+    ) {}
 
     /**
      * Generates comprehensive plugin documentation
@@ -29,28 +34,36 @@ export class PluginDocumentationGenerator {
         envUsages: EnvUsage[] = []
     ): Promise<void> {
         // Read package.json
-        const packageJsonPath = path.join(this.configuration.absolutePath, 'package.json');
-        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        const packageJsonPath = path.join(
+            this.configuration.absolutePath,
+            "package.json"
+        );
+        const packageJson = JSON.parse(
+            fs.readFileSync(packageJsonPath, "utf-8")
+        );
         if (!packageJson) {
-            console.error('package.json not found');
+            console.error("package.json not found");
         }
         // Generate documentation
         const documentation = await this.aiService.generatePluginDocumentation({
             existingDocs,
             packageJson,
             todoItems,
-            envUsages
+            envUsages,
         });
 
         // Generate markdown content
-        const markdownContent = this.generateMarkdownContent(documentation, packageJson);
+        const markdownContent = this.generateMarkdownContent(
+            documentation,
+            packageJson
+        );
 
         // Only commit the file if we're in a branch
         if (branchName) {
             // Use the configuration's relative path to determine the correct README location
             const relativeReadmePath = path.join(
                 this.configuration.relativePath,
-                'README-automated.md'
+                "README-automated.md"
             );
 
             // Commit the file to the correct location
@@ -58,14 +71,19 @@ export class PluginDocumentationGenerator {
                 branchName,
                 relativeReadmePath,
                 markdownContent,
-                'docs: Update plugin documentation'
+                "docs: Update plugin documentation"
             );
         } else {
-            console.error('No branch name provided, skipping commit for README-automated.md');
+            console.error(
+                "No branch name provided, skipping commit for README-automated.md"
+            );
         }
     }
 
-    private generateMarkdownContent(docs: PluginDocumentation, packageJson: any): string {
+    private generateMarkdownContent(
+        docs: PluginDocumentation,
+        packageJson: any
+    ): string {
         return `# ${packageJson.name} Documentation
 
 ## Overview
@@ -101,5 +119,5 @@ ${docs.todos}
 
 ### Troubleshooting
 ${docs.troubleshooting}`;
-}
+    }
 }
