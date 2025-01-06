@@ -65,6 +65,7 @@ export class WalletProvider {
             chain: storyOdyssey,
             transport: http(DEFAULT_CHAIN_CONFIGS.odyssey.rpcUrl),
         } as const;
+        // @ts-expect-error todo
         this.publicClient = createPublicClient<HttpTransport>(
             baseConfig
         ) as PublicClient<HttpTransport, Chain, Account | undefined>;

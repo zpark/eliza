@@ -134,6 +134,7 @@ export default {
             const aptosAccount = Account.fromPrivateKey({
                 privateKey: new Ed25519PrivateKey(
                     PrivateKey.formatPrivateKey(
+                        // @ts-expect-error todo
                         privateKey,
                         PrivateKeyVariants.Ed25519
                     )

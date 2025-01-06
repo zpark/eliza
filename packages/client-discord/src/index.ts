@@ -320,7 +320,9 @@ export class DiscordClient extends EventEmitter {
 
         const messageContent = reaction.message.content;
         const truncatedContent =
+            // @ts-expect-error todo
             messageContent.length > 50
+                // @ts-expect-error todo
                 ? messageContent.substring(0, 50) + "..."
                 : messageContent;
 
@@ -336,7 +338,9 @@ export class DiscordClient extends EventEmitter {
             `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
         );
 
+        // @ts-expect-error todo
         const userName = reaction.message.author.username;
+        // @ts-expect-error todo
         const name = reaction.message.author.displayName;
 
         await this.runtime.ensureConnection(

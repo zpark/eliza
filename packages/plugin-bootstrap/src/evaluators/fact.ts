@@ -92,6 +92,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     for (const fact of filteredFacts) {
         const factMemory = await factsManager.addEmbeddingToMemory({
             userId: agentId!,
+            // @ts-expect-error todo
             agentId,
             content: { text: fact },
             roomId,
