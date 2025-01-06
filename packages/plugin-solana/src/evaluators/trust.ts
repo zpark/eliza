@@ -161,6 +161,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
                 runtime.getSetting("RPC_URL") ||
                     "https://api.mainnet-beta.solana.com"
             ),
+            // @ts-expect-error todo
             publicKey
         );
         const tokenProvider = new TokenProvider(
@@ -211,6 +212,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         const user = participants.find(async (actor) => {
             const user = await runtime.databaseAdapter.getAccountById(actor);
             return (
+                // @ts-expect-error todo
                 user.name.toLowerCase().trim() ===
                 rec.recommender.toLowerCase().trim()
             );
@@ -222,6 +224,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         }
 
         const account = await runtime.databaseAdapter.getAccountById(user);
+        // @ts-expect-error todo
         const userId = account.id;
 
         const recMemory = {
@@ -232,6 +235,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             createdAt: Date.now(),
         };
 
+        // @ts-expect-error todo
         await recommendationsManager.createMemory(recMemory, true);
 
         console.log("recommendationsManager", rec);

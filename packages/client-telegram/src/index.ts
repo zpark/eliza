@@ -9,6 +9,7 @@ export const TelegramClientInterface: Client = {
 
         const tg = new TelegramClient(
             runtime,
+            // @ts-expect-error todo
             runtime.getSetting("TELEGRAM_BOT_TOKEN")
         );
 

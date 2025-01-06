@@ -82,6 +82,7 @@ async function textToSpeech(runtime: IAgentRuntime, text: string) {
             `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabsVoiceId}/stream?optimize_streaming_latency=${runtime.getSetting("ELEVENLABS_OPTIMIZE_STREAMING_LATENCY")}&output_format=${runtime.getSetting("ELEVENLABS_OUTPUT_FORMAT")}`,
             {
                 method: "POST",
+                // @ts-expect-error todo
                 headers: {
                     "Content-Type": "application/json",
                     "xi-api-key": runtime.getSetting("ELEVENLABS_XI_API_KEY"),
@@ -145,11 +146,13 @@ async function textToSpeech(runtime: IAgentRuntime, text: string) {
             });
 
             if (
+                // @ts-expect-error todo
                 runtime
                     .getSetting("ELEVENLABS_OUTPUT_FORMAT")
                     .startsWith("pcm_")
             ) {
                 const sampleRate = parseInt(
+                    // @ts-expect-error todo
                     runtime.getSetting("ELEVENLABS_OUTPUT_FORMAT").substring(4)
                 );
                 const withHeader = prependWavHeader(

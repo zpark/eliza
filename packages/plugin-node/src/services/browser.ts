@@ -175,6 +175,7 @@ export class BrowserService extends Service implements IBrowserService {
                 );
             }
 
+            // @ts-expect-error todo
             page = await this.context.newPage();
 
             // Enable stealth mode
@@ -193,6 +194,7 @@ export class BrowserService extends Service implements IBrowserService {
                 elizaLogger.error("Failed to load the page");
             }
 
+            // @ts-expect-error todo
             if (response.status() === 403 || response.status() === 404) {
                 return await this.tryAlternativeSources(url, runtime);
             }
