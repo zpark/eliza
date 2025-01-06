@@ -223,12 +223,12 @@ importers:
       '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../packages/plugin-node
-      '@elizaos/plugin-open-weather':
-        specifier: workspace:*
-        version: link:../packages/plugin-open-weather
       '@elizaos/plugin-opacity':
         specifier: workspace:*
         version: link:../packages/plugin-opacity
+      '@elizaos/plugin-open-weather':
+        specifier: workspace:*
+        version: link:../packages/plugin-open-weather
       '@elizaos/plugin-reclaim':
         specifier: workspace:*
         version: link:../packages/plugin-reclaim
@@ -1725,28 +1725,6 @@ importers:
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.7.0)
-
-  packages/plugin-opacity:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.7
-    devDependencies:
-      tsup:
-        specifier: ^8.3.5
-        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.7.0)
-
-  packages/plugin-open-weather:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
@@ -6264,13 +6242,8 @@ packages:
     resolution: {integrity: sha512-BRs5XUAwiyCDQMsVA9IDvDa7UBR9gAvPHgugOeGng3YN6vJ9JYonyDc0lNczErgtCWtucjR5N7VtaonboD/ezg==}
     engines: {node: '>=10.12.0'}
 
-  '@peculiar/x509@1.12.3':
-    resolution: {integrity: sha512-+Mzq+W7cNEKfkNZzyLl6A6ffqc3r21HGZUezgfKxpZrkORfOqgRXnS80Zu0IV6a9Ue9QBJeKD7kN0iWfc3bhRQ==}
-
   '@phala/dstack-sdk@0.1.7':
     resolution: {integrity: sha512-/+8S6XpAnN9X6pCiA7eBD+QtEWOtYhlN7Osrf9K59G6E8q6SdXUbJzuNpNBHtlZV+Pm7zm4zOhnwnpvShLD0Xg==}
-  '@phala/dstack-sdk@0.1.6':
-    resolution: {integrity: sha512-/JNlCDvgQmqAs+3N9qbRjqQdm4UCd1iYmkjH7cE7ejwWcoF4b4bSikiQdMK+fQ3be8T7FJupjWw52ysHWsnwmQ==}
     engines: {node: '>=18.0.0'}
 
   '@pinata/sdk@2.1.0':
@@ -26645,22 +26618,7 @@ snapshots:
       tslib: 2.8.1
       webcrypto-core: 1.8.1
 
-  '@peculiar/x509@1.12.3':
-    dependencies:
-      '@peculiar/asn1-cms': 2.3.15
-      '@peculiar/asn1-csr': 2.3.15
-      '@peculiar/asn1-ecc': 2.3.15
-      '@peculiar/asn1-pkcs9': 2.3.15
-      '@peculiar/asn1-rsa': 2.3.15
-      '@peculiar/asn1-schema': 2.3.15
-      '@peculiar/asn1-x509': 2.3.15
-      pvtsutils: 1.3.6
-      reflect-metadata: 0.2.2
-      tslib: 2.8.1
-      tsyringe: 4.8.0
-
   '@phala/dstack-sdk@0.1.7(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)':
-  '@phala/dstack-sdk@0.1.6(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)':
     optionalDependencies:
       viem: 2.21.58(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8)
     transitivePeerDependencies:
