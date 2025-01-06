@@ -1167,7 +1167,7 @@ export interface IAgentRuntime {
         state?: State,
         didRespond?: boolean,
         callback?: HandlerCallback
-    ): Promise<string[]>;
+    ): Promise<string[] | null>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
 
@@ -1400,4 +1400,9 @@ export enum TranscriptionProvider {
     OpenAI = "openai",
     Deepgram = "deepgram",
     Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
 }
