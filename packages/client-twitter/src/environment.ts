@@ -1,4 +1,8 @@
-import { parseBooleanFromText, IAgentRuntime } from "@elizaos/core";
+import {
+    parseBooleanFromText,
+    IAgentRuntime,
+    ActionTimelineType,
+} from "@elizaos/core";
 import { z, ZodError } from "zod";
 
 export const DEFAULT_MAX_TWEET_LENGTH = 280;
@@ -62,6 +66,9 @@ export const twitterEnvSchema = z.object({
     POST_IMMEDIATELY: z.boolean(),
     TWITTER_SPACES_ENABLE: z.boolean().default(false),
     MAX_ACTIONS_PROCESSING: z.number().int(),
+    ACTION_TIMELINE_TYPE: z
+        .nativeEnum(ActionTimelineType)
+        .default(ActionTimelineType.ForYou),
 });
 
 export type TwitterConfig = z.infer<typeof twitterEnvSchema>;
@@ -206,6 +213,10 @@ export async function validateTwitterConfig(
                     process.env.MAX_ACTIONS_PROCESSING,
                 1
             ),
+
+            ACTION_TIMELINE_TYPE:
+                runtime.getSetting("ACTION_TIMELINE_TYPE") ||
+                process.env.ACTION_TIMELINE_TYPE,
         };
 
         return twitterEnvSchema.parse(twitterConfig);
