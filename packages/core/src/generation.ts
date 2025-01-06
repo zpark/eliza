@@ -1734,7 +1734,7 @@ async function handleOpenAI({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const baseURL = models.openai.endpoint || undefined;
@@ -1761,7 +1761,7 @@ async function handleAnthropic({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const anthropic = createAnthropic({ apiKey });
@@ -1787,7 +1787,7 @@ async function handleGrok({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const grok = createOpenAI({ apiKey, baseURL: models.grok.endpoint });
@@ -1813,7 +1813,7 @@ async function handleGroq({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const groq = createGroq({ apiKey });
@@ -1839,7 +1839,7 @@ async function handleGoogle({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const google = createGoogleGenerativeAI();
@@ -1865,7 +1865,7 @@ async function handleRedPill({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const redPill = createOpenAI({ apiKey, baseURL: models.redpill.endpoint });
@@ -1891,7 +1891,7 @@ async function handleOpenRouter({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const openRouter = createOpenAI({
@@ -1919,7 +1919,7 @@ async function handleOllama({
     schema,
     schemaName,
     schemaDescription,
-    mode,
+    mode = "json",
     modelOptions,
     provider,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
