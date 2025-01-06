@@ -79,7 +79,7 @@ Your response must include the JSON block.`;
  * @param text - The input text from which to extract and parse the JSON array.
  * @returns An array parsed from the JSON string if successful; otherwise, null.
  */
-export function parseJsonArrayFromText(text: string) {
+export function parseJsonArrayFromText<T = string>(text: string): T[] | null {
     let jsonData = null;
 
     // First try to parse with the original JSON format

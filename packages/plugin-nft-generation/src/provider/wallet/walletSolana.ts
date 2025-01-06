@@ -46,6 +46,7 @@ export class WalletSolana {
                 commitment: "finalized",
             });
         }
+        // @ts-expect-error todo
         const umi = createUmi(this.connection.rpcEndpoint);
         umi.use(mplTokenMetadata());
         const umiUser = umi.eddsa.createKeypairFromSecretKey(
@@ -56,6 +57,7 @@ export class WalletSolana {
     }
 
     async getBalance() {
+        // @ts-expect-error todo
         const balance = await this.connection.getBalance(this.walletPublicKey);
         return {
             value: balance,
