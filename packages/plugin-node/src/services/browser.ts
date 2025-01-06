@@ -322,7 +322,9 @@ export class BrowserService extends Service implements IBrowserService {
             return await this.fetchPageContent(googleSearchUrl, runtime);
         } catch (error) {
             elizaLogger.error("Error fetching from Google Search:", error);
-            elizaLogger.error("Failed to fetch content from alternative sources");
+            elizaLogger.error(
+                "Failed to fetch content from alternative sources"
+            );
             return {
                 title: url,
                 description:

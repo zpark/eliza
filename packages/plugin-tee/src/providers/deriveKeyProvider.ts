@@ -1,4 +1,10 @@
-import { IAgentRuntime, Memory, Provider, State, elizaLogger } from "@elizaos/core";
+import {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
 import { Keypair } from "@solana/web3.js";
 import crypto from "crypto";
 import { DeriveKeyResponse, TappdClient } from "@phala/dstack-sdk";
@@ -58,7 +64,9 @@ class DeriveKeyProvider {
             publicKey,
         };
         const reportdata = JSON.stringify(deriveKeyData);
-        elizaLogger.log("Generating Remote Attestation Quote for Derive Key...");
+        elizaLogger.log(
+            "Generating Remote Attestation Quote for Derive Key..."
+        );
         const quote = await this.raProvider.generateAttestation(reportdata);
         elizaLogger.log("Remote Attestation Quote generated successfully!");
         return quote;

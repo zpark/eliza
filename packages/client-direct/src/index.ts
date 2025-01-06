@@ -7,7 +7,7 @@ import {
     generateCaption,
     generateImage,
     Media,
-    getEmbeddingZeroVector
+    getEmbeddingZeroVector,
 } from "@elizaos/core";
 import { composeContext } from "@elizaos/core";
 import { generateMessageResponse } from "@elizaos/core";
@@ -447,7 +447,9 @@ export class DirectClient {
 
         this.app.post("/:agentId/speak", async (req, res) => {
             const agentId = req.params.agentId;
-            const roomId = stringToUuid(req.body.roomId ?? "default-room-" + agentId);
+            const roomId = stringToUuid(
+                req.body.roomId ?? "default-room-" + agentId
+            );
             const userId = stringToUuid(req.body.userId ?? "user");
             const text = req.body.text;
 
@@ -461,7 +463,8 @@ export class DirectClient {
             // if runtime is null, look for runtime with the same name
             if (!runtime) {
                 runtime = Array.from(this.agents.values()).find(
-                    (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                    (a) =>
+                        a.character.name.toLowerCase() === agentId.toLowerCase()
                 );
             }
 
@@ -532,7 +535,9 @@ export class DirectClient {
                 await runtime.messageManager.createMemory(responseMessage);
 
                 if (!response) {
-                    res.status(500).send("No response from generateMessageResponse");
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
                     return;
                 }
 
@@ -566,35 +571,51 @@ export class DirectClient {
                     },
                     body: JSON.stringify({
                         text: textToSpeak,
-                        model_id: process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2",
+                        model_id:
+                            process.env.ELEVENLABS_MODEL_ID ||
+                            "eleven_multilingual_v2",
                         voice_settings: {
-                            stability: parseFloat(process.env.ELEVENLABS_VOICE_STABILITY || "0.5"),
-                            similarity_boost: parseFloat(process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST || "0.9"),
-                            style: parseFloat(process.env.ELEVENLABS_VOICE_STYLE || "0.66"),
-                            use_speaker_boost: process.env.ELEVENLABS_VOICE_USE_SPEAKER_BOOST === "true",
+                            stability: parseFloat(
+                                process.env.ELEVENLABS_VOICE_STABILITY || "0.5"
+                            ),
+                            similarity_boost: parseFloat(
+                                process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST ||
+                                    "0.9"
+                            ),
+                            style: parseFloat(
+                                process.env.ELEVENLABS_VOICE_STYLE || "0.66"
+                            ),
+                            use_speaker_boost:
+                                process.env
+                                    .ELEVENLABS_VOICE_USE_SPEAKER_BOOST ===
+                                "true",
                         },
                     }),
                 });
 
                 if (!speechResponse.ok) {
-                    throw new Error(`ElevenLabs API error: ${speechResponse.statusText}`);
+                    throw new Error(
+                        `ElevenLabs API error: ${speechResponse.statusText}`
+                    );
                 }
 
                 const audioBuffer = await speechResponse.arrayBuffer();
 
                 // Set appropriate headers for audio streaming
                 res.set({
-                    'Content-Type': 'audio/mpeg',
-                    'Transfer-Encoding': 'chunked'
+                    "Content-Type": "audio/mpeg",
+                    "Transfer-Encoding": "chunked",
                 });
 
                 res.send(Buffer.from(audioBuffer));
-
             } catch (error) {
-                console.error("Error processing message or generating speech:", error);
+                console.error(
+                    "Error processing message or generating speech:",
+                    error
+                );
                 res.status(500).json({
                     error: "Error processing message or generating speech",
-                    details: error.message
+                    details: error.message,
                 });
             }
         });
