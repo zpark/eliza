@@ -101,7 +101,7 @@ pnpm i
 pnpm build
 pnpm start
 
-# 프로젝트가 빠르게 수정되므로 프로젝트를 clean해야 할 수도 있습니다.
+# 프로젝트가 빠르게 변경되기 때문에, 다시 작업을 시작할 때는 clean 명령어 입력이 필요할 수도 있습니다.
 pnpm clean
 ```
 
