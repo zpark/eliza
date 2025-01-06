@@ -38,7 +38,7 @@ cp .env.example .env
 
 pnpm clean
 
-pnpm install -r
+pnpm install -r --no-frozen-lockfile
 
 pnpm build
 
