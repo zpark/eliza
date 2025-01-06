@@ -46,8 +46,6 @@ import {
     type Evaluator,
     type Memory,
     IVerifiableInferenceAdapter,
-    VerifiableInferenceOptions,
-    VerifiableInferenceProvider,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -277,31 +275,26 @@ export class AgentRuntime implements IAgentRuntime {
         this.cacheManager = opts.cacheManager;
 
         this.messageManager = new MemoryManager({
-            // @ts-expect-error todo
             runtime: this,
             tableName: "messages",
         });
 
         this.descriptionManager = new MemoryManager({
-            // @ts-expect-error todo
             runtime: this,
             tableName: "descriptions",
         });
 
         this.loreManager = new MemoryManager({
-            // @ts-expect-error todo
             runtime: this,
             tableName: "lore",
         });
 
         this.documentsManager = new MemoryManager({
-            // @ts-expect-error todo
             runtime: this,
             tableName: "documents",
         });
 
         this.knowledgeManager = new MemoryManager({
-            // @ts-expect-error todo
             runtime: this,
             tableName: "fragments",
         });
@@ -407,7 +400,6 @@ export class AgentRuntime implements IAgentRuntime {
     async initialize() {
         for (const [serviceType, service] of this.services.entries()) {
             try {
-                // @ts-expect-error todo
                 await service.initialize(this);
                 this.services.set(serviceType, service);
                 elizaLogger.success(
@@ -425,7 +417,6 @@ export class AgentRuntime implements IAgentRuntime {
         for (const plugin of this.plugins) {
             if (plugin.services)
                 await Promise.all(
-                    // @ts-expect-error todo
                     plugin.services?.map((service) => service.initialize(this))
                 );
         }
@@ -619,7 +610,7 @@ export class AgentRuntime implements IAgentRuntime {
                 elizaLogger.info(
                     `Executing handler for action: ${action.name}`
                 );
-                // @ts-expect-error todo
+
                 await action.handler(this, message, state, {}, callback);
             } catch (error) {
                 elizaLogger.error(error);
@@ -635,10 +626,10 @@ export class AgentRuntime implements IAgentRuntime {
      * @param callback The handler callback
      * @returns The results of the evaluation.
      */
-    // @ts-expect-error todo
+
     async evaluate(
         message: Memory,
-        state?: State,
+        state: State,
         didRespond?: boolean,
         callback?: HandlerCallback
     ) {
@@ -651,7 +642,7 @@ export class AgentRuntime implements IAgentRuntime {
                 if (!didRespond && !evaluator.alwaysRun) {
                     return null;
                 }
-                // @ts-expect-error todo
+
                 const result = await evaluator.validate(this, message, state);
                 if (result) {
                     return evaluator;
@@ -661,20 +652,19 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         const resolvedEvaluators = await Promise.all(evaluatorPromises);
-        const evaluatorsData = resolvedEvaluators.filter(Boolean);
+        const evaluatorsData = resolvedEvaluators.filter(
+            (evaluator): evaluator is Evaluator => evaluator !== null
+        );
 
         // if there are no evaluators this frame, return
-        if (evaluatorsData.length === 0) {
+        if (!evaluatorsData || evaluatorsData.length === 0) {
             return [];
         }
 
         const context = composeContext({
-            // @ts-expect-error todo
             state: {
                 ...state,
-                // @ts-expect-error todo
                 evaluators: formatEvaluators(evaluatorsData),
-                // @ts-expect-error todo
                 evaluatorNames: formatEvaluatorNames(evaluatorsData),
             },
             template:
@@ -683,7 +673,6 @@ export class AgentRuntime implements IAgentRuntime {
         });
 
         const result = await generateText({
-            // @ts-expect-error todo
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
@@ -696,7 +685,6 @@ export class AgentRuntime implements IAgentRuntime {
             if (!evaluators?.includes(evaluator.name)) continue;
 
             if (evaluator.handler)
-                // @ts-expect-error todo
                 await evaluator.handler(this, message, state, {}, callback);
         }
 
@@ -823,7 +811,6 @@ export class AgentRuntime implements IAgentRuntime {
             Memory[],
             Goal[],
         ] = await Promise.all([
-            // @ts-expect-error todo
             getActorDetails({ runtime: this, roomId }),
             this.messageManager.getMemories({
                 roomId,
@@ -831,7 +818,6 @@ export class AgentRuntime implements IAgentRuntime {
                 unique: false,
             }),
             getGoals({
-                // @ts-expect-error todo
                 runtime: this,
                 count: 10,
                 onlyInProgress: false,
@@ -875,9 +861,9 @@ export class AgentRuntime implements IAgentRuntime {
             );
 
             if (lastMessageWithAttachment) {
-                const lastMessageTime = lastMessageWithAttachment.createdAt;
+                const lastMessageTime =
+                    lastMessageWithAttachment?.createdAt ?? Date.now();
                 const oneHourBeforeLastMessage =
-                    // @ts-expect-error todo
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
                 allAttachments = recentMessagesData
@@ -973,8 +959,10 @@ Text: ${attachment.text}
                 });
 
             // Sort messages by timestamp in descending order
-            // @ts-expect-error todo
-            existingMemories.sort((a, b) => b.createdAt - a.createdAt);
+            existingMemories.sort(
+                (a, b) =>
+                    (b?.createdAt ?? Date.now()) - (a?.createdAt ?? Date.now())
+            );
 
             // Take the most recent messages
             const recentInteractionsData = existingMemories.slice(0, 20);
@@ -1190,7 +1178,6 @@ Text: ${attachment.text}
         } as State;
 
         const actionPromises = this.actions.map(async (action: Action) => {
-            // @ts-expect-error todo
             const result = await action.validate(this, message, initialState);
             if (result) {
                 return action;
@@ -1200,7 +1187,6 @@ Text: ${attachment.text}
 
         const evaluatorPromises = this.evaluators.map(async (evaluator) => {
             const result = await evaluator.validate(
-                // @ts-expect-error todo
                 this,
                 message,
                 initialState
@@ -1215,7 +1201,7 @@ Text: ${attachment.text}
             await Promise.all([
                 Promise.all(evaluatorPromises),
                 Promise.all(actionPromises),
-                // @ts-expect-error todo
+
                 getProviders(this, message, initialState),
             ]);
 
@@ -1290,15 +1276,15 @@ Text: ${attachment.text}
             );
 
             if (lastMessageWithAttachment) {
-                const lastMessageTime = lastMessageWithAttachment.createdAt;
+                const lastMessageTime =
+                    lastMessageWithAttachment?.createdAt ?? Date.now();
                 const oneHourBeforeLastMessage =
-                    // @ts-expect-error todo
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
                 allAttachments = recentMessagesData
                     .filter((msg) => {
-                        const msgTime = msg.createdAt;
-                        // @ts-expect-error todo
+                        const msgTime = msg.createdAt ?? Date.now();
+
                         return msgTime >= oneHourBeforeLastMessage;
                     })
                     .flatMap((msg) => msg.content.attachments || []);

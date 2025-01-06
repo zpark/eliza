@@ -132,11 +132,11 @@ export async function loadCharacters(
     let characterPaths = charactersArg
         ?.split(",")
         .map((filePath) => filePath.trim());
-    const loadedCharacters = [];
+    const loadedCharacters: Character[] = [];
 
     if (characterPaths?.length > 0) {
         for (const characterPath of characterPaths) {
-            let content = null;
+            let content: string | null = null;
             let resolvedPath = "";
 
             // Try different path resolutions in order
@@ -246,7 +246,7 @@ export async function loadCharacters(
 export function getTokenForProvider(
     provider: ModelProviderName,
     character: Character
-): string {
+): string | undefined {
     switch (provider) {
         // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
@@ -602,9 +602,7 @@ export async function createAgent(
                       advancedTradePlugin,
                   ]
                 : []),
-            ...(teeMode !== TEEMode.OFF && walletSecretSalt
-                ? [teePlugin]
-                : []),
+            ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
@@ -657,6 +655,11 @@ export async function createAgent(
 }
 
 function initializeFsCache(baseDir: string, character: Character) {
+    if (!character?.id) {
+        throw new Error(
+            "initializeFsCache requires id to be set in character definition"
+        );
+    }
     const cacheDir = path.resolve(baseDir, character.id, "cache");
 
     const cache = new CacheManager(new FsCacheAdapter(cacheDir));
@@ -664,6 +667,11 @@ function initializeFsCache(baseDir: string, character: Character) {
 }
 
 function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
+    if (!character?.id) {
+        throw new Error(
+            "initializeFsCache requires id to be set in character definition"
+        );
+    }
     const cache = new CacheManager(new DbCacheAdapter(db, character.id));
     return cache;
 }
@@ -679,6 +687,11 @@ function initializeCache(
             if (process.env.REDIS_URL) {
                 elizaLogger.info("Connecting to Redis...");
                 const redisClient = new RedisClient(process.env.REDIS_URL);
+                if (!character?.id) {
+                    throw new Error(
+                        "CacheStore.REDIS requires id to be set in character definition"
+                    );
+                }
                 return new CacheManager(
                     new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
                 );
@@ -698,6 +711,11 @@ function initializeCache(
 
         case CacheStore.FILESYSTEM:
             elizaLogger.info("Using File System Cache...");
+            if (!baseDir) {
+                throw new Error(
+                    "baseDir must be provided for CacheStore.FILESYSTEM."
+                );
+            }
             return initializeFsCache(baseDir, character);
 
         default:
