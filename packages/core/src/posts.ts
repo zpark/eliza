@@ -23,16 +23,13 @@ export const formatPosts = ({
 
     // Sort messages within each roomId by createdAt (oldest to newest)
     Object.values(groupedMessages).forEach((roomMessages) => {
-        // @ts-expect-error todo
         roomMessages.sort((a, b) => a.createdAt - b.createdAt);
     });
 
     // Sort rooms by the newest message's createdAt
     const sortedRooms = Object.entries(groupedMessages).sort(
         ([, messagesA], [, messagesB]) =>
-            // @ts-expect-error todo
             messagesB[messagesB.length - 1].createdAt -
-            // @ts-expect-error todo
             messagesA[messagesA.length - 1].createdAt
     );
 
@@ -45,12 +42,10 @@ export const formatPosts = ({
                 );
                 const userName = actor?.name || "Unknown User";
                 const displayName = actor?.username || "unknown";
-                // @ts-expect-error todo
-                const timestamp = formatTimestamp(message.createdAt);
 
                 return `Name: ${userName} (@${displayName})
 ID: ${message.id}${message.content.inReplyTo ? `\nIn reply to: ${message.content.inReplyTo}` : ""}
-Date: ${timestamp}
+Date: ${formatTimestamp(message.createdAt)}
 Text:
 ${message.content.text}`;
             });
