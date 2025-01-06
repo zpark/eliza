@@ -67,6 +67,7 @@
         "@elizaos/plugin-avalanche": "workspace:*",
         "@elizaos/plugin-web-search": "workspace:*",
         "@elizaos/plugin-genlayer": "workspace:*",
+        "@elizaos/plugin-open-weather": "workspace:*",
         "@elizaos/plugin-opacity": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
