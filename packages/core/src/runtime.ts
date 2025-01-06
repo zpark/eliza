@@ -35,6 +35,7 @@ import {
     IMemoryManager,
     KnowledgeItem,
     RAGKnowledgeItem,
+    Media,
     ModelClass,
     ModelProviderName,
     Plugin,
