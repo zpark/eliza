@@ -167,7 +167,7 @@ export class WalletProvider {
 
             const items = accounts.map(acc => ({
                 name: "Unknown",
-                address: acc.account.mint.toBase58(),
+                address: acc.account.data.parsed.info.mint,
                 symbol: "Unknown",
                 decimals: acc.account.data.parsed.info.tokenAmount.decimals,
                 balance: acc.account.data.parsed.info.tokenAmount.amount,
