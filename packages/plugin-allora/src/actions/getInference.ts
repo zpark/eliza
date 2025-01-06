@@ -12,11 +12,11 @@ import {
 } from "@elizaos/core";
 import { z } from "zod";
 import { topicsProvider } from "../providers/topics";
-import { AlloraAPIClient } from "../providers/allora-api";
 import { getInferenceTemplate } from "../templates";
+import { AlloraAPIClient, ChainSlug } from "@alloralabs/allora-sdk";
 
 interface InferenceFields {
-    topicId: string | null;
+    topicId: number | null;
     topicName: string | null;
 }
 
@@ -82,12 +82,12 @@ export const getInferenceAction: Action = {
 
         try {
             // Get inference from Allora API
-            const alloraApiClient = new AlloraAPIClient(
-                runtime.getSetting("ALLORA_CHAIN_SLUG"),
-                runtime.getSetting("ALLORA_API_KEY")
-            );
+            const alloraApiClient = new AlloraAPIClient({
+                chainSlug: runtime.getSetting("ALLORA_CHAIN_SLUG") as ChainSlug,
+                apiKey: runtime.getSetting("ALLORA_API_KEY") as string,
+            });
 
-            const inferenceRes = await alloraApiClient.getInference(
+            const inferenceRes = await alloraApiClient.getInferenceByTopicID(
                 inferenceFields.topicId
             );
             const inferenceValue =

@@ -5,8 +5,8 @@ import {
     Provider,
     State,
 } from "@elizaos/core";
-import { AlloraAPIClient, AlloraTopic } from "./allora-api";
 import NodeCache from "node-cache";
+import { AlloraAPIClient, AlloraTopic, ChainSlug } from "@alloralabs/allora-sdk";
 
 export class TopicsProvider implements Provider {
     private cache: NodeCache;
@@ -52,10 +52,10 @@ export class TopicsProvider implements Provider {
         const alloraApiKey = runtime.getSetting("ALLORA_API_KEY");
         const alloraChainSlug = runtime.getSetting("ALLORA_CHAIN_SLUG");
 
-        const alloraApiClient = new AlloraAPIClient(
-            alloraChainSlug,
-            alloraApiKey
-        );
+        const alloraApiClient = new AlloraAPIClient({
+            chainSlug: alloraChainSlug as ChainSlug,
+            apiKey: alloraApiKey as string,
+        });
         const alloraTopics = await alloraApiClient.getAllTopics();
 
         // Cache the retrieved topics
