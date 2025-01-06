@@ -8,6 +8,7 @@ import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
+import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
 import {
     AgentRuntime,
     CacheManager,
@@ -525,6 +526,22 @@ export async function createAgent(
         );
     }
 
+    // Initialize Reclaim adapter if environment variables are present
+    let verifiableInferenceAdapter;
+    if (
+        process.env.RECLAIM_APP_ID &&
+        process.env.RECLAIM_APP_SECRET &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    ) {
+        verifiableInferenceAdapter = new ReclaimAdapter({
+            appId: process.env.RECLAIM_APP_ID,
+            appSecret: process.env.RECLAIM_APP_SECRET,
+            modelProvider: character.modelProvider,
+            token,
+        });
+        elizaLogger.log("Verifiable inference adapter initialized");
+    }
+
     return new AgentRuntime({
         databaseAdapter: db,
         token,
@@ -586,7 +603,7 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt
-                ? [teePlugin, solanaPlugin]
+                ? [teePlugin]
                 : []),
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
@@ -635,6 +652,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
+        verifiableInferenceAdapter,
     });
 }
 
