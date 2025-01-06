@@ -8,6 +8,7 @@ import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
+// import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
 import {
     AgentRuntime,
     CacheManager,
@@ -67,6 +68,7 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
+import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import { artheraPlugin } from "@elizaos/plugin-arthera";
 import Database from "better-sqlite3";
 import fs from "fs";
@@ -131,11 +133,11 @@ export async function loadCharacters(
     let characterPaths = charactersArg
         ?.split(",")
         .map((filePath) => filePath.trim());
-    const loadedCharacters = [];
+    const loadedCharacters: Character[] = [];
 
     if (characterPaths?.length > 0) {
         for (const characterPath of characterPaths) {
-            let content = null;
+            let content: string | null = null;
             let resolvedPath = "";
 
             // Try different path resolutions in order
@@ -245,7 +247,7 @@ export async function loadCharacters(
 export function getTokenForProvider(
     provider: ModelProviderName,
     character: Character
-): string {
+): string | undefined {
     switch (provider) {
         // no key needed for llama_local or gaianet
         case ModelProviderName.LLAMALOCAL:
@@ -525,6 +527,22 @@ export async function createAgent(
         );
     }
 
+    // Initialize Reclaim adapter if environment variables are present
+    // let verifiableInferenceAdapter;
+    // if (
+    //     process.env.RECLAIM_APP_ID &&
+    //     process.env.RECLAIM_APP_SECRET &&
+    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    // ) {
+    //     verifiableInferenceAdapter = new ReclaimAdapter({
+    //         appId: process.env.RECLAIM_APP_ID,
+    //         appSecret: process.env.RECLAIM_APP_SECRET,
+    //         modelProvider: character.modelProvider,
+    //         token,
+    //     });
+    //     elizaLogger.log("Verifiable inference adapter initialized");
+    // }
+
     return new AgentRuntime({
         databaseAdapter: db,
         token,
@@ -585,9 +603,7 @@ export async function createAgent(
                       advancedTradePlugin,
                   ]
                 : []),
-            ...(teeMode !== TEEMode.OFF && walletSecretSalt
-                ? [teePlugin, solanaPlugin]
-                : []),
+            ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
@@ -625,7 +641,10 @@ export async function createAgent(
                 : null,
             getSecret(character, "AVAIL_SEED") ? availPlugin : null,
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
-            getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+            getSecret(character, "OPEN_WEATHER_API_KEY")
+                ? openWeatherPlugin
+                : null,
+          getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
                 ? artheraPlugin
                 : null,
         ].filter(Boolean),
@@ -635,10 +654,16 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
+        // verifiableInferenceAdapter,
     });
 }
 
 function initializeFsCache(baseDir: string, character: Character) {
+    if (!character?.id) {
+        throw new Error(
+            "initializeFsCache requires id to be set in character definition"
+        );
+    }
     const cacheDir = path.resolve(baseDir, character.id, "cache");
 
     const cache = new CacheManager(new FsCacheAdapter(cacheDir));
@@ -646,6 +671,11 @@ function initializeFsCache(baseDir: string, character: Character) {
 }
 
 function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
+    if (!character?.id) {
+        throw new Error(
+            "initializeFsCache requires id to be set in character definition"
+        );
+    }
     const cache = new CacheManager(new DbCacheAdapter(db, character.id));
     return cache;
 }
@@ -661,6 +691,11 @@ function initializeCache(
             if (process.env.REDIS_URL) {
                 elizaLogger.info("Connecting to Redis...");
                 const redisClient = new RedisClient(process.env.REDIS_URL);
+                if (!character?.id) {
+                    throw new Error(
+                        "CacheStore.REDIS requires id to be set in character definition"
+                    );
+                }
                 return new CacheManager(
                     new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
                 );
@@ -680,6 +715,11 @@ function initializeCache(
 
         case CacheStore.FILESYSTEM:
             elizaLogger.info("Using File System Cache...");
+            if (!baseDir) {
+                throw new Error(
+                    "baseDir must be provided for CacheStore.FILESYSTEM."
+                );
+            }
             return initializeFsCache(baseDir, character);
 
         default:
