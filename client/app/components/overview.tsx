@@ -1,12 +1,11 @@
 import { Character } from "@elizaos/core";
-import { Fragment } from "react/jsx-runtime";
 import ArrayInput from "~/components/array-input";
 import InputCopy from "~/components/input-copy";
 import PageTitle from "./page-title";
 
 export default function Overview({ character }: { character: Character }) {
     return (
-        <Fragment>
+        <div className="p-4">
             <PageTitle
                 title="Overview"
                 subtitle="An overview of your selected AI Agent."
@@ -35,6 +34,6 @@ export default function Overview({ character }: { character: Character }) {
                     }
                 />
             </div>
-        </Fragment>
+        </div>
     );
 }

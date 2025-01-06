@@ -40,7 +40,7 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {agents?.map((agent) => (
                                 <SidebarMenuItem key={agent.id}>
-                                    <Link to={`/agent/${agent.id}`}>
+                                    <Link to={`/chat/${agent.id}`}>
                                         <SidebarMenuButton>
                                             <div className="flex items-center gap-2">
                                                 <div className="w-8 bg-muted rounded-lg uppercase aspect-square grid place-items-center">

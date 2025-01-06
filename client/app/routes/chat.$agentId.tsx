@@ -16,20 +16,5 @@ export default function AgentRoute() {
 
     const character = query?.data?.character;
 
-    return (
-        <div className="flex flex-col gap-4">
-            <Tabs defaultValue="chat">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="chat">Chat</TabsTrigger>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                </TabsList>
-                <TabsContent value="chat">
-                    <Chat/>
-                </TabsContent>
-                <TabsContent value="overview">
-<Overview character={character}/>
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
+    return <Chat />;
 }
