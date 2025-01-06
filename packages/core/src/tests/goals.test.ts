@@ -247,8 +247,15 @@ const sampleGoal: Goal = {
 };
 
 describe("getGoals", () => {
+    let runtime: IAgentRuntime;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        runtime = {
+            agentId: "test-agent-id" as UUID,
+            databaseAdapter: {
+                getGoals: vi.fn().mockResolvedValue([]),
+            } as any,
+        } as IAgentRuntime;
     });
 
     it("retrieves goals successfully", async () => {
@@ -274,6 +281,26 @@ describe("getGoals", () => {
             })
         ).rejects.toThrow("Failed to retrieve goals");
     });
+
+    it("should handle empty goals list", async () => {
+        const mockRuntime = {
+            agentId: "test-agent-id" as UUID,
+            databaseAdapter: {
+                getGoals: vi.fn().mockResolvedValue([]),
+            },
+        } as unknown as IAgentRuntime;
+
+        const roomId = "test-room" as UUID;
+
+        await getGoals({ runtime: mockRuntime, roomId });
+
+        expect(mockRuntime.databaseAdapter.getGoals).toHaveBeenCalledWith({
+            agentId: "test-agent-id",
+            roomId,
+            onlyInProgress: true,
+            count: 5,
+        });
+    });
 });
 
 describe("formatGoalsAsString", () => {
@@ -291,6 +318,53 @@ describe("formatGoalsAsString", () => {
     it("handles empty goals array", () => {
         const formatted = formatGoalsAsString({ goals: [] });
         expect(formatted).toBe("");
+    });
+
+    it("should format goals as string correctly", () => {
+        const goals: Goal[] = [
+            {
+                id: "1" as UUID,
+                name: "Goal 1",
+                status: GoalStatus.IN_PROGRESS,
+                objectives: [
+                    {
+                        id: "obj1" as UUID,
+                        description: "Objective 1",
+                        completed: true,
+                    },
+                    {
+                        id: "obj2" as UUID,
+                        description: "Objective 2",
+                        completed: false,
+                    },
+                ],
+                roomId: "test-room" as UUID,
+                userId: "test-user" as UUID,
+            },
+            {
+                id: "2" as UUID,
+                name: "Goal 2",
+                status: GoalStatus.DONE,
+                objectives: [
+                    {
+                        id: "obj3" as UUID,
+                        description: "Objective 3",
+                        completed: true,
+                    },
+                ],
+                roomId: "test-room" as UUID,
+                userId: "test-user" as UUID,
+            },
+        ];
+
+        const formattedGoals = formatGoalsAsString({ goals });
+        expect(formattedGoals).toContain("Goal: Goal 1");
+        expect(formattedGoals).toContain("id: 1");
+        expect(formattedGoals).toContain("- [x] Objective 1  (DONE)");
+        expect(formattedGoals).toContain("- [ ] Objective 2  (IN PROGRESS)");
+        expect(formattedGoals).toContain("Goal: Goal 2");
+        expect(formattedGoals).toContain("id: 2");
+        expect(formattedGoals).toContain("- [x] Objective 3  (DONE)");
     });
 });
 
@@ -318,6 +392,138 @@ describe("updateGoal", () => {
             updateGoal({ runtime: mockRuntime, goal: sampleGoal })
         ).rejects.toThrow("Failed to update goal");
     });
+
+    it("should update goal status correctly", async () => {
+        const goalId = "test-goal" as UUID;
+        const mockRuntime = {
+            databaseAdapter: { updateGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        const updatedGoal: Goal = {
+            id: goalId,
+            name: "Test Goal",
+            objectives: [
+                {
+                    description: "Objective 1",
+                    completed: false,
+                },
+                {
+                    description: "Objective 2",
+                    completed: true,
+                },
+            ],
+            roomId: "room-id" as UUID,
+            userId: "user-id" as UUID,
+            status: GoalStatus.DONE,
+        };
+
+        await updateGoal({
+            runtime: mockRuntime,
+            goal: updatedGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+    });
+
+    it("should handle failed goal update", async () => {
+        const goalId = "test-goal" as UUID;
+        const mockRuntime = {
+            databaseAdapter: { updateGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        const updatedGoal: Goal = {
+            id: goalId,
+            name: "Test Goal",
+            objectives: [
+                {
+                    description: "Objective 1",
+                    completed: false,
+                },
+                {
+                    description: "Objective 2",
+                    completed: true,
+                },
+            ],
+            roomId: "room-id" as UUID,
+            userId: "user-id" as UUID,
+            status: GoalStatus.FAILED,
+        };
+
+        await updateGoal({
+            runtime: mockRuntime,
+            goal: updatedGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+    });
+
+    it("should handle in-progress goal update", async () => {
+        const goalId = "test-goal" as UUID;
+        const mockRuntime = {
+            databaseAdapter: { updateGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        const updatedGoal: Goal = {
+            id: goalId,
+            name: "Test Goal",
+            objectives: [
+                {
+                    description: "Objective 1",
+                    completed: false,
+                },
+                {
+                    description: "Objective 2",
+                    completed: true,
+                },
+            ],
+            roomId: "room-id" as UUID,
+            userId: "user-id" as UUID,
+            status: GoalStatus.IN_PROGRESS,
+        };
+
+        await updateGoal({
+            runtime: mockRuntime,
+            goal: updatedGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+    });
+
+    it("should handle goal priority updates", async () => {
+        const goalId = "test-goal" as UUID;
+        const mockRuntime = {
+            databaseAdapter: { updateGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        const updatedGoal: Goal = {
+            id: goalId,
+            name: "Test Goal",
+            objectives: [
+                {
+                    description: "Objective 1",
+                    completed: false,
+                },
+                {
+                    description: "Objective 2",
+                    completed: true,
+                },
+            ],
+            roomId: "room-id" as UUID,
+            userId: "user-id" as UUID,
+            status: GoalStatus.IN_PROGRESS,
+        };
+
+        await updateGoal({
+            runtime: mockRuntime,
+            goal: updatedGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+    });
 });
 
 describe("createGoal", () => {
@@ -343,5 +549,58 @@ describe("createGoal", () => {
         await expect(
             createGoal({ runtime: mockRuntime, goal: sampleGoal })
         ).rejects.toThrow("Failed to create goal");
+    });
+
+    it("should create new goal with correct properties", async () => {
+        const newGoal: Goal = {
+            name: "New Goal",
+            roomId: "room-id" as UUID,
+            userId: "user-id" as UUID,
+            status: GoalStatus.IN_PROGRESS,
+            objectives: []
+        };
+
+        const mockRuntime = {
+            databaseAdapter: { createGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        await createGoal({
+            runtime: mockRuntime,
+            goal: newGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.createGoal).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: "New Goal",
+                roomId: "room-id",
+                userId: "user-id",
+                status: GoalStatus.IN_PROGRESS,
+                objectives: []
+            })
+        );
+    });
+
+    it("should create a new goal", async () => {
+        const mockRuntime = {
+            databaseAdapter: { createGoal: vi.fn() },
+            agentId: "test-agent-id" as UUID,
+        } as unknown as IAgentRuntime;
+
+        const newGoal = {
+            id: "new-goal" as UUID,
+            name: "New Goal",
+            objectives: [],
+            roomId: "test-room" as UUID,
+            userId: "test-user" as UUID,
+            status: GoalStatus.IN_PROGRESS,
+        };
+
+        await createGoal({
+            runtime: mockRuntime,
+            goal: newGoal,
+        });
+
+        expect(mockRuntime.databaseAdapter.createGoal).toHaveBeenCalledWith(newGoal);
     });
 });
