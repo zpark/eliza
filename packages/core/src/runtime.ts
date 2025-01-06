@@ -680,7 +680,7 @@ export class AgentRuntime implements IAgentRuntime {
         ) as unknown as string[];
 
         for (const evaluator of this.evaluators) {
-            if (!evaluators.includes(evaluator.name)) continue;
+            if (!evaluators?.includes(evaluator.name)) continue;
 
             if (evaluator.handler)
                 await evaluator.handler(this, message, state, {}, callback);
