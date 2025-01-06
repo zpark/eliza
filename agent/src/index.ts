@@ -9,6 +9,8 @@ import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
+import { PrimusAdapter } from "@elizaos/plugin-primus";
+
 import {
     AgentRuntime,
     CacheManager,
@@ -540,6 +542,17 @@ export async function createAgent(
             token,
         });
         elizaLogger.log("Verifiable inference adapter initialized");
+    }else if ( 
+        process.env.PRIMUS_APP_ID &&
+        process.env.PRIMUS_APP_SECRET &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"){
+            verifiableInferenceAdapter = new PrimusAdapter({
+                appId: process.env.PRIMUS_APP_ID,
+                appSecret: process.env.PRIMUS_APP_SECRET,
+                modelProvider: character.modelProvider,
+                token,
+            });
+            elizaLogger.log("Verifiable inference primus adapter initialized");
     }
 
     return new AgentRuntime({
