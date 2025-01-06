@@ -400,7 +400,7 @@ export class TwitterPostClient {
     /**
      * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
      */
-    private async generateNewTweet() {
+    async generateNewTweet() {
         elizaLogger.log("Generating new tweet");
 
         try {
