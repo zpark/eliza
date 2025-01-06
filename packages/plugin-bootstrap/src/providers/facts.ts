@@ -12,9 +12,7 @@ const factsProvider: Provider = {
         const recentMessagesData = state?.recentMessagesData?.slice(-10);
 
         const recentMessages = formatMessages({
-            // @ts-expect-error todo
             messages: recentMessagesData,
-            // @ts-expect-error todo
             actors: state?.actorsData,
         });
 

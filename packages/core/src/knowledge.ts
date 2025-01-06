@@ -59,7 +59,6 @@ async function get(
         )
     );
 
-    // @ts-expect-error todo
     return knowledgeDocuments
         .filter((memory) => memory !== null)
         .map((memory) => ({ id: memory.id, content: memory.content }));

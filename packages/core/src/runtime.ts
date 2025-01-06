@@ -32,7 +32,6 @@ import {
     IDatabaseAdapter,
     IMemoryManager,
     KnowledgeItem,
-    Media,
     ModelClass,
     ModelProviderName,
     Plugin,
@@ -610,7 +609,6 @@ export class AgentRuntime implements IAgentRuntime {
                 elizaLogger.info(
                     `Executing handler for action: ${action.name}`
                 );
-
                 await action.handler(this, message, state, {}, callback);
             } catch (error) {
                 elizaLogger.error(error);
@@ -626,7 +624,6 @@ export class AgentRuntime implements IAgentRuntime {
      * @param callback The handler callback
      * @returns The results of the evaluation.
      */
-
     async evaluate(
         message: Memory,
         state: State,
@@ -642,7 +639,6 @@ export class AgentRuntime implements IAgentRuntime {
                 if (!didRespond && !evaluator.alwaysRun) {
                     return null;
                 }
-
                 const result = await evaluator.validate(this, message, state);
                 if (result) {
                     return evaluator;
@@ -679,10 +675,12 @@ export class AgentRuntime implements IAgentRuntime {
             verifiableInferenceAdapter: this.verifiableInferenceAdapter,
         });
 
-        const evaluators = parseJsonArrayFromText(result);
+        const evaluators = parseJsonArrayFromText(
+            result
+        ) as unknown as string[];
 
         for (const evaluator of this.evaluators) {
-            if (!evaluators?.includes(evaluator.name)) continue;
+            if (!evaluators.includes(evaluator.name)) continue;
 
             if (evaluator.handler)
                 await evaluator.handler(this, message, state, {}, callback);
@@ -1201,7 +1199,6 @@ Text: ${attachment.text}
             await Promise.all([
                 Promise.all(evaluatorPromises),
                 Promise.all(actionPromises),
-
                 getProviders(this, message, initialState),
             ]);
 
@@ -1266,7 +1263,7 @@ Text: ${attachment.text}
             }),
         });
 
-        let allAttachments: Media[] = [];
+        let allAttachments = [];
 
         if (recentMessagesData && Array.isArray(recentMessagesData)) {
             const lastMessageWithAttachment = recentMessagesData.find(
@@ -1284,7 +1281,6 @@ Text: ${attachment.text}
                 allAttachments = recentMessagesData
                     .filter((msg) => {
                         const msgTime = msg.createdAt ?? Date.now();
-
                         return msgTime >= oneHourBeforeLastMessage;
                     })
                     .flatMap((msg) => msg.content.attachments || []);
