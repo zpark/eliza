@@ -29,7 +29,7 @@ export class AttachTermsAction {
     }> {
         const storyClient = this.walletProvider.getStoryClient();
 
-        console.log("params", params);
+        elizaLogger.log("params", params);
 
         const licenseTerms: LicenseTerms = {
             transferable: true,
@@ -66,6 +66,7 @@ export class AttachTermsAction {
         const attachTermsResponse =
             await storyClient.license.attachLicenseTerms({
                 ipId: params.ipId,
+                // @ts-expect-error todo
                 licenseTermsId: registerPilTermsResponse.licenseTermsId,
                 txOptions: { waitForTransaction: true },
             });

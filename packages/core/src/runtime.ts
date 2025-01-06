@@ -32,6 +32,7 @@ import {
     IDatabaseAdapter,
     IMemoryManager,
     KnowledgeItem,
+    Media,
     ModelClass,
     ModelProviderName,
     Plugin,
@@ -44,6 +45,9 @@ import {
     type Actor,
     type Evaluator,
     type Memory,
+    IVerifiableInferenceAdapter,
+    VerifiableInferenceOptions,
+    VerifiableInferenceProvider,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -103,8 +107,7 @@ export class AgentRuntime implements IAgentRuntime {
      */
     imageModelProvider: ModelProviderName;
 
-
-     /**
+    /**
      * The model to use for describing images.
      */
     imageVisionModelProvider: ModelProviderName;
@@ -149,6 +152,8 @@ export class AgentRuntime implements IAgentRuntime {
     memoryManagers: Map<string, IMemoryManager> = new Map();
     cacheManager: ICacheManager;
     clients: Record<string, any>;
+
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
 
     registerMemoryManager(manager: IMemoryManager): void {
         if (!manager.tableName) {
@@ -231,6 +236,7 @@ export class AgentRuntime implements IAgentRuntime {
         speechModelPath?: string;
         cacheManager: ICacheManager;
         logging?: boolean;
+        verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     }) {
         elizaLogger.info("Initializing AgentRuntime with options:", {
             character: opts.character?.name,
@@ -271,26 +277,31 @@ export class AgentRuntime implements IAgentRuntime {
         this.cacheManager = opts.cacheManager;
 
         this.messageManager = new MemoryManager({
+            // @ts-expect-error todo
             runtime: this,
             tableName: "messages",
         });
 
         this.descriptionManager = new MemoryManager({
+            // @ts-expect-error todo
             runtime: this,
             tableName: "descriptions",
         });
 
         this.loreManager = new MemoryManager({
+            // @ts-expect-error todo
             runtime: this,
             tableName: "lore",
         });
 
         this.documentsManager = new MemoryManager({
+            // @ts-expect-error todo
             runtime: this,
             tableName: "documents",
         });
 
         this.knowledgeManager = new MemoryManager({
+            // @ts-expect-error todo
             runtime: this,
             tableName: "fragments",
         });
@@ -331,14 +342,13 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         this.imageVisionModelProvider =
-        this.character.imageVisionModelProvider ?? this.modelProvider;
+            this.character.imageVisionModelProvider ?? this.modelProvider;
 
         elizaLogger.info("Selected model provider:", this.modelProvider);
-         elizaLogger.info(
+        elizaLogger.info(
             "Selected image model provider:",
             this.imageVisionModelProvider
-         );
-
+        );
 
         // Validate model provider
         if (!Object.values(ModelProviderName).includes(this.modelProvider)) {
@@ -390,11 +400,14 @@ export class AgentRuntime implements IAgentRuntime {
         (opts.evaluators ?? []).forEach((evaluator: Evaluator) => {
             this.registerEvaluator(evaluator);
         });
+
+        this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
     }
 
     async initialize() {
         for (const [serviceType, service] of this.services.entries()) {
             try {
+                // @ts-expect-error todo
                 await service.initialize(this);
                 this.services.set(serviceType, service);
                 elizaLogger.success(
@@ -412,6 +425,7 @@ export class AgentRuntime implements IAgentRuntime {
         for (const plugin of this.plugins) {
             if (plugin.services)
                 await Promise.all(
+                    // @ts-expect-error todo
                     plugin.services?.map((service) => service.initialize(this))
                 );
         }
@@ -426,22 +440,27 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async stop() {
-      elizaLogger.debug('runtime::stop - character', this.character)
-      // stop services, they don't have a stop function
+        elizaLogger.debug("runtime::stop - character", this.character);
+        // stop services, they don't have a stop function
         // just initialize
 
-      // plugins
+        // plugins
         // have actions, providers, evaluators (no start/stop)
         // services (just initialized), clients
 
-      // client have a start
-      for(const cStr in this.clients) {
-        const c = this.clients[cStr]
-        elizaLogger.log('runtime::stop - requesting', cStr, 'client stop for', this.character.name)
-        c.stop()
-      }
-      // we don't need to unregister with directClient
-      // don't need to worry about knowledge
+        // client have a start
+        for (const cStr in this.clients) {
+            const c = this.clients[cStr];
+            elizaLogger.log(
+                "runtime::stop - requesting",
+                cStr,
+                "client stop for",
+                this.character.name
+            );
+            c.stop();
+        }
+        // we don't need to unregister with directClient
+        // don't need to worry about knowledge
     }
 
     /**
@@ -600,6 +619,7 @@ export class AgentRuntime implements IAgentRuntime {
                 elizaLogger.info(
                     `Executing handler for action: ${action.name}`
                 );
+                // @ts-expect-error todo
                 await action.handler(this, message, state, {}, callback);
             } catch (error) {
                 elizaLogger.error(error);
@@ -615,6 +635,7 @@ export class AgentRuntime implements IAgentRuntime {
      * @param callback The handler callback
      * @returns The results of the evaluation.
      */
+    // @ts-expect-error todo
     async evaluate(
         message: Memory,
         state?: State,
@@ -630,6 +651,7 @@ export class AgentRuntime implements IAgentRuntime {
                 if (!didRespond && !evaluator.alwaysRun) {
                     return null;
                 }
+                // @ts-expect-error todo
                 const result = await evaluator.validate(this, message, state);
                 if (result) {
                     return evaluator;
@@ -647,9 +669,12 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         const context = composeContext({
+            // @ts-expect-error todo
             state: {
                 ...state,
+                // @ts-expect-error todo
                 evaluators: formatEvaluators(evaluatorsData),
+                // @ts-expect-error todo
                 evaluatorNames: formatEvaluatorNames(evaluatorsData),
             },
             template:
@@ -658,19 +683,20 @@ export class AgentRuntime implements IAgentRuntime {
         });
 
         const result = await generateText({
+            // @ts-expect-error todo
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
+            verifiableInferenceAdapter: this.verifiableInferenceAdapter,
         });
 
-        const evaluators = parseJsonArrayFromText(
-            result
-        ) as unknown as string[];
+        const evaluators = parseJsonArrayFromText(result);
 
         for (const evaluator of this.evaluators) {
-            if (!evaluators.includes(evaluator.name)) continue;
+            if (!evaluators?.includes(evaluator.name)) continue;
 
             if (evaluator.handler)
+                // @ts-expect-error todo
                 await evaluator.handler(this, message, state, {}, callback);
         }
 
@@ -797,6 +823,7 @@ export class AgentRuntime implements IAgentRuntime {
             Memory[],
             Goal[],
         ] = await Promise.all([
+            // @ts-expect-error todo
             getActorDetails({ runtime: this, roomId }),
             this.messageManager.getMemories({
                 roomId,
@@ -804,6 +831,7 @@ export class AgentRuntime implements IAgentRuntime {
                 unique: false,
             }),
             getGoals({
+                // @ts-expect-error todo
                 runtime: this,
                 count: 10,
                 onlyInProgress: false,
@@ -849,6 +877,7 @@ export class AgentRuntime implements IAgentRuntime {
             if (lastMessageWithAttachment) {
                 const lastMessageTime = lastMessageWithAttachment.createdAt;
                 const oneHourBeforeLastMessage =
+                    // @ts-expect-error todo
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
                 allAttachments = recentMessagesData
@@ -944,6 +973,7 @@ Text: ${attachment.text}
                 });
 
             // Sort messages by timestamp in descending order
+            // @ts-expect-error todo
             existingMemories.sort((a, b) => b.createdAt - a.createdAt);
 
             // Take the most recent messages
@@ -1160,6 +1190,7 @@ Text: ${attachment.text}
         } as State;
 
         const actionPromises = this.actions.map(async (action: Action) => {
+            // @ts-expect-error todo
             const result = await action.validate(this, message, initialState);
             if (result) {
                 return action;
@@ -1169,6 +1200,7 @@ Text: ${attachment.text}
 
         const evaluatorPromises = this.evaluators.map(async (evaluator) => {
             const result = await evaluator.validate(
+                // @ts-expect-error todo
                 this,
                 message,
                 initialState
@@ -1183,6 +1215,7 @@ Text: ${attachment.text}
             await Promise.all([
                 Promise.all(evaluatorPromises),
                 Promise.all(actionPromises),
+                // @ts-expect-error todo
                 getProviders(this, message, initialState),
             ]);
 
@@ -1247,7 +1280,7 @@ Text: ${attachment.text}
             }),
         });
 
-        let allAttachments = [];
+        let allAttachments: Media[] = [];
 
         if (recentMessagesData && Array.isArray(recentMessagesData)) {
             const lastMessageWithAttachment = recentMessagesData.find(
@@ -1259,11 +1292,13 @@ Text: ${attachment.text}
             if (lastMessageWithAttachment) {
                 const lastMessageTime = lastMessageWithAttachment.createdAt;
                 const oneHourBeforeLastMessage =
+                    // @ts-expect-error todo
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
                 allAttachments = recentMessagesData
                     .filter((msg) => {
                         const msgTime = msg.createdAt;
+                        // @ts-expect-error todo
                         return msgTime >= oneHourBeforeLastMessage;
                     })
                     .flatMap((msg) => msg.content.attachments || []);
@@ -1292,6 +1327,14 @@ Text: ${attachment.text}
             recentMessagesData,
             attachments: formattedAttachments,
         } as State;
+    }
+
+    getVerifiableInferenceAdapter(): IVerifiableInferenceAdapter | undefined {
+        return this.verifiableInferenceAdapter;
+    }
+
+    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter): void {
+        this.verifiableInferenceAdapter = adapter;
     }
 }
 

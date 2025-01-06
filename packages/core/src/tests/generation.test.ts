@@ -129,6 +129,23 @@ describe("Generation", () => {
     });
 
     describe("trimTokens", () => {
+        let mockRuntime: IAgentRuntime;
+
+        beforeEach(() => {
+            mockRuntime = {
+                getSetting: vi.fn().mockImplementation((key: string) => {
+                    switch (key) {
+                        case "TOKENIZER_MODEL":
+                            return "gpt-4";
+                        case "TOKENIZER_TYPE":
+                            return "tiktoken";
+                        default:
+                            return undefined;
+                    }
+                }),
+            } as unknown as IAgentRuntime;
+        });
+
         it("should return empty string for empty input", async () => {
             const result = await trimTokens("", 100, mockRuntime);
             expect(result).toBe("");
@@ -169,10 +186,10 @@ describe("Generation", () => {
 
         it("should handle multiline text", async () => {
             const multilineText = `Line 1
-	Line 2
-	Line 3
-	Line 4
-	Line 5`;
+Line 2
+Line 3
+Line 4
+Line 5`;
             const result = await trimTokens(multilineText, 5, mockRuntime);
             expect(result.length).toBeGreaterThan(0);
             expect(result.length).toBeLessThan(multilineText.length);
