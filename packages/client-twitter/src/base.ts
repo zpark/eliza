@@ -729,28 +729,10 @@ export class ClientBase extends EventEmitter {
         );
     }
 
-    async getCachedProfile(username: string) {
-        return await this.runtime.cacheManager.get<TwitterProfile>(
-            `twitter/${username}/profile`
-        );
-    }
-
-    async cacheProfile(profile: TwitterProfile) {
-        await this.runtime.cacheManager.set(
-            `twitter/${profile.username}/profile`,
-            profile
-        );
-    }
-
     async fetchProfile(username: string): Promise<TwitterProfile> {
-        const cached = await this.getCachedProfile(username);
-
-        if (cached) return cached;
-
         try {
             const profile = await this.requestQueue.add(async () => {
                 const profile = await this.twitterClient.getProfile(username);
-                // console.log({ profile });
                 return {
                     id: profile.userId,
                     username,
@@ -767,13 +749,10 @@ export class ClientBase extends EventEmitter {
                 } satisfies TwitterProfile;
             });
 
-            this.cacheProfile(profile);
-
             return profile;
         } catch (error) {
             console.error("Error fetching Twitter profile:", error);
-
-            return undefined;
+            throw error;
         }
     }
 }

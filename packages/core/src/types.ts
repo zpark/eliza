@@ -137,51 +137,63 @@ export enum ModelClass {
 }
 
 /**
+ * Model settings
+ */
+export type ModelSettings = {
+    /** Model name */
+    name: string;
+
+    /** Maximum input tokens */
+    maxInputTokens: number;
+
+    /** Maximum output tokens */
+    maxOutputTokens: number;
+
+    /** Optional frequency penalty */
+    frequency_penalty?: number;
+
+    /** Optional presence penalty */
+    presence_penalty?: number;
+
+    /** Optional repetition penalty */
+    repetition_penalty?: number;
+
+    /** Stop sequences */
+    stop: string[];
+
+    /** Temperature setting */
+    temperature: number;
+
+    /** Optional telemetry configuration (experimental) */
+    experimental_telemetry?: TelemetrySettings;
+};
+
+/** Image model settings */
+export type ImageModelSettings = {
+    name: string;
+    steps?: number;
+};
+
+/** Embedding model settings */
+export type EmbeddingModelSettings = {
+    name: string;
+    dimensions?: number;
+};
+
+/**
  * Configuration for an AI model
  */
 export type Model = {
     /** Optional API endpoint */
     endpoint?: string;
 
-    /** Model settings */
-    settings: {
-        /** Maximum input tokens */
-        maxInputTokens: number;
-
-        /** Maximum output tokens */
-        maxOutputTokens: number;
-
-        /** Optional frequency penalty */
-        frequency_penalty?: number;
-
-        /** Optional presence penalty */
-        presence_penalty?: number;
-
-        /** Optional repetition penalty */
-        repetition_penalty?: number;
-
-        /** Stop sequences */
-        stop: string[];
-
-        /** Temperature setting */
-        temperature: number;
-
-        /** Optional telemetry configuration (experimental) */
-        experimental_telemetry?: TelemetrySettings;
-    };
-
-    /** Optional image generation settings */
-    imageSettings?: {
-        steps?: number;
-    };
-
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]: string;
-        [ModelClass.MEDIUM]: string;
-        [ModelClass.LARGE]: string;
-        [ModelClass.EMBEDDING]?: string;
-        [ModelClass.IMAGE]?: string;
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };
 
@@ -784,7 +796,9 @@ export type Character = {
         modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
+            // @ts-expect-error todo
             evm?: any[];
+            // @ts-expect-error todo
             solana?: any[];
             [key: string]: any[];
         };
@@ -1126,6 +1140,8 @@ export interface IAgentRuntime {
     // but I think the real solution is forthcoming as a base client interface
     clients: Record<string, any>;
 
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
+
     initialize(): Promise<void>;
 
     registerMemoryManager(manager: IMemoryManager): void;
@@ -1317,6 +1333,64 @@ export interface ActionResponse {
 
 export interface ISlackService extends Service {
     client: any;
+}
+
+/**
+ * Available verifiable inference providers
+ */
+export enum VerifiableInferenceProvider {
+    RECLAIM = "reclaim",
+}
+
+/**
+ * Options for verifiable inference
+ */
+export interface VerifiableInferenceOptions {
+    /** Custom endpoint URL */
+    endpoint?: string;
+    /** Custom headers */
+    headers?: Record<string, string>;
+    /** Provider-specific options */
+    providerOptions?: Record<string, unknown>;
+}
+
+/**
+ * Result of a verifiable inference request
+ */
+export interface VerifiableInferenceResult {
+    /** Generated text */
+    text: string;
+    /** Proof data */
+    proof: unknown;
+    /** Provider information */
+    provider: VerifiableInferenceProvider;
+    /** Timestamp */
+    timestamp: number;
+}
+
+/**
+ * Interface for verifiable inference adapters
+ */
+export interface IVerifiableInferenceAdapter {
+    /**
+     * Generate text with verifiable proof
+     * @param context The input text/prompt
+     * @param modelClass The model class/name to use
+     * @param options Additional provider-specific options
+     * @returns Promise containing the generated text and proof data
+     */
+    generateText(
+        context: string,
+        modelClass: string,
+        options?: VerifiableInferenceOptions
+    ): Promise<VerifiableInferenceResult>;
+
+    /**
+     * Verify the proof of a generated response
+     * @param result The result containing response and proof to verify
+     * @returns Promise indicating if the proof is valid
+     */
+    verifyProof(result: VerifiableInferenceResult): Promise<boolean>;
 }
 
 export enum TokenizerType {
