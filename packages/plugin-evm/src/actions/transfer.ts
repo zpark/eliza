@@ -35,7 +35,6 @@ export class TransferAction {
 
         try {
             const hash = await walletClient.sendTransaction({
-                // @ts-expect-error todo
                 account: walletClient.account,
                 to: params.toAddress,
                 value: parseEther(params.amount),
@@ -56,7 +55,6 @@ export class TransferAction {
 
             return {
                 hash,
-                // @ts-expect-error todo
                 from: walletClient.account.address,
                 to: params.toAddress,
                 value: parseEther(params.amount),

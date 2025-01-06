@@ -241,7 +241,6 @@ export async function generateText({
     const endpoint =
         runtime.character.modelEndpointOverride || getEndpoint(provider);
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    // @ts-expect-error todo
     let model = modelSettings.name;
 
     // allow character.json settings => secrets to override models
@@ -314,25 +313,19 @@ export async function generateText({
 
     const modelConfiguration = runtime.character?.settings?.modelConfig;
     const temperature =
-        // @ts-expect-error todo
         modelConfiguration?.temperature || modelSettings.temperature;
     const frequency_penalty =
         modelConfiguration?.frequency_penalty ||
-        // @ts-expect-error todo
         modelSettings.frequency_penalty;
     const presence_penalty =
-        // @ts-expect-error todo
         modelConfiguration?.presence_penalty || modelSettings.presence_penalty;
     const max_context_length =
-        // @ts-expect-error todo
         modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
         modelConfiguration?.max_response_length ||
-        // @ts-expect-error todo
         modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
-        // @ts-expect-error todo
         modelSettings.experimental_telemetry;
 
     const apiKey = runtime.token;
@@ -346,7 +339,6 @@ export async function generateText({
 
         let response: string;
 
-        // @ts-expect-error todo
         const _stop = stop || modelSettings.stop;
         elizaLogger.debug(
             `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
@@ -364,10 +356,8 @@ export async function generateText({
             case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model.");
                 const openai = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: endpoint,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -396,15 +386,12 @@ export async function generateText({
             case ModelProviderName.ETERNALAI: {
                 elizaLogger.debug("Initializing EternalAI model.");
                 const openai = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
-                        // @ts-expect-error todo
                         const fetching = await runtime.fetch(url, options);
                         if (
                             parseBooleanFromText(
-                                // @ts-expect-error todo
                                 runtime.getSetting("ETERNAL_AI_LOG_REQUEST")
                             )
                         ) {
@@ -444,9 +431,7 @@ export async function generateText({
 
             case ModelProviderName.GOOGLE: {
                 const google = createGoogleGenerativeAI({
-                    // @ts-expect-error todo
                     apiKey,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -476,9 +461,7 @@ export async function generateText({
                 elizaLogger.debug("Initializing Anthropic model.");
 
                 const anthropic = createAnthropic({
-                    // @ts-expect-error todo
                     apiKey,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -508,9 +491,7 @@ export async function generateText({
                 elizaLogger.debug("Initializing Claude Vertex model.");
 
                 const anthropic = createAnthropic({
-                    // @ts-expect-error todo
                     apiKey,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -541,10 +522,8 @@ export async function generateText({
             case ModelProviderName.GROK: {
                 elizaLogger.debug("Initializing Grok model.");
                 const grok = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: endpoint,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -573,7 +552,6 @@ export async function generateText({
             }
 
             case ModelProviderName.GROQ: {
-                // @ts-expect-error todo
                 const groq = createGroq({ apiKey, fetch: runtime.fetch });
 
                 const { text: groqResponse } = await aiGenerateText({
@@ -614,7 +592,6 @@ export async function generateText({
                     context,
                     temperature,
                     _stop,
-                    // @ts-expect-error todo
                     frequency_penalty,
                     presence_penalty,
                     max_response_length
@@ -627,10 +604,8 @@ export async function generateText({
                 elizaLogger.debug("Initializing RedPill model.");
                 const serverUrl = getEndpoint(provider);
                 const openai = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: serverUrl,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -660,10 +635,8 @@ export async function generateText({
                 elizaLogger.debug("Initializing OpenRouter model.");
                 const serverUrl = getEndpoint(provider);
                 const openrouter = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: serverUrl,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -695,7 +668,6 @@ export async function generateText({
 
                     const ollamaProvider = createOllama({
                         baseURL: getEndpoint(provider) + "/api",
-                        // @ts-expect-error todo
                         fetch: runtime.fetch,
                     });
                     const ollama = ollamaProvider(model);
@@ -723,10 +695,8 @@ export async function generateText({
             case ModelProviderName.HEURIST: {
                 elizaLogger.debug("Initializing Heurist model.");
                 const heurist = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey: apiKey,
                     baseURL: endpoint,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -779,10 +749,8 @@ export async function generateText({
                 elizaLogger.debug("Using GAIANET model with baseURL:", baseURL);
 
                 const openai = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey,
                     baseURL: endpoint,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -811,10 +779,8 @@ export async function generateText({
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
                 const galadriel = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey: apiKey,
                     baseURL: endpoint,
-                    // @ts-expect-error todo
                     fetch: runtime.fetch,
                 });
 
@@ -843,7 +809,6 @@ export async function generateText({
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
                 const venice = createOpenAI({
-                    // @ts-expect-error todo
                     apiKey: apiKey,
                     baseURL: endpoint,
                 });
@@ -990,7 +955,6 @@ export async function generateTrueOrFalse({
     let retryDelay = 1000;
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const stop = Array.from(
-        // @ts-expect-error todo
         new Set([...(modelSettings.stop || []), ["\n"]])
     ) as string[];
 
@@ -1161,7 +1125,6 @@ export async function generateMessageResponse({
     modelClass: ModelClass;
 }): Promise<Content> {
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    // @ts-expect-error todo
     const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
@@ -1216,7 +1179,6 @@ export const generateImage = async (
     error?: any;
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
-    // @ts-expect-error todo
     const model = modelSettings.name;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
@@ -1560,7 +1522,7 @@ export const generateCaption = async (
 export const generateWebSearch = async (
     query: string,
     runtime: IAgentRuntime
-): Promise<SearchResponse | undefined> => {
+): Promise<SearchResponse> => {
     try {
         const apiKey = runtime.getSetting("TAVILY_API_KEY") as string;
         if (!apiKey) {
@@ -1638,19 +1600,12 @@ export const generateObject = async ({
 
     const provider = runtime.modelProvider;
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    // @ts-expect-error todo
     const model = modelSettings.name;
-    // @ts-expect-error todo
     const temperature = modelSettings.temperature;
-    // @ts-expect-error todo
     const frequency_penalty = modelSettings.frequency_penalty;
-    // @ts-expect-error todo
     const presence_penalty = modelSettings.presence_penalty;
-    // @ts-expect-error todo
     const max_context_length = modelSettings.maxInputTokens;
-    // @ts-expect-error todo
     const max_response_length = modelSettings.maxOutputTokens;
-    // @ts-expect-error todo
     const experimental_telemetry = modelSettings.experimental_telemetry;
     const apiKey = runtime.token;
 
@@ -1661,11 +1616,8 @@ export const generateObject = async ({
             prompt: context,
             temperature,
             maxTokens: max_response_length,
-            // @ts-expect-error todo
             frequencyPenalty: frequency_penalty,
-            // @ts-expect-error todo
             presencePenalty: presence_penalty,
-            // @ts-expect-error todo
             stop: stop || modelSettings.stop,
             experimental_telemetry: experimental_telemetry,
         };
@@ -1673,7 +1625,6 @@ export const generateObject = async ({
         const response = await handleProvider({
             provider,
             model,
-            // @ts-expect-error todo
             apiKey,
             schema,
             schemaName,
@@ -1794,7 +1745,6 @@ async function handleOpenAI({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1821,7 +1771,6 @@ async function handleAnthropic({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1848,7 +1797,6 @@ async function handleGrok({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1875,7 +1823,6 @@ async function handleGroq({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1902,7 +1849,6 @@ async function handleGoogle({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1929,7 +1875,6 @@ async function handleRedPill({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1959,7 +1904,6 @@ async function handleOpenRouter({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
@@ -1989,7 +1933,6 @@ async function handleOllama({
         schema,
         schemaName,
         schemaDescription,
-        // @ts-expect-error todo
         mode,
         ...modelOptions,
     });
