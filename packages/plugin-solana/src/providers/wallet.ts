@@ -119,44 +119,71 @@ export class WalletProvider {
             }
             console.log("Cache miss for fetchPortfolioValue");
 
-            const walletData = await this.fetchWithRetry(
-                runtime,
-                `${PROVIDER_CONFIG.BIRDEYE_API}/v1/wallet/token_list?wallet=${this.walletPublicKey.toBase58()}`
-            );
+            // Check if Birdeye API key is available
+            const birdeyeApiKey = runtime.getSetting("BIRDEYE_API_KEY");
 
-            if (!walletData?.success || !walletData?.data) {
-                console.error("No portfolio data available", walletData);
-                throw new Error("No portfolio data available");
+            if (birdeyeApiKey) {
+                // Existing Birdeye API logic
+                const walletData = await this.fetchWithRetry(
+                    runtime,
+                    `${PROVIDER_CONFIG.BIRDEYE_API}/v1/wallet/token_list?wallet=${this.walletPublicKey.toBase58()}`
+                );
+
+                if (walletData?.success && walletData?.data) {
+                    // Process Birdeye data as before
+                    const data = walletData.data;
+                    const totalUsd = new BigNumber(data.totalUsd.toString());
+                    const prices = await this.fetchPrices(runtime);
+                    const solPriceInUSD = new BigNumber(prices.solana.usd.toString());
+
+                    const items = data.items.map((item: any) => ({
+                        ...item,
+                        valueSol: new BigNumber(item.valueUsd || 0)
+                            .div(solPriceInUSD)
+                            .toFixed(6),
+                        name: item.name || "Unknown",
+                        symbol: item.symbol || "Unknown",
+                        priceUsd: item.priceUsd || "0",
+                        valueUsd: item.valueUsd || "0",
+                    }));
+
+                    const portfolio = {
+                        totalUsd: totalUsd.toString(),
+                        totalSol: totalUsd.div(solPriceInUSD).toFixed(6),
+                        items: items.sort((a, b) =>
+                            new BigNumber(b.valueUsd).minus(new BigNumber(a.valueUsd)).toNumber()
+                        ),
+                    };
+
+                    this.cache.set(cacheKey, portfolio);
+                    return portfolio;
+                }
             }
 
-            const data = walletData.data;
-            const totalUsd = new BigNumber(data.totalUsd.toString());
-            const prices = await this.fetchPrices(runtime);
-            const solPriceInUSD = new BigNumber(prices.solana.usd.toString());
+            // Fallback to basic token account info if no Birdeye API key or API call fails
+            const accounts = await this.getTokenAccounts(this.walletPublicKey.toBase58());
 
-            const items = data.items.map((item: any) => ({
-                ...item,
-                valueSol: new BigNumber(item.valueUsd || 0)
-                    .div(solPriceInUSD)
-                    .toFixed(6),
-                name: item.name || "Unknown",
-                symbol: item.symbol || "Unknown",
-                priceUsd: item.priceUsd || "0",
-                valueUsd: item.valueUsd || "0",
+            const items = accounts.map(acc => ({
+                name: "Unknown",
+                address: acc.account.mint.toBase58(),
+                symbol: "Unknown",
+                decimals: acc.account.data.parsed.info.tokenAmount.decimals,
+                balance: acc.account.data.parsed.info.tokenAmount.amount,
+                uiAmount: acc.account.data.parsed.info.tokenAmount.uiAmount.toString(),
+                priceUsd: "0",
+                valueUsd: "0",
+                valueSol: "0"
             }));
 
-            const totalSol = totalUsd.div(solPriceInUSD);
             const portfolio = {
-                totalUsd: totalUsd.toString(),
-                totalSol: totalSol.toFixed(6),
-                items: items.sort((a, b) =>
-                    new BigNumber(b.valueUsd)
-                        .minus(new BigNumber(a.valueUsd))
-                        .toNumber()
-                ),
+                totalUsd: "0",
+                totalSol: "0",
+                items
             };
+
             this.cache.set(cacheKey, portfolio);
             return portfolio;
+
         } catch (error) {
             console.error("Error fetching portfolio:", error);
             throw error;
@@ -360,6 +387,21 @@ export class WalletProvider {
         } catch (error) {
             console.error("Error generating portfolio report:", error);
             return "Unable to fetch wallet information. Please try again later.";
+        }
+    }
+
+    private async getTokenAccounts(walletAddress: string) {
+        try {
+            const accounts = await this.connection.getParsedTokenAccountsByOwner(
+                new PublicKey(walletAddress),
+                {
+                    programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
+                }
+            );
+            return accounts.value;
+        } catch (error) {
+            console.error('Error fetching token accounts:', error);
+            return [];
         }
     }
 }
