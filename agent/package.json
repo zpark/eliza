@@ -33,6 +33,7 @@
         "@elizaos/plugin-0g": "workspace:*",
         "@elizaos/plugin-abstract": "workspace:*",
         "@elizaos/plugin-aptos": "workspace:*",
+        "@elizaos/plugin-binance": "workspace:*",
         "@elizaos/plugin-avail": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
         "@ai16z/plugin-cosmos": "workspace:*",
