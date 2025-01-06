@@ -287,9 +287,7 @@ export class LlamaService extends Service {
                     https
                         .get(url, (response) => {
                             if (
-                                // @ts-expect-error todo
                                 response.statusCode >= 300 &&
-                                // @ts-expect-error todo
                                 response.statusCode < 400 &&
                                 response.headers.location
                             ) {
@@ -573,7 +571,6 @@ export class LlamaService extends Service {
             grammarEvaluationState: useGrammar ? this.grammar : undefined,
             yieldEogToken: false,
         })) {
-            // @ts-expect-error todo
             const current = this.model.detokenize([...responseTokens, token]);
             if ([...stop].some((s) => current.includes(s))) {
                 elizaLogger.info("Stop sequence found");
@@ -777,7 +774,6 @@ export class LlamaService extends Service {
             repeatPenalty: repeatPenalty,
             yieldEogToken: false,
         })) {
-            // @ts-expect-error todo
             const current = this.model.detokenize([...responseTokens, token]);
             if (current.includes("\n")) {
                 elizaLogger.info("Stop sequence found");
@@ -807,10 +803,8 @@ export class LlamaService extends Service {
             throw new Error("Sequence not initialized");
         }
 
-        // @ts-expect-error todo
         const embeddingContext = await this.model.createEmbeddingContext();
         const embedding = await embeddingContext.getEmbeddingFor(text);
-        // @ts-expect-error todo
         return embedding?.vector ? [...embedding.vector] : undefined;
     }
 }
