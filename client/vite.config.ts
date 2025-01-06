@@ -1,39 +1,24 @@
-import path from "path";
+import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
-import topLevelAwait from "vite-plugin-top-level-await";
-import react from "@vitejs/plugin-react";
-import wasm from "vite-plugin-wasm";
-import { config } from "dotenv";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-config({ path: path.resolve(__dirname, "../.env") });
+declare module "@remix-run/node" {
+  interface Future {
+    v3_singleFetch: true;
+  }
+}
 
-// https://vite.dev/config/
 export default defineConfig({
-    plugins: [wasm(), topLevelAwait(), react()],
-    optimizeDeps: {
-        exclude: ["onnxruntime-node", "@anush008/tokenizers"],
-    },
-    build: {
-        commonjsOptions: {
-            exclude: ["onnxruntime-node", "@anush008/tokenizers"],
-        },
-        rollupOptions: {
-            external: ["onnxruntime-node", "@anush008/tokenizers"],
-        },
-    },
-    resolve: {
-        alias: {
-            "@": path.resolve(__dirname, "./src"),
-        },
-    },
-    server: {
-        host: true,
-        proxy: {
-            "/api": {
-                target: `http://127.0.0.1:${process.env.SERVER_PORT || 3000}`,
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api/, ""),
-            },
-        },
-    },
+  plugins: [
+    remix({
+      future: {
+        v3_fetcherPersist: true,
+        v3_relativeSplatPath: true,
+        v3_throwAbortReason: true,
+        v3_singleFetch: true,
+        v3_lazyRouteDiscovery: true,
+      },
+    }),
+    tsconfigPaths(),
+  ],
 });
