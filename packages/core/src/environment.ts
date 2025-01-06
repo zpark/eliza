@@ -78,10 +78,7 @@ export const CharacterSchema = z.object({
     adjectives: z.array(z.string()),
     knowledge: z.array(z.string()).optional(),
     clients: z.array(z.nativeEnum(Clients)),
-    plugins: z.union([
-      z.array(z.string()),
-      z.array(PluginSchema),
-    ]),
+    plugins: z.union([z.array(z.string()), z.array(PluginSchema)]),
     settings: z
         .object({
             secrets: z.record(z.string()).optional(),
