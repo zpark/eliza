@@ -117,7 +117,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 case ModelProviderName.TOGETHER:
                 case ModelProviderName.AKASH_CHAT_API:
                     body = {
-                        model,
+                        model: model.name,
                         messages: [{ role: "user", content: context }],
                         temperature:
                             options?.providerOptions?.temperature ||
@@ -127,7 +127,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 case ModelProviderName.ANTHROPIC:
                 case ModelProviderName.CLAUDE_VERTEX:
                     body = {
-                        model,
+                        model: model.name,
                         messages: [{ role: "user", content: context }],
                         max_tokens: models[provider].model[modelClass].maxOutputTokens,
                         temperature:
@@ -137,7 +137,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                     break;
                 case ModelProviderName.GOOGLE:
                     body = {
-                        model,
+                        model: model.name,
                         contents: [
                             { role: "user", parts: [{ text: context }] },
                         ],
@@ -168,10 +168,8 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 ]
             ));
 
-            // Extract text based on provider format
-            // const response = JSON.parse(proof.extractedParameterValues.response);
-            const response = JSON.parse(attestation.reponseResolve);
-            let text = JSON.parse(response.data).content;
+            const responseData = JSON.parse(attestation.data);
+            let text = JSON.parse(responseData.content);
             return {
                 text,
                 proof: attestation,
