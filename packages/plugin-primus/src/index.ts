@@ -1,4 +1,4 @@
-import { PrimusCoreTLS } from "@primuslabs/zktls-core-sdk";
+import { PrimusCoreTLS, Attestation } from "@fksyuan/zktls-core-sdk";
 import {
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
@@ -7,7 +7,6 @@ import {
     ModelProviderName,
     models,
 } from "@elizaos/core";
-import { PrimusZKTLS } from "@primuslabs/zktls-js-sdk";
 
 interface PrimusOptions {
     appId: string;
@@ -46,7 +45,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
         // Get provider-specific endpoint
         let endpoint;
         let authHeader;
-        let responseRegex;
+        let responseParsePath;
 
         switch (provider) {
             case ModelProviderName.OPENAI:
@@ -56,38 +55,38 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
             case ModelProviderName.HYPERBOLIC:
                 endpoint = `${baseEndpoint}/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex =
-                    "\\r\\n\\r\\n[a-f0-9]+\\r\\n(?<response>\\{.*\\})";
+                responseParsePath =
+                    "$.choices[0].message.content";
                 break;
             case ModelProviderName.ANTHROPIC:
             case ModelProviderName.CLAUDE_VERTEX:
                 endpoint = `${baseEndpoint}/messages`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex =
-                    "\\r\\n\\r\\n[a-f0-9]+\\r\\n(?<response>\\{.*\\})";
+                responseParsePath =
+                    "$.content[0].text";
                 break;
             case ModelProviderName.GOOGLE:
                 endpoint = `${baseEndpoint}/models/${model}:generateContent`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex = "(?<response>\\{.*\\})";
+                responseParsePath = "$.candidates[0].content.parts[0].text";
                 break;
             case ModelProviderName.ALI_BAILIAN:
                 endpoint = `${baseEndpoint}/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex = "(?<response>\\{.*\\})";
+                responseParsePath = "$.choices[0].message.content";
                 break;
             case ModelProviderName.VOLENGINE:
                 endpoint = `${baseEndpoint}/text/generation`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex = "(?<response>\\{.*\\})";
+                responseParsePath = "$.choices[0].message.content";
                 break;
             case ModelProviderName.LLAMACLOUD:
             case ModelProviderName.TOGETHER:
             case ModelProviderName.AKASH_CHAT_API:
                 endpoint = `${baseEndpoint}/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
-                responseRegex =
-                    "\\r\\n\\r\\n[a-f0-9]+\\r\\n(?<response>\\{.*\\})";
+                responseParsePath =
+                    "$.choices[0].message.content";
                 break;
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
@@ -96,6 +95,12 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
         const headers = {
             "Content-Type": "application/json",
             ...options?.headers,
+            ...(provider === ModelProviderName.ANTHROPIC || provider === ModelProviderName.CLAUDE_VERTEX
+                ? {
+                    "anthropic-version": "2023-06-01",
+                    "x-api-key": apiKey
+                  }
+                : { "Authorization": authHeader }),
         };
 
         try {
@@ -116,7 +121,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                         messages: [{ role: "user", content: context }],
                         temperature:
                             options?.providerOptions?.temperature ||
-                            models[provider].settings.temperature,
+                            models[provider].model[modelClass].temperature,
                     };
                     break;
                 case ModelProviderName.ANTHROPIC:
@@ -124,10 +129,10 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                     body = {
                         model,
                         messages: [{ role: "user", content: context }],
-                        max_tokens: models[provider].settings.maxOutputTokens,
+                        max_tokens: models[provider].model[modelClass].maxOutputTokens,
                         temperature:
                             options?.providerOptions?.temperature ||
-                            models[provider].settings.temperature,
+                            models[provider].model[modelClass].temperature,
                     };
                     break;
                 case ModelProviderName.GOOGLE:
@@ -139,7 +144,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                         generationConfig: {
                             temperature:
                                 options?.providerOptions?.temperature ||
-                                models[provider].settings.temperature,
+                                models[provider].model[modelClass].temperature,
                         },
                     };
                     break;
@@ -147,44 +152,26 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                     throw new Error(`Unsupported model provider: ${provider}`);
             }
 
-            // modify by echo wu this place need to be check again
-            this.client.setAdditionParams({
-                agentName: "eliza-agent",
-            })
             const attestation = await this.client.startAttestation(this.client.generateRequestParams(
                 {
                     url: endpoint,
                     method: "POST",
-                    headers,
+                    header: headers,
                     body: JSON.stringify(body),
                 },
-                  [
+                [
                     {
-                        keyName: 'code',
-                        parsePath: '$.code',
+                        keyName: 'content',
+                        parsePath: responseParsePath,
                         parseType: 'string'
                     }
                 ]
-            ))
+            ));
 
             // Extract text based on provider format
             // const response = JSON.parse(proof.extractedParameterValues.response);
             const response = JSON.parse(attestation.reponseResolve);
-            let text = "";
-            switch (provider) {
-                case ModelProviderName.GOOGLE:
-                    text =
-                        response.candidates?.[0]?.content?.parts?.[0]?.text ||
-                        "";
-                    break;
-                case ModelProviderName.ANTHROPIC:
-                case ModelProviderName.CLAUDE_VERTEX:
-                    text = response.content?.[0]?.text || "";
-                    break;
-                default:
-                    text = response.choices?.[0]?.message?.content || "";
-            }
-
+            let text = JSON.parse(response.data).content;
             return {
                 text,
                 proof: attestation,
@@ -199,7 +186,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
 
     async verifyProof(result: VerifiableInferenceResult): Promise<boolean> {
         // Primus response is self-verifying
-        const isValid = await PrimusCoreTLS.verifyAttestation(result.proof as attestation);
+        const isValid = await this.client.verifyAttestation(result.proof as Attestation);
         console.log("Proof is valid:", isValid);
         return isValid;
     }
