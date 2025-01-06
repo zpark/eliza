@@ -50,8 +50,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Meta />
                 <Links />
             </head>
-            <QueryClientProvider client={queryClient}>
-                <body>
+
+            <body>
+                <QueryClientProvider client={queryClient}>
                     <SidebarProvider>
                         <AppSidebar />
                         <SidebarInset>
@@ -60,11 +61,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </div>
                         </SidebarInset>
                     </SidebarProvider>
-                    <ScrollRestoration />
-                    <Scripts />
-                    <LiveReload />
-                </body>
-            </QueryClientProvider>
+                </QueryClientProvider>
+            </body>
+            <ScrollRestoration />
+            <Scripts />
         </html>
     );
 }

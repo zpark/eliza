@@ -3,7 +3,6 @@ import { Button } from "~/components/ui/button";
 import {
     ChatBubble,
     ChatBubbleAction,
-    ChatBubbleAvatar,
     ChatBubbleMessage,
 } from "~/components/ui/chat/chat-bubble";
 import { ChatInput } from "~/components/ui/chat/chat-input";
@@ -12,12 +11,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
     CopyIcon,
     CornerDownLeft,
-    Mic,
     Paperclip,
     RefreshCcw,
     Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { UUID } from "@elizaos/core";
 
 const ChatAiIcons = [
     {
@@ -34,7 +33,7 @@ const ChatAiIcons = [
     },
 ];
 
-export default function Page() {
+export default function Page({ agentId }: { agentId: UUID }) {
     const [messages, setMessages]: any[] = useState([]);
     const selectedUser = {
         name: "AAA",
@@ -89,8 +88,8 @@ export default function Page() {
     }, []);
 
     return (
-        <div className="flex flex-col w-full h-[calc(100dvh)]">
-            <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
+            <div className="flex-1 overflow-y-auto bg-card rounded-t-md border-t border-l border-r">
                 <ChatMessageList ref={messagesContainerRef}>
                     {/* Chat messages */}
                     <AnimatePresence>
@@ -194,18 +193,18 @@ export default function Page() {
                     </AnimatePresence>
                 </ChatMessageList>
             </div>
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-4 bg-card rounded-b-md border-b border-l border-r">
                 <form
                     ref={formRef}
                     onSubmit={handleSendMessage}
-                    className="relative rounded-lg border bg-background"
+                    className="relative rounded-md border bg-background"
                 >
                     <ChatInput
                         ref={inputRef}
                         onKeyDown={handleKeyDown}
                         onChange={({ target }) => setInput(target.value)}
                         placeholder="Type your message here..."
-                        className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
+                        className="min-h-12 resize-none rounded-md bg-background border-0 p-3 shadow-none focus-visible:ring-0"
                     />
                     <div className="flex items-center p-3 pt-0">
                         <Button variant="ghost" size="icon">

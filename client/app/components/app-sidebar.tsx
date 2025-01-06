@@ -12,6 +12,7 @@ import {
     SidebarMenuItem,
 } from "~/components/ui/sidebar";
 import { apiClient } from "~/lib/api";
+import { Separator } from "./ui/separator";
 
 export function AppSidebar() {
     const query = useQuery({
@@ -43,7 +44,7 @@ export function AppSidebar() {
                                     <Link to={`/chat/${agent.id}`}>
                                         <SidebarMenuButton>
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 bg-muted rounded-lg uppercase aspect-square grid place-items-center">
+                                                <div className="w-8 bg-muted rounded-md uppercase aspect-square grid place-items-center">
                                                     {agent?.name?.substring(
                                                         0,
                                                         2

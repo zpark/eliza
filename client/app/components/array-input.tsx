@@ -11,10 +11,10 @@ export default function ArrayInput({
     return (
         <div className="space-y-2">
             <Label>{title}</Label>
-            <div className="p-2 rounded-lg border">
+            <div className="p-2 bg-card rounded-md border">
                 <div className="space-y-2">
                     {data?.map((b: string, idx: number) => (
-                        <Input value={b} key={idx} />
+                        <Input value={b} key={idx} className="bg-background" />
                     ))}
                 </div>
             </div>

@@ -38,7 +38,7 @@ export default function Index() {
                             <CardTitle>{agent?.name}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="rounded-lg bg-muted aspect-square w-full grid place-items-center">
+                            <div className="rounded-md bg-muted aspect-square w-full grid place-items-center">
                                 <div className="text-6xl font-bold uppercase">
                                     {agent?.name?.substring(0, 2)}
                                 </div>
