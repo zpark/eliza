@@ -1,4 +1,4 @@
-import { Action, ActionExample, IAgentRuntime, Memory } from "@ai16z/eliza";
+import { Action, ActionExample, IAgentRuntime, Memory } from "@elizaos/core";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 
 export const endOrder: Action = {

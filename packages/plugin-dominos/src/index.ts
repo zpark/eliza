@@ -1,4 +1,4 @@
-import { Plugin } from "@ai16z/eliza";
+import { Plugin } from "@elizaos/core";
 import { startOrder } from "./actions/startOrder.ts";
 import { pizzaOrderProvider } from "./providers/pizzaOrder.ts";
 import { endOrder } from "./actions/endOrder.ts";

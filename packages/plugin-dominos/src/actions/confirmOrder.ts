@@ -1,4 +1,4 @@
-import { Action, IAgentRuntime, Memory } from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory } from "@elizaos/core";
 import { PizzaOrderManager } from "../PizzaOrderManager";
 import { OrderStatus } from "../types";
 

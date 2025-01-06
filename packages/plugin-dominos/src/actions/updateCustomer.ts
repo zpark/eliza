@@ -8,7 +8,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { Customer, Payment } from "dominos";
 import { z } from "zod";
 import { PizzaOrderManager } from "../PizzaOrderManager";
