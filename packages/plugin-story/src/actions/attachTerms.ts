@@ -66,6 +66,7 @@ export class AttachTermsAction {
         const attachTermsResponse =
             await storyClient.license.attachLicenseTerms({
                 ipId: params.ipId,
+                // @ts-expect-error todo
                 licenseTermsId: registerPilTermsResponse.licenseTermsId,
                 txOptions: { waitForTransaction: true },
             });

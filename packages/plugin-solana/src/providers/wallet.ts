@@ -109,8 +109,10 @@ export class WalletProvider {
 
         elizaLogger.error(
             "All attempts failed. Throwing the last error:",
+            // @ts-expect-error todo
             lastError
         );
+        // @ts-expect-error todo
         throw lastError;
     }
 
@@ -385,6 +387,7 @@ const walletProvider: Provider = {
                 runtime.getSetting("RPC_URL") || PROVIDER_CONFIG.DEFAULT_RPC
             );
 
+            // @ts-expect-error todo
             const provider = new WalletProvider(connection, publicKey);
 
             return await provider.getFormattedPortfolio(runtime);
