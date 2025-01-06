@@ -782,4 +782,17 @@ export class PizzaOrderManager implements OrderManager {
         if (!order.items[0].toppings?.length) return "What toppings would you like?";
         return "Would you like to add any more items to your order?";
     }
+
+    getNextRequiredAction(order: Order, customer: Customer): string {
+        if (!customer.name || !customer.phone || !customer.email || !customer.address) {
+            return "Customer information needs to be completed";
+        }
+        if (order.paymentStatus !== PaymentStatus.VALID) {
+            return "Payment information needs to be provided";
+        }
+        if (order.status === OrderStatus.PROCESSING) {
+            return "Order needs to be confirmed";
+        }
+        return "No additional actions required";
+    }
 }
