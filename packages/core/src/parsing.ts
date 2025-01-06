@@ -22,9 +22,9 @@ export const parseShouldRespondFromText = (
     const match = text
         .split("\n")[0]
         .trim()
-        .replace("[", "")
+        .replace(/\[/g, "")
         .toUpperCase()
-        .replace("]", "")
+        .replace(/\]/g, "")
         .match(/^(RESPOND|IGNORE|STOP)$/i);
     return match
         ? (match[0].toUpperCase() as "RESPOND" | "IGNORE" | "STOP")
@@ -43,9 +43,9 @@ export const parsePizzaDecisionFromText = (
     const match = text
         .split('\n')[0]
         .trim()
-        .replace("[", "")
+        .replace(/\[/g, "")
         .toUpperCase()
-        .replace("]", "")
+        .replace(/\]/g, "")
         .match(/^(YES|NO)$/i);
     return match
         ? (match[0].toUpperCase() as "YES" | "NO")
