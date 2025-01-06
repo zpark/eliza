@@ -182,7 +182,6 @@ export const createCoinbaseChargeAction: Action = {
         try {
             // Create a charge
             const chargeResponse = await createCharge(
-                // @ts-expect-error todo
                 runtime.getSetting("COINBASE_COMMERCE_KEY"),
                 {
                     local_price: {
@@ -344,7 +343,6 @@ export const getAllChargesAction: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
             const charges = await getAllCharges(
-                // @ts-expect-error todo
                 runtime.getSetting("COINBASE_COMMERCE_KEY")
             );
 
@@ -435,7 +433,6 @@ export const getChargeDetailsAction: Action = {
 
         try {
             const chargeDetails = await getChargeDetails(
-                // @ts-expect-error todo
                 runtime.getSetting("COINBASE_COMMERCE_KEY"),
                 charge.id
             );
@@ -494,7 +491,6 @@ export const chargeProvider: Provider = {
     get: async (runtime: IAgentRuntime, _message: Memory) => {
         elizaLogger.debug("Starting chargeProvider.get function");
         const charges = await getAllCharges(
-            // @ts-expect-error todo
             runtime.getSetting("COINBASE_COMMERCE_KEY")
         );
         // Ensure API key is available
