@@ -64,14 +64,11 @@ import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
-<<<<<<< HEAD
-import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
-=======
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
->>>>>>> ed16b0c170e9aeb1886dcd08443fa49ef2a50d2c
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
