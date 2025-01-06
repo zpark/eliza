@@ -1,5 +1,6 @@
 import {
     Links,
+    LiveReload,
     Meta,
     Outlet,
     Scripts,
@@ -61,6 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </SidebarProvider>
                     <ScrollRestoration />
                     <Scripts />
+                    <LiveReload />
                 </body>
             </QueryClientProvider>
         </html>

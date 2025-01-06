@@ -1,5 +1,5 @@
+import { Link } from "@remix-run/react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 
 import {
     Sidebar,
@@ -30,14 +30,19 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {agents?.map((agent) => (
                                 <SidebarMenuItem key={agent.id}>
-                                    <SidebarMenuButton>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 bg-muted rounded-lg uppercase aspect-square grid place-items-center">
-                                                {agent?.name?.substring(0,2)}
+                                    <Link to={`/agent/${agent.id}`}>
+                                        <SidebarMenuButton>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 bg-muted rounded-lg uppercase aspect-square grid place-items-center">
+                                                    {agent?.name?.substring(
+                                                        0,
+                                                        2
+                                                    )}
+                                                </div>
+                                                <span>{agent.name}</span>
                                             </div>
-                                            <span>{agent.name}</span>
-                                        </div>
-                                    </SidebarMenuButton>
+                                        </SidebarMenuButton>
+                                    </Link>
                                 </SidebarMenuItem>
                             ))}
                         </SidebarMenu>
