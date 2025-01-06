@@ -798,9 +798,7 @@ export type Character = {
         modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
-            // @ts-expect-error todo
             evm?: any[];
-            // @ts-expect-error todo
             solana?: any[];
             [key: string]: any[];
         };
@@ -1222,7 +1220,7 @@ export interface IAgentRuntime {
         state?: State,
         didRespond?: boolean,
         callback?: HandlerCallback
-    ): Promise<string[]>;
+    ): Promise<string[] | null>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
 

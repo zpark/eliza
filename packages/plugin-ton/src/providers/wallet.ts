@@ -61,7 +61,6 @@ export class WalletProvider {
         const cached = await this.cacheManager.get<T>(
             path.join(this.cacheKey, key)
         );
-        // @ts-expect-error todo
         return cached;
     }
 
@@ -128,10 +127,8 @@ export class WalletProvider {
 
         console.error(
             "All attempts failed. Throwing the last error:",
-            // @ts-expect-error todo
             lastError
         );
-        // @ts-expect-error todo
         throw lastError;
     }
 
