@@ -24,7 +24,7 @@ Number of characters to overlap between chunks (default: 100)
 
 `Promise`\<`string`[]\>
 
-Promise resolving to array of text chunks with bleed sections
+Promise resolving to an array of text chunks with bleed sections
 
 ## Defined in
 
