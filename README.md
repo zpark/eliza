@@ -12,7 +12,7 @@
 
 ## 🌍 README Translations
 
-[中文说明](./README_CN.md) | [日本語の説明](./README_JA.md) | [한국어 설명](./README_KOR.md) | [Français](./README_FR.md) | [Português](./README_PTBR.md) | [Türkçe](./README_TR.md) | [Русский](./README_RU.md) | [Español](./README_ES.md) | [Italiano](./README_IT.md) | [ไทย](./README_TH.md) | [Deutsch](./README_DE.md) | [Tiếng Việt](./README_VI.md) | [עִברִית](https://github.com/elizaos/Elisa/blob/main/README_HE.md) | [Tagalog](./README_TG.md) | [Polski](./README_PL.md) | [Arabic](./README_AR.md) | [Hungarian](./README_HU.md) | [Srpski](./README_RS.md)
+[中文说明](./README_CN.md) | [日本語の説明](./README_JA.md) | [한국어 설명](./README_KOR.md) | [Français](./README_FR.md) | [Português](./README_PTBR.md) | [Türkçe](./README_TR.md) | [Русский](./README_RU.md) | [Español](./README_ES.md) | [Italiano](./README_IT.md) | [ไทย](./README_TH.md) | [Deutsch](./README_DE.md) | [Tiếng Việt](./README_VI.md) | [עִברִית](https://github.com/elizaos/Elisa/blob/main/README_HE.md) | [Tagalog](./README_TG.md) | [Polski](./README_PL.md) | [Arabic](./README_AR.md) | [Hungarian](./README_HU.md) | [Srpski](./README_RS.md) | [Română](./README_RO.md)
 
 ## 🚩 Overview
 
@@ -42,17 +42,6 @@
 - 📈 Business Process Handling
 - 🎮 Video Game NPCs
 - 🧠 Trading
-
-## 💰 If you plan to launch a token
-
-This framework is the number one open source project on github, we are enabling the next generation of human-machine interface but we still need your help to ensure the code is of the utmost quality with response rapid to critical issues that will affect our builder community at large.
-
-To ensure sustainable development and continued innovation, we ask contributions of 5-10% of initial token distributions from successful launches.
-
-All contributions are publicly tracked on-chain and used exclusively for ecosystem development.
-
-### ⚠️ Don't forget to tip the big guy 10%: ⚠️
-[AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG](https://solscan.io/account/AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG)
 
 ## 🚀 Quick Start
 
@@ -106,7 +95,6 @@ cp .env.example .env
 ```
 
 Note: .env is optional. If you're planning to run multiple distinct agents, you can pass secrets through the character JSON
-Note: .env is optional. If you're planning to run multiple distinct agents, you can pass secrets through the character JSON
 
 ### Automatically Start Eliza
 
@@ -149,7 +137,6 @@ pnpm install --include=optional sharp
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). Best for: bugs you encounter using Eliza, and feature proposals.
 - [Discord](https://discord.gg/ai16z). Best for: sharing your applications and hanging out with the community.
-- [Developer Discord](https://discord.gg/3f67SH4rXT). Best for: getting help and plugin development.
 
 ## Contributors
 
