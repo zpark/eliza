@@ -1,4 +1,4 @@
-import { elizaLogger, models } from "@elizaos/core";
+import { elizaLogger, getEndpoint, models } from "@elizaos/core";
 import { Service } from "@elizaos/core";
 import {
     IAgentRuntime,
@@ -51,7 +51,9 @@ export class ImageDescriptionService
         env.allowLocalModels = false;
         env.allowRemoteModels = true;
         env.backends.onnx.logLevel = "fatal";
+        // @ts-expect-error todo
         env.backends.onnx.wasm.proxy = false;
+        // @ts-expect-error todo
         env.backends.onnx.wasm.numThreads = 1;
 
         elizaLogger.info("Downloading Florence model...");
@@ -93,6 +95,7 @@ export class ImageDescriptionService
         imageUrl: string
     ): Promise<{ title: string; description: string }> {
         if (!this.initialized) {
+            // @ts-expect-error todo
             const model = models[this.runtime?.character?.modelProvider];
 
             if (model === models[ModelProviderName.LLAMALOCAL]) {
@@ -190,6 +193,7 @@ export class ImageDescriptionService
                 const shouldUseBase64 =
                     (isGif || isLocalFile) &&
                     !(
+                        // @ts-expect-error todo
                         this.runtime.imageModelProvider ===
                         ModelProviderName.OPENAI
                     );
@@ -213,13 +217,16 @@ export class ImageDescriptionService
                 ];
                 // If model provider is openai, use the endpoint, otherwise use the default openai endpoint.
                 const endpoint =
+                    // @ts-expect-error todo
                     this.runtime.imageModelProvider === ModelProviderName.OPENAI
-                        ? models[this.runtime.imageModelProvider].endpoint
+                        // @ts-expect-error todo
+                        ? getEndpoint(this.runtime.imageModelProvider)
                         : "https://api.openai.com/v1";
                 const response = await fetch(endpoint + "/chat/completions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        // @ts-expect-error todo
                         Authorization: `Bearer ${this.runtime.getSetting("OPENAI_API_KEY")}`,
                     },
                     body: JSON.stringify({
@@ -263,6 +270,7 @@ export class ImageDescriptionService
         this.processing = true;
         while (this.queue.length > 0) {
             const imageUrl = this.queue.shift();
+            // @ts-expect-error todo
             await this.processImage(imageUrl);
         }
         this.processing = false;
