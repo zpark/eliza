@@ -25,6 +25,14 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarContent>
                 <SidebarGroup>
+                    <SidebarGroupLabel>
+                        <img
+                            src="/elizaos.webp"
+                            width="100%"
+                            height="100%"
+                            className="w-32"
+                        />
+                    </SidebarGroupLabel>
                     <SidebarGroupLabel>Agents</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
