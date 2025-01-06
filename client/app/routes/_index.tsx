@@ -11,15 +11,8 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-    const query = useQuery({
-        queryKey: ["agents"],
-        queryFn: () => apiClient.getAgents()
-    });
-
-    console.log(query)
-
     return (
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-full">
             <Button>Hello World</Button>
         </div>
     );

@@ -44,5 +44,5 @@ const fetcher = async ({
 export const apiClient = {
     sendMessage: (agentId: string) =>
         fetcher({ url: `/${agentId}/message`, method: "POST" }),
-    getAgents: () => fetcher({ url: "/agents" }),
+    getAgents: ()=> fetcher({ url: "/agents" }),
 };
