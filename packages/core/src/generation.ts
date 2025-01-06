@@ -212,9 +212,10 @@ export async function generateText({
         model: modelClass,
         verifiableInference,
     });
-
+    elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
+        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
         try {
             const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
@@ -222,6 +223,7 @@ export async function generateText({
                     modelClass,
                     verifiableInferenceOptions
                 );
+            elizaLogger.log("Verifiable inference result:", result);
             // Verify the proof
             const isValid =
                 await runtime.verifiableInferenceAdapter.verifyProof(result);

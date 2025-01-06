@@ -29,6 +29,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         options?: VerifiableInferenceOptions
     ): Promise<VerifiableInferenceResult> {
         const provider = this.options.modelProvider || ModelProviderName.OPENAI;
+
         const baseEndpoint =
             options?.endpoint ||
             `https://gateway.ai.cloudflare.com/v1/${this.options.teamId}/${this.options.teamName}`;
@@ -44,11 +45,12 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         let endpoint;
         let authHeader;
         let responseRegex;
-
+        elizaLogger.log("Using provider:", provider);
         switch (provider) {
             case ModelProviderName.OPENAI:
                 endpoint = `${baseEndpoint}/openai/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
+                elizaLogger.log("Using OpenAI endpoint:", endpoint);
                 break;
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
@@ -78,20 +80,23 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
                 ...options?.headers,
             };
             // // get cloudflare response
+            elizaLogger.log("Fetching cloudflare response with body: ", body);
             const cloudflareResponse = await fetch(endpoint, {
                 headers: headers,
                 body: JSON.stringify(body),
                 method: "POST",
             });
+            elizaLogger.log("Cloudflare response:", cloudflareResponse);
             const cloudflareLogId =
             cloudflareResponse.headers.get("cf-aig-log-id");
+            elizaLogger.log("Cloudflare log ID:", cloudflareLogId);
             const cloudflareResponseJson = await cloudflareResponse.json();
 
             const proof = await this.generateProof(
                 this.options.opacityProverUrl,
                 cloudflareLogId
             );
-            elizaLogger.debug("Proof generated for text generation ID:", cloudflareLogId);
+            elizaLogger.log("Proof generated for text generation ID:", cloudflareLogId);
 
             // // Extract text based on provider format
             const text = cloudflareResponseJson.choices[0].message.content;

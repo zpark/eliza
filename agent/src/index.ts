@@ -560,6 +560,11 @@ export async function createAgent(
             token: token,
         });
         elizaLogger.log("Verifiable inference adapter initialized");
+        elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
+        elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
+        elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
+        elizaLogger.log("modelProvider", character.modelProvider);
+        elizaLogger.log("token", token);
     }
 
     return new AgentRuntime({
@@ -674,7 +679,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        // verifiableInferenceAdapter,
+        verifiableInferenceAdapter,
     });
 }
 
