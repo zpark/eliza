@@ -10,7 +10,7 @@ import {
     State,
     type Action,
 } from "@elizaos/core";
-import { BinanceService } from "../services/BinanceService";
+import { BinanceService } from "../services";
 import { SpotTradeSchema } from "../types";
 
 const spotTradeTemplate = `Look at your LAST RESPONSE in the conversation where you confirmed a trade/swap request.

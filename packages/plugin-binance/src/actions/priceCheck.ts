@@ -10,7 +10,7 @@ import {
     State,
     type Action,
 } from "@elizaos/core";
-import { BinanceService } from "../services/BinanceService";
+import { BinanceService } from "../services";
 
 const priceCheckTemplate = `Look at ONLY your LAST RESPONSE message in this conversation, where you just said which cryptocurrency price you would check.
 Based on ONLY that last message, provide the trading symbol.

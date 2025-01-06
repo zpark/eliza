@@ -11,7 +11,7 @@ import {
     type Action,
 } from "@elizaos/core";
 import { validateBinanceConfig } from "../environment";
-import { BinanceService } from "../services/BinanceService";
+import { BinanceService } from "../services";
 import { BalanceCheckRequest } from "../types";
 
 const spotBalanceTemplate = `Look at ONLY your LAST RESPONSE message in this conversation, where you just confirmed which cryptocurrency balance to check.
