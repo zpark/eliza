@@ -1476,3 +1476,8 @@ export enum TranscriptionProvider {
     Deepgram = "deepgram",
     Local = "local",
 }
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
+}
