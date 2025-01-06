@@ -72,9 +72,8 @@ export const letzAiImageGeneration = {
     ],
 };
 
-t letzAIPlugin = {
+export const letzAIPlugin = {
     name: "letzai",
     actions: [letzAiImageGeneration],
 };
 
-export default letzAIPlugin;
