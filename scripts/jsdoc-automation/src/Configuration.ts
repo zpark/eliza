@@ -42,12 +42,12 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
     private _branch: string = "develop";
     private _language: string = "English";
     private _generateJsDoc: boolean = true;
-    private _generateReadme: boolean = true;
+    private _generateReadme: boolean = false;
 
     public excludedDirectories: string[] = [];
     public repository: Repository = {
-        owner: "elizaOS",
-        name: "eliza",
+        owner: "AudixAI",
+        name: "eliza-jsdoc",
         pullNumber: undefined,
     };
     public commitMessage: string = "Generated JSDoc comments";

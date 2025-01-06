@@ -20,7 +20,7 @@ on:
             root_directory:
                 description: "Only scans files in this directory (relative to repository root, e.g., packages/core/src)"
                 required: true
-                default: "packages/plugin-near/"
+                default: "packages/plugin-bootstrap-mini"
                 type: string
             excluded_directories:
                 description: "Directories to exclude from scanning (comma-separated, relative to root_directory)"
