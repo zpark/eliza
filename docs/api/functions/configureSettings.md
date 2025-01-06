@@ -10,7 +10,7 @@ Configures environment settings for browser usage
 
 • **settings**: `Settings`
 
-Object containing environment variables
+The object containing environment variables
 
 ## Returns
 
