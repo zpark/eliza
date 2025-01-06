@@ -5,6 +5,7 @@ import {
     IIrysService,
     UploadIrysResult,
     DataIrysFetchedFromGQL,
+    GraphQLTag
 } from "@elizaos/core";
 import { Uploader } from "@irys/upload";
 import { BaseEth } from "@irys/upload-ethereum";
@@ -39,9 +40,14 @@ export class IrysService extends Service implements IIrysService {
         this.runtime = runtime;
     }
 
-    private async getTransactionId(owners: string[]): Promise<TransactionsId> {
+    private async getTransactionId(owners: string[], tags: GraphQLTag[]): Promise<TransactionsId> {
         const graphQLClient = new GraphQLClient(this.endpointForTransactionId);
-        const QUERY = gql`
+        if (owners.length == 0 && tags.length == 0) {
+            return { success: false, transactions: [], error: "No owners or tags provided" };
+        }
+        let QUERY = "";
+        if (owners.length > 0 && tags.length > 0) {
+            QUERY = gql`
             query($owners: [String!]) {
                 transactions(owners: $owners) {
                     edges {
@@ -52,9 +58,36 @@ export class IrysService extends Service implements IIrysService {
                 }
             }
         `;
+        } else if (owners.length > 0) {
+            QUERY = gql`
+            query($owners: [String!]) {
+                transactions(owners: $owners) {
+                    edges {
+                        node {
+                            id
+                        }
+                    }
+                }
+            }
+        `;
+        }
+        else if (tags.length > 0) {
+            QUERY = gql`
+            query($tags: [TagFilter!]) {
+                transactions(tags: $tags) {
+                    edges {
+                        node {
+                            id
+                        }
+                    }
+                }
+            }
+        `;
+        }
         try {
             const variables = {
                 owners: owners,
+                tags: tags,
             }
             const data: TransactionGQL = await graphQLClient.request(QUERY, variables);
             const transactionIds = data.transactions.edges.map((edge: any) => edge.node.id);
@@ -93,7 +126,7 @@ export class IrysService extends Service implements IIrysService {
         };
     }
 
-    async uploadDataOnIrys(data: any): Promise<UploadIrysResult> {
+    async uploadDataOnIrys(data: any, tags: GraphQLTag[]): Promise<UploadIrysResult> {
         if (!(await this.initializeIrysUploader())) {
             return {
                 success: false,
@@ -104,17 +137,17 @@ export class IrysService extends Service implements IIrysService {
         try {
             const dataToStore = {
                 data: data,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
             };
 
-            const receipt = await this.irysUploader.upload(JSON.stringify(dataToStore));
+            const receipt = await this.irysUploader.upload(JSON.stringify(dataToStore), { tags: tags });
             return { success: true, url: `https://gateway.irys.xyz/${receipt.id}` };
         } catch (error) {
             return { success: false, error: "Error uploading to Irys, " + error };
         }
     }
 
-    async uploadFileOrImageOnIrys(data: string): Promise<UploadIrysResult> {
+    async uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult> {
         if (!(await this.initializeIrysUploader())) {
             return {
                 success: false,
@@ -123,16 +156,16 @@ export class IrysService extends Service implements IIrysService {
         }
 
         try {
-            const receipt = await this.irysUploader.uploadFile(data);
+            const receipt = await this.irysUploader.uploadFile(data, { tags: tags });
             return { success: true, url: `https://gateway.irys.xyz/${receipt.id}` };
         } catch (error) {
             return { success: false, error: "Error uploading to Irys, " + error };
         }
     }
 
-    async getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<DataIrysFetchedFromGQL> {
+    async getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[]): Promise<DataIrysFetchedFromGQL> {
         try {
-            const transactionIdsResponse = await this.getTransactionId(agentsWalletPublicKeys);
+            const transactionIdsResponse = await this.getTransactionId(agentsWalletPublicKeys, tags);
             if (!transactionIdsResponse.success) return { success: false, data: null, error: "Error fetching transaction IDs" };
             const transactionIds = transactionIdsResponse.transactions;
             const dataPromises: Promise<any>[] = transactionIds.map(async (id) => {

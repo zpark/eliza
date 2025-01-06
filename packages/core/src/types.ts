@@ -1239,10 +1239,15 @@ export interface DataIrysFetchedFromGQL {
     error?: string;
 }
 
+export interface GraphQLTag {
+    name: string;
+    values: string[];
+}
+
 export interface IIrysService extends Service {
-    uploadDataOnIrys(data: any): Promise<UploadIrysResult>;
-    getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<DataIrysFetchedFromGQL>;
-    uploadFileOrImageOnIrys(data: string): Promise<UploadIrysResult>;
+    uploadDataOnIrys(data: any, tags: GraphQLTag[]): Promise<UploadIrysResult>;
+    getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[]): Promise<DataIrysFetchedFromGQL>;
+    uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult>;
 }
 
 export type SearchResult = {
