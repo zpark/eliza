@@ -76,7 +76,7 @@ const handler: Handler = async (
     });
 
     try {
-        const orderDetails = (await generateObjectV2({
+        const orderDetails = (await generateObject({
             runtime,
             context,
             modelClass: ModelClass.LARGE,
