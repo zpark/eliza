@@ -16,7 +16,7 @@ An object containing the following properties:
 - **template**: `string | Function`
   A string or function returning a string containing placeholders in the format `{{placeholder}}`.
 
-- **templatingEngine**: `"handlebars" | undefined` _(optional)_
+- **templatingEngine**: `"handlebars" | undefined` _(optional)_  
   The templating engine to use. If set to `"handlebars"`, the Handlebars engine is used for template compilation. Defaults to `undefined` (simple string replacement).
 
 ## Returns
