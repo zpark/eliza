@@ -68,6 +68,7 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
+import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -602,7 +603,7 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt
-                ? [teePlugin, solanaPlugin]
+                ? [teePlugin]
                 : []),
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
@@ -641,6 +642,9 @@ export async function createAgent(
                 : null,
             getSecret(character, "AVAIL_SEED") ? availPlugin : null,
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
+            getSecret(character, "OPEN_WEATHER_API_KEY")
+                ? openWeatherPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
