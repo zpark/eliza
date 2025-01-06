@@ -378,7 +378,7 @@ export async function generateText({
                 });
 
                 response = openaiResponse;
-                elizaLogger.debug("Received response from OpenAI model.");
+                console.log("Received response from OpenAI model.");
                 break;
             }
 
