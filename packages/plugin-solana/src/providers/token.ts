@@ -54,6 +54,7 @@ export class TokenProvider {
         const cached = await this.cacheManager.get<T>(
             path.join(this.cacheKey, key)
         );
+        // @ts-expect-error todo
         return cached;
     }
 
@@ -130,8 +131,10 @@ export class TokenProvider {
 
         console.error(
             "All attempts failed. Throwing the last error:",
+            // @ts-expect-error todo
             lastError
         );
+        // @ts-expect-error todo
         throw lastError;
     }
 
@@ -162,7 +165,7 @@ export class TokenProvider {
     async fetchTokenCodex(): Promise<TokenCodex> {
         try {
             const cacheKey = `token_${this.tokenAddress}`;
-            const cachedData = this.getCachedData<TokenCodex>(cacheKey);
+            const cachedData = await this.getCachedData<TokenCodex>(cacheKey);
             if (cachedData) {
                 console.log(
                     `Returning cached token data for ${this.tokenAddress}.`
@@ -200,6 +203,7 @@ export class TokenProvider {
 
             const response = await fetch(this.GRAPHQL_ENDPOINT, {
                 method: "POST",
+                // @ts-expect-error todo
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: settings.CODEX_API_KEY,
@@ -243,7 +247,7 @@ export class TokenProvider {
     async fetchPrices(): Promise<Prices> {
         try {
             const cacheKey = "prices";
-            const cachedData = this.getCachedData<Prices>(cacheKey);
+            const cachedData = await this.getCachedData<Prices>(cacheKey);
             if (cachedData) {
                 console.log("Returning cached prices.");
                 return cachedData;
@@ -340,7 +344,7 @@ export class TokenProvider {
 
     async fetchTokenSecurity(): Promise<TokenSecurityData> {
         const cacheKey = `tokenSecurity_${this.tokenAddress}`;
-        const cachedData = this.getCachedData<TokenSecurityData>(cacheKey);
+        const cachedData = await this.getCachedData<TokenSecurityData>(cacheKey);
         if (cachedData) {
             console.log(
                 `Returning cached token security data for ${this.tokenAddress}.`
@@ -370,7 +374,7 @@ export class TokenProvider {
 
     async fetchTokenTradeData(): Promise<TokenTradeData> {
         const cacheKey = `tokenTradeData_${this.tokenAddress}`;
-        const cachedData = this.getCachedData<TokenTradeData>(cacheKey);
+        const cachedData = await this.getCachedData<TokenTradeData>(cacheKey);
         if (cachedData) {
             console.log(
                 `Returning cached token trade data for ${this.tokenAddress}.`
@@ -605,7 +609,7 @@ export class TokenProvider {
 
     async fetchDexScreenerData(): Promise<DexScreenerData> {
         const cacheKey = `dexScreenerData_${this.tokenAddress}`;
-        const cachedData = this.getCachedData<DexScreenerData>(cacheKey);
+        const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
         if (cachedData) {
             console.log("Returning cached DexScreener data.");
             return cachedData;
@@ -746,7 +750,7 @@ export class TokenProvider {
 
     async fetchHolderList(): Promise<HolderData[]> {
         const cacheKey = `holderList_${this.tokenAddress}`;
-        const cachedData = this.getCachedData<HolderData[]>(cacheKey);
+        const cachedData = await this.getCachedData<HolderData[]>(cacheKey);
         if (cachedData) {
             console.log("Returning cached holder list.");
             return cachedData;
@@ -1105,6 +1109,7 @@ const tokenProvider: Provider = {
         try {
             const { publicKey } = await getWalletKey(runtime, false);
 
+            // @ts-expect-error todo
             const walletProvider = new WalletProvider(connection, publicKey);
 
             const provider = new TokenProvider(

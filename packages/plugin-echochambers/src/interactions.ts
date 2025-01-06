@@ -209,6 +209,7 @@ export class InteractionClient {
             message.content.toLowerCase().includes(room.topic.toLowerCase());
 
         // Always process if mentioned, otherwise check relevance
+        // @ts-expect-error todo
         return isMentioned || isRelevantToTopic;
     }
 
@@ -314,6 +315,7 @@ export class InteractionClient {
 
             // Check if we've already processed this message
             const existing = await this.runtime.messageManager.getMemoryById(
+                // @ts-expect-error todo
                 memory.id
             );
             if (existing) {

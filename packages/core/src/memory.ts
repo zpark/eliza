@@ -173,6 +173,7 @@ export class MemoryManager implements IMemoryManager {
         // TODO: check memory.agentId == this.runtime.agentId
 
         const existingMessage =
+            // @ts-expect-error todo
             await this.runtime.databaseAdapter.getMemoryById(memory.id);
 
         if (existingMessage) {

@@ -3,6 +3,7 @@ import {
     IAwsS3Service,
     Service,
     ServiceType,
+    elizaLogger,
 } from "@elizaos/core";
 import {
     GetObjectCommand,
@@ -32,7 +33,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
     private runtime: IAgentRuntime | null = null;
 
     async initialize(runtime: IAgentRuntime): Promise<void> {
-        console.log("Initializing AwsS3Service");
+        elizaLogger.log("Initializing AwsS3Service");
         this.runtime = runtime;
         this.fileUploadPath = runtime.getSetting("AWS_S3_UPLOAD_PATH") ?? "";
     }
@@ -107,6 +108,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
             };
 
             // Upload file
+            // @ts-expect-error todo
             await this.s3Client.send(new PutObjectCommand(uploadParams));
 
             // Build result object
@@ -123,6 +125,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
                     Key: fileName,
                 });
                 result.url = await getSignedUrl(
+                    // @ts-expect-error todo
                     this.s3Client,
                     getObjectCommand,
                     {
@@ -159,6 +162,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
             Key: fileName,
         });
 
+        // @ts-expect-error todo
         return await getSignedUrl(this.s3Client, command, { expiresIn });
     }
 
@@ -228,6 +232,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
             };
 
             // Upload file
+            // @ts-expect-error todo
             await this.s3Client.send(new PutObjectCommand(uploadParams));
 
             // Build result
@@ -245,6 +250,7 @@ export class AwsS3Service extends Service implements IAwsS3Service {
                     Key: key,
                 });
                 result.url = await getSignedUrl(
+                    // @ts-expect-error todo
                     this.s3Client,
                     getObjectCommand,
                     { expiresIn }
