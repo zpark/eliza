@@ -25,7 +25,6 @@ services:
             - TWITTER_USERNAME=
             - TWITTER_PASSWORD=
             - TWITTER_EMAIL=
-            - X_SERVER_URL=https://api.red-pill.ai/v1
             - BIRDEYE_API_KEY=
             - SOL_ADDRESS=So11111111111111111111111111111111111111112
             - SLIPPAGE=1

@@ -75,7 +75,6 @@ Configure essential development variables:
 ```bash
 # Minimum required for local development
 OPENAI_API_KEY=sk-*           # Optional, for OpenAI features
-X_SERVER_URL=                 # Leave blank for local inference
 XAI_API_KEY=                 # Leave blank for local inference
 XAI_MODEL=meta-llama/Llama-3.1-7b-instruct  # Local model
 ```
