@@ -40,6 +40,7 @@ export class BridgeAction {
                     chainName: config.name,
                     nativeCurrency: config.nativeCurrency,
                     rpcUrls: [config.rpcUrls.default.http[0]],
+                    // @ts-expect-error todo
                     blockExplorerUrls: [config.blockExplorers.default.url],
                 },
                 diamondAddress: "0x0000000000000000000000000000000000000000",
