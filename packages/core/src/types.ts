@@ -1309,6 +1309,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    GOPLUS_SECURITY = "goplus_security",
 }
 
 export enum LoggingLevel {
@@ -1400,4 +1401,9 @@ export enum TranscriptionProvider {
     OpenAI = "openai",
     Deepgram = "deepgram",
     Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
 }
