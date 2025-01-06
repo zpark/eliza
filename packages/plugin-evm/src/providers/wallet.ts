@@ -157,7 +157,6 @@ export class WalletProvider {
         const cached = await this.cacheManager.get<T>(
             path.join(this.cacheKey, key)
         );
-        // @ts-expect-error todo
         return cached;
     }
 
@@ -255,7 +254,6 @@ const genChainsFromRuntime = (
     runtime: IAgentRuntime
 ): Record<string, Chain> => {
     const chainNames =
-        // @ts-expect-error todo
         (runtime.character.settings.chains?.evm as SupportedChain[]) || [];
     const chains = {};
 

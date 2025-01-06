@@ -125,7 +125,6 @@ export class FlowWalletProvider implements IFlowSigner, IFlowScriptExecutor {
      * @param message Message to sign
      */
     signMessage(message: string, privateKey = this.privateKeyHex) {
-        // @ts-expect-error todo
         return PureSigner.signWithKey(privateKey, message);
     }
 

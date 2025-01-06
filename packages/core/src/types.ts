@@ -796,9 +796,7 @@ export type Character = {
         modelConfig?: ModelConfiguration;
         embeddingModel?: string;
         chains?: {
-            // @ts-expect-error todo
             evm?: any[];
-            // @ts-expect-error todo
             solana?: any[];
             [key: string]: any[];
         };
@@ -1169,7 +1167,7 @@ export interface IAgentRuntime {
         state?: State,
         didRespond?: boolean,
         callback?: HandlerCallback
-    ): Promise<string[]>;
+    ): Promise<string[] | null>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
 
@@ -1311,6 +1309,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    GOPLUS_SECURITY = "goplus_security",
 }
 
 export enum LoggingLevel {
@@ -1402,4 +1401,9 @@ export enum TranscriptionProvider {
     OpenAI = "openai",
     Deepgram = "deepgram",
     Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
 }

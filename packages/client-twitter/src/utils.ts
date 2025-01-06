@@ -228,8 +228,8 @@ export async function sendTweet(
 
         const body = await result.json();
         const tweetResult = isLongTweet
-            ? body.data.notetweet_create.tweet_results.result
-            : body.data.create_tweet.tweet_results.result;
+            ? body?.data?.notetweet_create?.tweet_results?.result
+            : body?.data?.create_tweet?.tweet_results?.result;
 
         // if we have a response
         if (tweetResult) {

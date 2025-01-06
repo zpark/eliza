@@ -32,7 +32,6 @@ async function get(
         return [];
     }
 
-    // @ts-expect-error todo
     const embedding = await embed(runtime, processed);
     const fragments = await runtime.knowledgeManager.searchMemoriesByEmbedding(
         embedding,
@@ -60,7 +59,6 @@ async function get(
         )
     );
 
-    // @ts-expect-error todo
     return knowledgeDocuments
         .filter((memory) => memory !== null)
         .map((memory) => ({ id: memory.id, content: memory.content }));
@@ -86,7 +84,6 @@ async function set(
     const fragments = await splitChunks(preprocessed, chunkSize, bleed);
 
     for (const fragment of fragments) {
-        // @ts-expect-error todo
         const embedding = await embed(runtime, fragment);
         await runtime.knowledgeManager.createMemory({
             // We namespace the knowledge base uuid to avoid id
