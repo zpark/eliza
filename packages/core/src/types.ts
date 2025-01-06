@@ -1340,6 +1340,7 @@ export interface ISlackService extends Service {
  */
 export enum VerifiableInferenceProvider {
     OPACITY = "opacity",
+    RECLAIM = "reclaim",
 }
 
 /**
@@ -1361,7 +1362,7 @@ export interface VerifiableInferenceResult {
     /** Generated text */
     text: string;
     /** Proof id */
-    id: string;
+    id?: string;
     /** Provider information */
     provider: VerifiableInferenceProvider;
     /** Timestamp */

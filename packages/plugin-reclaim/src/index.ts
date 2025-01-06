@@ -18,7 +18,7 @@ interface ReclaimOptions {
 
 export class ReclaimAdapter implements IVerifiableInferenceAdapter {
     private client: ReclaimClient;
-    private options: ReclaimOptions;
+    public options: ReclaimOptions;
 
     constructor(options: ReclaimOptions) {
         this.options = options;
@@ -199,6 +199,7 @@ export class ReclaimAdapter implements IVerifiableInferenceAdapter {
             }
 
             return {
+                id: proof?.id,
                 text,
                 proof: proof,
                 provider: VerifiableInferenceProvider.RECLAIM,
