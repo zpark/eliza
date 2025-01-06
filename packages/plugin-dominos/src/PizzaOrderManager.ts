@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/core";
 import {
     Customer,
     ErrorType,
@@ -17,7 +17,7 @@ import {
     ToppingPortion,
     DominosPayment,
     DominosAddress,
-    DominosProduct
+    DominosProduct,
 } from "./types";
 
 export class PizzaOrderManager implements OrderManager {
@@ -171,21 +171,25 @@ export class PizzaOrderManager implements OrderManager {
     private readonly TRACKER_URL: string;
 
     private readonly headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Referer': 'order.dominos.com'
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Referer: "order.dominos.com",
     };
 
     private readonly trackerHeaders = {
-        'dpz-language': 'en',
-        'dpz-market': 'UNITED_STATES',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json; charset=utf-8'
+        "dpz-language": "en",
+        "dpz-market": "UNITED_STATES",
+        Accept: "application/json",
+        "Content-Type": "application/json; charset=utf-8",
     };
 
     constructor(private runtime: IAgentRuntime) {
-        this.BASE_URL = this.runtime.getSetting('API_BASE_URL') || 'https://order.dominos.com/power';
-        this.TRACKER_URL = this.runtime.getSetting('API_TRACKER_URL') || 'https://tracker.dominos.com/tracker-presentation-service/v2';
+        this.BASE_URL =
+            this.runtime.getSetting("API_BASE_URL") ||
+            "https://order.dominos.com/power";
+        this.TRACKER_URL =
+            this.runtime.getSetting("API_TRACKER_URL") ||
+            "https://tracker.dominos.com/tracker-presentation-service/v2";
     }
 
     // Helper Methods
@@ -226,7 +230,9 @@ export class PizzaOrderManager implements OrderManager {
         const toppingCodes = toppings.map((t) => t.code);
         let maxDiscount = 0;
 
-        for (const [_, combo] of Object.entries(this.menuConfig.specialCombos)) {
+        for (const [_, combo] of Object.entries(
+            this.menuConfig.specialCombos
+        )) {
             if (combo.requiredToppings.every((t) => toppingCodes.includes(t))) {
                 maxDiscount = Math.max(maxDiscount, combo.discount);
             }
@@ -283,14 +289,18 @@ export class PizzaOrderManager implements OrderManager {
     }
 
     // API Integration Methods
-    private async findNearestStore(address: string, city: string, state: string): Promise<any> {
+    private async findNearestStore(
+        address: string,
+        city: string,
+        state: string
+    ): Promise<any> {
         const encodedAddress = encodeURIComponent(address);
         const encodedCityState = encodeURIComponent(`${city}, ${state}`);
         const url = `${this.BASE_URL}/store-locator?s=${encodedAddress}&c=${encodedCityState}&type=Delivery`;
 
         const response = await fetch(url, {
-            method: 'GET',
-            headers: this.headers
+            method: "GET",
+            headers: this.headers,
         });
         return response.json();
     }
@@ -298,18 +308,20 @@ export class PizzaOrderManager implements OrderManager {
     private async getStoreInfo(storeId: string): Promise<any> {
         const url = `${this.BASE_URL}/store/${storeId}/profile`;
         const response = await fetch(url, {
-            method: 'GET',
-            headers: this.headers
+            method: "GET",
+            headers: this.headers,
         });
         return response.json();
     }
 
-    private async validateOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
+    private async validateOrderWithAPI(
+        orderRequest: OrderRequest
+    ): Promise<any> {
         const url = `${this.BASE_URL}/validate-order`;
         const response = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: this.headers,
-            body: JSON.stringify({ Order: orderRequest })
+            body: JSON.stringify({ Order: orderRequest }),
         });
         return response.json();
     }
@@ -317,9 +329,9 @@ export class PizzaOrderManager implements OrderManager {
     private async priceOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
         const url = `${this.BASE_URL}/price-order`;
         const response = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: this.headers,
-            body: JSON.stringify({ Order: orderRequest })
+            body: JSON.stringify({ Order: orderRequest }),
         });
         return response.json();
     }
@@ -327,18 +339,18 @@ export class PizzaOrderManager implements OrderManager {
     private async placeOrderWithAPI(orderRequest: OrderRequest): Promise<any> {
         const url = `${this.BASE_URL}/place-order`;
         const response = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: this.headers,
-            body: JSON.stringify({ Order: orderRequest })
+            body: JSON.stringify({ Order: orderRequest }),
         });
         return response.json();
     }
 
     private async trackOrderWithAPI(phoneNumber: string): Promise<any> {
-        const url = `${this.TRACKER_URL}/orders?phonenumber=${phoneNumber.replace(/\D/g, '')}`;
+        const url = `${this.TRACKER_URL}/orders?phonenumber=${phoneNumber.replace(/\D/g, "")}`;
         const response = await fetch(url, {
-            method: 'GET',
-            headers: this.trackerHeaders
+            method: "GET",
+            headers: this.trackerHeaders,
         });
         return response.json();
     }
@@ -500,109 +512,128 @@ export class PizzaOrderManager implements OrderManager {
 
     private convertItemToProduct(item: OrderItem): DominosProduct {
         const sizeMap = {
-            [PizzaSize.SMALL]: '10',
-            [PizzaSize.MEDIUM]: '12',
-            [PizzaSize.LARGE]: '14',
-            [PizzaSize.XLARGE]: '16'
+            [PizzaSize.SMALL]: "10",
+            [PizzaSize.MEDIUM]: "12",
+            [PizzaSize.LARGE]: "14",
+            [PizzaSize.XLARGE]: "16",
         };
 
         const crustMap = {
-            [PizzaCrust.HAND_TOSSED]: 'HANDTOSS',
-            [PizzaCrust.THIN]: 'THIN',
-            [PizzaCrust.PAN]: 'PAN',
-            [PizzaCrust.GLUTEN_FREE]: 'GLUTENF',
-            [PizzaCrust.BROOKLYN]: 'BK'
+            [PizzaCrust.HAND_TOSSED]: "HANDTOSS",
+            [PizzaCrust.THIN]: "THIN",
+            [PizzaCrust.PAN]: "PAN",
+            [PizzaCrust.GLUTEN_FREE]: "GLUTENF",
+            [PizzaCrust.BROOKLYN]: "BK",
         };
 
         const code = `${sizeMap[item.size]}${crustMap[item.crust]}`;
         const options: { [key: string]: { [key: string]: string } } = {
-            C: { '1/1': '1' }, // Base cheese
+            C: { "1/1": "1" }, // Base cheese
         };
 
         item.toppings?.forEach((topping) => {
-            const coverage = topping.portion === ToppingPortion.ALL ? '1/1' : '1/2';
+            const coverage =
+                topping.portion === ToppingPortion.ALL ? "1/1" : "1/2";
             options[topping.code] = { [coverage]: topping.amount.toString() };
         });
 
         return {
             Code: code,
-            Options: options
+            Options: options,
         };
     }
 
-    private convertToOrderRequest(order: Order, customer: Customer): OrderRequest {
-        const [firstName, ...lastNameParts] = customer.name.split(' ');
-        const lastName = lastNameParts.join(' ');
+    private convertToOrderRequest(
+        order: Order,
+        customer: Customer
+    ): OrderRequest {
+        const [firstName, ...lastNameParts] = customer.name.split(" ");
+        const lastName = lastNameParts.join(" ");
 
-        const addressParts = customer.address.split(',').map(part => part.trim());
+        const addressParts = customer.address
+            .split(",")
+            .map((part) => part.trim());
         const street = addressParts[0];
-        const cityStateZip = addressParts[1].split(' ');
-        const postalCode = cityStateZip.pop() || '';
-        const state = cityStateZip.pop() || '';
-        const city = cityStateZip.join(' ');
+        const cityStateZip = addressParts[1].split(" ");
+        const postalCode = cityStateZip.pop() || "";
+        const state = cityStateZip.pop() || "";
+        const city = cityStateZip.join(" ");
 
         const orderRequest: OrderRequest = {
             Address: {
                 Street: street,
                 City: city,
                 Region: state,
-                PostalCode: postalCode
+                PostalCode: postalCode,
             },
             StoreID: this.storeId,
-            Products: order.items?.map(item => this.convertItemToProduct(item)) || [],
-            OrderChannel: 'OLO',
-            OrderMethod: 'Web',
-            LanguageCode: 'en',
-            ServiceMethod: 'Delivery',
+            Products:
+                order.items?.map((item) => this.convertItemToProduct(item)) ||
+                [],
+            OrderChannel: "OLO",
+            OrderMethod: "Web",
+            LanguageCode: "en",
+            ServiceMethod: "Delivery",
             FirstName: firstName,
             LastName: lastName,
             Email: customer.email,
-            Phone: customer.phone
+            Phone: customer.phone,
         };
 
         if (order.paymentMethod && order.paymentMethod.cardNumber) {
-            orderRequest.Payments = [{
-                Type: 'CreditCard',
-                Amount: order.total,
-                CardType: this.detectCardType(order.paymentMethod.cardNumber),
-                Number: order.paymentMethod.cardNumber,
-                Expiration: order.paymentMethod.expiryDate?.replace('/', '') || '',
-                SecurityCode: order.paymentMethod.cvv || '',
-                PostalCode: order.paymentMethod.postalCode || '',
-                TipAmount: 0
-            }];
+            orderRequest.Payments = [
+                {
+                    Type: "CreditCard",
+                    Amount: order.total,
+                    CardType: this.detectCardType(
+                        order.paymentMethod.cardNumber
+                    ),
+                    Number: order.paymentMethod.cardNumber,
+                    Expiration:
+                        order.paymentMethod.expiryDate?.replace("/", "") || "",
+                    SecurityCode: order.paymentMethod.cvv || "",
+                    PostalCode: order.paymentMethod.postalCode || "",
+                    TipAmount: 0,
+                },
+            ];
         }
 
         return orderRequest;
     }
 
     private detectCardType(cardNumber: string): string {
-        if (cardNumber.startsWith('4')) return 'VISA';
-        if (cardNumber.startsWith('5')) return 'MASTERCARD';
-        if (cardNumber.startsWith('34') || cardNumber.startsWith('37')) return 'AMEX';
-        if (cardNumber.startsWith('6')) return 'DISCOVER';
-        return 'UNKNOWN';
+        if (cardNumber.startsWith("4")) return "VISA";
+        if (cardNumber.startsWith("5")) return "MASTERCARD";
+        if (cardNumber.startsWith("34") || cardNumber.startsWith("37"))
+            return "AMEX";
+        if (cardNumber.startsWith("6")) return "DISCOVER";
+        return "UNKNOWN";
     }
 
     async getNearestStoreId(address: string): Promise<string> {
         try {
-            const parts = address.split(',').map(part => part.trim());
+            const parts = address.split(",").map((part) => part.trim());
             const street = parts[0];
-            const cityState = parts[1].split(' ');
-            const state = cityState.pop() || '';
-            const city = cityState.join(' ');
+            const cityState = parts[1].split(" ");
+            const state = cityState.pop() || "";
+            const city = cityState.join(" ");
 
-            const storeResponse = await this.findNearestStore(street, city, state);
+            const storeResponse = await this.findNearestStore(
+                street,
+                city,
+                state
+            );
 
             if (!storeResponse.Stores || storeResponse.Stores.length === 0) {
                 throw new Error("No nearby stores found.");
             }
 
-            const deliveryStore = storeResponse.Stores.find((store: any) =>
-                store.IsOnlineCapable &&
-                store.IsDeliveryStore &&
-                store.IsOpen &&
-                store.ServiceIsOpen.Delivery
+            const deliveryStore = storeResponse.Stores.find(
+                (store: any) =>
+                    store.IsOnlineCapable &&
+                    store.IsDeliveryStore &&
+                    store.IsOpen &&
+                    store.ServiceIsOpen.Delivery
             );
 
             if (!deliveryStore) {
@@ -611,14 +642,16 @@ export class PizzaOrderManager implements OrderManager {
 
             this.storeId = deliveryStore.StoreID;
             return this.storeId;
-
         } catch (error) {
             console.error("Error finding nearest store:", error);
             throw error;
         }
     }
 
-    async processOrder(order: Order, customer: Customer): Promise<Order | OrderError> {
+    async processOrder(
+        order: Order,
+        customer: Customer
+    ): Promise<Order | OrderError> {
         try {
             // Validate customer information
             const customerError = this.validateCustomerInfo(customer);
@@ -647,7 +680,9 @@ export class PizzaOrderManager implements OrderManager {
 
                     // Validate toppings
                     if (item.toppings) {
-                        const toppingError = this.validateToppings(item.toppings);
+                        const toppingError = this.validateToppings(
+                            item.toppings
+                        );
                         if (toppingError) return toppingError;
                     }
 
@@ -671,22 +706,23 @@ export class PizzaOrderManager implements OrderManager {
             const orderRequest = this.convertToOrderRequest(order, customer);
 
             // Validate with API
-            const validatedOrder = await this.validateOrderWithAPI(orderRequest);
-            if (validatedOrder.Status !== 'Success') {
+            const validatedOrder =
+                await this.validateOrderWithAPI(orderRequest);
+            if (validatedOrder.Status !== "Success") {
                 return {
                     type: ErrorType.VALIDATION_FAILED,
-                    message: validatedOrder.StatusItems.join(', '),
-                    code: 'API_VALIDATION_FAILED'
+                    message: validatedOrder.StatusItems.join(", "),
+                    code: "API_VALIDATION_FAILED",
                 };
             }
 
             // Price the order
             const pricedOrder = await this.priceOrderWithAPI(orderRequest);
-            if (pricedOrder.Status !== 'Success') {
+            if (pricedOrder.Status !== "Success") {
                 return {
                     type: ErrorType.VALIDATION_FAILED,
-                    message: pricedOrder.StatusItems.join(', '),
-                    code: 'API_PRICING_FAILED'
+                    message: pricedOrder.StatusItems.join(", "),
+                    code: "API_PRICING_FAILED",
                 };
             }
 
@@ -695,18 +731,20 @@ export class PizzaOrderManager implements OrderManager {
 
             // If payment is provided and valid, attempt to place order
             if (order.paymentMethod) {
-                const paymentError = this.validatePaymentMethod(order.paymentMethod);
+                const paymentError = this.validatePaymentMethod(
+                    order.paymentMethod
+                );
                 if (paymentError) {
                     order.paymentStatus = PaymentStatus.INVALID;
                     return paymentError;
                 }
 
                 const placedOrder = await this.placeOrderWithAPI(orderRequest);
-                if (placedOrder.Status !== 'Success') {
+                if (placedOrder.Status !== "Success") {
                     return {
                         type: ErrorType.PAYMENT_FAILED,
-                        message: placedOrder.StatusItems.join(', '),
-                        code: 'API_ORDER_FAILED'
+                        message: placedOrder.StatusItems.join(", "),
+                        code: "API_ORDER_FAILED",
                     };
                 }
 
@@ -716,13 +754,13 @@ export class PizzaOrderManager implements OrderManager {
             }
 
             return order;
-
         } catch (error) {
-            console.error('Error processing order:', error);
+            console.error("Error processing order:", error);
             return {
                 type: ErrorType.SYSTEM_ERROR,
-                message: 'An unexpected error occurred while processing your order',
-                code: 'SYSTEM_ERROR'
+                message:
+                    "An unexpected error occurred while processing your order",
+                code: "SYSTEM_ERROR",
             };
         }
     }
