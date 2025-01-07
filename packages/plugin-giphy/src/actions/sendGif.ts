@@ -21,7 +21,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-
 const sendGifTemplate = `Given the message, determine if a gif should be sent based on the content.
 If yes, extract relevant keywords or phrases to use as search terms for the gif.
 
@@ -116,37 +115,52 @@ export default {
                 lang: "en", // Optional: specify language for better results
             };
 
-            debugLog.request('GET', GIPHY_SEARCH_ENDPOINT, requestParams);
+            debugLog.request("GET", GIPHY_SEARCH_ENDPOINT, requestParams);
 
-            const response = await axios.get<GifResponse>(GIPHY_SEARCH_ENDPOINT, {
-                params: requestParams,
-            });
+            const response = await axios.get<GifResponse>(
+                GIPHY_SEARCH_ENDPOINT,
+                {
+                    params: requestParams,
+                }
+            );
 
             debugLog.response(response);
-            elizaLogger.log("Full Giphy API Response:", JSON.stringify(response.data, null, 2));
+            elizaLogger.log(
+                "Full Giphy API Response:",
+                JSON.stringify(response.data, null, 2)
+            );
 
             const gifs = response.data.data;
             if (!gifs.length) {
-                throw new Error(`No gifs found for search term: ${content.searchTerm}`);
+                throw new Error(
+                    `No gifs found for search term: ${content.searchTerm}`
+                );
             }
 
             // Filter out any non-GIF URLs just in case
-            const gifGifs = gifs.filter(gif => gif.images.original.url.endsWith('.gif'));
+            const gifGifs = gifs.filter((gif) =>
+                gif.images.original.url.includes(".gif")
+            );
             if (!gifGifs.length) {
-                throw new Error(`No valid GIFs found for search term: ${content.searchTerm}`);
+                throw new Error(
+                    `No valid GIFs found for search term: ${content.searchTerm}`
+                );
             }
 
             // Select a random gif from the filtered results
-            const selectedGif: Gif = gifGifs[Math.floor(Math.random() * gifGifs.length)];
-            elizaLogger.log("Selected GIF:", JSON.stringify(selectedGif, null, 2));
+            const selectedGif: Gif =
+                gifGifs[Math.floor(Math.random() * gifGifs.length)];
+            elizaLogger.log(
+                "Selected GIF:",
+                JSON.stringify(selectedGif, null, 2)
+            );
 
-            const gifUrl = selectedGif.images.original.url;
+            const gifUrl = selectedGif.images.original.url.split("?")[0];
 
             // Validate the URL structure
-            if (!gifUrl.endsWith('.gif')) {
+            if (!gifUrl.endsWith(".gif")) {
                 throw new Error(`Invalid GIF URL format: ${gifUrl}`);
             }
-
 
             if (callback) {
                 const message = {
@@ -154,13 +168,13 @@ export default {
                     attachments: [
                         {
                             id: crypto.randomUUID(),
-                            url: gifUrl,  // Use the original Giphy URL directly
+                            url: gifUrl, // Use the original Giphy URL directly
                             title: "Enjoy your GIF!",
                             source: "giphyPlugin",
                             description: selectedGif.title,
                             text: selectedGif.title,
                             contentType: "image/gif",
-                            type: "animation"
+                            type: "animation",
                         },
                     ],
                 };
@@ -176,8 +190,13 @@ export default {
             debugLog.error(error);
             if (callback) {
                 callback({
-                    text: `Error fetching gif: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                    content: { error: error instanceof Error ? error.message : 'Unknown error' },
+                    text: `Error fetching gif: ${error instanceof Error ? error.message : "Unknown error"}`,
+                    content: {
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error",
+                    },
                 });
             }
             return false;
@@ -204,7 +223,7 @@ export default {
                 content: {
                     text: "https://media2.giphy.com/media/qP4CXhBeKJTbSzjNfC/giphy.gif",
                 },
-            }
+            },
         ],
     ],
 } as Action;
