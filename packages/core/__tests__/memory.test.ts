@@ -1,7 +1,7 @@
-import { MemoryManager } from "../memory";
-import { CacheManager, MemoryCacheAdapter } from "../cache";
+import { MemoryManager } from "../src/memory";
+import { CacheManager, MemoryCacheAdapter } from "../src/cache";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { IAgentRuntime, Memory, UUID } from "../types";
+import { IAgentRuntime, Memory, UUID } from "../src/types";
 
 describe("MemoryManager", () => {
     let memoryManager: MemoryManager;
@@ -58,7 +58,9 @@ describe("MemoryManager", () => {
                 content: { text: "" },
             };
 
-            await expect(memoryManager.addEmbeddingToMemory(memory)).rejects.toThrow(
+            await expect(
+                memoryManager.addEmbeddingToMemory(memory)
+            ).rejects.toThrow(
                 "Cannot generate embedding: Memory content is empty"
             );
         });
@@ -71,7 +73,9 @@ describe("MemoryManager", () => {
 
             mockDatabaseAdapter.searchMemories = vi.fn().mockResolvedValue([]);
 
-            await memoryManager.searchMemoriesByEmbedding(embedding, { roomId });
+            await memoryManager.searchMemoriesByEmbedding(embedding, {
+                roomId,
+            });
 
             expect(mockDatabaseAdapter.searchMemories).toHaveBeenCalledWith({
                 embedding,

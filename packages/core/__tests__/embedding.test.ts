@@ -4,9 +4,9 @@ import {
     getEmbeddingConfig,
     getEmbeddingType,
     getEmbeddingZeroVector,
-} from "../embedding.ts";
+} from "../src/embedding.ts";
 import { IAgentRuntime, ModelProviderName } from "../types.ts";
-import settings from "../settings.ts";
+import settings from "../src/settings.ts";
 
 // Mock environment-related settings
 vi.mock("../settings", () => ({

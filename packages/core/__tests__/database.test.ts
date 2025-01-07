@@ -1,5 +1,5 @@
 /* eslint-disable no-dupe-class-members */
-import { DatabaseAdapter } from "../database.ts"; // Adjust the import based on your project structure
+import { DatabaseAdapter } from "../src/database.ts";
 import {
     Memory,
     Actor,
@@ -9,7 +9,7 @@ import {
     Participant,
     Relationship,
     UUID,
-} from "../types"; // Adjust based on your types location
+} from "../src/types.ts";
 
 class MockDatabaseAdapter extends DatabaseAdapter {
     getMemoryById(_id: UUID): Promise<Memory | null> {
@@ -104,7 +104,7 @@ class MockDatabaseAdapter extends DatabaseAdapter {
     getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
     getParticipantsForAccount(
         _userId: unknown
-    ): Promise<import("../types").Participant[]> {
+    ): Promise<import("../src/types.ts").Participant[]> {
         throw new Error("Method not implemented.");
     }
     getParticipantsForRoom(_roomId: UUID): Promise<UUID[]> {

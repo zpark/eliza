@@ -1,11 +1,11 @@
-import { getProviders } from "../providers";
+import { getProviders } from "../src/providers.ts";
 import {
     IAgentRuntime,
     type Memory,
     type State,
     type Provider,
     UUID,
-} from "../types.ts";
+} from "../src/types.ts";
 
 describe("getProviders", () => {
     let runtime: IAgentRuntime;
@@ -211,7 +211,9 @@ describe("getProviders", () => {
         };
 
         const responses = await getProviders(runtime, message);
-        expect(responses).toBe("Response from Provider 1\nResponse from Provider 2");
+        expect(responses).toBe(
+            "Response from Provider 1\nResponse from Provider 2"
+        );
     });
 
     it("should handle provider throwing an error", async () => {
@@ -225,7 +227,11 @@ describe("getProviders", () => {
             },
         };
 
-        runtime.providers = [MockProvider1, MockProviderWithError, MockProvider2];
+        runtime.providers = [
+            MockProvider1,
+            MockProviderWithError,
+            MockProvider2,
+        ];
 
         const message: Memory = {
             userId: "00000000-0000-0000-0000-000000000001",
@@ -234,6 +240,8 @@ describe("getProviders", () => {
             agentId: "00000000-0000-0000-0000-000000000002",
         };
 
-        await expect(getProviders(runtime, message)).rejects.toThrow("Provider error");
+        await expect(getProviders(runtime, message)).rejects.toThrow(
+            "Provider error"
+        );
     });
 });
