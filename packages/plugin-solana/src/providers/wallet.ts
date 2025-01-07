@@ -374,7 +374,7 @@ const walletProvider: Provider = {
             const { publicKey } = await getWalletKey(runtime, false);
 
             const connection = new Connection(
-                runtime.getSetting("RPC_URL") || PROVIDER_CONFIG.DEFAULT_RPC
+                runtime.getSetting("SOLANA_RPC_URL") || PROVIDER_CONFIG.DEFAULT_RPC
             );
 
             const provider = new WalletProvider(connection, publicKey);

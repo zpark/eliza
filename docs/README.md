@@ -118,7 +118,7 @@ BIRDEYE_API_KEY=
 
 SOL_ADDRESS=So11111111111111111111111111111111111111112
 SLIPPAGE=1
-RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 HELIUS_API_KEY=
 
 
@@ -179,3 +179,13 @@ Tests are written using Jest and can be found in `src/**/*.test.ts` files. The t
 - Run tests in sequence (--runInBand)
 
 To create new tests, add a `.test.ts` file adjacent to the code you're testing.
+
+## Docs Updates
+
+Please make sure to vetify if the documentation provided is correct. In order to do so, please run the docs service.
+
+```console
+docker compose -f docker-compose-docs.yaml up --build
+```
+
+The docusaurus server will get started and you can verify it locally at https://localhost:3000/eliza.
