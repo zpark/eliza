@@ -263,7 +263,7 @@ runtime.character.settings.secrets = {
 **Example Call**
 
 ```typescript
-const response = await runtime.triggerAction("SEND_MASS_PAYOUT", {
+const response = await runtime.processAction("SEND_MASS_PAYOUT", {
     receivingAddresses: [
         "0xA0ba2ACB5846A54834173fB0DD9444F756810f06",
         "0xF14F2c49aa90BaFA223EE074C1C33b59891826bF",
@@ -388,7 +388,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 1. **ERC20 Token**
 
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC20",
         name: "MyToken",
         symbol: "MTK",
@@ -400,7 +400,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 2. **NFT Collection**
 
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC721",
         name: "MyNFT",
         symbol: "MNFT",
@@ -411,7 +411,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 
 3. **Multi-token Collection**
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC1155",
         name: "MyMultiToken",
         symbol: "MMT",
@@ -423,7 +423,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 **Contract Interaction Example:**
 
 ```typescript
-const response = await runtime.triggerAction("INVOKE_CONTRACT", {
+const response = await runtime.processAction("INVOKE_CONTRACT", {
   contractAddress: "0x123...",
   method: "transfer",
   abi: [...],
@@ -597,7 +597,7 @@ The Webhook Plugin enables Eliza to interact with the Coinbase SDK to create and
 To create a webhook:
 
 ```typescript
-const response = await runtime.triggerAction("CREATE_WEBHOOK", {
+const response = await runtime.processAction("CREATE_WEBHOOK", {
     networkId: "base",
     eventType: "transfers",
     notificationUri: "https://your-notification-uri.com",
