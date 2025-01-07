@@ -48,6 +48,7 @@ import {
     tradePlugin,
     webhookPlugin,
 } from "@elizaos/plugin-coinbase";
+import { coinPricePlugin } from "@elizaos/plugin-coinprice";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
@@ -569,6 +570,7 @@ export async function createAgent(
                 ? confluxPlugin
                 : null,
             nodePlugin,
+            coinPricePlugin,
             getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
