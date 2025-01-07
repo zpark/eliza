@@ -5,7 +5,7 @@ import {
     VerifiableInferenceResult,
     VerifiableInferenceProvider,
     ModelProviderName,
-    models,
+    models, elizaLogger,
 } from "@elizaos/core";
 
 interface PrimusOptions {
@@ -151,7 +151,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 default:
                     throw new Error(`Unsupported model provider: ${provider}`);
             }
-
+            const start = new Date();
             const attestation = await this.client.startAttestation(this.client.generateRequestParams(
                 {
                     url: endpoint,
@@ -167,6 +167,11 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                     }
                 ]
             ));
+            const end = new Date();
+
+            elizaLogger.info(
+                `request openAI cost:${end.getTime() - start.getTime()}ms`
+            );
 
             const responseData = JSON.parse(attestation.data);
             let text = JSON.parse(responseData.content);
