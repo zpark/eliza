@@ -9,6 +9,11 @@ declare module "@remix-run/node" {
 }
 
 export default defineConfig({
+    build: {
+        outDir: "dist",
+        minify: true,
+        cssMinify: true,
+    },
     plugins: [
         remix({
             ssr: false,
