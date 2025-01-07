@@ -657,7 +657,7 @@ export async function createAgent(
             getSecret(character, "OPEN_WEATHER_API_KEY")
                 ? openWeatherPlugin
                 : null,
-            getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+          getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
                 ? artheraPlugin
                 : null,
             getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
