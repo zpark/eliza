@@ -215,7 +215,7 @@ export function getTokenForProvider(
     switch (provider) {
         // no key needed for llama_local
         case ModelProviderName.LLAMALOCAL:
-            return "";
+            return '';
         case ModelProviderName.OPENAI:
             return (
                 character.settings?.secrets?.OPENAI_API_KEY ||
@@ -311,9 +311,9 @@ export function getTokenForProvider(
                 settings.AKASH_CHAT_API_KEY
             );
         default:
-            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
-            elizaLogger.error(errorMessage);
-            throw new Error(errorMessage);
+            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`
+            elizaLogger.error(errorMessage)
+            throw new Error(errorMessage)
     }
 }
 
