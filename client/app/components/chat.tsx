@@ -24,6 +24,8 @@ import { Avatar, AvatarImage } from "./ui/avatar";
 import CopyButton from "./copy-button";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useToast } from "~/hooks/use-toast";
+import AIWriter from "react-aiwriter";
 
 interface ExtraContentFields {
     user: string;
@@ -34,6 +36,7 @@ interface ExtraContentFields {
 type ContentWithUser = Content & ExtraContentFields;
 
 export default function Page({ agentId }: { agentId: UUID }) {
+    const { toast } = useToast();
     const [input, setInput] = useState("");
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -108,8 +111,12 @@ export default function Page({ agentId }: { agentId: UUID }) {
                 ]
             );
         },
-        onError: () => {
-            // TODO - Handle errors
+        onError: (e) => {
+            toast({
+                variant: "destructive",
+                title: "Unable to send message",
+                description: e.message,
+            });
         },
     });
 
@@ -177,7 +184,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                         message?.isLoading
                                                     }
                                                 >
-                                                    {message?.text}
+                                                    {message?.user !==
+                                                    "user" ? (
+                                                        <AIWriter>
+                                                            {message?.text}
+                                                        </AIWriter>
+                                                    ) : (
+                                                        message?.text
+                                                    )}
 
                                                     {/* Attachments */}
                                                     {/* <img
