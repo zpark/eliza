@@ -31,9 +31,9 @@ export const links: LinksFunction = () => [
     },
 ];
 
-const queryClient = new QueryClient();
-
 export function Layout({ children }: { children: React.ReactNode }) {
+    const queryClient = new QueryClient();
+
     return (
         <html
             lang="en"
@@ -51,9 +51,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Meta />
                 <Links />
             </head>
-            <QueryClientProvider client={queryClient}>
-                <body>
-                    <TooltipProvider delayDuration={0}>
+            <TooltipProvider delayDuration={0}>
+                <QueryClientProvider client={queryClient}>
+                    <body>
                         <SidebarProvider>
                             <AppSidebar />
                             <SidebarInset>
@@ -62,12 +62,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                 </div>
                             </SidebarInset>
                         </SidebarProvider>
-                    </TooltipProvider>
-                    <Toaster />
-                    <Scripts />
-                    <ScrollRestoration />
-                </body>
-            </QueryClientProvider>
+                        <Toaster />
+                        <Scripts />
+                        <ScrollRestoration />
+                    </body>
+                </QueryClientProvider>
+            </TooltipProvider>
         </html>
     );
 }

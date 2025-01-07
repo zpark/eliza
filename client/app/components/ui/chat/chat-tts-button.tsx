@@ -1,7 +1,7 @@
 import { Ellipsis, StopCircle, Volume2 } from "lucide-react";
 import { Button } from "../button";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { apiClient } from "~/lib/api";
 import { Tooltip, TooltipTrigger, TooltipContent } from "../tooltip";
 import { useToast } from "~/hooks/use-toast";
@@ -15,12 +15,15 @@ export default function ChatTtsButton({
 }) {
     const { toast } = useToast();
     const [playing, setPlaying] = useState<boolean>(false);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const mutation = useMutation({
         mutationKey: ["tts", text],
-        mutationFn: () => apiClient.speak(agentId, ""),
+        mutationFn: () => apiClient.speak(agentId, text),
         onSuccess: (data) => {
-            console.log(data);
-            setPlaying(true);
+            setAudioBlob(data);
+            play();
         },
         onError: (e) => {
             toast({
@@ -31,39 +34,74 @@ export default function ChatTtsButton({
         },
     });
 
+    const play = () => {
+        if (audioRef.current) {
+            audioRef.current.play().catch((err) => {
+                console.error("Error playing audio:", err);
+            });
+        }
+        setPlaying(true);
+    };
+
+    const stop = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+        setPlaying(false);
+    };
+
     const execute = () => {
         if (mutation?.isPending) return;
+
         if (playing) {
-            setPlaying(false);
+            stop();
+            return;
         }
 
-        mutation.mutate();
+        if (audioBlob) {
+            play();
+            return;
+        } else {
+            mutation.mutate();
+        }
     };
 
     const iconClass = "text-muted-foreground size-4";
 
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    type="button"
-                    onClick={() => execute()}
-                    disabled={mutation?.isPending}
-                >
-                    {mutation?.isPending ? (
-                        <Ellipsis className={iconClass} />
-                    ) : playing ? (
-                        <StopCircle className={iconClass} />
-                    ) : (
-                        <Volume2 className={iconClass} />
-                    )}
-                </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-                <p>Read aloud</p>
-            </TooltipContent>
-        </Tooltip>
+        <Fragment>
+            {audioBlob ? (
+                <audio ref={audioRef} autoPlay>
+                    <source
+                        src={URL.createObjectURL(audioBlob)}
+                        type="audio/mpeg"
+                    />
+                    Your browser does not support the audio element.
+                </audio>
+            ) : null}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => execute()}
+                        disabled={mutation?.isPending}
+                    >
+                        {mutation?.isPending ? (
+                            <Ellipsis className={iconClass} />
+                        ) : playing ? (
+                            <StopCircle className={iconClass} />
+                        ) : (
+                            <Volume2 className={iconClass} />
+                        )}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                    <p>Read aloud</p>
+                </TooltipContent>
+            </Tooltip>
+        </Fragment>
     );
 }

@@ -6,17 +6,21 @@ const fetcher = async ({
     url,
     method,
     body,
+    headers,
 }: {
     url: string;
     method?: "GET" | "POST";
     body?: object;
+    headers?: HeadersInit;
 }) => {
     const options: RequestInit = {
         method: method ?? "GET",
-        headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-        },
+        headers: headers
+            ? headers
+            : {
+                  Accept: "application/json",
+                  "Content-Type": "application/json",
+              },
     };
 
     if (method === "POST" && body) {
@@ -25,6 +29,11 @@ const fetcher = async ({
 
     return fetch(`${BASE_URL}${url}`, options).then(async (resp) => {
         if (resp.ok) {
+            const contentType = resp.headers.get("Content-Type");
+
+            if (contentType == "audio/mpeg") {
+                return await resp.blob();
+            }
             return resp.json();
         }
 
@@ -63,6 +72,11 @@ export const apiClient = {
             method: "POST",
             body: {
                 text,
+            },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "audio/mpeg",
+                "Transfer-Encoding": "chunked",
             },
         }),
 };
