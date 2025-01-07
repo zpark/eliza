@@ -6,7 +6,6 @@ This plugin integrates the Spheron Protocol SDK into the Eliza ecosystem, provid
 
 - **Escrow Operations**: Manage token deposits, withdrawals, and balance checks
 - **Deployment Management**: Create, update, and manage deployments using ICL YAML
-- **Lease Operations**: Handle lease details, states, and lifecycle management
 
 ## Installation
 
@@ -21,7 +20,7 @@ The plugin requires the following environment variables:
 ```env
 PRIVATE_KEY=your_private_key
 PROVIDER_PROXY_URL=your_provider_proxy_url
-WALLET_ADDRESS=your_wallet_address (optional)
+WALLET_ADDRESS=your_wallet_address
 ```
 
 ## Usage
@@ -39,7 +38,6 @@ eliza.registerPlugin(spheronPlugin);
 
 - `ESCROW_OPERATION`: Handle token deposits and withdrawals
 - `DEPLOYMENT_OPERATION`: Manage service deployments
-- `LEASE_OPERATION`: Handle lease lifecycle
 
 ## Examples
 
@@ -73,9 +71,12 @@ await runtime.executeAction("DEPLOYMENT_OPERATION", {
         resources: {
             cpu: "4",
             memory: "8Gi",
+            storage: "10Gi",
             gpu: "1",
             gpu_model: "rtx4090",
         },
+        duration: "1h",
+        token: "USDT",
     },
 });
 
@@ -83,7 +84,19 @@ await runtime.executeAction("DEPLOYMENT_OPERATION", {
 await runtime.executeAction("DEPLOYMENT_OPERATION", {
     operation: "update",
     leaseId: "your_lease_id",
-    iclYaml: "updated ICL YAML configuration",
+    template: "jupyter-notebook",
+    customizations: {
+        cpu: false,
+        resources: {
+            cpu: "4",
+            memory: "8Gi",
+            storage: "10Gi",
+            gpu: "1",
+            gpu_model: "rtx4090",
+        },
+        duration: "1h",
+        token: "USDT",
+    },
 });
 
 // Close deployment
@@ -99,6 +112,7 @@ await runtime.executeAction("DEPLOYMENT_OPERATION", {
 - USDC
 - DAI
 - WETH
+- CST
 
 ## Development
 
