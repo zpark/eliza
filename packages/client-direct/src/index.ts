@@ -226,6 +226,12 @@ export class DirectClient {
                 );
 
                 const text = req.body.text;
+                // if empty text, directly return
+                if (!text) {
+                    res.json([]);
+                    return;
+                }
+
                 const messageId = stringToUuid(Date.now().toString());
 
                 const attachments: Media[] = [];
