@@ -226,6 +226,9 @@ importers:
       '@elizaos/plugin-node':
         specifier: workspace:*
         version: link:../packages/plugin-node
+      '@elizaos/plugin-obsidian':
+        specifier: workspace:*
+        version: link:../packages/plugin-obsidian
       '@elizaos/plugin-open-weather':
         specifier: workspace:*
         version: link:../packages/plugin-open-weather
@@ -654,6 +657,9 @@ importers:
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+      vitest:
+        specifier: 1.2.1
+        version: 1.2.1(@types/node@22.10.5)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10))(terser@5.37.0)
 
   packages/client-farcaster:
     dependencies:
@@ -1382,6 +1388,25 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
 
+  packages/plugin-goplus:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: ^8.3.5
+        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    devDependencies:
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.5.13
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
+
   packages/plugin-icp:
     dependencies:
       '@dfinity/agent':
@@ -1719,6 +1744,24 @@ importers:
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+
+  packages/plugin-obsidian:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      file-type-checker:
+        specifier: ^1.1.2
+        version: 1.1.2
+      mrmime:
+        specifier: ^2.0.0
+        version: 2.0.0
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
 
   packages/plugin-open-weather:
     dependencies:
@@ -12059,6 +12102,9 @@ packages:
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       webpack: ^4.0.0 || ^5.0.0
+
+  file-type-checker@1.1.2:
+    resolution: {integrity: sha512-HodBNiinBQNHQfXhXzAuHkU2udHF3LFS6PAOEZqxW+BjotZVCaMR7ckpTTnvLi718dbzRavnjRX0kbSb5pJG3g==}
 
   file-uri-to-path@1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
@@ -33900,7 +33946,6 @@ snapshots:
       '@esbuild/win32-arm64': 0.23.1
       '@esbuild/win32-ia32': 0.23.1
       '@esbuild/win32-x64': 0.23.1
-    optional: true
 
   esbuild@0.24.2:
     optionalDependencies:
@@ -34606,6 +34651,8 @@ snapshots:
       schema-utils: 3.3.0
       webpack: 5.97.1(@swc/core@1.10.4(@swc/helpers@0.5.15))
 
+  file-type-checker@1.1.2: {}
+
   file-uri-to-path@1.0.0: {}
 
   filelist@1.0.4:
@@ -35045,7 +35092,6 @@ snapshots:
   get-tsconfig@4.8.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
-    optional: true
 
   get-uri@6.0.4:
     dependencies:
@@ -41678,8 +41724,7 @@ snapshots:
 
   resolve-pathname@3.0.0: {}
 
-  resolve-pkg-maps@1.0.0:
-    optional: true
+  resolve-pkg-maps@1.0.0: {}
 
   resolve.exports@2.0.3: {}
 
@@ -43345,7 +43390,6 @@ snapshots:
       get-tsconfig: 4.8.1
     optionalDependencies:
       fsevents: 2.3.3
-    optional: true
 
   tty-browserify@0.0.1: {}
 
