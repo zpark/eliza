@@ -10,13 +10,10 @@ export const sentientAI: Action = {
     name: "SENTIENT_AI",
     similes: [
         "SENTIENT",
-        "FORECAST",
-        "FUTURE_WEATHER",
-        "UPCOMING_WEATHER",
-        "WEATHER_PREDICTION",
-        "NEWS"
+        "NEWS",
+        "WEATHER"
     ],
-    description: "Provde realtime information given a query. 1. Weather. 2. News.",
+    description: "Provde realtime information for Weather, News.",
     examples: [
         [
             {
@@ -29,7 +26,7 @@ export const sentientAI: Action = {
                 user: "assistant",
                 content: {
                     text: "Here's the weather forecast for Tokyo: Tomorrow will be 22°C with partly cloudy skies. The next few days will see temperatures ranging from 18-24°C with a chance of rain on Thursday.",
-                    action: "WEATHER_FORECAST",
+                    action: "WEATHER",
                 },
             },
         ],
@@ -44,9 +41,11 @@ export const sentientAI: Action = {
                 user: "assistant",
                 content: {
                     text: "Looking at London's forecast: There's a 60% chance of rain on Wednesday with temperatures around 15°C. The rest of the week should be mostly cloudy with occasional showers.",
-                    action: "WEATHER_FORECAST",
+                    action: "WEATHER",
                 },
-            },
+            }
+        ],
+        [
             {
                 user: "user",
                 content: {
