@@ -16,7 +16,10 @@ import {
     Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { UUID } from "@elizaos/core";
+import { Content, UUID } from "@elizaos/core";
+import { useMutation } from "@tanstack/react-query";
+import { apiClient } from "~/lib/api";
+import { type MessageExample } from "@elizaos/core";
 
 const ChatAiIcons = [
     {
@@ -33,22 +36,16 @@ const ChatAiIcons = [
     },
 ];
 
+interface ExtraContentFields {
+    user: string;
+    createdAt: number;
+}
+
+type ContentWithUser = Content & ExtraContentFields;
+
 export default function Page({ agentId }: { agentId: UUID }) {
-    const [messages, setMessages]: any[] = useState([
-        {
-            id: 2,
-            avatar: "",
-            name: "Eliza",
-            role: "ai",
-            message: "How can I help?",
-        },
-    ]);
-    const selectedUser = {
-        name: "AAA",
-        avatar: null,
-    };
-    const [input, setInput] = useState("");
-    const [isLoading, setisLoading] = useState(false);
+    const [messages, setMessages] = useState<ContentWithUser[]>([]);
+    const [input, setInput] = useState<string>("");
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +53,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const formRef = useRef<HTMLFormElement>(null);
 
     const getMessageVariant = (role: string) =>
-        role === "ai" ? "received" : "sent";
+        role !== "user" ? "received" : "sent";
+
     useEffect(() => {
         if (messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop =
@@ -74,14 +72,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
         e.preventDefault();
         if (!input) return;
 
-        setMessages((messages) => [
+        sendMessageMutation.mutate(input);
+
+        setMessages((messages: ContentWithUser[]) => [
             ...messages,
             {
-                id: messages.length + 1,
-                avatar: selectedUser.avatar,
-                name: selectedUser.name,
-                role: "user",
-                message: input,
+                text: input,
+                user: "user",
+                createdAt: Date.now(),
             },
         ]);
 
@@ -95,109 +93,84 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     }, []);
 
+    const sendMessageMutation = useMutation({
+        mutationKey: ["send_message", agentId],
+        mutationFn: (message: string) =>
+            apiClient.sendMessage(agentId, message),
+        onSuccess(newMessages: ContentWithUser[]) {
+            console.log({ newMessages });
+            setMessages([
+                ...messages,
+                ...newMessages.map((a) => {
+                    a.createdAt = Date.now();
+                    return a;
+                }),
+            ]);
+        },
+    });
+
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             <div className="flex-1 overflow-y-auto bg-card rounded-t-md border-t border-l border-r">
                 <ChatMessageList ref={messagesContainerRef}>
                     {/* Chat messages */}
                     <AnimatePresence>
-                        {messages.map((message, index) => {
-                            const variant = getMessageVariant(message.role!);
-                            return (
-                                <motion.div
-                                    key={index}
-                                    layout
-                                    initial={{
-                                        opacity: 0,
-                                        scale: 1,
-                                        y: 50,
-                                        x: 0,
-                                    }}
-                                    animate={{
-                                        opacity: 1,
-                                        scale: 1,
-                                        y: 0,
-                                        x: 0,
-                                    }}
-                                    exit={{ opacity: 0, scale: 1, y: 1, x: 0 }}
-                                    transition={{
-                                        opacity: { duration: 0.1 },
-                                        layout: {
-                                            type: "spring",
-                                            bounce: 0.3,
-                                            duration: index * 0.05 + 0.2,
-                                        },
-                                    }}
-                                    style={{ originX: 0.5, originY: 0.5 }}
-                                    className="flex flex-col gap-2 p-4"
-                                >
-                                    <ChatBubble key={index} variant={variant}>
-                                        <Avatar>
-                                            <AvatarImage
-                                                src={
-                                                    message.role === "ai"
-                                                        ? ""
-                                                        : message.avatar
-                                                }
-                                                alt="Avatar"
-                                                className={
-                                                    message.role === "ai"
-                                                        ? "dark:invert"
-                                                        : ""
-                                                }
-                                            />
-                                            <AvatarFallback>
-                                                {message.role === "ai"
-                                                    ? "🤖"
-                                                    : "GG"}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <ChatBubbleMessage
-                                            isLoading={message.isLoading}
+                        {messages.map(
+                            (message: ContentWithUser, index: number) => {
+                                const variant = getMessageVariant(
+                                    message?.user
+                                );
+                                return (
+                                    <motion.div
+                                        key={index}
+                                        layout
+                                        initial={{
+                                            opacity: 0,
+                                            scale: 1,
+                                            y: 50,
+                                            x: 0,
+                                        }}
+                                        animate={{
+                                            opacity: 1,
+                                            scale: 1,
+                                            y: 0,
+                                            x: 0,
+                                        }}
+                                        exit={{
+                                            opacity: 0,
+                                            scale: 1,
+                                            y: 1,
+                                            x: 0,
+                                        }}
+                                        transition={{
+                                            opacity: { duration: 0.1 },
+                                            layout: {
+                                                type: "spring",
+                                                bounce: 0.3,
+                                                duration: index * 0.05 + 0.2,
+                                            },
+                                        }}
+                                        style={{ originX: 0.5, originY: 0.5 }}
+                                        className="flex flex-col gap-2 p-4"
+                                    >
+                                        <ChatBubble
+                                            key={index}
+                                            variant={variant}
+                                            className="flex flex-col"
                                         >
-                                            {message.message}
-                                            {message.role === "ai" && (
-                                                <div className="flex items-center mt-1.5 gap-1">
-                                                    {!message.isLoading && (
-                                                        <>
-                                                            {ChatAiIcons.map(
-                                                                (
-                                                                    icon,
-                                                                    index
-                                                                ) => {
-                                                                    const Icon =
-                                                                        icon.icon;
-                                                                    return (
-                                                                        <ChatBubbleAction
-                                                                            variant="outline"
-                                                                            className="size-6"
-                                                                            key={
-                                                                                index
-                                                                            }
-                                                                            icon={
-                                                                                <Icon className="size-3" />
-                                                                            }
-                                                                            onClick={() =>
-                                                                                console.log(
-                                                                                    "Action " +
-                                                                                        icon.label +
-                                                                                        " clicked for message " +
-                                                                                        index
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    );
-                                                                }
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </ChatBubbleMessage>
-                                    </ChatBubble>
-                                </motion.div>
-                            );
-                        })}
+                                            <ChatBubbleMessage
+                                                isLoading={false}
+                                            >
+                                                {message?.text}
+                                            </ChatBubbleMessage>
+                                            <span className="text-sm">
+                                                {message?.createdAt}
+                                            </span>
+                                        </ChatBubble>
+                                    </motion.div>
+                                );
+                            }
+                        )}
                     </AnimatePresence>
                 </ChatMessageList>
             </div>
@@ -226,12 +199,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
                         </Button> */}
 
                         <Button
-                            disabled={!input || isLoading}
+                            disabled={!input || sendMessageMutation?.isPending}
                             type="submit"
                             size="sm"
                             className="ml-auto gap-1.5"
                         >
-                            Send Message
+                            {sendMessageMutation?.isPending
+                                ? "..."
+                                : "Send Message"}
                             <CornerDownLeft className="size-3.5" />
                         </Button>
                     </div>

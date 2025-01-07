@@ -44,8 +44,15 @@ const fetcher = async ({
 };
 
 export const apiClient = {
-    sendMessage: (agentId: string) =>
-        fetcher({ url: `/${agentId}/message`, method: "POST" }),
+    sendMessage: (agentId: string, message: string) =>
+        fetcher({
+            url: `/${agentId}/message`,
+            method: "POST",
+            body: {
+                text: message,
+                user: 'user'
+            },
+        }),
     getAgents: () => fetcher({ url: "/agents" }),
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
