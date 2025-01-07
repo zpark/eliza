@@ -23,6 +23,7 @@ import { cn, moment } from "~/lib/utils";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import CopyButton from "./copy-button";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface ExtraContentFields {
     user: string;
@@ -242,16 +243,30 @@ export default function Page({ agentId }: { agentId: UUID }) {
                         className="min-h-12 resize-none rounded-md bg-background border-0 p-3 shadow-none focus-visible:ring-0"
                     />
                     <div className="flex items-center p-3 pt-0">
-                        <Button variant="ghost" size="icon">
-                            <Paperclip className="size-4" />
-                            <span className="sr-only">Attach file</span>
-                        </Button>
-
-                        <Button variant="ghost" size="icon">
-                            <Mic className="size-4" />
-                            <span className="sr-only">Use Microphone</span>
-                        </Button>
-
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Paperclip className="size-4" />
+                                    <span className="sr-only">Attach file</span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                                <p>Attach file</p>
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Mic className="size-4" />
+                                    <span className="sr-only">
+                                        Use Microphone
+                                    </span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                                <p>Use microphone</p>
+                            </TooltipContent>
+                        </Tooltip>
                         <Button
                             disabled={!input || sendMessageMutation?.isPending}
                             type="submit"
