@@ -1,44 +1,22 @@
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
     ChatBubble,
-    ChatBubbleAction,
     ChatBubbleMessage,
 } from "~/components/ui/chat/chat-bubble";
 import { ChatInput } from "~/components/ui/chat/chat-input";
 import { ChatMessageList } from "~/components/ui/chat/chat-message-list";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    CopyIcon,
-    CornerDownLeft,
-    Paperclip,
-    RefreshCcw,
-    Volume2,
-} from "lucide-react";
+import { CornerDownLeft, Paperclip } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "~/lib/api";
-import { type MessageExample } from "@elizaos/core";
-
-const ChatAiIcons = [
-    {
-        icon: CopyIcon,
-        label: "Copy",
-    },
-    {
-        icon: RefreshCcw,
-        label: "Refresh",
-    },
-    {
-        icon: Volume2,
-        label: "Volume",
-    },
-];
+import { moment } from "~/lib/utils";
 
 interface ExtraContentFields {
     user: string;
     createdAt: number;
+    isLoading?: boolean;
 }
 
 type ContentWithUser = Content & ExtraContentFields;
@@ -81,6 +59,12 @@ export default function Page({ agentId }: { agentId: UUID }) {
                 user: "user",
                 createdAt: Date.now(),
             },
+            {
+                text: input,
+                user: "system",
+                isLoading: true,
+                createdAt: Date.now(),
+            },
         ]);
 
         setInput("");
@@ -98,9 +82,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
         mutationFn: (message: string) =>
             apiClient.sendMessage(agentId, message),
         onSuccess(newMessages: ContentWithUser[]) {
-            console.log({ newMessages });
             setMessages([
-                ...messages,
+                ...messages.filter((a) => !a.isLoading),
                 ...newMessages.map((a) => {
                     a.createdAt = Date.now();
                     return a;
@@ -159,13 +142,17 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                             className="flex flex-col"
                                         >
                                             <ChatBubbleMessage
-                                                isLoading={false}
+                                                isLoading={message?.isLoading}
                                             >
                                                 {message?.text}
                                             </ChatBubbleMessage>
-                                            <span className="text-sm">
-                                                {message?.createdAt}
-                                            </span>
+                                            {message?.createdAt ? (
+                                                <span className="text-xs text-muted-foreground">
+                                                    {moment(
+                                                        message?.createdAt
+                                                    ).format("LT")}
+                                                </span>
+                                            ) : null}
                                         </ChatBubble>
                                     </motion.div>
                                 );
