@@ -7,19 +7,19 @@ import {
     HandlerCallback,
     elizaLogger,
     composeContext,
-    generateObject,
     ModelClass,
+    generateObjectDeprecated,
 } from "@elizaos/core";
-import { validateSpheronConfig } from "../environment";
+import { validateSpheronConfig } from "../environment.ts";
 import {
     getDeployment,
     updateDeployment,
     closeDeployment,
     startDeployment,
-} from "../utils";
-import { DeploymentContent } from "../types";
-import { AVAILABLE_GPU_MODELS, DEPLOYMENT_CONFIGS } from "../utils/constants";
-import { DEPLOYMENT_TEMPLATES } from "../utils/template";
+} from "../utils/index.ts";
+import { DeploymentContent } from "../types/index.ts";
+import { AVAILABLE_GPU_MODELS } from "../utils/constants.ts";
+import { DEPLOYMENT_TEMPLATES } from "../utils/template.ts";
 
 function isDeploymentContent(content: any): content is DeploymentContent {
     elizaLogger.debug("Content for deployment operation:", content);
@@ -62,14 +62,20 @@ Example responses for different operations:
 \`\`\`json
 {
     "operation": "create",
-    "template": "jupyter-notebook",  // Available templates: jupyter-notebook, ollama-webui, vscode-pytorch
+    "template": "<template-name>",  // One of: jupyter-notebook, ollama-webui, vscode-pytorch
     "customizations": {
-        "cpu": false,                // Optional: Set to true for CPU-only deployment (default: false for GPU deployment)
-        "resources": {               // Optional: Custom resource requirements
-            "cpu": "4",
-            "memory": "8Gi",
-            "gpu": "1",
-            "gpu_model": "rtx4090"   // Optional: Specify GPU model (default: rtx4090)
+        "cpu": <true|false>,                // Extract CPU-only preference from context or put a default value of false. eg. no gpu needed or something like that
+        "resources": {               // Extract resource requirements from context
+            "cpu": "<requested-cpu>", // Extract cpu requirements from context or put a default value of 4
+            "memory": "<requested-memory>", // Extract memory requirements from context or put a default value of 8Gi
+            "storage": "<requested-storage>", // Extract storage requirements from context or put a default value of 100Gi
+            "gpu": "<requested-gpu-count>", // Extract gpu requirements from context or put a default value of 1
+            "gpu_model": "<requested-gpu-model>" // Extract gpu model requirements from context or put a default value of rtx4090
+        },
+        "duration": "<requested-duration>" // Extract duration requirements from context or put a default value of 1h
+        "token": "<requested-token>" // Extract token requirements from context or put a default value of CST
+        "template": {
+            "heuristMinerAddress": "<requested-heurist-miner-address>" // Extract heurist miner address requirements from context
         }
     }
 }
@@ -79,16 +85,19 @@ Example responses for different operations:
 \`\`\`json
 {
     "operation": "update",
-    "leaseId": "existing-lease-id",
-    "template": "jupyter-notebook",
+    "leaseId": "existing-lease-id", // Extract lease ID from context
+    "template": "<template-name>", // One of: jupyter-notebook, ollama-webui, vscode-pytorch
     "customizations": {
-        "cpu": false,
-        "resources": {
-            "cpu": "4",
-            "memory": "8Gi",
-            "gpu": "1",
-            "gpu_model": "rtx4090"
-        }
+        "cpu": <true|false>,   // Extract cpu-only preference from context or put a default value of false. eg. no gpu needed or something like that
+        "resources": {               // Extract updated resource requirements from context
+            "cpu": "<requested-cpu>", // Extract cpu requirements from context or put a default value of 4
+            "memory": "<requested-memory>", // Extract memory requirements from context or put a default value of 8Gi
+            "storage": "<requested-storage>", // Extract storage requirements from context or put a default value of 100Gi
+            "gpu": "<requested-gpu-count>", // Extract gpu requirements from context or put a default value of 1
+            "gpu_model": "<requested-gpu-model>" // Extract gpu model requirements from context or put a default value of rtx4090
+        },
+        "duration": "<requested-duration>" // Extract duration requirements from context or put a default value of 1h
+        "token": "<requested-token>" // Extract token requirements from context or put a default value of CST
     }
 }
 \`\`\`
@@ -107,10 +116,16 @@ ${templateDescriptions}
 ## Available GPU Models
 ${AVAILABLE_GPU_MODELS.map((gpu) => `- ${gpu}`).join("\n")}
 
+{{recentMessages}}
+
 Given the recent messages, extract the following information about the requested deployment:
-- Desired template name
-- CPU-only requirement (if specified)
-- Any customization requirements (GPU model, resources, etc.)
+- Desired template name from the context
+- CPU-only requirement (if specified) from the context
+- Any customization requirements GPU model and it's count, cpu and memory resources properly from the context
+- Token (if specified) from the context
+- Duration (if specified) from the context
+- Lease ID (if updating or closing) from the context
+- Operation (create, update, close) from the context
 
 Respond with a JSON markdown block containing only the extracted values.`;
 
@@ -149,6 +164,13 @@ export default {
             state = await runtime.updateRecentMessageState(state);
         }
 
+        // Filter only "just now" and last couple of user messages
+        state.recentMessages = state.recentMessages
+            .split('\n')
+            .filter(line => line.includes('(just now)') || line.includes('(user)'))
+            .slice(-2)
+            .join('\n');
+
         // Compose deployment context
         const deploymentContext = composeContext({
             state,
@@ -156,13 +178,11 @@ export default {
         });
 
         // Generate deployment content
-        const content = await generateObject({
+        const content = await generateObjectDeprecated({
             runtime,
             context: deploymentContext,
             modelClass: ModelClass.SMALL,
         });
-
-        elizaLogger.debug("Deployment content:", content);
 
         // Validate deployment content
         if (!isDeploymentContent(content)) {
@@ -196,11 +216,11 @@ export default {
                         computeConfig
                     );
 
-                    elizaLogger.log("Deployment created:", result);
+                    elizaLogger.log("Deployment created with lease ID:", result.leaseId.toString());
 
                     const deploymentDetails = await getDeployment(
                         runtime,
-                        result.leaseId
+                        result.leaseId.toString()
                     );
                     const service = Object.values(
                         deploymentDetails.services
@@ -210,14 +230,24 @@ export default {
                     const ports =
                         deploymentDetails.forwarded_ports[service.name] || [];
                     const portInfo = ports
-                        .map((p) => `${p.host}:${p.externalPort}`)
+                        .map((p) => `${p.host}:${p.externalPort} for Port ${p.port}`)
                         .join(", ");
 
-                    callback?.({
-                        text: `Deployment created and ready!\nLease ID: ${result.leaseId}\n${portInfo ? `Access URLs: ${portInfo}` : ""}`,
+                    console.log("Final response:", {
+                        text: `Deployment created and ready!\nLease ID: ${result.leaseId.toString()}\n${portInfo ? `Access URLs: ${portInfo}` : ""}`,
                         content: {
                             success: true,
-                            leaseId: result.leaseId,
+                            leaseId: result.leaseId.toString(),
+                            details: deploymentDetails,
+                            ports: ports,
+                        },
+                    });
+
+                    callback?.({
+                        text: `Deployment created and ready!\nLease ID: ${result.leaseId.toString()}\n${portInfo ? `Access URLs: ${portInfo}` : ""}`,
+                        content: {
+                            success: true,
+                            leaseId: result.leaseId.toString(),
                             details: deploymentDetails,
                             ports: ports,
                         },
@@ -225,34 +255,35 @@ export default {
                     break;
                 }
                 case "update": {
-                    if (
-                        !content.leaseId ||
-                        !content.template ||
-                        !content.customizations
-                    ) {
+                    if (!content.leaseId || !content.customizations || !content.template) {
                         throw new Error(
                             "Lease ID, template, and customizations are required for deployment update"
                         );
                     }
+
+                    if (!DEPLOYMENT_TEMPLATES[content.template]) {
+                        throw new Error(`Unsupported template: ${content.template}`);
+                    }
+
                     const computeConfig = DEPLOYMENT_TEMPLATES[
                         content.template
                     ].config(content.customizations);
                     const result = await updateDeployment(
                         runtime,
-                        content.leaseId,
+                        content.leaseId.toString(),
                         computeConfig
                     );
-                    elizaLogger.log("Deployment updated:", result);
+                    elizaLogger.log("Deployment updated with lease ID:", result.leaseId.toString());
 
-                    const deploymentDetails = await getDeployment(
+                    const newDetails = await getDeployment(
                         runtime,
-                        content.leaseId
+                        content.leaseId.toString()
                     );
                     callback?.({
-                        text: `Deployment ${content.leaseId} updated successfully`,
+                        text: `Deployment ${content.leaseId.toString()} updated successfully`,
                         content: {
                             success: true,
-                            details: deploymentDetails,
+                            details: newDetails,
                         },
                     });
                     break;
@@ -265,12 +296,12 @@ export default {
                     }
                     const result = await closeDeployment(
                         runtime,
-                        content.leaseId
+                        content.leaseId.toString()
                     );
-                    elizaLogger.log("Deployment closed:", result);
+                    elizaLogger.log("Deployment closed with lease ID:", result.leaseId.toString());
 
                     callback?.({
-                        text: `Deployment ${content.leaseId} closed successfully`,
+                        text: `Deployment ${content.leaseId.toString()} closed successfully`,
                         content: {
                             success: true,
                             transaction: result,
@@ -281,7 +312,8 @@ export default {
             }
             return true;
         } catch (error) {
-            elizaLogger.error("Deployment operation failed:", error);
+            console.log("Error:", error);
+            elizaLogger.error("Deployment operation failed:", error.message);
             callback?.({
                 text: "Deployment operation failed",
                 content: {
@@ -371,6 +403,21 @@ export default {
                 },
             },
         ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Deploy a Jupyter notebook with GPU and token USDT",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Setting up your Jupyter notebook deployment with GPU support and token USDT...",
+                    action: "DEPLOYMENT_OPERATION",
+                },
+            },
+        ],
         // Update deployment examples
         [
             {
@@ -402,12 +449,42 @@ export default {
                 },
             },
         ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Update my deployment abc123 to use an A100 GPU and token USDT",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Updating deployment abc123 to use A100 GPU and token USDT...",
+                    action: "DEPLOYMENT_OPERATION",
+                },
+            },
+        ],
         // Close deployment examples
         [
             {
                 user: "{{user1}}",
                 content: {
                     text: "Close deployment abc123",
+                },
+            },
+            {
+                user: "{{agentName}}",
+                content: {
+                    text: "Closing deployment abc123...",
+                    action: "DEPLOYMENT_OPERATION",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "I want to stop my deployment abc123",
                 },
             },
             {

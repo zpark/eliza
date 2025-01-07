@@ -5,7 +5,7 @@ import {
     State,
     elizaLogger,
 } from "@elizaos/core";
-import { DEPLOYMENT_CONFIGS } from "../utils/constants";
+import { DEPLOYMENT_CONFIGS } from "../utils/constants.ts";
 
 export const deploymentProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {

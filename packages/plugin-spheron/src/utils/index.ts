@@ -1,7 +1,11 @@
 import { IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { SpheronSDK } from "@spheron/protocol-sdk";
-import { validateSpheronConfig } from "../environment";
-import { BalanceInfo, DeploymentDetails, SpheronComputeConfig } from "../types";
+import { validateSpheronConfig } from "../environment.ts";
+import {
+    BalanceInfo,
+    DeploymentDetails,
+    SpheronComputeConfig,
+} from "../types/index.ts";
 
 export const getSDKInstance = async (
     runtime: IAgentRuntime
@@ -29,11 +33,8 @@ export const depositBalance = async (
     return await sdk.escrow.depositBalance({
         token,
         amount,
-        onSuccessCallback: (receipt) => {
-            elizaLogger.log("Deposit successful:", receipt);
-        },
         onFailureCallback: (error) => {
-            elizaLogger.error("Deposit failed:", error);
+            elizaLogger.error("Deposit failed: ", error);
             throw error;
         },
     });
@@ -48,9 +49,6 @@ export const withdrawBalance = async (
     return await sdk.escrow.withdrawBalance({
         token,
         amount,
-        onSuccessCallback: (receipt) => {
-            elizaLogger.log("Withdrawal successful:", receipt);
-        },
         onFailureCallback: (error) => {
             elizaLogger.error("Withdrawal failed:", error);
             throw error;
@@ -92,12 +90,15 @@ export const startDeployment = async (
     const result = await createOrder(runtime, generateICLYaml(computeConfig));
     // Wait for new deployment to be ready
     let isReady = false;
-    const maxAttempts = 42; // 6 minutes with 10-second intervals
+    const maxAttempts = 10; // 10 times with 10-second intervals
     let attempts = 0;
 
     while (!isReady && attempts < maxAttempts) {
-        const status = await getDeploymentStatus(runtime, result.leaseId);
-        console.log(
+        const status = await getDeploymentStatus(
+            runtime,
+            result.leaseId.toString()
+        );
+        elizaLogger.debug(
             `Deployment status (attempt ${attempts + 1}/${maxAttempts}):`,
             status
         );
@@ -123,7 +124,7 @@ export const updateDeployment = async (
     runtime: IAgentRuntime,
     leaseId: string,
     computeConfig: SpheronComputeConfig
-): Promise<{ orderId: string; providerAddress: string }> => {
+): Promise<any> => {
     // Check balance before deployment update
     const token = computeConfig.token || "CST";
     const balance = await getUserBalance(runtime, token);
@@ -152,18 +153,18 @@ export const updateDeployment = async (
 
     const result = await updateOrder(
         runtime,
-        leaseId,
+        leaseId.toString(),
         generateICLYaml(computeConfig)
     );
 
     // Wait for new deployment to be ready
     let isReady = false;
-    const maxAttempts = 42; // 6 minutes with 10-second intervals
+    const maxAttempts = 10; // 10 times with 10-second intervals
     let attempts = 0;
 
     while (!isReady && attempts < maxAttempts) {
-        const status = await getDeploymentStatus(runtime, result.leaseId);
-        console.log(
+        const status = await getDeploymentStatus(runtime, leaseId.toString());
+        elizaLogger.debug(
             `Deployment status (attempt ${attempts + 1}/${maxAttempts}):`,
             status
         );
@@ -189,6 +190,7 @@ export const createOrder = async (
     runtime: IAgentRuntime,
     iclYaml: string
 ): Promise<{ leaseId: string; transaction: any }> => {
+    elizaLogger.debug("Creating order with iclYaml:", iclYaml);
     const sdk = await getSDKInstance(runtime);
     const config = await validateSpheronConfig(runtime);
     return await sdk.deployment.createDeployment(
@@ -201,7 +203,7 @@ export const updateOrder = async (
     runtime: IAgentRuntime,
     leaseId: string,
     iclYaml: string
-): Promise<{ orderId: string; providerAddress: string }> => {
+): Promise<{ providerAddress: string }> => {
     const sdk = await getSDKInstance(runtime);
     const config = await validateSpheronConfig(runtime);
     return await sdk.deployment.updateDeployment(
@@ -215,6 +217,7 @@ export const getDeployment = async (
     runtime: IAgentRuntime,
     leaseId: string
 ): Promise<DeploymentDetails> => {
+    elizaLogger.debug("Getting deployment with lease ID:", leaseId);
     const sdk = await getSDKInstance(runtime);
     const config = await validateSpheronConfig(runtime);
     return await sdk.deployment.getDeployment(
@@ -341,15 +344,15 @@ deployment:
 }
 
 function parseDuration(duration: string): number {
-    const match = duration.match(/^(\d+)(h|d|w|m)$/);
+    const match = duration.match(/^(\d*\.?\d+)(h|d|w|m)$/);
     if (!match) {
         throw new Error(
-            "Invalid duration format. Expected format: number followed by h(hours), d(days), w(weeks), or m(months)"
+            "Invalid duration format. Expected format: number (can include decimals) followed by h(hours), d(days), w(weeks), or m(months)"
         );
     }
 
     const [, value, unit] = match;
-    const numValue = parseInt(value, 10);
+    const numValue = parseFloat(value);
 
     switch (unit) {
         case "min":

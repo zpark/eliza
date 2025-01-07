@@ -35,22 +35,25 @@ export interface EscrowContent extends Content {
 export interface DeploymentContent extends Content {
     operation: "create" | "update" | "close";
     template?: string;
-    customizations?: any;
+    customizations?: Customizations;
     leaseId?: string;
 }
 
-export interface LeaseContent extends Content {
-    leaseId: string;
-    operation: "close" | "get";
+export interface Customizations {
+    cpu: boolean;
+    resources: {
+        cpu: number;
+        memory: string;
+        storage: string;
+        gpu: number;
+        gpu_model: string;
+    };
+    duration: string;
+    token: string;
+    template?: {
+        heuristMinerAddress: string;
+    };
 }
-
-export interface YakSwapQuote {
-    amounts: bigint[];
-    adapters: string[];
-    path: string[];
-    gasEstimate: bigint;
-}
-
 export interface TokenInfo {
     name: string;
     symbol: string;
@@ -61,29 +64,6 @@ export interface BalanceInfo {
     lockedBalance: string;
     unlockedBalance: string;
     token: TokenInfo;
-}
-
-export interface LeaseDetails {
-    leaseId: string;
-    fizzId: string;
-    requestId: string;
-    resourceAttribute: {
-        cpuUnits: number;
-        cpuAttributes: any[];
-        ramUnits: number;
-        ramAttributes: any[];
-        gpuUnits: number;
-        gpuAttributes: any[];
-        endpointsKind: number;
-        endpointsSequenceNumber: number;
-    };
-    acceptedPrice: string;
-    providerAddress: string;
-    tenantAddress: string;
-    startBlock: string;
-    startTime: number;
-    endTime: number;
-    state: string;
 }
 
 export interface DeploymentDetails {
@@ -111,33 +91,4 @@ export interface DeploymentDetails {
         }>;
     };
     ips: null | object;
-}
-
-export interface LeaseWithOrderDetails extends LeaseDetails {
-    name: string;
-    tier: string;
-    region?: string;
-    token?: {
-        symbol?: string;
-        decimal?: number;
-    };
-}
-
-export interface LeaseIds {
-    activeLeaseIds: string[];
-    terminatedLeaseIds: string[];
-    allLeaseIds: string[];
-}
-
-export interface LeasesByStateOptions {
-    state: "ACTIVE" | "TERMINATED";
-    page?: number;
-    pageSize?: number;
-}
-
-export interface LeasesByStateResponse {
-    leases: LeaseWithOrderDetails[];
-    activeCount: number;
-    terminatedCount: number;
-    totalCount: number;
 }

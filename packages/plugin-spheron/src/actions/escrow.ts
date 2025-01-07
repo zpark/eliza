@@ -9,17 +9,20 @@ import {
     composeContext,
     generateObject,
     ModelClass,
+    generateObjectDeprecated,
 } from "@elizaos/core";
-import { validateSpheronConfig } from "../environment";
-import { depositBalance, getUserBalance, withdrawBalance } from "../utils";
-import { EscrowContent } from "../types";
-import { SUPPORTED_TOKENS } from "../utils/constants";
+import { validateSpheronConfig } from "../environment.ts";
+import { depositBalance, getUserBalance, withdrawBalance } from "../utils/index.ts";
+import { EscrowContent } from "../types/index.ts";
+import { SUPPORTED_TOKENS } from "../utils/constants.ts";
 
 function isEscrowContent(content: any): content is EscrowContent {
-    elizaLogger.debug("Content for escrow operation:", content);
+    console.log("Content for escrow operation:", content);
     return (
         typeof content.token === "string" &&
-        typeof content.amount === "number" &&
+        ((content.operation === "deposit" || content.operation === "withdraw")
+            ? (typeof content.amount === "number" && content.amount > 0)
+            : content.operation === "check") &&
         (content.operation === "deposit" ||
             content.operation === "withdraw" ||
             content.operation === "check")
@@ -31,38 +34,36 @@ const escrowTemplate = `Respond with a JSON markdown block containing only the e
 - Token must be one of the supported tokens.
 - Amount must be a positive number.
 
-Example response for checking balance for USDT:
+Example response for checking balance for <token-symbol>:
 \`\`\`json
 {
-    "token": "USDT",
+    "token": "<token-symbol>", // can be USDT, USDC, DAI, WETH, CST
     "operation": "check"
 }
 \`\`\`
 
-Example response for depositing 100 USDT:
+Example response for depositing <amount> <token-symbol>:
 \`\`\`json
 {
-    "token": "USDT",
-    "amount": 100,
+    "token": "<token-symbol>", // can be USDT, USDC, DAI, WETH, CST
+    "amount": <amount>, // must be a positive number
     "operation": "deposit"
 }
 \`\`\`
 
-Example response for withdrawing 50 USDC:
+Example response for withdrawing <amount> <token-symbol>:
 \`\`\`json
 {
-    "token": "USDC",
-    "amount": 50,
-    "operation": "withdraw"
+    "token": "<token-symbol>", // can be USDT, USDC, DAI, WETH, CST
+    "amount": <amount>, // must be a positive number
+    "operation": "withdraw" // must be one of the supported operations
 }
 \`\`\`
 
 ## Supported Tokens
 ${Object.entries(SUPPORTED_TOKENS)
-    .map(([key, value]) => `- ${key}: ${value}`)
-    .join("\n")}
-
-## Recent Messages
+        .map(([key, _]) => `- ${key}`)
+        .join("\n")}
 
 {{recentMessages}}
 
@@ -70,6 +71,7 @@ Given the recent messages, extract the following information about the requested
 - Token symbol (must be one of the supported tokens)
 - Amount to deposit/withdraw (must be a positive number)
 - Operation type (deposit or withdraw)
+- Don't mention multiple operations in the same json block
 
 Respond with a JSON markdown block containing only the extracted values.`;
 
@@ -111,6 +113,13 @@ export default {
             state = await runtime.updateRecentMessageState(state);
         }
 
+        // Filter only "just now" and last couple of user messages
+        state.recentMessages = state.recentMessages
+            .split('\n')
+            .filter(line => line.includes('(just now)') || line.includes('(user)'))
+            .slice(-2)
+            .join('\n');
+
         // Compose escrow context
         const escrowContext = composeContext({
             state,
@@ -118,13 +127,12 @@ export default {
         });
 
         // Generate escrow content
-        const content = await generateObject({
+        const content = await generateObjectDeprecated({
             runtime,
             context: escrowContext,
             modelClass: ModelClass.SMALL,
         });
 
-        elizaLogger.debug("Escrow content:", content);
 
         // Validate escrow content
         if (!isEscrowContent(content)) {
@@ -146,56 +154,96 @@ export default {
             elizaLogger.log(`Current ${content.token} balance:`, balance);
 
             if (content.operation === "check") {
+                const formattedAvailableBalance =
+                    Number(balance.unlockedBalance) /
+                    10 ** Number(balance.token.decimal);
+                const formattedLockedBalance =
+                    Number(balance.lockedBalance) /
+                    10 ** Number(balance.token.decimal);
                 callback?.({
-                    text: `Current ${content.token}\n unlocked balance: ${balance.unlockedBalance} ${content.token}\n locked balance: ${balance.lockedBalance}`,
+                    text: `Current ${content.token.toUpperCase()} Balance for ${config.WALLET_ADDRESS}\n Available balance: ${formattedAvailableBalance.toFixed(2)} ${content.token.toUpperCase()}\n Locked balance: ${formattedLockedBalance.toFixed(2)} ${content.token.toUpperCase()}`,
                     content: {
                         success: true,
-                        unlockedBalance: balance.unlockedBalance,
-                        lockedBalance: balance.lockedBalance,
+                        unlockedBalance: formattedAvailableBalance,
+                        lockedBalance: formattedLockedBalance,
+                        token: balance.token,
+                        walletAddress: config.WALLET_ADDRESS,
                     },
                 });
             } else if (content.operation === "deposit") {
-                const result = await depositBalance(
-                    runtime,
-                    content.token,
-                    content.amount
-                );
-                callback?.({
-                    text: `Successfully deposited ${content.amount} ${content.token} into escrow`,
-                    content: {
-                        success: true,
-                        transaction: result,
-                        operation: "deposit",
-                        token: content.token,
-                        amount: content.amount,
-                        newBalance: await getUserBalance(
-                            runtime,
-                            content.token,
-                            config.WALLET_ADDRESS
-                        ),
-                    },
-                });
+                try {
+                    const result = await depositBalance(
+                        runtime,
+                        content.token,
+                        content.amount
+                    );
+                    callback?.({
+                        text: `Successfully deposited ${content.amount} ${content.token.toUpperCase()} into Spheron Escrow for ${config.WALLET_ADDRESS}`,
+                        content: {
+                            success: true,
+                            transaction: result,
+                            operation: "deposit",
+                            token: content.token,
+                            amount: content.amount,
+                            newBalance: await getUserBalance(
+                                runtime,
+                                content.token,
+                                config.WALLET_ADDRESS
+                            ),
+                            walletAddress: config.WALLET_ADDRESS,
+                        },
+                    });
+                } catch (error) {
+                    elizaLogger.error("Deposit operation failed:", error);
+                    callback?.({
+                        text: `Failed to deposit ${content.amount} ${content.token.toUpperCase()}: ${error instanceof Error ? error.message : "Unknown error"}`,
+                        content: {
+                            success: false,
+                            operation: "deposit",
+                            token: content.token,
+                            amount: content.amount,
+                            error: error instanceof Error ? error.message : "Unknown error",
+                        },
+                    });
+                    return false;
+                }
             } else if (content.operation === "withdraw") {
-                const result = await withdrawBalance(
-                    runtime,
-                    content.token,
-                    content.amount
-                );
-                callback?.({
-                    text: `Successfully withdrew ${content.amount} ${content.token} from escrow`,
-                    content: {
-                        success: true,
-                        transaction: result,
-                        operation: "withdraw",
-                        token: content.token,
-                        amount: content.amount,
-                        newBalance: await getUserBalance(
-                            runtime,
-                            content.token,
-                            config.WALLET_ADDRESS
-                        ),
-                    },
-                });
+                try {
+                    const result = await withdrawBalance(
+                        runtime,
+                        content.token,
+                        content.amount
+                    );
+                    callback?.({
+                        text: `Successfully withdrew ${content.amount} ${content.token.toUpperCase()} from Spheron Escrow for ${config.WALLET_ADDRESS}`,
+                        content: {
+                            success: true,
+                            transaction: result,
+                            operation: "withdraw",
+                            token: content.token,
+                            amount: content.amount,
+                            newBalance: await getUserBalance(
+                                runtime,
+                                content.token,
+                                config.WALLET_ADDRESS
+                            ),
+                            walletAddress: config.WALLET_ADDRESS,
+                        },
+                    });
+                } catch (error) {
+                    elizaLogger.error("Withdraw operation failed:", error);
+                    callback?.({
+                        text: `Failed to withdraw ${content.amount} ${content.token.toUpperCase()}: ${error instanceof Error ? error.message : "Unknown error"}`,
+                        content: {
+                            success: false,
+                            operation: "withdraw",
+                            token: content.token,
+                            amount: content.amount,
+                            error: error instanceof Error ? error.message : "Unknown error",
+                        },
+                    });
+                    return false;
+                }
             } else {
                 throw new Error("Invalid operation");
             }

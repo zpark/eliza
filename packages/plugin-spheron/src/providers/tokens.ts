@@ -5,7 +5,7 @@ import {
     State,
     elizaLogger,
 } from "@elizaos/core";
-import { SUPPORTED_TOKENS } from "../utils/constants";
+import { SUPPORTED_TOKENS } from "../utils/constants.ts";
 
 export const tokensProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {
