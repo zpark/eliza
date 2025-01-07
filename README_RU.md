@@ -137,7 +137,7 @@ BIRDEYE_API_KEY= # API-ключ для BirdEye
 
 SOL_ADDRESS=So11111111111111111111111111111111111111112
 SLIPPAGE=1
-RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 HELIUS_API_KEY= # API-ключ Helius
 
 
