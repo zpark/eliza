@@ -14,8 +14,9 @@ export const sentientAI: Action = {
         "FUTURE_WEATHER",
         "UPCOMING_WEATHER",
         "WEATHER_PREDICTION",
+        "NEWS"
     ],
-    description: "Get realtime detailed information like the weather forecast for a given location",
+    description: "Provde realtime information given a query. 1. Weather. 2. News.",
     examples: [
         [
             {
@@ -46,6 +47,19 @@ export const sentientAI: Action = {
                     action: "WEATHER_FORECAST",
                 },
             },
+            {
+                user: "user",
+                content: {
+                    text: "What is the latest news about Trump?",
+                },
+            },
+            {
+                user: "assistant",
+                content: {
+                    text: "Here are some of the latest news articles related to Trump: Trump invites House Republicans to Mar-a-Lago for strategy meetings.",
+                    action: "NEWS",
+                },
+            },
         ],
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
@@ -66,7 +80,7 @@ export const sentientAI: Action = {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "API-KEY": process.env.DEPIN_API_KEY,
+                    "API-KEY": runtime.getSetting("SENTAI_API_KEY"),
                 },
                 body: JSON.stringify({
                     q: content.text,
