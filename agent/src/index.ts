@@ -38,6 +38,7 @@ import { DirectClient } from "@elizaos/client-direct";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { aptosPlugin } from "@elizaos/plugin-aptos";
+import { alloraPlugin } from "@elizaos/plugin-allora";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { binancePlugin } from "@elizaos/plugin-binance";
 import {
@@ -374,7 +375,7 @@ export function getTokenForProvider(
     }
 }
 
-function initializeDatabase(dataDir: string) {
+async function initializeDatabase(dataDir: string) {
     if (process.env.POSTGRES_URL) {
         elizaLogger.info("Initializing PostgreSQL connection...");
         const db = new PostgresDatabaseAdapter({
@@ -514,11 +515,7 @@ export async function createAgent(
     cache: ICacheManager,
     token: string
 ): Promise<AgentRuntime> {
-    elizaLogger.success(
-        elizaLogger.successesTitle,
-        "Creating runtime for character",
-        character.name
-    );
+    elizaLogger.log(`Creating runtime for character ${character.name}`);
 
     nodePlugin ??= createNodePlugin();
 
@@ -669,6 +666,7 @@ export async function createAgent(
           getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
                 ? artheraPlugin
                 : null,
+            getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
@@ -767,10 +765,9 @@ async function startAgent(
             fs.mkdirSync(dataDir, { recursive: true });
         }
 
-        db = initializeDatabase(dataDir) as IDatabaseAdapter &
+        db = await initializeDatabase(dataDir) as IDatabaseAdapter &
             IDatabaseCacheAdapter;
 
-        await db.init();
 
         const cache = initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
