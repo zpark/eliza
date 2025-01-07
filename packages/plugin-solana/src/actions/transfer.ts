@@ -142,7 +142,7 @@ export default {
                 true
             );
 
-            const connection = new Connection(settings.RPC_URL!);
+            const connection = new Connection(settings.SOLANA_RPC_URL!);
 
             const mintPubkey = new PublicKey(content.tokenAddress);
             const recipientPubkey = new PublicKey(content.recipient);
