@@ -1,4 +1,4 @@
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/core";
 import {
     ActionExample,
     Content,
@@ -8,9 +8,9 @@ import {
     ModelClass,
     State,
     type Action,
-} from "@ai16z/eliza";
-import { composeContext } from "@ai16z/eliza";
-import { generateObjectDEPRECATED } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { composeContext } from "@elizaos/core";
+import { generateObjectDeprecated } from "@elizaos/core";
 import {
     Account,
     Aptos,
@@ -111,7 +111,7 @@ export default {
         });
 
         // Generate transfer content
-        const content = await generateObjectDEPRECATED({
+        const content = await generateObjectDeprecated({
             runtime,
             context: transferContext,
             modelClass: ModelClass.SMALL,
