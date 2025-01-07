@@ -17,15 +17,18 @@ jobs:
 
             - uses: pnpm/action-setup@v3
               with:
-                  version: 9.4.0
+                  version: 9.15.0
 
             - uses: actions/setup-node@v4
               with:
-                  node-version: "23"
+                  node-version: "23.3.0"
                   cache: "pnpm"
 
+            - name: Clean up
+              run: pnpm clean
+
             - name: Install dependencies
-              run: pnpm install -r
+              run: pnpm install -r --no-frozen-lockfile
 
             - name: Build packages
               run: pnpm build
