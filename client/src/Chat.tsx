@@ -14,7 +14,10 @@ export default function Chat() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { mutate: sendMessage, isPending } = useSendMessageMutation({ setMessages, setSelectedFile });
+    const { mutate: sendMessage, isPending } = useSendMessageMutation({
+        setMessages,
+        setSelectedFile,
+    });
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,7 +35,15 @@ export default function Chat() {
         const userMessage: TextResponse = {
             text: input,
             user: "user",
-            attachments: selectedFile ? [{ url: URL.createObjectURL(selectedFile), contentType: selectedFile.type, title: selectedFile.name }] : undefined,
+            attachments: selectedFile
+                ? [
+                      {
+                          url: URL.createObjectURL(selectedFile),
+                          contentType: selectedFile.type,
+                          title: selectedFile.name,
+                      },
+                  ]
+                : undefined,
         };
         setMessages((prev) => [...prev, userMessage]);
 
@@ -46,7 +57,7 @@ export default function Chat() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && file.type.startsWith('image/')) {
+        if (file && file.type.startsWith("image/")) {
             setSelectedFile(file);
         }
     };
@@ -73,22 +84,31 @@ export default function Chat() {
                                     }`}
                                 >
                                     {message.text}
-                                    {message.attachments?.map((attachment, i) => (
-                                        attachment.contentType.startsWith('image/') && (
-                                            <img
-                                                key={i}
-                                                src={message.user === "user"
-                                                    ? attachment.url
-                                                    : attachment.url.startsWith('http')
-                                                        ? attachment.url
-                                                        : `http://localhost:3000/media/generated/${attachment.url.split('/').pop()}`
-                                                }
-                                                alt={attachment.title || "Attached image"}
-                                                className="mt-2 max-w-full rounded-lg"
-                                            />
-                                        )
-                                    ))}
-                                 </pre>
+                                    {message.attachments?.map(
+                                        (attachment, i) =>
+                                            attachment.contentType.startsWith(
+                                                "image/"
+                                            ) && (
+                                                <img
+                                                    key={i}
+                                                    src={
+                                                        message.user === "user"
+                                                            ? attachment.url
+                                                            : attachment.url.startsWith(
+                                                                    "http"
+                                                                )
+                                                              ? attachment.url
+                                                              : `http://localhost:3000/media/generated/${attachment.url.split("/").pop()}`
+                                                    }
+                                                    alt={
+                                                        attachment.title ||
+                                                        "Attached image"
+                                                    }
+                                                    className="mt-2 max-w-full rounded-lg"
+                                                />
+                                            )
+                                    )}
+                                </pre>
                             </div>
                         ))
                     ) : (
