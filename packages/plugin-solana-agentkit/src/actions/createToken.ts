@@ -104,7 +104,7 @@ export default {
 
         elizaLogger.log("Init solana agent kit...");
         const solanaPrivatekey = runtime.getSetting("SOLANA_PRIVATE_KEY");
-        const rpc = runtime.getSetting("RPC_URL");
+        const rpc = runtime.getSetting("SOLANA_RPC_URL");
         const openAIKey = runtime.getSetting("OPENAI_API_KEY");
         const solanaAgentKit = new SolanaAgentKit(
             solanaPrivatekey,
