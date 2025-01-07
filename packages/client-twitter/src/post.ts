@@ -6,7 +6,8 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
-    UUID,
+    TemplateType,
+    UUID
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
@@ -18,6 +19,8 @@ import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 import { State } from "@elizaos/core";
 import { ActionResponse } from "@elizaos/core";
+
+const MAX_TIMELINES_TO_FETCH = 15;
 
 const twitterPostTemplate = `
 # Areas of Expertise
@@ -531,7 +534,7 @@ export class TwitterPostClient {
     private async generateTweetContent(
         tweetState: any,
         options?: {
-            template?: string;
+            template?: TemplateType;
             context?: string;
         }
     ): Promise<string> {
@@ -627,10 +630,9 @@ export class TwitterPostClient {
                 "twitter"
             );
 
-            // TODO: Once the 'count' parameter is fixed in the 'fetchTimeline' method of the 'agent-twitter-client',
-            // we should enable the ability to control the number of items fetched here.
-            // Related issue: https://github.com/elizaOS/agent-twitter-client/issues/43
-            const homeTimeline = await this.client.fetchTimelineForActions();
+            const homeTimeline = await this.client.fetchTimelineForActions(
+                MAX_TIMELINES_TO_FETCH
+            );
             const maxActionsProcessing =
                 this.client.twitterConfig.MAX_ACTIONS_PROCESSING;
             const processedTimelines = [];

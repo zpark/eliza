@@ -188,7 +188,6 @@ TWITTER_USERNAME= # Account username
 TWITTER_PASSWORD= # Account password
 TWITTER_EMAIL= # Account email
 
-X_SERVER_URL=
 XAI_API_KEY=
 XAI_MODEL=
 
@@ -237,7 +236,7 @@ npx --no node-llama-cpp source download --gpu cuda
 ### 本地运行
 
 添加 XAI_MODEL 并将其设置为上述 [使用 Llama 运行](#run-with-llama) 中的选项之一
-您可以将 X_SERVER_URL 和 XAI_API_KEY 留空，它会从 huggingface 下载模型并在本地查询
+您可以将 XAI_API_KEY 留空，它会从 huggingface 下载模型并在本地查询
 
 # 客户端
 
