@@ -95,7 +95,6 @@ TWITTER_USERNAME= # Account username
 TWITTER_PASSWORD= # Account password
 TWITTER_EMAIL= # Account email
 
-X_SERVER_URL=
 XAI_API_KEY=
 XAI_MODEL=
 

@@ -31,28 +31,21 @@ export type EmbeddingConfig = {
 };
 
 export const getEmbeddingConfig = (): EmbeddingConfig => ({
-    // @ts-expect-error todo
     dimensions:
         settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            // @ts-expect-error todo
             ? getEmbeddingModelSettings(ModelProviderName.OPENAI).dimensions
             : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              // @ts-expect-error todo
               ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).dimensions
               : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                // @ts-expect-error todo
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET)
                       .dimensions
                 : 384, // BGE
     model:
         settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            // @ts-expect-error todo
             ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
             : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              // @ts-expect-error todo
               ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
               : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                // @ts-expect-error todo
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
                 : "BGE-small-en-v1.5",
     provider:
@@ -142,17 +135,14 @@ export function getEmbeddingZeroVector(): number[] {
     let embeddingDimension = 384; // Default BGE dimension
 
     if (settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true") {
-        // @ts-expect-error todo
         embeddingDimension = getEmbeddingModelSettings(
             ModelProviderName.OPENAI
         ).dimensions; // OpenAI dimension
     } else if (settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true") {
-        // @ts-expect-error todo
         embeddingDimension = getEmbeddingModelSettings(
             ModelProviderName.OLLAMA
         ).dimensions; // Ollama mxbai-embed-large dimension
     } else if (settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true") {
-        // @ts-expect-error todo
         embeddingDimension = getEmbeddingModelSettings(
             ModelProviderName.GAIANET
         ).dimensions; // GaiaNet dimension
@@ -234,7 +224,6 @@ export async function embed(runtime: IAgentRuntime, input: string) {
                 settings.SMALL_GAIANET_SERVER_URL ||
                 settings.MEDIUM_GAIANET_SERVER_URL ||
                 settings.LARGE_GAIANET_SERVER_URL,
-            // @ts-expect-error todo
             apiKey: settings.GAIANET_API_KEY || runtime.token,
             dimensions: config.dimensions,
         });
@@ -258,7 +247,6 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         endpoint:
             runtime.character.modelEndpointOverride ||
             getEndpoint(runtime.character.modelProvider),
-        // @ts-expect-error todo
         apiKey: runtime.token,
         dimensions: config.dimensions,
     });

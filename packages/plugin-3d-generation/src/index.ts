@@ -16,7 +16,6 @@ import * as path from "path";
 import * as process from "process";
 
 const generate3D = async (prompt: string, runtime: IAgentRuntime) => {
-    // @ts-expect-error todo
     process.env["FAL_KEY"] =
         FAL_CONSTANTS.API_KEY_SETTING || runtime.getSetting("FAL_API_KEY");
 

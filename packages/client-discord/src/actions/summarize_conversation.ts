@@ -381,7 +381,7 @@ ${currentSummary.trim()}
             {
                 user: "{{user2}}",
                 content: {
-                    text: "no probblem, give me a few minutes to read through everything",
+                    text: "no problem, give me a few minutes to read through everything",
                     action: "SUMMARIZE",
                 },
             },

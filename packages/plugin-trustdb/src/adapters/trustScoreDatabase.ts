@@ -956,7 +956,6 @@ export class TrustScoreDatabase {
             initial_price: number | null;
         }>;
 
-        // @ts-expect-error todo
         return rows.map((row) => ({
             id: row.id,
             recommenderId: row.recommender_id,

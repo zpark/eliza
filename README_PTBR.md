@@ -99,7 +99,6 @@ TWITTER_USERNAME= # Nome de usuário da conta
 TWITTER_PASSWORD= # Senha da conta
 TWITTER_EMAIL= # Email da conta
 
-X_SERVER_URL=
 XAI_API_KEY=
 XAI_MODEL=
 
@@ -147,7 +146,7 @@ Certifique-se de ter instalado o CUDA Toolkit, incluindo cuDNN e cuBLAS.
 
 ### Executando localmente
 
-Adicione XAI_MODEL e configure-o para uma das opções acima de [Executar com Llama](#executar-com-llama) - você pode deixar X_SERVER_URL e XAI_API_KEY em branco, ele baixa o modelo do huggingface e faz consultas localmente
+Adicione XAI_MODEL e configure-o para uma das opções acima de [Executar com Llama](#executar-com-llama) - você pode deixar XAI_API_KEY em branco, ele baixa o modelo do huggingface e faz consultas localmente
 
 # Clientes
 
