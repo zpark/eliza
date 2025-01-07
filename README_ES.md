@@ -4,38 +4,38 @@
 
 ## Funcionalidades
 
--   🛠 Conectores completos para Discord, Twitter y Telegram
--   👥 Soporte para múltiples agentes y salas
--   📚 Ingestión e interacción sencilla con documentos
--   💾 Memoria recuperable y almacenamiento de documentos
--   🚀 Altamente extensible - cree sus propias acciones y clientes para expandir capacidades
--   ☁️ Soporta múltiples modelos, incluidos Llama local, OpenAI, Anthropic, Groq y más
--   📦 Funciona perfectamente
+- 🛠 Conectores completos para Discord, Twitter y Telegram
+- 👥 Soporte para múltiples agentes y salas
+- 📚 Ingestión e interacción sencilla con documentos
+- 💾 Memoria recuperable y almacenamiento de documentos
+- 🚀 Altamente extensible - cree sus propias acciones y clientes para expandir capacidades
+- ☁️ Soporta múltiples modelos, incluidos Llama local, OpenAI, Anthropic, Groq y más
+- 📦 Funciona perfectamente
 
 ## Usos
 
--   🤖 Chatbots
--   🕵️ Agentes autónomos
--   📈 Gestión de procesos empresariales
--   🎮 NPCs en videojuegos
+- 🤖 Chatbots
+- 🕵️ Agentes autónomos
+- 📈 Gestión de procesos empresariales
+- 🎮 NPCs en videojuegos
 
 # Primeros Pasos
 
 **Requisitos (OBLIGATORIOS):**
 
--   [Python 2.7+](https://www.python.org/downloads/)
--   [Node.js 23.3+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
--   [pnpm](https://pnpm.io/installation)
+- [Python 2.7+](https://www.python.org/downloads/)
+- [Node.js 23.3+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- [pnpm](https://pnpm.io/installation)
 
 ### Edite el archivo .env
 
--   Copie el archivo .env.example a .env y complete los valores apropiados
--   Edite las variables de entorno de TWITTER para agregar nombre de usuario y contraseña del bot
+- Copie el archivo .env.example a .env y complete los valores apropiados
+- Edite las variables de entorno de TWITTER para agregar nombre de usuario y contraseña del bot
 
 ### Edite el archivo de personaje
 
--   Revise el archivo `src/core/defaultCharacter.ts` - puede modificarlo
--   También puede cargar personajes con el comando `pnpm start --characters="path/to/your/character.json"` y ejecutar múltiples bots simultáneamente.
+- Revise el archivo `src/core/defaultCharacter.ts` - puede modificarlo
+- También puede cargar personajes con el comando `pnpm start --characters="path/to/your/character.json"` y ejecutar múltiples bots simultáneamente.
 
 Después de configurar el archivo .env y el archivo de personaje, puede iniciar el bot con:
 
@@ -99,7 +99,6 @@ TWITTER_USERNAME= # Nombre de usuario de la cuenta
 TWITTER_PASSWORD= # Contraseña de la cuenta
 TWITTER_EMAIL= # Correo electrónico de la cuenta
 
-X_SERVER_URL=
 XAI_API_KEY=
 XAI_MODEL=
 
@@ -145,7 +144,7 @@ Asegúrese de tener instalado el CUDA Toolkit, incluyendo cuDNN y cuBLAS.
 
 ### Ejecución local
 
-Agregue XAI_MODEL y configúrelo con una de las opciones de [Ejecutar con Llama](#ejecutar-con-llama) - puede dejar X_SERVER_URL y XAI_API_KEY en blanco, descargará el modelo de HuggingFace y realizará consultas localmente
+Agregue XAI_MODEL y configúrelo con una de las opciones de [Ejecutar con Llama](#ejecutar-con-llama) - puede dejar XAI_API_KEY en blanco, descargará el modelo de HuggingFace y realizará consultas localmente
 
 # Clientes
 
@@ -173,9 +172,9 @@ pnpm test:sqljs    # Ejecutar pruebas con SQL.js
 
 Las pruebas están escritas con Jest y se pueden encontrar en archivos `src/**/*.test.ts`. El entorno de pruebas está configurado para:
 
--   Cargar variables de ambiente desde `.env.test`
--   Usar un límite de 2 minutos para pruebas de larga duración
--   Soportar módulos ESM
--   Ejecutar pruebas en secuencia (--runInBand)
+- Cargar variables de ambiente desde `.env.test`
+- Usar un límite de 2 minutos para pruebas de larga duración
+- Soportar módulos ESM
+- Ejecutar pruebas en secuencia (--runInBand)
 
 Para crear nuevas pruebas, agregue un archivo `.test.ts` junto al código que está probando.
