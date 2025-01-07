@@ -8,6 +8,7 @@ import {
     getEmbeddingZeroVector,
     elizaLogger,
     stringToUuid,
+    ActionTimelineType,
 } from "@elizaos/core";
 import {
     QueryTweetsResponse,
@@ -321,10 +322,12 @@ export class ClientBase extends EventEmitter {
         elizaLogger.debug("fetching timeline for actions");
 
         const agentUsername = this.twitterConfig.TWITTER_USERNAME;
-        const homeTimeline = await this.twitterClient.fetchHomeTimeline(
-            count,
-            []
-        );
+
+        const homeTimeline =
+            this.twitterConfig.ACTION_TIMELINE_TYPE ===
+            ActionTimelineType.Following
+                ? await this.twitterClient.fetchFollowingTimeline(count, [])
+                : await this.twitterClient.fetchHomeTimeline(count, []);
 
         return homeTimeline
             .map((tweet) => ({
@@ -354,7 +357,11 @@ export class ClientBase extends EventEmitter {
                         (media) => media.type === "video"
                     ) || [],
             }))
-            .filter((tweet) => tweet.username !== agentUsername); // do not perform action on self-tweets
+            .filter((tweet) => tweet.username !== agentUsername) // do not perform action on self-tweets
+            .slice(0, count);
+        // TODO: Once the 'count' parameter is fixed in the 'fetchTimeline' method of the 'agent-twitter-client',
+        // this workaround can be removed.
+        // Related issue: https://github.com/elizaOS/agent-twitter-client/issues/43
     }
 
     async fetchSearchTweets(
@@ -729,28 +736,10 @@ export class ClientBase extends EventEmitter {
         );
     }
 
-    async getCachedProfile(username: string) {
-        return await this.runtime.cacheManager.get<TwitterProfile>(
-            `twitter/${username}/profile`
-        );
-    }
-
-    async cacheProfile(profile: TwitterProfile) {
-        await this.runtime.cacheManager.set(
-            `twitter/${profile.username}/profile`,
-            profile
-        );
-    }
-
     async fetchProfile(username: string): Promise<TwitterProfile> {
-        const cached = await this.getCachedProfile(username);
-
-        if (cached) return cached;
-
         try {
             const profile = await this.requestQueue.add(async () => {
                 const profile = await this.twitterClient.getProfile(username);
-                // console.log({ profile });
                 return {
                     id: profile.userId,
                     username,
@@ -767,13 +756,10 @@ export class ClientBase extends EventEmitter {
                 } satisfies TwitterProfile;
             });
 
-            this.cacheProfile(profile);
-
             return profile;
         } catch (error) {
             console.error("Error fetching Twitter profile:", error);
-
-            return undefined;
+            throw error;
         }
     }
 }

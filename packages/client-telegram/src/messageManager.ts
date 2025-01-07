@@ -1051,6 +1051,53 @@ export class MessageManager {
             // Decide whether to respond
             const shouldRespond = await this._shouldRespond(message, state);
 
+            // Send response in chunks
+            const callback: HandlerCallback = async (content: Content) => {
+                const sentMessages = await this.sendMessageInChunks(
+                    ctx,
+                    content,
+                    message.message_id
+                );
+                if (sentMessages) {
+                    const memories: Memory[] = [];
+
+                    // Create memories for each sent message
+                    for (let i = 0; i < sentMessages.length; i++) {
+                        const sentMessage = sentMessages[i];
+                        const isLastMessage = i === sentMessages.length - 1;
+
+                        const memory: Memory = {
+                            id: stringToUuid(
+                                sentMessage.message_id.toString() +
+                                    "-" +
+                                    this.runtime.agentId
+                            ),
+                            agentId,
+                            userId: agentId,
+                            roomId,
+                            content: {
+                                ...content,
+                                text: sentMessage.text,
+                                inReplyTo: messageId,
+                            },
+                            createdAt: sentMessage.date * 1000,
+                            embedding: getEmbeddingZeroVector(),
+                        };
+
+                        // Set action to CONTINUE for all messages except the last one
+                        // For the last message, use the original action from the response content
+                        memory.content.action = !isLastMessage
+                            ? "CONTINUE"
+                            : content.action;
+
+                        await this.runtime.messageManager.createMemory(memory);
+                        memories.push(memory);
+                    }
+
+                    return memories;
+                }
+            };
+
             if (shouldRespond) {
                 // Generate response
                 const context = composeContext({
@@ -1071,55 +1118,6 @@ export class MessageManager {
 
                 if (!responseContent || !responseContent.text) return;
 
-                // Send response in chunks
-                const callback: HandlerCallback = async (content: Content) => {
-                    const sentMessages = await this.sendMessageInChunks(
-                        ctx,
-                        content,
-                        message.message_id
-                    );
-                    if (sentMessages) {
-                        const memories: Memory[] = [];
-
-                        // Create memories for each sent message
-                        for (let i = 0; i < sentMessages.length; i++) {
-                            const sentMessage = sentMessages[i];
-                            const isLastMessage = i === sentMessages.length - 1;
-
-                            const memory: Memory = {
-                                id: stringToUuid(
-                                    sentMessage.message_id.toString() +
-                                        "-" +
-                                        this.runtime.agentId
-                                ),
-                                agentId,
-                                userId: agentId,
-                                roomId,
-                                content: {
-                                    ...content,
-                                    text: sentMessage.text,
-                                    inReplyTo: messageId,
-                                },
-                                createdAt: sentMessage.date * 1000,
-                                embedding: getEmbeddingZeroVector(),
-                            };
-
-                            // Set action to CONTINUE for all messages except the last one
-                            // For the last message, use the original action from the response content
-                            memory.content.action = !isLastMessage
-                                ? "CONTINUE"
-                                : content.action;
-
-                            await this.runtime.messageManager.createMemory(
-                                memory
-                            );
-                            memories.push(memory);
-                        }
-
-                        return memories;
-                    }
-                };
-
                 // Execute callback to send messages and log memories
                 const responseMessages = await callback(responseContent);
 
@@ -1135,7 +1133,7 @@ export class MessageManager {
                 );
             }
 
-            await this.runtime.evaluate(memory, state, shouldRespond);
+            await this.runtime.evaluate(memory, state, shouldRespond, callback);
         } catch (error) {
             elizaLogger.error("❌ Error handling message:", error);
             elizaLogger.error("Error sending message:", error);
