@@ -2,7 +2,7 @@ export const getInferenceTemplate = `Respond with a JSON markdown block containi
 Example response:
 \`\`\`json
 {
-    "topicId": "1",
+    "topicId": 1,
     "topicName": "Topic Name",
 }
 \`\`\`
@@ -22,7 +22,7 @@ If the topic is not active or the prediction timeframe is not matching the user'
 Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined. The result should be a valid JSON object with the following schema:
 \`\`\`json
 {
-    "topicId": string | null,
+    "topicId": number | null,
     "topicName": string | null,
 }
 \`\`\``;

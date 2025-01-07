@@ -57,7 +57,7 @@ export const getInferenceAction: Action = {
 
         // Define the schema for extracting the inference fields
         const schema = z.object({
-            topicId: z.string().nullable(),
+            topicId: z.number().nullable(),
             topicName: z.string().nullable(),
         });
 
