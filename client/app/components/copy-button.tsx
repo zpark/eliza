@@ -1,6 +1,7 @@
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const CopyButton = ({ text }: { text: any }) => {
     const [copied, setCopied] = useState(false);
@@ -13,18 +14,25 @@ const CopyButton = ({ text }: { text: any }) => {
     };
 
     return (
-        <Button
-            onClick={handleCopy}
-            variant="ghost"
-            size="icon"
-            className="flex items-center space-x-2 text-muted-foreground"
-        >
-            {copied ? (
-                <Check className="size-4" />
-            ) : (
-                <Copy className="size-4" />
-            )}
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    onClick={handleCopy}
+                    variant="ghost"
+                    size="icon"
+                    className="flex items-center space-x-2 text-muted-foreground"
+                >
+                    {copied ? (
+                        <Check className="size-4" />
+                    ) : (
+                        <Copy className="size-4" />
+                    )}
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+                <p>Copy</p>
+            </TooltipContent>
+        </Tooltip>
     );
 };
 

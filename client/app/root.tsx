@@ -15,6 +15,7 @@ import type { LinksFunction } from "@remix-run/node";
 
 import "./tailwind.css";
 import { AppSidebar } from "./components/app-sidebar";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 export const links: LinksFunction = () => [
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -51,14 +52,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </head>
             <QueryClientProvider client={queryClient}>
                 <body>
-                    <SidebarProvider>
-                        <AppSidebar />
-                        <SidebarInset>
-                            <div className="flex flex-1 flex-col gap-4 size-full">
-                                {children}
-                            </div>
-                        </SidebarInset>
-                    </SidebarProvider>
+                    <TooltipProvider delayDuration={0}>
+                        <SidebarProvider>
+                            <AppSidebar />
+                            <SidebarInset>
+                                <div className="flex flex-1 flex-col gap-4 size-full">
+                                    {children}
+                                </div>
+                            </SidebarInset>
+                        </SidebarProvider>
+                    </TooltipProvider>
                     <Scripts />
                     <ScrollRestoration />
                 </body>
