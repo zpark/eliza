@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.5-alpha.3](../index.md) / IVideoService
+[@elizaos/core v0.1.7-alpha.1](../index.md) / IVideoService
 
 # Interface: IVideoService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:968](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L968)
+[packages/core/src/types.ts:1036](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1036)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:973](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L973)
+[packages/core/src/types.ts:1041](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1041)
 
 ***
 
@@ -66,7 +66,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1075](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L1075)
+[packages/core/src/types.ts:1149](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1149)
 
 ***
 
@@ -84,7 +84,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1076](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L1076)
+[packages/core/src/types.ts:1150](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1150)
 
 ***
 
@@ -102,7 +102,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1077](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L1077)
+[packages/core/src/types.ts:1151](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1151)
 
 ***
 
@@ -122,4 +122,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1078](https://github.com/monilpat/eliza/blob/main/packages/core/src/types.ts#L1078)
+[packages/core/src/types.ts:1152](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1152)

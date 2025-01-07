@@ -3,7 +3,7 @@ import { Models, ModelProviderName, ModelClass } from "./types.ts";
 
 export const models: Models = {
     [ModelProviderName.OPENAI]: {
-        endpoint: "https://api.openai.com/v1",
+        endpoint: settings.OPENAI_API_URL || "https://api.openai.com/v1",
         settings: {
             stop: [],
             maxInputTokens: 128000,
@@ -87,10 +87,10 @@ export const models: Models = {
         },
         endpoint: "https://api.x.ai/v1",
         model: {
-            [ModelClass.SMALL]: "grok-beta",
-            [ModelClass.MEDIUM]: "grok-beta",
-            [ModelClass.LARGE]: "grok-beta",
-            [ModelClass.EMBEDDING]: "grok-beta", // not sure about this one
+            [ModelClass.SMALL]: settings.SMALL_GROK_MODEL || "grok-2-1212",
+            [ModelClass.MEDIUM]: settings.MEDIUM_GROK_MODEL || "grok-2-1212",
+            [ModelClass.LARGE]: settings.LARGE_GROK_MODEL || "grok-2-1212",
+            [ModelClass.EMBEDDING]: settings.EMBEDDING_GROK_MODEL || "grok-2-1212", // not sure about this one
         },
     },
     [ModelProviderName.GROQ]: {
@@ -395,7 +395,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.VOLENGINE]: {
-        endpoint: "https://open.volcengineapi.com/api/v3/",
+        endpoint: settings.VOLENGINE_API_URL || "https://open.volcengineapi.com/api/v3/",
         settings: {
             stop: [],
             maxInputTokens: 128000,
@@ -405,10 +405,21 @@ export const models: Models = {
             temperature: 0.6,
         },
         model: {
-            [ModelClass.SMALL]: "doubao-lite-128k",
-            [ModelClass.MEDIUM]: "doubao-pro-128k",
-            [ModelClass.LARGE]: "doubao-pro-128k",
-            [ModelClass.EMBEDDING]: "doubao-embedding",
+            [ModelClass.SMALL]:
+                settings.SMALL_VOLENGINE_MODEL ||
+                settings.VOLENGINE_MODEL ||
+                "doubao-lite-128k",
+            [ModelClass.MEDIUM]:
+                settings.MEDIUM_VOLENGINE_MODEL ||
+                settings.VOLENGINE_MODEL ||
+                "doubao-pro-128k",
+            [ModelClass.LARGE]:
+                settings.LARGE_VOLENGINE_MODEL ||
+                settings.VOLENGINE_MODEL ||
+                "doubao-pro-256k",
+            [ModelClass.EMBEDDING]:
+                settings.VOLENGINE_EMBEDDING_MODEL ||
+                "doubao-embedding",
         },
     },
     [ModelProviderName.NANOGPT]: {
@@ -463,6 +474,44 @@ export const models: Models = {
             [ModelClass.SMALL]: settings.SMALL_VENICE_MODEL || "llama-3.3-70b",
             [ModelClass.MEDIUM]: settings.MEDIUM_VENICE_MODEL || "llama-3.3-70b",
             [ModelClass.LARGE]: settings.LARGE_VENICE_MODEL || "llama-3.1-405b",
+            [ModelClass.IMAGE]: settings.IMAGE_VENICE_MODEL || "fluently-xl",
+        },
+    },
+    [ModelProviderName.AKASH_CHAT_API]: {
+        endpoint: "https://chatapi.akash.network/api/v1",
+        settings: {
+            stop: [],
+            maxInputTokens: 128000,
+            maxOutputTokens: 8192,
+            temperature: 0.6,
+        },
+        model: {
+            [ModelClass.SMALL]:
+                settings.SMALL_AKASH_CHAT_API_MODEL ||
+                "Meta-Llama-3-2-3B-Instruct",
+            [ModelClass.MEDIUM]:
+                settings.MEDIUM_AKASH_CHAT_API_MODEL ||
+                "Meta-Llama-3-3-70B-Instruct",
+            [ModelClass.LARGE]:
+                settings.LARGE_AKASH_CHAT_API_MODEL ||
+                "Meta-Llama-3-1-405B-Instruct-FP8",
+        },
+    },
+    [ModelProviderName.LIVEPEER]: {
+        settings: {
+            stop: [],
+            maxInputTokens: 128000,
+            maxOutputTokens: 8192,
+            repetition_penalty: 0.4,
+            temperature: 0.7,
+        },
+        // livepeer endpoint is handled from the sdk
+        model: {
+            [ModelClass.SMALL]: "",
+            [ModelClass.MEDIUM]: "",
+            [ModelClass.LARGE]: "",
+            [ModelClass.EMBEDDING]: "",
+            [ModelClass.IMAGE]: settings.LIVEPEER_IMAGE_MODEL || "ByteDance/SDXL-Lightning",
         },
     },
 };
