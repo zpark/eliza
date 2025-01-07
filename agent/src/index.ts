@@ -1,6 +1,7 @@
 import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 import { AutoClientInterface } from "@elizaos/client-auto";
 import { DiscordClientInterface } from "@elizaos/client-discord";
 import { FarcasterAgentClient } from "@elizaos/client-farcaster";
@@ -60,6 +61,7 @@ import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { solanaPlugin } from "@elizaos/plugin-solana";
+import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
@@ -70,7 +72,10 @@ import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 
 import { availPlugin } from "@elizaos/plugin-avail";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
+
+import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
+
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -388,6 +393,13 @@ function initializeDatabase(dataDir: string) {
             });
 
         return db;
+    } else if (process.env.PGLITE_DATA_DIR) {
+        elizaLogger.info("Initializing PgLite adapter...");
+        // `dataDir: memory://` for in memory pg
+        const db = new PGLiteDatabaseAdapter({
+            dataDir: process.env.PGLITE_DATA_DIR,
+        });
+        return db;
     } else {
         const filePath =
             process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
@@ -563,6 +575,9 @@ export async function createAgent(
                 !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? solanaPlugin
                 : null,
+            getSecret(character, "SOLANA_PRIVATE_KEY")
+                ? solanaAgentkitPlguin
+                : null,
             (getSecret(character, "NEAR_ADDRESS") ||
                 getSecret(character, "NEAR_WALLET_PUBLIC_KEY")) &&
             getSecret(character, "NEAR_WALLET_SECRET_KEY")
@@ -648,6 +663,9 @@ export async function createAgent(
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
             getSecret(character, "OPEN_WEATHER_API_KEY")
                 ? openWeatherPlugin
+                : null,
+          getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+                ? artheraPlugin
                 : null,
         ].filter(Boolean),
         providers: [],
