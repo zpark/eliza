@@ -1,6 +1,5 @@
 import {
     Links,
-    LiveReload,
     Meta,
     Outlet,
     Scripts,
@@ -50,9 +49,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Meta />
                 <Links />
             </head>
-
-            <body>
-                <QueryClientProvider client={queryClient}>
+            <QueryClientProvider client={queryClient}>
+                <body>
                     <SidebarProvider>
                         <AppSidebar />
                         <SidebarInset>
@@ -61,10 +59,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </div>
                         </SidebarInset>
                     </SidebarProvider>
-                </QueryClientProvider>
-                <Scripts />
-                <ScrollRestoration />
-            </body>
+                    <Scripts />
+                    <ScrollRestoration />
+                </body>
+            </QueryClientProvider>
         </html>
     );
 }

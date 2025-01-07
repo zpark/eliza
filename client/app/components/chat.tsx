@@ -7,7 +7,14 @@ import {
 import { ChatInput } from "~/components/ui/chat/chat-input";
 import { ChatMessageList } from "~/components/ui/chat/chat-message-list";
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy, CornerDownLeft, Mic, Paperclip } from "lucide-react";
+import {
+    Copy,
+    CornerDownLeft,
+    Mic,
+    Paperclip,
+    Speaker,
+    Volume2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +22,7 @@ import { apiClient } from "~/lib/api";
 import { cn, moment } from "~/lib/utils";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import CopyButton from "./copy-button";
+import ChatTtsButton from "./ui/chat/chat-tts-button";
 
 interface ExtraContentFields {
     user: string;
@@ -169,13 +177,33 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                     }
                                                 >
                                                     {message?.text}
+
+                                                    {/* Attachments */}
+                                                    {/* <img
+                                                        src="/elizaos.webp"
+                                                        width="100%"
+                                                        height="100%"
+                                                        className="w-64 rounded-md mt-4"
+                                                    /> */}
                                                 </ChatBubbleMessage>
-                                                <div className="flex items-center gap-4 justify-between w-full">
+                                                <div className="flex items-center gap-4 justify-between w-full mt-1">
                                                     {message?.text &&
                                                     !message?.isLoading ? (
-                                                        <CopyButton
-                                                            text={message?.text}
-                                                        />
+                                                        <div className="flex items-center gap-1">
+                                                            <CopyButton
+                                                                text={
+                                                                    message?.text
+                                                                }
+                                                            />
+                                                            <ChatTtsButton
+                                                                agentId={
+                                                                    agentId
+                                                                }
+                                                                text={
+                                                                    message?.text
+                                                                }
+                                                            />
+                                                        </div>
                                                     ) : null}
 
                                                     {message?.createdAt ? (

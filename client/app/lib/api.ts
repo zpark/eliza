@@ -50,10 +50,19 @@ export const apiClient = {
             method: "POST",
             body: {
                 text: message,
-                user: 'user'
+                user: "user",
             },
         }),
     getAgents: () => fetcher({ url: "/agents" }),
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
+
+    speak: (agentId: string, text: string) =>
+        fetcher({
+            url: `/${agentId}/speak`,
+            method: "POST",
+            body: {
+                text,
+            },
+        }),
 };
