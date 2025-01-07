@@ -2,6 +2,7 @@ import { Button } from "~/components/ui/button";
 import {
     ChatBubble,
     ChatBubbleMessage,
+    ChatBubbleTimestamp,
 } from "~/components/ui/chat/chat-bubble";
 import { ChatInput } from "~/components/ui/chat/chat-input";
 import { ChatMessageList } from "~/components/ui/chat/chat-message-list";
@@ -9,10 +10,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Copy, CornerDownLeft, Mic, Paperclip } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "~/lib/api";
-import { moment } from "~/lib/utils";
+import { cn, moment } from "~/lib/utils";
 import { Avatar, AvatarImage } from "./ui/avatar";
+import CopyButton from "./copy-button";
 
 interface ExtraContentFields {
     user: string;
@@ -23,13 +25,12 @@ interface ExtraContentFields {
 type ContentWithUser = Content & ExtraContentFields;
 
 export default function Page({ agentId }: { agentId: UUID }) {
-    const [messages, setMessages] = useState<ContentWithUser[]>([]);
-    const [input, setInput] = useState<string>("");
-
+    const [input, setInput] = useState("");
     const messagesContainerRef = useRef<HTMLDivElement>(null);
-
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
+
+    const queryClient = useQueryClient();
 
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
@@ -39,7 +40,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
             messagesContainerRef.current.scrollTop =
                 messagesContainerRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [queryClient.getQueryData(["messages", agentId])]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -51,10 +52,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
         e.preventDefault();
         if (!input) return;
 
-        sendMessageMutation.mutate(input);
-
-        setMessages((messages: ContentWithUser[]) => [
-            ...messages,
+        const newMessages = [
             {
                 text: input,
                 user: "user",
@@ -66,7 +64,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
                 isLoading: true,
                 createdAt: Date.now(),
             },
-        ]);
+        ];
+
+        queryClient.setQueryData(
+            ["messages", agentId],
+            (old: ContentWithUser[] = []) => [...old, ...newMessages]
+        );
+
+        sendMessageMutation.mutate(input);
 
         setInput("");
         formRef.current?.reset();
@@ -82,16 +87,26 @@ export default function Page({ agentId }: { agentId: UUID }) {
         mutationKey: ["send_message", agentId],
         mutationFn: (message: string) =>
             apiClient.sendMessage(agentId, message),
-        onSuccess(newMessages: ContentWithUser[]) {
-            setMessages([
-                ...messages.filter((a) => !a.isLoading),
-                ...newMessages.map((a) => {
-                    a.createdAt = Date.now();
-                    return a;
-                }),
-            ]);
+        onSuccess: (newMessages: ContentWithUser[]) => {
+            queryClient.setQueryData(
+                ["messages", agentId],
+                (old: ContentWithUser[] = []) => [
+                    ...old.filter((msg) => !msg.isLoading),
+                    ...newMessages.map((msg) => ({
+                        ...msg,
+                        createdAt: Date.now(),
+                    })),
+                ]
+            );
+        },
+        onError: () => {
+            // TODO - Handle errors
         },
     });
+
+    const messages =
+        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
+        [];
 
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
@@ -156,21 +171,24 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                     {message?.text}
                                                 </ChatBubbleMessage>
                                                 <div className="flex items-center gap-4 justify-between w-full">
-                                                    {message?.text ? (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                        >
-                                                            <Copy className="text-muted-foreground" />
-                                                        </Button>
+                                                    {message?.text &&
+                                                    !message?.isLoading ? (
+                                                        <CopyButton
+                                                            text={message?.text}
+                                                        />
                                                     ) : null}
 
                                                     {message?.createdAt ? (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            {moment(
+                                                        <ChatBubbleTimestamp
+                                                            timestamp={moment(
                                                                 message?.createdAt
                                                             ).format("LT")}
-                                                        </span>
+                                                            className={cn([
+                                                                message?.isLoading
+                                                                    ? "mt-2"
+                                                                    : "",
+                                                            ])}
+                                                        />
                                                     ) : null}
                                                 </div>
                                             </div>
