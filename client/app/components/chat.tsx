@@ -34,7 +34,15 @@ const ChatAiIcons = [
 ];
 
 export default function Page({ agentId }: { agentId: UUID }) {
-    const [messages, setMessages]: any[] = useState([]);
+    const [messages, setMessages]: any[] = useState([
+        {
+            id: 2,
+            avatar: "",
+            name: "Eliza",
+            role: "ai",
+            message: "How can I help?",
+        },
+    ]);
     const selectedUser = {
         name: "AAA",
         avatar: null,

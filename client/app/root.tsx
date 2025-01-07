@@ -62,9 +62,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         </SidebarInset>
                     </SidebarProvider>
                 </QueryClientProvider>
+                <Scripts />
+                <ScrollRestoration />
             </body>
-            <ScrollRestoration />
-            <Scripts />
         </html>
     );
 }
