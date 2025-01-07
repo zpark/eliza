@@ -30,8 +30,7 @@ Leverage **`@elizaos/plugin-depin`** to seamlessly integrate AI agents with the 
 Add the following to your `.env` file:
 
 ```env
-MAPBOX_API_KEY=your-mapbox-api-key
-NUBILA_API_KEY=your-nubila-api-key
+SENTAI_API_KEY=your-sentai-api-key
 ```
 
 ### Character Configuration
@@ -76,14 +75,13 @@ The **DEPIN_PROJECTS** action empowers Eliza agents to interact with and analyze
 - **Device and Revenue Analysis:** Explore statistics such as device deployment, operational costs, and revenue generation.
 - **In-depth Queries:** Answer detailed questions about specific DePIN projects by leveraging the rich dataset provided by the DePINScan API.
 
-### Current Weather and Weather Forecast
+### Sentient AI
 
-The **CURRENT_WEATHER** action integrates Nubila APIs to provide Eliza agents with weather-related capabilities. Key functionalities include:
+The **SENTIENT_AI** action integrates Sentient AI APIs to provide Eliza agents with weather-related capabilities. Key functionalities include:
 
-- **Real-Time Weather Updates:** Deliver current temperature, humidity, and general conditions for specified locations.
-- **Forecast Analysis:** Generate short- and long-term forecasts to assist in planning and decision-making.
-- **Pattern Recognition:** Analyze weather trends and identify emerging patterns or anomalies.
-- **Interactive Content:** Create weather-related insights, summaries, or user-facing content such as memes and visuals.
+- **Real-Time Weather Updates:** Deliver current temperature, humidity, and general conditions for specified locations. (supported by Nubila)
+- **Forecast Analysis:** Generate short- and long-term forecasts to assist in planning and decision-making. (supported by Nubila)
+- **Other Actions** Sentient AI will continue to improve and add more actions based on DePIN data.
 
 ---
 
