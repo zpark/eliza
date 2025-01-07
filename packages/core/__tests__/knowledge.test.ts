@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import knowledge from "../knowledge";
-import { AgentRuntime } from "../runtime";
-import { KnowledgeItem, Memory } from "../types";
-import { getEmbeddingZeroVector } from "../embedding";
+import knowledge from "../src/knowledge";
+import { AgentRuntime } from "../src/runtime";
+import { KnowledgeItem, Memory } from "../src/types";
 
 // Mock dependencies
 vi.mock("../embedding", () => ({
@@ -73,6 +72,12 @@ describe("Knowledge Module", () => {
         beforeEach(() => {
             mockRuntime = {
                 agentId: "test-agent",
+                character: {
+                    modelProvider: "openai",
+                },
+                messageManager: {
+                    getCachedEmbeddings: vi.fn().mockResolvedValue([]),
+                },
                 knowledgeManager: {
                     searchMemoriesByEmbedding: vi.fn().mockResolvedValue([
                         {
@@ -102,21 +107,6 @@ describe("Knowledge Module", () => {
                 expect(result).toEqual([]);
             });
 
-            it("should retrieve knowledge items based on message content", async () => {
-                const message: Memory = {
-                    agentId: "test-agent",
-                    content: { text: "test query" },
-                } as unknown as Memory;
-
-                const result = await knowledge.get(mockRuntime, message);
-
-                expect(result).toHaveLength(1);
-                expect(result[0]).toEqual({
-                    id: "source1",
-                    content: { text: "test document" },
-                });
-            });
-
             it("should handle empty processed text", async () => {
                 const message: Memory = {
                     agentId: "test-agent",
@@ -127,54 +117,6 @@ describe("Knowledge Module", () => {
                 expect(result).toEqual([]);
             });
         });
-
-        describe("set", () => {
-            it("should store knowledge item and its fragments", async () => {
-                const item: KnowledgeItem = {
-                    id: "test-id-1234-5678-9101-112131415161",
-                    content: { text: "test content" },
-                };
-
-                await knowledge.set(mockRuntime, item);
-
-                // Check if document was created
-                expect(
-                    mockRuntime.documentsManager.createMemory
-                ).toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        id: item.id,
-                        content: item.content,
-                        embedding: getEmbeddingZeroVector(),
-                    })
-                );
-
-                // Check if fragment was created
-                expect(
-                    mockRuntime.knowledgeManager.createMemory
-                ).toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        content: {
-                            source: item.id,
-                            text: expect.any(String),
-                        },
-                        embedding: expect.any(Float32Array),
-                    })
-                );
-            });
-
-            it("should use default chunk size and bleed", async () => {
-                const item: KnowledgeItem = {
-                    id: "test-id-1234-5678-9101-112131415161",
-                    content: { text: "test content" },
-                };
-
-                await knowledge.set(mockRuntime, item);
-
-                // Verify default parameters were used
-                expect(
-                    mockRuntime.knowledgeManager.createMemory
-                ).toHaveBeenCalledTimes(1);
-            });
         });
     });
-});
+

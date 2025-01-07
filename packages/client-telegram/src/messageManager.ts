@@ -52,7 +52,7 @@ Result: [RESPOND]
 {{user1}}: stfu bot
 Result: [STOP]
 
-{{user1}}: Hey {{agent}}, can you help me with something
+{{user1}}: Hey {{agentName}}, can you help me with something
 Result: [RESPOND]
 
 {{user1}}: {{agentName}} stfu plz
@@ -63,7 +63,7 @@ Result: [STOP]
 {{user1}}: no. i need help from someone else
 Result: [IGNORE]
 
-{{user1}}: Hey {{agent}}, can I ask you a question
+{{user1}}: Hey {{agentName}}, can I ask you a question
 {{agentName}}: Sure, what is it
 {{user1}}: can you ask claude to create a basic react module that demonstrates a counter
 Result: [RESPOND]
@@ -103,28 +103,22 @@ The goal is to decide whether {{agentName}} should respond to the last message.
 
 {{recentMessages}}
 
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
-
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message. Ignore messages if they are addressed to someone else.
 ` + shouldRespondFooter;
 
 const telegramMessageHandlerTemplate =
     // {{goals}}
-    `# Action Examples
+    `
 {{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
 # Knowledge
 {{knowledge}}
 
-# Task: Generate dialog and actions for the character {{agentName}}.
-About {{agentName}}:
+# About {{agentName}}:
 {{bio}}
 {{lore}}
 
-Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}
 
 {{providers}}
@@ -140,11 +134,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 {{recentMessages}}
 
-# Task: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
-Current Post:
-{{currentPost}}
-Thread of Tweets You Are Replying To:
-
+# Task: Generate a reply in the voice, style and perspective of {{agentName}} while using the thread above as additional context. You are replying on Telegram.
 {{formattedConversation}}
 ` + messageCompletionFooter;
 
