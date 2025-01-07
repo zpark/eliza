@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { validateEnv, validateCharacterConfig } from "../environment";
-import { Clients, ModelProviderName } from "../types";
+import { validateEnv, validateCharacterConfig } from "../src/environment";
+import { Clients, ModelProviderName } from "../src/types";
 
 describe("Environment Configuration", () => {
     const originalEnv = process.env;
