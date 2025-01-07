@@ -166,10 +166,12 @@ export default {
 
         // Filter only "just now" and last couple of user messages
         state.recentMessages = state.recentMessages
-            .split('\n')
-            .filter(line => line.includes('(just now)') || line.includes('(user)'))
+            .split("\n")
+            .filter(
+                (line) => line.includes("(just now)") || line.includes("(user)")
+            )
             .slice(-2)
-            .join('\n');
+            .join("\n");
 
         // Compose deployment context
         const deploymentContext = composeContext({
@@ -216,7 +218,10 @@ export default {
                         computeConfig
                     );
 
-                    elizaLogger.log("Deployment created with lease ID:", result.leaseId.toString());
+                    elizaLogger.log(
+                        "Deployment created with lease ID:",
+                        result.leaseId.toString()
+                    );
 
                     const deploymentDetails = await getDeployment(
                         runtime,
@@ -230,7 +235,10 @@ export default {
                     const ports =
                         deploymentDetails.forwarded_ports[service.name] || [];
                     const portInfo = ports
-                        .map((p) => `${p.host}:${p.externalPort} for Port ${p.port}`)
+                        .map(
+                            (p) =>
+                                `${p.host}:${p.externalPort} for Port ${p.port}`
+                        )
                         .join(", ");
 
                     console.log("Final response:", {
@@ -255,14 +263,20 @@ export default {
                     break;
                 }
                 case "update": {
-                    if (!content.leaseId || !content.customizations || !content.template) {
+                    if (
+                        !content.leaseId ||
+                        !content.customizations ||
+                        !content.template
+                    ) {
                         throw new Error(
                             "Lease ID, template, and customizations are required for deployment update"
                         );
                     }
 
                     if (!DEPLOYMENT_TEMPLATES[content.template]) {
-                        throw new Error(`Unsupported template: ${content.template}`);
+                        throw new Error(
+                            `Unsupported template: ${content.template}`
+                        );
                     }
 
                     const computeConfig = DEPLOYMENT_TEMPLATES[
@@ -273,7 +287,10 @@ export default {
                         content.leaseId.toString(),
                         computeConfig
                     );
-                    elizaLogger.log("Deployment updated with lease ID:", result.leaseId.toString());
+                    elizaLogger.log(
+                        "Deployment updated with lease ID:",
+                        result.leaseId.toString()
+                    );
 
                     const newDetails = await getDeployment(
                         runtime,
@@ -298,7 +315,10 @@ export default {
                         runtime,
                         content.leaseId.toString()
                     );
-                    elizaLogger.log("Deployment closed with lease ID:", result.leaseId.toString());
+                    elizaLogger.log(
+                        "Deployment closed with lease ID:",
+                        content.leaseId.toString()
+                    );
 
                     callback?.({
                         text: `Deployment ${content.leaseId.toString()} closed successfully`,

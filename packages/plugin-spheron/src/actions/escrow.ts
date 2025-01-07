@@ -12,7 +12,11 @@ import {
     generateObjectDeprecated,
 } from "@elizaos/core";
 import { validateSpheronConfig } from "../environment.ts";
-import { depositBalance, getUserBalance, withdrawBalance } from "../utils/index.ts";
+import {
+    depositBalance,
+    getUserBalance,
+    withdrawBalance,
+} from "../utils/index.ts";
 import { EscrowContent } from "../types/index.ts";
 import { SUPPORTED_TOKENS } from "../utils/constants.ts";
 
@@ -20,8 +24,8 @@ function isEscrowContent(content: any): content is EscrowContent {
     console.log("Content for escrow operation:", content);
     return (
         typeof content.token === "string" &&
-        ((content.operation === "deposit" || content.operation === "withdraw")
-            ? (typeof content.amount === "number" && content.amount > 0)
+        (content.operation === "deposit" || content.operation === "withdraw"
+            ? typeof content.amount === "number" && content.amount > 0
             : content.operation === "check") &&
         (content.operation === "deposit" ||
             content.operation === "withdraw" ||
@@ -62,8 +66,8 @@ Example response for withdrawing <amount> <token-symbol>:
 
 ## Supported Tokens
 ${Object.entries(SUPPORTED_TOKENS)
-        .map(([key, _]) => `- ${key}`)
-        .join("\n")}
+    .map(([key, _]) => `- ${key}`)
+    .join("\n")}
 
 {{recentMessages}}
 
@@ -115,10 +119,12 @@ export default {
 
         // Filter only "just now" and last couple of user messages
         state.recentMessages = state.recentMessages
-            .split('\n')
-            .filter(line => line.includes('(just now)') || line.includes('(user)'))
+            .split("\n")
+            .filter(
+                (line) => line.includes("(just now)") || line.includes("(user)")
+            )
             .slice(-2)
-            .join('\n');
+            .join("\n");
 
         // Compose escrow context
         const escrowContext = composeContext({
@@ -132,7 +138,6 @@ export default {
             context: escrowContext,
             modelClass: ModelClass.SMALL,
         });
-
 
         // Validate escrow content
         if (!isEscrowContent(content)) {
@@ -202,7 +207,10 @@ export default {
                             operation: "deposit",
                             token: content.token,
                             amount: content.amount,
-                            error: error instanceof Error ? error.message : "Unknown error",
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : "Unknown error",
                         },
                     });
                     return false;
@@ -239,7 +247,10 @@ export default {
                             operation: "withdraw",
                             token: content.token,
                             amount: content.amount,
-                            error: error instanceof Error ? error.message : "Unknown error",
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : "Unknown error",
                         },
                     });
                     return false;

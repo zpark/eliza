@@ -3,7 +3,11 @@ import escrow from "./actions/escrow.ts";
 import deployment from "./actions/deployment.ts";
 import { tokensProvider } from "./providers/tokens.ts";
 import { deploymentProvider } from "./providers/deployment.ts";
-import { SUPPORTED_TOKENS, DEPLOYMENT_CONFIGS, LEASE_STATES } from "./utils/constants.ts";
+import {
+    SUPPORTED_TOKENS,
+    DEPLOYMENT_CONFIGS,
+    LEASE_STATES,
+} from "./utils/constants.ts";
 
 export const CONFIG = {
     SUPPORTED_TOKENS,

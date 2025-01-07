@@ -106,13 +106,20 @@ await runtime.executeAction("DEPLOYMENT_OPERATION", {
 });
 ```
 
-## Supported Tokens
+## Supported Templates
 
-- USDT
-- USDC
-- DAI
-- WETH
-- CST
+- jupyter-notebook: Jupyter Notebook with or without Pytorch
+- vscode: VSCode with or without Pytorch
+- ollama: Ollama WebUI and API
+- heurist-miner: Heurist Miner for mining heurist network
+
+## How it Works
+
+1. You can ask the eliza to deploy a template like `jupyter-notebook`, `vscode`, `ollama`, or `heurist-miner` for you with just natural language.
+2. You can also customize the deployment with natural language.
+3. You can also ask the eliza to close the deployment.
+4. You can also ask the eliza to check the balance of your account.
+5. You can also ask the eliza to deposit or withdraw tokens from your account.
 
 ## Development
 
@@ -136,4 +143,4 @@ npm test
 
 ## License
 
-This project is licensed under the Apache License 2.0.
+This plugin is part of the Eliza project. See the main project repository for license information.
