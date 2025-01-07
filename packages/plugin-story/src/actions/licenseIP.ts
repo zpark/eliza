@@ -4,10 +4,10 @@ import {
     generateObjectDeprecated,
     HandlerCallback,
     ModelClass,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-} from "@ai16z/eliza";
+    IAgentRuntime,
+    Memory,
+    State,
+} from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { licenseIPTemplate } from "../templates";
 import { LicenseIPParams } from "../types";

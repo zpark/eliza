@@ -4,10 +4,10 @@ import {
     generateObjectDeprecated,
     HandlerCallback,
     ModelClass,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-} from "@ai16z/eliza";
+    IAgentRuntime,
+    Memory,
+    State,
+} from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { attachTermsTemplate } from "../templates";
 import {
@@ -29,7 +29,7 @@ export class AttachTermsAction {
     }> {
         const storyClient = this.walletProvider.getStoryClient();
 
-        console.log("params", params);
+        elizaLogger.log("params", params);
 
         const licenseTerms: LicenseTerms = {
             transferable: true,
