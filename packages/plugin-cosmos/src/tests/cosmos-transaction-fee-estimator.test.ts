@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { CosmosTransactionFeeEstimator } from "../shared/services/cosmos-transaction-fee-estimator";
 
@@ -22,8 +22,7 @@ describe("FeeEstimator", () => {
     it("should estimate gas for sending tokens successfully", async () => {
         const mockGasEstimation = 200000;
 
-        // @ts-expect-error -- ...
-        (mockSigningCosmWasmClient.simulate as vi.Mock).mockResolvedValue(
+        (mockSigningCosmWasmClient.simulate as Mock).mockResolvedValue(
             mockGasEstimation
         );
 
@@ -41,7 +40,8 @@ describe("FeeEstimator", () => {
                 memo
             );
 
-        expect(estimatedGas).toBe(mockGasEstimation);
+        // Add 20% to the estimated gas to make sure we have enough gas to cover the transaction
+        expect(estimatedGas).toBe(mockGasEstimation + mockGasEstimation * 0.2);
         expect(mockSigningCosmWasmClient.simulate).toHaveBeenCalledWith(
             senderAddress,
             [
@@ -59,8 +59,7 @@ describe("FeeEstimator", () => {
     });
 
     it("should throw an error if gas estimation fails", async () => {
-        // @ts-expect-error -- ...
-        (mockSigningCosmWasmClient.simulate as vi.Mock).mockRejectedValue(
+        (mockSigningCosmWasmClient.simulate as Mock).mockRejectedValue(
             new Error("Gas estimation failed")
         );
 

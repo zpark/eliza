@@ -1,8 +1,8 @@
-import { vi, expect, it, describe, beforeEach } from "vitest";
+import { vi, expect, it, describe, beforeEach, Mock } from "vitest";
 import { Chain } from "@chain-registry/types";
-import { getAvailableChains } from "../shared/helpers/cosmos-chains.ts";
 import { getChainByChainName } from "@chain-registry/utils";
 import { CosmosWallet } from "../shared/entities/cosmos-wallet.ts";
+import { getAvailableChains } from "../shared/helpers/cosmos-chains.ts";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { CosmosWalletChains } from "../shared/entities/cosmos-wallet-chains-data.ts";
 
@@ -23,11 +23,19 @@ vi.mock("../shared/entities/cosmos-wallet.ts", () => ({
     },
 }));
 
+vi.mock("../shared/helpers/cosmos-chains.ts", () => {
+    return {
+        getAvailableChains: vi.fn(),
+    };
+});
+
 describe("CosmosWalletChains", () => {
     let mockMnemonic: string;
     let mockChains: Chain[];
 
     beforeEach(() => {
+        vi.clearAllMocks();
+
         mockMnemonic = "test mnemonic";
 
         mockChains = [
@@ -46,34 +54,25 @@ describe("CosmosWalletChains", () => {
     });
 
     it("should create a CosmosWalletChains instance", async () => {
-        // @ts-expect-error -- ...
-        getAvailableChains.mockReturnValue(mockChains);
-        // @ts-expect-error -- ...
-        getChainByChainName.mockReturnValue(mockChains[0]);
+        vi.mocked(getAvailableChains).mockReturnValue(mockChains);
+        vi.mocked(getChainByChainName).mockReturnValue(mockChains[0]);
 
-        // @ts-expect-error -- ...
-        CosmosWallet.create.mockResolvedValue({
+        const mockCosmosWalletCreate = {
             directSecp256k1HdWallet: {},
             getWalletAddress: vi.fn().mockResolvedValue("mockedAddress"),
             getWalletBalances: vi.fn(),
-        });
+        };
 
-        // @ts-expect-error -- ...
-        SigningCosmWasmClient.connectWithSigner.mockResolvedValue({});
+        (CosmosWallet.create as Mock).mockResolvedValue(mockCosmosWalletCreate);
+
+        (SigningCosmWasmClient.connectWithSigner as Mock).mockResolvedValue({});
 
         const availableChains = ["chain1"];
 
-        // TODO: this should be done in other way
         const expectedResult = {
             walletChainsData: {
                 chain1: {
-                    wallet: {
-                        directSecp256k1HdWallet: {},
-                        getWalletAddress: vi
-                            .fn()
-                            .mockResolvedValue("mockedAddress"),
-                        getWalletBalances: vi.fn(),
-                    },
+                    wallet: mockCosmosWalletCreate,
                     signingCosmWasmClient: {},
                 },
             },
