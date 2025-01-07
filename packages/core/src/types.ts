@@ -137,51 +137,63 @@ export enum ModelClass {
 }
 
 /**
+ * Model settings
+ */
+export type ModelSettings = {
+    /** Model name */
+    name: string;
+
+    /** Maximum input tokens */
+    maxInputTokens: number;
+
+    /** Maximum output tokens */
+    maxOutputTokens: number;
+
+    /** Optional frequency penalty */
+    frequency_penalty?: number;
+
+    /** Optional presence penalty */
+    presence_penalty?: number;
+
+    /** Optional repetition penalty */
+    repetition_penalty?: number;
+
+    /** Stop sequences */
+    stop: string[];
+
+    /** Temperature setting */
+    temperature: number;
+
+    /** Optional telemetry configuration (experimental) */
+    experimental_telemetry?: TelemetrySettings;
+};
+
+/** Image model settings */
+export type ImageModelSettings = {
+    name: string;
+    steps?: number;
+};
+
+/** Embedding model settings */
+export type EmbeddingModelSettings = {
+    name: string;
+    dimensions?: number;
+};
+
+/**
  * Configuration for an AI model
  */
 export type Model = {
     /** Optional API endpoint */
     endpoint?: string;
 
-    /** Model settings */
-    settings: {
-        /** Maximum input tokens */
-        maxInputTokens: number;
-
-        /** Maximum output tokens */
-        maxOutputTokens: number;
-
-        /** Optional frequency penalty */
-        frequency_penalty?: number;
-
-        /** Optional presence penalty */
-        presence_penalty?: number;
-
-        /** Optional repetition penalty */
-        repetition_penalty?: number;
-
-        /** Stop sequences */
-        stop: string[];
-
-        /** Temperature setting */
-        temperature: number;
-
-        /** Optional telemetry configuration (experimental) */
-        experimental_telemetry?: TelemetrySettings;
-    };
-
-    /** Optional image generation settings */
-    imageSettings?: {
-        steps?: number;
-    };
-
     /** Model names by size class */
     model: {
-        [ModelClass.SMALL]: string;
-        [ModelClass.MEDIUM]: string;
-        [ModelClass.LARGE]: string;
-        [ModelClass.EMBEDDING]?: string;
-        [ModelClass.IMAGE]?: string;
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
     };
 };
 
@@ -243,6 +255,7 @@ export enum ModelProviderName {
     VENICE = "venice",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
+    INFERA = "infera",
 }
 
 /**
@@ -665,6 +678,8 @@ export interface ModelConfiguration {
     experimental_telemetry?: TelemetrySettings;
 }
 
+export type TemplateType = string | ((options: { state: State }) => string);
+
 /**
  * Configuration for an agent character
  */
@@ -695,30 +710,30 @@ export type Character = {
 
     /** Optional prompt templates */
     templates?: {
-        goalsTemplate?: string;
-        factsTemplate?: string;
-        messageHandlerTemplate?: string;
-        shouldRespondTemplate?: string;
-        continueMessageHandlerTemplate?: string;
-        evaluationTemplate?: string;
-        twitterSearchTemplate?: string;
-        twitterActionTemplate?: string;
-        twitterPostTemplate?: string;
-        twitterMessageHandlerTemplate?: string;
-        twitterShouldRespondTemplate?: string;
-        farcasterPostTemplate?: string;
-        lensPostTemplate?: string;
-        farcasterMessageHandlerTemplate?: string;
-        lensMessageHandlerTemplate?: string;
-        farcasterShouldRespondTemplate?: string;
-        lensShouldRespondTemplate?: string;
-        telegramMessageHandlerTemplate?: string;
-        telegramShouldRespondTemplate?: string;
-        discordVoiceHandlerTemplate?: string;
-        discordShouldRespondTemplate?: string;
-        discordMessageHandlerTemplate?: string;
-        slackMessageHandlerTemplate?: string;
-        slackShouldRespondTemplate?: string;
+        goalsTemplate?: TemplateType;
+        factsTemplate?: TemplateType;
+        messageHandlerTemplate?: TemplateType;
+        shouldRespondTemplate?: TemplateType;
+        continueMessageHandlerTemplate?: TemplateType;
+        evaluationTemplate?: TemplateType;
+        twitterSearchTemplate?: TemplateType;
+        twitterActionTemplate?: TemplateType;
+        twitterPostTemplate?: TemplateType;
+        twitterMessageHandlerTemplate?: TemplateType;
+        twitterShouldRespondTemplate?: TemplateType;
+        farcasterPostTemplate?: TemplateType;
+        lensPostTemplate?: TemplateType;
+        farcasterMessageHandlerTemplate?: TemplateType;
+        lensMessageHandlerTemplate?: TemplateType;
+        farcasterShouldRespondTemplate?: TemplateType;
+        lensShouldRespondTemplate?: TemplateType;
+        telegramMessageHandlerTemplate?: TemplateType;
+        telegramShouldRespondTemplate?: TemplateType;
+        discordVoiceHandlerTemplate?: TemplateType;
+        discordShouldRespondTemplate?: TemplateType;
+        discordMessageHandlerTemplate?: TemplateType;
+        slackMessageHandlerTemplate?: TemplateType;
+        slackShouldRespondTemplate?: TemplateType;
     };
 
     /** Character biography */
@@ -1125,6 +1140,8 @@ export interface IAgentRuntime {
     // but I think the real solution is forthcoming as a base client interface
     clients: Record<string, any>;
 
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
+
     initialize(): Promise<void>;
 
     registerMemoryManager(manager: IMemoryManager): void;
@@ -1152,7 +1169,7 @@ export interface IAgentRuntime {
         state?: State,
         didRespond?: boolean,
         callback?: HandlerCallback
-    ): Promise<string[]>;
+    ): Promise<string[] | null>;
 
     ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
 
@@ -1294,6 +1311,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    GOPLUS_SECURITY = "goplus_security",
 }
 
 export enum LoggingLevel {
@@ -1318,6 +1336,64 @@ export interface ISlackService extends Service {
     client: any;
 }
 
+/**
+ * Available verifiable inference providers
+ */
+export enum VerifiableInferenceProvider {
+    RECLAIM = "reclaim",
+}
+
+/**
+ * Options for verifiable inference
+ */
+export interface VerifiableInferenceOptions {
+    /** Custom endpoint URL */
+    endpoint?: string;
+    /** Custom headers */
+    headers?: Record<string, string>;
+    /** Provider-specific options */
+    providerOptions?: Record<string, unknown>;
+}
+
+/**
+ * Result of a verifiable inference request
+ */
+export interface VerifiableInferenceResult {
+    /** Generated text */
+    text: string;
+    /** Proof data */
+    proof: unknown;
+    /** Provider information */
+    provider: VerifiableInferenceProvider;
+    /** Timestamp */
+    timestamp: number;
+}
+
+/**
+ * Interface for verifiable inference adapters
+ */
+export interface IVerifiableInferenceAdapter {
+    /**
+     * Generate text with verifiable proof
+     * @param context The input text/prompt
+     * @param modelClass The model class/name to use
+     * @param options Additional provider-specific options
+     * @returns Promise containing the generated text and proof data
+     */
+    generateText(
+        context: string,
+        modelClass: string,
+        options?: VerifiableInferenceOptions
+    ): Promise<VerifiableInferenceResult>;
+
+    /**
+     * Verify the proof of a generated response
+     * @param result The result containing response and proof to verify
+     * @returns Promise indicating if the proof is valid
+     */
+    verifyProof(result: VerifiableInferenceResult): Promise<boolean>;
+}
+
 export enum TokenizerType {
     Auto = "auto",
     TikToken = "tiktoken",
@@ -1327,4 +1403,9 @@ export enum TranscriptionProvider {
     OpenAI = "openai",
     Deepgram = "deepgram",
     Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
 }
