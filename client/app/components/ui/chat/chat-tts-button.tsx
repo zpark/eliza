@@ -20,7 +20,7 @@ export default function ChatTtsButton({
 
     const mutation = useMutation({
         mutationKey: ["tts", text],
-        mutationFn: () => apiClient.speak(agentId, text),
+        mutationFn: () => apiClient.tts(agentId, text),
         onSuccess: (data) => {
             setAudioBlob(data);
             play();

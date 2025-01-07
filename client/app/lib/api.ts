@@ -66,9 +66,9 @@ export const apiClient = {
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
 
-    speak: (agentId: string, text: string) =>
+    tts: (agentId: string, text: string) =>
         fetcher({
-            url: `/${agentId}/speak`,
+            url: `/${agentId}/tts`,
             method: "POST",
             body: {
                 text,
