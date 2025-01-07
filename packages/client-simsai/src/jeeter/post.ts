@@ -170,6 +170,8 @@ export class JeeterPostClient {
                     async () => await this.client.simsAIClient.postJeet(content)
                 );
 
+                elizaLogger.log(`Jeet posted:\n ${result}`);
+
                 const jeet: Jeet = {
                     ...result,
                     permanentUrl: `${JEETER_API_URL}/${this.client.profile.username}/status/${result.id}`,

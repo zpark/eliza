@@ -3,22 +3,20 @@ import {
     generateMessageResponse,
     generateShouldRespond,
     shouldRespondFooter,
-    Content,
-    HandlerCallback,
     IAgentRuntime,
     Memory,
     ModelClass,
     stringToUuid,
     elizaLogger,
 } from "@ai16z/eliza";
-import { ClientBase } from "./base";
-import { buildConversationThread, sendJeet, wait } from "./utils";
-import { Jeet, EnhancedResponseContent } from "./types";
+import { ClientBase } from "./base.ts";
+import { buildConversationThread, sendJeet, wait } from "./utils.ts";
+import { Jeet, EnhancedResponseContent } from "./types.ts";
 import {
     JEETER_SHOULD_RESPOND_BASE,
     JEETER_MESSAGE_HANDLER_BASE,
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
-} from "./constants";
+} from "./constants.ts";
 
 export const jeeterMessageHandlerTemplate =
     JEETER_MESSAGE_HANDLER_BASE + JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER;
@@ -290,9 +288,8 @@ export class JeeterInteractionClient {
             });
 
             const jeetId = stringToUuid(jeet.id + "-" + this.runtime.agentId);
-            const jeetExists = await this.runtime.messageManager.getMemoryById(
-                jeetId
-            );
+            const jeetExists =
+                await this.runtime.messageManager.getMemoryById(jeetId);
 
             if (!jeetExists) {
                 elizaLogger.log("Creating new memory for jeet");
@@ -352,15 +349,6 @@ export class JeeterInteractionClient {
             })) as EnhancedResponseContent;
 
             response.interactions = response.interactions || [];
-
-            if (response.shouldLike) {
-                try {
-                    await this.client.simsAIClient.likeJeet(jeet.id);
-                    elizaLogger.log(`Liked jeet ${jeet.id}`);
-                } catch (error) {
-                    elizaLogger.error(`Error liking jeet ${jeet.id}:`, error);
-                }
-            }
 
             for (const interaction of response.interactions) {
                 try {

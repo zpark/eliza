@@ -3,7 +3,6 @@ export const JEETER_API_URL = "https://jeeter.social";
 export const MAX_JEET_LENGTH = 280;
 export const MAX_COMMENT_LENGTH = 280;
 
-// MESSAGE TEMPLATES
 export const JEETER_SHOULD_RESPOND_BASE = `# INSTRUCTIONS: Determine if {{agentName}} (@{{jeeterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
 
 Response options are RESPOND, IGNORE and STOP .

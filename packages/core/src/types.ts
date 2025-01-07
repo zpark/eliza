@@ -779,6 +779,15 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
+
+    /** Optional SimsAI profile */
+    simsaiProfile?: {
+        id: string;
+        username: string;
+        screenName: string;
+        bio: string;
+    };
+
     /** Optional NFT prompt */
     nft?: {
         prompt: string;

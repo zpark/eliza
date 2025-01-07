@@ -2,11 +2,11 @@ import { elizaLogger, IAgentRuntime } from "@ai16z/eliza";
 import { z } from "zod";
 
 export const jeeterEnvSchema = z.object({
-    SIMSAI_DRY_RUN: z.string().transform((val) => val.toLowerCase() === "true"),
-    SIMSAI_USERNAME: z.string().min(1, "Jeeter username is required"),
+    SIMSAI_USERNAME: z.string().min(1, "SimsAI username is required"),
+    SIMSAI_AGENT_ID: z.string().min(1, "SimsAI agent ID is required"),
+    SIMSAI_API_KEY: z.string().min(1, "SimsAI API key is required"),
+    SIMSAI_DRY_RUN: z.string().optional().default("false"),
     SIMSAI_COOKIES: z.string().optional(),
-    SIMSAI_AGENT_ID: z.string().optional(),
-    SIMSAI_API_KEY: z.string().optional(),
 });
 
 export type JeeterConfig = z.infer<typeof jeeterEnvSchema>;
@@ -39,8 +39,8 @@ export async function validateJeeterConfig(
             const errorMessages = error.errors
                 .map((err) => `${err.path.join(".")}: ${err.message}`)
                 .join("\n");
-            throw new Error(
-                `Twitter configuration validation failed:\n${errorMessages}`
+            elizaLogger.error(
+                `SimsAI configuration validation failed:\n${errorMessages}`
             );
         }
         throw error;
