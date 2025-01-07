@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiClient } from "~/lib/api";
 import { Tooltip, TooltipTrigger, TooltipContent } from "../tooltip";
+import { useToast } from "~/hooks/use-toast";
 
 export default function ChatTtsButton({
     agentId,
@@ -12,6 +13,7 @@ export default function ChatTtsButton({
     agentId: string;
     text: string;
 }) {
+    const { toast } = useToast();
     const [playing, setPlaying] = useState<boolean>(false);
     const mutation = useMutation({
         mutationKey: ["tts", text],
@@ -21,7 +23,11 @@ export default function ChatTtsButton({
             setPlaying(true);
         },
         onError: (e) => {
-            console.error(e.message);
+            toast({
+                variant: "destructive",
+                title: "Unable to read message aloud",
+                description: e.message,
+            });
         },
     });
 
