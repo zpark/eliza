@@ -1,7 +1,7 @@
 export * from "./sqliteTables.ts";
 export * from "./sqlite_vec.ts";
 
-import { DatabaseAdapter, elizaLogger, IDatabaseCacheAdapter } from "@elizaos/core";
+import { DatabaseAdapter, IDatabaseCacheAdapter } from "@elizaos/core";
 import {
     Account,
     Actor,
