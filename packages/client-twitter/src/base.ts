@@ -359,6 +359,9 @@ export class ClientBase extends EventEmitter {
             }))
             .filter((tweet) => tweet.username !== agentUsername) // do not perform action on self-tweets
             .slice(0, count);
+        // TODO: Once the 'count' parameter is fixed in the 'fetchTimeline' method of the 'agent-twitter-client',
+        // this workaround can be removed.
+        // Related issue: https://github.com/elizaOS/agent-twitter-client/issues/43
     }
 
     async fetchSearchTweets(
