@@ -71,7 +71,10 @@ import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 
 import { availPlugin } from "@elizaos/plugin-avail";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
+
+import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
+
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -652,6 +655,9 @@ export async function createAgent(
             getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
             getSecret(character, "OPEN_WEATHER_API_KEY")
                 ? openWeatherPlugin
+                : null,
+          getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+                ? artheraPlugin
                 : null,
         ].filter(Boolean),
         providers: [],
