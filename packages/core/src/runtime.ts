@@ -44,6 +44,7 @@ import {
     type Actor,
     type Evaluator,
     type Memory,
+    IVerifiableInferenceAdapter,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -149,6 +150,8 @@ export class AgentRuntime implements IAgentRuntime {
     cacheManager: ICacheManager;
     clients: Record<string, any>;
 
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+
     registerMemoryManager(manager: IMemoryManager): void {
         if (!manager.tableName) {
             throw new Error("Memory manager must have a tableName");
@@ -230,6 +233,7 @@ export class AgentRuntime implements IAgentRuntime {
         speechModelPath?: string;
         cacheManager: ICacheManager;
         logging?: boolean;
+        verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     }) {
         elizaLogger.info("Initializing AgentRuntime with options:", {
             character: opts.character?.name,
@@ -388,6 +392,8 @@ export class AgentRuntime implements IAgentRuntime {
         (opts.evaluators ?? []).forEach((evaluator: Evaluator) => {
             this.registerEvaluator(evaluator);
         });
+
+        this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
     }
 
     async initialize() {
@@ -620,7 +626,7 @@ export class AgentRuntime implements IAgentRuntime {
      */
     async evaluate(
         message: Memory,
-        state?: State,
+        state: State,
         didRespond?: boolean,
         callback?: HandlerCallback
     ) {
@@ -642,10 +648,12 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         const resolvedEvaluators = await Promise.all(evaluatorPromises);
-        const evaluatorsData = resolvedEvaluators.filter(Boolean);
+        const evaluatorsData = resolvedEvaluators.filter(
+            (evaluator): evaluator is Evaluator => evaluator !== null
+        );
 
         // if there are no evaluators this frame, return
-        if (evaluatorsData.length === 0) {
+        if (!evaluatorsData || evaluatorsData.length === 0) {
             return [];
         }
 
@@ -664,6 +672,7 @@ export class AgentRuntime implements IAgentRuntime {
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
+            verifiableInferenceAdapter: this.verifiableInferenceAdapter,
         });
 
         const evaluators = parseJsonArrayFromText(
@@ -671,7 +680,7 @@ export class AgentRuntime implements IAgentRuntime {
         ) as unknown as string[];
 
         for (const evaluator of this.evaluators) {
-            if (!evaluators.includes(evaluator.name)) continue;
+            if (!evaluators?.includes(evaluator.name)) continue;
 
             if (evaluator.handler)
                 await evaluator.handler(this, message, state, {}, callback);
@@ -850,7 +859,8 @@ export class AgentRuntime implements IAgentRuntime {
             );
 
             if (lastMessageWithAttachment) {
-                const lastMessageTime = lastMessageWithAttachment.createdAt;
+                const lastMessageTime =
+                    lastMessageWithAttachment?.createdAt ?? Date.now();
                 const oneHourBeforeLastMessage =
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
@@ -947,7 +957,10 @@ Text: ${attachment.text}
                 });
 
             // Sort messages by timestamp in descending order
-            existingMemories.sort((a, b) => b.createdAt - a.createdAt);
+            existingMemories.sort(
+                (a, b) =>
+                    (b?.createdAt ?? Date.now()) - (a?.createdAt ?? Date.now())
+            );
 
             // Take the most recent messages
             const recentInteractionsData = existingMemories.slice(0, 20);
@@ -1260,13 +1273,14 @@ Text: ${attachment.text}
             );
 
             if (lastMessageWithAttachment) {
-                const lastMessageTime = lastMessageWithAttachment.createdAt;
+                const lastMessageTime =
+                    lastMessageWithAttachment?.createdAt ?? Date.now();
                 const oneHourBeforeLastMessage =
                     lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
                 allAttachments = recentMessagesData
                     .filter((msg) => {
-                        const msgTime = msg.createdAt;
+                        const msgTime = msg.createdAt ?? Date.now();
                         return msgTime >= oneHourBeforeLastMessage;
                     })
                     .flatMap((msg) => msg.content.attachments || []);
@@ -1295,6 +1309,14 @@ Text: ${attachment.text}
             recentMessagesData,
             attachments: formattedAttachments,
         } as State;
+    }
+
+    getVerifiableInferenceAdapter(): IVerifiableInferenceAdapter | undefined {
+        return this.verifiableInferenceAdapter;
+    }
+
+    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter): void {
+        this.verifiableInferenceAdapter = adapter;
     }
 }
 

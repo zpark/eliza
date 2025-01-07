@@ -99,7 +99,6 @@ TWITTER_USERNAME= # Nombre de usuario de la cuenta
 TWITTER_PASSWORD= # Contraseña de la cuenta
 TWITTER_EMAIL= # Correo electrónico de la cuenta
 
-X_SERVER_URL=
 XAI_API_KEY=
 XAI_MODEL=
 
@@ -121,7 +120,7 @@ BIRDEYE_API_KEY=
 
 SOL_ADDRESS=So11111111111111111111111111111111111111112
 SLIPPAGE=1
-RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 HELIUS_API_KEY=
 
 ## Telegram
@@ -145,7 +144,7 @@ Asegúrese de tener instalado el CUDA Toolkit, incluyendo cuDNN y cuBLAS.
 
 ### Ejecución local
 
-Agregue XAI_MODEL y configúrelo con una de las opciones de [Ejecutar con Llama](#ejecutar-con-llama) - puede dejar X_SERVER_URL y XAI_API_KEY en blanco, descargará el modelo de HuggingFace y realizará consultas localmente
+Agregue XAI_MODEL y configúrelo con una de las opciones de [Ejecutar con Llama](#ejecutar-con-llama) - puede dejar XAI_API_KEY en blanco, descargará el modelo de HuggingFace y realizará consultas localmente
 
 # Clientes
 
