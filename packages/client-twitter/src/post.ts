@@ -627,10 +627,7 @@ export class TwitterPostClient {
                 "twitter"
             );
 
-            // TODO: Once the 'count' parameter is fixed in the 'fetchTimeline' method of the 'agent-twitter-client',
-            // we should enable the ability to control the number of items fetched here.
-            // Related issue: https://github.com/elizaOS/agent-twitter-client/issues/43
-            const homeTimeline = await this.client.fetchTimelineForActions();
+            const homeTimeline = await this.client.fetchTimelineForActions(15);
             const maxActionsProcessing =
                 this.client.twitterConfig.MAX_ACTIONS_PROCESSING;
             const processedTimelines = [];
