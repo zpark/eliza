@@ -267,7 +267,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.ensureParticipantExists(this.agentId, this.agentId);
         });
 
-        elizaLogger.success("Agent ID", this.agentId);
+        elizaLogger.success(`Agent ID: ${this.agentId}`);
 
         this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
 
