@@ -15,6 +15,9 @@ Add the following environment variables to your `.env` file:
 ```env
 PRIMUS_APP_ID=your_app_id
 PRIMUS_APP_SECRET=your_app_secret
+
+VERIFIABLE_INFERENCE_ENABLED=true # Set to true to enable verifiable inference
+VERIFIABLE_INFERENCE_PROVIDER=primus # Options: primus, reclaim, opacity
 ```
 
 ## Usage
@@ -77,7 +80,7 @@ The adapter returns a `VerifiableInferenceResult` object containing:
 {
     text: string;           // The generated text response
     proof: unknown;         // The proof data
-    provider: string;       // The provider name (e.g., "reclaim")
+    provider: string;       // The provider name (e.g., "primus")
     timestamp: number;      // Generation timestamp
     metadata?: {           // Optional metadata
         modelProvider: string;
@@ -89,7 +92,7 @@ The adapter returns a `VerifiableInferenceResult` object containing:
 
 ## How it Works
 
-The Primus adapter wraps AI model API calls with zero-knowledge proofs using the `@primusprotocol/zk-fetch` library. This allows you to:
+The Primus adapter wraps AI model API calls with zkTLS proofs using the `@primuslabs/zktls-core-sdk` library. This allows you to:
 
 1. Make verifiable API calls to AI model providers
 2. Generate proofs of the responses

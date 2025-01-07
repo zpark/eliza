@@ -42,7 +42,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
             );
         }
 
-        // Get provider-specific endpoint
+        // Get provider-specific endpoint, auth header and response json path
         let endpoint;
         let authHeader;
         let responseParsePath;
@@ -53,40 +53,29 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
             case ModelProviderName.REDPILL:
             case ModelProviderName.NANOGPT:
             case ModelProviderName.HYPERBOLIC:
+            case ModelProviderName.ALI_BAILIAN:
+            case ModelProviderName.LLAMACLOUD:
+            case ModelProviderName.TOGETHER:
+            case ModelProviderName.AKASH_CHAT_API:
                 endpoint = `${baseEndpoint}/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
-                responseParsePath =
-                    "$.choices[0].message.content";
+                responseParsePath = "$.choices[0].message.content";
                 break;
             case ModelProviderName.ANTHROPIC:
             case ModelProviderName.CLAUDE_VERTEX:
                 endpoint = `${baseEndpoint}/messages`;
                 authHeader = `Bearer ${apiKey}`;
-                responseParsePath =
-                    "$.content[0].text";
+                responseParsePath = "$.content[0].text";
                 break;
             case ModelProviderName.GOOGLE:
                 endpoint = `${baseEndpoint}/models/${model}:generateContent`;
                 authHeader = `Bearer ${apiKey}`;
                 responseParsePath = "$.candidates[0].content.parts[0].text";
                 break;
-            case ModelProviderName.ALI_BAILIAN:
-                endpoint = `${baseEndpoint}/chat/completions`;
-                authHeader = `Bearer ${apiKey}`;
-                responseParsePath = "$.choices[0].message.content";
-                break;
             case ModelProviderName.VOLENGINE:
                 endpoint = `${baseEndpoint}/text/generation`;
                 authHeader = `Bearer ${apiKey}`;
                 responseParsePath = "$.choices[0].message.content";
-                break;
-            case ModelProviderName.LLAMACLOUD:
-            case ModelProviderName.TOGETHER:
-            case ModelProviderName.AKASH_CHAT_API:
-                endpoint = `${baseEndpoint}/chat/completions`;
-                authHeader = `Bearer ${apiKey}`;
-                responseParsePath =
-                    "$.choices[0].message.content";
                 break;
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
@@ -168,6 +157,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 ]
             ));
             const end = new Date();
+            console.log(`attestation:`, attestation);
 
             elizaLogger.info(
                 `request openAI cost:${end.getTime() - start.getTime()}ms`
@@ -188,7 +178,6 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
     }
 
     async verifyProof(result: VerifiableInferenceResult): Promise<boolean> {
-        // Primus response is self-verifying
         const isValid = await this.client.verifyAttestation(result.proof as Attestation);
         console.log("Proof is valid:", isValid);
         return isValid;
