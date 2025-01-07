@@ -13,6 +13,7 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink } from "react-router";
 import { type UUID } from "@elizaos/core";
+import { formatAgentName } from "@/lib/utils";
 
 export function AppSidebar() {
     const query = useQuery({
@@ -46,9 +47,8 @@ export function AppSidebar() {
                                             <SidebarMenuButton>
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 bg-muted rounded-md uppercase aspect-square grid place-items-center">
-                                                        {agent?.name?.substring(
-                                                            0,
-                                                            2
+                                                        {formatAgentName(
+                                                            agent.name
                                                         )}
                                                     </div>
                                                     <span>{agent.name}</span>
