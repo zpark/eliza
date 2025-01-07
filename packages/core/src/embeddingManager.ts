@@ -4,8 +4,8 @@ import { FlagEmbedding, EmbeddingModel } from "fastembed";
 import elizaLogger from "./logger";
 
 class EmbeddingModelManager {
-    private static instance: EmbeddingModelManager;
-    private model: any = null;
+    private static instance: EmbeddingModelManager | null;
+    private model: FlagEmbedding | null = null;
     private initPromise: Promise<void> | null = null;
     private initializationLock = false;
 
@@ -101,7 +101,19 @@ class EmbeddingModelManager {
         }
 
         try {
+            // Let fastembed handle tokenization internally
             const embedding = await this.model.queryEmbed(input);
+            // Debug the raw embedding
+            elizaLogger.debug("Raw embedding from BGE:", {
+                type: typeof embedding,
+                isArray: Array.isArray(embedding),
+                dimensions: Array.isArray(embedding)
+                    ? embedding.length
+                    : "not an array",
+                sample: Array.isArray(embedding)
+                    ? embedding.slice(0, 5)
+                    : embedding,
+            });
             return this.processEmbedding(embedding);
         } catch (error) {
             elizaLogger.error("Embedding generation failed:", error);
@@ -109,7 +121,7 @@ class EmbeddingModelManager {
         }
     }
 
-    private processEmbedding(embedding: any): number[] {
+    private processEmbedding(embedding: number[]): number[] {
         let finalEmbedding: number[];
 
         if (
@@ -132,7 +144,9 @@ class EmbeddingModelManager {
         finalEmbedding = finalEmbedding.map((n) => Number(n));
 
         if (!Array.isArray(finalEmbedding) || finalEmbedding[0] === undefined) {
-            throw new Error("Invalid embedding format");
+            throw new Error(
+                "Invalid embedding format: must be an array starting with a number"
+            );
         }
 
         if (finalEmbedding.length !== 384) {

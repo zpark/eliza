@@ -1,4 +1,3 @@
-import path from "node:path";
 import { getEmbeddingModelSettings, getEndpoint } from "./models.ts";
 import { IAgentRuntime, ModelProviderName } from "./types.ts";
 import settings from "./settings.ts";
