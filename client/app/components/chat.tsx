@@ -6,12 +6,13 @@ import {
 import { ChatInput } from "~/components/ui/chat/chat-input";
 import { ChatMessageList } from "~/components/ui/chat/chat-message-list";
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Paperclip } from "lucide-react";
+import { Copy, CornerDownLeft, Mic, Paperclip } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation } from "@tanstack/react-query";
 import { apiClient } from "~/lib/api";
 import { moment } from "~/lib/utils";
+import { Avatar, AvatarImage } from "./ui/avatar";
 
 interface ExtraContentFields {
     user: string;
@@ -139,20 +140,40 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                         <ChatBubble
                                             key={index}
                                             variant={variant}
-                                            className="flex flex-col"
+                                            className="flex flex-row items-center gap-2"
                                         >
-                                            <ChatBubbleMessage
-                                                isLoading={message?.isLoading}
-                                            >
-                                                {message?.text}
-                                            </ChatBubbleMessage>
-                                            {message?.createdAt ? (
-                                                <span className="text-xs text-muted-foreground">
-                                                    {moment(
-                                                        message?.createdAt
-                                                    ).format("LT")}
-                                                </span>
+                                            {message?.user !== "user" ? (
+                                                <Avatar className="size-8 p-1 border rounded-full">
+                                                    <AvatarImage src="/elizaos-icon.png" />
+                                                </Avatar>
                                             ) : null}
+                                            <div className="flex flex-col">
+                                                <ChatBubbleMessage
+                                                    isLoading={
+                                                        message?.isLoading
+                                                    }
+                                                >
+                                                    {message?.text}
+                                                </ChatBubbleMessage>
+                                                <div className="flex items-center gap-4 justify-between w-full">
+                                                    {message?.text ? (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                        >
+                                                            <Copy className="text-muted-foreground" />
+                                                        </Button>
+                                                    ) : null}
+
+                                                    {message?.createdAt ? (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {moment(
+                                                                message?.createdAt
+                                                            ).format("LT")}
+                                                        </span>
+                                                    ) : null}
+                                                </div>
+                                            </div>
                                         </ChatBubble>
                                     </motion.div>
                                 );
@@ -180,10 +201,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
                             <span className="sr-only">Attach file</span>
                         </Button>
 
-                        {/* <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon">
                             <Mic className="size-4" />
                             <span className="sr-only">Use Microphone</span>
-                        </Button> */}
+                        </Button>
 
                         <Button
                             disabled={!input || sendMessageMutation?.isPending}

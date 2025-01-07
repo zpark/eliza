@@ -12,7 +12,6 @@ import {
     SidebarMenuItem,
 } from "~/components/ui/sidebar";
 import { apiClient } from "~/lib/api";
-import { Separator } from "./ui/separator";
 
 export function AppSidebar() {
     const query = useQuery({
