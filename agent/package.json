@@ -51,6 +51,7 @@
         "@elizaos/plugin-nft-generation": "workspace:*",
         "@elizaos/plugin-node": "workspace:*",
         "@elizaos/plugin-solana": "workspace:*",
+        "@elizaos/plugin-solana-agentkit": "workspace:*",
         "@elizaos/plugin-starknet": "workspace:*",
         "@elizaos/plugin-stargaze": "workspace:*",
         "@elizaos/plugin-ton": "workspace:*",
@@ -68,6 +69,7 @@
         "@elizaos/plugin-web-search": "workspace:*",
         "@elizaos/plugin-genlayer": "workspace:*",
         "@elizaos/plugin-open-weather": "workspace:*",
+        "@elizaos/plugin-arthera": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"

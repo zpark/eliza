@@ -66,7 +66,7 @@ export const executeSwapForDAO: Action = {
 
         try {
             const connection = new Connection(
-                runtime.getSetting("RPC_URL") as string
+                runtime.getSetting("SOLANA_RPC_URL") as string
             );
 
             const { keypair: authority } = await getWalletKey(runtime, true);
