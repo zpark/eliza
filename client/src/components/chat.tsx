@@ -7,14 +7,7 @@ import {
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    Copy,
-    CornerDownLeft,
-    Mic,
-    Paperclip,
-    Speaker,
-    Volume2,
-} from "lucide-react";
+import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
