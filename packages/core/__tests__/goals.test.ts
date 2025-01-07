@@ -3,7 +3,7 @@ import {
     formatGoalsAsString,
     updateGoal,
     createGoal,
-} from "../goals.ts";
+} from "../src/goals.ts";
 import {
     Goal,
     GoalStatus,
@@ -13,8 +13,8 @@ import {
     UUID,
     Service,
     ServiceType,
-} from "../types";
-import { CacheManager, MemoryCacheAdapter } from "../cache.ts";
+} from "../src/types.ts";
+import { CacheManager, MemoryCacheAdapter } from "../src/cache.ts";
 import { describe, expect, vi, beforeEach } from "vitest";
 
 // Mock the database adapter
@@ -423,7 +423,9 @@ describe("updateGoal", () => {
             goal: updatedGoal,
         });
 
-        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(
+            updatedGoal
+        );
     });
 
     it("should handle failed goal update", async () => {
@@ -456,7 +458,9 @@ describe("updateGoal", () => {
             goal: updatedGoal,
         });
 
-        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(
+            updatedGoal
+        );
     });
 
     it("should handle in-progress goal update", async () => {
@@ -489,7 +493,9 @@ describe("updateGoal", () => {
             goal: updatedGoal,
         });
 
-        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(
+            updatedGoal
+        );
     });
 
     it("should handle goal priority updates", async () => {
@@ -522,7 +528,9 @@ describe("updateGoal", () => {
             goal: updatedGoal,
         });
 
-        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(updatedGoal);
+        expect(mockRuntime.databaseAdapter.updateGoal).toHaveBeenCalledWith(
+            updatedGoal
+        );
     });
 });
 
@@ -557,7 +565,7 @@ describe("createGoal", () => {
             roomId: "room-id" as UUID,
             userId: "user-id" as UUID,
             status: GoalStatus.IN_PROGRESS,
-            objectives: []
+            objectives: [],
         };
 
         const mockRuntime = {
@@ -576,7 +584,7 @@ describe("createGoal", () => {
                 roomId: "room-id",
                 userId: "user-id",
                 status: GoalStatus.IN_PROGRESS,
-                objectives: []
+                objectives: [],
             })
         );
     });
@@ -601,6 +609,8 @@ describe("createGoal", () => {
             goal: newGoal,
         });
 
-        expect(mockRuntime.databaseAdapter.createGoal).toHaveBeenCalledWith(newGoal);
+        expect(mockRuntime.databaseAdapter.createGoal).toHaveBeenCalledWith(
+            newGoal
+        );
     });
 });

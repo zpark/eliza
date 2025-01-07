@@ -1,5 +1,5 @@
-import { defaultCharacter } from "../defaultCharacter";
-import { ModelProviderName } from "../types";
+import { defaultCharacter } from "../src/defaultCharacter";
+import { ModelProviderName } from "../src/types";
 
 describe("defaultCharacter", () => {
     it("should have the correct name", () => {

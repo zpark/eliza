@@ -3,8 +3,8 @@ import {
     getRelationship,
     getRelationships,
     formatRelationships,
-} from "../relationships";
-import { IAgentRuntime, type Relationship, type UUID } from "../types";
+} from "../src/relationships";
+import { IAgentRuntime, type Relationship, type UUID } from "../src/types";
 import { describe, expect, vi } from "vitest";
 
 // Mock runtime and databaseAdapter
