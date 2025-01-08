@@ -34,7 +34,7 @@ export class WalletProvider {
     private cacheKey: string = "evm/wallet";
     private currentChain: SupportedChain = "mainnet";
     private CACHE_EXPIRY_SEC = 5;
-    chains: Record<string, Chain> = { mainnet: viemChains.mainnet };
+    chains: Record<string, Chain> = { ...viemChains };
     account: PrivateKeyAccount;
 
     constructor(

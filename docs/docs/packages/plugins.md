@@ -263,7 +263,7 @@ runtime.character.settings.secrets = {
 **Example Call**
 
 ```typescript
-const response = await runtime.triggerAction("SEND_MASS_PAYOUT", {
+const response = await runtime.processAction("SEND_MASS_PAYOUT", {
     receivingAddresses: [
         "0xA0ba2ACB5846A54834173fB0DD9444F756810f06",
         "0xF14F2c49aa90BaFA223EE074C1C33b59891826bF",
@@ -388,7 +388,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 1. **ERC20 Token**
 
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC20",
         name: "MyToken",
         symbol: "MTK",
@@ -400,7 +400,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 2. **NFT Collection**
 
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC721",
         name: "MyNFT",
         symbol: "MNFT",
@@ -411,7 +411,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 
 3. **Multi-token Collection**
     ```typescript
-    const response = await runtime.triggerAction("DEPLOY_TOKEN_CONTRACT", {
+    const response = await runtime.processAction("DEPLOY_TOKEN_CONTRACT", {
         contractType: "ERC1155",
         name: "MyMultiToken",
         symbol: "MMT",
@@ -423,7 +423,7 @@ All contract deployments and interactions are logged to a CSV file for record-ke
 **Contract Interaction Example:**
 
 ```typescript
-const response = await runtime.triggerAction("INVOKE_CONTRACT", {
+const response = await runtime.processAction("INVOKE_CONTRACT", {
   contractAddress: "0x123...",
   method: "transfer",
   abi: [...],
@@ -597,7 +597,7 @@ The Webhook Plugin enables Eliza to interact with the Coinbase SDK to create and
 To create a webhook:
 
 ```typescript
-const response = await runtime.triggerAction("CREATE_WEBHOOK", {
+const response = await runtime.processAction("CREATE_WEBHOOK", {
     networkId: "base",
     eventType: "transfers",
     notificationUri: "https://your-notification-uri.com",
@@ -741,6 +741,39 @@ cargo run --ip-addr <ip>:<port>
 # The server runs on 1350 inside Docker, can remap to any interface and port
 docker run --init -p 127.0.0.1:1350:1350 marlinorg/attestation-server-custom-mock
 ```
+
+### 12. Allora Plugin (`@elizaos/allora-plugin`)
+
+The [Allora Network](https://allora.network) plugin seamlessly empowers Eliza agents with real-time, advanced, self-improving AI inferences, delivering high-performance insights without introducing any additional complexity.
+
+#### Setup and Configuration
+
+1. Add the plugin to your character's configuration
+
+    ```typescript
+    import { alloraPlugin } from "@eliza/plugin-allora";
+
+    const character = {
+        plugins: [alloraPlugin],
+    };
+    ```
+
+2. Set the following environment variables:
+    - `ALLORA_API_KEY`: Create an API key by [creating an account](https://developer.upshot.xyz/signup).
+
+#### Actions
+
+- `GET_INFERENCE`: Retrieves predictions for a specific topic.
+
+Example interactions:
+
+```
+User: "What is the predicted ETH price in 5 minutes?"
+Agent: "I'll get the inference now..."
+Agent: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 13): 3393.364326646801085508"
+```
+
+For detailed information and additional implementation examples, please refer to the [Allora-Eliza integration docs](https://docs.allora.network/marketplace/integrations/eliza-os).
 
 ### Writing Custom Plugins
 
