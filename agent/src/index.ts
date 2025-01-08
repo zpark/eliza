@@ -79,6 +79,11 @@ import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
+
+import { giphyPlugin } from "@elizaos/plugin-giphy";
+import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
+
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import Database from "better-sqlite3";
 import fs from "fs";
@@ -86,6 +91,7 @@ import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import { OpacityAdapter } from "@elizaos/plugin-opacity";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -554,6 +560,28 @@ export async function createAgent(
     //     });
     //     elizaLogger.log("Verifiable inference adapter initialized");
     // }
+    // Initialize Opacity adapter if environment variables are present
+    let verifiableInferenceAdapter;
+    if (
+        process.env.OPACITY_TEAM_ID &&
+        process.env.OPACITY_CLOUDFLARE_NAME &&
+        process.env.OPACITY_PROVER_URL &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    ) {
+        verifiableInferenceAdapter = new OpacityAdapter({
+            teamId: process.env.OPACITY_TEAM_ID,
+            teamName: process.env.OPACITY_CLOUDFLARE_NAME,
+            opacityProverUrl: process.env.OPACITY_PROVER_URL,
+            modelProvider: character.modelProvider,
+            token: token,
+        });
+        elizaLogger.log("Verifiable inference adapter initialized");
+        elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
+        elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
+        elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
+        elizaLogger.log("modelProvider", character.modelProvider);
+        elizaLogger.log("token", token);
+    }
 
     return new AgentRuntime({
         databaseAdapter: db,
@@ -663,6 +691,7 @@ export async function createAgent(
                 ? echoChambersPlugin
                 : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
+            getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
@@ -685,7 +714,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        // verifiableInferenceAdapter,
+        verifiableInferenceAdapter,
     });
 }
 

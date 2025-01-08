@@ -58,6 +58,7 @@
         "@elizaos/plugin-solana-agentkit": "workspace:*",
         "@elizaos/plugin-starknet": "workspace:*",
         "@elizaos/plugin-stargaze": "workspace:*",
+        "@elizaos/plugin-giphy": "workspace:*",
         "@elizaos/plugin-ton": "workspace:*",
         "@elizaos/plugin-sui": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
@@ -78,6 +79,7 @@
         "@elizaos/plugin-obsidian": "workspace:*",
         "@elizaos/plugin-arthera": "workspace:*",
         "@elizaos/plugin-allora": "workspace:*",
+        "@elizaos/plugin-opacity": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"
