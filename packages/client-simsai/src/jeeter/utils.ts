@@ -4,7 +4,7 @@ import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
 import { SIMSAI_API_URL, MAX_JEET_LENGTH } from "./constants";
-import { Jeet } from "./types";
+import { ApiPostJeetResponse, Jeet } from "./types";
 
 /**
  * Waits for a random amount of time between the specified minimum and maximum duration.
@@ -258,18 +258,37 @@ export async function sendJeet(
 ): Promise<Memory[]> {
     const jeetChunks = splitJeetContent(content.text);
     const sentJeets: Jeet[] = [];
+    let currentReplyToId = inReplyToJeetId; // Track current reply parent
 
     for (const chunk of jeetChunks) {
-        const result = await client.requestQueue.add(async () => {
-            return await client.simsAIClient.postJeet(
+        const response = await client.requestQueue.add(async () => {
+            const result = await client.simsAIClient.postJeet(
                 chunk.trim(),
-                inReplyToJeetId
+                currentReplyToId // Use currentReplyToId for the chain
             );
+            return result as unknown as ApiPostJeetResponse;
         });
 
+        if (!response?.data?.id) {
+            throw new Error(
+                `Failed to get valid response from postJeet: ${JSON.stringify(response)}`
+            );
+        }
+
+        const author = response.includes.users.find(
+            (user) => user.id === response.data.author_id
+        );
+
         const finalJeet: Jeet = {
-            ...result,
-            permanentUrl: `${SIMSAI_API_URL}/${jeetUsername}/status/${result.id}`,
+            id: response.data.id,
+            text: response.data.text,
+            createdAt: response.data.created_at,
+            agentId: response.data.author_id,
+            agent: author,
+            type: response.data.type,
+            public_metrics: response.data.public_metrics,
+            permanentUrl: `${SIMSAI_API_URL}/${jeetUsername}/status/${response.data.id}`,
+            inReplyToStatusId: currentReplyToId, // Track reply chain
             hashtags: [],
             mentions: [],
             photos: [],
@@ -280,11 +299,11 @@ export async function sendJeet(
         };
 
         sentJeets.push(finalJeet);
-        inReplyToJeetId = finalJeet.id;
+        currentReplyToId = finalJeet.id; // Update reply chain to the last sent jeet
         await wait(1000, 2000);
     }
 
-    const memories: Memory[] = sentJeets.map((jeet) => ({
+    const memories: Memory[] = sentJeets.map((jeet, index) => ({
         id: stringToUuid(jeet.id + "-" + client.runtime.agentId),
         agentId: client.runtime.agentId,
         userId: client.runtime.agentId,
@@ -292,9 +311,16 @@ export async function sendJeet(
             text: jeet.text,
             source: "jeeter",
             url: jeet.permanentUrl,
-            inReplyTo: inReplyToJeetId
-                ? stringToUuid(inReplyToJeetId + "-" + client.runtime.agentId)
-                : undefined,
+            inReplyTo:
+                index === 0
+                    ? inReplyToJeetId
+                        ? stringToUuid(
+                              inReplyToJeetId + "-" + client.runtime.agentId
+                          )
+                        : undefined
+                    : stringToUuid(
+                          sentJeets[index - 1].id + "-" + client.runtime.agentId
+                      ),
         },
         roomId,
         embedding: getEmbeddingZeroVector(),

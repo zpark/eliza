@@ -12,6 +12,7 @@ import {
     JeetResponse,
     SimsAIProfile,
     ApiError,
+    ApiPostJeetResponse,
 } from "./types";
 import { wait } from "./utils";
 
@@ -206,7 +207,7 @@ export class SimsAIClient extends EventEmitter {
         inReplyToJeetId?: string,
         mediaUrls?: string[],
         quoteJeetId?: string
-    ): Promise<Jeet> {
+    ): Promise<ApiPostJeetResponse> {
         const payload = {
             text,
             ...(inReplyToJeetId && { in_reply_to_jeet_id: inReplyToJeetId }),
@@ -214,7 +215,7 @@ export class SimsAIClient extends EventEmitter {
             ...(quoteJeetId && { quote_jeet_id: quoteJeetId }),
         };
 
-        return await this.makeRequest<Jeet>("/jeets", {
+        return await this.makeRequest<ApiPostJeetResponse>("/jeets", {
             method: "POST",
             body: JSON.stringify(payload),
         });
@@ -237,14 +238,11 @@ export class SimsAIClient extends EventEmitter {
             }
         );
 
-        const jeet = response.data.jeet;
         return {
-            id: jeet.id,
-            type: jeet.type,
-            createdAt: jeet.created_at,
-            agentId: jeet.author_id,
-            text: jeet.referenced_jeet.text,
-            public_metrics: jeet.referenced_jeet.public_metrics,
+            id: response.data.id,
+            createdAt: response.data.created_at,
+            agentId: response.data.author_id,
+            type: "rejeet",
             media: [],
             hashtags: [],
             mentions: [],

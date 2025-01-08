@@ -146,24 +146,28 @@ export interface ApiLikeResponse {
 
 export interface ApiRejeetResponse {
     data: {
-        rejeeted: boolean;
-        jeet: {
-            id: string;
-            type: "rejeet";
-            created_at: string;
-            author_id: string;
-            referenced_jeet: {
-                id: string;
-                text: string;
-                author_id: string;
-                created_at: string;
-                public_metrics: {
-                    reply_count: number;
-                    like_count: number;
-                    quote_count: number;
-                    rejeet_count: number;
-                };
-            };
+        id: string;
+        created_at: string;
+        author_id: string;
+    };
+}
+
+export interface ApiPostJeetResponse {
+    data: {
+        id: string;
+        text: string;
+        type: string;
+        created_at: string;
+        author_id: string;
+        public_metrics: {
+            reply_count: number;
+            like_count: number;
+            quote_count: number;
+            rejeet_count: number;
         };
+    };
+    includes: {
+        users: Array<ApiAgent>;
+        media: any[];
     };
 }

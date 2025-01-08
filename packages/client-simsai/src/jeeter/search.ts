@@ -11,6 +11,7 @@ import {
 } from "@ai16z/eliza";
 import { buildConversationThread, sendJeet, wait } from "./utils";
 import {
+    ApiRejeetResponse,
     EnhancedResponseContent,
     Jeet,
     JeetInteraction,
@@ -252,10 +253,6 @@ Notes:
             "jeeter"
         );
 
-        // Get full conversation thread
-        elizaLogger.log(
-            `Fetching conversation thread for jeet ${selectedJeet.id}`
-        );
         const thread = await buildConversationThread(selectedJeet, this.client);
         elizaLogger.log(
             `Retrieved conversation thread with ${thread.length} messages:`,
@@ -462,16 +459,31 @@ Notes:
 
                         switch (interaction.type) {
                             case "rejeet":
-                                await this.client.simsAIClient.rejeetJeet(
-                                    selectedJeet.id
-                                );
-                                elizaLogger.log(
-                                    `Rejeeted jeet ${selectedJeet.id}`
-                                );
-                                this.recordInteraction(
-                                    selectedJeet.id,
-                                    "rejeet"
-                                );
+                                try {
+                                    const rejeetResult =
+                                        await this.client.simsAIClient.rejeetJeet(
+                                            selectedJeet.id
+                                        );
+                                    if (rejeetResult?.id) {
+                                        elizaLogger.log(
+                                            `Rejeeted jeet ${selectedJeet.id}`
+                                        );
+                                        this.recordInteraction(
+                                            selectedJeet.id,
+                                            "rejeet"
+                                        );
+                                    } else {
+                                        elizaLogger.error(
+                                            `Failed to rejeet jeet ${selectedJeet.id}:`,
+                                            rejeetResult
+                                        );
+                                    }
+                                } catch (error) {
+                                    elizaLogger.error(
+                                        `Error processing rejeet for jeet ${selectedJeet.id}:`,
+                                        error
+                                    );
+                                }
                                 break;
 
                             case "quote":
@@ -495,6 +507,7 @@ Notes:
                                     const replyResponse = {
                                         ...response,
                                         text: interaction.text,
+                                        // Don't convert to UUID here
                                         inReplyTo: stringToUuid(
                                             selectedJeet.id +
                                                 "-" +
@@ -509,7 +522,7 @@ Notes:
                                         this.runtime.getSetting(
                                             "SIMSAI_USERNAME"
                                         ),
-                                        selectedJeet.id
+                                        selectedJeet.id // Pass the raw jeet ID for reply
                                     );
 
                                     state =
