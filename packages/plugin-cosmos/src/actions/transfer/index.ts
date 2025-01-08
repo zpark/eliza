@@ -6,7 +6,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { initWalletChainsData } from "../../providers/wallet/utils";
 import { cosmosTransferTemplate } from "../../templates";
 import { CosmosTransferActionService } from "./services/cosmos-transfer-action-service";

@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/core";
 import { CosmosWalletChains } from "../../shared/entities/cosmos-wallet-chains-data";
 
 export const initWalletChainsData = async (runtime: IAgentRuntime) => {
