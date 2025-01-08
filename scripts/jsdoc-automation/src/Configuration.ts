@@ -44,8 +44,8 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
 
     public excludedDirectories: string[] = [];
     public repository: Repository = {
-        owner: "AudixAI",
-        name: "eliza-jsdoc",
+        owner: "elizaOS",
+        name: "eliza",
         pullNumber: undefined,
     };
     public commitMessage: string = "Generated JSDoc comments";
