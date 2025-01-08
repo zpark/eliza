@@ -54,15 +54,15 @@ Para evitar conflictos en el directorio central, se recomienda agregar acciones 
 
 ### Ejecutar con Llama
 
-Puede ejecutar modelos Llama 70B o 405B configurando la variable de ambiente `XAI_MODEL` en `meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo` o `meta-llama/Meta-Llama-3.1-405B-Instruct`
+Puede ejecutar modelos Llama 70B o 405B configurando la variable de ambiente para un proveedor que soporte estos modelos. Llama también es soportado localmente si no se configura otro proveedor.
 
 ### Ejecutar con Grok
 
-Puede ejecutar modelos Grok configurando la variable de ambiente `XAI_MODEL` en `grok-beta`
+Puede ejecutar modelos Grok configurando la variable de ambiente `GROK_API_KEY` y configurando "grok" como proveedor en el archivo de caracteres.
 
 ### Ejecutar con OpenAI
 
-Puede ejecutar modelos OpenAI configurando la variable de ambiente `XAI_MODEL` en `gpt-4o-mini` o `gpt-4o`
+Puede ejecutar modelos OpenAI configurando la variable de ambiente `OPENAI_API_KEY` y configurando "openai" como proveedor en el archivo de caracteres.
 
 ## Requisitos Adicionales
 
@@ -98,9 +98,6 @@ TWITTER_DRY_RUN=false
 TWITTER_USERNAME= # Nombre de usuario de la cuenta
 TWITTER_PASSWORD= # Contraseña de la cuenta
 TWITTER_EMAIL= # Correo electrónico de la cuenta
-
-XAI_API_KEY=
-XAI_MODEL=
 
 # Para consultar a Claude
 ANTHROPIC_API_KEY=
