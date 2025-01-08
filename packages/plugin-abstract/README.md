@@ -113,25 +113,7 @@ pnpm run dev
     - Account abstraction improvements
     - Social recovery options
 
-2. **CosmWasm Integration**
-
-    - Contract deployment templates
-    - Smart contract verification tools
-    - Contract upgrade system
-    - Testing framework improvements
-    - Gas optimization tools
-    - Contract interaction templates
-
-3. **IBC Operations**
-
-    - Cross-chain transfer optimization
-    - IBC relayer monitoring
-    - Channel management tools
-    - Packet tracking system
-    - Timeout handling improvements
-    - Cross-chain messaging
-
-4. **DEX Integration**
+2. **DEX Integration**
 
     - Advanced swap routing
     - Liquidity pool management
@@ -140,7 +122,7 @@ pnpm run dev
     - Slippage protection
     - AMM optimization
 
-5. **Security Enhancements**
+3. **Security Enhancements**
 
     - Transaction simulation
     - Risk assessment tools
@@ -149,7 +131,7 @@ pnpm run dev
     - Emergency shutdown features
     - Audit integration tools
 
-6. **Developer Tools**
+4. **Developer Tools**
 
     - Enhanced debugging capabilities
     - Documentation generator
@@ -158,7 +140,7 @@ pnpm run dev
     - Deployment automation
     - Performance profiling
 
-7. **Analytics and Monitoring**
+5. **Analytics and Monitoring**
 
     - Transaction tracking dashboard
     - Network statistics
@@ -167,7 +149,7 @@ pnpm run dev
     - Custom reporting tools
     - Real-time monitoring
 
-8. **Wallet Management**
+6. **Wallet Management**
     - Multiple wallet support
     - Hardware wallet integration
     - Address book features
@@ -185,27 +167,8 @@ Contributions are welcome! Please see the [CONTRIBUTING.md](CONTRIBUTING.md) fil
 
 This plugin integrates with and builds upon several key technologies:
 
-- [Abstract](https://abstract.money/): Smart account infrastructure
-- [CosmWasm](https://cosmwasm.com/): Smart contract platform
-- [Cosmos SDK](https://v1.cosmos.network/sdk): Blockchain application framework
-- [IBC Protocol](https://ibcprotocol.org/): Inter-blockchain communication
-- [Osmosis](https://osmosis.zone/): DEX infrastructure
-
-Special thanks to:
-
-- The Abstract development team
-- The CosmWasm core developers
-- The Cosmos SDK maintainers
-- The IBC Protocol team
-- The Osmosis DEX team
-- The Eliza community for their contributions and feedback
-
-For more information about Abstract capabilities:
-
-- [Abstract Documentation](https://docs.abstract.money/)
-- [CosmWasm Documentation](https://docs.cosmwasm.com/)
-- [Cosmos SDK Docs](https://docs.cosmos.network/)
-- [IBC Protocol Docs](https://ibc.cosmos.network/)
+- [Abstract](https://abs.xyz/): Consumer blockchain
+- [viem](https://viem.sh/): Typescript web3 client
 
 ## License
 
