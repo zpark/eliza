@@ -23,7 +23,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <div
-                className="dark"
+                className="dark antialiased"
                 style={{
                     colorScheme: "dark",
                 }}

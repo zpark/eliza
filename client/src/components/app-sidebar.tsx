@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import lernaDetails from "../../../lerna.json";
+import info from "@/lib/info.json";
 import {
     Sidebar,
     SidebarContent,
@@ -14,16 +14,17 @@ import {
     SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
 import { apiClient } from "@/lib/api";
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { type UUID } from "@elizaos/core";
 import { Book, Cog, User } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
+    const location = useLocation();
     const query = useQuery({
         queryKey: ["agents"],
         queryFn: () => apiClient.getAgents(),
-        refetchInterval: 5_000
+        refetchInterval: 5_000,
     });
 
     const agents = query?.data?.agents;
@@ -46,9 +47,7 @@ export function AppSidebar() {
                                     <span className="font-semibold">
                                         ElizaOS
                                     </span>
-                                    <span className="">
-                                        v{lernaDetails?.version}
-                                    </span>
+                                    <span className="">v{info?.version}</span>
                                 </div>
                             </NavLink>
                         </SidebarMenuButton>
@@ -78,7 +77,11 @@ export function AppSidebar() {
                                                 <NavLink
                                                     to={`/chat/${agent.id}`}
                                                 >
-                                                    <SidebarMenuButton>
+                                                    <SidebarMenuButton
+                                                        isActive={location.pathname.includes(
+                                                            agent.id
+                                                        )}
+                                                    >
                                                         <User />
                                                         <span>
                                                             {agent.name}
