@@ -8,7 +8,7 @@ export const nearEnvSchema = z.object({
     NEAR_WALLET_SECRET_KEY: z.string().min(1, "Wallet secret key is required"),
     NEAR_WALLET_PUBLIC_KEY: z.string().min(1, "Wallet public key is required"),
     NEAR_ADDRESS: z.string().min(1, "Near address is required"),
-    SLIPPAGE: z.string().min(1, "Slippage is required"),
+    NEAR_SLIPPAGE: z.string().min(1, "Slippage is required"),
     NEAR_RPC_URL: z.string().min(1, "RPC URL is required"),
     networkId: z.string(),
     nodeUrl: z.string(),
@@ -86,7 +86,7 @@ export async function validateNearConfig(
                 process.env.NEAR_WALLET_PUBLIC_KEY,
             NEAR_ADDRESS:
                 runtime.getSetting("NEAR_ADDRESS") || process.env.NEAR_ADDRESS,
-            SLIPPAGE: runtime.getSetting("SLIPPAGE") || process.env.SLIPPAGE,
+            NEAR_SLIPPAGE: runtime.getSetting("NEAR_SLIPPAGE") || process.env.NEAR_SLIPPAGE,
             NEAR_RPC_URL: runtime.getSetting("NEAR_RPC_URL") || process.env.NEAR_RPC_URL,
             ...envConfig, // Spread the environment-specific config
         };
