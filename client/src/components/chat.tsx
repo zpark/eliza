@@ -91,6 +91,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
             (old: ContentWithUser[] = []) => [...old, ...newMessages]
         );
 
+        setSelectedFile(null);
         sendMessageMutation.mutate({ message: input, attachments });
 
         setInput("");
@@ -145,7 +146,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
         [];
 
     const transitions = useTransition(messages, {
-        keys: (message) => message.createdAt,
+        keys: (message) => `${message.createdAt}-${message.user}-${message.text}`,
         from: { opacity: 0, transform: "translateY(50px)" },
         enter: { opacity: 1, transform: "translateY(0px)" },
         leave: { opacity: 0, transform: "translateY(10px)" },
@@ -153,14 +154,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
-            <div className="flex-1 overflow-y-auto bg-card rounded-t-md border-t border-l border-r">
+            <div className="flex-1 overflow-y-auto">
                 <ChatMessageList ref={messagesContainerRef}>
                     {transitions((styles, message) => {
                         const variant = getMessageVariant(message?.user);
                         return (
                             <animated.div
                                 style={styles}
-                                key={`${btoa(message.text)}_${btoa(String(message?.createdAt))}`}
                                 className="flex flex-col gap-2 p-4"
                             >
                                 <ChatBubble
@@ -168,7 +168,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                     className="flex flex-row items-center gap-2"
                                 >
                                     {message?.user !== "user" ? (
-                                        <Avatar className="size-8 p-1 border rounded-full">
+                                        <Avatar className="size-8 p-1 border rounded-full select-none">
                                             <AvatarImage src="/elizaos-icon.png" />
                                         </Avatar>
                                     ) : null}
@@ -242,11 +242,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     })}
                 </ChatMessageList>
             </div>
-            <div className="px-4 pb-4 bg-card rounded-b-md border-b border-l border-r">
+            <div className="px-4 pb-4">
                 <form
                     ref={formRef}
                     onSubmit={handleSendMessage}
-                    className="relative rounded-md border bg-background"
+                    className="relative rounded-md border bg-card"
                 >
                     {selectedFile ? (
                         <div className="p-3 flex">
@@ -274,11 +274,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
                         value={input}
                         onChange={({ target }) => setInput(target.value)}
                         placeholder="Type your message here..."
-                        className="min-h-12 resize-none rounded-md bg-background border-0 p-3 shadow-none focus-visible:ring-0"
+                        className="min-h-12 resize-none rounded-md bg-card border-0 p-3 shadow-none focus-visible:ring-0"
                     />
                     <div className="flex items-center p-3 pt-0">
                         <Tooltip>
-                            <TooltipTrigger>
+                            <TooltipTrigger asChild>
                                 <Fragment>
                                     <Button
                                         variant="ghost"

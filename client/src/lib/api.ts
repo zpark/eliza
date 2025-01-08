@@ -24,12 +24,14 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST" && body) {
+    if (method === "POST") {
         if (body instanceof FormData) {
             // @ts-expect-error
             delete options.headers["Content-Type"];
+            options.body = body;
+        } else {
+            options.body = JSON.stringify(body);
         }
-        options.body = body as BodyInit;
     }
 
     return fetch(`${BASE_URL}${url}`, options).then(async (resp) => {

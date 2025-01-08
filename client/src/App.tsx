@@ -9,7 +9,14 @@ import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnReconnect: true,
+            refetchOnWindowFocus: true,
+        },
+    },
+});
 
 function App() {
     return (
@@ -25,7 +32,7 @@ function App() {
                         <SidebarProvider>
                             <AppSidebar />
                             <SidebarInset>
-                                <div className="flex flex-1 flex-col gap-4 size-full">
+                                <div className="flex flex-1 flex-col gap-4 size-full container">
                                     <Routes>
                                         <Route path="/" element={<Home />} />
                                         <Route

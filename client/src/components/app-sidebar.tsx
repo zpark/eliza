@@ -17,7 +17,8 @@ import { apiClient } from "@/lib/api";
 import { NavLink } from "react-router";
 import { type UUID } from "@elizaos/core";
 import { Fragment } from "react/jsx-runtime";
-import { Book, Cog } from "lucide-react";
+import { Book, Cog, User } from "lucide-react";
+import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
     const query = useQuery({
@@ -78,6 +79,7 @@ export function AppSidebar() {
                                                     to={`/chat/${agent.id}`}
                                                 >
                                                     <SidebarMenuButton>
+                                                        <User />
                                                         <span>
                                                             {agent.name}
                                                         </span>
@@ -109,6 +111,7 @@ export function AppSidebar() {
                             <Cog /> Settings
                         </SidebarMenuButton>
                     </SidebarMenuItem>
+                    <ConnectionStatus />
                 </SidebarMenu>
             </SidebarFooter>
         </Sidebar>
