@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
+import lernaDetails from "../../../lerna.json";
 import {
     Sidebar,
     SidebarContent,
@@ -16,9 +16,8 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink } from "react-router";
 import { type UUID } from "@elizaos/core";
-import { formatAgentName } from "@/lib/utils";
 import { Fragment } from "react/jsx-runtime";
-import { ChevronUp, Cog, User2 } from "lucide-react";
+import { Book, Cog } from "lucide-react";
 
 export function AppSidebar() {
     const query = useQuery({
@@ -46,7 +45,9 @@ export function AppSidebar() {
                                     <span className="font-semibold">
                                         ElizaOS
                                     </span>
-                                    <span className="">v0.1.7</span>
+                                    <span className="">
+                                        v{lernaDetails?.version}
+                                    </span>
                                 </div>
                             </NavLink>
                         </SidebarMenuButton>
@@ -77,16 +78,9 @@ export function AppSidebar() {
                                                     to={`/chat/${agent.id}`}
                                                 >
                                                     <SidebarMenuButton>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-8 bg-muted rounded-md uppercase aspect-square grid place-items-center">
-                                                                {formatAgentName(
-                                                                    agent.name
-                                                                )}
-                                                            </div>
-                                                            <span>
-                                                                {agent.name}
-                                                            </span>
-                                                        </div>
+                                                        <span>
+                                                            {agent.name}
+                                                        </span>
                                                     </SidebarMenuButton>
                                                 </NavLink>
                                             </SidebarMenuItem>
@@ -100,6 +94,16 @@ export function AppSidebar() {
             </SidebarContent>
             <SidebarFooter>
                 <SidebarMenu>
+                    <SidebarMenuItem>
+                        <NavLink
+                            to="https://elizaos.github.io/eliza/docs/intro/"
+                            target="_blank"
+                        >
+                            <SidebarMenuButton>
+                                <Book /> Documentation
+                            </SidebarMenuButton>
+                        </NavLink>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton disabled>
                             <Cog /> Settings

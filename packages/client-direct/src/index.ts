@@ -25,6 +25,7 @@ import {
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
+import OpenAI from "openai";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -153,6 +154,7 @@ export class DirectClient {
                 }
 
                 let runtime = this.agents.get(agentId);
+                const apiKey = runtime.getSetting("OPENAI_API_KEY");
 
                 // if runtime is null, look for runtime with the same name
                 if (!runtime) {
@@ -168,26 +170,16 @@ export class DirectClient {
                     return;
                 }
 
-                const formData = new FormData();
-                const audioBlob = new Blob([audioFile.buffer], {
-                    type: audioFile.mimetype,
+                const openai = new OpenAI({
+                    apiKey,
                 });
-                formData.append("file", audioBlob, audioFile.originalname);
-                formData.append("model", "whisper-1");
 
-                const response = await fetch(
-                    "https://api.openai.com/v1/audio/transcriptions",
-                    {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${runtime.token}`,
-                        },
-                        body: formData,
-                    }
-                );
+                const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream(audioFile.path),
+                    model: "whisper-1",
+                });
 
-                const data = await response.json();
-                res.json(data);
+                res.json(transcription);
             }
         );
 

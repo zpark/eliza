@@ -11,7 +11,7 @@ const fetcher = async ({
 }: {
     url: string;
     method?: "GET" | "POST";
-    body?: object;
+    body?: object | FormData;
     headers?: HeadersInit;
 }) => {
     const options: RequestInit = {
@@ -25,14 +25,18 @@ const fetcher = async ({
     };
 
     if (method === "POST" && body) {
-        options.body = JSON.stringify(body);
+        if (body instanceof FormData) {
+            // @ts-expect-error
+            delete options.headers["Content-Type"];
+        }
+        options.body = body as BodyInit;
     }
 
     return fetch(`${BASE_URL}${url}`, options).then(async (resp) => {
         if (resp.ok) {
             const contentType = resp.headers.get("Content-Type");
 
-            if (contentType == "audio/mpeg") {
+            if (contentType === "audio/mpeg") {
                 return await resp.blob();
             }
             return resp.json();
@@ -71,7 +75,6 @@ export const apiClient = {
     getAgents: () => fetcher({ url: "/agents" }),
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
-
     tts: (agentId: string, text: string) =>
         fetcher({
             url: `/${agentId}/tts`,
@@ -85,4 +88,13 @@ export const apiClient = {
                 "Transfer-Encoding": "chunked",
             },
         }),
+    whisper: async (agentId: string, audioBlob: Blob) => {
+        const formData = new FormData();
+        formData.append("file", audioBlob, "recording.wav");
+        return fetcher({
+            url: `/${agentId}/whisper`,
+            method: "POST",
+            body: formData,
+        });
+    },
 };

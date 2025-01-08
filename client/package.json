@@ -25,7 +25,6 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "2.1.1",
         "dayjs": "^1.11.13",
-        "framer-motion": "^11.16.0",
         "lucide-react": "^0.469.0",
         "react": "^18.3.1",
         "react-aiwriter": "^1.0.0",
@@ -33,7 +32,8 @@
         "react-router": "^7.1.1",
         "react-router-dom": "6.22.1",
         "tailwind-merge": "^2.6.0",
-        "tailwindcss-animate": "^1.0.7"
+        "tailwindcss-animate": "^1.0.7",
+        "vite-plugin-compression": "^0.5.1"
     },
     "devDependencies": {
         "@eslint/js": "^9.17.0",
@@ -53,6 +53,7 @@
         "eslint-plugin-react-refresh": "^0.4.16",
         "globals": "^15.14.0",
         "postcss": "^8.4.38",
+        "rollup-plugin-visualizer": "^5.14.0",
         "tailwindcss": "^3.4.4",
         "typescript": "~5.6.3",
         "typescript-eslint": "^8.18.2",

@@ -6,8 +6,8 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Mic, Paperclip, X } from "lucide-react";
+import { useTransition, animated } from "@react-spring/web";
+import { Paperclip, Send, X } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import AIWriter from "react-aiwriter";
 import { IAttachment } from "@/types";
+import { AudioRecorder } from "./audio-recorder";
 
 interface ExtraContentFields {
     user: string;
@@ -143,142 +144,102 @@ export default function Page({ agentId }: { agentId: UUID }) {
         queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
         [];
 
+    const transitions = useTransition(messages, {
+        keys: (message) => message.createdAt,
+        from: { opacity: 0, transform: "translateY(50px)" },
+        enter: { opacity: 1, transform: "translateY(0px)" },
+        leave: { opacity: 0, transform: "translateY(10px)" },
+    });
+
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             <div className="flex-1 overflow-y-auto bg-card rounded-t-md border-t border-l border-r">
                 <ChatMessageList ref={messagesContainerRef}>
-                    {/* Chat messages */}
-                    <AnimatePresence>
-                        {messages.map(
-                            (message: ContentWithUser, index: number) => {
-                                const variant = getMessageVariant(
-                                    message?.user
-                                );
-                                return (
-                                    <motion.div
-                                        key={index}
-                                        layout
-                                        initial={{
-                                            opacity: 0,
-                                            scale: 1,
-                                            y: 50,
-                                            x: 0,
-                                        }}
-                                        animate={{
-                                            opacity: 1,
-                                            scale: 1,
-                                            y: 0,
-                                            x: 0,
-                                        }}
-                                        exit={{
-                                            opacity: 0,
-                                            scale: 1,
-                                            y: 1,
-                                            x: 0,
-                                        }}
-                                        transition={{
-                                            opacity: { duration: 0.1 },
-                                            layout: {
-                                                type: "spring",
-                                                bounce: 0.3,
-                                                duration: index * 0.05 + 0.2,
-                                            },
-                                        }}
-                                        style={{ originX: 0.5, originY: 0.5 }}
-                                        className="flex flex-col gap-2 p-4"
-                                    >
-                                        <ChatBubble
-                                            key={index}
-                                            variant={variant}
-                                            className="flex flex-row items-center gap-2"
+                    {transitions((styles, message) => {
+                        const variant = getMessageVariant(message?.user);
+                        return (
+                            <animated.div
+                                style={styles}
+                                key={`${btoa(message.text)}_${btoa(String(message?.createdAt))}`}
+                                className="flex flex-col gap-2 p-4"
+                            >
+                                <ChatBubble
+                                    variant={variant}
+                                    className="flex flex-row items-center gap-2"
+                                >
+                                    {message?.user !== "user" ? (
+                                        <Avatar className="size-8 p-1 border rounded-full">
+                                            <AvatarImage src="/elizaos-icon.png" />
+                                        </Avatar>
+                                    ) : null}
+                                    <div className="flex flex-col">
+                                        <ChatBubbleMessage
+                                            isLoading={message?.isLoading}
                                         >
                                             {message?.user !== "user" ? (
-                                                <Avatar className="size-8 p-1 border rounded-full">
-                                                    <AvatarImage src="/elizaos-icon.png" />
-                                                </Avatar>
-                                            ) : null}
-                                            <div className="flex flex-col">
-                                                <ChatBubbleMessage
-                                                    isLoading={
-                                                        message?.isLoading
-                                                    }
-                                                >
-                                                    {message?.user !==
-                                                    "user" ? (
-                                                        <AIWriter>
-                                                            {message?.text}
-                                                        </AIWriter>
-                                                    ) : (
-                                                        message?.text
-                                                    )}
-                                                    {/* Attachments */}
-                                                    <Fragment>
-                                                        {message?.attachments?.map(
-                                                            (
-                                                                attachment,
-                                                                idx
-                                                            ) => (
-                                                                <div
-                                                                    className="flex flex-col gap-1 mt-2"
-                                                                    key={idx}
-                                                                >
-                                                                    <img
-                                                                        src={
-                                                                            attachment.url
-                                                                        }
-                                                                        width="100%"
-                                                                        height="100%"
-                                                                        className="w-64 rounded-md"
-                                                                    />
-                                                                    <div className="flex items-center justify-between gap-4">
-                                                                        <span></span>
-                                                                        <span></span>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        )}
-                                                    </Fragment>
-                                                </ChatBubbleMessage>
-                                                <div className="flex items-center gap-4 justify-between w-full mt-1">
-                                                    {message?.text &&
-                                                    !message?.isLoading ? (
-                                                        <div className="flex items-center gap-1">
-                                                            <CopyButton
-                                                                text={
-                                                                    message?.text
+                                                <AIWriter>
+                                                    {message?.text}
+                                                </AIWriter>
+                                            ) : (
+                                                message?.text
+                                            )}
+                                            {/* Attachments */}
+                                            <Fragment>
+                                                {message?.attachments?.map(
+                                                    (attachment, idx) => (
+                                                        <div
+                                                            className="flex flex-col gap-1 mt-2"
+                                                            key={idx}
+                                                        >
+                                                            <img
+                                                                src={
+                                                                    attachment.url
                                                                 }
+                                                                width="100%"
+                                                                height="100%"
+                                                                className="w-64 rounded-md"
                                                             />
-                                                            <ChatTtsButton
-                                                                agentId={
-                                                                    agentId
-                                                                }
-                                                                text={
-                                                                    message?.text
-                                                                }
-                                                            />
+                                                            <div className="flex items-center justify-between gap-4">
+                                                                <span></span>
+                                                                <span></span>
+                                                            </div>
                                                         </div>
-                                                    ) : null}
-
-                                                    {message?.createdAt ? (
-                                                        <ChatBubbleTimestamp
-                                                            timestamp={moment(
-                                                                message?.createdAt
-                                                            ).format("LT")}
-                                                            className={cn([
-                                                                message?.isLoading
-                                                                    ? "mt-2"
-                                                                    : "",
-                                                            ])}
-                                                        />
-                                                    ) : null}
+                                                    )
+                                                )}
+                                            </Fragment>
+                                        </ChatBubbleMessage>
+                                        <div className="flex items-center gap-4 justify-between w-full mt-1">
+                                            {message?.text &&
+                                            !message?.isLoading ? (
+                                                <div className="flex items-center gap-1">
+                                                    <CopyButton
+                                                        text={message?.text}
+                                                    />
+                                                    <ChatTtsButton
+                                                        agentId={agentId}
+                                                        text={message?.text}
+                                                    />
                                                 </div>
-                                            </div>
-                                        </ChatBubble>
-                                    </motion.div>
-                                );
-                            }
-                        )}
-                    </AnimatePresence>
+                                            ) : null}
+
+                                            {message?.createdAt ? (
+                                                <ChatBubbleTimestamp
+                                                    timestamp={moment(
+                                                        message?.createdAt
+                                                    ).format("LT")}
+                                                    className={cn([
+                                                        message?.isLoading
+                                                            ? "mt-2"
+                                                            : "",
+                                                    ])}
+                                                />
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                </ChatBubble>
+                            </animated.div>
+                        );
+                    })}
                 </ChatMessageList>
             </div>
             <div className="px-4 pb-4 bg-card rounded-b-md border-b border-l border-r">
@@ -310,13 +271,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <ChatInput
                         ref={inputRef}
                         onKeyDown={handleKeyDown}
+                        value={input}
                         onChange={({ target }) => setInput(target.value)}
                         placeholder="Type your message here..."
                         className="min-h-12 resize-none rounded-md bg-background border-0 p-3 shadow-none focus-visible:ring-0"
                     />
                     <div className="flex items-center p-3 pt-0">
                         <Tooltip>
-                            <TooltipTrigger asChild>
+                            <TooltipTrigger>
                                 <Fragment>
                                     <Button
                                         variant="ghost"
@@ -337,7 +299,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
                                         accept="image/*"
-                                        className="hidden" // Keeps the input field hidden
+                                        className="hidden"
                                     />
                                 </Fragment>
                             </TooltipTrigger>
@@ -345,29 +307,20 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                 <p>Attach file</p>
                             </TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" disabled>
-                                    <Mic className="size-4" />
-                                    <span className="sr-only">
-                                        Use Microphone
-                                    </span>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">
-                                <p>Use microphone</p>
-                            </TooltipContent>
-                        </Tooltip>
+                        <AudioRecorder
+                            agentId={agentId}
+                            onChange={(newInput: string) => setInput(newInput)}
+                        />
                         <Button
                             disabled={!input || sendMessageMutation?.isPending}
                             type="submit"
                             size="sm"
-                            className="ml-auto gap-1.5"
+                            className="ml-auto gap-1.5 h-[30px]"
                         >
                             {sendMessageMutation?.isPending
                                 ? "..."
                                 : "Send Message"}
-                            <CornerDownLeft className="size-3.5" />
+                            <Send className="size-3.5" />
                         </Button>
                     </div>
                 </form>
