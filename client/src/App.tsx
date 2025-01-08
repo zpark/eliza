@@ -9,27 +9,19 @@ import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
 
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            staleTime: 0,
-            refetchOnReconnect: 'always',
-            refetchOnWindowFocus: 'always',
-        },
-    },
-});
+const queryClient = new QueryClient();
 
 function App() {
     return (
-        <div
-            className="dark"
-            style={{
-                colorScheme: "dark",
-            }}
-        >
-            <BrowserRouter>
-                <TooltipProvider delayDuration={0}>
-                    <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+            <div
+                className="dark"
+                style={{
+                    colorScheme: "dark",
+                }}
+            >
+                <BrowserRouter>
+                    <TooltipProvider delayDuration={0}>
                         <SidebarProvider>
                             <AppSidebar />
                             <SidebarInset>
@@ -49,10 +41,10 @@ function App() {
                             </SidebarInset>
                         </SidebarProvider>
                         <Toaster />
-                    </QueryClientProvider>
-                </TooltipProvider>
-            </BrowserRouter>
-        </div>
+                    </TooltipProvider>
+                </BrowserRouter>
+            </div>
+        </QueryClientProvider>
     );
 }
 

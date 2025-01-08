@@ -7,9 +7,12 @@ export default function ConnectionStatus() {
     const query = useQuery({
         queryKey: ["status"],
         queryFn: () => apiClient.getAgents(),
+        refetchInterval: 5_000,
+        retry: 1,
+        refetchOnWindowFocus: "always",
     });
 
-    const connected = query?.isSuccess;
+    const connected = query?.isSuccess && !query?.isError;
     const isLoading = query?.isRefetching || query?.isPending;
 
     return (
@@ -39,7 +42,7 @@ export default function ConnectionStatus() {
                         {isLoading
                             ? "Loading..."
                             : connected
-                              ? "Connected to server"
+                              ? "Connected"
                               : "Disconnected"}
                     </span>
                 </div>
