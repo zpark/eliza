@@ -21,12 +21,12 @@ pnpm add @elizaos/plugin-twitter-primus
 
 The plugin requires the following environment variables:
 
-- .env file
+.env file
 
 ```env
 TWITTER_USERNAME=your_username
 TWITTER_PASSWORD=your_password
-TWITTER_EMAIL=your_email              # Optional: for 2FA
+TWITTER_EMAIL=your_email              # Recommand: for 2FA
 TWITTER_2FA_SECRET=your_2fa_secret    # Optional: for 2FA
 TWITTER_PREMIUM=false                 # Optional: enables premium features
 TWITTER_DRY_RUN=false                # Optional: test without posting
@@ -47,3 +47,21 @@ To use the plugin, add `@elizaos/plugin-twitter-primus` to the plugins field in 
     .....
 }
 ```
+
+## Run
+```bash
+# Run with your character file
+pnpm start --characters="characters/xxx.character.json"
+```
+
+## Chat with Your Agent
+```
+You: Get the latest tweet and post it on my twitter.
+Agent: The latest tweet has posted!
+```
+
+```
+You: Post a tweet on twitter for me.
+Agent: The tweet has posted!
+```
+Other questions with the same semantic meaning can also be asked
