@@ -16,7 +16,6 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink } from "react-router";
 import { type UUID } from "@elizaos/core";
-import { Fragment } from "react/jsx-runtime";
 import { Book, Cog, User } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
@@ -24,6 +23,7 @@ export function AppSidebar() {
     const query = useQuery({
         queryKey: ["agents"],
         queryFn: () => apiClient.getAgents(),
+        refetchInterval: 5_000
     });
 
     const agents = query?.data?.agents;

@@ -8,7 +8,7 @@ import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { useTransition, animated } from "@react-spring/web";
 import { Paperclip, Send, X } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";

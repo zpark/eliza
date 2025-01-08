@@ -9,7 +9,13 @@ import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: Infinity,
+        },
+    },
+});
 
 function App() {
     return (

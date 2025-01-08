@@ -18,6 +18,7 @@ export default function Home() {
     const query = useQuery({
         queryKey: ["agents"],
         queryFn: () => apiClient.getAgents(),
+        refetchInterval: 5_000
     });
 
     const agents = query?.data?.agents;

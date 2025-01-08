@@ -1,7 +1,7 @@
 import { Ellipsis, StopCircle, Volume2 } from "lucide-react";
 import { Button } from "../button";
 import { useMutation } from "@tanstack/react-query";
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { Tooltip, TooltipTrigger, TooltipContent } from "../tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -72,7 +72,13 @@ export default function ChatTtsButton({
     return (
         <div>
             {audioBlob ? (
-                <audio ref={audioRef} autoPlay>
+                <audio
+                    ref={audioRef}
+                    onEnded={() => {
+                        setPlaying(false);
+                    }}
+                    autoPlay
+                >
                     <source
                         src={URL.createObjectURL(audioBlob)}
                         type="audio/mpeg"

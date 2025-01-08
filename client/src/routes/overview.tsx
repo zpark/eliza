@@ -12,6 +12,7 @@ export default function AgentRoute() {
     const query = useQuery({
         queryKey: ["agent", agentId],
         queryFn: () => apiClient.getAgent(agentId),
+        refetchInterval: 5_000,
     });
 
     const character = query?.data?.character;
