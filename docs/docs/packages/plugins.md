@@ -742,6 +742,39 @@ cargo run --ip-addr <ip>:<port>
 docker run --init -p 127.0.0.1:1350:1350 marlinorg/attestation-server-custom-mock
 ```
 
+### 12. Allora Plugin (`@elizaos/allora-plugin`)
+
+The [Allora Network](https://allora.network) plugin seamlessly empowers Eliza agents with real-time, advanced, self-improving AI inferences, delivering high-performance insights without introducing any additional complexity.
+
+#### Setup and Configuration
+
+1. Add the plugin to your character's configuration
+
+    ```typescript
+    import { alloraPlugin } from "@eliza/plugin-allora";
+
+    const character = {
+        plugins: [alloraPlugin],
+    };
+    ```
+
+2. Set the following environment variables:
+    - `ALLORA_API_KEY`: Create an API key by [creating an account](https://developer.upshot.xyz/signup).
+
+#### Actions
+
+- `GET_INFERENCE`: Retrieves predictions for a specific topic.
+
+Example interactions:
+
+```
+User: "What is the predicted ETH price in 5 minutes?"
+Agent: "I'll get the inference now..."
+Agent: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 13): 3393.364326646801085508"
+```
+
+For detailed information and additional implementation examples, please refer to the [Allora-Eliza integration docs](https://docs.allora.network/marketplace/integrations/eliza-os).
+
 ### Writing Custom Plugins
 
 Create a new plugin by implementing the Plugin interface:

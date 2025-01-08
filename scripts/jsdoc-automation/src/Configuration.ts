@@ -29,7 +29,6 @@ interface ConfigurationData {
     excludedFiles: string[];
     generateJsDoc: boolean;
     generateReadme: boolean;
-    language: string;
 }
 
 /**
@@ -40,9 +39,8 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
     private _rootDirectory!: ConfigurationData["rootDirectory"];
     private readonly repoRoot: string;
     private _branch: string = "develop";
-    private _language: string = "English";
     private _generateJsDoc: boolean = true;
-    private _generateReadme: boolean = true;
+    private _generateReadme: boolean = false;
 
     public excludedDirectories: string[] = [];
     public repository: Repository = {
@@ -61,14 +59,6 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
     constructor() {
         this.repoRoot = getRepoRoot();
         this.loadConfiguration();
-    }
-
-    get language(): string {
-        return this._language;
-    }
-
-    set language(value: string) {
-        this._language = value;
     }
 
     get generateJsDoc(): boolean {
@@ -109,8 +99,6 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
 
     private loadConfiguration(): void {
         // First try to get from environment variables
-        this._language = process.env.INPUT_LANGUAGE || "English";
-        console.log("Using language:", this._language);
         const rootDirectory = process.env.INPUT_ROOT_DIRECTORY;
         this._generateJsDoc = process.env.INPUT_JSDOC
             ? process.env.INPUT_JSDOC.toUpperCase() === "T"

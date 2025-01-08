@@ -4,7 +4,7 @@ import { JsDocAnalyzer } from "./JsDocAnalyzer.js";
 import { JsDocGenerator } from "./JsDocGenerator.js";
 import { DocumentationGenerator } from "./DocumentationGenerator.js";
 import { Configuration } from "./Configuration.js";
-import { AIService } from "./AIService.js";
+import { AIService } from "./AIService/AIService.js";
 import { GitManager } from "./GitManager.js";
 import { PluginDocumentationGenerator } from "./PluginDocumentationGenerator.js";
 
