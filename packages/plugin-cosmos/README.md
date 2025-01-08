@@ -1,4 +1,4 @@
-# `@ai16z/plugin-cosmos`
+# `@elizaos/plugin-cosmos`
 
 This plugin provides actions and utilities for interacting with Cosmos-compatible blockchains.
 
@@ -7,15 +7,17 @@ This plugin provides actions and utilities for interacting with Cosmos-compatibl
 ## Development
 
 Prepare Eliza according to [README](../../README.md)
- Add variables required for `@ai16z/plugin-cosmos` :
- ```
+Add variables required for `@elizaos/plugin-cosmos` :
+
+```
 COSMOS_RECOVERY_PHRASE=your recovery phrase words
 COSMOS_AVAILABLE_CHAINS=chain1,chain2,chain3
-  ```
+```
 
-Ensure the appropriate environment variables are added for the plugin. If they are correctly configured, the project will run with `@ai16z/plugin-cosmos`
+Ensure the appropriate environment variables are added for the plugin. If they are correctly configured, the project will run with `@elizaos/plugin-cosmos`
 
-Run Eliza 
+Run Eliza
+
 ```
 pnpm run dev
 ```
@@ -26,13 +28,12 @@ pnpm run dev
 
 To start using the plugin, you need to provide your **Cosmos account recovery phrases** and the list of **available chains**. Add the following to your `.env` file:
 
-
 ```env
 COSMOS_RECOVERY_PHRASE=your recovery phrase words
 COSMOS_AVAILABLE_CHAINS=chain1,chain2,chain3
 ```
-Ensure that the chain names in `COSMOS_AVAILABLE_CHAINS` match the identifiers from the [chain-registry](https://github.com/cosmos/chain-registry) library for compatibility.
 
+Ensure that the chain names in `COSMOS_AVAILABLE_CHAINS` match the identifiers from the [chain-registry](https://github.com/cosmos/chain-registry) library for compatibility.
 
 ### Using the Cosmos Helper Character
 
@@ -51,9 +52,11 @@ To use the character, pass it with the `--characters` flag:
 ---
 
 ### Custom chain configuration
+
 Plugin allows you to pass you custom chain config to `createCosmosPlugin` function invoked in `../agent/src/index`.
 
 Your custom configuration fulfills the interfaces from `chain-registry`
+
 ```
 import  type { assets, chains } from  "chain-registry";
 
