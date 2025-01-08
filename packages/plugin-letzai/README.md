@@ -2,7 +2,7 @@
 
 ![LetzAI Logo](https://letz.ai/_next/image?url=%2FL.png&w=64&q=100)
 
-A plugin to integrate LetzAI Image Generation capabilities into the elizaOS ecosystem.
+A plugin to integrate LetzAI Image Generation capabilities into the elizaos ecosystem.
 
 It uses the [LetzAI API](https://www.letz.ai/docs/api) and can use any models available to API user.
 
