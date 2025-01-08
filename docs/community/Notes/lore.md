@@ -62,7 +62,7 @@ Week 1 Recap: ai16z Launch and Early Developments
    - Final details on creator/dev fund to be determined
 
 4. Infrastructure / Contributor Pipeline
-   - New website launched: [https://ai16z.ai](https://elizaos.ai/)
+   - New website launched: [https://elizaos.ai](https://elizaos.ai/)
    - Dework for crypto bounties, invite link, still WIP: https://app.dework.xyz/i/7KbiY0TFRoJhMx0251BvUP
    - Twitter account transferred to partners: https://x.com/ai16zdao
    - Media/design assets consolidated on GitHub: https://github.com/ai16z/assets
