@@ -29,7 +29,6 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         options?: VerifiableInferenceOptions
     ): Promise<VerifiableInferenceResult> {
         const provider = this.options.modelProvider || ModelProviderName.OPENAI;
-
         const baseEndpoint =
             options?.endpoint ||
             `https://gateway.ai.cloudflare.com/v1/${this.options.teamId}/${this.options.teamName}`;
@@ -45,12 +44,11 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         let endpoint;
         let authHeader;
         let responseRegex;
-        elizaLogger.log("Using provider:", provider);
+
         switch (provider) {
             case ModelProviderName.OPENAI:
                 endpoint = `${baseEndpoint}/openai/chat/completions`;
                 authHeader = `Bearer ${apiKey}`;
-                elizaLogger.log("Using OpenAI endpoint:", endpoint);
                 break;
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
@@ -62,41 +60,84 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
             switch (provider) {
                 case ModelProviderName.OPENAI:
                     body = {
-                        model: model,
+                        model: model.name,
                         messages: [
                             {
                                 role: "system",
                                 content: context,
                             },
                         ],
+                        temperature: model.temperature || 0.7,
+                        max_tokens: model.maxOutputTokens,
+                        frequency_penalty: model.frequency_penalty,
+                        presence_penalty: model.presence_penalty,
                     };
                     break;
                 default:
                     throw new Error(`Unsupported model provider: ${provider}`);
             }
-            const headers = {
+
+            elizaLogger.debug("Request body:", JSON.stringify(body, null, 2));
+            const requestBody = JSON.stringify(body);
+            const requestHeaders = {
                 "Content-Type": "application/json",
                 Authorization: authHeader,
                 ...options?.headers,
             };
-            // // get cloudflare response
-            elizaLogger.log("Fetching cloudflare response with body: ", body);
-            const cloudflareResponse = await fetch(endpoint, {
-                headers: headers,
-                body: JSON.stringify(body),
-                method: "POST",
+
+            elizaLogger.debug("Making request to Cloudflare with:", {
+                endpoint,
+                headers: {
+                    ...requestHeaders,
+                    Authorization: "[REDACTED]",
+                },
+                body: requestBody,
             });
-            elizaLogger.log("Cloudflare response:", cloudflareResponse);
+
+            // Validate JSON before sending
+            try {
+                JSON.parse(requestBody); // Verify the JSON is valid
+            } catch (e) {
+                elizaLogger.error("Invalid JSON body:", body);
+                throw new Error("Failed to create valid JSON request body");
+            }
+            elizaLogger.debug("Request body:", requestBody);
+            const cloudflareResponse = await fetch(endpoint, {
+                method: "POST",
+                headers: requestHeaders,
+                body: requestBody,
+            });
+
+            if (!cloudflareResponse.ok) {
+                const errorText = await cloudflareResponse.text();
+                elizaLogger.error("Cloudflare error response:", {
+                    status: cloudflareResponse.status,
+                    statusText: cloudflareResponse.statusText,
+                    error: errorText,
+                });
+                throw new Error(`Cloudflare request failed: ${errorText}`);
+            }
+
+            elizaLogger.debug("Cloudflare response:", {
+                status: cloudflareResponse.status,
+                statusText: cloudflareResponse.statusText,
+                headers: cloudflareResponse.headers,
+                type: cloudflareResponse.type,
+                url: cloudflareResponse.url,
+            });
+
             const cloudflareLogId =
-            cloudflareResponse.headers.get("cf-aig-log-id");
-            elizaLogger.log("Cloudflare log ID:", cloudflareLogId);
+                cloudflareResponse.headers.get("cf-aig-log-id");
             const cloudflareResponseJson = await cloudflareResponse.json();
 
             const proof = await this.generateProof(
                 this.options.opacityProverUrl,
                 cloudflareLogId
             );
-            elizaLogger.log("Proof generated for text generation ID:", cloudflareLogId);
+            elizaLogger.debug(
+                "Proof generated for text generation ID:",
+                cloudflareLogId
+            );
 
             // // Extract text based on provider format
             const text = cloudflareResponseJson.choices[0].message.content;
@@ -116,6 +157,7 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
 
     async generateProof(baseUrl: string, logId: string) {
         const response = await fetch(`${baseUrl}/api/logs/${logId}`);
+        elizaLogger.debug("Fetching proof for log ID:", logId);
         if (!response.ok) {
             throw new Error(`Failed to fetch proof: ${response.statusText}`);
         }
