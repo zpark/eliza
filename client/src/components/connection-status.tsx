@@ -9,7 +9,8 @@ export default function ConnectionStatus() {
         queryFn: () => apiClient.getAgents(),
     });
 
-    const connected = query?.data;
+    const connected = query?.isSuccess;
+    const isLoading = query?.isRefetching || query?.isPending;
 
     return (
         <SidebarMenuItem>
@@ -18,16 +19,28 @@ export default function ConnectionStatus() {
                     <div
                         className={cn([
                             "h-2.5 w-2.5 rounded-full",
-                            connected ? "bg-green-600" : "bg-red-600",
+                            isLoading
+                                ? "bg-muted-foreground"
+                                : connected
+                                  ? "bg-green-600"
+                                  : "bg-red-600",
                         ])}
                     />
                     <span
                         className={cn([
                             "text-xs",
-                            connected ? "text-green-600" : "text-red-600",
+                            isLoading
+                                ? "text-muted-foreground"
+                                : connected
+                                  ? "text-green-600"
+                                  : "text-red-600",
                         ])}
                     >
-                        {connected ? "Connected to server" : "Disconnected"}
+                        {isLoading
+                            ? "Loading..."
+                            : connected
+                              ? "Connected to server"
+                              : "Disconnected"}
                     </span>
                 </div>
             </SidebarMenuButton>

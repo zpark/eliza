@@ -146,7 +146,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
         [];
 
     const transitions = useTransition(messages, {
-        keys: (message) => `${message.createdAt}-${message.user}-${message.text}`,
+        keys: (message) =>
+            `${message.createdAt}-${message.user}-${message.text}`,
         from: { opacity: 0, transform: "translateY(50px)" },
         enter: { opacity: 1, transform: "translateY(0px)" },
         leave: { opacity: 0, transform: "translateY(10px)" },

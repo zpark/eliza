@@ -12,8 +12,9 @@ import Home from "./routes/home";
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            refetchOnReconnect: true,
-            refetchOnWindowFocus: true,
+            staleTime: 0,
+            refetchOnReconnect: 'always',
+            refetchOnWindowFocus: 'always',
         },
     },
 });
