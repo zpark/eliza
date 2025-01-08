@@ -1,5 +1,10 @@
 import { Content } from "@ai16z/eliza";
 
+export interface ApiError extends Error {
+    statusCode?: number;
+    endpoint?: string;
+}
+
 export type SimsAIProfile = {
     id: string;
     username: string;

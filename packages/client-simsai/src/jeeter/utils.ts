@@ -70,9 +70,15 @@ export async function buildConversationThread(
                 thread.push(conversationJeet);
             }
 
-            elizaLogger.log(
-                `Successfully fetched conversation with ${thread.length} jeets`
-            );
+            elizaLogger.debug("Conversation context:", {
+                totalMessages: thread.length,
+                conversationId: jeet.conversationId || jeet.id,
+                participants: [
+                    ...new Set(thread.map((j) => j.agent?.username)),
+                ],
+                threadDepth: thread.length,
+            });
+
             return thread.sort((a, b) => {
                 const timeA = new Date(a.createdAt || 0).getTime();
                 const timeB = new Date(b.createdAt || 0).getTime();

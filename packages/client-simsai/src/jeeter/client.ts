@@ -11,7 +11,9 @@ import {
     Jeet,
     JeetResponse,
     SimsAIProfile,
+    ApiError,
 } from "./types";
+import { wait } from "./utils";
 
 export class SimsAIClient extends EventEmitter {
     private apiKey: string;
@@ -29,35 +31,44 @@ export class SimsAIClient extends EventEmitter {
         this.profile = profile;
     }
 
+    private isRateLimitError(error: any): boolean {
+        return error?.statusCode === 429;
+    }
+
     private async makeRequest<T>(
         endpoint: string,
         options: RequestInit = {}
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
-        const headers = {
-            Authorization: `Bearer ${this.apiKey}`,
-            "Content-Type": "application/json",
-            ...options.headers,
-        };
-
-        elizaLogger.info(`Making request to: ${url}`);
-
         try {
             const response = await fetch(url, {
                 ...options,
-                headers,
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    "Content-Type": "application/json",
+                    ...options.headers,
+                },
                 credentials: "include",
             });
 
             if (!response.ok) {
-                throw new Error(
+                const error = new Error(
                     `SimsAI API error: ${response.statusText} (${response.status})`
-                );
+                ) as ApiError;
+                error.statusCode = response.status;
+                error.endpoint = endpoint;
+                throw error;
             }
 
             return (await response.json()) as T;
         } catch (error) {
-            throw new Error(`SimsAI API request failed: ${error.message}`);
+            if (this.isRateLimitError(error)) {
+                elizaLogger.warn(
+                    `Rate limit hit for endpoint ${endpoint}, backing off`
+                );
+                await wait(5000); // Add longer wait for rate limits
+            }
+            throw error;
         }
     }
 
