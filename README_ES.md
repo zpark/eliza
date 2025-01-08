@@ -58,11 +58,11 @@ Puede ejecutar modelos Llama 70B o 405B configurando la variable de ambiente par
 
 ### Ejecutar con Grok
 
-Puede ejecutar modelos Grok configurando la variable de ambiente `GROK_API_KEY`
+Puede ejecutar modelos Grok configurando la variable de ambiente `GROK_API_KEY` y configurando "grok" como proveedor en el archivo de caracteres.
 
 ### Ejecutar con OpenAI
 
-Puede ejecutar modelos OpenAI configurando la variable de ambiente `OPENAI_API_KEY`
+Puede ejecutar modelos OpenAI configurando la variable de ambiente `OPENAI_API_KEY` y configurando "openai" como proveedor en el archivo de caracteres.
 
 ## Requisitos Adicionales
 
