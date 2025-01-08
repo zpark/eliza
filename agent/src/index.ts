@@ -82,6 +82,7 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
@@ -368,6 +369,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
                 settings.GOOGLE_GENERATIVE_AI_API_KEY
+            );
+        case ModelProviderName.LETZAI:
+            return (
+                character.settings?.secrets?.LETZAI_API_KEY ||
+                settings.LETZAI_API_KEY
             );
         case ModelProviderName.INFERA:
             return (
@@ -690,6 +696,7 @@ export async function createAgent(
             getSecret(character, "ECHOCHAMBERS_API_KEY")
                 ? echoChambersPlugin
                 : null,
+            getSecret(character, "LETZAI_API_KEY") ? letzAIPlugin : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
             getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
             getSecret(character, "GENLAYER_PRIVATE_KEY")
