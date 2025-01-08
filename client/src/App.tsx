@@ -8,6 +8,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -32,7 +33,7 @@ function App() {
                                             element={<Chat />}
                                         />
                                         <Route
-                                            path="overview/:agentId"
+                                            path="settings/:agentId"
                                             element={<Overview />}
                                         />
                                     </Routes>

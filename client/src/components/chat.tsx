@@ -7,8 +7,8 @@ import {
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { CornerDownLeft, Mic, Paperclip, X } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
@@ -19,6 +19,7 @@ import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import AIWriter from "react-aiwriter";
+import { IAttachment } from "@/types";
 
 interface ExtraContentFields {
     user: string;
@@ -30,9 +31,11 @@ type ContentWithUser = Content & ExtraContentFields;
 
 export default function Page({ agentId }: { agentId: UUID }) {
     const { toast } = useToast();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [input, setInput] = useState("");
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
     const queryClient = useQueryClient();
@@ -57,11 +60,22 @@ export default function Page({ agentId }: { agentId: UUID }) {
         e.preventDefault();
         if (!input) return;
 
+        const attachments: IAttachment[] | undefined = selectedFile
+            ? [
+                  {
+                      url: URL.createObjectURL(selectedFile),
+                      contentType: selectedFile.type,
+                      title: selectedFile.name,
+                  },
+              ]
+            : undefined;
+
         const newMessages = [
             {
                 text: input,
                 user: "user",
                 createdAt: Date.now(),
+                attachments,
             },
             {
                 text: input,
@@ -76,7 +90,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
             (old: ContentWithUser[] = []) => [...old, ...newMessages]
         );
 
-        sendMessageMutation.mutate(input);
+        sendMessageMutation.mutate({ message: input, attachments });
 
         setInput("");
         formRef.current?.reset();
@@ -90,8 +104,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
     const sendMessageMutation = useMutation({
         mutationKey: ["send_message", agentId],
-        mutationFn: (message: string) =>
-            apiClient.sendMessage(agentId, message),
+        mutationFn: ({
+            message,
+            attachments,
+        }: {
+            message: string;
+            attachments: IAttachment[] | undefined;
+        }) => apiClient.sendMessage(agentId, message, attachments),
         onSuccess: (newMessages: ContentWithUser[]) => {
             queryClient.setQueryData(
                 ["messages", agentId],
@@ -112,6 +131,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
             });
         },
     });
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.type.startsWith("image/")) {
+            setSelectedFile(file);
+        }
+    };
 
     const messages =
         queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
@@ -185,14 +211,33 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                     ) : (
                                                         message?.text
                                                     )}
-
                                                     {/* Attachments */}
-                                                    {/* <img
-                                                        src="/elizaos.webp"
-                                                        width="100%"
-                                                        height="100%"
-                                                        className="w-64 rounded-md mt-4"
-                                                    /> */}
+                                                    <Fragment>
+                                                        {message?.attachments?.map(
+                                                            (
+                                                                attachment,
+                                                                idx
+                                                            ) => (
+                                                                <div
+                                                                    className="flex flex-col gap-1 mt-2"
+                                                                    key={idx}
+                                                                >
+                                                                    <img
+                                                                        src={
+                                                                            attachment.url
+                                                                        }
+                                                                        width="100%"
+                                                                        height="100%"
+                                                                        className="w-64 rounded-md"
+                                                                    />
+                                                                    <div className="flex items-center justify-between gap-4">
+                                                                        <span></span>
+                                                                        <span></span>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        )}
+                                                    </Fragment>
                                                 </ChatBubbleMessage>
                                                 <div className="flex items-center gap-4 justify-between w-full mt-1">
                                                     {message?.text &&
@@ -242,6 +287,26 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     onSubmit={handleSendMessage}
                     className="relative rounded-md border bg-background"
                 >
+                    {selectedFile ? (
+                        <div className="p-3 flex">
+                            <div className="relative rounded-md border p-2">
+                                <Button
+                                    onClick={() => setSelectedFile(null)}
+                                    className="absolute -right-2 -top-2 size-[22px] ring-2 ring-background"
+                                    variant="outline"
+                                    size="icon"
+                                >
+                                    <X />
+                                </Button>
+                                <img
+                                    src={URL.createObjectURL(selectedFile)}
+                                    height="100%"
+                                    width="100%"
+                                    className="aspect-square object-contain w-16"
+                                />
+                            </div>
+                        </div>
+                    ) : null}
                     <ChatInput
                         ref={inputRef}
                         onKeyDown={handleKeyDown}
@@ -252,10 +317,29 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <div className="flex items-center p-3 pt-0">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Paperclip className="size-4" />
-                                    <span className="sr-only">Attach file</span>
-                                </Button>
+                                <Fragment>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            if (fileInputRef.current) {
+                                                fileInputRef.current.click();
+                                            }
+                                        }}
+                                    >
+                                        <Paperclip className="size-4" />
+                                        <span className="sr-only">
+                                            Attach file
+                                        </span>
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        accept="image/*"
+                                        className="hidden" // Keeps the input field hidden
+                                    />
+                                </Fragment>
                             </TooltipTrigger>
                             <TooltipContent side="left">
                                 <p>Attach file</p>
@@ -263,7 +347,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button variant="ghost" size="icon" disabled>
                                     <Mic className="size-4" />
                                     <span className="sr-only">
                                         Use Microphone

@@ -1,3 +1,4 @@
+import { IAttachment } from "@/types";
 import { type UUID, type Character } from "@elizaos/core";
 
 const BASE_URL = "http://localhost:3000";
@@ -53,11 +54,16 @@ const fetcher = async ({
 };
 
 export const apiClient = {
-    sendMessage: (agentId: string, message: string) =>
+    sendMessage: (
+        agentId: string,
+        message: string,
+        attachments?: IAttachment[] | undefined
+    ) =>
         fetcher({
             url: `/${agentId}/message`,
             method: "POST",
             body: {
+                attachments,
                 text: message,
                 user: "user",
             },
