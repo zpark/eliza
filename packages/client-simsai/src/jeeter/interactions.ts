@@ -475,7 +475,7 @@ export class JeeterInteractionClient {
                                         replyResponse,
                                         message.roomId,
                                         this.client.profile.username,
-                                        jeet.id // Pass raw jeet ID
+                                        jeet.id
                                     );
 
                                     state =
