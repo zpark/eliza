@@ -429,8 +429,6 @@ Text: ${jeet.text}
             formattedConversation,
             thread
         );
-
-        this.recordInteraction(selectedJeet.id, "reply");
     }
 
     private async handleJeetInteractions(
@@ -447,6 +445,7 @@ Text: ${jeet.text}
         thread: Jeet[]
     ) {
         try {
+            elizaLogger.log(`Composing state for jeet ${selectedJeet.id}`);
             let state = await this.runtime.composeState(message, {
                 jeeterClient: this.client,
                 jeeterUserName: this.runtime.getSetting("SIMSAI_USERNAME"),
@@ -485,6 +484,9 @@ Text: ${jeet.text}
                 previousInteractions,
             });
 
+            elizaLogger.log(
+                `Saving request message for jeet ${selectedJeet.id}`
+            );
             await this.client.saveRequestMessage(message, state as State);
 
             const context = composeContext({
@@ -494,6 +496,9 @@ Text: ${jeet.text}
                     jeeterSearchTemplate,
             });
 
+            elizaLogger.log(
+                `Generating message response for jeet ${selectedJeet.id}`
+            );
             const rawResponse = (await generateMessageResponse({
                 runtime: this.runtime,
                 context,
@@ -508,59 +513,32 @@ Text: ${jeet.text}
                 interactions: rawResponse.interactions || [],
             };
 
-            // Add detailed interaction logging here
-            elizaLogger.log(`Response details for jeet ${selectedJeet.id}:`, {
-                text:
-                    response.text?.slice(0, 100) +
-                    (response.text?.length > 100 ? "..." : ""), // Log first 100 chars
-                action: response.action,
-                shouldLike: response.shouldLike,
-                interactions: response.interactions.map((i) => ({
-                    type: i.type,
-                    hasText: !!i.text,
-                    textPreview:
-                        i.text?.slice(0, 50) +
-                        (i.text?.length > 50 ? "..." : ""), // Log first 50 chars
-                })),
-            });
-
-            // Then continue with the existing response validation
             if (!response.interactions) {
                 throw new TypeError("Response interactions are undefined");
             }
 
-            // Handle liking
-            if (response.shouldLike && !previousInteractions.liked) {
-                try {
-                    await this.client.simsAIClient.likeJeet(selectedJeet.id);
-                    elizaLogger.log(`Liked jeet ${selectedJeet.id}`);
-                    this.recordInteraction(selectedJeet.id, "like");
-                } catch (error) {
-                    elizaLogger.error(
-                        `Error liking jeet ${selectedJeet.id}:`,
-                        error
-                    );
-                }
-            }
-
-            // Handle other interactions
             if (response.interactions.length > 0) {
                 for (const interaction of response.interactions) {
                     try {
-                        // Skip if already performed
                         if (
                             (interaction.type === "reply" &&
                                 previousInteractions.replied) ||
                             (interaction.type === "rejeet" &&
                                 previousInteractions.rejeeted) ||
                             (interaction.type === "quote" &&
-                                previousInteractions.quoted)
+                                previousInteractions.quoted) ||
+                            (interaction.type === "like" &&
+                                previousInteractions.liked)
                         ) {
                             elizaLogger.log(
                                 `Skipping ${interaction.type} for jeet ${selectedJeet.id} - already performed`
                             );
                             continue;
                         }
+
+                        elizaLogger.log(
+                            `Attempting ${interaction.type} interaction for jeet ${selectedJeet.id}`
+                        );
 
                         switch (interaction.type) {
                             case "rejeet":
@@ -618,9 +596,7 @@ Text: ${jeet.text}
                                         this.client,
                                         replyResponse,
                                         message.roomId,
-                                        this.runtime.getSetting(
-                                            "SIMSAI_USERNAME"
-                                        ),
+                                        this.client.profile.username,
                                         selectedJeet.id
                                     );
 
@@ -656,6 +632,26 @@ Text: ${jeet.text}
                                 }
                                 break;
 
+                            case "like":
+                                try {
+                                    await this.client.simsAIClient.likeJeet(
+                                        selectedJeet.id
+                                    );
+                                    elizaLogger.log(
+                                        `Liked jeet ${selectedJeet.id}`
+                                    );
+                                    this.recordInteraction(
+                                        selectedJeet.id,
+                                        "like"
+                                    );
+                                } catch (error) {
+                                    elizaLogger.error(
+                                        `Error liking jeet ${selectedJeet.id}:`,
+                                        error
+                                    );
+                                }
+                                break;
+
                             case "none":
                                 elizaLogger.log(
                                     `Chose not to interact with jeet ${selectedJeet.id}`
@@ -663,9 +659,8 @@ Text: ${jeet.text}
                                 break;
                         }
 
-                        this.recordInteraction(
-                            selectedJeet.id,
-                            interaction.type
+                        elizaLogger.log(
+                            `Successfully ${interaction.type} interaction for jeet ${selectedJeet.id}`
                         );
                     } catch (error) {
                         elizaLogger.error(
@@ -682,6 +677,9 @@ Text: ${jeet.text}
                 selectedJeet.text
             }\nAgent's Output:\n${JSON.stringify(response)}`;
 
+            elizaLogger.log(
+                `Caching response info for jeet ${selectedJeet.id}`
+            );
             await this.runtime.cacheManager.set(
                 `jeeter/jeet_generation_${selectedJeet.id}.txt`,
                 responseInfo

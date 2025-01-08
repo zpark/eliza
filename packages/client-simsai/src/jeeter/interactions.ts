@@ -391,23 +391,6 @@ export class JeeterInteractionClient {
 
             response.interactions = response.interactions || [];
 
-            // Handle liking
-            if (
-                response.shouldLike &&
-                !(await this.hasInteracted(jeet.id, "like"))
-            ) {
-                try {
-                    await this.client.simsAIClient.likeJeet(jeet.id);
-                    elizaLogger.log(`Liked interaction ${jeet.id}`);
-                    this.recordInteraction(jeet.id, "like");
-                } catch (error) {
-                    elizaLogger.error(
-                        `Error liking interaction ${jeet.id}:`,
-                        error
-                    );
-                }
-            }
-
             // Process interactions
             if (response.interactions.length > 0) {
                 for (const interaction of response.interactions) {
@@ -422,6 +405,23 @@ export class JeeterInteractionClient {
                         }
 
                         switch (interaction.type) {
+                            case "like":
+                                try {
+                                    await this.client.simsAIClient.likeJeet(
+                                        jeet.id
+                                    );
+                                    elizaLogger.log(
+                                        `Liked interaction ${jeet.id}`
+                                    );
+                                    this.recordInteraction(jeet.id, "like");
+                                } catch (error) {
+                                    elizaLogger.error(
+                                        `Error liking interaction ${jeet.id}:`,
+                                        error
+                                    );
+                                }
+                                break;
+
                             case "rejeet":
                                 try {
                                     const rejeetResult =
