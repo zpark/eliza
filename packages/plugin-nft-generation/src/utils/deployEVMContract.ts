@@ -3,15 +3,11 @@ import { fileURLToPath } from "url";
 import { compileWithImports } from "./generateERC721ContractCode.ts";
 import path from "path";
 import fs from "fs";
+import CustomERC721 from "../contract/CustomERC721.sol"
 
 // 动态生成 ERC-721 合约代码
 export function generateERC721ContractCode(NFTContractName) {
-    const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-    const __dirname = path.dirname(__filename); // get the name of the directory
-    const solPath = path.resolve(__dirname, "../contract/CustomERC721.sol");
-    return fs
-        .readFileSync(solPath, "utf8")
-        .replace("NFTContractName", NFTContractName);
+    return CustomERC721.replace("NFTContractName", NFTContractName)
 }
 
 // 使用 Solidity 编译器生成 ABI 和 Bytecode
