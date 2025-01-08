@@ -70,14 +70,14 @@ import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
+import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { availPlugin } from "@elizaos/plugin-avail";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
-
 import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { obsidianPlugin } from "@elizaos/plugin-obsidian";
-
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -644,6 +644,7 @@ export async function createAgent(
                 : null,
             getSecret(character, "TEE_MARLIN") ? teeMarlinPlugin : null,
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
+            getSecret(character, "THIRDWEB_SECRET_KEY") ? thirdwebPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
             getSecret(character, "FUEL_PRIVATE_KEY") ? fuelPlugin : null,
