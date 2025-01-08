@@ -93,7 +93,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
         sendMessageMutation.mutate({
             message: input,
-            attachments,
             selectedFile: selectedFile ? selectedFile : null,
         });
 

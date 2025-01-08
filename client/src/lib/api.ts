@@ -1,4 +1,3 @@
-import { IAttachment } from "@/types";
 import { type UUID, type Character } from "@elizaos/core";
 
 const BASE_URL = "http://localhost:3000";

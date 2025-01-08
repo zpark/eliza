@@ -64,12 +64,14 @@ export default function ConnectionStatus() {
                         </div>
                     </SidebarMenuButton>
                 </TooltipTrigger>
-                <TooltipContent side="top">
-                    <div className="flex items-center gap-1">
-                        <Activity className="size-4" />
-                        <span>{queryTime?.toFixed(2)} ms</span>
-                    </div>
-                </TooltipContent>
+                {connected ? (
+                    <TooltipContent side="top">
+                        <div className="flex items-center gap-1">
+                            <Activity className="size-4" />
+                            <span>{queryTime?.toFixed(2)} ms</span>
+                        </div>
+                    </TooltipContent>
+                ) : null}
             </Tooltip>
         </SidebarMenuItem>
     );
