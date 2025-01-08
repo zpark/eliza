@@ -9,7 +9,7 @@ export const createTokenSchema = z.object({
     decimals: z
         .number()
         .int()
-        .min(1, { message: "Decimals must be at least 1" })
+        .min(0, { message: "Decimals must be at least 0" })
         .max(18, { message: "Decimals must be at most 18" })
         .nullable()
         .optional(),
