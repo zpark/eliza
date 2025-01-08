@@ -164,8 +164,8 @@ export class TwitterPostClient {
             }>("twitter/" + this.twitterUsername + "/lastPost");
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
-            const minMinutes = 10;
-            const maxMinutes = 10;
+            const minMinutes = this.client.twitterConfig.POST_INTERVAL_MIN;
+            const maxMinutes = this.client.twitterConfig.POST_INTERVAL_MAX;
             const randomMinutes =
                 Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) +
                 minMinutes;
