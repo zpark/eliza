@@ -789,7 +789,13 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
+                const headers = {}
+                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                if (fineTuneApiKey) {
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                }
                 const galadriel = createOpenAI({
+                    headers,
                     apiKey: apiKey,
                     baseURL: endpoint,
                     fetch: runtime.fetch,
