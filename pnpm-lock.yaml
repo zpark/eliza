@@ -1290,7 +1290,7 @@ importers:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.6(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.2)(yaml@2.7.0)
 
-  packages/plugin-coinprice:
+  packages/plugin-coinmarketcap:
     dependencies:
       '@elizaos/core':
         specifier: workspace:*
@@ -1306,7 +1306,7 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5(@swc/core@1.10.6(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.2)(yaml@2.7.0)
 
-  packages/plugin-coinmarketcap:
+  packages/plugin-coinprice:
     dependencies:
       '@elizaos/core':
         specifier: workspace:*
@@ -1320,7 +1320,7 @@ importers:
     devDependencies:
       tsup:
         specifier: ^8.3.5
-        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.6.3)(yaml@2.7.0)
+        version: 8.3.5(@swc/core@1.10.6(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.2)(yaml@2.7.0)
 
   packages/plugin-conflux:
     dependencies:
@@ -2019,6 +2019,57 @@ importers:
         specifier: ^3.22.4
         version: 3.23.8
 
+  packages/plugin-rabbi-trader:
+    dependencies:
+      '@elizaos/client-twitter':
+        specifier: workspace:*
+        version: link:../client-twitter
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@elizaos/plugin-solana':
+        specifier: workspace:*
+        version: link:../plugin-solana
+      '@elizaos/plugin-trustdb':
+        specifier: workspace:*
+        version: link:../plugin-trustdb
+      '@goat-sdk/core':
+        specifier: 0.3.8
+        version: 0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10)
+      '@goat-sdk/plugin-coingecko':
+        specifier: 0.1.4
+        version: 0.1.4(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
+      '@goat-sdk/plugin-erc20':
+        specifier: 0.1.7
+        version: 0.1.7(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
+      '@goat-sdk/wallet-viem':
+        specifier: 0.1.3
+        version: 0.1.3(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
+      '@solana/web3.js':
+        specifier: ^1.87.6
+        version: 1.95.8(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      bignumber:
+        specifier: 1.1.0
+        version: 1.1.0
+      bignumber.js:
+        specifier: 9.1.2
+        version: 9.1.2
+      node-cache:
+        specifier: ^5.1.2
+        version: 5.1.2
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.6(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.2)(yaml@2.7.0)
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
+      ws:
+        specifier: ^8.0.0
+        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+
   packages/plugin-solana:
     dependencies:
       '@coral-xyz/anchor':
@@ -2488,8 +2539,8 @@ packages:
     peerDependencies:
       zod: ^3.0.0
 
-  '@ai-sdk/openai@1.0.14':
-    resolution: {integrity: sha512-uyOkQNtYsHr4qyV7y0rmMAtdW4LTJoThYo1qXcvQa30RDh/MyvLEOjKYX181Siyp8LcTqYvwf6Tt+eckdVTTug==}
+  '@ai-sdk/openai@1.0.15':
+    resolution: {integrity: sha512-acX2crxBrkyfIlTtJGGX/YD/ck6L+LpPdaYQqGiahacHX07yn1nUE1jlnNLmTnDFoMwgxJXXt/wI16LC3ybYZg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -5446,8 +5497,25 @@ packages:
       '@goat-sdk/core': 0.4.0
       ai: 4.0.3
 
+  '@goat-sdk/core@0.3.8':
+    resolution: {integrity: sha512-1H8Cziyjj3bN78M4GETGN8+/fAQhtTPqMowSyAgIZtC/MGWvf41H2SR0FNba/xhfCOALhb0UfhGOsXCswvM5iA==}
+    engines: {node: '>=20.12.2 <21', npm: please-use-pnpm, pnpm: '>=9', yarn: please-use-pnpm}
+
   '@goat-sdk/core@0.4.0':
     resolution: {integrity: sha512-x7TVQ+3IS8bS+44O+ZkbS2R6IDXO0dOcRNWe5psU8Aqrb7/48Fe1ILN2Pif0sv34y1WkPYPlqoPINl/TiatIVQ==}
+
+  '@goat-sdk/plugin-coingecko@0.1.4':
+    resolution: {integrity: sha512-i85v/SeCXB7/fcqZKc0hV68/3FrUAHJSL4N5AUp5OPauzV5kq4Ecn0WjeDZEHX8iCEEY1NZSZ47yweDckAhjhA==}
+    peerDependencies:
+      '@goat-sdk/core': 0.3.14
+      viem: 2.21.58
+
+  '@goat-sdk/plugin-erc20@0.1.7':
+    resolution: {integrity: sha512-UDd6pXIBmpCWW7QIFxM5rJPta4tWqkys8P1sAt1kqabAndx+GaczhNUPwSdV1MH77BNtcyGZ6+HoeirskiV//Q==}
+    engines: {node: '>=20.12.2 <21', npm: please-use-pnpm, pnpm: '>=9', yarn: please-use-pnpm}
+    peerDependencies:
+      '@goat-sdk/core': 0.3.8
+      viem: 2.21.58
 
   '@goat-sdk/plugin-erc20@0.2.2':
     resolution: {integrity: sha512-uobj8A2GRAHAU8PNY9Be0iA8p+311zRDIRKHRQX0uooCWD4CxD6iMj99Q4RvBl8Es+Kc7JMQPRoZzMLawJUSJw==}
@@ -5465,6 +5533,13 @@ packages:
     resolution: {integrity: sha512-w/sWi7WHsTz8G+jNWI0xJ+l4wWOVFrSxh7PHfYOEZQyFexOioEdEG5QGYkgYT3/VoYApsx9G1H8itKxs1Mg5Mw==}
     peerDependencies:
       '@goat-sdk/core': 0.4.0
+
+  '@goat-sdk/wallet-viem@0.1.3':
+    resolution: {integrity: sha512-2uofsH/dVmeJk/4V2/tJ1rDk6/ZFQlthUO50tg366hjq0vjINJXMQqYGwSLnv5Z3PMmdfPCSd5xikFEfA+1ZZw==}
+    engines: {node: '>=20.12.2 <21', npm: please-use-pnpm, pnpm: '>=9', yarn: please-use-pnpm}
+    peerDependencies:
+      '@goat-sdk/core': 0.3.4
+      viem: 2.21.58
 
   '@goat-sdk/wallet-viem@0.2.0':
     resolution: {integrity: sha512-x9FTUg9/ZhJyx8tQMAuIGmoFfRkmyDge78yvd9CTK6SQTiYQ/Hio7rAmHjLE95lElXb6EumZu7R0IlX3m/SGSw==}
@@ -5816,8 +5891,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
 
-  '@langchain/langgraph-sdk@0.0.33':
-    resolution: {integrity: sha512-l/hRbI6roLzplBXy2VyDUwqY1TkK7RcjPmrMUuVdvCCH4LTwLfIXh/G1kHatNiN7VUTskw0FkfBbgq6gtj0ang==}
+  '@langchain/langgraph-sdk@0.0.34':
+    resolution: {integrity: sha512-Pjnuz2fDK/Ud11bld2dhqA2hLQ9png3fHWfITfxm3plBCtdpFWmOMH4mbHcmgCSTlZXVQv1rIpctPI3E/4sp5A==}
 
   '@langchain/langgraph@0.2.39':
     resolution: {integrity: sha512-zoQT5LViPlB5hRS7RNwixcAonUBAHcW+IzVkGR/4vcKoE49z5rPBdZsWjJ6b1YIV1K2bdSDJWl5KSEHilvnR1Q==}
@@ -8440,8 +8515,8 @@ packages:
     resolution: {integrity: sha512-b+zebfKCfRdgNJDknHCob3O7FpeYQN6ZG6YLExMcasDHsCXlsXCEuiPZeLnJLpwa5dvPetGlnGCiMHuLwGvFow==}
     engines: {node: '>=18.0.0'}
 
-  '@smithy/util-waiter@4.0.0':
-    resolution: {integrity: sha512-C8dSfGmZH0ecrmnJOw4aDXJ47krihnUtee8eDZ2fA+28wTjD4TVM3L/bBQYnBBlDVWcYzldLV7loPRsPc1kERg==}
+  '@smithy/util-waiter@4.0.1':
+    resolution: {integrity: sha512-PiLI5OMSDOw0IyA+lB8Ta0CIgaJuIyXE97Khvrk1G1ab71WbMTruzLKP9j3nS6QJScGirkUVN9sTOhZHU8q3OQ==}
     engines: {node: '>=18.0.0'}
 
   '@solana-developers/helpers@2.5.6':
@@ -13245,8 +13320,8 @@ packages:
     resolution: {integrity: sha512-2kCCtc+JvcZ86IGAz3Z2Y0A1baIz9fL31pH/0S1IqZr9Iwnjq8izfPtrCyQKO6TLMPELLsQMre7VDqeIKCsHkA==}
     engines: {node: '>=18'}
 
-  flash-sdk@2.25.0:
-    resolution: {integrity: sha512-n7SUVztt/E3s0i6Nfh/tuRi9IEe8kYLyIhyFGuNmaddducSvsqllGkC15xJjZV9petC/YDnAqF+y/CoSJ7aKIg==}
+  flash-sdk@2.25.1:
+    resolution: {integrity: sha512-n9hGhJ1uMpMw7xUVZ6cqaGpbGgcLZqyh0jMlXWcqT2mPfLtVL16n2bSEOCmik/rx9jSizixCG9l9cKpeVSi4zg==}
 
   flat-cache@3.2.0:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
@@ -16687,8 +16762,8 @@ packages:
       zod:
         optional: true
 
-  openai@4.77.3:
-    resolution: {integrity: sha512-wLDy4+KWHz31HRFMW2+9KQuVuT2QWhs0z94w1Gm1h2Ut9vIHr9/rHZggbykZEfyiaJRVgw8ZS9K6AylDWzvPYw==}
+  openai@4.77.4:
+    resolution: {integrity: sha512-rShjKsZ/HXm1cSxXt6iFeZxiCohrVShawt0aRRQmbb+z/EXcH4OouyQZP1ShyZMb63LJajpl8aGw3DzEi8Wh9Q==}
     hasBin: true
     peerDependencies:
       zod: ^3.23.8
@@ -21643,7 +21718,7 @@ snapshots:
       '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
       zod: 3.23.8
 
-  '@ai-sdk/openai@1.0.14(zod@3.24.1)':
+  '@ai-sdk/openai@1.0.15(zod@3.24.1)':
     dependencies:
       '@ai-sdk/provider': 1.0.4
       '@ai-sdk/provider-utils': 2.0.6(zod@3.24.1)
@@ -22236,7 +22311,7 @@ snapshots:
       '@smithy/util-retry': 4.0.0
       '@smithy/util-stream': 4.0.0
       '@smithy/util-utf8': 4.0.0
-      '@smithy/util-waiter': 4.0.0
+      '@smithy/util-waiter': 4.0.1
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
@@ -26398,9 +26473,33 @@ snapshots:
       ai: 4.0.30(react@18.3.1)(zod@3.23.8)
       zod: 3.23.8
 
+  '@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@solana/web3.js': 1.95.5(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      abitype: 1.0.8(typescript@5.7.2)(zod@3.23.8)
+      viem: 2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8)
+      zod: 3.23.8
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - typescript
+      - utf-8-validate
+
   '@goat-sdk/core@0.4.0':
     dependencies:
       reflect-metadata: 0.2.2
+      zod: 3.23.8
+
+  '@goat-sdk/plugin-coingecko@0.1.4(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))':
+    dependencies:
+      '@goat-sdk/core': 0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10)
+      viem: 2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8)
+      zod: 3.23.8
+
+  '@goat-sdk/plugin-erc20@0.1.7(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))':
+    dependencies:
+      '@goat-sdk/core': 0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10)
+      viem: 2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8)
       zod: 3.23.8
 
   '@goat-sdk/plugin-erc20@0.2.2(@goat-sdk/core@0.4.0)(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))':
@@ -26435,6 +26534,11 @@ snapshots:
       - bufferutil
       - typescript
       - utf-8-validate
+
+  '@goat-sdk/wallet-viem@0.1.3(@goat-sdk/core@0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))':
+    dependencies:
+      '@goat-sdk/core': 0.3.8(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.7.2)(utf-8-validate@5.0.10)
+      viem: 2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8)
 
   '@goat-sdk/wallet-viem@0.2.0(@goat-sdk/wallet-evm@0.2.0(@goat-sdk/core@0.4.0)(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10))(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))':
     dependencies:
@@ -26924,14 +27028,14 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))':
+  '@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))':
     dependencies:
       '@cfworker/json-schema': 4.1.0
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.15
-      langsmith: 0.2.14(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
+      langsmith: 0.2.14(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -26952,33 +27056,33 @@ snapshots:
       - encoding
     optional: true
 
-  '@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)':
+  '@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)':
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
-      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
       groq-sdk: 0.5.0(encoding@0.1.13)
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     transitivePeerDependencies:
       - encoding
 
-  '@langchain/langgraph-checkpoint@0.0.13(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))':
+  '@langchain/langgraph-checkpoint@0.0.13(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))':
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.33':
+  '@langchain/langgraph-sdk@0.0.34':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 9.0.1
 
-  '@langchain/langgraph@0.2.39(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))':
+  '@langchain/langgraph@0.2.39(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))':
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
-      '@langchain/langgraph-checkpoint': 0.0.13(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))
-      '@langchain/langgraph-sdk': 0.0.33
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/langgraph-checkpoint': 0.0.13(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))
+      '@langchain/langgraph-sdk': 0.0.34
       uuid: 10.0.0
       zod: 3.23.8
 
@@ -26986,17 +27090,17 @@ snapshots:
     dependencies:
       '@langchain/core': 0.3.27(openai@4.73.0(encoding@0.1.13)(zod@3.23.8))
       js-tiktoken: 1.0.15
-      openai: 4.77.3(encoding@0.1.13)(zod@3.23.8)
+      openai: 4.77.4(encoding@0.1.13)(zod@3.23.8)
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     transitivePeerDependencies:
       - encoding
 
-  '@langchain/openai@0.3.16(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)':
+  '@langchain/openai@0.3.16(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)':
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
       js-tiktoken: 1.0.15
-      openai: 4.77.3(encoding@0.1.13)(zod@3.23.8)
+      openai: 4.77.4(encoding@0.1.13)(zod@3.23.8)
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     transitivePeerDependencies:
@@ -27007,9 +27111,9 @@ snapshots:
       '@langchain/core': 0.3.27(openai@4.73.0(encoding@0.1.13)(zod@3.23.8))
       js-tiktoken: 1.0.15
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))':
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
       js-tiktoken: 1.0.15
 
   '@leichtgewicht/ip-codec@2.0.5': {}
@@ -30920,7 +31024,7 @@ snapshots:
       '@smithy/util-buffer-from': 4.0.0
       tslib: 2.8.1
 
-  '@smithy/util-waiter@4.0.0':
+  '@smithy/util-waiter@4.0.1':
     dependencies:
       '@smithy/abort-controller': 4.0.0
       '@smithy/types': 4.0.0
@@ -31384,7 +31488,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.26.0
       '@noble/curves': 1.8.0
-      '@noble/hashes': 1.5.0
+      '@noble/hashes': 1.7.0
       '@solana/buffer-layout': 4.0.1
       agentkeepalive: 4.6.0
       bigint-buffer: 1.1.5
@@ -37602,7 +37706,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.4.0(supports-color@8.1.1)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -37814,7 +37918,7 @@ snapshots:
       semver-regex: 4.0.5
       super-regex: 1.0.0
 
-  flash-sdk@2.25.0(@swc/core@1.10.6(@swc/helpers@0.5.15))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10):
+  flash-sdk@2.25.1(@swc/core@1.10.6(@swc/helpers@0.5.15))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10):
     dependencies:
       '@coral-xyz/anchor': 0.27.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       '@pythnetwork/client': 2.22.0(@solana/web3.js@1.95.8(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
@@ -40544,15 +40648,15 @@ snapshots:
       inherits: 2.0.4
       stream-splicer: 2.0.1
 
-  langchain@0.3.10(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13))(axios@1.7.9)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)):
+  langchain@0.3.10(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13))(axios@1.7.9)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)):
     dependencies:
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
-      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))
       js-tiktoken: 1.0.15
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.2.14(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
+      langsmith: 0.2.14(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
@@ -40560,7 +40664,7 @@ snapshots:
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     optionalDependencies:
-      '@langchain/groq': 0.1.2(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
+      '@langchain/groq': 0.1.2(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
       axios: 1.7.9(debug@4.4.0)
       handlebars: 4.7.8
     transitivePeerDependencies:
@@ -40609,7 +40713,7 @@ snapshots:
     optionalDependencies:
       openai: 4.73.0(encoding@0.1.13)(zod@3.23.8)
 
-  langsmith@0.2.14(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)):
+  langsmith@0.2.14(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)):
     dependencies:
       '@types/uuid': 10.0.0
       commander: 10.0.1
@@ -40618,7 +40722,7 @@ snapshots:
       semver: 7.6.3
       uuid: 10.0.0
     optionalDependencies:
-      openai: 4.77.3(encoding@0.1.13)(zod@3.24.1)
+      openai: 4.77.4(encoding@0.1.13)(zod@3.24.1)
 
   latest-version@7.0.0:
     dependencies:
@@ -42731,7 +42835,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@4.77.3(encoding@0.1.13)(zod@3.23.8):
+  openai@4.77.4(encoding@0.1.13)(zod@3.23.8):
     dependencies:
       '@types/node': 18.19.70
       '@types/node-fetch': 2.6.12
@@ -42745,7 +42849,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@4.77.3(encoding@0.1.13)(zod@3.24.1):
+  openai@4.77.4(encoding@0.1.13)(zod@3.24.1):
     dependencies:
       '@types/node': 18.19.70
       '@types/node-fetch': 2.6.12
@@ -45729,14 +45833,14 @@ snapshots:
 
   solana-agent-kit@1.3.7(@noble/hashes@1.7.0)(@swc/core@1.10.6(@swc/helpers@0.5.15))(axios@1.7.9)(borsh@2.0.0)(buffer@6.0.3)(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(handlebars@4.7.8)(jiti@2.4.2)(react@18.3.1)(sodium-native@3.4.1)(typescript@5.7.2)(utf-8-validate@5.0.10):
     dependencies:
-      '@ai-sdk/openai': 1.0.14(zod@3.24.1)
+      '@ai-sdk/openai': 1.0.15(zod@3.24.1)
       '@bonfida/spl-name-service': 3.0.7(@solana/web3.js@1.98.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
       '@cks-systems/manifest-sdk': 0.1.59(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(jiti@2.4.2)(typescript@5.7.2)(utf-8-validate@5.0.10)
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
-      '@langchain/core': 0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
-      '@langchain/groq': 0.1.2(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
-      '@langchain/langgraph': 0.2.39(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))
-      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
+      '@langchain/core': 0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
+      '@langchain/groq': 0.1.2(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
+      '@langchain/langgraph': 0.2.39(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))
+      '@langchain/openai': 0.3.16(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13)
       '@lightprotocol/compressed-token': 0.17.1(@lightprotocol/stateless.js@0.17.1(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
       '@lightprotocol/stateless.js': 0.17.1(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       '@metaplex-foundation/mpl-core': 1.1.1(@metaplex-foundation/umi@0.9.2)(@noble/hashes@1.7.0)
@@ -45760,10 +45864,10 @@ snapshots:
       chai: 5.1.2
       decimal.js: 10.4.3
       dotenv: 16.4.7
-      flash-sdk: 2.25.0(@swc/core@1.10.6(@swc/helpers@0.5.15))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
+      flash-sdk: 2.25.1(@swc/core@1.10.6(@swc/helpers@0.5.15))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.7.2)(utf-8-validate@5.0.10)
       form-data: 4.0.1
-      langchain: 0.3.10(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.3(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13))(axios@1.7.9)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.77.3(encoding@0.1.13)(zod@3.24.1))
-      openai: 4.77.3(encoding@0.1.13)(zod@3.24.1)
+      langchain: 0.3.10(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(@langchain/groq@0.1.2(@langchain/core@0.3.27(openai@4.77.4(encoding@0.1.13)(zod@3.24.1)))(encoding@0.1.13))(axios@1.7.9)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.77.4(encoding@0.1.13)(zod@3.24.1))
+      openai: 4.77.4(encoding@0.1.13)(zod@3.24.1)
       typedoc: 0.27.6(typescript@5.7.2)
       zod: 3.24.1
     transitivePeerDependencies:
@@ -47606,25 +47710,6 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  viem@2.21.58(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8):
-    dependencies:
-      '@noble/curves': 1.7.0
-      '@noble/hashes': 1.6.1
-      '@scure/bip32': 1.6.0
-      '@scure/bip39': 1.5.0
-      abitype: 1.0.7(typescript@5.6.3)(zod@3.23.8)
-      isows: 1.0.6(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
-      ox: 0.4.4(typescript@5.6.3)(zod@3.23.8)
-      webauthn-p256: 0.0.10
-      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    optionalDependencies:
-      typescript: 5.6.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-      - zod
-
-  vite-node@2.1.4(@types/node@22.10.5)(terser@5.37.0):
   viem@2.21.58(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.24.1):
     dependencies:
       '@noble/curves': 1.7.0
