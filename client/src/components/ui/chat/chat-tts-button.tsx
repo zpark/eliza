@@ -105,7 +105,7 @@ export default function ChatTtsButton({
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                    <p>Read aloud</p>
+                    <p>{playing ? "Stop" : "Read aloud"}</p>
                 </TooltipContent>
             </Tooltip>
         </div>

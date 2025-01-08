@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import AIWriter from "react-aiwriter";
 import { IAttachment } from "@/types";
 import { AudioRecorder } from "./audio-recorder";
+import { Badge } from "./ui/badge";
 
 interface ExtraContentFields {
     user: string;
@@ -233,19 +234,32 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                     />
                                                 </div>
                                             ) : null}
-
-                                            {message?.createdAt ? (
-                                                <ChatBubbleTimestamp
-                                                    timestamp={moment(
-                                                        message?.createdAt
-                                                    ).format("LT")}
-                                                    className={cn([
-                                                        message?.isLoading
-                                                            ? "mt-2"
-                                                            : "",
-                                                    ])}
-                                                />
-                                            ) : null}
+                                            <div
+                                                className={cn([
+                                                    message?.isLoading
+                                                        ? "mt-2"
+                                                        : "",
+                                                    "flex items-center justify-between gap-4 select-none",
+                                                ])}
+                                            >
+                                                {message?.source ? (
+                                                    <Badge variant="outline">
+                                                        {message.source}
+                                                    </Badge>
+                                                ) : null}
+                                                {message?.action ? (
+                                                    <Badge variant="outline">
+                                                        {message.action}
+                                                    </Badge>
+                                                ) : null}
+                                                {message?.createdAt ? (
+                                                    <ChatBubbleTimestamp
+                                                        timestamp={moment(
+                                                            message?.createdAt
+                                                        ).format("LT")}
+                                                    />
+                                                ) : null}
+                                            </div>
                                         </div>
                                     </div>
                                 </ChatBubble>

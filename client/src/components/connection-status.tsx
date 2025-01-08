@@ -54,7 +54,7 @@ export default function ConnectionStatus() {
                                     ])}
                                 >
                                     {isLoading
-                                        ? "Loading..."
+                                        ? "Connecting..."
                                         : connected
                                           ? "Connected"
                                           : "Disconnected"}
