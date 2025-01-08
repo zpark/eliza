@@ -1,7 +1,11 @@
 export * from "./sqliteTables.ts";
 export * from "./sqlite_vec.ts";
 
-import { DatabaseAdapter, elizaLogger, IDatabaseCacheAdapter } from "@elizaos/core";
+import {
+    DatabaseAdapter,
+    elizaLogger,
+    IDatabaseCacheAdapter,
+} from "@elizaos/core";
 import {
     Account,
     Actor,
@@ -11,7 +15,7 @@ import {
     type Memory,
     type Relationship,
     type UUID,
-    RAGKnowledgeItem
+    RAGKnowledgeItem,
 } from "@elizaos/core";
 import { Database } from "better-sqlite3";
 import { v4 } from "uuid";
@@ -216,19 +220,27 @@ export class SqliteDatabaseAdapter
         const content = JSON.stringify(memory.content);
         const createdAt = memory.createdAt ?? Date.now();
 
+        let embeddingValue: Float32Array = new Float32Array(384);
+        // If embedding is not available, we just load an array with a length of 384
+        if (memory?.embedding && memory?.embedding?.length > 0) {
+            embeddingValue = new Float32Array(memory.embedding);
+        }
+
         // Insert the memory with the appropriate 'unique' value
         const sql = `INSERT OR REPLACE INTO memories (id, type, content, embedding, userId, roomId, agentId, \`unique\`, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        this.db.prepare(sql).run(
-            memory.id ?? v4(),
-            tableName,
-            content,
-            new Float32Array(memory.embedding!), // Store as Float32Array
-            memory.userId,
-            memory.roomId,
-            memory.agentId,
-            isUnique ? 1 : 0,
-            createdAt
-        );
+        this.db
+            .prepare(sql)
+            .run(
+                memory.id ?? v4(),
+                tableName,
+                content,
+                embeddingValue,
+                memory.userId,
+                memory.roomId,
+                memory.agentId,
+                isUnique ? 1 : 0,
+                createdAt
+            );
     }
 
     async searchMemories(params: {
@@ -738,12 +750,17 @@ export class SqliteDatabaseAdapter
 
         const rows = this.db.prepare(sql).all(...queryParams) as KnowledgeRow[];
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             agentId: row.agentId,
             content: JSON.parse(row.content),
-            embedding: row.embedding ? new Float32Array(row.embedding) : undefined,
-            createdAt: typeof row.createdAt === 'string' ? Date.parse(row.createdAt) : row.createdAt
+            embedding: row.embedding
+                ? new Float32Array(row.embedding)
+                : undefined,
+            createdAt:
+                typeof row.createdAt === "string"
+                    ? Date.parse(row.createdAt)
+                    : row.createdAt,
         }));
     }
 
@@ -757,7 +774,7 @@ export class SqliteDatabaseAdapter
         const cacheKey = `embedding_${params.agentId}_${params.searchText}`;
         const cachedResult = await this.getCache({
             key: cacheKey,
-            agentId: params.agentId
+            agentId: params.agentId,
         });
 
         if (cachedResult) {
@@ -816,36 +833,42 @@ export class SqliteDatabaseAdapter
         const searchParams = [
             params.embedding,
             params.agentId,
-            `%${params.searchText?.toLowerCase() || ''}%`,
+            `%${params.searchText?.toLowerCase() || ""}%`,
             params.agentId,
             params.agentId,
             params.match_threshold,
-            params.match_count
+            params.match_count,
         ];
 
         try {
-            const rows = this.db.prepare(sql).all(...searchParams) as KnowledgeSearchRow[];
-            const results = rows.map(row => ({
+            const rows = this.db
+                .prepare(sql)
+                .all(...searchParams) as KnowledgeSearchRow[];
+            const results = rows.map((row) => ({
                 id: row.id,
                 agentId: row.agentId,
                 content: JSON.parse(row.content),
-                embedding: row.embedding ? new Float32Array(row.embedding) : undefined,
-                createdAt: typeof row.createdAt === 'string' ? Date.parse(row.createdAt) : row.createdAt,
-                similarity: row.combined_score
+                embedding: row.embedding
+                    ? new Float32Array(row.embedding)
+                    : undefined,
+                createdAt:
+                    typeof row.createdAt === "string"
+                        ? Date.parse(row.createdAt)
+                        : row.createdAt,
+                similarity: row.combined_score,
             }));
 
             await this.setCache({
                 key: cacheKey,
                 agentId: params.agentId,
-                value: JSON.stringify(results)
+                value: JSON.stringify(results),
             });
 
             return results;
         } catch (error) {
-            elizaLogger.error('Error in searchKnowledge:', error);
+            elizaLogger.error("Error in searchKnowledge:", error);
             throw error;
         }
-
     }
 
     async createKnowledge(knowledge: RAGKnowledgeItem): Promise<void> {
@@ -863,36 +886,45 @@ export class SqliteDatabaseAdapter
                 const metadata = knowledge.content.metadata || {};
                 const isShared = metadata.isShared ? 1 : 0;
 
-                this.db.prepare(sql).run(
-                    knowledge.id,
-                    metadata.isShared ? null : knowledge.agentId,
-                    JSON.stringify(knowledge.content),
-                    embeddingArray,
-                    knowledge.createdAt || Date.now(),
-                    metadata.isMain ? 1 : 0,
-                    metadata.originalId || null,
-                    metadata.chunkIndex || null,
-                    isShared
-                );
-
+                this.db
+                    .prepare(sql)
+                    .run(
+                        knowledge.id,
+                        metadata.isShared ? null : knowledge.agentId,
+                        JSON.stringify(knowledge.content),
+                        embeddingArray,
+                        knowledge.createdAt || Date.now(),
+                        metadata.isMain ? 1 : 0,
+                        metadata.originalId || null,
+                        metadata.chunkIndex || null,
+                        isShared
+                    );
             })();
         } catch (error: any) {
             const isShared = knowledge.content.metadata?.isShared;
-            const isPrimaryKeyError = error?.code === 'SQLITE_CONSTRAINT_PRIMARYKEY';
+            const isPrimaryKeyError =
+                error?.code === "SQLITE_CONSTRAINT_PRIMARYKEY";
 
             if (isShared && isPrimaryKeyError) {
-                elizaLogger.info(`Shared knowledge ${knowledge.id} already exists, skipping`);
+                elizaLogger.info(
+                    `Shared knowledge ${knowledge.id} already exists, skipping`
+                );
                 return;
-            } else if (!isShared && !error.message?.includes('SQLITE_CONSTRAINT_PRIMARYKEY')) {
+            } else if (
+                !isShared &&
+                !error.message?.includes("SQLITE_CONSTRAINT_PRIMARYKEY")
+            ) {
                 elizaLogger.error(`Error creating knowledge ${knowledge.id}:`, {
                     error,
                     embeddingLength: knowledge.embedding?.length,
-                    content: knowledge.content
+                    content: knowledge.content,
                 });
                 throw error;
             }
 
-            elizaLogger.debug(`Knowledge ${knowledge.id} already exists, skipping`);
+            elizaLogger.debug(
+                `Knowledge ${knowledge.id} already exists, skipping`
+            );
         }
     }
 
@@ -902,11 +934,16 @@ export class SqliteDatabaseAdapter
     }
 
     async clearKnowledge(agentId: UUID, shared?: boolean): Promise<void> {
-        const sql = shared ? `DELETE FROM knowledge WHERE (agentId = ? OR isShared = 1)` : `DELETE FROM knowledge WHERE agentId = ?`;
+        const sql = shared
+            ? `DELETE FROM knowledge WHERE (agentId = ? OR isShared = 1)`
+            : `DELETE FROM knowledge WHERE agentId = ?`;
         try {
             this.db.prepare(sql).run(agentId);
         } catch (error) {
-            elizaLogger.error(`Error clearing knowledge for agent ${agentId}:`, error);
+            elizaLogger.error(
+                `Error clearing knowledge for agent ${agentId}:`,
+                error
+            );
             throw error;
         }
     }
