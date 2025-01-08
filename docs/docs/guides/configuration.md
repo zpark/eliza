@@ -79,47 +79,6 @@ LIVEPEER_GATEWAY_URL=
 XAI_MODEL=meta-llama/Llama-3.1-7b-instruct
 ```
 
-# Feature Request: **nineteen.ai** Integration
-
-## Relevance
-Eliza currently supports various AI providers but lacks native integration with **nineteen.ai**, which offers high-performance language models for free. Users currently need manual configuration and workarounds to use **nineteen.ai **models through the OpenAI compatibility layer.
-
-## Solution description
-Add native support for **nineteen.ai** as a dedicated model provider in Eliza, similar to existing providers like OpenAI and Anthropic. This includes:
-
-1. New Provider Implementation:
-- Add `ModelProviderName.NINETEEN_AI`
-- Implement SN19-specific configuration handling
-- Add proper model mapping and endpoint management
-
-2. Configuration Updates:
-
-```
-NINETEEN_API_KEY=       # nineteen.ai API key (from https://nineteen.ai/app/api)
-NINETEEN_API_URL=       # Default: https://api.nineteen.ai/v1
-SMALL_NINETEEN_MODEL=unsloth/Llama-3.2-3B-Instruct
-MEDIUM_NINETEEN_MODEL=unsloth/Meta-Llama-3.1-8B-Instruct
-LARGE_NINETEEN_MODEL=hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4
-```
-
-## Implementation Details
-
-The PR will add:
-
-- New provider type in `packages/core/src/types.ts`
-- **nineteen.ai **provider implementation in `packages/core/src/generation.ts`
-- Documentation updates in `docs/`
-- Environment variable examples in `.env.example`
-
-## Testing Plan
-
-- Get a free api key from https://nineteen.ai/app/api
-- Add the following env variables in the `.env` :
-`NINETEEN_API_KEY=XXX
-NINETEEN_API_URL=https://api.nineteen.ai/v1 SMALL_NINETEEN_MODEL=unsloth/Llama-3.2-3B-Instruct       MEDIUM_NINETEEN_MODEL=unsloth/Meta-Llama-3.1-8B-Instruct LARGE_NINETEEN_MODEL=hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4`
-- Test provider initialization, model selection, API key validation, request/response handling and error scenarios / fallbacks
-
-
 ### Image Generation
 
 Configure image generation in your character file:
