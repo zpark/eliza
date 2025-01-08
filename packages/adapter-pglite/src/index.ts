@@ -1349,6 +1349,16 @@ export class PGLiteDatabaseAdapter
         searchText?: string;
     }): Promise<RAGKnowledgeItem[]> {
         return this.withDatabase(async () => {
+            interface KnowledgeSearchRow {
+                id: UUID;
+                agentId: UUID;
+                content: string;
+                embedding: Buffer | null;
+                createdAt: string | number;
+                vector_score: number;
+                keyword_score: number;
+                combined_score: number;
+            }
             try {
                 const cacheKey = `embedding_${params.agentId}_${params.searchText}`;
                 const cachedResult = await this.getCache({
@@ -1400,7 +1410,7 @@ export class PGLiteDatabaseAdapter
                 LIMIT $5
             `;
 
-                const { rows } = await this.query<RAGKnowledgeItem>(sql, [
+                const { rows } = await this.query<KnowledgeSearchRow>(sql, [
                     vectorStr,
                     params.agentId,
                     `%${params.searchText || ""}%`,
