@@ -4,9 +4,10 @@ import {
     TodoItem,
     EnvUsage,
 } from "./types/index.js";
-import { AIService } from "./AIService.js";
+import { AIService } from "./AIService/AIService.js";
 import { GitManager } from "./GitManager.js";
 import { Configuration } from "./Configuration.js";
+import { FullDocumentationGenerator } from "./AIService/generators/FullDocumentationGenerator.js";
 import fs from "fs";
 import path from "path";
 
@@ -14,11 +15,14 @@ import path from "path";
  * Generates comprehensive plugin documentation based on existing JSDoc comments
  */
 export class PluginDocumentationGenerator {
+    private fullDocumentationGenerator: FullDocumentationGenerator;
     constructor(
         private aiService: AIService,
         private gitManager: GitManager,
         private configuration: Configuration
-    ) {}
+    ) {
+        this.fullDocumentationGenerator = new FullDocumentationGenerator(configuration);
+    }
 
     /**
      * Generates comprehensive plugin documentation
@@ -45,7 +49,7 @@ export class PluginDocumentationGenerator {
             console.error("package.json not found");
         }
         // Generate documentation
-        const documentation = await this.aiService.generatePluginDocumentation({
+        const documentation = await this.fullDocumentationGenerator.generatePluginDocumentation({
             existingDocs,
             packageJson,
             todoItems,
@@ -109,15 +113,15 @@ ${docs.evaluatorsDocumentation}
 ## Usage Examples
 ${docs.usage}
 
-## API Reference
-${docs.apiReference}
+## FAQ
+${docs.faq}
 
 ## Development
 
 ### TODO Items
 ${docs.todos}
 
-### Troubleshooting
+## Troubleshooting Guide
 ${docs.troubleshooting}`;
     }
 }
