@@ -5,7 +5,7 @@ import {
   generateText,
   ModelClass,
   parseJSONObjectFromText,
-} from "@elizaOS/eliza";
+} from "@elizaOS/core";
 
 export const analyzeTradeAction: Action = {
   name: "ANALYZE_TRADE",
@@ -41,7 +41,7 @@ export const analyzeTradeAction: Action = {
       };
 
       // Direct prompt instead of template
-      const prompt = `Analyze the following token data and provide a trading recommendation. 
+      const prompt = `Analyze the following token data and provide a trading recommendation.
 Return the response as a JSON object with the following structure:
 {
   "recommendation": "BUY" | "SELL" | "HOLD",

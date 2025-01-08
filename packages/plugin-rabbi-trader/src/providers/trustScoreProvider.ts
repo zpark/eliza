@@ -1,4 +1,4 @@
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/core";
 import { TokenProvider } from "./token";
 import { ProcessedTokenData } from "../types/token";
 

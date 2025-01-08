@@ -1,4 +1,4 @@
-import { elizaLogger, IAgentRuntime } from "@elizaOS/eliza";
+import { elizaLogger, IAgentRuntime } from "@elizaOS/core";
 import {
   Connection,
   Keypair,

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { elizaLogger } from "@elizaOS/eliza";
+import { elizaLogger } from "@elizaOS/core";
 
 export function loadTokenAddresses(): string[] {
   try {

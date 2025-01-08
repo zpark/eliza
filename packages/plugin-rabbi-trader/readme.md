@@ -16,7 +16,7 @@ An automated cryptocurrency trading plugin for Solana tokens with integrated tru
 ## Installation
 
 ```bash
-npm install @ai16z/plugin-rabbi-trader
+npm install @elizaos/plugin-rabbi-trader
 ```
 
 ## Prerequisites
@@ -35,8 +35,8 @@ The following environment variables need to be configured:
 ## Usage
 
 ```typescript
-import createRabbiTraderPlugin from '@ai16z/plugin-rabbi-trader';
-import { IAgentRuntime } from '@ai16z/eliza';
+import createRabbiTraderPlugin from '@elizaos/plugin-rabbi-trader';
+import { IAgentRuntime } from '@elizaos/core';
 
 const plugin = await createRabbiTraderPlugin(
   (key: string) => process.env[key],
@@ -159,9 +159,9 @@ npm run dev
 Key dependencies include:
 
 - `@solana/web3.js`: Solana blockchain interaction
-- `@ai16z/eliza`: Core agent runtime
-- `@ai16z/plugin-solana`: Solana integration
-- `@ai16z/plugin-trustdb`: Trust score database
+- `@elizaos/core`: Core agent runtime
+- `@elizaos/plugin-solana`: Solana integration
+- `@elizaos/plugin-trustdb`: Trust score database
 - `node-cache`: Caching functionality
 - `bignumber.js`: Precise number handling
 
