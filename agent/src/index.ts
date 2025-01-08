@@ -558,18 +558,6 @@ export async function createAgent(
     // }
     let verifiableInferenceAdapter;
     if (
-        process.env.RECLAIM_APP_ID &&
-        process.env.RECLAIM_APP_SECRET &&
-        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    ) {
-        verifiableInferenceAdapter = new ReclaimAdapter({
-            appId: process.env.RECLAIM_APP_ID,
-            appSecret: process.env.RECLAIM_APP_SECRET,
-            modelProvider: character.modelProvider,
-            token,
-        });
-        elizaLogger.log("Verifiable inference adapter initialized");
-    }else if (
         process.env.PRIMUS_APP_ID &&
         process.env.PRIMUS_APP_SECRET &&
         process.env.VERIFIABLE_INFERENCE_ENABLED === "true"){
@@ -709,7 +697,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        // verifiableInferenceAdapter,
+        verifiableInferenceAdapter,
     });
 }
 

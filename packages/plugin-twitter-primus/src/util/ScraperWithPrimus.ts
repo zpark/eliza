@@ -1,6 +1,6 @@
 import { Scraper } from "agent-twitter-client";
 import { elizaLogger } from "@elizaos/core";
-import { PrimusCoreTLS } from "@fksyuan/zktls-core-sdk";
+import { PrimusCoreTLS } from "@primuslabs/zktls-core-sdk";
 
 const expectedEntryTypes = ["tweet", "profile-conversation"];
 

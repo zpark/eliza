@@ -1,4 +1,4 @@
-import { PrimusCoreTLS, Attestation } from "@fksyuan/zktls-core-sdk";
+import { PrimusCoreTLS, Attestation } from "@primuslabs/zktls-core-sdk";
 import {
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
