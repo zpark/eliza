@@ -8,8 +8,12 @@ import { router } from "./router.tsx";
 
 // Initialize theme
 const theme = localStorage.getItem("theme") || "system";
-const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-document.documentElement.classList.add(theme === "system" ? systemTheme : theme);
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+document.documentElement.classList.add(
+    theme === "system" ? systemTheme : theme
+);
 
 // Create a client
 const queryClient = new QueryClient();
