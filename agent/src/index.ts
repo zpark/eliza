@@ -54,6 +54,7 @@ import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 import { evmPlugin } from "@elizaos/plugin-evm";
+import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
 import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
@@ -375,7 +376,7 @@ export function getTokenForProvider(
     }
 }
 
-async function initializeDatabase(dataDir: string) {
+function initializeDatabase(dataDir: string) {
     if (process.env.POSTGRES_URL) {
         elizaLogger.info("Initializing PostgreSQL connection...");
         const db = new PostgresDatabaseAdapter({
@@ -587,6 +588,9 @@ export async function createAgent(
                 getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? evmPlugin
                 : null,
+            getSecret(character, "COSMOS_RECOVERY_PHRASE") &&
+                getSecret(character, "COSMOS_AVAILABLE_CHAINS") &&
+                createCosmosPlugin(),
             (getSecret(character, "SOLANA_PUBLIC_KEY") ||
                 (getSecret(character, "WALLET_PUBLIC_KEY") &&
                     !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith(
@@ -769,8 +773,10 @@ async function startAgent(
             fs.mkdirSync(dataDir, { recursive: true });
         }
 
-        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter &
+        db = initializeDatabase(dataDir) as IDatabaseAdapter &
             IDatabaseCacheAdapter;
+
+        await db.init();
 
         const cache = initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
