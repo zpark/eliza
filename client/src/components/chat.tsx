@@ -91,9 +91,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
             (old: ContentWithUser[] = []) => [...old, ...newMessages]
         );
 
-        setSelectedFile(null);
-        sendMessageMutation.mutate({ message: input, attachments });
+        sendMessageMutation.mutate({
+            message: input,
+            attachments,
+            selectedFile: selectedFile ? selectedFile : null,
+        });
 
+        setSelectedFile(null);
         setInput("");
         formRef.current?.reset();
     };
@@ -108,11 +112,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
         mutationKey: ["send_message", agentId],
         mutationFn: ({
             message,
-            attachments,
+            selectedFile,
         }: {
             message: string;
-            attachments: IAttachment[] | undefined;
-        }) => apiClient.sendMessage(agentId, message, attachments),
+            selectedFile?: File | null;
+        }) => apiClient.sendMessage(agentId, message, selectedFile),
         onSuccess: (newMessages: ContentWithUser[]) => {
             queryClient.setQueryData(
                 ["messages", agentId],

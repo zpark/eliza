@@ -63,17 +63,21 @@ export const apiClient = {
     sendMessage: (
         agentId: string,
         message: string,
-        attachments?: IAttachment[] | undefined
-    ) =>
-        fetcher({
+        selectedFile?: File | null
+    ) => {
+        const formData = new FormData();
+        formData.append("text", message);
+        formData.append("user", "user");
+
+        if (selectedFile) {
+            formData.append("file", selectedFile);
+        }
+        return fetcher({
             url: `/${agentId}/message`,
             method: "POST",
-            body: {
-                attachments,
-                text: message,
-                user: "user",
-            },
-        }),
+            body: formData,
+        });
+    },
     getAgents: () => fetcher({ url: "/agents" }),
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
