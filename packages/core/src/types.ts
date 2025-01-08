@@ -255,6 +255,7 @@ export enum ModelProviderName {
     VENICE = "venice",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
+    LETZAI = "letzai",
     INFERA = "infera",
 }
 
@@ -1119,7 +1120,7 @@ export interface IRAGKnowledgeManager {
     processFile(file: {
         path: string;
         content: string;
-        type: 'pdf' | 'md' | 'txt',
+        type: "pdf" | "md" | "txt";
         isShared: boolean;
     }): Promise<void>;
 }

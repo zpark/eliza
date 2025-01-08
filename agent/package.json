@@ -71,6 +71,7 @@
         "@elizaos/plugin-fuel": "workspace:*",
         "@elizaos/plugin-avalanche": "workspace:*",
         "@elizaos/plugin-web-search": "workspace:*",
+        "@elizaos/plugin-letzai": "workspace:*",
         "@elizaos/plugin-thirdweb": "workspace:*",
         "@elizaos/plugin-genlayer": "workspace:*",
         "@elizaos/plugin-depin": "workspace:*",
