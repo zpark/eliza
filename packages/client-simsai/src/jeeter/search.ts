@@ -10,7 +10,12 @@ import {
     stringToUuid,
 } from "@ai16z/eliza";
 import { buildConversationThread, sendJeet, wait } from "./utils";
-import { EnhancedResponseContent, Jeet, JeetResponse } from "./types";
+import {
+    EnhancedResponseContent,
+    Jeet,
+    JeetInteraction,
+    JeetResponse,
+} from "./types";
 import { ClientBase } from "./base";
 import {
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
@@ -22,6 +27,7 @@ const jeeterSearchTemplate =
 
 export class JeeterSearchClient {
     private repliedJeets: Set<string> = new Set();
+    private likedJeets: Set<string> = new Set();
     private rejeetedJeets: Set<string> = new Set();
     private quotedJeets: Set<string> = new Set();
 
@@ -32,11 +38,13 @@ export class JeeterSearchClient {
 
     private async hasInteracted(
         jeetId: string,
-        type: "reply" | "rejeet" | "quote"
+        type: JeetInteraction["type"]
     ): Promise<boolean> {
         switch (type) {
             case "reply":
                 return this.repliedJeets.has(jeetId);
+            case "like":
+                return this.likedJeets.has(jeetId);
             case "rejeet":
                 return this.rejeetedJeets.has(jeetId);
             case "quote":
@@ -46,13 +54,13 @@ export class JeeterSearchClient {
         }
     }
 
-    private recordInteraction(
-        jeetId: string,
-        type: "reply" | "rejeet" | "quote"
-    ) {
+    private recordInteraction(jeetId: string, type: JeetInteraction["type"]) {
         switch (type) {
             case "reply":
                 this.repliedJeets.add(jeetId);
+                break;
+            case "like":
+                this.likedJeets.add(jeetId);
                 break;
             case "rejeet":
                 this.rejeetedJeets.add(jeetId);
@@ -77,7 +85,6 @@ export class JeeterSearchClient {
     private async engageWithSearchTerms() {
         elizaLogger.log("Engaging with search terms");
         try {
-            // Check if topics exist and are not empty
             if (!this.runtime.character.topics?.length) {
                 elizaLogger.log("No topics available for search");
                 return;
@@ -164,6 +171,7 @@ export class JeeterSearchClient {
 
             const previousInteractions = {
                 replied: await this.hasInteracted(selectedJeet.id, "reply"),
+                liked: await this.hasInteracted(selectedJeet.id, "like"),
                 rejeeted: await this.hasInteracted(selectedJeet.id, "rejeet"),
                 quoted: await this.hasInteracted(selectedJeet.id, "quote"),
             };
@@ -222,28 +230,93 @@ Notes:
     }
 
     private async processSelectedJeet(
-        selectedJeet: any,
+        selectedJeet: Jeet,
         formattedTimeline: string,
         previousInteractions: {
             replied: boolean;
+            liked: boolean;
             rejeeted: boolean;
             quoted: boolean;
         }
     ) {
         const roomId = stringToUuid(
-            selectedJeet.id + "-" + this.runtime.agentId
+            `${selectedJeet.conversationId || selectedJeet.id}-${this.runtime.agentId}`
         );
         const userIdUUID = stringToUuid(selectedJeet.agentId);
 
         await this.runtime.ensureConnection(
             userIdUUID,
             roomId,
-            selectedJeet.agent.username,
-            selectedJeet.agent.name,
+            selectedJeet.agent?.username || "",
+            selectedJeet.agent?.name || "",
             "jeeter"
         );
 
-        await buildConversationThread(selectedJeet, this.client);
+        // Get full conversation thread
+        elizaLogger.log(
+            `Fetching conversation thread for jeet ${selectedJeet.id}`
+        );
+        const thread = await buildConversationThread(selectedJeet, this.client);
+        elizaLogger.log(
+            `Retrieved conversation thread with ${thread.length} messages:`,
+            {
+                messages: thread.map((t) => ({
+                    id: t.id,
+                    username: t.agent?.username,
+                    text:
+                        t.text?.slice(0, 50) +
+                        (t.text?.length > 50 ? "..." : ""),
+                    timestamp: t.createdAt,
+                })),
+            }
+        );
+
+        // Sort thread chronologically and handle timestamps
+        const sortedThread = thread.sort((a, b) => {
+            const timeA = new Date(a.createdAt || 0).getTime();
+            const timeB = new Date(b.createdAt || 0).getTime();
+            return timeA - timeB;
+        });
+
+        // Enhanced formatting of conversation context with clear conversation flow
+        const formattedConversation = sortedThread
+            .map((j, index) => {
+                const timestamp = j.createdAt
+                    ? new Date(j.createdAt).getTime()
+                    : Date.now();
+                const isCurrentJeet = j.id === selectedJeet.id;
+                const arrow = index > 0 ? "↪ " : ""; // Show reply chain
+                return `[${new Date(timestamp).toLocaleString()}] ${arrow}@${
+                    j.agent?.username || "unknown"
+                }${isCurrentJeet ? " (current message)" : ""}: ${j.text}`;
+            })
+            .join("\n\n");
+
+        // Log conversation context for debugging
+        elizaLogger.log("Conversation context:", {
+            originalJeet: selectedJeet.id,
+            totalMessages: thread.length,
+            participants: [...new Set(thread.map((j) => j.agent?.username))],
+            timespan:
+                thread.length > 1
+                    ? {
+                          first: new Date(
+                              Math.min(
+                                  ...thread.map((j) =>
+                                      new Date(j.createdAt || 0).getTime()
+                                  )
+                              )
+                          ),
+                          last: new Date(
+                              Math.max(
+                                  ...thread.map((j) =>
+                                      new Date(j.createdAt || 0).getTime()
+                                  )
+                              )
+                          ),
+                      }
+                    : null,
+        });
 
         const message = {
             id: stringToUuid(selectedJeet.id + "-" + this.runtime.agentId),
@@ -254,7 +327,9 @@ Notes:
             },
             userId: userIdUUID,
             roomId,
-            createdAt: new Date(selectedJeet.createdAt).getTime(),
+            createdAt: selectedJeet.createdAt
+                ? new Date(selectedJeet.createdAt).getTime()
+                : Date.now(),
         };
 
         if (!message.content.text) {
@@ -265,19 +340,24 @@ Notes:
             message,
             selectedJeet,
             formattedTimeline,
-            previousInteractions
+            previousInteractions,
+            formattedConversation,
+            thread
         );
     }
 
     private async handleJeetInteractions(
         message: any,
-        selectedJeet: any,
+        selectedJeet: Jeet,
         formattedTimeline: string,
         previousInteractions: {
             replied: boolean;
+            liked: boolean;
             rejeeted: boolean;
             quoted: boolean;
-        }
+        },
+        formattedConversation: string,
+        thread: Jeet[]
     ) {
         try {
             let state = await this.runtime.composeState(message, {
@@ -285,13 +365,40 @@ Notes:
                 jeeterUserName: this.runtime.getSetting("SIMSAI_USERNAME"),
                 timeline: formattedTimeline,
                 jeetContext: await this.buildJeetContext(selectedJeet),
+                formattedConversation, // Add conversation context
+                conversationContext: {
+                    messageCount: thread.length,
+                    participants: [
+                        ...new Set(thread.map((j) => j.agent?.username)),
+                    ],
+                    timespan:
+                        thread.length > 1
+                            ? {
+                                  start: new Date(
+                                      Math.min(
+                                          ...thread.map((j) =>
+                                              new Date(
+                                                  j.createdAt || 0
+                                              ).getTime()
+                                          )
+                                      )
+                                  ).toISOString(),
+                                  end: new Date(
+                                      Math.max(
+                                          ...thread.map((j) =>
+                                              new Date(
+                                                  j.createdAt || 0
+                                              ).getTime()
+                                          )
+                                      )
+                                  ).toISOString(),
+                              }
+                            : null,
+                },
                 previousInteractions,
             });
 
             await this.client.saveRequestMessage(message, state as State);
-
-            elizaLogger.debug("State:", state);
-            elizaLogger.debug("Jeet context:", selectedJeet);
 
             const context = composeContext({
                 state,
@@ -300,8 +407,6 @@ Notes:
                     jeeterSearchTemplate,
             });
 
-            elizaLogger.debug("Context:", context);
-
             const rawResponse = (await generateMessageResponse({
                 runtime: this.runtime,
                 context,
@@ -309,20 +414,38 @@ Notes:
             })) as EnhancedResponseContent;
 
             elizaLogger.debug("Raw response:", rawResponse);
-
             const response = {
                 text: rawResponse.text,
                 action: rawResponse.action,
-                interactions: rawResponse.interactions,
+                shouldLike: rawResponse.shouldLike,
+                interactions: rawResponse.interactions || [],
             };
 
-            if (!response || !response.interactions || !response.text) {
-                throw new TypeError("Response or interactions are undefined");
+            elizaLogger.debug("Processed response:", response);
+
+            if (!response.interactions) {
+                throw new TypeError("Response interactions are undefined");
             }
 
+            // Handle liking
+            if (response.shouldLike && !previousInteractions.liked) {
+                try {
+                    await this.client.simsAIClient.likeJeet(selectedJeet.id);
+                    elizaLogger.log(`Liked jeet ${selectedJeet.id}`);
+                    this.recordInteraction(selectedJeet.id, "like");
+                } catch (error) {
+                    elizaLogger.error(
+                        `Error liking jeet ${selectedJeet.id}:`,
+                        error
+                    );
+                }
+            }
+
+            // Handle other interactions
             if (response.interactions.length > 0) {
                 for (const interaction of response.interactions) {
                     try {
+                        // Skip if already performed
                         if (
                             (interaction.type === "reply" &&
                                 previousInteractions.replied) ||
@@ -430,15 +553,17 @@ Notes:
                     } catch (error) {
                         elizaLogger.error(
                             `Error processing interaction ${interaction.type} for jeet ${selectedJeet.id}:`,
-                            error instanceof Error ? error.message : error
+                            error
                         );
                     }
                 }
             }
 
-            const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${selectedJeet.id} - @${
-                selectedJeet.agent.username
-            }: ${selectedJeet.text}\nAgent's Output:\n${JSON.stringify(response)}`;
+            const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${
+                selectedJeet.id
+            } - @${selectedJeet.agent?.username || "unknown"}: ${
+                selectedJeet.text
+            }\nAgent's Output:\n${JSON.stringify(response)}`;
 
             await this.runtime.cacheManager.set(
                 `jeeter/jeet_generation_${selectedJeet.id}.txt`,
@@ -449,6 +574,7 @@ Notes:
 
             const interactionSummary = {
                 jeetId: selectedJeet.id,
+                liked: response.shouldLike,
                 interactions: response.interactions.map((i) => i.type),
                 replyText: response.text,
                 quoteTexts: response.interactions
@@ -464,18 +590,20 @@ Notes:
         }
     }
 
-    private async buildJeetContext(selectedJeet: any): Promise<string> {
-        let context = `Original Post:\nBy @${selectedJeet.agent.username}\n${selectedJeet.text}`;
+    private async buildJeetContext(selectedJeet: Jeet): Promise<string> {
+        let context = `Original Post:\nBy @${selectedJeet.agent?.username || "unknown"}\n${selectedJeet.text}`;
 
-        // Add reply context if it exists
         if (selectedJeet.thread?.length) {
             const replyContext = selectedJeet.thread
                 .filter(
-                    (reply: any) =>
-                        reply.agent.username !==
+                    (reply: Jeet) =>
+                        reply.agent?.username !==
                         this.runtime.getSetting("SIMSAI_USERNAME")
                 )
-                .map((reply: any) => `@${reply.agent.username}: ${reply.text}`)
+                .map(
+                    (reply: Jeet) =>
+                        `@${reply.agent?.username || "unknown"}: ${reply.text}`
+                )
                 .join("\n");
 
             if (replyContext) {
@@ -486,12 +614,13 @@ Notes:
         // Add media descriptions if they exist
         if (selectedJeet.media?.length) {
             const imageDescriptions = [];
-
             for (const media of selectedJeet.media) {
-                if (media.url) {
+                // Check if the media has a URL and we can process it
+                if ("url" in media) {
                     const description = this.runtime.getService(
                         ServiceType.IMAGE_DESCRIPTION
                     );
+
                     imageDescriptions.push(description);
                 }
             }
@@ -499,6 +628,34 @@ Notes:
             if (imageDescriptions.length > 0) {
                 context += `\nMedia in Post (Described): ${imageDescriptions.join(", ")}`;
             }
+        }
+
+        // Add URLs if they exist
+        if (selectedJeet.urls?.length) {
+            context += `\nURLs: ${selectedJeet.urls.join(", ")}`;
+        }
+
+        // Add photos if they exist
+        if (selectedJeet.photos?.length) {
+            const photoDescriptions = [];
+            for (const photo of selectedJeet.photos) {
+                if (photo.url) {
+                    const description = this.runtime.getService(
+                        ServiceType.IMAGE_DESCRIPTION
+                    );
+
+                    photoDescriptions.push(description);
+                }
+            }
+
+            if (photoDescriptions.length > 0) {
+                context += `\nPhotos in Post (Described): ${photoDescriptions.join(", ")}`;
+            }
+        }
+
+        // Add videos if they exist (just mentioning their presence)
+        if (selectedJeet.videos?.length) {
+            context += `\nVideos: ${selectedJeet.videos.length} video(s) attached`;
         }
 
         return context;

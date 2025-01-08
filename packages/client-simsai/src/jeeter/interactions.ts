@@ -9,28 +9,60 @@ import {
     stringToUuid,
     elizaLogger,
 } from "@ai16z/eliza";
-import { ClientBase } from "./base.ts";
-import { buildConversationThread, sendJeet, wait } from "./utils.ts";
-import { Jeet, EnhancedResponseContent } from "./types.ts";
+import { ClientBase } from "./base";
+import { buildConversationThread, sendJeet, wait } from "./utils";
+import { Jeet, EnhancedResponseContent, JeetInteraction } from "./types";
 import {
     JEETER_SHOULD_RESPOND_BASE,
     JEETER_MESSAGE_HANDLER_BASE,
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
-} from "./constants.ts";
+} from "./constants";
 
 export const jeeterMessageHandlerTemplate =
     JEETER_MESSAGE_HANDLER_BASE + JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER;
-
 export const jeeterShouldRespondTemplate =
     JEETER_SHOULD_RESPOND_BASE + shouldRespondFooter;
 
 export class JeeterInteractionClient {
-    client: ClientBase;
-    runtime: IAgentRuntime;
+    private likedJeets: Set<string> = new Set();
+    private rejeetedJeets: Set<string> = new Set();
+    private quotedJeets: Set<string> = new Set();
 
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
-        this.client = client;
-        this.runtime = runtime;
+    constructor(
+        private client: ClientBase,
+        private runtime: IAgentRuntime
+    ) {}
+
+    private async hasInteracted(
+        jeetId: string,
+        type: JeetInteraction["type"]
+    ): Promise<boolean> {
+        switch (type) {
+            case "reply":
+                return false; // Always allow replies to direct interactions
+            case "like":
+                return this.likedJeets.has(jeetId);
+            case "rejeet":
+                return this.rejeetedJeets.has(jeetId);
+            case "quote":
+                return this.quotedJeets.has(jeetId);
+            default:
+                return false;
+        }
+    }
+
+    private recordInteraction(jeetId: string, type: JeetInteraction["type"]) {
+        switch (type) {
+            case "like":
+                this.likedJeets.add(jeetId);
+                break;
+            case "rejeet":
+                this.rejeetedJeets.add(jeetId);
+                break;
+            case "quote":
+                this.quotedJeets.add(jeetId);
+                break;
+        }
     }
 
     async start() {
@@ -98,7 +130,7 @@ export class JeeterInteractionClient {
                 new Map(allInteractions.map((jeet) => [jeet.id, jeet])).values()
             )
                 .sort((a, b) => a.id.localeCompare(b.id))
-                .filter((jeet) => jeet.userId !== this.client.profile.id);
+                .filter((jeet) => jeet.agentId !== this.client.profile.id);
 
             elizaLogger.log(
                 `Found ${uniqueJeets.length} unique interactions to process`
@@ -127,20 +159,18 @@ export class JeeterInteractionClient {
 
                 try {
                     const roomId = stringToUuid(
-                        `${jeet.conversationId || jeet.id}-${
-                            this.runtime.agentId
-                        }`
+                        `${jeet.conversationId || jeet.id}-${this.runtime.agentId}`
                     );
-                    const userIdUUID = stringToUuid(jeet.userId);
+                    const userIdUUID = stringToUuid(jeet.agentId);
 
                     elizaLogger.log(
-                        `Ensuring connection for user ${jeet.username}`
+                        `Ensuring connection for user ${jeet.agent?.username}`
                     );
                     await this.runtime.ensureConnection(
                         userIdUUID,
                         roomId,
-                        jeet.username,
-                        jeet.name || jeet.username,
+                        jeet.agent?.username || "",
+                        jeet.agent?.name || "",
                         "jeeter"
                     );
 
@@ -206,25 +236,33 @@ export class JeeterInteractionClient {
                     continue;
                 }
 
-                // Fetch the actual replies using conversation ID
-                const replies = await this.client.fetchSearchJeets(
-                    `conversation_id:${post.id}`,
-                    20
-                );
+                elizaLogger.log(`Fetching conversation for post ${post.id}`);
+                // Use the correct endpoint to get full conversation
+                const conversation =
+                    await this.client.simsAIClient.getJeetConversation(post.id);
 
-                if (replies?.jeets) {
+                if (conversation) {
                     // Filter out the original post and the agent's own replies
-                    const validComments = replies.jeets.filter(
-                        (reply) =>
-                            reply.id !== post.id &&
-                            reply.userId !== this.client.profile.id &&
-                            !reply.isRejeet // Exclude retweets
+                    const validComments = conversation
+                        .filter(
+                            (reply) =>
+                                reply.id !== post.id && // Not the original post
+                                reply.agentId !== this.client.profile.id && // Not our own replies
+                                !reply.isRejeet // Not a rejeet
+                        )
+                        .sort((a, b) => {
+                            const timeA = new Date(a.createdAt || 0).getTime();
+                            const timeB = new Date(b.createdAt || 0).getTime();
+                            return timeB - timeA; // Newest first
+                        });
+
+                    elizaLogger.log(
+                        `Found ${validComments.length} valid comments for post ${post.id}`
                     );
                     comments.push(...validComments);
                 }
 
-                // Wait between requests to avoid rate limiting
-                await wait(1000, 2000);
+                await wait(1000, 2000); // Rate limiting delay
             } catch (error) {
                 elizaLogger.error(
                     `Error fetching comments for post ${post.id}:`,
@@ -261,9 +299,7 @@ export class JeeterInteractionClient {
             }
 
             const formatJeet = (j: Jeet) =>
-                `ID: ${j.id}\nFrom: ${j.name || j.username} (@${
-                    j.username
-                })\nText: ${j.text}`;
+                `ID: ${j.id}\nFrom: ${j.agent?.name || "Unknown"} (@${j.agent?.username || "Unknown"})\nText: ${j.text}`;
 
             const formattedHomeTimeline = homeTimeline
                 .map((j) => `${formatJeet(j)}\n---\n`)
@@ -272,8 +308,10 @@ export class JeeterInteractionClient {
             const formattedConversation = thread
                 .map(
                     (j) =>
-                        `@${j.username} (${new Date(
-                            j.timestamp * 1000
+                        `@${j.agent?.username || "unknown"} (${new Date(
+                            j.createdAt
+                                ? new Date(j.createdAt).getTime()
+                                : Date.now()
                         ).toLocaleString()}): ${j.text}`
                 )
                 .join("\n\n");
@@ -306,9 +344,11 @@ export class JeeterInteractionClient {
                               )
                             : undefined,
                     },
-                    userId: stringToUuid(jeet.userId),
+                    userId: stringToUuid(jeet.agentId),
                     roomId: message.roomId,
-                    createdAt: jeet.timestamp * 1000,
+                    createdAt: jeet.createdAt
+                        ? new Date(jeet.createdAt).getTime()
+                        : Date.now(),
                 };
                 await this.client.saveRequestMessage(memoryMessage, state);
             }
@@ -350,12 +390,38 @@ export class JeeterInteractionClient {
 
             response.interactions = response.interactions || [];
 
+            // Handle liking
+            if (
+                response.shouldLike &&
+                !(await this.hasInteracted(jeet.id, "like"))
+            ) {
+                try {
+                    await this.client.simsAIClient.likeJeet(jeet.id);
+                    elizaLogger.log(`Liked interaction ${jeet.id}`);
+                    this.recordInteraction(jeet.id, "like");
+                } catch (error) {
+                    elizaLogger.error(
+                        `Error liking interaction ${jeet.id}:`,
+                        error
+                    );
+                }
+            }
+
             for (const interaction of response.interactions) {
                 try {
+                    // Check if we've already performed this type of interaction
+                    if (await this.hasInteracted(jeet.id, interaction.type)) {
+                        elizaLogger.log(
+                            `Skipping ${interaction.type} for jeet ${jeet.id} - already performed`
+                        );
+                        continue;
+                    }
+
                     switch (interaction.type) {
                         case "rejeet":
                             await this.client.simsAIClient.rejeetJeet(jeet.id);
                             elizaLogger.log(`Rejeeted jeet ${jeet.id}`);
+                            this.recordInteraction(jeet.id, "rejeet");
                             break;
 
                         case "quote":
@@ -367,6 +433,7 @@ export class JeeterInteractionClient {
                                 elizaLogger.log(
                                     `Quote rejeeted jeet ${jeet.id}`
                                 );
+                                this.recordInteraction(jeet.id, "quote");
                             }
                             break;
 
@@ -412,6 +479,12 @@ export class JeeterInteractionClient {
                                 );
                             }
                             break;
+
+                        case "none":
+                            elizaLogger.log(
+                                `No interaction needed for jeet ${jeet.id}`
+                            );
+                            break;
                     }
                 } catch (error) {
                     elizaLogger.error(
@@ -427,11 +500,22 @@ export class JeeterInteractionClient {
                 }
             }
 
+            const interactionSummary = {
+                jeetId: jeet.id,
+                liked: response.shouldLike,
+                interactions: response.interactions.map((i) => i.type),
+                replyText: response.text,
+                quoteTexts: response.interactions
+                    .filter((i) => i.type === "quote")
+                    .map((i) => i.text),
+            };
+
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${
                 jeet.id
-            } - ${jeet.username}: ${
+            } - ${jeet.agent?.username || "unknown"}: ${
                 jeet.text
-            }\nAgent's Output:\n${JSON.stringify(response)}`;
+            }\nAgent's Output:\n${JSON.stringify(response)}\n\nInteraction Summary:\n${JSON.stringify(interactionSummary, null, 2)}`;
+
             await this.runtime.cacheManager.set(
                 `jeeter/jeet_generation_${jeet.id}.txt`,
                 responseInfo

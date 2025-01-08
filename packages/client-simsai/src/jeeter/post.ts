@@ -1,4 +1,4 @@
-import { Jeet } from "./types.ts";
+import { Jeet } from "./types";
 import {
     composeContext,
     generateText,
@@ -6,13 +6,11 @@ import {
     IAgentRuntime,
     ModelClass,
     stringToUuid,
+    elizaLogger,
 } from "@ai16z/eliza";
-import { elizaLogger } from "@ai16z/eliza";
-import { ClientBase } from "./base.ts";
-import { JEETER_API_URL } from "./constants.ts";
-import { truncateToCompleteSentence } from "./utils.ts";
-
-const MAX_JEET_LENGTH = 240;
+import { ClientBase } from "./base";
+import { JEETER_API_URL, MAX_JEET_LENGTH } from "./constants";
+import { truncateToCompleteSentence } from "./utils";
 
 const jeeterPostTemplate = `{{timeline}}
 
@@ -38,6 +36,11 @@ export class JeeterPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
 
+    constructor(client: ClientBase, runtime: IAgentRuntime) {
+        this.client = client;
+        this.runtime = runtime;
+    }
+
     async start(postImmediately: boolean = false) {
         if (!this.client.profile) {
             await this.client.init();
@@ -46,7 +49,7 @@ export class JeeterPostClient {
         const generateNewJeetLoop = async () => {
             const lastPost = await this.runtime.cacheManager.get<{
                 timestamp: number;
-            }>("jeeter/" + this.client.profile.username + "/lastPost");
+            }>(`jeeter/${this.client.profile.username}/lastPost`);
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
             const minMinutes =
@@ -70,15 +73,10 @@ export class JeeterPostClient {
         };
 
         if (postImmediately) {
-            this.generateNewJeet();
+            await this.generateNewJeet();
         }
 
         generateNewJeetLoop();
-    }
-
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
-        this.client = client;
-        this.runtime = runtime;
     }
 
     private async generateNewJeet() {
@@ -102,17 +100,22 @@ export class JeeterPostClient {
                 homeTimeline = await this.client.fetchHomeTimeline(50);
                 await this.client.cacheTimeline(homeTimeline);
             }
+
             const formattedHomeTimeline =
                 `# ${this.runtime.character.name}'s Home Timeline\n\n` +
                 homeTimeline
                     .map((jeet) => {
-                        return `#${jeet.id}\n${jeet.name} (@${jeet.username})${
+                        const timestamp = jeet.createdAt
+                            ? new Date(jeet.createdAt).toDateString()
+                            : new Date().toDateString();
+
+                        return `#${jeet.id}
+${jeet.agent?.name || "Unknown"} (@${jeet.agent?.username || "Unknown"})${
                             jeet.inReplyToStatusId
                                 ? `\nIn reply to: ${jeet.inReplyToStatusId}`
                                 : ""
-                        }\n${new Date(
-                            jeet.timestamp * 1000
-                        ).toDateString()}\n\n${jeet.text}\n---\n`;
+                        }
+${timestamp}\n\n${jeet.text}\n---\n`;
                     })
                     .join("\n");
 
@@ -170,11 +173,43 @@ export class JeeterPostClient {
                     async () => await this.client.simsAIClient.postJeet(content)
                 );
 
-                elizaLogger.log(`Jeet posted:\n ${result}`);
+                if (!result?.id) {
+                    elizaLogger.error(
+                        "Failed to get valid response from postJeet:",
+                        result
+                    );
+                    return;
+                }
 
+                elizaLogger.log(`Jeet posted with ID: ${result.id}`);
+
+                // If we got a valid result with an ID, construct the jeet
                 const jeet: Jeet = {
-                    ...result,
+                    id: result.id,
+                    text: content,
+                    createdAt: result.createdAt || new Date().toISOString(),
+                    agentId: this.client.profile.id,
+                    agent: {
+                        id: this.client.profile.id,
+                        name: this.runtime.character.name,
+                        username: this.client.profile.username,
+                        type: "ai",
+                        avatar_url: "", // Add if available
+                    },
                     permanentUrl: `${JEETER_API_URL}/${this.client.profile.username}/status/${result.id}`,
+                    public_metrics: {
+                        reply_count: 0,
+                        like_count: 0,
+                        quote_count: 0,
+                        rejeet_count: 0,
+                    },
+                    hashtags: [],
+                    mentions: [],
+                    photos: [],
+                    thread: [],
+                    urls: [],
+                    videos: [],
+                    media: [],
                 };
 
                 await this.runtime.cacheManager.set(
@@ -189,10 +224,10 @@ export class JeeterPostClient {
 
                 homeTimeline.push(jeet);
                 await this.client.cacheTimeline(homeTimeline);
-                elizaLogger.log(`Jeet posted:\n ${jeet.permanentUrl}`);
+                elizaLogger.log(`Jeet posted at: ${jeet.permanentUrl}`);
 
                 const roomId = stringToUuid(
-                    jeet.conversationId + "-" + this.runtime.agentId
+                    jeet.id + "-" + this.runtime.agentId
                 );
 
                 await this.runtime.ensureRoomExists(roomId);
@@ -206,13 +241,13 @@ export class JeeterPostClient {
                     userId: this.runtime.agentId,
                     agentId: this.runtime.agentId,
                     content: {
-                        text: newJeetContent.trim(),
+                        text: content,
                         url: jeet.permanentUrl,
                         source: "jeeter",
                     },
                     roomId,
                     embedding: getEmbeddingZeroVector(),
-                    createdAt: jeet.timestamp * 1000,
+                    createdAt: new Date(jeet.createdAt).getTime(),
                 });
             } catch (error) {
                 elizaLogger.error("Error sending jeet:", error);

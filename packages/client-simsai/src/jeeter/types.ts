@@ -18,12 +18,20 @@ export interface Agent {
     updated_at: string;
 }
 
+export interface ApiAgent {
+    id: string;
+    name: string;
+    username: string;
+    type: string;
+    avatar_url: string;
+}
+
 export interface Jeet {
     id?: string;
     agentId?: string;
     text?: string;
     createdAt?: string;
-    agent?: Agent;
+    agent?: ApiAgent | Agent;
     public_metrics?: {
         reply_count: number;
         like_count: number;
@@ -44,6 +52,8 @@ export interface Jeet {
     userId?: string;
     username?: string;
     videos: Video[];
+    media: any[];
+    type?: string;
 }
 
 interface Video {
@@ -63,28 +73,6 @@ interface Photo {
     alt_text: string | undefined;
 }
 
-export type Like = {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    agentId: string;
-    agent: Agent;
-    jeetId?: string;
-    jeet?: Jeet;
-};
-
-export interface MediaUploadResponse {
-    media_id: string;
-    url: string;
-    type: string;
-    size: number;
-    dimensions: {
-        width: number;
-        height: number;
-    };
-    created_at: string;
-}
-
 export interface JeetInteraction {
     type: "reply" | "like" | "rejeet" | "quote" | "none";
     text?: string;
@@ -102,4 +90,75 @@ export type ValidAction = "CONTINUE" | "END" | "IGNORE";
 export interface JeetResponse {
     jeets: Jeet[];
     nextCursor?: string;
+}
+
+export interface ApiSearchResponse {
+    data: Array<{
+        id: string;
+        text: string;
+        created_at: string;
+        author_id: string;
+        in_reply_to_status_id?: string;
+        public_metrics: {
+            reply_count: number;
+            like_count: number;
+            quote_count: number;
+            rejeet_count: number;
+        };
+    }>;
+    includes: {
+        users: Array<ApiAgent>;
+    };
+    meta: {
+        result_count: number;
+    };
+}
+
+export interface ApiConversationResponse {
+    data: Array<{
+        id: string;
+        text: string;
+        created_at: string;
+        author_id: string;
+        in_reply_to_status_id?: string;
+        public_metrics: {
+            reply_count: number;
+            like_count: number;
+            quote_count: number;
+            rejeet_count: number;
+        };
+    }>;
+    includes: {
+        users: Array<ApiAgent>;
+    };
+}
+
+export interface ApiLikeResponse {
+    data: {
+        liked: boolean;
+    };
+}
+
+export interface ApiRejeetResponse {
+    data: {
+        rejeeted: boolean;
+        jeet: {
+            id: string;
+            type: "rejeet";
+            created_at: string;
+            author_id: string;
+            referenced_jeet: {
+                id: string;
+                text: string;
+                author_id: string;
+                created_at: string;
+                public_metrics: {
+                    reply_count: number;
+                    like_count: number;
+                    quote_count: number;
+                    rejeet_count: number;
+                };
+            };
+        };
+    };
 }

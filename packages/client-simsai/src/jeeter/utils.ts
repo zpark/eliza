@@ -1,10 +1,10 @@
 import { getEmbeddingZeroVector } from "@ai16z/eliza";
 import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
-import { ClientBase } from "./base.ts";
+import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
-import { SIMSAI_API_URL, MAX_JEET_LENGTH } from "./constants.ts";
-import { Jeet } from "./types.ts";
+import { SIMSAI_API_URL, MAX_JEET_LENGTH } from "./constants";
+import { Jeet } from "./types";
 
 /**
  * Waits for a random amount of time between the specified minimum and maximum duration.
@@ -42,10 +42,10 @@ export const isValidJeet = (jeet: Jeet): boolean => {
 };
 
 /**
- * Builds a conversation thread by recursively processing parent jeets.
- * @param jeet The starting jeet of the conversation thread.
- * @param client The ClientBase instance.
- * @returns A promise that resolves to an array of jeets representing the conversation thread.
+ * Builds a conversation thread by fetching the full conversation or recursively processing parent jeets.
+ * @param jeet The starting jeet of the conversation thread
+ * @param client The ClientBase instance
+ * @returns A promise that resolves to an array of jeets representing the conversation thread
  */
 export async function buildConversationThread(
     jeet: Jeet,
@@ -54,169 +54,95 @@ export async function buildConversationThread(
     const thread: Jeet[] = [];
     const visited: Set<string> = new Set();
 
+    // Try to fetch the full conversation first if we have a conversation ID
+    if (jeet.conversationId || jeet.id) {
+        try {
+            elizaLogger.log(
+                `Attempting to fetch conversation for jeet ${jeet.id}`
+            );
+            const conversationId = jeet.conversationId || jeet.id;
+            const conversation =
+                await client.simsAIClient.getJeetConversation(conversationId);
+
+            // Process each jeet in the conversation
+            for (const conversationJeet of conversation) {
+                await processJeetMemory(conversationJeet, client);
+                thread.push(conversationJeet);
+            }
+
+            elizaLogger.log(
+                `Successfully fetched conversation with ${thread.length} jeets`
+            );
+            return thread.sort((a, b) => {
+                const timeA = new Date(a.createdAt || 0).getTime();
+                const timeB = new Date(b.createdAt || 0).getTime();
+                return timeA - timeB;
+            });
+        } catch (error) {
+            elizaLogger.error(
+                `Error fetching conversation, falling back to recursive method:`,
+                error
+            );
+            // Clear thread and fall back to recursive method
+            thread.length = 0;
+        }
+    }
+
+    // Fall back to recursive method if conversation fetch fails or isn't available
     async function processThread(currentJeet: Jeet, depth: number = 0) {
         try {
-            const jeetId = currentJeet.id;
-            const agentId = client.runtime.agentId;
+            validateJeet(currentJeet);
 
-            if (typeof jeetId !== "string") {
-                elizaLogger.error("Jeet ID is not a string:", jeetId);
-                throw new TypeError("Jeet ID must be a string");
-            }
-            if (typeof agentId !== "string") {
-                elizaLogger.error("Agent ID is not a string:", agentId);
-                throw new TypeError("Agent ID must be a string");
-            }
-
-            const memory = await client.runtime.messageManager.getMemoryById(
-                stringToUuid(jeetId + "-" + agentId)
-            );
-
-            if (!memory) {
-                const conversationId =
-                    currentJeet.conversationId || currentJeet.id;
-                if (typeof conversationId !== "string") {
-                    elizaLogger.error(
-                        "Conversation ID is not a string:",
-                        conversationId
-                    );
-                    throw new TypeError("Conversation ID must be a string");
-                }
-
-                const roomId = stringToUuid(
-                    conversationId + "-" + client.runtime.agentId
-                );
-
-                elizaLogger.log("Processing jeet:", currentJeet.id);
-
-                const userId = currentJeet.agentId;
-
-                if (typeof userId !== "string" || !userId.trim()) {
-                    elizaLogger.error(
-                        "User ID is not a string or is empty:",
-                        userId
-                    );
-                    throw new TypeError(
-                        "User ID must be a string and cannot be empty"
-                    );
-                }
-
-                await client.runtime.ensureConnection(
-                    stringToUuid(userId),
-                    roomId,
-                    currentJeet.agent?.username || "",
-                    currentJeet.agent?.name ||
-                        currentJeet.agent?.username ||
-                        "",
-                    "jeeter"
-                );
-
-                await client.runtime.messageManager.createMemory({
-                    id: stringToUuid(
-                        currentJeet.id + "-" + client.runtime.agentId
-                    ),
-                    agentId: client.runtime.agentId,
-                    content: {
-                        text: currentJeet.text || "",
-                        source: "jeeter",
-                        url: currentJeet.permanentUrl,
-                        inReplyTo: currentJeet.inReplyToStatusId
-                            ? stringToUuid(
-                                  currentJeet.inReplyToStatusId +
-                                      "-" +
-                                      client.runtime.agentId
-                              )
-                            : undefined,
-                    },
-                    createdAt: currentJeet.timestamp
-                        ? Math.floor(currentJeet.timestamp * 1000)
-                        : Date.now(),
-                    roomId,
-                    userId: stringToUuid(userId),
-                    embedding: getEmbeddingZeroVector(),
-                });
-            }
-
+            // Check if we've already processed this jeet
             if (visited.has(currentJeet.id)) {
-                elizaLogger.debug("Already visited jeet:", currentJeet.id);
+                elizaLogger.debug(`Already visited jeet: ${currentJeet.id}`);
                 return;
             }
 
+            // Process the current jeet's memory
+            await processJeetMemory(currentJeet, client);
+
+            // Add to visited set and thread
             visited.add(currentJeet.id);
             thread.unshift(currentJeet);
 
-            elizaLogger.debug("Current thread state:", {
+            elizaLogger.debug("Thread state:", {
                 length: thread.length,
                 currentDepth: depth,
                 jeetId: currentJeet.id,
             });
 
-            const parentJeets = currentJeet.inReplyToStatusId
-                ? [currentJeet.inReplyToStatusId]
-                : [];
-
-            await Promise.all(
-                parentJeets.map(async (parentJeetId) => {
-                    try {
-                        const parentJeet =
-                            await client.simsAIClient.getJeet(parentJeetId);
-
-                        if (!parentJeet) {
-                            elizaLogger.debug("No parent jeet found");
-                            return;
-                        }
-
-                        const formattedParentJeet: Jeet = {
-                            id: parentJeet.id || "",
-                            text: parentJeet.text || "",
-                            userId: parentJeet.agentId || "",
-                            username: parentJeet.agent?.username || "",
-                            name: parentJeet.agent?.name || "",
-                            timestamp:
-                                parentJeet.timestamp || Date.now() / 1000,
-                            public_metrics: parentJeet.public_metrics || {
-                                reply_count: 0,
-                                like_count: 0,
-                                quote_count: 0,
-                                rejeet_count: 0,
-                            },
-                            conversationId:
-                                parentJeet.conversationId ||
-                                parentJeet.id ||
-                                "",
-                            mentions: parentJeet.mentions || [],
-                            hashtags: parentJeet.hashtags || [],
-                            photos: parentJeet.photos || [],
-                            videos: parentJeet.videos || [],
-                            thread: [],
-                            urls: parentJeet.urls || [],
-                            inReplyToStatusId: parentJeet.inReplyToStatusId,
-                        };
-
-                        elizaLogger.debug("Found parent jeet:", {
-                            id: formattedParentJeet.id,
-                            username: formattedParentJeet.username,
-                            text: formattedParentJeet.text?.slice(0, 50),
-                        });
-
-                        await processThread(formattedParentJeet, depth + 1);
-                    } catch (error) {
-                        elizaLogger.error("Error processing parent jeet:", {
-                            jeetId: parentJeetId,
-                            error,
-                        });
+            // Process parent jeet if it exists
+            if (currentJeet.inReplyToStatusId) {
+                try {
+                    const parentJeet = await client.simsAIClient.getJeet(
+                        currentJeet.inReplyToStatusId
+                    );
+                    if (parentJeet) {
+                        await processThread(parentJeet, depth + 1);
                     }
-                })
-            );
+                } catch (error) {
+                    elizaLogger.error(
+                        `Error processing parent jeet ${currentJeet.inReplyToStatusId}:`,
+                        error
+                    );
+                }
+            }
         } catch (error) {
-            elizaLogger.error("Error in processThread:", {
-                jeetId: currentJeet.id,
-                error: error instanceof Error ? error.message : error,
-                stack: error instanceof Error ? error.stack : undefined,
-            });
+            elizaLogger.error(
+                `Error in processThread for jeet ${currentJeet.id}:`,
+                error
+            );
+            if (error instanceof Error) {
+                elizaLogger.error("Error details:", {
+                    message: error.message,
+                    stack: error.stack,
+                });
+            }
         }
     }
 
+    // Start processing with the initial jeet
     await processThread(jeet, 0);
 
     elizaLogger.debug("Final thread built:", {
@@ -228,6 +154,84 @@ export async function buildConversationThread(
     });
 
     return thread;
+}
+
+/**
+ * Validates a jeet object has required properties
+ * @param jeet The jeet to validate
+ * @throws TypeError if required properties are missing or invalid
+ */
+function validateJeet(jeet: Jeet) {
+    if (typeof jeet.id !== "string") {
+        elizaLogger.error("Jeet ID is not a string:", jeet.id);
+        throw new TypeError("Jeet ID must be a string");
+    }
+
+    if (typeof jeet.agentId !== "string") {
+        elizaLogger.error("Agent ID is not a string:", jeet.agentId);
+        throw new TypeError("Agent ID must be a string");
+    }
+
+    if (jeet.conversationId && typeof jeet.conversationId !== "string") {
+        elizaLogger.error(
+            "Conversation ID is not a string:",
+            jeet.conversationId
+        );
+        throw new TypeError("Conversation ID must be a string");
+    }
+}
+
+/**
+ * Processes and stores a jeet's memory in the runtime
+ * @param jeet The jeet to process
+ * @param client The ClientBase instance
+ */
+async function processJeetMemory(jeet: Jeet, client: ClientBase) {
+    const roomId = stringToUuid(
+        `${jeet.conversationId || jeet.id}-${client.runtime.agentId}`
+    );
+    const userId = stringToUuid(jeet.agentId);
+
+    // Ensure connection exists
+    if (jeet.agent) {
+        await client.runtime.ensureConnection(
+            userId,
+            roomId,
+            jeet.agent.username,
+            jeet.agent.name,
+            "jeeter"
+        );
+    }
+
+    // Create memory if it doesn't exist
+    const existingMemory = await client.runtime.messageManager.getMemoryById(
+        stringToUuid(jeet.id + "-" + client.runtime.agentId)
+    );
+
+    if (!existingMemory) {
+        await client.runtime.messageManager.createMemory({
+            id: stringToUuid(jeet.id + "-" + client.runtime.agentId),
+            agentId: client.runtime.agentId,
+            content: {
+                text: jeet.text || "",
+                source: "jeeter",
+                url: jeet.permanentUrl,
+                inReplyTo: jeet.inReplyToStatusId
+                    ? stringToUuid(
+                          jeet.inReplyToStatusId + "-" + client.runtime.agentId
+                      )
+                    : undefined,
+            },
+            createdAt: jeet.createdAt
+                ? new Date(jeet.createdAt).getTime()
+                : jeet.timestamp
+                  ? jeet.timestamp * 1000
+                  : Date.now(),
+            roomId,
+            userId: userId,
+            embedding: getEmbeddingZeroVector(),
+        });
+    }
 }
 
 /**
@@ -260,6 +264,13 @@ export async function sendJeet(
         const finalJeet: Jeet = {
             ...result,
             permanentUrl: `${SIMSAI_API_URL}/${jeetUsername}/status/${result.id}`,
+            hashtags: [],
+            mentions: [],
+            photos: [],
+            thread: [],
+            urls: [],
+            videos: [],
+            media: [],
         };
 
         sentJeets.push(finalJeet);
@@ -281,7 +292,9 @@ export async function sendJeet(
         },
         roomId,
         embedding: getEmbeddingZeroVector(),
-        createdAt: new Date(jeet.createdAt).getTime(),
+        createdAt: jeet.createdAt
+            ? new Date(jeet.createdAt).getTime()
+            : Date.now(),
     }));
 
     return memories;

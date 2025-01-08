@@ -2,7 +2,16 @@ import { EventEmitter } from "events";
 import { SIMSAI_API_URL } from "./constants";
 import { elizaLogger } from "@ai16z/eliza";
 import { CookieJar } from "tough-cookie";
-import { Agent, Jeet, JeetResponse, SimsAIProfile } from "./types";
+import {
+    Agent,
+    ApiLikeResponse,
+    ApiRejeetResponse,
+    ApiSearchResponse,
+    ApiConversationResponse,
+    Jeet,
+    JeetResponse,
+    SimsAIProfile,
+} from "./types";
 
 export class SimsAIClient extends EventEmitter {
     private apiKey: string;
@@ -61,7 +70,44 @@ export class SimsAIClient extends EventEmitter {
     }
 
     async getJeet(jeetId: string): Promise<Jeet> {
-        return await this.makeRequest<Jeet>(`/jeets/${jeetId}`);
+        return await this.makeRequest<Jeet>(`/public/jeets/${jeetId}`);
+    }
+
+    async getJeetConversation(jeetId: string): Promise<Jeet[]> {
+        const response = await this.makeRequest<ApiConversationResponse>(
+            `/jeets/${jeetId}/conversation`
+        );
+
+        return response.data.map((jeet) => {
+            const author = response.includes.users.find(
+                (user) => user.id === jeet.author_id
+            );
+
+            return {
+                id: jeet.id,
+                text: jeet.text,
+                createdAt: jeet.created_at,
+                agentId: jeet.author_id,
+                inReplyToStatusId: jeet.in_reply_to_status_id,
+                agent: author
+                    ? {
+                          id: author.id,
+                          name: author.name,
+                          username: author.username,
+                          type: author.type,
+                          avatar_url: author.avatar_url,
+                      }
+                    : undefined,
+                public_metrics: jeet.public_metrics,
+                media: [],
+                hashtags: [],
+                mentions: [],
+                photos: [],
+                thread: [],
+                urls: [],
+                videos: [],
+            };
+        });
     }
 
     async getHomeTimeline(
@@ -88,9 +134,48 @@ export class SimsAIClient extends EventEmitter {
             max_results: Math.min(maxResults, 100).toString(),
         });
 
-        return await this.makeRequest<JeetResponse>(
+        const response = await this.makeRequest<ApiSearchResponse>(
             `/jeets/search/recent?${params.toString()}`
         );
+
+        const jeets: Jeet[] = response.data.map((jeet) => {
+            const author = response.includes.users.find(
+                (user) => user.id === jeet.author_id
+            );
+
+            return {
+                id: jeet.id,
+                text: jeet.text,
+                type: "jeet",
+                createdAt: jeet.created_at,
+                agentId: jeet.author_id,
+                agent: author
+                    ? {
+                          id: author.id,
+                          name: author.name,
+                          username: author.username,
+                          type: author.type,
+                          avatar_url: author.avatar_url,
+                      }
+                    : undefined,
+                public_metrics: jeet.public_metrics,
+                media: [],
+                hashtags: [],
+                mentions: [],
+                photos: [],
+                thread: [],
+                urls: [],
+                videos: [],
+            };
+        });
+
+        return {
+            jeets,
+            nextCursor:
+                response.meta?.result_count > maxResults
+                    ? response.data[response.data.length - 1]?.created_at
+                    : undefined,
+        };
     }
 
     async getMentions(maxResults: number = 20): Promise<JeetResponse> {
@@ -111,7 +196,7 @@ export class SimsAIClient extends EventEmitter {
         mediaUrls?: string[],
         quoteJeetId?: string
     ): Promise<Jeet> {
-        const payload: any = {
+        const payload = {
             text,
             ...(inReplyToJeetId && { in_reply_to_jeet_id: inReplyToJeetId }),
             ...(mediaUrls?.length && { media_urls: mediaUrls }),
@@ -124,10 +209,39 @@ export class SimsAIClient extends EventEmitter {
         });
     }
 
-    async rejeetJeet(jeetId: string): Promise<Jeet> {
-        return await this.makeRequest<Jeet>(`/jeets/${jeetId}/rejeets`, {
+    async likeJeet(jeetId: string): Promise<boolean> {
+        const response = await this.makeRequest<ApiLikeResponse>("/likes", {
             method: "POST",
+            body: JSON.stringify({ jeetId }),
         });
+
+        return response.data.liked;
+    }
+
+    async rejeetJeet(jeetId: string): Promise<Jeet> {
+        const response = await this.makeRequest<ApiRejeetResponse>(
+            `/jeets/${jeetId}/rejeets`,
+            {
+                method: "POST",
+            }
+        );
+
+        const jeet = response.data.jeet;
+        return {
+            id: jeet.id,
+            type: jeet.type,
+            createdAt: jeet.created_at,
+            agentId: jeet.author_id,
+            text: jeet.referenced_jeet.text,
+            public_metrics: jeet.referenced_jeet.public_metrics,
+            media: [],
+            hashtags: [],
+            mentions: [],
+            photos: [],
+            thread: [],
+            urls: [],
+            videos: [],
+        };
     }
 
     async quoteRejeet(jeetId: string, text: string): Promise<Jeet> {
