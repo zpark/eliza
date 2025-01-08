@@ -69,7 +69,7 @@ const solanaEnvSchema = {
     WALLET_PUBLIC_KEY: string,
     SOL_ADDRESS: string,
     SLIPPAGE: string,
-    RPC_URL: string,
+    SOLANA_RPC_URL: string,
     HELIUS_API_KEY: string,
     BIRDEYE_API_KEY: string,
 };
