@@ -27,7 +27,7 @@ export class JeeterInteractionClient {
     private likedJeets: Set<string> = new Set();
     private rejeetedJeets: Set<string> = new Set();
     private quotedJeets: Set<string> = new Set();
-
+    private repliedJeets: Set<string> = new Set();
     constructor(
         private client: ClientBase,
         private runtime: IAgentRuntime
@@ -35,17 +35,27 @@ export class JeeterInteractionClient {
 
     private async hasInteracted(
         jeetId: string,
-        type: JeetInteraction["type"]
+        type: JeetInteraction["type"],
+        inReplyToStatusId?: string
     ): Promise<boolean> {
+        // If this is a reply to our jeet, always allow response
+        if (type === "reply" && inReplyToStatusId) {
+            const parentJeet = await this.client.getJeet(inReplyToStatusId);
+            if (parentJeet?.agentId === this.client.profile.id) {
+                return false; // Allow replying to replies to our jeets
+            }
+        }
+
+        // Otherwise check if we've already interacted
         switch (type) {
-            case "reply":
-                return false; // Always allow replies to direct interactions
             case "like":
                 return this.likedJeets.has(jeetId);
             case "rejeet":
                 return this.rejeetedJeets.has(jeetId);
             case "quote":
                 return this.quotedJeets.has(jeetId);
+            case "reply":
+                return this.repliedJeets.has(jeetId);
             default:
                 return false;
         }
@@ -61,6 +71,9 @@ export class JeeterInteractionClient {
                 break;
             case "quote":
                 this.quotedJeets.add(jeetId);
+                break;
+            case "reply":
+                this.repliedJeets.add(jeetId);
                 break;
         }
     }
@@ -101,10 +114,6 @@ export class JeeterInteractionClient {
                 `@${jeeterUsername}`,
                 20
             );
-            elizaLogger.log(
-                "Search response received:",
-                JSON.stringify(searchResponse)
-            );
 
             // Fetch user's own posts
             let homeTimeline = await this.client.getCachedTimeline();
@@ -116,9 +125,6 @@ export class JeeterInteractionClient {
 
             // Get comments on user's posts
             const commentsOnPosts = await this.getCommentsOnPosts(homeTimeline);
-            elizaLogger.log(
-                `Found ${commentsOnPosts.length} comments on posts`
-            );
 
             // Combine mentions and comments, remove duplicates
             const allInteractions = [
@@ -197,6 +203,7 @@ export class JeeterInteractionClient {
                     });
 
                     this.client.lastCheckedJeetId = jeet.id;
+
                     elizaLogger.log(
                         `Successfully processed interaction ${jeet.id}`
                     );
@@ -256,9 +263,6 @@ export class JeeterInteractionClient {
                             return timeB - timeA; // Newest first
                         });
 
-                    elizaLogger.log(
-                        `Found ${validComments.length} valid comments for post ${post.id}`
-                    );
                     comments.push(...validComments);
                 }
 
@@ -396,7 +400,11 @@ export class JeeterInteractionClient {
                 for (const interaction of response.interactions) {
                     try {
                         if (
-                            await this.hasInteracted(jeet.id, interaction.type)
+                            await this.hasInteracted(
+                                jeet.id,
+                                interaction.type,
+                                jeet.inReplyToStatusId
+                            )
                         ) {
                             elizaLogger.log(
                                 `Skipping ${interaction.type} for jeet ${jeet.id} - already performed`
@@ -465,6 +473,19 @@ export class JeeterInteractionClient {
 
                             case "reply":
                                 if (interaction.text) {
+                                    if (
+                                        await this.hasInteracted(
+                                            jeet.id,
+                                            "reply",
+                                            jeet.inReplyToStatusId
+                                        )
+                                    ) {
+                                        elizaLogger.log(
+                                            `Already replied to jeet ${jeet.id}`
+                                        );
+                                        continue;
+                                    }
+
                                     const replyResponse = {
                                         ...response,
                                         text: interaction.text,
@@ -502,6 +523,8 @@ export class JeeterInteractionClient {
                                         responseMessages,
                                         state
                                     );
+
+                                    this.recordInteraction(jeet.id, "reply");
                                 }
                                 break;
 

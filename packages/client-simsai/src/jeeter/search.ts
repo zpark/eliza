@@ -72,8 +72,22 @@ export class JeeterSearchClient {
     }
 
     async start() {
-        const handleJeeterInteractionsLoop = () => {
-            this.engageWithSearchTerms();
+        let isRunning = false;
+        const handleJeeterInteractionsLoop = async () => {
+            if (isRunning) {
+                elizaLogger.log("Previous engagement still running, skipping");
+                return;
+            }
+
+            try {
+                isRunning = true;
+                await this.engageWithSearchTerms();
+            } catch (error) {
+                elizaLogger.error("Error in engagement loop:", error);
+            } finally {
+                isRunning = false;
+            }
+
             setTimeout(
                 handleJeeterInteractionsLoop,
                 (Math.floor(Math.random() * (120 - 60 + 1)) + 60) * 60 * 1000
@@ -660,7 +674,7 @@ Text: ${jeet.text}
                         }
 
                         elizaLogger.log(
-                            `Successfully ${interaction.type} interaction for jeet ${selectedJeet.id}`
+                            `Successfully performed ${interaction.type} interaction for jeet ${selectedJeet.id}`
                         );
                     } catch (error) {
                         elizaLogger.error(
