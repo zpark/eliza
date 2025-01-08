@@ -215,13 +215,19 @@ export class SqliteDatabaseAdapter
         const content = JSON.stringify(memory.content);
         const createdAt = memory.createdAt ?? Date.now();
 
+        let embeddingValue: Float32Array = new Float32Array(384);
+        // If embedding is not available, we just load an array with a length of 384
+        if (memory?.embedding && memory?.embedding?.length > 0) {
+            embeddingValue = new Float32Array(memory.embedding);
+        }
+
         // Insert the memory with the appropriate 'unique' value
         const sql = `INSERT OR REPLACE INTO memories (id, type, content, embedding, userId, roomId, agentId, \`unique\`, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.db.prepare(sql).run(
             memory.id ?? v4(),
             tableName,
             content,
-            new Float32Array(memory.embedding!), // Store as Float32Array
+            embeddingValue,
             memory.userId,
             memory.roomId,
             memory.agentId,
