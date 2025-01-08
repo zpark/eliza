@@ -4,8 +4,9 @@
     "sideEffects": false,
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "tsc -b && vite build",
+        "extract-version": "./version.sh",
+        "dev": "pnpm run extract-version && vite",
+        "build": "pnpm run extract-version && tsc -b && vite build",
         "preview": "vite preview",
         "lint": "eslint ."
     },
@@ -32,6 +33,7 @@
         "react-dom": "^19.0.0",
         "react-router": "^7.1.1",
         "react-router-dom": "^7.1.1",
+        "semver": "^7.6.3",
         "tailwind-merge": "^2.6.0",
         "tailwindcss-animate": "^1.0.7",
         "vite-plugin-compression": "^0.5.1"
@@ -41,6 +43,7 @@
         "@types/node": "^22.10.5",
         "@types/react": "^19.0.3",
         "@types/react-dom": "^19.0.2",
+        "@types/semver": "^7.5.8",
         "@typescript-eslint/eslint-plugin": "^8.19.1",
         "@typescript-eslint/parser": "^8.19.1",
         "@vitejs/plugin-react-swc": "^3.5.0",

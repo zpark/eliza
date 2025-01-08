@@ -15,7 +15,6 @@ export default function ConnectionStatus() {
             const start = performance.now();
             const data = await apiClient.getAgents();
             const end = performance.now();
-            console.log(end - start, "took");
             setQueryTime(end - start);
             return data;
         },

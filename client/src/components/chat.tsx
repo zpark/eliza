@@ -44,12 +44,19 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
 
-    useEffect(() => {
+    const scrollToBottom = () => {
         if (messagesContainerRef.current) {
             messagesContainerRef.current.scrollTop =
                 messagesContainerRef.current.scrollHeight;
         }
+    };
+    useEffect(() => {
+        scrollToBottom();
     }, [queryClient.getQueryData(["messages", agentId])]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, []);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
