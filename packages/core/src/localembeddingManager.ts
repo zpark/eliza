@@ -3,19 +3,20 @@ import { fileURLToPath } from "url";
 import { FlagEmbedding, EmbeddingModel } from "fastembed";
 import elizaLogger from "./logger";
 
-class EmbeddingModelManager {
-    private static instance: EmbeddingModelManager | null;
+class LocalEmbeddingModelManager {
+    private static instance: LocalEmbeddingModelManager | null;
     private model: FlagEmbedding | null = null;
     private initPromise: Promise<void> | null = null;
     private initializationLock = false;
 
     private constructor() {}
 
-    public static getInstance(): EmbeddingModelManager {
-        if (!EmbeddingModelManager.instance) {
-            EmbeddingModelManager.instance = new EmbeddingModelManager();
+    public static getInstance(): LocalEmbeddingModelManager {
+        if (!LocalEmbeddingModelManager.instance) {
+            LocalEmbeddingModelManager.instance =
+                new LocalEmbeddingModelManager();
         }
-        return EmbeddingModelManager.instance;
+        return LocalEmbeddingModelManager.instance;
     }
 
     private async getRootPath(): Promise<string> {
@@ -169,11 +170,11 @@ class EmbeddingModelManager {
 
     // For testing purposes
     public static resetInstance(): void {
-        if (EmbeddingModelManager.instance) {
-            EmbeddingModelManager.instance.reset();
-            EmbeddingModelManager.instance = null;
+        if (LocalEmbeddingModelManager.instance) {
+            LocalEmbeddingModelManager.instance.reset();
+            LocalEmbeddingModelManager.instance = null;
         }
     }
 }
 
-export default EmbeddingModelManager;
+export default LocalEmbeddingModelManager;

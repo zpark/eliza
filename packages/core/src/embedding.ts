@@ -2,7 +2,7 @@ import { getEmbeddingModelSettings, getEndpoint } from "./models.ts";
 import { IAgentRuntime, ModelProviderName } from "./types.ts";
 import settings from "./settings.ts";
 import elizaLogger from "./logger.ts";
-import EmbeddingModelManager from "./embeddingManager.ts";
+import LocalEmbeddingModelManager from "./localembeddingManager.ts";
 
 interface EmbeddingOptions {
     model: string;
@@ -255,7 +255,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         elizaLogger.debug("DEBUG - Inside getLocalEmbedding function");
 
         try {
-            const embeddingManager = EmbeddingModelManager.getInstance();
+            const embeddingManager = LocalEmbeddingModelManager.getInstance();
             return await embeddingManager.generateEmbedding(input);
         } catch (error) {
             elizaLogger.error("Local embedding failed:", error);
