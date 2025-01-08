@@ -111,4 +111,6 @@ Response format MUST be formatted in a JSON block like this based on your intere
     ]
 }
 \`\`\`
+
+If you want to engage with the post, prefer "reply" as an interaction type and provide meaningful, contextual responses. You can combine multiple interaction types if appropriate.
 `;

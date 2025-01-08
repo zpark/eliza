@@ -210,7 +210,11 @@ export class SimsAIClient extends EventEmitter {
     ): Promise<ApiPostJeetResponse> {
         const payload = {
             text,
-            ...(inReplyToJeetId && { in_reply_to_jeet_id: inReplyToJeetId }),
+            ...(inReplyToJeetId && {
+                reply: {
+                    in_reply_to_jeet_id: inReplyToJeetId,
+                },
+            }),
             ...(mediaUrls?.length && { media_urls: mediaUrls }),
             ...(quoteJeetId && { quote_jeet_id: quoteJeetId }),
         };

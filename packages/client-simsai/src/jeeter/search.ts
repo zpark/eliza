@@ -11,7 +11,6 @@ import {
 } from "@ai16z/eliza";
 import { buildConversationThread, sendJeet, wait } from "./utils";
 import {
-    ApiRejeetResponse,
     EnhancedResponseContent,
     Jeet,
     JeetInteraction,
@@ -126,32 +125,29 @@ export class JeeterSearchClient {
                 discoveryTimeline.jeets || []
             );
 
+            // Get combined jeets and rank them
             const jeetsToProcess =
                 (searchResponse.jeets?.length ?? 0) > 0
                     ? searchResponse.jeets
                     : discoveryTimeline.jeets || [];
 
-            const validJeets = jeetsToProcess.filter(
-                (jeet) =>
-                    jeet &&
-                    jeet.text &&
-                    jeet.agent?.username !==
-                        this.runtime.getSetting("SIMSAI_USERNAME")
-            );
+            // Use our new ranking method
+            elizaLogger.log("Ranking jeets for engagement");
+            const rankedJeets = await this.filterAndRankJeets(jeetsToProcess);
 
-            const slicedJeets = validJeets
-                .sort(() => Math.random() - 0.5)
-                .slice(0, 20);
-
-            if (slicedJeets.length === 0) {
+            if (rankedJeets.length === 0) {
                 elizaLogger.log("No valid jeets found for processing");
                 return;
             }
 
+            elizaLogger.log(
+                `Found ${rankedJeets.length} ranked jeets to consider`
+            );
             const prompt = this.generateSelectionPrompt(
-                slicedJeets,
+                rankedJeets,
                 searchTerm
             );
+
             const mostInterestingJeetResponse = await generateText({
                 runtime: this.runtime,
                 context: prompt,
@@ -159,7 +155,7 @@ export class JeeterSearchClient {
             });
 
             const jeetId = mostInterestingJeetResponse.trim();
-            const selectedJeet = slicedJeets.find(
+            const selectedJeet = rankedJeets.find(
                 (jeet) =>
                     jeet.id.toString().includes(jeetId) ||
                     jeetId.includes(jeet.id.toString())
@@ -170,12 +166,22 @@ export class JeeterSearchClient {
                 return;
             }
 
+            elizaLogger.log(`Selected jeet ${selectedJeet.id} for interaction`);
+
             const previousInteractions = {
                 replied: await this.hasInteracted(selectedJeet.id, "reply"),
                 liked: await this.hasInteracted(selectedJeet.id, "like"),
                 rejeeted: await this.hasInteracted(selectedJeet.id, "rejeet"),
                 quoted: await this.hasInteracted(selectedJeet.id, "quote"),
             };
+
+            // Skip if we've already interacted with this jeet
+            if (Object.values(previousInteractions).some((v) => v)) {
+                elizaLogger.log(
+                    `Already interacted with jeet ${selectedJeet.id}, skipping`
+                );
+                return;
+            }
 
             await this.processSelectedJeet(
                 selectedJeet,
@@ -209,25 +215,107 @@ Text: ${jeet.text}
 
     private generateSelectionPrompt(jeets: Jeet[], searchTerm: string): string {
         return `
-Here are some jeets related to the search term "${searchTerm}":
+    Here are some jeets related to "${searchTerm}". As ${this.runtime.character.name}, you're looking for jeets that would benefit from your engagement and expertise.
 
-${jeets
-    .map(
-        (jeet) => `
-ID: ${jeet.id}
-From: ${jeet.agent?.name || "Unknown"} (@${jeet.agent?.username || "Unknown"})
-Text: ${jeet.text}`
-    )
-    .join("\n---\n")}
+    ${jeets
+        .map(
+            (jeet) => `
+    ID: ${jeet.id}
+    From: ${jeet.agent?.name || "Unknown"} (@${jeet.agent?.username || "Unknown"})
+    Text: ${jeet.text}
+    Metrics: ${JSON.stringify(jeet.public_metrics || {})}`
+        )
+        .join("\n---\n")}
 
-Which jeet is the most interesting and relevant for ${this.runtime.character.name} to reply to?
-Please provide only the ID of the jeet in your response.
-Notes:
-- Respond to English jeets only
-- Respond to jeets that don't have a lot of hashtags, links, URLs or images
-- Respond to jeets that are not rejeets
-- Consider jeets that could be quoted or rejeeted
-- ONLY respond with the ID of the jeet`;
+    Which jeet would be most valuable to respond to as ${this.runtime.character.name}? Consider:
+    - Posts that raise questions or points you can meaningfully contribute to
+    - Posts that align with your expertise
+    - Posts that could start a productive discussion
+    - Posts in English without excessive hashtags/links
+    - Avoid already heavily discussed posts or simple announcements
+    - Avoid rejeets when possible
+
+    Please ONLY respond with the ID of the single most promising jeet to engage with.`;
+    }
+
+    private scoreJeetForEngagement(jeet: Jeet): number {
+        let score = 0;
+
+        // Prefer jeets without too many replies already
+        if (jeet.public_metrics?.reply_count < 3) score += 3;
+        else if (jeet.public_metrics?.reply_count < 5) score += 1;
+
+        // Avoid heavily rejeeted/quoted content
+        if (jeet.public_metrics?.rejeet_count > 10) score -= 2;
+        if (jeet.public_metrics?.quote_count > 5) score -= 1;
+
+        // Prefer original content over rejeets
+        if (jeet.isRejeet) score -= 3;
+
+        // Avoid jeets with lots of hashtags/links
+        const hashtagCount = (jeet.text?.match(/#/g) || []).length;
+        const urlCount = (jeet.text?.match(/https?:\/\//g) || []).length;
+        score -= hashtagCount + urlCount;
+
+        // Prefer jeets with meaningful length (not too short, not too long)
+        const textLength = jeet.text?.length || 0;
+        if (textLength > 50 && textLength < 200) score += 2;
+
+        // Prefer jeets that seem to ask questions or invite discussion
+        if (jeet.text?.includes("?")) score += 2;
+        const discussionWords = [
+            "thoughts",
+            "opinion",
+            "what if",
+            "how about",
+            "discuss",
+        ];
+        if (
+            discussionWords.some((word) =>
+                jeet.text?.toLowerCase().includes(word)
+            )
+        )
+            score += 2;
+
+        return score;
+    }
+
+    private async filterAndRankJeets(jeets: Jeet[]): Promise<Jeet[]> {
+        // First filter out basic invalid jeets
+        const basicValidJeets = jeets.filter(
+            (jeet) =>
+                jeet &&
+                jeet.text &&
+                jeet.agent?.username !==
+                    this.runtime.getSetting("SIMSAI_USERNAME")
+        );
+
+        // Then check interaction status for each jeet
+        const validJeets = [];
+        for (const jeet of basicValidJeets) {
+            const hasInteracted = await this.hasInteracted(jeet.id, "reply");
+            if (!hasInteracted) {
+                validJeets.push(jeet);
+            }
+        }
+
+        // Score and sort jeets
+        const scoredJeets = validJeets.map((jeet) => ({
+            jeet,
+            score: this.scoreJeetForEngagement(jeet),
+        }));
+
+        // Sort by score and add some randomness for top jeets
+        scoredJeets.sort((a, b) => b.score - a.score);
+
+        // Take top 20 and add slight randomization while maintaining general score order
+        const topJeets = scoredJeets.slice(0, 20).map(({ jeet }, index) => ({
+            jeet,
+            randomScore: Math.random() * 0.3 + (1 - index / 20), // Maintain rough ordering with some randomness
+        }));
+
+        topJeets.sort((a, b) => b.randomScore - a.randomScore);
+        return topJeets.map(({ jeet }) => jeet);
     }
 
     private async processSelectedJeet(
@@ -341,6 +429,8 @@ Notes:
             formattedConversation,
             thread
         );
+
+        this.recordInteraction(selectedJeet.id, "reply");
     }
 
     private async handleJeetInteractions(
@@ -418,8 +508,23 @@ Notes:
                 interactions: rawResponse.interactions || [],
             };
 
-            elizaLogger.debug("Processed response:", response);
+            // Add detailed interaction logging here
+            elizaLogger.log(`Response details for jeet ${selectedJeet.id}:`, {
+                text:
+                    response.text?.slice(0, 100) +
+                    (response.text?.length > 100 ? "..." : ""), // Log first 100 chars
+                action: response.action,
+                shouldLike: response.shouldLike,
+                interactions: response.interactions.map((i) => ({
+                    type: i.type,
+                    hasText: !!i.text,
+                    textPreview:
+                        i.text?.slice(0, 50) +
+                        (i.text?.length > 50 ? "..." : ""), // Log first 50 chars
+                })),
+            });
 
+            // Then continue with the existing response validation
             if (!response.interactions) {
                 throw new TypeError("Response interactions are undefined");
             }
@@ -507,12 +612,6 @@ Notes:
                                     const replyResponse = {
                                         ...response,
                                         text: interaction.text,
-                                        // Don't convert to UUID here
-                                        inReplyTo: stringToUuid(
-                                            selectedJeet.id +
-                                                "-" +
-                                                this.runtime.agentId
-                                        ),
                                     };
 
                                     const responseMessages = await sendJeet(
@@ -522,7 +621,7 @@ Notes:
                                         this.runtime.getSetting(
                                             "SIMSAI_USERNAME"
                                         ),
-                                        selectedJeet.id // Pass the raw jeet ID for reply
+                                        selectedJeet.id
                                     );
 
                                     state =
@@ -563,6 +662,11 @@ Notes:
                                 );
                                 break;
                         }
+
+                        this.recordInteraction(
+                            selectedJeet.id,
+                            interaction.type
+                        );
                     } catch (error) {
                         elizaLogger.error(
                             `Error processing interaction ${interaction.type} for jeet ${selectedJeet.id}:`,

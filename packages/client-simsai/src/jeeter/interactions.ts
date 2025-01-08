@@ -325,6 +325,27 @@ export class JeeterInteractionClient {
                 timeline: `# ${this.runtime.character.name}'s Home Timeline\n\n${formattedHomeTimeline}`,
             });
 
+            elizaLogger.log("Checking if should respond");
+            const shouldRespondContext = composeContext({
+                state,
+                template:
+                    this.runtime.character?.templates
+                        ?.jeeterShouldRespondTemplate ||
+                    jeeterShouldRespondTemplate,
+            });
+
+            const shouldRespond = await generateShouldRespond({
+                runtime: this.runtime,
+                context: shouldRespondContext,
+                modelClass: ModelClass.MEDIUM,
+            });
+
+            if (shouldRespond !== "RESPOND") {
+                elizaLogger.log(`Not responding to jeet ${jeet.id}`);
+                return { text: "Response Decision:", action: shouldRespond };
+            }
+
+            // Only create memory and process interaction if we're going to respond
             const jeetId = stringToUuid(jeet.id + "-" + this.runtime.agentId);
             const jeetExists =
                 await this.runtime.messageManager.getMemoryById(jeetId);
@@ -351,26 +372,6 @@ export class JeeterInteractionClient {
                         : Date.now(),
                 };
                 await this.client.saveRequestMessage(memoryMessage, state);
-            }
-
-            elizaLogger.log("Generating response");
-            const shouldRespondContext = composeContext({
-                state,
-                template:
-                    this.runtime.character?.templates
-                        ?.jeeterShouldRespondTemplate ||
-                    jeeterShouldRespondTemplate,
-            });
-
-            const shouldRespond = await generateShouldRespond({
-                runtime: this.runtime,
-                context: shouldRespondContext,
-                modelClass: ModelClass.MEDIUM,
-            });
-
-            if (shouldRespond !== "RESPOND") {
-                elizaLogger.log(`Not responding to jeet ${jeet.id}`);
-                return { text: "Response Decision:", action: shouldRespond };
             }
 
             const context = composeContext({
@@ -407,114 +408,123 @@ export class JeeterInteractionClient {
                 }
             }
 
-            for (const interaction of response.interactions) {
-                try {
-                    // Check if we've already performed this type of interaction
-                    if (await this.hasInteracted(jeet.id, interaction.type)) {
-                        elizaLogger.log(
-                            `Skipping ${interaction.type} for jeet ${jeet.id} - already performed`
-                        );
-                        continue;
-                    }
+            // Process interactions
+            if (response.interactions.length > 0) {
+                for (const interaction of response.interactions) {
+                    try {
+                        if (
+                            await this.hasInteracted(jeet.id, interaction.type)
+                        ) {
+                            elizaLogger.log(
+                                `Skipping ${interaction.type} for jeet ${jeet.id} - already performed`
+                            );
+                            continue;
+                        }
 
-                    switch (interaction.type) {
-                        case "rejeet":
-                            await this.client.simsAIClient.rejeetJeet(jeet.id);
-                            elizaLogger.log(`Rejeeted jeet ${jeet.id}`);
-                            this.recordInteraction(jeet.id, "rejeet");
-                            break;
-
-                        case "quote":
-                            if (interaction.text) {
-                                await this.client.simsAIClient.quoteRejeet(
-                                    jeet.id,
-                                    interaction.text
-                                );
-                                elizaLogger.log(
-                                    `Quote rejeeted jeet ${jeet.id}`
-                                );
-                                this.recordInteraction(jeet.id, "quote");
-                            }
-                            break;
-
-                        case "reply":
-                            if (interaction.text) {
-                                const replyResponse = {
-                                    ...response,
-                                    text: interaction.text,
-                                    inReplyTo: jeetId,
-                                };
-
-                                const responseMessages = await sendJeet(
-                                    this.client,
-                                    replyResponse,
-                                    message.roomId,
-                                    this.client.profile.username,
-                                    jeet.id
-                                );
-
-                                state =
-                                    await this.runtime.updateRecentMessageState(
-                                        state
-                                    );
-
-                                for (const [
-                                    idx,
-                                    responseMessage,
-                                ] of responseMessages.entries()) {
-                                    responseMessage.content.action =
-                                        idx === responseMessages.length - 1
-                                            ? response.action
-                                            : "CONTINUE";
-                                    await this.runtime.messageManager.createMemory(
-                                        responseMessage
+                        switch (interaction.type) {
+                            case "rejeet":
+                                try {
+                                    const rejeetResult =
+                                        await this.client.simsAIClient.rejeetJeet(
+                                            jeet.id
+                                        );
+                                    if (rejeetResult?.id) {
+                                        // Check for Jeet ID directly
+                                        elizaLogger.log(
+                                            `Rejeeted jeet ${jeet.id}`
+                                        );
+                                        this.recordInteraction(
+                                            jeet.id,
+                                            "rejeet"
+                                        );
+                                    } else {
+                                        elizaLogger.error(
+                                            `Failed to rejeet jeet ${jeet.id}: Invalid response`
+                                        );
+                                    }
+                                } catch (error) {
+                                    elizaLogger.error(
+                                        `Error rejeeting jeet ${jeet.id}:`,
+                                        error
                                     );
                                 }
+                                break;
 
-                                await this.runtime.evaluate(message, state);
-                                await this.runtime.processActions(
-                                    message,
-                                    responseMessages,
-                                    state
+                            case "quote":
+                                if (interaction.text) {
+                                    await this.client.simsAIClient.quoteRejeet(
+                                        jeet.id,
+                                        interaction.text
+                                    );
+                                    elizaLogger.log(
+                                        `Quote rejeeted jeet ${jeet.id}`
+                                    );
+                                    this.recordInteraction(jeet.id, "quote");
+                                }
+                                break;
+
+                            case "reply":
+                                if (interaction.text) {
+                                    const replyResponse = {
+                                        ...response,
+                                        text: interaction.text,
+                                    };
+
+                                    const responseMessages = await sendJeet(
+                                        this.client,
+                                        replyResponse,
+                                        message.roomId,
+                                        this.client.profile.username,
+                                        jeet.id // Pass raw jeet ID
+                                    );
+
+                                    state =
+                                        await this.runtime.updateRecentMessageState(
+                                            state
+                                        );
+
+                                    for (const [
+                                        idx,
+                                        responseMessage,
+                                    ] of responseMessages.entries()) {
+                                        responseMessage.content.action =
+                                            idx === responseMessages.length - 1
+                                                ? response.action
+                                                : "CONTINUE";
+                                        await this.runtime.messageManager.createMemory(
+                                            responseMessage
+                                        );
+                                    }
+
+                                    await this.runtime.evaluate(message, state);
+                                    await this.runtime.processActions(
+                                        message,
+                                        responseMessages,
+                                        state
+                                    );
+                                }
+                                break;
+
+                            case "none":
+                                elizaLogger.log(
+                                    `No interaction needed for jeet ${jeet.id}`
                                 );
-                            }
-                            break;
-
-                        case "none":
-                            elizaLogger.log(
-                                `No interaction needed for jeet ${jeet.id}`
-                            );
-                            break;
-                    }
-                } catch (error) {
-                    elizaLogger.error(
-                        `Error processing interaction ${interaction.type}:`,
-                        error
-                    );
-                    if (error instanceof Error) {
-                        elizaLogger.error("Error details:", {
-                            message: error.message,
-                            stack: error.stack,
-                        });
+                                break;
+                        }
+                    } catch (error) {
+                        elizaLogger.error(
+                            `Error processing interaction ${interaction.type}:`,
+                            error
+                        );
                     }
                 }
             }
-
-            const interactionSummary = {
-                jeetId: jeet.id,
-                liked: response.shouldLike,
-                interactions: response.interactions.map((i) => i.type),
-                replyText: response.text,
-                quoteTexts: response.interactions
-                    .filter((i) => i.type === "quote")
-                    .map((i) => i.text),
-            };
 
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${
                 jeet.id
             } - ${jeet.agent?.username || "unknown"}: ${
                 jeet.text
-            }\nAgent's Output:\n${JSON.stringify(response)}\n\nInteraction Summary:\n${JSON.stringify(interactionSummary, null, 2)}`;
+            }\nAgent's Output:\n${JSON.stringify(response)}`;
 
             await this.runtime.cacheManager.set(
                 `jeeter/jeet_generation_${jeet.id}.txt`,
