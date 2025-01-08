@@ -1,4 +1,10 @@
-import { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
+import {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
@@ -91,7 +97,7 @@ export class WalletProvider {
                 const data = await response.json();
                 return data;
             } catch (error) {
-                console.error(`Attempt ${i + 1} failed:`, error);
+                elizaLogger.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
                     const delay = PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i);
@@ -101,7 +107,7 @@ export class WalletProvider {
             }
         }
 
-        console.error(
+        elizaLogger.error(
             "All attempts failed. Throwing the last error:",
             lastError
         );
@@ -114,10 +120,10 @@ export class WalletProvider {
             const cachedValue = this.cache.get<WalletPortfolio>(cacheKey);
 
             if (cachedValue) {
-                console.log("Cache hit for fetchPortfolioValue");
+                elizaLogger.log("Cache hit for fetchPortfolioValue");
                 return cachedValue;
             }
-            console.log("Cache miss for fetchPortfolioValue");
+            elizaLogger.log("Cache miss for fetchPortfolioValue");
 
             const walletData = await this.fetchWithRetry(
                 runtime,
@@ -125,7 +131,7 @@ export class WalletProvider {
             );
 
             if (!walletData?.success || !walletData?.data) {
-                console.error("No portfolio data available", walletData);
+                elizaLogger.error("No portfolio data available", walletData);
                 throw new Error("No portfolio data available");
             }
 
@@ -158,7 +164,7 @@ export class WalletProvider {
             this.cache.set(cacheKey, portfolio);
             return portfolio;
         } catch (error) {
-            console.error("Error fetching portfolio:", error);
+            elizaLogger.error("Error fetching portfolio:", error);
             throw error;
         }
     }
@@ -169,10 +175,10 @@ export class WalletProvider {
             const cachedValue = await this.cache.get<WalletPortfolio>(cacheKey);
 
             if (cachedValue) {
-                console.log("Cache hit for fetchPortfolioValue");
+                elizaLogger.log("Cache hit for fetchPortfolioValue");
                 return cachedValue;
             }
-            console.log("Cache miss for fetchPortfolioValue");
+            elizaLogger.log("Cache miss for fetchPortfolioValue");
 
             const query = `
               query Balances($walletId: String!, $cursor: String) {
@@ -209,7 +215,7 @@ export class WalletProvider {
             const data = response.data?.data?.balances?.items;
 
             if (!data || data.length === 0) {
-                console.error("No portfolio data available", data);
+                elizaLogger.error("No portfolio data available", data);
                 throw new Error("No portfolio data available");
             }
 
@@ -255,7 +261,7 @@ export class WalletProvider {
 
             return portfolio;
         } catch (error) {
-            console.error("Error fetching portfolio:", error);
+            elizaLogger.error("Error fetching portfolio:", error);
             throw error;
         }
     }
@@ -266,10 +272,10 @@ export class WalletProvider {
             const cachedValue = this.cache.get<Prices>(cacheKey);
 
             if (cachedValue) {
-                console.log("Cache hit for fetchPrices");
+                elizaLogger.log("Cache hit for fetchPrices");
                 return cachedValue;
             }
-            console.log("Cache miss for fetchPrices");
+            elizaLogger.log("Cache miss for fetchPrices");
 
             const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
             const tokens = [SOL, BTC, ETH];
@@ -300,14 +306,16 @@ export class WalletProvider {
                               : "ethereum"
                     ].usd = price;
                 } else {
-                    console.warn(`No price data available for token: ${token}`);
+                    elizaLogger.warn(
+                        `No price data available for token: ${token}`
+                    );
                 }
             }
 
             this.cache.set(cacheKey, prices);
             return prices;
         } catch (error) {
-            console.error("Error fetching prices:", error);
+            elizaLogger.error("Error fetching prices:", error);
             throw error;
         }
     }
@@ -358,7 +366,7 @@ export class WalletProvider {
 
             return this.formatPortfolio(runtime, portfolio, prices);
         } catch (error) {
-            console.error("Error generating portfolio report:", error);
+            elizaLogger.error("Error generating portfolio report:", error);
             return "Unable to fetch wallet information. Please try again later.";
         }
     }
@@ -381,7 +389,7 @@ const walletProvider: Provider = {
 
             return await provider.getFormattedPortfolio(runtime);
         } catch (error) {
-            console.error("Error in wallet provider:", error);
+            elizaLogger.error("Error in wallet provider:", error);
             return null;
         }
     },
