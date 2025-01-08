@@ -376,7 +376,7 @@ export function getTokenForProvider(
     }
 }
 
-async function initializeDatabase(dataDir: string) {
+function initializeDatabase(dataDir: string) {
     if (process.env.POSTGRES_URL) {
         elizaLogger.info("Initializing PostgreSQL connection...");
         const db = new PostgresDatabaseAdapter({
@@ -773,7 +773,7 @@ async function startAgent(
             fs.mkdirSync(dataDir, { recursive: true });
         }
 
-        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter &
+        db = initializeDatabase(dataDir) as IDatabaseAdapter &
             IDatabaseCacheAdapter;
 
         const cache = initializeCache(
