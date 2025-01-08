@@ -608,14 +608,14 @@ export class TwitterPostClient {
                 "twitter"
             );
 
-            const homeTimeline = await this.client.fetchTimelineForActions(
+            const timelines = await this.client.fetchTimelineForActions(
                 MAX_TIMELINES_TO_FETCH
             );
             const maxActionsProcessing =
                 this.client.twitterConfig.MAX_ACTIONS_PROCESSING;
             const processedTimelines = [];
 
-            for (const tweet of homeTimeline) {
+            for (const tweet of timelines) {
                 try {
                     // Skip if we've already processed this tweet
                     const memory =
