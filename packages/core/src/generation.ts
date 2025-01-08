@@ -389,10 +389,16 @@ export async function generateText({
                     apiKey,
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
+                        const chain_id = runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762"
+                        if (options?.body) {
+                            const body = JSON.parse(options.body);
+                            body.chain_id = chain_id;
+                            options.body = JSON.stringify(body);
+                        }
                         const fetching = await runtime.fetch(url, options);
                         if (
                             parseBooleanFromText(
-                                runtime.getSetting("ETERNAL_AI_LOG_REQUEST")
+                                runtime.getSetting("ETERNALAI_LOG")
                             )
                         ) {
                             elizaLogger.info(
@@ -400,12 +406,16 @@ export async function generateText({
                                 JSON.stringify(options, null, 2)
                             );
                             const clonedResponse = fetching.clone();
-                            clonedResponse.json().then((data) => {
-                                elizaLogger.info(
-                                    "Response data: ",
-                                    JSON.stringify(data, null, 2)
-                                );
-                            });
+                            try {
+                                clonedResponse.json().then((data) => {
+                                    elizaLogger.info(
+                                        "Response data: ",
+                                        JSON.stringify(data, null, 2)
+                                    );
+                                });
+                            } catch (e) {
+                                elizaLogger.debug(e);
+                            }
                         }
                         return fetching;
                     },
@@ -1128,6 +1138,7 @@ export async function generateMessageResponse({
     const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
+    elizaLogger.debug("Context:", context);
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
@@ -1745,7 +1756,7 @@ async function handleOpenAI({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1771,7 +1782,7 @@ async function handleAnthropic({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1797,7 +1808,7 @@ async function handleGrok({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1823,7 +1834,7 @@ async function handleGroq({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1849,7 +1860,7 @@ async function handleGoogle({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1875,7 +1886,7 @@ async function handleRedPill({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1904,7 +1915,7 @@ async function handleOpenRouter({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }
@@ -1933,7 +1944,7 @@ async function handleOllama({
         schema,
         schemaName,
         schemaDescription,
-        mode: "json",
+        mode,
         ...modelOptions,
     });
 }

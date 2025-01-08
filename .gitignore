@@ -15,6 +15,7 @@ packages/plugin-buttplug/intiface-engine
 dist/
 # Allow models directory but ignore model files
 models/*.gguf
+pgLite/
 
 cookies.json
 

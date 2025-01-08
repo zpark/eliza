@@ -1168,7 +1168,7 @@
 - Abstract transcript provider [\#73](https://github.com/elizaOS/eliza/issues/73)
 - 🤖 Confidence Level Implementation [\#50](https://github.com/elizaOS/eliza/issues/50)
 - 📈 Trading Assistant Implementation [\#48](https://github.com/elizaOS/eliza/issues/48)
-- swap Dao action initital [\#196](https://github.com/elizaOS/eliza/pull/196) ([MarcoMandar](https://github.com/MarcoMandar))
+- swap Dao action initial [\#196](https://github.com/elizaOS/eliza/pull/196) ([MarcoMandar](https://github.com/MarcoMandar))
 
 **Fixed bugs:**
 
