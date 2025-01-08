@@ -12,9 +12,8 @@ dotenv.config();
  */
 export class AIService {
     private chatModel: ChatOpenAI;
-    private typeScriptParser: TypeScriptParser;
     private codeFormatter: CodeFormatter;
-    private documentOrganizer: DocumentOrganizer;
+    private chatModelFAQ: ChatOpenAI;
 
     /**
      * Constructor for initializing the ChatOpenAI instance.
@@ -27,27 +26,25 @@ export class AIService {
             throw new Error("OPENAI_API_KEY is not set");
         }
         this.chatModel = new ChatOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        this.typeScriptParser = new TypeScriptParser();
+        this.chatModelFAQ = new ChatOpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+            model: "gpt-4o",
+        });
         this.codeFormatter = new CodeFormatter();
-        this.documentOrganizer = new DocumentOrganizer();
     }
+
 
     /**
      * Generates a comment based on the specified prompt by invoking the chat model.
      * @param {string} prompt - The prompt for which to generate a comment
      * @returns {Promise<string>} The generated comment
      */
-    public async generateComment(prompt: string): Promise<string> {
+    public async generateComment(prompt: string, isFAQ: boolean = false): Promise<string> {
         try {
             // First try with generous limit
-            let finalPrompt = this.codeFormatter.truncateCodeBlock(prompt, 8000);
-
-            // Only append language instruction if not English
-            const normalizedLanguage = this.configuration.language
-                .toLowerCase()
-                .trim();
-            if (normalizedLanguage !== "english") {
-                finalPrompt += `\n\nEverything except the JSDoc conventions and code should be in ${this.configuration.language}`;
+            let finalPrompt = prompt;
+            if (!isFAQ) {
+                finalPrompt = this.codeFormatter.truncateCodeBlock(prompt, 8000);
             }
 
             console.log(
@@ -55,7 +52,12 @@ export class AIService {
             );
 
             try {
-                const response = await this.chatModel.invoke(finalPrompt);
+                let response;
+                if (isFAQ) {
+                    response = await this.chatModelFAQ.invoke(finalPrompt);
+                } else {
+                    response = await this.chatModel.invoke(finalPrompt);
+                }
                 return response.content as string;
             } catch (error) {
                 if (

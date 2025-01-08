@@ -15,4 +15,5 @@ export interface OrganizedDocs {
     interfaces: ASTQueueItem[];
     types: ASTQueueItem[];
     functions: ASTQueueItem[];
+    variables: ASTQueueItem[];
 }

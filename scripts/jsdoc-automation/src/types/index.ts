@@ -76,6 +76,7 @@ export interface PluginDocumentation {
     actionsDocumentation: string;
     providersDocumentation: string;
     evaluatorsDocumentation: string;
+    faq: string;
 }
 
 export interface ActionMetadata {

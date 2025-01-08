@@ -9,6 +9,22 @@ import { FileDocsGroup, OrganizedDocs } from "../types";
 import { AIService } from "../AIService.js";
 import { promises as fs } from "fs";
 
+interface FAQ {
+    question: string;
+    answer: string;
+}
+
+interface TroubleshootingIssue {
+    issue: string;
+    cause: string;
+    solution: string;
+}
+
+interface Troubleshooting {
+    commonIssues: TroubleshootingIssue[];
+    debuggingTips: string[];
+}
+
 export class FullDocumentationGenerator {
     private typeScriptParser: TypeScriptParser;
     private codeFormatter: CodeFormatter;
@@ -40,12 +56,9 @@ export class FullDocumentationGenerator {
         envUsages: EnvUsage[];
     }): Promise<PluginDocumentation> {
         const organizedDocs = this.documentOrganizer.organizeDocumentation(existingDocs);
-        // write organizedDocs to a json file
         const organizedDocsPath = path.join(this.configuration.absolutePath, "organizedDocs.json");
         await fs.writeFile(organizedDocsPath, JSON.stringify(organizedDocs, null, 2));
 
-        // Read the index.ts file
-        // Read the index.ts file
         const indexPath = path.join(
             this.configuration.absolutePath,
             "src",
@@ -53,51 +66,80 @@ export class FullDocumentationGenerator {
         );
         const exports = this.typeScriptParser.extractExports(indexPath);
 
-        // Extract actions, providers, and evaluators from the index.ts content
-        // Generate documentation for actions
         const actionsDocumentation = await this.generateActionsDocumentation(
             exports.actions
         );
+        const providersDocumentation = await this.generateProvidersDocumentation(exports.providers);
+        const evaluatorsDocumentation = await this.generateEvaluatorsDocumentation(exports.evaluators);
 
-        // Generate documentation for providers
-        const providersDocumentation =
-            await this.generateProvidersDocumentation(exports.providers);
-
-        // Generate documentation for evaluators
-        const evaluatorsDocumentation =
-            await this.generateEvaluatorsDocumentation(exports.evaluators);
+        // Generate overview, FAQ, and troubleshooting together
+        const overviewResponse = await this.generateOverview(organizedDocs, packageJson);
+        const parsedOverview = JSON.parse(overviewResponse);
 
         const [
-            overview,
             installation,
             configuration,
             usage,
             apiRef,
-            troubleshooting,
             todoSection,
         ] = await Promise.all([
-            this.generateOverview(organizedDocs, packageJson),
             this.generateInstallation(packageJson),
             this.generateConfiguration(envUsages),
             this.generateUsage(organizedDocs, packageJson),
             this.generateApiReference(organizedDocs),
-            this.generateTroubleshooting(organizedDocs, packageJson),
             this.generateTodoSection(todoItems),
         ]);
 
+        // Format the FAQ and troubleshooting sections
+        const formattedFAQ = this.formatFAQSection(parsedOverview.faq);
+        const formattedTroubleshooting = this.formatTroubleshootingSection(parsedOverview.troubleshooting);
+
         return {
-            overview,
+            overview: this.formatOverviewSection(parsedOverview.overview),
             installation,
             configuration,
             usage,
             apiReference: apiRef,
-            troubleshooting,
+            troubleshooting: formattedTroubleshooting,
+            faq: formattedFAQ,
             todos: todoSection.todos,
-            actionsDocumentation, // Added actions documentation
-            providersDocumentation, // Added providers documentation
-            evaluatorsDocumentation, // Added evaluators documentation
+            actionsDocumentation,
+            providersDocumentation,
+            evaluatorsDocumentation,
         };
+    }
 
+    private formatOverviewSection(overview: any): string {
+        return `### Purpose\n${overview.purpose}\n\n### Key Features\n${overview.keyFeatures}`;
+    }
+
+    private formatFAQSection(faq: FAQ[]): string {
+        if (!Array.isArray(faq)) {
+            console.warn('FAQ data is not an array, returning empty string');
+            return '';
+        }
+
+        return faq
+            .filter(item => item.question && item.answer) // Filter out invalid items
+            .map(item => `### Q: ${item.question}\n${item.answer}`)
+            .join('\n\n');
+    }
+
+    private formatTroubleshootingSection(troubleshooting: Troubleshooting): string {
+        if (!troubleshooting?.commonIssues || !troubleshooting?.debuggingTips) {
+            console.warn('Troubleshooting data is missing required fields, returning empty string');
+            return '';
+        }
+        const issues = troubleshooting.commonIssues
+            .filter((issue: { issue: string; cause: string; solution: string }) => issue.issue && issue.cause && issue.solution)
+            .map((issue: { issue: string; cause: string; solution: string }) => `### ${issue.issue}\n- Cause: ${issue.cause}\n- Solution: ${issue.solution}`)
+            .join('\n\n');
+
+        const tips = troubleshooting.debuggingTips.length > 0
+            ? `### Debugging Tips\n${troubleshooting.debuggingTips.map(tip => `- ${tip}`).join('\n')}`
+            : '';
+
+        return issues + (tips ? `\n\n${tips}` : '');
     }
 
     private async generateOverview(
@@ -106,12 +148,20 @@ export class FullDocumentationGenerator {
     ): Promise<string> {
         const prompt = PROMPT_TEMPLATES.overview(packageJson, docs);
         try {
-            const overview = await this.aiService.generateComment(prompt);
-            return overview;
+            const overview = await this.aiService.generateComment(prompt, true);
+            return this.cleanJSONResponse(overview);
         } catch (error) {
             console.error("Error generating overview:", error);
             return `# ${packageJson.name}\n\nNo overview available. Please check package documentation.`;
         }
+    }
+
+    private cleanJSONResponse(response: string): string {
+        // Remove markdown code block syntax if present
+        return response
+            .replace(/^```json\n/, '')  // Remove opening ```json
+            .replace(/\n```$/, '')      // Remove closing ```
+            .trim();                    // Remove any extra whitespace
     }
 
     private async generateInstallation(packageJson: any): Promise<string> {
@@ -444,6 +494,7 @@ export class FullDocumentationGenerator {
                     \`\`\`
 
                     Provide an overview of the evaluator's purpose and functionality.
+
                     Format in markdown without adding any additional headers.`;
 
                 const evaluatorDocumentation =

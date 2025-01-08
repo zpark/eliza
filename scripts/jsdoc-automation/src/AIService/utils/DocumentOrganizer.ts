@@ -24,6 +24,9 @@ export class DocumentOrganizer {
                         case "FunctionDeclaration":
                             acc.functions.push(doc);
                             break;
+                        case "VariableDeclaration":
+                            acc.variables.push(doc);
+                            break;
                     }
                     return acc;
                 },
@@ -33,6 +36,7 @@ export class DocumentOrganizer {
                     interfaces: [],
                     types: [],
                     functions: [],
+                    variables: [],
                 }
             );
         }
@@ -46,6 +50,7 @@ export class DocumentOrganizer {
             ...docs.interfaces,
             ...docs.types,
             ...docs.functions,
+            ...docs.variables,
         ].forEach((item) => filePaths.add(item.filePath));
 
         // Create groups for each file path
@@ -60,6 +65,9 @@ export class DocumentOrganizer {
                 types: docs.types.filter((t) => t.filePath === filePath),
                 functions: docs.functions.filter(
                     (f) => f.filePath === filePath
+                ),
+                variables: docs.variables.filter(
+                    (v) => v.filePath === filePath
                 ),
             };
         });

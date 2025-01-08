@@ -113,15 +113,15 @@ ${docs.evaluatorsDocumentation}
 ## Usage Examples
 ${docs.usage}
 
-## API Reference
-${docs.apiReference}
+## FAQ
+${docs.faq}
 
 ## Development
 
 ### TODO Items
 ${docs.todos}
 
-### Troubleshooting
+## Troubleshooting Guide
 ${docs.troubleshooting}`;
     }
 }
