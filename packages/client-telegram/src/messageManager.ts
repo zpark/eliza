@@ -98,7 +98,7 @@ The goal is to decide whether {{agentName}} should respond to the last message.
 
 {{recentMessages}}
 
-Thread of Tweets You Are Replying To:
+Thread of Messages You Are Replying To:
 
 {{formattedConversation}}
 
@@ -135,10 +135,10 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 {{recentMessages}}
 
-# Task: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
+# Task: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of messages as additional context:
 Current Post:
 {{currentPost}}
-Thread of Tweets You Are Replying To:
+Thread of Messages You Are Replying To:
 
 {{formattedConversation}}
 ` + messageCompletionFooter;
