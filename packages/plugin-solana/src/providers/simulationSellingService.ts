@@ -39,8 +39,7 @@ export class SimulationSellingService {
     constructor(runtime: IAgentRuntime, trustScoreDb: TrustScoreDatabase) {
         this.trustScoreDb = trustScoreDb;
 
-        this.connection = new Connection(runtime.getSetting("RPC_URL"));
-        this.initializeWalletProvider();
+        this.connection = new Connection(runtime.getSetting("SOLANA_RPC_URL"));
         this.baseMint = new PublicKey(
             runtime.getSetting("BASE_MINT") ||
                 "So11111111111111111111111111111111111111112"
@@ -51,6 +50,7 @@ export class SimulationSellingService {
         this.sonarBe = runtime.getSetting("SONAR_BE");
         this.sonarBeToken = runtime.getSetting("SONAR_BE_TOKEN");
         this.runtime = runtime;
+        this.initializeWalletProvider();
     }
     /**
      * Initializes the RabbitMQ connection and starts consuming messages.
