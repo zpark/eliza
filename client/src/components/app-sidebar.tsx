@@ -61,7 +61,7 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {query?.isPending ? (
-                                <Fragment>
+                                <div>
                                     {Array.from({ length: 5 }).map(
                                         (_, index) => (
                                             <SidebarMenuItem key={index}>
@@ -69,9 +69,9 @@ export function AppSidebar() {
                                             </SidebarMenuItem>
                                         )
                                     )}
-                                </Fragment>
+                                </div>
                             ) : (
-                                <Fragment>
+                                <div>
                                     {agents?.map(
                                         (agent: { id: UUID; name: string }) => (
                                             <SidebarMenuItem key={agent.id}>
@@ -88,7 +88,7 @@ export function AppSidebar() {
                                             </SidebarMenuItem>
                                         )
                                     )}
-                                </Fragment>
+                                </div>
                             )}
                         </SidebarMenu>
                     </SidebarGroupContent>

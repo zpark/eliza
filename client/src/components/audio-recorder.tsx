@@ -22,7 +22,7 @@ type Props = {
 type Record = {
     id: number;
     name: string;
-    file: any;
+    file: string | null;
 };
 
 let recorder: MediaRecorder;
@@ -43,7 +43,7 @@ export const AudioRecorder = ({
     const { toast } = useToast();
     // States
     const [isRecording, setIsRecording] = useState<boolean>(false);
-    // @ts-expect-error
+    // @ts-expect-error - isRecordingFinished is unused, but would break the 2D array if removed
     const [isRecordingFinished, setIsRecordingFinished] =
         useState<boolean>(false);
     const [timer, setTimer] = useState<number>(0);

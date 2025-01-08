@@ -70,7 +70,7 @@ export default function ChatTtsButton({
     const iconClass = "text-muted-foreground size-4";
 
     return (
-        <Fragment>
+        <div>
             {audioBlob ? (
                 <audio ref={audioRef} autoPlay>
                     <source
@@ -102,6 +102,6 @@ export default function ChatTtsButton({
                     <p>Read aloud</p>
                 </TooltipContent>
             </Tooltip>
-        </Fragment>
+        </div>
     );
 }

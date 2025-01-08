@@ -186,7 +186,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                 message?.text
                                             )}
                                             {/* Attachments */}
-                                            <Fragment>
+                                            <div>
                                                 {message?.attachments?.map(
                                                     (attachment, idx) => (
                                                         <div
@@ -208,7 +208,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                                         </div>
                                                     )
                                                 )}
-                                            </Fragment>
+                                            </div>
                                         </ChatBubbleMessage>
                                         <div className="flex items-center gap-4 justify-between w-full mt-1">
                                             {message?.text &&
@@ -281,7 +281,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <div className="flex items-center p-3 pt-0">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Fragment>
+                                <div>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -303,7 +303,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                         accept="image/*"
                                         className="hidden"
                                     />
-                                </Fragment>
+                                </div>
                             </TooltipTrigger>
                             <TooltipContent side="left">
                                 <p>Attach file</p>
