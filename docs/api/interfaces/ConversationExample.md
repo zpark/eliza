@@ -10,7 +10,7 @@ Example conversation content with user ID
 
 > **userId**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
 
-UUID of user in conversation
+UUID of the user in conversation
 
 #### Defined in
 
