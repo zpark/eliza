@@ -18,6 +18,7 @@ export const farcasterEnvSchema = z.object({
     FARCASTER_FID: z.number().int().min(1, "Farcaster fid is required"),
     MAX_CAST_LENGTH: z.number().int().default(DEFAULT_MAX_CAST_LENGTH),
     FARCASTER_POLL_INTERVAL: z.number().int().default(DEFAULT_POLL_INTERVAL),
+    ENABLE_POST: z.boolean().default(true),
     POST_INTERVAL_MIN: z.number().int(),
     POST_INTERVAL_MAX: z.number().int(),
     ENABLE_ACTION_PROCESSING: z.boolean(),
@@ -74,6 +75,11 @@ export async function validateFarcasterConfig(
                 DEFAULT_POLL_INTERVAL
             ),
 
+            ENABLE_POST: parseBooleanFromText(
+                runtime.getSetting("ENABLE_POST") ||
+                    process.env.ENABLE_POST ||
+                    "true"
+            ),
 
             POST_INTERVAL_MIN: safeParseInt(
                 runtime.getSetting("POST_INTERVAL_MIN") ||

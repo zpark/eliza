@@ -39,16 +39,21 @@ export class FarcasterPostManager {
             `- Dry Run Mode: ${this.isDryRun ? "enabled" : "disabled"}`
         );
         elizaLogger.log(
-            `- Post Interval: ${this.client.farcasterConfig.POST_INTERVAL_MIN}-${this.client.farcasterConfig.POST_INTERVAL_MAX} minutes`
+            `- Enable Post: ${this.client.farcasterConfig.ENABLE_POST ? "enabled" : "disabled"}`
         );
+        if (this.client.farcasterConfig.ENABLE_POST) {
+            elizaLogger.log(
+                `- Post Interval: ${this.client.farcasterConfig.POST_INTERVAL_MIN}-${this.client.farcasterConfig.POST_INTERVAL_MAX} minutes`
+            );
+            elizaLogger.log(
+                `- Post Immediately: ${this.client.farcasterConfig.POST_IMMEDIATELY ? "enabled" : "disabled"}`
+            );
+        }
         elizaLogger.log(
             `- Action Processing: ${this.client.farcasterConfig.ENABLE_ACTION_PROCESSING ? "enabled" : "disabled"}`
         );
         elizaLogger.log(
             `- Action Interval: ${this.client.farcasterConfig.ACTION_INTERVAL} minutes`
-        );
-        elizaLogger.log(
-            `- Post Immediately: ${this.client.farcasterConfig.POST_IMMEDIATELY ? "enabled" : "disabled"}`
         );
 
         if (this.isDryRun) {
@@ -88,10 +93,13 @@ export class FarcasterPostManager {
 
             elizaLogger.log(`Next cast scheduled in ${randomMinutes} minutes`);
         };
-        if (this.client.farcasterConfig?.POST_IMMEDIATELY) {
-            await this.generateNewCast();
+
+        if (this.client.farcasterConfig?.ENABLE_POST) {
+            if (this.client.farcasterConfig?.POST_IMMEDIATELY) {
+                await this.generateNewCast();
+            }
+            generateNewCastLoop();
         }
-        generateNewCastLoop();
     }
 
     public async stop() {
