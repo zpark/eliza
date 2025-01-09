@@ -600,6 +600,7 @@ export async function createAgent(
         verifiableInferenceAdapter = new PrimusAdapter({
             appId: process.env.PRIMUS_APP_ID,
             appSecret: process.env.PRIMUS_APP_SECRET,
+            attMode: "proxytls",
             modelProvider: character.modelProvider,
             token,
         });

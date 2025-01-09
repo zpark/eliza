@@ -5,8 +5,7 @@ import {
     Memory,
     State,
 } from "@elizaos/core";
-import { TwitterScraper } from "../util/TwitterScraper.ts";
-import { tweetProvider } from "../providers/tweetProvider.ts";
+import { TwitterScraper } from "../util/twitterScraper.ts";
 import {tokenPriceProvider} from "../providers/tokenPriceProvider.ts";
 
 export const postTweetAction: Action = {

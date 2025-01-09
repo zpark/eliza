@@ -1,240 +1,178 @@
 # @elizaos/plugin-primus
 
-A plugin to fully verify agent activities, including LLM access, actions, and interactions with external providers, powered by Primus' zkTLS protocol.
+A plugin to fully verify agent activities, including LLM access, actions, and interactions with external providers,
+powered by Primus' zkTLS protocol.
 
 ## Overview
 
 Here's a refined version of your text:
 
-In the Eliza framework, an agent consists of three key components: a brain (accessing an LLM), actions (the tasks the agent performs), and perception (gathering external information from providers). To fully verify agent activities, it's essential to ensure that the agent's thoughts, actions, and external information requests are all verifiable. This plugin enables full verification of these activities.
+In the Eliza framework, an agent consists of three key components: a brain (accessing an LLM), actions (the tasks the
+agent performs), and perception (gathering external information from providers). To fully verify agent activities, it's
+essential to ensure that the agent's thoughts, actions, and external information requests are all verifiable. This
+plugin enables full verification of these activities.
 
 The current plugin includes:
 
 - Verification of inference from OpenAI's LLM.
 - An example for verifying actions, such as posting a tweet (this can be extended to any other actions).
-- An example to verify that the Bitcoin price is accurately fetched from Binance (this can be extended to any other data providers).
+- An example to verify that the Bitcoin price is accurately fetched from Binance (this can be extended to any other data
+  providers).
 
+## Primus Adapter
+### LLM inference Usage (PrimusAdapter)
+```typescript
+import {PrimusAdapter} from "@elizaos/plugin-primus";
+import {VerifiableInferenceOptions} from '@elizaos/core';
 
-## What we do?
+// Initialize primus adapter
+const primusAdatper = new PrimusAdapter({
+    appId: process.env.PRIMUS_APP_ID,
+    appSecret: process.env.PRIMUS_APP_SECRET,
+    attMode: "proxytls",
+    modelProvider: character.modelProvider,
+    token,
+});
+
+interface PrimusOptions {
+    appId: string;
+    appSecret: string;
+    attMode: string;
+    modelProvider?: ModelProviderName;
+    token?: string;
+}
+
+// The options for generating an attestation
+const options: VerifiableInferenceOptions = {
+    // Optional: Override the default endpoint
+    endpoint: "https://api.openapi.com/chat/completions",
+    // Optional: Add custom headers
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": "bearer Token",
+    },
+    // Optional: Provider-specific options
+    providerOptions: {
+        temperature: 0.7,
+    },
+};
+
+// Generate an attestation for a network request.
+const result = await primusAdapter.generateText(context, "gpt-4o", options);
+// Verify the validity of the attestation.
+const isValid = await primusAdapter.verifyProof(result.proof);
+```
+
 This plugin offers the following features:
 
 - Generate an attestation for a network request.
 - Verify the validity of the attestation.
 
 You can find detail code at [primusUtil.ts](./src/util/primusUtil.ts)
-
-### generateProof
+#### generateProof
 ```typescript
 generateProof = async (
+    // The target endpoint of the network request.
     endpoint: string,
+    // The HTTP method of the request, such as 'GET', 'POST', etc.
     method: string,
+    // A record containing the headers of the request.
     headers: Record<string, any>,
+    // The body of the request. It should be a string.
     body: string,
+    //A [JSONPath](https://datatracker.ietf.org/doc/rfc9535/) expression to locate the specific field in the response you want to attest.
     responseParsePath: string
 ): Promise<any>
 ```
-***parameters***
-- ***endpoint***: The target endpoint of the network request.
-- ***method***: The HTTP method of the request, such as 'GET', 'POST', etc.
-- ***headers***: A record containing the headers of the request.
-- ***body*** : The body of the request. It should be a string.
-- ***responseParsePath***: A JSONPath expression to locate the specific field in the response you want to attest. Currently, only JSONPath expressions are supported ([ What is JSONPath](https://datatracker.ietf.org/doc/rfc9535/))
+***returns***  
+When a successful data verification process is completed, you will receive a standard [attestation](https://docs.primuslabs.xyz/data-verification/zk-tls-sdk/production#understanding-the-data-verification-structure)
 
-***returns***
-When a successful data verification process is completed, you will receive a standard verification structure with the following details:
-```json
-  {
-  "recipient": "YOUR_USER_ADDRESS", // user's wallet address, default is 0x0000000000000000000000000000000000000000
-  "request": { // request of data verification
-    "url": "REQUEST_URL", // request url for verification
-    "header": "REQUEST_HEADER", // request header
-    "method": "REQUEST_METHOD", // request method
-    "body": "REQUEST_BODY" // request body
-  },
-  "reponseResolve": [ // data verification response items
-    {
-      "keyName": "VERIFY_DATA_ITEMS", // the "verify data items" you set in the template
-      "parseType": "",
-      "parsePath": "DARA_ITEM_PATH" // json path of the data for verification
-    }
-  ],
-  "data": "{ACTUAL_DATA}", // actual data items in the request, stringified JSON object
-  "attConditions": "[RESPONSE_CONDITIONS]", // verification response conditions, stringified JSON object
-  "timestamp": TIMESTAMP_OF_VERIFICATION_EXECUTION, // timestamp of verification execution
-  "additionParams": "", // additionParams from zkTLS sdk
-  "attestors": [ // information of the attestors
-    {
-      "attestorAddr": "ATTESTOR_ADDRESS",  // the address of the attestor
-      "url": "https://primuslabs.org"        // the attestor's url
-    }
-  ],
-  "signatures": [
-    "SIGNATURE_OF_THIS_VERIFICATION" // attestor's signature for this verification
-  ]
-}
-```
-### verifyProof
+#### verifyProof
+
 Verify the attestation is valid.
+
 ```typescript
+ // The attestation is generated during a network request.
+ // Returns true: The attestation is valid. false : The attestation is invalid.
  verifyProof = async (attestation: any): Promise<boolean>
 ```
-***parameters***
-
-- ***attestation***: The attestation is generated during a network request.
-
-***returns***
-- true : The attestation is valid.
-- false : The attestation is invalid.
-
 ***Below are examples illustrating how to use these functions.***
 
-### model
-Developers can leverage the zktls module provided by Primus to attest OpenAI requests. The following is a detailed example:
-```typescript
 
-export class PrimusAdapter implements IVerifiableInferenceAdapter {
-    /**
-     * Generate proof of communication with OpenAI
-     */
-    async generateText(
-        context: string,
-        modelClass: string,
-        options?: VerifiableInferenceOptions
-    ): Promise<VerifiableInferenceResult> {
-        //other code is hidden
-        ......
-        // Get provider-specific endpoint, auth header and response json path
-        let endpoint;
-        let authHeader;
-        let responseParsePath;
-        
-        switch (provider) {
-            case ModelProviderName.OPENAI:
-                //The endpoint of the request
-                endpoint = `${baseEndpoint}/chat/completions`;
-                authHeader = `Bearer ${apiKey}`;
-                //The JSONPath to extract the content field from OpenAI's response.
-                responseParsePath = "$.choices[0].message.content";
-                break;
-            default:
-                throw new Error(`Unsupported model provider: ${provider}`);
-        }
-        //The headers of the request
-        const headers = {
-            "Content-Type": "application/json",
-            "Authorization": authHeader,
-        };
+### Providers
 
-        try {
-            //The body of the request
-            let body = {
-                model: model.name,
-                messages: [{ role: "user", content: context }],
-                temperature:
-                    options?.providerOptions?.temperature ||
-                    models[provider].model[modelClass].temperature,
-            };
-            //generate proof
-            const attestation = await generateProof(endpoint,"POST",headers,JSON.stringify(body),responseParsePath);
-            elizaLogger.log(`model attestation:`, attestation);
-            
-            const responseData = JSON.parse(attestation.data);
-            let text = JSON.parse(responseData.content);
-            return {
-                text,
-                proof: attestation,
-                provider: VerifiableInferenceProvider.PRIMUS,
-                timestamp: Date.now(),
-            };
-        } catch (error) {
-            console.error("Error in Primus generateText:", error);
-            throw error;
-        }
-    }
-    //verify the proof
-    async verifyProof(result: VerifiableInferenceResult): Promise<boolean> {
-        const isValid = verifyProof(result.proof)
-        elizaLogger.log("Proof is valid:", isValid);
-        return isValid;
-    }
-}
-
-```
-You can see full code at [primusAdapter.ts](./src/adapter/primusAdapter.ts)
-
-### Provider
-Developers can use the zktls module provided by Primus to attest providers. Providers are core modules responsible for injecting dynamic context and real-time information into agent interactions. Therefore, it is crucial for agents to validate that the information received from providers is authentic.
+Developers can use the zktls module provided by Primus to attest providers. Providers are core modules responsible for
+injecting dynamic context and real-time information into agent interactions. Therefore, it is crucial for agents to
+validate that the information received from providers is authentic.
 
 Below is an example demonstrating how to verify that the BTC price from Binance is valid:
+
 ```typescript
 
 const tokenPriceProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
-        //get btc price
+        // get btc price
         const url = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT";
         const method = 'GET';
         const headers = {
             'Accept	': '*/*',
         };
-        //generate proof
+        // generate proof
         const attestation = await generateProof(url, method, headers, "", "$.price");
-        //you can verify the proof is valid
+        // you can verify the proof is valid
         const valid = await verifyProof(attestation);
-        if(!valid){
+        if (!valid) {
             throw new Error("Invalid price attestation");
         }
-        elizaLogger.info('price attestation:',attestation);
-        const responseData = JSON.parse((attestation as any).data);
-        const price = responseData.content;
-        return  `
-        Get BTC price from Binance:
-        BTC: ${price} USDT
-        Time: ${new Date().toUTCString()}
-        POST by eliza #zilia
-        Attested by Primus #primus #zktls
-        `
+    ......
     },
 };
 ```
+
 You can see more examples at [providers](./src/providers/tokenPriceProvider.ts)
 
-### actions
-Primus ensures the reliability of both the provider's data source and the operations performed by actions. Below is an example demonstrating how to post price information from the [tokenPriceProvider](./src/providers/tokenPriceProvider.ts) to Twitter:
+### Actions
+
+Primus ensures the reliability of both the provider's data source and the operations performed by actions. Below is an
+example demonstrating how to post price information from the [tokenPriceProvider](./src/providers/tokenPriceProvider.ts)
+to Twitter:
+
 ```typescript
-const contentYouWantToPost = await tokenPriceProvider.get(runtime, message, state);
-//other code is hidden
-try {
-    //login
-    const scraperWithPrimus = new TwitterScraper();
-    await scraperWithPrimus.login();
-    if (!(await scraperWithPrimus.getScraper().isLoggedIn())) {
-        elizaLogger.error("Failed to login to Twitter");
-        return false;
-    }
-    // post the tweet
-    elizaLogger.log("Attempting to send tweet:", contentYouWantToPost);
+
+export const postTweetAction: Action = {
+  description: "",
+  examples: [],
+  handler: async (
+          runtime: IAgentRuntime,
+          message: Memory,
+          state?: State
+  ): Promise<boolean> => {
+    const contentYouWantToPost = await tokenPriceProvider.get(runtime, message, state);
     const endpoint = 'https://twitter.com/i/api/graphql/a1p9RWpkYKBjWv_I3WzS-A/CreateTweet';
     const method = 'POST';
-    //generate proof
     const attestation = await generateProof(endpoint,method,headers,bodyStr,"$.data.create_tweet.tweet_results.result.rest_id");
-
     elizaLogger.info(
-        "Tweet posting proof generated successfully:",
-        attestation
+            "Tweet posting proof generated successfully:",
+            attestation
     );
-
     const verifyResult = verifyProof(attestation);
     if (!verifyResult) {
-        throw new Error(
-            "Verify attestation failed, data from source is illegality"
-        );
+      throw new Error(
+              "Attestation verify failed, data from source is illegality"
+      );
     }
-    return true;
-} catch (error) {
-    elizaLogger.error("Error in post action:", error);
-    return false;
-}
+
+  },
+  name: "",
+  similes: [],
+  validate: async (
+          runtime: IAgentRuntime,
+          message: Memory,
+          state?: State
+  ) => {},
+};
 ```
+
 For more details, refer to [postTweetAction.ts](./src/actions/postTweetAction.ts)
 
 ## Installation
@@ -244,6 +182,7 @@ pnpm add @elizaos/plugin-primus
 ```
 
 ## Configuration
+
 Add the following environment variables to your .env file:
 
 ```
@@ -272,16 +211,18 @@ TWITTER_DRY_RUN=false# Optional: test without posting
 
 ## Usage
 
-To use the plugin, add `@elizaos/plugin-primus` to the plugins field in your character file. Here's an example of how your character file might look after the update:
+To use the plugin, add `@elizaos/plugin-primus` to the plugins field in your character file. Here's an example of how
+your character file might look after the update:
 
 ```json
 {
   "name": "trump",
-  "modelProvider": "openai",//just support openai now
+  "modelProvider": "openai",
+  // just support openai now
   "plugins": [
     "@elizaos/plugin-primus"
   ],
-  //other  fields
+  // other  fields
   .....
 }
 ```

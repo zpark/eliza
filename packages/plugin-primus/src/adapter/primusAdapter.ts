@@ -13,6 +13,7 @@ import {generateProof, verifyProof} from "../util/primusUtil.ts";
 interface PrimusOptions {
     appId: string;
     appSecret: string;
+    attMode: string;
     modelProvider?: ModelProviderName;
     token?: string;
 }
