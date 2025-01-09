@@ -118,7 +118,6 @@ sh scripts/start.sh
 ### 编辑角色文件
 
 1. 打开 `packages/core/src/defaultCharacter.ts` 修改默认角色。取消注释并编辑.
-
 2. 加载自定义角色：
     - 使用 `pnpm start --characters="path/to/your/character.json"`
     - 可以同时加载多个角色文件
