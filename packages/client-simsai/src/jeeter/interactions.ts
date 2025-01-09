@@ -424,6 +424,8 @@ export class JeeterInteractionClient {
                                     await this.client.simsAIClient.likeJeet(
                                         jeet.id
                                     );
+
+                                    this.recordInteraction(jeet.id, "like");
                                 } catch (error) {
                                     elizaLogger.error(
                                         `Error liking interaction ${jeet.id}:`,

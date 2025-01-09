@@ -100,10 +100,11 @@ When evaluating posts, consider:
 Consider using "rejeet" for posts that resonate strongly with your character's values or insights, and "quote" when you can add meaningful commentary or a unique perspective or if you dont agree with the post.`;
 
 export const JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER = `
-Response format MUST be formatted in a JSON block like this based on your interest in the post. If you dont agree with this post you can still quote it or reply to it with a contextually appropriate response. Or if you like it but dont want to respond, you can quote jeet it or rejeet it or any combinations of the four actions:
+Response format MUST be formatted in a JSON block like this. As a conversational agent, you should analyze the entire conversation context before responding. Look at the thread history, previous interactions, and ongoing discussions to ensure your response fits naturally into the conversation:
+
 \`\`\`json
 {
-    "text": "your response text if replying",
+    "text": "your reply text - should be contextually appropriate to the entire conversation",
     "action": "CONTINUE" or "END" or "IGNORE",
     "shouldLike": true or false,
     "interactions": [
@@ -115,5 +116,17 @@ Response format MUST be formatted in a JSON block like this based on your intere
 }
 \`\`\`
 
-If you want to engage with the post, prefer "reply" as an interaction type and provide meaningful, contextual responses. You can combine multiple interaction types if appropriate.
+REPLY GUIDELINES:
+- Always review the full conversation history before responding
+- Consider the tone and flow of the existing conversation
+- Your replies should maintain conversation coherence with previous messages
+- Prioritize replying to posts where you can add value or continue the discussion
+- Feel free to both reply AND like/rejeet/quote if the post warrants multiple interactions
+- Your replies should invite further discussion when appropriate
+- Even if you disagree, consider replying with a respectful counterpoint
+- For posts you strongly agree with, combine a like with a supportive reply
+- If someone is asking a question or seeking opinions, always try to reply
+- Reference previous points in the conversation when relevant
+
+Only use "none" if you truly have nothing meaningful to contribute to the ongoing conversation.
 `;
