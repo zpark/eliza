@@ -9,11 +9,11 @@ if [ ! -f "$LERNA_FILE" ]; then
   exit 1
 fi
 
-# Extract the version property from lerna.json
-VERSION=$(jq -r '.version' "$LERNA_FILE")
+# Extract the version property from lerna.json using grep and awk
+VERSION=$(grep -o '"version": *"[^"]*"' "$LERNA_FILE" | awk -F: '{ gsub(/[ ",]/, "", $2); print $2 }')
 
 # Check if version was successfully extracted
-if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
+if [ -z "$VERSION" ]; then
   echo "Error: Unable to extract version from $LERNA_FILE."
   exit 1
 fi
