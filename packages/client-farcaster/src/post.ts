@@ -11,7 +11,6 @@ import { formatTimeline, postTemplate } from "./prompts";
 import { castUuid, MAX_CAST_LENGTH } from "./utils";
 import { createCastMemory } from "./memory";
 import { sendCast } from "./actions";
-import { DEFAULT_POST_INTERVAL_MAX, DEFAULT_POST_INTERVAL_MIN } from "./environment";
 
 export class FarcasterPostManager {
     client: FarcasterClient;
@@ -71,8 +70,8 @@ export class FarcasterPostManager {
             }>("farcaster/" + this.fid + "/lastPost");
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
-            const minMinutes = this.client.farcasterConfig?.POST_INTERVAL_MIN ?? DEFAULT_POST_INTERVAL_MIN;
-            const maxMinutes = this.client.farcasterConfig?.POST_INTERVAL_MAX ?? DEFAULT_POST_INTERVAL_MAX;
+            const minMinutes = this.client.farcasterConfig.POST_INTERVAL_MIN;
+            const maxMinutes = this.client.farcasterConfig.POST_INTERVAL_MAX;
             const randomMinutes =
                 Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) +
                 minMinutes;
@@ -94,8 +93,8 @@ export class FarcasterPostManager {
             elizaLogger.log(`Next cast scheduled in ${randomMinutes} minutes`);
         };
 
-        if (this.client.farcasterConfig?.ENABLE_POST) {
-            if (this.client.farcasterConfig?.POST_IMMEDIATELY) {
+        if (this.client.farcasterConfig.ENABLE_POST) {
+            if (this.client.farcasterConfig.POST_IMMEDIATELY) {
                 await this.generateNewCast();
             }
             generateNewCastLoop();
