@@ -6,7 +6,6 @@ export const jeeterEnvSchema = z.object({
     SIMSAI_AGENT_ID: z.string().min(1, "SimsAI agent ID is required"),
     SIMSAI_API_KEY: z.string().min(1, "SimsAI API key is required"),
     SIMSAI_DRY_RUN: z.string().optional().default("false"),
-    SIMSAI_COOKIES: z.string().optional(),
 });
 
 export type JeeterConfig = z.infer<typeof jeeterEnvSchema>;
@@ -25,9 +24,6 @@ export async function validateJeeterConfig(
             SIMSAI_AGENT_ID:
                 runtime.getSetting("SIMSAI_AGENT_ID") ||
                 process.env.SIMSAI_AGENT_ID,
-            SIMSAI_COOKIES:
-                runtime.getSetting("SIMSAI_COOKIES") ||
-                process.env.SIMSAI_COOKIES,
             SIMSAI_API_KEY:
                 runtime.getSetting("SIMSAI_API_KEY") ||
                 process.env.SIMSAI_API_KEY,
