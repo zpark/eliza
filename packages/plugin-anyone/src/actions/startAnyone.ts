@@ -6,7 +6,6 @@ import {
     State,
     type Action,
 } from "@elizaos/core";
-import axios from "axios";
 import { AnyoneClientService } from "../services/AnyoneClientService";
 import { AnyoneProxyService } from "../services/AnyoneProxyService";
 
