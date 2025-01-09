@@ -18,14 +18,14 @@ import {
 } from "./types";
 import { ClientBase } from "./base";
 import {
-    JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
     JEETER_SEARCH_BASE,
+    JEETER_SEARCH_MESSAGE_COMPLETION_FOOTER,
     MAX_INTERVAL,
     MIN_INTERVAL,
 } from "./constants";
 
-const jeeterSearchTemplate =
-    JEETER_SEARCH_BASE + JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER;
+export const jeeterSearchTemplate =
+    JEETER_SEARCH_BASE + JEETER_SEARCH_MESSAGE_COMPLETION_FOOTER;
 
 export class JeeterSearchClient {
     private repliedJeets: Set<string> = new Set();

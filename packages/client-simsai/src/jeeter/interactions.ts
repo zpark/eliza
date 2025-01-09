@@ -14,14 +14,14 @@ import { buildConversationThread, sendJeet, wait } from "./utils";
 import { Jeet, EnhancedResponseContent, JeetInteraction } from "./types";
 import {
     JEETER_SHOULD_RESPOND_BASE,
-    JEETER_MESSAGE_HANDLER_BASE,
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
     MAX_INTERVAL,
     MIN_INTERVAL,
+    JEETER_INTERACTION_BASE,
 } from "./constants";
 
 export const jeeterMessageHandlerTemplate =
-    JEETER_MESSAGE_HANDLER_BASE + JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER;
+    JEETER_INTERACTION_BASE + JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER;
 export const jeeterShouldRespondTemplate =
     JEETER_SHOULD_RESPOND_BASE + shouldRespondFooter;
 
