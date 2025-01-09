@@ -52,16 +52,11 @@ export class IrysService extends Service implements IIrysService {
         this.runtime = runtime;
     }
 
-    private async getTransactionId(owners: string[], tags: GraphQLTag[], timestamp: IrysTimestamp = null): Promise<TransactionsIdAddress> {
+    private async getTransactionId(owners: string[] = null, tags: GraphQLTag[] = null, timestamp: IrysTimestamp = null): Promise<TransactionsIdAddress> {
         const graphQLClient = new GraphQLClient(this.endpointForTransactionId);
-        if (owners.length == 0 && tags.length == 0) {
-            return { success: false, data: [], error: "No owners or tags provided" };
-        }
-        let QUERY = "";
-        if (owners.length > 0 && tags.length > 0) {
-            QUERY = gql`
-            query($owners: [String!], $timestamp: TimestampFilter) {
-                transactions(owners: $owners, timestamp: $timestamp) {
+        const QUERY = gql`
+            query($owners: [String!], $tags: [TagFilter!], $timestamp: TimestampFilter) {
+                transactions(owners: $owners, tags: $tags, timestamp: $timestamp) {
                     edges {
                         node {
                             id,
@@ -71,34 +66,6 @@ export class IrysService extends Service implements IIrysService {
                 }
             }
         `;
-        } else if (owners.length > 0) {
-            QUERY = gql`
-            query($owners: [String!], $timestamp: TimestampFilter) {
-                transactions(owners: $owners, timestamp: $timestamp) {
-                    edges {
-                        node {
-                            id,
-                            address
-                        }
-                    }
-                }
-            }
-        `;
-        }
-        else if (tags.length > 0) {
-            QUERY = gql`
-            query($tags: [TagFilter!], $timestamp: TimestampFilter) {
-                transactions(tags: $tags, timestamp: $timestamp) {
-                    edges {
-                        node {
-                            id,
-                            address
-                        }
-                    }
-                }
-            }
-        `;
-        }
         try {
             const variables = {
                 owners: owners,
@@ -262,7 +229,7 @@ export class IrysService extends Service implements IIrysService {
         }
     }
 
-    async workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[], minimumProviders: number[], testProvider: boolean[], reputation: number[]): Promise<UploadIrysResult> {
+    async workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[] = [], minimumProviders: number[] = [], testProvider: boolean[] = [], reputation: number[] = []): Promise<UploadIrysResult> {
         this.normalizeArrayValues(validationThreshold, 0, 1);
         this.normalizeArrayValues(minimumProviders, 0);
         this.normalizeArrayValues(reputation, 0, 1);
@@ -298,7 +265,7 @@ export class IrysService extends Service implements IIrysService {
         return await this.uploadDataOnIrys(data, tags, IrysMessageType.DATA_STORAGE);
     }
 
-    async getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp): Promise<DataIrysFetchedFromGQL> {
+    async getDataFromAnAgent(agentsWalletPublicKeys: string[] = null, tags: GraphQLTag[] = null, timestamp: IrysTimestamp = null): Promise<DataIrysFetchedFromGQL> {
         try {
             const transactionIdsResponse = await this.getTransactionId(agentsWalletPublicKeys, tags, timestamp);
             if (!transactionIdsResponse.success) return { success: false, data: null, error: "Error fetching transaction IDs" };
