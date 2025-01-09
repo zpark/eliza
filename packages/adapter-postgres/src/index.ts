@@ -184,6 +184,27 @@ export class PostgresDatabaseAdapter
         }, "query");
     }
 
+    private async validateVectorSetup(): Promise<boolean> {
+        try {
+            const vectorExt = await this.query(`
+                SELECT 1 FROM pg_extension WHERE extname = 'vector'
+            `);
+            const hasVector = vectorExt.rows.length > 0;
+
+            if (!hasVector) {
+                elizaLogger.error("Vector extension not found in database");
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            elizaLogger.error("Failed to validate vector extension:", {
+                error: error instanceof Error ? error.message : String(error)
+            });
+            return false;
+        }
+    }
+
     async init() {
         await this.testConnection();
 
@@ -208,14 +229,24 @@ export class PostgresDatabaseAdapter
             } else {
                 await client.query("SET app.use_openai_embedding = 'false'");
                 await client.query("SET app.use_ollama_embedding = 'false'");
-                await client.query("SET app.use_gaianet_embedding = 'false'");
             }
 
-            const schema = fs.readFileSync(
-                path.resolve(__dirname, "../schema.sql"),
-                "utf8"
-            );
-            await client.query(schema);
+            // Check if schema already exists (check for a core table)
+            const { rows } = await client.query(`
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables
+                    WHERE table_name = 'rooms'
+                );
+            `);
+
+            if (!rows[0].exists || !await this.validateVectorSetup()) {
+                elizaLogger.info("Applying database schema - tables or vector extension missing");
+                const schema = fs.readFileSync(
+                    path.resolve(__dirname, "../schema.sql"),
+                    "utf8"
+                );
+                await client.query(schema);
+            }
 
             await client.query("COMMIT");
         } catch (error) {
