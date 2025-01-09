@@ -1,48 +1,29 @@
 import { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
-import { API_URLS } from "./constants";
 
-export const coingeckoEnvSchema = z.object({
-    COINGECKO_API_KEY: z.string().min(1, "CoinGecko API key is required"),
-    COINGECKO_PRO_API_KEY: z.string().optional().nullable(),
+const coingeckoConfigSchema = z.object({
+    COINGECKO_API_KEY: z.string().nullable(),
+    COINGECKO_PRO_API_KEY: z.string().nullable(),
+}).refine(data => data.COINGECKO_API_KEY || data.COINGECKO_PRO_API_KEY, {
+    message: "Either COINGECKO_API_KEY or COINGECKO_PRO_API_KEY must be provided"
 });
 
-export type CoingeckoConfig = z.infer<typeof coingeckoEnvSchema>;
+export type CoingeckoConfig = z.infer<typeof coingeckoConfigSchema>;
 
-export async function validateCoingeckoConfig(
-    runtime: IAgentRuntime
-): Promise<CoingeckoConfig> {
-    try {
-        const config = {
-            COINGECKO_API_KEY: runtime.getSetting("COINGECKO_API_KEY"),
-            COINGECKO_PRO_API_KEY: runtime.getSetting("COINGECKO_PRO_API_KEY") || null,
-        };
+export async function validateCoingeckoConfig(runtime: IAgentRuntime): Promise<CoingeckoConfig> {
+    const config = {
+        COINGECKO_API_KEY: runtime.getSetting("COINGECKO_API_KEY"),
+        COINGECKO_PRO_API_KEY: runtime.getSetting("COINGECKO_PRO_API_KEY"),
+    };
 
-        return coingeckoEnvSchema.parse(config);
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            const errorMessages = error.errors
-                .map((err) => `${err.path.join(".")}: ${err.message}`)
-                .join("\n");
-            throw new Error(
-                `CoinGecko configuration validation failed:\n${errorMessages}`
-            );
-        }
-        throw error;
-    }
+    return coingeckoConfigSchema.parse(config);
 }
 
 export function getApiConfig(config: CoingeckoConfig) {
-    if (config.COINGECKO_PRO_API_KEY) {
-        return {
-            baseUrl: API_URLS.PRO,
-            apiKey: config.COINGECKO_PRO_API_KEY,
-            headerKey: 'x-cg-pro-api-key'
-        };
-    }
+    const isPro = !!config.COINGECKO_PRO_API_KEY;
     return {
-        baseUrl: API_URLS.FREE,
-        apiKey: config.COINGECKO_API_KEY,
-        headerKey: 'x-cg-demo-api-key'
+        baseUrl: isPro ? "https://pro-api.coingecko.com/api/v3" : "https://api.coingecko.com/api/v3",
+        apiKey: isPro ? config.COINGECKO_PRO_API_KEY : config.COINGECKO_API_KEY,
+        headerKey: isPro ? "x-cg-pro-api-key" : "x-cg-demo-api-key"
     };
 }
