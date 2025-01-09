@@ -1,10 +1,8 @@
 import { Scraper } from "agent-twitter-client";
 import { elizaLogger } from "@elizaos/core";
-import { PrimusCoreTLS } from "@primuslabs/zktls-core-sdk";
+import { verifyProof, generateProof } from "./primusUtil.ts";
 
-const expectedEntryTypes = ["tweet", "profile-conversation"];
-
-export class ScraperWithPrimus {
+export class TwitterScraper {
     private scraper: Scraper;
 
     constructor() {}
@@ -113,35 +111,22 @@ export class ScraperWithPrimus {
         const fieldTogglesUrlEncoded = encodeURIComponent(
             JSON.stringify(fieldToggles)
         );
-
-        const zkTLS = new PrimusCoreTLS();
-        const appId = process.env.PRIMUS_APP_ID;
-        const appSecret = process.env.PRIMUS_APP_SECRET;
-        await zkTLS.init(appId, appSecret);
-
-        const attestation = await zkTLS.startAttestation(
-            zkTLS.generateRequestParams(
-                {
-                    url: `https://twitter.com/i/api/graphql/V7H0Ap3_Hh2FyS75OCDO3Q/UserTweets?variables=${variablesUrlEncoded}&features=${featureUrlEncoded}&fieldToggles=${fieldTogglesUrlEncoded}`,
-                    method: "GET",
-                    header: headers,
-                },
-                [
-                    {
-                        keyName: "content",
-                        parsePath:
-                            "$.data.user.result.timeline_v2.timeline.instructions[1].entry.content.itemContent.tweet_results.result.legacy.full_text",
-                        parseType: "string",
-                    },
-                ]
-            )
+        const endpoint = `https://twitter.com/i/api/graphql/V7H0Ap3_Hh2FyS75OCDO3Q/UserTweets?variables=${variablesUrlEncoded}&features=${featureUrlEncoded}&fieldToggles=${fieldTogglesUrlEncoded}`;
+        const responseParsePath =
+            "$.data.user.result.timeline_v2.timeline.instructions[1].entry.content.itemContent.tweet_results.result.legacy.full_text";
+        const attestation = await generateProof(
+            endpoint,
+            "GET",
+            headers,
+            undefined,
+            responseParsePath
         );
         //log attestation
         elizaLogger.info(
             "Tweet getting proof generated successfully:",
             attestation
         );
-        const verifyResult = zkTLS.verifyAttestation(attestation);
+        const verifyResult = verifyProof(attestation);
         if (!verifyResult) {
             throw new Error(
                 "Verify attestation failed，data from source is illegality"
@@ -252,43 +237,24 @@ export class ScraperWithPrimus {
             },
             fieldToggles: {},
         });
+        const endpoint = 'https://twitter.com/i/api/graphql/a1p9RWpkYKBjWv_I3WzS-A/CreateTweet';
+        const method = 'POST';
+        const attestation = await generateProof(endpoint,method,headers,bodyStr,"$.data.create_tweet.tweet_results.result.rest_id");
 
-        const zkTLS = new PrimusCoreTLS();
-        const appId = process.env.PRIMUS_APP_ID;
-        const appSecret = process.env.PRIMUS_APP_SECRET;
-        await zkTLS.init(appId, appSecret);
-        const attestation = await zkTLS.startAttestation(
-            zkTLS.generateRequestParams(
-                {
-                    url: `https://twitter.com/i/api/graphql/a1p9RWpkYKBjWv_I3WzS-A/CreateTweet`,
-                    method: "POST",
-                    body: bodyStr,
-                    header: headers,
-                },
-                [
-                    {
-                        keyName: "tweetId",
-                        parsePath:
-                            "$.data.create_tweet.tweet_results.result.rest_id",
-                        parseType: "string",
-                    },
-                ]
-            )
-        );
         elizaLogger.info(
             "Tweet posting proof generated successfully:",
             attestation
         );
 
-        const verifyResult = zkTLS.verifyAttestation(attestation);
+        const verifyResult = verifyProof(attestation);
         if (!verifyResult) {
             throw new Error(
                 "Verify attestation failed，data from source is illegality"
             );
         }
         const responseData = JSON.parse(attestation.data);
-        elizaLogger.info(`send tweet success,tweetId:${responseData.tweetId}`);
+        elizaLogger.info(`send tweet success,tweetId:${responseData.content}`);
 
-        return responseData.tweetId;
+        return responseData.content;
     }
 }
