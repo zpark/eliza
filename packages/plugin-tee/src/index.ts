@@ -1,6 +1,11 @@
-import { Plugin } from "@ai16z/eliza";
+import { Plugin } from "@elizaos/core";
 import { remoteAttestationProvider } from "./providers/remoteAttestationProvider";
 import { deriveKeyProvider } from "./providers/deriveKeyProvider";
+import { remoteAttestationAction } from "./actions/remoteAttestation";
+
+export { DeriveKeyProvider } from "./providers/deriveKeyProvider";
+export { RemoteAttestationProvider } from "./providers/remoteAttestationProvider";
+export { RemoteAttestationQuote, TEEMode } from "./types/tee";
 
 export const teePlugin: Plugin = {
     name: "tee",
@@ -8,6 +13,7 @@ export const teePlugin: Plugin = {
         "TEE plugin with actions to generate remote attestations and derive keys",
     actions: [
         /* custom actions */
+        remoteAttestationAction,
     ],
     evaluators: [
         /* custom evaluators */

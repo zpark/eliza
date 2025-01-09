@@ -1,27 +1,19 @@
-import bs58 from "bs58";
-import {
-    Connection,
-    Keypair,
-    PublicKey,
-    VersionedTransaction,
-} from "@solana/web3.js";
-import BigNumber from "bignumber.js";
-import { v4 as uuidv4 } from "uuid";
-import { TrustScoreDatabase } from "@ai16z/plugin-trustdb";
 import {
     ActionExample,
+    composeContext,
+    generateObjectDeprecated,
     HandlerCallback,
     IAgentRuntime,
     Memory,
     ModelClass,
+    settings,
     State,
     type Action,
-    composeContext,
-    generateObject,
-    settings,
-} from "@ai16z/eliza";
-import { TokenProvider } from "../providers/token.ts";
-import { TrustScoreManager } from "../providers/trustScoreProvider.ts";
+    elizaLogger,
+} from "@elizaos/core";
+import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
+import { getWalletKey } from "../keypairUtils.ts";
 import { walletProvider, WalletProvider } from "../providers/wallet.ts";
 import { getTokenDecimals } from "./swapUtils.ts";
 
@@ -41,7 +33,7 @@ async function swapToken(
                       await getTokenDecimals(connection, inputTokenCA)
                   );
 
-        console.log("Decimals:", decimals.toString());
+        elizaLogger.log("Decimals:", decimals.toString());
 
         // Use BigNumber for adjustedAmount: amount * (10 ** decimals)
         const amountBN = new BigNumber(amount);
@@ -49,35 +41,38 @@ async function swapToken(
             new BigNumber(10).pow(decimals)
         );
 
-        console.log("Fetching quote with params:", {
+        elizaLogger.log("Fetching quote with params:", {
             inputMint: inputTokenCA,
             outputMint: outputTokenCA,
             amount: adjustedAmount,
         });
 
         const quoteResponse = await fetch(
-            `https://quote-api.jup.ag/v6/quote?inputMint=${inputTokenCA}&outputMint=${outputTokenCA}&amount=${adjustedAmount}&slippageBps=50`
+            `https://quote-api.jup.ag/v6/quote?inputMint=${inputTokenCA}&outputMint=${outputTokenCA}&amount=${adjustedAmount}&dynamicSlippage=true&maxAccounts=64`
         );
         const quoteData = await quoteResponse.json();
 
         if (!quoteData || quoteData.error) {
-            console.error("Quote error:", quoteData);
+            elizaLogger.error("Quote error:", quoteData);
             throw new Error(
                 `Failed to get quote: ${quoteData?.error || "Unknown error"}`
             );
         }
 
-        console.log("Quote received:", quoteData);
+        elizaLogger.log("Quote received:", quoteData);
 
         const swapRequestBody = {
             quoteResponse: quoteData,
-            userPublicKey: walletPublicKey.toString(),
-            wrapAndUnwrapSol: true,
-            computeUnitPriceMicroLamports: 2000000,
+            userPublicKey: walletPublicKey.toBase58(),
             dynamicComputeUnitLimit: true,
+            dynamicSlippage: true,
+            priorityLevelWithMaxLamports: {
+                maxLamports: 4000000,
+                priorityLevel: "veryHigh",
+            },
         };
 
-        console.log("Requesting swap with body:", swapRequestBody);
+        elizaLogger.log("Requesting swap with body:", swapRequestBody);
 
         const swapResponse = await fetch("https://quote-api.jup.ag/v6/swap", {
             method: "POST",
@@ -90,16 +85,16 @@ async function swapToken(
         const swapData = await swapResponse.json();
 
         if (!swapData || !swapData.swapTransaction) {
-            console.error("Swap error:", swapData);
+            elizaLogger.error("Swap error:", swapData);
             throw new Error(
                 `Failed to get swap transaction: ${swapData?.error || "No swap transaction returned"}`
             );
         }
 
-        console.log("Swap transaction received");
+        elizaLogger.log("Swap transaction received");
         return swapData;
     } catch (error) {
-        console.error("Error in swapToken:", error);
+        elizaLogger.error("Error in swapToken:", error);
         throw error;
     }
 }
@@ -110,7 +105,7 @@ Example response:
 \`\`\`json
 {
     "inputTokenSymbol": "SOL",
-    "outputTokenSymbol": "USDC", 
+    "outputTokenSymbol": "USDC",
     "inputTokenCA": "So11111111111111111111111111111111111111112",
     "outputTokenCA": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     "amount": 1.5
@@ -125,7 +120,7 @@ Given the recent messages and wallet information below:
 
 Extract the following information about the requested token swap:
 - Input token symbol (the token being sold)
-- Output token symbol (the token being bought) 
+- Output token symbol (the token being bought)
 - Input token contract address if provided
 - Output token contract address if provided
 - Amount to swap
@@ -134,7 +129,7 @@ Respond with a JSON markdown block containing only the extracted values. Use nul
 \`\`\`json
 {
     "inputTokenSymbol": string | null,
-    "outputTokenSymbol": string | null, 
+    "outputTokenSymbol": string | null,
     "inputTokenCA": string | null,
     "outputTokenCA": string | null,
     "amount": number | string | null
@@ -145,12 +140,10 @@ Respond with a JSON markdown block containing only the extracted values. Use nul
 
 // get all the tokens in the wallet using the wallet provider
 async function getTokensInWallet(runtime: IAgentRuntime) {
+    const { publicKey } = await getWalletKey(runtime, false);
     const walletProvider = new WalletProvider(
         new Connection("https://api.mainnet-beta.solana.com"),
-        new PublicKey(
-            runtime.getSetting("SOLANA_PUBLIC_KEY") ??
-                runtime.getSetting("WALLET_PUBLIC_KEY")
-        )
+        publicKey
     );
 
     const walletInfo = await walletProvider.fetchPortfolioValue(runtime);
@@ -170,7 +163,7 @@ async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string) {
             return null;
         }
     } catch (error) {
-        console.error("Error checking token in wallet:", error);
+        elizaLogger.error("Error checking token in wallet:", error);
         return null;
     }
 }
@@ -182,7 +175,7 @@ export const executeSwap: Action = {
     similes: ["SWAP_TOKENS", "TOKEN_SWAP", "TRADE_TOKENS", "EXCHANGE_TOKENS"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         // Check if the necessary parameters are provided in the message
-        console.log("Message:", message);
+        elizaLogger.log("Message:", message);
         return true;
     },
     description: "Perform a token swap.",
@@ -209,15 +202,14 @@ export const executeSwap: Action = {
             template: swapTemplate,
         });
 
-        const response = await generateObject({
+        const response = await generateObjectDeprecated({
             runtime,
             context: swapContext,
             modelClass: ModelClass.LARGE,
         });
 
-        console.log("Response:", response);
-        const type =
-            response.inputTokenSymbol?.toUpperCase() === "SOL" ? "buy" : "sell";
+        elizaLogger.log("Response:", response);
+        // const type = response.inputTokenSymbol?.toUpperCase() === "SOL" ? "buy" : "sell";
 
         // Add SOL handling logic
         if (response.inputTokenSymbol?.toUpperCase() === "SOL") {
@@ -230,7 +222,7 @@ export const executeSwap: Action = {
         // if both contract addresses are set, lets execute the swap
         // TODO: try to resolve CA from symbol based on existing symbol in wallet
         if (!response.inputTokenCA && response.inputTokenSymbol) {
-            console.log(
+            elizaLogger.log(
                 `Attempting to resolve CA for input token symbol: ${response.inputTokenSymbol}`
             );
             response.inputTokenCA = await getTokenFromWallet(
@@ -238,9 +230,13 @@ export const executeSwap: Action = {
                 response.inputTokenSymbol
             );
             if (response.inputTokenCA) {
-                console.log(`Resolved inputTokenCA: ${response.inputTokenCA}`);
+                elizaLogger.log(
+                    `Resolved inputTokenCA: ${response.inputTokenCA}`
+                );
             } else {
-                console.log("No contract addresses provided, skipping swap");
+                elizaLogger.log(
+                    "No contract addresses provided, skipping swap"
+                );
                 const responseMsg = {
                     text: "I need the contract addresses to perform the swap",
                 };
@@ -250,7 +246,7 @@ export const executeSwap: Action = {
         }
 
         if (!response.outputTokenCA && response.outputTokenSymbol) {
-            console.log(
+            elizaLogger.log(
                 `Attempting to resolve CA for output token symbol: ${response.outputTokenSymbol}`
             );
             response.outputTokenCA = await getTokenFromWallet(
@@ -258,11 +254,13 @@ export const executeSwap: Action = {
                 response.outputTokenSymbol
             );
             if (response.outputTokenCA) {
-                console.log(
+                elizaLogger.log(
                     `Resolved outputTokenCA: ${response.outputTokenCA}`
                 );
             } else {
-                console.log("No contract addresses provided, skipping swap");
+                elizaLogger.log(
+                    "No contract addresses provided, skipping swap"
+                );
                 const responseMsg = {
                     text: "I need the contract addresses to perform the swap",
                 };
@@ -272,7 +270,7 @@ export const executeSwap: Action = {
         }
 
         if (!response.amount) {
-            console.log("No amount provided, skipping swap");
+            elizaLogger.log("No amount provided, skipping swap");
             const responseMsg = {
                 text: "I need the amount to perform the swap",
             };
@@ -282,7 +280,7 @@ export const executeSwap: Action = {
 
         // TODO: if response amount is half, all, etc, semantically retrieve amount and return as number
         if (!response.amount) {
-            console.log("Amount is not a number, skipping swap");
+            elizaLogger.log("Amount is not a number, skipping swap");
             const responseMsg = {
                 text: "The amount must be a number",
             };
@@ -293,17 +291,17 @@ export const executeSwap: Action = {
             const connection = new Connection(
                 "https://api.mainnet-beta.solana.com"
             );
-            const walletPublicKey = new PublicKey(
-                runtime.getSetting("SOLANA_PUBLIC_KEY") ??
-                    runtime.getSetting("WALLET_PUBLIC_KEY")
+            const { publicKey: walletPublicKey } = await getWalletKey(
+                runtime,
+                false
             );
 
-            const provider = new WalletProvider(connection, walletPublicKey);
+            // const provider = new WalletProvider(connection, walletPublicKey);
 
-            console.log("Wallet Public Key:", walletPublicKey);
-            console.log("inputTokenSymbol:", response.inputTokenCA);
-            console.log("outputTokenSymbol:", response.outputTokenCA);
-            console.log("amount:", response.amount);
+            elizaLogger.log("Wallet Public Key:", walletPublicKey);
+            elizaLogger.log("inputTokenSymbol:", response.inputTokenCA);
+            elizaLogger.log("outputTokenSymbol:", response.outputTokenCA);
+            elizaLogger.log("amount:", response.amount);
 
             const swapResult = await swapToken(
                 connection,
@@ -313,7 +311,7 @@ export const executeSwap: Action = {
                 response.amount as number
             );
 
-            console.log("Deserializing transaction...");
+            elizaLogger.log("Deserializing transaction...");
             const transactionBuf = Buffer.from(
                 swapResult.swapTransaction,
                 "base64"
@@ -321,54 +319,21 @@ export const executeSwap: Action = {
             const transaction =
                 VersionedTransaction.deserialize(transactionBuf);
 
-            console.log("Preparing to sign transaction...");
-            const privateKeyString =
-                runtime.getSetting("SOLANA_PRIVATE_KEY") ??
-                runtime.getSetting("WALLET_PRIVATE_KEY");
+            elizaLogger.log("Preparing to sign transaction...");
 
-            // Handle different private key formats
-            let secretKey: Uint8Array;
-            try {
-                // First try to decode as base58
-                secretKey = bs58.decode(privateKeyString);
-                // eslint-disable-next-line
-            } catch (e) {
-                try {
-                    // If that fails, try base64
-                    secretKey = Uint8Array.from(
-                        Buffer.from(privateKeyString, "base64")
-                    );
-                    // eslint-disable-next-line
-                } catch (e2) {
-                    throw new Error("Invalid private key format");
-                }
-            }
-
-            // Verify the key length
-            if (secretKey.length !== 64) {
-                console.error("Invalid key length:", secretKey.length);
-                throw new Error(
-                    `Invalid private key length: ${secretKey.length}. Expected 64 bytes.`
-                );
-            }
-
-            console.log("Creating keypair...");
-            const keypair = Keypair.fromSecretKey(secretKey);
-
+            elizaLogger.log("Creating keypair...");
+            const { keypair } = await getWalletKey(runtime, true);
             // Verify the public key matches what we expect
-            const expectedPublicKey =
-                runtime.getSetting("SOLANA_PUBLIC_KEY") ??
-                runtime.getSetting("WALLET_PUBLIC_KEY");
-            if (keypair.publicKey.toBase58() !== expectedPublicKey) {
+            if (keypair.publicKey.toBase58() !== walletPublicKey.toBase58()) {
                 throw new Error(
                     "Generated public key doesn't match expected public key"
                 );
             }
 
-            console.log("Signing transaction...");
+            elizaLogger.log("Signing transaction...");
             transaction.sign([keypair]);
 
-            console.log("Sending transaction...");
+            elizaLogger.log("Sending transaction...");
 
             const latestBlockhash = await connection.getLatestBlockhash();
 
@@ -378,7 +343,7 @@ export const executeSwap: Action = {
                 preflightCommitment: "confirmed",
             });
 
-            console.log("Transaction sent:", txid);
+            elizaLogger.log("Transaction sent:", txid);
 
             // Confirm transaction using the blockhash
             const confirmation = await connection.confirmTransaction(
@@ -402,83 +367,8 @@ export const executeSwap: Action = {
                 );
             }
 
-            if (type === "buy") {
-                const tokenProvider = new TokenProvider(
-                    response.outputTokenCA,
-                    provider,
-                    runtime.cacheManager
-                );
-                const module = await import("better-sqlite3");
-                const Database = module.default;
-                const trustScoreDb = new TrustScoreDatabase(
-                    new Database(":memory:")
-                );
-                // add or get recommender
-                const uuid = uuidv4();
-                const recommender = await trustScoreDb.getOrCreateRecommender({
-                    id: uuid,
-                    address: walletPublicKey.toString(),
-                    solanaPubkey: walletPublicKey.toString(),
-                });
-
-                const trustScoreDatabase = new TrustScoreManager(
-                    runtime,
-                    tokenProvider,
-                    trustScoreDb
-                );
-                // save the trade
-                const tradeData = {
-                    buy_amount: response.amount,
-                    is_simulation: false,
-                };
-                await trustScoreDatabase.createTradePerformance(
-                    runtime,
-                    response.outputTokenCA,
-                    recommender.id,
-                    tradeData
-                );
-            } else if (type === "sell") {
-                const tokenProvider = new TokenProvider(
-                    response.inputTokenCA,
-                    provider,
-                    runtime.cacheManager
-                );
-                const module = await import("better-sqlite3");
-                const Database = module.default;
-                const trustScoreDb = new TrustScoreDatabase(
-                    new Database(":memory:")
-                );
-                // add or get recommender
-                const uuid = uuidv4();
-                const recommender = await trustScoreDb.getOrCreateRecommender({
-                    id: uuid,
-                    address: walletPublicKey.toString(),
-                    solanaPubkey: walletPublicKey.toString(),
-                });
-
-                const trustScoreDatabase = new TrustScoreManager(
-                    runtime,
-                    tokenProvider,
-                    trustScoreDb
-                );
-                // save the trade
-                const sellDetails = {
-                    sell_amount: response.amount,
-                    sell_recommender_id: recommender.id,
-                };
-                const sellTimeStamp = new Date().getTime().toString();
-                await trustScoreDatabase.updateSellDetails(
-                    runtime,
-                    response.inputTokenCA,
-                    recommender.id,
-                    sellTimeStamp,
-                    sellDetails,
-                    false
-                );
-            }
-
-            console.log("Swap completed successfully!");
-            console.log(`Transaction ID: ${txid}`);
+            elizaLogger.log("Swap completed successfully!");
+            elizaLogger.log(`Transaction ID: ${txid}`);
 
             const responseMsg = {
                 text: `Swap completed successfully! Transaction ID: ${txid}`,
@@ -488,7 +378,7 @@ export const executeSwap: Action = {
 
             return true;
         } catch (error) {
-            console.error("Error during token swap:", error);
+            elizaLogger.error("Error during token swap:", error);
             return false;
         }
     },

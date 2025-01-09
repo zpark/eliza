@@ -1,9 +1,16 @@
 /* This is an example of how WalletProvider can use DeriveKeyProvider to generate a Solana Keypair */
-import { IAgentRuntime, Memory, Provider, State } from "@ai16z/eliza";
+import {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
+    elizaLogger,
+} from "@elizaos/core";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import NodeCache from "node-cache";
 import { DeriveKeyProvider } from "./deriveKeyProvider";
+import { RemoteAttestationQuote } from "../types/tee";
 // Provider configuration
 const PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
@@ -35,7 +42,7 @@ interface WalletPortfolio {
     items: Array<Item>;
 }
 
-interface BirdEyePriceData {
+interface _BirdEyePriceData {
     data: {
         [key: string]: {
             price: number;
@@ -90,7 +97,7 @@ export class WalletProvider {
                 const data = await response.json();
                 return data;
             } catch (error) {
-                console.error(`Attempt ${i + 1} failed:`, error);
+                elizaLogger.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
                     const delay = PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i);
@@ -100,7 +107,7 @@ export class WalletProvider {
             }
         }
 
-        console.error(
+        elizaLogger.error(
             "All attempts failed. Throwing the last error:",
             lastError
         );
@@ -113,10 +120,10 @@ export class WalletProvider {
             const cachedValue = this.cache.get<WalletPortfolio>(cacheKey);
 
             if (cachedValue) {
-                console.log("Cache hit for fetchPortfolioValue");
+                elizaLogger.log("Cache hit for fetchPortfolioValue");
                 return cachedValue;
             }
-            console.log("Cache miss for fetchPortfolioValue");
+            elizaLogger.log("Cache miss for fetchPortfolioValue");
 
             const walletData = await this.fetchWithRetry(
                 runtime,
@@ -124,7 +131,7 @@ export class WalletProvider {
             );
 
             if (!walletData?.success || !walletData?.data) {
-                console.error("No portfolio data available", walletData);
+                elizaLogger.error("No portfolio data available", walletData);
                 throw new Error("No portfolio data available");
             }
 
@@ -157,7 +164,7 @@ export class WalletProvider {
             this.cache.set(cacheKey, portfolio);
             return portfolio;
         } catch (error) {
-            console.error("Error fetching portfolio:", error);
+            elizaLogger.error("Error fetching portfolio:", error);
             throw error;
         }
     }
@@ -168,10 +175,10 @@ export class WalletProvider {
             const cachedValue = this.cache.get<Prices>(cacheKey);
 
             if (cachedValue) {
-                console.log("Cache hit for fetchPrices");
+                elizaLogger.log("Cache hit for fetchPrices");
                 return cachedValue;
             }
-            console.log("Cache miss for fetchPrices");
+            elizaLogger.log("Cache miss for fetchPrices");
 
             const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
             const tokens = [SOL, BTC, ETH];
@@ -202,14 +209,16 @@ export class WalletProvider {
                               : "ethereum"
                     ].usd = price;
                 } else {
-                    console.warn(`No price data available for token: ${token}`);
+                    elizaLogger.warn(
+                        `No price data available for token: ${token}`
+                    );
                 }
             }
 
             this.cache.set(cacheKey, prices);
             return prices;
         } catch (error) {
-            console.error("Error fetching prices:", error);
+            elizaLogger.error("Error fetching prices:", error);
             throw error;
         }
     }
@@ -260,7 +269,7 @@ export class WalletProvider {
 
             return this.formatPortfolio(runtime, portfolio, prices);
         } catch (error) {
-            console.error("Error generating portfolio report:", error);
+            elizaLogger.error("Error generating portfolio report:", error);
             return "Unable to fetch wallet information. Please try again later.";
         }
     }
@@ -272,10 +281,13 @@ const walletProvider: Provider = {
         _message: Memory,
         _state?: State
     ): Promise<string> => {
+        const agentId = runtime.agentId;
+        const teeMode = runtime.getSetting("TEE_MODE");
+        const deriveKeyProvider = new DeriveKeyProvider(teeMode);
         try {
             // Validate wallet configuration
             if (!runtime.getSetting("WALLET_SECRET_SALT")) {
-                console.error(
+                elizaLogger.error(
                     "Wallet secret salt is not configured in settings"
                 );
                 return "";
@@ -283,16 +295,18 @@ const walletProvider: Provider = {
 
             let publicKey: PublicKey;
             try {
-                const deriveKeyProvider = new DeriveKeyProvider();
-                const derivedKeyPair: Keypair =
-                    await deriveKeyProvider.deriveEd25519Keypair(
-                        "/",
-                        runtime.getSetting("WALLET_SECRET_SALT")
-                    );
-                publicKey = derivedKeyPair.publicKey;
-                console.log("Wallet Public Key: ", publicKey.toBase58());
+                const derivedKeyPair: {
+                    keypair: Keypair;
+                    attestation: RemoteAttestationQuote;
+                } = await deriveKeyProvider.deriveEd25519Keypair(
+                    "/",
+                    runtime.getSetting("WALLET_SECRET_SALT"),
+                    agentId
+                );
+                publicKey = derivedKeyPair.keypair.publicKey;
+                elizaLogger.log("Wallet Public Key: ", publicKey.toBase58());
             } catch (error) {
-                console.error("Error creating PublicKey:", error);
+                elizaLogger.error("Error creating PublicKey:", error);
                 return "";
             }
 
@@ -302,7 +316,7 @@ const walletProvider: Provider = {
             const porfolio = await provider.getFormattedPortfolio(runtime);
             return porfolio;
         } catch (error) {
-            console.error("Error in wallet provider:", error.message);
+            elizaLogger.error("Error in wallet provider:", error.message);
             return `Failed to fetch wallet information: ${error instanceof Error ? error.message : "Unknown error"}`;
         }
     },

@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.4-alpha.3](../index.md) / IDatabaseCacheAdapter
+[@elizaos/core v0.1.7](../index.md) / IDatabaseCacheAdapter
 
 # Interface: IDatabaseCacheAdapter
 
@@ -22,9 +22,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:888](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L888)
+[packages/core/src/types.ts:1006](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1006)
 
-***
+---
 
 ### setCache()
 
@@ -46,9 +46,9 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:893](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L893)
+[packages/core/src/types.ts:1011](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1011)
 
-***
+---
 
 ### deleteCache()
 
@@ -68,4 +68,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:899](https://github.com/ai16z/eliza/blob/main/packages/core/src/types.ts#L899)
+[packages/core/src/types.ts:1017](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1017)
