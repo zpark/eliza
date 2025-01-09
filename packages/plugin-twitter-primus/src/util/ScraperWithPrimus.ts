@@ -13,6 +13,10 @@ export class ScraperWithPrimus {
         return this.scraper;
     }
 
+    public async getUserIdByScreenName(screenName: string) {
+        return await this.scraper.getUserIdByScreenName(screenName);
+    }
+
     public async login() {
         this.scraper = new Scraper();
         const username = process.env.TWITTER_USERNAME;
@@ -115,7 +119,6 @@ export class ScraperWithPrimus {
         const appSecret = process.env.PRIMUS_APP_SECRET;
         await zkTLS.init(appId, appSecret);
 
-        const start = new Date();
         const attestation = await zkTLS.startAttestation(
             zkTLS.generateRequestParams(
                 {
@@ -133,23 +136,41 @@ export class ScraperWithPrimus {
                 ]
             )
         );
-        const end = new Date();
-        //log cost
+        //log attestation
         elizaLogger.info(
-            `request primus cost:${end.getTime() - start.getTime()}ms`
+            "Tweet getting proof generated successfully:",
+            attestation
         );
-
-
-
-        elizaLogger.info(`Tweet getting proof generated successfully!`);
         const verifyResult = zkTLS.verifyAttestation(attestation);
-        if(!verifyResult){
-            throw new Error("Verify attestation failed，data from source is illegality");
+        if (!verifyResult) {
+            throw new Error(
+                "Verify attestation failed，data from source is illegality"
+            );
         }
         const responseData = JSON.parse(attestation.data);
+        const content = responseData.content;
         //log
-        elizaLogger.info(`get tweet content success:${responseData.content}`);
-        return responseData.content;
+        elizaLogger.info(`get tweet content success:${content}`);
+        return this.removeEmojis(content);
+    }
+
+    private isEmoji(char: string) {
+        const codePoint = char.codePointAt(0);
+        return (
+            (codePoint >= 0x1f600 && codePoint <= 0x1f64f) ||
+            (codePoint >= 0x1f300 && codePoint <= 0x1f5ff) ||
+            (codePoint >= 0x1f680 && codePoint <= 0x1f6ff) ||
+            (codePoint >= 0x2600 && codePoint <= 0x26ff) ||
+            (codePoint >= 0x2700 && codePoint <= 0x27bf) ||
+            (codePoint >= 0x1f900 && codePoint <= 0x1f9ff) ||
+            (codePoint >= 0x1f1e6 && codePoint <= 0x1f1ff)
+        );
+    }
+
+    private removeEmojis(input: string) {
+        return Array.from(input)
+            .filter((char) => !this.isEmoji(char))
+            .join("");
     }
 
     public async sendTweet(content: string) {
@@ -254,11 +275,16 @@ export class ScraperWithPrimus {
                 ]
             )
         );
-        elizaLogger.info(`Tweet sending proof generated successfully!`);
+        elizaLogger.info(
+            "Tweet posting proof generated successfully:",
+            attestation
+        );
 
         const verifyResult = zkTLS.verifyAttestation(attestation);
-        if(!verifyResult){
-            throw new Error("Verify attestation failed，data from source is illegality");
+        if (!verifyResult) {
+            throw new Error(
+                "Verify attestation failed，data from source is illegality"
+            );
         }
         const responseData = JSON.parse(attestation.data);
         elizaLogger.info(`send tweet success,tweetId:${responseData.tweetId}`);

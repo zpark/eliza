@@ -12,12 +12,13 @@ const tweetProvider: Provider = {
             elizaLogger.error("Failed to login to Twitter");
             return false;
         }
-        const userId = process.env.TWITTER_USER_ID_WANT_TO_GET_TWEET;
-        if(!userId){
-            elizaLogger.error("TWITTER_USER_ID_WANT_TO_GET_TWEET is not set");
+        const userName = process.env.TWITTER_USERNAME_WANT_TO_GET_TWEET;
+        if(!userName){
+            elizaLogger.error("TWITTER_USERNAME_WANT_TO_GET_TWEET is not set");
             return false;
         }
-
+        const userId = await scraperWithPrimus.getUserIdByScreenName(userName);
+        elizaLogger.log(`userName is:${userName}, userId:${userId}`);
         const result = await scraperWithPrimus.getUserLatestTweet(userId);
         //log
         elizaLogger.log("Tweet response:", result);

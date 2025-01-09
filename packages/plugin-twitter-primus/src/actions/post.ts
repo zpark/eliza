@@ -1,44 +1,37 @@
 import {
-    Action, composeContext,
-    elizaLogger, generateMessageResponse, generateObject,
+    Action,
+    composeContext,
+    elizaLogger,
+    generateText,
     IAgentRuntime,
-    Memory, ModelClass,
+    Memory,
+    ModelClass,
     State,
 } from "@elizaos/core";
 import { ScraperWithPrimus } from "../util/ScraperWithPrimus.ts";
 import { tweetProvider } from "../provider/tweetProvider.ts";
-import {isTweetContent, TweetSchema} from "../types.ts";
-import {summarizeTweetTemplate} from "../templates.ts";
-
+import { summarizeTweetTemplate } from "../templates.ts";
 
 async function summaryTweetContent(
     runtime: IAgentRuntime,
     _message: Memory,
+    twitterContent: string,
     state?: State
 ): Promise<string> {
     try {
-        const context = composeContext({
-            state,
-            template: summarizeTweetTemplate,
-        });
+        const context = summarizeTweetTemplate(twitterContent)
 
-        const tweetContentObject = await generateObject({
+        const tweetContentStr = await generateText({
             runtime,
             context,
-            modelClass: ModelClass.SMALL,
-            schema: TweetSchema,
-            stop: ["\n"],
+            modelClass: ModelClass.LARGE,
         });
-
-        if (!isTweetContent(tweetContentObject.object)) {
-            elizaLogger.error(
-                "Invalid tweet content:",
-                tweetContentObject.object
-            );
+        if (!tweetContentStr) {
+            elizaLogger.error("Invalid tweet content:", tweetContentStr);
             return;
         }
 
-        const trimmedContent = tweetContentObject.object.text.trim();
+        const trimmedContent = JSON.parse(tweetContentStr).text;
 
         // Skip truncation if TWITTER_PREMIUM is true
         if (
@@ -58,7 +51,6 @@ async function summaryTweetContent(
     }
 }
 
-
 async function postTweet(content: string): Promise<boolean> {
     try {
         const scraperWithPrimus = new ScraperWithPrimus();
@@ -76,9 +68,7 @@ async function postTweet(content: string): Promise<boolean> {
 
         // Check for Twitter API errors
         if (!result) {
-            elizaLogger.error(
-                `Twitter API error ${result}`
-            );
+            elizaLogger.error(`Twitter API error ${result}`);
             return false;
         }
         return true;
@@ -149,8 +139,16 @@ export const postAction: Action = {
         state?: State
     ): Promise<boolean> => {
         //check VERIFIABLE_INFERENCE_ENABLED
-        if(!((process.env.VERIFIABLE_INFERENCE_ENABLED === "true")&&process.env.PRIMUS_APP_ID&&process.env.PRIMUS_APP_SECRET)){
-            elizaLogger.error(`Parameter 'VERIFIABLE_INFERENCE_ENABLED' not set, Eliza will run this action!`);
+        if (
+            !(
+                process.env.VERIFIABLE_INFERENCE_ENABLED === "true" &&
+                process.env.PRIMUS_APP_ID &&
+                process.env.PRIMUS_APP_SECRET
+            )
+        ) {
+            elizaLogger.error(
+                `Parameter 'VERIFIABLE_INFERENCE_ENABLED' not set, Eliza will run this action!`
+            );
             return false;
         }
 
@@ -171,10 +169,16 @@ export const postAction: Action = {
             elizaLogger.log(`Content from twitter: ${twitterContent}`);
 
             //Summary the content
-            state['twitterContent'] = twitterContent;
-            const contentSummaryByAI = await summaryTweetContent(runtime, message, state);
+            const contentSummaryByAI = await summaryTweetContent(
+                runtime,
+                message,
+                twitterContent,
+                state
+            );
             //log
-            elizaLogger.log(`Summary content from twitter: ${contentSummaryByAI}`);
+            elizaLogger.log(
+                `Summary content from twitter: ${contentSummaryByAI}`
+            );
             // Check for dry run mode - explicitly check for string "true"
             if (
                 process.env.TWITTER_DRY_RUN &&

@@ -21,9 +21,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
 
     constructor(options: PrimusOptions) {
         this.options = options;
-        const zkTLS = new PrimusCoreTLS();
-        zkTLS.init(this.options.appId, this.options.appSecret);
-        this.client = zkTLS;
+
     }
 
     async generateText(
@@ -140,8 +138,10 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 default:
                     throw new Error(`Unsupported model provider: ${provider}`);
             }
-            const start = new Date();
-            const attestation = await this.client.startAttestation(this.client.generateRequestParams(
+            const zkTLS = new PrimusCoreTLS();
+            await zkTLS.init(process.env.PRIMUS_APP_ID, process.env.PRIMUS_APP_SECRET);
+            this.client = zkTLS;
+            const attestation = await zkTLS.startAttestation(zkTLS.generateRequestParams(
                 {
                     url: endpoint,
                     method: "POST",
@@ -156,12 +156,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                     }
                 ]
             ));
-            const end = new Date();
-            console.log(`attestation:`, attestation);
-
-            elizaLogger.info(
-                `request openAI cost:${end.getTime() - start.getTime()}ms`
-            );
+            console.log(`model attestation:`, attestation);
 
             const responseData = JSON.parse(attestation.data);
             let text = JSON.parse(responseData.content);
