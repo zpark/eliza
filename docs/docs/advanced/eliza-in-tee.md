@@ -57,15 +57,21 @@ Example usage:
 const provider = new DeriveKeyProvider(teeMode);
 // For Solana
 const { keypair, attestation } = await provider.deriveEd25519Keypair(
-    "/",
     secretSalt,
+    "solana",
     agentId,
 );
 // For EVM
 const { keypair, attestation } = await provider.deriveEcdsaKeypair(
-    "/",
     secretSalt,
+    "evm",
     agentId,
+);
+
+// For raw key derivation
+const rawKey = await provider.deriveRawKey(
+    secretSalt,
+    "raw",
 );
 ```
 

@@ -72,6 +72,12 @@ class DeriveKeyProvider {
         return quote;
     }
 
+    /**
+     * Derives a raw key from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @returns The derived key.
+     */
     async rawDeriveKey(
         path: string,
         subject: string
@@ -94,6 +100,13 @@ class DeriveKeyProvider {
         }
     }
 
+    /**
+     * Derives an Ed25519 keypair from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @param agentId - The agent ID to generate an attestation for.
+     * @returns An object containing the derived keypair and attestation.
+     */
     async deriveEd25519Keypair(
         path: string,
         subject: string,
@@ -130,6 +143,13 @@ class DeriveKeyProvider {
         }
     }
 
+    /**
+     * Derives an ECDSA keypair from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @param agentId - The agent ID to generate an attestation for. This is used for the certificate chain.
+     * @returns An object containing the derived keypair and attestation.
+     */
     async deriveEcdsaKeypair(
         path: string,
         subject: string,
@@ -184,13 +204,13 @@ const deriveKeyProvider: Provider = {
                 const secretSalt =
                     runtime.getSetting("WALLET_SECRET_SALT") || "secret_salt";
                 const solanaKeypair = await provider.deriveEd25519Keypair(
-                    "/",
                     secretSalt,
+                    "solana",
                     agentId
                 );
                 const evmKeypair = await provider.deriveEcdsaKeypair(
-                    "/",
                     secretSalt,
+                    "evm",
                     agentId
                 );
                 return JSON.stringify({
