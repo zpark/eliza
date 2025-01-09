@@ -18,7 +18,7 @@ interface PrimusOptions {
 }
 
 export class PrimusAdapter implements IVerifiableInferenceAdapter {
-    private options: PrimusOptions;
+    public options: PrimusOptions;
 
     constructor(options: PrimusOptions) {
         this.options = options;
