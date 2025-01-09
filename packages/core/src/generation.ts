@@ -212,17 +212,18 @@ export async function generateText({
         model: modelClass,
         verifiableInference,
     });
-
+    elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
+        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
         try {
-            const result =
+            const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
                     context,
                     modelClass,
                     verifiableInferenceOptions
                 );
-
+            elizaLogger.log("Verifiable inference result:", result);
             // Verify the proof
             const isValid =
                 await runtime.verifiableInferenceAdapter.verifyProof(result);
@@ -352,6 +353,7 @@ export async function generateText({
             case ModelProviderName.LLAMACLOUD:
             case ModelProviderName.NANOGPT:
             case ModelProviderName.HYPERBOLIC:
+            case ModelProviderName.NINETEEN_AI:
             case ModelProviderName.TOGETHER:
             case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model.");
@@ -788,7 +790,13 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
+                const headers = {}
+                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                if (fineTuneApiKey) {
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                }
                 const galadriel = createOpenAI({
+                    headers,
                     apiKey: apiKey,
                     baseURL: endpoint,
                     fetch: runtime.fetch,
@@ -1217,6 +1225,7 @@ export const generateImage = async (
                           // If no specific match, try the fallback chain
                           return (
                               runtime.getSetting("HEURIST_API_KEY") ??
+                              runtime.getSetting("NINETEEN_AI_API_KEY") ??
                               runtime.getSetting("TOGETHER_API_KEY") ??
                               runtime.getSetting("FAL_API_KEY") ??
                               runtime.getSetting("OPENAI_API_KEY") ??
@@ -1408,6 +1417,43 @@ export const generateImage = async (
                 if (!base64String) {
                     throw new Error(
                         "Empty base64 string in Venice AI response"
+                    );
+                }
+                return `data:image/png;base64,${base64String}`;
+            });
+
+            return { success: true, data: base64s };
+        }else if (runtime.imageModelProvider === ModelProviderName.NINETEEN_AI) {
+            const response = await fetch(
+                "https://api.nineteen.ai/v1/text-to-image",
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: data.modelId || "dataautogpt3/ProteusV0.4-Lightning",
+                        prompt: data.prompt,
+                        negative_prompt: data.negativePrompt,
+                        width: data.width,
+                        height: data.height,
+                        steps: data.numIterations,
+                        cfg_scale: data.guidanceScale || 3
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.images || !Array.isArray(result.images)) {
+                throw new Error("Invalid response format from Nineteen AI");
+            }
+
+            const base64s = result.images.map((base64String) => {
+                if (!base64String) {
+                    throw new Error(
+                        "Empty base64 string in Nineteen AI response"
                     );
                 }
                 return `data:image/png;base64,${base64String}`;
