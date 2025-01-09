@@ -1,6 +1,6 @@
 import { Plugin } from "@elizaos/core";
 import { postTweetAction } from "./actions/postTweetAction.ts";
-import {PrimusAdapter} from "./adapter/PrimusAdapter.ts";
+import {PrimusAdapter} from "./adapter/primusAdapter.ts";
 
 export const twitterPlugin: Plugin = {
     name: "twitter",
