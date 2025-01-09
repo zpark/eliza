@@ -14,17 +14,15 @@ import {
     stringToUuid,
     elizaLogger,
     getEmbeddingZeroVector,
+    parsePizzaDecisionFromText,
+    pizzaDecisionFooter,
 } from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 import {
     generateText
-} from "@ai16z/eliza/src/generation.ts";
+} from "@elizaos/core";
 import { PizzaAPI } from "./pizza.ts";
-import {
-    pizzaDecisionFooter,
-    parsePizzaDecisionFromText
-} from "@ai16z/eliza/src/parsing.ts";
 
 export const twitterMessageHandlerTemplate =
     `
