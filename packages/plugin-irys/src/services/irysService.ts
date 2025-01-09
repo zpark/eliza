@@ -9,7 +9,8 @@ import {
     IrysMessageType,
     generateMessageResponse,
     ModelClass,
-    IrysDataType
+    IrysDataType,
+    IrysTimestamp
 } from "@elizaos/core";
 import { Uploader } from "@irys/upload";
 import { BaseEth } from "@irys/upload-ethereum";
@@ -51,7 +52,7 @@ export class IrysService extends Service implements IIrysService {
         this.runtime = runtime;
     }
 
-    private async getTransactionId(owners: string[], tags: GraphQLTag[]): Promise<TransactionsIdAddress> {
+    private async getTransactionId(owners: string[], tags: GraphQLTag[], timestamp: IrysTimestamp = null): Promise<TransactionsIdAddress> {
         const graphQLClient = new GraphQLClient(this.endpointForTransactionId);
         if (owners.length == 0 && tags.length == 0) {
             return { success: false, data: [], error: "No owners or tags provided" };
@@ -59,8 +60,8 @@ export class IrysService extends Service implements IIrysService {
         let QUERY = "";
         if (owners.length > 0 && tags.length > 0) {
             QUERY = gql`
-            query($owners: [String!]) {
-                transactions(owners: $owners) {
+            query($owners: [String!], $timestamp: TimestampFilter) {
+                transactions(owners: $owners, timestamp: $timestamp) {
                     edges {
                         node {
                             id,
@@ -72,8 +73,8 @@ export class IrysService extends Service implements IIrysService {
         `;
         } else if (owners.length > 0) {
             QUERY = gql`
-            query($owners: [String!]) {
-                transactions(owners: $owners) {
+            query($owners: [String!], $timestamp: TimestampFilter) {
+                transactions(owners: $owners, timestamp: $timestamp) {
                     edges {
                         node {
                             id,
@@ -86,8 +87,8 @@ export class IrysService extends Service implements IIrysService {
         }
         else if (tags.length > 0) {
             QUERY = gql`
-            query($tags: [TagFilter!]) {
-                transactions(tags: $tags) {
+            query($tags: [TagFilter!], $timestamp: TimestampFilter) {
+                transactions(tags: $tags, timestamp: $timestamp) {
                     edges {
                         node {
                             id,
@@ -102,6 +103,7 @@ export class IrysService extends Service implements IIrysService {
             const variables = {
                 owners: owners,
                 tags: tags,
+                timestamp: timestamp
             }
             const data: TransactionGQL = await graphQLClient.request(QUERY, variables);
             const listOfTransactions : NodeGQL[] = data.transactions.edges.map((edge: any) => edge.node);
@@ -140,7 +142,7 @@ export class IrysService extends Service implements IIrysService {
         };
     }
 
-    private async orchestrateRequest(requestMessage: string, tags: GraphQLTag[]): Promise<DataIrysFetchedFromGQL> {
+    private async orchestrateRequest(requestMessage: string, tags: GraphQLTag[], timestamp: IrysTimestamp = null): Promise<DataIrysFetchedFromGQL> {
         let serviceCategory = tags.find((tag) => tag.name == "Service-Category")?.values[0];
         let protocol = tags.find((tag) => tag.name == "Protocol")?.values[0];
         let minimumProviders = Number(tags.find((tag) => tag.name == "Minimum-Providers")?.values[0]);
@@ -156,7 +158,7 @@ export class IrysService extends Service implements IIrysService {
             { name: "Protocol", values: [protocol] },
         ];
 
-        const data = await this.getDataFromAnAgent([],tagsToRetrieve);
+        const data = await this.getDataFromAnAgent([],tagsToRetrieve, timestamp);
         if (!data.success) return { success: false, data: null, error: data.error };
         const dataArray = data.data as Array<any>;
         for (let i = 0; i < dataArray.length; i++) {
@@ -204,7 +206,7 @@ export class IrysService extends Service implements IIrysService {
     }
 
     // Orchestrator
-    private async uploadDataOnIrys(data: any, tags: GraphQLTag[], messageType: IrysMessageType): Promise<UploadIrysResult> {
+    private async uploadDataOnIrys(data: any, tags: GraphQLTag[], messageType: IrysMessageType, timestamp: IrysTimestamp = null): Promise<UploadIrysResult> {
         if (!(await this.initializeIrysUploader())) {
             return {
                 success: false,
@@ -223,7 +225,7 @@ export class IrysService extends Service implements IIrysService {
             if (messageType == IrysMessageType.DATA_STORAGE || messageType == IrysMessageType.REQUEST_RESPONSE) {
                 return { success: true, url: `https://gateway.irys.xyz/${receipt.id}`};
             } else if (messageType == IrysMessageType.REQUEST) {
-                const response = await this.orchestrateRequest(data, tags);
+                const response = await this.orchestrateRequest(data, tags, timestamp);
                 return {
                     success: response.success,
                     url: `https://gateway.irys.xyz/${receipt.id}`,
@@ -296,9 +298,9 @@ export class IrysService extends Service implements IIrysService {
         return await this.uploadDataOnIrys(data, tags, IrysMessageType.DATA_STORAGE);
     }
 
-    async getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[]): Promise<DataIrysFetchedFromGQL> {
+    async getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp): Promise<DataIrysFetchedFromGQL> {
         try {
-            const transactionIdsResponse = await this.getTransactionId(agentsWalletPublicKeys, tags);
+            const transactionIdsResponse = await this.getTransactionId(agentsWalletPublicKeys, tags, timestamp);
             if (!transactionIdsResponse.success) return { success: false, data: null, error: "Error fetching transaction IDs" };
             const transactionIdsAndResponse = transactionIdsResponse.data.map((node: NodeGQL) => node);
             const dataPromises: Promise<any>[] = transactionIdsAndResponse.map(async (node: NodeGQL) => {
