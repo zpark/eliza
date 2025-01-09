@@ -14,11 +14,6 @@ import {
 import NodeCache from "node-cache";
 import * as path from "path";
 
-const PROVIDER_CONFIG = {
-    MAX_RETRIES: 3,
-    RETRY_DELAY: 2000,
-};
-
 export class RAGGraphProvider {
     private cache: NodeCache;
     private cacheKey: string = "raggraph";
