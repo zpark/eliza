@@ -212,17 +212,18 @@ export async function generateText({
         model: modelClass,
         verifiableInference,
     });
-
+    elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
+        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
         try {
-            const result =
+            const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
                     context,
                     modelClass,
                     verifiableInferenceOptions
                 );
-
+            elizaLogger.log("Verifiable inference result:", result);
             // Verify the proof
             const isValid =
                 await runtime.verifiableInferenceAdapter.verifyProof(result);
@@ -788,7 +789,13 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
+                const headers = {}
+                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                if (fineTuneApiKey) {
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                }
                 const galadriel = createOpenAI({
+                    headers,
                     apiKey: apiKey,
                     baseURL: endpoint,
                     fetch: runtime.fetch,
@@ -1138,6 +1145,7 @@ export async function generateMessageResponse({
     const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
+    elizaLogger.debug("Context:", context);
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
