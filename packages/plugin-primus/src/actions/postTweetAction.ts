@@ -6,8 +6,8 @@ import {
     State,
 } from "@elizaos/core";
 import { TwitterScraper } from "../util/TwitterScraper.ts";
-import { tweetProvider } from "../provider/tweetProvider.ts";
-import {tokenPriceProvider} from "../provider/tokenPriceProvider.ts";
+import { tweetProvider } from "../providers/tweetProvider.ts";
+import {tokenPriceProvider} from "../providers/tokenPriceProvider.ts";
 
 export const postTweetAction: Action = {
     description: "Post a tweet on Twitter and be verified by Primus",
