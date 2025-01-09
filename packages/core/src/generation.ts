@@ -1918,21 +1918,31 @@ async function handleAtoma({
 
             return {
                 object: validatedObject,
-                finishReason: "stop",
+                finishReason: (result.choices[0].finishReason ?? "stop") as
+                    | "stop"
+                    | "length"
+                    | "error"
+                    | "tool-calls",
                 usage: {
-                    promptTokens: 0,
-                    completionTokens: 0,
-                    totalTokens: 0,
+                    promptTokens: result.usage?.promptTokens ?? 0,
+                    completionTokens: result.usage?.completionTokens ?? 0,
+                    totalTokens: result.usage?.totalTokens ?? 0,
                 },
                 warnings: undefined,
                 request: {},
                 response: {
                     id: result.id,
-                    timestamp: new Date(),
-                    modelId: model,
+                    timestamp: new Date(result.created * 1000), // Convert Unix timestamp to Date
+                    modelId: result.model,
                 },
                 logprobs: undefined,
-                experimental_providerMetadata: undefined,
+                experimental_providerMetadata: result.systemFingerprint
+                    ? {
+                          metadata: {
+                              systemFingerprint: result.systemFingerprint,
+                          },
+                      }
+                    : undefined,
                 toJsonResponse(init?: ResponseInit) {
                     return new Response(
                         JSON.stringify({ object: validatedObject }),
@@ -1951,21 +1961,27 @@ async function handleAtoma({
 
         return {
             object: completion,
-            finishReason: "stop",
+            finishReason: (result.choices[0].finishReason ?? "stop") as
+                | "stop"
+                | "length"
+                | "error"
+                | "tool-calls",
             usage: {
-                promptTokens: 0,
-                completionTokens: 0,
-                totalTokens: 0,
+                promptTokens: result.usage?.promptTokens ?? 0,
+                completionTokens: result.usage?.completionTokens ?? 0,
+                totalTokens: result.usage?.totalTokens ?? 0,
             },
             warnings: undefined,
             request: {},
             response: {
                 id: result.id,
-                timestamp: new Date(),
-                modelId: model,
+                timestamp: new Date(result.created * 1000), // Convert Unix timestamp to Date
+                modelId: result.model,
             },
             logprobs: undefined,
-            experimental_providerMetadata: undefined,
+            experimental_providerMetadata: result.systemFingerprint
+                ? { metadata: { systemFingerprint: result.systemFingerprint } }
+                : undefined,
             toJsonResponse(init?: ResponseInit) {
                 return new Response(JSON.stringify({ object: completion }), {
                     ...init,
