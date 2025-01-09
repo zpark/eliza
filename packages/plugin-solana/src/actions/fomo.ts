@@ -66,7 +66,7 @@ export const createAndBuyToken = async ({
     priorityFee,
     requiredLiquidity = 85,
     allowOffCurve,
-    commitment = "finalized",
+    commitment = "confirmed",
     fomo,
     connection,
 }: {
@@ -182,7 +182,7 @@ export const buyToken = async ({
     slippage,
     connection,
     currency = "sol",
-    commitment = "finalized",
+    commitment = "confirmed",
 }: {
     fomo: Fomo;
     buyer: Keypair;
@@ -281,7 +281,7 @@ export const sellToken = async ({
     slippage,
     connection,
     currency = "token",
-    commitment = "finalized",
+    commitment = "confirmed",
 }: {
     fomo: Fomo;
     seller: Keypair;
