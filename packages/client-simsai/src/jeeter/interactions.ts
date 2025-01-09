@@ -16,6 +16,8 @@ import {
     JEETER_SHOULD_RESPOND_BASE,
     JEETER_MESSAGE_HANDLER_BASE,
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
+    MAX_INTERVAL,
+    MIN_INTERVAL,
 } from "./constants";
 
 export const jeeterMessageHandlerTemplate =
@@ -28,6 +30,7 @@ export class JeeterInteractionClient {
     private rejeetedJeets: Set<string> = new Set();
     private quotedJeets: Set<string> = new Set();
     private repliedJeets: Set<string> = new Set();
+
     constructor(
         private client: ClientBase,
         private runtime: IAgentRuntime
@@ -38,15 +41,15 @@ export class JeeterInteractionClient {
         type: JeetInteraction["type"],
         inReplyToStatusId?: string
     ): Promise<boolean> {
-        // If this is a reply to our jeet, always allow response
+        // If this is a reply to our jeet, always allow the agent to decide whether to respond
         if (type === "reply" && inReplyToStatusId) {
             const parentJeet = await this.client.getJeet(inReplyToStatusId);
             if (parentJeet?.agentId === this.client.profile.id) {
-                return false; // Allow replying to replies to our jeets
+                return false; // Let the agent decide through generateResponse
             }
         }
 
-        // Otherwise check if we've already interacted
+        // For other interactions, check if we've already done them
         switch (type) {
             case "like":
                 return this.likedJeets.has(jeetId);
@@ -87,10 +90,14 @@ export class JeeterInteractionClient {
                 });
 
                 const nextInterval =
-                    (Math.floor(Math.random() * (5 - 2 + 1)) + 2) * 60 * 1000;
+                    Math.floor(
+                        Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1)
+                    ) + MIN_INTERVAL;
+
                 elizaLogger.log(
                     `Next check scheduled in ${nextInterval / 1000} seconds`
                 );
+
                 setTimeout(handleJeeterInteractionsLoop, nextInterval);
             } catch (error) {
                 elizaLogger.error("Error in loop scheduling:", error);
@@ -104,7 +111,7 @@ export class JeeterInteractionClient {
         elizaLogger.log("Checking Jeeter interactions");
 
         try {
-            const jeeterUsername = this.client.profile.username;
+            const { username: jeeterUsername } = this.client.profile;
             elizaLogger.log(
                 `Fetching mentions and comments for @${jeeterUsername}`
             );
@@ -165,7 +172,7 @@ export class JeeterInteractionClient {
 
                 try {
                     const roomId = stringToUuid(
-                        `${jeet.conversationId || jeet.id}-${this.runtime.agentId}`
+                        `${jeet.conversationId ?? jeet.id}-${this.runtime.agentId}`
                     );
                     const userIdUUID = stringToUuid(jeet.agentId);
 
@@ -244,7 +251,6 @@ export class JeeterInteractionClient {
                 }
 
                 elizaLogger.log(`Fetching conversation for post ${post.id}`);
-                // Use the correct endpoint to get full conversation
                 const conversation =
                     await this.client.simsAIClient.getJeetConversation(post.id);
 
@@ -418,10 +424,6 @@ export class JeeterInteractionClient {
                                     await this.client.simsAIClient.likeJeet(
                                         jeet.id
                                     );
-                                    elizaLogger.log(
-                                        `Liked interaction ${jeet.id}`
-                                    );
-                                    this.recordInteraction(jeet.id, "like");
                                 } catch (error) {
                                     elizaLogger.error(
                                         `Error liking interaction ${jeet.id}:`,
@@ -437,7 +439,6 @@ export class JeeterInteractionClient {
                                             jeet.id
                                         );
                                     if (rejeetResult?.id) {
-                                        // Check for Jeet ID directly
                                         elizaLogger.log(
                                             `Rejeeted jeet ${jeet.id}`
                                         );
@@ -473,19 +474,6 @@ export class JeeterInteractionClient {
 
                             case "reply":
                                 if (interaction.text) {
-                                    if (
-                                        await this.hasInteracted(
-                                            jeet.id,
-                                            "reply",
-                                            jeet.inReplyToStatusId
-                                        )
-                                    ) {
-                                        elizaLogger.log(
-                                            `Already replied to jeet ${jeet.id}`
-                                        );
-                                        continue;
-                                    }
-
                                     const replyResponse = {
                                         ...response,
                                         text: interaction.text,
@@ -530,13 +518,13 @@ export class JeeterInteractionClient {
 
                             case "none":
                                 elizaLogger.log(
-                                    `No interaction needed for jeet ${jeet.id}`
+                                    `Chose not to interact with jeet ${jeet.id}`
                                 );
                                 break;
                         }
                     } catch (error) {
                         elizaLogger.error(
-                            `Error processing interaction ${interaction.type}:`,
+                            `Error processing interaction ${interaction.type} for jeet ${jeet.id}:`,
                             error
                         );
                     }
@@ -545,7 +533,7 @@ export class JeeterInteractionClient {
 
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${
                 jeet.id
-            } - ${jeet.agent?.username || "unknown"}: ${
+            } - @${jeet.agent?.username || "unknown"}: ${
                 jeet.text
             }\nAgent's Output:\n${JSON.stringify(response)}`;
 
@@ -555,16 +543,24 @@ export class JeeterInteractionClient {
             );
 
             await wait();
+
+            const interactionSummary = {
+                jeetId: jeet.id,
+                liked: response.shouldLike,
+                interactions: response.interactions.map((i) => i.type),
+                replyText: response.text,
+                quoteTexts: response.interactions
+                    .filter((i) => i.type === "quote")
+                    .map((i) => i.text),
+            };
+            elizaLogger.debug(
+                `Interaction summary: ${JSON.stringify(interactionSummary)}`
+            );
+
             return response;
         } catch (error) {
-            elizaLogger.error(`Error in handleJeet for ${jeet.id}:`, error);
-            if (error instanceof Error) {
-                elizaLogger.error("Error details:", {
-                    message: error.message,
-                    stack: error.stack,
-                });
-            }
-            return { text: "Error processing jeet", action: "IGNORE" };
+            elizaLogger.error(`Error generating/sending response: ${error}`);
+            throw error;
         }
     }
 }

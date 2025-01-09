@@ -20,6 +20,8 @@ import { ClientBase } from "./base";
 import {
     JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER,
     JEETER_SEARCH_BASE,
+    MAX_INTERVAL,
+    MIN_INTERVAL,
 } from "./constants";
 
 const jeeterSearchTemplate =
@@ -90,7 +92,8 @@ export class JeeterSearchClient {
 
             setTimeout(
                 handleJeeterInteractionsLoop,
-                (Math.floor(Math.random() * (120 - 60 + 1)) + 60) * 60 * 1000
+                Math.floor(Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1)) +
+                    MIN_INTERVAL
             );
         };
         handleJeeterInteractionsLoop();
@@ -304,31 +307,37 @@ Text: ${jeet.text}
                     this.runtime.getSetting("SIMSAI_USERNAME")
         );
 
-        // Then check interaction status for each jeet
+        // Then check ALL interaction types before processing
         const validJeets = [];
         for (const jeet of basicValidJeets) {
-            const hasInteracted = await this.hasInteracted(jeet.id, "reply");
-            if (!hasInteracted) {
+            const hasReplied = await this.hasInteracted(jeet.id, "reply");
+            const hasLiked = await this.hasInteracted(jeet.id, "like");
+            const hasRejeeted = await this.hasInteracted(jeet.id, "rejeet");
+            const hasQuoted = await this.hasInteracted(jeet.id, "quote");
+
+            // Only include jeets we haven't interacted with at all
+            if (!hasReplied && !hasLiked && !hasRejeeted && !hasQuoted) {
                 validJeets.push(jeet);
             }
         }
 
         // Score and sort jeets
-        const scoredJeets = validJeets.map((jeet) => ({
-            jeet,
-            score: this.scoreJeetForEngagement(jeet),
-        }));
-
-        // Sort by score and add some randomness for top jeets
-        scoredJeets.sort((a, b) => b.score - a.score);
+        const scoredJeets = validJeets
+            .map((jeet) => ({
+                jeet,
+                score: this.scoreJeetForEngagement(jeet),
+            }))
+            .sort((a, b) => b.score - a.score);
 
         // Take top 20 and add slight randomization while maintaining general score order
-        const topJeets = scoredJeets.slice(0, 20).map(({ jeet }, index) => ({
-            jeet,
-            randomScore: Math.random() * 0.3 + (1 - index / 20), // Maintain rough ordering with some randomness
-        }));
+        const topJeets = scoredJeets
+            .slice(0, 20)
+            .map(({ jeet }, index) => ({
+                jeet,
+                randomScore: Math.random() * 0.3 + (1 - index / 20),
+            }))
+            .sort((a, b) => b.randomScore - a.randomScore);
 
-        topJeets.sort((a, b) => b.randomScore - a.randomScore);
         return topJeets.map(({ jeet }) => jeet);
     }
 
