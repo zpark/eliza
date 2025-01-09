@@ -13,7 +13,7 @@ import NodeCache from "node-cache";
 const PROVIDER_CONFIG = {
     networkId: process.env.NEAR_NETWORK || "testnet",
     nodeUrl:
-        process.env.RPC_URL ||
+        process.env.NEAR_RPC_URL ||
         `https://rpc.${process.env.NEAR_NETWORK || "testnet"}.near.org`,
     walletUrl: `https://${process.env.NEAR_NETWORK || "testnet"}.mynearwallet.com/`,
     helperUrl: `https://helper.${process.env.NEAR_NETWORK || "testnet"}.near.org`,
