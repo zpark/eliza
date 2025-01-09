@@ -12,7 +12,7 @@ import {
     type Action,
 } from "@elizaos/core";
 import axios from "axios";
-import { validateCoingeckoConfig } from "../environment";
+import { getApiConfig, validateCoingeckoConfig } from "../environment";
 import { getPriceTemplate } from "../templates/price";
 import { normalizeCoinId } from "../utils/coin";
 
@@ -85,16 +85,20 @@ export default {
 
             // Fetch price from CoinGecko
             const config = await validateCoingeckoConfig(runtime);
+            const { baseUrl, apiKey, headerKey } = getApiConfig(config);
+
             elizaLogger.log(`Fetching price for ${coinId} in ${currency}...`);
 
             const response = await axios.get(
-                `https://api.coingecko.com/api/v3/simple/price`,
+                `${baseUrl}/simple/price`,
                 {
                     params: {
                         ids: coinId,
                         vs_currencies: currency,
-                        x_cg_demo_api_key: config.COINGECKO_API_KEY,
                     },
+                    headers: {
+                        [headerKey]: apiKey
+                    }
                 }
             );
 
