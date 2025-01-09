@@ -18,7 +18,6 @@ interface PrimusOptions {
 }
 
 export class PrimusAdapter implements IVerifiableInferenceAdapter {
-    private client: PrimusCoreTLS;
     private options: PrimusOptions;
 
     constructor(options: PrimusOptions) {
@@ -52,18 +51,6 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
                 authHeader = `Bearer ${apiKey}`;
                 responseParsePath = "$.choices[0].message.content";
                 break;
-            case ModelProviderName.ETERNALAI:
-            case ModelProviderName.REDPILL:
-            case ModelProviderName.NANOGPT:
-            case ModelProviderName.HYPERBOLIC:
-            case ModelProviderName.ALI_BAILIAN:
-            case ModelProviderName.LLAMACLOUD:
-            case ModelProviderName.TOGETHER:
-            case ModelProviderName.AKASH_CHAT_API:
-            case ModelProviderName.ANTHROPIC:
-            case ModelProviderName.CLAUDE_VERTEX:
-            case ModelProviderName.GOOGLE:
-            case ModelProviderName.VOLENGINE:
             default:
                 throw new Error(`Unsupported model provider: ${provider}`);
         }

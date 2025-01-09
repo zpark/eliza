@@ -129,7 +129,7 @@ export class TwitterScraper {
         const verifyResult = verifyProof(attestation);
         if (!verifyResult) {
             throw new Error(
-                "Verify attestation failed，data from source is illegality"
+                "Verify attestation failed,data from source is illegality"
             );
         }
         const responseData = JSON.parse(attestation.data);

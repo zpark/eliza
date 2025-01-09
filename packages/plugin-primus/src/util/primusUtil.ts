@@ -28,11 +28,11 @@ export const generateProof = async (
             parsePath: responseParsePath,
             parseType: "string",
         },
-    ])
-    // console.log('attestationParams:',attestationParams)
-    return await zkTLS.startAttestation(
-        attestationParams
-    );
+    ]);
+    attestationParams.setAttMode({
+        algorithmType: "proxytls",
+    });
+    return await zkTLS.startAttestation(attestationParams);
 };
 
 export const verifyProof = async (attestation: any): Promise<boolean> => {
