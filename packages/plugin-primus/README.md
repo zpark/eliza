@@ -10,9 +10,9 @@ In the Eliza framework, an agent consists of three key components: a brain (acce
 
 The current plugin includes:
 
-Verification of inference from OpenAI's LLM.
-An example for verifying actions, such as posting a tweet (this can be extended to any other actions).
-An example to verify that the Bitcoin price is accurately fetched from Binance (this can be extended to any other data providers).
+- Verification of inference from OpenAI's LLM.
+- An example for verifying actions, such as posting a tweet (this can be extended to any other actions).
+- An example to verify that the Bitcoin price is accurately fetched from Binance (this can be extended to any other data providers).
 
 
 ## What we do?
