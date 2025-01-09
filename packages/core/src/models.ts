@@ -514,6 +514,22 @@ export const models: Models = {
             [ModelClass.IMAGE]: settings.LIVEPEER_IMAGE_MODEL || "ByteDance/SDXL-Lightning",
         },
     },
+    [ModelProviderName.DEEPSEEK]: {
+        endpoint: settings.DEEPSEEK_API_URL || "https://api.deepseek.com",
+        settings: {
+            stop: [],
+            maxInputTokens: 128000,
+            maxOutputTokens: 8192,
+            frequency_penalty: 0.0,
+            presence_penalty: 0.0,
+            temperature: 0.7,
+        },
+        model: {
+            [ModelClass.SMALL]: settings.SMALL_DEEPSEEK_MODEL || "deepseek-chat",
+            [ModelClass.MEDIUM]: settings.MEDIUM_DEEPSEEK_MODEL || "deepseek-chat",
+            [ModelClass.LARGE]: settings.LARGE_DEEPSEEK_MODEL || "deepseek-chat",
+        },
+    },
 };
 
 export function getModel(provider: ModelProviderName, type: ModelClass) {
