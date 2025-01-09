@@ -1,7 +1,6 @@
 import type { TSESTree } from "@typescript-eslint/types";
 import { TypeScriptParser } from "./TypeScriptParser.js";
 import { ASTQueueItem, EnvUsage, TodoItem } from "./types/index.js";
-import { ASTQueueItem, EnvUsage, TodoItem } from "./types/index.js";
 
 type AST_NODE_TYPES = {
     ClassDeclaration: "ClassDeclaration";
@@ -14,6 +13,7 @@ type AST_NODE_TYPES = {
     TSPropertySignature: "TSPropertySignature";
     ExportNamedDeclaration: "ExportNamedDeclaration";
     Identifier: "Identifier";
+    VariableDeclaration: "VariableDeclaration";
 };
 
 const AST_NODE_TYPES = {
@@ -27,6 +27,7 @@ const AST_NODE_TYPES = {
     TSPropertySignature: "TSPropertySignature",
     ExportNamedDeclaration: "ExportNamedDeclaration",
     Identifier: "Identifier",
+    VariableDeclaration: "VariableDeclaration",
 } as const;
 
 type DocumentableNodeType =
@@ -37,7 +38,8 @@ type DocumentableNodeType =
     | "MethodDefinition"
     | "TSMethodSignature"
     | "TSInterfaceDeclaration"
-    | "TSPropertySignature";
+    | "TSPropertySignature"
+    | "VariableDeclaration";
 
 interface Location {
     start: number;
@@ -57,7 +59,56 @@ export class JsDocAnalyzer {
         AST_NODE_TYPES.TSMethodSignature,
         AST_NODE_TYPES.TSPropertySignature,
         AST_NODE_TYPES.TSInterfaceDeclaration,
+        AST_NODE_TYPES.VariableDeclaration,
     ]);
+
+    /**
+     * Type guard to check if a node is a VariableDeclaration
+     */
+    private isVariableDeclaration(node: TSESTree.Node): node is TSESTree.VariableDeclaration {
+        return node.type === 'VariableDeclaration';
+    }
+
+    /**
+     * Checks if a node is a const declaration
+     */
+    private isConstDeclaration(node: TSESTree.Node): boolean {
+        return this.isVariableDeclaration(node) && node.kind === 'const';
+    }
+
+    /**
+     * Checks if a node spans more than the specified number of lines
+     */
+    private isLongEnough(node: TSESTree.Node, minLines: number = 10): boolean {
+        if (!node.loc) return false;
+        return (node.loc.end.line - node.loc.start.line) > minLines;
+    }
+
+    /**
+     * Checks if a node is an export declaration
+     */
+    private isExportDeclaration(node: TSESTree.Node): node is TSESTree.ExportNamedDeclaration {
+        return node.type === 'ExportNamedDeclaration';
+    }
+
+    /**
+     * Checks if a variable declaration is a significant constant
+     * @param node The variable declaration node to check
+     * @returns True if the node is an exported constant with significant complexity
+     */
+    private isSignificantConstant(node: TSESTree.VariableDeclaration): boolean {
+        // Must be const declaration
+        if (node.kind !== 'const') return false;
+
+        // Must be exported
+        const parent = node.parent;
+        if (!parent || !this.isExportNamedDeclaration(parent)) return false;
+
+        // Must span multiple lines (at least 10)
+        if (!node.loc) return false;
+        const lineCount = node.loc.end.line - node.loc.start.line;
+        return lineCount >= 10;
+    }
 
     /**
      * Type guard to check if a node is a ClassDeclaration
@@ -151,6 +202,14 @@ export class JsDocAnalyzer {
     private getNodeName(node: TSESTree.Node): string | undefined {
         const actualNode = this.getActualNode(node);
 
+        // Handle variable declarations (constants)
+        if (this.isVariableDeclaration(actualNode) && actualNode.declarations.length > 0) {
+            const declaration = actualNode.declarations[0];
+            if (this.isIdentifier(declaration.id)) {
+                return declaration.id.name;
+            }
+        }
+
         if (this.isMethodDefinition(actualNode)) {
             return this.getMethodName(actualNode);
         }
@@ -238,6 +297,17 @@ export class JsDocAnalyzer {
      */
     public shouldHaveJSDoc(node: TSESTree.Node): boolean {
         const actualNode = this.getActualNode(node);
+
+        // Special handling for const declarations
+        if (this.isConstDeclaration(actualNode)) {
+            return this.isLongEnough(actualNode);
+        }
+
+        // Handle export const declarations
+        if (this.isExportDeclaration(node) && node.declaration && this.isConstDeclaration(node.declaration)) {
+            return this.isLongEnough(node.declaration);
+        }
+
         return this.documentableTypes.has(
             actualNode.type as DocumentableNodeType
         );

@@ -10,11 +10,11 @@ Composes a context string by replacing placeholders in a template with values fr
 
 An object containing the following properties:
 
-- **state**: `State`  
+- **state**: `State`
   The state object containing key-value pairs for replacing placeholders in the template.
 
-- **template**: `string`  
-  A string containing placeholders in the format `{{placeholder}}`.
+- **template**: `string | Function`
+  A string or function returning a string containing placeholders in the format `{{placeholder}}`.
 
 - **templatingEngine**: `"handlebars" | undefined` _(optional)_  
   The templating engine to use. If set to `"handlebars"`, the Handlebars engine is used for template compilation. Defaults to `undefined` (simple string replacement).
@@ -51,7 +51,7 @@ const contextHandlebars = composeContext({
 ```javascript
 const advancedTemplate = `
   {{#if userAge}}
-    Hello, {{userName}}! 
+    Hello, {{userName}}!
     {{#if (gt userAge 18)}}You are an adult.{{else}}You are a minor.{{/if}}
   {{else}}
     Hello! We don't know your age.
