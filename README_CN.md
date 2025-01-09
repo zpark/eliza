@@ -63,7 +63,7 @@ Eliza 是 GitHub 上排名第一的开源项目，我们正在推动下一代人
 - [pnpm](https://pnpm.io/installation)
 
 
-> **Windows 用户注意：**需要安装 [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual)。
+> **Windows 用户注意：** 需要安装 [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual).
 
 ## 使用启动器（推荐）
 
@@ -74,7 +74,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-当代理运行时，您应该会在最后看到运行 pnpm start:client 的消息。
+当代理运行时，您应该会在最后看到运行 pnpm start:client 的消息.
 打开另一个终端并移动到同一目录，然后运行以下命令并按照 URL 与您的代理聊天.
 
 ```bash
@@ -105,7 +105,7 @@ git checkout $(git describe --tags --abbrev=0)
 cp .env.example .env
 ```
 
-注意：.env 是可选的。如果您计划运行多个独立的代理，可以通过角色 JSON 传递密钥。
+注意：.env 是可选的.如果您计划运行多个独立的代理，可以通过角色 JSON 传递密钥.
 
 ### 自动启动 Eliza
 
@@ -117,7 +117,8 @@ sh scripts/start.sh
 
 ### 编辑角色文件
 
-1. 打开 `packages/core/src/defaultCharacter.ts` 修改默认角色。取消注释并编辑.
+1. 打开 `packages/core/src/defaultCharacter.ts` 修改默认角色.取消注释并编辑.
+
 2. 加载自定义角色：
     - 使用 `pnpm start --characters="path/to/your/character.json"`
     - 可以同时加载多个角色文件
@@ -137,7 +138,7 @@ pnpm clean
 
 #### 其他要求
 
-您可能需要安装 Sharp。如果在启动时看到错误，请尝试使用以下命令安装:
+您可能需要安装 Sharp.如果在启动时看到错误，请尝试使用以下命令安装:
 
 ```
 pnpm install --include=optional sharp
