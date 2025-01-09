@@ -56,6 +56,11 @@ export function createApiRouter(
             return;
         }
 
+        let character = agent?.character;
+        if (character?.settings?.secrets) {
+            delete character.settings.secrets;
+        }
+
         res.json({
             id: agent.agentId,
             character: agent.character,
