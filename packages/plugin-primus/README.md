@@ -16,11 +16,13 @@ The current plugin includes:
 
 
 ## What we do?
-This plugin provides the following features:
-- Generate an attestation of a network request
-- Verify the attestation is valid
+This plugin offers the following features:
 
-You can find detail at [primusUtil.ts](./src/util/primusUtil.ts)
+- Generate an attestation for a network request.
+- Verify the validity of the attestation.
+
+You can find detail code at [primusUtil.ts](./src/util/primusUtil.ts)
+
 ### generateProof
 ```typescript
 generateProof = async (
@@ -87,7 +89,7 @@ Verify the attestation is valid.
 ***Below are examples illustrating how to use these functions.***
 
 ### model
-Developers can use the zktls module provided by Primus to attest OpenAI requests. Below is the detailed example code:
+Developers can leverage the zktls module provided by Primus to attest OpenAI requests. The following is a detailed example:
 ```typescript
 
 export class PrimusAdapter implements IVerifiableInferenceAdapter {
