@@ -8,9 +8,7 @@ import {
     type State,
 } from "@elizaos/core";
 import { validateAsteraiConfig } from "../environment";
-import {AsteraiClient} from "@asterai/client";
-
-let asteraiClient: AsteraiClient | null = null;
+import {getInitAsteraiClient} from "../index.ts";
 
 export const queryAction = {
     name: "QUERY_ASTERAI_AGENT",
@@ -26,25 +24,24 @@ export const queryAction = {
         "the user you are assisting, to help perform a workflow task, etc.",
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
         const config = await validateAsteraiConfig(runtime);
-        if (!asteraiClient) {
-            asteraiClient = new AsteraiClient({
-                appId: config.ASTERAI_AGENT_ID,
-                queryKey: config.ASTERAI_PUBLIC_QUERY_KEY,
-            })
-        }
+        getInitAsteraiClient(
+          config.ASTERAI_AGENT_ID,
+          config.ASTERAI_PUBLIC_QUERY_KEY
+        );
         return true;
     },
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
+        _state: State,
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        if (asteraiClient === null) {
-            elizaLogger.warn("asterai client is not initialised; ignoring");
-            return null;
-        }
+        const config = await validateAsteraiConfig(runtime);
+        const asteraiClient = getInitAsteraiClient(
+          config.ASTERAI_AGENT_ID,
+          config.ASTERAI_PUBLIC_QUERY_KEY
+        );
         elizaLogger.debug("called QUERY_ASTERAI_AGENT action with message:", message.content);
         const response = await asteraiClient.query({
             query: message.content.text
