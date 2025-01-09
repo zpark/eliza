@@ -42,6 +42,7 @@ import {
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
+import { AtomaSDK } from "atoma-sdk";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
@@ -1632,45 +1633,32 @@ interface ProviderOptions {
 export async function handleProvider(
     options: ProviderOptions
 ): Promise<GenerateObjectResult<unknown>> {
-    const { provider, runtime, context, modelClass } = options;
+    const { provider } = options;
+
     switch (provider) {
         case ModelProviderName.OPENAI:
-        case ModelProviderName.ETERNALAI:
-        case ModelProviderName.ALI_BAILIAN:
-        case ModelProviderName.VOLENGINE:
-        case ModelProviderName.LLAMACLOUD:
-        case ModelProviderName.TOGETHER:
-        case ModelProviderName.NANOGPT:
-        case ModelProviderName.AKASH_CHAT_API:
-            return await handleOpenAI(options);
+            return handleOpenAI(options);
         case ModelProviderName.ANTHROPIC:
-        case ModelProviderName.CLAUDE_VERTEX:
-            return await handleAnthropic(options);
+            return handleAnthropic(options);
         case ModelProviderName.GROK:
-            return await handleGrok(options);
+            return handleGrok(options);
         case ModelProviderName.GROQ:
-            return await handleGroq(options);
-        case ModelProviderName.LLAMALOCAL:
-            return await generateObjectDeprecated({
-                runtime,
-                context,
-                modelClass,
-            });
+            return handleGroq(options);
         case ModelProviderName.GOOGLE:
-            return await handleGoogle(options);
+            return handleGoogle(options);
         case ModelProviderName.REDPILL:
-            return await handleRedPill(options);
+            return handleRedPill(options);
         case ModelProviderName.OPENROUTER:
-            return await handleOpenRouter(options);
+            return handleOpenRouter(options);
         case ModelProviderName.OLLAMA:
-            return await handleOllama(options);
-        default: {
-            const errorMessage = `Unsupported provider: ${provider}`;
-            elizaLogger.error(errorMessage);
-            throw new Error(errorMessage);
-        }
+            return handleOllama(options);
+        case ModelProviderName.ATOMA:
+            return handleAtoma(options);
+        default:
+            throw new Error(`Unsupported provider: ${provider}`);
     }
 }
+
 /**
  * Handles object generation for OpenAI.
  *
@@ -1884,6 +1872,114 @@ async function handleOllama({
         mode,
         ...modelOptions,
     });
+}
+
+/**
+ * Handles object generation for Atoma models.
+ *
+ * @param {ProviderOptions} options - Options specific to Atoma.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleAtoma({
+    model,
+    apiKey,
+    schema,
+    schemaName: _schemaName,
+    schemaDescription: _schemaDescription,
+    mode: _mode,
+    modelOptions: _modelOptions,
+    context,
+    runtime: _runtime,
+    provider: _provider,
+    modelClass: _modelClass,
+}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    const atomaSDK = new AtomaSDK({
+        bearerAuth: apiKey,
+    });
+
+    try {
+        const result = await atomaSDK.chat.create({
+            messages: [
+                {
+                    content: context,
+                    role: "user",
+                },
+            ],
+            model: model,
+        });
+
+        const completion = result.choices[0].message.content;
+
+        if (schema) {
+            // For schema-based generation, we'll parse the completion as JSON
+            // and validate it against the schema
+            const parsedCompletion = JSON.parse(completion);
+            const validatedObject = schema.parse(parsedCompletion);
+
+            return {
+                object: validatedObject,
+                finishReason: "stop",
+                usage: {
+                    promptTokens: 0,
+                    completionTokens: 0,
+                    totalTokens: 0,
+                },
+                warnings: undefined,
+                request: {},
+                response: {
+                    id: result.id,
+                    timestamp: new Date(),
+                    modelId: model,
+                },
+                logprobs: undefined,
+                experimental_providerMetadata: undefined,
+                toJsonResponse(init?: ResponseInit) {
+                    return new Response(
+                        JSON.stringify({ object: validatedObject }),
+                        {
+                            ...init,
+                            headers: {
+                                ...init?.headers,
+                                "content-type":
+                                    "application/json; charset=utf-8",
+                            },
+                        }
+                    );
+                },
+            };
+        }
+
+        return {
+            object: completion,
+            finishReason: "stop",
+            usage: {
+                promptTokens: 0,
+                completionTokens: 0,
+                totalTokens: 0,
+            },
+            warnings: undefined,
+            request: {},
+            response: {
+                id: result.id,
+                timestamp: new Date(),
+                modelId: model,
+            },
+            logprobs: undefined,
+            experimental_providerMetadata: undefined,
+            toJsonResponse(init?: ResponseInit) {
+                return new Response(JSON.stringify({ object: completion }), {
+                    ...init,
+                    headers: {
+                        ...init?.headers,
+                        "content-type": "application/json; charset=utf-8",
+                    },
+                });
+            },
+        };
+    } catch (error) {
+        console.error("Error in Atoma handler:", error);
+        throw error;
+    }
 }
 
 // Add type definition for Together AI response
