@@ -40,8 +40,10 @@ export const getEmbeddingConfig = (): EmbeddingConfig => ({
               : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET)
                       .dimensions
-                : getEmbeddingModelSettings(ModelProviderName.HEURIST)
-                      .dimensions, // BGE
+                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
+                        .dimensions
+                  : 384, // BGE
     model:
         settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
             ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
@@ -49,7 +51,9 @@ export const getEmbeddingConfig = (): EmbeddingConfig => ({
               ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
               : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
                 ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
-                : getEmbeddingModelSettings(ModelProviderName.HEURIST).name,
+                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
+                  : "BGE-small-en-v1.5",
     provider:
         settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
             ? "OpenAI"
