@@ -4,7 +4,7 @@ A plugin for ElizaOS that enables decentralized data storage and retrieval using
 
 ## Overview
 
-This plugin integrates Irys functionality into ElizaOS, allowing agents to store and retrieve data in a decentralized manner. It provides a robust service for creating a decentralized knowledge base and enabling multi-agent collaboration.
+This plugin integrates Irys functionality into ElizaOS, allowing agents to store and retrieve data in a decentralized manner. It provides a service for creating a decentralized knowledge base and enabling multi-agent collaboration.
 
 ## Installation
 
@@ -34,6 +34,8 @@ For this plugin to work, you need to have an EVM (Base network) wallet with a pr
 
 ## Usage
 
+![Orchestrator Diagram](./OrchestratorDiagram.png)
+
 ### Uploading Data
 
 To upload data to the Irys network, you can use the `uploadDataOnIrys` function. This function will upload the data to the Irys network and return the transaction hash.
@@ -54,7 +56,7 @@ const { IrysService } = require('@elizaos/plugin-irys');
 
 const irysService : IrysService = runtime.getService(ServiceType.IRYS)
 const userAttachmentToStore = state.recentMessagesData[1].content.attachments[0].url.replace("agent\\agent", "agent");
-            
+
 const transactionResult = await irysService.uploadFileOrImageOnIrys(userAttachmentToStore);
 console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
 ```
