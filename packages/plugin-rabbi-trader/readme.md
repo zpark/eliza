@@ -25,7 +25,7 @@ The following environment variables need to be configured:
 
 - `WALLET_PRIVATE_KEY`: Your Solana wallet private key
 - `WALLET_PUBLIC_KEY`: Your Solana wallet public address
-- `RPC_URL`: Solana RPC endpoint (defaults to mainnet)
+- `SOLANA_RPC_URL`: Solana RPC endpoint (defaults to mainnet)
 - `BIRDEYE_API_KEY`: API key for Birdeye data provider
 - `TWITTER_ENABLED`: Enable/disable Twitter notifications
 - `TWITTER_USERNAME`: Twitter username for notifications
@@ -176,4 +176,3 @@ Key dependencies include:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
