@@ -68,17 +68,18 @@ import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { obsidianPlugin } from "@elizaos/plugin-obsidian";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
-import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
@@ -678,7 +679,10 @@ export async function createAgent(
                 ? webhookPlugin
                 : null,
             goatPlugin,
-            getSecret(character, "COINGECKO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "COINGECKO_API_KEY") ||
+            getSecret(character, "COINGECKO_PRO_API_KEY")
+            ? coingeckoPlugin
+            : null,
             getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
