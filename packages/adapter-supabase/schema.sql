@@ -170,7 +170,7 @@ CREATE TABLE knowledge (
     "originalId" UUID REFERENCES knowledge("id"),
     "chunkIndex" INTEGER,
     "isShared" BOOLEAN DEFAULT FALSE,
-    CHECK((isShared = true AND "agentId" IS NULL) OR (isShared = false AND "agentId" IS NOT NULL))
+    CHECK(("isShared" = true AND "agentId" IS NULL) OR ("isShared" = false AND "agentId" IS NOT NULL))
 );
 
 -- Add index for Ollama table
