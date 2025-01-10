@@ -53,17 +53,6 @@ async function composeTweet(
             );
         }
 
-        // Skip truncation if TWITTER_PREMIUM is true
-        if (
-            process.env.TWITTER_PREMIUM?.toLowerCase() !== "true" &&
-            trimmedContent.length > 180
-        ) {
-            elizaLogger.warn(
-                `Tweet too long (${trimmedContent.length} chars), truncating...`
-            );
-            return trimmedContent.substring(0, 177) + "...";
-        }
-
         return trimmedContent;
     } catch (error) {
         elizaLogger.error("Error composing tweet:", error);
