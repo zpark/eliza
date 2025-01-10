@@ -131,7 +131,6 @@ export default {
             const categories = await getCategoriesData(runtime);
 
             // Compose markets context with categories
-            elizaLogger.log("Composing markets context...");
             const marketsContext = composeContext({
                 state,
                 template: getMarketsTemplate.replace('{{categories}}',
@@ -139,7 +138,6 @@ export default {
                 ),
             });
 
-            elizaLogger.log("Composing content...");
             const content = (await generateObjectDeprecated({
                 runtime,
                 context: marketsContext,
