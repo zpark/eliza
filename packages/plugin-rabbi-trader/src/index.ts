@@ -462,7 +462,7 @@ async function createRabbiTraderPlugin(
 
     // Move connection initialization to the top
     const connection = new Connection(
-        runtime?.getSetting("RPC_URL") || "https://api.mainnet-beta.solana.com"
+        runtime?.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com"
     );
 
     const keypair = getWalletKeypair(runtime);

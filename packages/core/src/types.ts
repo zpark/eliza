@@ -223,6 +223,7 @@ export type Models = {
     [ModelProviderName.NANOGPT]: Model;
     [ModelProviderName.HYPERBOLIC]: Model;
     [ModelProviderName.VENICE]: Model;
+    [ModelProviderName.NINETEEN_AI]: Model;
     [ModelProviderName.AKASH_CHAT_API]: Model;
     [ModelProviderName.LIVEPEER]: Model;
 };
@@ -253,6 +254,7 @@ export enum ModelProviderName {
     NANOGPT = "nanogpt",
     HYPERBOLIC = "hyperbolic",
     VENICE = "venice",
+    NINETEEN_AI = "nineteen_ai",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
     LETZAI = "letzai",
@@ -1331,6 +1333,11 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export interface ITeeLogService extends Service {
+    getInstance(): ITeeLogService;
+    log(agentId: string, roomId: string, userId: string, type: string, content: string): Promise<boolean>;
+}
+
 export type SearchImage = {
     url: string;
     description?: string;
@@ -1365,6 +1372,7 @@ export enum ServiceType {
     AWS_S3 = "aws_s3",
     BUTTPLUG = "buttplug",
     SLACK = "slack",
+    TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
 }
 

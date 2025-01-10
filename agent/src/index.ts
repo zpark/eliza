@@ -68,31 +68,32 @@ import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { obsidianPlugin } from "@elizaos/plugin-obsidian";
-import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
-import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
-import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
 import { giphyPlugin } from "@elizaos/plugin-giphy";
-import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+
+import { OpacityAdapter } from "@elizaos/plugin-opacity";
+import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
+import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-import { OpacityAdapter } from "@elizaos/plugin-opacity";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -282,6 +283,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.ETERNALAI_API_KEY ||
                 settings.ETERNALAI_API_KEY
+            );
+        case ModelProviderName.NINETEEN_AI:
+            return (
+                character.settings?.secrets?.NINETEEN_AI_API_KEY ||
+                settings.NINETEEN_AI_API_KEY
             );
         case ModelProviderName.LLAMACLOUD:
         case ModelProviderName.TOGETHER:
@@ -645,6 +651,7 @@ export async function createAgent(
             getSecret(character, "FAL_API_KEY") ||
             getSecret(character, "OPENAI_API_KEY") ||
             getSecret(character, "VENICE_API_KEY") ||
+            getSecret(character, "NINETEEN_AI_API_KEY") ||
             getSecret(character, "HEURIST_API_KEY") ||
             getSecret(character, "LIVEPEER_GATEWAY_URL")
                 ? imageGenerationPlugin
@@ -660,12 +667,20 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
+            getSecret(character, "SGX") ? sgxPlugin : null,
+            (getSecret(character, "ENABLE_TEE_LOG") &&
+                ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                    getSecret(character, "SGX")))
+                ? teeLogPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
             goatPlugin,
+            getSecret(character, "COINGECKO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
