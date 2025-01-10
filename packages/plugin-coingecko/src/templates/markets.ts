@@ -1,6 +1,12 @@
-export const getMarketsTemplate = `You are a cryptocurrency market data parser. Your task is to extract market data query parameters from the conversation, focusing on the most recent request.
+export const getMarketsTemplate = `You are a cryptocurrency market data parser. Your task is to extract market listing parameters from the conversation.
 
-Look at how the AI understood the request and extract the appropriate parameters.
+Focus on requests that ask for:
+- Lists of top cryptocurrencies
+- Market rankings
+- Category-specific listings
+- Overall market overview
+
+DO NOT match requests that only ask for specific coins' prices or data.
 
 Parameters to extract:
 - vs_currency: Target currency of price data (default: "usd")
@@ -11,18 +17,17 @@ Parameters to extract:
 Available Categories:
 {{categories}}
 
-When the AI responds with phrases like:
-"I'll fetch the top 10 AI Meme cryptocurrencies..."
-→ Match with appropriate category ID from the list above
+Example matches:
+"Show me the top 10 cryptocurrencies"
+"List the best performing coins"
+"What are the top gaming tokens?"
+"Show market rankings"
 
-"I'll get the top 5 Layer 1 cryptocurrencies..."
-→ Match with appropriate category ID from the list above
-
-"Let me show you the top 6 cryptocurrencies..."
-→ Use { category: null, per_page: 6 }
-
-Format your response as a JSON object with these parameters. Always focus on the most recent request in the conversation.
+Example non-matches:
+"What's BTC price?"
+"Show me ETH and BTC prices with volume"
+"Check Bitcoin's market cap"
 
 {{recentMessages}}
 
-Based on the AI's understanding in the most recent message and the available categories list above, extract and provide the appropriate query parameters.`;
+Based on the conversation above, if the request is for a market listing/ranking, extract the appropriate parameters. If the request is for specific coins only, respond with null.`;

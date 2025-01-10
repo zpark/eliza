@@ -97,17 +97,19 @@ export interface GetMarketsContent extends Content {
 export default {
     name: "GET_MARKETS",
     similes: [
-        "COIN_MARKETS",
-        "CRYPTO_MARKETS",
-        "MARKET_DATA",
-        "COIN_PRICES",
-        "MARKET_PRICES",
+        "MARKET_OVERVIEW",
+        "TOP_RANKINGS",
+        "MARKET_LEADERBOARD",
+        "CRYPTO_RANKINGS",
+        "BEST_PERFORMING_COINS",
+        "TOP_MARKET_CAPS"
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateCoingeckoConfig(runtime);
         return true;
     },
-    description: "Get cryptocurrency market data including prices, market cap, volume, and more",
+    // Comprehensive endpoint for market rankings, supports up to 250 coins per request
+    description: "Get ranked list of top cryptocurrencies sorted by market metrics (without specifying coins)",
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -145,6 +147,11 @@ export default {
             })) as unknown as GetMarketsContent;
 
             elizaLogger.log("Content from template:", content);
+
+            // If template returns null, this is not a markets request
+            if (!content) {
+                return false;
+            }
 
             const formattedCategory = formatCategory(content.category, categories);
 
