@@ -1482,24 +1482,6 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
 
-<<<<<<< HEAD
-  packages/plugin-dominos:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      dominos:
-        specifier: ^3.3.1
-        version: 3.3.1(encoding@0.1.13)
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.4(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
-      whatwg-url:
-        specifier: 7.1.0
-        version: 7.1.0
-
-=======
->>>>>>> parent of b96168d25 (feat: Proof of Pizza - Agentic Dominos Ordering)
   packages/plugin-echochambers:
     dependencies:
       '@elizaos/core':
@@ -34275,15 +34257,7 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.3.0
 
-<<<<<<< HEAD
-  biskviit@1.0.1:
-    dependencies:
-      psl: 1.15.0
-
   bitcoinjs-lib@7.0.0-rc.0(typescript@5.7.3):
-=======
-  bitcoinjs-lib@7.0.0-rc.0(typescript@5.7.2):
->>>>>>> parent of b96168d25 (feat: Proof of Pizza - Agentic Dominos Ordering)
     dependencies:
       '@noble/hashes': 1.7.0
       bech32: 2.0.0
