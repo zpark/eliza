@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/agent",
-    "version": "0.1.7-alpha.2",
+    "version": "0.1.7",
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
@@ -38,6 +38,7 @@
         "@elizaos/plugin-coinbase": "workspace:*",
         "@elizaos/plugin-conflux": "workspace:*",
         "@elizaos/plugin-evm": "workspace:*",
+        "@elizaos/plugin-echochambers": "workspace:*",
         "@elizaos/plugin-flow": "workspace:*",
         "@elizaos/plugin-gitbook": "workspace:*",
         "@elizaos/plugin-story": "workspace:*",
