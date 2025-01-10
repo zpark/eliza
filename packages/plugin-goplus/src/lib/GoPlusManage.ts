@@ -1,6 +1,6 @@
 
 
-export const GoPlusTypeEnum = {
+export const GoPlusType = {
     EVMTOKEN_SECURITY_CHECK: "EVMTOKEN_SECURITY_CHECK",
     SOLTOKEN_SECURITY_CHECK: "SOLTOKEN_SECURITY_CHECK",
     SUITOKEN_SECURITY_CHECK: "SUITOKEN_SECURITY_CHECK",
@@ -15,7 +15,7 @@ export const GoPlusTypeEnum = {
     URL_SECURITY_CHECK: "URL_SECURITY_CHECK",
 } as const;
 
-export type GoPlusType = (typeof GoPlusTypeEnum)[keyof typeof GoPlusTypeEnum];
+export type GoPlusTypeType = (typeof GoPlusTypeEnum)[keyof typeof GoPlusType];
 
 export type GoPlusParamType = {
     "type": GoPlusType,
