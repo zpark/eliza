@@ -45,7 +45,7 @@ import {
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
     VerifiableInferenceResult,
-    VerifiableInferenceProvider,
+    //VerifiableInferenceProvider,
     TelemetrySettings,
     TokenizerType,
 } from "./types.ts";
@@ -1777,9 +1777,9 @@ export async function handleProvider(
         runtime,
         context,
         modelClass,
-        verifiableInference,
-        verifiableInferenceAdapter,
-        verifiableInferenceOptions,
+        //verifiableInference,
+        //verifiableInferenceAdapter,
+        //verifiableInferenceOptions,
     } = options;
     switch (provider) {
         case ModelProviderName.OPENAI:
