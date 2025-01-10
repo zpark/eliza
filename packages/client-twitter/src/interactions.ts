@@ -348,8 +348,6 @@ export class TwitterInteractionClient {
 
         elizaLogger.debug("formattedConversation: ", formattedConversation);
 
-        //Get image description for the provided iamges.
-        //console.log(tweet);
         let imageDescriptionsArray = [];
         try{
             elizaLogger.debug('Getting images');
