@@ -95,6 +95,7 @@ export default {
             creationMethod: 2,
             envList: {},
             templateId: "Eliza",
+        };
 
         const sendPostRequest = async () => {
             try {
@@ -169,4 +170,5 @@ export default {
             },
         ],
     ] as ActionExample[][],
-} as Action;
+} satisfies Action;
+
