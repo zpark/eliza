@@ -116,9 +116,9 @@ export class IrysService extends Service implements IIrysService {
     }
 
     private async orchestrateRequest(requestMessage: string, tags: GraphQLTag[], timestamp: IrysTimestamp = null): Promise<DataIrysFetchedFromGQL> {
-        let serviceCategory = tags.find((tag) => tag.name == "Service-Category")?.values;
-        let protocol = tags.find((tag) => tag.name == "Protocol")?.values;
-        let minimumProviders = Number(tags.find((tag) => tag.name == "Minimum-Providers")?.values);
+        const serviceCategory = tags.find((tag) => tag.name == "Service-Category")?.values;
+        const protocol = tags.find((tag) => tag.name == "Protocol")?.values;
+        const minimumProviders = Number(tags.find((tag) => tag.name == "Minimum-Providers")?.values);
         /*
             Further implementation of the orchestrator
             { name: "Validation-Threshold", values: validationThreshold },
@@ -158,7 +158,7 @@ export class IrysService extends Service implements IIrysService {
                 return { success: false, data: null, error: "Error in the orchestrator" };
             }
         }
-        let responseTags: GraphQLTag[] = [
+        const responseTags: GraphQLTag[] = [
             { name: "Message-Type", values: [IrysMessageType.REQUEST_RESPONSE] },
             { name: "Service-Category", values: [serviceCategory] },
             { name: "Protocol", values: [protocol] },
@@ -319,7 +319,7 @@ export class IrysService extends Service implements IIrysService {
                     const responseText = await fetchDataFromTransactionIdResponse.data.text();
                     try {
                         data = JSON.parse(responseText);
-                    } catch (error) {
+                    } catch {
                         data = responseText;
                     }
                     return {
