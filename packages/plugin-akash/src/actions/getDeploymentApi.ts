@@ -171,7 +171,12 @@ export async function fetchDeployments(
         const apiStatus = status;
 
         // Don't include status in URL if not specified
-        const url = `https://console-api.akash.network/v1/addresses/${address}/deployments/${skip}/${limit}${apiStatus ? `?status=${apiStatus}` : ''}&reverseSorting=true`;
+        const params = new URLSearchParams();
+        if (apiStatus) {
+            params.append('status', apiStatus);
+        }
+        params.append('reverseSorting', 'true');
+        const url = `https://console-api.akash.network/v1/addresses/${address}/deployments/${skip}/${limit}?${params.toString()}`;
         elizaLogger.debug("Making API request", { url });
 
         const response = await fetchWithRetry(url, {
