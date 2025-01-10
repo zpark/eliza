@@ -1,11 +1,11 @@
 import settings from "./settings.ts";
 import {
-    Models,
-    ModelProviderName,
-    ModelClass,
-    ModelSettings,
-    ImageModelSettings,
     EmbeddingModelSettings,
+    ImageModelSettings,
+    ModelClass,
+    ModelProviderName,
+    Models,
+    ModelSettings,
 } from "./types.ts";
 
 export const models: Models = {
@@ -332,6 +332,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.GOOGLE]: {
+        endpoint: "https://generativelanguage.googleapis.com",
         model: {
             [ModelClass.SMALL]: {
                 name:
@@ -815,7 +816,7 @@ export const models: Models = {
             [ModelClass.IMAGE]: {
                 name: settings.IMAGE_VENICE_MODEL || "fluently-xl",
             },
-        }
+        },
     },
     [ModelProviderName.NINETEEN_AI]: {
         endpoint: "https://api.nineteen.ai/v1",
@@ -844,7 +845,7 @@ export const models: Models = {
             [ModelClass.IMAGE]: {
                 name: settings.IMAGE_NINETEEN_AI_MODEL || "dataautogpt3/ProteusV0.4-Lightning",
             },
-        }
+        },
     },
     [ModelProviderName.AKASH_CHAT_API]: {
         endpoint: "https://chatapi.akash.network/api/v1",
