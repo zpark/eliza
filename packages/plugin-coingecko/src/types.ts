@@ -1,7 +1,8 @@
 // Type definitions for CoinGecko plugin
 
 export interface CoinGeckoConfig {
-    apiKey?: string;
+    apiKey: string;
+    baseUrl?: string;
 }
 
 export interface PriceResponse {
