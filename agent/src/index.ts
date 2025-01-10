@@ -71,6 +71,7 @@ import { obsidianPlugin } from "@elizaos/plugin-obsidian";
 import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
+import { autonomePlugin } from "@elizaos/plugin-autonome";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
@@ -141,10 +142,6 @@ function tryLoadFile(filePath: string): string | null {
     } catch (e) {
         return null;
     }
-}
-
-function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
 
 export async function loadCharacters(
@@ -232,16 +229,9 @@ export async function loadCharacters(
                 }
 
                 // Handle plugins
-                if (isAllStrings(character.plugins)) {
-                    elizaLogger.info("Plugins are: ", character.plugins);
-                    const importedPlugins = await Promise.all(
-                        character.plugins.map(async (plugin) => {
-                            const importedPlugin = await import(plugin);
-                            return importedPlugin.default;
-                        })
-                    );
-                    character.plugins = importedPlugins;
-                }
+                character.plugins = await handlePluginImporting(
+                    character.plugins
+                );
 
                 loadedCharacters.push(character);
                 elizaLogger.info(
@@ -262,6 +252,36 @@ export async function loadCharacters(
     }
 
     return loadedCharacters;
+}
+
+async function handlePluginImporting(plugins: string[]) {
+    if (plugins.length > 0) {
+        elizaLogger.info("Plugins are: ", plugins);
+        const importedPlugins = await Promise.all(
+            plugins.map(async (plugin) => {
+                try {
+                    const importedPlugin = await import(plugin);
+                    const functionName =
+                        plugin
+                            .replace("@elizaos/plugin-", "")
+                            .replace(/-./g, (x) => x[1].toUpperCase()) +
+                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
+                    return (
+                        importedPlugin.default || importedPlugin[functionName]
+                    );
+                } catch (importError) {
+                    elizaLogger.error(
+                        `Failed to import plugin: ${plugin}`,
+                        importError
+                    );
+                    return []; // Return null for failed imports
+                }
+            })
+        );
+        return importedPlugins;
+    } else {
+        return [];
+    }
 }
 
 export function getTokenForProvider(
@@ -619,6 +639,7 @@ export async function createAgent(
             getSecret(character, "SOLANA_PRIVATE_KEY")
                 ? solanaAgentkitPlguin
                 : null,
+            getSecret(character, "AUTONOME_JWT_TOKEN") ? autonomePlugin : null,
             (getSecret(character, "NEAR_ADDRESS") ||
                 getSecret(character, "NEAR_WALLET_PUBLIC_KEY")) &&
             getSecret(character, "NEAR_WALLET_SECRET_KEY")
@@ -926,7 +947,10 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async (character: Character) => {
+    directClient.startAgent = async (character) => {
+        // Handle plugins
+        character.plugins = await handlePluginImporting(character.plugins);
+
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
