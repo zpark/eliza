@@ -170,5 +170,5 @@ export default {
             },
         ],
     ] as ActionExample[][],
-}
+} satisfies Action;
 
