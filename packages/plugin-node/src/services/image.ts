@@ -260,15 +260,39 @@ export class ImageDescriptionService
         }
 
         const model = models[this.runtime?.character?.modelProvider];
-        if (model === models[ModelProviderName.LLAMALOCAL]) {
+
+        if (this.runtime.imageVisionModelProvider) {
+            if (
+                this.runtime.imageVisionModelProvider ===
+                ModelProviderName.LLAMALOCAL
+            ) {
+                this.provider = new LocalImageProvider();
+                elizaLogger.debug("Using llama local for vision model");
+            } else if (
+                this.runtime.imageVisionModelProvider ===
+                ModelProviderName.GOOGLE
+            ) {
+                this.provider = new GoogleImageProvider(this.runtime);
+                elizaLogger.debug("Using google for vision model");
+            } else if (
+                this.runtime.imageVisionModelProvider ===
+                ModelProviderName.OPENAI
+            ) {
+                this.provider = new OpenAIImageProvider(this.runtime);
+                elizaLogger.debug("Using openai for vision model");
+            } else {
+                elizaLogger.error(
+                    `Unsupported image vision model provider: ${this.runtime.imageVisionModelProvider}`
+                );
+            }
+        } else if (model === models[ModelProviderName.LLAMALOCAL]) {
             this.provider = new LocalImageProvider();
-        } else if (
-            this.runtime.imageVisionModelProvider ===
-                ModelProviderName.GOOGLE ||
-            model === models[ModelProviderName.GOOGLE]
-        ) {
+            elizaLogger.debug("Using llama local for vision model");
+        } else if (model === models[ModelProviderName.GOOGLE]) {
             this.provider = new GoogleImageProvider(this.runtime);
+            elizaLogger.debug("Using google for vision model");
         } else {
+            elizaLogger.debug("Using default openai for vision model");
             this.provider = new OpenAIImageProvider(this.runtime);
         }
 
