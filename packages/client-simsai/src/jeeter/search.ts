@@ -351,6 +351,14 @@ Text: ${jeet.text}
             quoted: boolean;
         }
     ) {
+        // If dry run is enabled, skip processing
+        if (this.runtime.getSetting("SIMSAI_DRY_RUN") === "true") {
+            elizaLogger.info(
+                `Dry run: would have processed jeet: ${selectedJeet.id}`
+            );
+            return;
+        }
+
         const roomId = stringToUuid(
             `${selectedJeet.conversationId || selectedJeet.id}-${this.runtime.agentId}`
         );

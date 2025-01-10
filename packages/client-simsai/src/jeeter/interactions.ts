@@ -295,6 +295,12 @@ export class JeeterInteractionClient {
     }) {
         elizaLogger.log(`Starting handleJeet for ${jeet.id}`);
 
+        // If dry run is enabled, skip processing
+        if (this.runtime.getSetting("SIMSAI_DRY_RUN") === "true") {
+            elizaLogger.info(`Dry run: would have handled jeet: ${jeet.id}`);
+            return { text: "", action: "IGNORE" };
+        }
+
         try {
             if (!message.content.text) {
                 elizaLogger.log(`Skipping jeet ${jeet.id} - no text content`);

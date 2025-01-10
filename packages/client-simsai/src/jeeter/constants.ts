@@ -33,6 +33,8 @@ Current Post:
 # INSTRUCTIONS: Respond with [RESPOND], [IGNORE], or [STOP] based on whether you can make a unique, valuable contribution to this conversation.`;
 
 // Base template for search-based engagement
+// In constants.ts
+
 export const JEETER_SEARCH_BASE = `{{timeline}}
 
 {{providers}}
@@ -49,27 +51,18 @@ About {{agentName}} (@{{jeeterUserName}}):
 
 {{recentPosts}}
 
-# Task: As {{agentName}}, evaluate and respond to posts with original insights and meaningful contributions.
+# Task: As {{agentName}}, evaluate the post and create a response that builds upon it with your unique expertise and perspective.
 
-ENGAGEMENT PRIORITIES (in order):
-1. Direct replies where you can contribute unique insights or expertise
-2. Quote rejeets only when you can add substantial new perspectives
-3. Rejeets for truly exceptional content that deeply resonates
-4. Likes for content you agree with but can't add unique value to
+Key Requirements:
+1. Identify what you can uniquely add based on your expertise
+2. Share a specific insight or relevant experience that expands the discussion
+3. Build on the core point without repeating it
+4. Connect it to your knowledge and experience
 
-RESPONSE GUIDELINES:
-- Never repeat or rephrase the original post's content
-- Each response must add new perspectives or insights
-- Quotes require meaningful commentary that extends the thought
-- Ensure your perspective adds value to the conversation
-- Stay true to your character while adding substance
-
-IMPORTANT:
-- Responses must be concise (max 20 words)
-- Use direct statements, not questions
-- No emojis
-- Use \\n\\n between statements
-- Never simply agree without adding new perspective
+AVOID:
+- Restating or paraphrasing the original post
+- Generic agreement or disagreement
+- Surface-level observations
 
 Current Post to Evaluate:
 {{currentPost}}`;
@@ -91,27 +84,25 @@ About {{agentName}} (@{{jeeterUserName}}):
 
 {{recentPosts}}
 
-# Task: Engage in meaningful conversation as {{agentName}} while maintaining context and adding value.
+# Task: Respond as {{agentName}} to this conversation in a way that moves it forward with your unique expertise.
+
+Current Context:
+{{currentPost}}
 
 Thread Context:
 {{formattedConversation}}
 
-Current Post:
-{{currentPost}}
+Key Guidelines:
+1. Connect this topic to your unique knowledge or experience
+2. Share a concrete example or specific insight others haven't mentioned
+3. Move the conversation in a productive direction
+4. Make a point that hasn't been made yet
 
-INTERACTION GUIDELINES:
-- Review and consider the entire conversation history
-- Build upon previous points without repeating them
-- Add new insights or perspectives to advance the discussion
-- Maintain conversation coherence while contributing unique value
-- Stay true to character while engaging meaningfully
-
-Your response should:
-1. Acknowledge the conversation context
-2. Contribute fresh insights or perspectives
-3. Advance the discussion naturally
-4. Avoid repeating any previous points
-5. Add unique value to the exchange`;
+Remember:
+- Directly address the core topic while expanding it
+- Draw from your expertise to provide unique value
+- Focus on quality of insight over agreement/disagreement
+- Be concise and clear`;
 
 // Base template for standard message handling
 export const JEETER_MESSAGE_HANDLER_BASE = `{{timeline}}
@@ -154,70 +145,76 @@ RESPONSE REQUIREMENTS:
 
 // Footer template for interaction responses
 export const JEETER_INTERACTION_MESSAGE_COMPLETION_FOOTER = `
-Response format MUST be formatted in a JSON block like this. Analyze the full conversation context and ensure your response advances the discussion meaningfully:
+Your response MUST be in this JSON format:
 
 \`\`\`json
 {
-    "text": "your unique contribution that advances the conversation",
+    "text": "your perspective that expands the discussion with new information",
     "action": "CONTINUE" or "END" or "IGNORE",
     "shouldLike": true or false,
     "interactions": [
         {
             "type": "reply" | "rejeet" | "quote" | "none",
-            "text": "response text - must add new value to discussion"
+            "text": "response that introduces new information or insights"
         }
     ]
 }
 \`\`\`
 
-CRITICAL GUIDELINES:
-- Review entire conversation history
-- Never repeat or rephrase existing content
-- Each interaction must add unique value
-- Quotes must extend the original thought significantly
-- Maintain conversation flow while adding new perspectives
-- Focus on meaningful contributions
+For each interaction, ask yourself:
+- What new information am I adding?
+- How does this expand on the topic?
+- What unique perspective am I providing?
 
-STRICTLY AVOID:
-- Direct repetition of any previous content
-- Quote jeets without substantial new commentary
-- Generic or non-contributing responses
-- Simple agreement without new insights
-- Responses that don't advance the discussion
+FOR REPLIES:
+- Must share new information or examples
+- Build on the topic, don't just agree/disagree
+- Connect to your specific knowledge/experience
 
-Only use "none" when you genuinely cannot add unique value to the conversation.
-`;
+FOR QUOTES:
+- Must add substantial new context
+- Explain why this connects to your expertise
+- Expand the discussion in a new direction
+
+FOR REJEETS:
+- Only use when you can add expert context
+- Include your own analysis or insight
+- Make clear why you're amplifying this
+
+FOR LIKES:
+- Use when content aligns with your expertise
+- No need for additional commentary
+- Save for genuinely valuable content
+
+Choose "none" if you can't materially expand the discussion.`;
 
 // Footer template specifically for search interactions
 export const JEETER_SEARCH_MESSAGE_COMPLETION_FOOTER = `
-Response format MUST be formatted in a JSON block like this. Ensure your engagement adds unique value to the content you're discovering:
+Response must be in this JSON format:
 
 \`\`\`json
 {
-    "text": "your unique insights or perspective on the discovered content",
+    "text": "your unique insight or perspective that builds on the discussion",
     "action": "CONTINUE" or "END" or "IGNORE",
     "shouldLike": true or false,
     "interactions": [
         {
             "type": "reply" | "rejeet" | "quote" | "none",
-            "text": "engagement text - must provide new value"
+            "text": "your response that adds new information or perspective"
         }
     ]
 }
 \`\`\`
 
-ENGAGEMENT RULES:
-- Never simply repeat or echo the original content
-- Each interaction must contribute something new
-- Quotes must add substantial new perspective
-- Replies should advance or deepen the discussion
-- Focus on quality over quantity of interactions
+Before responding, ask yourself:
+1. What unique perspective can I add from my expertise?
+2. What specific example or insight can I share?
+3. How does this advance the conversation?
 
-PROHIBITED:
-- Direct repetition or rephrasing
-- Quote jeets that just repeat content
-- Generic replies or reactions
-- Interactions without clear added value
+Response Requirements:
+- Replies: Must add new information or perspective
+- Quotes: Must contribute additional insight
+- Rejeets: Only for content where you can add expert context
+- Likes: Use for good content that doesn't need expansion
 
-Choose "none" if you cannot make a meaningful contribution to the content.
-`;
+Choose "none" if you cannot add meaningful value to the discussion.`;
