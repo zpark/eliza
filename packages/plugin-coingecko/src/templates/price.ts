@@ -1,25 +1,18 @@
-export const getPriceTemplate = `You are a cryptocurrency price request parser. Your task is to extract the cryptocurrency and currency information from the most recent message in the conversation.
+export const getPriceTemplate = `
+Extract the following parameters for cryptocurrency price data:
+- **coinIds** (string | string[]): The ID(s) of the cryptocurrency/cryptocurrencies to get prices for (e.g., "bitcoin" or ["bitcoin", "ethereum"])
+- **currency** (string | string[]): The currency/currencies to display prices in (e.g., "usd" or ["usd", "eur", "jpy"]) - defaults to ["usd"]
+- **include_market_cap** (boolean): Whether to include market cap data - defaults to false
+- **include_24hr_vol** (boolean): Whether to include 24h volume data - defaults to false
+- **include_24hr_change** (boolean): Whether to include 24h price change data - defaults to false
+- **include_last_updated_at** (boolean): Whether to include last update timestamp - defaults to false
 
-Focus on identifying:
-1. Which cryptocurrency/cryptocurrencies are being asked about
-2. Which currency to display the price in (default to "usd" if not specified)
-3. Whether additional data is requested (market cap, volume, price changes, last update time)
+Provide the values in the following JSON format:
 
-Format your response as a JSON object with these fields:
-- coinIds: string or array of strings with coin IDs (e.g., "bitcoin" or ["bitcoin", "ethereum"])
-- currency: string with the currency code (e.g., "usd", "eur")
-- include_market_cap: boolean (default: false, set to true if market cap is specifically requested)
-- include_24hr_vol: boolean (default: false, set to true if volume is specifically requested)
-- include_24hr_change: boolean (default: false, set to true if price change is specifically requested)
-- include_last_updated_at: boolean (default: false, set to true if last update time is specifically requested)
-
-Examples:
-Message: "What's the current price of Bitcoin?"
-Response:
 \`\`\`json
 {
     "coinIds": "bitcoin",
-    "currency": "usd",
+    "currency": ["usd"],
     "include_market_cap": false,
     "include_24hr_vol": false,
     "include_24hr_change": false,
@@ -27,12 +20,25 @@ Response:
 }
 \`\`\`
 
-Message: "Show me ETH price and market cap in EUR with last update time"
-Response:
+Example request: "What's the current price of Bitcoin?"
+Example response:
+\`\`\`json
+{
+    "coinIds": "bitcoin",
+    "currency": ["usd"],
+    "include_market_cap": false,
+    "include_24hr_vol": false,
+    "include_24hr_change": false,
+    "include_last_updated_at": false
+}
+\`\`\`
+
+Example request: "Show me ETH price and market cap in EUR with last update time"
+Example response:
 \`\`\`json
 {
     "coinIds": "ethereum",
-    "currency": "eur",
+    "currency": ["eur"],
     "include_market_cap": true,
     "include_24hr_vol": false,
     "include_24hr_change": false,
@@ -40,19 +46,20 @@ Response:
 }
 \`\`\`
 
-Message: "What are BTC and ETH prices with volume and 24h changes?"
-Response:
+Example request: "What's the current price of Bitcoin in USD, JPY and EUR?"
+Example response:
 \`\`\`json
 {
-    "coinIds": ["bitcoin", "ethereum"],
-    "currency": "usd",
+    "coinIds": "bitcoin",
+    "currency": ["usd", "jpy", "eur"],
     "include_market_cap": false,
-    "include_24hr_vol": true,
-    "include_24hr_change": true,
+    "include_24hr_vol": false,
+    "include_24hr_change": false,
     "include_last_updated_at": false
 }
 \`\`\`
 
+Here are the recent user messages for context:
 {{recentMessages}}
 
-Parse the most recent cryptocurrency price request from above and respond with the appropriate JSON.`;
+Based on the conversation above, if the request is for cryptocurrency price data, extract the appropriate parameters and respond with a JSON object. If the request is not related to price data, respond with null.`;

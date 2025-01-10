@@ -1,33 +1,56 @@
-export const getMarketsTemplate = `You are a cryptocurrency market data parser. Your task is to extract market listing parameters from the conversation.
-
-Focus on requests that ask for:
-- Lists of top cryptocurrencies
-- Market rankings
-- Category-specific listings
-- Overall market overview
-
-DO NOT match requests that only ask for specific coins' prices or data.
-
-Parameters to extract:
-- vs_currency: Target currency of price data (default: "usd")
-- category: The specific category ID from the available categories (listed below)
-- per_page: Number of results requested (extract from phrases like "top 10", "top 5")
-- order: How to sort the results (default: "market_cap_desc")
+export const getMarketsTemplate = `
+Extract the following parameters for market listing:
+- **vs_currency** (string): Target currency for price data (default: "usd")
+- **category** (string, optional): Specific category ID from the available categories
+- **per_page** (number): Number of results to return (1-250, default: 20)
+- **order** (string): Sort order for results, one of:
+  - market_cap_desc: Highest market cap first
+  - market_cap_asc: Lowest market cap first
+  - volume_desc: Highest volume first
+  - volume_asc: Lowest volume first
 
 Available Categories:
 {{categories}}
 
-Example matches:
-"Show me the top 10 cryptocurrencies"
-"List the best performing coins"
-"What are the top gaming tokens?"
-"Show market rankings"
+Provide the values in the following JSON format:
 
-Example non-matches:
-"What's BTC price?"
-"Show me ETH and BTC prices with volume"
-"Check Bitcoin's market cap"
+\`\`\`json
+{
+    "vs_currency": "<currency>",
+    "category": "<category_id>",
+    "per_page": <number>,
+    "order": "<sort_order>",
+    "page": 1,
+    "sparkline": false
+}
+\`\`\`
 
+Example request: "Show me the top 10 gaming cryptocurrencies"
+Example response:
+\`\`\`json
+{
+    "vs_currency": "usd",
+    "category": "gaming",
+    "per_page": 10,
+    "order": "market_cap_desc",
+    "page": 1,
+    "sparkline": false
+}
+\`\`\`
+
+Example request: "What are the best performing coins by volume?"
+Example response:
+\`\`\`json
+{
+    "vs_currency": "usd",
+    "per_page": 20,
+    "order": "volume_desc",
+    "page": 1,
+    "sparkline": false
+}
+\`\`\`
+
+Here are the recent user messages for context:
 {{recentMessages}}
 
-Based on the conversation above, if the request is for a market listing/ranking, extract the appropriate parameters. If the request is for specific coins only, respond with null.`;
+Based on the conversation above, if the request is for a market listing/ranking, extract the appropriate parameters and respond with a JSON object. If the request is for specific coins only, respond with null.`;

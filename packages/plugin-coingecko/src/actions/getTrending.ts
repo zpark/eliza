@@ -3,7 +3,7 @@ import {
     composeContext,
     Content,
     elizaLogger,
-    generateObjectDeprecated,
+    generateObject,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -12,6 +12,7 @@ import {
     type Action
 } from "@elizaos/core";
 import axios from "axios";
+import { z } from "zod";
 import { getApiConfig, validateCoingeckoConfig } from "../environment";
 import { getTrendingTemplate } from "../templates/trending";
 
@@ -53,9 +54,16 @@ interface TrendingResponse {
     icos: string[];
 }
 
-export interface GetTrendingContent extends Content {
-    valid: boolean;
-}
+export const GetTrendingSchema = z.object({
+    include_nfts: z.boolean().default(true),
+    include_categories: z.boolean().default(true)
+});
+
+export type GetTrendingContent = z.infer<typeof GetTrendingSchema> & Content;
+
+export const isGetTrendingContent = (obj: any): obj is GetTrendingContent => {
+    return GetTrendingSchema.safeParse(obj).success;
+};
 
 export default {
     name: "GET_TRENDING",
@@ -94,16 +102,16 @@ export default {
                 template: getTrendingTemplate,
             });
 
-            elizaLogger.log("Composing content...");
-            const content = (await generateObjectDeprecated({
+            const result = await generateObject({
                 runtime,
                 context: trendingContext,
                 modelClass: ModelClass.LARGE,
-            })) as unknown as GetTrendingContent;
+                schema: GetTrendingSchema
+            });
 
-            // Validate content structure
-            if (!content?.valid) {
-                throw new Error("Invalid request for trending data");
+            if (!isGetTrendingContent(result.object)) {
+                elizaLogger.error("Invalid trending request format");
+                return false;
             }
 
             // Fetch trending data from CoinGecko

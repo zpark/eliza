@@ -3,7 +3,7 @@ import {
     composeContext,
     Content,
     elizaLogger,
-    generateObjectDeprecated,
+    generateObject,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -12,6 +12,7 @@ import {
     type Action
 } from "@elizaos/core";
 import axios from "axios";
+import { z } from "zod";
 import { getApiConfig, validateCoingeckoConfig } from "../environment";
 import { getTopGainersLosersTemplate } from "../templates/gainersLosers";
 
@@ -23,7 +24,13 @@ interface TopGainerLoserItem {
     market_cap_rank: number;
     usd: number;
     usd_24h_vol: number;
-    usd_24h_change: number;
+    usd_1h_change?: number;
+    usd_24h_change?: number;
+    usd_7d_change?: number;
+    usd_14d_change?: number;
+    usd_30d_change?: number;
+    usd_60d_change?: number;
+    usd_1y_change?: number;
 }
 
 interface TopGainersLosersResponse {
@@ -31,11 +38,20 @@ interface TopGainersLosersResponse {
     top_losers: TopGainerLoserItem[];
 }
 
-export interface GetTopGainersLosersContent extends Content {
-    vs_currency?: string;
-    duration?: '24h' | '7d' | '14d' | '30d' | '60d' | '1y';
-    top_coins?: string;
-}
+const DurationEnum = z.enum(["1h", "24h", "7d", "14d", "30d", "60d", "1y"]);
+type Duration = z.infer<typeof DurationEnum>;
+
+export const GetTopGainersLosersSchema = z.object({
+    vs_currency: z.string().default("usd"),
+    duration: DurationEnum.default("24h"),
+    top_coins: z.string().default("1000")
+});
+
+export type GetTopGainersLosersContent = z.infer<typeof GetTopGainersLosersSchema> & Content;
+
+export const isGetTopGainersLosersContent = (obj: any): obj is GetTopGainersLosersContent => {
+    return GetTopGainersLosersSchema.safeParse(obj).success;
+};
 
 export default {
     name: "GET_TOP_GAINERS_LOSERS",
@@ -58,6 +74,8 @@ export default {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
+        elizaLogger.log("Starting CoinGecko GET_TOP_GAINERS_LOSERS handler...");
+
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         } else {
@@ -65,21 +83,38 @@ export default {
         }
 
         try {
-            // Compose context
+            elizaLogger.log("Composing gainers/losers context...");
             const context = composeContext({
                 state,
                 template: getTopGainersLosersTemplate,
             });
 
-            const content = (await generateObjectDeprecated({
+            elizaLogger.log("Generating content from template...");
+            const result = await generateObject({
                 runtime,
                 context,
                 modelClass: ModelClass.LARGE,
-            })) as unknown as GetTopGainersLosersContent;
+                schema: GetTopGainersLosersSchema
+            });
+
+            if (!isGetTopGainersLosersContent(result.object)) {
+                elizaLogger.error("Invalid gainers/losers request format");
+                return false;
+            }
+
+            const content = result.object;
+            elizaLogger.log("Generated content:", content);
 
             // Fetch data from CoinGecko
             const config = await validateCoingeckoConfig(runtime);
             const { baseUrl, apiKey, headerKey } = getApiConfig(config);
+
+            elizaLogger.log("Fetching top gainers/losers data...");
+            elizaLogger.log("API request params:", {
+                vs_currency: content.vs_currency,
+                duration: content.duration,
+                top_coins: content.top_coins
+            });
 
             const response = await axios.get<TopGainersLosersResponse>(
                 `${baseUrl}/coins/top_gainers_losers`,
@@ -89,9 +124,9 @@ export default {
                         [headerKey]: apiKey
                     },
                     params: {
-                        vs_currency: content.vs_currency || 'usd',
-                        duration: content.duration || '24h',
-                        top_coins: content.top_coins || '1000'
+                        vs_currency: content.vs_currency,
+                        duration: content.duration,
+                        top_coins: content.top_coins
                     }
                 }
             );
@@ -100,55 +135,39 @@ export default {
                 throw new Error("No data received from CoinGecko API");
             }
 
-            // No need to sort - API returns data already sorted
-            const formattedData = {
-                gainers: response.data.top_gainers.map(coin => ({
-                    name: coin.name,
-                    symbol: coin.symbol.toUpperCase(),
-                    price: coin.usd,
-                    priceChange: coin.usd_24h_change,
-                    volume24h: coin.usd_24h_vol,
-                    marketCapRank: coin.market_cap_rank
-                })).slice(0, 15),
-                losers: response.data.top_losers.map(coin => ({
-                    name: coin.name,
-                    symbol: coin.symbol.toUpperCase(),
-                    price: coin.usd,
-                    priceChange: coin.usd_24h_change,
-                    volume24h: coin.usd_24h_vol,
-                    marketCapRank: coin.market_cap_rank
-                })).slice(0, 15)
-            };
-
+            // Format the response text
             const responseText = [
                 'Top Gainers:',
-                ...formattedData.gainers.map((coin, index) =>
-                    `${index + 1}. ${coin.name} (${coin.symbol})` +
-                    ` | $${coin.price.toLocaleString()}` +
-                    ` | ${coin.priceChange.toFixed(2)}%` +
-                    `${coin.marketCapRank ? ` | Rank #${coin.marketCapRank}` : ''}`
-                ),
+                ...response.data.top_gainers.map((coin, index) => {
+                    const changeKey = `usd_${content.duration}_change` as keyof TopGainerLoserItem;
+                    const change = coin[changeKey] as number;
+                    return `${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()})` +
+                        ` | $${coin.usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}` +
+                        ` | ${change >= 0 ? '+' : ''}${change.toFixed(2)}%` +
+                        `${coin.market_cap_rank ? ` | Rank #${coin.market_cap_rank}` : ''}`;
+                }),
                 '',
                 'Top Losers:',
-                ...formattedData.losers.map((coin, index) =>
-                    `${index + 1}. ${coin.name} (${coin.symbol})` +
-                    ` | $${coin.price.toLocaleString()}` +
-                    ` | ${coin.priceChange.toFixed(2)}%` +
-                    `${coin.marketCapRank ? ` | Rank #${coin.marketCapRank}` : ''}`
-                )
+                ...response.data.top_losers.map((coin, index) => {
+                    const changeKey = `usd_${content.duration}_change` as keyof TopGainerLoserItem;
+                    const change = coin[changeKey] as number;
+                    return `${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()})` +
+                        ` | $${coin.usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 8 })}` +
+                        ` | ${change >= 0 ? '+' : ''}${change.toFixed(2)}%` +
+                        `${coin.market_cap_rank ? ` | Rank #${coin.market_cap_rank}` : ''}`;
+                })
             ].join('\n');
 
             if (callback) {
                 callback({
                     text: responseText,
                     content: {
-                        data: formattedData,
+                        data: response.data,
                         params: {
-                            vs_currency: content.vs_currency || 'usd',
-                            duration: content.duration || '24h',
-                            top_coins: content.top_coins || '1000'
-                        },
-                        timestamp: new Date().toISOString()
+                            vs_currency: content.vs_currency,
+                            duration: content.duration,
+                            top_coins: content.top_coins
+                        }
                     }
                 });
             }
@@ -157,16 +176,25 @@ export default {
         } catch (error) {
             elizaLogger.error("Error in GET_TOP_GAINERS_LOSERS handler:", error);
 
-            const errorMessage = error.response?.status === 429 ?
-                "Rate limit exceeded. Please try again later." :
-                `Error fetching top gainers/losers data: ${error.message}`;
+            let errorMessage;
+            if (error.response?.status === 429) {
+                errorMessage = "Rate limit exceeded. Please try again later.";
+            } else if (error.response?.status === 403) {
+                errorMessage = "This endpoint requires a CoinGecko Pro API key. Please upgrade your plan to access this data.";
+            } else if (error.response?.status === 400) {
+                errorMessage = "Invalid request parameters. Please check your input.";
+            } else {
+                errorMessage = `Error fetching top gainers/losers data: ${error.message}`;
+            }
 
             if (callback) {
                 callback({
                     text: errorMessage,
                     content: {
                         error: error.message,
-                        statusCode: error.response?.status
+                        statusCode: error.response?.status,
+                        params: error.config?.params,
+                        requiresProPlan: error.response?.status === 403
                     },
                 });
             }

@@ -3,7 +3,7 @@ import {
     composeContext,
     Content,
     elizaLogger,
-    generateObjectDeprecated,
+    generateObject,
     HandlerCallback,
     IAgentRuntime,
     Memory,
@@ -12,6 +12,7 @@ import {
     type Action
 } from "@elizaos/core";
 import axios from "axios";
+import { z } from "zod";
 import { getApiConfig, validateCoingeckoConfig } from "../environment";
 import { getCategoriesData } from '../providers/categoriesProvider';
 import { getMarketsTemplate } from "../templates/markets";
@@ -85,14 +86,20 @@ export interface CoinMarketData {
     last_updated: string;
 }
 
-export interface GetMarketsContent extends Content {
-    vs_currency?: string;
-    category?: string;
-    order?: 'market_cap_desc' | 'market_cap_asc' | 'volume_desc' | 'volume_asc';
-    per_page?: number;
-    page?: number;
-    sparkline?: boolean;
-}
+export const GetMarketsSchema = z.object({
+    vs_currency: z.string().default('usd'),
+    category: z.string().optional(),
+    order: z.enum(['market_cap_desc', 'market_cap_asc', 'volume_desc', 'volume_asc']).default('market_cap_desc'),
+    per_page: z.number().min(1).max(250).default(20),
+    page: z.number().min(1).default(1),
+    sparkline: z.boolean().default(false)
+});
+
+export type GetMarketsContent = z.infer<typeof GetMarketsSchema> & Content;
+
+export const isGetMarketsContent = (obj: any): obj is GetMarketsContent => {
+    return GetMarketsSchema.safeParse(obj).success;
+};
 
 export default {
     name: "GET_MARKETS",
@@ -140,12 +147,19 @@ export default {
                 ),
             });
 
-            const content = (await generateObjectDeprecated({
+            const result = await generateObject({
                 runtime,
                 context: marketsContext,
-                modelClass: ModelClass.LARGE,
-            })) as unknown as GetMarketsContent;
+                modelClass: ModelClass.SMALL,
+                schema: GetMarketsSchema
+            });
 
+            if (!isGetMarketsContent(result.object)) {
+                elizaLogger.error("Invalid market data format received");
+                return false;
+            }
+
+            const content = result.object;
             elizaLogger.log("Content from template:", content);
 
             // If template returns null, this is not a markets request
@@ -154,14 +168,17 @@ export default {
             }
 
             const formattedCategory = formatCategory(content.category, categories);
+            if (content.category && !formattedCategory) {
+                throw new Error(`Invalid category: ${content.category}. Please choose from the available categories.`);
+            }
 
             elizaLogger.log("Making API request with params:", {
                 url: `${baseUrl}/coins/markets`,
                 category: formattedCategory,
-                vs_currency: content.vs_currency || 'usd',
-                order: content.order || 'market_cap_desc',
-                per_page: content.per_page || 20,
-                page: content.page || 1
+                vs_currency: content.vs_currency,
+                order: content.order,
+                per_page: content.per_page,
+                page: content.page
             });
 
             const response = await axios.get<CoinMarketData[]>(
@@ -172,12 +189,12 @@ export default {
                         'x-cg-pro-api-key': apiKey
                     },
                     params: {
-                        vs_currency: content.vs_currency || 'usd',
+                        vs_currency: content.vs_currency,
                         category: formattedCategory,
-                        order: content.order || 'market_cap_desc',
-                        per_page: content.per_page || 20,
-                        page: content.page || 1,
-                        sparkline: content.sparkline || false
+                        order: content.order,
+                        per_page: content.per_page,
+                        page: content.page,
+                        sparkline: content.sparkline
                     }
                 }
             );
@@ -207,7 +224,7 @@ export default {
                 `${categories.find(c => c.category_id === formattedCategory)?.name.toUpperCase() || content.category.toUpperCase()} ` : '';
 
             const responseText = [
-                `Top ${formattedData.length} ${categoryDisplay}Cryptocurrencies by Market Cap:`,
+                `Top ${formattedData.length} ${categoryDisplay}Cryptocurrencies by ${content.order === 'volume_desc' || content.order === 'volume_asc' ? 'Volume' : 'Market Cap'}:`,
                 ...formattedData.map((coin, index) =>
                     `${index + 1}. ${coin.name} (${coin.symbol})` +
                     ` | $${coin.currentPrice.toLocaleString()}` +
@@ -224,9 +241,11 @@ export default {
                     content: {
                         markets: formattedData,
                         params: {
-                            vs_currency: content.vs_currency || 'usd',
+                            vs_currency: content.vs_currency,
                             category: content.category,
-                            order: content.order || 'market_cap_desc'
+                            order: content.order,
+                            per_page: content.per_page,
+                            page: content.page
                         },
                         timestamp: new Date().toISOString()
                     }
@@ -251,12 +270,12 @@ export default {
             if (callback) {
                 callback({
                     text: errorMessage,
-                    content: {
-                        error: error.message,
+                    error: {
+                        message: error.message,
                         statusCode: error.response?.status,
                         params: error.config?.params,
                         requiresProPlan: error.response?.status === 403
-                    },
+                    }
                 });
             }
             return false;

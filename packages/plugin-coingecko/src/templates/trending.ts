@@ -1,17 +1,36 @@
-export const getTrendingTemplate = `Given the message, verify if it's requesting trending cryptocurrency market data.
+export const getTrendingTemplate = `
+Extract the following parameters for trending data:
+- **include_nfts** (boolean): Whether to include NFTs in the response (default: true)
+- **include_categories** (boolean): Whether to include categories in the response (default: true)
 
-Example valid requests:
-- "What's trending in crypto?"
-- "Show me hot cryptocurrencies"
-- "What's popular in the crypto market?"
-- "Show trending coins and NFTs"
-- "What's hot in crypto right now?"
+Provide the values in the following JSON format:
 
-Format the response as a JSON object:
+\`\`\`json
 {
-    "valid": boolean  // true if the message is requesting trending data
+    "include_nfts": true,
+    "include_categories": true
 }
+\`\`\`
 
+Example request: "What's trending in crypto?"
+Example response:
+\`\`\`json
+{
+    "include_nfts": true,
+    "include_categories": true
+}
+\`\`\`
+
+Example request: "Show me trending coins only"
+Example response:
+\`\`\`json
+{
+    "include_nfts": false,
+    "include_categories": false
+}
+\`\`\`
+
+Here are the recent user messages for context:
 {{recentMessages}}
 
-Determine if the above messages are requesting trending market data and respond with the appropriate JSON.`;
+Based on the conversation above, if the request is for trending market data, extract the appropriate parameters and respond with a JSON object. If the request is not related to trending data, respond with null.`;
