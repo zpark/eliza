@@ -8,6 +8,7 @@ import {
     stringToUuid,
     TemplateType,
     UUID,
+    truncateToCompleteSentence,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import { ClientBase } from "./base.ts";
@@ -76,40 +77,6 @@ Tweet:
 
 # Respond with qualifying action tags only. Default to NO action unless extremely confident of relevance.` +
     postActionResponseFooter;
-
-/**
- * Truncate text to fit within the Twitter character limit, ensuring it ends at a complete sentence.
- */
-function truncateToCompleteSentence(
-    text: string,
-    maxTweetLength: number
-): string {
-    if (text.length <= maxTweetLength) {
-        return text;
-    }
-
-    // Attempt to truncate at the last period within the limit
-    const lastPeriodIndex = text.lastIndexOf(".", maxTweetLength - 1);
-    if (lastPeriodIndex !== -1) {
-        const truncatedAtPeriod = text.slice(0, lastPeriodIndex + 1).trim();
-        if (truncatedAtPeriod.length > 0) {
-            return truncatedAtPeriod;
-        }
-    }
-
-    // If no period, truncate to the nearest whitespace within the limit
-    const lastSpaceIndex = text.lastIndexOf(" ", maxTweetLength - 1);
-    if (lastSpaceIndex !== -1) {
-        const truncatedAtSpace = text.slice(0, lastSpaceIndex).trim();
-        if (truncatedAtSpace.length > 0) {
-            return truncatedAtSpace + "...";
-        }
-    }
-
-    // Fallback: Hard truncate and add ellipsis
-    const hardTruncated = text.slice(0, maxTweetLength - 3).trim();
-    return hardTruncated + "...";
-}
 
 interface PendingTweet {
     cleanedContent: string;
