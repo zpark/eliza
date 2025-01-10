@@ -6,11 +6,11 @@
 
 ## 🌍 README Traduções
 
-[中文说明](./README_CN.md) | [Deutsch](./README_DE.md) | [Français](./README_FR.md) | [ไทย](./README_TH.md) | [Español](README_ES.md) | [Português](./README_PT.md)
+[中文说明](README_CN.md) | [Deutsch](README_DE.md) | [Français](README_FR.md) | [ไทย](README_TH.md) | [Español](README_ES.md) | [Português](README_PT.md)
 
 # dev branch
 
-<img src="./docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
+<img src="static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
 
 _Como visto dando funcionamento em [@DegenSpartanAI](https://x.com/degenspartanai) e [@MarcAIndreessen](https://x.com/pmairca)_
 
