@@ -45,11 +45,11 @@ async function composeTweet(
         let trimmedContent = tweetContentObject.object.text.trim();
 
         // Truncate the content to the maximum tweet length specified in the environment settings.
-        const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
+        const maxTweetLength = runtime.getSetting("MAX_TWEET_LENGTH");
         if (maxTweetLength) {
             trimmedContent = truncateToCompleteSentence(
                 trimmedContent,
-                maxTweetLength
+                Number(maxTweetLength)
             );
         }
 
@@ -89,7 +89,7 @@ async function postTweet(
     content: string
 ): Promise<boolean> {
     try {
-        const twitterClient = runtime.clients.twitter.client.twitterClient;
+        const twitterClient = runtime.clients.twitter?.client?.twitterClient;
         const scraper = twitterClient || new Scraper();
 
         if (!twitterClient) {
