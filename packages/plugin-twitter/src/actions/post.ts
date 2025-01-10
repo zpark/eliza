@@ -80,6 +80,8 @@ async function sendTweet(twitterClient: Scraper, content: string) {
         elizaLogger.error("Failed to post tweet: No tweet result in response");
         return false;
     }
+
+    return true;
 }
 
 async function postTweet(
