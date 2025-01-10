@@ -41,7 +41,7 @@ const convertToBase64DataUrl = (
     mimeType: string
 ): string => {
     const base64Data = imageData.toString("base64");
-    return `data:image/${mimeType};base64,${base64Data}`;
+    return `data:${mimeType};base64,${base64Data}`;
 };
 
 const handleApiError = async (
@@ -291,7 +291,8 @@ export class ImageDescriptionService
         } else {
             if (fs.existsSync(imageUrl)) {
                 imageData = fs.readFileSync(imageUrl);
-                mimeType = path.extname(imageUrl).slice(1) || "jpeg";
+                const ext = path.extname(imageUrl).slice(1);
+                mimeType = ext ? `image/${ext}` : "image/jpeg";
             } else {
                 const response = await fetch(imageUrl);
                 if (!response.ok) {
@@ -300,9 +301,7 @@ export class ImageDescriptionService
                     );
                 }
                 imageData = Buffer.from(await response.arrayBuffer());
-                mimeType =
-                    response.headers.get("content-type")?.split("/")[1] ||
-                    "jpeg";
+                mimeType = response.headers.get("content-type") || "image/jpeg";
             }
         }
 
