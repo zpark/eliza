@@ -34,6 +34,11 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
+
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import createGoatPlugin from "@elizaos/plugin-goat";
+// import { intifacePlugin } from "@elizaos/plugin-intiface";
+import { DirectClient } from "@elizaos/client-direct";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { alloraPlugin } from "@elizaos/plugin-allora";
@@ -42,7 +47,6 @@ import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { availPlugin } from "@elizaos/plugin-avail";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { binancePlugin } from "@elizaos/plugin-binance";
-import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -61,7 +65,6 @@ import { evmPlugin } from "@elizaos/plugin-evm";
 import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
-import createGoatPlugin from "@elizaos/plugin-goat";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
 import { multiversxPlugin } from "@elizaos/plugin-multiversx";
 import { nearPlugin } from "@elizaos/plugin-near";
@@ -72,7 +75,9 @@ import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
@@ -616,7 +621,6 @@ export async function createAgent(
         // character.plugins are handled when clients are added
         plugins: [
             bootstrapPlugin,
-            dominosPlugin,
             getSecret(character, "CONFLUX_CORE_PRIVATE_KEY")
                 ? confluxPlugin
                 : null,
@@ -680,6 +684,12 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
+            getSecret(character, "SGX") ? sgxPlugin : null,
+            (getSecret(character, "ENABLE_TEE_LOG") &&
+                ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                    getSecret(character, "SGX")))
+                ? teeLogPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")

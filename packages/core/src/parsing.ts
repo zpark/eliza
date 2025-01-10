@@ -11,20 +11,15 @@ If {{agentName}} is talking too much, you can choose [IGNORE]
 
 Your response must include one of the options.`;
 
-
-export const pizzaDecisionFooter = `The available options are [YES] or [NO]. Choose the most appropriate option.
-Your response must include one of the options.`;
-
-
 export const parseShouldRespondFromText = (
     text: string
 ): "RESPOND" | "IGNORE" | "STOP" | null => {
     const match = text
         .split("\n")[0]
         .trim()
-        .replace(/\[/g, "")
+        .replace("[", "")
         .toUpperCase()
-        .replace(/\]/g, "")
+        .replace("]", "")
         .match(/^(RESPOND|IGNORE|STOP)$/i);
     return match
         ? (match[0].toUpperCase() as "RESPOND" | "IGNORE" | "STOP")
@@ -36,24 +31,6 @@ export const parseShouldRespondFromText = (
               ? "STOP"
               : null;
 };
-
-export const parsePizzaDecisionFromText = (
-    text: string
-): "YES" | "NO" | null => {
-    const match = text
-        .split('\n')[0]
-        .trim()
-        .replace(/\[/g, "")
-        .toUpperCase()
-        .replace(/\]/g, "")
-        .match(/^(YES|NO)$/i);
-    return match
-        ? (match[0].toUpperCase() as "YES" | "NO")
-        : text.includes("YES") ? "YES" : text.includes("NO") ? "NO" : null;
-};
-
-
-
 
 export const booleanFooter = `Respond with only a YES or a NO.`;
 
