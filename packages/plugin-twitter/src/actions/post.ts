@@ -44,7 +44,7 @@ async function composeTweet(
 
         let trimmedContent = tweetContentObject.object.text.trim();
 
-        // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
+        // Truncate the content to the maximum tweet length specified in the environment settings.
         const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
         if (maxTweetLength) {
             trimmedContent = truncateToCompleteSentence(
