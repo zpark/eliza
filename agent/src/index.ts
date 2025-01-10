@@ -53,7 +53,7 @@ import {
     webhookPlugin,
 } from "@elizaos/plugin-coinbase";
 import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
-import { coinPricePlugin } from "@elizaos/plugin-coinprice";
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
@@ -609,7 +609,6 @@ export async function createAgent(
                 ? confluxPlugin
                 : null,
             nodePlugin,
-            coinPricePlugin,
             getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
@@ -669,9 +668,9 @@ export async function createAgent(
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
             getSecret(character, "SGX") ? sgxPlugin : null,
-            (getSecret(character, "ENABLE_TEE_LOG") &&
-                ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
-                    getSecret(character, "SGX")))
+            getSecret(character, "ENABLE_TEE_LOG") &&
+            ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                getSecret(character, "SGX"))
                 ? teeLogPlugin
                 : null,
             getSecret(character, "COINBASE_API_KEY") &&
