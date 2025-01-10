@@ -59,13 +59,16 @@ async function composeTweet(
     }
 }
 
-async function postTweet(content: string): Promise<boolean> {
+async function postTweet(
+    runtime: IAgentRuntime,
+    content: string
+): Promise<boolean> {
     try {
         const scraper = new Scraper();
-        const username = process.env.TWITTER_USERNAME;
-        const password = process.env.TWITTER_PASSWORD;
-        const email = process.env.TWITTER_EMAIL;
-        const twitter2faSecret = process.env.TWITTER_2FA_SECRET;
+        const username = runtime.getSetting("TWITTER_USERNAME");
+        const password = runtime.getSetting("TWITTER_PASSWORD");
+        const email = runtime.getSetting("TWITTER_EMAIL");
+        const twitter2faSecret = runtime.getSetting("TWITTER_2FA_SECRET");
 
         if (!username || !password) {
             elizaLogger.error(
@@ -127,8 +130,10 @@ export const postAction: Action = {
         message: Memory,
         state?: State
     ) => {
-        const hasCredentials =
-            !!process.env.TWITTER_USERNAME && !!process.env.TWITTER_PASSWORD;
+        const username = runtime.getSetting("TWITTER_USERNAME");
+        const password = runtime.getSetting("TWITTER_PASSWORD");
+        const email = runtime.getSetting("TWITTER_EMAIL");
+        const hasCredentials = !!username && !!password && !!email;
         elizaLogger.log(`Has credentials: ${hasCredentials}`);
 
         return hasCredentials;
@@ -160,7 +165,7 @@ export const postAction: Action = {
                 return true;
             }
 
-            return await postTweet(tweetContent);
+            return await postTweet(runtime, tweetContent);
         } catch (error) {
             elizaLogger.error("Error in post action:", error);
             return false;
