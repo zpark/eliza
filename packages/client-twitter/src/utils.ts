@@ -345,7 +345,7 @@ function extractUrls(paragraph: string): {
 function splitSentencesAndWords(text: string, maxLength: number): string[] {
     // Split by periods, question marks and exclamation marks
     // Note that URLs in text have been replaced with `<<URL_xxx>>` and won't be split by dots
-    const sentences = text.match(/[^\.!\?]+[\.!\?]+|[^\.!\?]+$/g) || [text];
+    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
     const chunks: string[] = [];
     let currentChunk = "";
 

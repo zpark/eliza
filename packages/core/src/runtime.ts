@@ -34,8 +34,8 @@ import {
     IRAGKnowledgeManager,
     IMemoryManager,
     KnowledgeItem,
-    RAGKnowledgeItem,
-    Media,
+    //RAGKnowledgeItem,
+    //Media,
     ModelClass,
     ModelProviderName,
     Plugin,
@@ -546,10 +546,7 @@ export class AgentRuntime implements IAgentRuntime {
                             agentId: this.agentId
                         });
 
-                        let content: string;
-
-                        content = await readFile(filePath, 'utf8');
-
+                        const content: string = await readFile(filePath, 'utf8');
                         if (!content) {
                             hasError = true;
                             continue;
