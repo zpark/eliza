@@ -64,6 +64,7 @@ import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
+import { akashPlugin } from "@elizaos/plugin-akash";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -609,6 +610,10 @@ export async function createAgent(
             getSecret(character, "ECHOCHAMBERS_API_KEY")
                 ? echoChamberPlugin
                 : null,
+            getSecret(character, "AKASH_MNEMONIC") &&
+            getSecret(character, "AKASH_WALLET_ADDRESS")
+                    ? akashPlugin
+                    : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
