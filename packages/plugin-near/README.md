@@ -34,8 +34,8 @@ NEAR_WALLET_SECRET_KEY=your-wallet-private-key
 NEAR_WALLET_PUBLIC_KEY=your-wallet-public-key
 NEAR_ADDRESS=your-account.near
 NEAR_NETWORK=testnet  # mainnet or testnet
-RPC_URL=https://rpc.testnet.near.org
-SLIPPAGE=0.01  # 1% slippage tolerance
+NEAR_RPC_URL=https://rpc.testnet.near.org
+NEAR_SLIPPAGE=0.01  # 1% slippage tolerance
 ```
 
 ## Usage
