@@ -1,11 +1,11 @@
 import settings from "./settings.ts";
 import {
-    Models,
-    ModelProviderName,
-    ModelClass,
-    ModelSettings,
-    ImageModelSettings,
     EmbeddingModelSettings,
+    ImageModelSettings,
+    ModelClass,
+    ModelProviderName,
+    Models,
+    ModelSettings,
 } from "./types.ts";
 
 export const models: Models = {
@@ -332,6 +332,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.GOOGLE]: {
+        endpoint: "https://generativelanguage.googleapis.com",
         model: {
             [ModelClass.SMALL]: {
                 name:
