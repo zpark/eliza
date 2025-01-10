@@ -830,6 +830,37 @@ export async function generateText({
                 break;
             }
 
+            case ModelProviderName.INFERA: {
+                elizaLogger.debug("Initializing Infera model.");
+
+                const apiKey = settings.INFERA_API_KEY || runtime.token;
+
+                const infera = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    headers: {
+                        api_key: apiKey,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const { text: inferaResponse } = await aiGenerateText({
+                    model: infera.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+                response = inferaResponse;
+                elizaLogger.debug("Received response from Infera model.");
+                break;
+            }
+
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
                 const venice = createOpenAI({
