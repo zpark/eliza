@@ -215,7 +215,10 @@ export async function generateText({
     elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
+        elizaLogger.log(
+            "Using verifiable inference adapter:",
+            runtime.verifiableInferenceAdapter
+        );
         try {
             const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
@@ -391,7 +394,8 @@ export async function generateText({
                     apiKey,
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
-                        const chain_id = runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762"
+                        const chain_id =
+                            runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
                         if (options?.body) {
                             const body = JSON.parse(options.body);
                             body.chain_id = chain_id;
@@ -790,10 +794,12 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
-                const headers = {}
-                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                const headers = {};
+                const fineTuneApiKey = runtime.getSetting(
+                    "GALADRIEL_FINE_TUNE_API_KEY"
+                );
                 if (fineTuneApiKey) {
-                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey;
                 }
                 const galadriel = createOpenAI({
                     headers,
@@ -821,6 +827,37 @@ export async function generateText({
 
                 response = galadrielResponse;
                 elizaLogger.debug("Received response from Galadriel model.");
+                break;
+            }
+
+            case ModelProviderName.INFERA: {
+                elizaLogger.debug("Initializing Infera model.");
+
+                const apiKey = settings.INFERA_API_KEY || runtime.token;
+
+                const infera = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    headers: {
+                        api_key: apiKey,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const { text: inferaResponse } = await aiGenerateText({
+                    model: infera.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+                response = inferaResponse;
+                elizaLogger.debug("Received response from Infera model.");
                 break;
             }
 
@@ -1423,7 +1460,9 @@ export const generateImage = async (
             });
 
             return { success: true, data: base64s };
-        }else if (runtime.imageModelProvider === ModelProviderName.NINETEEN_AI) {
+        } else if (
+            runtime.imageModelProvider === ModelProviderName.NINETEEN_AI
+        ) {
             const response = await fetch(
                 "https://api.nineteen.ai/v1/text-to-image",
                 {
@@ -1433,13 +1472,13 @@ export const generateImage = async (
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        model: data.modelId || "dataautogpt3/ProteusV0.4-Lightning",
+                        model: model,
                         prompt: data.prompt,
                         negative_prompt: data.negativePrompt,
                         width: data.width,
                         height: data.height,
                         steps: data.numIterations,
-                        cfg_scale: data.guidanceScale || 3
+                        cfg_scale: data.guidanceScale || 3,
                     }),
                 }
             );
