@@ -55,6 +55,7 @@ describe("IrysService", () => {
     describe("Store String on Irys", () => {
         it("should store string on Irys", async () => {
             const result = await irysService.providerUploadDataOnIrys("Hello World", IrysDataType.OTHER, ["test"], ["test"]);
+            console.log("Store String on Irys ERROR : ", result.error)
             expect(result.success).toBe(true);
         });
     });

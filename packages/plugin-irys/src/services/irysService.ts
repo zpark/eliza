@@ -10,7 +10,7 @@ import {
     generateMessageResponse,
     ModelClass,
     IrysDataType,
-    IrysTimestamp
+    IrysTimestamp,
 } from "@elizaos/core";
 import { Uploader } from "@irys/upload";
 import { BaseEth } from "@irys/upload-ethereum";
@@ -108,11 +108,17 @@ export class IrysService extends Service implements IIrysService {
             data: response,
         };
     }
+    private converToValues(value: any): any[] {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        return [value];
+    }
 
     private async orchestrateRequest(requestMessage: string, tags: GraphQLTag[], timestamp: IrysTimestamp = null): Promise<DataIrysFetchedFromGQL> {
-        let serviceCategory = tags.find((tag) => tag.name == "Service-Category")?.values[0];
-        let protocol = tags.find((tag) => tag.name == "Protocol")?.values[0];
-        let minimumProviders = Number(tags.find((tag) => tag.name == "Minimum-Providers")?.values[0]);
+        let serviceCategory = tags.find((tag) => tag.name == "Service-Category")?.values;
+        let protocol = tags.find((tag) => tag.name == "Protocol")?.values;
+        let minimumProviders = Number(tags.find((tag) => tag.name == "Minimum-Providers")?.values);
         /*
             Further implementation of the orchestrator
             { name: "Validation-Threshold", values: validationThreshold },
@@ -121,16 +127,16 @@ export class IrysService extends Service implements IIrysService {
         */
         const tagsToRetrieve : GraphQLTag[] = [
             { name: "Message-Type", values: [IrysMessageType.DATA_STORAGE] },
-            { name: "Service-Category", values: [serviceCategory] },
-            { name: "Protocol", values: [protocol] },
+            { name: "Service-Category", values: this.converToValues(serviceCategory) },
+            { name: "Protocol", values: this.converToValues(protocol) },
         ];
-
-        const data = await this.getDataFromAnAgent([],tagsToRetrieve, timestamp);
+        const data = await this.getDataFromAnAgent(null, tagsToRetrieve, timestamp);
         if (!data.success) return { success: false, data: null, error: data.error };
         const dataArray = data.data as Array<any>;
-        for (let i = 0; i < dataArray.length; i++) {
-            const node = dataArray[i];
-            const templateRequest = `
+        try {
+            for (let i = 0; i < dataArray.length; i++) {
+                const node = dataArray[i];
+                const templateRequest = `
                 Determine the truthfulness of the relationship between the given context and text.
                 Context: ${requestMessage}
                 Text: ${node.data}
@@ -141,9 +147,15 @@ export class IrysService extends Service implements IIrysService {
                 context: templateRequest,
                 modelClass: ModelClass.MEDIUM,
             });
+            console.log("RESPONSE FROM MODEL : ", responseFromModel)
             if (!responseFromModel.success || ((responseFromModel.content?.toString().toLowerCase().includes('false')) && (!responseFromModel.content?.toString().toLowerCase().includes('true')))) {
                 dataArray.splice(i, 1);
-                i--;
+                    i--;
+                }
+            }
+        } catch (error) {
+            if (error.message.includes("TypeError: Cannot read properties of undefined (reading 'settings')")) {
+                return { success: false, data: null, error: "Error in the orchestrator" };
             }
         }
         let responseTags: GraphQLTag[] = [
@@ -180,15 +192,24 @@ export class IrysService extends Service implements IIrysService {
                 error: "Irys uploader not initialized",
             };
         }
-        tags.push({ name: "Timestamp", values: [new Date().toISOString()] });
-        const requestId = crypto.createHash('sha256').update(new Date().toISOString()).digest('hex');
-        tags.push({ name: "Request-Id", values: [requestId] });
+
+        // Transform tags to the correct format
+        const formattedTags = tags.map(tag => ({
+            name: tag.name,
+            value: Array.isArray(tag.values) ? tag.values.join(',') : tag.values
+        }));
+
+        const requestId = String(crypto.createHash('sha256').update(new Date().toISOString()).digest('hex'));
+        formattedTags.push({
+            name: "Request-Id",
+            value: requestId
+        });
+        console.log("FORMATTED TAGS : ", formattedTags)
         try {
             const dataToStore = {
                 data: data,
             };
-
-            const receipt = await this.irysUploader.upload(JSON.stringify(dataToStore), { tags: tags });
+            const receipt = await this.irysUploader.upload(JSON.stringify(dataToStore), { tags: formattedTags });
             if (messageType == IrysMessageType.DATA_STORAGE || messageType == IrysMessageType.REQUEST_RESPONSE) {
                 return { success: true, url: `https://gateway.irys.xyz/${receipt.id}`};
             } else if (messageType == IrysMessageType.REQUEST) {
@@ -215,8 +236,13 @@ export class IrysService extends Service implements IIrysService {
             };
         }
 
+        const formattedTags = tags.map(tag => ({
+            name: tag.name,
+            value: Array.isArray(tag.values) ? tag.values.join(',') : tag.values
+        }));
+
         try {
-            const receipt = await this.irysUploader.uploadFile(data, { tags: tags });
+            const receipt = await this.irysUploader.uploadFile(data, { tags: formattedTags });
             return { success: true, url: `https://gateway.irys.xyz/${receipt.id}` };
         } catch (error) {
             return { success: false, error: "Error uploading to Irys, " + error };
@@ -229,21 +255,38 @@ export class IrysService extends Service implements IIrysService {
         }
     }
 
+    private normalizeArraySize(arr: any[]): any {
+        if (arr.length == 1) {
+            return arr[0];
+        }
+        return arr;
+    }
+
     async workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[] = [], minimumProviders: number[] = [], testProvider: boolean[] = [], reputation: number[] = []): Promise<UploadIrysResult> {
         this.normalizeArrayValues(validationThreshold, 0, 1);
         this.normalizeArrayValues(minimumProviders, 0);
         this.normalizeArrayValues(reputation, 0, 1);
 
         const tags = [
-            { name: "Message-Type", values: [messageType] },
-            { name: "Service-Category", values: serviceCategory },
-            { name: "Protocol", values: protocol },
-            { name: "Validation-Threshold", values: validationThreshold },
-            { name: "Minimum-Providers", values: minimumProviders },
-            { name: "Test-Provider", values: testProvider },
-            { name: "Reputation", values: reputation },
+            { name: "Message-Type", values: messageType },
+            { name: "Service-Category", values: this.normalizeArraySize(serviceCategory) },
+            { name: "Protocol", values: this.normalizeArraySize(protocol) },
         ] as GraphQLTag[];
 
+        if (messageType == IrysMessageType.REQUEST) {
+            if (validationThreshold.length > 0) {
+                tags.push({ name: "Validation-Threshold", values: this.normalizeArraySize(validationThreshold) });
+            }
+            if (minimumProviders.length > 0) {
+                tags.push({ name: "Minimum-Providers", values: this.normalizeArraySize(minimumProviders) });
+            }
+            if (testProvider.length > 0) {
+                tags.push({ name: "Test-Provider", values: this.normalizeArraySize(testProvider) });
+            }
+            if (reputation.length > 0) {
+                tags.push({ name: "Reputation", values: this.normalizeArraySize(reputation) });
+            }
+        }
         if (dataType == IrysDataType.FILE || dataType == IrysDataType.IMAGE) {
             return await this.uploadFileOrImageOnIrys(data, tags);
         }
@@ -274,14 +317,11 @@ export class IrysService extends Service implements IIrysService {
                 const fetchDataFromTransactionIdResponse = await this.fetchDataFromTransactionId(node.id);
                 if (await fetchDataFromTransactionIdResponse.data.headers.get('content-type') == "application/octet-stream") {
                     let data = null;
+                    const responseText = await fetchDataFromTransactionIdResponse.data.text();
                     try {
-                        data = await fetchDataFromTransactionIdResponse.data.json();
+                        data = JSON.parse(responseText);
                     } catch (error) {
-                        try {
-                            data = await fetchDataFromTransactionIdResponse.data.text();
-                        } catch (error) {
-                            console.log("Error fetching data from transaction ID, ", error);
-                        }
+                        data = responseText;
                     }
                     return {
                         data: data,

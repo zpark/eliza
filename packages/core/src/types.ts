@@ -1242,23 +1242,28 @@ export interface DataIrysFetchedFromGQL {
 
 export interface GraphQLTag {
     name: string;
-    values: string[];
+    values: any[];
 }
 
-export enum IrysMessageType {
+export const enum IrysMessageType {
     REQUEST = "REQUEST",
     DATA_STORAGE = "DATA_STORAGE",
     REQUEST_RESPONSE = "REQUEST_RESPONSE",
 }
 
-export enum IrysDataType {
+export const enum IrysDataType {
     FILE = "FILE",
     IMAGE = "IMAGE",
     OTHER = "OTHER",
 }
 
+export interface IrysTimestamp {
+    from: number;
+    to: number;
+}
+
 export interface IIrysService extends Service {
-    getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[]): Promise<DataIrysFetchedFromGQL>;
+    getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp): Promise<DataIrysFetchedFromGQL>;
     uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult>;
     workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[], minimumProviders: number[], testProvider: boolean[], reputation: number[]): Promise<UploadIrysResult>;
     providerUploadDataOnIrys(data: any, dataType: IrysDataType, serviceCategory: string[], protocol: string[]): Promise<UploadIrysResult>;

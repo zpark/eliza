@@ -33,6 +33,7 @@ describe("IrysService", () => {
     let mockedRuntime;
 
     beforeEach(async () => {
+
         vi.clearAllMocks();
         mockCacheManager.get.mockResolvedValue(null);
 
@@ -54,18 +55,27 @@ describe("IrysService", () => {
 
     describe("Store String on Irys", () => {
         it("should store string on Irys", async () => {
-            const result = await irysService.workerUploadDataOnIrys("Hello World", IrysDataType.OTHER, IrysMessageType.DATA_STORAGE, ["test"], ["test"]);
+            const result = await irysService.workerUploadDataOnIrys(
+                "Hello World",
+                IrysDataType.OTHER,
+                IrysMessageType.DATA_STORAGE,
+                ["test"],
+                ["test"]
+            );
+            console.log("Store String on Irys ERROR : ", result.error)
             expect(result.success).toBe(true);
         });
 
         it("should retrieve data from Irys", async () => {
-            const result = await irysService.getDataFromAnAgent(["0xb9dBf1966c9C6E4D93b4C61bbC4cDDb32900f4bE"], []);
+            const result = await irysService.getDataFromAnAgent(["0x7131780570930a0ef05ef7a66489111fc31e9538"], []);
+            console.log("should retrieve data from Irys ERROR : ", result.error)
             expect(result.success).toBe(true);
             expect(result.data.length).toBeGreaterThan(0);
         });
 
         it("should get a response from the orchestrator", async () => {
             const result = await irysService.workerUploadDataOnIrys("Hello World", IrysDataType.OTHER, IrysMessageType.REQUEST, ["test"], ["test"]);
+            console.log("should get a response from the orchestrator ERROR : ", result.error)
             expect(result.success).toBe(true);
             expect(result.data.length).toBeGreaterThan(0);
         });
