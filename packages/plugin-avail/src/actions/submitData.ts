@@ -9,16 +9,13 @@ import {
     type Action,
     elizaLogger,
     composeContext,
-    generateObject,
     generateObjectDeprecated,
 } from "@elizaos/core";
 import { validateAvailConfig } from "../environment";
 import {
-    getDecimals,
+    //getDecimals,
     initialize,
-    formatNumberToBalance,
     getKeyringFromSeed,
-    isValidAddress,
 } from "avail-js-sdk";
 import { ISubmittableResult } from "@polkadot/types/types/extrinsic";
 import { H256 } from "@polkadot/types/interfaces/runtime";
@@ -67,7 +64,7 @@ export default {
         "SUBMIT_DATA_ON_AVAIL_NETWORK",
         "SUBMIT_DATA_TO_AVAIL_NETWORK",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateAvailConfig(runtime);
         return true;
     },
@@ -116,14 +113,14 @@ export default {
         if (content.data != null) {
             try {
                 const SEED = runtime.getSetting("AVAIL_SEED")!;
-                const ACCOUNT = runtime.getSetting("AVAIL_ADDRESS")!;
+                //const ACCOUNT = runtime.getSetting("AVAIL_ADDRESS")!;
                 const ENDPOINT = runtime.getSetting("AVAIL_RPC_URL");
                 const APP_ID = runtime.getSetting("AVAIL_APP_ID");
 
                 const api = await initialize(ENDPOINT);
                 const keyring = getKeyringFromSeed(SEED);
                 const options = { app_id: APP_ID, nonce: -1 };
-                const decimals = getDecimals(api);
+                //const decimals = getDecimals(api);
                 const data = content.data;
 
                 const submitDataInfo = await api.tx.dataAvailability

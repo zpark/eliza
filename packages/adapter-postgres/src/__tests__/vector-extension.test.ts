@@ -3,7 +3,7 @@ import pg from 'pg';
 import fs from 'fs';
 import path from 'path';
 import { describe, test, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
-import { DatabaseAdapter, elizaLogger, type Memory, type Content, EmbeddingProvider } from '@elizaos/core';
+import { elizaLogger, type Memory, type Content } from '@elizaos/core';
 
 // Increase test timeout
 vi.setConfig({ testTimeout: 15000 });
@@ -41,7 +41,7 @@ vi.mock('@elizaos/core', () => ({
 const parseVectorString = (vectorStr: string): number[] => {
     if (!vectorStr) return [];
     // Remove brackets and split by comma
-    return vectorStr.replace(/[\[\]]/g, '').split(',').map(Number);
+    return vectorStr.replace(/[[\]]/g, '').split(',').map(Number);
 };
 
 describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
@@ -111,7 +111,7 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
             user: 'postgres',
             password: 'postgres'
         });
-        
+
         const setupClient = await setupPool.connect();
         try {
             await cleanDatabase(setupClient);
@@ -133,13 +133,13 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
                 user: 'postgres',
                 password: 'postgres'
             });
-            
+
             testClient = await testPool.connect();
             elizaLogger.debug('Database connection established');
-            
+
             await cleanDatabase(testClient);
             elizaLogger.debug('Database cleaned');
-            
+
             adapter = new PostgresDatabaseAdapter({
                 host: 'localhost',
                 port: 5433,
@@ -254,7 +254,7 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
                 elizaLogger.debug('Attempting initialization with error...');
                 await expect(adapter.init()).rejects.toThrow('Schema read error');
                 elizaLogger.success('Error thrown as expected');
-                
+
                 // Verify no tables were created
                 elizaLogger.debug('Verifying rollback...');
                 const { rows } = await testClient.query(`
@@ -277,19 +277,19 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
     describe('Memory Operations with Vector', () => {
         const TEST_UUID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
         const TEST_TABLE = 'test_memories';
-        
+
         beforeEach(async () => {
             elizaLogger.info('Setting up memory operations test...');
             try {
                 // Ensure clean state and proper initialization
                 await adapter.init();
-                
+
                 // Verify vector extension and search path
                 await testClient.query(`
                     SET search_path TO public, extensions;
                     SELECT set_config('app.use_openai_embedding', 'true', false);
                 `);
-                
+
                 // Create necessary account and room first
                 await testClient.query('BEGIN');
                 try {
@@ -298,19 +298,19 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
                         VALUES ($1, 'test@test.com')
                         ON CONFLICT (id) DO NOTHING
                     `, [TEST_UUID]);
-                    
+
                     await testClient.query(`
                         INSERT INTO rooms (id)
                         VALUES ($1)
                         ON CONFLICT (id) DO NOTHING
                     `, [TEST_UUID]);
-                    
+
                     await testClient.query('COMMIT');
                 } catch (error) {
                     await testClient.query('ROLLBACK');
                     throw error;
                 }
-                
+
             } catch (error) {
                 elizaLogger.error('Memory operations setup failed:', {
                     error: error instanceof Error ? error.message : String(error)
@@ -324,7 +324,7 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
             const content: Content = {
                 text: 'test content'
             };
-            
+
             const memory: Memory = {
                 id: TEST_UUID,
                 content,
@@ -383,7 +383,7 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
                 await testClient.query('ROLLBACK');
                 throw error;
             }
-            
+
             // Act
             const results = await adapter.searchMemoriesByEmbedding(embedding, {
                 tableName: TEST_TABLE,
@@ -405,7 +405,7 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
             const content: Content = {
                 text: 'test content'
             };
-            
+
             const memory: Memory = {
                 id: TEST_UUID,
                 content,
@@ -430,4 +430,4 @@ describe('PostgresDatabaseAdapter - Vector Extension Validation', () => {
             }
         }, { timeout: 30000 });  // Increased timeout for retry attempts
     });
-}); 
+});
