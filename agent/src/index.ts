@@ -81,7 +81,7 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
-
+import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 
 import { OpacityAdapter } from "@elizaos/plugin-opacity";
