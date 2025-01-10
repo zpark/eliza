@@ -53,7 +53,7 @@ import {
     webhookPlugin,
 } from "@elizaos/plugin-coinbase";
 import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
-import { coinPricePlugin } from "@elizaos/plugin-coinprice";
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
@@ -68,17 +68,18 @@ import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { obsidianPlugin } from "@elizaos/plugin-obsidian";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
-import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
 import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
@@ -609,7 +610,6 @@ export async function createAgent(
                 ? confluxPlugin
                 : null,
             nodePlugin,
-            coinPricePlugin,
             getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
@@ -669,9 +669,9 @@ export async function createAgent(
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
             getSecret(character, "SGX") ? sgxPlugin : null,
-            (getSecret(character, "ENABLE_TEE_LOG") &&
-                ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
-                    getSecret(character, "SGX")))
+            getSecret(character, "ENABLE_TEE_LOG") &&
+            ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                getSecret(character, "SGX"))
                 ? teeLogPlugin
                 : null,
             getSecret(character, "COINBASE_API_KEY") &&
@@ -680,7 +680,10 @@ export async function createAgent(
                 ? webhookPlugin
                 : null,
             goatPlugin,
-            getSecret(character, "COINGECKO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "COINGECKO_API_KEY") ||
+            getSecret(character, "COINGECKO_PRO_API_KEY")
+            ? coingeckoPlugin
+            : null,
             getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
