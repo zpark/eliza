@@ -204,7 +204,6 @@ export class IrysService extends Service implements IIrysService {
             name: "Request-Id",
             value: requestId
         });
-        console.log("FORMATTED TAGS : ", formattedTags)
         try {
             const dataToStore = {
                 data: data,
@@ -228,7 +227,7 @@ export class IrysService extends Service implements IIrysService {
         }
     }
 
-    async uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult> {
+    private async uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult> {
         if (!(await this.initializeIrysUploader())) {
             return {
                 success: false,

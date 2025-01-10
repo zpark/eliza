@@ -68,22 +68,26 @@ You can find more information about the system in the [A Decentralized Framework
 
 ## Usage
 
-![Orchestrator Diagram](./OrchestratorDiagram.png)
+### Worker
 
-### Uploading Data
-
-To upload data to the Irys network, you can use the `uploadDataOnIrys` function. This function will upload the data to the Irys network and return the transaction hash.
+As a worker, you can store data on the Irys network using the `workerUploadDataOnIrys` function. You can use this function to store data from any source to document your actions. You can also use this function to store a request to get data from the Orchestrator to enhance your context.
 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');
 
 const irysService : IrysService = runtime.getService(ServiceType.IRYS)
-const data = "Hello, world!";
-const transactionResult = await irysService.uploadDataOnIrys(data);
-console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
+const data = "Provide Liquidity to the ETH pool on Stargate";
+const result = await irysService.workerUploadDataOnIrys(
+    data,
+    IrysDataType.OTHER,
+    IrysMessageType.DATA_STORAGE,
+    ["DeFi"],
+    ["Stargate", "LayerZero"]
+);
+console.log(`Data uploaded successfully at the following url: ${result.url}`);
 ```
 
-To upload files or images to the Irys network, you can use the `uploadFileOrImageOnIrys` function:
+To upload files or images :
 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');
@@ -91,13 +95,76 @@ const { IrysService } = require('@elizaos/plugin-irys');
 const irysService : IrysService = runtime.getService(ServiceType.IRYS)
 const userAttachmentToStore = state.recentMessagesData[1].content.attachments[0].url.replace("agent\\agent", "agent");
 
-const transactionResult = await irysService.uploadFileOrImageOnIrys(userAttachmentToStore);
-console.log(`Data uploaded successfully. Transaction hash: ${transactionResult}`);
+const result = await irysService.workerUploadDataOnIrys(
+    userAttachmentToStore,
+    IrysDataType.IMAGE,
+    IrysMessageType.DATA_STORAGE,
+    ["Social Media"],
+    ["X", "Twitter"]
+);
+console.log(`Data uploaded successfully at the following url: ${result.url}`);
+```
+
+To store a request to get data from the Orchestrator to enhance your context, you can use the `workerUploadDataOnIrys` function with the `IrysMessageType.REQUEST` message type.
+
+```typescript
+const { IrysService } = require('@elizaos/plugin-irys');
+
+const irysService : IrysService = runtime.getService(ServiceType.IRYS)
+const data = "Which Pool farm has the highest APY on Stargate?";
+const result = await irysService.workerUploadDataOnIrys(
+    data,
+    IrysDataType.OTHER,
+    IrysMessageType.REQUEST,
+    ["DeFi"],
+    ["Stargate", "LayerZero"],
+    [0.5], // Validation Threshold - Not implemented yet
+    [1], // Minimum Providers
+    [false], // Test Provider - Not implemented yet
+    [0.5] // Reputation - Not implemented yet
+);
+console.log(`Data uploaded successfully at the following url: ${result.url}`);
+console.log(`Response from the Orchestrator: ${result.data}`);
+```
+
+### Provider
+
+As a provider, you can store data on the Irys network using the `providerUploadDataOnIrys` function. The data you provide can be retrieved by the Orchestrator to enhance the context of the Worker.
+
+```typescript
+const { IrysService } = require('@elizaos/plugin-irys');
+
+const irysService : IrysService = runtime.getService(ServiceType.IRYS)
+const data = "ETH Pool Farm APY : 6,86%";
+const result = await irysService.providerUploadDataOnIrys(
+    data,
+    IrysDataType.OTHER,
+    ["DeFi"],
+    ["Stargate", "LayerZero"]
+);
+console.log(`Data uploaded successfully at the following url: ${result.url}`);
+```
+
+To upload files or images :
+
+```typescript
+const { IrysService } = require('@elizaos/plugin-irys');
+
+const irysService : IrysService = runtime.getService(ServiceType.IRYS)
+const userAttachmentToStore = state.recentMessagesData[1].content.attachments[0].url.replace("agent\\agent", "agent");
+
+const result = await irysService.providerUploadDataOnIrys(
+    userAttachmentToStore,
+    IrysDataType.IMAGE,
+    ["Social Media"],
+    ["X", "Twitter"]
+);
+console.log(`Data uploaded successfully at the following url: ${result.url}`);
 ```
 
 ### Retrieving Data
 
-To retrieve data from the Irys network, you can use the `getDataFromAnAgent` function. This function will retrieve all data associated with the given wallet addresses. The function automatically detects the content type and returns either JSON data or file URLs accordingly.
+To retrieve data from the Irys network, you can use the `getDataFromAnAgent` function. This function will retrieve all data associated with the given wallet addresses, tags and timestamp. The function automatically detects the content type and returns either JSON data or file/image URLs accordingly.
 
 - For files and images: Returns the URL of the stored content
 - For other data types: Returns a JSON object with the following structure:
@@ -105,9 +172,11 @@ To retrieve data from the Irys network, you can use the `getDataFromAnAgent` fun
 ```typescript
 {
   data: string,    // The stored data
-  timestamp: Date  // When the data was stored
+  address: string  // The address of the agent that stored the data
 }
 ```
+
+By using only the provider address you want to retrieve data from :
 
 ```typescript
 const { IrysService } = require('@elizaos/plugin-irys');
@@ -117,6 +186,24 @@ const agentsWalletPublicKeys = runtime.getSetting("AGENTS_WALLET_PUBLIC_KEYS").s
 const data = await irysService.getDataFromAnAgent(agentsWalletPublicKeys);
 console.log(`Data retrieved successfully. Data: ${data}`);
 ```
+
+By using tags and timestamp:
+
+```typescript
+const { IrysService } = require('@elizaos/plugin-irys');
+
+const irysService = runtime.getService(ServiceType.IRYS)
+const tags = [
+    { name: "Message-Type", values: [IrysMessageType.DATA_STORAGE] },
+    { name: "Service-Category", values: ["DeFi"] },
+    { name: "Protocol", values: ["Stargate", "LayerZero"] },
+];
+const timestamp = { from: 1710000000, to: 1710000000 };
+const data = await irysService.getDataFromAnAgent(null, tags, timestamp);
+console.log(`Data retrieved successfully. Data: ${data}`);
+```
+
+If everything is null, the function will retrieve all data from the Irys network.
 
 ## About Irys
 
@@ -135,18 +222,28 @@ Irys is the first Layer 1 (L1) programmable datachain designed to optimize both 
 
 The plugin uses GraphQL to retrieve transaction metadata. Here's an example query structure:
 
-```graphql
-query {
-  transactions(owners: ["0x1234567890", "0x0987654321"]) {
-    edges {
-      node {
-        id
-      }
+```typescript
+const QUERY = gql`
+    query($owners: [String!], $tags: [TagFilter!], $timestamp: TimestampFilter) {
+        transactions(owners: $owners, tags: $tags, timestamp: $timestamp) {
+            edges {
+                node {
+                    id,
+                    address
+                }
+            }
+        }
     }
-  }
-}
-```
+`;
 
+const variables = {
+    owners: owners,
+    tags: tags,
+    timestamp: timestamp
+}
+
+const data: TransactionGQL = await graphQLClient.request(QUERY, variables);
+```
 
 ## API Reference
 
@@ -155,20 +252,62 @@ query {
 The main service provided by this plugin implements the following interface:
 
 ```typescript
-interface IrysService {
-    uploadStringToIrys(data: string): Promise<string>;
-    getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<string>;
+
+interface UploadIrysResult {
+    success: boolean;
+    url?: string;
+    error?: string;
+    data?: any;
+}
+
+interface DataIrysFetchedFromGQL {
+    success: boolean;
+    data: any;
+    error?: string;
+}
+
+interface GraphQLTag {
+    name: string;
+    values: any[];
+}
+
+const enum IrysMessageType {
+    REQUEST = "REQUEST",
+    DATA_STORAGE = "DATA_STORAGE",
+    REQUEST_RESPONSE = "REQUEST_RESPONSE",
+}
+
+const enum IrysDataType {
+    FILE = "FILE",
+    IMAGE = "IMAGE",
+    OTHER = "OTHER",
+}
+
+interface IrysTimestamp {
+    from: number;
+    to: number;
+}
+
+interface IIrysService extends Service {
+    getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp): Promise<DataIrysFetchedFromGQL>;
+    workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[], minimumProviders: number[], testProvider: boolean[], reputation: number[]): Promise<UploadIrysResult>;
+    providerUploadDataOnIrys(data: any, dataType: IrysDataType, serviceCategory: string[], protocol: string[]): Promise<UploadIrysResult>;
 }
 ```
 
 #### Methods
 
-- `uploadStringToIrys(data: string)`: Uploads a string to Irys and returns the transaction URL
-- `getDataFromAnAgent(agentsWalletPublicKeys: string[])`: Retrieves all data associated with the given wallet addresses
+- `getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp)`: Retrieves all data associated with the given parameters
+- `workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[], minimumProviders: number[], testProvider: boolean[], reputation: number[])`: Uploads data to Irys and returns the orchestrator response (request or data storage)
+- `providerUploadDataOnIrys(data: any, dataType: IrysDataType, serviceCategory: string[], protocol: string[])`: Uploads data to Irys and returns orchestrator response (data storage)
 
 ## Testing
 
-While we don't currently have a formal test suite, all functions have been manually tested through agent actions to verify their functionality. Each function has been validated in real-world scenarios to ensure reliable performance.
+To run the tests, you can use the following command:
+
+```bash
+pnpm test
+```
 
 ## Contributing
 
