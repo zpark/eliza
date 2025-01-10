@@ -1,8 +1,8 @@
 // src/plugins/SttTtsPlugin.ts
 
-import { spawn } from 'child_process';
-import { ITranscriptionService } from '@elizaos/core';
-import { Space, JanusClient, AudioDataWithUser } from 'agent-twitter-client';
+import { spawn } from "child_process";
+import { ITranscriptionService } from "@elizaos/core";
+import { Space, JanusClient, AudioDataWithUser } from "agent-twitter-client";
 
 interface PluginConfig {
     openAiApiKey?: string; // for STT & ChatGPT
@@ -14,7 +14,7 @@ interface PluginConfig {
     elevenLabsModel?: string; // e.g. "eleven_monolingual_v1"
     systemPrompt?: string; // ex. "You are a helpful AI assistant"
     chatContext?: Array<{
-        role: 'system' | 'user' | 'assistant';
+        role: "system" | "user" | "assistant";
         content: string;
     }>;
     transcriptionService: ITranscriptionService;
@@ -33,12 +33,12 @@ export class SttTtsPlugin implements Plugin {
     private openAiApiKey?: string;
     private elevenLabsApiKey?: string;
 
-    private gptModel = 'gpt-3.5-turbo';
-    private voiceId = '21m00Tcm4TlvDq8ikWAM';
-    private elevenLabsModel = 'eleven_monolingual_v1';
-    private systemPrompt = 'You are a helpful AI assistant.';
+    private gptModel = "gpt-3.5-turbo";
+    private voiceId = "21m00Tcm4TlvDq8ikWAM";
+    private elevenLabsModel = "eleven_monolingual_v1";
+    private systemPrompt = "You are a helpful AI assistant.";
     private chatContext: Array<{
-        role: 'system' | 'user' | 'assistant';
+        role: "system" | "user" | "assistant";
         content: string;
     }> = [];
 
@@ -63,24 +63,26 @@ export class SttTtsPlugin implements Plugin {
     private ttsQueue: string[] = [];
     private isSpeaking = false;
 
-    onAttach(space: Space) {
-        console.log('[SttTtsPlugin] onAttach => space was attached');
+    onAttach(_space: Space) {
+        console.log("[SttTtsPlugin] onAttach => space was attached");
     }
 
     init(params: { space: Space; pluginConfig?: Record<string, any> }): void {
         console.log(
-            '[SttTtsPlugin] init => Space fully ready. Subscribing to events.',
+            "[SttTtsPlugin] init => Space fully ready. Subscribing to events."
         );
 
         this.space = params.space;
-        this.janus = (this.space as any)?.janusClient as JanusClient | undefined;
+        this.janus = (this.space as any)?.janusClient as
+            | JanusClient
+            | undefined;
 
         const config = params.pluginConfig as PluginConfig;
         this.openAiApiKey = config?.openAiApiKey;
         this.elevenLabsApiKey = config?.elevenLabsApiKey;
         this.transcriptionService = config.transcriptionService;
         if (config?.gptModel) this.gptModel = config.gptModel;
-        if (typeof config?.silenceThreshold === 'number') {
+        if (typeof config?.silenceThreshold === "number") {
             this.silenceThreshold = config.silenceThreshold;
         }
         if (config?.voiceId) {
@@ -95,16 +97,16 @@ export class SttTtsPlugin implements Plugin {
         if (config?.chatContext) {
             this.chatContext = config.chatContext;
         }
-        console.log('[SttTtsPlugin] Plugin config =>', config);
+        console.log("[SttTtsPlugin] Plugin config =>", config);
 
         // Listen for mute events
         this.space.on(
-            'muteStateChanged',
+            "muteStateChanged",
             (evt: { userId: string; muted: boolean }) => {
-                console.log('[SttTtsPlugin] Speaker muteStateChanged =>', evt);
+                console.log("[SttTtsPlugin] Speaker muteStateChanged =>", evt);
                 if (evt.muted) {
                     this.handleMute(evt.userId).catch((err) =>
-                        console.error('[SttTtsPlugin] handleMute error =>', err),
+                        console.error("[SttTtsPlugin] handleMute error =>", err)
                     );
                 } else {
                     this.speakerUnmuted.set(evt.userId, true);
@@ -112,7 +114,7 @@ export class SttTtsPlugin implements Plugin {
                         this.pcmBuffers.set(evt.userId, []);
                     }
                 }
-            },
+            }
         );
     }
 
@@ -157,22 +159,22 @@ export class SttTtsPlugin implements Plugin {
         const view = new DataView(buffer);
 
         // RIFF chunk descriptor
-        this.writeString(view, 0, 'RIFF');
+        this.writeString(view, 0, "RIFF");
         view.setUint32(4, 36 + dataSize, true); // file size - 8
-        this.writeString(view, 8, 'WAVE');
+        this.writeString(view, 8, "WAVE");
 
         // fmt sub-chunk
-        this.writeString(view, 12, 'fmt ');
-        view.setUint32(16, 16, true);          // Subchunk1Size (16 for PCM)
-        view.setUint16(20, 1, true);           // AudioFormat (1 = PCM)
+        this.writeString(view, 12, "fmt ");
+        view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
+        view.setUint16(20, 1, true); // AudioFormat (1 = PCM)
         view.setUint16(22, numChannels, true); // NumChannels
-        view.setUint32(24, sampleRate, true);  // SampleRate
-        view.setUint32(28, byteRate, true);    // ByteRate
-        view.setUint16(32, blockAlign, true);  // BlockAlign
-        view.setUint16(34, 16, true);          // BitsPerSample (16)
+        view.setUint32(24, sampleRate, true); // SampleRate
+        view.setUint32(28, byteRate, true); // ByteRate
+        view.setUint16(32, blockAlign, true); // BlockAlign
+        view.setUint16(34, 16, true); // BitsPerSample (16)
 
         // data sub-chunk
-        this.writeString(view, 36, 'data');
+        this.writeString(view, 36, "data");
         view.setUint32(40, dataSize, true);
 
         // Write PCM samples
@@ -199,11 +201,11 @@ export class SttTtsPlugin implements Plugin {
         this.pcmBuffers.set(userId, []);
 
         if (!chunks.length) {
-            console.log('[SttTtsPlugin] No audio chunks for user =>', userId);
+            console.log("[SttTtsPlugin] No audio chunks for user =>", userId);
             return;
         }
         console.log(
-            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`,
+            `[SttTtsPlugin] Flushing STT buffer for user=${userId}, chunks=${chunks.length}`
         );
 
         const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
@@ -221,14 +223,19 @@ export class SttTtsPlugin implements Plugin {
         const sttText = await this.transcriptionService.transcribe(wavBuffer);
 
         if (!sttText || !sttText.trim()) {
-            console.log('[SttTtsPlugin] No speech recognized for user =>', userId);
+            console.log(
+                "[SttTtsPlugin] No speech recognized for user =>",
+                userId
+            );
             return;
         }
         console.log(`[SttTtsPlugin] STT => user=${userId}, text="${sttText}"`);
 
         // GPT answer
         const replyText = await this.askChatGPT(sttText);
-        console.log(`[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`);
+        console.log(
+            `[SttTtsPlugin] GPT => user=${userId}, reply="${replyText}"`
+        );
 
         // Use the standard speak method with queue
         await this.speakText(replyText);
@@ -242,7 +249,7 @@ export class SttTtsPlugin implements Plugin {
         if (!this.isSpeaking) {
             this.isSpeaking = true;
             this.processTtsQueue().catch((err) => {
-                console.error('[SttTtsPlugin] processTtsQueue error =>', err);
+                console.error("[SttTtsPlugin] processTtsQueue error =>", err);
             });
         }
     }
@@ -260,7 +267,7 @@ export class SttTtsPlugin implements Plugin {
                 const pcm = await this.convertMp3ToPcm(ttsAudio, 48000);
                 await this.streamToJanus(pcm, 48000);
             } catch (err) {
-                console.error('[SttTtsPlugin] TTS streaming error =>', err);
+                console.error("[SttTtsPlugin] TTS streaming error =>", err);
             }
         }
         this.isSpeaking = false;
@@ -271,20 +278,20 @@ export class SttTtsPlugin implements Plugin {
      */
     private async askChatGPT(userText: string): Promise<string> {
         if (!this.openAiApiKey) {
-            throw new Error('[SttTtsPlugin] No OpenAI API key for ChatGPT');
+            throw new Error("[SttTtsPlugin] No OpenAI API key for ChatGPT");
         }
-        const url = 'https://api.openai.com/v1/chat/completions';
+        const url = "https://api.openai.com/v1/chat/completions";
         const messages = [
-            { role: 'system', content: this.systemPrompt },
+            { role: "system", content: this.systemPrompt },
             ...this.chatContext,
-            { role: 'user', content: userText },
+            { role: "user", content: userText },
         ];
 
         const resp = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
                 Authorization: `Bearer ${this.openAiApiKey}`,
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 model: this.gptModel,
@@ -295,14 +302,14 @@ export class SttTtsPlugin implements Plugin {
         if (!resp.ok) {
             const errText = await resp.text();
             throw new Error(
-                `[SttTtsPlugin] ChatGPT error => ${resp.status} ${errText}`,
+                `[SttTtsPlugin] ChatGPT error => ${resp.status} ${errText}`
             );
         }
 
         const json = await resp.json();
-        const reply = json.choices?.[0]?.message?.content || '';
-        this.chatContext.push({ role: 'user', content: userText });
-        this.chatContext.push({ role: 'assistant', content: reply });
+        const reply = json.choices?.[0]?.message?.content || "";
+        this.chatContext.push({ role: "user", content: userText });
+        this.chatContext.push({ role: "assistant", content: reply });
         return reply.trim();
     }
 
@@ -311,14 +318,14 @@ export class SttTtsPlugin implements Plugin {
      */
     private async elevenLabsTts(text: string): Promise<Buffer> {
         if (!this.elevenLabsApiKey) {
-            throw new Error('[SttTtsPlugin] No ElevenLabs API key');
+            throw new Error("[SttTtsPlugin] No ElevenLabs API key");
         }
         const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}`;
         const resp = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'xi-api-key': this.elevenLabsApiKey,
+                "Content-Type": "application/json",
+                "xi-api-key": this.elevenLabsApiKey,
             },
             body: JSON.stringify({
                 text,
@@ -329,7 +336,7 @@ export class SttTtsPlugin implements Plugin {
         if (!resp.ok) {
             const errText = await resp.text();
             throw new Error(
-                `[SttTtsPlugin] ElevenLabs TTS error => ${resp.status} ${errText}`,
+                `[SttTtsPlugin] ElevenLabs TTS error => ${resp.status} ${errText}`
             );
         }
         const arrayBuf = await resp.arrayBuffer();
@@ -341,29 +348,29 @@ export class SttTtsPlugin implements Plugin {
      */
     private convertMp3ToPcm(
         mp3Buf: Buffer,
-        outRate: number,
+        outRate: number
     ): Promise<Int16Array> {
         return new Promise((resolve, reject) => {
-            const ff = spawn('ffmpeg', [
-                '-i',
-                'pipe:0',
-                '-f',
-                's16le',
-                '-ar',
+            const ff = spawn("ffmpeg", [
+                "-i",
+                "pipe:0",
+                "-f",
+                "s16le",
+                "-ar",
                 outRate.toString(),
-                '-ac',
-                '1',
-                'pipe:1',
+                "-ac",
+                "1",
+                "pipe:1",
             ]);
             let raw = Buffer.alloc(0);
 
-            ff.stdout.on('data', (chunk: Buffer) => {
+            ff.stdout.on("data", (chunk: Buffer) => {
                 raw = Buffer.concat([raw, chunk]);
             });
-            ff.stderr.on('data', () => {
+            ff.stderr.on("data", () => {
                 // ignoring ffmpeg logs
             });
-            ff.on('close', (code) => {
+            ff.on("close", (code) => {
                 if (code !== 0) {
                     reject(new Error(`ffmpeg error code=${code}`));
                     return;
@@ -371,7 +378,7 @@ export class SttTtsPlugin implements Plugin {
                 const samples = new Int16Array(
                     raw.buffer,
                     raw.byteOffset,
-                    raw.byteLength / 2,
+                    raw.byteLength / 2
                 );
                 resolve(samples);
             });
@@ -387,7 +394,7 @@ export class SttTtsPlugin implements Plugin {
      */
     private async streamToJanus(
         samples: Int16Array,
-        sampleRate: number,
+        sampleRate: number
     ): Promise<void> {
         // TODO: Check if better than 480 fixed
         const FRAME_SIZE = Math.floor(sampleRate * 0.01); // 10ms frames => 480 @48kHz
@@ -408,7 +415,7 @@ export class SttTtsPlugin implements Plugin {
 
     public setSystemPrompt(prompt: string) {
         this.systemPrompt = prompt;
-        console.log('[SttTtsPlugin] setSystemPrompt =>', prompt);
+        console.log("[SttTtsPlugin] setSystemPrompt =>", prompt);
     }
 
     /**
@@ -416,17 +423,17 @@ export class SttTtsPlugin implements Plugin {
      */
     public setGptModel(model: string) {
         this.gptModel = model;
-        console.log('[SttTtsPlugin] setGptModel =>', model);
+        console.log("[SttTtsPlugin] setGptModel =>", model);
     }
 
     /**
      * Add a message (system, user or assistant) to the chat context.
      * E.g. to store conversation history or inject a persona.
      */
-    public addMessage(role: 'system' | 'user' | 'assistant', content: string) {
+    public addMessage(role: "system" | "user" | "assistant", content: string) {
         this.chatContext.push({ role, content });
         console.log(
-            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`,
+            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`
         );
     }
 
@@ -435,11 +442,11 @@ export class SttTtsPlugin implements Plugin {
      */
     public clearChatContext() {
         this.chatContext = [];
-        console.log('[SttTtsPlugin] clearChatContext => done');
+        console.log("[SttTtsPlugin] clearChatContext => done");
     }
 
     cleanup(): void {
-        console.log('[SttTtsPlugin] cleanup => releasing resources');
+        console.log("[SttTtsPlugin] cleanup => releasing resources");
         this.pcmBuffers.clear();
         this.speakerUnmuted.clear();
         this.ttsQueue = [];
