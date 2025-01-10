@@ -377,6 +377,31 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.MISTRAL]: {
+        settings: {
+            stop: [],
+            maxInputTokens: 128000,
+            maxOutputTokens: 8192,
+            frequency_penalty: 0.4,
+            presence_penalty: 0.4,
+            temperature: 0.7,
+        },
+        model: {
+            [ModelClass.SMALL]:
+                settings.SMALL_MISTRAL_MODEL ||
+                settings.MISTRAL_MODEL ||
+                "mistral-small-latest",
+            [ModelClass.MEDIUM]:
+                settings.MEDIUM_MISTRAL_MODEL ||
+                settings.MISTRAL_MODEL ||
+                "mistral-large-latest",
+            [ModelClass.LARGE]:
+                settings.LARGE_MISTRAL_MODEL ||
+                settings.MISTRAL_MODEL ||
+                "mistral-large-latest",
+            [ModelClass.EMBEDDING]: "mistral-embed",
+        },
+    },
     [ModelProviderName.REDPILL]: {
         endpoint: "https://api.red-pill.ai/v1",
         // Available models: https://docs.red-pill.ai/get-started/supported-models
