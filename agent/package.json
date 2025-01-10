@@ -50,6 +50,7 @@
         "@elizaos/plugin-gitbook": "workspace:*",
         "@elizaos/plugin-story": "workspace:*",
         "@elizaos/plugin-goat": "workspace:*",
+        "@elizaos/plugin-lensNetwork": "workspace:*",
         "@elizaos/plugin-icp": "workspace:*",
         "@elizaos/plugin-image-generation": "workspace:*",
         "@elizaos/plugin-movement": "workspace:*",
