@@ -198,6 +198,7 @@ export type Models = {
     [ModelProviderName.TOGETHER]: Model;
     [ModelProviderName.LLAMALOCAL]: Model;
     [ModelProviderName.GOOGLE]: Model;
+    [ModelProviderName.MISTRAL]: Model;
     [ModelProviderName.CLAUDE_VERTEX]: Model;
     [ModelProviderName.REDPILL]: Model;
     [ModelProviderName.OPENROUTER]: Model;
@@ -229,6 +230,7 @@ export enum ModelProviderName {
     TOGETHER = "together",
     LLAMALOCAL = "llama_local",
     GOOGLE = "google",
+    MISTRAL = "mistral",
     CLAUDE_VERTEX = "claude_vertex",
     REDPILL = "redpill",
     OPENROUTER = "openrouter",
