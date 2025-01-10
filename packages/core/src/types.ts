@@ -1265,6 +1265,7 @@ export interface UploadIrysResult {
     success: boolean;
     url?: string;
     error?: string;
+    data?: any;
 }
 
 export interface DataIrysFetchedFromGQL {
@@ -1273,10 +1274,33 @@ export interface DataIrysFetchedFromGQL {
     error?: string;
 }
 
+export interface GraphQLTag {
+    name: string;
+    values: any[];
+}
+
+export const enum IrysMessageType {
+    REQUEST = "REQUEST",
+    DATA_STORAGE = "DATA_STORAGE",
+    REQUEST_RESPONSE = "REQUEST_RESPONSE",
+}
+
+export const enum IrysDataType {
+    FILE = "FILE",
+    IMAGE = "IMAGE",
+    OTHER = "OTHER",
+}
+
+export interface IrysTimestamp {
+    from: number;
+    to: number;
+}
+
 export interface IIrysService extends Service {
-    uploadDataOnIrys(data: any): Promise<UploadIrysResult>;
-    getDataFromAnAgent(agentsWalletPublicKeys: string[]): Promise<DataIrysFetchedFromGQL>;
-    uploadFileOrImageOnIrys(data: string): Promise<UploadIrysResult>;
+    getDataFromAnAgent(agentsWalletPublicKeys: string[], tags: GraphQLTag[], timestamp: IrysTimestamp): Promise<DataIrysFetchedFromGQL>;
+    uploadFileOrImageOnIrys(data: string, tags: GraphQLTag[]): Promise<UploadIrysResult>;
+    workerUploadDataOnIrys(data: any, dataType: IrysDataType, messageType: IrysMessageType, serviceCategory: string[], protocol: string[], validationThreshold: number[], minimumProviders: number[], testProvider: boolean[], reputation: number[]): Promise<UploadIrysResult>;
+    providerUploadDataOnIrys(data: any, dataType: IrysDataType, serviceCategory: string[], protocol: string[]): Promise<UploadIrysResult>;
 }
 
 export type SearchImage = {
