@@ -545,7 +545,7 @@ export const models: Models = {
             [ModelClass.LARGE]: {
                 name:
                     settings.LARGE_HEURIST_MODEL ||
-                    "meta-llama/llama-3.1-405b-instruct",
+                    "meta-llama/llama-3.3-70b-instruct",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
@@ -553,8 +553,12 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.IMAGE]: {
-                name: settings.HEURIST_IMAGE_MODEL || "PepeXL",
+                name: settings.HEURIST_IMAGE_MODEL || "FLUX.1-dev",
                 steps: 20,
+            },
+            [ModelClass.EMBEDDING]: {
+                name: "BAAI/bge-large-en-v1.5",
+                dimensions: 1024,
             },
         },
     },
