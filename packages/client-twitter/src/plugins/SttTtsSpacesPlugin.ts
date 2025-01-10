@@ -67,7 +67,7 @@ export class SttTtsPlugin implements Plugin {
     private ttsQueue: string[] = [];
     private isSpeaking = false;
 
-    onAttach(space: Space) {
+    onAttach(_space: Space) {
         elizaLogger.log("[SttTtsPlugin] onAttach => space was attached");
     }
 

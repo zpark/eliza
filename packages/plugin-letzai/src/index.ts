@@ -1,4 +1,4 @@
-import { elizaLogger, generateText, HandlerCallback, IAgentRuntime, ModelClass, Plugin, State } from "@elizaos/core";
+import { elizaLogger, HandlerCallback, IAgentRuntime, Plugin, State } from "@elizaos/core";
 import { Memory } from "@elizaos/core";
 
 

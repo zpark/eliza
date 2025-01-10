@@ -7,7 +7,6 @@ import {
     HandlerCallback,
     elizaLogger,
     composeContext,
-    generateObject,
     ModelClass,
     generateObjectDeprecated,
 } from "@elizaos/core";

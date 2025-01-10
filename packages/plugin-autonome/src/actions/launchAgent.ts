@@ -42,7 +42,7 @@ Given the recent messages, extract the following information about the requested
 export default {
     name: "LAUNCH_AGENT",
     similes: ["CREATE_AGENT", "DEPLOY_AGENT", "DEPLOY_ELIZA", "DEPLOY_BOT"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, _message: Memory) => {
         return true;
     },
     description: "Launch an Eliza agent",
@@ -95,6 +95,7 @@ export default {
             creationMethod: 2,
             envList: {},
             templateId: "Eliza",
+        };
 
         const sendPostRequest = async () => {
             try {
@@ -169,4 +170,5 @@ export default {
             },
         ],
     ] as ActionExample[][],
-} as Action;
+} satisfies Action;
+
