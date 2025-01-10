@@ -95,6 +95,7 @@ export default {
             creationMethod: 2,
             envList: {},
             templateId: "Eliza",
+        }
 
         const sendPostRequest = async () => {
             try {
