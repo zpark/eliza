@@ -32,6 +32,40 @@ For this plugin to work, you need to have an EVM (Base network) wallet with a pr
 
 > **Important**: The wallet address needs to have Base Sepolia ETH tokens to store images/files and any data larger than 100KB.
 
+## How it works
+
+![Orchestrator Diagram](./OrchestratorDiagram.png)
+
+The system consists of three main components that work together to enable decentralized multi-agent operations:
+
+### 1. Providers
+Providers are the data management layer of the system. They:
+- Interact with the Orchestrator to store data
+- Aggregate information from multiple sources to enhance context
+- Support agents with enriched data for better decision-making
+
+### 2. Orchestrators
+Orchestrators manage the flow of communication and requests. They:
+- Interact with the Irys datachain to store and retrieve data
+- Implement a tagging system for request categorization
+- Validate data integrity and authenticity
+- Coordinate the overall system workflow
+
+### 3. Workers
+Workers are specialized agents that execute specific tasks. They:
+- Perform autonomous operations (e.g., social media interactions, DeFi operations)
+- Interact with Orchestrators to get contextual data from Providers
+- Interact with Orchestrators to store execution results on the Irys datachain
+- Maintain transparency by documenting all actions
+
+This architecture ensures a robust, transparent, and efficient system where:
+- Data is securely stored and verified on the blockchain
+- Requests are properly routed and managed
+- Operations are executed autonomously
+- All actions are traceable and accountable
+
+You can find more information about the system in the [A Decentralized Framework for Multi-Agent Systems Using Datachain Technology](https://trophe.net/article/A_Decentralized_Framework_for_Multi-Agent_Systems_Using_Datachain_Technology.pdf) paper.
+
 ## Usage
 
 ![Orchestrator Diagram](./OrchestratorDiagram.png)
@@ -139,3 +173,8 @@ While we don't currently have a formal test suite, all functions have been manua
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Ressources
+
+- [Irys Documentation](https://docs.irys.xyz/)
+- [A Decentralized Framework for Multi-Agent Systems Using Datachain Technology](https://trophe.net/article/A_Decentralized_Framework_for_Multi-Agent_Systems_Using_Datachain_Technology.pdf)
