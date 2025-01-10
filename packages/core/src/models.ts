@@ -544,7 +544,7 @@ export const models: Models = {
             [ModelClass.LARGE]: {
                 name:
                     settings.LARGE_HEURIST_MODEL ||
-                    "meta-llama/llama-3.1-405b-instruct",
+                    "meta-llama/llama-3.3-70b-instruct",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
@@ -552,8 +552,12 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.IMAGE]: {
-                name: settings.HEURIST_IMAGE_MODEL || "PepeXL",
+                name: settings.HEURIST_IMAGE_MODEL || "FLUX.1-dev",
                 steps: 20,
+            },
+            [ModelClass.EMBEDDING]: {
+                name: "BAAI/bge-large-en-v1.5",
+                dimensions: 1024,
             },
         },
     },
@@ -815,36 +819,44 @@ export const models: Models = {
             [ModelClass.IMAGE]: {
                 name: settings.IMAGE_VENICE_MODEL || "fluently-xl",
             },
-        }
+        },
     },
     [ModelProviderName.NINETEEN_AI]: {
         endpoint: "https://api.nineteen.ai/v1",
         model: {
             [ModelClass.SMALL]: {
-                name: settings.SMALL_NINETEEN_AI_MODEL || "unsloth/Llama-3.2-3B-Instruct",
+                name:
+                    settings.SMALL_NINETEEN_AI_MODEL ||
+                    "unsloth/Llama-3.2-3B-Instruct",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
-                temperature: 0.6
+                temperature: 0.6,
             },
             [ModelClass.MEDIUM]: {
-                name: settings.MEDIUM_NINETEEN_AI_MODEL || "unsloth/Meta-Llama-3.1-8B-Instruct",
+                name:
+                    settings.MEDIUM_NINETEEN_AI_MODEL ||
+                    "unsloth/Meta-Llama-3.1-8B-Instruct",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
                 temperature: 0.6,
             },
             [ModelClass.LARGE]: {
-                name: settings.LARGE_NINETEEN_AI_MODEL || "hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4",
+                name:
+                    settings.LARGE_NINETEEN_AI_MODEL ||
+                    "hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
                 temperature: 0.6,
             },
             [ModelClass.IMAGE]: {
-                name: settings.IMAGE_NINETEEN_AI_MODEL || "dataautogpt3/ProteusV0.4-Lightning",
+                name:
+                    settings.IMAGE_NINETEEN_AI_MODEL ||
+                    "dataautogpt3/ProteusV0.4-Lightning",
             },
-        }
+        },
     },
     [ModelProviderName.AKASH_CHAT_API]: {
         endpoint: "https://chatapi.akash.network/api/v1",
