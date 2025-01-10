@@ -567,12 +567,14 @@ export class DirectClient {
                             // only need to call if responseMessage.content.action is set
                             if (contentObj.action) {
                                 // pass memory (query) to any actions to call
-                                const _result = await runtime.processActions(
+                                runtime.processActions(
                                     memory,
                                     [responseMessage],
                                     state,
                                     async (newMessages) => {
-                                        message = newMessages;
+                                        // FIXME: this is supposed override what the LLM said/decided
+                                        // but the promise doesn't make this possible
+                                        //message = newMessages;
                                         return [memory];
                                     }
                                 ); // 0.674s
