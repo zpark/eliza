@@ -20,12 +20,12 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .from("rooms")
             .select("id")
             .eq("id", roomId)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            throw new Error(`Error getting room: ${error.message}`);
+            console.error(`Error getting room: ${error.message}`);
+            return null;
         }
-
         return data ? (data.id as UUID) : null;
     }
 
