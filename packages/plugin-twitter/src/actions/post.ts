@@ -7,10 +7,13 @@ import {
     elizaLogger,
     ModelClass,
     generateObject,
+    truncateToCompleteSentence,
 } from "@elizaos/core";
 import { Scraper } from "agent-twitter-client";
 import { tweetTemplate } from "../templates";
 import { isTweetContent, TweetSchema } from "../types";
+
+export const DEFAULT_MAX_TWEET_LENGTH = 280;
 
 async function composeTweet(
     runtime: IAgentRuntime,
@@ -39,7 +42,16 @@ async function composeTweet(
             return;
         }
 
-        const trimmedContent = tweetContentObject.object.text.trim();
+        let trimmedContent = tweetContentObject.object.text.trim();
+
+        // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
+        const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
+        if (maxTweetLength) {
+            trimmedContent = truncateToCompleteSentence(
+                trimmedContent,
+                maxTweetLength
+            );
+        }
 
         // Skip truncation if TWITTER_PREMIUM is true
         if (
@@ -59,56 +71,77 @@ async function composeTweet(
     }
 }
 
+async function sendTweet(twitterClient: Scraper, content: string) {
+    const result = await twitterClient.sendTweet(content);
+
+    const body = await result.json();
+    elizaLogger.log("Tweet response:", body);
+
+    // Check for Twitter API errors
+    if (body.errors) {
+        const error = body.errors[0];
+        elizaLogger.error(
+            `Twitter API error (${error.code}): ${error.message}`
+        );
+        return false;
+    }
+
+    // Check for successful tweet creation
+    if (!body?.data?.create_tweet?.tweet_results?.result) {
+        elizaLogger.error("Failed to post tweet: No tweet result in response");
+        return false;
+    }
+}
+
 async function postTweet(
     runtime: IAgentRuntime,
     content: string
 ): Promise<boolean> {
     try {
-        const scraper = new Scraper();
-        const username = runtime.getSetting("TWITTER_USERNAME");
-        const password = runtime.getSetting("TWITTER_PASSWORD");
-        const email = runtime.getSetting("TWITTER_EMAIL");
-        const twitter2faSecret = runtime.getSetting("TWITTER_2FA_SECRET");
+        const twitterClient = runtime.clients.twitter.client.twitterClient;
+        const scraper = twitterClient || new Scraper();
 
-        if (!username || !password) {
-            elizaLogger.error(
-                "Twitter credentials not configured in environment"
-            );
-            return false;
-        }
+        if (!twitterClient) {
+            const username = runtime.getSetting("TWITTER_USERNAME");
+            const password = runtime.getSetting("TWITTER_PASSWORD");
+            const email = runtime.getSetting("TWITTER_EMAIL");
+            const twitter2faSecret = runtime.getSetting("TWITTER_2FA_SECRET");
 
-        // Login with credentials
-        await scraper.login(username, password, email, twitter2faSecret);
-        if (!(await scraper.isLoggedIn())) {
-            elizaLogger.error("Failed to login to Twitter");
-            return false;
+            if (!username || !password) {
+                elizaLogger.error(
+                    "Twitter credentials not configured in environment"
+                );
+                return false;
+            }
+            // Login with credentials
+            await scraper.login(username, password, email, twitter2faSecret);
+            if (!(await scraper.isLoggedIn())) {
+                elizaLogger.error("Failed to login to Twitter");
+                return false;
+            }
         }
 
         // Send the tweet
         elizaLogger.log("Attempting to send tweet:", content);
-        const result = await scraper.sendTweet(content);
 
-        const body = await result.json();
-        elizaLogger.log("Tweet response:", body);
-
-        // Check for Twitter API errors
-        if (body.errors) {
-            const error = body.errors[0];
-            elizaLogger.error(
-                `Twitter API error (${error.code}): ${error.message}`
-            );
-            return false;
+        try {
+            if (content.length > DEFAULT_MAX_TWEET_LENGTH) {
+                const noteTweetResult = await scraper.sendNoteTweet(content);
+                if (
+                    noteTweetResult.errors &&
+                    noteTweetResult.errors.length > 0
+                ) {
+                    // Note Tweet failed due to authorization. Falling back to standard Tweet.
+                    return await sendTweet(scraper, content);
+                } else {
+                    return true;
+                }
+            } else {
+                return await sendTweet(scraper, content);
+            }
+        } catch (error) {
+            throw new Error(`Note Tweet failed: ${error}`);
         }
-
-        // Check for successful tweet creation
-        if (!body?.data?.create_tweet?.tweet_results?.result) {
-            elizaLogger.error(
-                "Failed to post tweet: No tweet result in response"
-            );
-            return false;
-        }
-
-        return true;
     } catch (error) {
         // Log the full error details
         elizaLogger.error("Error posting tweet:", {
