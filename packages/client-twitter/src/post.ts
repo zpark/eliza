@@ -366,7 +366,6 @@ export class TwitterPostClient {
 
     async handleNoteTweet(
         client: ClientBase,
-        runtime: IAgentRuntime,
         content: string,
         tweetId?: string
     ) {
@@ -432,11 +431,7 @@ export class TwitterPostClient {
             let result;
 
             if (cleanedContent.length > DEFAULT_MAX_TWEET_LENGTH) {
-                result = await this.handleNoteTweet(
-                    client,
-                    runtime,
-                    cleanedContent
-                );
+                result = await this.handleNoteTweet(client, cleanedContent);
             } else {
                 result = await this.sendStandardTweet(client, cleanedContent);
             }
@@ -1171,7 +1166,6 @@ export class TwitterPostClient {
             if (replyText.length > DEFAULT_MAX_TWEET_LENGTH) {
                 result = await this.handleNoteTweet(
                     this.client,
-                    this.runtime,
                     replyText,
                     tweet.id
                 );
