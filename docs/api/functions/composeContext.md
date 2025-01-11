@@ -1,4 +1,4 @@
-[@ai16z/eliza v0.1.6-alpha.4](../index.md) / composeContext
+[@elizaos/core v0.1.7](../index.md) / composeContext
 
 # Function: composeContext()
 
@@ -20,11 +20,11 @@ The parameters for composing the context.
 
 • **params.state**: [`State`](../interfaces/State.md)
 
-The state object containing values to replace the placeholders in the template.
+The state object contains values to replace the placeholders in the template.
 
-• **params.template**: `string`
+• **params.template**: `string` | `Function`
 
-The template string containing placeholders to be replaced with state values.
+The template string or function returning a string containing placeholders to be replaced with state values.
 
 • **params.templatingEngine?**: `"handlebars"`
 
@@ -50,4 +50,4 @@ const contextSimple = composeContext({ state, template });
 
 ## Defined in
 
-[packages/core/src/context.ts:28](https://github.com/IkigaiLabsETH/eliza/blob/main/packages/core/src/context.ts#L28)
+[packages/core/src/context.ts:29](https://github.com/elizaOS/eliza/blob/main/packages/core/src/context.ts#L29)
