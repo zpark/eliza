@@ -486,10 +486,6 @@ export async function createAgent(
         );
     }
 
-    let nftCollectionsPluginInstance = getSecret(character, "RESERVOIR_API_KEY")
-        ? nftCollectionsPlugin
-        : null;
-
     return new AgentRuntime({
         databaseAdapter: db,
         token,
@@ -566,7 +562,9 @@ export async function createAgent(
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
-            nftCollectionsPluginInstance,
+            getSecret(character, "RESERVOIR_API_KEY")
+                ? nftCollectionsPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
