@@ -29,19 +29,19 @@ This plugin serves as a powerful interface between Eliza AI agents and blockchai
 ### On-chain Data Queries
 
 ```plaintext
-Query: "This address 0x8308964da9ed5d2e8012023d7c7ef02f9e6438c7 which tokens on Ethereum are held"
+Query: "query onchain data: This address 0x8308964da9ed5d2e8012023d7c7ef02f9e6438c7 which tokens on Ethereum are held"
 ```
 
 This query will return the token holdings for the specified Ethereum address.
 
 ```plaintext
-Query: "List the top 10 Ethereum blocks by total gas used in the last 24 hours"
+Query: "query onchain data: List the top 10 Ethereum blocks by total gas used in the last 24 hours"
 ```
 
 This query will analyze and return gas usage statistics for recent Ethereum blocks.
 
 ```plaintext
-Query: "The address 0x8308964da9ed5d2e8012023d7c7ef02f9e6438c7 last 10 Ethereum token transfer"
+Query: "query onchain data: The address 0x8308964da9ed5d2e8012023d7c7ef02f9e6438c7 last 10 Ethereum token transfer"
 ```
 
 This query will fetch the most recent 10 token transfer events for the specified Ethereum address, including both incoming and outgoing transfers.
