@@ -378,6 +378,46 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.MISTRAL]: {
+        model: {
+            [ModelClass.SMALL]: {
+                name:
+                    settings.SMALL_MISTRAL_MODEL ||
+                    settings.MISTRAL_MODEL ||
+                    "mistral-small-latest",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.4,
+                presence_penalty: 0.4,
+                temperature: 0.7,
+            },
+            [ModelClass.MEDIUM]: {
+                name:
+                    settings.MEDIUM_MISTRAL_MODEL ||
+                    settings.MISTRAL_MODEL ||
+                    "mistral-large-latest",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.4,
+                presence_penalty: 0.4,
+                temperature: 0.7,
+            },
+            [ModelClass.LARGE]: {
+                name:
+                    settings.LARGE_MISTRAL_MODEL ||
+                    settings.MISTRAL_MODEL ||
+                    "mistral-large-latest",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.4,
+                presence_penalty: 0.4,
+                temperature: 0.7,
+            },
+        },
+    },
     [ModelProviderName.REDPILL]: {
         endpoint: "https://api.red-pill.ai/v1",
         // Available models: https://docs.red-pill.ai/get-started/supported-models
@@ -923,6 +963,38 @@ export const models: Models = {
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
                 temperature: 0.6,
+            },
+        },
+    },
+    [ModelProviderName.DEEPSEEK]: {
+        endpoint: settings.DEEPSEEK_API_URL || "https://api.deepseek.com",
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
             },
         },
     },
