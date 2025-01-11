@@ -4,9 +4,14 @@ import {TwitterScraper} from "../util/twitterScraper.ts";
 const tweetProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
         const scraperWithPrimus = new TwitterScraper();
-        elizaLogger.info("Login to Twitter");
-        await scraperWithPrimus.login();
-        elizaLogger.info("Login to Twitter success");
+        try {
+            elizaLogger.info("Attempting Twitter login");
+            await scraperWithPrimus.login();
+            elizaLogger.info("Twitter login successful");
+        }catch (error){
+            elizaLogger.error("Twitter login failed:", error);
+            return false;
+        }
 
         if (!(await scraperWithPrimus.getScraper().isLoggedIn())) {
             elizaLogger.error("Failed to login to Twitter");
@@ -17,12 +22,17 @@ const tweetProvider: Provider = {
             elizaLogger.error("TWITTER_USERNAME_WANT_TO_GET_TWEET is not set");
             return false;
         }
+        elizaLogger.debug(`Fetching tweets for user: ${userName}`);
         const userId = await scraperWithPrimus.getUserIdByScreenName(userName);
-        elizaLogger.log(`userName is:${userName}, userId:${userId}`);
-        const result = await scraperWithPrimus.getUserLatestTweet(userId);
-        //log
-        elizaLogger.log("Tweet response:", result);
-        return result;
+        elizaLogger.debug(`Fetching tweets for user: ${userName}`);
+        try {
+            const result = await scraperWithPrimus.getUserLatestTweet(userId);
+            elizaLogger.debug("Tweet retrieved successfully");
+            return result;
+        } catch (error) {
+            elizaLogger.error("Failed to fetch tweet:", error);
+            return false;
+        }
     },
 };
 

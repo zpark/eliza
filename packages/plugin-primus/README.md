@@ -115,7 +115,7 @@ Below is an example showcasing how to post price information from the [tokenPric
 Note that you need to configure the `.env` file correctly to post tweets.
 ```typescript
 export const postTweetAction: Action = {
-  description: "",
+  description: "Post a tweet on Twitter and be verified by Primus",
   examples: [],
   handler: async (
           runtime: IAgentRuntime,
@@ -138,13 +138,19 @@ export const postTweetAction: Action = {
     }
 
   },
-  name: "",
+  name: "POST_TWEET",
   similes: [],
   validate: async (
           runtime: IAgentRuntime,
           message: Memory,
           state?: State
-  ) => {},
+  ) => {
+    const hasCredentials =
+            !!process.env.TWITTER_USERNAME && !!process.env.TWITTER_PASSWORD;
+    elizaLogger.log(`Has credentials: ${hasCredentials}`);
+
+    return hasCredentials;
+  },
 };
 ```
 

@@ -1,4 +1,4 @@
-import { PrimusCoreTLS } from "@primuslabs/zktls-core-sdk";
+import { PrimusCoreTLS,Attestation } from "@primuslabs/zktls-core-sdk";
 
 export const generateProof = async (
     endpoint: string,
@@ -6,7 +6,7 @@ export const generateProof = async (
     headers: Record<string, any>,
     body: string,
     responseParsePath: string
-): Promise<any> => {
+): Promise<Attestation> => {
     const zkTLS = new PrimusCoreTLS();
     await zkTLS.init(process.env.PRIMUS_APP_ID, process.env.PRIMUS_APP_SECRET);
     const requestParam = body
@@ -35,7 +35,7 @@ export const generateProof = async (
     return await zkTLS.startAttestation(attestationParams);
 };
 
-export const verifyProof = async (attestation: any): Promise<boolean> => {
+export const verifyProof = async (attestation: Attestation): Promise<boolean> => {
     const zkTLS = new PrimusCoreTLS();
     await zkTLS.init(process.env.PRIMUS_APP_ID, process.env.PRIMUS_APP_SECRET);
     return zkTLS.verifyAttestation(attestation);
