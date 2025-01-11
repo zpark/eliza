@@ -1181,6 +1181,8 @@ export interface IAwsS3Service extends Service {
     generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export interface INFTCollectionsService extends Service {}
+
 export type SearchResult = {
     title: string;
     url: string;

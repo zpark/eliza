@@ -41,13 +41,13 @@ import { imageGenerationPlugin } from "@ai16z/plugin-image-generation";
 import { multiversxPlugin } from "@ai16z/plugin-multiversx";
 import { nearPlugin } from "@ai16z/plugin-near";
 import { nftGenerationPlugin } from "@ai16z/plugin-nft-generation";
-import { nftCollectionsPlugin } from "@ai16z/plugin-nft-collections";
 import { createNodePlugin } from "@ai16z/plugin-node";
 import { solanaPlugin } from "@ai16z/plugin-solana";
 import { suiPlugin } from "@ai16z/plugin-sui";
 import { TEEMode, teePlugin } from "@ai16z/plugin-tee";
 import { tonPlugin } from "@ai16z/plugin-ton";
 import { zksyncEraPlugin } from "@ai16z/plugin-zksync-era";
+import { createNFTCollectionsPlugin } from "@ai16z/plugin-nft-collections";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -563,7 +563,7 @@ export async function createAgent(
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
             getSecret(character, "RESERVOIR_API_KEY")
-                ? nftCollectionsPlugin
+                ? createNFTCollectionsPlugin()
                 : null,
         ].filter(Boolean),
         providers: [],
