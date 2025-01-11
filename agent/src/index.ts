@@ -63,6 +63,7 @@ import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { lensPlugin } from "@elizaos/plugin-lensNetwork";
 import { multiversxPlugin } from "@elizaos/plugin-multiversx";
 import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
@@ -80,7 +81,6 @@ import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
-import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
@@ -90,6 +90,7 @@ import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import { OpacityAdapter } from "@elizaos/plugin-opacity";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
+import { akashPlugin } from "@elizaos/plugin-akash";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -702,8 +703,8 @@ export async function createAgent(
             goatPlugin,
             getSecret(character, "COINGECKO_API_KEY") ||
             getSecret(character, "COINGECKO_PRO_API_KEY")
-            ? coingeckoPlugin
-            : null,
+                ? coingeckoPlugin
+                : null,
             getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
@@ -715,6 +716,10 @@ export async function createAgent(
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
+                : null,
+            getSecret(character, "LENS_ADDRESS") &&
+            getSecret(character, "LENS_PRIVATE_KEY")
+                ? lensPlugin
                 : null,
             getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
             getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
@@ -753,6 +758,10 @@ export async function createAgent(
                 ? artheraPlugin
                 : null,
             getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
+            getSecret(character, "AKASH_MNEMONIC") &&
+            getSecret(character, "AKASH_WALLET_ADDRESS")
+                ? akashPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],

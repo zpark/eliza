@@ -176,7 +176,7 @@ To create new tests, add a `.test.ts` file adjacent to the code you're testing.
 
 ## Docs Updates
 
-Please make sure to vetify if the documentation provided is correct. In order to do so, please run the docs service.
+Please make sure to verify if the documentation provided is correct. In order to do so, please run the docs service.
 
 ```console
 docker compose -f docker-compose-docs.yaml up --build

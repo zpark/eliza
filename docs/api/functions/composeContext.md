@@ -20,7 +20,7 @@ The parameters for composing the context.
 
 • **params.state**: [`State`](../interfaces/State.md)
 
-The state object containing values to replace the placeholders in the template.
+The state object contains values to replace the placeholders in the template.
 
 • **params.template**: `string` | `Function`
 
