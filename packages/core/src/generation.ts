@@ -1,5 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createMistral } from "@ai-sdk/mistral";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
@@ -525,6 +526,27 @@ export async function generateText({
 
                 response = googleResponse;
                 elizaLogger.debug("Received response from Google model.");
+                break;
+            }
+
+            case ModelProviderName.MISTRAL: {
+                const mistral = createMistral();
+
+                const { text: mistralResponse } = await aiGenerateText({
+                    model: mistral(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+
+                response = mistralResponse;
+                elizaLogger.debug("Received response from Mistral model.");
                 break;
             }
 
@@ -1863,6 +1885,8 @@ export async function handleProvider(
             });
         case ModelProviderName.GOOGLE:
             return await handleGoogle(options);
+        case ModelProviderName.MISTRAL:
+            return await handleMistral(options);
         case ModelProviderName.REDPILL:
             return await handleRedPill(options);
         case ModelProviderName.OPENROUTER:
@@ -2011,6 +2035,31 @@ async function handleGoogle({
     const google = createGoogleGenerativeAI();
     return await aiGenerateObject({
         model: google(model),
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+}
+
+/**
+ * Handles object generation for Mistral models.
+ *
+ * @param {ProviderOptions} options - Options specific to Mistral.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleMistral({
+    model,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode,
+    modelOptions,
+}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    const mistral = createMistral();
+    return await aiGenerateObject({
+        model: mistral(model),
         schema,
         schemaName,
         schemaDescription,

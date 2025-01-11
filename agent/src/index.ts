@@ -398,6 +398,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
                 settings.GOOGLE_GENERATIVE_AI_API_KEY
             );
+        case ModelProviderName.MISTRAL:
+            return (
+                character.settings?.secrets?.MISTRAL_API_KEY ||
+                settings.MISTRAL_API_KEY
+            );
         case ModelProviderName.LETZAI:
             return (
                 character.settings?.secrets?.LETZAI_API_KEY ||

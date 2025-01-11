@@ -982,6 +982,9 @@ importers:
       '@ai-sdk/groq':
         specifier: 0.0.3
         version: 0.0.3(zod@3.23.8)
+      '@ai-sdk/mistral':
+        specifier: ^1.0.8
+        version: 1.0.8(zod@3.23.8)
       '@ai-sdk/openai':
         specifier: 1.0.5
         version: 1.0.5(zod@3.23.8)
@@ -2823,6 +2826,12 @@ packages:
 
   '@ai-sdk/groq@0.0.3':
     resolution: {integrity: sha512-Iyj2p7/M0TVhoPrQfSiwfvjTpZFfc17a6qY/2s22+VgpT0yyfai9dVyLbfUAdnNlpGGrjDpxPHqK1L03r4KlyA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
+
+  '@ai-sdk/mistral@1.0.8':
+    resolution: {integrity: sha512-jWH4HHK4cYvXaac9UprMiSUBwOVb3e0hpbiL1wPb+2bF75pqQQKFQWQyfmoLFrh1oXlMOGn+B6IzwUDSFHLanA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -22362,6 +22371,12 @@ snapshots:
       '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
       zod: 3.23.8
 
+  '@ai-sdk/mistral@1.0.8(zod@3.23.8)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.4
+      '@ai-sdk/provider-utils': 2.0.7(zod@3.23.8)
+      zod: 3.23.8
+
   '@ai-sdk/openai@1.0.17(zod@3.24.1)':
     dependencies:
       '@ai-sdk/provider': 1.0.4
@@ -24863,7 +24878,7 @@ snapshots:
 
   '@cosmjs/proto-signing@0.32.2':
     dependencies:
-      '@cosmjs/amino': 0.32.2
+      '@cosmjs/amino': 0.32.4
       '@cosmjs/crypto': 0.32.4
       '@cosmjs/encoding': 0.32.4
       '@cosmjs/math': 0.32.4
@@ -24921,7 +24936,7 @@ snapshots:
   '@cosmjs/stargate@0.32.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@confio/ics23': 0.6.8
-      '@cosmjs/amino': 0.32.2
+      '@cosmjs/amino': 0.32.4
       '@cosmjs/encoding': 0.32.4
       '@cosmjs/math': 0.32.4
       '@cosmjs/proto-signing': 0.32.4
@@ -39018,7 +39033,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.4.0(supports-color@5.5.0)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -41365,7 +41380,7 @@ snapshots:
 
   jest-diff@29.7.0:
     dependencies:
-      chalk: 4.1.0
+      chalk: 4.1.2
       diff-sequences: 29.6.3
       jest-get-type: 29.6.3
       pretty-format: 29.7.0
@@ -43438,7 +43453,7 @@ snapshots:
       array-differ: 3.0.0
       array-union: 2.1.0
       arrify: 2.0.1
-      minimatch: 3.0.5
+      minimatch: 3.1.2
 
   multistream@4.1.0:
     dependencies:
@@ -43872,7 +43887,7 @@ snapshots:
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.7
       axios: 1.7.9(debug@4.4.0)
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       cliui: 8.0.1
@@ -44163,7 +44178,7 @@ snapshots:
   ora@5.3.0:
     dependencies:
       bl: 4.1.0
-      chalk: 4.1.0
+      chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
       is-interactive: 1.0.0
