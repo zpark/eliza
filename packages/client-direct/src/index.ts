@@ -571,7 +571,7 @@ export class DirectClient {
                                     memory,
                                     [responseMessage],
                                     state,
-                                    async (newMessages) => {
+                                    async (_newMessages) => {
                                         // FIXME: this is supposed override what the LLM said/decided
                                         // but the promise doesn't make this possible
                                         //message = newMessages;
