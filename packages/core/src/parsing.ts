@@ -11,20 +11,15 @@ If {{agentName}} is talking too much, you can choose [IGNORE]
 
 Your response must include one of the options.`;
 
-
-export const pizzaDecisionFooter = `The available options are [YES] or [NO]. Choose the most appropriate option.
-Your response must include one of the options.`;
-
-
 export const parseShouldRespondFromText = (
     text: string
 ): "RESPOND" | "IGNORE" | "STOP" | null => {
     const match = text
         .split("\n")[0]
         .trim()
-        .replace(/\[/g, "")
+        .replace("[", "")
         .toUpperCase()
-        .replace(/\]/g, "")
+        .replace("]", "")
         .match(/^(RESPOND|IGNORE|STOP)$/i);
     return match
         ? (match[0].toUpperCase() as "RESPOND" | "IGNORE" | "STOP")
@@ -36,24 +31,6 @@ export const parseShouldRespondFromText = (
               ? "STOP"
               : null;
 };
-
-export const parsePizzaDecisionFromText = (
-    text: string
-): "YES" | "NO" | null => {
-    const match = text
-        .split('\n')[0]
-        .trim()
-        .replace(/\[/g, "")
-        .toUpperCase()
-        .replace(/\]/g, "")
-        .match(/^(YES|NO)$/i);
-    return match
-        ? (match[0].toUpperCase() as "YES" | "NO")
-        : text.includes("YES") ? "YES" : text.includes("NO") ? "NO" : null;
-};
-
-
-
 
 export const booleanFooter = `Respond with only a YES or a NO.`;
 
@@ -228,3 +205,37 @@ export const parseActionResponseFromText = (
 
     return { actions };
 };
+
+/**
+ * Truncate text to fit within the character limit, ensuring it ends at a complete sentence.
+ */
+export function truncateToCompleteSentence(
+    text: string,
+    maxLength: number
+): string {
+    if (text.length <= maxLength) {
+        return text;
+    }
+
+    // Attempt to truncate at the last period within the limit
+    const lastPeriodIndex = text.lastIndexOf(".", maxLength - 1);
+    if (lastPeriodIndex !== -1) {
+        const truncatedAtPeriod = text.slice(0, lastPeriodIndex + 1).trim();
+        if (truncatedAtPeriod.length > 0) {
+            return truncatedAtPeriod;
+        }
+    }
+
+    // If no period, truncate to the nearest whitespace within the limit
+    const lastSpaceIndex = text.lastIndexOf(" ", maxLength - 1);
+    if (lastSpaceIndex !== -1) {
+        const truncatedAtSpace = text.slice(0, lastSpaceIndex).trim();
+        if (truncatedAtSpace.length > 0) {
+            return truncatedAtSpace + "...";
+        }
+    }
+
+    // Fallback: Hard truncate and add ellipsis
+    const hardTruncated = text.slice(0, maxLength - 3).trim();
+    return hardTruncated + "...";
+}

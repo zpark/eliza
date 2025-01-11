@@ -60,7 +60,7 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "CREATE_TOKEN",
     similes: ["DEPLOY_TOKEN"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => true,
+    validate: async (_runtime: IAgentRuntime, _message: Memory) => true,
     description: "Create tokens",
     handler: async (
         runtime: IAgentRuntime,

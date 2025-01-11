@@ -10,7 +10,6 @@ import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 // import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
-import { DirectClient } from "@elizaos/client-direct";
 import {
     AgentRuntime,
     CacheManager,
@@ -32,6 +31,11 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
+
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import createGoatPlugin from "@elizaos/plugin-goat";
+// import { intifacePlugin } from "@elizaos/plugin-intiface";
+import { DirectClient } from "@elizaos/client-direct";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { alloraPlugin } from "@elizaos/plugin-allora";
@@ -40,7 +44,6 @@ import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { availPlugin } from "@elizaos/plugin-avail";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { binancePlugin } from "@elizaos/plugin-binance";
-import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -50,7 +53,7 @@ import {
     webhookPlugin,
 } from "@elizaos/plugin-coinbase";
 import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
-import { coinPricePlugin } from "@elizaos/plugin-coinprice";
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
 import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
@@ -59,18 +62,21 @@ import { evmPlugin } from "@elizaos/plugin-evm";
 import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
-import createGoatPlugin from "@elizaos/plugin-goat";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { lensPlugin } from "@elizaos/plugin-lensNetwork";
 import { multiversxPlugin } from "@elizaos/plugin-multiversx";
 import { nearPlugin } from "@elizaos/plugin-near";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
 import { obsidianPlugin } from "@elizaos/plugin-obsidian";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
+import { autonomePlugin } from "@elizaos/plugin-autonome";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
@@ -78,12 +84,13 @@ import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
-
+import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 
 import { OpacityAdapter } from "@elizaos/plugin-opacity";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
+import { akashPlugin } from "@elizaos/plugin-akash";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -135,10 +142,6 @@ function tryLoadFile(filePath: string): string | null {
     } catch (e) {
         return null;
     }
-}
-
-function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
 
 export async function loadCharacters(
@@ -226,16 +229,9 @@ export async function loadCharacters(
                 }
 
                 // Handle plugins
-                if (isAllStrings(character.plugins)) {
-                    elizaLogger.info("Plugins are: ", character.plugins);
-                    const importedPlugins = await Promise.all(
-                        character.plugins.map(async (plugin) => {
-                            const importedPlugin = await import(plugin);
-                            return importedPlugin.default;
-                        })
-                    );
-                    character.plugins = importedPlugins;
-                }
+                character.plugins = await handlePluginImporting(
+                    character.plugins
+                );
 
                 loadedCharacters.push(character);
                 elizaLogger.info(
@@ -256,6 +252,36 @@ export async function loadCharacters(
     }
 
     return loadedCharacters;
+}
+
+async function handlePluginImporting(plugins: string[]) {
+    if (plugins.length > 0) {
+        elizaLogger.info("Plugins are: ", plugins);
+        const importedPlugins = await Promise.all(
+            plugins.map(async (plugin) => {
+                try {
+                    const importedPlugin = await import(plugin);
+                    const functionName =
+                        plugin
+                            .replace("@elizaos/plugin-", "")
+                            .replace(/-./g, (x) => x[1].toUpperCase()) +
+                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
+                    return (
+                        importedPlugin.default || importedPlugin[functionName]
+                    );
+                } catch (importError) {
+                    elizaLogger.error(
+                        `Failed to import plugin: ${plugin}`,
+                        importError
+                    );
+                    return []; // Return null for failed imports
+                }
+            })
+        );
+        return importedPlugins;
+    } else {
+        return [];
+    }
 }
 
 export function getTokenForProvider(
@@ -371,6 +397,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
                 settings.GOOGLE_GENERATIVE_AI_API_KEY
+            );
+        case ModelProviderName.MISTRAL:
+            return (
+                character.settings?.secrets?.MISTRAL_API_KEY ||
+                settings.MISTRAL_API_KEY
             );
         case ModelProviderName.LETZAI:
             return (
@@ -600,12 +631,10 @@ export async function createAgent(
         // character.plugins are handled when clients are added
         plugins: [
             bootstrapPlugin,
-            dominosPlugin,
             getSecret(character, "CONFLUX_CORE_PRIVATE_KEY")
                 ? confluxPlugin
                 : null,
             nodePlugin,
-            coinPricePlugin,
             getSecret(character, "TAVILY_API_KEY") ? webSearchPlugin : null,
             getSecret(character, "SOLANA_PUBLIC_KEY") ||
             (getSecret(character, "WALLET_PUBLIC_KEY") &&
@@ -615,6 +644,7 @@ export async function createAgent(
             getSecret(character, "SOLANA_PRIVATE_KEY")
                 ? solanaAgentkitPlguin
                 : null,
+            getSecret(character, "AUTONOME_JWT_TOKEN") ? autonomePlugin : null,
             (getSecret(character, "NEAR_ADDRESS") ||
                 getSecret(character, "NEAR_WALLET_PUBLIC_KEY")) &&
             getSecret(character, "NEAR_WALLET_SECRET_KEY")
@@ -664,13 +694,22 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
+            getSecret(character, "SGX") ? sgxPlugin : null,
+            getSecret(character, "ENABLE_TEE_LOG") &&
+            ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                getSecret(character, "SGX"))
+                ? teeLogPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
             goatPlugin,
-            getSecret(character, "COINGECKO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "COINGECKO_API_KEY") ||
+            getSecret(character, "COINGECKO_PRO_API_KEY")
+                ? coingeckoPlugin
+                : null,
             getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
@@ -682,6 +721,10 @@ export async function createAgent(
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
+                : null,
+            getSecret(character, "LENS_ADDRESS") &&
+            getSecret(character, "LENS_PRIVATE_KEY")
+                ? lensPlugin
                 : null,
             getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
             getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
@@ -720,6 +763,16 @@ export async function createAgent(
                 ? artheraPlugin
                 : null,
             getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
+            getSecret(character, "HYPERLIQUID_PRIVATE_KEY")
+                ? hyperliquidPlugin
+                : null,
+            getSecret(character, "HYPERLIQUID_TESTNET")
+                ? hyperliquidPlugin
+                : null,
+            getSecret(character, "AKASH_MNEMONIC") &&
+            getSecret(character, "AKASH_WALLET_ADDRESS")
+                ? akashPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
@@ -909,7 +962,10 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async (character: Character) => {
+    directClient.startAgent = async (character) => {
+        // Handle plugins
+        character.plugins = await handlePluginImporting(character.plugins);
+
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };

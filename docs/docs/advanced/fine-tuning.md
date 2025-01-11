@@ -22,6 +22,7 @@ enum ModelProviderName {
     LLAMACLOUD,
     LLAMALOCAL,
     GOOGLE,
+    MISTRAL,
     REDPILL,
     OPENROUTER,
     HEURIST,

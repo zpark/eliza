@@ -34,8 +34,8 @@ import {
     IRAGKnowledgeManager,
     IMemoryManager,
     KnowledgeItem,
-    RAGKnowledgeItem,
-    Media,
+    //RAGKnowledgeItem,
+    //Media,
     ModelClass,
     ModelProviderName,
     Plugin,
@@ -546,10 +546,7 @@ export class AgentRuntime implements IAgentRuntime {
                             agentId: this.agentId
                         });
 
-                        let content: string;
-
-                        content = await readFile(filePath, 'utf8');
-
+                        const content: string = await readFile(filePath, 'utf8');
                         if (!content) {
                             hasError = true;
                             continue;
@@ -1102,21 +1099,11 @@ Text: ${attachment.text}
             ]);
 
             // Check the existing memories in the database
-            const existingMemories =
-                await this.messageManager.getMemoriesByRoomIds({
+            return this.messageManager.getMemoriesByRoomIds({
                     // filter out the current room id from rooms
                     roomIds: rooms.filter((room) => room !== roomId),
+                    limit: 20
                 });
-
-            // Sort messages by timestamp in descending order
-            existingMemories.sort(
-                (a, b) =>
-                    (b?.createdAt ?? Date.now()) - (a?.createdAt ?? Date.now())
-            );
-
-            // Take the most recent messages
-            const recentInteractionsData = existingMemories.slice(0, 20);
-            return recentInteractionsData;
         };
 
         const recentInteractions =
