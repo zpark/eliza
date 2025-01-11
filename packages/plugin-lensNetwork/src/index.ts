@@ -2,8 +2,7 @@ import { Plugin } from "@elizaos/core";
 
 import transfer from "./actions/transfer.ts";
 
-
-export const LensPlugin: Plugin = {
+export const lensPlugin: Plugin = {
     name: "Lens",
     description: "Lens Plugin for Eliza",
     actions: [transfer],
@@ -11,4 +10,4 @@ export const LensPlugin: Plugin = {
     providers: [],
 };
 
-export default LensPlugin;
+export default lensPlugin;
