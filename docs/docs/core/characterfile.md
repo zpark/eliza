@@ -191,7 +191,7 @@ The `style` object defines behavior patterns across contexts:
 ### Adjectives Array
 
 - Words that describe the character's traits and personality
-- Used for generating responses with a consistent tone
+- Used for generating responses with consistent tone
 - Can be used in "Mad Libs" style content generation
 
 ### Settings Configuration
