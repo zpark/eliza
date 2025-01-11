@@ -72,6 +72,7 @@
         "@elizaos/plugin-near": "workspace:*",
         "@elizaos/plugin-zksync-era": "workspace:*",
         "@elizaos/plugin-twitter": "workspace:*",
+        "@elizaos/plugin-primus": "workspace:*",
         "@elizaos/plugin-cronoszkevm": "workspace:*",
         "@elizaos/plugin-3d-generation": "workspace:*",
         "@elizaos/plugin-fuel": "workspace:*",
