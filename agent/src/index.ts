@@ -10,6 +10,9 @@ import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 // import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
+import { DirectClient } from "@elizaos/client-direct";
+import { PrimusAdapter } from "@elizaos/plugin-primus";
+
 import {
     AgentRuntime,
     CacheManager,
@@ -91,12 +94,14 @@ import { OpacityAdapter } from "@elizaos/plugin-opacity";
 import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
 import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { akashPlugin } from "@elizaos/plugin-akash";
+import { quaiPlugin } from "@elizaos/plugin-quai";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import {dominosPlugin} from "@elizaos/plugin-dominos";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -142,6 +147,61 @@ function tryLoadFile(filePath: string): string | null {
     } catch (e) {
         return null;
     }
+}
+function mergeCharacters(base: Character, child: Character): Character {
+    const mergeObjects = (baseObj: any, childObj: any) => {
+        const result: any = {};
+        const keys = new Set([...Object.keys(baseObj || {}), ...Object.keys(childObj || {})]);
+        keys.forEach(key => {
+            if (typeof baseObj[key] === 'object' && typeof childObj[key] === 'object' && !Array.isArray(baseObj[key]) && !Array.isArray(childObj[key])) {
+                result[key] = mergeObjects(baseObj[key], childObj[key]);
+            } else if (Array.isArray(baseObj[key]) || Array.isArray(childObj[key])) {
+                result[key] = [...(baseObj[key] || []), ...(childObj[key] || [])];
+            } else {
+                result[key] = childObj[key] !== undefined ? childObj[key] : baseObj[key];
+            }
+        });
+        return result;
+    };
+    return mergeObjects(base, child);
+}
+async function loadCharacter(filePath: string): Promise<Character> {
+    const content = tryLoadFile(filePath);
+    if (!content) {
+        throw new Error(`Character file not found: ${filePath}`);
+    }
+    let character = JSON.parse(content);
+    validateCharacterConfig(character);
+
+     // .id isn't really valid
+     const characterId = character.id || character.name;
+     const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
+     const characterSettings = Object.entries(process.env)
+         .filter(([key]) => key.startsWith(characterPrefix))
+         .reduce((settings, [key, value]) => {
+             const settingKey = key.slice(characterPrefix.length);
+             return { ...settings, [settingKey]: value };
+         }, {});
+     if (Object.keys(characterSettings).length > 0) {
+         character.settings = character.settings || {};
+         character.settings.secrets = {
+             ...characterSettings,
+             ...character.settings.secrets,
+         };
+     }
+     // Handle plugins
+     character.plugins = await handlePluginImporting(
+        character.plugins
+    );
+    if (character.extends) {
+        elizaLogger.info(`Merging  ${character.name} character with parent characters`);
+        for (const extendPath of character.extends) {
+            const baseCharacter = await loadCharacter(path.resolve(path.dirname(filePath), extendPath));
+            character = mergeCharacters(baseCharacter, character);
+            elizaLogger.info(`Merged ${character.name} with ${baseCharacter.name}`);
+        }
+    }
+    return character;
 }
 
 export async function loadCharacters(
@@ -206,32 +266,7 @@ export async function loadCharacters(
             }
 
             try {
-                const character = JSON.parse(content);
-                validateCharacterConfig(character);
-
-                // .id isn't really valid
-                const characterId = character.id || character.name;
-                const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
-
-                const characterSettings = Object.entries(process.env)
-                    .filter(([key]) => key.startsWith(characterPrefix))
-                    .reduce((settings, [key, value]) => {
-                        const settingKey = key.slice(characterPrefix.length);
-                        return { ...settings, [settingKey]: value };
-                    }, {});
-
-                if (Object.keys(characterSettings).length > 0) {
-                    character.settings = character.settings || {};
-                    character.settings.secrets = {
-                        ...characterSettings,
-                        ...character.settings.secrets,
-                    };
-                }
-
-                // Handle plugins
-                character.plugins = await handlePluginImporting(
-                    character.plugins
-                );
+                const character: Character = await loadCharacter(resolvedPath);
 
                 loadedCharacters.push(character);
                 elizaLogger.info(
@@ -621,6 +656,19 @@ export async function createAgent(
         elizaLogger.log("modelProvider", character.modelProvider);
         elizaLogger.log("token", token);
     }
+    if (
+        process.env.PRIMUS_APP_ID &&
+        process.env.PRIMUS_APP_SECRET &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"){
+        verifiableInferenceAdapter = new PrimusAdapter({
+            appId: process.env.PRIMUS_APP_ID,
+            appSecret: process.env.PRIMUS_APP_SECRET,
+            attMode: "proxytls",
+            modelProvider: character.modelProvider,
+            token,
+        });
+        elizaLogger.log("Verifiable inference primus adapter initialized");
+    }
 
     return new AgentRuntime({
         databaseAdapter: db,
@@ -772,6 +820,9 @@ export async function createAgent(
             getSecret(character, "AKASH_MNEMONIC") &&
             getSecret(character, "AKASH_WALLET_ADDRESS")
                 ? akashPlugin
+                : null,
+            getSecret(character, "QUAI_PRIVATE_KEY")
+                ? quaiPlugin
                 : null,
         ].filter(Boolean),
         providers: [],
