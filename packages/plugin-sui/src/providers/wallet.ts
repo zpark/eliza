@@ -181,7 +181,7 @@ export class WalletProvider {
                 }
             );
             const prices: Prices = {
-                sui: { usd: (1 / suiPriceData.pair.priceNative).toFixed(2) },
+                sui: { usd: (1 / suiPriceData.pair.priceNative).toString() },
             };
             this.setCachedData(cacheKey, prices);
             return prices;
