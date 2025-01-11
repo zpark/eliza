@@ -507,7 +507,7 @@ export class MessageManager {
 
         // Check if team member has direct interest first
         if (
-            this.runtime.character.clientConfig?.discord?.isPartOfTeam &&
+            this.runtime.character.clientConfig?.telegram?.isPartOfTeam &&
             !this._isTeamLeader() &&
             this._isRelevantToTeamMember(messageText, chatId)
         ) {

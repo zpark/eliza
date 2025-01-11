@@ -299,14 +299,14 @@ export class RAGKnowledgeManager implements IRAGKnowledgeManager {
         };
 
         const startTime = Date.now();
-        let content = file.content;
+        const content = file.content;
 
         try {
             const fileSizeKB = (new TextEncoder().encode(content)).length / 1024;
             elizaLogger.info(`[File Progress] Starting ${file.path} (${fileSizeKB.toFixed(2)} KB)`);
 
             // Step 1: Preprocessing
-            const preprocessStart = Date.now();
+            //const preprocessStart = Date.now();
             const processedContent = this.preprocess(content);
             timeMarker('Preprocessing');
 
