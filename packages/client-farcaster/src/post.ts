@@ -29,7 +29,7 @@ export class FarcasterPostManager {
         this.runtime = runtime;
 
         this.fid = this.client.farcasterConfig?.FARCASTER_FID ?? 0;
-        this.isDryRun = this.client.farcasterConfig.FARCASTER_DRY_RUN;
+        this.isDryRun = this.client.farcasterConfig?.FARCASTER_DRY_RUN ?? false;
 
         // Log configuration on initialization
         elizaLogger.log("Farcaster Client Configuration:");
