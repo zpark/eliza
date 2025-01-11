@@ -1,11 +1,16 @@
 import {
     AgentRuntime,
     CacheManager,
+    Character,
     Clients,
     DbCacheAdapter,
     defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
+    IAgentRuntime,
+    ICacheManager,
+    IDatabaseAdapter,
+    IDatabaseCacheAdapter,
     ModelProviderName,
     settings,
     stringToUuid,
@@ -53,14 +58,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-
-// Temporary type definitions to unblock development
-type Character = any;
-type IAgentRuntime = any;
-type ICacheManager = any;
-type IDatabaseAdapter = any;
-type IDatabaseCacheAdapter = any;
-type ModelProvider = ModelProviderName;
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -188,16 +185,6 @@ export async function loadCharacters(
                     character.plugins = importedPlugins;
                 }
 
-                // Ensure settings are properly merged
-                character.settings = {
-                    ...defaultCharacter.settings,
-                    ...character.settings,
-                    secrets: {
-                        ...defaultCharacter.settings.secrets,
-                        ...character.settings?.secrets,
-                    },
-                };
-
                 loadedCharacters.push(character);
                 elizaLogger.info(
                     `Successfully loaded character from: ${resolvedPath}`
@@ -220,7 +207,7 @@ export async function loadCharacters(
 }
 
 export function getTokenForProvider(
-    provider: ModelProvider,
+    provider: ModelProviderName,
     character: Character
 ) {
     switch (provider) {
@@ -459,7 +446,7 @@ export async function createAgent(
     db: IDatabaseAdapter,
     cache: ICacheManager,
     token: string
-): Promise<any> {
+): Promise<AgentRuntime> {
     elizaLogger.success(
         elizaLogger.successesTitle,
         "Creating runtime for character",
@@ -589,8 +576,8 @@ function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
 
 async function startAgent(
     character: Character,
-    directClient: any
-): Promise<any> {
+    directClient: AgentRuntime
+): Promise<AgentRuntime> {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
         character.id ??= stringToUuid(character.name);
@@ -609,7 +596,12 @@ async function startAgent(
         await db.init();
 
         const cache = initializeDbCache(character, db);
-        const runtime: any = await createAgent(character, db, cache, token);
+        const runtime: AgentRuntime = await createAgent(
+            character,
+            db,
+            cache,
+            token
+        );
 
         // start services/plugins/process knowledge
         await runtime.initialize();
