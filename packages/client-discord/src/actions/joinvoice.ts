@@ -8,6 +8,8 @@ import {
     IAgentRuntime,
     Memory,
     State,
+    generateText,
+    ModelClass,
 } from "@elizaos/core";
 import {
     Channel,
@@ -117,6 +119,9 @@ export default {
                 guildId: (discordMessage as DiscordMessage).guild?.id as string,
                 adapterCreator: (client.guilds.cache.get(id) as Guild)
                     .voiceAdapterCreator,
+                selfDeaf: false,
+                selfMute: false,
+                group: client.user.id,
             });
             return true;
         } else {
@@ -129,6 +134,9 @@ export default {
                         ?.id as string,
                     adapterCreator: (client.guilds.cache.get(id) as Guild)
                         .voiceAdapterCreator,
+                    selfDeaf: false,
+                    selfMute: false,
+                    group: client.user.id,
                 });
                 return true;
             }
@@ -199,6 +207,9 @@ You should only respond with the name of the voice channel or none, no commentar
                             ?.id as string,
                         adapterCreator: (client.guilds.cache.get(id) as Guild)
                             .voiceAdapterCreator,
+                        selfDeaf: false,
+                        selfMute: false,
+                        group: client.user.id,
                     });
                     return true;
                 }
