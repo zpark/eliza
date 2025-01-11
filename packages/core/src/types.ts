@@ -579,7 +579,7 @@ export type Client = {
     stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
 
-export type IPlugin = {
+export type Plugin = {
     /** Plugin name */
     name: string;
 
@@ -601,21 +601,6 @@ export type IPlugin = {
     /** Optional clients */
     clients?: Client[];
 };
-
-export abstract class Plugin implements IPlugin {
-    abstract readonly name: string;
-    abstract readonly description: string;
-    actions?: Action[] = [];
-    providers?: Provider[] = [];
-    evaluators?: Evaluator[] = [];
-    services?: Service[] = [];
-    clients?: Client[] = [];
-
-    constructor() {}
-
-    async setup(_character: Character): Promise<void> {}
-    async teardown(): Promise<void> {}
-}
 
 /**
  * Available client platforms
