@@ -1,7 +1,7 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { SigningStargateClient } from "@cosmjs/stargate";
-import { elizaLogger } from "@elizaos/core";
-import { IAgentRuntime, Memory } from "@elizaos/core/src/types";
+import { elizaLogger, IAgentRuntime, Memory } from "@elizaos/core";
+// import { IAgentRuntime, Memory } from "@elizaos/core/src/types";
 import { validateAkashConfig } from "../environment";
 import { getAkashTypeRegistry } from "@akashnetwork/akashjs/build/stargate";
 import {
@@ -9,7 +9,6 @@ import {
     AkashWalletState,
     AkashError,
     AKASH_ERROR_CODES,
-    AkashRegistryTypes
 } from "../types";
 
 // Use a proper UUID for the wallet room

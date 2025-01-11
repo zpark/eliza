@@ -1,4 +1,3 @@
-import { elizaLogger } from "@elizaos/core";
 
 export enum AkashErrorCategory {
     WALLET = 'WALLET',

@@ -5,7 +5,7 @@ import { validateAkashConfig } from "../environment";
 import { AkashError, AkashErrorCode } from "../error/error";
 import * as fs from 'fs';
 import * as path from 'path';
-import { getCertificatePath, getDeploymentsPath } from "../utils/paths";
+import { getDeploymentsPath } from "../utils/paths";
 
 export interface DeploymentInfo {
     owner: string;
@@ -278,7 +278,6 @@ export async function loadDeploymentInfo(filePath: string): Promise<DeploymentIn
     elizaLogger.info("Loading deployment info", { filePath });
 
     try {
-        const fs = require('fs');
         if (!fs.existsSync(filePath)) {
             throw new AkashError(
                 `Deployment info file not found: ${filePath}`,
@@ -383,14 +382,14 @@ export const getDeploymentApiAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State | undefined,
-        options: { [key: string]: unknown } = {},
+        _options: { [key: string]: unknown } = {},
         callback?: HandlerCallback
     ): Promise<boolean> => {
         const actionId = Date.now().toString();
         elizaLogger.info("Starting deployment API request", { actionId });
 
         try {
-            const config = await validateAkashConfig(runtime);
+            // const config = await validateAkashConfig(runtime);
             const params = message.content as Partial<GetDeploymentsContent>;
 
             // Fetch deployments

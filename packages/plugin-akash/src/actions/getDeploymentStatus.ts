@@ -144,7 +144,7 @@ export const getDeploymentStatusAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State | undefined,
-        options: { [key: string]: unknown } = {},
+        _options: { [key: string]: unknown } = {},
         callback?: HandlerCallback
     ): Promise<boolean> => {
         const actionId = Date.now().toString();
