@@ -2,7 +2,7 @@
 
 # Interface: ActionExample
 
-Example content with associated user for demonstration purposes
+Example content with the associated user for demonstration purposes
 
 ## Properties
 
