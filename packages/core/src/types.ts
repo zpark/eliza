@@ -262,7 +262,7 @@ export enum ModelProviderName {
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
     DEEPSEEK="deepseek",
-    INFERA='infera'
+    INFERA="infera"
 }
 
 /**
