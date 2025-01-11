@@ -45,7 +45,7 @@ import {
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
     VerifiableInferenceResult,
-    VerifiableInferenceProvider,
+    //VerifiableInferenceProvider,
     TelemetrySettings,
     TokenizerType,
 } from "./types.ts";
@@ -259,7 +259,10 @@ export async function generateText({
     elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
+        elizaLogger.log(
+            "Using verifiable inference adapter:",
+            runtime.verifiableInferenceAdapter
+        );
         try {
             const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
@@ -407,18 +410,17 @@ export async function generateText({
             case ModelProviderName.LLAMACLOUD:
             case ModelProviderName.NANOGPT:
             case ModelProviderName.HYPERBOLIC:
-            case ModelProviderName.TOGETHER: {
+            case ModelProviderName.TOGETHER:
+            case ModelProviderName.NINETEEN_AI:
+            case ModelProviderName.TOGETHER:
+            case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model with Cloudflare check");
                 const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || endpoint;
-                elizaLogger.debug("OpenAI baseURL result:", { baseURL });
-                
-                const openai = createOpenAI({ apiKey, baseURL });
-              
-            case ModelProviderName.AKASH_CHAT_API: {
-                elizaLogger.debug("Initializing OpenAI model.");
+               
+                //elizaLogger.debug("OpenAI baseURL result:", { baseURL });
                 const openai = createOpenAI({
                     apiKey,
-                    baseURL: endpoint,
+                    baseURL,
                     fetch: runtime.fetch,
                 });
 
@@ -450,7 +452,8 @@ export async function generateText({
                     apiKey,
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
-                        const chain_id = runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762"
+                        const chain_id =
+                            runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
                         if (options?.body) {
                             const body = JSON.parse(options.body);
                             body.chain_id = chain_id;
@@ -854,10 +857,12 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
-                const headers = {}
-                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                const headers = {};
+                const fineTuneApiKey = runtime.getSetting(
+                    "GALADRIEL_FINE_TUNE_API_KEY"
+                );
                 if (fineTuneApiKey) {
-                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey;
                 }
                 const galadriel = createOpenAI({
                     headers,
@@ -885,6 +890,37 @@ export async function generateText({
 
                 response = galadrielResponse;
                 elizaLogger.debug("Received response from Galadriel model.");
+                break;
+            }
+
+            case ModelProviderName.INFERA: {
+                elizaLogger.debug("Initializing Infera model.");
+
+                const apiKey = settings.INFERA_API_KEY || runtime.token;
+
+                const infera = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    headers: {
+                        api_key: apiKey,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const { text: inferaResponse } = await aiGenerateText({
+                    model: infera.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+                response = inferaResponse;
+                elizaLogger.debug("Received response from Infera model.");
                 break;
             }
 
@@ -1289,6 +1325,7 @@ export const generateImage = async (
                           // If no specific match, try the fallback chain
                           return (
                               runtime.getSetting("HEURIST_API_KEY") ??
+                              runtime.getSetting("NINETEEN_AI_API_KEY") ??
                               runtime.getSetting("TOGETHER_API_KEY") ??
                               runtime.getSetting("FAL_API_KEY") ??
                               runtime.getSetting("OPENAI_API_KEY") ??
@@ -1480,6 +1517,45 @@ export const generateImage = async (
                 if (!base64String) {
                     throw new Error(
                         "Empty base64 string in Venice AI response"
+                    );
+                }
+                return `data:image/png;base64,${base64String}`;
+            });
+
+            return { success: true, data: base64s };
+        } else if (
+            runtime.imageModelProvider === ModelProviderName.NINETEEN_AI
+        ) {
+            const response = await fetch(
+                "https://api.nineteen.ai/v1/text-to-image",
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: data.prompt,
+                        negative_prompt: data.negativePrompt,
+                        width: data.width,
+                        height: data.height,
+                        steps: data.numIterations,
+                        cfg_scale: data.guidanceScale || 3,
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.images || !Array.isArray(result.images)) {
+                throw new Error("Invalid response format from Nineteen AI");
+            }
+
+            const base64s = result.images.map((base64String) => {
+                if (!base64String) {
+                    throw new Error(
+                        "Empty base64 string in Nineteen AI response"
                     );
                 }
                 return `data:image/png;base64,${base64String}`;
@@ -1764,9 +1840,9 @@ export async function handleProvider(
         runtime,
         context,
         modelClass,
-        verifiableInference,
-        verifiableInferenceAdapter,
-        verifiableInferenceOptions,
+        //verifiableInference,
+        //verifiableInferenceAdapter,
+        //verifiableInferenceOptions,
     } = options;
     switch (provider) {
         case ModelProviderName.OPENAI:
