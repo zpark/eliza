@@ -7,9 +7,7 @@ export const defaultCharacter: Character = {
     clients: [],
     modelProvider: ModelProviderName.LLAMALOCAL,
     settings: {
-        secrets: {
-            RESERVOIR_API_KEY: process.env.RESERVOIR_API_KEY || "",
-        },
+        secrets: {},
         voice: {
             model: "en_US-hfc_female-medium",
         },
