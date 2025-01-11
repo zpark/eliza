@@ -16,7 +16,7 @@ import { AkashError, AkashErrorCode, withRetry } from "../error/error";
 import * as fs from 'fs';
 import * as path from 'path';
 import { getCertificatePath, getDefaultSDLPath } from "../utils/paths";
-import { fileURLToPath } from 'url';
+// import { fileURLToPath } from 'url';
 import { inspectRuntime, isPluginLoaded } from "../runtime_inspect";
 import https from 'node:https';
 import axios from 'axios';
@@ -162,7 +162,8 @@ const loadSDLFromFile = (filePath: string): string => {
     }
 };
 
-const formatErrorMessage = (error: unknown): string => {
+// Preserved for future use
+/* const formatErrorMessage = (error: unknown): string => {
     if (error instanceof AkashError) {
         if (error.code === AkashErrorCode.WALLET_NOT_INITIALIZED) {
             return "Akash wallet not initialized";
@@ -196,7 +197,7 @@ const formatErrorMessage = (error: unknown): string => {
         return "Failed to parse SDL: Invalid format";
     }
     return message;
-};
+}; */
 
 async function initializeWallet(mnemonic: string) {
     elizaLogger.debug("=== Initializing Wallet ===", {
@@ -619,7 +620,7 @@ async function queryLeaseStatus(lease: any, providerUri: string, certificate: Ce
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    // @ts-ignore - Node's fetch has agent support
+                    // @ts-expect-error - TypeScript's fetch types don't include Node's agent support, but it exists at runtime
                     agent,
                     signal: AbortSignal.timeout(10000)
                 });
@@ -1138,7 +1139,7 @@ export const createDeploymentAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State | undefined,
-        options: { [key: string]: unknown; } = {},
+        _options: { [key: string]: unknown; } = {},
         callback?: HandlerCallback
     ): Promise<boolean> => {
         const actionId = Date.now().toString();
