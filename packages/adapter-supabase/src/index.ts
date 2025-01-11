@@ -20,12 +20,12 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .from("rooms")
             .select("id")
             .eq("id", roomId)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            throw new Error(`Error getting room: ${error.message}`);
+            elizaLogger.error(`Error getting room: ${error.message}`);
+            return null;
         }
-
         return data ? (data.id as UUID) : null;
     }
 
@@ -56,7 +56,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .single();
 
         if (error) {
-            console.error("Error getting participant user state:", error);
+            elizaLogger.error("Error getting participant user state:", error);
             return null;
         }
 
@@ -75,7 +75,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .eq("userId", userId);
 
         if (error) {
-            console.error("Error setting participant user state:", error);
+            elizaLogger.error("Error setting participant user state:", error);
             throw new Error("Failed to set participant user state");
         }
     }
@@ -127,7 +127,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
         const { data, error } = await query;
 
         if (error) {
-            console.error("Error retrieving memories by room IDs:", error);
+            elizaLogger.error("Error retrieving memories by room IDs:", error);
             return [];
         }
 
@@ -155,7 +155,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .from("accounts")
             .upsert([account]);
         if (error) {
-            console.error(error.message);
+            elizaLogger.error(error.message);
             return false;
         }
         return true;
@@ -175,7 +175,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
                 .eq("id", params.roomId);
 
             if (response.error) {
-                console.error("Error!" + response.error);
+                elizaLogger.error("Error!" + response.error);
                 return [];
             }
             const { data } = response;
@@ -194,7 +194,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
                 )
                 .flat();
         } catch (error) {
-            console.error("error", error);
+            elizaLogger.error("error", error);
             throw error;
         }
     }
@@ -267,7 +267,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
         });
 
         if (error) {
-            console.error("Error inserting log:", error);
+            elizaLogger.error("Error inserting log:", error);
             throw new Error(error.message);
         }
     }
@@ -357,7 +357,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .single();
 
         if (error) {
-            console.error("Error retrieving memory by ID:", error);
+            elizaLogger.error("Error retrieving memory by ID:", error);
             return null;
         }
 
@@ -571,7 +571,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .insert({ userId: userId, roomId: roomId });
 
         if (error) {
-            console.error(`Error adding participant: ${error.message}`);
+            elizaLogger.error(`Error adding participant: ${error.message}`);
             return false;
         }
         return true;
@@ -585,7 +585,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .eq("roomId", roomId);
 
         if (error) {
-            console.error(`Error removing participant: ${error.message}`);
+            elizaLogger.error(`Error removing participant: ${error.message}`);
             return false;
         }
         return true;
@@ -695,7 +695,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             .single();
 
         if (error) {
-            console.error('Error fetching cache:', error);
+            elizaLogger.error('Error fetching cache:', error);
             return undefined;
         }
 
@@ -717,7 +717,7 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
             });
 
         if (error) {
-            console.error('Error setting cache:', error);
+            elizaLogger.error('Error setting cache:', error);
             return false;
         }
 
