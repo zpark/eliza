@@ -81,7 +81,6 @@ import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 
-import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
@@ -704,8 +703,8 @@ export async function createAgent(
             goatPlugin,
             getSecret(character, "COINGECKO_API_KEY") ||
             getSecret(character, "COINGECKO_PRO_API_KEY")
-            ? coingeckoPlugin
-            : null,
+                ? coingeckoPlugin
+                : null,
             getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
@@ -720,8 +719,8 @@ export async function createAgent(
                 : null,
             getSecret(character, "LENS_ADDRESS") &&
             getSecret(character, "LENS_PRIVATE_KEY")
-                    ? lensPlugin
-                    : null,
+                ? lensPlugin
+                : null,
             getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
             getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
             getSecret(character, "ZKSYNC_PRIVATE_KEY") ? zksyncEraPlugin : null,
@@ -761,8 +760,8 @@ export async function createAgent(
             getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
             getSecret(character, "AKASH_MNEMONIC") &&
             getSecret(character, "AKASH_WALLET_ADDRESS")
-                    ? akashPlugin
-                    : null,
+                ? akashPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
