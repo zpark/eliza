@@ -416,7 +416,7 @@ export async function generateText({
             case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model with Cloudflare check");
                 const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || endpoint;
-               
+
                 //elizaLogger.debug("OpenAI baseURL result:", { baseURL });
                 const openai = createOpenAI({
                     apiKey,
@@ -530,15 +530,10 @@ export async function generateText({
 
             case ModelProviderName.ANTHROPIC: {
                 elizaLogger.debug("Initializing Anthropic model with Cloudflare check");
-                const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic');
+                const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic') || "https://api.anthropic.com/v1";
                 elizaLogger.debug("Anthropic baseURL result:", { baseURL });
 
-                const anthropic = createAnthropic({
-                    apiKey,
-                    fetch: runtime.fetch,
-                });
-
-                const anthropic = createAnthropic({ apiKey, baseURL });
+                const anthropic = createAnthropic({ apiKey, baseURL, fetch: runtime.fetch });
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
                     prompt: context,
@@ -634,19 +629,18 @@ export async function generateText({
                 const { text: groqResponse } = await aiGenerateText({
                     model: groq.languageModel(model),
                     prompt: context,
-                    system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-                    temperature: temperature,
+                    temperature,
                     system:
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
-                    tools: tools,
+                    tools,
                     onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
+                    maxSteps,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
+                    experimental_telemetry,
                 });
 
                 response = groqResponse;
