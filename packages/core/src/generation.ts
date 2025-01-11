@@ -45,7 +45,7 @@ import {
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
     VerifiableInferenceResult,
-    VerifiableInferenceProvider,
+    //VerifiableInferenceProvider,
     TelemetrySettings,
     TokenizerType,
 } from "./types.ts";
@@ -164,6 +164,50 @@ async function truncateTiktoken(
 }
 
 /**
+ * Gets the Cloudflare Gateway base URL for a specific provider if enabled
+ * @param runtime The runtime environment
+ * @param provider The model provider name
+ * @returns The Cloudflare Gateway base URL if enabled, undefined otherwise
+ */
+function getCloudflareGatewayBaseURL(runtime: IAgentRuntime, provider: string): string | undefined {
+    const isCloudflareEnabled = runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
+    const cloudflareAccountId = runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID");
+    const cloudflareGatewayId = runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID");
+
+    elizaLogger.debug("Cloudflare Gateway Configuration:", {
+        isEnabled: isCloudflareEnabled,
+        hasAccountId: !!cloudflareAccountId,
+        hasGatewayId: !!cloudflareGatewayId,
+        provider: provider
+    });
+
+    if (!isCloudflareEnabled) {
+        elizaLogger.debug("Cloudflare Gateway is not enabled");
+        return undefined;
+    }
+
+    if (!cloudflareAccountId) {
+        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set");
+        return undefined;
+    }
+
+    if (!cloudflareGatewayId) {
+        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set");
+        return undefined;
+    }
+
+    const baseURL = `https://gateway.ai.cloudflare.com/v1/${cloudflareAccountId}/${cloudflareGatewayId}/${provider.toLowerCase()}`;
+    elizaLogger.info("Using Cloudflare Gateway:", {
+        provider,
+        baseURL,
+        accountId: cloudflareAccountId,
+        gatewayId: cloudflareGatewayId
+    });
+
+    return baseURL;
+}
+
+/**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
  * @param opts - The options for the generateText request.
  * @param opts.context The context of the message to be completed.
@@ -215,7 +259,10 @@ export async function generateText({
     elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log("Using verifiable inference adapter:", runtime.verifiableInferenceAdapter);
+        elizaLogger.log(
+            "Using verifiable inference adapter:",
+            runtime.verifiableInferenceAdapter
+        );
         try {
             const result: VerifiableInferenceResult =
                 await runtime.verifiableInferenceAdapter.generateText(
@@ -239,6 +286,16 @@ export async function generateText({
     }
 
     const provider = runtime.modelProvider;
+    elizaLogger.debug("Provider settings:", {
+        provider,
+        hasRuntime: !!runtime,
+        runtimeSettings: {
+            CLOUDFLARE_GW_ENABLED: runtime.getSetting("CLOUDFLARE_GW_ENABLED"),
+            CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID"),
+            CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID")
+        }
+    });
+
     const endpoint =
         runtime.character.modelEndpointOverride || getEndpoint(provider);
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
@@ -353,13 +410,17 @@ export async function generateText({
             case ModelProviderName.LLAMACLOUD:
             case ModelProviderName.NANOGPT:
             case ModelProviderName.HYPERBOLIC:
+            case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
             case ModelProviderName.TOGETHER:
             case ModelProviderName.AKASH_CHAT_API: {
-                elizaLogger.debug("Initializing OpenAI model.");
+                elizaLogger.debug("Initializing OpenAI model with Cloudflare check");
+                const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || endpoint;
+
+                //elizaLogger.debug("OpenAI baseURL result:", { baseURL });
                 const openai = createOpenAI({
                     apiKey,
-                    baseURL: endpoint,
+                    baseURL,
                     fetch: runtime.fetch,
                 });
 
@@ -391,7 +452,8 @@ export async function generateText({
                     apiKey,
                     baseURL: endpoint,
                     fetch: async (url: string, options: any) => {
-                        const chain_id = runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762"
+                        const chain_id =
+                            runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
                         if (options?.body) {
                             const body = JSON.parse(options.body);
                             body.chain_id = chain_id;
@@ -426,10 +488,7 @@ export async function generateText({
                 const { text: openaiResponse } = await aiGenerateText({
                     model: openai.languageModel(model),
                     prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
+                    system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -470,13 +529,11 @@ export async function generateText({
             }
 
             case ModelProviderName.ANTHROPIC: {
-                elizaLogger.debug("Initializing Anthropic model.");
+                elizaLogger.debug("Initializing Anthropic model with Cloudflare check");
+                const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic') || "https://api.anthropic.com/v1";
+                elizaLogger.debug("Anthropic baseURL result:", { baseURL });
 
-                const anthropic = createAnthropic({
-                    apiKey,
-                    fetch: runtime.fetch,
-                });
-
+                const anthropic = createAnthropic({ apiKey, baseURL, fetch: runtime.fetch });
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
                     prompt: context,
@@ -564,26 +621,30 @@ export async function generateText({
             }
 
             case ModelProviderName.GROQ: {
-                const groq = createGroq({ apiKey, fetch: runtime.fetch });
+                elizaLogger.debug("Initializing Groq model with Cloudflare check");
+                const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+                elizaLogger.debug("Groq baseURL result:", { baseURL });
+                const groq = createGroq({ apiKey, fetch: runtime.fetch, baseURL });
 
                 const { text: groqResponse } = await aiGenerateText({
                     model: groq.languageModel(model),
                     prompt: context,
-                    temperature: temperature,
+                    temperature,
                     system:
                         runtime.character.system ??
                         settings.SYSTEM_PROMPT ??
                         undefined,
-                    tools: tools,
+                    tools,
                     onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
+                    maxSteps,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
+                    experimental_telemetry,
                 });
 
                 response = groqResponse;
+                elizaLogger.debug("Received response from Groq model.");
                 break;
             }
 
@@ -790,10 +851,12 @@ export async function generateText({
 
             case ModelProviderName.GALADRIEL: {
                 elizaLogger.debug("Initializing Galadriel model.");
-                const headers = {}
-                const fineTuneApiKey = runtime.getSetting("GALADRIEL_FINE_TUNE_API_KEY")
+                const headers = {};
+                const fineTuneApiKey = runtime.getSetting(
+                    "GALADRIEL_FINE_TUNE_API_KEY"
+                );
                 if (fineTuneApiKey) {
-                    headers["Fine-Tune-Authentication"] = fineTuneApiKey
+                    headers["Fine-Tune-Authentication"] = fineTuneApiKey;
                 }
                 const galadriel = createOpenAI({
                     headers,
@@ -821,6 +884,37 @@ export async function generateText({
 
                 response = galadrielResponse;
                 elizaLogger.debug("Received response from Galadriel model.");
+                break;
+            }
+
+            case ModelProviderName.INFERA: {
+                elizaLogger.debug("Initializing Infera model.");
+
+                const apiKey = settings.INFERA_API_KEY || runtime.token;
+
+                const infera = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    headers: {
+                        api_key: apiKey,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const { text: inferaResponse } = await aiGenerateText({
+                    model: infera.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                });
+                response = inferaResponse;
+                elizaLogger.debug("Received response from Infera model.");
                 break;
             }
 
@@ -1423,7 +1517,9 @@ export const generateImage = async (
             });
 
             return { success: true, data: base64s };
-        }else if (runtime.imageModelProvider === ModelProviderName.NINETEEN_AI) {
+        } else if (
+            runtime.imageModelProvider === ModelProviderName.NINETEEN_AI
+        ) {
             const response = await fetch(
                 "https://api.nineteen.ai/v1/text-to-image",
                 {
@@ -1433,13 +1529,13 @@ export const generateImage = async (
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        model: data.modelId || "dataautogpt3/ProteusV0.4-Lightning",
+                        model: model,
                         prompt: data.prompt,
                         negative_prompt: data.negativePrompt,
                         width: data.width,
                         height: data.height,
                         steps: data.numIterations,
-                        cfg_scale: data.guidanceScale || 3
+                        cfg_scale: data.guidanceScale || 3,
                     }),
                 }
             );
@@ -1738,9 +1834,9 @@ export async function handleProvider(
         runtime,
         context,
         modelClass,
-        verifiableInference,
-        verifiableInferenceAdapter,
-        verifiableInferenceOptions,
+        //verifiableInference,
+        //verifiableInferenceAdapter,
+        //verifiableInferenceOptions,
     } = options;
     switch (provider) {
         case ModelProviderName.OPENAI:
@@ -1794,8 +1890,10 @@ async function handleOpenAI({
     schemaDescription,
     mode = "json",
     modelOptions,
+    provider,
+    runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const baseURL = models.openai.endpoint || undefined;
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || models.openai.endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -1821,8 +1919,13 @@ async function handleAnthropic({
     schemaDescription,
     mode = "json",
     modelOptions,
+    runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const anthropic = createAnthropic({ apiKey });
+    elizaLogger.debug("Handling Anthropic request with Cloudflare check");
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic');
+    elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
+
+    const anthropic = createAnthropic({ apiKey, baseURL });
     return await aiGenerateObject({
         model: anthropic.languageModel(model),
         schema,
@@ -1873,8 +1976,13 @@ async function handleGroq({
     schemaDescription,
     mode = "json",
     modelOptions,
+    runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const groq = createGroq({ apiKey });
+    elizaLogger.debug("Handling Groq request with Cloudflare check");
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+    elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
+
+    const groq = createGroq({ apiKey, baseURL });
     return await aiGenerateObject({
         model: groq.languageModel(model),
         schema,

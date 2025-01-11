@@ -1,8 +1,5 @@
 import { encodeAbiParameters } from "viem";
-import { fileURLToPath } from "url";
 import { compileWithImports } from "./generateERC721ContractCode.ts";
-import path from "path";
-import fs from "fs";
 import CustomERC721 from "../contract/CustomERC721.sol"
 
 // 动态生成 ERC-721 合约代码
