@@ -17,6 +17,7 @@ import {
     Guild,
     GuildMember,
 } from "discord.js";
+import { joinVoiceChannel } from "@discordjs/voice";
 
 export default {
     name: "JOIN_VOICE",
@@ -66,12 +67,7 @@ export default {
             return false;
         }
 
-        const client = state.discordClient as Client;
-
-        // Check if the client is connected to any voice channel
-        const isConnectedToVoice = client.voice.adapters.size === 0;
-
-        return isConnectedToVoice;
+        return true;
     },
     description: "Join a voice channel to participate in voice chat.",
     handler: async (
@@ -115,15 +111,8 @@ export default {
             );
         });
 
-        if (!state.voiceManager) {
-            state.voiceManager = new VoiceManager({
-                client: state.discordClient,
-                runtime: runtime,
-            });
-        }
-
         if (targetChannel) {
-            state.voiceManager.joinVoiceChannel({
+            joinVoiceChannel({
                 channelId: targetChannel.id,
                 guildId: (discordMessage as DiscordMessage).guild?.id as string,
                 adapterCreator: (client.guilds.cache.get(id) as Guild)
@@ -134,7 +123,7 @@ export default {
             const member = (discordMessage as DiscordMessage)
                 .member as GuildMember;
             if (member?.voice?.channel) {
-                state.voiceManager.joinVoiceChannel({
+                joinVoiceChannel({
                     channelId: member.voice.channel.id,
                     guildId: (discordMessage as DiscordMessage).guild
                         ?.id as string,
@@ -204,7 +193,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 });
 
                 if (targetChannel) {
-                    state.voiceManager.joinVoiceChannel({
+                    joinVoiceChannel({
                         channelId: targetChannel.id,
                         guildId: (discordMessage as DiscordMessage).guild
                             ?.id as string,
