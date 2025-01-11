@@ -871,6 +871,8 @@ export type Character = {
     nft?: {
         prompt: string;
     };
+    /**Optinal Parent characters to inherit information from */
+    extends?: string[];
 };
 
 /**
