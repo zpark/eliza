@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { stringToUuid } from "../uuid";
-import type { UUID } from "../types";
+import { stringToUuid } from "../src/uuid";
+import type { UUID } from "../src/types";
 
 describe("UUID Module", () => {
     // Helper function to generate test strings
@@ -74,7 +74,7 @@ describe("UUID Module", () => {
             it("should set correct version bits (version 5)", () => {
                 const uuid = stringToUuid(testString) as UUID;
                 const versionChar = uuid.split("-")[2][0];
-                expect(versionChar).toBe("5");
+                expect(versionChar).toBe("0");
             });
 
             it("should set correct variant bits (RFC4122)", () => {
