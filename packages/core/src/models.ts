@@ -415,7 +415,7 @@ export const models: Models = {
                 frequency_penalty: 0.4,
                 presence_penalty: 0.4,
                 temperature: 0.7,
-            }
+            },
         },
     },
     [ModelProviderName.REDPILL]: {
@@ -963,6 +963,38 @@ export const models: Models = {
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
                 temperature: 0.6,
+            },
+        },
+    },
+    [ModelProviderName.DEEPSEEK]: {
+        endpoint: settings.DEEPSEEK_API_URL || "https://api.deepseek.com",
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_DEEPSEEK_MODEL || "deepseek-chat",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.7,
             },
         },
     },

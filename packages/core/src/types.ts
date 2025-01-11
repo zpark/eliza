@@ -227,6 +227,7 @@ export type Models = {
     [ModelProviderName.NINETEEN_AI]: Model;
     [ModelProviderName.AKASH_CHAT_API]: Model;
     [ModelProviderName.LIVEPEER]: Model;
+    [ModelProviderName.DEEPSEEK]: Model;
     [ModelProviderName.INFERA]: Model;
 };
 
@@ -260,8 +261,8 @@ export enum ModelProviderName {
     NINETEEN_AI = "nineteen_ai",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
-    LETZAI = "letzai",
-    INFERA = "infera",
+    DEEPSEEK="deepseek",
+    INFERA="infera"
 }
 
 /**
