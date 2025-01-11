@@ -1099,21 +1099,11 @@ Text: ${attachment.text}
             ]);
 
             // Check the existing memories in the database
-            const existingMemories =
-                await this.messageManager.getMemoriesByRoomIds({
+            return this.messageManager.getMemoriesByRoomIds({
                     // filter out the current room id from rooms
                     roomIds: rooms.filter((room) => room !== roomId),
+                    limit: 20
                 });
-
-            // Sort messages by timestamp in descending order
-            existingMemories.sort(
-                (a, b) =>
-                    (b?.createdAt ?? Date.now()) - (a?.createdAt ?? Date.now())
-            );
-
-            // Take the most recent messages
-            const recentInteractionsData = existingMemories.slice(0, 20);
-            return recentInteractionsData;
         };
 
         const recentInteractions =
