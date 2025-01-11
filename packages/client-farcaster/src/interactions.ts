@@ -43,7 +43,7 @@ export class FarcasterInteractionManager {
 
             this.timeout = setTimeout(
                 handleInteractionsLoop,
-                Number(this.client.farcasterConfig.FARCASTER_POLL_INTERVAL) *
+                Number(this.client.farcasterConfig?.FARCASTER_POLL_INTERVAL ?? 120) *
                 1000 // Default to 2 minutes
             );
         };
