@@ -25,6 +25,7 @@ import {
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
+import OpenAI from "openai";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -153,6 +154,7 @@ export class DirectClient {
                 }
 
                 let runtime = this.agents.get(agentId);
+                const apiKey = runtime.getSetting("OPENAI_API_KEY");
 
                 // if runtime is null, look for runtime with the same name
                 if (!runtime) {
@@ -168,26 +170,16 @@ export class DirectClient {
                     return;
                 }
 
-                const formData = new FormData();
-                const audioBlob = new Blob([audioFile.buffer], {
-                    type: audioFile.mimetype,
+                const openai = new OpenAI({
+                    apiKey,
                 });
-                formData.append("file", audioBlob, audioFile.originalname);
-                formData.append("model", "whisper-1");
 
-                const response = await fetch(
-                    "https://api.openai.com/v1/audio/transcriptions",
-                    {
-                        method: "POST",
-                        headers: {
-                            Authorization: `Bearer ${runtime.token}`,
-                        },
-                        body: formData,
-                    }
-                );
+                const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream(audioFile.path),
+                    model: "whisper-1",
+                });
 
-                const data = await response.json();
-                res.json(data);
+                res.json(transcription);
             }
         );
 
@@ -381,14 +373,12 @@ export class DirectClient {
 
                 // hyperfi specific parameters
                 let nearby = [];
-                let messages = [];
                 let availableEmotes = [];
 
                 if (body.nearby) {
                     nearby = body.nearby;
                 }
                 if (body.messages) {
-                    messages = body.messages;
                     // loop on the messages and record the memories
                     // might want to do this in parallel
                     for (const msg of body.messages) {
@@ -510,10 +500,17 @@ export class DirectClient {
                     schema: hyperfiOutSchema,
                 });
 
+                if (!response) {
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
+                    return;
+                }
+
                 let hfOut;
                 try {
                     hfOut = hyperfiOutSchema.parse(response.object);
-                } catch (e) {
+                } catch {
                     elizaLogger.error(
                         "cant serialize response",
                         response.object
@@ -523,7 +520,7 @@ export class DirectClient {
                 }
 
                 // do this in the background
-                const rememberThis = new Promise(async (resolve) => {
+                new Promise((resolve) => {
                     const contentObj: Content = {
                         text: hfOut.say,
                     };
@@ -553,45 +550,38 @@ export class DirectClient {
                         content: contentObj,
                     };
 
-                    await runtime.messageManager.createMemory(responseMessage); // 18.2ms
+                    runtime.messageManager.createMemory(responseMessage).then(() => {
+                          const messageId = stringToUuid(Date.now().toString());
+                          const memory: Memory = {
+                              id: messageId,
+                              agentId: runtime.agentId,
+                              userId,
+                              roomId,
+                              content,
+                              createdAt: Date.now(),
+                          };
 
-                    if (!response) {
-                        res.status(500).send(
-                            "No response from generateMessageResponse"
-                        );
-                        return;
-                    }
-
-                    let message = null as Content | null;
-
-                    const messageId = stringToUuid(Date.now().toString());
-                    const memory: Memory = {
-                        id: messageId,
-                        agentId: runtime.agentId,
-                        userId,
-                        roomId,
-                        content,
-                        createdAt: Date.now(),
-                    };
-
-                    // run evaluators (generally can be done in parallel with processActions)
-                    // can an evaluator modify memory? it could but currently doesn't
-                    await runtime.evaluate(memory, state); // 0.5s
-
-                    // only need to call if responseMessage.content.action is set
-                    if (contentObj.action) {
-                        // pass memory (query) to any actions to call
-                        const _result = await runtime.processActions(
-                            memory,
-                            [responseMessage],
-                            state,
-                            async (newMessages) => {
-                                message = newMessages;
-                                return [memory];
+                          // run evaluators (generally can be done in parallel with processActions)
+                          // can an evaluator modify memory? it could but currently doesn't
+                          runtime.evaluate(memory, state).then(() => {
+                            // only need to call if responseMessage.content.action is set
+                            if (contentObj.action) {
+                                // pass memory (query) to any actions to call
+                                runtime.processActions(
+                                    memory,
+                                    [responseMessage],
+                                    state,
+                                    async (_newMessages) => {
+                                        // FIXME: this is supposed override what the LLM said/decided
+                                        // but the promise doesn't make this possible
+                                        //message = newMessages;
+                                        return [memory];
+                                    }
+                                ); // 0.674s
                             }
-                        ); // 0.674s
-                    }
-                    resolve(true);
+                            resolve(true);
+                        });
+                    });
                 });
                 res.json({ response: hfOut });
             }
@@ -885,6 +875,79 @@ export class DirectClient {
                 const audioBuffer = await speechResponse.arrayBuffer();
 
                 // Set appropriate headers for audio streaming
+                res.set({
+                    "Content-Type": "audio/mpeg",
+                    "Transfer-Encoding": "chunked",
+                });
+
+                res.send(Buffer.from(audioBuffer));
+            } catch (error) {
+                elizaLogger.error(
+                    "Error processing message or generating speech:",
+                    error
+                );
+                res.status(500).json({
+                    error: "Error processing message or generating speech",
+                    details: error.message,
+                });
+            }
+        });
+
+        this.app.post("/:agentId/tts", async (req, res) => {
+            const text = req.body.text;
+
+            if (!text) {
+                res.status(400).send("No text provided");
+                return;
+            }
+
+            try {
+                // Convert to speech using ElevenLabs
+                const elevenLabsApiUrl = `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`;
+                const apiKey = process.env.ELEVENLABS_XI_API_KEY;
+
+                if (!apiKey) {
+                    throw new Error("ELEVENLABS_XI_API_KEY not configured");
+                }
+
+                const speechResponse = await fetch(elevenLabsApiUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "xi-api-key": apiKey,
+                    },
+                    body: JSON.stringify({
+                        text,
+                        model_id:
+                            process.env.ELEVENLABS_MODEL_ID ||
+                            "eleven_multilingual_v2",
+                        voice_settings: {
+                            stability: parseFloat(
+                                process.env.ELEVENLABS_VOICE_STABILITY || "0.5"
+                            ),
+                            similarity_boost: parseFloat(
+                                process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST ||
+                                    "0.9"
+                            ),
+                            style: parseFloat(
+                                process.env.ELEVENLABS_VOICE_STYLE || "0.66"
+                            ),
+                            use_speaker_boost:
+                                process.env
+                                    .ELEVENLABS_VOICE_USE_SPEAKER_BOOST ===
+                                "true",
+                        },
+                    }),
+                });
+
+                if (!speechResponse.ok) {
+                    throw new Error(
+                        `ElevenLabs API error: ${speechResponse.statusText}`
+                    );
+                }
+
+                const audioBuffer = await speechResponse.arrayBuffer();
+
                 res.set({
                     "Content-Type": "audio/mpeg",
                     "Transfer-Encoding": "chunked",

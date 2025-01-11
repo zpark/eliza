@@ -28,6 +28,9 @@ interface PluginConfig {
  *   - On speaker mute -> flush STT -> GPT -> TTS -> push to Janus
  */
 export class SttTtsPlugin implements Plugin {
+    name = "SttTtsPlugin";
+    description = "Speech-to-text (OpenAI) + conversation + TTS (ElevenLabs)";
+
     private space?: Space;
     private janus?: JanusClient;
 
@@ -64,7 +67,7 @@ export class SttTtsPlugin implements Plugin {
     private ttsQueue: string[] = [];
     private isSpeaking = false;
 
-    onAttach(space: Space) {
+    onAttach(_space: Space) {
         elizaLogger.log("[SttTtsPlugin] onAttach => space was attached");
     }
 

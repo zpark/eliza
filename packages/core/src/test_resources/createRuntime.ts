@@ -4,6 +4,7 @@ import {
 } from "@elizaos/adapter-sqlite";
 import { SqlJsDatabaseAdapter } from "@elizaos/adapter-sqljs";
 import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
+import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 import { DatabaseAdapter } from "../database.ts";
 import { getEndpoint } from "../models.ts";
 import { AgentRuntime } from "../runtime.ts";
@@ -117,6 +118,23 @@ export async function createRuntime({
             );
             break;
         }
+        case "pglite":
+            {
+                // Import the PGLite adapter
+                await import("@electric-sql/pglite");
+
+                // PGLite adapter
+                adapter = new PGLiteDatabaseAdapter({ dataDir: "../pglite" });
+
+                // Create a test user and session
+                session = {
+                    user: {
+                        id: zeroUuid,
+                        email: "test@example.com",
+                    },
+                };
+            }
+            break;
         case "sqlite":
         default:
             {

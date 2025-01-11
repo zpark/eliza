@@ -60,7 +60,7 @@ Respond with a JSON markdown block containing only the extracted values.`;
 export default {
     name: "CREATE_TOKEN",
     similes: ["DEPLOY_TOKEN"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => true,
+    validate: async (_runtime: IAgentRuntime, _message: Memory) => true,
     description: "Create tokens",
     handler: async (
         runtime: IAgentRuntime,
@@ -104,7 +104,7 @@ export default {
 
         elizaLogger.log("Init solana agent kit...");
         const solanaPrivatekey = runtime.getSetting("SOLANA_PRIVATE_KEY");
-        const rpc = runtime.getSetting("RPC_URL");
+        const rpc = runtime.getSetting("SOLANA_RPC_URL");
         const openAIKey = runtime.getSetting("OPENAI_API_KEY");
         const solanaAgentKit = new SolanaAgentKit(
             solanaPrivatekey,
