@@ -6,8 +6,8 @@ import { AkashError, AkashErrorCode } from "../error/error";
 import * as fs from 'fs';
 import * as path from 'path';
 import yaml from 'js-yaml';
-import { getAkashTypeRegistry } from "@akashnetwork/akashjs/build/stargate";
-import { getCertificatePath, getDefaultSDLPath } from "../utils/paths";
+// import { getAkashTypeRegistry } from "@akashnetwork/akashjs/build/stargate";
+import { getDefaultSDLPath } from "../utils/paths";
 
 interface GetManifestContent extends Content {
     sdl?: string;
@@ -121,10 +121,10 @@ const validateSDL = (sdlContent: string, validationLevel: string = "strict"): bo
         // });
         return true;
     } catch (error) {
-        // elizaLogger.error("SDL validation failed", {
-        //     error: error instanceof Error ? error.message : String(error),
-        //     validationLevel
-        // });
+        elizaLogger.error("SDL validation failed", {
+            error: error instanceof Error ? error.message : String(error),
+            validationLevel
+        });
         return false;
     }
 };
@@ -186,7 +186,7 @@ export const getManifestAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State | undefined,
-        options: { [key: string]: unknown; } = {},
+        _options: { [key: string]: unknown; } = {},
         callback?: HandlerCallback
     ): Promise<boolean> => {
         const actionId = Date.now().toString();

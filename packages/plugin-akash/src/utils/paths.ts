@@ -2,7 +2,6 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { elizaLogger } from "@elizaos/core";
 import { existsSync } from 'fs';
-import fs from 'fs';
 import { getConfig } from '../environment';
 
 export const getPluginRoot = (importMetaUrl: string) => {
@@ -81,7 +80,7 @@ export const getDefaultSDLPath = (importMetaUrl: string) => {
     const config = getConfig(process.env.AKASH_ENV);
     const sdlFileName = config.AKASH_SDL;
     const sdlPath = path.join(srcPath, 'sdl', sdlFileName);
-    const sdlDir = path.dirname(sdlPath);
+    // const sdlDir = path.dirname(sdlPath);
 
     // Only log if file doesn't exist as a warning
     if (!existsSync(sdlPath)) {
