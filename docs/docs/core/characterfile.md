@@ -140,7 +140,7 @@ Array used for Retrieval Augmented Generation (RAG), containing facts or referen
 
 #### `messageExamples`
 
-Sample conversations for establishing interaction patterns, help establish the character's conversational style.
+Sample conversations for establishing interaction patterns, helps establish the character's conversational style.
 
 ```json
 "messageExamples": [
