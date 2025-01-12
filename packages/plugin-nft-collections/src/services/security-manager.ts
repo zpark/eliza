@@ -64,9 +64,13 @@ export class SecurityManager {
 
     verifySignature(data: any, timestamp: number, signature: string): boolean {
         const expectedSignature = this.generateSignature(data, timestamp);
-        return crypto.timingSafeEqual(
-            Buffer.from(signature),
-            Buffer.from(expectedSignature)
-        );
+        const signatureBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSignature);
+
+        if (signatureBuffer.length !== expectedBuffer.length) {
+            return false;
+        }
+
+        return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
     }
 }
