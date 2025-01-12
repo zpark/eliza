@@ -22,7 +22,7 @@ describe("ReservoirService", () => {
     beforeEach(() => {
         cacheManager = new MemoryCacheManager();
         rateLimiter = new RateLimiter();
-        service = new ReservoirService("test-api-key", {
+        service = new ReservoirService({
             cacheManager,
             rateLimiter,
         });

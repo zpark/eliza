@@ -29,7 +29,7 @@ const config = {
     batchSize: 20, // Batch size for collection requests
 };
 
-async function createNFTCollectionsPlugin(): Promise<Plugin> {
+function createNFTCollectionsPlugin(): Plugin {
     // Initialize reusable CacheManager if caching is enabled
     const cacheManager = config.caching?.enabled
         ? new MemoryCacheManager({

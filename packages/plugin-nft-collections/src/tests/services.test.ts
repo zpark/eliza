@@ -25,7 +25,7 @@ describe("NFT Services", () => {
         beforeEach(() => {
             cacheManager = new MemoryCacheManager();
             rateLimiter = new RateLimiter();
-            service = new ReservoirService("test-api-key", {
+            service = new ReservoirService({
                 cacheManager,
                 rateLimiter,
             });

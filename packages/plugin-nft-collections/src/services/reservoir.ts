@@ -1,5 +1,5 @@
 import pRetry from "p-retry";
-import pQueue from "p-queue";
+// import pQueue from "p-queue";
 import { PerformanceMonitor } from "../utils/performance";
 import {
     ErrorHandler,
@@ -23,7 +23,7 @@ interface ReservoirServiceConfig {
 export class ReservoirService {
     private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
-    private queue: pQueue;
+    // private queue: pQueue;
     private maxRetries: number;
     private batchSize: number;
     private performanceMonitor: PerformanceMonitor;
@@ -32,7 +32,8 @@ export class ReservoirService {
     constructor(config: ReservoirServiceConfig = {}) {
         this.cacheManager = config.cacheManager;
         this.rateLimiter = config.rateLimiter;
-        this.queue = new pQueue({ concurrency: config.maxConcurrent || 5 });
+
+        // this.queue = new pQueue({ concurrency: config.maxConcurrent || 5 });
         this.maxRetries = config.maxRetries || 3;
         this.batchSize = config.batchSize || 20;
         this.performanceMonitor = PerformanceMonitor.getInstance();
@@ -73,39 +74,35 @@ export class ReservoirService {
             const reservoirApiKey = runtime.getSetting("RESERVOIR_API_KEY");
 
             // Make the request with retries
-            const result = await this.queue.add(
-                () =>
-                    pRetry(
-                        async () => {
-                            const response = await fetch(
-                                `https://api.reservoir.tools${endpoint}?${new URLSearchParams(
-                                    params
-                                ).toString()}`,
-                                {
-                                    headers: {
-                                        "x-api-key": reservoirApiKey,
-                                    },
-                                }
-                            );
-
-                            if (!response.ok) {
-                                throw new Error(
-                                    `Reservoir API error: ${response.status}`
-                                );
-                            }
-
-                            return response.json();
-                        },
+            const result = await pRetry(
+                async () => {
+                    const response = await fetch(
+                        `https://api.reservoir.tools${endpoint}?${new URLSearchParams(
+                            params
+                        ).toString()}`,
                         {
-                            retries: this.maxRetries,
-                            onFailedAttempt: (error) => {
-                                console.error(
-                                    `Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
-                                );
+                            headers: {
+                                "x-api-key": reservoirApiKey,
                             },
                         }
-                    ),
-                { priority }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Reservoir API error: ${response.status}`
+                        );
+                    }
+
+                    return response.json();
+                },
+                {
+                    retries: this.maxRetries,
+                    onFailedAttempt: (error) => {
+                        console.error(
+                            `Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
+                        );
+                    },
+                }
             );
 
             // Cache the result
