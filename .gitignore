@@ -4,17 +4,18 @@ node_modules
 .env
 .env.production
 .env.local
-.env.old
 .env_main
 concatenated-output.ts
 embedding-cache.json
 packages/plugin-buttplug/intiface-engine
 
+.idea
 .DS_Store
 
 dist/
 # Allow models directory but ignore model files
 models/*.gguf
+pgLite/
 
 cookies.json
 
@@ -45,11 +46,18 @@ packages/core/src/providers/cache
 packages/core/src/providers/cache/*
 cache/*
 packages/plugin-coinbase/src/plugins/transactions.csv
-packages/plugin-coinbase/package-lock.json
 
 tsup.config.bundled_*.mjs
 
 .turbo
+.cursorrules
+.pnpm-store
 
 coverage
 .eslintcache
+
+agent/content
+
+eliza.manifest
+eliza.manifest.sgx
+eliza.sig

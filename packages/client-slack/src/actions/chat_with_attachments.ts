@@ -3,8 +3,8 @@ import {
     generateText,
     trimTokens,
     parseJSONObjectFromText,
-} from "@ai16z/eliza";
-import { models } from "@ai16z/eliza";
+    getModelSettings,
+} from "@elizaos/core";
 import {
     Action,
     ActionExample,
@@ -15,7 +15,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
@@ -194,19 +194,23 @@ const summarizeAction: Action = {
 
         let currentSummary = "";
 
-        const model = models[runtime.character.modelProvider];
-        const chunkSize = model.settings.maxOutputTokens;
+        const modelSettings = getModelSettings(
+            runtime.character.modelProvider,
+            ModelClass.SMALL
+        );
+        const chunkSize = modelSettings.maxOutputTokens;
 
         currentState.attachmentsWithText = attachmentsWithText;
         currentState.objective = objective;
 
+        const template = await trimTokens(
+            summarizationTemplate,
+            chunkSize + 500,
+            runtime
+        );
         const context = composeContext({
             state: currentState,
-            template: trimTokens(
-                summarizationTemplate,
-                chunkSize + 500,
-                "gpt-4o-mini"
-            ),
+            template,
         });
 
         const summary = await generateText({
