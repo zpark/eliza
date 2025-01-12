@@ -1,5 +1,3 @@
-import { Service, ServiceType } from "@elizaos/core";
-
 interface CoinGeckoNFTData {
     id: string;
     contract_address: string;
@@ -17,21 +15,12 @@ interface CoinGeckoNFTData {
     number_of_unique_currencies?: number;
 }
 
-export class CoinGeckoService extends Service {
+export class CoinGeckoService {
     private baseUrl = "https://api.coingecko.com/api/v3";
     private apiKey?: string;
 
     constructor(apiKey?: string) {
-        super();
         this.apiKey = apiKey;
-    }
-
-    static get serviceType(): ServiceType {
-        return "coingecko" as ServiceType;
-    }
-
-    async initialize(): Promise<void> {
-        // No initialization needed
     }
 
     private async fetch<T>(

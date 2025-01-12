@@ -1,4 +1,3 @@
-import { Service, IAgentRuntime, ServiceType } from "@elizaos/core";
 import { MemoryCacheManager } from "./cache-manager";
 import { RateLimiter } from "./rate-limiter";
 import { SocialMetrics } from "../utils/validation";
@@ -8,23 +7,13 @@ interface SocialAnalyticsConfig {
     rateLimiter?: RateLimiter;
 }
 
-export class SocialAnalyticsService extends Service {
+export class SocialAnalyticsService {
     private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
-    protected runtime?: IAgentRuntime;
 
     constructor(config: SocialAnalyticsConfig = {}) {
-        super();
         this.cacheManager = config.cacheManager;
         this.rateLimiter = config.rateLimiter;
-    }
-
-    static override get serviceType(): ServiceType {
-        return "nft_social_analytics" as ServiceType;
-    }
-
-    override async initialize(runtime: IAgentRuntime): Promise<void> {
-        this.runtime = runtime;
     }
 
     async getSocialMetrics(address: string): Promise<SocialMetrics> {

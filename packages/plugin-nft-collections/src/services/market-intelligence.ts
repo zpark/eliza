@@ -1,4 +1,3 @@
-import { Service, IAgentRuntime, ServiceType } from "@elizaos/core";
 import { MemoryCacheManager } from "./cache-manager";
 import { RateLimiter } from "./rate-limiter";
 import { MarketData } from "../utils/validation";
@@ -8,23 +7,13 @@ interface MarketIntelligenceConfig {
     rateLimiter?: RateLimiter;
 }
 
-export class MarketIntelligenceService extends Service {
+export class MarketIntelligenceService {
     private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
-    protected runtime?: IAgentRuntime;
 
     constructor(config: MarketIntelligenceConfig = {}) {
-        super();
         this.cacheManager = config.cacheManager;
         this.rateLimiter = config.rateLimiter;
-    }
-
-    static override get serviceType(): ServiceType {
-        return "nft_market_intelligence" as ServiceType;
-    }
-
-    override async initialize(runtime: IAgentRuntime): Promise<void> {
-        this.runtime = runtime;
     }
 
     async getMarketIntelligence(address: string): Promise<MarketData> {

@@ -1,4 +1,3 @@
-import { Service, IAgentRuntime, ServiceType } from "@elizaos/core";
 import pRetry from "p-retry";
 import pQueue from "p-queue";
 import { PerformanceMonitor } from "../utils/performance";
@@ -10,7 +9,8 @@ import {
 } from "../utils/error-handler";
 import { MemoryCacheManager } from "./cache-manager";
 import { RateLimiter } from "./rate-limiter";
-import { NFTCollection } from "../types";
+import { MarketStats, NFTCollection } from "../types";
+import { IAgentRuntime } from "@elizaos/core";
 
 interface ReservoirServiceConfig {
     cacheManager?: MemoryCacheManager;
@@ -20,8 +20,7 @@ interface ReservoirServiceConfig {
     batchSize?: number;
 }
 
-export class ReservoirService extends Service {
-    private apiKey: string;
+export class ReservoirService {
     private cacheManager?: MemoryCacheManager;
     private rateLimiter?: RateLimiter;
     private queue: pQueue;
@@ -29,11 +28,8 @@ export class ReservoirService extends Service {
     private batchSize: number;
     private performanceMonitor: PerformanceMonitor;
     private errorHandler: ErrorHandler;
-    protected runtime?: IAgentRuntime;
 
-    constructor(apiKey: string, config: ReservoirServiceConfig = {}) {
-        super();
-        this.apiKey = apiKey;
+    constructor(config: ReservoirServiceConfig = {}) {
         this.cacheManager = config.cacheManager;
         this.rateLimiter = config.rateLimiter;
         this.queue = new pQueue({ concurrency: config.maxConcurrent || 5 });
@@ -43,21 +39,11 @@ export class ReservoirService extends Service {
         this.errorHandler = ErrorHandler.getInstance();
     }
 
-    static override get serviceType(): ServiceType {
-        return "nft" as ServiceType;
-    }
-
-    override async initialize(runtime: IAgentRuntime): Promise<void> {
-        this.runtime = runtime;
-        if (!this.apiKey) {
-            throw new Error("Reservoir API key is required");
-        }
-    }
-
     async makeRequest<T>(
         endpoint: string,
         params: Record<string, any> = {},
-        priority: number = 0
+        priority: number = 0,
+        runtime: IAgentRuntime
     ): Promise<T> {
         const endOperation = this.performanceMonitor.startOperation(
             "makeRequest",
@@ -84,6 +70,7 @@ export class ReservoirService extends Service {
             if (this.rateLimiter) {
                 await this.rateLimiter.consume("reservoir", 1);
             }
+            const reservoirApiKey = runtime.getSetting("RESERVOIR_API_KEY");
 
             // Make the request with retries
             const result = await this.queue.add(
@@ -96,7 +83,7 @@ export class ReservoirService extends Service {
                                 ).toString()}`,
                                 {
                                     headers: {
-                                        "x-api-key": this.apiKey,
+                                        "x-api-key": reservoirApiKey,
                                     },
                                 }
                             );
@@ -152,7 +139,10 @@ export class ReservoirService extends Service {
         }
     }
 
-    async getTopCollections(limit: number = 10): Promise<NFTCollection[]> {
+    async getTopCollections(
+        runtime: IAgentRuntime,
+        limit: number = 10
+    ): Promise<NFTCollection[]> {
         const endOperation = this.performanceMonitor.startOperation(
             "getTopCollections",
             { limit }
@@ -175,7 +165,8 @@ export class ReservoirService extends Service {
                             offset,
                             sortBy: "volume24h",
                         },
-                        1
+                        1,
+                        runtime
                     )
                 );
             }
@@ -224,5 +215,104 @@ export class ReservoirService extends Service {
             this.errorHandler.handleError(nftError);
             throw error;
         }
+    }
+
+    async getMarketStats(): Promise<MarketStats> {
+        return Promise.resolve({} as MarketStats);
+    }
+
+    async getCollectionActivity(collectionAddress: string): Promise<any> {
+        return Promise.resolve(null);
+    }
+
+    async getCollectionTokens(collectionAddress: string): Promise<any> {
+        return Promise.resolve(null);
+    }
+
+    async getCollectionAttributes(collectionAddress: string): Promise<any> {
+        return Promise.resolve(null);
+    }
+
+    async getFloorListings(options: {
+        collection: string;
+        limit: number;
+        sortBy: "price" | "rarity";
+    }): Promise<
+        Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>
+    > {
+        return Promise.resolve([]);
+    }
+
+    async executeBuy(options: {
+        listings: Array<{
+            tokenId: string;
+            price: number;
+            seller: string;
+            marketplace: string;
+        }>;
+        taker: string;
+    }): Promise<{
+        path: string;
+        steps: Array<{
+            action: string;
+            status: string;
+        }>;
+    }> {
+        return Promise.resolve({
+            path: "",
+            steps: [],
+        });
+    }
+
+    async createListing(options: {
+        tokenId: string;
+        collectionAddress: string;
+        price: number;
+        expirationTime?: number; // Unix timestamp
+        marketplace: "ikigailabs";
+        currency?: string; // Default to ETH
+        quantity?: number; // Default to 1 for ERC721
+    }): Promise<{
+        listingId: string;
+        status: string;
+        transactionHash?: string;
+        marketplaceUrl: string;
+    }> {
+        return Promise.resolve({
+            listingId: "",
+            status: "",
+            transactionHash: undefined,
+            marketplaceUrl: "",
+        });
+    }
+
+    async cancelListing(options: {
+        listingId: string;
+        marketplace: "ikigailabs";
+    }): Promise<{
+        status: string;
+        transactionHash?: string;
+    }> {
+        return Promise.resolve({
+            status: "",
+            transactionHash: undefined,
+        });
+    }
+
+    async getOwnedNFTs(owner: string): Promise<
+        Array<{
+            tokenId: string;
+            collectionAddress: string;
+            name: string;
+            imageUrl?: string;
+            attributes?: Record<string, string>;
+        }>
+    > {
+        return Promise.resolve([]);
     }
 }
