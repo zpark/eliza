@@ -39,10 +39,13 @@ export const getCollectionsAction = (
                 });
                 return true;
             } catch (error) {
-                console.error("Error fetching NFT collections:", error);
+                const errorMessage = error instanceof Error 
+                    ? `Failed to fetch NFT collections: ${error.message}`
+                    : "An unexpected error occurred while fetching NFT collections.";
+                console.error(errorMessage);
                 await runtime.messageManager.createMemory({
                     id: message.id,
-                    content: { text: "Failed to fetch NFT collection data." },
+                    content: { text: errorMessage },
                     roomId: message.roomId,
                     userId: message.userId,
                     agentId: runtime.agentId,
