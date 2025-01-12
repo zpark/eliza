@@ -212,15 +212,18 @@ export async function sendTweet(
                 })
             );
         }
+
+        const cleanChunk = deduplicateMentions(chunk.trim())
+
         const result = await client.requestQueue.add(async () =>
             isLongTweet
                 ? client.twitterClient.sendLongTweet(
-                      chunk.trim(),
+                      cleanChunk,
                       previousTweetId,
                       mediaData
                   )
                 : client.twitterClient.sendTweet(
-                      chunk.trim(),
+                      cleanChunk,
                       previousTweetId,
                       mediaData
                   )
@@ -395,6 +398,33 @@ function splitSentencesAndWords(text: string, maxLength: number): string[] {
     }
 
     return chunks;
+}
+
+function deduplicateMentions(paragraph: string) {
+    // Regex to match mentions at the beginning of the string
+  const mentionRegex = /^@(\w+)(?:\s+@(\w+))*(\s+|$)/;
+
+  // Find all matches
+  const matches = paragraph.match(mentionRegex);
+
+  if (!matches) {
+    return paragraph; // If no matches, return the original string
+  }
+
+  // Extract mentions from the match groups
+  let mentions = matches.slice(1).filter(Boolean) as string[];
+
+  // Deduplicate mentions
+  mentions = [...new Set(mentions)];
+
+  // Reconstruct the string with deduplicated mentions
+  const uniqueMentionsString = `@${mentions.join(' ')}`;
+
+  // Find where the mentions end in the original string
+  const endOfMentions = paragraph.indexOf(matches[0]) + matches[0].length;
+
+  // Construct the result by combining unique mentions with the rest of the string
+  return uniqueMentionsString + paragraph.slice(endOfMentions);
 }
 
 function restoreUrls(
