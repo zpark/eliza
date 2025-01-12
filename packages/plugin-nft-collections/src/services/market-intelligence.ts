@@ -1,4 +1,4 @@
-import { Service, IAgentRuntime, ServiceType } from "@ai16z/eliza";
+import { Service, IAgentRuntime, ServiceType } from "@elizaos/core";
 import { MemoryCacheManager } from "./cache-manager";
 import { RateLimiter } from "./rate-limiter";
 import { MarketData } from "../utils/validation";

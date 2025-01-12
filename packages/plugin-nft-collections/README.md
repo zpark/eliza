@@ -103,7 +103,7 @@ RESERVOIR_API_KEY=your-reservoir-api-key
 ### Optional Configuration
 
 ```typescript
-import { NFTCollectionsPlugin } from "@ai16z/plugin-nft-collections";
+import { NFTCollectionsPlugin } from "@elizaos/plugin-nft-collections";
 
 const plugin = new NFTCollectionsPlugin({
     caching: {

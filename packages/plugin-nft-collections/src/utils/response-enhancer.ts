@@ -1,4 +1,4 @@
-import { State } from "@ai16z/eliza";
+import { State } from "@elizaos/core";
 import { NFTKnowledge } from "../types";
 
 export function enhanceResponse(response: string, state: State): string {

@@ -1,6 +1,6 @@
-import { Service, ServiceType } from "@ai16z/eliza";
+import { Service, ServiceType } from "@elizaos/core";
 
-declare module "@ai16z/eliza" {
+declare module "@elizaos/core" {
     interface ServiceTypeMap {
         nft: Service & NFTService;
         nft_market_intelligence: Service & MarketIntelligenceService;

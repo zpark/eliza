@@ -1,4 +1,4 @@
-import { Action, IAgentRuntime, Memory, State } from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory, State } from "@elizaos/core";
 import { NFTService } from "../types";
 
 // Helper function to extract NFT details from the message

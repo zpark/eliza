@@ -3,7 +3,7 @@ import {
     type IAgentRuntime,
     type Memory,
     type Service,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import type {
     NFTCollection,
     MarketIntelligence,

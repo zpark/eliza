@@ -1,4 +1,4 @@
-import { Service, IAgentRuntime, ServiceType } from "@ai16z/eliza";
+import { Service, IAgentRuntime, ServiceType } from "@elizaos/core";
 import pRetry from "p-retry";
 import pQueue from "p-queue";
 import { PerformanceMonitor } from "../utils/performance";

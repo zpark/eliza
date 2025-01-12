@@ -1,9 +1,5 @@
-import { Service } from "@ai16z/eliza";
-import {
-    IAgentRuntime,
-    ServiceType,
-    INFTCollectionsService,
-} from "@ai16z/eliza";
+import { Service } from "@elizaos/core";
+import { IAgentRuntime } from "@elizaos/core";
 
 import { ReservoirService } from "./reservoir";
 import { MarketIntelligenceService } from "./market-intelligence";
@@ -11,7 +7,7 @@ import { SocialAnalyticsService } from "./social-analytics";
 import { MemoryCacheManager } from "./cache-manager";
 import { RateLimiter } from "./rate-limiter";
 import { nftCollectionProvider } from "../providers/nft-collections";
-import { Memory } from "@ai16z/eliza";
+import { Memory } from "@elizaos/core";
 
 interface Config {
     caching?: {
@@ -31,10 +27,7 @@ interface Config {
     batchSize: number;
 }
 
-export class NFTCollectionsService
-    extends Service
-    implements INFTCollectionsService
-{
+export class NFTCollectionsService extends Service {
     // static serviceType: ServiceType = "nft_collections";
 
     private reservoirService?: ReservoirService;

@@ -1,4 +1,4 @@
-import { Service, ServiceType } from "@ai16z/eliza";
+import { Service, ServiceType } from "@elizaos/core";
 
 interface CoinGeckoNFTData {
     id: string;

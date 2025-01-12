@@ -1,4 +1,4 @@
-import { Action, IAgentRuntime, Memory } from "@ai16z/eliza";
+import { Action, IAgentRuntime, Memory } from "@elizaos/core";
 import { nftCollectionProvider } from "../providers/nft-collections";
 
 export const getCollectionsAction: Action = {
