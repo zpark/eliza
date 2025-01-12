@@ -1,17 +1,22 @@
 import {
     Service,
-    IWebSearchService,
-    ServiceType,
     IAgentRuntime,
-    SearchResponse,
-    SearchOptions,
 } from "@elizaos/core";
 import { tavily } from "@tavily/core";
+import { IWebSearchService, SearchOptions, SearchResponse } from "../types";
+
+export type TavilyClient = ReturnType<typeof tavily>; // declaring manually because orginal package does not export its types
 
 export class WebSearchService extends Service implements IWebSearchService {
-    static serviceType: ServiceType = ServiceType.WEB_SEARCH;
+    public tavilyClient: TavilyClient
 
-    async initialize(_runtime: IAgentRuntime): Promise<void> {}
+    async initialize(_runtime: IAgentRuntime): Promise<void> {
+        const apiKey = _runtime.getSetting("TAVILY_API_KEY") as string;
+        if (!apiKey) {
+            throw new Error("TAVILY_API_KEY is not set");
+        }
+        this.tavilyClient = tavily({ apiKey });
+    }
 
     getInstance(): IWebSearchService {
         return WebSearchService.getInstance();
@@ -19,17 +24,10 @@ export class WebSearchService extends Service implements IWebSearchService {
 
     async search(
         query: string,
-        runtime: IAgentRuntime,
         options?: SearchOptions,
     ): Promise<SearchResponse> {
         try {
-            const apiKey = runtime.getSetting("TAVILY_API_KEY") as string;
-            if (!apiKey) {
-                throw new Error("TAVILY_API_KEY is not set");
-            }
-
-            const tvly = tavily({ apiKey });
-            const response = await tvly.search(query, {
+            const response = await this.tavilyClient.search(query, {
                 includeAnswer: options?.includeAnswer || true,
                 maxResults: options?.limit || 3,
                 topic: options?.type || "general",

@@ -41,7 +41,6 @@ import {
     ModelClass,
     ModelProviderName,
     ServiceType,
-    SearchResponse,
     ActionResponse,
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
@@ -49,8 +48,6 @@ import {
     //VerifiableInferenceProvider,
     TelemetrySettings,
     TokenizerType,
-    IWebSearchService,
-    SearchOptions,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
 
@@ -1725,31 +1722,6 @@ export const generateCaption = async (
     };
 };
 
-export const generateWebSearch = async (
-    data: {
-        query: string
-        options?: SearchOptions
-    },
-    runtime: IAgentRuntime
-): Promise<SearchResponse> => {
-    try {
-        const { query, options } = data;
-        const webSearchService =
-        runtime.getService<IWebSearchService>(
-            ServiceType.WEB_SEARCH
-        );
-
-        if (!webSearchService) {
-            throw new Error("Web search service not found");
-        }
-
-        const response = await webSearchService.search(query, runtime, options);
-        return response;
-
-    } catch (error) {
-        elizaLogger.error("Error:", error);
-    }
-};
 /**
  * Configuration options for generating objects with a model.
  */
