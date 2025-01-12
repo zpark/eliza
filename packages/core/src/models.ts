@@ -276,7 +276,7 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.MEDIUM]: {
-                name: "meta-llama-3.1-8b-instruct",
+                name: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo-128K",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
