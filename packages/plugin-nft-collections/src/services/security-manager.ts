@@ -43,7 +43,11 @@ export class SecurityManager {
         let decrypted = decipher.update(data, "hex", "utf8");
         decrypted += decipher.final("utf8");
 
-        return JSON.parse(decrypted);
+        try {
+            return JSON.parse(decrypted);
+        } catch (error) {
+            throw new Error('Failed to decrypt or parse data');
+        }
     }
 
     hashData(data: string): string {
