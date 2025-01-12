@@ -88,7 +88,7 @@ A powerful plugin for interacting with NFT collections, providing comprehensive 
 ### Installation
 
 ```bash
-pnpm add @ai16z/plugin-nft-collections
+pnpm add @elizaos/plugin-nft-collections
 ```
 
 ## Configuration
