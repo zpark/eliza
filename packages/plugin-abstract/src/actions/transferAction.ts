@@ -77,6 +77,8 @@ Given the recent messages, extract the following information about the requested
 - Amount to transfer
 - Whether to use Abstract Global Wallet aka AGW
 
+If the user does not specify "global wallet" or "AGW" in their message, set useAGW to false.
+
 Respond with a JSON markdown block containing only the extracted values.`;
 
 export const transferAction: Action = {
