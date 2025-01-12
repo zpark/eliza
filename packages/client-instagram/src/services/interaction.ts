@@ -142,7 +142,7 @@ import { InstagramState } from "../types";
         elizaLogger.log("Checking Instagram interactions");
 
         const ig = getIgClient();
-        const activity = await ig.feed.accountActivity().items();
+        const activity = await ig.feed.news().items();
 
         for (const item of activity) {
           const activityId = `instagram-activity-${item.pk}`;

@@ -1,5 +1,5 @@
 // src/services/post.ts
-import { IAgentRuntime, ModelClass, composeContext, elizaLogger, generateText, getEmbeddingZeroVector, stringToUuid } from "@elizaos/core";
+import { IAgentRuntime, ModelClass, composeContext, elizaLogger, generateImage, generateText, getEmbeddingZeroVector, stringToUuid } from "@elizaos/core";
 import { promises as fs } from 'fs';
 import path, { dirname } from "path";
 import sharp from 'sharp';
@@ -193,11 +193,42 @@ export class InstagramPostService {
 
   // Placeholder - implement actual image generation/selection
   private async getOrGenerateImage(content: string): Promise<string> {
-    // This should be implemented based on your image generation strategy
-    // Could use DALL-E, Stable Diffusion, or select from a preset collection
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    return path.resolve(__dirname, '../assets/goku.png');
+    try {
+      elizaLogger.log("Generating image for Instagram post");
+
+      const result = await generateImage({
+        prompt: content,
+        width: 1024,
+        height: 1024,
+        count: 1,
+        numIterations: 50,
+        guidanceScale: 7.5
+      }, this.runtime);
+
+      if (!result.success || !result.data || result.data.length === 0) {
+        throw new Error("Failed to generate image: " + (result.error || "No image data returned"));
+      }
+
+      // Save the base64 image to a temporary file
+      const imageData = result.data[0].replace(/^data:image\/\w+;base64,/, '');
+      const tempDir = path.resolve(process.cwd(), 'temp');
+      await fs.mkdir(tempDir, { recursive: true });
+      const tempFile = path.join(tempDir, `instagram-post-${Date.now()}.png`);
+      await fs.writeFile(tempFile, Buffer.from(imageData, 'base64'));
+
+      return tempFile;
+    } catch (error) {
+      elizaLogger.error("Error generating image:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        phase: 'getOrGenerateImage'
+      });
+
+      // Fallback to default image if generation fails
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      return path.resolve(__dirname, '../assets/goku.png');
+    }
   }
 
   async createPost(options: PostOptions) {
