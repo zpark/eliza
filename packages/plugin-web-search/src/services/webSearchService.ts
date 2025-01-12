@@ -1,6 +1,7 @@
 import {
     Service,
     IAgentRuntime,
+    ServiceType,
 } from "@elizaos/core";
 import { tavily } from "@tavily/core";
 import { IWebSearchService, SearchOptions, SearchResponse } from "../types";
@@ -20,6 +21,10 @@ export class WebSearchService extends Service implements IWebSearchService {
 
     getInstance(): IWebSearchService {
         return WebSearchService.getInstance();
+    }
+
+    static get serviceType(): ServiceType {
+        return ServiceType.WEB_SEARCH;
     }
 
     async search(

@@ -1409,6 +1409,7 @@ export enum ServiceType {
     IRYS = "irys",
     TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
+    WEB_SEARCH = "web_search",
 }
 
 export enum LoggingLevel {
