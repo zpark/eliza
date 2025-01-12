@@ -69,15 +69,16 @@ Example response:
 }
 \`\`\`
 
-{{recentMessages}}
+User message:
+"{{currentMessage}}"
 
-Given the recent messages, extract the following information about the requested token transfer:
+Given the message, extract the following information about the requested token transfer:
 - Token contract address
 - Recipient wallet address
 - Amount to transfer
 - Whether to use Abstract Global Wallet aka AGW
 
-If the user does not specify "global wallet" or "AGW" in their message, set useAGW to false.
+If the user did not specify "global wallet", "AGW", "agw", or "abstract global wallet" in their message, set useAGW to false, otherwise set it to true.
 
 Respond with a JSON markdown block containing only the extracted values.`;
 
@@ -114,6 +115,7 @@ export const transferAction: Action = {
         }
 
         // Compose transfer context
+        state.currentMessage = `${state.recentMessagesData[1].content.text}`;
         const transferContext = composeContext({
             state,
             template: transferTemplate,
