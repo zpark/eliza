@@ -1,5 +1,6 @@
 import { Action, IAgentRuntime, Memory, State } from "@elizaos/core";
 import { ReservoirService } from "../services/reservoir";
+import { HandlerCallback } from "@elizaos/core";
 
 // Helper function to extract NFT details from the message
 function extractNFTDetails(text: string): {
@@ -34,7 +35,9 @@ export const sweepFloorAction = (nftService: ReservoirService): Action => {
         handler: async (
             runtime: IAgentRuntime,
             message: Memory,
-            state?: State
+            state: State,
+            options: any,
+            callback: HandlerCallback
         ) => {
             try {
                 const { collectionAddress, quantity } = extractNFTDetails(
@@ -80,7 +83,9 @@ export const sweepFloorAction = (nftService: ReservoirService): Action => {
                     `• Average Price: ${(totalPrice / quantity).toFixed(4)} ETH\n` +
                     `• Transaction Path: ${result.path}\n` +
                     `• Status: ${result.steps.map((step) => `${step.action} - ${step.status}`).join(", ")}`;
-
+                callback({
+                    text: response,
+                });
                 await runtime.messageManager.createMemory({
                     id: message.id,
                     content: { text: response },
