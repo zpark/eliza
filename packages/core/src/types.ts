@@ -261,6 +261,7 @@ export enum ModelProviderName {
     NINETEEN_AI = "nineteen_ai",
     AKASH_CHAT_API = "akash_chat_api",
     LIVEPEER = "livepeer",
+    LETZAI = "letzai",
     DEEPSEEK="deepseek",
     INFERA="infera"
 }
@@ -647,6 +648,7 @@ export enum Clients {
     LENS = "lens",
     AUTO = "auto",
     SLACK = "slack",
+    GITHUB = "github",
 }
 
 export interface IAgentConfig {
@@ -871,6 +873,8 @@ export type Character = {
     nft?: {
         prompt: string;
     };
+    /**Optinal Parent characters to inherit information from */
+    extends?: string[];
 };
 
 /**
@@ -1477,7 +1481,9 @@ export interface ISlackService extends Service {
  * Available verifiable inference providers
  */
 export enum VerifiableInferenceProvider {
+    RECLAIM = "reclaim",
     OPACITY = "opacity",
+    PRIMUS = "primus",
 }
 
 /**

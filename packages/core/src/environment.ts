@@ -135,6 +135,7 @@ export const CharacterSchema = z.object({
             prompt: z.string().optional(),
         })
         .optional(),
+    extends: z.array(z.string()).optional(),
 });
 
 // Type inference

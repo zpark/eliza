@@ -413,7 +413,6 @@ export async function generateText({
             case ModelProviderName.HYPERBOLIC:
             case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
-            case ModelProviderName.TOGETHER:
             case ModelProviderName.AKASH_CHAT_API: {
                 elizaLogger.debug("Initializing OpenAI model with Cloudflare check");
                 const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || endpoint;
@@ -1947,7 +1946,7 @@ async function handleOpenAI({
     schemaDescription,
     mode = "json",
     modelOptions,
-    provider,
+    provider: _provider,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || models.openai.endpoint;
