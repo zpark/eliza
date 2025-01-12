@@ -1328,6 +1328,23 @@ export interface IPdfService extends Service {
     convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
 
+export interface IWebSearchService extends Service {
+    search(
+        query: string,
+        runtime: IAgentRuntime,
+        options?: SearchOptions,
+    ): Promise<SearchResponse>;
+}
+
+export interface SearchOptions {
+    limit?: number;
+    type?: "news" | "general";
+    includeAnswer?: boolean;
+    searchDepth?: "basic" | "advanced";
+    includeImages?: boolean;
+    days?: number; // 1 means current day, 2 means last 2 days
+}
+
 export interface IAwsS3Service extends Service {
     uploadFile(
         imagePath: string,
@@ -1431,6 +1448,7 @@ export enum ServiceType {
     IRYS = "irys",
     TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
+    WEB_SEARCH = "web_search",
 }
 
 export enum LoggingLevel {
