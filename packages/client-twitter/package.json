@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/client-twitter",
-    "version": "0.1.7",
+    "version": "0.1.8+build.1",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -22,7 +22,8 @@
         "@elizaos/core": "workspace:*",
         "agent-twitter-client": "0.0.18",
         "glob": "11.0.0",
-        "zod": "3.23.8"
+        "zod": "3.23.8",
+        "discord.js": "14.16.3"
     },
     "devDependencies": {
         "tsup": "8.3.5",

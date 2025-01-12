@@ -771,6 +771,9 @@ Example interactions:
 User: "What is the predicted ETH price in 5 minutes?"
 Agent: "I'll get the inference now..."
 Agent: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 13): 3393.364326646801085508"
+```
+
+For detailed information and additional implementation examples, please refer to the [Allora-Eliza integration docs](https://docs.allora.network/marketplace/integrations/eliza-os).
 
 ### Writing Custom Plugins
 

@@ -87,6 +87,9 @@ export class TypeScriptParser {
         let endLine: number | null = null;
         let actionNameStartLine: number | null = null;
 
+        // write ast to json file
+        // fs.writeFileSync("ast.json", JSON.stringify(ast, null, 2));
+
         const findActionTypeAnnotation = (node: any) => {
             // Look for Action type annotation
             if (

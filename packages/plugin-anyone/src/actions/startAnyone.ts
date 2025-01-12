@@ -6,7 +6,6 @@ import {
     State,
     type Action,
 } from "@elizaos/core";
-import axios from "axios";
 import { AnyoneClientService } from "../services/AnyoneClientService";
 import { AnyoneProxyService } from "../services/AnyoneProxyService";
 
@@ -25,7 +24,8 @@ export const startAnyone: Action = {
         _callback: HandlerCallback
     ): Promise<boolean> => {
         await AnyoneClientService.initialize();
-        const anon = AnyoneClientService.getInstance();
+        //lint says unused
+        //const anon = AnyoneClientService.getInstance();
         const proxyService = AnyoneProxyService.getInstance();
         await proxyService.initialize();
 
