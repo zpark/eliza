@@ -72,12 +72,7 @@ export class ReservoirService {
                 await this.rateLimiter.consume("reservoir", 1);
             }
             const reservoirApiKey = runtime.getSetting("RESERVOIR_API_KEY");
-            console.log(
-                "########################################################################################################################",
-                `https://api.reservoir.tools${endpoint}?${new URLSearchParams(
-                    params
-                ).toString()}`
-            );
+
             // Make the request with retries
             const result = await pRetry(
                 async () => {
