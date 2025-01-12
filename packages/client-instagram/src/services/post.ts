@@ -1,6 +1,9 @@
 // src/services/post.ts
 import { IAgentRuntime, ModelClass, composeContext, elizaLogger, generateText, getEmbeddingZeroVector, stringToUuid } from "@elizaos/core";
+import { promises as fs } from 'fs';
+import path, { dirname } from "path";
 import sharp from 'sharp';
+import { fileURLToPath } from 'url';
 import { getIgClient } from "../lib/state";
 import { InstagramState } from "../types";
 
@@ -155,7 +158,6 @@ export class InstagramPostService {
       }
 
       // For Instagram, we need to generate or get an image
-      // This is a placeholder - you'll need to implement image generation/selection
       const mediaUrl = await this.getOrGenerateImage(cleanedContent);
 
       await this.createPost({
@@ -181,7 +183,11 @@ export class InstagramPostService {
       });
 
     } catch (error) {
-      elizaLogger.error("Error generating Instagram post:", error);
+      elizaLogger.error("Error generating Instagram post:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        phase: 'generateNewPost'
+      });
     }
   }
 
@@ -189,14 +195,19 @@ export class InstagramPostService {
   private async getOrGenerateImage(content: string): Promise<string> {
     // This should be implemented based on your image generation strategy
     // Could use DALL-E, Stable Diffusion, or select from a preset collection
-    return "path/to/default/image.jpg";
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    return path.resolve(__dirname, '../assets/goku.png');
   }
 
   async createPost(options: PostOptions) {
     const ig = getIgClient();
 
     try {
-      elizaLogger.log("Creating Instagram post");
+      elizaLogger.log("Creating Instagram post", {
+        mediaCount: options.media.length,
+        hasCaption: !!options.caption
+      });
 
       // Process media
       const processedMedia = await Promise.all(
@@ -224,7 +235,8 @@ export class InstagramPostService {
         if (media.type === 'VIDEO') {
           await ig.publish.video({
             video: media.buffer,
-            caption: options.caption
+            caption: options.caption,
+            coverImage: media.buffer
           });
         } else {
           await ig.publish.photo({
@@ -242,16 +254,23 @@ export class InstagramPostService {
 
       elizaLogger.log("Instagram post created successfully");
     } catch (error) {
-      elizaLogger.error("Error creating Instagram post:", error);
+      elizaLogger.error("Error creating Instagram post:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        phase: 'createPost',
+        mediaCount: options.media.length,
+        hasCaption: !!options.caption
+      });
       throw error;
     }
   }
 
   private async processMedia(media: { type: string; url: string }): Promise<Buffer> {
     try {
-      const response = await fetch(media.url);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      elizaLogger.log("Processing media", { type: media.type, url: media.url });
+
+      // Read file directly from filesystem instead of using fetch
+      const buffer = await fs.readFile(media.url);
 
       if (media.type === 'IMAGE') {
         // Process image with sharp
@@ -270,7 +289,13 @@ export class InstagramPostService {
       // For other types, return original buffer
       return buffer;
     } catch (error) {
-      elizaLogger.error("Error processing media:", error);
+      elizaLogger.error("Error processing media:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        phase: 'processMedia',
+        mediaType: media.type,
+        url: media.url
+      });
       throw error;
     }
   }

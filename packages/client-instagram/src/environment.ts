@@ -4,9 +4,9 @@ import {
 } from "@elizaos/core";
 import { z } from "zod";
 
-export const DEFAULT_POST_INTERVAL_MIN = 90; // 1.5 hours
-export const DEFAULT_POST_INTERVAL_MAX = 180; // 3 hours
-export const DEFAULT_ACTION_INTERVAL = 5; // 5 minutes
+export const DEFAULT_POST_INTERVAL_MIN = 1;
+export const DEFAULT_POST_INTERVAL_MAX = 2;
+export const DEFAULT_ACTION_INTERVAL = 5;
 export const DEFAULT_MAX_ACTIONS = 1;
 export const DEFAULT_RETRY_LIMIT = 5;
 
