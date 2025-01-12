@@ -1,3 +1,5 @@
+import { State } from "@elizaos/core";
+import { HandlerCallback } from "@elizaos/core";
 import { Action, IAgentRuntime, Memory, Provider } from "@elizaos/core";
 
 export const getCollectionsAction = (
@@ -13,12 +15,21 @@ export const getCollectionsAction = (
                 .toLowerCase()
                 .includes("nft collections");
         },
-        handler: async (runtime: IAgentRuntime, message: Memory) => {
+        handler: async (
+            runtime: IAgentRuntime,
+            message: Memory,
+            state: State,
+            options: any,
+            callback: HandlerCallback
+        ) => {
             try {
                 const response = await nftCollectionProvider.get(
                     runtime,
                     message
                 );
+                callback({
+                    text: response,
+                });
                 await runtime.messageManager.createMemory({
                     id: message.id,
                     content: { text: response },
