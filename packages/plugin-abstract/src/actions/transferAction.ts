@@ -15,16 +15,20 @@ import { validateAbstractConfig } from "../environment";
 
 import {
     Address,
-    createWalletClient,
     erc20Abi,
     http,
     parseEther,
     isAddress,
     parseUnits,
     createPublicClient,
+    WalletClient,
 } from "viem";
 import { abstractTestnet, mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
+import {
+    createAbstractClient,
+    AbstractClient,
+} from "@abstract-foundation/agw-client";
 import { z } from "zod";
 import { ValidateContext } from "../utils";
 import { ETH_ADDRESS, ERC20_OVERRIDE_INFO } from "../constants";
@@ -39,12 +43,14 @@ const TransferSchema = z.object({
     tokenAddress: z.string(),
     recipient: z.string(),
     amount: z.string(),
+    useAGW: z.boolean(),
 });
 
 export interface TransferContent extends Content {
     tokenAddress: string;
     recipient: string;
     amount: string | number;
+    useAGW: boolean;
 }
 
 const transferTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
@@ -58,7 +64,8 @@ Example response:
 {
     "tokenAddress": "0x5A7d6b2F92C77FAD6CCaBd7EE0624E64907Eaf3E",
     "recipient": "0xCCa8009f5e09F8C5dB63cb0031052F9CB635Af62",
-    "amount": "1000"
+    "amount": "1000",
+    "useAGW": true
 }
 \`\`\`
 
@@ -68,6 +75,7 @@ Given the recent messages, extract the following information about the requested
 - Token contract address
 - Recipient wallet address
 - Amount to transfer
+- Whether to use Abstract Global Wallet aka AGW
 
 Respond with a JSON markdown block containing only the extracted values.`;
 
@@ -150,7 +158,16 @@ export const transferAction: Action = {
 
         try {
             const account = useGetAccount(runtime);
-            const walletClient = useGetWalletClient();
+            let walletClient: AbstractClient | WalletClient;
+
+            if (content.useAGW) {
+                walletClient = await createAbstractClient({
+                    chain: abstractTestnet,
+                    signer: account,
+                });
+            } else {
+                walletClient = useGetWalletClient();
+            }
 
             let hash;
 
@@ -230,6 +247,27 @@ export const transferAction: Action = {
                 user: "{{agent}}",
                 content: {
                     text: "Successfully sent 0.01 ETH to 0x114B242D931B47D5cDcEe7AF065856f70ee278C4\nTransaction: 0xdde850f9257365fffffc11324726ebdcf5b90b01c6eec9b3e7ab3e81fde6f14b",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Send 0.01 ETH to 0x114B242D931B47D5cDcEe7AF065856f70ee278C4 using your abstract global wallet",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "Sure, I'll send 0.01 ETH to that address now using my AGW.",
+                    action: "SEND_TOKEN",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "Successfully sent 0.01 ETH to 0x114B242D931B47D5cDcEe7AF065856f70ee278C4\nTransaction: 0xdde850f9257365fffffc11324726ebdcf5b90b01c6eec9b3e7ab3e81fde6f14b using my AGW",
                 },
             },
         ],
