@@ -66,6 +66,96 @@ export const getCollectionsAction = (
                     },
                 },
             ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "Can you show me a list of NFT collections?",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Sure! Here are some curated NFT collections on Ethereum:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "Do you know the best NFT collections?",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Absolutely! Here's a list of top NFT collections on Ethereum:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "Can you fetch Ethereum NFT collections for me?",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Of course! Fetching NFT collections on Ethereum:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "I'm curious about NFTs. What are some collections I should look into?",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Here are some NFT collections you might find interesting:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "Tell me about the trending Ethereum NFT collections.",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Here's information on trending Ethereum NFT collections:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
+            [
+                {
+                    user: "{{user1}}",
+                    content: {
+                        text: "What are some cool NFT collections right now?",
+                    },
+                },
+                {
+                    user: "{{user2}}",
+                    content: {
+                        text: "Let me show you some popular NFT collections:",
+                        action: "GET_NFT_COLLECTIONS",
+                    },
+                },
+            ],
         ],
     };
 };
