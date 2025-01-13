@@ -73,7 +73,7 @@ export const FarcasterClientInterface: Client = {
 
         // Start all services
         await manager.start();
-
+        runtime.clients.farcaster = manager;
         return manager;
     },
 
@@ -81,7 +81,9 @@ export const FarcasterClientInterface: Client = {
         try {
             // stop it
             elizaLogger.log("Stopping farcaster client", runtime.agentId);
-            await runtime.clients.farcaster.stop();
+            if (runtime.clients.farcaster) {
+                await runtime.clients.farcaster.stop();
+            }
         } catch (e) {
             elizaLogger.error("client-farcaster interface stop error", e);
         }

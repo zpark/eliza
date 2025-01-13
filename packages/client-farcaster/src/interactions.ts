@@ -56,7 +56,11 @@ export class FarcasterInteractionManager {
     }
 
     private async handleInteractions() {
-        const agentFid = this.client.farcasterConfig.FARCASTER_FID;
+        const agentFid = this.client.farcasterConfig?.FARCASTER_FID ?? 0;
+        if (!agentFid) {
+            elizaLogger.info("No FID found, skipping interactions");
+            return;
+        }
 
         const mentions = await this.client.getMentions({
             fid: agentFid,
@@ -230,7 +234,7 @@ export class FarcasterInteractionManager {
 
         if (!responseContent.text) return;
 
-        if (this.client.farcasterConfig.FARCASTER_DRY_RUN) {
+        if (this.client.farcasterConfig?.FARCASTER_DRY_RUN) {
             elizaLogger.info(
                 `Dry run: would have responded to cast ${cast.hash} with ${responseContent.text}`
             );
