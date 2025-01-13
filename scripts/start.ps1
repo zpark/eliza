@@ -13,22 +13,38 @@ $CLIENT_PID = $null
 
 # Logging functions
 function Write-CustomError {
-    param($message)
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$message
+    )
     Write-Host "❌ $message" -ForegroundColor Red
 }
 
 function Write-CustomSuccess {
-    param($message)
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$message
+    )
     Write-Host "✅ $message" -ForegroundColor Green
 }
 
 function Write-CustomInfo {
-    param($message)
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$message
+    )
     Write-Host "ℹ️ $message" -ForegroundColor Blue
 }
 
 function Write-CustomVerbose {
-    param($message)
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$message
+    )
     if ($VerbosePreference -eq "Continue") {
         Write-Host "🔍 $message" -ForegroundColor Yellow
     }
