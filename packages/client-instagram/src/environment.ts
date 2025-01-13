@@ -4,11 +4,10 @@ import {
 } from "@elizaos/core";
 import { z } from "zod";
 
-export const DEFAULT_POST_INTERVAL_MIN = 1;
-export const DEFAULT_POST_INTERVAL_MAX = 2;
+export const DEFAULT_POST_INTERVAL_MIN = 60;
+export const DEFAULT_POST_INTERVAL_MAX = 120;
 export const DEFAULT_ACTION_INTERVAL = 5;
 export const DEFAULT_MAX_ACTIONS = 1;
-export const DEFAULT_RETRY_LIMIT = 5;
 
 // Define validation schemas for Instagram usernames and other fields
 const instagramUsernameSchema = z
@@ -36,21 +35,13 @@ export const instagramEnvSchema = z.object({
     INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional(),
 
     // Posting configuration
-    POST_INTERVAL_MIN: z.number().int().default(DEFAULT_POST_INTERVAL_MIN),
-    POST_INTERVAL_MAX: z.number().int().default(DEFAULT_POST_INTERVAL_MAX),
+    INSTAGRAM_POST_INTERVAL_MIN: z.number().int().default(DEFAULT_POST_INTERVAL_MIN),
+    INSTAGRAM_POST_INTERVAL_MAX: z.number().int().default(DEFAULT_POST_INTERVAL_MAX),
 
     // Action processing configuration
-    ENABLE_ACTION_PROCESSING: z.boolean().default(false),
-    ACTION_INTERVAL: z.number().int().default(DEFAULT_ACTION_INTERVAL),
-    MAX_ACTIONS_PROCESSING: z.number().int().default(DEFAULT_MAX_ACTIONS),
-
-    // Retry configuration
-    RETRY_LIMIT: z.number().int().default(DEFAULT_RETRY_LIMIT),
-
-    // Media handling configuration
-    MAX_MEDIA_SIZE_MB: z.number().default(8), // Instagram's default limit
-    SUPPORTED_IMAGE_TYPES: z.array(z.string()).default(['image/jpeg', 'image/png']),
-    SUPPORTED_VIDEO_TYPES: z.array(z.string()).default(['video/mp4']),
+    INSTAGRAM_ENABLE_ACTION_PROCESSING: z.boolean().default(false),
+    INSTAGRAM_ACTION_INTERVAL: z.number().int().default(DEFAULT_ACTION_INTERVAL),
+    INSTAGRAM_MAX_ACTIONS: z.number().int().default(DEFAULT_MAX_ACTIONS),
 });
 
 export type InstagramConfig = z.infer<typeof instagramEnvSchema>;
@@ -84,43 +75,36 @@ export async function validateInstagramConfig(
             INSTAGRAM_BUSINESS_ACCOUNT_ID: runtime.getSetting("INSTAGRAM_BUSINESS_ACCOUNT_ID") ||
                 process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
 
-            POST_INTERVAL_MIN: parseInt(
-                runtime.getSetting("POST_INTERVAL_MIN") ||
-                    process.env.POST_INTERVAL_MIN ||
+            INSTAGRAM_POST_INTERVAL_MIN: parseInt(
+                runtime.getSetting("INSTAGRAM_POST_INTERVAL_MIN") ||
+                    process.env.INSTAGRAM_POST_INTERVAL_MIN ||
                     DEFAULT_POST_INTERVAL_MIN.toString(),
                 10
             ),
 
-            POST_INTERVAL_MAX: parseInt(
-                runtime.getSetting("POST_INTERVAL_MAX") ||
-                    process.env.POST_INTERVAL_MAX ||
+            INSTAGRAM_POST_INTERVAL_MAX: parseInt(
+                runtime.getSetting("INSTAGRAM_POST_INTERVAL_MAX") ||
+                    process.env.INSTAGRAM_POST_INTERVAL_MAX ||
                     DEFAULT_POST_INTERVAL_MAX.toString(),
                 10
             ),
 
-            ENABLE_ACTION_PROCESSING: parseBooleanFromText(
+            INSTAGRAM_ENABLE_ACTION_PROCESSING: parseBooleanFromText(
                 runtime.getSetting("ENABLE_ACTION_PROCESSING") ||
                     process.env.ENABLE_ACTION_PROCESSING
             ) ?? false,
 
-            ACTION_INTERVAL: parseInt(
+            INSTAGRAM_ACTION_INTERVAL: parseInt(
                 runtime.getSetting("ACTION_INTERVAL") ||
                     process.env.ACTION_INTERVAL ||
                     DEFAULT_ACTION_INTERVAL.toString(),
                 10
             ),
 
-            MAX_ACTIONS_PROCESSING: parseInt(
+            INSTAGRAM_MAX_ACTIONS: parseInt(
                 runtime.getSetting("MAX_ACTIONS_PROCESSING") ||
                     process.env.MAX_ACTIONS_PROCESSING ||
                     DEFAULT_MAX_ACTIONS.toString(),
-                10
-            ),
-
-            RETRY_LIMIT: parseInt(
-                runtime.getSetting("RETRY_LIMIT") ||
-                    process.env.RETRY_LIMIT ||
-                    DEFAULT_RETRY_LIMIT.toString(),
                 10
             ),
         };
