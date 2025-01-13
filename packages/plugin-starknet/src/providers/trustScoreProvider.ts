@@ -19,7 +19,7 @@ import {
 } from "@elizaos/plugin-trustdb";
 import { getTokenBalance } from "../utils/index.ts";
 import { TokenProvider } from "./token.ts";
-import { WalletProvider } from "./walletProvider.ts";
+import { WalletProvider } from "./portfolioProvider.ts";
 
 const _Wallet = settings.MAIN_WALLET_ADDRESS;
 interface TradeData {
@@ -136,16 +136,19 @@ export class TrustScoreManager {
                 tokenAddress:
                     processedData.dexScreenerData.pairs[0]?.baseToken.address ||
                     "",
+                symbol: processedData.dexScreenerData.pairs[0]?.baseToken.symbol || "",
+                balance: 0, // TODO: Implement balance check
+                initialMarketCap: processedData.dexScreenerData.pairs[0]?.marketCap || 0,
                 priceChange24h:
-                    processedData.tradeData.price_change_24h_percent,
-                volumeChange24h: processedData.tradeData.volume_24h,
+                    processedData.tradeData.market.priceChangePercentage24h,
+                volumeChange24h: processedData.tradeData.market.starknetVolume24h,
                 trade_24h_change:
-                    processedData.tradeData.trade_24h_change_percent,
+                    processedData.tradeData.market.starknetTradingVolume24h,
                 liquidity:
                     processedData.dexScreenerData.pairs[0]?.liquidity.usd || 0,
                 liquidityChange24h: 0,
                 holderChange24h:
-                    processedData.tradeData.unique_wallet_24h_change_percent,
+                    processedData.tradeData.market.starknetTradingVolume24h,
                 rugPull: false, // TODO: Implement rug pull detection
                 isScam: false, // TODO: Implement scam detection
                 marketCapChange24h: 0, // TODO: Implement market cap change
@@ -289,8 +292,8 @@ export class TrustScoreManager {
     async suspiciousVolume(tokenAddress: string): Promise<boolean> {
         const processedData: ProcessedTokenData =
             await this.tokenProvider.getProcessedTokenData();
-        const unique_wallet_24h = processedData.tradeData.unique_wallet_24h;
-        const volume_24h = processedData.tradeData.volume_24h;
+        const unique_wallet_24h = processedData.tradeData.market.starknetTradingVolume24h;
+        const volume_24h = processedData.tradeData.market.starknetVolume24h;
         const suspiciousVolume = unique_wallet_24h / volume_24h > 0.5;
         elizaLogger.log(
             `Fetched processed token data for token: ${tokenAddress}`
@@ -305,7 +308,13 @@ export class TrustScoreManager {
             `Fetched processed token data for token: ${tokenAddress}`
         );
 
-        return processedData.tradeData.volume_24h_change_percent > 50;
+        // Use starknetTradingVolume24h as a proxy for volume growth
+        const currentVolume = processedData.tradeData.market.starknetTradingVolume24h;
+
+        // Define a growth threshold (e.g., $1M volume as sustained growth)
+        const growthThreshold = 1_000_000;
+
+        return currentVolume > growthThreshold;
     }
 
     async isRapidDump(tokenAddress: string): Promise<boolean> {
@@ -315,7 +324,11 @@ export class TrustScoreManager {
             `Fetched processed token data for token: ${tokenAddress}`
         );
 
-        return processedData.tradeData.trade_24h_change_percent < -50;
+        // Use priceChangePercentage24h as a proxy for rapid dump
+        const priceChange24h = processedData.tradeData.market.priceChangePercentage24h;
+
+        // Consider a rapid dump if the price drops more than 50% in 24 hours
+        return priceChange24h < -50;
     }
 
     async checkTrustScore(tokenAddress: string): Promise<TokenSecurityData> {
@@ -358,15 +371,18 @@ export class TrustScoreManager {
         // TODO: change to starknet
         const wallet = new WalletProvider(runtime);
 
-        const prices = await wallet.fetchPrices(runtime);
-        const solPrice = prices.solana.usd;
-        const buySol = data.buy_amount / parseFloat(solPrice);
-        const buy_value_usd = data.buy_amount * processedData.tradeData.price;
+        const prices = await wallet.getTokenUsdValues();
+        const solPrice = prices.solana?.usd;
+        if (!solPrice) {
+            throw new Error("Unable to fetch Solana price (cryptoName: 'solana').");
+        }
+        const buySol = data.buy_amount / solPrice;
+        const buy_value_usd = data.buy_amount * processedData.tradeData.market.currentPrice;
 
         const creationData = {
             token_address: tokenAddress,
             recommender_id: recommender.id,
-            buy_price: processedData.tradeData.price,
+            buy_price: processedData.tradeData.market.currentPrice,
             sell_price: 0,
             buy_timeStamp: new Date().toISOString(),
             sell_timeStamp: "",
@@ -469,11 +485,14 @@ export class TrustScoreManager {
         // TODO:
         const wallet = new WalletProvider(this.runtime);
 
-        const prices = await wallet.fetchPrices(runtime);
-        const solPrice = prices.solana.usd;
-        const sellSol = sellDetails.sell_amount / parseFloat(solPrice);
+        const prices = await wallet.getTokenUsdValues();
+        const solPrice = prices.solana?.usd;
+        if (!solPrice) {
+            throw new Error("Unable to fetch Solana price (cryptoName: 'solana').");
+        }
+        const sellSol = sellDetails.sell_amount / solPrice;
         const sell_value_usd =
-            sellDetails.sell_amount * processedData.tradeData.price;
+            sellDetails.sell_amount * processedData.tradeData.market.currentPrice;
         const trade = await this.trustScoreDb.getLatestTradePerformance(
             tokenAddress,
             recommender.id,
@@ -484,7 +503,7 @@ export class TrustScoreManager {
             processedData.dexScreenerData.pairs[0]?.marketCap || 0;
         const liquidity =
             processedData.dexScreenerData.pairs[0]?.liquidity.usd || 0;
-        const sell_price = processedData.tradeData.price;
+        const sell_price = processedData.tradeData.market.currentPrice;
         const profit_usd = sell_value_usd - trade.buy_value_usd;
         const profit_percent = (profit_usd / trade.buy_value_usd) * 100;
 
