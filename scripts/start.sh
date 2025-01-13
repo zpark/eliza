@@ -597,6 +597,78 @@ check_existing_installation() {
     return 0
 }
 
+# Install NVM function
+install_nvm() {
+    log_verbose "Installing NVM..."
+    
+    if ! command -v nvm &> /dev/null; then
+        # Download and run the nvm installation script
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+        
+        # Load NVM
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Verify installation
+        if ! command -v nvm &> /dev/null; then
+            log_error "Failed to install NVM. Please install it manually:"
+            echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
+            exit 1
+        fi
+        log_success "NVM installed"
+    else
+        log_success "NVM already installed"
+    fi
+
+    # Install required Node version
+    if ! nvm install "$NODE_VERSION"; then
+        log_error "Failed to install Node.js $NODE_VERSION"
+        exit 1
+    fi
+
+    if ! nvm use "$NODE_VERSION"; then
+        log_error "Failed to use Node.js $NODE_VERSION"
+        exit 1
+    fi
+
+    log_success "Node.js setup complete"
+    
+    if [ "$VERBOSE" = true ]; then
+        log_verbose "Node version: $(node -v)"
+        log_verbose "NPM version: $(npm -v)"
+    fi
+}
+
+# Setup Node.js environment
+setup_node() {
+    log_verbose "Setting up Node.js environment..."
+    
+    # Verify Node.js installation
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js is not installed"
+        exit 1
+    fi
+    
+    # Install pnpm if not present
+    if ! command -v pnpm &> /dev/null; then
+        log_info "Installing pnpm..."
+        if ! npm install -g pnpm; then
+            log_error "Failed to install pnpm"
+            exit 1
+        fi
+        log_success "pnpm installed"
+    fi
+    
+    # Verify versions
+    if [ "$VERBOSE" = true ]; then
+        log_verbose "Node version: $(node -v)"
+        log_verbose "NPM version: $(npm -v)"
+        log_verbose "PNPM version: $(pnpm -v)"
+    fi
+    
+    log_success "Node.js environment setup complete"
+}
+
 main() {
     early_log "Detected operating system: $OS_TYPE"
     
