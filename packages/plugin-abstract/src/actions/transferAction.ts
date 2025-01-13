@@ -162,49 +162,74 @@ export const transferAction: Action = {
 
         try {
             const account = useGetAccount(runtime);
-            let walletClient: AbstractClient | WalletClient;
-
+            let hash;
             if (content.useAGW) {
-                walletClient = await createAbstractClient({
+                const abstractClient = await createAbstractClient({
                     chain: abstractTestnet,
                     signer: account,
                 });
+
+                // Handle AGW transfer based on token type
+                if (
+                    content.tokenAddress.toLowerCase() !==
+                    ETH_ADDRESS.toLowerCase()
+                ) {
+                    const tokenInfo =
+                        ERC20_OVERRIDE_INFO[content.tokenAddress.toLowerCase()];
+                    const decimals = tokenInfo?.decimals ?? 18;
+                    const tokenAmount = parseUnits(
+                        content.amount.toString(),
+                        decimals
+                    );
+
+                    hash = await abstractClient.writeContract({
+                        chain: abstractTestnet,
+                        address: content.tokenAddress as Address,
+                        abi: erc20Abi,
+                        functionName: "transfer",
+                        args: [content.recipient as Address, tokenAmount],
+                    });
+                } else {
+                    hash = await abstractClient.sendTransaction({
+                        chain: abstractTestnet,
+                        to: content.recipient as Address,
+                        value: parseEther(content.amount.toString()),
+                        kzg: undefined,
+                    });
+                }
             } else {
-                walletClient = useGetWalletClient();
-            }
+                const walletClient = useGetWalletClient();
 
-            let hash;
+                // Handle regular wallet transfer based on token type
+                if (
+                    content.tokenAddress.toLowerCase() !==
+                    ETH_ADDRESS.toLowerCase()
+                ) {
+                    const tokenInfo =
+                        ERC20_OVERRIDE_INFO[content.tokenAddress.toLowerCase()];
+                    const decimals = tokenInfo?.decimals ?? 18;
+                    const tokenAmount = parseUnits(
+                        content.amount.toString(),
+                        decimals
+                    );
 
-            // Check if the token is native
-            if (
-                content.tokenAddress.toLowerCase() !== ETH_ADDRESS.toLowerCase()
-            ) {
-                // Convert amount to proper token decimals
-                const tokenInfo =
-                    ERC20_OVERRIDE_INFO[content.tokenAddress.toLowerCase()];
-                const decimals = tokenInfo?.decimals ?? 18; // Default to 18 decimals if not specified
-                const tokenAmount = parseUnits(
-                    content.amount.toString(),
-                    decimals
-                );
-
-                // Execute ERC20 transfer
-                hash = await walletClient.writeContract({
-                    account,
-                    chain: abstractTestnet,
-                    address: content.tokenAddress as Address,
-                    abi: erc20Abi,
-                    functionName: "transfer",
-                    args: [content.recipient as Address, tokenAmount],
-                });
-            } else {
-                hash = await walletClient.sendTransaction({
-                    account: account,
-                    chain: abstractTestnet,
-                    to: content.recipient as Address,
-                    value: parseEther(content.amount.toString()),
-                    kzg: undefined,
-                });
+                    hash = await walletClient.writeContract({
+                        account,
+                        chain: abstractTestnet,
+                        address: content.tokenAddress as Address,
+                        abi: erc20Abi,
+                        functionName: "transfer",
+                        args: [content.recipient as Address, tokenAmount],
+                    });
+                } else {
+                    hash = await walletClient.sendTransaction({
+                        account,
+                        chain: abstractTestnet,
+                        to: content.recipient as Address,
+                        value: parseEther(content.amount.toString()),
+                        kzg: undefined,
+                    });
+                }
             }
 
             elizaLogger.success(
