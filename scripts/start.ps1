@@ -11,15 +11,6 @@ $NODE_VERSION = "23.3.0"
 $SERVER_PID = $null
 $CLIENT_PID = $null
 
-# Install Chocolatey if not present
-if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-    Write-Host "Installing Chocolatey..."
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-    refreshenv
-}
-
 # Logging functions
 function Write-Error($message) {
     Write-Host "❌ $message" -ForegroundColor Red
@@ -37,6 +28,15 @@ function Write-Verbose($message) {
     if ($VerbosePreference -eq "Continue") {
         Write-Host "🔍 $message" -ForegroundColor Yellow
     }
+}
+
+# Install Chocolatey if not present
+if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+    Write-Info "Installing Chocolatey..."
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+    refreshenv
 }
 
 # Install dependencies using Chocolatey
@@ -161,8 +161,6 @@ function Select-Character {
                     return $true
                     
                 } while (-not $selectedChars)
-                
-                continue
             }
         }
     }
