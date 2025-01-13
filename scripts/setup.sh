@@ -8,6 +8,58 @@ NODE_VERSION="23.3.0"
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'
 NC='\033[0m'; BOLD='\033[1m'
 
+# Basic early logging before any dependencies
+early_log() { echo -e "\033[0;34mℹ️  ${1}\033[0m"; }
+early_error() { echo -e "\033[0;31m❌ ${1}\033[0m"; }
+early_success() { echo -e "\033[0;32m✅ ${1}\033[0m"; }
+
+# Early NVM setup before anything else
+setup_early_nvm() {
+    if ! command -v nvm &> /dev/null; then
+        early_log "Setting up NVM..."
+        # Download and run the nvm installation script
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+
+        # Load NVM
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Verify installation
+        if ! command -v nvm &> /dev/null; then
+            early_error "Failed to install NVM. Please install it manually:"
+            echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash"
+            exit 1
+        fi
+        early_success "NVM installed successfully"
+    else
+        early_success "NVM already installed"
+    fi
+
+    # Install required Node version
+    if ! nvm install "$NODE_VERSION"; then
+        early_error "Failed to install Node.js $NODE_VERSION"
+        exit 1
+    fi
+
+    if ! nvm use "$NODE_VERSION"; then
+        early_error "Failed to use Node.js $NODE_VERSION"
+        exit 1
+    fi
+
+    # Install pnpm
+    if ! command -v pnpm &> /dev/null; then
+        early_log "Installing pnpm..."
+        if ! npm install -g pnpm; then
+            early_error "Failed to install pnpm"
+            exit 1
+        fi
+        early_success "pnpm installed successfully"
+    fi
+}
+
+# Call early NVM setup before anything else
+setup_early_nvm
+
 # Global variables for process management
 SERVER_PID=""
 CLIENT_PID=""
