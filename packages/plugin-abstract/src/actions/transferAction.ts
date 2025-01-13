@@ -24,9 +24,7 @@ import {
 } from "viem";
 import { abstractTestnet, mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
-import {
-    createAbstractClient,
-} from "@abstract-foundation/agw-client";
+import { createAbstractClient } from "@abstract-foundation/agw-client";
 import { z } from "zod";
 import { ValidateContext } from "../utils";
 import { ETH_ADDRESS, ERC20_OVERRIDE_INFO } from "../constants";
@@ -148,7 +146,7 @@ export const transferAction: Action = {
 
         // Validate transfer content
         if (!ValidateContext.transferAction(content)) {
-            console.error("Invalid content for TRANSFER_TOKEN action.");
+            elizaLogger.error("Invalid content for TRANSFER_TOKEN action.");
             if (callback) {
                 callback({
                     text: "Unable to process transfer request. Invalid content provided.",
