@@ -101,6 +101,7 @@ import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import { verifiableLogPlugin } from "@elizaos/plugin-tee-verifiable-log";
 import createNFTCollectionsPlugin from "@elizaos/plugin-nft-collections";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -798,6 +799,9 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
+            (teeMode !== TEEMode.OFF && walletSecretSalt &&getSecret(character,"VLOG")
+                ? verifiableLogPlugin
+                : null),
             getSecret(character, "SGX") ? sgxPlugin : null,
             getSecret(character, "ENABLE_TEE_LOG") &&
             ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
