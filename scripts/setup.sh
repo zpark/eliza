@@ -139,12 +139,26 @@ install_nvm() {
     fi
 
     log_verbose "Installing NVM..."
-    chmod +x "./scripts/install_nvm.sh"
     
-    if ./scripts/install_nvm.sh > /tmp/nvm_install.log 2>&1; then
-        # Try to load NVM immediately
+    # Create NVM directory
+    mkdir -p "$HOME/.nvm"
+    
+    # Download and install NVM
+    if curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash > /tmp/nvm_install.log 2>&1; then
+        # Load NVM
         export NVM_DIR="$HOME/.nvm"
-        \. "$NVM_DIR/nvm.sh"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        
+        # Add NVM to shell profile if not already there
+        if ! grep -q 'NVM_DIR' "$HOME/.bashrc"; then
+            echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc"
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc"
+        fi
+        
+        if ! grep -q 'NVM_DIR' "$HOME/.profile"; then
+            echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.profile"
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$HOME/.profile"
+        fi
         
         if command -v nvm &> /dev/null; then
             log_success "NVM installed successfully"
