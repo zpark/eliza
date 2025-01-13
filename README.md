@@ -12,7 +12,7 @@
 
 ## 🌍 README Translations
 
-[中文说明](./README_CN.md) | [日本語の説明](./README_JA.md) | [한국어 설명](./README_KOR.md) | [Français](./README_FR.md) | [Português](./README_PTBR.md) | [Türkçe](./README_TR.md) | [Русский](./README_RU.md) | [Español](./README_ES.md) | [Italiano](./README_IT.md) | [ไทย](./README_TH.md) | [Deutsch](./README_DE.md) | [Tiếng Việt](./README_VI.md) | [עִברִית](https://github.com/elizaos/Elisa/blob/main/README_HE.md) | [Tagalog](./README_TG.md) | [Polski](./README_PL.md) | [Arabic](./README_AR.md) | [Hungarian](./README_HU.md) | [Srpski](./README_RS.md) | [Română](./README_RO.md) | [Nederlands](./README_NL.md)
+[中文说明](./README_CN.md) | [日本語の説明](./README_JA.md) | [한국어 설명](./README_KOR.md) | [Persian](./README_FA.md) | [Français](./README_FR.md) | [Português](./README_PTBR.md) | [Türkçe](./README_TR.md) | [Русский](./README_RU.md) | [Español](./README_ES.md) | [Italiano](./README_IT.md) | [ไทย](./README_TH.md) | [Deutsch](./README_DE.md) | [Tiếng Việt](./README_VI.md) | [עִברִית](https://github.com/elizaos/Elisa/blob/main/README_HE.md) | [Tagalog](./README_TG.md) | [Polski](./README_PL.md) | [Arabic](./README_AR.md) | [Hungarian](./README_HU.md) | [Srpski](./README_RS.md) | [Română](./README_RO.md) | [Nederlands](./README_NL.md) | [Ελληνικά](./README_GR.md)
 
 ## 🚩 Overview
 
@@ -80,6 +80,8 @@ git clone https://github.com/elizaos/eliza.git
 # Checkout the latest release
 # This project iterates fast, so we recommend checking out the latest release
 git checkout $(git describe --tags --abbrev=0)
+# If the above doesn't checkout the latest release, this should work:
+# git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 ```
 
 ### Start Eliza with Gitpod
@@ -98,11 +100,15 @@ Note: .env is optional. If you're planning to run multiple distinct agents, you 
 
 ### Automatically Start Eliza
 
-This will run everything to set up the project and start the bot with the default character.
+The start script provides an automated way to set up and run Eliza:
 
 ```bash
 sh scripts/start.sh
 ```
+
+For detailed instructions on using the start script, including character management and troubleshooting, see our [Start Script Guide](./docs/docs/guides/start-script.md).
+
+> **Note**: The start script handles all dependencies, environment setup, and character management automatically.
 
 ### Edit the character file
 

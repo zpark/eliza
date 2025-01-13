@@ -13,9 +13,9 @@ export const GoPlusType = {
     ACCOUNT_ERC1155_SECURITY_CHECK: "ACCOUNT_ERC1155_SECURITY_CHECK",
     SIGNATURE_SECURITY_CHECK: "SIGNATURE_SECURITY_CHECK",
     URL_SECURITY_CHECK: "URL_SECURITY_CHECK",
-}
+} as const;
 
-export type GoPlusType = (typeof GoPlusType)[keyof typeof GoPlusType]
+export type GoPlusTypeType = (typeof GoPlusTypeEnum)[keyof typeof GoPlusType];
 
 export type GoPlusParamType = {
     "type": GoPlusType,

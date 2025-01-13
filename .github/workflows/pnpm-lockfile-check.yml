@@ -2,7 +2,7 @@ name: Pnpm Lockfile Check
 
 on:
     pull_request:
-        branches: ["*"]
+        branches: [main]
 
 jobs:
     check-lockfile:

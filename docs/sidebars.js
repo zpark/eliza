@@ -117,6 +117,11 @@ const sidebars = {
                     id: "advanced/eliza-in-tee",
                     label: "Eliza in TEE",
                 },
+                {
+                    type: "doc",
+                    id: "advanced/verified-inference",
+                    label: "Verified Inference",
+                },
             ],
         },
         {
