@@ -21,13 +21,11 @@ import {
     isAddress,
     parseUnits,
     createPublicClient,
-    WalletClient,
 } from "viem";
 import { abstractTestnet, mainnet } from "viem/chains";
 import { normalize } from "viem/ens";
 import {
     createAbstractClient,
-    AbstractClient,
 } from "@abstract-foundation/agw-client";
 import { z } from "zod";
 import { ValidateContext } from "../utils";
