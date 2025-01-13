@@ -15,13 +15,38 @@ CLIENT_PID=""
 # Set up interrupt handling
 trap 'cleanup' EXIT INT TERM
 
-# Basic functions first
-log_error() { gum style --foreground 1 "❌ ${1}"; }
-log_success() { gum style --foreground 2 "✅ ${1}"; }
-log_info() { gum style --foreground 4 "ℹ️  ${1}"; }
+# Basic functions first - fallback logging before gum is installed
+log_error() { 
+    if command -v gum &> /dev/null; then
+        gum style --foreground 1 "❌ ${1}"
+    else
+        echo -e "\033[0;31m❌ ${1}\033[0m"
+    fi
+}
+
+log_success() {
+    if command -v gum &> /dev/null; then
+        gum style --foreground 2 "✅ ${1}"
+    else
+        echo -e "\033[0;32m✅ ${1}\033[0m"
+    fi
+}
+
+log_info() {
+    if command -v gum &> /dev/null; then
+        gum style --foreground 4 "ℹ️  ${1}"
+    else
+        echo -e "\033[0;34mℹ️  ${1}\033[0m"
+    fi
+}
+
 log_verbose() { 
     if [ "$VERBOSE" = true ]; then
-        gum style --foreground 3 "🔍 ${1}"
+        if command -v gum &> /dev/null; then
+            gum style --foreground 3 "🔍 ${1}"
+        else
+            echo -e "\033[1;33m🔍 ${1}\033[0m"
+        fi
     fi
 }
 
@@ -54,10 +79,10 @@ handle_error() {
     exit 1
 }
 
-# Rest of your functions in order of dependency
+# Move install_gum to be called before any other function that uses gum
 install_gum() {
     if ! command -v gum &> /dev/null; then
-        log_info "Installing gum for better UI..."
+        echo -e "\033[0;34mℹ️  Installing gum for better UI...\033[0m"
         sudo mkdir -p /etc/apt/keyrings
         curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
         echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
@@ -68,8 +93,6 @@ install_gum() {
 show_welcome() {
     clear
     cat << "EOF"
-Welcome to
-
  EEEEEE LL    IIII ZZZZZZZ  AAAA
  EE     LL     II      ZZ  AA  AA
  EEEE   LL     II    ZZZ   AAAAAA
@@ -590,9 +613,10 @@ check_existing_installation() {
 }
 
 main() {
+    # Install gum first before any other operations
     install_gum
+    
     show_welcome
-
     [ "$VERBOSE" = true ] && log_verbose "Running in verbose mode"
 
     # Add the installation check here
