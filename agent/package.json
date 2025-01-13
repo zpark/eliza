@@ -83,6 +83,7 @@
         "@elizaos/plugin-letzai": "workspace:*",
         "@elizaos/plugin-thirdweb": "workspace:*",
         "@elizaos/plugin-genlayer": "workspace:*",
+        "@elizaos/plugin-tee-verifiable-log": "workspace:*",
         "@elizaos/plugin-depin": "workspace:*",
         "@elizaos/plugin-open-weather": "workspace:*",
         "@elizaos/plugin-obsidian": "workspace:*",
