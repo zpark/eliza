@@ -116,7 +116,7 @@ The start script provides an automated way to set up and run Eliza:
 sh scripts/start.sh
 ```
 
-For detailed instructions on using the start script, including character management and troubleshooting, see our [Start Script Guide](./docs/start.md).
+For detailed instructions on using the start script, including character management and troubleshooting, see our [Start Script Guide](./docs/docs/guides/start-script.md).
 
 > **Note**: The start script handles all dependencies, environment setup, and character management automatically.
 
