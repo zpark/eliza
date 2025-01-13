@@ -71,6 +71,7 @@
         "@elizaos/plugin-tee-marlin": "workspace:*",
         "@elizaos/plugin-multiversx": "workspace:*",
         "@elizaos/plugin-near": "workspace:*",
+        "@elizaos/plugin-nft-collections": "workspace:*",
         "@elizaos/plugin-zksync-era": "workspace:*",
         "@elizaos/plugin-twitter": "workspace:*",
         "@elizaos/plugin-primus": "workspace:*",

@@ -8,13 +8,17 @@ import {
     ModelClass,
     State,
     type Action,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 
 
 export const currentNewsAction: Action = {
     name: "CURRENT_NEWS",
     similes: ["NEWS", "GET_NEWS", "GET_CURRENT_NEWS"],
     validate: async (_runtime: IAgentRuntime, _message: Memory) => {
+        const apiKey = process.env.NEWS_API_KEY;
+        if (!apiKey) {
+            throw new Error('NEWS_API_KEY environment variable is not set');
+        }
         return true;
     },
     description:
@@ -28,11 +32,6 @@ export const currentNewsAction: Action = {
     ): Promise<boolean> => {
         async function getCurrentNews(searchTerm: string) {
             try {
-                const apiKey = process.env.NEWS_API_KEY;
-                if (!apiKey) {
-                    throw new Error('NEWS_API_KEY environment variable is not set');
-                }
-
                 // Add quotes and additional context terms
                 const enhancedSearchTerm = encodeURIComponent(`"${searchTerm}" AND (Spain OR Spanish OR Madrid OR Felipe)`);
 
@@ -43,7 +42,7 @@ export const currentNewsAction: Action = {
                         `sortBy=relevancy&` +
                         `language=en&` +
                         `pageSize=50&` +
-                        `apiKey=${apiKey}`
+                        `apiKey=${process.env.NEWS_API_KEY}`
                     ),
                     fetch(
                         `https://newsapi.org/v2/top-headlines?` +
@@ -51,7 +50,7 @@ export const currentNewsAction: Action = {
                         `country=es&` +
                         `language=en&` +
                         `pageSize=50&` +
-                        `apiKey=${apiKey}`
+                        `apiKey=${process.env.NEWS_API_KEY}`
                     )
                 ]);
 
