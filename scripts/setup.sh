@@ -141,13 +141,25 @@ install_nvm() {
 
     log_verbose "Installing NVM..."
     
-    # Create NVM directory
-    mkdir -p "$HOME/.nvm"
+    # Download NVM installation script to a temporary file
+    local temp_script="/tmp/nvm_install.sh"
+    if ! curl -o "$temp_script" -sL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh"; then
+        log_error "Failed to download NVM installation script"
+        return 1
+    fi
     
-    # Download and install NVM
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
-
-    # Source NVM immediately
+    # Make the script executable and run it
+    chmod +x "$temp_script"
+    if ! "$temp_script"; then
+        log_error "Failed to run NVM installation script"
+        rm -f "$temp_script"
+        return 1
+    fi
+    
+    # Clean up
+    rm -f "$temp_script"
+    
+    # Source NVM in the current shell
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
