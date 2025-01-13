@@ -129,7 +129,8 @@ install_nvm() {
     
     if [ -d "$HOME/.nvm" ]; then
         export NVM_DIR="$HOME/.nvm"
-        \. "$NVM_DIR/nvm.sh" 2>/dev/null || true
+        # Try to load NVM if it exists
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
         
         if command -v nvm &> /dev/null; then
             log_success "NVM is already installed"
@@ -144,34 +145,22 @@ install_nvm() {
     mkdir -p "$HOME/.nvm"
     
     # Download and install NVM
-    if curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash > /tmp/nvm_install.log 2>&1; then
-        # Load NVM
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        
-        # Add NVM to shell profile if not already there
-        if ! grep -q 'NVM_DIR' "$HOME/.bashrc"; then
-            echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.bashrc"
-            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$HOME/.bashrc"
-        fi
-        
-        if ! grep -q 'NVM_DIR' "$HOME/.profile"; then
-            echo 'export NVM_DIR="$HOME/.nvm"' >> "$HOME/.profile"
-            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> "$HOME/.profile"
-        fi
-        
-        if command -v nvm &> /dev/null; then
-            log_success "NVM installed successfully"
-            [ "$VERBOSE" = true ] && log_verbose "NVM Version: $(nvm --version)"
-            rm -f /tmp/nvm_install.log
-            return 0
-        fi
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+
+    # Source NVM immediately
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    
+    # Verify installation
+    if command -v nvm &> /dev/null; then
+        log_success "NVM installed successfully"
+        [ "$VERBOSE" = true ] && log_verbose "NVM Version: $(nvm --version)"
+        return 0
     fi
 
     # If we get here, installation failed
-    log_error "NVM installation failed. Installation log:"
-    cat /tmp/nvm_install.log
-    rm -f /tmp/nvm_install.log
+    log_error "NVM installation failed."
     log_error "Please try installing manually:"
     echo ""
     echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh | bash"
