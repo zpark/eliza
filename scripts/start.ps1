@@ -12,19 +12,23 @@ $SERVER_PID = $null
 $CLIENT_PID = $null
 
 # Logging functions
-function Write-Error($message) {
+function Write-CustomError {
+    param($message)
     Write-Host "❌ $message" -ForegroundColor Red
 }
 
-function Write-Success($message) {
+function Write-CustomSuccess {
+    param($message)
     Write-Host "✅ $message" -ForegroundColor Green
 }
 
-function Write-Info($message) {
+function Write-CustomInfo {
+    param($message)
     Write-Host "ℹ️ $message" -ForegroundColor Blue
 }
 
-function Write-Verbose($message) {
+function Write-CustomVerbose {
+    param($message)
     if ($VerbosePreference -eq "Continue") {
         Write-Host "🔍 $message" -ForegroundColor Yellow
     }
@@ -32,7 +36,7 @@ function Write-Verbose($message) {
 
 # Install Chocolatey if not present
 if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-    Write-Info "Installing Chocolatey..."
+    Write-CustomInfo "Installing Chocolatey..."
     Set-ExecutionPolicy Bypass -Scope Process -Force
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
     Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
