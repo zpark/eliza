@@ -1,6 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
-set -o pipefail
+
+# Remove pipefail if not running in bash
+if [ -n "$BASH_VERSION" ]; then
+    set -o pipefail
+fi
 
 # Initial variables
 NVM_VERSION="v0.39.1"
@@ -184,7 +188,7 @@ cleanup() {
 # Command line argument parsing
 VERBOSE=false
 SKIP_NVM=false
-while [[ "$#" -gt 0 ]]; do
+while [ $# -gt 0 ]; do
     case $1 in
         -v|--verbose) VERBOSE=true; shift ;;
         --skip-nvm) SKIP_NVM=true; shift ;;
@@ -242,16 +246,16 @@ select_character() {
         return 1
     fi
 
-    # Get list of character files
-    characters=()
-    character_paths=()
-    while IFS= read -r file; do
-        # Store full path
-        character_paths+=("$file")
-        # Remove path and .character.json extension for display
-        name=$(basename "$file" .character.json)
-        characters+=("$name")
-    done < <(find "./characters" -name "*.character.json" -type f | sort)
+    # Get list of character files using POSIX-compatible syntax
+    characters=""
+    character_paths=""
+    for file in ./characters/*.character.json; do
+        if [ -f "$file" ]; then
+            character_paths="$character_paths $file"
+            name=$(basename "$file" .character.json)
+            characters="$characters $name"
+        fi
+    done
 
     while true; do
         # Instructions for user
@@ -280,26 +284,30 @@ select_character() {
                 fi
 
                 # Copy template and replace name
-                cat > "$new_file" << 'EOF'
-                # ... (template JSON remains the same)
-EOF
+                if [ ! -f "characters/eliza.character.json" ]; then
+                    log_error "Template file not found"
+                    continue
+                fi
+                cp "characters/eliza.character.json" "$new_file"
+                sed -i "s/\"name\": \".*\"/\"name\": \"$new_name\"/" "$new_file"
+                
                 # Open the new file for editing
                 log_success "Created new character file. Opening for editing..."
                 nano "$new_file"
                 
                 # Add to current list
-                characters+=("$new_name")
-                character_paths+=("$new_file")
+                characters="$characters $new_name"
+                character_paths="$character_paths $new_file"
                 continue
                 ;;
             "Use Existing")
                 # Show character list for multi-select
-                selected_names=$(printf "%s\n" "${characters[@]}" | gum choose --no-limit)
+                selected_names=$(printf "%s\n" $characters | gum choose --no-limit)
                 
                 # If no selection made, use the highlighted character
                 if [ -z "$selected_names" ]; then
                     # Get the first visible character (highlighted one)
-                    selected_names=$(printf "%s\n" "${characters[@]}" | head -n 1)
+                    selected_names=$(printf "%s\n" $characters | head -n 1)
                     if [ -z "$selected_names" ]; then
                         log_error "No characters available"
                         continue
@@ -318,7 +326,7 @@ EOF
                 
                 case "$action" in
                     "Delete")
-                        # ... existing delete logic ...
+                        # Delete logic here
                         ;;
                     "Edit")
                         # Count selected characters
@@ -326,22 +334,24 @@ EOF
                         
                         if [ "$char_count" -gt 1 ]; then
                             # Edit each selected character
-                            while IFS= read -r name; do
-                                for i in "${!characters[@]}"; do
-                                    if [ "${characters[$i]}" = "$name" ]; then
+                            echo "$selected_names" | while read -r name; do
+                                for file in $character_paths; do
+                                    base_name=$(basename "$file" .character.json)
+                                    if [ "$base_name" = "$name" ]; then
                                         log_info "Editing character: $name"
-                                        nano "${character_paths[$i]}"
+                                        nano "$file"
                                         break
                                     fi
                                 done
-                            done <<< "$selected_names"
+                            done
                             log_success "Characters edited. Please select character(s) to continue:"
                         else
                             # Single character edit
-                            for i in "${!characters[@]}"; do
-                                if [ "${characters[$i]}" = "$selected_names" ]; then
+                            for file in $character_paths; do
+                                base_name=$(basename "$file" .character.json)
+                                if [ "$base_name" = "$selected_names" ]; then
                                     log_info "Editing character: $selected_names"
-                                    nano "${character_paths[$i]}"
+                                    nano "$file"
                                     log_success "Character edited. Please select character(s) to continue:"
                                     break
                                 fi
@@ -353,19 +363,23 @@ EOF
                         # Convert selected names to paths
                         selected_paths=""
                         first=true
-                        while IFS= read -r name; do
-                            for i in "${!characters[@]}"; do
-                                if [ "${characters[$i]}" = "$name" ]; then
+                        # Save selected_names to a temp file to preserve it across the pipe
+                        echo "$selected_names" > /tmp/eliza_selected_names
+                        while read -r name; do
+                            for file in $character_paths; do
+                                base_name=$(basename "$file" .character.json)
+                                if [ "$base_name" = "$name" ]; then
                                     if [ "$first" = true ]; then
-                                        selected_paths="${character_paths[$i]}"
+                                        selected_paths="$file"
                                         first=false
                                     else
-                                        selected_paths="$selected_paths,${character_paths[$i]}"
+                                        selected_paths="$selected_paths,$file"
                                     fi
                                     break
                                 fi
                             done
-                        done <<< "$selected_names"
+                        done < /tmp/eliza_selected_names
+                        rm -f /tmp/eliza_selected_names
 
                         if [ -n "$selected_paths" ]; then
                             selected_character_path="$selected_paths"
