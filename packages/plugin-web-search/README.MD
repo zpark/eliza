@@ -28,7 +28,7 @@ TAVILY_API_KEY=your_api_key    # Required: API key for search service
 
 ## Usage
 
-Import and register the plugin in your Eliza configuration. In
+Import and register the plugin in your Eliza configuration.
 
 ```typescript
 import { webSearchPlugin } from "@elizaos/plugin-web-search";

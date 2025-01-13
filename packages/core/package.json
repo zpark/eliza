@@ -81,6 +81,7 @@
         "glob": "11.0.0",
         "handlebars": "^4.7.8",
         "js-sha1": "0.7.0",
+        "js-tiktoken": "1.0.15",
         "langchain": "0.3.6",
         "ollama-ai-provider": "0.16.1",
         "openai": "4.73.0",
