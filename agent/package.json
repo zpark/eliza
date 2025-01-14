@@ -59,6 +59,7 @@
         "@elizaos/plugin-node": "workspace:*",
         "@elizaos/plugin-solana": "workspace:*",
         "@elizaos/plugin-solana-agentkit": "workspace:*",
+        "@elizaos/plugin-squid-router": "workspace:*",
         "@elizaos/plugin-autonome": "workspace:*",
         "@elizaos/plugin-starknet": "workspace:*",
         "@elizaos/plugin-stargaze": "workspace:*",
