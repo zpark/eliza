@@ -103,6 +103,45 @@ export function createApiRouter(
         });
     });
 
+    router.post("/agents", async (req, res) => {
+        // load character from body
+        const character = req.body;
+        try {
+            validateCharacterConfig(req.body);
+        } catch (e) {
+            elizaLogger.error(`Error parsing character: ${e}`);
+            res.status(400).json({
+                success: false,
+                message: e.message,
+            });
+            return;
+        }
+        // start it up (and register it)
+        const agent = await directClient.startAgent(character);
+        elizaLogger.log(`${character.name} started`);
+
+        res.json({
+            id: character.id,
+            character: character,
+        });
+    });
+
+    router.delete("/agents/:agentId", async (req, res) => {
+        const agentId = req.params.agentId;
+        console.log("agentId", agentId);
+        let agent: AgentRuntime = agents.get(agentId);
+
+        if (agent) {
+            // stop agent
+            agent.stop();
+            directClient.unregisterAgent(agent);
+            res.status(204).send();
+        }
+        else {
+            res.status(404).json({ error: "Agent not found" });
+        }
+    });
+
     router.post("/agents/:agentId/set", async (req, res) => {
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
