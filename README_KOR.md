@@ -10,28 +10,45 @@
 
 </div>
 
+## 🚩 구조
+
+<div align="center">
+  <img src="./docs/static/img/eliza_diagram.jpg" alt="Eliza Diagram" width="100%" />
+</div>
+
 ## ✨ 기능
 
-- 🛠 SNS 통합 지원: Discord, Twitter, Telegram을 모두 지원합니다.
-- 🔗 다양한 모델 호환: Llama, Grok, OpenAI, Anthropic 등 다양한 AI 모델을 지원합니다.
-- 👥 다중 에이전트 및 채팅방 지원: 여러 에이전트와 채팅방을 손쉽게 관리할 수 있습니다.
-- 📚 문서 처리 및 상호작용: 데이터를 손쉽게 추가하고 활용할 수 있는 기능을 제공합니다.
-- 💾 검색 가능한 메모리 및 문서 저장소: 데이터를 빠르고 간편하게 검색하고 액세스할 수 있습니다.
-- 🚀 높은 확장성: 사용자 정의 동작 및 클라이언트를 만들어 기능을 확장할 수 있습니다.
-- ☁️ 다양한 AI 모델 지원: Local Llama, OpenAI, Anthropic, Groq 등과 호환됩니다.
-- 📦 쉽게 시작하세요: 바로 작동하며 손쉽게 활용할 수 있습니다!
+- 🛠 SNS 지원: 디스코드, 트위터, 텔레그램 연동 지원
+- 🔗 다양한 모델 지원 (Llama, Grok, OpenAI, Anthropic 등)
+- 👥 다중 지원: 다중 에이전트 및 채팅방 지원
+- 📚 높은 유연성: 데이터를 쉽게 추가하고 다양한 상호작용 가능
+- 💾 검색 지원: 데이터와 작업을 쉽게 찾아볼 수 있도록 검색 기능 지원
+- 🚀 높은 확장성: 사용자 정의 동작 및 클라이언트 생성 가능
+- ☁️ 다양한 AI 모델 지원: local Llama, OpenAI, Anthropic, Groq 등 다양한 AI 모델을 지원합니다
+- 📦 즐겁게 개발해 봐요!
 
-## 비디오 튜토리얼
+## 튜토리얼 동영상
 
 [AI Agent Dev School](https://www.youtube.com/watch?v=ArptLpQiKfI&list=PLx5pnFXdPTRzWla0RaOxALTSTnVq53fKL)
 
-## 🎯 eliza로 어떤걸 만들 수 있을까요?
+## 🎯 사용 사례
 
-- 🤖 챗봇 개발
-- 🕵 ️AI가 자율적으로 결과를 만들어줘요!
-- 📈 업무처리 자동화
+- 🤖 챗봇
+- 🕵 ️자율 에이전트
+- 📈 자동화 프로세스
 - 🎮 비디오 게임 NPC
 - 🧠 트레이딩
+
+## 💰 토큰을 출시할 계획이 있으시다면
+
+이 프레임워크는 GitHub에서 가장 인기 있는 오픈 소스 프로젝트로, 차세대 인간-기계 인터페이스를 가능하게 합니다. 하지만 빌더 커뮤니티 전반에 영향을 미칠 중요한 문제들에 신속히 대응하고 코드의 최고 품질을 보장하기 위해 여전히 여러분의 도움이 필요합니다.
+
+지속 가능한 개발과 혁신을 위해, 성공적으로 출시된 토큰의 초기 분배량 중 5-10%를 기부해 주실 것을 요청드립니다.
+
+모든 기부는 온체인에서 공개적으로 추적되며, 생태계 개발에만 독점적으로 사용됩니다.
+
+### ⚠️ 큰 형님께 10%를 기부하는 것을 잊지 마세요 ⚠️
+[AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG](https://solscan.io/account/AM84n1iLdxgVTAyENBcLdjXoyvjentTbu5Q6EpKV1PeG)
 
 ## 🚀 빠른 시작
 
@@ -41,7 +58,7 @@
 - [Node.js 23.3+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [pnpm](https://pnpm.io/installation)
 
-> **Windows 사용자 참고:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual)가 필요합니다.
+> **Windows 사용자 참고:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) 필요.
 
 ### Starter 사용 (권장)
 
@@ -51,18 +68,22 @@ cd eliza-starter
 cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
-에이전트가 실행되면 마지막에 "pnpm start:client"를 실행하라는 메시지가 표시됩니다. 
-다른 터미널을 열고 같은 디렉토리로 이동한 뒤 아래 명령어를 실행하세요. 표시된 URL을 열어 에이전트와 대화하세요.
+
+에이전트가 실행되면, 마지막에 "pnpm start:client" 명령을 실행하라는 메시지를 볼 수 있습니다.
+
+다른 터미널을 열고 같은 디렉터리로 이동한 다음 아래 명령어를 실행하세요. 
+
+그리고 제공된 URL을 따라 에이전트와 대화하세요.
 ```bash
 pnpm start:client
 ```
 
-[문서](https://elizaos.github.io/eliza/)를 참고하여 Eliza를 커스터마이징하는 방법을 배워보세요.
+[문서](https://elizaos.github.io/eliza/)를 참고하여 Eliza를 커스마이징 방법을 확인하세요.
 
-### Eliza를 수동으로 실행하기 (경험자에게만 권장)
+### 수동으로 실행 (사용법을 알고 있는 경우에만 권장)
 
 ```bash
-# 리포지토리 클론
+# 저장소 복사
 git clone https://github.com/elizaos/eliza.git
 
 # 최신 릴리스로 체크아웃
@@ -94,7 +115,7 @@ sh scripts/start.sh
 
 ### character file 편집
 
-1. `agent/src/character.ts`를 열어 기본 캐릭터를 수정하세요. 주석을 해제하고 수정하시면 됩니다.
+1. `packages/core/src/defaultCharacter.ts`를 열어 기본 캐릭터를 수정하세요. 주석을 해제하고 수정하시면 됩니다.
 
 2. 커스텀 캐릭터 로드하기:
     - `pnpm start --characters="path/to/your/character.json"`을 사용합니다.
@@ -109,13 +130,13 @@ pnpm i
 pnpm build
 pnpm start
 
-# 프로젝트가 빠르게 수정되므로 프로젝트를 clean해야 할 수도 있습니다.
+# 프로젝트가 빠르게 변경되기 때문에, 다시 작업을 시작할 때는 clean 명령어 입력이 필요할 수도 있습니다.
 pnpm clean
 ```
 
 #### 추가 요구 사항
 
-시작할 때 오류가 발생하면 Sharp를 설치해야 할 수도 있습니다. 아래 명령어를 실행하여 설치하세요:
+시작 시 에러가 발생하면 Sharp를 설치해야 할 수 있습니다. 아래 명령어를 사용하여 설치하세요:
 
 ```
 pnpm install --include=optional sharp
@@ -123,10 +144,11 @@ pnpm install --include=optional sharp
 
 ### 커뮤니티 & 문의
 
-- [Github Issues](https://github.com/elizaos/eliza/issues). liza 사용 중 발견된 버그 보고 및 기능 제안에 적합합니다.
-- [Discord](https://discord.gg/ai16z). 애플리케이션 공유 및 커뮤니티와의 소통에 적합합니다.
+- [Github Issues](https://github.com/elizaos/eliza/issues). 용도: Eliza 사용 중 발견된 버그 리포트, 기능 제안.
+- [Discord](https://discord.gg/ai16z). 용도: 애플리케이션 공유 및 커뮤니티 활동.
+- [Developer Discord](https://discord.gg/3f67SH4rXT). 용도: 도움요청 및 플러그인 개발
 
-## 컨트리뷰터
+## 기여자
 
 <a href="https://github.com/elizaos/eliza/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=elizaos/eliza" />

@@ -7,7 +7,6 @@ import {
 } from "@elizaos/core";
 
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 import { MIST_PER_SUI } from "@mysten/sui/utils";
 import BigNumber from "bignumber.js";
@@ -182,7 +181,7 @@ export class WalletProvider {
                 }
             );
             const prices: Prices = {
-                sui: { usd: suiPriceData.pair.priceUsd },
+                sui: { usd: (1 / suiPriceData.pair.priceNative).toString() },
             };
             this.setCachedData(cacheKey, prices);
             return prices;
