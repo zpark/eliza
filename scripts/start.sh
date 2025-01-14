@@ -239,6 +239,101 @@ setup_environment() {
     fi
 }
 
+create_character_template() {
+    local name="$1"
+    cat > "$2" << EOF
+{
+    "name": "$name",
+    "clients": [],
+    "modelProvider": "anthropic",
+    "settings": {
+        "voice": {
+            "model": "en_GB-alan-medium"
+        }
+    },
+    "plugins": [],
+    "bio": [
+        "Brief description of the character",
+        "Key personality traits",
+        "Main purpose or role",
+        "Notable characteristics"
+    ],
+    "lore": [
+        "Background information",
+        "Important history",
+        "Key relationships",
+        "Significant attributes"
+    ],
+    "knowledge": [
+        "Area of expertise 1",
+        "Area of expertise 2",
+        "Area of expertise 3",
+        "Area of expertise 4"
+    ],
+    "messageExamples": [
+        [
+            {
+                "user": "{{user1}}",
+                "content": {
+                    "text": "Can you help me with this task?"
+                }
+            },
+            {
+                "user": "$name",
+                "content": {
+                    "text": "Example response showing character's personality"
+                }
+            }
+        ],
+        [
+            {
+                "user": "{{user1}}",
+                "content": {
+                    "text": "This seems difficult."
+                }
+            },
+            {
+                "user": "$name",
+                "content": {
+                    "text": "Another example response in character's style"
+                }
+            }
+        ]
+    ],
+    "postExamples": [
+        "Example of a social media post in character's voice",
+        "Another example showing typical posting style"
+    ],
+    "topics": [""],
+    "style": {
+        "all": [
+            "Primary trait",
+            "Secondary trait",
+            "Third trait",
+            "Fourth trait"
+        ],
+        "chat": [
+            "Chat-specific trait",
+            "Another chat trait",
+            "Third chat trait"
+        ],
+        "post": [
+            "Posting style 1",
+            "Posting style 2",
+            "Posting style 3"
+        ]
+    },
+    "adjectives": [
+        "Descriptive1",
+        "Descriptive2",
+        "Descriptive3",
+        "Descriptive4",
+        "Descriptive5"
+    ]
+}
+EOF
+}
+
 select_character() {
     # Check if characters directory exists
     if [ ! -d "./characters" ]; then
@@ -283,13 +378,8 @@ select_character() {
                     continue
                 fi
 
-                # Copy template and replace name
-                if [ ! -f "characters/eliza.character.json" ]; then
-                    log_error "Template file not found"
-                    continue
-                fi
-                cp "characters/eliza.character.json" "$new_file"
-                sed -i "s/\"name\": \".*\"/\"name\": \"$new_name\"/" "$new_file"
+                # Create new character from template
+                create_character_template "$new_name" "$new_file"
                 
                 # Open the new file for editing
                 log_success "Created new character file. Opening for editing..."
