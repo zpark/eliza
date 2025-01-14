@@ -15,10 +15,10 @@ vi.mock('axios', () => {
 });
 
 describe('WhatsAppClient', () => {
-    let client: WhatsAppClient;
-    let mockPost: any;
-    
-    const mockConfig: WhatsAppConfig = {
+    let client;
+    let mockPost;
+
+    const mockConfig = {
         accessToken: 'test-token',
         phoneNumberId: 'test-phone-id',
         webhookVerifyToken: 'test-webhook-token',
@@ -28,12 +28,12 @@ describe('WhatsAppClient', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         client = new WhatsAppClient(mockConfig);
-        mockPost = (axios.create() as any).post;
+        mockPost = (axios.create()).post;
     });
 
     describe('sendMessage', () => {
         it('should send a text message correctly', async () => {
-            const mockMessage: WhatsAppMessage = {
+            const mockMessage = {
                 type: 'text',
                 to: '1234567890',
                 content: 'Hello, World!'
@@ -57,7 +57,7 @@ describe('WhatsAppClient', () => {
         });
 
         it('should send a template message correctly', async () => {
-            const mockMessage: WhatsAppMessage = {
+            const mockMessage = {
                 type: 'template',
                 to: '1234567890',
                 content: {
@@ -93,7 +93,7 @@ describe('WhatsAppClient', () => {
         });
 
         it('should handle API errors correctly', async () => {
-            const mockMessage: WhatsAppMessage = {
+            const mockMessage = {
                 type: 'text',
                 to: '1234567890',
                 content: 'Hello, World!'
@@ -108,7 +108,7 @@ describe('WhatsAppClient', () => {
 
     describe('verifyWebhook', () => {
         it('should verify webhook token correctly', async () => {
-            const result = await client.verifyWebhook(mockConfig.webhookVerifyToken!);
+            const result = await client.verifyWebhook(mockConfig.webhookVerifyToken);
             expect(result).toBe(true);
         });
 
