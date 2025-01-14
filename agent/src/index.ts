@@ -71,6 +71,7 @@ import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
+import { gitcoinPassportPlugin } from "@elizaos/plugin-gitcoin-passport";
 import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
 import { lensPlugin } from "@elizaos/plugin-lensNetwork";
@@ -826,7 +827,7 @@ export async function createAgent(
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
-            getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin: null,
+            getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin : null,
             getSecret(character, "BINANCE_API_KEY") &&
             getSecret(character, "BINANCE_SECRET_KEY")
                 ? binancePlugin
@@ -869,6 +870,9 @@ export async function createAgent(
             getSecret(character, "LETZAI_API_KEY") ? letzAIPlugin : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
             getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
+            getSecret(character, "PASSPORT_API_KEY")
+                ? gitcoinPassportPlugin
+                : null,
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
