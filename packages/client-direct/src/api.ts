@@ -103,36 +103,15 @@ export function createApiRouter(
         });
     });
 
-    router.post("/agents", async (req, res) => {
-        // load character from body
-        const character = req.body;
-        try {
-            validateCharacterConfig(req.body);
-        } catch (e) {
-            elizaLogger.error(`Error parsing character: ${e}`);
-            res.status(400).json({
-                success: false,
-                message: e.message,
-            });
-            return;
-        }
-        // start it up (and register it)
-        const agent = await directClient.startAgent(character);
-        elizaLogger.log(`${character.name} started`);
-
-        res.json({
-            id: character.id,
-            character: character,
-        });
-    });
-
     router.delete("/agents/:agentId", async (req, res) => {
-        const agentId = req.params.agentId;
-        console.log("agentId", agentId);
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
         let agent: AgentRuntime = agents.get(agentId);
 
         if (agent) {
-            // stop agent
             agent.stop();
             directClient.unregisterAgent(agent);
             res.status(204).send();
@@ -150,12 +129,9 @@ export function createApiRouter(
 
         let agent: AgentRuntime = agents.get(agentId);
 
-        // update character
         if (agent) {
-            // stop agent
             agent.stop();
             directClient.unregisterAgent(agent);
-            // if it has a different name, the agentId will change
         }
 
         // load character from body
@@ -172,9 +148,17 @@ export function createApiRouter(
         }
 
         // start it up (and register it)
-        agent = await directClient.startAgent(character);
-        elizaLogger.log(`${character.name} started`);
-
+        try {
+            await directClient.startAgent(character);
+            elizaLogger.log(`${character.name} started`);
+        } catch (e) {
+            elizaLogger.error(`Error starting agent: ${e}`);
+            res.status(500).json({
+                success: false,
+                message: e.message,
+            });
+            return;
+        }
         res.json({
             id: character.id,
             character: character,
@@ -369,3 +353,4 @@ export function createApiRouter(
 
     return router;
 }
+
