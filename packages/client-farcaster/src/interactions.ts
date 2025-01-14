@@ -101,7 +101,7 @@ export class FarcasterInteractionManager {
             });
 
             const memory: Memory = {
-                content: { text: mention.text, hash: mention.hash },
+                content: { text: mention.text },
                 agentId: this.runtime.agentId,
                 userId,
                 roomId,
@@ -279,7 +279,7 @@ export class FarcasterInteractionManager {
         const newState = await this.runtime.updateRecentMessageState(state);
 
         await this.runtime.processActions(
-            memory,
+            { ...memory, content: { ...memory.content, cast } },
             responseMessages,
             newState,
             callback
