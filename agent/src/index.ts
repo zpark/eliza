@@ -1111,11 +1111,6 @@ startAgents().catch((error) => {
     process.exit(1);
 });
 
-startAgents().catch((error) => {
-    elizaLogger.error("Unhandled error in startAgents:", error);
-    process.exit(1);
-});
-
 // Prevent unhandled exceptions from crashing the process if desired
 if (process.env.PREVENT_UNHANDLED_EXIT && parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)) {
     // Handle uncaught exceptions to prevent the process from crashing

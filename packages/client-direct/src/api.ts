@@ -129,9 +129,12 @@ export function createApiRouter(
 
         let agent: AgentRuntime = agents.get(agentId);
 
+        // update character
         if (agent) {
+            // stop agent
             agent.stop();
             directClient.unregisterAgent(agent);
+            // if it has a different name, the agentId will change
         }
 
         // load character from body
