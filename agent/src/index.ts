@@ -32,6 +32,7 @@ import {
     settings,
     stringToUuid,
     validateCharacterConfig,
+    parseBooleanFromText,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
 
@@ -1113,3 +1114,16 @@ startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
     process.exit(1);
 });
+
+// Prevent unhandled exceptions from crashing the process if desired
+if (process.env.PREVENT_UNHANDLED_EXIT && parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)) {
+    // Handle uncaught exceptions to prevent the process from crashing
+    process.on('uncaughtException', function(err) {
+        console.error("uncaughtException", err);
+    });
+
+    // Handle unhandled rejections to prevent the process from crashing
+    process.on('unhandledRejection', function(err) {
+        console.error("unhandledRejection", err);
+    });
+}
