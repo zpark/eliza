@@ -16,7 +16,7 @@ describe('remoteAttestationAction', () => {
         getSetting: vi.fn().mockReturnValue('LOCAL'),
         getState: vi.fn(),
         setState: vi.fn(),
-        getConversation: vi.fn(),
+        message:{ userId: 'user', roomId: 'room', content: { text: 'If you are running in a TEE, generate a remote attestation' } },
         setConversation: vi.fn()
     };
 
@@ -43,7 +43,7 @@ describe('remoteAttestationAction', () => {
         it('should generate and upload attestation successfully', async () => {
             const result = await remoteAttestationAction.handler(
                 mockRuntime,
-                {},
+                mockRuntime.message,
                 {},
                 {},
                 mockCallback
