@@ -48,6 +48,7 @@ import { artheraPlugin } from "@elizaos/plugin-arthera";
 import { autonomePlugin } from "@elizaos/plugin-autonome";
 import { availPlugin } from "@elizaos/plugin-avail";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
+import { b2Plugin } from "@elizaos/plugin-b2";
 import { binancePlugin } from "@elizaos/plugin-binance";
 import { birdeyePlugin } from "@elizaos/plugin-birdeye";
 import {
@@ -823,6 +824,7 @@ export async function createAgent(
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
+            getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin: null,
             getSecret(character, "BINANCE_API_KEY") &&
             getSecret(character, "BINANCE_SECRET_KEY")
                 ? binancePlugin
