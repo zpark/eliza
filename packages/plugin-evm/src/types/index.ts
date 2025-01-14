@@ -101,6 +101,7 @@ export interface EvmPluginConfig {
         cronos?: string;
         gnosis?: string;
         fantom?: string;
+        fraxtal?: string;
         klaytn?: string;
         celo?: string;
         moonbeam?: string;
@@ -116,6 +117,7 @@ export interface EvmPluginConfig {
         zksync?: string;
         canto?: string;
         alienx?: string;
+        gravity?: string;
     };
     secrets?: {
         EVM_PRIVATE_KEY: string;
