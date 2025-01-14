@@ -138,6 +138,10 @@ export class FarcasterInteractionManager {
 
         const currentPost = formatCast(cast);
 
+
+        const senderId = stringToUuid(cast.authorFid.toString());
+
+
         const { timeline } = await this.client.getTimeline({
             fid: agent.fid,
             pageSize: 10,
@@ -190,6 +194,7 @@ export class FarcasterInteractionManager {
             await this.runtime.messageManager.createMemory(
                 createCastMemory({
                     roomId: memory.roomId,
+                    senderId,
                     runtime: this.runtime,
                     cast,
                 })
