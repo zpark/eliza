@@ -1,5 +1,6 @@
 import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
 import { AutoClientInterface } from "@elizaos/client-auto";
@@ -415,7 +416,11 @@ function initializeDatabase(dataDir: string) {
             dataDir: process.env.PGLITE_DATA_DIR,
         });
         return db;
-    } else {
+    } else if (process.env.QDRANT_URL) {
+        elizaLogger.info("Initializing Qdrant adapter...");
+        const db = new QdrantDatabaseAdapter();
+        return db;
+    }else {
         const filePath =
             process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
         // ":memory:";
