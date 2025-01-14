@@ -535,6 +535,8 @@ export const models: Models = {
             [ModelClass.SMALL]: "meta-llama/Llama-3.3-70B-Instruct",
             [ModelClass.MEDIUM]: "meta-llama/Llama-3.3-70B-Instruct",
             [ModelClass.LARGE]: "meta-llama/Llama-3.3-70B-Instruct",
+            [ModelClass.EMBEDDING]: "intfloat/multilingual-e5-large-instruct",
+            [ModelClass.IMAGE]: "black-forest-labs/FLUX.1-schnell",
         },
     },
 };
