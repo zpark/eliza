@@ -1,4 +1,4 @@
-import { elizaLogger, generateText, HandlerCallback, IAgentRuntime, ModelClass, State } from "@elizaos/core";
+import { elizaLogger, HandlerCallback, IAgentRuntime, Plugin, State } from "@elizaos/core";
 import { Memory } from "@elizaos/core";
 
 
@@ -258,9 +258,12 @@ export const letzAiImageGeneration = {
     ],
 };
 
-export const letzAIPlugin = {
+export const letzAIPlugin:Plugin = {
     name: "letzai",
+    description: "LetzAI Image Generation Plugin",
     actions: [letzAiImageGeneration],
+    evaluators: [],
+    providers: [],
 };
 
 export default letzAIPlugin;

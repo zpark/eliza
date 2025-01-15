@@ -25,6 +25,7 @@ import {
 import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
 import * as path from "path";
+import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
 import OpenAI from "openai";
 
 const storage = multer.diskStorage({
@@ -134,6 +135,10 @@ export class DirectClient {
 
         const apiRouter = createApiRouter(this.agents, this);
         this.app.use(apiRouter);
+
+
+        const apiLogRouter = createVerifiableLogApiRouter(this.agents);
+        this.app.use(apiLogRouter);
 
         // Define an interface that extends the Express Request interface
         interface CustomRequest extends ExpressRequest {
@@ -373,14 +378,12 @@ export class DirectClient {
 
                 // hyperfi specific parameters
                 let nearby = [];
-                let messages = [];
                 let availableEmotes = [];
 
                 if (body.nearby) {
                     nearby = body.nearby;
                 }
                 if (body.messages) {
-                    messages = body.messages;
                     // loop on the messages and record the memories
                     // might want to do this in parallel
                     for (const msg of body.messages) {
@@ -502,10 +505,17 @@ export class DirectClient {
                     schema: hyperfiOutSchema,
                 });
 
+                if (!response) {
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
+                    return;
+                }
+
                 let hfOut;
                 try {
                     hfOut = hyperfiOutSchema.parse(response.object);
-                } catch (e) {
+                } catch {
                     elizaLogger.error(
                         "cant serialize response",
                         response.object
@@ -515,7 +525,7 @@ export class DirectClient {
                 }
 
                 // do this in the background
-                const rememberThis = new Promise(async (resolve) => {
+                new Promise((resolve) => {
                     const contentObj: Content = {
                         text: hfOut.say,
                     };
@@ -545,45 +555,38 @@ export class DirectClient {
                         content: contentObj,
                     };
 
-                    await runtime.messageManager.createMemory(responseMessage); // 18.2ms
+                    runtime.messageManager.createMemory(responseMessage).then(() => {
+                          const messageId = stringToUuid(Date.now().toString());
+                          const memory: Memory = {
+                              id: messageId,
+                              agentId: runtime.agentId,
+                              userId,
+                              roomId,
+                              content,
+                              createdAt: Date.now(),
+                          };
 
-                    if (!response) {
-                        res.status(500).send(
-                            "No response from generateMessageResponse"
-                        );
-                        return;
-                    }
-
-                    let message = null as Content | null;
-
-                    const messageId = stringToUuid(Date.now().toString());
-                    const memory: Memory = {
-                        id: messageId,
-                        agentId: runtime.agentId,
-                        userId,
-                        roomId,
-                        content,
-                        createdAt: Date.now(),
-                    };
-
-                    // run evaluators (generally can be done in parallel with processActions)
-                    // can an evaluator modify memory? it could but currently doesn't
-                    await runtime.evaluate(memory, state); // 0.5s
-
-                    // only need to call if responseMessage.content.action is set
-                    if (contentObj.action) {
-                        // pass memory (query) to any actions to call
-                        const _result = await runtime.processActions(
-                            memory,
-                            [responseMessage],
-                            state,
-                            async (newMessages) => {
-                                message = newMessages;
-                                return [memory];
+                          // run evaluators (generally can be done in parallel with processActions)
+                          // can an evaluator modify memory? it could but currently doesn't
+                          runtime.evaluate(memory, state).then(() => {
+                            // only need to call if responseMessage.content.action is set
+                            if (contentObj.action) {
+                                // pass memory (query) to any actions to call
+                                runtime.processActions(
+                                    memory,
+                                    [responseMessage],
+                                    state,
+                                    async (_newMessages) => {
+                                        // FIXME: this is supposed override what the LLM said/decided
+                                        // but the promise doesn't make this possible
+                                        //message = newMessages;
+                                        return [memory];
+                                    }
+                                ); // 0.674s
                             }
-                        ); // 0.674s
-                    }
-                    resolve(true);
+                            resolve(true);
+                        });
+                    });
                 });
                 res.json({ response: hfOut });
             }
