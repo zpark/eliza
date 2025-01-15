@@ -218,6 +218,7 @@ export class FarcasterPostManager {
                 await this.runtime.messageManager.createMemory(
                     createCastMemory({
                         roomId,
+                        senderId: this.runtime.agentId,
                         runtime: this.runtime,
                         cast,
                     })
