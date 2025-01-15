@@ -523,20 +523,29 @@ export const models: Models = {
         },
     },
     [ModelProviderName.ATOMA]: {
+        endpoint: settings.ATOMA_API_URL || "https://api.atoma.network/v1",
         settings: {
             stop: [],
             maxInputTokens: 128000,
             maxOutputTokens: 8192,
-            frequency_penalty: 0.0,
-            presence_penalty: 0.0,
             temperature: 0.7,
         },
         model: {
-            [ModelClass.SMALL]: "meta-llama/Llama-3.3-70B-Instruct",
-            [ModelClass.MEDIUM]: "meta-llama/Llama-3.3-70B-Instruct",
-            [ModelClass.LARGE]: "meta-llama/Llama-3.3-70B-Instruct",
-            [ModelClass.EMBEDDING]: "intfloat/multilingual-e5-large-instruct",
-            [ModelClass.IMAGE]: "black-forest-labs/FLUX.1-schnell",
+            [ModelClass.SMALL]:
+                settings.SMALL_ATOMA_MODEL ||
+                "meta-llama/Llama-3.3-70B-Instruct",
+            [ModelClass.MEDIUM]:
+                settings.MEDIUM_ATOMA_MODEL ||
+                "meta-llama/Llama-3.3-70B-Instruct",
+            [ModelClass.LARGE]:
+                settings.LARGE_ATOMA_MODEL ||
+                "meta-llama/Llama-3.3-70B-Instruct",
+            [ModelClass.EMBEDDING]:
+                settings.EMBEDDING_ATOMA_MODEL ||
+                "intfloat/multilingual-e5-large-instruct",
+            [ModelClass.IMAGE]:
+                settings.IMAGE_ATOMA_MODEL ||
+                "black-forest-labs/FLUX.1-schnell",
         },
     },
 };

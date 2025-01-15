@@ -817,7 +817,7 @@ importers:
         version: 1.0.2(encoding@0.1.13)(zod@3.23.8)
       atoma-sdk:
         specifier: github:atoma-network/atoma-sdk-typescript
-        version: https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/1420a609da09a15eaa2b173a830049aef4060b9c(zod@3.23.8)
+        version: https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1(zod@3.23.8)
       fastembed:
         specifier: 1.14.1
         version: 1.14.1
@@ -8981,9 +8981,9 @@ packages:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
     engines: {node: '>= 4.0.0'}
 
-  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/1420a609da09a15eaa2b173a830049aef4060b9c:
-    resolution: {tarball: https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/1420a609da09a15eaa2b173a830049aef4060b9c}
-    version: 0.1.1
+  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1:
+    resolution: {tarball: https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1}
+    version: 0.1.0
     peerDependencies:
       zod: '>= 3'
 
@@ -29971,7 +29971,7 @@ snapshots:
 
   at-least-node@1.0.0: {}
 
-  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/1420a609da09a15eaa2b173a830049aef4060b9c(zod@3.23.8):
+  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1(zod@3.23.8):
     dependencies:
       zod: 3.23.8
 
