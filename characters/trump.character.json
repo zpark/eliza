@@ -1,6 +1,8 @@
 {
     "name": "trump",
-    "clients": [],
+    "clients": [
+        "@elizaos/client-discord"
+    ],
     "modelProvider": "openai",
     "settings": {
         "secrets": {},
