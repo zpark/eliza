@@ -41,7 +41,6 @@ import {
     ModelClass,
     ModelProviderName,
     ServiceType,
-    SearchResponse,
     ActionResponse,
     IVerifiableInferenceAdapter,
     VerifiableInferenceOptions,
@@ -51,7 +50,7 @@ import {
     TokenizerType,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
-import { tavily } from "@tavily/core";
+
 import BigNumber from "bignumber.js";
 import {createPublicClient, http} from "viem";
 
@@ -1818,28 +1817,6 @@ export const generateCaption = async (
     };
 };
 
-export const generateWebSearch = async (
-    query: string,
-    runtime: IAgentRuntime
-): Promise<SearchResponse> => {
-    try {
-        const apiKey = runtime.getSetting("TAVILY_API_KEY") as string;
-        if (!apiKey) {
-            throw new Error("TAVILY_API_KEY is not set");
-        }
-        const tvly = tavily({ apiKey });
-        const response = await tvly.search(query, {
-            includeAnswer: true,
-            maxResults: 3, // 5 (default)
-            topic: "general", // "general"(default) "news"
-            searchDepth: "basic", // "basic"(default) "advanced"
-            includeImages: false, // false (default) true
-        });
-        return response;
-    } catch (error) {
-        elizaLogger.error("Error:", error);
-    }
-};
 /**
  * Configuration options for generating objects with a model.
  */
