@@ -923,6 +923,9 @@ export async function createAgent(
                 ? akashPlugin
                 : null,
             getSecret(character, "QUAI_PRIVATE_KEY") ? quaiPlugin : null,
+             getSecret(character, "RESERVOIR_API_KEY")
+                ? createNFTCollectionsPlugin()
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
