@@ -138,9 +138,7 @@ export class FarcasterInteractionManager {
 
         const currentPost = formatCast(cast);
 
-
         const senderId = stringToUuid(cast.authorFid.toString());
-
 
         const { timeline } = await this.client.getTimeline({
             fid: agent.fid,
@@ -271,7 +269,7 @@ export class FarcasterInteractionManager {
                 }
                 return results.map((result) => result.memory);
             } catch (error) {
-                console.error("Error sending response cast:", error);
+                elizaLogger.error("Error sending response cast:", error);
                 return [];
             }
         };
