@@ -1,5 +1,5 @@
 services:
-    tee:
+    eliza:
         build:
             context: .
             dockerfile: Dockerfile
@@ -7,8 +7,8 @@ services:
         tty: true
         volumes:
             - /var/run/tappd.sock:/var/run/tappd.sock
-            - tee:/app/packages/client-twitter/src/tweetcache
-            - tee:/app/db.sqlite
+            - eliza:/app/packages/client-twitter/src/tweetcache
+            - eliza:/app/db.sqlite
         environment:
             - OPENAI_API_KEY=
             - REDPILL_API_KEY=
@@ -39,4 +39,4 @@ services:
         restart: always
 
 volumes:
-    tee:
+    eliza:

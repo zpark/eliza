@@ -34,14 +34,11 @@ RUN ln -sf /usr/bin/python3 /usr/bin/python
 # Set the working directory
 WORKDIR /app
 
-# Copy only the essential files for dependency installation
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
+# Copy application code
+COPY . .
 
 # Install dependencies
 RUN pnpm install --no-frozen-lockfile
-
-# Copy the rest of the application code
-COPY . .
 
 # Build the project
 RUN pnpm run build && pnpm prune --prod
