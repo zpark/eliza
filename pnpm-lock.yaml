@@ -11051,6 +11051,12 @@ packages:
     engines: {node: '>= 4.5.0'}
     hasBin: true
 
+  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1:
+    resolution: {tarball: https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1}
+    version: 0.1.0
+    peerDependencies:
+      zod: '>= 3'
+
   atomic-sleep@1.0.0:
     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
     engines: {node: '>=8.0.0'}
@@ -35862,6 +35868,10 @@ snapshots:
 
   atob@2.1.2: {}
 
+  atoma-sdk@https://codeload.github.com/atoma-network/atoma-sdk-typescript/tar.gz/328fef6da9d297a013d0fd641355d19e0f9babd1(zod@3.23.8):
+    dependencies:
+      zod: 3.23.8
+
   atomic-sleep@1.0.0: {}
 
   autocomplete.js@0.37.1:
@@ -38866,7 +38876,6 @@ snapshots:
       '@esbuild/win32-arm64': 0.23.1
       '@esbuild/win32-ia32': 0.23.1
       '@esbuild/win32-x64': 0.23.1
-    optional: true
 
   esbuild@0.24.2:
     optionalDependencies:
@@ -40218,7 +40227,6 @@ snapshots:
   get-tsconfig@4.8.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
-    optional: true
 
   get-uri@6.0.4:
     dependencies:
@@ -49093,7 +49101,6 @@ snapshots:
       get-tsconfig: 4.8.1
     optionalDependencies:
       fsevents: 2.3.3
-    optional: true
 
   tty-browserify@0.0.1: {}
 
