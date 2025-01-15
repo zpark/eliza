@@ -1,6 +1,6 @@
 # Eliza
 
-<img src="./docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
+<img src="../docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
 <div align="center">
 
 📖 [Documente](https://elizaos.github.io/eliza/) | 🎯 [Exemple](https://github.com/thejoven/awesome-eliza)
@@ -14,7 +14,7 @@
 ## 🚩 Cuprins
 
 <div align="center">
-  <img src="./docs/static/img/eliza_diagram.png" alt="Eliza Diagram" width="100%" />
+  <img src="../docs/static/img/eliza_diagram.png" alt="Eliza Diagram" width="100%" />
 </div>
 
 ## Funcționalități
