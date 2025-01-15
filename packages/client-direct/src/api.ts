@@ -11,7 +11,8 @@ import {
     ServiceType,
 } from "@elizaos/core";
 
-import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
+// NOTE: This is disabled to make the core not depend on any external plugins
+// import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
 import { REST, Routes } from "discord.js";
 import { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
@@ -290,43 +291,44 @@ export function createApiRouter(
         }
     });
 
-    router.post(
-        "/tee/logs",
-        async (req: express.Request, res: express.Response) => {
-            try {
-                const query = req.body.query || {};
-                const page = parseInt(req.body.page) || 1;
-                const pageSize = parseInt(req.body.pageSize) || 10;
+    // NOTE: This is disabled to make the core not depend on any external plugins
+    // router.post(
+    //     "/tee/logs",
+    //     async (req: express.Request, res: express.Response) => {
+    //         try {
+    //             const query = req.body.query || {};
+    //             const page = parseInt(req.body.page) || 1;
+    //             const pageSize = parseInt(req.body.pageSize) || 10;
 
-                const teeLogQuery: TeeLogQuery = {
-                    agentId: query.agentId || "",
-                    roomId: query.roomId || "",
-                    userId: query.userId || "",
-                    type: query.type || "",
-                    containsContent: query.containsContent || "",
-                    startTimestamp: query.startTimestamp || undefined,
-                    endTimestamp: query.endTimestamp || undefined,
-                };
-                const agentRuntime: AgentRuntime = agents.values().next().value;
-                const teeLogService = agentRuntime
-                    .getService<TeeLogService>(
-                        ServiceType.TEE_LOG
-                    )
-                    .getInstance();
-                const pageQuery = await teeLogService.getLogs(teeLogQuery, page, pageSize);
-                const attestation = await teeLogService.generateAttestation(JSON.stringify(pageQuery));
-                res.json({
-                    logs: pageQuery,
-                    attestation: attestation,
-                });
-            } catch (error) {
-                elizaLogger.error("Failed to get TEE logs:", error);
-                res.status(500).json({
-                    error: "Failed to get TEE logs",
-                });
-            }
-        }
-    );
+    //             const teeLogQuery: TeeLogQuery = {
+    //                 agentId: query.agentId || "",
+    //                 roomId: query.roomId || "",
+    //                 userId: query.userId || "",
+    //                 type: query.type || "",
+    //                 containsContent: query.containsContent || "",
+    //                 startTimestamp: query.startTimestamp || undefined,
+    //                 endTimestamp: query.endTimestamp || undefined,
+    //             };
+    //             const agentRuntime: AgentRuntime = agents.values().next().value;
+    //             const teeLogService = agentRuntime
+    //                 .getService<TeeLogService>(
+    //                     ServiceType.TEE_LOG
+    //                 )
+    //                 .getInstance();
+    //             const pageQuery = await teeLogService.getLogs(teeLogQuery, page, pageSize);
+    //             const attestation = await teeLogService.generateAttestation(JSON.stringify(pageQuery));
+    //             res.json({
+    //                 logs: pageQuery,
+    //                 attestation: attestation,
+    //             });
+    //         } catch (error) {
+    //             elizaLogger.error("Failed to get TEE logs:", error);
+    //             res.status(500).json({
+    //                 error: "Failed to get TEE logs",
+    //             });
+    //         }
+    //     }
+    // );
 
     return router;
 }
