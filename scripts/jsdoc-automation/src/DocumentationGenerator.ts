@@ -14,7 +14,7 @@ import { GitManager } from "./GitManager.js";
 import fs from "fs";
 import { Configuration } from "./Configuration.js";
 import path from "path";
-import { AIService } from "./AIService.js";
+import { AIService } from "./AIService/AIService.js";
 import { PluginDocumentationGenerator } from "./PluginDocumentationGenerator.js";
 import { JSDocValidator } from "./JSDocValidator.js";
 

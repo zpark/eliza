@@ -469,7 +469,7 @@ const provider = new DeriveKeyProvider();
 // Derive a raw key
 try {
     const rawKey = await provider.rawDeriveKey(
-        "/path/to/derive",
+        "/path/to/derive", // This is what the WALLET_SECRET_SALT is used for
         "subject-identifier",
     );
     // rawKey is a DeriveKeyResponse that can be used for further processing
@@ -482,7 +482,7 @@ try {
 // Derive a Solana keypair (Ed25519)
 try {
     const solanaKeypair = await provider.deriveEd25519Keypair(
-        "/path/to/derive",
+        "/path/to/derive", // This is what the WALLET_SECRET_SALT is used for
         "subject-identifier",
     );
     // solanaKeypair can now be used for Solana operations
@@ -493,7 +493,7 @@ try {
 // Derive an Ethereum keypair (ECDSA)
 try {
     const evmKeypair = await provider.deriveEcdsaKeypair(
-        "/path/to/derive",
+        "/path/to/derive", // This is what the WALLET_SECRET_SALT is used for
         "subject-identifier",
     );
     // evmKeypair can now be used for Ethereum operations
@@ -741,6 +741,39 @@ cargo run --ip-addr <ip>:<port>
 # The server runs on 1350 inside Docker, can remap to any interface and port
 docker run --init -p 127.0.0.1:1350:1350 marlinorg/attestation-server-custom-mock
 ```
+
+### 12. Allora Plugin (`@elizaos/allora-plugin`)
+
+The [Allora Network](https://allora.network) plugin seamlessly empowers Eliza agents with real-time, advanced, self-improving AI inferences, delivering high-performance insights without introducing any additional complexity.
+
+#### Setup and Configuration
+
+1. Add the plugin to your character's configuration
+
+    ```typescript
+    import { alloraPlugin } from "@eliza/plugin-allora";
+
+    const character = {
+        plugins: [alloraPlugin],
+    };
+    ```
+
+2. Set the following environment variables:
+    - `ALLORA_API_KEY`: Create an API key by [creating an account](https://developer.upshot.xyz/signup).
+
+#### Actions
+
+- `GET_INFERENCE`: Retrieves predictions for a specific topic.
+
+Example interactions:
+
+```
+User: "What is the predicted ETH price in 5 minutes?"
+Agent: "I'll get the inference now..."
+Agent: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 13): 3393.364326646801085508"
+```
+
+For detailed information and additional implementation examples, please refer to the [Allora-Eliza integration docs](https://docs.allora.network/marketplace/integrations/eliza-os).
 
 ### Writing Custom Plugins
 

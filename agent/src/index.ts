@@ -1,14 +1,18 @@
+import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 import { AutoClientInterface } from "@elizaos/client-auto";
 import { DiscordClientInterface } from "@elizaos/client-discord";
-import { FarcasterAgentClient } from "@elizaos/client-farcaster";
+import { FarcasterClientInterface } from "@elizaos/client-farcaster";
 import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 // import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
+import { PrimusAdapter } from "@elizaos/plugin-primus";
+
 import {
     AgentRuntime,
     CacheManager,
@@ -28,17 +32,26 @@ import {
     settings,
     stringToUuid,
     validateCharacterConfig,
+    parseBooleanFromText,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
+
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import createGoatPlugin from "@elizaos/plugin-goat";
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
 import { DirectClient } from "@elizaos/client-direct";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
 import { abstractPlugin } from "@elizaos/plugin-abstract";
+import { akashPlugin } from "@elizaos/plugin-akash";
+import { alloraPlugin } from "@elizaos/plugin-allora";
 import { aptosPlugin } from "@elizaos/plugin-aptos";
+import { artheraPlugin } from "@elizaos/plugin-arthera";
+import { autonomePlugin } from "@elizaos/plugin-autonome";
+import { availPlugin } from "@elizaos/plugin-avail";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
+import { b2Plugin } from "@elizaos/plugin-b2";
 import { binancePlugin } from "@elizaos/plugin-binance";
+import { birdeyePlugin } from "@elizaos/plugin-birdeye";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -47,24 +60,43 @@ import {
     tradePlugin,
     webhookPlugin,
 } from "@elizaos/plugin-coinbase";
+import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
+import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
 import { confluxPlugin } from "@elizaos/plugin-conflux";
+import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
 import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
 import { evmPlugin } from "@elizaos/plugin-evm";
 import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
+import { giphyPlugin } from "@elizaos/plugin-giphy";
+import { gitcoinPassportPlugin } from "@elizaos/plugin-gitcoin-passport";
+import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
+import { lensPlugin } from "@elizaos/plugin-lensNetwork";
+import { letzAIPlugin } from "@elizaos/plugin-letzai";
 import { multiversxPlugin } from "@elizaos/plugin-multiversx";
 import { nearPlugin } from "@elizaos/plugin-near";
+import createNFTCollectionsPlugin from "@elizaos/plugin-nft-collections";
 import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
 import { createNodePlugin } from "@elizaos/plugin-node";
+import { obsidianPlugin } from "@elizaos/plugin-obsidian";
+import { OpacityAdapter } from "@elizaos/plugin-opacity";
+import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
+import { quaiPlugin } from "@elizaos/plugin-quai";
+import { sgxPlugin } from "@elizaos/plugin-sgx";
 import { solanaPlugin } from "@elizaos/plugin-solana";
 import { solanaAgentkitPlguin } from "@elizaos/plugin-solana-agentkit";
+import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import { storyPlugin } from "@elizaos/plugin-story";
 import { suiPlugin } from "@elizaos/plugin-sui";
 import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
+import { teeLogPlugin } from "@elizaos/plugin-tee-log";
 import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
+import { verifiableLogPlugin } from "@elizaos/plugin-tee-verifiable-log";
+import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
 import { tonPlugin } from "@elizaos/plugin-ton";
+import { squidRouterPlugin } from "@elizaos/plugin-squid-router";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 <<<<<<< HEAD
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
@@ -73,10 +105,6 @@ import { stargazePlugin } from "@elizaos/plugin-stargaze";
 =======
 >>>>>>> bd9d2151a509acb8da9d6e1dab9303d884498d74
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-
-import { availPlugin } from "@elizaos/plugin-avail";
-import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
-import { stargazePlugin } from "@elizaos/plugin-stargaze";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -129,9 +157,93 @@ function tryLoadFile(filePath: string): string | null {
         return null;
     }
 }
+function mergeCharacters(base: Character, child: Character): Character {
+    const mergeObjects = (baseObj: any, childObj: any) => {
+        const result: any = {};
+        const keys = new Set([
+            ...Object.keys(baseObj || {}),
+            ...Object.keys(childObj || {}),
+        ]);
+        keys.forEach((key) => {
+            if (
+                typeof baseObj[key] === "object" &&
+                typeof childObj[key] === "object" &&
+                !Array.isArray(baseObj[key]) &&
+                !Array.isArray(childObj[key])
+            ) {
+                result[key] = mergeObjects(baseObj[key], childObj[key]);
+            } else if (
+                Array.isArray(baseObj[key]) ||
+                Array.isArray(childObj[key])
+            ) {
+                result[key] = [
+                    ...(baseObj[key] || []),
+                    ...(childObj[key] || []),
+                ];
+            } else {
+                result[key] =
+                    childObj[key] !== undefined ? childObj[key] : baseObj[key];
+            }
+        });
+        return result;
+    };
+    return mergeObjects(base, child);
+}
 
-function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
+async function loadCharacterFromUrl(url: string): Promise<Character> {
+    const response = await fetch(url);
+    const character = await response.json();
+    return jsonToCharacter(url, character);
+}
+
+async function jsonToCharacter(
+    filePath: string,
+    character: any
+): Promise<Character> {
+    validateCharacterConfig(character);
+
+    // .id isn't really valid
+    const characterId = character.id || character.name;
+    const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
+    const characterSettings = Object.entries(process.env)
+        .filter(([key]) => key.startsWith(characterPrefix))
+        .reduce((settings, [key, value]) => {
+            const settingKey = key.slice(characterPrefix.length);
+            return { ...settings, [settingKey]: value };
+        }, {});
+    if (Object.keys(characterSettings).length > 0) {
+        character.settings = character.settings || {};
+        character.settings.secrets = {
+            ...characterSettings,
+            ...character.settings.secrets,
+        };
+    }
+    // Handle plugins
+    character.plugins = await handlePluginImporting(character.plugins);
+    if (character.extends) {
+        elizaLogger.info(
+            `Merging  ${character.name} character with parent characters`
+        );
+        for (const extendPath of character.extends) {
+            const baseCharacter = await loadCharacter(
+                path.resolve(path.dirname(filePath), extendPath)
+            );
+            character = mergeCharacters(baseCharacter, character);
+            elizaLogger.info(
+                `Merged ${character.name} with ${baseCharacter.name}`
+            );
+        }
+    }
+    return character;
+}
+
+async function loadCharacter(filePath: string): Promise<Character> {
+    const content = tryLoadFile(filePath);
+    if (!content) {
+        throw new Error(`Character file not found: ${filePath}`);
+    }
+    let character = JSON.parse(content);
+    return jsonToCharacter(filePath, character);
 }
 
 export async function loadCharacters(
@@ -196,39 +308,7 @@ export async function loadCharacters(
             }
 
             try {
-                const character = JSON.parse(content);
-                validateCharacterConfig(character);
-
-                // .id isn't really valid
-                const characterId = character.id || character.name;
-                const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
-
-                const characterSettings = Object.entries(process.env)
-                    .filter(([key]) => key.startsWith(characterPrefix))
-                    .reduce((settings, [key, value]) => {
-                        const settingKey = key.slice(characterPrefix.length);
-                        return { ...settings, [settingKey]: value };
-                    }, {});
-
-                if (Object.keys(characterSettings).length > 0) {
-                    character.settings = character.settings || {};
-                    character.settings.secrets = {
-                        ...characterSettings,
-                        ...character.settings.secrets,
-                    };
-                }
-
-                // Handle plugins
-                if (isAllStrings(character.plugins)) {
-                    elizaLogger.info("Plugins are: ", character.plugins);
-                    const importedPlugins = await Promise.all(
-                        character.plugins.map(async (plugin) => {
-                            const importedPlugin = await import(plugin);
-                            return importedPlugin.default;
-                        })
-                    );
-                    character.plugins = importedPlugins;
-                }
+                const character: Character = await loadCharacter(resolvedPath);
 
                 loadedCharacters.push(character);
                 elizaLogger.info(
@@ -244,11 +324,51 @@ export async function loadCharacters(
     }
 
     if (loadedCharacters.length === 0) {
+        if (
+            process.env.REMOTE_CHARACTER_URL != "" &&
+            process.env.REMOTE_CHARACTER_URL.startsWith("http")
+        ) {
+            const character = await loadCharacterFromUrl(
+                process.env.REMOTE_CHARACTER_URL
+            );
+            loadedCharacters.push(character);
+        }
+
         elizaLogger.info("No characters found, using default character");
         loadedCharacters.push(defaultCharacter);
     }
 
     return loadedCharacters;
+}
+
+async function handlePluginImporting(plugins: string[]) {
+    if (plugins.length > 0) {
+        elizaLogger.info("Plugins are: ", plugins);
+        const importedPlugins = await Promise.all(
+            plugins.map(async (plugin) => {
+                try {
+                    const importedPlugin = await import(plugin);
+                    const functionName =
+                        plugin
+                            .replace("@elizaos/plugin-", "")
+                            .replace(/-./g, (x) => x[1].toUpperCase()) +
+                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
+                    return (
+                        importedPlugin.default || importedPlugin[functionName]
+                    );
+                } catch (importError) {
+                    elizaLogger.error(
+                        `Failed to import plugin: ${plugin}`,
+                        importError
+                    );
+                    return []; // Return null for failed imports
+                }
+            })
+        );
+        return importedPlugins;
+    } else {
+        return [];
+    }
 }
 
 export function getTokenForProvider(
@@ -273,6 +393,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.ETERNALAI_API_KEY ||
                 settings.ETERNALAI_API_KEY
             );
+        case ModelProviderName.NINETEEN_AI:
+            return (
+                character.settings?.secrets?.NINETEEN_AI_API_KEY ||
+                settings.NINETEEN_AI_API_KEY
+            );
         case ModelProviderName.LLAMACLOUD:
         case ModelProviderName.TOGETHER:
             return (
@@ -280,8 +405,6 @@ export function getTokenForProvider(
                 settings.LLAMACLOUD_API_KEY ||
                 character.settings?.secrets?.TOGETHER_API_KEY ||
                 settings.TOGETHER_API_KEY ||
-                character.settings?.secrets?.XAI_API_KEY ||
-                settings.XAI_API_KEY ||
                 character.settings?.secrets?.OPENAI_API_KEY ||
                 settings.OPENAI_API_KEY
             );
@@ -362,10 +485,25 @@ export function getTokenForProvider(
                 character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
                 settings.GOOGLE_GENERATIVE_AI_API_KEY
             );
+        case ModelProviderName.MISTRAL:
+            return (
+                character.settings?.secrets?.MISTRAL_API_KEY ||
+                settings.MISTRAL_API_KEY
+            );
+        case ModelProviderName.LETZAI:
+            return (
+                character.settings?.secrets?.LETZAI_API_KEY ||
+                settings.LETZAI_API_KEY
+            );
         case ModelProviderName.INFERA:
             return (
                 character.settings?.secrets?.INFERA_API_KEY ||
                 settings.INFERA_API_KEY
+            );
+        case ModelProviderName.DEEPSEEK:
+            return (
+                character.settings?.secrets?.DEEPSEEK_API_KEY ||
+                settings.DEEPSEEK_API_KEY
             );
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
@@ -375,7 +513,26 @@ export function getTokenForProvider(
 }
 
 function initializeDatabase(dataDir: string) {
-    if (process.env.POSTGRES_URL) {
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+        elizaLogger.info("Initializing Supabase connection...");
+        const db = new SupabaseDatabaseAdapter(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY
+        );
+
+        // Test the connection
+        db.init()
+            .then(() => {
+                elizaLogger.success(
+                    "Successfully connected to Supabase database"
+                );
+            })
+            .catch((error) => {
+                elizaLogger.error("Failed to connect to Supabase:", error);
+            });
+
+        return db;
+    } else if (process.env.POSTGRES_URL) {
         elizaLogger.info("Initializing PostgreSQL connection...");
         const db = new PostgresDatabaseAdapter({
             connectionString: process.env.POSTGRES_URL,
@@ -394,11 +551,30 @@ function initializeDatabase(dataDir: string) {
             });
 
         return db;
+    } else if (process.env.PGLITE_DATA_DIR) {
+        elizaLogger.info("Initializing PgLite adapter...");
+        // `dataDir: memory://` for in memory pg
+        const db = new PGLiteDatabaseAdapter({
+            dataDir: process.env.PGLITE_DATA_DIR,
+        });
+        return db;
     } else {
         const filePath =
             process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
-        // ":memory:";
+        elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
         const db = new SqliteDatabaseAdapter(new Database(filePath));
+
+        // Test the connection
+        db.init()
+            .then(() => {
+                elizaLogger.success(
+                    "Successfully connected to SQLite database"
+                );
+            })
+            .catch((error) => {
+                elizaLogger.error("Failed to connect to SQLite:", error);
+            });
+
         return db;
     }
 }
@@ -415,7 +591,8 @@ export async function initializeClients(
         character.clients?.map((str) => str.toLowerCase()) || [];
     elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
-    if (clientTypes.includes(Clients.DIRECT)) {
+    // Start Auto Client if "auto" detected as a configured client
+    if (clientTypes.includes(Clients.AUTO)) {
         const autoClient = await AutoClientInterface.start(runtime);
         if (autoClient) clients.auto = autoClient;
     }
@@ -438,10 +615,8 @@ export async function initializeClients(
     }
 
     if (clientTypes.includes(Clients.FARCASTER)) {
-        // why is this one different :(
-        const farcasterClient = new FarcasterAgentClient(runtime);
+        const farcasterClient = await FarcasterClientInterface.start(runtime);
         if (farcasterClient) {
-            farcasterClient.start();
             clients.farcaster = farcasterClient;
         }
     }
@@ -507,11 +682,7 @@ export async function createAgent(
     cache: ICacheManager,
     token: string
 ): Promise<AgentRuntime> {
-    elizaLogger.success(
-        elizaLogger.successesTitle,
-        "Creating runtime for character",
-        character.name
-    );
+    elizaLogger.log(`Creating runtime for character ${character.name}`);
 
     nodePlugin ??= createNodePlugin();
 
@@ -549,6 +720,42 @@ export async function createAgent(
     //     });
     //     elizaLogger.log("Verifiable inference adapter initialized");
     // }
+    // Initialize Opacity adapter if environment variables are present
+    let verifiableInferenceAdapter;
+    if (
+        process.env.OPACITY_TEAM_ID &&
+        process.env.OPACITY_CLOUDFLARE_NAME &&
+        process.env.OPACITY_PROVER_URL &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    ) {
+        verifiableInferenceAdapter = new OpacityAdapter({
+            teamId: process.env.OPACITY_TEAM_ID,
+            teamName: process.env.OPACITY_CLOUDFLARE_NAME,
+            opacityProverUrl: process.env.OPACITY_PROVER_URL,
+            modelProvider: character.modelProvider,
+            token: token,
+        });
+        elizaLogger.log("Verifiable inference adapter initialized");
+        elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
+        elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
+        elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
+        elizaLogger.log("modelProvider", character.modelProvider);
+        elizaLogger.log("token", token);
+    }
+    if (
+        process.env.PRIMUS_APP_ID &&
+        process.env.PRIMUS_APP_SECRET &&
+        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    ) {
+        verifiableInferenceAdapter = new PrimusAdapter({
+            appId: process.env.PRIMUS_APP_ID,
+            appSecret: process.env.PRIMUS_APP_SECRET,
+            attMode: "proxytls",
+            modelProvider: character.modelProvider,
+            token,
+        });
+        elizaLogger.log("Verifiable inference primus adapter initialized");
+    }
 
     return new AgentRuntime({
         databaseAdapter: db,
@@ -573,6 +780,7 @@ export async function createAgent(
             getSecret(character, "SOLANA_PRIVATE_KEY")
                 ? solanaAgentkitPlguin
                 : null,
+            getSecret(character, "AUTONOME_JWT_TOKEN") ? autonomePlugin : null,
             (getSecret(character, "NEAR_ADDRESS") ||
                 getSecret(character, "NEAR_WALLET_PUBLIC_KEY")) &&
             getSecret(character, "NEAR_WALLET_SECRET_KEY")
@@ -583,6 +791,9 @@ export async function createAgent(
                 getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? evmPlugin
                 : null,
+            getSecret(character, "COSMOS_RECOVERY_PHRASE") &&
+                getSecret(character, "COSMOS_AVAILABLE_CHAINS") &&
+                createCosmosPlugin(),
             (getSecret(character, "SOLANA_PUBLIC_KEY") ||
                 (getSecret(character, "WALLET_PUBLIC_KEY") &&
                     !getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith(
@@ -594,12 +805,16 @@ export async function createAgent(
                 ? nftGenerationPlugin
                 : null,
             getSecret(character, "ZEROG_PRIVATE_KEY") ? zgPlugin : null,
+            getSecret(character, "COINMARKETCAP_API_KEY")
+                ? coinmarketcapPlugin
+                : null,
             getSecret(character, "COINBASE_COMMERCE_KEY")
                 ? coinbaseCommercePlugin
                 : null,
             getSecret(character, "FAL_API_KEY") ||
             getSecret(character, "OPENAI_API_KEY") ||
             getSecret(character, "VENICE_API_KEY") ||
+            getSecret(character, "NINETEEN_AI_API_KEY") ||
             getSecret(character, "HEURIST_API_KEY") ||
             getSecret(character, "LIVEPEER_GATEWAY_URL")
                 ? imageGenerationPlugin
@@ -615,15 +830,32 @@ export async function createAgent(
                   ]
                 : []),
             ...(teeMode !== TEEMode.OFF && walletSecretSalt ? [teePlugin] : []),
+            teeMode !== TEEMode.OFF &&
+            walletSecretSalt &&
+            getSecret(character, "VLOG")
+                ? verifiableLogPlugin
+                : null,
+            getSecret(character, "SGX") ? sgxPlugin : null,
+            getSecret(character, "ENABLE_TEE_LOG") &&
+            ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
+                getSecret(character, "SGX"))
+                ? teeLogPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
             goatPlugin,
+            getSecret(character, "COINGECKO_API_KEY") ||
+            getSecret(character, "COINGECKO_PRO_API_KEY")
+                ? coingeckoPlugin
+                : null,
+            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
+            getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin : null,
             getSecret(character, "BINANCE_API_KEY") &&
             getSecret(character, "BINANCE_SECRET_KEY")
                 ? binancePlugin
@@ -631,6 +863,10 @@ export async function createAgent(
             getSecret(character, "FLOW_ADDRESS") &&
             getSecret(character, "FLOW_PRIVATE_KEY")
                 ? flowPlugin
+                : null,
+            getSecret(character, "LENS_ADDRESS") &&
+            getSecret(character, "LENS_PRIVATE_KEY")
+                ? lensPlugin
                 : null,
             getSecret(character, "APTOS_PRIVATE_KEY") ? aptosPlugin : null,
             getSecret(character, "MVX_PRIVATE_KEY") ? multiversxPlugin : null,
@@ -640,24 +876,59 @@ export async function createAgent(
                 : null,
             getSecret(character, "TEE_MARLIN") ? teeMarlinPlugin : null,
             getSecret(character, "TON_PRIVATE_KEY") ? tonPlugin : null,
+            getSecret(character, "THIRDWEB_SECRET_KEY") ? thirdwebPlugin : null,
             getSecret(character, "SUI_PRIVATE_KEY") ? suiPlugin : null,
             getSecret(character, "STORY_PRIVATE_KEY") ? storyPlugin : null,
+            getSecret(character, "SQUID_SDK_URL") &&
+            getSecret(character, "SQUID_INTEGRATOR_ID") &&
+            getSecret(character, "SQUID_EVM_ADDRESS") &&
+            getSecret(character, "SQUID_EVM_PRIVATE_KEY") &&
+            getSecret(character, "SQUID_API_THROTTLE_INTERVAL")
+                ? squidRouterPlugin
+                : null,
             getSecret(character, "FUEL_PRIVATE_KEY") ? fuelPlugin : null,
             getSecret(character, "AVALANCHE_PRIVATE_KEY")
                 ? avalanchePlugin
                 : null,
+            getSecret(character, "BIRDEYE_API_KEY") ? birdeyePlugin : null,
             getSecret(character, "ECHOCHAMBERS_API_URL") &&
             getSecret(character, "ECHOCHAMBERS_API_KEY")
                 ? echoChambersPlugin
                 : null,
+            getSecret(character, "LETZAI_API_KEY") ? letzAIPlugin : null,
             getSecret(character, "STARGAZE_ENDPOINT") ? stargazePlugin : null,
+            getSecret(character, "GIPHY_API_KEY") ? giphyPlugin : null,
+            getSecret(character, "PASSPORT_API_KEY")
+                ? gitcoinPassportPlugin
+                : null,
             getSecret(character, "GENLAYER_PRIVATE_KEY")
                 ? genLayerPlugin
                 : null,
-            getSecret(character, "AVAIL_SEED") ? availPlugin : null,
-            getSecret(character, "AVAIL_APP_ID") ? availPlugin : null,
+            getSecret(character, "AVAIL_SEED") &&
+            getSecret(character, "AVAIL_APP_ID")
+                ? availPlugin
+                : null,
             getSecret(character, "OPEN_WEATHER_API_KEY")
                 ? openWeatherPlugin
+                : null,
+            getSecret(character, "OBSIDIAN_API_TOKEN") ? obsidianPlugin : null,
+            getSecret(character, "ARTHERA_PRIVATE_KEY")?.startsWith("0x")
+                ? artheraPlugin
+                : null,
+            getSecret(character, "ALLORA_API_KEY") ? alloraPlugin : null,
+            getSecret(character, "HYPERLIQUID_PRIVATE_KEY")
+                ? hyperliquidPlugin
+                : null,
+            getSecret(character, "HYPERLIQUID_TESTNET")
+                ? hyperliquidPlugin
+                : null,
+            getSecret(character, "AKASH_MNEMONIC") &&
+            getSecret(character, "AKASH_WALLET_ADDRESS")
+                ? akashPlugin
+                : null,
+            getSecret(character, "QUAI_PRIVATE_KEY") ? quaiPlugin : null,
+            getSecret(character, "RESERVOIR_API_KEY")
+                ? createNFTCollectionsPlugin()
                 : null,
         ].filter(Boolean),
         providers: [],
@@ -666,7 +937,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        // verifiableInferenceAdapter,
+        verifiableInferenceAdapter,
     });
 }
 
@@ -848,7 +1119,10 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    directClient.startAgent = async (character: Character) => {
+    directClient.startAgent = async (character) => {
+        // Handle plugins
+        character.plugins = await handlePluginImporting(character.plugins);
+
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
@@ -868,3 +1142,19 @@ startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
     process.exit(1);
 });
+
+// Prevent unhandled exceptions from crashing the process if desired
+if (
+    process.env.PREVENT_UNHANDLED_EXIT &&
+    parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
+) {
+    // Handle uncaught exceptions to prevent the process from crashing
+    process.on("uncaughtException", function (err) {
+        console.error("uncaughtException", err);
+    });
+
+    // Handle unhandled rejections to prevent the process from crashing
+    process.on("unhandledRejection", function (err) {
+        console.error("unhandledRejection", err);
+    });
+}
