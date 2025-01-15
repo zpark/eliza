@@ -38,7 +38,7 @@ export class TokenPriceProvider implements Provider {
             console.log(`Fetching price for token: ${tokenIdentifier}`);
 
             // Make API request
-            const isAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenIdentifier);
+            const isAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenIdentifier) || /^[1-9A-HJ-NP-Za-km-z]{43,44}$/.test(address); // validates for ethAddress and solAddress
             const endpoint = isAddress
                 ? `https://api.dexscreener.com/latest/dex/tokens/${tokenIdentifier}`
                 : `https://api.dexscreener.com/latest/dex/search?q=${tokenIdentifier}`;
