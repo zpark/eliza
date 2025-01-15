@@ -7,7 +7,6 @@ node_modules
 .DS_Store
 
 # Ignore Git files and metadata
-.git
 .gitignore
 
 # Ignore IDE and editor config files
