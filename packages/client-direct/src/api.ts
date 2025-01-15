@@ -6,6 +6,7 @@ import {
     AgentRuntime,
     elizaLogger,
     getEnvVariable,
+    UUID,
     validateCharacterConfig,
     ServiceType,
 } from "@elizaos/core";
@@ -13,7 +14,38 @@ import {
 import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
 import { REST, Routes } from "discord.js";
 import { DirectClient } from ".";
-import { stringToUuid } from "@elizaos/core";
+import { validateUuid } from "@elizaos/core";
+
+interface UUIDParams {
+    agentId: UUID;
+    roomId?: UUID;
+}
+
+function validateUUIDParams(
+    params: { agentId: string; roomId?: string },
+    res: express.Response
+): UUIDParams | null {
+    const agentId = validateUuid(params.agentId);
+    if (!agentId) {
+        res.status(400).json({
+            error: "Invalid AgentId format. Expected to be a UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        });
+        return null;
+    }
+
+    if (params.roomId) {
+        const roomId = validateUuid(params.roomId);
+        if (!roomId) {
+            res.status(400).json({
+                error: "Invalid RoomId format. Expected to be a UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            });
+            return null;
+        }
+        return { agentId, roomId };
+    }
+
+    return { agentId };
+}
 
 export function createApiRouter(
     agents: Map<string, AgentRuntime>,
@@ -48,7 +80,11 @@ export function createApiRouter(
     });
 
     router.get("/agents/:agentId", (req, res) => {
-        const agentId = req.params.agentId;
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
         const agent = agents.get(agentId);
 
         if (!agent) {
@@ -67,9 +103,30 @@ export function createApiRouter(
         });
     });
 
+    router.delete("/agents/:agentId", async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
+        let agent: AgentRuntime = agents.get(agentId);
+
+        if (agent) {
+            agent.stop();
+            directClient.unregisterAgent(agent);
+            res.status(204).send();
+        }
+        else {
+            res.status(404).json({ error: "Agent not found" });
+        }
+    });
+
     router.post("/agents/:agentId/set", async (req, res) => {
-        const agentId = req.params.agentId;
-        console.log("agentId", agentId);
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
         let agent: AgentRuntime = agents.get(agentId);
 
         // update character
@@ -94,9 +151,17 @@ export function createApiRouter(
         }
 
         // start it up (and register it)
-        agent = await directClient.startAgent(character);
-        elizaLogger.log(`${character.name} started`);
-
+        try {
+            await directClient.startAgent(character);
+            elizaLogger.log(`${character.name} started`);
+        } catch (e) {
+            elizaLogger.error(`Error starting agent: ${e}`);
+            res.status(500).json({
+                success: false,
+                message: e.message,
+            });
+            return;
+        }
         res.json({
             id: character.id,
             character: character,
@@ -104,7 +169,11 @@ export function createApiRouter(
     });
 
     router.get("/agents/:agentId/channels", async (req, res) => {
-        const agentId = req.params.agentId;
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
         const runtime = agents.get(agentId);
 
         if (!runtime) {
@@ -130,8 +199,12 @@ export function createApiRouter(
     });
 
     router.get("/agents/:agentId/:roomId/memories", async (req, res) => {
-        const agentId = req.params.agentId;
-        const roomId = stringToUuid(req.params.roomId);
+        const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+            roomId: null,
+        };
+        if (!agentId || !roomId) return;
+
         let runtime = agents.get(agentId);
 
         // if runtime is null, look for runtime with the same name
@@ -283,3 +356,4 @@ export function createApiRouter(
 
     return router;
 }
+

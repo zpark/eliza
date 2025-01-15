@@ -348,7 +348,7 @@ export class TwitterInteractionClient {
 
         elizaLogger.debug("formattedConversation: ", formattedConversation);
 
-        let imageDescriptionsArray = [];
+        const imageDescriptionsArray = [];
         try{
             elizaLogger.debug('Getting images');
             for (const photo of tweet.photos) {
