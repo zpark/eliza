@@ -540,12 +540,6 @@ export const models: Models = {
             [ModelClass.LARGE]:
                 settings.LARGE_ATOMA_MODEL ||
                 "meta-llama/Llama-3.3-70B-Instruct",
-            [ModelClass.EMBEDDING]:
-                settings.EMBEDDING_ATOMA_MODEL ||
-                "intfloat/multilingual-e5-large-instruct",
-            [ModelClass.IMAGE]:
-                settings.IMAGE_ATOMA_MODEL ||
-                "black-forest-labs/FLUX.1-schnell",
         },
     },
 };
