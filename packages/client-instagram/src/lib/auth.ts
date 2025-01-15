@@ -38,7 +38,7 @@ async function authenticate(
 
     // Proceed with fresh login
     try {
-      const loggedInUser = await ig.account.login(
+       await ig.account.login(
         config.INSTAGRAM_USERNAME,
         config.INSTAGRAM_PASSWORD
       );

@@ -1,9 +1,8 @@
 // src/services/post.ts
 import { IAgentRuntime, ModelClass, composeContext, elizaLogger, generateImage, generateText, getEmbeddingZeroVector, stringToUuid } from "@elizaos/core";
 import { promises as fs } from 'fs';
-import path, { dirname } from "path";
+import path from "path";
 import sharp from 'sharp';
-import { fileURLToPath } from 'url';
 import { getIgClient } from "../lib/state";
 import { InstagramState } from "../types";
 
@@ -223,11 +222,7 @@ export class InstagramPostService {
         stack: error instanceof Error ? error.stack : undefined,
         phase: 'getOrGenerateImage'
       });
-
-      // Fallback to default image if generation fails
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = dirname(__filename);
-      return path.resolve(__dirname, '../assets/goku.png');
+      throw error;
     }
   }
 

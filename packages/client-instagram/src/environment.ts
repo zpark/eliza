@@ -90,13 +90,13 @@ export async function validateInstagramConfig(
             ),
 
             INSTAGRAM_ENABLE_ACTION_PROCESSING: parseBooleanFromText(
-                runtime.getSetting("ENABLE_ACTION_PROCESSING") ||
-                    process.env.ENABLE_ACTION_PROCESSING
+                runtime.getSetting("INSTAGRAM_ENABLE_ACTION_PROCESSING") ||
+                    process.env.INSTAGRAM_ENABLE_ACTION_PROCESSING
             ) ?? false,
 
             INSTAGRAM_ACTION_INTERVAL: parseInt(
-                runtime.getSetting("ACTION_INTERVAL") ||
-                    process.env.ACTION_INTERVAL ||
+                runtime.getSetting("INSTAGRAM_ACTION_INTERVAL") ||
+                    process.env.INSTAGRAM_ACTION_INTERVAL ||
                     DEFAULT_ACTION_INTERVAL.toString(),
                 10
             ),

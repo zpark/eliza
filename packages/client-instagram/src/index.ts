@@ -25,7 +25,7 @@ export const InstagramClientInterface: Client = {
         await postService.start();
         elizaLogger.log("Instagram post service started");
 
-        if (config.ENABLE_ACTION_PROCESSING) {
+        if (config.INSTAGRAM_ENABLE_ACTION_PROCESSING) {
           await interactionService.start();
           elizaLogger.log("Instagram interaction service started");
         }

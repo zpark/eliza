@@ -14,22 +14,22 @@ export async function fetchRecentMedia(
       const feed = ig.feed.user(ig.state.cookieUserId);
       const items = await feed.items();
 
-      return items.slice(0, count).map(item => ({
+      return items.slice(0, count).map((item: any) => ({
         id: item.id,
         mediaType: item.media_type as MediaItem['mediaType'],
         mediaUrl: item.media_url,
-        thumbnailUrl: item.thumbnail_url,
+        thumbnailUrl: item.thumbnail_url || null,
         permalink: item.permalink,
-        caption: item.caption?.text,
+        caption: item.caption?.text || null,
         timestamp: item.timestamp,
-        children: item.children?.map(child => ({
+        children: item.children?.map((child: any) => ({
           id: child.id,
           mediaType: child.media_type as MediaItem['mediaType'],
           mediaUrl: child.media_url,
-          thumbnailUrl: child.thumbnail_url,
+          thumbnailUrl: child.thumbnail_url || null,
           permalink: child.permalink,
           timestamp: child.timestamp
-        }))
+        })) || null
       }));
     } catch (error) {
       elizaLogger.error('Error fetching recent media:', error);
