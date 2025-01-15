@@ -81,15 +81,26 @@ export class SqlJsDatabaseAdapter
         agentId: UUID;
         roomIds: UUID[];
         tableName: string;
+        limit?: number;
     }): Promise<Memory[]> {
         const placeholders = params.roomIds.map(() => "?").join(", ");
-        const sql = `SELECT * FROM memories WHERE 'type' = ? AND agentId = ? AND roomId IN (${placeholders})`;
-        const stmt = this.db.prepare(sql);
+        let sql = `SELECT * FROM memories WHERE 'type' = ? AND agentId = ? AND roomId IN (${placeholders})`;
+
         const queryParams = [
             params.tableName,
             params.agentId,
             ...params.roomIds,
         ];
+
+        // Add ordering and limit
+        sql += ` ORDER BY createdAt DESC`;
+        if (params.limit) {
+            sql += ` LIMIT ?`;
+            queryParams.push(params.limit.toString());
+        }
+
+        const stmt = this.db.prepare(sql);
+
         elizaLogger.log({ queryParams });
         stmt.bind(queryParams);
         elizaLogger.log({ queryParams });

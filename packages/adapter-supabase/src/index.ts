@@ -114,14 +114,20 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
         roomIds: UUID[];
         agentId?: UUID;
         tableName: string;
+        limit?: number;
     }): Promise<Memory[]> {
         let query = this.supabase
             .from(params.tableName)
             .select("*")
-            .in("roomId", params.roomIds);
+            .in("roomId", params.roomIds)
+            .order("createdAt", { ascending: false });
 
         if (params.agentId) {
             query = query.eq("agentId", params.agentId);
+        }
+
+        if (params.limit) {
+            query = query.limit(params.limit);
         }
 
         const { data, error } = await query;
