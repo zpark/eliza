@@ -15,9 +15,6 @@ class SimsAIManager {
         this.client = new ClientBase(runtime);
         this.post = new JeeterPostClient(this.client, runtime);
         this.search = new JeeterSearchClient(this.client, runtime);
-        // this searches topics from character file, but kind of violates consent of random users
-        // burns your rate limit and can get your account banned
-        // use at your own risk
         this.interaction = new JeeterInteractionClient(this.client, runtime);
     }
 }
