@@ -86,7 +86,7 @@ export const CharacterSchema = z.object({
             })
         ])
     ).optional(),
-    clients: z.array(z.nativeEnum(Clients)),
+    clients: z.array(z.string()),
     plugins: z.union([z.array(z.string()), z.array(PluginSchema)]),
     settings: z
         .object({
