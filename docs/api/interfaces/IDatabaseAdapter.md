@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.8+build.1](../index.md) / IDatabaseAdapter
+[@elizaos/core v0.1.7](../index.md) / IDatabaseAdapter
 
 # Interface: IDatabaseAdapter
 
@@ -14,7 +14,7 @@ Database instance
 
 #### Defined in
 
-[packages/core/src/types.ts:885](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L885)
+[packages/core/src/types.ts:856](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L856)
 
 ## Methods
 
@@ -30,9 +30,9 @@ Optional initialization
 
 #### Defined in
 
-[packages/core/src/types.ts:888](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L888)
+[packages/core/src/types.ts:859](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L859)
 
-***
+---
 
 ### close()
 
@@ -46,9 +46,9 @@ Close database connection
 
 #### Defined in
 
-[packages/core/src/types.ts:891](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L891)
+[packages/core/src/types.ts:862](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L862)
 
-***
+---
 
 ### getAccountById()
 
@@ -66,9 +66,9 @@ Get account by ID
 
 #### Defined in
 
-[packages/core/src/types.ts:894](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L894)
+[packages/core/src/types.ts:865](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L865)
 
-***
+---
 
 ### createAccount()
 
@@ -86,9 +86,9 @@ Create new account
 
 #### Defined in
 
-[packages/core/src/types.ts:897](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L897)
+[packages/core/src/types.ts:868](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L868)
 
-***
+---
 
 ### getMemories()
 
@@ -120,9 +120,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:900](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L900)
+[packages/core/src/types.ts:871](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L871)
 
-***
+---
 
 ### getMemoryById()
 
@@ -138,9 +138,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:910](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L910)
+[packages/core/src/types.ts:881](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L881)
 
-***
+---
 
 ### getMemoriesByRoomIds()
 
@@ -156,17 +156,15 @@ Get memories matching criteria
 
 • **params.roomIds**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`[]
 
-• **params.limit?**: `number`
-
 #### Returns
 
 `Promise`\<[`Memory`](Memory.md)[]\>
 
 #### Defined in
 
-[packages/core/src/types.ts:912](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L912)
+[packages/core/src/types.ts:883](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L883)
 
-***
+---
 
 ### getCachedEmbeddings()
 
@@ -176,17 +174,17 @@ Get memories matching criteria
 
 • **params**
 
-• **params.query\_table\_name**: `string`
+• **params.query_table_name**: `string`
 
-• **params.query\_threshold**: `number`
+• **params.query_threshold**: `number`
 
-• **params.query\_input**: `string`
+• **params.query_input**: `string`
 
-• **params.query\_field\_name**: `string`
+• **params.query_field_name**: `string`
 
-• **params.query\_field\_sub\_name**: `string`
+• **params.query_field_sub_name**: `string`
 
-• **params.query\_match\_count**: `number`
+• **params.query_match_count**: `number`
 
 #### Returns
 
@@ -194,9 +192,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:919](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L919)
+[packages/core/src/types.ts:889](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L889)
 
-***
+---
 
 ### log()
 
@@ -220,9 +218,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:928](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L928)
+[packages/core/src/types.ts:898](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L898)
 
-***
+---
 
 ### getActorDetails()
 
@@ -240,9 +238,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:935](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L935)
+[packages/core/src/types.ts:905](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L905)
 
-***
+---
 
 ### searchMemories()
 
@@ -260,9 +258,9 @@ Get memories matching criteria
 
 • **params.embedding**: `number`[]
 
-• **params.match\_threshold**: `number`
+• **params.match_threshold**: `number`
 
-• **params.match\_count**: `number`
+• **params.match_count**: `number`
 
 • **params.unique**: `boolean`
 
@@ -272,9 +270,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:937](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L937)
+[packages/core/src/types.ts:907](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L907)
 
-***
+---
 
 ### updateGoalStatus()
 
@@ -294,9 +292,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:947](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L947)
+[packages/core/src/types.ts:917](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L917)
 
-***
+---
 
 ### searchMemoriesByEmbedding()
 
@@ -308,7 +306,7 @@ Get memories matching criteria
 
 • **params**
 
-• **params.match\_threshold?**: `number`
+• **params.match_threshold?**: `number`
 
 • **params.count?**: `number`
 
@@ -326,9 +324,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:952](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L952)
+[packages/core/src/types.ts:922](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L922)
 
-***
+---
 
 ### createMemory()
 
@@ -348,9 +346,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:964](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L964)
+[packages/core/src/types.ts:934](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L934)
 
-***
+---
 
 ### removeMemory()
 
@@ -368,9 +366,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:970](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L970)
+[packages/core/src/types.ts:940](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L940)
 
-***
+---
 
 ### removeAllMemories()
 
@@ -388,9 +386,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:972](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L972)
+[packages/core/src/types.ts:942](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L942)
 
-***
+---
 
 ### countMemories()
 
@@ -410,9 +408,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:974](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L974)
+[packages/core/src/types.ts:944](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L944)
 
-***
+---
 
 ### getGoals()
 
@@ -438,9 +436,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:980](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L980)
+[packages/core/src/types.ts:950](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L950)
 
-***
+---
 
 ### updateGoal()
 
@@ -456,9 +454,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:988](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L988)
+[packages/core/src/types.ts:958](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L958)
 
-***
+---
 
 ### createGoal()
 
@@ -474,9 +472,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:990](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L990)
+[packages/core/src/types.ts:960](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L960)
 
-***
+---
 
 ### removeGoal()
 
@@ -492,9 +490,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:992](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L992)
+[packages/core/src/types.ts:962](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L962)
 
-***
+---
 
 ### removeAllGoals()
 
@@ -510,9 +508,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:994](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L994)
+[packages/core/src/types.ts:964](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L964)
 
-***
+---
 
 ### getRoom()
 
@@ -528,9 +526,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:996](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L996)
+[packages/core/src/types.ts:966](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L966)
 
-***
+---
 
 ### createRoom()
 
@@ -546,9 +544,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:998](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L998)
+[packages/core/src/types.ts:968](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L968)
 
-***
+---
 
 ### removeRoom()
 
@@ -564,9 +562,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1000](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1000)
+[packages/core/src/types.ts:970](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L970)
 
-***
+---
 
 ### getRoomsForParticipant()
 
@@ -582,9 +580,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1002](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1002)
+[packages/core/src/types.ts:972](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L972)
 
-***
+---
 
 ### getRoomsForParticipants()
 
@@ -600,9 +598,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1004](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1004)
+[packages/core/src/types.ts:974](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L974)
 
-***
+---
 
 ### addParticipant()
 
@@ -620,9 +618,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1006](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1006)
+[packages/core/src/types.ts:976](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L976)
 
-***
+---
 
 ### removeParticipant()
 
@@ -640,9 +638,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1008](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1008)
+[packages/core/src/types.ts:978](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L978)
 
-***
+---
 
 ### getParticipantsForAccount()
 
@@ -658,9 +656,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1010](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1010)
+[packages/core/src/types.ts:980](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L980)
 
-***
+---
 
 ### getParticipantsForRoom()
 
@@ -676,9 +674,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1012](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1012)
+[packages/core/src/types.ts:982](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L982)
 
-***
+---
 
 ### getParticipantUserState()
 
@@ -696,9 +694,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1014](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1014)
+[packages/core/src/types.ts:984](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L984)
 
-***
+---
 
 ### setParticipantUserState()
 
@@ -718,9 +716,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1019](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1019)
+[packages/core/src/types.ts:989](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L989)
 
-***
+---
 
 ### createRelationship()
 
@@ -740,9 +738,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1025](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1025)
+[packages/core/src/types.ts:995](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L995)
 
-***
+---
 
 ### getRelationship()
 
@@ -762,9 +760,9 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1027](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1027)
+[packages/core/src/types.ts:997](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L997)
 
-***
+---
 
 ### getRelationships()
 
@@ -782,116 +780,4 @@ Get memories matching criteria
 
 #### Defined in
 
-[packages/core/src/types.ts:1032](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1032)
-
-***
-
-### getKnowledge()
-
-> **getKnowledge**(`params`): `Promise`\<[`RAGKnowledgeItem`](RAGKnowledgeItem.md)[]\>
-
-#### Parameters
-
-• **params**
-
-• **params.id?**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
-• **params.agentId**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
-• **params.limit?**: `number`
-
-• **params.query?**: `string`
-
-• **params.conversationContext?**: `string`
-
-#### Returns
-
-`Promise`\<[`RAGKnowledgeItem`](RAGKnowledgeItem.md)[]\>
-
-#### Defined in
-
-[packages/core/src/types.ts:1034](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1034)
-
-***
-
-### searchKnowledge()
-
-> **searchKnowledge**(`params`): `Promise`\<[`RAGKnowledgeItem`](RAGKnowledgeItem.md)[]\>
-
-#### Parameters
-
-• **params**
-
-• **params.agentId**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
-• **params.embedding**: `Float32Array`
-
-• **params.match\_threshold**: `number`
-
-• **params.match\_count**: `number`
-
-• **params.searchText?**: `string`
-
-#### Returns
-
-`Promise`\<[`RAGKnowledgeItem`](RAGKnowledgeItem.md)[]\>
-
-#### Defined in
-
-[packages/core/src/types.ts:1042](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1042)
-
-***
-
-### createKnowledge()
-
-> **createKnowledge**(`knowledge`): `Promise`\<`void`\>
-
-#### Parameters
-
-• **knowledge**: [`RAGKnowledgeItem`](RAGKnowledgeItem.md)
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[packages/core/src/types.ts:1050](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1050)
-
-***
-
-### removeKnowledge()
-
-> **removeKnowledge**(`id`): `Promise`\<`void`\>
-
-#### Parameters
-
-• **id**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[packages/core/src/types.ts:1051](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1051)
-
-***
-
-### clearKnowledge()
-
-> **clearKnowledge**(`agentId`, `shared`?): `Promise`\<`void`\>
-
-#### Parameters
-
-• **agentId**: \`$\{string\}-$\{string\}-$\{string\}-$\{string\}-$\{string\}\`
-
-• **shared?**: `boolean`
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Defined in
-
-[packages/core/src/types.ts:1052](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1052)
+[packages/core/src/types.ts:1002](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1002)

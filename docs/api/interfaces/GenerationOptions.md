@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.8+build.1](../index.md) / GenerationOptions
+[@elizaos/core v0.1.7](../index.md) / GenerationOptions
 
 # Interface: GenerationOptions
 
@@ -12,9 +12,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1753](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1753)
+[packages/core/src/generation.ts:1516](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1516)
 
-***
+---
 
 ### context
 
@@ -22,9 +22,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1754](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1754)
+[packages/core/src/generation.ts:1517](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1517)
 
-***
+---
 
 ### modelClass
 
@@ -32,9 +32,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1755](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1755)
+[packages/core/src/generation.ts:1518](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1518)
 
-***
+---
 
 ### schema?
 
@@ -42,9 +42,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1756](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1756)
+[packages/core/src/generation.ts:1519](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1519)
 
-***
+---
 
 ### schemaName?
 
@@ -52,9 +52,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1757](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1757)
+[packages/core/src/generation.ts:1520](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1520)
 
-***
+---
 
 ### schemaDescription?
 
@@ -62,9 +62,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1758](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1758)
+[packages/core/src/generation.ts:1521](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1521)
 
-***
+---
 
 ### stop?
 
@@ -72,9 +72,9 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1759](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1759)
+[packages/core/src/generation.ts:1522](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1522)
 
-***
+---
 
 ### mode?
 
@@ -82,44 +82,14 @@ Configuration options for generating objects with a model.
 
 #### Defined in
 
-[packages/core/src/generation.ts:1760](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1760)
+[packages/core/src/generation.ts:1523](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1523)
 
-***
+---
 
-### experimental\_providerMetadata?
+### experimental_providerMetadata?
 
-> `optional` **experimental\_providerMetadata**: `Record`\<`string`, `unknown`\>
-
-#### Defined in
-
-[packages/core/src/generation.ts:1761](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1761)
-
-***
-
-### verifiableInference?
-
-> `optional` **verifiableInference**: `boolean`
+> `optional` **experimental_providerMetadata**: `Record`\<`string`, `unknown`\>
 
 #### Defined in
 
-[packages/core/src/generation.ts:1762](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1762)
-
-***
-
-### verifiableInferenceAdapter?
-
-> `optional` **verifiableInferenceAdapter**: [`IVerifiableInferenceAdapter`](IVerifiableInferenceAdapter.md)
-
-#### Defined in
-
-[packages/core/src/generation.ts:1763](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1763)
-
-***
-
-### verifiableInferenceOptions?
-
-> `optional` **verifiableInferenceOptions**: [`VerifiableInferenceOptions`](VerifiableInferenceOptions.md)
-
-#### Defined in
-
-[packages/core/src/generation.ts:1764](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/generation.ts#L1764)
+[packages/core/src/generation.ts:1524](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1524)

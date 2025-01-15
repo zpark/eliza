@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.8+build.1](../index.md) / Relationship
+[@elizaos/core v0.1.7](../index.md) / Relationship
 
 # Interface: Relationship
 
@@ -14,9 +14,9 @@ Unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:510](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L510)
+[packages/core/src/types.ts:487](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L487)
 
-***
+---
 
 ### userA
 
@@ -26,9 +26,9 @@ First user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:513](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L513)
+[packages/core/src/types.ts:490](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L490)
 
-***
+---
 
 ### userB
 
@@ -38,9 +38,9 @@ Second user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:516](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L516)
+[packages/core/src/types.ts:493](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L493)
 
-***
+---
 
 ### userId
 
@@ -50,9 +50,9 @@ Primary user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:519](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L519)
+[packages/core/src/types.ts:496](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L496)
 
-***
+---
 
 ### roomId
 
@@ -62,9 +62,9 @@ Associated room ID
 
 #### Defined in
 
-[packages/core/src/types.ts:522](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L522)
+[packages/core/src/types.ts:499](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L499)
 
-***
+---
 
 ### status
 
@@ -74,9 +74,9 @@ Relationship status
 
 #### Defined in
 
-[packages/core/src/types.ts:525](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L525)
+[packages/core/src/types.ts:502](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L502)
 
-***
+---
 
 ### createdAt?
 
@@ -86,4 +86,4 @@ Optional creation timestamp
 
 #### Defined in
 
-[packages/core/src/types.ts:528](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L528)
+[packages/core/src/types.ts:505](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L505)

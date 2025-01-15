@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.8+build.1](../index.md) / Character
+[@elizaos/core v0.1.7](../index.md) / Character
 
 # Type Alias: Character
 
@@ -64,99 +64,99 @@ Optional prompt templates
 
 ### templates.goalsTemplate?
 
-> `optional` **goalsTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **goalsTemplate**: `string`
 
 ### templates.factsTemplate?
 
-> `optional` **factsTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **factsTemplate**: `string`
 
 ### templates.messageHandlerTemplate?
 
-> `optional` **messageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **messageHandlerTemplate**: `string`
 
 ### templates.shouldRespondTemplate?
 
-> `optional` **shouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **shouldRespondTemplate**: `string`
 
 ### templates.continueMessageHandlerTemplate?
 
-> `optional` **continueMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **continueMessageHandlerTemplate**: `string`
 
 ### templates.evaluationTemplate?
 
-> `optional` **evaluationTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **evaluationTemplate**: `string`
 
 ### templates.twitterSearchTemplate?
 
-> `optional` **twitterSearchTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **twitterSearchTemplate**: `string`
 
 ### templates.twitterActionTemplate?
 
-> `optional` **twitterActionTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **twitterActionTemplate**: `string`
 
 ### templates.twitterPostTemplate?
 
-> `optional` **twitterPostTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **twitterPostTemplate**: `string`
 
 ### templates.twitterMessageHandlerTemplate?
 
-> `optional` **twitterMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **twitterMessageHandlerTemplate**: `string`
 
 ### templates.twitterShouldRespondTemplate?
 
-> `optional` **twitterShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **twitterShouldRespondTemplate**: `string`
 
 ### templates.farcasterPostTemplate?
 
-> `optional` **farcasterPostTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **farcasterPostTemplate**: `string`
 
 ### templates.lensPostTemplate?
 
-> `optional` **lensPostTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **lensPostTemplate**: `string`
 
 ### templates.farcasterMessageHandlerTemplate?
 
-> `optional` **farcasterMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **farcasterMessageHandlerTemplate**: `string`
 
 ### templates.lensMessageHandlerTemplate?
 
-> `optional` **lensMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **lensMessageHandlerTemplate**: `string`
 
 ### templates.farcasterShouldRespondTemplate?
 
-> `optional` **farcasterShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **farcasterShouldRespondTemplate**: `string`
 
 ### templates.lensShouldRespondTemplate?
 
-> `optional` **lensShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **lensShouldRespondTemplate**: `string`
 
 ### templates.telegramMessageHandlerTemplate?
 
-> `optional` **telegramMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **telegramMessageHandlerTemplate**: `string`
 
 ### templates.telegramShouldRespondTemplate?
 
-> `optional` **telegramShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **telegramShouldRespondTemplate**: `string`
 
 ### templates.discordVoiceHandlerTemplate?
 
-> `optional` **discordVoiceHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **discordVoiceHandlerTemplate**: `string`
 
 ### templates.discordShouldRespondTemplate?
 
-> `optional` **discordShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **discordShouldRespondTemplate**: `string`
 
 ### templates.discordMessageHandlerTemplate?
 
-> `optional` **discordMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **discordMessageHandlerTemplate**: `string`
 
 ### templates.slackMessageHandlerTemplate?
 
-> `optional` **slackMessageHandlerTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **slackMessageHandlerTemplate**: `string`
 
 ### templates.slackShouldRespondTemplate?
 
-> `optional` **slackShouldRespondTemplate**: [`TemplateType`](TemplateType.md)
+> `optional` **slackShouldRespondTemplate**: `string`
 
 ### bio
 
@@ -196,7 +196,7 @@ Character traits
 
 ### knowledge?
 
-> `optional` **knowledge**: (`string` \| `object`)[]
+> `optional` **knowledge**: `string`[]
 
 Optional knowledge base
 
@@ -224,7 +224,7 @@ Optional configuration
 
 #### Index Signature
 
- \[`key`: `string`\]: `string`
+\[`key`: `string`\]: `string`
 
 ### settings.intiface?
 
@@ -342,7 +342,7 @@ New structured ElevenLabs config
 
 #### Index Signature
 
- \[`key`: `string`\]: `any`[]
+\[`key`: `string`\]: `any`[]
 
 ### settings.chains.evm?
 
@@ -355,10 +355,6 @@ New structured ElevenLabs config
 ### settings.transcription?
 
 > `optional` **transcription**: [`TranscriptionProvider`](../enumerations/TranscriptionProvider.md)
-
-### settings.ragKnowledge?
-
-> `optional` **ragKnowledge**: `boolean`
 
 ### clientConfig?
 
@@ -532,12 +528,6 @@ Optional NFT prompt
 
 > **prompt**: `string`
 
-### extends?
-
-> `optional` **extends**: `string`[]
-
-Optinal Parent characters to inherit information from
-
 ## Defined in
 
-[packages/core/src/types.ts:697](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L697)
+[packages/core/src/types.ts:671](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L671)

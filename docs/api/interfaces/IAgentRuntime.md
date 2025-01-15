@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.8+build.1](../index.md) / IAgentRuntime
+[@elizaos/core v0.1.7](../index.md) / IAgentRuntime
 
 # Interface: IAgentRuntime
 
@@ -12,9 +12,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1179](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1179)
+[packages/core/src/types.ts:1100](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1100)
 
-***
+---
 
 ### serverUrl
 
@@ -22,9 +22,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1180](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1180)
+[packages/core/src/types.ts:1101](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1101)
 
-***
+---
 
 ### databaseAdapter
 
@@ -32,9 +32,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1181](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1181)
+[packages/core/src/types.ts:1102](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1102)
 
-***
+---
 
 ### token
 
@@ -42,9 +42,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1182](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1182)
+[packages/core/src/types.ts:1103](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1103)
 
-***
+---
 
 ### modelProvider
 
@@ -52,9 +52,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1183](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1183)
+[packages/core/src/types.ts:1104](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1104)
 
-***
+---
 
 ### imageModelProvider
 
@@ -62,9 +62,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1184](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1184)
+[packages/core/src/types.ts:1105](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1105)
 
-***
+---
 
 ### imageVisionModelProvider
 
@@ -72,9 +72,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1185](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1185)
+[packages/core/src/types.ts:1106](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1106)
 
-***
+---
 
 ### character
 
@@ -82,9 +82,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1186](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1186)
+[packages/core/src/types.ts:1107](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1107)
 
-***
+---
 
 ### providers
 
@@ -92,9 +92,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1187](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1187)
+[packages/core/src/types.ts:1108](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1108)
 
-***
+---
 
 ### actions
 
@@ -102,9 +102,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1188](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1188)
+[packages/core/src/types.ts:1109](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1109)
 
-***
+---
 
 ### evaluators
 
@@ -112,9 +112,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1189](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1189)
+[packages/core/src/types.ts:1110](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1110)
 
-***
+---
 
 ### plugins
 
@@ -122,9 +122,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1190](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1190)
+[packages/core/src/types.ts:1111](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1111)
 
-***
+---
 
 ### fetch()?
 
@@ -154,9 +154,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1192](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1192)
+[packages/core/src/types.ts:1113](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1113)
 
-***
+---
 
 ### messageManager
 
@@ -164,9 +164,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1194](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1194)
+[packages/core/src/types.ts:1115](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1115)
 
-***
+---
 
 ### descriptionManager
 
@@ -174,9 +174,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1195](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1195)
+[packages/core/src/types.ts:1116](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1116)
 
-***
+---
 
 ### documentsManager
 
@@ -184,9 +184,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1196](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1196)
+[packages/core/src/types.ts:1117](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1117)
 
-***
+---
 
 ### knowledgeManager
 
@@ -194,19 +194,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1197](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1197)
+[packages/core/src/types.ts:1118](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1118)
 
-***
-
-### ragKnowledgeManager
-
-> **ragKnowledgeManager**: [`IRAGKnowledgeManager`](IRAGKnowledgeManager.md)
-
-#### Defined in
-
-[packages/core/src/types.ts:1198](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1198)
-
-***
+---
 
 ### loreManager
 
@@ -214,9 +204,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1199](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1199)
+[packages/core/src/types.ts:1119](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1119)
 
-***
+---
 
 ### cacheManager
 
@@ -224,9 +214,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1201](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1201)
+[packages/core/src/types.ts:1121](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1121)
 
-***
+---
 
 ### services
 
@@ -234,9 +224,9 @@ Properties
 
 #### Defined in
 
-[packages/core/src/types.ts:1203](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1203)
+[packages/core/src/types.ts:1123](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1123)
 
-***
+---
 
 ### clients
 
@@ -247,17 +237,7 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1206](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1206)
-
-***
-
-### verifiableInferenceAdapter?
-
-> `optional` **verifiableInferenceAdapter**: [`IVerifiableInferenceAdapter`](IVerifiableInferenceAdapter.md)
-
-#### Defined in
-
-[packages/core/src/types.ts:1208](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1208)
+[packages/core/src/types.ts:1126](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1126)
 
 ## Methods
 
@@ -271,9 +251,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1210](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1210)
+[packages/core/src/types.ts:1128](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1128)
 
-***
+---
 
 ### registerMemoryManager()
 
@@ -289,9 +269,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1212](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1212)
+[packages/core/src/types.ts:1130](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1130)
 
-***
+---
 
 ### getMemoryManager()
 
@@ -307,9 +287,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1214](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1214)
+[packages/core/src/types.ts:1132](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1132)
 
-***
+---
 
 ### getService()
 
@@ -317,7 +297,7 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Type Parameters
 
-• **T** *extends* [`Service`](../classes/Service.md)
+• **T** _extends_ [`Service`](../classes/Service.md)
 
 #### Parameters
 
@@ -329,9 +309,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1216](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1216)
+[packages/core/src/types.ts:1134](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1134)
 
-***
+---
 
 ### registerService()
 
@@ -347,9 +327,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1218](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1218)
+[packages/core/src/types.ts:1136](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1136)
 
-***
+---
 
 ### getSetting()
 
@@ -365,9 +345,9 @@ but I think the real solution is forthcoming as a base client interface
 
 #### Defined in
 
-[packages/core/src/types.ts:1220](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1220)
+[packages/core/src/types.ts:1138](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1138)
 
-***
+---
 
 ### getConversationLength()
 
@@ -381,9 +361,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1223](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1223)
+[packages/core/src/types.ts:1141](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1141)
 
-***
+---
 
 ### processActions()
 
@@ -405,9 +385,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1225](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1225)
+[packages/core/src/types.ts:1143](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1143)
 
-***
+---
 
 ### evaluate()
 
@@ -429,9 +409,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1232](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1232)
+[packages/core/src/types.ts:1150](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1150)
 
-***
+---
 
 ### ensureParticipantExists()
 
@@ -449,9 +429,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1239](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1239)
+[packages/core/src/types.ts:1157](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1157)
 
-***
+---
 
 ### ensureUserExists()
 
@@ -473,9 +453,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1241](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1241)
+[packages/core/src/types.ts:1159](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1159)
 
-***
+---
 
 ### registerAction()
 
@@ -491,9 +471,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1248](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1248)
+[packages/core/src/types.ts:1166](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1166)
 
-***
+---
 
 ### ensureConnection()
 
@@ -517,9 +497,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1250](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1250)
+[packages/core/src/types.ts:1168](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1168)
 
-***
+---
 
 ### ensureParticipantInRoom()
 
@@ -537,9 +517,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1258](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1258)
+[packages/core/src/types.ts:1176](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1176)
 
-***
+---
 
 ### ensureRoomExists()
 
@@ -555,9 +535,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1260](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1260)
+[packages/core/src/types.ts:1178](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1178)
 
-***
+---
 
 ### composeState()
 
@@ -575,9 +555,9 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1262](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1262)
+[packages/core/src/types.ts:1180](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1180)
 
-***
+---
 
 ### updateRecentMessageState()
 
@@ -593,4 +573,4 @@ Methods
 
 #### Defined in
 
-[packages/core/src/types.ts:1267](https://github.com/JoeyKhd/eliza/blob/main/packages/core/src/types.ts#L1267)
+[packages/core/src/types.ts:1185](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1185)
