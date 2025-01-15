@@ -295,6 +295,14 @@ async function handlePluginImporting(plugins: string[]) {
     if (plugins.length > 0) {
         elizaLogger.info("Plugins are: ", plugins);
         const importedPlugins = await Promise.all(
+            // plugin is something like "@elizaos/plugin-discord"
+            // first, import the module
+            // then, apply the user's configuration per the package.json keys:
+            // https://github.com/elizaos-plugins/plugin-image-generation/blob/ac8c5adcfaf1f8d5389df04a0790273434f8acd5/package.json#L17
+            // - pluginType
+            // - pluginParameters
+            // - pluginEnv
+            // plugin return the Plugin interface
             plugins.map(async (plugin) => {
                 try {
                     const importedPlugin = await import(plugin);
