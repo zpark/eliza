@@ -19,20 +19,20 @@ import {
 export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  implements IDatabaseCacheAdapter {
     db: QdrantClient;
     collectionName: string = 'collection';
-
-
-    constructor() {
+    cacheM: Map<string, string> = new Map<string, string>();
+    vectorSize: number;
+    constructor(url: string, apiKey: string, port: number, vectorSize: number) {
         super();
         elizaLogger.info("new Qdrant client...");
-       this.db = new QdrantClient({
-            url: 'https://vectordb-alpha.bsquared.network',
-            port: 443,
-       });
-        elizaLogger.info("new Qdrant client over...");
+        this.db = new QdrantClient({
+                url: url,
+                apiKey:apiKey,
+                port: port,
+        });
+       this.vectorSize = vectorSize;
     }
 
     private preprocess(content: string): string {
-        elizaLogger.info("content preprocess...");
         if (!content || typeof content !== "string") {
             elizaLogger.warn("Invalid input for preprocessing");
             return "";
@@ -53,37 +53,26 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         .replace(/\n{3,}/g, "\n\n")
         .replace(/[^a-zA-Z0-9\s\-_./:?=&]/g, "")
         .trim()
-        elizaLogger.info("content preprocess content:", c);
         return c
     }
 
     async init () {
-        elizaLogger.info("Initializing Qdrant...");
         const response = await this.db.getCollections();
-        elizaLogger.info("Qdrant adapter getCollections...");
         const collectionNames = response.collections.map((collection) => collection.name);
-
-        if (collectionNames.includes(this.collectionName)) {``
+        if (collectionNames.includes(this.collectionName)) {
             await this.db.deleteCollection(this.collectionName);
         }
-
+        elizaLogger.info("create collection...");
         await this.db.createCollection(this.collectionName, {
             vectors: {
-                size: 1536,
+                size: this.vectorSize,
                 distance: 'Cosine',
             },
-            optimizers_config: {
-                default_segment_number: 2,
-            },
-            replication_factor: 2,
         });
     }
 
     async createKnowledge(knowledge: RAGKnowledgeItem): Promise<void> {
         const metadata = knowledge.content.metadata || {}
-        elizaLogger.info("Qdrant adapter createKnowledge...");
-        elizaLogger.info("Knowledge: ", knowledge);
-        elizaLogger.info("Knowledge content: ",  knowledge.content);
         await this.db.upsert(this.collectionName, {
             wait: true,
             points: [
@@ -105,26 +94,6 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
                 }
             ],
         })
-        //  -------- Create payload indexes -------------
-        // await this.db.createPayloadIndex(this.collectionName, {
-        //     field_name: 'city',
-        //     field_schema: 'keyword',
-        //     wait: true,
-        // })
-        //
-        // await this.db.createPayloadIndex(this.collectionName, {
-        //     field_name: 'count',
-        //     field_schema: 'integer',
-        //     wait: true,
-        // });
-        //
-        // await this.db.createPayloadIndex(this.collectionName, {
-        //     field_name: 'coords',
-        //     field_schema: 'geo',
-        //     wait: true,
-        // });
-        //
-        elizaLogger.info("Qdrant adapter createKnowledge over...");
     }
 
     async getKnowledge(params: {
@@ -143,7 +112,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
             ? JSON.parse(row.payload.content)
             : row.payload?.content;
             return {
-                id: row.id.toString()+"-chunk-0" as UUID,
+                id: row.id.toString() as UUID,
                 agentId: (row.payload?.agentId || "") as UUID,
                 content: {
                     text: String(contentObj.text || ""),
@@ -153,7 +122,6 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
                 createdAt: row.payload?.createdAt as number
             };
         });
-        // elizaLogger.info("Qdrant adapter getKnowledge results:", results);
         return results;
     }
 
@@ -172,21 +140,27 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         match_count?: number;
         searchText?: string
     }): Promise<RAGKnowledgeItem[]> {
-        elizaLogger.info("Qdrant adapter searchKnowledge start...", Array.from(params.embedding));
+        const cacheKey = `${params.agentId}`;
+            const cachedResult = await this.getCache({
+                key: cacheKey,
+                agentId: params.agentId
+            });
+
+            if (cachedResult) {
+                return JSON.parse(cachedResult);
+            }
         const rows = await this.db.search(this.collectionName, {
             vector:  Array.from(params.embedding),
-            limit: 3,
+            limit: 30,
             with_vector: true
         });
-        // elizaLogger.info("Qdrant adapter searchKnowledge rows:", rows);
 
         const results: RAGKnowledgeItem[] = rows.map((row) => {
             const contentObj = typeof row.payload?.content === "string"
             ? JSON.parse(row.payload.content)
             : row.payload?.content;
-            //elizaLogger.info("Qdrant adapter searchKnowledge results.content:", contentObj);
             return {
-                id: row.id.toString()+"-chunk-0" as UUID,
+                id: row.id.toString() as UUID,
                 agentId: (row.payload?.agentId || "") as UUID,
                 content: {
                     text: String(contentObj.text || ""),
@@ -197,7 +171,11 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
                 similarity: row.score || 0
             };
         });
-        // elizaLogger.info("Qdrant adapter searchKnowledge results:", results);
+        await this.setCache({
+            key: cacheKey,
+            agentId: params.agentId,
+            value: JSON.stringify(results)
+        });
         return results;
     }
 
@@ -385,7 +363,9 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         key: string;
         agentId: UUID;
     }): Promise<string | undefined> {
-        return Promise.resolve(undefined);
+        let key = this.buildKey(params.agentId, params.key);
+        let result = this.cacheM.get(key);
+        return result;
     }
 
     async setCache(params: {
@@ -393,7 +373,8 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         agentId: UUID;
         value: string;
     }): Promise<boolean> {
-        return false;
+        this.cacheM.set(this.buildKey(params.agentId, params.key),params.value)
+        return true;
     }
 
     async deleteCache(params: {
@@ -401,6 +382,10 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         agentId: UUID;
     }): Promise<boolean> {
         return false
+    }
+
+    private buildKey(agentId: UUID, key: string): string {
+        return `${agentId}:${key}`;
     }
 }
 

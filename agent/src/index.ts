@@ -418,7 +418,12 @@ function initializeDatabase(dataDir: string) {
         return db;
     } else if (process.env.QDRANT_URL) {
         elizaLogger.info("Initializing Qdrant adapter...");
-        const db = new QdrantDatabaseAdapter();
+        const db = new QdrantDatabaseAdapter(
+            process.env.QDRANT_URL,
+            process.env.QDRANT_KEY,
+            Number(process.env.QDRANT_PORT),
+            Number(process.env.QDRANT_VECTOR_SIZE)
+        );
         return db;
     }else {
         const filePath =
