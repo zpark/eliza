@@ -81,6 +81,8 @@ export class ClientBase extends EventEmitter {
     requestQueue: RequestQueue = new RequestQueue();
     profile: Agent | null;
 
+    callback: (self: ClientBase) => any = () => {};
+
     constructor(runtime: IAgentRuntime) {
         super();
         this.runtime = runtime;
@@ -530,6 +532,4 @@ export class ClientBase extends EventEmitter {
             "Not implemented in base class, please call from subclass"
         );
     }
-
-    callback: (self: ClientBase) => any = null;
 }

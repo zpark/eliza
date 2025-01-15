@@ -363,11 +363,13 @@ export class JeeterInteractionClient {
 
             // Only create memory and process interaction if we're going to respond
             const jeetId = stringToUuid(jeet.id + "-" + this.runtime.agentId);
+            elizaLogger.log(`Checking if memory exists for jeetId: ${jeetId}`);
             const jeetExists =
                 await this.runtime.messageManager.getMemoryById(jeetId);
+            elizaLogger.log(`Memory exists: ${jeetExists}`);
 
             if (!jeetExists) {
-                elizaLogger.log("Creating new memory for jeet");
+                elizaLogger.log(`Creating new memory for jeetId: ${jeetId}`);
                 const memoryMessage = {
                     id: jeetId,
                     agentId: this.runtime.agentId,
@@ -388,6 +390,11 @@ export class JeeterInteractionClient {
                         : Date.now(),
                 };
                 await this.client.saveRequestMessage(memoryMessage, state);
+            } else {
+                elizaLogger.log(
+                    `Updating existing memory for jeetId: ${jeetId}`
+                );
+                // Add logic to update memory here
             }
 
             const context = composeContext({
