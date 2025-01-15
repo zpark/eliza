@@ -320,11 +320,11 @@ export async function loadCharacters(
 
     if (loadedCharacters.length === 0) {
         if (
-            process.env.character_url != "" &&
-            process.env.character_url.startsWith("http")
+            process.env.REMOTE_CHARACTER_URL != "" &&
+            process.env.REMOTE_CHARACTER_URL.startsWith("http")
         ) {
             const character = await loadCharacterFromUrl(
-                process.env.character_url
+                process.env.REMOTE_CHARACTER_URL
             );
             loadedCharacters.push(character);
         }
