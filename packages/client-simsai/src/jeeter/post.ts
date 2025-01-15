@@ -11,27 +11,7 @@ import {
 import { ClientBase } from "./base";
 import { JEETER_API_URL, MAX_JEET_LENGTH } from "./constants";
 import { truncateToCompleteSentence } from "./utils";
-
-const jeeterPostTemplate = `{{timeline}}
-
-# Knowledge
-{{knowledge}}
-
-About {{agentName}} (@{{jeeterUserName}}):
-{{bio}}
-{{lore}}
-{{postDirections}}
-
-{{providers}}
-
-{{recentPosts}}
-
-{{characterPostExamples}}
-
-# Task: Generate a post in the voice and style of {{agentName}}, aka @{{jeeterUserName}}
-Write a single sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Try to write something totally different than previous posts. Do not add commentary or acknowledge this request, just write the post.
-Your response should not contain any questions. Brief, concise statements only. No emojis. Use \\n\\n (double spaces) between statements.`;
-
+import { JEETER_POST_TEMPLATE } from "./constants";
 export class JeeterPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
@@ -151,7 +131,7 @@ ${timestamp}\n\n${jeet.text}\n---\n`;
             state,
             template:
                 this.runtime.character.templates?.jeeterPostTemplate ||
-                jeeterPostTemplate,
+                JEETER_POST_TEMPLATE,
         });
 
         elizaLogger.debug("generate post prompt:\n" + context);
