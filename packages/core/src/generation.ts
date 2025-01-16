@@ -295,7 +295,7 @@ export async function generateText({
             CLOUDFLARE_GW_ENABLED: runtime.getSetting("CLOUDFLARE_GW_ENABLED"),
             CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID"),
             CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID")
-        },
+        }
     });
 
     const endpoint =
@@ -555,7 +555,7 @@ export async function generateText({
                 const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic') || "https://api.anthropic.com/v1";
                 elizaLogger.debug("Anthropic baseURL result:", { baseURL });
 
-                const anthropic = createAnthropic({apiKey, baseURL, fetch: runtime.fetch});
+                const anthropic = createAnthropic({ apiKey, baseURL, fetch: runtime.fetch });
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
                     prompt: context,
@@ -643,16 +643,10 @@ export async function generateText({
             }
 
             case ModelProviderName.GROQ: {
-                elizaLogger.debug(
-                    "Initializing Groq model with Cloudflare check"
-                );
+                elizaLogger.debug("Initializing Groq model with Cloudflare check");
                 const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
                 elizaLogger.debug("Groq baseURL result:", { baseURL });
-                const groq = createGroq({
-                    apiKey,
-                    fetch: runtime.fetch,
-                    baseURL,
-                });
+                const groq = createGroq({ apiKey, fetch: runtime.fetch, baseURL });
 
                 const { text: groqResponse } = await aiGenerateText({
                     model: groq.languageModel(model),
@@ -1929,29 +1923,44 @@ export async function handleProvider(
     } = options;
     switch (provider) {
         case ModelProviderName.OPENAI:
-            return handleOpenAI(options);
+        case ModelProviderName.ETERNALAI:
+        case ModelProviderName.ALI_BAILIAN:
+        case ModelProviderName.VOLENGINE:
+        case ModelProviderName.LLAMACLOUD:
+        case ModelProviderName.TOGETHER:
+        case ModelProviderName.NANOGPT:
+        case ModelProviderName.AKASH_CHAT_API:
+            return await handleOpenAI(options);
         case ModelProviderName.ANTHROPIC:
-            return handleAnthropic(options);
+        case ModelProviderName.CLAUDE_VERTEX:
+            return await handleAnthropic(options);
         case ModelProviderName.GROK:
-            return handleGrok(options);
+            return await handleGrok(options);
         case ModelProviderName.GROQ:
-            return handleGroq(options);
+            return await handleGroq(options);
+        case ModelProviderName.LLAMALOCAL:
+            return await generateObjectDeprecated({
+                runtime,
+                context,
+                modelClass,
+            });
         case ModelProviderName.GOOGLE:
             return await handleGoogle(options);
         case ModelProviderName.MISTRAL:
             return await handleMistral(options);
         case ModelProviderName.REDPILL:
-            return handleRedPill(options);
+            return await handleRedPill(options);
         case ModelProviderName.OPENROUTER:
-            return handleOpenRouter(options);
+            return await handleOpenRouter(options);
         case ModelProviderName.OLLAMA:
-            return handleOllama(options);
+            return await handleOllama(options);
         case ModelProviderName.DEEPSEEK:
             return await handleDeepSeek(options);
-        case ModelProviderName.ATOMA:
-            return handleAtoma(options);
-        default:
-            throw new Error(`Unsupported provider: ${provider}`);
+        default: {
+            const errorMessage = `Unsupported provider: ${provider}`;
+            elizaLogger.error(errorMessage);
+            throw new Error(errorMessage);
+        }
     }
 }
 
@@ -1972,9 +1981,7 @@ async function handleOpenAI({
     provider: _provider,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") ||
-        models.openai.endpoint;
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || models.openai.endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -2003,7 +2010,7 @@ async function handleAnthropic({
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Anthropic request with Cloudflare check");
-    const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic');
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
     const anthropic = createAnthropic({ apiKey, baseURL });
@@ -2060,7 +2067,7 @@ async function handleGroq({
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Groq request with Cloudflare check");
-    const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
+    const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
     const groq = createGroq({ apiKey, baseURL });
