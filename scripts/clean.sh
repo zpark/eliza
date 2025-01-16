@@ -8,3 +8,4 @@ find . -type d -name "node_modules" -exec rm -rf {} + \
     -o -type d -name "dist" -exec rm -rf {} +
 
 echo "Cleanup completed."
+exit 0
