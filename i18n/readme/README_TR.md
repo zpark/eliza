@@ -37,7 +37,7 @@
 - [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [pnpm](https://pnpm.io/installation)
 
-> **Windows Kullanıcıları İçin Not:** WSL gereklidir
+> **Windows Kullanıcıları İçin Not:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) gereklidir
 
 ### .env Dosyasını Düzenleyin
 

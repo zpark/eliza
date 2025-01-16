@@ -130,7 +130,7 @@ You set which model to use inside the character JSON file
     pnpm start --character="characters/trump.character.json"
     ```
 
-    You can also load multiple characters with the characters option with a comma separated list:
+    You can also load multiple characters with the characters option with a comma-separated list:
 
     ```bash
     pnpm start --characters="characters/trump.character.json,characters/tate.character.json"

@@ -1,10 +1,9 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { elizaLogger } from "@elizaos/core";
 import {
     Hash,
     Address,
     parseUnits,
     encodeFunctionData,
-    SendTransactionParameters,
 } from "viem";
 import { b2Network } from "./chains";
 import { WalletProvider } from "../providers";
