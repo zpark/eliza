@@ -53,7 +53,6 @@ import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import {createPublicClient, http} from "viem";
-import { AtomaSDK } from "atoma-sdk";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
