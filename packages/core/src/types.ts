@@ -1418,28 +1418,6 @@ export interface ITeeLogService extends Service {
     ): Promise<boolean>;
 }
 
-export type SearchImage = {
-    url: string;
-    description?: string;
-};
-
-export type SearchResult = {
-    title: string;
-    url: string;
-    content: string;
-    rawContent?: string;
-    score: number;
-    publishedDate?: string;
-};
-
-export type SearchResponse = {
-    answer?: string;
-    query: string;
-    responseTime: number;
-    images: SearchImage[];
-    results: SearchResult[];
-};
-
 export enum ServiceType {
     IMAGE_DESCRIPTION = "image_description",
     TRANSCRIPTION = "transcription",
@@ -1456,6 +1434,7 @@ export enum ServiceType {
     IRYS = "irys",
     TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
+    WEB_SEARCH = "web_search",
 }
 
 export enum LoggingLevel {
