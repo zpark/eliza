@@ -154,18 +154,28 @@ export class SqliteDatabaseAdapter
         agentId: UUID;
         roomIds: UUID[];
         tableName: string;
+        limit?: number;
     }): Promise<Memory[]> {
         if (!params.tableName) {
             // default to messages
             params.tableName = "messages";
         }
+
         const placeholders = params.roomIds.map(() => "?").join(", ");
-        const sql = `SELECT * FROM memories WHERE type = ? AND agentId = ? AND roomId IN (${placeholders})`;
+        let sql = `SELECT * FROM memories WHERE type = ? AND agentId = ? AND roomId IN (${placeholders})`;
+
         const queryParams = [
             params.tableName,
             params.agentId,
             ...params.roomIds,
         ];
+
+        // Add ordering and limit
+        sql += ` ORDER BY createdAt DESC`;
+        if (params.limit) {
+            sql += ` LIMIT ?`;
+            queryParams.push(params.limit.toString());
+        }
 
         const stmt = this.db.prepare(sql);
         const rows = stmt.all(...queryParams) as (Memory & {
@@ -192,6 +202,33 @@ export class SqliteDatabaseAdapter
         }
 
         return null;
+    }
+
+    async getMemoriesByIds(
+        memoryIds: UUID[],
+        tableName?: string
+    ): Promise<Memory[]> {
+        if (memoryIds.length === 0) return [];
+        const queryParams: any[] = [];
+        const placeholders = memoryIds.map(() => "?").join(",");
+        let sql = `SELECT * FROM memories WHERE id IN (${placeholders})`;
+        queryParams.push(...memoryIds);
+
+        if (tableName) {
+            sql += ` AND type = ?`;
+            queryParams.push(tableName);
+        }
+
+        const memories = this.db.prepare(sql).all(...queryParams) as Memory[];
+
+        return memories.map((memory) => ({
+            ...memory,
+            createdAt:
+                typeof memory.createdAt === "string"
+                    ? Date.parse(memory.createdAt as string)
+                    : memory.createdAt,
+            content: JSON.parse(memory.content as unknown as string),
+        }));
     }
 
     async createMemory(memory: Memory, tableName: string): Promise<void> {
