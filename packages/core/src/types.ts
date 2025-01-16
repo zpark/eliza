@@ -1139,6 +1139,7 @@ export interface IRAGKnowledgeManager {
         type: "pdf" | "md" | "txt";
         isShared: boolean;
     }): Promise<void>;
+    cleanupDeletedKnowledgeFiles(): Promise<void>;
 }
 
 export type CacheOptions = {
@@ -1418,28 +1419,6 @@ export interface ITeeLogService extends Service {
     ): Promise<boolean>;
 }
 
-export type SearchImage = {
-    url: string;
-    description?: string;
-};
-
-export type SearchResult = {
-    title: string;
-    url: string;
-    content: string;
-    rawContent?: string;
-    score: number;
-    publishedDate?: string;
-};
-
-export type SearchResponse = {
-    answer?: string;
-    query: string;
-    responseTime: number;
-    images: SearchImage[];
-    results: SearchResult[];
-};
-
 export enum ServiceType {
     IMAGE_DESCRIPTION = "image_description",
     TRANSCRIPTION = "transcription",
@@ -1456,6 +1435,7 @@ export enum ServiceType {
     IRYS = "irys",
     TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
+    WEB_SEARCH = "web_search",
 }
 
 export enum LoggingLevel {
@@ -1579,4 +1559,23 @@ export enum TranscriptionProvider {
 export enum ActionTimelineType {
     ForYou = "foryou",
     Following = "following",
+}
+
+export enum KnowledgeScope {
+    SHARED = "shared",
+    PRIVATE = "private",
+}
+
+export enum CacheKeyPrefix {
+    KNOWLEDGE = "knowledge",
+}
+
+export interface DirectoryItem {
+    directory: string;
+    shared?: boolean;
+}
+
+export interface ChunkRow {
+    id: string;
+    // Add other properties if needed
 }
