@@ -21,6 +21,9 @@ importers:
       '@deepgram/sdk':
         specifier: ^3.9.0
         version: 3.9.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5)
+      '@elizaos/plugin-discord':
+        specifier: github:elizaos-plugins/client-discord
+        version: '@elizaos/client-discord@https://codeload.github.com/elizaos-plugins/client-discord/tar.gz/3c8e331985af3a2a98463f5ff2c2be19ec9e1134(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5)(whatwg-url@14.1.0)'
       '@vitest/eslint-plugin':
         specifier: 1.0.1
         version: 1.0.1(@typescript-eslint/utils@8.19.1(eslint@9.16.0(jiti@2.4.2))(typescript@5.6.3))(eslint@9.16.0(jiti@2.4.2))(typescript@5.6.3)(vitest@2.1.5(@types/node@22.10.5)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@6.0.5))(terser@5.37.0))
@@ -52,9 +55,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: 18.6.3
         version: 18.6.3
-      '@elizaos/plugin-discord':
-        specifier: github:elizaos-plugins/client-discord
-        version: '@elizaos/client-discord@https://codeload.github.com/elizaos-plugins/client-discord/tar.gz/3c8e331985af3a2a98463f5ff2c2be19ec9e1134(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@6.0.5)(whatwg-url@14.1.0)'
       '@types/jest':
         specifier: ^29.5.11
         version: 29.5.14
