@@ -575,20 +575,23 @@ export async function generateText({
                 const openai = createOpenAI({
                     apiKey,
                     baseURL: endpoint,
-                    fetch: async (url: string, options: any) => {
+                    fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+                        const url = typeof input === 'string' ? input : input.toString();
                         const chain_id =
                             runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
+                        
+                        const options: RequestInit = { ...init };
                         if (options?.body) {
-                            const body = JSON.parse(options.body);
+                            const body = JSON.parse(options.body as string);
                             body.chain_id = chain_id;
                             options.body = JSON.stringify(body);
                         }
+
                         const fetching = await runtime.fetch(url, options);
-                        if (
-                            parseBooleanFromText(
-                                runtime.getSetting("ETERNALAI_LOG")
-                            )
-                        ) {
+                        
+                        if (parseBooleanFromText(
+                            runtime.getSetting("ETERNALAI_LOG")
+                        )) {
                             elizaLogger.info(
                                 "Request data: ",
                                 JSON.stringify(options, null, 2)
@@ -1272,7 +1275,6 @@ export async function splitChunks(
  * @param opts.presence_penalty The presence penalty to apply (0.0 to 2.0)
  * @param opts.temperature The temperature to control randomness (0.0 to 2.0)
  * @param opts.serverUrl The URL of the API server
- * @param opts.token The API token for authentication
  * @param opts.max_context_length Maximum allowed context length in tokens
  * @param opts.max_response_length Maximum allowed response length in tokens
  * @returns Promise resolving to a boolean value parsed from the model's response

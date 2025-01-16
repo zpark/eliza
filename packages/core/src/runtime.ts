@@ -380,9 +380,9 @@ export class AgentRuntime implements IAgentRuntime {
         this.imageVisionModelProvider =
             this.character.imageVisionModelProvider ?? this.modelProvider;
 
-        elizaLogger.info("Selected model provider:", this.modelProvider);
+        // elizaLogger.info("Selected model provider:", this.modelProvider); duplicated log ln: 343
         elizaLogger.info(
-            "Selected image model provider:",
+            "Selected image vision model provider:",
             this.imageVisionModelProvider
         );
 
