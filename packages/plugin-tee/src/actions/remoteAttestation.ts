@@ -87,13 +87,13 @@ https://proof.t16z.com/reports/${data.checksum}`,
                 user: "{{user1}}",
                 content: {
                     text: "If you are running in a TEE, generate a remote attestation",
+                    action: "REMOTE_ATTESTATION",
                 },
             },
             {
                 user: "{{user2}}",
                 content: {
                     text: "Of course, one second...",
-                    action: "REMOTE_ATTESTATION",
                 },
             }
         ],
