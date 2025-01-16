@@ -63,6 +63,16 @@ const PluginSchema = z.object({
     clients: z.array(z.any()).optional(),
 });
 
+const ClientDefinition = z.object({
+    url: z.string(),
+    parameters: z.any().optional(),
+});
+
+const PluginDefinition = z.object({
+    url: z.string(),
+    parameters: z.any().optional(),
+});
+
 // Main Character schema
 export const CharacterSchema = z.object({
     id: z.string().uuid().optional(),
@@ -86,8 +96,14 @@ export const CharacterSchema = z.object({
             })
         ])
     ).optional(),
-    clients: z.array(z.string()),
-    plugins: z.union([z.array(z.string()), z.array(PluginSchema)]),
+    clients: z.union([
+        z.array(z.string()),
+        z.array(ClientDefinition),
+    ]),
+    plugins: z.union([
+        z.array(z.string()),
+        z.array(PluginDefinition),
+    ]),
     settings: z
         .object({
             secrets: z.record(z.string()).optional(),
