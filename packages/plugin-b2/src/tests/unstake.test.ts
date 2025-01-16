@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { generatePrivateKey } from "viem/accounts";
-import { getEnvVariable } from "@elizaos/core";
 
 import { UnstakeAction } from "../actions/unstake";
 import { WalletProvider } from "../providers";
-import { TransferParams, UnstakeParams } from "../types";
+import { UnstakeParams } from "../types";
 
 describe("Unstake Action", () => {
     let wp: WalletProvider;
