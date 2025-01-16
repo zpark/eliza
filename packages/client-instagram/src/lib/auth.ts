@@ -14,7 +14,7 @@ async function authenticate(
   config: InstagramConfig
 ): Promise<InstagramState> {
   const ig = getIgClient();
-  let state = createInitialState();
+  const state = createInitialState();
 
   try {
     // Generate device ID
