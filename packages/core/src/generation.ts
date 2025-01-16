@@ -1508,6 +1508,8 @@ export const generateImage = async (
         jobId?: string;
         stylePreset?: string;
         hideWatermark?: boolean;
+        safeMode?: boolean;
+        cfgScale?: number;
     },
     runtime: IAgentRuntime
 ): Promise<{
@@ -1714,10 +1716,12 @@ export const generateImage = async (
                     body: JSON.stringify({
                         model: model,
                         prompt: data.prompt,
+                        cfg_scale: data.guidanceScale,
                         negative_prompt: data.negativePrompt,
                         width: data.width,
                         height: data.height,
                         steps: data.numIterations,
+                        safe_mode: data.safeMode,
                         seed: data.seed,
                         style_preset: data.stylePreset,
                         hide_watermark: data.hideWatermark,

@@ -786,6 +786,7 @@ export type Character = {
             steps?: number;
             width?: number;
             height?: number;
+            cfgScale?: number;
             negativePrompt?: string;
             numIterations?: number;
             guidanceScale?: number;
@@ -795,6 +796,7 @@ export type Character = {
             count?: number;
             stylePreset?: string;
             hideWatermark?: boolean;
+            safeMode?: boolean;
         };
         voice?: {
             model?: string; // For VITS
