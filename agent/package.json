@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/agent",
-    "version": "0.1.8+build.1",
+    "version": "0.1.9-alpha.1",
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
@@ -30,6 +30,7 @@
         "@elizaos/client-lens": "workspace:*",
         "@elizaos/client-telegram": "workspace:*",
         "@elizaos/client-twitter": "workspace:*",
+        "@elizaos/client-instagram": "workspace:*",
         "@elizaos/client-slack": "workspace:*",
         "@elizaos/core": "workspace:*",
         "@elizaos/plugin-0g": "workspace:*",

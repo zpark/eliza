@@ -1,1 +1,2 @@
-export * from "./tokenAction.ts";
+export * from "./tokenAction";
+export * from "./trendsAction";

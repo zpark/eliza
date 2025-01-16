@@ -31,7 +31,7 @@ export class TokenPriceAction implements Action {
         const hasPriceKeyword = /\b(price|value|worth|cost)\b/i.test(content);
         const hasToken = (
             /0x[a-fA-F0-9]{40}/.test(content) ||
-            /[\$#]?[a-zA-Z0-9]+/i.test(content)
+            /[$#]?[a-zA-Z0-9]+/i.test(content)
         );
 
         return hasPriceKeyword && hasToken;

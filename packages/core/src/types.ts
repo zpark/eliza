@@ -649,6 +649,7 @@ export enum Clients {
     AUTO = "auto",
     SLACK = "slack",
     GITHUB = "github",
+    INSTAGRAM = "instagram",
 }
 
 export interface IAgentConfig {
@@ -732,6 +733,9 @@ export type Character = {
         twitterPostTemplate?: TemplateType;
         twitterMessageHandlerTemplate?: TemplateType;
         twitterShouldRespondTemplate?: TemplateType;
+        instagramPostTemplate?: TemplateType;
+        instagramMessageHandlerTemplate?: TemplateType;
+        instagramShouldRespondTemplate?: TemplateType;
         farcasterPostTemplate?: TemplateType;
         lensPostTemplate?: TemplateType;
         farcasterMessageHandlerTemplate?: TemplateType;
@@ -782,6 +786,7 @@ export type Character = {
             steps?: number;
             width?: number;
             height?: number;
+            cfgScale?: number;
             negativePrompt?: string;
             numIterations?: number;
             guidanceScale?: number;
@@ -791,6 +796,7 @@ export type Character = {
             count?: number;
             stylePreset?: string;
             hideWatermark?: boolean;
+            safeMode?: boolean;
         };
         voice?: {
             model?: string; // For VITS
@@ -869,10 +875,20 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
+
+    /** Optional Instagram profile */
+    instagramProfile?: {
+        id: string;
+        username: string;
+        bio: string;
+        nicknames?: string[];
+    };
+
     /** Optional NFT prompt */
     nft?: {
         prompt: string;
     };
+
     /**Optinal Parent characters to inherit information from */
     extends?: string[];
 };
@@ -1139,6 +1155,7 @@ export interface IRAGKnowledgeManager {
         type: "pdf" | "md" | "txt";
         isShared: boolean;
     }): Promise<void>;
+    cleanupDeletedKnowledgeFiles(): Promise<void>;
 }
 
 export type CacheOptions = {
@@ -1558,4 +1575,23 @@ export enum TranscriptionProvider {
 export enum ActionTimelineType {
     ForYou = "foryou",
     Following = "following",
+}
+
+export enum KnowledgeScope {
+    SHARED = "shared",
+    PRIVATE = "private",
+}
+
+export enum CacheKeyPrefix {
+    KNOWLEDGE = "knowledge",
+}
+
+export interface DirectoryItem {
+    directory: string;
+    shared?: boolean;
+}
+
+export interface ChunkRow {
+    id: string;
+    // Add other properties if needed
 }
