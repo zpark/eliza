@@ -1,5 +1,5 @@
-import { composeContext } from "@ai16z/eliza";
-import { generateMessageResponse, generateShouldRespond } from "@ai16z/eliza";
+import { composeContext, composeRandomUser } from "@elizaos/core";
+import { generateMessageResponse, generateShouldRespond } from "@elizaos/core";
 import {
     Content,
     HandlerCallback,
@@ -13,15 +13,15 @@ import {
     ServiceType,
     State,
     UUID,
-} from "@ai16z/eliza";
-import { stringToUuid, getEmbeddingZeroVector } from "@ai16z/eliza";
+} from "@elizaos/core";
+import { stringToUuid, getEmbeddingZeroVector } from "@elizaos/core";
 import {
     ChannelType,
     Client,
     Message as DiscordMessage,
     TextChannel,
 } from "discord.js";
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/core";
 import { AttachmentManager } from "./attachments.ts";
 import { VoiceManager } from "./voice.ts";
 import {
@@ -389,11 +389,16 @@ export class MessageManager {
                         discordMessageHandlerTemplate,
                 });
 
+                // simulate discord typing while generating a response
+                const stopTyping = this.simulateTyping(message);
+
                 const responseContent = await this._generateResponse(
                     memory,
                     state,
                     context
-                );
+                ).finally(() => {
+                    stopTyping();
+                });
 
                 responseContent.text = responseContent.text?.trim();
                 responseContent.inReplyTo = stringToUuid(
@@ -505,6 +510,47 @@ export class MessageManager {
         for (const [_, message] of messages) {
             await this.handleMessage(message);
         }
+    }
+
+    private _isMessageForMe(message: DiscordMessage): boolean {
+        const isMentioned = message.mentions.users?.has(
+            this.client.user?.id as string
+        );
+        const guild = message.guild;
+        const member = guild?.members.cache.get(this.client.user?.id as string);
+        const nickname = member?.nickname;
+
+        // Don't consider role mentions as direct mentions
+        const hasRoleMentionOnly =
+            message.mentions.roles.size > 0 && !isMentioned;
+
+        // If it's only a role mention and we're in team mode, let team logic handle it
+        if (
+            hasRoleMentionOnly &&
+            this.runtime.character.clientConfig?.discord?.isPartOfTeam
+        ) {
+            return false;
+        }
+
+        return (
+            isMentioned ||
+            (!this.runtime.character.clientConfig?.discord
+                ?.shouldRespondOnlyToMentions &&
+                (message.content
+                    .toLowerCase()
+                    .includes(
+                        this.client.user?.username.toLowerCase() as string
+                    ) ||
+                    message.content
+                        .toLowerCase()
+                        .includes(
+                            this.client.user?.tag.toLowerCase() as string
+                        ) ||
+                    (nickname &&
+                        message.content
+                            .toLowerCase()
+                            .includes(nickname.toLowerCase()))))
+        );
     }
 
     async processMessageMedia(
@@ -663,47 +709,6 @@ export class MessageManager {
 
         return teamConfig.teamMemberInterestKeywords.some((keyword) =>
             content.toLowerCase().includes(keyword.toLowerCase())
-        );
-    }
-
-    private _isMessageForMe(message: DiscordMessage): boolean {
-        const isMentioned = message.mentions.users?.has(
-            this.client.user?.id as string
-        );
-        const guild = message.guild;
-        const member = guild?.members.cache.get(this.client.user?.id as string);
-        const nickname = member?.nickname;
-
-        // Don't consider role mentions as direct mentions
-        const hasRoleMentionOnly =
-            message.mentions.roles.size > 0 && !isMentioned;
-
-        // If it's only a role mention and we're in team mode, let team logic handle it
-        if (
-            hasRoleMentionOnly &&
-            this.runtime.character.clientConfig?.discord?.isPartOfTeam
-        ) {
-            return false;
-        }
-
-        return (
-            isMentioned ||
-            (!this.runtime.character.clientConfig?.discord
-                ?.shouldRespondOnlyToMentions &&
-                (message.content
-                    .toLowerCase()
-                    .includes(
-                        this.client.user?.username.toLowerCase() as string
-                    ) ||
-                    message.content
-                        .toLowerCase()
-                        .includes(
-                            this.client.user?.tag.toLowerCase() as string
-                        ) ||
-                    (nickname &&
-                        message.content
-                            .toLowerCase()
-                            .includes(nickname.toLowerCase()))))
         );
     }
 
@@ -1228,7 +1233,7 @@ export class MessageManager {
                 this.runtime.character.templates
                     ?.discordShouldRespondTemplate ||
                 this.runtime.character.templates?.shouldRespondTemplate ||
-                discordShouldRespondTemplate,
+                composeRandomUser(discordShouldRespondTemplate, 2),
         });
 
         const response = await generateShouldRespond({
@@ -1306,5 +1311,28 @@ export class MessageManager {
 
         const data = await response.json();
         return data.username;
+    }
+
+    /**
+     * Simulate discord typing while generating a response;
+     * returns a function to interrupt the typing loop
+     *
+     * @param message
+     */
+    private simulateTyping(message: DiscordMessage) {
+        let typing = true;
+
+        const typingLoop = async () => {
+            while (typing) {
+                await message.channel.sendTyping();
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+            }
+        };
+
+        typingLoop();
+
+        return function stopTyping() {
+            typing = false;
+        };
     }
 }

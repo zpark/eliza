@@ -10,8 +10,10 @@ import type {
 } from "viem";
 import * as viemChains from "viem/chains";
 
-const SupportedChainList = Object.keys(viemChains) as Array<keyof typeof viemChains>;
-export type SupportedChain = (typeof SupportedChainList)[number];
+const _SupportedChainList = Object.keys(viemChains) as Array<
+    keyof typeof viemChains
+>;
+export type SupportedChain = (typeof _SupportedChainList)[number];
 
 // Transaction types
 export interface Transaction {
@@ -88,6 +90,7 @@ export interface BridgeParams {
 export interface EvmPluginConfig {
     rpcUrl?: {
         ethereum?: string;
+        abstract?: string;
         base?: string;
         sepolia?: string;
         bsc?: string;
@@ -98,6 +101,7 @@ export interface EvmPluginConfig {
         cronos?: string;
         gnosis?: string;
         fantom?: string;
+        fraxtal?: string;
         klaytn?: string;
         celo?: string;
         moonbeam?: string;
@@ -112,6 +116,8 @@ export interface EvmPluginConfig {
         taiko?: string;
         zksync?: string;
         canto?: string;
+        alienx?: string;
+        gravity?: string;
     };
     secrets?: {
         EVM_PRIVATE_KEY: string;
@@ -159,4 +165,40 @@ export interface TokenListResponse {
 export interface ProviderError extends Error {
     code?: number;
     data?: unknown;
+}
+
+export enum VoteType {
+    AGAINST = 0,
+    FOR = 1,
+    ABSTAIN = 2,
+}
+
+export interface Proposal {
+    targets: Address[];
+    values: bigint[];
+    calldatas: `0x${string}`[];
+    description: string;
+}
+
+export interface VoteParams {
+    chain: SupportedChain;
+    governor: Address;
+    proposalId: string;
+    support: VoteType;
+}
+
+export interface QueueProposalParams extends Proposal {
+    chain: SupportedChain;
+    governor: Address;
+}
+
+export interface ExecuteProposalParams extends Proposal {
+    chain: SupportedChain;
+    governor: Address;
+    proposalId: string;
+}
+
+export interface ProposeProposalParams extends Proposal {
+    chain: SupportedChain;
+    governor: Address;
 }
