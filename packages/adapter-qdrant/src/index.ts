@@ -151,7 +151,6 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
             }
         const rows = await this.db.search(this.collectionName, {
             vector:  Array.from(params.embedding),
-            limit: 30,
             with_vector: true
         });
 
@@ -359,6 +358,11 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
     async updateGoalStatus(params: { goalId: UUID; status: GoalStatus }): Promise<void> {
         return Promise.resolve(undefined);
     }
+
+    getMemoriesByIds(memoryIds: UUID[], tableName?: string): Promise<Memory[]> {
+        throw new Error("Method not implemented.");
+    }
+
     async getCache(params: {
         key: string;
         agentId: UUID;
