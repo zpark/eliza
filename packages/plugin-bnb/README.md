@@ -118,7 +118,7 @@ Request testnet tokens from the faucet. You could request any of the supported t
 - **Token**(Optional)
 - **Recipient Address**
 
-The recipient address must maintain a minimum balance of 0.002 BNB on BSC Mainnet to qualify.
+The faucet is rate-limited. One claim is allowed per IP address within a 24-hour period. And the recipient address must maintain a minimum balance of 0.002 BNB on BSC Mainnet to qualify.
 
 **Example usage:**
 

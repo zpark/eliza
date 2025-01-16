@@ -15,12 +15,9 @@ function getContractSource(contractPath: string) {
 }
 
 function findImports(importPath: string) {
-    elizaLogger.log("importPath", importPath);
     try {
         if (importPath.startsWith("@openzeppelin/")) {
-            elizaLogger.log("in modPath");
             const modPath = require.resolve(importPath);
-            elizaLogger.log("modPath", modPath);
             return { contents: fs.readFileSync(modPath, "utf8") };
         }
 
@@ -36,8 +33,6 @@ function findImports(importPath: string) {
 
 export async function compileSolidity(contractFileName: string) {
     const contractPath = path.join(baseDir, contractFileName + ".sol");
-    elizaLogger.log("baseDir", __dirname, baseDir, contractPath);
-
     const source = getContractSource(contractPath);
 
     const input = {
@@ -60,7 +55,7 @@ export async function compileSolidity(contractFileName: string) {
         },
     };
 
-    elizaLogger.log("Compiling contract...");
+    elizaLogger.debug("Compiling contract...");
 
     try {
         const output = JSON.parse(
@@ -80,15 +75,13 @@ export async function compileSolidity(contractFileName: string) {
         }
 
         const contractName = path.basename(contractFileName, ".sol");
-        elizaLogger.log("contractFileName", contractFileName);
-        elizaLogger.log("contractName", contractName);
         const contract = output.contracts[contractFileName][contractName];
 
         if (!contract) {
             throw new Error("Contract compilation result is empty");
         }
 
-        elizaLogger.log("Contract compiled successfully");
+        elizaLogger.debug("Contract compiled successfully");
         return {
             abi: contract.abi,
             bytecode: contract.evm.bytecode.object,

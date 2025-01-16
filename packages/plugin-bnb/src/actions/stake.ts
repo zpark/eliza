@@ -9,16 +9,19 @@ import {
     type State,
 } from "@elizaos/core";
 
-import { initWalletProvider, WalletProvider } from "../providers/wallet";
+import {
+    bnbWalletProvider,
+    initWalletProvider,
+    WalletProvider,
+} from "../providers/wallet";
 import { stakeTemplate } from "../templates";
 import {
     ERC20Abi,
     ListaDaoAbi,
-    SupportedChain,
     type StakeParams,
     type StakeResponse,
 } from "../types";
-import { formatEther, Hex, parseEther } from "viem";
+import { formatEther, parseEther } from "viem";
 
 export { stakeTemplate };
 
@@ -32,7 +35,9 @@ export class StakeAction {
     constructor(private walletProvider: WalletProvider) {}
 
     async stake(params: StakeParams): Promise<StakeResponse> {
+        elizaLogger.debug("Stake params:", params);
         this.validateStakeParams(params);
+        elizaLogger.debug("Normalized stake params:", params);
 
         this.walletProvider.switchChain("bsc"); // only BSC is supported
 
@@ -45,11 +50,15 @@ export class StakeAction {
             const resp = await actions[params.action]();
             return { response: resp };
         } catch (error) {
-            throw new Error(`Stake failed: ${error.message}`);
+            throw error;
         }
     }
 
     validateStakeParams(params: StakeParams) {
+        if (params.chain != "bsc") {
+            throw new Error("Only BSC mainnet is supported");
+        }
+
         if (params.action == "deposit" && !params.amount) {
             throw new Error("Amount is required for deposit");
         }
@@ -60,21 +69,20 @@ export class StakeAction {
     }
 
     async doDeposit(amount: string): Promise<string> {
-        const publicClient = this.walletProvider.getPublicClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
-        const walletClient = this.walletProvider.getWalletClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
+        const publicClient = this.walletProvider.getPublicClient("bsc");
+        const walletClient = this.walletProvider.getWalletClient("bsc");
 
         const { request } = await publicClient.simulateContract({
-            account: walletClient.account,
+            account: this.walletProvider.getAccount(),
             address: this.LISTA_DAO,
             abi: ListaDaoAbi,
             functionName: "deposit",
             value: parseEther(amount),
         });
         const txHash = await walletClient.writeContract(request);
+        await publicClient.waitForTransactionReceipt({
+            hash: txHash,
+        });
 
         const slisBNBBalance = await publicClient.readContract({
             address: this.SLIS_BNB,
@@ -87,12 +95,8 @@ export class StakeAction {
     }
 
     async doWithdraw(amount?: string): Promise<string> {
-        const publicClient = this.walletProvider.getPublicClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
-        const walletClient = this.walletProvider.getWalletClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
+        const publicClient = this.walletProvider.getPublicClient("bsc");
+        const walletClient = this.walletProvider.getWalletClient("bsc");
 
         // If amount is not provided, withdraw all slisBNB
         let amountToWithdraw: bigint;
@@ -107,15 +111,40 @@ export class StakeAction {
             amountToWithdraw = parseEther(amount);
         }
 
+        // check slisBNB allowance
+        const diff = await this.walletProvider.checkERC20Allowance(
+            "bsc",
+            this.SLIS_BNB,
+            walletClient.account!.address,
+            this.LISTA_DAO,
+            amountToWithdraw
+        );
+        if (diff > 0n) {
+            elizaLogger.log(
+                `Increasing slisBNB allowance for Lista DAO. ${diff} more needed`
+            );
+            const txHash = await this.walletProvider.increaseERC20Allowance(
+                "bsc",
+                this.SLIS_BNB,
+                this.LISTA_DAO,
+                diff
+            );
+            await publicClient.waitForTransactionReceipt({
+                hash: txHash,
+            });
+        }
+
         const { request } = await publicClient.simulateContract({
-            account: walletClient.account,
+            account: this.walletProvider.getAccount(),
             address: this.LISTA_DAO,
             abi: ListaDaoAbi,
             functionName: "requestWithdraw",
             args: [amountToWithdraw],
         });
-
         const txHash = await walletClient.writeContract(request);
+        await publicClient.waitForTransactionReceipt({
+            hash: txHash,
+        });
 
         const slisBNBBalance = await publicClient.readContract({
             address: this.SLIS_BNB,
@@ -128,12 +157,8 @@ export class StakeAction {
     }
 
     async doClaim(): Promise<string> {
-        const publicClient = this.walletProvider.getPublicClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
-        const walletClient = this.walletProvider.getWalletClient(
-            this.walletProvider.getCurrentChain().name as SupportedChain
-        );
+        const publicClient = this.walletProvider.getPublicClient("bsc");
+        const walletClient = this.walletProvider.getWalletClient("bsc");
 
         const address = walletClient.account!.address;
         const requests = await publicClient.readContract({
@@ -154,14 +179,17 @@ export class StakeAction {
 
             if (isClaimable) {
                 const { request } = await publicClient.simulateContract({
-                    account: walletClient.account,
+                    account: this.walletProvider.getAccount(),
                     address: this.LISTA_DAO,
                     abi: ListaDaoAbi,
                     functionName: "claimWithdraw",
                     args: [BigInt(idx)],
                 });
 
-                await walletClient.writeContract(request);
+                const txHash = await walletClient.writeContract(request);
+                await publicClient.waitForTransactionReceipt({
+                    hash: txHash,
+                });
 
                 totalClaimed += amount;
             } else {
@@ -200,6 +228,7 @@ export const stakeAction = {
         } else {
             state = await runtime.updateRecentMessageState(state);
         }
+        state.walletInfo = await bnbWalletProvider.get(runtime, message, state);
 
         // Compose stake context
         const stakeContext = composeContext({
@@ -215,6 +244,7 @@ export const stakeAction = {
         const walletProvider = initWalletProvider(runtime);
         const action = new StakeAction(walletProvider);
         const paramOptions: StakeParams = {
+            chain: content.chain,
             action: content.action,
             amount: content.amount,
         };
@@ -227,9 +257,9 @@ export const stakeAction = {
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error during transfer:", error);
+            elizaLogger.error("Error during stake:", error.message);
             callback?.({
-                text: `Stake failed`,
+                text: `Stake failed: ${error.message}`,
                 content: { error: error.message },
             });
             return false;
@@ -243,38 +273,95 @@ export const stakeAction = {
     examples: [
         [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
-                    text: "Delegate 1 BNB",
-                    action: "delegate",
+                    text: "Stake 1 BNB on BSC",
                 },
             },
             {
-                user: "user",
+                user: "{{agent}}",
                 content: {
-                    text: "Stake 1 BNB",
-                    action: "stake",
+                    text: "I'll help you stake 1 BNB to Lista DAO on BSC",
+                    action: "STAKE",
+                    content: {
+                        action: "deposit",
+                        amount: "1",
+                    },
                 },
             },
+        ],
+        [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
                     text: "Deposit 1 BNB to Lista DAO",
-                    action: "deposit",
                 },
             },
             {
-                user: "user",
+                user: "{{agent}}",
                 content: {
-                    text: "Withdraw 1 BNB from Lista DAO",
-                    action: "withdraw",
+                    text: "I'll help you deposit 1 BNB to Lista DAO on BSC",
+                    action: "STAKE",
+                    content: {
+                        action: "deposit",
+                        amount: "1",
+                    },
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Undelegate 1 slisBNB on BSC",
                 },
             },
             {
-                user: "user",
+                user: "{{agent}}",
                 content: {
-                    text: "Claim locked BNB",
-                    action: "claim",
+                    text: "I'll help you undelegate 1 slisBNB from Lista DAO on BSC",
+                    action: "STAKE",
+                    content: {
+                        action: "withdraw",
+                        amount: "1",
+                    },
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Withdraw 1 slisBNB from Lista DAO",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "I'll help you withdraw 1 slisBNB from Lista DAO on BSC",
+                    action: "STAKE",
+                    content: {
+                        action: "withdraw",
+                        amount: "1",
+                    },
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Claim unlocked BNB from Lista DAO",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "I'll help you claim unlocked BNB from Lista DAO on BSC",
+                    action: "STAKE",
+                    content: {
+                        action: "claim",
+                    },
                 },
             },
         ],

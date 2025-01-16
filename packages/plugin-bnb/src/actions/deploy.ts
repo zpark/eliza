@@ -9,13 +9,18 @@ import {
     type State,
 } from "@elizaos/core";
 import solc from "solc";
-import { Abi, formatEther, formatUnits, parseUnits } from "viem";
-import { initWalletProvider, WalletProvider } from "../providers/wallet";
+import { Abi, Address, parseUnits } from "viem";
+import {
+    bnbWalletProvider,
+    initWalletProvider,
+    WalletProvider,
+} from "../providers/wallet";
 import { ercContractTemplate } from "../templates";
 import {
     IDeployERC1155Params,
     IDeployERC721Params,
     IDeployERC20Params,
+    SupportedChain,
 } from "../types";
 import { compileSolidity } from "../utils/contracts";
 
@@ -41,7 +46,7 @@ export class DeployAction {
                 },
             },
         };
-        elizaLogger.log("Compiling contract...");
+        elizaLogger.debug("Compiling contract...");
         const output = JSON.parse(solc.compile(JSON.stringify(input)));
 
         // check compile error
@@ -62,7 +67,7 @@ export class DeployAction {
             elizaLogger.error("Compilation result is empty");
         }
 
-        elizaLogger.log("Contract compiled successfully");
+        elizaLogger.debug("Contract compiled successfully");
         return {
             abi: contract.abi as Abi,
             bytecode: contract.evm.bytecode.object,
@@ -70,65 +75,30 @@ export class DeployAction {
     }
 
     async deployERC20(deployTokenParams: IDeployERC20Params) {
-        elizaLogger.log("deployTokenParams", deployTokenParams);
+        elizaLogger.debug("deployTokenParams", deployTokenParams);
+
         const { name, symbol, decimals, totalSupply, chain } =
             deployTokenParams;
-
-        this.walletProvider.switchChain(chain);
-
-        const chainConfig = this.walletProvider.getChainConfigs(chain);
-        const publicClient = this.walletProvider.getPublicClient(chain);
-        const walletClient = this.walletProvider.getWalletClient(chain);
+        if (!name || name === "") {
+            throw new Error("Token name is required");
+        }
+        if (!symbol || symbol === "") {
+            throw new Error("Token symbol is required");
+        }
+        if (!decimals || decimals === 0) {
+            throw new Error("Token decimals is required");
+        }
+        if (!totalSupply || totalSupply === "") {
+            throw new Error("Token total supply is required");
+        }
 
         try {
-            const { abi, bytecode } = await compileSolidity("ERC20Contract");
-
-            if (!bytecode) {
-                throw new Error("Bytecode is empty after compilation");
-            }
-
-            // check wallet balance
-            const balance = await publicClient.getBalance({
-                address: this.walletProvider.getAddress(),
-            });
-            elizaLogger.log(`Wallet balance: ${formatEther(balance)} BNB`);
-
-            if (balance === 0n) {
-                elizaLogger.error("Wallet has no BNB for gas fees");
-            }
-
-            const totalSupplyWithDecimals = parseUnits(
-                totalSupply.toString(),
-                decimals
-            );
-            const hash = await walletClient.deployContract({
-                account: this.walletProvider.getAccount(),
-                abi,
-                bytecode,
-                args: [name, symbol, decimals, totalSupplyWithDecimals],
-                chain: chainConfig,
-            });
-
-            elizaLogger.log("Waiting for deployment transaction...", hash);
-            const receipt = await publicClient.waitForTransactionReceipt({
-                hash,
-            });
-            const contractAddress = receipt.contractAddress;
-
-            elizaLogger.log("Contract deployed successfully!");
-            elizaLogger.log("Contract address:", contractAddress);
-
-            elizaLogger.log("\nToken Information:");
-            elizaLogger.log("=================");
-            elizaLogger.log(`Name: ${name}`);
-            elizaLogger.log(`Symbol: ${symbol}`);
-            elizaLogger.log(`Decimals: ${decimals}`);
-            elizaLogger.log(
-                `Total Supply: ${formatUnits(totalSupplyWithDecimals, decimals)}`
-            );
-
-            elizaLogger.log(
-                `View on BSCScan: https://testnet.bscscan.com/address/${contractAddress}`
+            const totalSupplyWithDecimals = parseUnits(totalSupply, decimals);
+            const args = [name, symbol, decimals, totalSupplyWithDecimals];
+            const contractAddress = await this.deployContract(
+                chain,
+                "ERC20Contract",
+                args
             );
 
             return {
@@ -141,48 +111,51 @@ export class DeployAction {
     }
 
     async deployERC721(deployNftParams: IDeployERC721Params) {
-        elizaLogger.log("deployNftParams", deployNftParams);
+        elizaLogger.debug("deployNftParams", deployNftParams);
+
         const { baseURI, name, symbol, chain } = deployNftParams;
-
-        this.walletProvider.switchChain(chain);
-
-        const chainConfig = this.walletProvider.getChainConfigs(chain);
-        const publicClient = this.walletProvider.getPublicClient(chain);
-        const walletClient = this.walletProvider.getWalletClient(chain);
-
+        if (!name || name === "") {
+            throw new Error("Token name is required");
+        }
+        if (!symbol || symbol === "") {
+            throw new Error("Token symbol is required");
+        }
+        if (!baseURI || baseURI === "") {
+            throw new Error("Token baseURI is required");
+        }
         try {
-            const { abi, bytecode } = await compileSolidity("ERC721Contract");
-            if (!bytecode) {
-                throw new Error("Bytecode is empty after compilation");
-            }
+            const args = [name, symbol, baseURI];
+            const contractAddress = await this.deployContract(
+                chain,
+                "ERC721Contract",
+                args
+            );
 
-            // check wallet balance
-            const balance = await publicClient.getBalance({
-                address: this.walletProvider.getAddress(),
-            });
-            elizaLogger.log(`Wallet balance: ${formatEther(balance)} BNB`);
+            return {
+                address: contractAddress,
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
 
-            if (balance === 0n) {
-                elizaLogger.error("Wallet has no BNB for gas fees");
-            }
+    async deployERC1155(deploy1155Params: IDeployERC1155Params) {
+        elizaLogger.debug("deploy1155Params", deploy1155Params);
 
-            const hash = await walletClient.deployContract({
-                account: this.walletProvider.getAccount(),
-                abi,
-                bytecode,
-                args: [name, symbol, baseURI],
-                chain: chainConfig,
-            });
-
-            elizaLogger.log("Waiting for deployment transaction...", hash);
-            const receipt = await publicClient.waitForTransactionReceipt({
-                hash,
-            });
-
-            const contractAddress = receipt.contractAddress;
-
-            elizaLogger.log("Contract deployed successfully!");
-            elizaLogger.log("Contract address:", contractAddress);
+        const { baseURI, name, chain } = deploy1155Params;
+        if (!name || name === "") {
+            throw new Error("Token name is required");
+        }
+        if (!baseURI || baseURI === "") {
+            throw new Error("Token baseURI is required");
+        }
+        try {
+            const args = [name, baseURI];
+            const contractAddress = await this.deployContract(
+                chain,
+                "ERC1155Contract",
+                args
+            );
 
             return {
                 address: contractAddress,
@@ -193,56 +166,36 @@ export class DeployAction {
         }
     }
 
-    async deployERC1155(deploy1155Params: IDeployERC1155Params) {
-        const { baseURI, name, chain } = deploy1155Params;
+    async deployContract(
+        chain: SupportedChain,
+        contractName: string,
+        args: any[]
+    ): Promise<Address | null | undefined> {
+        const { abi, bytecode } = await compileSolidity(contractName);
+        if (!bytecode) {
+            throw new Error("Bytecode is empty after compilation");
+        }
 
         this.walletProvider.switchChain(chain);
 
         const chainConfig = this.walletProvider.getChainConfigs(chain);
-        const publicClient = this.walletProvider.getPublicClient(chain);
         const walletClient = this.walletProvider.getWalletClient(chain);
+        const hash = await walletClient.deployContract({
+            account: this.walletProvider.getAccount(),
+            abi,
+            bytecode,
+            args,
+            chain: chainConfig,
+        });
 
-        try {
-            const { bytecode, abi } = await compileSolidity("ERC1155Contract");
+        elizaLogger.debug("Waiting for deployment transaction...", hash);
+        const publicClient = this.walletProvider.getPublicClient(chain);
+        const receipt = await publicClient.waitForTransactionReceipt({
+            hash,
+        });
+        elizaLogger.debug("Contract deployed successfully!");
 
-            if (!bytecode) {
-                throw new Error("Bytecode is empty after compilation");
-            }
-            // check wallet balance
-            const balance = await publicClient.getBalance({
-                address: this.walletProvider.getAddress(),
-            });
-            elizaLogger.log(`Wallet balance: ${formatEther(balance)} BNB`);
-
-            if (balance === 0n) {
-                elizaLogger.error("Wallet has no BNB for gas fees");
-            }
-
-            const hash = await walletClient.deployContract({
-                account: this.walletProvider.getAccount(),
-                abi,
-                bytecode,
-                args: [name, baseURI],
-                chain: chainConfig,
-            });
-
-            elizaLogger.log("Waiting for deployment transaction...", hash);
-            const receipt = await publicClient.waitForTransactionReceipt({
-                hash,
-            });
-            const contractAddress = receipt.contractAddress;
-            elizaLogger.log("Contract deployed successfully!");
-            elizaLogger.log("Contract address:", contractAddress);
-
-            return {
-                address: contractAddress,
-                name: name,
-                baseURI: baseURI,
-            };
-        } catch (error) {
-            elizaLogger.error("Deployment failed:", error);
-            throw error;
-        }
+        return receipt.contractAddress;
     }
 }
 
@@ -265,6 +218,7 @@ export const deployAction = {
         } else {
             state = await runtime.updateRecentMessageState(state);
         }
+        state.walletInfo = await bnbWalletProvider.get(runtime, message, state);
 
         // Compose context
         const context = composeContext({
@@ -277,59 +231,55 @@ export const deployAction = {
             modelClass: ModelClass.LARGE,
         });
 
-        elizaLogger.log("content", content);
-
         const walletProvider = initWalletProvider(runtime);
         const action = new DeployAction(walletProvider);
-
-        const contractType = content.contractType;
-        let result;
-        switch (contractType.toLocaleLowerCase()) {
-            case "erc20":
-                result = await action.deployERC20({
-                    chain: content.chain,
-                    decimals: content.decimals,
-                    symbol: content.symbol,
-                    name: content.name,
-                    totalSupply: content.totalSupply,
-                });
-                break;
-            case "erc721":
-                result = await action.deployERC721({
-                    chain: content.chain,
-                    name: content.name,
-                    symbol: content.symbol,
-                    baseURI: content.baseURI,
-                });
-                break;
-            case "erc1155":
-                result = await action.deployERC1155({
-                    chain: content.chain,
-                    name: content.name,
-                    baseURI: content.baseURI,
-                });
-                break;
-        }
-
-        elizaLogger.log("result: ", result);
-        if (result) {
-            callback?.({
-                text: `Successfully create contract - ${result?.address}`,
-                content: { ...result },
-            });
-        } else {
-            callback?.({
-                text: `Unsuccessfully create contract`,
-                content: { ...result },
-            });
-        }
-
         try {
+            const contractType = content.contractType;
+            let result;
+            switch (contractType.toLocaleLowerCase()) {
+                case "erc20":
+                    result = await action.deployERC20({
+                        chain: content.chain,
+                        decimals: content.decimals,
+                        symbol: content.symbol,
+                        name: content.name,
+                        totalSupply: content.totalSupply,
+                    });
+                    break;
+                case "erc721":
+                    result = await action.deployERC721({
+                        chain: content.chain,
+                        name: content.name,
+                        symbol: content.symbol,
+                        baseURI: content.baseURI,
+                    });
+                    break;
+                case "erc1155":
+                    result = await action.deployERC1155({
+                        chain: content.chain,
+                        name: content.name,
+                        baseURI: content.baseURI,
+                    });
+                    break;
+            }
+
+            if (result) {
+                callback?.({
+                    text: `Successfully create contract - ${result?.address}`,
+                    content: { ...result },
+                });
+            } else {
+                callback?.({
+                    text: `Unsuccessfully create contract`,
+                    content: { ...result },
+                });
+            }
+
             return true;
         } catch (error) {
-            elizaLogger.error("Error in get balance:", error.message);
+            elizaLogger.error("Error during deploy:", error.message);
             callback?.({
-                text: `Getting balance failed`,
+                text: `Deploy failed: ${error.message}`,
                 content: { error: error.message },
             });
             return false;
@@ -342,23 +292,27 @@ export const deployAction = {
     examples: [
         [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
-                    text: "deploy an ERC20 token",
+                    text: "deploy an ERC20 token with name 'MyToken', symbol 'MTK', decimals 18, total supply 10000",
                     action: "DEPLOY_TOKEN",
                 },
             },
+        ],
+        [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
-                    text: "Deploy an ERC721 NFT contract",
+                    text: "Deploy an ERC721 NFT contract with name 'MyNFT', symbol 'MNFT', baseURI 'https://my-nft-base-uri.com'",
                     action: "DEPLOY_TOKEN",
                 },
             },
+        ],
+        [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
-                    text: "Deploy an ERC1155 contract",
+                    text: "Deploy an ERC1155 contract with name 'My1155', baseURI 'https://my-1155-base-uri.com'",
                     action: "DEPLOY_TOKEN",
                 },
             },
@@ -369,5 +323,7 @@ export const deployAction = {
         "DEPLOY_ERC721",
         "DEPLOY_ERC1155",
         "CREATE_TOKEN",
+        "CREATE_NFT",
+        "CREATE_1155",
     ],
 };

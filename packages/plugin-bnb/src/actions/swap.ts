@@ -11,7 +11,11 @@ import {
 import { executeRoute, getRoutes } from "@lifi/sdk";
 import { parseEther } from "viem";
 
-import { initWalletProvider, WalletProvider } from "../providers/wallet";
+import {
+    bnbWalletProvider,
+    initWalletProvider,
+    WalletProvider,
+} from "../providers/wallet";
 import { swapTemplate } from "../templates";
 import type { SwapParams, SwapResponse } from "../types";
 
@@ -21,9 +25,9 @@ export class SwapAction {
     constructor(private walletProvider: WalletProvider) {}
 
     async swap(params: SwapParams): Promise<SwapResponse> {
-        if (params.chain == "bscTestnet") {
-            throw new Error("Testnet is not supported");
-        }
+        elizaLogger.debug("Swap params:", params);
+        this.validateAndNormalizeParams(params);
+        elizaLogger.debug("Normalized swap params:", params);
 
         const fromAddress = this.walletProvider.getAddress();
         const chainId = this.walletProvider.getChainConfigs(params.chain).id;
@@ -54,7 +58,10 @@ export class SwapAction {
             if (!routes.routes.length) throw new Error("No routes found");
 
             const execution = await executeRoute(routes.routes[0]);
-            const process = execution.steps[0]?.execution?.process[0];
+            const process =
+                execution.steps[0]?.execution?.process[
+                    execution.steps[0]?.execution?.process.length - 1
+                ];
 
             if (!process?.status || process.status === "FAILED") {
                 throw new Error("Transaction failed");
@@ -64,7 +71,13 @@ export class SwapAction {
 
             return resp;
         } catch (error) {
-            throw new Error(`Swap failed: ${error.message}`);
+            throw error;
+        }
+    }
+
+    validateAndNormalizeParams(params: SwapParams): void {
+        if (params.chain != "bsc") {
+            throw new Error("Only BSC mainnet is supported");
         }
     }
 }
@@ -87,6 +100,7 @@ export const swapAction = {
         } else {
             state = await runtime.updateRecentMessageState(state);
         }
+        state.walletInfo = await bnbWalletProvider.get(runtime, message, state);
 
         // Compose swap context
         const swapContext = composeContext({
@@ -99,6 +113,8 @@ export const swapAction = {
             modelClass: ModelClass.LARGE,
         });
 
+        const walletProvider = initWalletProvider(runtime);
+        const action = new SwapAction(walletProvider);
         const swapOptions: SwapParams = {
             chain: content.chain,
             fromToken: content.inputToken,
@@ -106,9 +122,6 @@ export const swapAction = {
             amount: content.amount,
             slippage: content.slippage,
         };
-
-        const walletProvider = initWalletProvider(runtime);
-        const action = new SwapAction(walletProvider);
         try {
             const swapResp = await action.swap(swapOptions);
             callback?.({
@@ -119,7 +132,7 @@ export const swapAction = {
         } catch (error) {
             elizaLogger.error("Error during swap:", error.message);
             callback?.({
-                text: `Swap failed`,
+                text: `Swap failed: ${error.message}`,
                 content: { error: error.message },
             });
             return false;
@@ -133,13 +146,48 @@ export const swapAction = {
     examples: [
         [
             {
-                user: "user",
+                user: "{{user1}}",
                 content: {
-                    text: "Swap 1 BNB for USDC on Bsc",
-                    action: "TOKEN_SWAP",
+                    text: "Swap 1 BNB for USDC on BSC",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "I'll help you swap 1 BNB for USDC on BSC",
+                    action: "SWAP",
+                    content: {
+                        chain: "bsc",
+                        inputToken: "BNB",
+                        outputToken: "USDC",
+                        amount: "1",
+                        slippage: undefined,
+                    },
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Buy some token of 0x1234 using 1 USDC on BSC. The slippage should be no more than 5%",
+                },
+            },
+            {
+                user: "{{agent}}",
+                content: {
+                    text: "I'll help you swap 1 USDC for token 0x1234 on BSC",
+                    action: "SWAP",
+                    content: {
+                        chain: "bsc",
+                        inputToken: "USDC",
+                        outputToken: "0x1234",
+                        amount: "1",
+                        slippage: 0.05,
+                    },
                 },
             },
         ],
     ],
-    similes: ["TOKEN_SWAP", "EXCHANGE_TOKENS", "TRADE_TOKENS"],
+    similes: ["SWAP", "TOKEN_SWAP", "EXCHANGE_TOKENS", "TRADE_TOKENS"],
 };

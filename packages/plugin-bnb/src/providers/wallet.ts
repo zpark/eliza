@@ -3,7 +3,6 @@ import {
     type Provider,
     type Memory,
     type State,
-    elizaLogger,
 } from "@elizaos/core";
 import { EVM, createConfig, getToken } from "@lifi/sdk";
 import type {
@@ -112,9 +111,14 @@ export class WalletProvider {
     }
 
     async formatAddress(address: string): Promise<Address> {
+        if (!address || address.length === 0) {
+            throw new Error("Empty address");
+        }
+
         if (address.startsWith("0x") && address.length === 42) {
             return address as Address;
         }
+
         const resolvedAddress = await this.resolveWeb3Name(address);
         if (resolvedAddress) {
             return resolvedAddress as Address;
@@ -126,6 +130,43 @@ export class WalletProvider {
     async resolveWeb3Name(name: string): Promise<string | null> {
         const nameService = createWeb3Name();
         return await nameService.getAddress(name);
+    }
+
+    async checkERC20Allowance(
+        chain: SupportedChain,
+        token: Address,
+        owner: Address,
+        spender: Address,
+        amount: bigint
+    ): Promise<bigint> {
+        const publicClient = this.getPublicClient(chain);
+        const allowance = await publicClient.readContract({
+            address: token,
+            abi: ERC20Abi,
+            functionName: "allowance",
+            args: [owner, spender],
+        });
+
+        return allowance > amount ? 0n : amount - allowance;
+    }
+
+    async increaseERC20Allowance(
+        chain: SupportedChain,
+        token: Address,
+        spender: Address,
+        increment: bigint
+    ): Promise<Hex> {
+        const publicClient = this.getPublicClient(chain);
+        const walletClient = this.getWalletClient(chain);
+        const { request } = await publicClient.simulateContract({
+            account: this.account,
+            address: token,
+            abi: ERC20Abi,
+            functionName: "increaseAllowance",
+            args: [spender, increment],
+        });
+
+        return await walletClient.writeContract(request);
     }
 
     async transfer(
@@ -140,7 +181,7 @@ export class WalletProvider {
     ): Promise<Hex> {
         const walletClient = this.getWalletClient(chain);
         return walletClient.sendTransaction({
-            account: walletClient.account!,
+            account: this.account!,
             to: toAddress,
             value: amount,
             chain: this.getChainConfigs(chain),
@@ -161,7 +202,7 @@ export class WalletProvider {
         const publicClient = this.getPublicClient(chain);
         const walletClient = this.getWalletClient(chain);
         const { request } = await publicClient.simulateContract({
-            account: walletClient.account,
+            account: this.account,
             address: tokenAddress as `0x${string}`,
             abi: ERC20Abi,
             functionName: "transfer",
@@ -172,34 +213,23 @@ export class WalletProvider {
         return await walletClient.writeContract(request);
     }
 
-    // NOTE: Only works for bsc
-    async getWalletBalance(): Promise<string | null> {
-        try {
-            const client = this.getPublicClient("bsc");
-            const balance = await client.getBalance({
-                address: this.account.address,
-            });
-            return formatUnits(balance, 18);
-        } catch (error) {
-            elizaLogger.error("Error getting wallet balance:", error);
-            return null;
-        }
+    async getBalance(): Promise<string> {
+        const client = this.getPublicClient(this.currentChain);
+        const balance = await client.getBalance({
+            address: this.account.address,
+        });
+        return formatUnits(balance, 18);
     }
 
     async getTokenAddress(
         chainName: SupportedChain,
         tokenSymbol: string
-    ): Promise<string | null> {
-        try {
-            const token = await getToken(
-                this.getChainConfigs(chainName).id,
-                tokenSymbol
-            );
-            return token.address;
-        } catch (error) {
-            elizaLogger.error("Error getting token address:", error);
-            return null;
-        }
+    ): Promise<string> {
+        const token = await getToken(
+            this.getChainConfigs(chainName).id,
+            tokenSymbol
+        );
+        return token.address;
     }
 
     addChain(chain: Record<string, Chain>) {
@@ -315,7 +345,7 @@ export const bnbWalletProvider: Provider = {
         try {
             const walletProvider = initWalletProvider(runtime);
             const address = walletProvider.getAddress();
-            const balance = await walletProvider.getWalletBalance();
+            const balance = await walletProvider.getBalance();
             const chain = walletProvider.getCurrentChain();
             return `BNB chain Wallet Address: ${address}\nBalance: ${balance} ${chain.nativeCurrency.symbol}\nChain ID: ${chain.id}, Name: ${chain.name}`;
         } catch (error) {
