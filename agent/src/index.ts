@@ -107,6 +107,11 @@ import yargs from "yargs";
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
+// XXX TODO: validate parameters against jsonSchema
+const validateParameters = (parameters: any, jsonSchema: any) => {
+    return parameters;
+};
+
 export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     const waitTime =
         Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
@@ -303,16 +308,37 @@ async function handlePluginImporting(plugins: string[]) {
             // - pluginEnv
             // plugin return the Plugin interface
             plugins.map(async (plugin) => {
+                let pluginSpec: any = null;
+                if (typeof plugin === 'string') {
+                    pluginSpec = {
+                        url: plugin.toLowerCase(),
+                        parameters: {},
+                    };
+                } else {
+                    pluginSpec = plugin;
+                }
                 try {
-                    const importedPlugin = await import(plugin);
-                    const functionName =
-                        plugin
-                            .replace("@elizaos/plugin-", "")
-                            .replace(/-./g, (x) => x[1].toUpperCase()) +
-                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
-                    return (
-                        importedPlugin.default || importedPlugin[functionName]
-                    );
+                    const u = `${pluginSpec.url}/package.json`;
+                    const packageJson = await import(u, {
+                        with: {
+                            type: 'json',
+                        },
+                    });
+                    const {
+                        pluginType,
+                        pluginParameters,
+                    } = packageJson;
+                    const mergedParameters = validateParameters(pluginSpec.parameters, pluginParameters);
+                    console.log('merge custom plugin schema', {
+                        parameters: pluginSpec.parameters,
+                        pluginParameters,
+                        mergedParameters,
+                    });
+                    let plugin: any | Promise<any> = await import(pluginSpec.url);
+                    plugin = plugin.default || plugin;
+                    const runtime = null; // XXX TODO: pass in the runtime
+                    const pluginInstance = await plugin(mergedParameters, runtime);
+                    return pluginInstance;
                 } catch (importError) {
                     elizaLogger.error(
                         `Failed to import plugin: ${plugin}`,
@@ -537,9 +563,62 @@ export async function initializeClients(
     // each client can only register once
     // and if we want two we can explicitly support it
     const clients: Record<string, any> = {};
-    const clientTypes: string[] =
-        character.clients?.map((str) => str.toLowerCase()) || [];
-    elizaLogger.log("initializeClients", clientTypes, "for", character.name);
+    const clientTypes: {
+        name: string;
+        clientInstance: any;
+    }[] = character.clients ?
+        await Promise.all(character.clients.map(async (str) => {
+            let clientSpec: any = null;
+            if (typeof str === "string") {
+                clientSpec = {
+                    url: str.toLowerCase(),
+                    parameters: {},
+                };
+            } else {
+                clientSpec = str;
+            }
+            const u = `${clientSpec.url}/package.json`;
+            console.log('load client spec A', {
+                clientSpec,
+                u,
+            });
+            let packageJson = await import(u, {
+                with: {
+                    type: 'json',
+                },
+            });
+            packageJson = packageJson.default || packageJson;
+            console.log('load client spec B', {
+                u,
+                packageJson,
+            });
+            const {
+                name,
+                pluginType,
+                parameters,
+            } = packageJson;
+            const mergedParameters = validateParameters(clientSpec.parameters, parameters);
+            console.log('merge custom client schema', {
+                packageJson,
+                clientSpec,
+                mergedParameters,
+            });
+            let client: any | Promise<any> = await import(clientSpec.url);
+            client = client.default || client;
+            console.log('got client', client, Object.keys(client))
+            const clientInstance = await client.start(mergedParameters, runtime);
+            return {
+                name,
+                clientInstance,
+            };
+        })) : [];
+    elizaLogger.log("initializeClients", clientTypes.map(o => o.name), "for", character.name);
+    for (const {
+        name,
+        clientInstance,
+    } of clientTypes) {
+        clients[name] = clientInstance;
+    }
 
     // XXX dyanically initialize clients
     // // Start Auto Client if "auto" detected as a configured client
@@ -605,9 +684,11 @@ export async function initializeClients(
         return `client_${Date.now()}`;
     }
 
+    // XXX TODO: move this initialization elsewhere
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
+                throw new Error('cannot load subclient');
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
                     const clientType = determineClientType(client);
@@ -997,7 +1078,7 @@ async function startAgent(
     } catch (error) {
         elizaLogger.error(
             `Error starting agent for character ${character.name}:`,
-            error
+            error.stack
         );
         elizaLogger.error(error);
         if (db) {
@@ -1053,8 +1134,10 @@ const startAgents = async () => {
         serverPort++;
     }
 
+    // XXX TODO: is this still used?
     // upload some agent functionality into directClient
     directClient.startAgent = async (character) => {
+        throw new Error('fail 1');
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
 
