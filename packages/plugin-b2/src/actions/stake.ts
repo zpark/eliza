@@ -10,8 +10,8 @@ import {
     composeContext,
     ModelClass,
 } from "@elizaos/core";
-import { getTxReceipt, sendNativeAsset, sendToken, depositBTC } from "../utils";
-import { Address, Hash } from "viem";
+import { getTxReceipt, depositBTC } from "../utils";
+import { Hash } from "viem";
 import { validateB2NetworkConfig } from "../environment";
 import { stakeTemplate } from "../templates";
 import { WalletProvider } from "../providers";

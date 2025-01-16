@@ -266,7 +266,6 @@ async function fetchEternalAISystemPrompt(
             } else {
                 throw new Error("invalid on-chain system prompt");
             }
-            return undefined;
         }
     } else {
         return content;
@@ -579,7 +578,7 @@ export async function generateText({
                         const url = typeof input === 'string' ? input : input.toString();
                         const chain_id =
                             runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
-                        
+
                         const options: RequestInit = { ...init };
                         if (options?.body) {
                             const body = JSON.parse(options.body as string);
@@ -588,7 +587,7 @@ export async function generateText({
                         }
 
                         const fetching = await runtime.fetch(url, options);
-                        
+
                         if (parseBooleanFromText(
                             runtime.getSetting("ETERNALAI_LOG")
                         )) {

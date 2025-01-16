@@ -1,15 +1,12 @@
 import type { IAgentRuntime, Memory, State } from "@ai16z/eliza";
 import { WalletProvider } from "../providers/wallet";
-import { proposeTemplate, voteTemplate } from "../templates";
+import { proposeTemplate } from "../templates";
 import type { ProposeProposalParams, Transaction } from "../types";
 import governorArtifacts from "../contracts/artifacts/OZGovernor.json";
 import {
     ByteArray,
     Hex,
     encodeFunctionData,
-    getContract,
-    keccak256,
-    stringToHex,
 } from "viem";
 
 export { proposeTemplate };
@@ -50,12 +47,12 @@ export class ProposeAction {
                 data: txData as Hex,
                 chain: chainConfig,
                 kzg: {
-                    blobToKzgCommitment: function (blob: ByteArray): ByteArray {
+                    blobToKzgCommitment: function (_blob: ByteArray): ByteArray {
                         throw new Error("Function not implemented.");
                     },
                     computeBlobKzgProof: function (
-                        blob: ByteArray,
-                        commitment: ByteArray
+                        _blob: ByteArray,
+                        _commitment: ByteArray
                     ): ByteArray {
                         throw new Error("Function not implemented.");
                     },

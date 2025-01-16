@@ -7,12 +7,9 @@ import {
     ByteArray,
     Hex,
     encodeFunctionData,
-    getContract,
     keccak256,
     stringToHex,
 } from "viem";
-import { Chain } from "viem";
-import voteTokenArtifacts from "../contracts/artifacts/VoteToken.json";
 
 export { queueProposalTemplate };
 
@@ -54,12 +51,12 @@ export class QueueAction {
                 data: txData as Hex,
                 chain: chainConfig,
                 kzg: {
-                    blobToKzgCommitment: function (blob: ByteArray): ByteArray {
+                    blobToKzgCommitment: function (_blob: ByteArray): ByteArray {
                         throw new Error("Function not implemented.");
                     },
                     computeBlobKzgProof: function (
-                        blob: ByteArray,
-                        commitment: ByteArray
+                        _blob: ByteArray,
+                        _commitment: ByteArray
                     ): ByteArray {
                         throw new Error("Function not implemented.");
                     },
