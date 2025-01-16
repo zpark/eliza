@@ -1101,10 +1101,12 @@ const checkPortAvailable = (port: number): Promise<boolean> => {
     });
 };
 
-const hasValidRemoteUrls = () => {
-    const remoteUrls = process.env.REMOTE_CHARACTER_URLS;
-    return remoteUrls && remoteUrls !== "" && remoteUrls.startsWith('http');
-};
+
+const hasValidRemoteUrls = () =>
+    process.env.REMOTE_CHARACTER_URLS &&
+    process.env.REMOTE_CHARACTER_URLS !== "" &&
+    process.env.REMOTE_CHARACTER_URLS.startsWith("http");
+
 
 const startAgents = async () => {
     const directClient = new DirectClient();
