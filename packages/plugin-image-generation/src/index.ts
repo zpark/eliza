@@ -110,6 +110,7 @@ const imageGeneration: Action = {
             width?: number;
             height?: number;
             count?: number;
+            cfgScale?: number;
             negativePrompt?: string;
             numIterations?: number;
             guidanceScale?: number;
@@ -118,6 +119,7 @@ const imageGeneration: Action = {
             jobId?: string;
             stylePreset?: string;
             hideWatermark?: boolean;
+            safeMode?: boolean;
         },
         callback: HandlerCallback
     ) => {
@@ -231,18 +233,19 @@ Ensure that your prompt is detailed, vivid, and incorporates all the elements me
                     : {}),
                 ...(options.stylePreset != null ||
                 imageSettings.stylePreset != null
-                    ? {
-                          stylePreset:
-                              options.stylePreset || imageSettings.stylePreset,
-                      }
+                    ? { stylePreset: options.stylePreset ||
+                            imageSettings.stylePreset }
                     : {}),
                 ...(options.hideWatermark != null ||
                 imageSettings.hideWatermark != null
-                    ? {
-                          hideWatermark:
-                              options.hideWatermark ||
-                              imageSettings.hideWatermark,
-                      }
+                    ? { hideWatermark: options.hideWatermark ||
+                            imageSettings.hideWatermark }
+                    : {}),
+                ...(options.safeMode != null || imageSettings.safeMode != null
+                    ? { safeMode: options.safeMode || imageSettings.safeMode }
+                    : {}),
+                ...(options.cfgScale != null || imageSettings.cfgScale != null
+                    ? { cfgScale: options.cfgScale || imageSettings.cfgScale }
                     : {}),
             },
             runtime
