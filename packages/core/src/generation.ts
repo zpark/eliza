@@ -644,7 +644,7 @@ export async function generateText({
 
             case ModelProviderName.GROQ: {
                 elizaLogger.debug("Initializing Groq model with Cloudflare check");
-                const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
+                const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
                 elizaLogger.debug("Groq baseURL result:", { baseURL });
                 const groq = createGroq({ apiKey, fetch: runtime.fetch, baseURL });
 
@@ -1963,7 +1963,6 @@ export async function handleProvider(
         }
     }
 }
-
 /**
  * Handles object generation for OpenAI.
  *
