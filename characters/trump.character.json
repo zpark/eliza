@@ -1,7 +1,12 @@
 {
     "name": "trump",
     "clients": [
-        "@elizaos/client-discord"
+        {
+            "url": "@elizaos/client-discord",
+            "parameters": {
+                "DISCORD_API_TOKEN": ""
+            }
+        }
     ],
     "modelProvider": "openai",
     "settings": {
