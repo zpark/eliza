@@ -746,6 +746,8 @@ export type Character = {
         lensShouldRespondTemplate?: TemplateType;
         telegramMessageHandlerTemplate?: TemplateType;
         telegramShouldRespondTemplate?: TemplateType;
+        telegramAutoPostTemplate?: string;
+        telegramPinnedMessageTemplate?: string;
         discordVoiceHandlerTemplate?: TemplateType;
         discordShouldRespondTemplate?: TemplateType;
         discordMessageHandlerTemplate?: TemplateType;
@@ -848,6 +850,14 @@ export type Character = {
             teamAgentIds?: string[];
             teamLeaderId?: string;
             teamMemberInterestKeywords?: string[];
+            autoPost?: {
+                enabled?: boolean;
+                monitorTime?: number;
+                inactivityThreshold?: number;
+                mainChannelId?: string;
+                pinnedMessagesGroups?: string[];
+                minTimeBetweenPosts?: number;
+            };
         };
         slack?: {
             shouldIgnoreBotMessages?: boolean;
