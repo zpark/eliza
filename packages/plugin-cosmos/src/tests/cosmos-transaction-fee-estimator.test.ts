@@ -8,6 +8,10 @@ vi.mock("@cosmjs/cosmwasm-stargate", () => ({
     },
 }));
 
+vi.mock("../shared/helpers/cosmos-messages", () => ({
+    generateIbcTransferMessage: vi.fn(),
+}));
+
 describe("FeeEstimator", () => {
     let mockSigningCosmWasmClient: SigningCosmWasmClient;
 
