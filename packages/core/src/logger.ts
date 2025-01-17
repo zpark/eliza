@@ -26,7 +26,10 @@ const createStream = () => {
     });
 };
 
+const defaultLevel = process?.env?.DEFAULT_LOG_LEVEL || "info";
+
 const options = {
+    level: defaultLevel,
     customLevels,
     hooks: {
         logMethod(
