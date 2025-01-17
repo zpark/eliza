@@ -17,6 +17,10 @@ vi.mock("@cosmjs/cosmwasm-stargate", () => ({
     },
 }));
 
+vi.mock("@skip-go/client", () => ({
+    SkipClient: vi.fn(() => ({})),
+}));
+
 vi.mock("../shared/entities/cosmos-wallet.ts", () => ({
     CosmosWallet: {
         create: vi.fn(),
@@ -74,6 +78,7 @@ describe("CosmosWalletChains", () => {
                 chain1: {
                     wallet: mockCosmosWalletCreate,
                     signingCosmWasmClient: {},
+                    skipClient: {},
                 },
             },
         };

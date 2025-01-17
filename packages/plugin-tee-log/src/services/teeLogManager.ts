@@ -98,7 +98,7 @@ export class TeeLogManager {
             const sgxAttestation = await sgxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(sgxAttestation);
         } else if (this.teeType === TeeType.TDX_DSTACK) {
-            const tdxAttestationProvider = new TdxAttestationProvider();
+            const tdxAttestationProvider = new TdxAttestationProvider(this.teeMode);
             const tdxAttestation = await tdxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(tdxAttestation);
         } else {

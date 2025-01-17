@@ -371,19 +371,19 @@ export class AgentRuntime implements IAgentRuntime {
         this.imageModelProvider =
             this.character.imageModelProvider ?? this.modelProvider;
 
-        elizaLogger.info("Selected model provider:", this.modelProvider);
         elizaLogger.info(
-            "Selected image model provider:",
-            this.imageModelProvider
+            `Selected model provider: ${this.modelProvider}`
+        );
+
+        elizaLogger.info(
+            `Selected image model provider: ${this.imageModelProvider}`
         );
 
         this.imageVisionModelProvider =
             this.character.imageVisionModelProvider ?? this.modelProvider;
 
-        // elizaLogger.info("Selected model provider:", this.modelProvider); duplicated log ln: 343
         elizaLogger.info(
-            "Selected image vision model provider:",
-            this.imageVisionModelProvider
+            `Selected image vision model provider: ${this.imageVisionModelProvider}`
         );
 
         // Validate model provider
@@ -470,7 +470,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.knowledge.length > 0
         ) {
             elizaLogger.info(
-                `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge}`
+                `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge ? true : false}`
             );
             elizaLogger.info(
                 `[RAG Check] Knowledge items:`,
