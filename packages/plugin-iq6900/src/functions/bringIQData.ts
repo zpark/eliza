@@ -1,7 +1,7 @@
 import { elizaLogger } from "@elizaos/core";
 
 import { Connection, PublicKey } from "@solana/web3.js";
-const network = process.env.IQSOlRPC||"https://api.mainnet-beta.solana.com";
+const network = process.env.IQSOlRPC || "https://api.mainnet-beta.solana.com";
 const stringAddress = process.env.IQ_WALLET_ADDRESS;
 
 const connection = new Connection(network, "confirmed");
@@ -10,18 +10,14 @@ const iqHost = "https://solanacontractapi.uc.r.appspot.com";
 
 async function fetchDBPDA(): Promise<string> {
     try {
-        if(stringAddress){
+        if (stringAddress) {
             elizaLogger.info("Connecting to Solana...(IQ6900)");
             elizaLogger.info("Your Address:" + stringAddress);
             const response = await fetch(`${iqHost}/getDBPDA/${stringAddress}`);
             const data = await response.json();
             if (response.ok) {
                 return data.DBPDA as string;
-            } else {
-                throw new Error(data.error || "Failed to fetch PDA");
             }
-        }else{
-            return "null";
         }
     } catch (error) {
         console.error("Error fetching PDA:", error);
@@ -160,8 +156,8 @@ async function fetchSignaturesForAddress(
 }
 
 async function findRecentJsonSignature(): Promise<string> {
-
     const dbAddress = await fetchDBPDA();
+    if (!dbAddress) return;
     const signatures = await fetchSignaturesForAddress(
         new PublicKey(dbAddress)
     );
@@ -170,15 +166,14 @@ async function findRecentJsonSignature(): Promise<string> {
         const commit = await extractCommitMessage(signature);
         if (commit !== "null") return signature;
     }
-    return "null";
+    return;
 }
 
 export async function bringAgentWithWalletAddress() {
-
     const recent = await findRecentJsonSignature();
-    if (recent === "null") {
+    if (!recent) {
         elizaLogger.error("Cannot found onchain data in this wallet.");
-        return "null";
+        return;
     }
     const result = await bringCode(recent);
     const json_string = result.json_data;
