@@ -189,7 +189,6 @@ class OpenAIImageProvider implements ImageProvider {
     }
 }
 
-
 class GroqImageProvider implements ImageProvider {
     constructor(private runtime: IAgentRuntime) {}
 
@@ -232,7 +231,6 @@ class GroqImageProvider implements ImageProvider {
         return parseImageResponse(data.choices[0].message.content);
     }
 }
-
 
 class GoogleImageProvider implements ImageProvider {
     constructor(private runtime: IAgentRuntime) {}
@@ -299,10 +297,17 @@ export class ImageDescriptionService
         this.runtime = runtime;
     }
 
-    private async initializeProvider(): Promise<void> {
+    private async initializeProvider(): Promise<boolean> {
         if (!this.runtime) {
             throw new Error("Runtime is required for image recognition");
         }
+
+        const availableModels = [
+            ModelProviderName.LLAMALOCAL,
+            ModelProviderName.GOOGLE,
+            ModelProviderName.OPENAI,
+            ModelProviderName.GROQ,
+        ].join(", ");
 
         const model = models[this.runtime?.character?.modelProvider];
 
@@ -326,15 +331,17 @@ export class ImageDescriptionService
                 this.provider = new OpenAIImageProvider(this.runtime);
                 elizaLogger.debug("Using openai for vision model");
             } else if (
-                this.runtime.imageVisionModelProvider ===
-                ModelProviderName.GROQ
+                this.runtime.imageVisionModelProvider === ModelProviderName.GROQ
             ) {
                 this.provider = new GroqImageProvider(this.runtime);
                 elizaLogger.debug("Using Groq for vision model");
             } else {
-                elizaLogger.error(
-                    `Unsupported image vision model provider: ${this.runtime.imageVisionModelProvider}`
+                elizaLogger.warn(
+                    `Unsupported image vision model provider: ${this.runtime.imageVisionModelProvider}. ` +
+                        `Please use one of the following: ${availableModels}. ` +
+                        `Update the 'imageVisionModelProvider' field in the character file.`
                 );
+                return false;
             }
         } else if (model === models[ModelProviderName.LLAMALOCAL]) {
             this.provider = new LocalImageProvider();
@@ -350,8 +357,15 @@ export class ImageDescriptionService
             this.provider = new OpenAIImageProvider(this.runtime);
         }
 
-        await this.provider.initialize();
-        this.initialized = true;
+        try {
+            await this.provider.initialize();
+        } catch (error) {
+            elizaLogger.error(
+                `Failed to initialize the image vision model provider: ${this.runtime.imageVisionModelProvider}`
+            );
+            return false;
+        }
+        return true;
     }
 
     private async loadImageData(
@@ -416,15 +430,17 @@ export class ImageDescriptionService
         imageUrl: string
     ): Promise<{ title: string; description: string }> {
         if (!this.initialized) {
-            await this.initializeProvider();
+            this.initialized = await this.initializeProvider();
         }
 
-        try {
-            const { data, mimeType } = await this.loadImageData(imageUrl);
-            return await this.provider!.describeImage(data, mimeType);
-        } catch (error) {
-            elizaLogger.error("Error in describeImage:", error);
-            throw error;
+        if (this.initialized) {
+            try {
+                const { data, mimeType } = await this.loadImageData(imageUrl);
+                return await this.provider!.describeImage(data, mimeType);
+            } catch (error) {
+                elizaLogger.error("Error in describeImage:", error);
+                throw error;
+            }
         }
     }
 }
