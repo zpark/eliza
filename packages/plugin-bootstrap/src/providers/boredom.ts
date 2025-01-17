@@ -215,7 +215,7 @@ const cringeWords = [
     "uncharted",
     "multifaceted",
     "comprehensive",
-    "multi-dimentional",
+    "multi-dimensional",
     "explore",
     "elevate",
     "leverage",
