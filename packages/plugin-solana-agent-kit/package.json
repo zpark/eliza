@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/plugin-solana-agentkit",
+    "name": "@elizaos/plugin-solana-agent-kit",
     "version": "0.1.9-alpha.1",
     "main": "dist/index.js",
     "type": "module",
