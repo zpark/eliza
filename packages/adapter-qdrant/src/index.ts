@@ -60,15 +60,16 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         const response = await this.db.getCollections();
         const collectionNames = response.collections.map((collection) => collection.name);
         if (collectionNames.includes(this.collectionName)) {
-            await this.db.deleteCollection(this.collectionName);
+            elizaLogger.info("Collection already exists.");
+        } else {
+            elizaLogger.info("create collection...");
+            await this.db.createCollection(this.collectionName, {
+                vectors: {
+                    size: this.vectorSize,
+                    distance: 'Cosine',
+                },
+            });
         }
-        elizaLogger.info("create collection...");
-        await this.db.createCollection(this.collectionName, {
-            vectors: {
-                size: this.vectorSize,
-                distance: 'Cosine',
-            },
-        });
     }
 
     async createKnowledge(knowledge: RAGKnowledgeItem): Promise<void> {
