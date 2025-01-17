@@ -109,7 +109,7 @@ const squidRouterProvider: Provider = {
         _state?: State
     ): Promise<string | null> => {
         try {
-            const provider = initSquidRouterProvider(runtime);
+            /*const provider = */ initSquidRouterProvider(runtime);
             return "Squid Router provider setup successful."
         } catch (error) {
             console.error("Error in Squid Router provider:", error);

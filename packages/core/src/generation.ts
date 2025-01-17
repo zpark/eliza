@@ -266,7 +266,6 @@ async function fetchEternalAISystemPrompt(
             } else {
                 throw new Error("invalid on-chain system prompt");
             }
-            return undefined;
         }
     } else {
         return content;
@@ -579,7 +578,7 @@ export async function generateText({
                         const url = typeof input === 'string' ? input : input.toString();
                         const chain_id =
                             runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
-                        
+
                         const options: RequestInit = { ...init };
                         if (options?.body) {
                             const body = JSON.parse(options.body as string);
@@ -588,7 +587,7 @@ export async function generateText({
                         }
 
                         const fetching = await runtime.fetch(url, options);
-                        
+
                         if (parseBooleanFromText(
                             runtime.getSetting("ETERNALAI_LOG")
                         )) {
@@ -1030,6 +1029,36 @@ export async function generateText({
 
                 response = openaiResponse;
                 elizaLogger.debug("Received response from GAIANET model.");
+                break;
+            }
+
+            case ModelProviderName.ATOMA: {
+                elizaLogger.debug("Initializing Atoma model.");
+                const atoma = createOpenAI({
+                    apiKey,
+                    baseURL: endpoint,
+                    fetch: runtime.fetch,
+                });
+
+                const { text: atomaResponse } = await aiGenerateText({
+                    model: atoma.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    maxSteps: maxSteps,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
+                });
+
+                response = atomaResponse;
+                elizaLogger.debug("Received response from Atoma model.");
                 break;
             }
 
@@ -1508,6 +1537,8 @@ export const generateImage = async (
         jobId?: string;
         stylePreset?: string;
         hideWatermark?: boolean;
+        safeMode?: boolean;
+        cfgScale?: number;
     },
     runtime: IAgentRuntime
 ): Promise<{
@@ -1714,10 +1745,12 @@ export const generateImage = async (
                     body: JSON.stringify({
                         model: model,
                         prompt: data.prompt,
+                        cfg_scale: data.guidanceScale,
                         negative_prompt: data.negativePrompt,
                         width: data.width,
                         height: data.height,
                         steps: data.numIterations,
+                        safe_mode: data.safeMode,
                         seed: data.seed,
                         style_preset: data.stylePreset,
                         hide_watermark: data.hideWatermark,
