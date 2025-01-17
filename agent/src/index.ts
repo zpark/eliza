@@ -566,7 +566,11 @@ function initializeDatabase(dataDir: string) {
             dataDir: process.env.PGLITE_DATA_DIR,
         });
         return db;
-    } else if (process.env.QDRANT_URL) {
+    } else if (process.env.QDRANT_URL
+        && process.env.QDRANT_KEY
+        && process.env.QDRANT_PORT
+        && process.env.QDRANT_VECTOR_SIZE
+    ) {
         elizaLogger.info("Initializing Qdrant adapter...");
         const db = new QdrantDatabaseAdapter(
             process.env.QDRANT_URL,
