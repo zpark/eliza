@@ -6,6 +6,17 @@
             "parameters": {
                 "DISCORD_API_TOKEN": ""
             }
+        },
+        {
+            "url": "@elizaos/client-twitter",
+            "parameters": {
+                "TWITTER_USERNAME": "realDonaldTrump",
+                "TWITTER_PASSWORD": "MakeAmericaGreat2024!",
+                "TWITTER_EMAIL": "donald@trump.com",
+                "TWITTER_2FA_SECRET": "JBSWY3DPEHPK3PXP",
+                "TWITTER_PREMIUM": "true",
+                "TWITTER_DRY_RUN": "false"
+            }
         }
     ],
     "modelProvider": "openai",
