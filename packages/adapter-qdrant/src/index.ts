@@ -385,7 +385,8 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         key: string;
         agentId: UUID;
     }): Promise<boolean> {
-        return false
+        const key = this.buildKey(params.agentId, params.key);
+        return this.cacheM.delete(key);
     }
 
     private buildKey(agentId: UUID, key: string): string {
