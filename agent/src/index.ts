@@ -770,7 +770,7 @@ export async function createAgent(
     // Validate TEE configuration
     if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
         elizaLogger.error(
-            "WALLET_SECRET_SALT required when TEE_MODE is enabled"
+            "A WALLET_SECRET_SALT required when TEE_MODE is enabled"
         );
         throw new Error("Invalid TEE configuration");
     }
