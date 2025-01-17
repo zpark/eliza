@@ -1,4 +1,4 @@
-import { v4 } from "uuid";
+import { v4,v5 } from "uuid";
 import { QdrantClient } from "@qdrant/js-client-rest";
 import {
     Account,
@@ -19,6 +19,7 @@ import {
 export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  implements IDatabaseCacheAdapter {
     db: QdrantClient;
     collectionName: string = 'collection';
+    qdrantV5UUIDNamespace: string = "00000000-0000-0000-0000-000000000000";
     cacheM: Map<string, string> = new Map<string, string>();
     vectorSize: number;
     constructor(url: string, apiKey: string, port: number, vectorSize: number) {
@@ -78,7 +79,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
             wait: true,
             points: [
                 {
-                    id: knowledge.id.replace(/-chunk-\d+$/, ""),
+                    id: this.buildQdrantID(knowledge.id), // the qdrant id must be a standard uuid
                     vector: knowledge.embedding ? Array.from(knowledge.embedding) : [],
                     payload:{
                         agentId:  metadata.isShared ? null : knowledge.agentId,
@@ -171,6 +172,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
                 similarity: row.score || 0
             };
         });
+        elizaLogger.debug("Qdrant adapter searchKnowledge results:", results);
         await this.setCache({
             key: cacheKey,
             agentId: params.agentId,
@@ -392,6 +394,10 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
 
     private buildKey(agentId: UUID, key: string): string {
         return `${agentId}:${key}`;
+    }
+
+    private buildQdrantID(id: string): string{
+       return v5(id,this.qdrantV5UUIDNamespace);
     }
 }
 
