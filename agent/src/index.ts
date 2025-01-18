@@ -40,6 +40,7 @@ import {
 import { zgPlugin } from "@elizaos/plugin-0g";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import { normalizeCharacter } from "@elizaos/plugin-di";
 import createGoatPlugin from "@elizaos/plugin-goat";
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
@@ -1203,6 +1204,9 @@ const startAgents = async () => {
     if ((!onchainJson && charactersArg) || hasValidRemoteUrls()) {
         characters = await loadCharacters(charactersArg);
     }
+
+    // Normalize characters for injectable plugins
+    characters = await Promise.all(characters.map(normalizeCharacter));
 
     try {
         for (const character of characters) {

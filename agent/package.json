@@ -43,6 +43,7 @@
         "@elizaos/plugin-binance": "workspace:*",
         "@elizaos/plugin-avail": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
+        "@elizaos/plugin-di": "workspace:*",
         "@elizaos/plugin-cosmos": "workspace:*",
         "@elizaos/plugin-intiface": "workspace:*",
         "@elizaos/plugin-coinbase": "workspace:*",
