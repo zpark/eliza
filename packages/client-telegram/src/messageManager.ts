@@ -985,11 +985,16 @@ export class MessageManager {
                 }
 
                 const fileStream = fs.createReadStream(mediaPath);
-                await sendFunction(
-                    ctx.chat.id,
-                    { source: fileStream },
-                    { caption }
-                );
+
+                try {
+                    await sendFunction(
+                        ctx.chat.id,
+                        { source: fileStream },
+                        { caption }
+                    );
+                } finally {
+                    fileStream.destroy();
+                }
             }
 
             elizaLogger.info(
