@@ -507,7 +507,7 @@ export class MessageManager {
             "text" in message
                 ? message.text
                 : "caption" in message
-                ? (message as any).caption
+                ? message.caption
                 : "";
 
         if (!messageText) return false;
