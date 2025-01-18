@@ -94,7 +94,7 @@ export default {
             if (callback) {
                 callback({
                     text: "Unable to process create token request. Invalid content provided.",
-                    content: { error: "Invalid creat token content" },
+                    content: { error: "Invalid create token content" },
                 });
             }
             return false;
