@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { Account, Chain, Hex } from "viem";
+import { Account, Chain } from "viem";
 
-import { TransferAction } from "../actions/transfer";
 import { WalletProvider } from "../providers/wallet";
-import { SwapAction, swapAction } from '../actions/swap';
+import { SwapAction } from "../actions/swap";
 
 // Mock the ICacheManager
 const mockCacheManager = {
@@ -36,7 +35,9 @@ describe("Swap Action", () => {
         });
     });
     describe("Swap", () => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let ta: SwapAction;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let receiver: Account;
 
         beforeEach(() => {
