@@ -707,6 +707,9 @@ export type Character = {
     /** Optional username */
     username?: string;
 
+    /** Optional email */
+    email?: string;
+
     /** Optional system prompt */
     system?: string;
 
@@ -1607,3 +1610,4 @@ export interface ChunkRow {
     id: string;
     // Add other properties if needed
 }
+

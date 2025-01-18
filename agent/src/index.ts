@@ -252,7 +252,7 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
 async function loadCharacterFromUrl(url: string): Promise<Character> {
     const response = await fetch(url);
     const character = await response.json();
-    return jsonToCharacter(url, character);
+    return await jsonToCharacter(url, character);
 }
 
 async function jsonToCharacter(
@@ -305,6 +305,61 @@ async function loadCharacter(filePath: string): Promise<Character> {
     return jsonToCharacter(filePath, character);
 }
 
+async function loadCharacterTryPath(characterPath: string): Promise<Character> {
+    let content: string | null = null;
+    let resolvedPath = "";
+
+    // Try different path resolutions in order
+    const pathsToTry = [
+        characterPath, // exact path as specified
+        path.resolve(process.cwd(), characterPath), // relative to cwd
+        path.resolve(process.cwd(), "agent", characterPath), // Add this
+        path.resolve(__dirname, characterPath), // relative to current script
+        path.resolve(__dirname, "characters", path.basename(characterPath)), // relative to agent/characters
+        path.resolve(__dirname, "../characters", path.basename(characterPath)), // relative to characters dir from agent
+        path.resolve(
+            __dirname,
+            "../../characters",
+            path.basename(characterPath)
+        ), // relative to project root characters dir
+    ];
+
+    elizaLogger.info(
+        "Trying paths:",
+        pathsToTry.map((p) => ({
+            path: p,
+            exists: fs.existsSync(p),
+        }))
+    );
+
+    for (const tryPath of pathsToTry) {
+        content = tryLoadFile(tryPath);
+        if (content !== null) {
+            resolvedPath = tryPath;
+            break;
+        }
+    }
+
+    if (content === null) {
+        elizaLogger.error(
+            `Error loading character from ${characterPath}: File not found in any of the expected locations`
+        );
+        elizaLogger.error("Tried the following paths:");
+        pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
+        throw new Error(
+            `Error loading character from ${characterPath}: File not found in any of the expected locations`
+        );
+    }
+    try {
+        const character: Character = await loadCharacter(resolvedPath);
+        elizaLogger.info(`Successfully loaded character from: ${resolvedPath}`);
+        return character;
+    } catch (e) {
+        elizaLogger.error(`Error parsing character from ${resolvedPath}: ${e}`);
+        throw new Error(`Error parsing character from ${resolvedPath}: ${e}`);
+    }
+}
+
 function commaSeparatedStringToArray(commaSeparated: string): string[] {
     return commaSeparated?.split(",").map((value) => value.trim());
 }
@@ -317,68 +372,11 @@ export async function loadCharacters(
 
     if (characterPaths?.length > 0) {
         for (const characterPath of characterPaths) {
-            let content: string | null = null;
-            let resolvedPath = "";
-
-            // Try different path resolutions in order
-            const pathsToTry = [
-                characterPath, // exact path as specified
-                path.resolve(process.cwd(), characterPath), // relative to cwd
-                path.resolve(process.cwd(), "agent", characterPath), // Add this
-                path.resolve(__dirname, characterPath), // relative to current script
-                path.resolve(
-                    __dirname,
-                    "characters",
-                    path.basename(characterPath)
-                ), // relative to agent/characters
-                path.resolve(
-                    __dirname,
-                    "../characters",
-                    path.basename(characterPath)
-                ), // relative to characters dir from agent
-                path.resolve(
-                    __dirname,
-                    "../../characters",
-                    path.basename(characterPath)
-                ), // relative to project root characters dir
-            ];
-
-            elizaLogger.info(
-                "Trying paths:",
-                pathsToTry.map((p) => ({
-                    path: p,
-                    exists: fs.existsSync(p),
-                }))
-            );
-
-            for (const tryPath of pathsToTry) {
-                content = tryLoadFile(tryPath);
-                if (content !== null) {
-                    resolvedPath = tryPath;
-                    break;
-                }
-            }
-
-            if (content === null) {
-                elizaLogger.error(
-                    `Error loading character from ${characterPath}: File not found in any of the expected locations`
-                );
-                elizaLogger.error("Tried the following paths:");
-                pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
-                process.exit(1);
-            }
-
             try {
-                const character: Character = await loadCharacter(resolvedPath);
-
+                const character: Character =
+                    await loadCharacterTryPath(characterPath);
                 loadedCharacters.push(character);
-                elizaLogger.info(
-                    `Successfully loaded character from: ${resolvedPath}`
-                );
             } catch (e) {
-                elizaLogger.error(
-                    `Error parsing character from ${resolvedPath}: ${e}`
-                );
                 process.exit(1);
             }
         }
@@ -1232,6 +1230,9 @@ const startAgents = async () => {
         // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
+
+    directClient.loadCharacterTryPath = loadCharacterTryPath;
+    directClient.jsonToCharacter = jsonToCharacter;
 
     directClient.start(serverPort);
 
