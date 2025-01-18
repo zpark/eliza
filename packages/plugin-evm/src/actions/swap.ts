@@ -167,7 +167,7 @@ export class SwapAction {
                 swapData: routes.routes[0],
             };
         } catch (error) {
-            console.debug("Error in getLifiQuote:", error.message);
+            elizaLogger.error("Error in getLifiQuote:", error.message);
             return undefined;
         }
     }
@@ -223,7 +223,7 @@ export class SwapAction {
                 swapData: route,
             };
         } catch (error) {
-            console.debug("Error in getBebopQuote:", error.message);
+            elizaLogger.error("Error in getBebopQuote:", error.message);
             return undefined;
         }
     }
@@ -355,7 +355,7 @@ export const swapAction = {
         _options: any,
         callback?: any
     ) => {
-        console.log("Swap action handler called");
+        elizaLogger.log("Swap action handler called");
         const walletProvider = await initWalletProvider(runtime);
         const action = new SwapAction(walletProvider);
 
@@ -393,7 +393,7 @@ export const swapAction = {
             }
             return true;
         } catch (error) {
-            console.error("Error in swap handler:", error.message);
+            elizaLogger.error("Error in swap handler:", error.message);
             if (callback) {
                 callback({ text: `Error: ${error.message}` });
             }
