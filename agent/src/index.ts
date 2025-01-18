@@ -20,17 +20,17 @@ import {
     AgentRuntime,
     CacheManager,
     CacheStore,
-    Character,
-    Client,
+    type Character,
+    type Client,
     Clients,
     DbCacheAdapter,
     defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
-    IAgentRuntime,
-    ICacheManager,
-    IDatabaseAdapter,
-    IDatabaseCacheAdapter,
+    type IAgentRuntime,
+    type ICacheManager,
+    type IDatabaseAdapter,
+    type IDatabaseCacheAdapter,
     ModelProviderName,
     parseBooleanFromText,
     settings,
@@ -116,7 +116,7 @@ import yargs from "yargs";
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
-export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
+export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
         Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
     return new Promise((resolve) => setTimeout(resolve, waitTime));
@@ -300,7 +300,7 @@ async function loadCharacter(filePath: string): Promise<Character> {
     if (!content) {
         throw new Error(`Character file not found: ${filePath}`);
     }
-    let character = JSON.parse(content);
+    const character = JSON.parse(content);
     return jsonToCharacter(filePath, character);
 }
 
@@ -311,7 +311,7 @@ function commaSeparatedStringToArray(commaSeparated: string): string[] {
 export async function loadCharacters(
     charactersArg: string
 ): Promise<Character[]> {
-    let characterPaths = commaSeparatedStringToArray(charactersArg);
+    const characterPaths = commaSeparatedStringToArray(charactersArg);
     const loadedCharacters: Character[] = [];
 
     if (characterPaths?.length > 0) {
@@ -385,7 +385,7 @@ export async function loadCharacters(
 
     if (hasValidRemoteUrls()) {
         elizaLogger.info("Loading characters from remote URLs");
-        let characterUrls = commaSeparatedStringToArray(
+        const characterUrls = commaSeparatedStringToArray(
             process.env.REMOTE_CHARACTER_URLS
         );
         for (const characterUrl of characterUrls) {
@@ -1191,9 +1191,9 @@ const hasValidRemoteUrls = () =>
 
 const startAgents = async () => {
     const directClient = new DirectClient();
-    let serverPort = parseInt(settings.SERVER_PORT || "3000");
+    let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
-    let charactersArg = args.characters || args.character;
+    const charactersArg = args.characters || args.character;
     let characters = [defaultCharacter];
 
     if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
@@ -1231,7 +1231,7 @@ const startAgents = async () => {
 
     directClient.start(serverPort);
 
-    if (serverPort !== parseInt(settings.SERVER_PORT || "3000")) {
+    if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);
     }
 
@@ -1251,12 +1251,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", function (err) {
+    process.on("unhandledRejection", (err) => {
         console.error("unhandledRejection", err);
     });
 }

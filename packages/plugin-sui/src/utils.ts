@@ -1,4 +1,4 @@
-import { IAgentRuntime } from "@elizaos/core";
+import type { IAgentRuntime } from "@elizaos/core";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 
 const parseAccount = (runtime: IAgentRuntime): Ed25519Keypair => {

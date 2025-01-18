@@ -1,23 +1,23 @@
-import { SearchMode, Tweet } from "agent-twitter-client";
+import { SearchMode, type Tweet } from "agent-twitter-client";
 import {
     composeContext,
     generateMessageResponse,
     generateShouldRespond,
     messageCompletionFooter,
     shouldRespondFooter,
-    Content,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type Content,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     stringToUuid,
     elizaLogger,
     getEmbeddingZeroVector,
-    IImageDescriptionService,
+    type IImageDescriptionService,
     ServiceType
 } from "@elizaos/core";
-import { ClientBase } from "./base";
+import type { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 
 export const twitterMessageHandlerTemplate =
@@ -160,7 +160,7 @@ export class TwitterInteractionClient {
                             const validTweets = userTweets.filter((tweet) => {
                                 const isUnprocessed =
                                     !this.client.lastCheckedTweetId ||
-                                    parseInt(tweet.id) >
+                                    Number.parseInt(tweet.id) >
                                         this.client.lastCheckedTweetId;
                                 const isRecent =
                                     Date.now() - tweet.timestamp * 1000 <
@@ -522,12 +522,12 @@ export class TwitterInteractionClient {
 
     async buildConversationThread(
         tweet: Tweet,
-        maxReplies: number = 10
+        maxReplies = 10
     ): Promise<Tweet[]> {
         const thread: Tweet[] = [];
         const visited: Set<string> = new Set();
 
-        async function processThread(currentTweet: Tweet, depth: number = 0) {
+        async function processThread(currentTweet: Tweet, depth = 0) {
             elizaLogger.log("Processing tweet:", {
                 id: currentTweet.id,
                 inReplyToStatusId: currentTweet.inReplyToStatusId,
