@@ -3,6 +3,7 @@ import {
     composeContext,
     generateObjectDeprecated,
     ModelClass,
+    elizaLogger,
 } from "@elizaos/core";
 import {
     createConfig,
@@ -15,8 +16,15 @@ import {
 import { initWalletProvider, WalletProvider } from "../providers/wallet";
 import { swapTemplate } from "../templates";
 import type { SwapParams, SwapQuote, Transaction } from "../types";
-import { Address, ByteArray, encodeFunctionData, Hex, parseAbi, parseEther, parseUnits } from "viem";
-import { BebopRoute } from '../types/index';
+import {
+    Address,
+    ByteArray,
+    encodeFunctionData,
+    Hex,
+    parseAbi,
+    parseUnits,
+} from "viem";
+import { BebopRoute } from "../types/index";
 
 export { swapTemplate };
 
@@ -26,7 +34,7 @@ export class SwapAction {
 
     constructor(private walletProvider: WalletProvider) {
         this.walletProvider = walletProvider;
-        let lifiChains: ExtendedChain[] = [];
+        const lifiChains: ExtendedChain[] = [];
         for (const config of Object.values(this.walletProvider.chains)) {
             try {
                 lifiChains.push({
@@ -58,7 +66,8 @@ export class SwapAction {
                     },
                     coin: config.nativeCurrency.symbol,
                     mainnet: true,
-                    diamondAddress: "0x0000000000000000000000000000000000000000",
+                    diamondAddress:
+                        "0x0000000000000000000000000000000000000000",
                 } as ExtendedChain);
             } catch {
                 // Skip chains with missing config in viem
@@ -66,11 +75,11 @@ export class SwapAction {
         }
         this.lifiConfig = createConfig({
             integrator: "eliza",
-            chains: lifiChains
-        })
+            chains: lifiChains,
+        });
         this.bebopChainsMap = {
-            'mainnet': 'ethereum'
-        }
+            mainnet: "ethereum",
+        };
     }
 
     async swap(params: SwapParams): Promise<Transaction> {
@@ -78,7 +87,10 @@ export class SwapAction {
         const [fromAddress] = await walletClient.getAddresses();
 
         // Getting quotes from different aggregators and sorting them by minAmount (amount after slippage)
-        const sortedQuotes: SwapQuote[] = await this.getSortedQuotes(fromAddress, params);
+        const sortedQuotes: SwapQuote[] = await this.getSortedQuotes(
+            fromAddress,
+            params
+        );
 
         // Trying to execute the best quote by amount, fallback to the next one if it fails
         for (const quote of sortedQuotes) {
@@ -89,7 +101,7 @@ export class SwapAction {
                     break;
                 case "bebop":
                     res = await this.executeBebopQuote(quote, params);
-                    break
+                    break;
                 default:
                     throw new Error("No aggregator found");
             }
@@ -98,31 +110,50 @@ export class SwapAction {
         throw new Error("Execution failed");
     }
 
-    private async getSortedQuotes(fromAddress: Address, params: SwapParams): Promise<SwapQuote[]> {
-        const decimalsAbi = parseAbi(['function decimals() view returns (uint8)']);
-        const decimals = await this.walletProvider.getPublicClient(params.chain).readContract({
-            address: params.fromToken,
-            abi: decimalsAbi,
-            functionName: 'decimals',
-        });
+    private async getSortedQuotes(
+        fromAddress: Address,
+        params: SwapParams
+    ): Promise<SwapQuote[]> {
+        const decimalsAbi = parseAbi([
+            "function decimals() view returns (uint8)",
+        ]);
+        const decimals = await this.walletProvider
+            .getPublicClient(params.chain)
+            .readContract({
+                address: params.fromToken,
+                abi: decimalsAbi,
+                functionName: "decimals",
+            });
         const quotes: SwapQuote[] | undefined = await Promise.all([
             this.getLifiQuote(fromAddress, params, decimals),
-             this.getBebopQuote(fromAddress, params, decimals)
+            this.getBebopQuote(fromAddress, params, decimals),
         ]);
-        const sortedQuotes: SwapQuote[] = quotes.filter((quote) => quote !== undefined) as SwapQuote[];
-        sortedQuotes.sort((a, b) => BigInt(a.minOutputAmount) > BigInt(b.minOutputAmount) ? -1 : 1);
+        const sortedQuotes: SwapQuote[] = quotes.filter(
+            (quote) => quote !== undefined
+        ) as SwapQuote[];
+        sortedQuotes.sort((a, b) =>
+            BigInt(a.minOutputAmount) > BigInt(b.minOutputAmount) ? -1 : 1
+        );
         if (sortedQuotes.length === 0) throw new Error("No routes found");
         return sortedQuotes;
     }
 
-    private async getLifiQuote(fromAddress: Address, params: SwapParams, fromTokenDecimals: number): Promise<SwapQuote | undefined> {
+    private async getLifiQuote(
+        fromAddress: Address,
+        params: SwapParams,
+        fromTokenDecimals: number
+    ): Promise<SwapQuote | undefined> {
         try {
             const routes = await getRoutes({
-                fromChainId: this.walletProvider.getChainConfigs(params.chain).id,
+                fromChainId: this.walletProvider.getChainConfigs(params.chain)
+                    .id,
                 toChainId: this.walletProvider.getChainConfigs(params.chain).id,
                 fromTokenAddress: params.fromToken,
                 toTokenAddress: params.toToken,
-                fromAmount: parseUnits(params.amount, fromTokenDecimals).toString(),
+                fromAmount: parseUnits(
+                    params.amount,
+                    fromTokenDecimals
+                ).toString(),
                 fromAddress: fromAddress,
                 options: {
                     slippage: params.slippage / 100 || 0.005,
@@ -133,30 +164,37 @@ export class SwapAction {
             return {
                 aggregator: "lifi",
                 minOutputAmount: routes.routes[0].steps[0].estimate.toAmountMin,
-                swapData: routes.routes[0]
-            }
+                swapData: routes.routes[0],
+            };
         } catch (error) {
             console.debug("Error in getLifiQuote:", error.message);
             return undefined;
         }
     }
 
-    private async getBebopQuote(fromAddress: Address, params: SwapParams, fromTokenDecimals: number): Promise<SwapQuote | undefined> {
+    private async getBebopQuote(
+        fromAddress: Address,
+        params: SwapParams,
+        fromTokenDecimals: number
+    ): Promise<SwapQuote | undefined> {
         try {
             const url = `https://api.bebop.xyz/router/${this.bebopChainsMap[params.chain] ?? params.chain}/v1/quote`;
             const reqParams = new URLSearchParams({
                 sell_tokens: params.fromToken,
                 buy_tokens: params.toToken,
-                sell_amounts: parseUnits(params.amount, fromTokenDecimals).toString(),
+                sell_amounts: parseUnits(
+                    params.amount,
+                    fromTokenDecimals
+                ).toString(),
                 taker_address: fromAddress,
-                approval_type: 'Standard',
-                skip_validation: 'true',
-                gasless: 'false',
-                source: 'eliza'
+                approval_type: "Standard",
+                skip_validation: "true",
+                gasless: "false",
+                source: "eliza",
             });
             const response = await fetch(`${url}?${reqParams.toString()}`, {
-                method: 'GET',
-                headers: {'accept': 'application/json'},
+                method: "GET",
+                headers: { accept: "application/json" },
             });
             if (!response.ok) {
                 throw Error(response.statusText);
@@ -164,30 +202,41 @@ export class SwapAction {
             const data = await response.json();
             const route: BebopRoute = {
                 data: data.routes[0].quote.tx.data,
-                sellAmount: parseUnits(params.amount, fromTokenDecimals).toString(),
-                approvalTarget: data.routes[0].quote.approvalTarget as `0x${string}`,
+                sellAmount: parseUnits(
+                    params.amount,
+                    fromTokenDecimals
+                ).toString(),
+                approvalTarget: data.routes[0].quote
+                    .approvalTarget as `0x${string}`,
                 from: data.routes[0].quote.tx.from as `0x${string}`,
                 value: data.routes[0].quote.tx.value.toString(),
                 to: data.routes[0].quote.tx.to as `0x${string}`,
                 gas: data.routes[0].quote.tx.gas.toString(),
-                gasPrice: data.routes[0].quote.tx.gasPrice.toString()
-            }
+                gasPrice: data.routes[0].quote.tx.gasPrice.toString(),
+            };
             return {
                 aggregator: "bebop",
-                minOutputAmount: data.routes[0].quote.buyTokens[params.toToken].minimumAmount.toString(),
-                swapData: route
-            }
-
+                minOutputAmount:
+                    data.routes[0].quote.buyTokens[
+                        params.toToken
+                    ].minimumAmount.toString(),
+                swapData: route,
+            };
         } catch (error) {
             console.debug("Error in getBebopQuote:", error.message);
             return undefined;
         }
     }
 
-    private async executeLifiQuote(quote: SwapQuote): Promise<Transaction | undefined> {
+    private async executeLifiQuote(
+        quote: SwapQuote
+    ): Promise<Transaction | undefined> {
         try {
             const route: Route = quote.swapData as Route;
-            const execution = await executeRoute(quote.swapData as Route, this.lifiConfig);
+            const execution = await executeRoute(
+                quote.swapData as Route,
+                this.lifiConfig
+            );
             const process = execution.steps[0]?.execution?.process[0];
 
             if (!process?.status || process.status === "FAILED") {
@@ -199,36 +248,77 @@ export class SwapAction {
                 to: route.steps[0].estimate.approvalAddress as `0x${string}`,
                 value: 0n,
                 data: process.data as `0x${string}`,
-                chainId: route.fromChainId
-            }
+                chainId: route.fromChainId,
+            };
         } catch (error) {
+            elizaLogger.error(`Failed to execute lifi quote: ${error}`);
             return undefined;
         }
     }
 
-    private async executeBebopQuote(quote: SwapQuote, params: SwapParams): Promise<Transaction | undefined> {
+    private async executeBebopQuote(
+        quote: SwapQuote,
+        params: SwapParams
+    ): Promise<Transaction | undefined> {
         try {
             const bebopRoute: BebopRoute = quote.swapData as BebopRoute;
-            const allowanceAbi = parseAbi(['function allowance(address,address) view returns (uint256)']);
-            const allowance: bigint = await this.walletProvider.getPublicClient(params.chain).readContract({
-                address: params.fromToken,
-                abi: allowanceAbi,
-                functionName: 'allowance',
-                args: [bebopRoute.from, bebopRoute.approvalTarget]
-            });
+            const allowanceAbi = parseAbi([
+                "function allowance(address,address) view returns (uint256)",
+            ]);
+            const allowance: bigint = await this.walletProvider
+                .getPublicClient(params.chain)
+                .readContract({
+                    address: params.fromToken,
+                    abi: allowanceAbi,
+                    functionName: "allowance",
+                    args: [bebopRoute.from, bebopRoute.approvalTarget],
+                });
             if (allowance < BigInt(bebopRoute.sellAmount)) {
                 const approvalData = encodeFunctionData({
-                    abi: parseAbi(['function approve(address,uint256)']),
-                    functionName: 'approve',
-                    args: [bebopRoute.approvalTarget, BigInt(bebopRoute.sellAmount)],
+                    abi: parseAbi(["function approve(address,uint256)"]),
+                    functionName: "approve",
+                    args: [
+                        bebopRoute.approvalTarget,
+                        BigInt(bebopRoute.sellAmount),
+                    ],
                 });
-                await this.walletProvider.getWalletClient(params.chain).sendTransaction({
-                    account: this.walletProvider.getWalletClient(params.chain).account,
-                    to: params.fromToken,
-                    value: 0n,
-                    data: approvalData,
+                await this.walletProvider
+                    .getWalletClient(params.chain)
+                    .sendTransaction({
+                        account: this.walletProvider.getWalletClient(
+                            params.chain
+                        ).account,
+                        to: params.fromToken,
+                        value: 0n,
+                        data: approvalData,
+                        kzg: {
+                            blobToKzgCommitment: function (
+                                _: ByteArray
+                            ): ByteArray {
+                                throw new Error("Function not implemented.");
+                            },
+                            computeBlobKzgProof: function (
+                                _blob: ByteArray,
+                                _commitment: ByteArray
+                            ): ByteArray {
+                                throw new Error("Function not implemented.");
+                            },
+                        },
+                        chain: undefined,
+                    });
+            }
+            const hash = await this.walletProvider
+                .getWalletClient(params.chain)
+                .sendTransaction({
+                    account: this.walletProvider.getWalletClient(params.chain)
+                        .account,
+                    to: bebopRoute.to,
+                    value: BigInt(bebopRoute.value),
+                    data: bebopRoute.data as Hex,
                     kzg: {
-                        blobToKzgCommitment: function (_: ByteArray): ByteArray {
+                        blobToKzgCommitment: function (
+                            _: ByteArray
+                        ): ByteArray {
                             throw new Error("Function not implemented.");
                         },
                         computeBlobKzgProof: function (
@@ -240,33 +330,16 @@ export class SwapAction {
                     },
                     chain: undefined,
                 });
-            }
-            const hash = await this.walletProvider.getWalletClient(params.chain).sendTransaction({
-                account: this.walletProvider.getWalletClient(params.chain).account,
-                to: bebopRoute.to,
-                value: BigInt(bebopRoute.value),
-                data: bebopRoute.data as Hex,
-                kzg: {
-                    blobToKzgCommitment: function (_: ByteArray): ByteArray {
-                        throw new Error("Function not implemented.");
-                    },
-                    computeBlobKzgProof: function (
-                        _blob: ByteArray,
-                        _commitment: ByteArray
-                    ): ByteArray {
-                        throw new Error("Function not implemented.");
-                    },
-                },
-                chain: undefined,
-            });
             return {
                 hash,
-                from: this.walletProvider.getWalletClient(params.chain).account.address,
+                from: this.walletProvider.getWalletClient(params.chain).account
+                    .address,
                 to: bebopRoute.to,
                 value: BigInt(bebopRoute.value),
                 data: bebopRoute.data as Hex,
             };
         } catch (error) {
+            elizaLogger.error(`Failed to execute bebop quote: ${error}`);
             return undefined;
         }
     }
