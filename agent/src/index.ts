@@ -546,15 +546,20 @@ export function getTokenForProvider(
                 character.settings?.secrets?.HYPERBOLIC_API_KEY ||
                 settings.HYPERBOLIC_API_KEY
             );
+
         case ModelProviderName.VENICE:
             return (
                 character.settings?.secrets?.VENICE_API_KEY ||
                 settings.VENICE_API_KEY
             );
         case ModelProviderName.ATOMA:
+             return (
+                 character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
+                 settings.ATOMASDK_BEARER_AUTH
+        case ModelProviderName.NVIDIA:
             return (
-                character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
-                settings.ATOMASDK_BEARER_AUTH
+                character.settings?.secrets?.NVIDIA_API_KEY ||
+                settings.NVIDIA_API_KEY
             );
         case ModelProviderName.AKASH_CHAT_API:
             return (
@@ -918,6 +923,7 @@ export async function createAgent(
             getSecret(character, "FAL_API_KEY") ||
             getSecret(character, "OPENAI_API_KEY") ||
             getSecret(character, "VENICE_API_KEY") ||
+            getSecret(character, "NVIDIA_API_KEY") ||
             getSecret(character, "NINETEEN_AI_API_KEY") ||
             getSecret(character, "HEURIST_API_KEY") ||
             getSecret(character, "LIVEPEER_GATEWAY_URL")
