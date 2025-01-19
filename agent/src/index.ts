@@ -3,7 +3,6 @@ import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
 import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
-// XXX dynamically load plugins
 // import { AutoClientInterface } from "@elizaos/client-auto";
 // import { DiscordClientInterface } from "@elizaos/client-discord";
 // import { FarcasterAgentClient } from "@elizaos/client-farcaster";
@@ -684,11 +683,9 @@ export async function initializeClients(
         return `client_${Date.now()}`;
     }
 
-    // XXX TODO: move this initialization elsewhere
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
-                throw new Error('cannot load subclient');
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
                     const clientType = determineClientType(client);
@@ -1133,11 +1130,10 @@ const startAgents = async () => {
         );
         serverPort++;
     }
-
     // XXX TODO: is this still used?
     // upload some agent functionality into directClient
     directClient.startAgent = async (character) => {
-        throw new Error('fail 1');
+        throw new Error('not implemented');
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
 
