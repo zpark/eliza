@@ -105,6 +105,7 @@ import yargs from "yargs";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
+const pluginJsonFileName = 'plugin.json';
 
 // XXX TODO: validate parameters against jsonSchema
 const validateParameters = (parameters: any, jsonSchema: any) => {
@@ -298,14 +299,6 @@ async function handlePluginImporting(plugins: string[]) {
     if (plugins.length > 0) {
         elizaLogger.info("Plugins are: ", plugins);
         const importedPlugins = await Promise.all(
-            // plugin is something like "@elizaos/plugin-discord"
-            // first, import the module
-            // then, apply the user's configuration per the package.json keys:
-            // https://github.com/elizaos-plugins/plugin-image-generation/blob/ac8c5adcfaf1f8d5389df04a0790273434f8acd5/package.json#L17
-            // - pluginType
-            // - pluginParameters
-            // - pluginEnv
-            // plugin return the Plugin interface
             plugins.map(async (plugin) => {
                 let pluginSpec: any = null;
                 if (typeof plugin === 'string') {
@@ -317,7 +310,7 @@ async function handlePluginImporting(plugins: string[]) {
                     pluginSpec = plugin;
                 }
                 try {
-                    const u = `${pluginSpec.url}/package.json`;
+                    const u = `${pluginSpec.url}/${pluginJsonFileName}`;
                     const packageJson = await import(u, {
                         with: {
                             type: 'json',
@@ -576,7 +569,7 @@ export async function initializeClients(
             } else {
                 clientSpec = str;
             }
-            const u = `${clientSpec.url}/package.json`;
+            const u = `${clientSpec.url}/${pluginJsonFileName}`;
             console.log('load client spec A', {
                 clientSpec,
                 u,
