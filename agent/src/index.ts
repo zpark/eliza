@@ -334,7 +334,7 @@ async function handlePluginImporting(plugins: string[]) {
                 } catch (importError) {
                     elizaLogger.error(
                         `Failed to import plugin: ${plugin}`,
-                        importError
+                        importError.stack
                     );
                     return []; // Return null for failed imports
                 }
