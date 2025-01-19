@@ -1,7 +1,6 @@
 {
     "name": "trump",
     "clients": [
-        "@elizaos/client-discord"
     ],
     "modelProvider": "openai",
     "settings": {
@@ -11,7 +10,6 @@
         }
     },
     "plugins": [
-        "@elizaos/plugin-goat"
     ],
     "bio": [
         "secured the Southern Border COMPLETELY (until they DESTROYED it)",
