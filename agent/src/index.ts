@@ -300,17 +300,9 @@ async function handlePluginImporting(plugins: string[]) {
         elizaLogger.info("Plugins are: ", plugins);
         const importedPlugins = await Promise.all(
             plugins.map(async (plugin) => {
-                let pluginSpec: any = null;
-                if (typeof plugin === 'string') {
-                    pluginSpec = {
-                        url: plugin.toLowerCase(),
-                        parameters: {},
-                    };
-                } else {
-                    pluginSpec = plugin;
-                }
+                const pluginSpec: string = plugin;
                 try {
-                    const u = `${pluginSpec.url}/${pluginJsonFileName}`;
+                    const u = `${pluginSpec}/${pluginJsonFileName}`;
                     const packageJson = await import(u, {
                         with: {
                             type: 'json',
@@ -320,16 +312,14 @@ async function handlePluginImporting(plugins: string[]) {
                         pluginType,
                         pluginParameters,
                     } = packageJson;
-                    const mergedParameters = validateParameters(pluginSpec.parameters, pluginParameters);
-                    console.log('merge custom plugin schema', {
-                        parameters: pluginSpec.parameters,
-                        pluginParameters,
-                        mergedParameters,
-                    });
-                    let plugin: any | Promise<any> = await import(pluginSpec.url);
-                    plugin = plugin.default || plugin;
-                    const runtime = null; // XXX TODO: pass in the runtime
-                    const pluginInstance = await plugin(mergedParameters, runtime);
+                    // const mergedParameters = validateParameters(pluginSpec.parameters, pluginParameters);
+                    // console.log('merge custom plugin schema', {
+                    //     parameters: pluginSpec.parameters,
+                    //     pluginParameters,
+                    //     mergedParameters,
+                    // });
+                    const plugin: any | Promise<any> = await import(pluginSpec);
+                    const pluginInstance = plugin.default || plugin;
                     return pluginInstance;
                 } catch (importError) {
                     elizaLogger.error(
@@ -560,16 +550,8 @@ export async function initializeClients(
         clientInstance: any;
     }[] = character.clients ?
         await Promise.all(character.clients.map(async (str) => {
-            let clientSpec: any = null;
-            if (typeof str === "string") {
-                clientSpec = {
-                    url: str.toLowerCase(),
-                    parameters: {},
-                };
-            } else {
-                clientSpec = str;
-            }
-            const u = `${clientSpec.url}/${pluginJsonFileName}`;
+            const clientSpec: string = str;
+            const u = `${clientSpec}/${pluginJsonFileName}`;
             console.log('load client spec A', {
                 clientSpec,
                 u,
@@ -589,16 +571,16 @@ export async function initializeClients(
                 pluginType,
                 parameters,
             } = packageJson;
-            const mergedParameters = validateParameters(clientSpec.parameters, parameters);
-            console.log('merge custom client schema', {
-                packageJson,
-                clientSpec,
-                mergedParameters,
-            });
-            let client: any | Promise<any> = await import(clientSpec.url);
+            // const mergedParameters = validateParameters(clientSpec.parameters, parameters);
+            // console.log('merge custom client schema', {
+            //     packageJson,
+            //     clientSpec,
+            //     mergedParameters,
+            // });
+            let client: any | Promise<any> = await import(clientSpec);
             client = client.default || client;
             console.log('got client', client, Object.keys(client))
-            const clientInstance = await client.start(mergedParameters, runtime);
+            const clientInstance = await client.start(runtime);
             return {
                 name,
                 clientInstance,
