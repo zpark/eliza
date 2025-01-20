@@ -7,7 +7,7 @@ export const getBalanceTemplate = `Given the recent messages and wallet informat
 Extract the following information about the requested check balance:
 - Chain to execute on. Must be one of ["bsc", "bscTestnet", "opBNB", "opBNBTestnet"]. Default is "bsc".
 - Address to check balance for. Optional, must be a valid Ethereum address starting with "0x" or a web3 domain name. If not provided, use the BNB chain Wallet Address.
-- Token symbol or address. Optional. The address must be a valid Ethereum address starting with "0x".
+- Token symbol or address. Could be a token symbol or address. If the address is provided, it must be a valid Ethereum address starting with "0x". Default is "BNB".
 If any field is not provided, use the default value. If no default value is specified, use null.
 
 Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined:
@@ -16,7 +16,7 @@ Respond with a JSON markdown block containing only the extracted values. Use nul
 {
     "chain": SUPPORTED_CHAINS,
     "address": string | null,
-    "token": string | null
+    "token": string
 }
 \`\`\`
 `;

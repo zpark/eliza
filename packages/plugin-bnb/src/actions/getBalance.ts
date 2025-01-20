@@ -8,7 +8,7 @@ import {
     type Memory,
     type State,
 } from "@elizaos/core";
-import { getToken, getTokens, getTokenBalances, ChainId } from "@lifi/sdk";
+import { getToken } from "@lifi/sdk";
 
 import {
     bnbWalletProvider,
@@ -17,7 +17,6 @@ import {
 } from "../providers/wallet";
 import { getBalanceTemplate } from "../templates";
 import type {
-    Balance,
     GetBalanceParams,
     GetBalanceResponse,
     SupportedChain,
@@ -46,47 +45,37 @@ export class GetBalanceAction {
             let resp: GetBalanceResponse = {
                 chain,
                 address: address!,
-                balances: [],
             };
 
-            // If no specific token is requested, get all token balances
-            if (!token) {
-                this.walletProvider.configureLiFiSdk(chain);
-                const balances = await this.getTokenBalances(chainId, address!);
-                resp.balances = balances;
-            } else {
-                // If specific token is requested and it's not the native token
-                if (token.toLowerCase() !== nativeSymbol.toLowerCase()) {
-                    let balance: string;
-                    if (token.startsWith("0x")) {
-                        balance = await this.getERC20TokenBalance(
-                            chain,
-                            address!,
-                            token as `0x${string}`
-                        );
-                    } else {
-                        this.walletProvider.configureLiFiSdk(chain);
-                        const tokenInfo = await getToken(chainId, token);
-                        balance = await this.getERC20TokenBalance(
-                            chain,
-                            address!,
-                            tokenInfo.address as `0x${string}`
-                        );
-                    }
-
-                    resp.balances = [{ token, balance }];
+            // If ERC20 token is requested
+            if (token.toLowerCase() !== nativeSymbol.toLowerCase()) {
+                let amount: string;
+                if (token.startsWith("0x")) {
+                    amount = await this.getERC20TokenBalance(
+                        chain,
+                        address!,
+                        token as `0x${string}`
+                    );
                 } else {
-                    // If native token is requested
-                    const nativeBalanceWei = await this.walletProvider
-                        .getPublicClient(chain)
-                        .getBalance({ address: address! });
-                    resp.balances = [
-                        {
-                            token: nativeSymbol,
-                            balance: formatEther(nativeBalanceWei),
-                        },
-                    ];
+                    this.walletProvider.configureLiFiSdk(chain);
+                    const tokenInfo = await getToken(chainId, token);
+                    amount = await this.getERC20TokenBalance(
+                        chain,
+                        address!,
+                        tokenInfo.address as `0x${string}`
+                    );
                 }
+
+                resp.balance = { token, amount };
+            } else {
+                // If native token is requested
+                const nativeBalanceWei = await this.walletProvider
+                    .getPublicClient(chain)
+                    .getBalance({ address: address! });
+                resp.balance = {
+                    token: nativeSymbol,
+                    amount: formatEther(nativeBalanceWei),
+                };
             }
 
             return resp;
@@ -118,22 +107,6 @@ export class GetBalanceAction {
         return formatUnits(balance, decimals);
     }
 
-    async getTokenBalances(
-        chainId: ChainId,
-        address: Address
-    ): Promise<Balance[]> {
-        const tokensResponse = await getTokens();
-        const tokens = tokensResponse.tokens[chainId];
-
-        const tokenBalances = await getTokenBalances(address, tokens);
-        return tokenBalances
-            .filter((balance) => balance.amount && balance.amount !== 0n)
-            .map((balance) => ({
-                token: balance.symbol,
-                balance: formatUnits(balance.amount!, balance.decimals),
-            }));
-    }
-
     async validateAndNormalizeParams(params: GetBalanceParams): Promise<void> {
         if (!params.address) {
             params.address = this.walletProvider.getAddress();
@@ -143,11 +116,15 @@ export class GetBalanceAction {
             );
         }
 
+        if (!params.token || params.token === "") {
+            params.token = "BNB";
+        }
+
         if (params.chain != "bsc") {
             // if token contract address is not provided, only BSC mainnet is supported
-            if (!(params.token && params.token.startsWith("0x"))) {
+            if (!params.token.startsWith("0x")) {
                 throw new Error(
-                    "If token contract address is not provided, only BSC mainnet is supported"
+                    "Only BSC mainnet is supported for querying balance by token symbol"
                 );
             }
         }
@@ -196,10 +173,10 @@ export const getBalanceAction = {
             const getBalanceResp = await action.getBalance(getBalanceOptions);
             if (callback) {
                 let text = `No balance found for ${getBalanceOptions.address} on ${getBalanceOptions.chain}`;
-                if (getBalanceResp.balances.length > 0) {
-                    text = `Balance of ${getBalanceResp.address} on ${getBalanceResp.chain}:\n${getBalanceResp.balances
-                        .map(({ token, balance }) => `${token}: ${balance}`)
-                        .join("\n")}`;
+                if (getBalanceResp.balance) {
+                    text = `Balance of ${getBalanceResp.address} on ${getBalanceResp.chain}:\n${
+                        getBalanceResp.balance.token
+                    }: ${getBalanceResp.balance.amount}`;
                 }
                 callback({
                     text,

@@ -3,16 +3,11 @@ import type { Address, Hash } from "viem";
 export type SupportedChain = "bsc" | "bscTestnet" | "opBNB" | "opBNBTestnet";
 export type StakeAction = "deposit" | "withdraw" | "claim";
 
-export interface Balance {
-    token: string;
-    balance: string;
-}
-
 // Action parameters
 export interface GetBalanceParams {
     chain: SupportedChain;
     address?: Address;
-    token?: string;
+    token: string;
 }
 
 export interface TransferParams {
@@ -55,7 +50,7 @@ export interface FaucetParams {
 export interface GetBalanceResponse {
     chain: SupportedChain;
     address: Address;
-    balances: Balance[];
+    balance?: { token: string; amount: string };
 }
 
 export interface TransferResponse {
