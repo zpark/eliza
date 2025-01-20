@@ -1292,8 +1292,8 @@ importers:
   packages/plugin-abstract:
     dependencies:
       '@abstract-foundation/agw-client':
-        specifier: ^0.1.7
-        version: 0.1.8(abitype@1.0.8(typescript@5.7.3)(zod@3.24.1))(typescript@5.7.3)(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)(zod@3.24.1))
+        specifier: 1.0.1
+        version: 1.0.1(abitype@1.0.8(typescript@5.7.3)(zod@3.24.1))(typescript@5.7.3)(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)(zod@3.24.1))
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
@@ -3498,8 +3498,8 @@ packages:
   '@3land/listings-sdk@0.0.6':
     resolution: {integrity: sha512-1OG4qddbij7kLGcyRvwA9WUiif7DJi2gEWODHF4NnfgQHRl22yLSFHZeHPLlo9mE1T2LZnn0I6HtUxvUtCHCAQ==}
 
-  '@abstract-foundation/agw-client@0.1.8':
-    resolution: {integrity: sha512-MEPfFRWtEVXUuWkE43Vrqxzk7s+23cRtY2ctzqiZSiqJ+Hg4uPCymowmqPATdYgGNQXPCzUYNQN4tFxFWRMaFA==}
+  '@abstract-foundation/agw-client@1.0.1':
+    resolution: {integrity: sha512-ZJEC2siysQz9FdnWs6xFDY9vuIV+5E01nUFgv/Kvw2mRmf148T7H99SoelN2o8qCmv1r3z2iWQCLCLTa5f3FtQ==}
     peerDependencies:
       abitype: ^1.0.0
       typescript: '>=5.0.4'
@@ -24746,7 +24746,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@abstract-foundation/agw-client@0.1.8(abitype@1.0.8(typescript@5.7.3)(zod@3.24.1))(typescript@5.7.3)(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)(zod@3.24.1))':
+  '@abstract-foundation/agw-client@1.0.1(abitype@1.0.8(typescript@5.7.3)(zod@3.24.1))(typescript@5.7.3)(viem@2.21.58(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)(zod@3.24.1))':
     dependencies:
       abitype: 1.0.8(typescript@5.7.3)(zod@3.24.1)
       viem: 2.21.58(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)(zod@3.24.1)
