@@ -15,6 +15,23 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Cache pnpm
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ~/.pnpm-store
+                      **/node_modules
+                  key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: ${{ runner.os }}-pnpm-
+
+            - name: Cache plugin dist
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      **/packages/plugin-*/dist
+                  key: ${{ runner.os }}-plugin-dist-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: ${{ runner.os }}-plugin-dist-
+
             - uses: pnpm/action-setup@v3
               with:
                   version: 9.15.0
@@ -22,7 +39,6 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: "23.3.0"
-                  cache: "pnpm"
 
             - name: Clean up
               run: pnpm clean
