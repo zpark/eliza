@@ -107,7 +107,7 @@ import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
 import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
-import { openaiPlugin } from '@elizaos/plugin-openai';
+import { openaiPlugin } from "@elizaos/plugin-openai";
 
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
 import Database from "better-sqlite3";
@@ -209,7 +209,9 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
 
         // .id isn't really valid
         const characterId = character.id || character.name;
-        const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
+        const characterPrefix = `CHARACTER.${characterId
+            .toUpperCase()
+            .replace(/ /g, "_")}.`;
 
         const characterSettings = Object.entries(process.env)
             .filter(([key]) => key.startsWith(characterPrefix))
@@ -281,7 +283,9 @@ async function jsonToCharacter(
 
     // .id isn't really valid
     const characterId = character.id || character.name;
-    const characterPrefix = `CHARACTER.${characterId.toUpperCase().replace(/ /g, "_")}.`;
+    const characterPrefix = `CHARACTER.${characterId
+        .toUpperCase()
+        .replace(/ /g, "_")}.`;
     const characterSettings = Object.entries(process.env)
         .filter(([key]) => key.startsWith(characterPrefix))
         .reduce((settings, [key, value]) => {
@@ -391,8 +395,9 @@ export async function loadCharacters(
     if (characterPaths?.length > 0) {
         for (const characterPath of characterPaths) {
             try {
-                const character: Character =
-                    await loadCharacterTryPath(characterPath);
+                const character: Character = await loadCharacterTryPath(
+                    characterPath
+                );
                 loadedCharacters.push(character);
             } catch (e) {
                 process.exit(1);
@@ -555,9 +560,10 @@ export function getTokenForProvider(
                 settings.VENICE_API_KEY
             );
         case ModelProviderName.ATOMA:
-             return (
-                 character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
-                 settings.ATOMASDK_BEARER_AUTH
+            return (
+                character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
+                settings.ATOMASDK_BEARER_AUTH
+            );
         case ModelProviderName.NVIDIA:
             return (
                 character.settings?.secrets?.NVIDIA_API_KEY ||
@@ -1050,12 +1056,13 @@ export async function createAgent(
             getSecret(character, "PYTH_MAINNET_PROGRAM_KEY")
                 ? pythDataPlugin
                 : null,
-                getSecret(character, "LND_TLS_CERT") &&
-                getSecret(character, "LND_MACAROON") &&
-                getSecret(character, "LND_SOCKET")
-                    ? lightningPlugin
-                    : null,
-            getSecret(character, "OPENAI_API_KEY") && getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN")
+            getSecret(character, "LND_TLS_CERT") &&
+            getSecret(character, "LND_MACAROON") &&
+            getSecret(character, "LND_SOCKET")
+                ? lightningPlugin
+                : null,
+            getSecret(character, "OPENAI_API_KEY") &&
+            getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN")
                 ? openaiPlugin
                 : null,
         ].filter(Boolean),
@@ -1301,4 +1308,3 @@ if (
         console.error("unhandledRejection", err);
     });
 }
-
