@@ -38,7 +38,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
             elizaLogger.warn("Invalid input for preprocessing");
             return "";
         }
-       const c =  content
+       const processedContent =  content
         .replace(/```[\s\S]*?```/g, "")
         .replace(/`.*?`/g, "")
         .replace(/#{1,6}\s*(.*)/g, "$1")
@@ -54,7 +54,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         .replace(/\n{3,}/g, "\n\n")
         .replace(/[^a-zA-Z0-9\s\-_./:?=&]/g, "")
         .trim()
-        return c
+        return processedContent
     }
 
     async init () {
