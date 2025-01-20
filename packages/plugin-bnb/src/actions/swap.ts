@@ -34,7 +34,7 @@ export class SwapAction {
 
         this.walletProvider.configureLiFiSdk(params.chain);
         try {
-            let resp: SwapResponse = {
+            const resp: SwapResponse = {
                 chain: params.chain,
                 txHash: "0x",
                 fromToken: params.fromToken,

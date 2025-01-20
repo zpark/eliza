@@ -8,7 +8,9 @@ This plugin enables interaction with the BNB Chain ecosystem, providing support 
 
 ### Default Setup
 
-By default, **plugin-bnb** is not enabled. To use it, simply add your private key and public key to the `.env` file:
+By default, **plugin-bnb** is not enabled. To use it, simply add your private key and/or public key to the `.env` file. If private key is not provided, some actions will be disabled.
+
+**Security Note:** Your private key grants full access to your associated funds. Store it securely and never share it with anyone. Do not commit or upload your `.env` file to version control systems like Git.
 
 ```env
 BNB_PRIVATE_KEY=your-private-key-here
@@ -69,10 +71,10 @@ Transfer 1 BNB to 0xRecipient on BSC.
 
 Swap tokens from one address to another on BSC. Just specify the:
 
+- **Chain**(Only BSC is supported for now)
 - **Input Token**
 - **Output Token**
 - **Amount**
-- **Chain**
 - **Slippage**(Optional)
 
 **Example usage:**
@@ -102,6 +104,7 @@ Bridge 1 BNB from BSC to opBNB.
 
 Perform staking operations on BSC through [Lista Dao](https://lista.org/liquid-staking/BNB). User will receive sliBNB(0xB0b84D294e0C75A6abe60171b70edEb2EFd14A1B) as staking credit. Just specify the:
 
+- **Chain**(Only BSC is supported for now)
 - **Action**
 - **Amount**
 

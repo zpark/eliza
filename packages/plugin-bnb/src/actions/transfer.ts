@@ -13,6 +13,7 @@ import {
     formatUnits,
     parseEther,
     parseUnits,
+    erc20Abi,
     type Hex,
 } from "viem";
 
@@ -22,7 +23,7 @@ import {
     WalletProvider,
 } from "../providers/wallet";
 import { transferTemplate } from "../templates";
-import { ERC20Abi, type TransferParams, type TransferResponse } from "../types";
+import { type TransferParams, type TransferResponse } from "../types";
 
 export { transferTemplate };
 
@@ -42,103 +43,97 @@ export class TransferAction {
 
         this.walletProvider.switchChain(params.chain);
 
-        try {
-            const nativeToken =
-                this.walletProvider.chains[params.chain].nativeCurrency.symbol;
+        const nativeToken =
+            this.walletProvider.chains[params.chain].nativeCurrency.symbol;
 
-            let resp: TransferResponse = {
-                chain: params.chain,
-                txHash: "0x",
-                recipient: params.toAddress,
-                amount: "",
-                token: params.token ?? nativeToken,
+        const resp: TransferResponse = {
+            chain: params.chain,
+            txHash: "0x",
+            recipient: params.toAddress,
+            amount: "",
+            token: params.token ?? nativeToken,
+        };
+
+        if (!params.token || params.token == nativeToken) {
+            // Native token transfer
+            let options: { gas?: bigint; gasPrice?: bigint; data?: Hex } = {
+                data: params.data,
             };
-
-            if (!params.token || params.token == nativeToken) {
-                // Native token transfer
-                let options: { gas?: bigint; gasPrice?: bigint; data?: Hex } = {
-                    data: params.data,
-                };
-                let value: bigint;
-                if (!params.amount) {
-                    // Transfer all balance minus gas
-                    const publicClient = this.walletProvider.getPublicClient(
-                        params.chain
-                    );
-                    const balance = await publicClient.getBalance({
-                        address: fromAddress,
-                    });
-
-                    value = balance - this.DEFAULT_GAS_PRICE * 21000n;
-                    options.gas = this.TRANSFER_GAS;
-                    options.gasPrice = this.DEFAULT_GAS_PRICE;
-                } else {
-                    value = parseEther(params.amount);
-                }
-
-                resp.amount = formatEther(value);
-                resp.txHash = await this.walletProvider.transfer(
-                    params.chain,
-                    params.toAddress,
-                    value,
-                    options
-                );
-            } else {
-                // ERC20 token transfer
-                let tokenAddress = params.token;
-                if (!params.token.startsWith("0x")) {
-                    tokenAddress = await this.walletProvider.getTokenAddress(
-                        params.chain,
-                        params.token
-                    );
-                }
-
+            let value: bigint;
+            if (!params.amount) {
+                // Transfer all balance minus gas
                 const publicClient = this.walletProvider.getPublicClient(
                     params.chain
                 );
-                const decimals = await publicClient.readContract({
-                    address: tokenAddress as `0x${string}`,
-                    abi: ERC20Abi,
-                    functionName: "decimals",
+                const balance = await publicClient.getBalance({
+                    address: fromAddress,
                 });
 
-                let value: bigint;
-                if (!params.amount) {
-                    value = await publicClient.readContract({
-                        address: tokenAddress as `0x${string}`,
-                        abi: ERC20Abi,
-                        functionName: "balanceOf",
-                        args: [fromAddress],
-                    });
-                } else {
-                    value = parseUnits(params.amount, decimals);
-                }
+                value = balance - this.DEFAULT_GAS_PRICE * 21000n;
+                options.gas = this.TRANSFER_GAS;
+                options.gasPrice = this.DEFAULT_GAS_PRICE;
+            } else {
+                value = parseEther(params.amount);
+            }
 
-                resp.amount = formatUnits(value, decimals);
-                resp.txHash = await this.walletProvider.transferERC20(
+            resp.amount = formatEther(value);
+            resp.txHash = await this.walletProvider.transfer(
+                params.chain,
+                params.toAddress,
+                value,
+                options
+            );
+        } else {
+            // ERC20 token transfer
+            let tokenAddress = params.token;
+            if (!params.token.startsWith("0x")) {
+                tokenAddress = await this.walletProvider.getTokenAddress(
                     params.chain,
-                    tokenAddress as `0x${string}`,
-                    params.toAddress,
-                    value
+                    params.token
                 );
             }
 
-            if (!resp.txHash || resp.txHash == "0x") {
-                throw new Error("Get transaction hash failed");
-            }
-
-            // wait for the transaction to be confirmed
             const publicClient = this.walletProvider.getPublicClient(
                 params.chain
             );
-            await publicClient.waitForTransactionReceipt({
-                hash: resp.txHash,
+            const decimals = await publicClient.readContract({
+                address: tokenAddress as `0x${string}`,
+                abi: erc20Abi,
+                functionName: "decimals",
             });
 
-            return resp;
-        } catch (error) {
-            throw error;
+            let value: bigint;
+            if (!params.amount) {
+                value = await publicClient.readContract({
+                    address: tokenAddress as `0x${string}`,
+                    abi: erc20Abi,
+                    functionName: "balanceOf",
+                    args: [fromAddress],
+                });
+            } else {
+                value = parseUnits(params.amount, decimals);
+            }
+
+            resp.amount = formatUnits(value, decimals);
+            resp.txHash = await this.walletProvider.transferERC20(
+                params.chain,
+                tokenAddress as `0x${string}`,
+                params.toAddress,
+                value
+            );
         }
+
+        if (!resp.txHash || resp.txHash == "0x") {
+            throw new Error("Get transaction hash failed");
+        }
+
+        // wait for the transaction to be confirmed
+        const publicClient = this.walletProvider.getPublicClient(params.chain);
+        await publicClient.waitForTransactionReceipt({
+            hash: resp.txHash,
+        });
+
+        return resp;
     }
 
     async validateAndNormalizeParams(params: TransferParams): Promise<void> {

@@ -40,48 +40,53 @@ export class GetBalanceAction {
             this.walletProvider.getChainConfigs(chain).nativeCurrency.symbol;
         const chainId = this.walletProvider.getChainConfigs(chain).id;
 
-        this.walletProvider.configureLiFiSdk(chain);
-        try {
-            let resp: GetBalanceResponse = {
-                chain,
-                address: address!,
-            };
+        let queryNativeToken = false;
+        if (
+            !token ||
+            token == "" ||
+            token.toLowerCase() == "bnb" ||
+            token.toLowerCase() == "tbnb"
+        ) {
+            queryNativeToken = true;
+        }
 
-            // If ERC20 token is requested
-            if (token.toLowerCase() !== nativeSymbol.toLowerCase()) {
-                let amount: string;
-                if (token.startsWith("0x")) {
-                    amount = await this.getERC20TokenBalance(
-                        chain,
-                        address!,
-                        token as `0x${string}`
-                    );
-                } else {
-                    this.walletProvider.configureLiFiSdk(chain);
-                    const tokenInfo = await getToken(chainId, token);
-                    amount = await this.getERC20TokenBalance(
-                        chain,
-                        address!,
-                        tokenInfo.address as `0x${string}`
-                    );
-                }
+        const resp: GetBalanceResponse = {
+            chain,
+            address: address!,
+        };
 
-                resp.balance = { token, amount };
+        // If ERC20 token is requested
+        if (!queryNativeToken) {
+            let amount: string;
+            if (token.startsWith("0x")) {
+                amount = await this.getERC20TokenBalance(
+                    chain,
+                    address!,
+                    token as `0x${string}`
+                );
             } else {
-                // If native token is requested
-                const nativeBalanceWei = await this.walletProvider
-                    .getPublicClient(chain)
-                    .getBalance({ address: address! });
-                resp.balance = {
-                    token: nativeSymbol,
-                    amount: formatEther(nativeBalanceWei),
-                };
+                this.walletProvider.configureLiFiSdk(chain);
+                const tokenInfo = await getToken(chainId, token);
+                amount = await this.getERC20TokenBalance(
+                    chain,
+                    address!,
+                    tokenInfo.address as `0x${string}`
+                );
             }
 
-            return resp;
-        } catch (error) {
-            throw error;
+            resp.balance = { token, amount };
+        } else {
+            // If native token is requested
+            const nativeBalanceWei = await this.walletProvider
+                .getPublicClient(chain)
+                .getBalance({ address: address! });
+            resp.balance = {
+                token: nativeSymbol,
+                amount: formatEther(nativeBalanceWei),
+            };
         }
+
+        return resp;
     }
 
     async getERC20TokenBalance(
@@ -116,13 +121,9 @@ export class GetBalanceAction {
             );
         }
 
-        if (!params.token || params.token === "") {
-            params.token = "BNB";
-        }
-
-        if (params.chain != "bsc") {
+        if (params.token.startsWith("0x")) {
             // if token contract address is not provided, only BSC mainnet is supported
-            if (!params.token.startsWith("0x")) {
+            if (params.chain != "bsc") {
                 throw new Error(
                     "Only BSC mainnet is supported for querying balance by token symbol"
                 );

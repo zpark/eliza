@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from "vitest";
+import { describe, it, beforeEach, expect } from "vitest";
 import {
     generatePrivateKey,
     Account,
@@ -29,7 +29,8 @@ describe("GetBalance Action", () => {
                 token: "BNB",
             };
             const resp = await ga.getBalance(input);
-            console.log("BNB balance", resp.balance);
+            expect(resp.balance).toBeDefined();
+            expect(typeof resp.balance).toBe("object");
         });
 
         it("get USDC balance", async () => {
@@ -39,7 +40,8 @@ describe("GetBalance Action", () => {
                 token: "USDC",
             };
             const resp = await ga.getBalance(input);
-            console.log("USDC balance", resp.balance);
+            expect(resp.balance).toBeDefined();
+            expect(typeof resp.balance).toBe("object");
         });
 
         it("get balance by token contract address", async () => {
@@ -49,10 +51,8 @@ describe("GetBalance Action", () => {
                 token: "0x55d398326f99059ff775485246999027b3197955",
             };
             const resp = await ga.getBalance(input);
-            console.log(
-                "0x55d398326f99059ff775485246999027b3197955 balance",
-                resp.balance
-            );
+            expect(resp.balance).toBeDefined();
+            expect(typeof resp.balance).toBe("object");
         });
     });
 });

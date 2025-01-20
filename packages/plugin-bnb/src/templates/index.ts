@@ -175,10 +175,10 @@ Respond with a JSON markdown block containing only the extracted values. Use nul
     "chain": SUPPORTED_CHAINS,
     "contractType": "ERC20" | "ERC721" | "ERC1155",
     "name": string,
-    "symbol": string,
-    "decimals": number,
-    "totalSupply": string,
-    "baseURI": string
+    "symbol": string | null,
+    "decimals": number | null,
+    "totalSupply": string | null,
+    "baseURI": string | null
 }
 \`\`\`
 `;

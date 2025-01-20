@@ -15,7 +15,8 @@ import { deployAction } from "./actions/deploy";
 
 export const bnbPlugin: Plugin = {
     name: "bnb",
-    description: "BNB Smart Chain integration plugin",
+    description:
+        "BNB Smart Chain (BSC) and opBNB integration plugin supporting transfers, swaps, staking, bridging, and token deployments",
     providers: [bnbWalletProvider],
     evaluators: [],
     services: [],
@@ -23,7 +24,7 @@ export const bnbPlugin: Plugin = {
         getBalanceAction,
         transferAction,
         swapAction,
-        bridgeAction, // NOTE: The bridge action only supports bridge funds between BSC and opBNB for now. We may adding stargate support later.
+        bridgeAction,
         stakeAction,
         faucetAction,
         deployAction,

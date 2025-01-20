@@ -40,67 +40,81 @@ export class FaucetAction {
         await this.validateAndNormalizeParams(params);
         elizaLogger.debug("Normalized faucet params:", params);
 
-        let resp: FaucetResponse = {
+        const resp: FaucetResponse = {
             token: params.token!,
             recipient: params.toAddress!,
             txHash: "0x",
         };
 
-        return new Promise((resolve, reject) => {
-            const options: ClientOptions = {
-                headers: {
-                    Connection: "Upgrade",
-                    Upgrade: "websocket",
-                },
+        const options: ClientOptions = {
+            headers: {
+                Connection: "Upgrade",
+                Upgrade: "websocket",
+            },
+        };
+
+        const ws = new WebSocket(this.FAUCET_URL, options);
+
+        try {
+            // Wait for connection
+            await new Promise<void>((resolve, reject) => {
+                ws.once("open", () => resolve());
+                ws.once("error", reject);
+            });
+
+            // Send the message
+            const message = {
+                tier: 0,
+                url: params.toAddress,
+                symbol: params.token,
+                captcha: "noCaptchaToken",
             };
-            const ws = new WebSocket(this.FAUCET_URL, options);
+            ws.send(JSON.stringify(message));
 
-            ws.onopen = () => {
-                const message = {
-                    tier: 0,
-                    url: params.toAddress,
-                    symbol: params.token,
-                    captcha: "noCaptchaToken",
-                };
-                ws.send(JSON.stringify(message));
-            };
+            // Wait for response with transaction hash
+            const txHash = await new Promise<Hex>((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    reject(new Error("Faucet request timeout"));
+                }, 15000);
 
-            ws.onmessage = (event: WebSocket.MessageEvent) => {
-                const response = JSON.parse(event.data.toString());
+                ws.on("message", (data) => {
+                    const response = JSON.parse(data.toString());
 
-                // First response: funding request accepted
-                if (response.success) {
-                    return; // Wait for the next message
-                }
-
-                // Second response: transaction details
-                if (response.requests && response.requests.length > 0) {
-                    const txHash = response.requests[0].tx.hash;
-                    if (txHash) {
-                        resp.txHash = txHash as Hex;
-                        resolve(resp);
-                        ws.close();
+                    // First response: funding request accepted
+                    if (response.success) {
                         return;
                     }
-                }
 
-                // Handle error case
-                if (response.error) {
-                    reject(new Error(response.error));
-                    ws.close();
-                }
-            };
+                    // Second response: transaction details
+                    if (response.requests?.length > 0) {
+                        const txHash = response.requests[0].tx.hash;
+                        if (txHash) {
+                            clearTimeout(timeout);
+                            resolve(txHash as Hex);
+                        }
+                    }
 
-            ws.onerror = (error: WebSocket.ErrorEvent) => {
-                reject(new Error(`WebSocket error occurred: ${error.message}`));
-            };
+                    // Handle error case
+                    if (response.error) {
+                        clearTimeout(timeout);
+                        reject(new Error(response.error));
+                    }
+                });
 
-            // Add timeout to prevent hanging
-            setTimeout(() => {
-                ws.close();
-                reject(new Error("Faucet request timeout"));
-            }, 15000); // 15 seconds timeout
-        });
+                ws.on("error", (error) => {
+                    clearTimeout(timeout);
+                    reject(
+                        new Error(`WebSocket error occurred: ${error.message}`)
+                    );
+                });
+            });
+
+            resp.txHash = txHash;
+            return resp;
+        } finally {
+            ws.close();
+        }
     }
 
     async validateAndNormalizeParams(params: FaucetParams): Promise<void> {

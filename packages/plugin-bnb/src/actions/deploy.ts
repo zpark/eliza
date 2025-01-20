@@ -105,7 +105,7 @@ export class DeployAction {
                 address: contractAddress,
             };
         } catch (error) {
-            elizaLogger.error("Detailed error:", error);
+            elizaLogger.error("Depoly ERC20 failed:", error.message);
             throw error;
         }
     }
@@ -135,6 +135,7 @@ export class DeployAction {
                 address: contractAddress,
             };
         } catch (error) {
+            elizaLogger.error("Depoly ERC721 failed:", error.message);
             throw error;
         }
     }
@@ -161,7 +162,7 @@ export class DeployAction {
                 address: contractAddress,
             };
         } catch (error) {
-            elizaLogger.error("Deployment failed:", error);
+            elizaLogger.error("Depoly ERC1155 failed:", error.message);
             throw error;
         }
     }

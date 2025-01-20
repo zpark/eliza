@@ -71,7 +71,7 @@ export async function compileSolidity(contractFileName: string) {
                     `Compilation errors: ${JSON.stringify(output.errors, null, 2)}`
                 );
             }
-            console.warn("Compilation warnings:", output.errors);
+            elizaLogger.warn("Compilation warnings:", output.errors);
         }
 
         const contractName = path.basename(contractFileName, ".sol");
@@ -87,7 +87,7 @@ export async function compileSolidity(contractFileName: string) {
             bytecode: contract.evm.bytecode.object,
         };
     } catch (error) {
-        console.error("Compilation failed:", error);
+        elizaLogger.error("Compilation failed:", error.message);
         throw error;
     }
 }

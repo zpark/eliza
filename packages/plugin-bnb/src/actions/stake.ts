@@ -8,6 +8,7 @@ import {
     type Memory,
     type State,
 } from "@elizaos/core";
+import { formatEther, parseEther, erc20Abi } from "viem";
 
 import {
     bnbWalletProvider,
@@ -15,13 +16,7 @@ import {
     WalletProvider,
 } from "../providers/wallet";
 import { stakeTemplate } from "../templates";
-import {
-    ERC20Abi,
-    ListaDaoAbi,
-    type StakeParams,
-    type StakeResponse,
-} from "../types";
-import { formatEther, parseEther } from "viem";
+import { ListaDaoAbi, type StakeParams, type StakeResponse } from "../types";
 
 export { stakeTemplate };
 
@@ -41,17 +36,13 @@ export class StakeAction {
 
         this.walletProvider.switchChain("bsc"); // only BSC is supported
 
-        try {
-            const actions = {
-                deposit: async () => await this.doDeposit(params.amount!),
-                withdraw: async () => await this.doWithdraw(params.amount),
-                claim: async () => await this.doClaim(),
-            };
-            const resp = await actions[params.action]();
-            return { response: resp };
-        } catch (error) {
-            throw error;
-        }
+        const actions = {
+            deposit: async () => await this.doDeposit(params.amount!),
+            withdraw: async () => await this.doWithdraw(params.amount),
+            claim: async () => await this.doClaim(),
+        };
+        const resp = await actions[params.action]();
+        return { response: resp };
     }
 
     validateStakeParams(params: StakeParams) {
@@ -86,7 +77,7 @@ export class StakeAction {
 
         const slisBNBBalance = await publicClient.readContract({
             address: this.SLIS_BNB,
-            abi: ERC20Abi,
+            abi: erc20Abi,
             functionName: "balanceOf",
             args: [walletClient.account!.address],
         });
@@ -103,7 +94,7 @@ export class StakeAction {
         if (!amount) {
             amountToWithdraw = await publicClient.readContract({
                 address: this.SLIS_BNB,
-                abi: ERC20Abi,
+                abi: erc20Abi,
                 functionName: "balanceOf",
                 args: [walletClient.account!.address],
             });
@@ -112,22 +103,21 @@ export class StakeAction {
         }
 
         // check slisBNB allowance
-        const diff = await this.walletProvider.checkERC20Allowance(
+        const allowance = await this.walletProvider.checkERC20Allowance(
             "bsc",
             this.SLIS_BNB,
             walletClient.account!.address,
-            this.LISTA_DAO,
-            amountToWithdraw
+            this.LISTA_DAO
         );
-        if (diff > 0n) {
+        if (allowance < amountToWithdraw) {
             elizaLogger.log(
-                `Increasing slisBNB allowance for Lista DAO. ${diff} more needed`
+                `Increasing slisBNB allowance for Lista DAO. ${amountToWithdraw - allowance} more needed`
             );
-            const txHash = await this.walletProvider.increaseERC20Allowance(
+            const txHash = await this.walletProvider.approveERC20(
                 "bsc",
                 this.SLIS_BNB,
                 this.LISTA_DAO,
-                diff
+                amountToWithdraw
             );
             await publicClient.waitForTransactionReceipt({
                 hash: txHash,
@@ -148,7 +138,7 @@ export class StakeAction {
 
         const slisBNBBalance = await publicClient.readContract({
             address: this.SLIS_BNB,
-            abi: ERC20Abi,
+            abi: erc20Abi,
             functionName: "balanceOf",
             args: [walletClient.account!.address],
         });

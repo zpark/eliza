@@ -8,7 +8,7 @@ import {
     type Memory,
     type State,
 } from "@elizaos/core";
-import { parseEther, getContract, parseUnits } from "viem";
+import { parseEther, getContract, parseUnits, erc20Abi } from "viem";
 
 import {
     bnbWalletProvider,
@@ -17,7 +17,6 @@ import {
 } from "../providers/wallet";
 import { bridgeTemplate } from "../templates";
 import {
-    ERC20Abi,
     L1StandardBridgeAbi,
     L2StandardBridgeAbi,
     type BridgeParams,
@@ -52,268 +51,238 @@ export class BridgeAction {
             params.fromChain
         );
 
-        try {
-            const nativeToken =
-                this.walletProvider.chains[params.fromChain].nativeCurrency
-                    .symbol;
+        const nativeToken =
+            this.walletProvider.chains[params.fromChain].nativeCurrency.symbol;
 
-            let resp: BridgeResponse = {
-                fromChain: params.fromChain,
-                toChain: params.toChain,
-                txHash: "0x",
-                recipient: params.toAddress ?? fromAddress,
-                amount: params.amount,
-                fromToken: params.fromToken ?? nativeToken,
-                toToken: params.toToken ?? nativeToken,
-            };
+        const resp: BridgeResponse = {
+            fromChain: params.fromChain,
+            toChain: params.toChain,
+            txHash: "0x",
+            recipient: params.toAddress ?? fromAddress,
+            amount: params.amount,
+            fromToken: params.fromToken ?? nativeToken,
+            toToken: params.toToken ?? nativeToken,
+        };
 
-            const account = this.walletProvider.getAccount();
-            const chain = this.walletProvider.getChainConfigs(params.fromChain);
+        const account = this.walletProvider.getAccount();
+        const chain = this.walletProvider.getChainConfigs(params.fromChain);
 
-            const selfBridge =
-                !params.toAddress || params.toAddress == fromAddress;
-            const nativeTokenBridge =
-                !params.fromToken || params.fromToken == nativeToken;
+        const selfBridge = !params.toAddress || params.toAddress == fromAddress;
+        const nativeTokenBridge =
+            !params.fromToken || params.fromToken == nativeToken;
 
-            let amount: bigint;
-            if (nativeTokenBridge) {
-                amount = parseEther(params.amount);
-            } else {
-                const decimals = await publicClient.readContract({
-                    address: params.fromToken!,
-                    abi: ERC20Abi,
-                    functionName: "decimals",
-                });
-                amount = parseUnits(params.amount, decimals);
-            }
+        let amount: bigint;
+        if (nativeTokenBridge) {
+            amount = parseEther(params.amount);
+        } else {
+            const decimals = await publicClient.readContract({
+                address: params.fromToken!,
+                abi: erc20Abi,
+                functionName: "decimals",
+            });
+            amount = parseUnits(params.amount, decimals);
+        }
 
-            if (params.fromChain == "bsc" && params.toChain == "opBNB") {
-                // from L1 to L2
-                const l1BridgeContract = getContract({
-                    address: this.L1_BRIDGE_ADDRESS,
-                    abi: L1StandardBridgeAbi,
-                    client: {
-                        public: publicClient,
-                        wallet: walletClient,
-                    },
-                });
+        if (params.fromChain == "bsc" && params.toChain == "opBNB") {
+            // from L1 to L2
+            const l1BridgeContract = getContract({
+                address: this.L1_BRIDGE_ADDRESS,
+                abi: L1StandardBridgeAbi,
+                client: {
+                    public: publicClient,
+                    wallet: walletClient,
+                },
+            });
 
-                // check ERC20 allowance
-                if (!nativeTokenBridge) {
-                    const diff = await this.walletProvider.checkERC20Allowance(
+            // check ERC20 allowance
+            if (!nativeTokenBridge) {
+                const allowance = await this.walletProvider.checkERC20Allowance(
+                    params.fromChain,
+                    params.fromToken!,
+                    fromAddress,
+                    this.L1_BRIDGE_ADDRESS
+                );
+                if (allowance < amount) {
+                    elizaLogger.log(
+                        `Increasing ERC20 allowance for L1 bridge. ${amount - allowance} more needed`
+                    );
+                    const txHash = await this.walletProvider.approveERC20(
                         params.fromChain,
                         params.fromToken!,
-                        fromAddress,
                         this.L1_BRIDGE_ADDRESS,
                         amount
                     );
-                    if (diff > 0n) {
-                        elizaLogger.log(
-                            `Increasing ERC20 allowance for L1 bridge. ${diff} more needed`
-                        );
-                        const txHash =
-                            await this.walletProvider.increaseERC20Allowance(
-                                params.fromChain,
-                                params.fromToken!,
-                                this.L1_BRIDGE_ADDRESS,
-                                diff
-                            );
-                        await publicClient.waitForTransactionReceipt({
-                            hash: txHash,
-                        });
+                    await publicClient.waitForTransactionReceipt({
+                        hash: txHash,
+                    });
+                }
+            }
+
+            if (selfBridge && nativeTokenBridge) {
+                const args = [1, "0x"] as const;
+                await l1BridgeContract.simulate.depositETH(args, {
+                    value: amount,
+                });
+                resp.txHash = await l1BridgeContract.write.depositETH(args, {
+                    account,
+                    chain,
+                    value: amount,
+                });
+            } else if (selfBridge && !nativeTokenBridge) {
+                const args = [
+                    params.fromToken!,
+                    params.toToken!,
+                    amount,
+                    1,
+                    "0x",
+                ] as const;
+                await l1BridgeContract.simulate.depositERC20(args, {
+                    account,
+                });
+                resp.txHash = await l1BridgeContract.write.depositERC20(args, {
+                    account,
+                    chain,
+                });
+            } else if (!selfBridge && nativeTokenBridge) {
+                const args = [params.toAddress!, 1, "0x"] as const;
+                await l1BridgeContract.simulate.depositETHTo(args, {
+                    value: amount,
+                });
+                resp.txHash = await l1BridgeContract.write.depositETHTo(args, {
+                    account,
+                    chain,
+                    value: amount,
+                });
+            } else {
+                const args = [
+                    params.fromToken!,
+                    params.toToken!,
+                    params.toAddress!,
+                    amount,
+                    1,
+                    "0x",
+                ] as const;
+                await l1BridgeContract.simulate.depositERC20To(args, {
+                    account,
+                });
+                resp.txHash = await l1BridgeContract.write.depositERC20To(
+                    args,
+                    {
+                        account,
+                        chain,
                     }
-                }
+                );
+            }
+        } else if (params.fromChain == "opBNB" && params.toChain == "bsc") {
+            // from L2 to L1
+            const l2BridgeContract = getContract({
+                address: this.L2_BRIDGE_ADDRESS,
+                abi: L2StandardBridgeAbi,
+                client: {
+                    public: publicClient,
+                    wallet: walletClient,
+                },
+            });
 
-                if (selfBridge && nativeTokenBridge) {
-                    const args = [1, "0x"] as const;
-                    await l1BridgeContract.simulate.depositETH(args, {
-                        value: amount,
-                    });
-                    resp.txHash = await l1BridgeContract.write.depositETH(
-                        args,
-                        {
-                            account,
-                            chain,
-                            value: amount,
-                        }
-                    );
-                } else if (selfBridge && !nativeTokenBridge) {
-                    const args = [
-                        params.fromToken!,
-                        params.toToken!,
-                        amount,
-                        1,
-                        "0x",
-                    ] as const;
-                    await l1BridgeContract.simulate.depositERC20(args, {
-                        account,
-                    });
-                    resp.txHash = await l1BridgeContract.write.depositERC20(
-                        args,
-                        {
-                            account,
-                            chain,
-                        }
-                    );
-                } else if (!selfBridge && nativeTokenBridge) {
-                    const args = [params.toAddress!, 1, "0x"] as const;
-                    await l1BridgeContract.simulate.depositETHTo(args, {
-                        value: amount,
-                    });
-                    resp.txHash = await l1BridgeContract.write.depositETHTo(
-                        args,
-                        {
-                            account,
-                            chain,
-                            value: amount,
-                        }
-                    );
-                } else {
-                    const args = [
-                        params.fromToken!,
-                        params.toToken!,
-                        params.toAddress!,
-                        amount,
-                        1,
-                        "0x",
-                    ] as const;
-                    await l1BridgeContract.simulate.depositERC20To(args, {
-                        account,
-                    });
-                    resp.txHash = await l1BridgeContract.write.depositERC20To(
-                        args,
-                        {
-                            account,
-                            chain,
-                        }
-                    );
-                }
-            } else if (params.fromChain == "opBNB" && params.toChain == "bsc") {
-                // from L2 to L1
-                const l2BridgeContract = getContract({
-                    address: this.L2_BRIDGE_ADDRESS,
-                    abi: L2StandardBridgeAbi,
-                    client: {
-                        public: publicClient,
-                        wallet: walletClient,
-                    },
-                });
+            const delegationFee = await publicClient.readContract({
+                address: this.L2_BRIDGE_ADDRESS,
+                abi: L2StandardBridgeAbi,
+                functionName: "delegationFee",
+            });
 
-                const delegationFee = await publicClient.readContract({
-                    address: this.L2_BRIDGE_ADDRESS,
-                    abi: L2StandardBridgeAbi,
-                    functionName: "delegationFee",
-                });
-
-                // check ERC20 allowance
-                if (!nativeTokenBridge) {
-                    const diff = await this.walletProvider.checkERC20Allowance(
+            // check ERC20 allowance
+            if (!nativeTokenBridge) {
+                const allowance = await this.walletProvider.checkERC20Allowance(
+                    params.fromChain,
+                    params.fromToken!,
+                    fromAddress,
+                    this.L2_BRIDGE_ADDRESS
+                );
+                if (allowance < amount) {
+                    elizaLogger.log(
+                        `Increasing ERC20 allowance for L2 bridge. ${amount - allowance} more needed`
+                    );
+                    const txHash = await this.walletProvider.approveERC20(
                         params.fromChain,
                         params.fromToken!,
-                        fromAddress,
                         this.L2_BRIDGE_ADDRESS,
                         amount
                     );
-                    if (diff > 0n) {
-                        elizaLogger.log(
-                            `Increasing ERC20 allowance for L2 bridge. ${diff} more needed`
-                        );
-                        const txHash =
-                            await this.walletProvider.increaseERC20Allowance(
-                                params.fromChain,
-                                params.fromToken!,
-                                this.L2_BRIDGE_ADDRESS,
-                                diff
-                            );
-                        await publicClient.waitForTransactionReceipt({
-                            hash: txHash,
-                        });
-                    }
+                    await publicClient.waitForTransactionReceipt({
+                        hash: txHash,
+                    });
                 }
+            }
 
-                if (selfBridge && nativeTokenBridge) {
-                    const args = [
-                        this.LEGACY_ERC20_ETH,
-                        amount,
-                        1,
-                        "0x",
-                    ] as const;
-                    const value = amount + delegationFee;
-                    await l2BridgeContract.simulate.withdraw(args, { value });
-                    resp.txHash = await l2BridgeContract.write.withdraw(args, {
-                        account,
-                        chain,
-                        value,
-                    });
-                } else if (selfBridge && !nativeTokenBridge) {
-                    const args = [params.fromToken!, amount, 1, "0x"] as const;
-                    const value = delegationFee;
-                    await l2BridgeContract.simulate.withdraw(args, {
-                        account,
-                        value,
-                    });
-                    resp.txHash = await l2BridgeContract.write.withdraw(args, {
-                        account,
-                        chain,
-                        value,
-                    });
-                } else if (!selfBridge && nativeTokenBridge) {
-                    const args = [
-                        this.LEGACY_ERC20_ETH,
-                        params.toAddress!,
-                        amount,
-                        1,
-                        "0x",
-                    ] as const;
-                    const value = amount + delegationFee;
-                    await l2BridgeContract.simulate.withdrawTo(args, { value });
-                    resp.txHash = await l2BridgeContract.write.withdrawTo(
-                        args,
-                        {
-                            account,
-                            chain,
-                            value,
-                        }
-                    );
-                } else {
-                    const args = [
-                        params.fromToken!,
-                        params.toAddress!,
-                        amount,
-                        1,
-                        "0x",
-                    ] as const;
-                    const value = delegationFee;
-                    await l2BridgeContract.simulate.withdrawTo(args, {
-                        account,
-                        value,
-                    });
-                    resp.txHash = await l2BridgeContract.write.withdrawTo(
-                        args,
-                        {
-                            account,
-                            chain,
-                            value,
-                        }
-                    );
-                }
+            if (selfBridge && nativeTokenBridge) {
+                const args = [this.LEGACY_ERC20_ETH, amount, 1, "0x"] as const;
+                const value = amount + delegationFee;
+                await l2BridgeContract.simulate.withdraw(args, { value });
+                resp.txHash = await l2BridgeContract.write.withdraw(args, {
+                    account,
+                    chain,
+                    value,
+                });
+            } else if (selfBridge && !nativeTokenBridge) {
+                const args = [params.fromToken!, amount, 1, "0x"] as const;
+                const value = delegationFee;
+                await l2BridgeContract.simulate.withdraw(args, {
+                    account,
+                    value,
+                });
+                resp.txHash = await l2BridgeContract.write.withdraw(args, {
+                    account,
+                    chain,
+                    value,
+                });
+            } else if (!selfBridge && nativeTokenBridge) {
+                const args = [
+                    this.LEGACY_ERC20_ETH,
+                    params.toAddress!,
+                    amount,
+                    1,
+                    "0x",
+                ] as const;
+                const value = amount + delegationFee;
+                await l2BridgeContract.simulate.withdrawTo(args, { value });
+                resp.txHash = await l2BridgeContract.write.withdrawTo(args, {
+                    account,
+                    chain,
+                    value,
+                });
             } else {
-                throw new Error("Unsupported bridge direction");
+                const args = [
+                    params.fromToken!,
+                    params.toAddress!,
+                    amount,
+                    1,
+                    "0x",
+                ] as const;
+                const value = delegationFee;
+                await l2BridgeContract.simulate.withdrawTo(args, {
+                    account,
+                    value,
+                });
+                resp.txHash = await l2BridgeContract.write.withdrawTo(args, {
+                    account,
+                    chain,
+                    value,
+                });
             }
-
-            if (!resp.txHash || resp.txHash == "0x") {
-                throw new Error("Get transaction hash failed");
-            }
-
-            // wait for the transaction to be confirmed
-            await publicClient.waitForTransactionReceipt({
-                hash: resp.txHash,
-            });
-
-            return resp;
-        } catch (error) {
-            throw error;
+        } else {
+            throw new Error("Unsupported bridge direction");
         }
+
+        if (!resp.txHash || resp.txHash == "0x") {
+            throw new Error("Get transaction hash failed");
+        }
+
+        // wait for the transaction to be confirmed
+        await publicClient.waitForTransactionReceipt({
+            hash: resp.txHash,
+        });
+
+        return resp;
     }
 
     async validateAndNormalizeParams(params: BridgeParams) {

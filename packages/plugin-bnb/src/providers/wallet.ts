@@ -20,13 +20,13 @@ import {
     createWalletClient,
     formatUnits,
     http,
+    erc20Abi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import * as viemChains from "viem/chains";
 import { createWeb3Name } from "@web3-name-sdk/core";
 
 import type { SupportedChain } from "../types";
-import { ERC20Abi } from "../types";
 
 export class WalletProvider {
     private currentChain: SupportedChain = "bsc";
@@ -137,33 +137,30 @@ export class WalletProvider {
         token: Address,
         owner: Address,
         spender: Address,
-        amount: bigint
     ): Promise<bigint> {
         const publicClient = this.getPublicClient(chain);
-        const allowance = await publicClient.readContract({
+        return await publicClient.readContract({
             address: token,
-            abi: ERC20Abi,
+            abi: erc20Abi,
             functionName: "allowance",
             args: [owner, spender],
         });
-
-        return allowance > amount ? 0n : amount - allowance;
     }
 
-    async increaseERC20Allowance(
+    async approveERC20(
         chain: SupportedChain,
         token: Address,
         spender: Address,
-        increment: bigint
+        amount: bigint
     ): Promise<Hex> {
         const publicClient = this.getPublicClient(chain);
         const walletClient = this.getWalletClient(chain);
         const { request } = await publicClient.simulateContract({
             account: this.account,
             address: token,
-            abi: ERC20Abi,
-            functionName: "increaseAllowance",
-            args: [spender, increment],
+            abi: erc20Abi,
+            functionName: "approve",
+            args: [spender, amount],
         });
 
         return await walletClient.writeContract(request);
@@ -204,7 +201,7 @@ export class WalletProvider {
         const { request } = await publicClient.simulateContract({
             account: this.account,
             address: tokenAddress as `0x${string}`,
-            abi: ERC20Abi,
+            abi: erc20Abi,
             functionName: "transfer",
             args: [toAddress as `0x${string}`, amount],
             ...options,

@@ -93,10 +93,4 @@ describe("Wallet provider", () => {
             expect(client.transport.url).toEqual(customRpcUrls.bsc);
         });
     });
-    describe("Balance", () => {
-        it("should fetch balance", async () => {
-            let bal = await walletProvider.getWalletBalance();
-            expect(bal).toEqual("0");
-        });
-    });
 });
