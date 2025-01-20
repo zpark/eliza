@@ -75,6 +75,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
 
     async createKnowledge(knowledge: RAGKnowledgeItem): Promise<void> {
         const metadata = knowledge.content.metadata || {}
+        elizaLogger.info("Qdrant adapter createKnowledge id:", knowledge.id);
         await this.db.upsert(this.collectionName, {
             wait: true,
             points: [
@@ -142,7 +143,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         match_count?: number;
         searchText?: string
     }): Promise<RAGKnowledgeItem[]> {
-        const cacheKey = `${params.agentId}`;
+        const cacheKey = `${params.agentId}:${params.embedding.toString()}`;
             const cachedResult = await this.getCache({
                 key: cacheKey,
                 agentId: params.agentId
@@ -160,6 +161,7 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
             const contentObj = typeof row.payload?.content === "string"
             ? JSON.parse(row.payload.content)
             : row.payload?.content;
+            elizaLogger.info("Qdrant adapter searchKnowledge  id:", row.id.toString() as UUID);
             return {
                 id: row.id.toString() as UUID,
                 agentId: (row.payload?.agentId || "") as UUID,
