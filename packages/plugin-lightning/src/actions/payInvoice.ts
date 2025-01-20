@@ -1,7 +1,7 @@
 import type { IAgentRuntime, Memory, State } from "@elizaos/core";
 import {
     composeContext,
-    generateObjectV2,
+    generateObject,
     ModelClass,
     elizaLogger,
 } from "@elizaos/core";
@@ -25,10 +25,10 @@ export class PayInvoiceAction {
     async getAvalibleChannelId(): Promise<string> {
         const { channels } = await this.lightningProvider.getLndChannel();
         const filteredActiveChannels = channels.filter(
-            (channel) => channel.is_active === true,
+            (channel) => channel.is_active === true
         );
         const sortedChannels = filteredActiveChannels.sort(
-            (a, b) => b.local_balance - a.local_balance,
+            (a, b) => b.local_balance - a.local_balance
         );
         if (sortedChannels.length > 0) {
             return sortedChannels[0].id;
@@ -44,8 +44,9 @@ export class PayInvoiceAction {
             outgoing_channel: outgoing_channel,
             ...params,
         };
-        const retPayInvoice =
-            await this.lightningProvider.payInvoice(requestArgs);
+        const retPayInvoice = await this.lightningProvider.payInvoice(
+            requestArgs
+        );
         return {
             ...retPayInvoice,
             outgoing_channel: outgoing_channel,
@@ -61,7 +62,7 @@ export const payInvoiceAction = {
         _message: Memory,
         state: State,
         _options: any,
-        callback?: any,
+        callback?: any
     ) => {
         elizaLogger.log("payInvoice action handler called");
         const lightningProvider = await initLightningProvider(runtime);
@@ -72,7 +73,7 @@ export const payInvoiceAction = {
             state,
             template: payInvoiceTemplate,
         });
-        const content = await generateObjectV2({
+        const content = await generateObject({
             runtime,
             context: payInvoiceContext,
             modelClass: ModelClass.LARGE,
