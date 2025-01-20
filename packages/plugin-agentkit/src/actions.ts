@@ -9,7 +9,7 @@ import {
     composeContext,
     generateObject,
 } from "@elizaos/core";
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
+import type { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 import { CdpToolkit, type Tool } from "@coinbase/cdp-langchain";
 
 type GetAgentKitActionsParams = {
@@ -44,8 +44,9 @@ export async function getAgentKitActions({
                 const client = await getClient();
                 let currentState =
                     state ?? (await runtime.composeState(message));
-                currentState =
-                    await runtime.updateRecentMessageState(currentState);
+                currentState = await runtime.updateRecentMessageState(
+                    currentState
+                );
 
                 const parameterContext = composeParameterContext(
                     tool,
