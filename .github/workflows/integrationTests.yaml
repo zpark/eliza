@@ -15,33 +15,38 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - uses: pnpm/action-setup@v3
+              with:
+                  version: 9.15.0
+
             - name: Cache pnpm
               uses: actions/cache@v4
               with:
                   path: |
                       ~/.pnpm-store
                       **/node_modules
-                  key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: ${{ runner.os }}-pnpm-
+                  key: ${{ runner.os }}-pnpm-${{ runner.arch }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/package.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-${{ runner.arch }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+                      ${{ runner.os }}-pnpm-${{ runner.arch }}-
 
             - name: Cache plugin dist
               uses: actions/cache@v4
               with:
                   path: |
                       **/packages/plugin-*/dist
-                  key: ${{ runner.os }}-plugin-dist-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: ${{ runner.os }}-plugin-dist-
-
-            - uses: pnpm/action-setup@v3
-              with:
-                  version: 9.15.0
+                  key: ${{ runner.os }}-plugin-dist-${{ runner.arch }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-plugin-dist-${{ runner.arch }}-
 
             - uses: actions/setup-node@v4
               with:
                   node-version: "23.3.0"
 
             - name: Install dependencies
-              run: pnpm install -r --no-frozen-lockfile
+              run: |
+                  pnpm config set store-dir ~/.pnpm-store
+                  pnpm install -r --no-frozen-lockfile
 
             - name: Build packages
               run: pnpm build
