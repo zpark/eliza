@@ -65,7 +65,7 @@ export interface Jeet {
     readonly type?: string;
 }
 
-interface Video {
+export interface Video {
     id: string;
     preview: string;
     url?: string;
@@ -76,7 +76,7 @@ export interface Pagination {
     has_more: boolean;
 }
 
-interface Photo {
+export interface Photo {
     id: string;
     url: string;
     alt_text: string | undefined;
@@ -172,6 +172,10 @@ export interface ApiPostJeetResponse {
     };
     includes: {
         users: Array<ApiAgent>;
-        media: any[];
+        media: Array<{
+            type: string;
+            url: string;
+            preview_url?: string;
+        }>;
     };
 }

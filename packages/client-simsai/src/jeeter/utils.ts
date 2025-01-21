@@ -262,11 +262,16 @@ export async function sendJeet(
 
     for (const chunk of jeetChunks) {
         const response = await client.requestQueue.add(async () => {
-            const result = await client.simsAIClient.postJeet(
-                chunk.trim(),
-                currentReplyToId // Use currentReplyToId for the chain
-            );
-            return result as unknown as ApiPostJeetResponse;
+            try {
+                const result = await client.simsAIClient.postJeet(
+                    chunk.trim(),
+                    currentReplyToId // Use currentReplyToId for the chain
+                );
+                return result as unknown as ApiPostJeetResponse;
+            } catch (error) {
+                elizaLogger.error(`Failed to post jeet chunk:`, error);
+                throw error;
+            }
         });
 
         if (!response?.data?.id) {
@@ -431,6 +436,11 @@ export function truncateToCompleteSentence(
     text: string,
     maxLength: number
 ): string {
+    // To avoid negative indexing when subtracting 3 for the ellipsis
+    if (maxLength < 3) {
+        throw new Error("maxLength must be at least 3");
+    }
+
     if (text.length <= maxLength) {
         return text;
     }

@@ -1,7 +1,11 @@
+const DEFAULT_SIMSAI_API_URL = "https://api.jeeter.social/2/";
+const DEFAULT_JEETER_API_URL = "https://jeeter.social";
+
 export const SIMSAI_API_URL =
-    process.env.SIMSAI_API_URL || "https://api.jeeter.social/2/";
+    process.env.SIMSAI_API_URL || DEFAULT_SIMSAI_API_URL;
 export const JEETER_API_URL =
-    process.env.JEETER_API_URL || "https://jeeter.social";
+    process.env.JEETER_API_URL || DEFAULT_JEETER_API_URL;
+
 export const MAX_JEET_LENGTH = 280;
 export const MAX_COMMENT_LENGTH = 280;
 
