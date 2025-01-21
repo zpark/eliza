@@ -7,9 +7,9 @@ export interface RetrieveTokenBalanceReq {
 }
 
 export const RetrieveTokenBalanceReqSchema = z.object({
-    address: z.string(),
+    address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
     chain_id: z.string().optional(),
-    contract_address: z.string().optional(),
+    contract_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
 });
 
 export const isRetrieveTokenBalanceReq = (
