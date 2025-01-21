@@ -65,6 +65,12 @@ export class GetBalanceAction {
                     token as `0x${string}`
                 );
             } else {
+                if (chainId != 56) {
+                    throw new Error(
+                        "Only BSC mainnet is supported for querying balance by token symbol"
+                    );
+                }
+
                 this.walletProvider.configureLiFiSdk(chain);
                 const tokenInfo = await getToken(chainId, token);
                 amount = await this.getERC20TokenBalance(
@@ -119,15 +125,6 @@ export class GetBalanceAction {
             params.address = await this.walletProvider.formatAddress(
                 params.address
             );
-        }
-
-        if (params.token.startsWith("0x")) {
-            // if token contract address is not provided, only BSC mainnet is supported
-            if (params.chain != "bsc") {
-                throw new Error(
-                    "Only BSC mainnet is supported for querying balance by token symbol"
-                );
-            }
         }
     }
 }
