@@ -27,31 +27,31 @@ import { getProviders } from "./providers.ts";
 import { RAGKnowledgeManager } from "./ragknowledge.ts";
 import settings from "./settings.ts";
 import {
-    Character,
-    Goal,
-    HandlerCallback,
-    IAgentRuntime,
-    ICacheManager,
-    IDatabaseAdapter,
-    IMemoryManager,
-    IRAGKnowledgeManager,
-    IVerifiableInferenceAdapter,
-    KnowledgeItem,
+    type Character,
+    type Goal,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type ICacheManager,
+    type IDatabaseAdapter,
+    type IMemoryManager,
+    type IRAGKnowledgeManager,
+    type IVerifiableInferenceAdapter,
+    type KnowledgeItem,
     // RAGKnowledgeItem,
     //Media,
     ModelClass,
     ModelProviderName,
-    Plugin,
-    Provider,
-    Service,
-    ServiceType,
-    State,
-    UUID,
+    type Plugin,
+    type Provider,
+    type Service,
+    type ServiceType,
+    type State,
+    type UUID,
     type Action,
     type Actor,
     type Evaluator,
     type Memory,
-    DirectoryItem,
+    type DirectoryItem,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { glob } from "glob";
@@ -298,7 +298,7 @@ export class AgentRuntime implements IAgentRuntime {
         this.ensureRoomExists(this.agentId);
         this.ensureUserExists(
             this.agentId,
-            this.character.name,
+            this.character.username || this.character.name,
             this.character.name
         ).then(() => {
             // postgres needs the user to exist before you can add a participant
@@ -371,19 +371,19 @@ export class AgentRuntime implements IAgentRuntime {
         this.imageModelProvider =
             this.character.imageModelProvider ?? this.modelProvider;
 
-        elizaLogger.info("Selected model provider:", this.modelProvider);
         elizaLogger.info(
-            "Selected image model provider:",
-            this.imageModelProvider
+            `Selected model provider: ${this.modelProvider}`
+        );
+
+        elizaLogger.info(
+            `Selected image model provider: ${this.imageModelProvider}`
         );
 
         this.imageVisionModelProvider =
             this.character.imageVisionModelProvider ?? this.modelProvider;
 
-        // elizaLogger.info("Selected model provider:", this.modelProvider); duplicated log ln: 343
         elizaLogger.info(
-            "Selected image vision model provider:",
-            this.imageVisionModelProvider
+            `Selected image vision model provider: ${this.imageVisionModelProvider}`
         );
 
         // Validate model provider
@@ -470,7 +470,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.knowledge.length > 0
         ) {
             elizaLogger.info(
-                `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge}`
+                `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge ? true : false}`
             );
             elizaLogger.info(
                 `[RAG Check] Knowledge items:`,
@@ -1111,10 +1111,10 @@ export class AgentRuntime implements IAgentRuntime {
         if (!account) {
             await this.databaseAdapter.createAccount({
                 id: userId,
-                name: name || userName || "Unknown User",
-                username: userName || name || "Unknown",
-                email: email || (userName || "Bot") + "@" + source || "Unknown", // Temporary
-                details: { summary: "" },
+                name: name || this.character.name || "Unknown User",
+                username: userName || this.character.username || "Unknown",
+                email: email || this.character.email || userId, // Temporary
+                details: this.character || { summary: "" },
             });
             elizaLogger.success(`User ${userName} created successfully.`);
         }
@@ -1147,7 +1147,7 @@ export class AgentRuntime implements IAgentRuntime {
         await Promise.all([
             this.ensureUserExists(
                 this.agentId,
-                this.character.name ?? "Agent",
+                this.character.username ?? "Agent",
                 this.character.name ?? "Agent",
                 source
             ),
@@ -1256,7 +1256,7 @@ export class AgentRuntime implements IAgentRuntime {
 
                 allAttachments = recentMessagesData
                     .reverse()
-                    .map((msg) => {
+                    .flatMap((msg) => {
                         const msgTime = msg.createdAt ?? Date.now();
                         const isWithinTime =
                             msgTime >= oneHourBeforeLastMessage;
@@ -1267,8 +1267,7 @@ export class AgentRuntime implements IAgentRuntime {
                             });
                         }
                         return attachments;
-                    })
-                    .flat();
+                    });
             }
         }
 
