@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-nft-collections",
-    "version": "0.1.0",
+    "version": "0.1.9-alpha.1",
     "description": "NFT collections plugin for Eliza",
     "type": "module",
     "main": "dist/index.js",
@@ -9,7 +9,6 @@
         "build": "tsup src/index.ts --format esm --dts",
         "test": "vitest run",
         "test:watch": "vitest",
-        "lint": "eslint --fix --cache .",
         "format": "prettier --write src/**/*.ts"
     },
     "dependencies": {

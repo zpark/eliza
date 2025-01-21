@@ -1,9 +1,7 @@
-import { IAgentRuntime } from "@elizaos/core";
+import type { IAgentRuntime } from "@elizaos/core";
 import { z } from 'zod';
 import { ethers } from 'ethers';
-import { bech32 } from 'bech32';
-import bs58 from 'bs58';
-import {SquidToken, XChainSwapContent} from "../types";
+import type {SquidToken, XChainSwapContent} from "../types";
 
 export function convertToWei(amount: string | number, token: SquidToken): string {
     if (typeof token.decimals !== 'number' || token.decimals < 0 || token.decimals > 255) {
@@ -53,32 +51,6 @@ const isValidEvmAddress = (address: string): boolean => {
 const isValidEvmPrivateKey = (key: string): boolean => {
     const cleanedKey = key.startsWith('0x') ? key.slice(2) : key;
     return /^[0-9a-fA-F]{64}$/.test(cleanedKey);
-};
-
-const isValidSolanaAddress = (address: string): boolean => {
-    try {
-        const decoded = bs58.decode(address);
-        return decoded.length === 32; // Corrected from 32 || 44 to only 32
-    } catch {
-        return false;
-    }
-};
-
-const isValidSolanaPrivateKey = (key: string): boolean => {
-    return /^[0-9a-fA-F]{64}$/.test(key);
-};
-
-const isValidCosmosAddress = (address: string): boolean => {
-    try {
-        const decoded = bech32.decode(address);
-        return decoded.prefix.startsWith('cosmos') && decoded.words.length === 52;
-    } catch {
-        return false;
-    }
-};
-
-const isValidCosmosPrivateKey = (key: string): boolean => {
-    return /^[0-9a-fA-F]{64}$/.test(key);
 };
 
 export const squidRouterEnvSchema = z

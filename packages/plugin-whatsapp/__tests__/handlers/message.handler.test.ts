@@ -4,31 +4,31 @@ import { WhatsAppClient } from '../../src/client';
 import { WhatsAppMessage } from '../../src/types';
 
 describe('MessageHandler', () => {
-    let messageHandler: MessageHandler;
-    let mockClient: WhatsAppClient;
+    let messageHandler;
+    let mockClient;
 
     beforeEach(() => {
         mockClient = {
             sendMessage: vi.fn(),
-        } as any as WhatsAppClient;
+        };
 
         messageHandler = new MessageHandler(mockClient);
     });
 
     it('should successfully send a message', async () => {
-        const mockMessage: WhatsAppMessage = {
+        const mockMessage = {
             type: 'text',
             to: '1234567890',
             content: 'Test message'
         };
 
-        const mockResponse = { 
+        const mockResponse = {
             messaging_product: 'whatsapp',
             contacts: [{ input: '1234567890', wa_id: 'WHATSAPP_ID' }],
             messages: [{ id: 'MESSAGE_ID' }]
         };
 
-        (mockClient.sendMessage as any).mockResolvedValue({ data: mockResponse });
+        (mockClient.sendMessage).mockResolvedValue({ data: mockResponse });
 
         const result = await messageHandler.send(mockMessage);
 
@@ -37,14 +37,14 @@ describe('MessageHandler', () => {
     });
 
     it('should handle client errors with error message', async () => {
-        const mockMessage: WhatsAppMessage = {
+        const mockMessage = {
             type: 'text',
             to: '1234567890',
             content: 'Test message'
         };
 
         const errorMessage = 'API Error';
-        (mockClient.sendMessage as any).mockRejectedValue(new Error(errorMessage));
+        (mockClient.sendMessage).mockRejectedValue(new Error(errorMessage));
 
         await expect(messageHandler.send(mockMessage))
             .rejects
@@ -52,13 +52,13 @@ describe('MessageHandler', () => {
     });
 
     it('should handle unknown errors', async () => {
-        const mockMessage: WhatsAppMessage = {
+        const mockMessage = {
             type: 'text',
             to: '1234567890',
             content: 'Test message'
         };
 
-        (mockClient.sendMessage as any).mockRejectedValue('Unknown error');
+        (mockClient.sendMessage).mockRejectedValue('Unknown error');
 
         await expect(messageHandler.send(mockMessage))
             .rejects

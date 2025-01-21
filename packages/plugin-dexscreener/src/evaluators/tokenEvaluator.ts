@@ -1,4 +1,4 @@
-import { Evaluator, IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { Evaluator, IAgentRuntime, Memory, State } from "@elizaos/core";
 
 export class TokenPriceEvaluator implements Evaluator {
     name = "TOKEN_PRICE_EVALUATOR";
@@ -21,14 +21,14 @@ export class TokenPriceEvaluator implements Evaluator {
         // 3. Token symbol after "of" or "for" (case insensitive)
         const hasToken = (
             /0x[a-fA-F0-9]{40}/.test(content) || // Ethereum address
-            /[\$#][a-zA-Z]+/.test(content) || // $TOKEN or #TOKEN format
+            /[$#][a-zA-Z]+/.test(content) || // $TOKEN or #TOKEN format
             /\b(of|for)\s+[a-zA-Z0-9]+\b/i.test(content) // "price of TOKEN" format
         );
 
         return hasPriceKeyword && hasToken;
     }
 
-    async handler(runtime: IAgentRuntime, message: Memory, state?: State): Promise<string> {
+    async handler(_runtime: IAgentRuntime, _message: Memory, _state?: State): Promise<string> {
         return "GET_TOKEN_PRICE";
     }
 

@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { generatePrivateKey } from "viem/accounts";
-import { getEnvVariable } from "@elizaos/core";
 
 import { StakeAction } from "../actions/stake";
 import { WalletProvider } from "../providers";
-import { StakeParams } from "../types";
+import type { StakeParams } from "../types";
 
 describe("Stake Action", () => {
     let wp: WalletProvider;
