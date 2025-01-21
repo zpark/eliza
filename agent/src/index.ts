@@ -1087,7 +1087,7 @@ export async function createAgent(
                 ? lightningPlugin
                 : null,
             getSecret(character, "OPENAI_API_KEY") &&
-            getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN")
+            parseBooleanFromText(getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN"))
                 ? openaiPlugin
                 : null,
             getSecret(character, "DEVIN_API_TOKEN")
