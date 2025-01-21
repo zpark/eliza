@@ -84,7 +84,10 @@ export const queryBlockChainData: Action = {
             });
         } catch (error) {
             elizaLogger.error("Error in queryChainbase action:", error);
-            return "error";
+            callback({
+                text: "An error occurred while querying the blockchain. Please try again later.",
+            });
+            return ;
         }
     },
 
