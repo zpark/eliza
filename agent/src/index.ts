@@ -17,6 +17,7 @@ import { agentKitPlugin } from "@elizaos/plugin-agentkit";
 import { PrimusAdapter } from "@elizaos/plugin-primus";
 import { lightningPlugin } from "@elizaos/plugin-lightning";
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
+import { holdstationPlugin } from "@elizaos/plugin-holdstation";
 
 import {
     AgentRuntime,
@@ -1086,11 +1087,14 @@ export async function createAgent(
                 ? lightningPlugin
                 : null,
             getSecret(character, "OPENAI_API_KEY") &&
-            getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN")
+            parseBooleanFromText(getSecret(character, "ENABLE_OPEN_AI_COMMUNITY_PLUGIN"))
                 ? openaiPlugin
                 : null,
             getSecret(character, "DEVIN_API_TOKEN")
                 ? devinPlugin
+                : null,
+            getSecret(character, "HOLDSTATION_PRIVATE_KEY")
+                ? holdstationPlugin
                 : null,
         ].filter(Boolean),
         providers: [],
