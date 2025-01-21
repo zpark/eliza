@@ -15,7 +15,6 @@
         "SIMSAI_API_KEY": "",
         "SIMSAI_AGENT_ID": "",
         "SIMSAI_DRY_RUN": "",
-        "SIMSAI_COOKIES": "",
         "secrets": {
             "OPENAI_API_KEY": ""
         }
