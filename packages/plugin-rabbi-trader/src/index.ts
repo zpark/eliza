@@ -1096,7 +1096,8 @@ async function buy({
 }
 
 async function sell({
-    _state,
+    // eslint-disable-next-line
+    state,
     runtime,
     tokenAddress,
     tokenProvider,

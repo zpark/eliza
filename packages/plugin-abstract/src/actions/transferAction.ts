@@ -89,6 +89,7 @@ export const transferAction: Action = {
         "MOVE_TOKENS_ON_ABSTRACT",
         "MOVE_ETH_ON_ABSTRACT",
     ],
+    // eslint-disable-next-line
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         await validateAbstractConfig(runtime);
         return true;
@@ -178,7 +179,6 @@ export const transferAction: Action = {
                         decimals
                     );
 
-                    // @ts-ignore - will fix later
                     hash = await abstractClient.writeContract({
                         chain: abstractTestnet,
                         address: content.tokenAddress as Address,
@@ -187,7 +187,6 @@ export const transferAction: Action = {
                         args: [content.recipient as Address, tokenAmount],
                     });
                 } else {
-                    // @ts-ignore
                     hash = await abstractClient.sendTransaction({
                         chain: abstractTestnet,
                         to: content.recipient as Address,

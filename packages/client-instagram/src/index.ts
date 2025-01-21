@@ -45,7 +45,7 @@ export const InstagramClientInterface: Client = {
       throw error;
     }
   },
-
+  // eslint-disable-next-line
   async stop(runtime: IAgentRuntime) {
     elizaLogger.log("Stopping Instagram client services...");
     // Cleanup will be handled by the services themselves

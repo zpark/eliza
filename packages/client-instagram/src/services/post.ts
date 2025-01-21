@@ -138,7 +138,7 @@ export class InstagramPostService {
         } else if (typeof parsedResponse === "string") {
           cleanedContent = parsedResponse;
         }
-      } catch (error) {
+      } catch {
         // If not JSON, clean the raw content
         cleanedContent = content
           .replace(/^\s*{?\s*"text":\s*"|"\s*}?\s*$/g, "") // Remove JSON-like wrapper

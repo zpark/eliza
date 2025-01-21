@@ -9,7 +9,6 @@ import {
     IAgentRuntime,
     Memory,
     ModelClass,
-    State,
     stringToUuid,
     elizaLogger,
     getEmbeddingZeroVector,

@@ -31,7 +31,7 @@ async function authenticate(
           isInitialized: true,
           profile
         };
-      } catch (error) {
+      } catch {
         elizaLogger.warn('Cached session invalid, proceeding with fresh login');
       }
     }
