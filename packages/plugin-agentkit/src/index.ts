@@ -12,6 +12,15 @@ console.log("└═════════════════════�
 
 const initializeActions = async () => {
     try {
+        // Validate environment variables
+        const apiKeyName = process.env.CDP_API_KEY_NAME;
+        const apiKeyPrivateKey = process.env.CDP_API_KEY_PRIVATE_KEY;
+
+        if (!apiKeyName || !apiKeyPrivateKey) {
+            console.warn("⚠️ Missing CDP API credentials - AgentKit actions will not be available");
+            return [];
+        }
+
         const actions = await getAgentKitActions({
             getClient,
         });
@@ -19,7 +28,7 @@ const initializeActions = async () => {
         return actions;
     } catch (error) {
         console.error("❌ Failed to initialize AgentKit actions:", error);
-        return null;
+        return []; // Return empty array instead of failing
     }
 };
 

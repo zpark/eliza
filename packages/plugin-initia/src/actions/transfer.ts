@@ -9,9 +9,7 @@ import {
     State
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
-import * as initia from '@initia/initia.js';
-const { MsgSend } = initia;
-import { KEY_PRIVATE_KEY } from "../types/const";
+
 
 export interface TransferContent extends Content {
     sender: string;
@@ -56,7 +54,7 @@ export default {
     ],
     description: "",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        const privateKey = runtime.getSetting(KEY_PRIVATE_KEY);
+        const privateKey = runtime.getSetting("INITIA_PRIVATE_KEY");
         return typeof privateKey === "string" && privateKey.startsWith("0x");
     },
     handler: async (
@@ -94,6 +92,9 @@ export default {
         }
 
         try {
+            const initia = await import('@initia/initia.js');
+            const { MsgSend } = initia;
+
             const walletProvider = new WalletProvider(runtime);
             const msgSend = new MsgSend(
                 content.sender,

@@ -1,7 +1,5 @@
 import { IAgentRuntime, Provider, Memory, State } from "@elizaos/core";
-import * as initia from '@initia/initia.js';
-const { Wallet, RESTClient, RawKey, Tx, WaitTxBroadcastResult } = initia;
-import { KEY_CHAIN_ID, KEY_NODE_URL, KEY_PRIVATE_KEY } from "../types/const";
+
 
 interface WalletProviderOptions {
     chainId: string;
@@ -14,13 +12,16 @@ const DEFAULT_INITIA_TESTNET_CONFIGS: WalletProviderOptions = {
 }
 
 export class WalletProvider {
-    private readonly wallet: Wallet | null = null;
-    private readonly restClient: RESTClient | null = null;
+    private wallet: any = null;
+    private restClient: any = null;
     private runtime: IAgentRuntime;
 
-    constructor(runtime: IAgentRuntime, options: WalletProviderOptions = DEFAULT_INITIA_TESTNET_CONFIGS) {
-        const privateKey = runtime.getSetting(KEY_PRIVATE_KEY);
+    async initialize(runtime: IAgentRuntime, options: WalletProviderOptions = DEFAULT_INITIA_TESTNET_CONFIGS) {
+        const privateKey = runtime.getSetting("INITIA_PRIVATE_KEY");
         if (!privateKey) throw new Error("INITIA_PRIVATE_KEY is not configured");
+
+        const initia = await import('@initia/initia.js');
+        const { Wallet, RESTClient, RawKey } = initia;
 
         this.runtime = runtime;
         this.restClient = new RESTClient(
@@ -32,11 +33,15 @@ export class WalletProvider {
         this.wallet = new Wallet(this.restClient, RawKey.fromHex(privateKey));
     }
 
+    constructor(runtime: IAgentRuntime, options: WalletProviderOptions = DEFAULT_INITIA_TESTNET_CONFIGS) {
+        this.runtime = runtime;
+        this.initialize(runtime, options);
+    }
+
     getWallet() {
         if (this.wallet == null) {
             throw new Error("Initia wallet is not configured.");
         }
-
         return this.wallet;
     }
 
@@ -44,7 +49,6 @@ export class WalletProvider {
         if (this.wallet == null) {
             throw new Error("Initia wallet is not configured.");
         }
-
         return this.wallet.key.accAddress;
     }
 
@@ -52,24 +56,23 @@ export class WalletProvider {
         if (this.wallet == null) {
             throw new Error("Initia wallet is not configured.");
         }
-
         return this.wallet.rest.bank.balance(this.getAddress());
     }
 
-    async sendTransaction(signedTx: Tx): Promise<WaitTxBroadcastResult> {
+    async sendTransaction(signedTx: any) {
         return await this.restClient.tx.broadcast(signedTx);
     }
 }
 
 export const initiaWalletProvider: Provider = {
     async get(runtime: IAgentRuntime, message: Memory, state?: State): Promise<string | null> {
-        if (!runtime.getSetting(KEY_PRIVATE_KEY)) {
+        if (!runtime.getSetting("INITIA_PRIVATE_KEY")) {
             return null;
         }
 
         try {
-            const nodeUrl: string | null = runtime.getSetting(KEY_NODE_URL);
-            const chainId: string | null = runtime.getSetting(KEY_CHAIN_ID);
+            const nodeUrl: string | null = runtime.getSetting("INITIA_NODE_URL");
+            const chainId: string | null = runtime.getSetting("INITIA_CHAIN_ID");
             let walletProvider: WalletProvider;
             if (nodeUrl === null || chainId === null) {
                 walletProvider = new WalletProvider(runtime);

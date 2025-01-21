@@ -57,7 +57,7 @@
     "@elizaos/plugin-goat": "workspace:*",
     "@elizaos/plugin-lensNetwork": "workspace:*",
     "@elizaos/plugin-icp": "workspace:*",
-        "@elizaos/plugin-initia": "workspace:*",
+    "@elizaos/plugin-initia": "workspace:*",
     "@elizaos/plugin-image-generation": "workspace:*",
     "@elizaos/plugin-movement": "workspace:*",
     "@elizaos/plugin-massa": "workspace:*",
@@ -84,6 +84,7 @@
     "@elizaos/plugin-twitter": "workspace:*",
     "@elizaos/plugin-primus": "workspace:*",
     "@elizaos/plugin-cronoszkevm": "workspace:*",
+    "@elizaos/plugin-cronos": "workspace:*",
     "@elizaos/plugin-3d-generation": "workspace:*",
     "@elizaos/plugin-fuel": "workspace:*",
     "@elizaos/plugin-avalanche": "workspace:*",
@@ -111,6 +112,8 @@
     "@elizaos/plugin-devin": "workspace:*",
     "@elizaos/plugin-holdstation": "workspace:*",
     "@elizaos/plugin-router-nitro": "workspace:*",
+    "@elizaos/plugin-nvidia-nim": "workspace:*",
+
     "readline": "1.3.0",
     "ws": "8.18.0",
     "yargs": "17.7.2"

@@ -116,6 +116,9 @@ import { devinPlugin } from '@elizaos/plugin-devin';
 
 
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
+
+import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
+
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -902,8 +905,7 @@ export async function createAgent(
                 ? elizaCodeinPlugin
                 : null,
             bootstrapPlugin,
-            getSecret(character, "CDP_API_KEY_NAME") &&
-            getSecret(character, "CDP_API_KEY_PRIVATE_KEY")
+            getSecret(character, "CDP_API_KEY_NAME") && getSecret(character, "CDP_API_KEY_PRIVATE_KEY") && getSecret(character, "CDP_AGENT_KIT_NETWORK")
                 ? agentKitPlugin
                 : null,
             getSecret(character, "DEXSCREENER_API_KEY")
@@ -1099,6 +1101,12 @@ export async function createAgent(
                 ? holdstationPlugin
                 : null,
             getSecret(character, "INITIA_PRIVATE_KEY") ? initiaPlugin : null,
+
+            getSecret(character, "NVIDIA_NIM_API_KEY") ||
+            getSecret(character, "NVIDIA_NGC_API_KEY")
+                ? nvidiaNimPlugin
+                : null,
+            getSecret(character, "INITIA_PRIVATE_KEY") && getSecret(character, "INITIA_NODE_URL") ? initiaPlugin : null
         ].filter(Boolean),
         providers: [],
         actions: [],

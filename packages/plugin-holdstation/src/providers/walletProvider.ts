@@ -24,10 +24,38 @@ import { PrivateKeyAccount } from "viem/accounts";
 import { useGetAccount, useGetWalletClient } from "../hooks";
 import { Item, SendTransactionParams, WalletPortfolio } from "../types";
 
-import NodeCache from "node-cache";
+// Add this simple cache class
+class SimpleCache {
+    private cache: Map<string, { value: any; expiry: number }>;
+    private defaultTTL: number;
+
+    constructor(defaultTTL: number = 300) { // 300 seconds = 5 minutes
+        this.cache = new Map();
+        this.defaultTTL = defaultTTL;
+    }
+
+    set(key: string, value: any): void {
+        this.cache.set(key, {
+            value,
+            expiry: Date.now() + (this.defaultTTL * 1000)
+        });
+    }
+
+    get<T>(key: string): T | undefined {
+        const item = this.cache.get(key);
+        if (!item) return undefined;
+
+        if (Date.now() > item.expiry) {
+            this.cache.delete(key);
+            return undefined;
+        }
+
+        return item.value as T;
+    }
+}
 
 export class WalletProvider {
-    private cache: NodeCache;
+    private cache: SimpleCache;
     account: PrivateKeyAccount;
     walletClient: WalletClient;
     publicClient: PublicClient<HttpTransport, Chain, Account | undefined>;
@@ -39,7 +67,7 @@ export class WalletProvider {
             chain: zksync,
             transport: http(),
         }) as PublicClient<HttpTransport, Chain, Account | undefined>;
-        this.cache = new NodeCache({ stdTTL: 300 });
+        this.cache = new SimpleCache(300); // 5 minutes TTL
     }
 
     getAddress() {

@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-initia",
-    "version": "0.1.8+build.1",
+    "version": "0.1.9-alpha.1",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -30,7 +30,7 @@
         "@elizaos/core": "workspace:*",
         "@elizaos/plugin-trustdb": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
-        "@initia/initia.js": "^0.2.26"
+        "@initia/initia.js": "0.2.26"
     },
     "devDependencies": {
         "@types/node": "^22.10.1"

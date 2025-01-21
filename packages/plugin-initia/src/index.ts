@@ -1,6 +1,6 @@
 import { Plugin } from "@elizaos/core";
-import transfer from "./actions/transfer.ts";
-import { initiaWalletProvider } from "./providers/wallet.ts";
+import transfer from "./actions/transfer";
+import { initiaWalletProvider } from "./providers/wallet";
 
 export const initiaPlugin: Plugin = {
     name: "initiaPlugin",
