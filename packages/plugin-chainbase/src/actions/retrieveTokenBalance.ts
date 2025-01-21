@@ -117,7 +117,7 @@ export const retrieveTokenBalance: Action = {
         } catch (error) {
             elizaLogger.error("Error in retrieveTokenBalance:", error);
             callback({
-                text: `❌ Error retrieving token balances: ${error instanceof Error ? error.message : "Unknown error"}`,
+                text: "❌ An error occurred while retrieving token balances. Please try again later.",
             });
         }
     },
