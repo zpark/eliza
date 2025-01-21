@@ -192,13 +192,12 @@ export class JeeterInteractionClient {
                 `Found ${uniqueJeets.length} unique interactions to process`
             );
 
-            for (const jeet of uniqueJeets) {
-                // Check if we've been stopped
+            const interactionPromises = uniqueJeets.map(async (jeet) => {
                 if (!this.isRunning) {
                     elizaLogger.log(
                         "Stopping jeet processing due to client stop"
                     );
-                    break;
+                    return;
                 }
 
                 elizaLogger.log(
@@ -208,7 +207,7 @@ export class JeeterInteractionClient {
 
                 if (!jeet.id) {
                     elizaLogger.warn("Skipping interaction without ID");
-                    continue;
+                    return;
                 }
 
                 if (
@@ -218,7 +217,7 @@ export class JeeterInteractionClient {
                     elizaLogger.log(
                         `Skipping already processed interaction ${jeet.id}`
                     );
-                    continue;
+                    return;
                 }
 
                 try {
@@ -277,7 +276,9 @@ export class JeeterInteractionClient {
                         });
                     }
                 }
-            }
+            });
+
+            await Promise.all(interactionPromises);
 
             await this.client.cacheLatestCheckedJeetId();
             elizaLogger.log("Finished checking Jeeter interactions");

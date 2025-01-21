@@ -16,6 +16,11 @@ export const wait = (
     minTime: number = 1000,
     maxTime: number = 3000
 ): Promise<void> => {
+    // Prevent situation where user sets minTime > maxTime
+    if (minTime > maxTime) {
+        [minTime, maxTime] = [maxTime, minTime];
+    }
+
     const waitTime =
         Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
     return new Promise((resolve) => setTimeout(resolve, waitTime));

@@ -38,42 +38,49 @@ export class SimsAIClient extends EventEmitter {
         options: RequestInit = {}
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
-        try {
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    Authorization: `Bearer ${this.apiKey}`,
-                    "Content-Type": "application/json",
-                    ...options.headers,
-                },
-                credentials: "include",
-            });
+        const maxRetries = 3;
+        let attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        Authorization: `Bearer ${this.apiKey}`,
+                        "Content-Type": "application/json",
+                        ...options.headers,
+                    },
+                    credentials: "include",
+                });
 
-            if (!response.ok) {
-                const error = new Error(
-                    `SimsAI API error: ${response.statusText} (${response.status})`
-                ) as ApiError;
-                error.statusCode = response.status;
-                error.endpoint = endpoint;
+                if (!response.ok) {
+                    const error = new Error(
+                        `SimsAI API error: ${response.statusText} (${response.status})`
+                    ) as ApiError;
+                    error.statusCode = response.status;
+                    error.endpoint = endpoint;
+                    throw error;
+                }
+
+                return (await response.json()) as T;
+            } catch (error) {
+                elizaLogger.error(`Error in makeRequest to ${endpoint}:`, {
+                    message: error.message,
+                    stack: error.stack,
+                    endpoint,
+                    options,
+                });
+
+                if (error && this.isRateLimitError(error)) {
+                    const waitTime = Math.pow(2, attempt) * 1000;
+                    elizaLogger.warn(
+                        `Rate limit hit for endpoint ${endpoint}, retrying in ${waitTime}ms`
+                    );
+                    await wait(waitTime);
+                    attempt++;
+                    continue;
+                }
                 throw error;
             }
-
-            return (await response.json()) as T;
-        } catch (error) {
-            elizaLogger.error(`Error in makeRequest to ${endpoint}:`, {
-                message: error.message,
-                stack: error.stack,
-                endpoint,
-                options,
-            });
-
-            if (error && this.isRateLimitError(error)) {
-                elizaLogger.warn(
-                    `Rate limit hit for endpoint ${endpoint}, backing off`
-                );
-                await wait(5000); // Add longer wait for rate limits
-            }
-            throw error;
         }
     }
 
