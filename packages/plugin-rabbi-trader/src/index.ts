@@ -30,7 +30,7 @@ import {
     getWalletBalance,
     getWalletKeypair,
 } from "./wallet";
-import { ProcessedTokenData } from "./types";
+import type { ProcessedTokenData } from "./types";
 import { analyzeTradeAction } from "./actions/analyzeTrade";
 
 // Update Balance interface to include formatted

@@ -1,11 +1,11 @@
 import {
-    ActionExample,
-    Content,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type ActionExample,
+    type Content,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
     elizaLogger,
     composeContext,
@@ -16,7 +16,7 @@ import { getDefaultProvider, Network, Wallet } from "@lens-network/sdk/ethers";
 import { ethers } from "ethers";
 
 import {
-    Address,
+    type Address,
     parseEther,
     isAddress,
 } from "viem";

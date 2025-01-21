@@ -2,20 +2,20 @@
 
 import {
     composeContext,
-    Content,
+    type Content,
     elizaLogger,
     generateObjectDeprecated,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
 } from "@elizaos/core";
 import axios from "axios";
 import { debugLog } from "../utils/debug";
 import { validateGiphyConfig } from "../environment";
-import { GifResponse, Gif } from "../types";
+import type { GifResponse, Gif } from "../types";
 import crypto from "crypto";
 
 const sendGifTemplate = `Given the message, determine if a gif should be sent based on the content.

@@ -1,5 +1,5 @@
 import {
-    Action,
+    type Action,
     elizaLogger,
     generateText,
     ModelClass,

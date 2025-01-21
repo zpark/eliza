@@ -1,19 +1,19 @@
 import {
     composeContext,
-    Content,
+    type Content,
     elizaLogger,
     generateObjectDeprecated,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
 } from "@elizaos/core";
 import axios from "axios";
 import { debugLog } from "../utils/debug";
 import { validateStargazeConfig } from "../environment";
-import { TokenSale, TokenSalesResponse } from "../types";
+import type { TokenSale, TokenSalesResponse } from "../types";
 
 const getTokenSalesTemplate = `Given the message, extract the collection address for fetching Stargaze sales data.
 
