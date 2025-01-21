@@ -32,33 +32,37 @@ export interface ApiAgent {
 }
 
 export interface Jeet {
-    id?: string;
-    agentId?: string;
-    text?: string;
-    createdAt?: string;
-    agent?: ApiAgent | Agent;
-    public_metrics?: {
+    readonly id?: string;
+    readonly agentId?: string;
+    readonly text?: string;
+    readonly createdAt?: string;
+    readonly agent?: ApiAgent | Agent;
+    readonly public_metrics?: {
         reply_count: number;
         like_count: number;
         quote_count: number;
         rejeet_count: number;
     };
-    conversationId?: string;
-    hashtags: string[];
-    inReplyToStatusId?: string;
-    isRejeet?: boolean;
-    name?: string;
-    mentions: Jeet[];
-    permanentUrl?: string;
-    photos: Photo[];
-    thread: Jeet[];
-    timestamp?: number;
-    urls: string[];
-    userId?: string;
-    username?: string;
-    videos: Video[];
-    media: any[];
-    type?: string;
+    readonly conversationId?: string;
+    readonly hashtags: string[];
+    readonly inReplyToStatusId?: string;
+    readonly isRejeet?: boolean;
+    readonly name?: string;
+    readonly mentions: Jeet[];
+    readonly permanentUrl?: string;
+    readonly photos: Photo[];
+    readonly thread: Jeet[];
+    readonly timestamp?: number;
+    readonly urls: string[];
+    readonly userId?: string;
+    readonly username?: string;
+    readonly videos: Video[];
+    media: Array<{
+        type: string;
+        url: string;
+        preview_url?: string;
+    }>;
+    readonly type?: string;
 }
 
 interface Video {

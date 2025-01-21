@@ -435,17 +435,20 @@ export function truncateToCompleteSentence(
         return text;
     }
 
-    const truncatedAtPeriod = text.slice(
-        0,
-        text.lastIndexOf(".", maxLength) + 1
-    );
-    if (truncatedAtPeriod.trim().length > 0) {
-        return truncatedAtPeriod.trim();
+    const lastPeriodIndex = text.lastIndexOf(".", maxLength);
+    if (lastPeriodIndex !== -1) {
+        const truncatedAtPeriod = text.slice(0, lastPeriodIndex + 1).trim();
+        if (truncatedAtPeriod.length > 0) {
+            return truncatedAtPeriod;
+        }
     }
 
-    const truncatedAtSpace = text.slice(0, text.lastIndexOf(" ", maxLength));
-    if (truncatedAtSpace.trim().length > 0) {
-        return truncatedAtSpace.trim() + "...";
+    const lastSpaceIndex = text.lastIndexOf(" ", maxLength);
+    if (lastSpaceIndex !== -1) {
+        const truncatedAtSpace = text.slice(0, lastSpaceIndex).trim();
+        if (truncatedAtSpace.length > 0) {
+            return truncatedAtSpace + "...";
+        }
     }
 
     return text.slice(0, maxLength - 3).trim() + "...";

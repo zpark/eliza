@@ -4,6 +4,7 @@ import {
     generateMessageResponse,
     generateText,
     IAgentRuntime,
+    IImageDescriptionService,
     ModelClass,
     ServiceType,
     State,
@@ -32,6 +33,8 @@ export class JeeterSearchClient {
     private likedJeets: Set<string> = new Set();
     private rejeetedJeets: Set<string> = new Set();
     private quotedJeets: Set<string> = new Set();
+    private isRunning: boolean = false;
+    private timeoutHandle?: NodeJS.Timeout;
 
     constructor(
         private client: ClientBase,
@@ -74,32 +77,70 @@ export class JeeterSearchClient {
     }
 
     async start() {
-        let isRunning = false;
+        if (this.isRunning) {
+            elizaLogger.warn("JeeterSearchClient is already running");
+            return;
+        }
+
+        this.isRunning = true;
+        elizaLogger.log("Starting JeeterSearchClient");
+
         const handleJeeterInteractionsLoop = async () => {
-            if (isRunning) {
-                elizaLogger.log("Previous engagement still running, skipping");
+            if (!this.isRunning) {
+                elizaLogger.log("JeeterSearchClient has been stopped");
                 return;
             }
 
             try {
-                isRunning = true;
                 await this.engageWithSearchTerms();
             } catch (error) {
                 elizaLogger.error("Error in engagement loop:", error);
-            } finally {
-                isRunning = false;
             }
 
-            setTimeout(
-                handleJeeterInteractionsLoop,
-                Math.floor(Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1)) +
-                    MIN_INTERVAL
-            );
+            if (this.isRunning) {
+                this.timeoutHandle = setTimeout(
+                    handleJeeterInteractionsLoop,
+                    Math.floor(
+                        Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1)
+                    ) + MIN_INTERVAL
+                );
+            }
         };
+
+        // Start the loop
         handleJeeterInteractionsLoop();
     }
 
+    public async stop() {
+        elizaLogger.log("Stopping JeeterSearchClient...");
+        this.isRunning = false;
+
+        // Clear any pending timeout
+        if (this.timeoutHandle) {
+            clearTimeout(this.timeoutHandle);
+            this.timeoutHandle = undefined;
+        }
+
+        // Clear interaction sets
+        this.repliedJeets.clear();
+        this.likedJeets.clear();
+        this.rejeetedJeets.clear();
+        this.quotedJeets.clear();
+
+        // Wait for any ongoing operations to complete
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        elizaLogger.log("JeeterSearchClient stopped successfully");
+    }
+
     private async engageWithSearchTerms() {
+        if (!this.isRunning) {
+            elizaLogger.log(
+                "Skipping search terms engagement - client is stopped"
+            );
+            return;
+        }
+
         elizaLogger.log("Engaging with search terms");
         try {
             if (!this.runtime.character.topics?.length) {
@@ -129,6 +170,8 @@ export class JeeterSearchClient {
                 elizaLogger.error("Error fetching search jeets:", error);
             }
 
+            if (!this.isRunning) return;
+
             const discoveryTimeline =
                 await this.client.simsAIClient.getDiscoveryTimeline(50);
             if (!discoveryTimeline) {
@@ -148,6 +191,8 @@ export class JeeterSearchClient {
                     ? searchResponse.jeets
                     : discoveryTimeline.jeets || [];
 
+            if (!this.isRunning) return;
+
             // Use our new ranking method
             elizaLogger.log("Ranking jeets for engagement");
             const rankedJeets = await this.filterAndRankJeets(jeetsToProcess);
@@ -164,6 +209,8 @@ export class JeeterSearchClient {
                 rankedJeets,
                 searchTerm
             );
+
+            if (!this.isRunning) return;
 
             const mostInterestingJeetResponse = await generateText({
                 runtime: this.runtime,
@@ -183,6 +230,8 @@ export class JeeterSearchClient {
                 return;
             }
 
+            if (!this.isRunning) return;
+
             elizaLogger.log(`Selected jeet ${selectedJeet.id} for interaction`);
 
             const previousInteractions = {
@@ -199,6 +248,8 @@ export class JeeterSearchClient {
                 );
                 return;
             }
+
+            if (!this.isRunning) return;
 
             await this.processSelectedJeet(
                 selectedJeet,
@@ -298,11 +349,12 @@ Text: ${jeet.text}
     }
 
     private async filterAndRankJeets(jeets: Jeet[]): Promise<Jeet[]> {
+        if (!this.isRunning) return [];
+
         // First filter out basic invalid jeets
         const basicValidJeets = jeets.filter(
             (jeet) =>
-                jeet &&
-                jeet.text &&
+                jeet?.text &&
                 jeet.agent?.username !==
                     this.runtime.getSetting("SIMSAI_USERNAME")
         );
@@ -310,6 +362,8 @@ Text: ${jeet.text}
         // Then check ALL interaction types before processing
         const validJeets = [];
         for (const jeet of basicValidJeets) {
+            if (!this.isRunning) return [];
+
             const hasReplied = await this.hasInteracted(jeet.id, "reply");
             const hasLiked = await this.hasInteracted(jeet.id, "like");
             const hasRejeeted = await this.hasInteracted(jeet.id, "rejeet");
@@ -351,6 +405,8 @@ Text: ${jeet.text}
             quoted: boolean;
         }
     ) {
+        if (!this.isRunning) return;
+
         // If dry run is enabled, skip processing
         if (this.runtime.getSetting("SIMSAI_DRY_RUN") === "true") {
             elizaLogger.info(
@@ -371,6 +427,8 @@ Text: ${jeet.text}
             selectedJeet.agent?.name || "",
             "jeeter"
         );
+
+        if (!this.isRunning) return;
 
         const thread = await buildConversationThread(selectedJeet, this.client);
         elizaLogger.log(
@@ -393,6 +451,8 @@ Text: ${jeet.text}
             const timeB = new Date(b.createdAt || 0).getTime();
             return timeA - timeB;
         });
+
+        if (!this.isRunning) return;
 
         // Enhanced formatting of conversation context with clear conversation flow
         const formattedConversation = sortedThread
@@ -452,6 +512,8 @@ Text: ${jeet.text}
             return { text: "", action: "IGNORE" };
         }
 
+        if (!this.isRunning) return;
+
         await this.handleJeetInteractions(
             message,
             selectedJeet,
@@ -475,6 +537,8 @@ Text: ${jeet.text}
         formattedConversation: string,
         thread: Jeet[]
     ) {
+        if (!this.isRunning) return;
+
         try {
             elizaLogger.log(`Composing state for jeet ${selectedJeet.id}`);
             let state = await this.runtime.composeState(message, {
@@ -482,7 +546,7 @@ Text: ${jeet.text}
                 jeeterUserName: this.runtime.getSetting("SIMSAI_USERNAME"),
                 timeline: formattedTimeline,
                 jeetContext: await this.buildJeetContext(selectedJeet),
-                formattedConversation, // Add conversation context
+                formattedConversation,
                 conversationContext: {
                     messageCount: thread.length,
                     participants: [
@@ -515,6 +579,8 @@ Text: ${jeet.text}
                 previousInteractions,
             });
 
+            if (!this.isRunning) return;
+
             elizaLogger.log(
                 `Saving request message for jeet ${selectedJeet.id}`
             );
@@ -526,6 +592,8 @@ Text: ${jeet.text}
                     this.runtime.character.templates?.jeeterSearchTemplate ||
                     jeeterSearchTemplate,
             });
+
+            if (!this.isRunning) return;
 
             elizaLogger.log(
                 `Generating message response for jeet ${selectedJeet.id}`
@@ -548,8 +616,12 @@ Text: ${jeet.text}
                 throw new TypeError("Response interactions are undefined");
             }
 
+            if (!this.isRunning) return;
+
             if (response.interactions.length > 0) {
                 for (const interaction of response.interactions) {
+                    if (!this.isRunning) return;
+
                     try {
                         if (
                             (interaction.type === "reply" &&
@@ -574,6 +646,7 @@ Text: ${jeet.text}
                         switch (interaction.type) {
                             case "rejeet":
                                 try {
+                                    if (!this.isRunning) return;
                                     const rejeetResult =
                                         await this.client.simsAIClient.rejeetJeet(
                                             selectedJeet.id
@@ -602,6 +675,7 @@ Text: ${jeet.text}
 
                             case "quote":
                                 if (interaction.text) {
+                                    if (!this.isRunning) return;
                                     await this.client.simsAIClient.quoteRejeet(
                                         selectedJeet.id,
                                         interaction.text
@@ -618,6 +692,7 @@ Text: ${jeet.text}
 
                             case "reply":
                                 if (interaction.text) {
+                                    if (!this.isRunning) return;
                                     const replyResponse = {
                                         ...response,
                                         text: interaction.text,
@@ -640,6 +715,7 @@ Text: ${jeet.text}
                                         idx,
                                         responseMessage,
                                     ] of responseMessages.entries()) {
+                                        if (!this.isRunning) return;
                                         responseMessage.content.action =
                                             idx === responseMessages.length - 1
                                                 ? response.action
@@ -665,6 +741,7 @@ Text: ${jeet.text}
 
                             case "like":
                                 try {
+                                    if (!this.isRunning) return;
                                     await this.client.simsAIClient.likeJeet(
                                         selectedJeet.id
                                     );
@@ -702,6 +779,8 @@ Text: ${jeet.text}
                 }
             }
 
+            if (!this.isRunning) return;
+
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${
                 selectedJeet.id
             } - @${selectedJeet.agent?.username || "unknown"}: ${
@@ -737,6 +816,8 @@ Text: ${jeet.text}
     }
 
     private async buildJeetContext(selectedJeet: Jeet): Promise<string> {
+        if (!this.isRunning) return "";
+
         let context = `Original Post:\nBy @${selectedJeet.agent?.username || "unknown"}\n${selectedJeet.text}`;
 
         if (selectedJeet.thread?.length) {
@@ -757,16 +838,22 @@ Text: ${jeet.text}
             }
         }
 
+        if (!this.isRunning) return "";
+
         // Add media descriptions if they exist
         if (selectedJeet.media?.length) {
             const imageDescriptions = [];
             for (const media of selectedJeet.media) {
+                if (!this.isRunning) return "";
                 // Check if the media has a URL and we can process it
                 if ("url" in media) {
-                    const description = this.runtime.getService(
-                        ServiceType.IMAGE_DESCRIPTION
-                    );
+                    const imageDescriptionService =
+                        this.runtime.getService<IImageDescriptionService>(
+                            ServiceType.IMAGE_DESCRIPTION
+                        );
 
+                    const description =
+                        await imageDescriptionService.describeImage(media.url);
                     imageDescriptions.push(description);
                 }
             }
@@ -781,15 +868,21 @@ Text: ${jeet.text}
             context += `\nURLs: ${selectedJeet.urls.join(", ")}`;
         }
 
+        if (!this.isRunning) return "";
+
         // Add photos if they exist
         if (selectedJeet.photos?.length) {
             const photoDescriptions = [];
             for (const photo of selectedJeet.photos) {
+                if (!this.isRunning) return "";
                 if (photo.url) {
-                    const description = this.runtime.getService(
-                        ServiceType.IMAGE_DESCRIPTION
-                    );
+                    const imageDescriptionService =
+                        this.runtime.getService<IImageDescriptionService>(
+                            ServiceType.IMAGE_DESCRIPTION
+                        );
 
+                    const description =
+                        await imageDescriptionService.describeImage(photo.url);
                     photoDescriptions.push(description);
                 }
             }

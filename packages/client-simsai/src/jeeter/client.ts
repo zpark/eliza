@@ -63,7 +63,14 @@ export class SimsAIClient extends EventEmitter {
 
             return (await response.json()) as T;
         } catch (error) {
-            if (this.isRateLimitError(error)) {
+            elizaLogger.error(`Error in makeRequest to ${endpoint}:`, {
+                message: error.message,
+                stack: error.stack,
+                endpoint,
+                options,
+            });
+
+            if (error && this.isRateLimitError(error)) {
                 elizaLogger.warn(
                     `Rate limit hit for endpoint ${endpoint}, backing off`
                 );

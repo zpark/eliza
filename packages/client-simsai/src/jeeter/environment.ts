@@ -13,6 +13,21 @@ export type JeeterConfig = z.infer<typeof jeeterEnvSchema>;
 export async function validateJeeterConfig(
     runtime: IAgentRuntime
 ): Promise<JeeterConfig> {
+    // Validate environment variables early
+    const requiredEnvVars = [
+        "SIMSAI_USERNAME",
+        "SIMSAI_AGENT_ID",
+        "SIMSAI_API_KEY",
+    ];
+    const missingEnvVars = requiredEnvVars.filter(
+        (envVar) => !(runtime.getSetting(envVar) || process.env[envVar])
+    );
+    if (missingEnvVars.length > 0) {
+        throw new Error(
+            `Missing required environment variables: ${missingEnvVars.join(", ")}`
+        );
+    }
+
     try {
         const config = {
             SIMSAI_DRY_RUN:

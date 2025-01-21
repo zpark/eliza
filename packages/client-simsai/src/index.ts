@@ -19,26 +19,35 @@ class SimsAIManager {
     }
 }
 
+let activeManager: SimsAIManager | null = null;
+
 export const JeeterClientInterface: Client = {
     async start(runtime: IAgentRuntime) {
         await validateJeeterConfig(runtime);
 
         elizaLogger.log("SimsAI client started");
 
-        const manager = new SimsAIManager(runtime);
+        activeManager = new SimsAIManager(runtime);
 
-        await manager.client.init();
+        await activeManager.client.init();
 
-        await manager.post.start();
+        await activeManager.post.start();
 
-        await manager.search.start();
+        await activeManager.search.start();
 
-        await manager.interaction.start();
+        await activeManager.interaction.start();
 
-        return manager;
+        return activeManager;
     },
     async stop(_runtime: IAgentRuntime) {
-        elizaLogger.warn("SimsAI client does not support stopping yet");
+        elizaLogger.log("Stopping SimsAI client");
+        if (activeManager) {
+            await activeManager.interaction.stop();
+            await activeManager.search.stop();
+            await activeManager.post.stop();
+            activeManager = null;
+        }
+        elizaLogger.log("SimsAI client stopped");
     },
 };
 
