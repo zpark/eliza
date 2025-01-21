@@ -33,7 +33,7 @@
         "@elizaos/client-twitter": "workspace:*",
         "@elizaos/client-instagram": "workspace:*",
         "@elizaos/client-slack": "workspace:*",
-        "@elizaos/client-simsai":"workspace:*",
+        "@elizaos/client-simsai": "workspace:*",
         "@elizaos/core": "workspace:*",
         "@elizaos/plugin-0g": "workspace:*",
         "@elizaos/plugin-abstract": "workspace:*",
@@ -123,8 +123,9 @@
         "@elizaos/plugin-suno": "workspace:*",
         "@elizaos/plugin-udio": "workspace:*",
         "@elizaos/plugin-hyperbolic": "workspace:*",
-            "@elizaos/plugin-football": "workspace:*",
-    "readline": "1.3.0",
+        "@elizaos/plugin-football": "workspace:*",
+        "@elizaos/plugin-imgflip": "workspace:*",
+        "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"
     },
@@ -136,4 +137,3 @@
         "tsup": "8.3.5"
     }
 }
-
