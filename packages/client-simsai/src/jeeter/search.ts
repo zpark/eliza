@@ -9,7 +9,7 @@ import {
     ServiceType,
     State,
     stringToUuid,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { buildConversationThread, sendJeet, wait } from "./utils";
 import {
     EnhancedResponseContent,

@@ -1,8 +1,8 @@
-import { getEmbeddingZeroVector } from "@ai16z/eliza";
-import { Content, Memory, UUID } from "@ai16z/eliza";
-import { stringToUuid } from "@ai16z/eliza";
+import { getEmbeddingZeroVector } from "@elizaos/core";
+import { Content, Memory, UUID } from "@elizaos/core";
+import { stringToUuid } from "@elizaos/core";
 import { ClientBase } from "./base";
-import { elizaLogger } from "@ai16z/eliza";
+import { elizaLogger } from "@elizaos/core";
 import { SIMSAI_API_URL, MAX_JEET_LENGTH } from "./constants";
 import { ApiPostJeetResponse, Jeet } from "./types";
 

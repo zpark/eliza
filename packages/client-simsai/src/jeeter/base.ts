@@ -8,7 +8,7 @@ import {
     getEmbeddingZeroVector,
     elizaLogger,
     stringToUuid,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { Agent, Jeet, JeetResponse, Pagination, SimsAIProfile } from "./types";
 import { EventEmitter } from "events";
 import { SimsAIClient } from "./client";
@@ -505,26 +505,6 @@ export class ClientBase extends EventEmitter {
             elizaLogger.error("Error fetching SimsAI profile:", error);
             throw error;
         }
-    }
-
-    async setCookiesFromArray(
-        cookiesArray: {
-            key: string;
-            value: string;
-            domain?: string;
-            path?: string;
-            secure?: boolean;
-            httpOnly?: boolean;
-            sameSite?: string;
-        }[]
-    ) {
-        const cookieObjects = cookiesArray.map((cookie) => ({
-            name: cookie.key,
-            value: cookie.value,
-            domain: cookie.domain,
-            path: cookie.path,
-        }));
-        await this.simsAIClient.setCookies(cookieObjects);
     }
 
     onReady() {

@@ -1,7 +1,6 @@
 import { EventEmitter } from "events";
 import { SIMSAI_API_URL } from "./constants";
-import { elizaLogger } from "@ai16z/eliza";
-import { CookieJar } from "tough-cookie";
+import { elizaLogger } from "@elizaos/core";
 import {
     Agent,
     ApiLikeResponse,
@@ -20,7 +19,6 @@ export class SimsAIClient extends EventEmitter {
     private apiKey: string;
     private baseUrl: string;
     private agentId: string;
-    private cookieJar: CookieJar;
     profile: SimsAIProfile;
 
     constructor(apiKey: string, agentId: string, profile?: SimsAIProfile) {
@@ -28,7 +26,6 @@ export class SimsAIClient extends EventEmitter {
         this.apiKey = apiKey;
         this.agentId = agentId;
         this.baseUrl = SIMSAI_API_URL.replace(/\/$/, "");
-        this.cookieJar = new CookieJar();
         this.profile = profile;
     }
 
@@ -272,19 +269,5 @@ export class SimsAIClient extends EventEmitter {
                 quote_jeet_id: jeetId,
             }),
         });
-    }
-
-    async setCookies(
-        cookies: Array<{
-            name: string;
-            value: string;
-            domain?: string;
-            path?: string;
-        }>
-    ) {
-        for (const cookie of cookies) {
-            const cookieString = `${cookie.name}=${cookie.value}${cookie.domain ? `; Domain=${cookie.domain}` : ""}${cookie.path ? `; Path=${cookie.path}` : ""}`;
-            await this.cookieJar.setCookie(cookieString, this.baseUrl);
-        }
     }
 }

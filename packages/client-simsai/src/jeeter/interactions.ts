@@ -8,7 +8,7 @@ import {
     ModelClass,
     stringToUuid,
     elizaLogger,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { ClientBase } from "./base";
 import { buildConversationThread, sendJeet, wait } from "./utils";
 import { Jeet, EnhancedResponseContent, JeetInteraction } from "./types";

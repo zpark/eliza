@@ -7,7 +7,7 @@ import {
     ModelClass,
     stringToUuid,
     elizaLogger,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { ClientBase } from "./base";
 import { JEETER_API_URL, MAX_JEET_LENGTH } from "./constants";
 import { truncateToCompleteSentence } from "./utils";
