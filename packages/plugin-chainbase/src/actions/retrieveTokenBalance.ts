@@ -94,7 +94,7 @@ export const retrieveTokenBalance: Action = {
                 ...token,
                 balance: token.balance
                     ? Number(
-                          BigInt(token.balance) / BigInt(10 ** token.decimals)
+                          BigInt(token.balance) / (BigInt(10) ** BigInt(token.decimals))
                       ).toFixed(18)
                     : "0",
             }));
