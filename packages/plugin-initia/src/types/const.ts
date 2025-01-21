@@ -1,0 +1,3 @@
+export const KEY_PRIVATE_KEY = "INITIA_PRIVATE_KEY";
+export const KEY_NODE_URL = "INITIA_NODE_URL";
+export const KEY_CHAIN_ID = "INITIA_CHAIN_ID";

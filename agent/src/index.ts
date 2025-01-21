@@ -76,6 +76,7 @@ import { flowPlugin } from "@elizaos/plugin-flow";
 import { fuelPlugin } from "@elizaos/plugin-fuel";
 import { genLayerPlugin } from "@elizaos/plugin-genlayer";
 import { gitcoinPassportPlugin } from "@elizaos/plugin-gitcoin-passport";
+import { initiaPlugin } from "@elizaos/plugin-initia";
 import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
 import { lensPlugin } from "@elizaos/plugin-lensNetwork";
 import { multiversxPlugin } from "@elizaos/plugin-multiversx";
@@ -1097,6 +1098,7 @@ export async function createAgent(
             getSecret(character, "HOLDSTATION_PRIVATE_KEY")
                 ? holdstationPlugin
                 : null,
+            getSecret(character, "INITIA_PRIVATE_KEY") ? initiaPlugin : null,
         ].filter(Boolean),
         providers: [],
         actions: [],
