@@ -1,10 +1,10 @@
 import { TokenWithBalance } from "./types";
 
 export function formatTokenBalance(token: TokenWithBalance) {
-    const balanceDecimal = parseInt(token.balance, 16);
+    const balanceDecimal = BigInt(`0x${token.balance}`);
     const amount = token.decimals
-        ? balanceDecimal / Math.pow(10, token.decimals)
-        : balanceDecimal;
+        ? Number(balanceDecimal) / Math.pow(10, token.decimals)
+        : Number(balanceDecimal);
 
     const formattedAmount =
         amount >= 1
