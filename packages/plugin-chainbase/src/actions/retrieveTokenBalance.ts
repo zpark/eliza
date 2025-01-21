@@ -10,6 +10,7 @@ import {
     generateObject,
     generateText,
 } from "@elizaos/core";
+import Big from "big.js";
 import { getTokenBalances } from "../libs/chainbase";
 import {
     retrieveTokenBalanceTemplate,
@@ -44,7 +45,7 @@ export const retrieveTokenBalance: Action = {
         message: Memory,
         state?: State,
         options?: { [key: string]: unknown },
-        callback?: HandlerCallback
+        callback?: HandlerCallback,
     ) => {
         try {
             elizaLogger.log("Composing state for message:", message);
@@ -71,7 +72,7 @@ export const retrieveTokenBalance: Action = {
                     {
                         text: "Invalid query params. Please check the inputs.",
                     },
-                    []
+                    [],
                 );
                 return;
             }
@@ -93,9 +94,9 @@ export const retrieveTokenBalance: Action = {
             const processedTokens = tokens.map((token) => ({
                 ...token,
                 balance: token.balance
-                    ? Number(
-                          BigInt(token.balance) / (BigInt(10) ** BigInt(token.decimals))
-                      ).toFixed(18)
+                    ? new Big(parseInt(token.balance, 16).toString())
+                          .div(new Big(10).pow(token.decimals))
+                          .toFixed(18)
                     : "0",
             }));
 
@@ -115,7 +116,7 @@ export const retrieveTokenBalance: Action = {
                 });
             }
         } catch (error) {
-            elizaLogger.error("Error in retrieveTokenBalance:", error);
+            elizaLogger.error("Error in retrieveTokenBalance:", error.message);
             callback({
                 text: "❌ An error occurred while retrieving token balances. Please try again later.",
             });
