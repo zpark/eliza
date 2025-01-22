@@ -105,7 +105,7 @@ import yargs from "yargs";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
-const pluginJsonFileName = 'plugin.json';
+const packageJsonFileName = 'package.json';
 
 // XXX TODO: validate parameters against jsonSchema
 const validateParameters = (parameters: any, jsonSchema: any) => {
@@ -302,7 +302,7 @@ async function handlePluginImporting(plugins: string[]) {
             plugins.map(async (plugin) => {
                 const pluginSpec: string = plugin;
                 try {
-                    const u = `${pluginSpec}/${pluginJsonFileName}`;
+                    const u = `${pluginSpec}/${packageJsonFileName}`;
                     const packageJson = await import(u, {
                         with: {
                             type: 'json',
@@ -311,7 +311,7 @@ async function handlePluginImporting(plugins: string[]) {
                     const {
                         pluginType,
                         pluginParameters,
-                    } = packageJson;
+                    } = packageJson.agentConfig ?? {};
                     // const mergedParameters = validateParameters(pluginSpec.parameters, pluginParameters);
                     // console.log('merge custom plugin schema', {
                     //     parameters: pluginSpec.parameters,
@@ -551,7 +551,7 @@ export async function initializeClients(
     }[] = character.clients ?
         await Promise.all(character.clients.map(async (str) => {
             const clientSpec: string = str;
-            const u = `${clientSpec}/${pluginJsonFileName}`;
+            const u = `${clientSpec}/${packageJsonFileName}`;
             console.log('load client spec A', {
                 clientSpec,
                 u,
@@ -568,9 +568,11 @@ export async function initializeClients(
             });
             const {
                 name,
+            } = packageJson;
+            const {
                 pluginType,
                 parameters,
-            } = packageJson;
+            } = packageJson.agentConfig ?? {};
             // const mergedParameters = validateParameters(clientSpec.parameters, parameters);
             // console.log('merge custom client schema', {
             //     packageJson,
