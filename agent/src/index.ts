@@ -19,7 +19,6 @@ import { agentKitPlugin } from "@elizaos/plugin-agentkit";
 import { PrimusAdapter } from "@elizaos/plugin-primus";
 import { lightningPlugin } from "@elizaos/plugin-lightning";
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
-import { holdstationPlugin } from "@elizaos/plugin-holdstation";
 
 import {
     AgentRuntime,
@@ -60,6 +59,7 @@ import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { b2Plugin } from "@elizaos/plugin-b2";
 import { binancePlugin } from "@elizaos/plugin-binance";
 import { birdeyePlugin } from "@elizaos/plugin-birdeye";
+import { bnbPlugin } from "@elizaos/plugin-bnb";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -103,6 +103,7 @@ import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
 import { verifiableLogPlugin } from "@elizaos/plugin-tee-verifiable-log";
 import { tonPlugin } from "@elizaos/plugin-ton";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
+import { dkgPlugin } from "@elizaos/plugin-dkg";
 import { injectivePlugin } from "@elizaos/plugin-injective";
 import { giphyPlugin } from "@elizaos/plugin-giphy";
 import { letzAIPlugin } from "@elizaos/plugin-letzai";
@@ -127,7 +128,10 @@ import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-import { dominosPlugin } from "@elizaos/plugin-dominos";
+import { emailPlugin } from "@elizaos/plugin-email";
+
+const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
+const __dirname = path.dirname(__filename); // get the name of the directory
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -595,6 +599,11 @@ export function getTokenForProvider(
             return (
                 character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
                 settings.ATOMASDK_BEARER_AUTH
+            );
+        case ModelProviderName.NVIDIA:
+            return (
+                character.settings?.secrets?.NVIDIA_API_KEY ||
+                settings.NVIDIA_API_KEY
             );
         case ModelProviderName.NVIDIA:
             return (
@@ -1095,6 +1104,8 @@ export async function createAgent(
             getSecret(character, "RESERVOIR_API_KEY")
                 ? createNFTCollectionsPlugin()
                 : null,
+            getSecret(character, "ZERO_EX_API_KEY") ? zxPlugin : null,
+            getSecret(character, "DKG_PRIVATE_KEY") ? dkgPlugin : null,
             getSecret(character, "PYTH_TESTNET_PROGRAM_KEY") ||
             getSecret(character, "PYTH_MAINNET_PROGRAM_KEY")
                 ? pythDataPlugin
@@ -1110,20 +1121,22 @@ export async function createAgent(
             )
                 ? openaiPlugin
                 : null,
-            getSecret(character, "DEVIN_API_TOKEN") ? devinPlugin : null,
-            getSecret(character, "HOLDSTATION_PRIVATE_KEY")
-                ? holdstationPlugin
+            getSecret(character, "DEVIN_API_TOKEN")
+                ? devinPlugin
                 : null,
             getSecret(character, "INITIA_PRIVATE_KEY") ? initiaPlugin : null,
-
             getSecret(character, "NVIDIA_NIM_API_KEY") ||
             getSecret(character, "NVIDIA_NGC_API_KEY")
                 ? nvidiaNimPlugin
                 : null,
-            getSecret(character, "INITIA_PRIVATE_KEY") &&
-            getSecret(character, "INITIA_NODE_URL")
-                ? initiaPlugin
+            getSecret(character, "INITIA_PRIVATE_KEY") && getSecret(character, "INITIA_NODE_URL") ? initiaPlugin : null,
+            getSecret(character, "BNB_PRIVATE_KEY") ||
+            getSecret(character, "BNB_PUBLIC_KEY")?.startsWith("0x")
+                ? bnbPlugin
                 : null,
+            getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS") ||
+            getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS") ?
+            emailPlugin : null
         ].filter(Boolean),
         providers: [],
         managers: [],
