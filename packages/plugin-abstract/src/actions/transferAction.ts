@@ -149,25 +149,6 @@ export const transferAction: Action = {
 
 		const resolvedRecipient = await resolveAddress(content.recipient);
 
-<<<<<<< HEAD
-                    hash = await abstractClient.writeContract({
-                        chain: abstractTestnet,
-                        address: content.tokenAddress as Address,
-                        abi: erc20Abi,
-                        functionName: "transfer",
-                        args: [content.recipient as Address, tokenAmount],
-                    });
-                } else {
-                    hash = await abstractClient.sendTransaction({
-                        chain: abstractTestnet,
-                        to: content.recipient as Address,
-                        value: parseEther(content.amount.toString()),
-                        kzg: undefined,
-                    });
-                }
-            } else {
-                const walletClient = useGetWalletClient();
-=======
 		const input = {
 			tokenAddress: tokenAddress,
 			recipient: resolvedRecipient,
@@ -175,7 +156,6 @@ export const transferAction: Action = {
 			useAGW: content.useAGW,
 		};
 		const result = validatedTransferSchema.safeParse(input);
->>>>>>> a00f7237542b734e239de539bb3ee99271542ab7
 
 		if (!result.success) {
 			elizaLogger.error(
