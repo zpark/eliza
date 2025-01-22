@@ -12,10 +12,10 @@ import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 import { FarcasterClientInterface } from "@elizaos/client-farcaster";
 import { JeeterClientInterface } from "@elizaos/client-simsai";
-// import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
+
 import { DirectClient } from "@elizaos/client-direct";
 import { agentKitPlugin } from "@elizaos/plugin-agentkit";
-// import { ReclaimAdapter } from "@elizaos/plugin-reclaim";
+
 import { PrimusAdapter } from "@elizaos/plugin-primus";
 import { lightningPlugin } from "@elizaos/plugin-lightning";
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
