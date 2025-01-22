@@ -1,5 +1,5 @@
 
-import { Action } from "@elizaos/core";
+import type { Action } from "@elizaos/core";
 import { validatePrompt, validateApiKey, callOpenAiApi, buildRequestData } from "./action";
 
 export const generateTextAction: Action = {

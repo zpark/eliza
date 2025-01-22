@@ -1,5 +1,5 @@
 
-import { Action } from "@elizaos/core";
+import type { Action } from "@elizaos/core";
 import { validateApiKey, callOpenAiApi } from "./action";
 
 export const transcribeAudioAction: Action = {
