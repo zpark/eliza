@@ -58,6 +58,7 @@ import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { b2Plugin } from "@elizaos/plugin-b2";
 import { binancePlugin } from "@elizaos/plugin-binance";
 import { birdeyePlugin } from "@elizaos/plugin-birdeye";
+import { bnbPlugin } from "@elizaos/plugin-bnb";
 import {
     advancedTradePlugin,
     coinbaseCommercePlugin,
@@ -1108,7 +1109,11 @@ export async function createAgent(
             getSecret(character, "NVIDIA_NGC_API_KEY")
                 ? nvidiaNimPlugin
                 : null,
-            getSecret(character, "INITIA_PRIVATE_KEY") && getSecret(character, "INITIA_NODE_URL") ? initiaPlugin : null
+            getSecret(character, "INITIA_PRIVATE_KEY") && getSecret(character, "INITIA_NODE_URL") ? initiaPlugin : null,
+            getSecret(character, "BNB_PRIVATE_KEY") ||
+            getSecret(character, "BNB_PUBLIC_KEY")?.startsWith("0x")
+                ? bnbPlugin
+                : null,
         ].filter(Boolean),
         providers: [],
         actions: [],

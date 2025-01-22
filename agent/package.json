@@ -42,6 +42,7 @@
         "@elizaos/plugin-coinmarketcap": "workspace:*",
         "@elizaos/plugin-binance": "workspace:*",
         "@elizaos/plugin-avail": "workspace:*",
+        "@elizaos/plugin-bnb": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
         "@elizaos/plugin-di": "workspace:*",
         "@elizaos/plugin-cosmos": "workspace:*",
