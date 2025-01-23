@@ -133,6 +133,7 @@ import { fileURLToPath } from "url";
 import yargs from "yargs";
 import { emailPlugin } from "@elizaos/plugin-email";
 import { sunoPlugin } from "@elizaos/plugin-suno";
+import { udioPlugin } from "@elizaos/plugin-udio";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -1155,7 +1156,8 @@ export async function createAgent(
             getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS") ||
             getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS") ?
             emailPlugin : null,
-            getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null
+            getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
+            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null
         ].filter(Boolean),
         providers: [],
         managers: [],
