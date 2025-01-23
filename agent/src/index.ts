@@ -118,14 +118,11 @@ import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
 import { openaiPlugin } from "@elizaos/plugin-openai";
 import nitroPlugin from "@elizaos/plugin-router-nitro";
 import { devinPlugin } from "@elizaos/plugin-devin";
-
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-
 import { chainbasePlugin } from "@elizaos/plugin-chainbase";
-
 import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
-
 import { zxPlugin } from "@elizaos/plugin-0x";
+import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -1161,6 +1158,9 @@ export async function createAgent(
             getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS") ||
             getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS") ?
             emailPlugin : null,
+            getSecret(character, "HYPERBOLIC_API_KEY")
+                ? hyperbolicPlugin
+                : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
             getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null
         ].filter(Boolean),
