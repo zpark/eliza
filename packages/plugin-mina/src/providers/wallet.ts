@@ -11,6 +11,7 @@ import NodeCache from "node-cache";
 import * as path from "path";
 import { parseAccount } from "../utils";
 import { MINA_UNIT, USD_UNIT } from "../constants";
+import BigNumber from "bignumber.js";
 
 // Provider configuration
 const PROVIDER_CONFIG = {
@@ -193,7 +194,9 @@ export class WalletProvider {
         runtime: IAgentRuntime,
         portfolio: WalletPortfolio,
     ): string {
-        return `${runtime.character.name}\nWallet Address: ${this.address}\nTotal Value: $${portfolio.totalUsd} (${portfolio.totalMina} MINA)\n`;
+        const totalUsd = new BigNumber(portfolio.totalUsd).toFixed(2);
+        const totalMina = new BigNumber(portfolio.totalMina).toFixed(2);
+        return `${runtime.character.name}\nWallet Address: ${this.address}\nTotal Value: $${totalUsd} (${totalMina} MINA)\n`;
     }
 
     async getFormattedPortfolio(runtime: IAgentRuntime): Promise<string> {

@@ -4,6 +4,7 @@ import { WalletProvider } from "../providers/wallet.ts";
 import { defaultCharacter } from "@elizaos/core";
 import { PublicKey } from "o1js";
 import { MINA_UNIT, USD_UNIT } from "../constants.ts";
+import BigNumber from "bignumber.js";
 
 // Mock NodeCache
 vi.mock("node-cache", () => {
@@ -73,7 +74,7 @@ describe("WalletProvider", () => {
 
             expect(result).toEqual(
                 `Eliza\nWallet Address: ${walletProvider.address}\n` +
-                    `Total Value: $${totalUsd} (${minaAmount} MINA)\n`,
+                    `Total Value: $${new BigNumber(totalUsd.toString()).toFixed(2)} (${new BigNumber(minaAmount.toString()).toFixed(2)} MINA)\n`,
             );
         });
     });
