@@ -530,6 +530,10 @@ export class TwitterPostClient {
                     cleanedContent = parsedResponse;
                 }
             } catch (error) {
+                elizaLogger.error(
+                    "Response is not JSON, treating as plain text",
+                    response,
+                );
                 error.linted = true; // make linter happy since catch needs a variable
                 // If not JSON, clean the raw content
                 cleanedContent = newTweetContent
@@ -655,7 +659,10 @@ export class TwitterPostClient {
             error.linted = true; // make linter happy since catch needs a variable
 
             // If JSON parsing fails, treat as plain text
-            elizaLogger.debug("Response is not JSON, treating as plain text");
+            elizaLogger.error(
+                "Response is not JSON, treating as plain text",
+                response,
+            );
         }
         // If not JSON or no valid content found, clean the raw text
         return this.trimTweetLength(cleanedResponse);
