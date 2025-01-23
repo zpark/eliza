@@ -1,4 +1,3 @@
-
 import { Action } from "@elizaos/core";
 import { validatePrompt, validateApiKey, callOpenAiApi } from "./action";
 
@@ -15,7 +14,15 @@ export const generateEmbeddingAction: Action = {
             input,
         };
 
-        const response = await callOpenAiApi("https://api.openai.com/v1/embeddings", requestData, apiKey);
+        const response = await callOpenAiApi(
+            "https://api.openai.com/v1/embeddings",
+            requestData,
+            apiKey,
+        );
         return response.data.map((item) => item.embedding);
     },
+    validate: async (runtime, message) => {
+        return !!runtime.getSetting("OPENAI_API_KEY");
+    },
+    examples: [],
 };
