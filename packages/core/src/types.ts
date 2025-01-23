@@ -916,6 +916,7 @@ export type Character = {
         username: string;
         bio: string;
         nicknames?: string[];
+    };
 
     /** Optional SimsAI profile */
     simsaiProfile?: {
