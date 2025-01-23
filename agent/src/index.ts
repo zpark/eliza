@@ -12,6 +12,7 @@ import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 import { FarcasterClientInterface } from "@elizaos/client-farcaster";
+import { OmniflixPlugin } from "@elizaos/plugin-omniflix";
 import { JeeterClientInterface } from "@elizaos/client-simsai";
 
 import { DirectClient } from "@elizaos/client-direct";
@@ -117,14 +118,11 @@ import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
 import { openaiPlugin } from "@elizaos/plugin-openai";
 import nitroPlugin from "@elizaos/plugin-router-nitro";
 import { devinPlugin } from "@elizaos/plugin-devin";
-
 import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-
 import { chainbasePlugin } from "@elizaos/plugin-chainbase";
-
 import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
-
 import { zxPlugin } from "@elizaos/plugin-0x";
+import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -133,6 +131,7 @@ import { fileURLToPath } from "url";
 import yargs from "yargs";
 import { emailPlugin } from "@elizaos/plugin-email";
 import { sunoPlugin } from "@elizaos/plugin-suno";
+import { udioPlugin } from "@elizaos/plugin-udio";
 import { minaPlugin } from "@elizaos/plugin-mina";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -1034,6 +1033,10 @@ export async function createAgent(
                 getSecret(character, "SGX"))
                 ? teeLogPlugin
                 : null,
+            getSecret(character, "OMNIFLIX_API_URL") &&
+            getSecret(character, "OMNIFLIX_MNEMONIC")
+                ? OmniflixPlugin
+                : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
             getSecret(character, "COINBASE_NOTIFICATION_URI")
@@ -1155,13 +1158,14 @@ export async function createAgent(
             getSecret(character, "BNB_PUBLIC_KEY")?.startsWith("0x")
                 ? bnbPlugin
                 : null,
-            (getSecret(character, "EMAIL_INCOMING_USER") &&
-                getSecret(character, "EMAIL_INCOMING_PASS")) ||
-            (getSecret(character, "EMAIL_OUTGOING_USER") &&
-                getSecret(character, "EMAIL_OUTGOING_PASS"))
-                ? emailPlugin
+            getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS") ||
+            getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS") ?
+            emailPlugin : null,
+            getSecret(character, "HYPERBOLIC_API_KEY")
+                ? hyperbolicPlugin
                 : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
+            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null,
             getSecret(character, "MINA_PRIVATE_KEY") ? minaPlugin : null,
         ].filter(Boolean),
         providers: [],
