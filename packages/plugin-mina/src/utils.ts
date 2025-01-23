@@ -10,4 +10,9 @@ const parseAccount = (runtime: IAgentRuntime): PrivateKey => {
     return PrivateKey.fromBase58(privateKey);
 };
 
-export { parseAccount };
+const isDevnet = (runtime: IAgentRuntime): boolean => {
+    const network = runtime.getSetting("MINA_NETWORK");
+    return network === "devnet";
+};
+
+export { parseAccount, isDevnet };

@@ -16,7 +16,7 @@ import { z } from "zod";
 import { Mina, AccountUpdate, PublicKey, UInt64 } from "o1js";
 
 import { walletProvider } from "../providers/wallet";
-import { parseAccount } from "../utils";
+import { isDevnet, parseAccount } from "../utils";
 import { MINA_UNIT } from "../constants";
 
 export interface TransferContent extends Content {
@@ -70,7 +70,7 @@ export default {
         message: Memory,
         state: State,
         _options: { [key: string]: unknown },
-        callback?: HandlerCallback,
+        callback?: HandlerCallback
     ): Promise<boolean> => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
 
@@ -123,13 +123,14 @@ export default {
             const sender = minaAccount.toPublicKey();
             const recipient = PublicKey.fromBase58(transferContent.recipient);
             const adjustedAmount = UInt64.from(transferContent.amount).mul(
-                MINA_UNIT,
+                MINA_UNIT
             );
+            const fee = isDevnet(runtime) ? 0.2 * MINA_UNIT : 0.01 * MINA_UNIT;
 
             const tx = await Mina.transaction(
                 {
                     sender,
-                    fee: 0.01 * MINA_UNIT,
+                    fee,
                     memo: "TransferFromEliza",
                 },
                 async () => {
@@ -138,14 +139,14 @@ export default {
                         to: recipient,
                         amount: adjustedAmount,
                     });
-                },
+                }
             );
             await tx.prove();
             const pendingTx = await tx.sign([minaAccount]).send();
             await pendingTx.wait();
 
             console.log(
-                `Transferring: ${transferContent.amount} tokens (${adjustedAmount} base units)`,
+                `Transferring: ${transferContent.amount} tokens (${adjustedAmount} base units)`
             );
             console.log("Transfer successful:", pendingTx.hash);
 
