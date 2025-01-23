@@ -76,6 +76,7 @@
         "@elizaos/plugin-giphy": "workspace:*",
         "@elizaos/plugin-ton": "workspace:*",
         "@elizaos/plugin-sui": "workspace:*",
+        "@elizaos/plugin-mina": "workspace:*",
         "@elizaos/plugin-sgx": "workspace:*",
         "@elizaos/plugin-iq6900": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
@@ -124,7 +125,6 @@
         "@elizaos/plugin-udio": "workspace:*",
         "@elizaos/plugin-hyperbolic": "workspace:*",
         "@elizaos/plugin-football": "workspace:*",
-        "@elizaos/plugin-mina": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"
@@ -137,4 +137,3 @@
         "tsup": "8.3.5"
     }
 }
-
