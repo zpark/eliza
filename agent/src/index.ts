@@ -44,6 +44,7 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 import { zgPlugin } from "@elizaos/plugin-0g";
+import { footballPlugin } from "@elizaos/plugin-football";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import { normalizeCharacter } from "@elizaos/plugin-di";
@@ -947,6 +948,7 @@ export async function createAgent(
             getSecret(character, "DEXSCREENER_API_KEY")
                 ? dexScreenerPlugin
                 : null,
+            getSecret(character, "FOOTBALL_API_KEY") ? footballPlugin : null,
             getSecret(character, "CONFLUX_CORE_PRIVATE_KEY")
                 ? confluxPlugin
                 : null,
@@ -1397,12 +1399,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", (err) => {
+    process.on('uncaughtException', function(err) {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", (err) => {
+    process.on('unhandledRejection', function(err) {
         console.error("unhandledRejection", err);
     });
 }
