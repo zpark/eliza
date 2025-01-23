@@ -260,7 +260,7 @@ export class SttTtsPlugin implements Plugin {
     /**
      * On speaker silence => flush STT => GPT => TTS => push to Janus
      */
-    private async processAudio(userId: UUID): Promise<void> {
+    private async processAudio(userId: string): Promise<void> {
         if (this.isProcessingAudio) {
             return;
         }
@@ -399,7 +399,7 @@ export class SttTtsPlugin implements Plugin {
         userId: string // This is the raw Twitter user ID like 'tw-1865462035586142208'
     ): Promise<string> {
         // Extract the numeric ID part
-        const numericId = userId.replace('tw-', '');
+        const numericId = userId.replace("tw-", "");
         const roomId = stringToUuid(`twitter_generate_room-${this.spaceId}`);
 
         // Create consistent UUID for the user
