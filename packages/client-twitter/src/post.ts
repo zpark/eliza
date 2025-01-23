@@ -229,9 +229,6 @@ export class TwitterPostClient {
         }
 
         const generateNewTweetLoop = async () => {
-            // Check for pending tweets first
-            if (this.approvalRequired) await this.handlePendingTweet();
-
             const lastPost = await this.runtime.cacheManager.get<{
                 timestamp: number;
             }>("twitter/" + this.twitterUsername + "/lastPost");
