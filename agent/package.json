@@ -119,6 +119,7 @@
         "@elizaos/plugin-chainbase": "workspace:*",
         "@elizaos/plugin-dkg": "workspace:*",
         "@elizaos/plugin-email": "workspace:*",
+        "@elizaos/plugin-omniflix": "workspace:*",
         "@elizaos/plugin-suno": "workspace:*",
         "@elizaos/plugin-udio": "workspace:*",
         "readline": "1.3.0",

@@ -12,6 +12,7 @@ import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
 import { TwitterClientInterface } from "@elizaos/client-twitter";
 import { FarcasterClientInterface } from "@elizaos/client-farcaster";
+import { OmniflixPlugin } from "@elizaos/plugin-omniflix";
 import { JeeterClientInterface } from "@elizaos/client-simsai";
 
 import { DirectClient } from "@elizaos/client-direct";
@@ -1032,6 +1033,10 @@ export async function createAgent(
             ((teeMode !== TEEMode.OFF && walletSecretSalt) ||
                 getSecret(character, "SGX"))
                 ? teeLogPlugin
+                : null,
+            getSecret(character, "OMNIFLIX_API_URL") &&
+            getSecret(character, "OMNIFLIX_MNEMONIC")
+                ? OmniflixPlugin
                 : null,
             getSecret(character, "COINBASE_API_KEY") &&
             getSecret(character, "COINBASE_PRIVATE_KEY") &&
