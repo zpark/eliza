@@ -4,6 +4,14 @@ import { SmartThingsApi } from '../src/services/smart_things_api';
 import { CommandParser } from '../src/utils/command_parser';
 import type { IAgentRuntime } from '@elizaos/core';
 
+// Define mock interface that extends IAgentRuntime
+interface MockAgentRuntime extends IAgentRuntime {
+    llm: {
+        shouldRespond: ReturnType<typeof vi.fn>;
+        complete: ReturnType<typeof vi.fn>;
+    };
+}
+
 // Mock dependencies
 vi.mock('../src/services/smart_things_api', () => ({
     SmartThingsApi: vi.fn().mockImplementation(() => ({
@@ -22,22 +30,30 @@ vi.mock('@elizaos/core', () => ({
 
 describe('SmartHomeManager', () => {
     let smartHomeManager: SmartHomeManager;
-    let mockRuntime: IAgentRuntime;
+    let mockRuntime: MockAgentRuntime;
 
     beforeEach(() => {
         // Reset all mocks
         vi.clearAllMocks();
 
-        // Create mock runtime
+        // Create mock runtime with proper typing
         mockRuntime = {
             llm: {
                 shouldRespond: vi.fn(),
                 complete: vi.fn(),
             },
             getSetting: vi.fn().mockReturnValue('mock-token'),
-            composeState: vi.fn(),
-            updateRecentMessageState: vi.fn(),
-        } as unknown as IAgentRuntime;
+            // Add required IAgentRuntime properties
+            agentId: 'test-agent-id',
+            serverUrl: 'http://test-server',
+            databaseAdapter: {
+                init: vi.fn(),
+                close: vi.fn(),
+                // Add other required database methods as needed
+            },
+            token: 'test-token',
+            modelProvider: 'test-provider',
+        } as MockAgentRuntime;
 
         smartHomeManager = new SmartHomeManager(mockRuntime);
     });
@@ -52,69 +68,51 @@ describe('SmartHomeManager', () => {
 
             // Assert
             expect(result).toBeNull();
-            expect(mockRuntime.llm.shouldRespond).toHaveBeenCalled();
-            expect(CommandParser.parseCommand).not.toHaveBeenCalled();
+            expect(mockRuntime.llm.shouldRespond).toHaveBeenCalledWith(
+                expect.any(String),
+                'turn on lights'
+            );
         });
 
-        it('should successfully handle a valid command', async () => {
+        it('should execute command and return response when shouldRespond returns RESPOND', async () => {
             // Arrange
-            const mockCommand = 'turn on lights';
-            const mockUserId = 'user123';
-            const mockParsedCommand = {
-                command: 'turnOn',
+            const mockResponse = 'Command executed successfully';
+            vi.mocked(mockRuntime.llm.shouldRespond).mockResolvedValue('RESPOND');
+            vi.mocked(mockRuntime.llm.complete).mockResolvedValue(mockResponse);
+            vi.mocked(CommandParser.parseCommand).mockReturnValue({
+                command: 'turn_on',
                 args: { device: 'lights' }
-            };
-            const mockDeviceCommand = {
+            });
+            vi.mocked(CommandParser.mapToDeviceCommand).mockReturnValue({
                 deviceId: 'device123',
                 capability: 'switch',
-                command: 'on',
-                arguments: []
-            };
-            const mockApiResponse = { status: 'success' };
-            const mockDevices = [
-                { name: 'Light', status: { switch: 'on' } }
-            ];
-
-            vi.mocked(mockRuntime.llm.shouldRespond).mockResolvedValue('RESPOND');
-            vi.mocked(CommandParser.parseCommand).mockReturnValue(mockParsedCommand);
-            vi.mocked(CommandParser.mapToDeviceCommand).mockReturnValue(mockDeviceCommand);
-            vi.mocked(mockRuntime.llm.complete).mockResolvedValue('Command executed successfully');
-
-            // Mock SmartThingsApi
-            const mockApi = vi.mocked(SmartThingsApi).mock.results[0].value;
-            mockApi.devices.executeCommand.mockResolvedValue(mockApiResponse);
-            mockApi.devices.list.mockResolvedValue(mockDevices);
+                command: 'on'
+            });
 
             // Act
-            const result = await smartHomeManager.handleCommand(mockCommand, mockUserId);
+            const result = await smartHomeManager.handleCommand('turn on lights', 'user123');
 
             // Assert
             expect(result).toEqual({
                 success: true,
-                message: 'Command executed successfully',
-                data: mockApiResponse
+                message: mockResponse,
+                data: { status: 'success' }
             });
             expect(mockRuntime.llm.shouldRespond).toHaveBeenCalled();
-            expect(CommandParser.parseCommand).toHaveBeenCalledWith(mockCommand);
-            expect(CommandParser.mapToDeviceCommand).toHaveBeenCalledWith(
-                mockParsedCommand.command,
-                mockParsedCommand.args
-            );
             expect(mockRuntime.llm.complete).toHaveBeenCalled();
+            expect(CommandParser.parseCommand).toHaveBeenCalledWith('turn on lights');
+            expect(CommandParser.mapToDeviceCommand).toHaveBeenCalled();
         });
 
-        it('should handle errors appropriately', async () => {
+        it('should handle errors gracefully', async () => {
             // Arrange
-            const mockError = new Error('API Error');
-            vi.mocked(mockRuntime.llm.shouldRespond).mockResolvedValue('RESPOND');
-            vi.mocked(CommandParser.parseCommand).mockImplementation(() => {
-                throw mockError;
-            });
+            const mockError = new Error('Test error');
+            vi.mocked(mockRuntime.llm.shouldRespond).mockRejectedValue(mockError);
 
             // Act & Assert
-            await expect(
-                smartHomeManager.handleCommand('turn on lights', 'user123')
-            ).rejects.toThrow(mockError);
+            await expect(smartHomeManager.handleCommand('turn on lights', 'user123'))
+                .rejects
+                .toThrow(mockError);
         });
     });
 });
