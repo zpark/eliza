@@ -463,6 +463,14 @@ export class TwitterPostClient {
         }
     }
 
+    cleanJsonResponse(response: string): string {
+        return response
+            .replace(/```json\s*/g, "") // Remove ```json
+            .replace(/```\s*/g, "") // Remove any remaining ```
+            .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
+            .trim();
+    }
+
     /**
      * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
      */
@@ -512,11 +520,7 @@ export class TwitterPostClient {
                 modelClass: ModelClass.SMALL,
             });
 
-            const newTweetContent = response
-                .replace(/```json\s*/g, "") // Remove ```json
-                .replace(/```\s*/g, "") // Remove any remaining ```
-                .replace(/(\r\n|\n|\r)/g, "") // Remove line break
-                .trim();
+            const newTweetContent = this.cleanJsonResponse(response);
 
             // First attempt to clean content
             let cleanedContent = "";
@@ -634,11 +638,7 @@ export class TwitterPostClient {
         elizaLogger.log("generate tweet content response:\n" + response);
 
         // First clean up any markdown and newlines
-        const cleanedResponse = response
-            .replace(/```json\s*/g, "") // Remove ```json
-            .replace(/```\s*/g, "") // Remove any remaining ```
-            .replace(/(\r\n|\n|\r)/g, "") // Remove line break
-            .trim();
+        const cleanedResponse = this.cleanJsonResponse(response);
 
         // Try to parse as JSON first
         try {
