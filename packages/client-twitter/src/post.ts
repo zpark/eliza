@@ -11,6 +11,7 @@ import {
     truncateToCompleteSentence,
     parseJSONObjectFromText,
     extractAttributes,
+    cleanJsonResponse,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
@@ -465,22 +466,6 @@ export class TwitterPostClient {
     }
 
     /**
-     * Cleans a JSON-like response string by removing unnecessary markers, line breaks, and extra whitespace.
-     * This is useful for handling improperly formatted JSON responses from external sources.
-     *
-     * @param response - The raw JSON-like string response to clean.
-     * @returns The cleaned string, ready for parsing or further processing.
-     */
-
-    cleanJsonResponse(response: string): string {
-        return response
-            .replace(/```json\s*/g, "") // Remove ```json
-            .replace(/```\s*/g, "") // Remove any remaining ```
-            .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
-            .trim();
-    }
-
-    /**
      * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
      */
     async generateNewTweet() {
@@ -529,7 +514,7 @@ export class TwitterPostClient {
                 modelClass: ModelClass.SMALL,
             });
 
-            const newTweetContent = this.cleanJsonResponse(response);
+            const newTweetContent = cleanJsonResponse(response);
 
             // First attempt to clean content
             let cleanedContent = "";
@@ -654,7 +639,7 @@ export class TwitterPostClient {
         elizaLogger.log("generate tweet content response:\n" + response);
 
         // First clean up any markdown and newlines
-        const cleanedResponse = this.cleanJsonResponse(response);
+        const cleanedResponse = cleanJsonResponse(response);
 
         // Try to parse as JSON first
         try {
