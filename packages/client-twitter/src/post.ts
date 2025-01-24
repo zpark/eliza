@@ -10,6 +10,7 @@ import {
     type UUID,
     truncateToCompleteSentence,
     parseJSONObjectFromText,
+    extractAttributes,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
@@ -464,6 +465,22 @@ export class TwitterPostClient {
     }
 
     /**
+     * Cleans a JSON-like response string by removing unnecessary markers, line breaks, and extra whitespace.
+     * This is useful for handling improperly formatted JSON responses from external sources.
+     *
+     * @param response - The raw JSON-like string response to clean.
+     * @returns The cleaned string, ready for parsing or further processing.
+     */
+
+    cleanJsonResponse(response: string): string {
+        return response
+            .replace(/```json\s*/g, "") // Remove ```json
+            .replace(/```\s*/g, "") // Remove any remaining ```
+            .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
+            .trim();
+    }
+
+    /**
      * Generates and posts a new tweet. If isDryRun is true, only logs what would have been posted.
      */
     async generateNewTweet() {
@@ -512,11 +529,7 @@ export class TwitterPostClient {
                 modelClass: ModelClass.SMALL,
             });
 
-            const newTweetContent = response
-                .replace(/```json\s*/g, "") // Remove ```json
-                .replace(/```\s*/g, "") // Remove any remaining ```
-                .replace(/(\r\n|\n|\r)/g, "") // Remove line break
-                .trim();
+            const newTweetContent = this.cleanJsonResponse(response);
 
             // First attempt to clean content
             let cleanedContent = "";
@@ -542,6 +555,13 @@ export class TwitterPostClient {
                     .replace(/\\"/g, '"') // Unescape quotes
                     .replace(/\\n/g, "\n\n") // Unescape newlines, ensures double spaces
                     .trim();
+            }
+
+            if (!cleanedContent) {
+                cleanedContent = truncateToCompleteSentence(
+                    extractAttributes(newTweetContent, ["text"]).text,
+                    this.client.twitterConfig.MAX_TWEET_LENGTH,
+                );
             }
 
             if (!cleanedContent) {
@@ -634,17 +654,17 @@ export class TwitterPostClient {
         elizaLogger.log("generate tweet content response:\n" + response);
 
         // First clean up any markdown and newlines
-        const cleanedResponse = response
-            .replace(/```json\s*/g, "") // Remove ```json
-            .replace(/```\s*/g, "") // Remove any remaining ```
-            .replace(/(\r\n|\n|\r)/g, "") // Remove line break
-            .trim();
+        const cleanedResponse = this.cleanJsonResponse(response);
 
         // Try to parse as JSON first
         try {
             const jsonResponse = parseJSONObjectFromText(cleanedResponse);
             if (jsonResponse.text) {
-                return this.trimTweetLength(jsonResponse.text);
+                const truncateContent = truncateToCompleteSentence(
+                    jsonResponse.text,
+                    this.client.twitterConfig.MAX_TWEET_LENGTH,
+                );
+                return truncateContent;
             }
             if (typeof jsonResponse === "object") {
                 const possibleContent =
@@ -652,7 +672,11 @@ export class TwitterPostClient {
                     jsonResponse.message ||
                     jsonResponse.response;
                 if (possibleContent) {
-                    return this.trimTweetLength(possibleContent);
+                    const truncateContent = truncateToCompleteSentence(
+                        possibleContent,
+                        this.client.twitterConfig.MAX_TWEET_LENGTH,
+                    );
+                    return truncateContent;
                 }
             }
         } catch (error) {
@@ -664,24 +688,21 @@ export class TwitterPostClient {
                 response,
             );
         }
-        // If not JSON or no valid content found, clean the raw text
-        return this.trimTweetLength(cleanedResponse);
-    }
 
-    // Helper method to ensure tweet length compliance
-    private trimTweetLength(text: string, maxLength = 280): string {
-        if (text.length <= maxLength) return text;
+        let truncateContent = truncateToCompleteSentence(
+            extractAttributes(cleanedResponse, ["text"]).text,
+            this.client.twitterConfig.MAX_TWEET_LENGTH,
+        );
 
-        // Try to cut at last sentence
-        const lastSentence = text.slice(0, maxLength).lastIndexOf(".");
-        if (lastSentence > 0) {
-            return text.slice(0, lastSentence + 1).trim();
+        if (!truncateContent) {
+            // If not JSON or no valid content found, clean the raw text
+            truncateContent = truncateToCompleteSentence(
+                cleanedResponse,
+                this.client.twitterConfig.MAX_TWEET_LENGTH,
+            );
         }
 
-        // Fallback to word boundary
-        return (
-            text.slice(0, text.lastIndexOf(" ", maxLength - 3)).trim() + "..."
-        );
+        return truncateContent;
     }
 
     /**
