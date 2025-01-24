@@ -133,6 +133,7 @@ import yargs from "yargs";
 import { emailPlugin } from "@elizaos/plugin-email";
 import { sunoPlugin } from "@elizaos/plugin-suno";
 import { udioPlugin } from "@elizaos/plugin-udio";
+import { ethstoragePlugin } from "@elizaos/plugin-ethstorage"
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -1164,7 +1165,8 @@ export async function createAgent(
                 ? hyperbolicPlugin
                 : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
-            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null
+            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null,
+            getSecret(character, "ETHSTORAGE_PRIVATE_KEY") ? ethstoragePlugin : null,
         ].filter(Boolean),
         providers: [],
         managers: [],
