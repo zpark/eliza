@@ -644,7 +644,11 @@ export class TwitterPostClient {
         try {
             const jsonResponse = parseJSONObjectFromText(cleanedResponse);
             if (jsonResponse.text) {
-                return this.trimTweetLength(jsonResponse.text);
+                const truncateContent = truncateToCompleteSentence(
+                    jsonResponse.text,
+                    this.client.twitterConfig.MAX_TWEET_LENGTH,
+                );
+                return truncateContent;
             }
             if (typeof jsonResponse === "object") {
                 const possibleContent =
@@ -652,7 +656,11 @@ export class TwitterPostClient {
                     jsonResponse.message ||
                     jsonResponse.response;
                 if (possibleContent) {
-                    return this.trimTweetLength(possibleContent);
+                    const truncateContent = truncateToCompleteSentence(
+                        possibleContent,
+                        this.client.twitterConfig.MAX_TWEET_LENGTH,
+                    );
+                    return truncateContent;
                 }
             }
         } catch (error) {
@@ -665,23 +673,11 @@ export class TwitterPostClient {
             );
         }
         // If not JSON or no valid content found, clean the raw text
-        return this.trimTweetLength(cleanedResponse);
-    }
-
-    // Helper method to ensure tweet length compliance
-    private trimTweetLength(text: string, maxLength = 280): string {
-        if (text.length <= maxLength) return text;
-
-        // Try to cut at last sentence
-        const lastSentence = text.slice(0, maxLength).lastIndexOf(".");
-        if (lastSentence > 0) {
-            return text.slice(0, lastSentence + 1).trim();
-        }
-
-        // Fallback to word boundary
-        return (
-            text.slice(0, text.lastIndexOf(" ", maxLength - 3)).trim() + "..."
+        const truncateContent = truncateToCompleteSentence(
+            cleanedResponse,
+            this.client.twitterConfig.MAX_TWEET_LENGTH,
         );
+        return truncateContent;
     }
 
     /**
