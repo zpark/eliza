@@ -115,7 +115,6 @@ import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
 import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
-
 import { openaiPlugin } from "@elizaos/plugin-openai";
 import nitroPlugin from "@elizaos/plugin-router-nitro";
 import { devinPlugin } from "@elizaos/plugin-devin";
@@ -124,6 +123,7 @@ import { chainbasePlugin } from "@elizaos/plugin-chainbase";
 import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
 import { zxPlugin } from "@elizaos/plugin-0x";
 import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
+import { litPlugin } from "@elizaos/plugin-lit";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -1164,7 +1164,8 @@ export async function createAgent(
                 ? hyperbolicPlugin
                 : null,
             getSecret(character, "SUNO_API_KEY") ? sunoPlugin : null,
-            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null
+            getSecret(character, "UDIO_AUTH_TOKEN") ? udioPlugin : null,
+            getSecret(character, "FUNDING_PRIVATE_KEY") && getSecret(character, "EVM_RPC_URL") ? litPlugin : null            ,
         ].filter(Boolean),
         providers: [],
         managers: [],
