@@ -558,9 +558,10 @@ export class TwitterPostClient {
             }
 
             if (!cleanedContent) {
-                cleanedContent = extractAttributes(newTweetContent, [
-                    "text",
-                ]).text;
+                cleanedContent = truncateToCompleteSentence(
+                    extractAttributes(newTweetContent, ["text"]).text,
+                    this.client.twitterConfig.MAX_TWEET_LENGTH,
+                );
             }
 
             if (!cleanedContent) {
@@ -688,7 +689,10 @@ export class TwitterPostClient {
             );
         }
 
-        let truncateContent = extractAttributes(cleanedResponse, ["text"]).text;
+        let truncateContent = truncateToCompleteSentence(
+            extractAttributes(cleanedResponse, ["text"]).text,
+            this.client.twitterConfig.MAX_TWEET_LENGTH,
+        );
 
         if (!truncateContent) {
             // If not JSON or no valid content found, clean the raw text
