@@ -76,3 +76,5 @@ scripts/bug_hunt/checkpoints/
 scripts/bug_hunt/checkpoints/*.json
 scripts/bug_hunt/reports/
 scripts/bug_hunt/reports/*.md
+
+lit-config.json
