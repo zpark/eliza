@@ -44,8 +44,8 @@ export class WalletProvider {
     wallet: WalletContractV4;
     private cache: NodeCache;
     private cacheKey = "ton/wallet";
+    private rpcApiKey: string;
 
-    // reqiure hex private key
     constructor(
         // mnemonic: string,
         keypair: KeyPair,
@@ -58,6 +58,7 @@ export class WalletProvider {
             workchain: 0,
             publicKey: keypair.publicKey,
         });
+        this.rpcApiKey = process.env.TON_RPC_API_KEY || PROVIDER_CONFIG.RPC_API_KEY;
     }
 
     // thanks to plugin-sui
