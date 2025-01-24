@@ -6,8 +6,12 @@ import type {
     State,
 } from "@elizaos/core";
 
-import { TonClient, WalletContractV4 } from "@ton/ton";
-import { type KeyPair, mnemonicToPrivateKey } from "@ton/crypto";
+import { TonClient, WalletContractV4, fromNano } from "@ton/ton";
+import {
+    type KeyPair,
+    mnemonicToPrivateKey,
+    mnemonicToWalletKey,
+} from "@ton/crypto";
 
 import NodeCache from "node-cache";
 import * as path from "path";
@@ -46,8 +50,7 @@ export class WalletProvider {
         // mnemonic: string,
         keypair: KeyPair,
         private endpoint: string,
-        private rpcApiKey: string,
-        private cacheManager: ICacheManager
+        private cacheManager: ICacheManager,
     ) {
         this.keypair = keypair;
         this.cache = new NodeCache({ stdTTL: 300 });
@@ -60,7 +63,7 @@ export class WalletProvider {
     // thanks to plugin-sui
     private async readFromCache<T>(key: string): Promise<T | null> {
         const cached = await this.cacheManager.get<T>(
-            path.join(this.cacheKey, key)
+            path.join(this.cacheKey, key),
         );
         return cached;
     }
@@ -103,13 +106,13 @@ export class WalletProvider {
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
             try {
                 const response = await fetch(
-                    `https://api.dexscreener.com/latest/dex/pairs/${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER}/${PROVIDER_CONFIG.STONFI_TON_USD_POOL}`
+                    `https://api.dexscreener.com/latest/dex/pairs/${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER}/${PROVIDER_CONFIG.STONFI_TON_USD_POOL}`,
                 );
 
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(
-                        `HTTP error! status: ${response.status}, message: ${errorText}`
+                        `HTTP error! status: ${response.status}, message: ${errorText}`,
                     );
                 }
 
@@ -128,7 +131,7 @@ export class WalletProvider {
 
         console.error(
             "All attempts failed. Throwing the last error:",
-            lastError
+            lastError,
         );
         throw lastError;
     }
@@ -148,10 +151,10 @@ export class WalletProvider {
                 (error) => {
                     console.error(
                         `Error fetching ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} price:`,
-                        error
+                        error,
                     );
                     throw error;
-                }
+                },
             );
             const prices: Prices = {
                 nativeToken: { usd: new BigNumber(priceData.pair.priceUsd).dividedBy(new BigNumber(priceData.pair.priceNative)) },
@@ -166,14 +169,14 @@ export class WalletProvider {
 
     private formatPortfolio(
         runtime: IAgentRuntime,
-        portfolio: WalletPortfolio
+        portfolio: WalletPortfolio,
     ): string {
         let output = `${runtime.character.name}\n`;
         output += `Wallet Address: ${this.getAddress()}\n`;
 
         const totalUsdFormatted = new BigNumber(portfolio.totalUsd).toFixed(2);
         const totalNativeTokenFormatted = new BigNumber(
-            portfolio.totalNativeToken
+            portfolio.totalNativeToken,
         ).toFixed(4);
 
         output += `Total Value: $${totalUsdFormatted} (${totalNativeTokenFormatted} ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()})\n`;
@@ -196,7 +199,7 @@ export class WalletProvider {
             const prices = await this.fetchPrices().catch((error) => {
                 console.error(
                     `Error fetching ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} price:`,
-                    error
+                    error,
                 );
                 throw error;
             });
@@ -204,25 +207,25 @@ export class WalletProvider {
                 (error) => {
                     console.error(
                         `Error fetching ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} amount:`,
-                        error
+                        error,
                     );
                     throw error;
-                }
+                },
             );
 
             const amount =
                 Number(nativeTokenBalance) /
                 Number(PROVIDER_CONFIG.TON_DECIMAL);
             const totalUsd = new BigNumber(amount.toString()).times(
-                prices.nativeToken.usd
-            ).toFixed(4);
+                prices.nativeToken.usd,
+            );
 
             const portfolio = {
                 totalUsd: totalUsd.toString(),
                 totalNativeToken: amount.toFixed(4).toString(),
             };
+
             this.setCachedData(cacheKey, portfolio);
-            console.log("Fetched portfolio:", portfolio);
             return portfolio;
         } catch (error) {
             console.error("Error fetching portfolio:", error);
@@ -259,9 +262,7 @@ export class WalletProvider {
     async getWalletBalance(): Promise<bigint | null> {
         try {
             const client = this.getWalletClient();
-            const contract = client.open(this.wallet);
-            const balance = await contract.getBalance();
-
+            const balance = await client.getBalance(this.wallet.address);
             return balance;
         } catch (error) {
             console.error("Error getting wallet balance:", error);
@@ -282,11 +283,12 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
             throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} mnemonic seems invalid`);
         }
     }
-    const rpcUrl = runtime.getSetting(CONFIG_KEYS.TON_RPC_URL) || PROVIDER_CONFIG.MAINNET_RPC;
-    const rpcApiKey = runtime.getSetting(CONFIG_KEYS.TON_RPC_API_KEY) || PROVIDER_CONFIG.RPC_API_KEY;
 
-    const keypair = await mnemonicToPrivateKey(mnemonics, "");
-    return new WalletProvider(keypair, rpcUrl, rpcApiKey, runtime.cacheManager);
+    const rpcUrl =
+        runtime.getSetting("TON_RPC_URL") || PROVIDER_CONFIG.MAINNET_RPC;
+
+    const keypair = await mnemonicToWalletKey(mnemonics, "");
+    return new WalletProvider(keypair, rpcUrl, runtime.cacheManager);
 };
 
 export const nativeWalletProvider: Provider = {
@@ -295,15 +297,18 @@ export const nativeWalletProvider: Provider = {
         // eslint-disable-next-line
         message: Memory,
         // eslint-disable-next-line
-        state?: State
+        state?: State,
     ): Promise<string | null> {
         try {
             const walletProvider = await initWalletProvider(runtime);
-            return await walletProvider.getFormattedPortfolio(runtime);
+            const formattedPortfolio =
+                await walletProvider.getFormattedPortfolio(runtime);
+            console.log(formattedPortfolio);
+            return formattedPortfolio;
         } catch (error) {
             console.error(
                 `Error in ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} wallet provider:`,
-                error
+                error,
             );
             return null;
         }
