@@ -12,6 +12,7 @@ This plugin provides functionality to:
 - Manage wallet interactions with the Mina network
 - Cache token prices for performance optimization
 - Get faucet tokens for testing purposes
+- Get balances for wallets
 
 ## Installation
 
@@ -82,6 +83,7 @@ Assistant: "I'll send you some faucet tokens...";
 - `SEND_MINA`: Alias for SEND_TOKEN
 - `PAY`: Alias for SEND_TOKEN
 - `FAUCET`: Request faucet tokens for testing
+- `BALANCE`: Query wallet balance
 
 ### Providers
 
