@@ -197,6 +197,22 @@ export function extractAttributes(
     return attributes;
 }
 
+/**
+ * Cleans a JSON-like response string by removing unnecessary markers, line breaks, and extra whitespace.
+ * This is useful for handling improperly formatted JSON responses from external sources.
+ *
+ * @param response - The raw JSON-like string response to clean.
+ * @returns The cleaned string, ready for parsing or further processing.
+ */
+
+export function cleanJsonResponse(response: string): string {
+    return response
+        .replace(/```json\s*/g, "") // Remove ```json
+        .replace(/```\s*/g, "") // Remove any remaining ```
+        .replace(/(\r\n|\n|\r)/g, "") // Remove line breaks
+        .trim();
+}
+
 export const postActionResponseFooter = `Choose any combination of [LIKE], [RETWEET], [QUOTE], and [REPLY] that are appropriate. Each action must be on its own line. Your response must only include the chosen actions.`;
 
 export const parseActionResponseFromText = (
