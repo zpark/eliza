@@ -114,6 +114,7 @@
         "@elizaos/plugin-pyth-data": "workspace:*",
         "@elizaos/plugin-openai": "workspace:*",
         "@elizaos/plugin-devin": "workspace:*",
+        "@elizaos/plugin-holdstation": "workspace:*",
         "@elizaos/plugin-router-nitro": "workspace:*",
         "@elizaos/plugin-nvidia-nim": "workspace:*",
         "@elizaos/plugin-0x": "workspace:*",
