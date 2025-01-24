@@ -132,6 +132,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
 import { emailPlugin } from "@elizaos/plugin-email";
+import { seiPlugin } from "@elizaos/plugin-sei"
 import { sunoPlugin } from "@elizaos/plugin-suno";
 import { udioPlugin } from "@elizaos/plugin-udio";
 
@@ -1164,6 +1165,9 @@ export async function createAgent(
             getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS") ||
             getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS") ?
             emailPlugin : null,
+            getSecret(character, "SEI_PRIVATE_KEY")
+            ? seiPlugin
+            : null,
             getSecret(character, "HYPERBOLIC_API_KEY")
                 ? hyperbolicPlugin
                 : null,
