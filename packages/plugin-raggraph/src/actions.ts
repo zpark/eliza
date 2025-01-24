@@ -8,7 +8,7 @@ import {
     Memory,
     ModelClass,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { validateRaggraphConfig } from "./environment";
 import { RAGGraphProvider } from "./provider";
 

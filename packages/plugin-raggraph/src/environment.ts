@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IAgentRuntime } from "@ai16z/eliza";
+import { IAgentRuntime } from "@elizaos/core";
 
 export const raggraphEnvSchema = z.object({
     NEO4J_URI: z.string(),

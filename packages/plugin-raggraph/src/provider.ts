@@ -4,7 +4,7 @@ import {
     Memory,
     Provider,
     State,
-} from "@ai16z/eliza";
+} from "@elizaos/core";
 import { createGraphRAG } from "./driver";
 import {
     GraphRAGResponse,
