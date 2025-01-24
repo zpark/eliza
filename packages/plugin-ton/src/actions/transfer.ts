@@ -1,8 +1,8 @@
 import {
     elizaLogger,
     composeContext,
-    Content,
-    HandlerCallback,
+    type Content,
+    type HandlerCallback,
     ModelClass,
     generateObject,
     type IAgentRuntime,
@@ -13,7 +13,7 @@ import { z } from "zod";
 
 import {
     initWalletProvider,
-    WalletProvider,
+    type WalletProvider,
     nativeWalletProvider,
 } from "../providers/wallet";
 import { internal } from "@ton/ton";
@@ -188,6 +188,7 @@ export default {
         }
     },
     template: transferTemplate,
+    // eslint-disable-next-line
     validate: async (runtime: IAgentRuntime) => {
         //console.log("Validating TON transfer from user:", message.userId);
         return true;

@@ -1,12 +1,12 @@
 import {
-    IPLicenseTerms,
-    PILTerms,
+    type IPLicenseTerms,
+    type PILTerms,
     QUERY_ORDER_BY,
     QUERY_ORDER_DIRECTION,
-    QueryOptions,
+    type QueryOptions,
     RESOURCE_TYPE,
-    ResourceType,
-    Trait,
+    type ResourceType,
+    type Trait,
 } from "../types/api";
 import { elizaLogger } from "@elizaos/core";
 
@@ -19,6 +19,7 @@ export const API_KEY = process.env.STORY_API_KEY || "";
 export async function getResource(
     resourceName: ResourceType,
     resourceId: string,
+    // eslint-disable-next-line
     options?: QueryOptions
 ) {
     try {

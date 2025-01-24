@@ -1,6 +1,6 @@
-import { MemoryCacheManager } from "./cache-manager";
-import { RateLimiter } from "./rate-limiter";
-import { MarketData } from "../utils/validation";
+import type { MemoryCacheManager } from "./cache-manager";
+import type { RateLimiter } from "./rate-limiter";
+import type { MarketData } from "../utils/validation";
 
 interface MarketIntelligenceConfig {
     cacheManager?: MemoryCacheManager;
@@ -16,7 +16,7 @@ export class MarketIntelligenceService {
         this.rateLimiter = config.rateLimiter;
     }
 
-    async getMarketIntelligence(address: string): Promise<MarketData> {
+    async getMarketIntelligence(_address: string): Promise<MarketData> {
         // Implementation will be added later
         return {
             floorPrice: 0,

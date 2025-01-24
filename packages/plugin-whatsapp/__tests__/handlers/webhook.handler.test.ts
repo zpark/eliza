@@ -4,12 +4,12 @@ import { WhatsAppClient } from '../../src/client';
 import { WhatsAppWebhookEvent } from '../../src/types';
 
 describe('WebhookHandler', () => {
-    let webhookHandler: WebhookHandler;
-    let mockClient: WhatsAppClient;
-    let consoleSpy: any;
+    let webhookHandler;
+    let mockClient;
+    let consoleSpy;
 
     beforeEach(() => {
-        mockClient = {} as WhatsAppClient;
+        mockClient = {};
         webhookHandler = new WebhookHandler(mockClient);
         consoleSpy = vi.spyOn(console, 'log');
     });
@@ -28,7 +28,7 @@ describe('WebhookHandler', () => {
             }
         };
 
-        const mockEvent: WhatsAppWebhookEvent = {
+        const mockEvent = {
             object: 'whatsapp_business_account',
             entry: [{
                 id: 'BUSINESS_ID',
@@ -58,7 +58,7 @@ describe('WebhookHandler', () => {
             recipient_id: '1234567890'
         };
 
-        const mockEvent: WhatsAppWebhookEvent = {
+        const mockEvent = {
             object: 'whatsapp_business_account',
             entry: [{
                 id: 'BUSINESS_ID',
@@ -98,7 +98,7 @@ describe('WebhookHandler', () => {
             recipient_id: '1234567890'
         };
 
-        const mockEvent: WhatsAppWebhookEvent = {
+        const mockEvent = {
             object: 'whatsapp_business_account',
             entry: [{
                 id: 'BUSINESS_ID',
@@ -123,11 +123,11 @@ describe('WebhookHandler', () => {
     });
 
     it('should handle errors correctly', async () => {
-        const mockEvent = {} as WhatsAppWebhookEvent;
-        
+        const mockEvent = {};
+
         // The handler should not throw an error for an empty event
         await expect(webhookHandler.handle(mockEvent)).resolves.not.toThrow();
-        
+
         // Verify that no messages or statuses were processed
         expect(consoleSpy).not.toHaveBeenCalled();
     });
