@@ -10,6 +10,7 @@ import {
     type UUID,
     truncateToCompleteSentence,
     parseJSONObjectFromText,
+    extractAttributes,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
@@ -463,6 +464,14 @@ export class TwitterPostClient {
         }
     }
 
+    /**
+     * Cleans a JSON-like response string by removing unnecessary markers, line breaks, and extra whitespace.
+     * This is useful for handling improperly formatted JSON responses from external sources.
+     *
+     * @param response - The raw JSON-like string response to clean.
+     * @returns The cleaned string, ready for parsing or further processing.
+     */
+
     cleanJsonResponse(response: string): string {
         return response
             .replace(/```json\s*/g, "") // Remove ```json
@@ -546,6 +555,12 @@ export class TwitterPostClient {
                     .replace(/\\"/g, '"') // Unescape quotes
                     .replace(/\\n/g, "\n\n") // Unescape newlines, ensures double spaces
                     .trim();
+            }
+
+            if (!cleanedContent) {
+                cleanedContent = extractAttributes(newTweetContent, [
+                    "text",
+                ]).text;
             }
 
             if (!cleanedContent) {
@@ -672,11 +687,17 @@ export class TwitterPostClient {
                 response,
             );
         }
-        // If not JSON or no valid content found, clean the raw text
-        const truncateContent = truncateToCompleteSentence(
-            cleanedResponse,
-            this.client.twitterConfig.MAX_TWEET_LENGTH,
-        );
+
+        let truncateContent = extractAttributes(cleanedResponse, ["text"]).text;
+
+        if (!truncateContent) {
+            // If not JSON or no valid content found, clean the raw text
+            truncateContent = truncateToCompleteSentence(
+                cleanedResponse,
+                this.client.twitterConfig.MAX_TWEET_LENGTH,
+            );
+        }
+
         return truncateContent;
     }
 

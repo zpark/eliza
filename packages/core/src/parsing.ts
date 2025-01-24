@@ -173,6 +173,30 @@ export function parseJSONObjectFromText(
     }
 }
 
+/**
+ * Extracts specific attributes (e.g., user, text, action) from a JSON-like string using regex.
+ * @param response - The cleaned string response to extract attributes from.
+ * @param attributesToExtract - An array of attribute names to extract.
+ * @returns An object containing the extracted attributes.
+ */
+export function extractAttributes(
+    response: string,
+    attributesToExtract: string[],
+): { [key: string]: string | undefined } {
+    const attributes: { [key: string]: string | undefined } = {};
+
+    attributesToExtract.forEach((attribute) => {
+        const match = response.match(
+            new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i"),
+        );
+        if (match) {
+            attributes[attribute] = match[1];
+        }
+    });
+
+    return attributes;
+}
+
 export const postActionResponseFooter = `Choose any combination of [LIKE], [RETWEET], [QUOTE], and [REPLY] that are appropriate. Each action must be on its own line. Your response must only include the chosen actions.`;
 
 export const parseActionResponseFromText = (
