@@ -12,9 +12,11 @@ import { type KeyPair, mnemonicToPrivateKey } from "@ton/crypto";
 import NodeCache from "node-cache";
 import * as path from "path";
 import BigNumber from "bignumber.js";
+import { CONFIG_KEYS } from "../enviroment";
 
 const PROVIDER_CONFIG = {
     MAINNET_RPC: "https://toncenter.com/api/v2/jsonRPC",
+    RPC_API_KEY: "",
     STONFI_TON_USD_POOL: "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
     CHAIN_NAME_IN_DEXSCREENER: "ton",
     // USD_DECIMAL=10^6
@@ -23,8 +25,6 @@ const PROVIDER_CONFIG = {
     // 10^9
     TON_DECIMAL: BigInt(1000000000),
 };
-// settings
-// TON_PRIVATE_KEY, TON_RPC_URL
 
 interface WalletPortfolio {
     totalUsd: string;
@@ -32,7 +32,7 @@ interface WalletPortfolio {
 }
 
 interface Prices {
-    nativeToken: { usd: string };
+    nativeToken: { usd: BigNumber };
 }
 
 export class WalletProvider {
@@ -46,6 +46,7 @@ export class WalletProvider {
         // mnemonic: string,
         keypair: KeyPair,
         private endpoint: string,
+        private rpcApiKey: string,
         private cacheManager: ICacheManager
     ) {
         this.keypair = keypair;
@@ -153,7 +154,7 @@ export class WalletProvider {
                 }
             );
             const prices: Prices = {
-                nativeToken: { usd: priceData.pair.priceUsd },
+                nativeToken: { usd: new BigNumber(priceData.pair.priceUsd).dividedBy(new BigNumber(priceData.pair.priceNative)) },
             };
             this.setCachedData(cacheKey, prices);
             return prices;
@@ -214,11 +215,11 @@ export class WalletProvider {
                 Number(PROVIDER_CONFIG.TON_DECIMAL);
             const totalUsd = new BigNumber(amount.toString()).times(
                 prices.nativeToken.usd
-            );
+            ).toFixed(4);
 
             const portfolio = {
                 totalUsd: totalUsd.toString(),
-                totalNativeToken: amount.toString(),
+                totalNativeToken: amount.toFixed(4).toString(),
             };
             this.setCachedData(cacheKey, portfolio);
             console.log("Fetched portfolio:", portfolio);
@@ -250,6 +251,7 @@ export class WalletProvider {
     getWalletClient(): TonClient {
         const client = new TonClient({
             endpoint: this.endpoint,
+            apiKey: this.rpcApiKey,
         });
         return client;
     }
@@ -269,22 +271,22 @@ export class WalletProvider {
 }
 
 export const initWalletProvider = async (runtime: IAgentRuntime) => {
-    const privateKey = runtime.getSetting("TON_PRIVATE_KEY");
+    const privateKey = runtime.getSetting(CONFIG_KEYS.TON_PRIVATE_KEY);
     let mnemonics: string[];
 
     if (!privateKey) {
-        throw new Error("TON_PRIVATE_KEY is missing");
+        throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} is missing`);
     } else {
         mnemonics = privateKey.split(" ");
         if (mnemonics.length < 2) {
-            throw new Error("TON_PRIVATE_KEY mnemonic seems invalid");
+            throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} mnemonic seems invalid`);
         }
     }
-    const rpcUrl =
-        runtime.getSetting("TON_RPC_URL") || PROVIDER_CONFIG.MAINNET_RPC;
+    const rpcUrl = runtime.getSetting(CONFIG_KEYS.TON_RPC_URL) || PROVIDER_CONFIG.MAINNET_RPC;
+    const rpcApiKey = runtime.getSetting(CONFIG_KEYS.TON_RPC_API_KEY) || PROVIDER_CONFIG.RPC_API_KEY;
 
     const keypair = await mnemonicToPrivateKey(mnemonics, "");
-    return new WalletProvider(keypair, rpcUrl, runtime.cacheManager);
+    return new WalletProvider(keypair, rpcUrl, rpcApiKey, runtime.cacheManager);
 };
 
 export const nativeWalletProvider: Provider = {
