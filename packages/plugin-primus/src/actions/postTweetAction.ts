@@ -1,9 +1,9 @@
 import {
-    Action,
+    type Action,
     elizaLogger,
-    IAgentRuntime,
-    Memory,
-    State,
+    type IAgentRuntime,
+    type Memory,
+    type State,
 } from "@elizaos/core";
 import { TwitterScraper } from "../util/twitterScraper.ts";
 import {tokenPriceProvider} from "../providers/tokenPriceProvider.ts";
@@ -114,8 +114,11 @@ export const postTweetAction: Action = {
     name: "POST_TWEET",
     similes: ["TWEET", "POST", "SEND_TWEET"],
     validate: async (
+        // eslint-disable-next-line
         runtime: IAgentRuntime,
+        // eslint-disable-next-line
         message: Memory,
+        // eslint-disable-next-line
         state?: State
     ) => {
         const hasCredentials =
