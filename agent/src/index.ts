@@ -134,6 +134,7 @@ import { imgflipPlugin } from "@elizaos/plugin-imgflip"
 import { ethstoragePlugin } from "@elizaos/plugin-ethstorage"
 import { zerionPlugin } from "@elizaos/plugin-zerion"
 import { minaPlugin } from "@elizaos/plugin-mina"
+import { formPlugin } from "@elizaos/plugin-form";
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
 const __dirname = path.dirname(__filename) // get the name of the directory
@@ -547,11 +548,12 @@ function initializeDatabase(dataDir: string) {
 			dataDir: process.env.PGLITE_DATA_DIR,
 		})
 		return db
-	} else if (process.env.QDRANT_URL && process.env.QDRANT_KEY && process.env.QDRANT_PORT && process.env.QDRANT_VECTOR_SIZE) {
+	} else if (
+        process.env.QDRANT_URL && process.env.QDRANT_KEY && process.env.QDRANT_PORT && process.env.QDRANT_VECTOR_SIZE) {
 		elizaLogger.info("Initializing Qdrant adapter...")
-		const db = new QdrantDatabaseAdapter(process.env.QDRANT_URL, process.env.QDRANT_KEY, Number(process.env.QDRANT_PORT), Number(process.env.QDRANT_VECTOR_SIZE))
+		const db = new QdrantDatabaseAdapter(process.env.QDRANT_URL, process.env.QDRANT_KEY, Number(process.env.QDRANT_PORT), Number(process.env.QDRANT_VECTOR_SIZE),)
 		return db
-	} else {
+	}  else {
 		const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite")
 		elizaLogger.info(`Initializing SQLite database at ${filePath}...`)
 		const db = new SqliteDatabaseAdapter(new Database(filePath))
@@ -849,6 +851,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "FUNDING_PRIVATE_KEY") && getSecret(character, "EVM_RPC_URL") ? litPlugin : null,
 			getSecret(character, "ETHSTORAGE_PRIVATE_KEY") ? ethstoragePlugin : null,
 			getSecret(character, "MINA_PRIVATE_KEY") ? minaPlugin : null,
+            getSecret(character, "FORM_PRIVATE_KEY") ? formPlugin : null,
 		].filter(Boolean),
 		providers: [],
 		managers: [],
@@ -1037,14 +1040,17 @@ startAgents().catch((error) => {
 })
 
 // Prevent unhandled exceptions from crashing the process if desired
-if (process.env.PREVENT_UNHANDLED_EXIT && parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)) {
-	// Handle uncaught exceptions to prevent the process from crashing
-	process.on("uncaughtException", function (err) {
-		console.error("uncaughtException", err)
-	})
+if (
+    process.env.PREVENT_UNHANDLED_EXIT &&
+    parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
+) {
+    // Handle uncaught exceptions to prevent the process from crashing
+    process.on("uncaughtException", function (err) {
+        console.error("uncaughtException", err);
+    });
 
-	// Handle unhandled rejections to prevent the process from crashing
-	process.on("unhandledRejection", function (err) {
-		console.error("unhandledRejection", err)
-	})
+    // Handle unhandled rejections to prevent the process from crashing
+    process.on("unhandledRejection", function (err) {
+        console.error("unhandledRejection", err);
+    });
 }
