@@ -62,6 +62,7 @@ import { avalanchePlugin } from "@elizaos/plugin-avalanche"
 import { b2Plugin } from "@elizaos/plugin-b2"
 import { binancePlugin } from "@elizaos/plugin-binance"
 import { birdeyePlugin } from "@elizaos/plugin-birdeye"
+import { bittensorPlugin } from "@elizaos/plugin-bittensor";
 import { bnbPlugin } from "@elizaos/plugin-bnb"
 import { advancedTradePlugin, coinbaseCommercePlugin, coinbaseMassPaymentsPlugin, tokenContractPlugin, tradePlugin, webhookPlugin } from "@elizaos/plugin-coinbase"
 import { coingeckoPlugin } from "@elizaos/plugin-coingecko"
@@ -487,8 +488,6 @@ export function getTokenForProvider(provider: ModelProviderName, character: Char
 			return character.settings?.secrets?.ATOMASDK_BEARER_AUTH || settings.ATOMASDK_BEARER_AUTH
 		case ModelProviderName.NVIDIA:
 			return character.settings?.secrets?.NVIDIA_API_KEY || settings.NVIDIA_API_KEY
-		case ModelProviderName.NVIDIA:
-			return character.settings?.secrets?.NVIDIA_API_KEY || settings.NVIDIA_API_KEY
 		case ModelProviderName.AKASH_CHAT_API:
 			return character.settings?.secrets?.AKASH_CHAT_API_KEY || settings.AKASH_CHAT_API_KEY
 		case ModelProviderName.GOOGLE:
@@ -747,6 +746,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 		character,
 		// character.plugins are handled when clients are added
 		plugins: [
+            parseBooleanFromText(getSecret(character, "BITMIND")) && getSecret(character, "BITMIND_API_TOKEN") ? bittensorPlugin : null,
             parseBooleanFromText(getSecret(character, "EMAIL_AUTOMATION_ENABLED")) ? emailAutomationPlugin : null,
 			getSecret(character, "IQ_WALLET_ADDRESS") && getSecret(character, "IQSOlRPC") ? elizaCodeinPlugin : null,
 			bootstrapPlugin,
@@ -841,7 +841,6 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "INITIA_PRIVATE_KEY") ? initiaPlugin : null,
 			getSecret(character, "HOLDSTATION_PRIVATE_KEY") ? holdstationPlugin : null,
 			getSecret(character, "NVIDIA_NIM_API_KEY") || getSecret(character, "NVIDIA_NGC_API_KEY") ? nvidiaNimPlugin : null,
-			getSecret(character, "INITIA_PRIVATE_KEY") && getSecret(character, "INITIA_NODE_URL") ? initiaPlugin : null,
 			getSecret(character, "BNB_PRIVATE_KEY") || getSecret(character, "BNB_PUBLIC_KEY")?.startsWith("0x") ? bnbPlugin : null,
 			(getSecret(character, "EMAIL_INCOMING_USER") && getSecret(character, "EMAIL_INCOMING_PASS")) || (getSecret(character, "EMAIL_OUTGOING_USER") && getSecret(character, "EMAIL_OUTGOING_PASS")) ? emailPlugin : null,
 			getSecret(character, "SEI_PRIVATE_KEY") ? seiPlugin : null,

@@ -120,6 +120,7 @@
 		"@elizaos/plugin-router-nitro": "workspace:*",
 		"@elizaos/plugin-nvidia-nim": "workspace:*",
 		"@elizaos/plugin-0x": "workspace:*",
+        "@elizaos/plugin-bittensor": "workspace:*",
 		"@elizaos/plugin-chainbase": "workspace:*",
 		"@elizaos/plugin-dkg": "workspace:*",
 		"@elizaos/plugin-email": "workspace:*",
