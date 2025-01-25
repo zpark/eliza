@@ -438,6 +438,8 @@ export function getTokenForProvider(provider: ModelProviderName, character: Char
 		case ModelProviderName.OLLAMA:
 			return ""
 		case ModelProviderName.GAIANET:
+            return "";
+        case ModelProviderName.BEDROCK:
 			return ""
 		case ModelProviderName.OPENAI:
 			return character.settings?.secrets?.OPENAI_API_KEY || settings.OPENAI_API_KEY
