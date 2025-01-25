@@ -11,6 +11,8 @@ import { LensAgentClient } from "@elizaos/client-lens"
 import { SlackClientInterface } from "@elizaos/client-slack"
 import { TelegramClientInterface } from "@elizaos/client-telegram"
 import { TwitterClientInterface } from "@elizaos/client-twitter"
+import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb"
+
 import { FarcasterClientInterface } from "@elizaos/client-farcaster"
 import { OmniflixPlugin } from "@elizaos/plugin-omniflix"
 import { JeeterClientInterface } from "@elizaos/client-simsai"
@@ -137,6 +139,7 @@ import { zerionPlugin } from "@elizaos/plugin-zerion"
 import { minaPlugin } from "@elizaos/plugin-mina"
 import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
+import { MongoClient } from "mongodb";
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
 const __dirname = path.dirname(__filename) // get the name of the directory
@@ -510,9 +513,42 @@ export function getTokenForProvider(provider: ModelProviderName, character: Char
 }
 
 function initializeDatabase(dataDir: string) {
-	if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-		elizaLogger.info("Initializing Supabase connection...")
-		const db = new SupabaseDatabaseAdapter(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
+    if (process.env.MONGODB_CONNECTION_STRING) {
+        elizaLogger.log("Initializing database on MongoDB Atlas");
+        const client = new MongoClient(process.env.MONGODB_CONNECTION_STRING, {
+            maxPoolSize: 100,
+            minPoolSize: 5,
+            maxIdleTimeMS: 60000,
+            connectTimeoutMS: 10000,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            compressors: ['zlib'],
+            retryWrites: true,
+            retryReads: true
+        });
+
+        const dbName = process.env.MONGODB_DATABASE || 'elizaAgent';
+        const db = new MongoDBDatabaseAdapter(client, dbName);
+
+        // Test the connection
+        db.init()
+            .then(() => {
+                elizaLogger.success(
+                    "Successfully connected to MongoDB Atlas"
+                );
+            })
+            .catch((error) => {
+                elizaLogger.error("Failed to connect to MongoDB Atlas:", error);
+                throw error; // Re-throw to handle it in the calling code
+            });
+
+        return db;
+    } else if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+        elizaLogger.info("Initializing Supabase connection...");
+        const db = new SupabaseDatabaseAdapter(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY,
+        );
 
 		// Test the connection
 		db.init()
@@ -578,6 +614,7 @@ export async function initializeClients(character: Character, runtime: IAgentRun
 	const clients: Record<string, any> = {}
 	const clientTypes: string[] = character.clients?.map((str) => str.toLowerCase()) || []
 	elizaLogger.log("initializeClients", clientTypes, "for", character.name)
+
 
 	// Start Auto Client if "auto" detected as a configured client
 	if (clientTypes.includes(Clients.AUTO)) {

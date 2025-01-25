@@ -24,6 +24,7 @@
 		"@elizaos/adapter-sqlite": "workspace:*",
 		"@elizaos/adapter-pglite": "workspace:*",
 		"@elizaos/adapter-qdrant": "workspace:*",
+        "@elizaos/adapter-mongodb": "workspace:*",
 		"@elizaos/client-auto": "workspace:*",
 		"@elizaos/client-direct": "workspace:*",
 		"@elizaos/client-discord": "workspace:*",
