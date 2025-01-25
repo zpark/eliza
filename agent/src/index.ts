@@ -141,6 +141,7 @@ import { minaPlugin } from "@elizaos/plugin-mina"
 import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
 import { MongoClient } from "mongodb";
+import { quickIntelPlugin } from "@elizaos/plugin-quick-intel"
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
 const __dirname = path.dirname(__filename) // get the name of the directory
@@ -899,6 +900,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
             getSecret(character, "FORM_PRIVATE_KEY") ? formPlugin : null,
             getSecret(character, "ANKR_WALLET") ? ankrPlugin : null,
 			getSecret(character, "DCAP_EVM_PRIVATE_KEY") && getSecret(character, "DCAP_MODE") ? dcapPlugin : null,
+			getSecret(character, "QUICKINTEL_API_KEY") ? quickIntelPlugin : null,
 		].filter(Boolean),
 		providers: [],
 		managers: [],
