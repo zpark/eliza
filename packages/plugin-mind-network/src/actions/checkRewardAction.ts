@@ -1,7 +1,7 @@
 import type { Action } from "@elizaos/core";
 import { type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, type State, elizaLogger } from "@elizaos/core";
 import { checkColdWalletReward } from "mind-randgen-sdk";
-import { isAddress, formatEther } from "ethers";
+import { isAddress, formatEther } from "viem";
 
 export const checkRewardAction: Action = {
     name: "MIND_CHECK_VOTING_REWARD",

@@ -358,6 +358,9 @@ importers:
       '@elizaos/plugin-mina':
         specifier: workspace:*
         version: link:../packages/plugin-mina
+      '@elizaos/plugin-mind-network':
+        specifier: workspace:*
+        version: link:../packages/plugin-mind-network
       '@elizaos/plugin-moralis':
         specifier: workspace:*
         version: link:../packages/plugin-moralis
@@ -406,6 +409,9 @@ importers:
       '@elizaos/plugin-quai':
         specifier: workspace:*
         version: link:../packages/plugin-quai
+      '@elizaos/plugin-quick-intel':
+        specifier: workspace:*
+        version: link:../packages/plugin-quick-intel
       '@elizaos/plugin-router-nitro':
         specifier: workspace:*
         version: link:../packages/plugin-router-nitro
@@ -3111,6 +3117,18 @@ importers:
         specifier: 7.1.0
         version: 7.1.0
 
+  packages/plugin-mind-network:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      mind-randgen-sdk:
+        specifier: ^1.0.0
+        version: 1.0.2(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      whatwg-url:
+        specifier: 7.1.0
+        version: 7.1.0
+
   packages/plugin-moralis:
     dependencies:
       '@elizaos/core':
@@ -3768,6 +3786,15 @@ importers:
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
+
+  packages/plugin-quick-intel:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.9(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
 
   packages/plugin-rabbi-trader:
     dependencies:
@@ -20667,6 +20694,12 @@ packages:
   min-indent@1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
+
+  mind-hubs-sdk@1.0.1:
+    resolution: {integrity: sha512-Pka97NTCDe4SRfVsF8Sgo0v67pABPj/7X+ew1TTnvb2UVzgatjIaSOzS+cN0SpwxcLOhwFt0rgmd4x2jTknaVw==}
+
+  mind-randgen-sdk@1.0.2:
+    resolution: {integrity: sha512-kJyXa5KuL5G5iGvfl4o8pbsypbUGf7bEt/D+Mg0mrttDpcv5UzQdyEJdoPFbi87PEwjID6NiYfUT6vpMlTJKhw==}
 
   mini-css-extract-plugin@2.9.2:
     resolution: {integrity: sha512-GJuACcS//jtq4kCtd5ii/M0SZf7OZRH+BxdqXZHaJfb8TJiVl+NgQRPwiYt2EuqeSkNydn/7vP+bcE27C5mb9w==}
@@ -51294,7 +51327,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.4.0(supports-color@8.1.1)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -56398,6 +56431,26 @@ snapshots:
       dom-walk: 0.1.2
 
   min-indent@1.0.1: {}
+
+  mind-hubs-sdk@1.0.1(bufferutil@4.0.9)(utf-8-validate@6.0.5):
+    dependencies:
+      ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      pino: 9.6.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  mind-randgen-sdk@1.0.2(bufferutil@4.0.9)(utf-8-validate@6.0.5):
+    dependencies:
+      axios: 1.7.9
+      commander: 10.0.1
+      ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      mind-hubs-sdk: 1.0.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      pino: 9.6.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
 
   mini-css-extract-plugin@2.9.2(webpack@5.97.1(@swc/core@1.10.9(@swc/helpers@0.5.15))):
     dependencies:

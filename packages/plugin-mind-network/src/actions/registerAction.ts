@@ -1,7 +1,7 @@
 import type { Action } from "@elizaos/core";
 import { type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, type State, elizaLogger } from "@elizaos/core";
 import { registerVoter } from "mind-randgen-sdk";
-import { isAddress } from "ethers";
+import { isAddress } from "viem";
 
 export const registerAction: Action = {
     name: "MIND_REGISTER_VOTER",
