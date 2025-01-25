@@ -126,6 +126,7 @@ import path from "path"
 import { fileURLToPath } from "url"
 import yargs from "yargs"
 import { emailPlugin } from "@elizaos/plugin-email"
+import { emailAutomationPlugin } from "@elizaos/plugin-email-automation";
 import { seiPlugin } from "@elizaos/plugin-sei"
 import { sunoPlugin } from "@elizaos/plugin-suno"
 import { udioPlugin } from "@elizaos/plugin-udio"
@@ -743,6 +744,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 		character,
 		// character.plugins are handled when clients are added
 		plugins: [
+            parseBooleanFromText(getSecret(character, "EMAIL_AUTOMATION_ENABLED")) ? emailAutomationPlugin : null,
 			getSecret(character, "IQ_WALLET_ADDRESS") && getSecret(character, "IQSOlRPC") ? elizaCodeinPlugin : null,
 			bootstrapPlugin,
 			getSecret(character, "CDP_API_KEY_NAME") && getSecret(character, "CDP_API_KEY_PRIVATE_KEY") && getSecret(character, "CDP_AGENT_KIT_NETWORK") ? agentKitPlugin : null,
