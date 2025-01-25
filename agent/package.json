@@ -65,6 +65,7 @@
 		"@elizaos/plugin-lit": "workspace:*",
 		"@elizaos/plugin-movement": "workspace:*",
 		"@elizaos/plugin-massa": "workspace:*",
+        "@elizaos/plugin-news": "workspace:*",
 		"@elizaos/plugin-nft-generation": "workspace:*",
 		"@elizaos/plugin-node": "workspace:*",
 		"@elizaos/plugin-solana": "workspace:*",
