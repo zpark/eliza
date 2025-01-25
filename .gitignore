@@ -42,7 +42,11 @@ timeline_cache.json
 
 *.sqlite
 
-characters/
+# Character configurations
+characters/**/secrets.json
+characters/**/*.env
+characters/**/*.key
+characters/**/private/
 
 packages/core/src/providers/cache
 packages/core/src/providers/cache/*
@@ -68,6 +72,9 @@ eliza.sig
 packages/plugin-nvidia-nim/extra
 packages/plugin-nvidia-nim/old_code
 packages/plugin-nvidia-nim/docs
+
+# Edriziai specific ignores
+characters/edriziai-info/secrets.json
 
 # Bug Hunter logs and checkpoints
 scripts/bug_hunt/logs/
