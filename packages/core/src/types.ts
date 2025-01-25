@@ -230,6 +230,7 @@ export type Models = {
     [ModelProviderName.LIVEPEER]: Model;
     [ModelProviderName.DEEPSEEK]: Model;
     [ModelProviderName.INFERA]: Model;
+    [ModelProviderName.BEDROCK]: Model;
     [ModelProviderName.ATOMA]: Model;
 };
 
@@ -267,6 +268,7 @@ export enum ModelProviderName {
     LETZAI = "letzai",
     DEEPSEEK = "deepseek",
     INFERA = "infera",
+    BEDROCK = "bedrock",
     ATOMA = "atoma",
 }
 
