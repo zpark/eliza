@@ -42,6 +42,7 @@
 		"@elizaos/plugin-birdeye": "workspace:*",
 		"@elizaos/plugin-coingecko": "workspace:*",
 		"@elizaos/plugin-coinmarketcap": "workspace:*",
+		"@elizaos/plugin-zerion": "workspace:*",
 		"@elizaos/plugin-binance": "workspace:*",
 		"@elizaos/plugin-avail": "workspace:*",
 		"@elizaos/plugin-bnb": "workspace:*",
@@ -63,6 +64,7 @@
 		"@elizaos/plugin-initia": "workspace:*",
 		"@elizaos/plugin-image-generation": "workspace:*",
 		"@elizaos/plugin-lit": "workspace:*",
+        "@elizaos/plugin-moralis": "workspace:*",
 		"@elizaos/plugin-movement": "workspace:*",
 		"@elizaos/plugin-massa": "workspace:*",
 		"@elizaos/plugin-nft-generation": "workspace:*",
@@ -130,6 +132,7 @@
 		"@elizaos/plugin-imgflip": "workspace:*",
 		"@elizaos/plugin-ethstorage": "workspace:*",
 		"@elizaos/plugin-mina": "workspace:*",
+        "@elizaos/plugin-email-automation": "workspace:*",
 		"readline": "1.3.0",
 		"ws": "8.18.0",
 		"yargs": "17.7.2"

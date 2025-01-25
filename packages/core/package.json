@@ -68,6 +68,7 @@
         "@ai-sdk/groq": "0.0.3",
         "@ai-sdk/mistral": "1.0.9",
         "@ai-sdk/openai": "1.0.5",
+        "@ai-sdk/amazon-bedrock": "1.1.0",
         "@fal-ai/client": "1.2.0",
         "@tavily/core": "^0.0.2",
         "@types/uuid": "10.0.0",

@@ -23,25 +23,25 @@ import { lightningPlugin } from "@elizaos/plugin-lightning"
 import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900"
 
 import {
-	AgentRuntime,
-	CacheManager,
-	CacheStore,
-	type Character,
-	type Client,
-	Clients,
-	DbCacheAdapter,
-	defaultCharacter,
-	elizaLogger,
-	FsCacheAdapter,
-	type IAgentRuntime,
-	type ICacheManager,
-	type IDatabaseAdapter,
-	type IDatabaseCacheAdapter,
-	ModelProviderName,
-	parseBooleanFromText,
-	settings,
-	stringToUuid,
-	validateCharacterConfig,
+    AgentRuntime,
+    CacheManager,
+    CacheStore,
+    type Character,
+    type Client,
+    Clients,
+    DbCacheAdapter,
+    defaultCharacter,
+    elizaLogger,
+    FsCacheAdapter,
+    type IAgentRuntime,
+    type ICacheManager,
+    type IDatabaseAdapter,
+    type IDatabaseCacheAdapter,
+    ModelProviderName,
+    parseBooleanFromText,
+    settings,
+    stringToUuid,
+    validateCharacterConfig,
 } from "@elizaos/core"
 import { zgPlugin } from "@elizaos/plugin-0g"
 import { footballPlugin } from "@elizaos/plugin-football"
@@ -105,6 +105,7 @@ import { giphyPlugin } from "@elizaos/plugin-giphy"
 import { letzAIPlugin } from "@elizaos/plugin-letzai"
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb"
 import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid"
+import { moralisPlugin } from "@elizaos/plugin-moralis";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers"
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener"
 import { pythDataPlugin } from "@elizaos/plugin-pyth-data"
@@ -125,11 +126,13 @@ import path from "path"
 import { fileURLToPath } from "url"
 import yargs from "yargs"
 import { emailPlugin } from "@elizaos/plugin-email"
+import { emailAutomationPlugin } from "@elizaos/plugin-email-automation";
 import { seiPlugin } from "@elizaos/plugin-sei"
 import { sunoPlugin } from "@elizaos/plugin-suno"
 import { udioPlugin } from "@elizaos/plugin-udio"
 import { imgflipPlugin } from "@elizaos/plugin-imgflip"
 import { ethstoragePlugin } from "@elizaos/plugin-ethstorage"
+import { zerionPlugin } from "@elizaos/plugin-zerion"
 import { minaPlugin } from "@elizaos/plugin-mina"
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
@@ -438,6 +441,8 @@ export function getTokenForProvider(provider: ModelProviderName, character: Char
 		case ModelProviderName.OLLAMA:
 			return ""
 		case ModelProviderName.GAIANET:
+            return "";
+        case ModelProviderName.BEDROCK:
 			return ""
 		case ModelProviderName.OPENAI:
 			return character.settings?.secrets?.OPENAI_API_KEY || settings.OPENAI_API_KEY
@@ -739,6 +744,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 		character,
 		// character.plugins are handled when clients are added
 		plugins: [
+            parseBooleanFromText(getSecret(character, "EMAIL_AUTOMATION_ENABLED")) ? emailAutomationPlugin : null,
 			getSecret(character, "IQ_WALLET_ADDRESS") && getSecret(character, "IQSOlRPC") ? elizaCodeinPlugin : null,
 			bootstrapPlugin,
 			getSecret(character, "CDP_API_KEY_NAME") && getSecret(character, "CDP_API_KEY_PRIVATE_KEY") && getSecret(character, "CDP_AGENT_KIT_NETWORK") ? agentKitPlugin : null,
@@ -763,6 +769,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 				: null,
 			getSecret(character, "ZEROG_PRIVATE_KEY") ? zgPlugin : null,
 			getSecret(character, "COINMARKETCAP_API_KEY") ? coinmarketcapPlugin : null,
+			getSecret(character, "ZERION_API_KEY") ? zerionPlugin : null,
 			getSecret(character, "COINBASE_COMMERCE_KEY") ? coinbaseCommercePlugin : null,
 			getSecret(character, "FAL_API_KEY") ||
 			getSecret(character, "OPENAI_API_KEY") ||
@@ -783,6 +790,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "COINBASE_API_KEY") && getSecret(character, "COINBASE_PRIVATE_KEY") && getSecret(character, "COINBASE_NOTIFICATION_URI") ? webhookPlugin : null,
 			goatPlugin,
 			getSecret(character, "COINGECKO_API_KEY") || getSecret(character, "COINGECKO_PRO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "MORALIS_API_KEY") ? moralisPlugin : null,
 			getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
 			getSecret(character, "ABSTRACT_PRIVATE_KEY") ? abstractPlugin : null,
 			getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin : null,
