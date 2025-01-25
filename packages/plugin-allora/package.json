@@ -9,7 +9,7 @@
         "tsup": "8.3.5",
         "node-cache": "5.1.2",
         "vitest": "2.1.8",
-        "@alloralabs/allora-sdk": "0.0.4"
+        "@alloralabs/allora-sdk": "^0.1.0"
     },
     "scripts": {
         "build": "tsup --format esm --dts",
