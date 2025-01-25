@@ -105,6 +105,7 @@ import { giphyPlugin } from "@elizaos/plugin-giphy"
 import { letzAIPlugin } from "@elizaos/plugin-letzai"
 import { thirdwebPlugin } from "@elizaos/plugin-thirdweb"
 import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid"
+import { moralisPlugin } from "@elizaos/plugin-moralis";
 import { echoChambersPlugin } from "@elizaos/plugin-echochambers"
 import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener"
 import { pythDataPlugin } from "@elizaos/plugin-pyth-data"
@@ -787,6 +788,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "COINBASE_API_KEY") && getSecret(character, "COINBASE_PRIVATE_KEY") && getSecret(character, "COINBASE_NOTIFICATION_URI") ? webhookPlugin : null,
 			goatPlugin,
 			getSecret(character, "COINGECKO_API_KEY") || getSecret(character, "COINGECKO_PRO_API_KEY") ? coingeckoPlugin : null,
+            getSecret(character, "MORALIS_API_KEY") ? moralisPlugin : null,
 			getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
 			getSecret(character, "ABSTRACT_PRIVATE_KEY") ? abstractPlugin : null,
 			getSecret(character, "B2_PRIVATE_KEY") ? b2Plugin : null,
