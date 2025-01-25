@@ -72,16 +72,16 @@ eliza.sig
 packages/plugin-nvidia-nim/extra
 packages/plugin-nvidia-nim/old_code
 packages/plugin-nvidia-nim/docs
+
 # Edriziai specific ignores
 characters/edriziai-info/secrets.json
-*.env
-.env.*
 
-# Build directories
-**/.turbo/
-**/dist/
-**/node_modules/
+# Bug Hunter logs and checkpoints
+scripts/bug_hunt/logs/
+scripts/bug_hunt/logs/*.log
+scripts/bug_hunt/checkpoints/
+scripts/bug_hunt/checkpoints/*.json
+scripts/bug_hunt/reports/
+scripts/bug_hunt/reports/*.md
 
-# Cache and temporary files
-**/*.cache
-**/*.temp
+lit-config.json
