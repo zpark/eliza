@@ -67,6 +67,7 @@
   		"@elizaos/plugin-image-generation": "workspace:*",
 		"@elizaos/plugin-lit": "workspace:*",
         "@elizaos/plugin-moralis": "workspace:*",
+    	"@elizaos/plugin-mind-network": "workspace:*",
   		"@elizaos/plugin-movement": "workspace:*",
   		"@elizaos/plugin-massa": "workspace:*",
   		"@elizaos/plugin-nft-generation": "workspace:*",
