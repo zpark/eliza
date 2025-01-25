@@ -133,6 +133,9 @@ importers:
       '@elizaos/adapter-supabase':
         specifier: workspace:*
         version: link:../packages/adapter-supabase
+      '@elizaos/client-alexa':
+        specifier: workspace:*
+        version: link:../packages/client-alexa
       '@elizaos/client-auto':
         specifier: workspace:*
         version: link:../packages/client-auto
@@ -892,6 +895,31 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(@types/node@22.10.10)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@6.0.5))(terser@5.37.0)
 
+  packages/client-alexa:
+    dependencies:
+      '@elizaos/core':
+        specifier: workspace:*
+        version: link:../core
+      '@elizaos/plugin-node':
+        specifier: workspace:*
+        version: link:../plugin-node
+      ask-sdk-core:
+        specifier: ^2.14.0
+        version: 2.14.0(ask-sdk-model@1.86.0)
+      ask-sdk-model:
+        specifier: ^1.86.0
+        version: 1.86.0
+      axios:
+        specifier: 1.7.9
+        version: 1.7.9
+    devDependencies:
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(@swc/core@1.10.9(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
+      vitest:
+        specifier: 1.2.1
+        version: 1.2.1(@types/node@22.10.10)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@6.0.5))(terser@5.37.0)
+
   packages/client-auto:
     dependencies:
       '@elizaos/core':
@@ -1500,13 +1528,16 @@ importers:
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
+      tsup:
+        specifier: ^8.3.5
+        version: 8.3.5(@swc/core@1.10.9(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@4.9.5)(yaml@2.7.0)
+      viem:
+        specifier: 2.21.58
+        version: 2.21.58(bufferutil@4.0.9)(typescript@4.9.5)(utf-8-validate@6.0.5)(zod@3.24.1)
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
     devDependencies:
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.9(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@4.9.5)(yaml@2.7.0)
       typescript:
         specifier: '4.9'
         version: 4.9.5
@@ -3523,7 +3554,7 @@ importers:
         version: link:../core
       file-type-checker:
         specifier: ^1.1.2
-        version: 1.1.2
+        version: 1.1.3
       mrmime:
         specifier: ^2.0.0
         version: 2.0.0
@@ -12228,8 +12259,8 @@ packages:
   '@swc/types@0.1.17':
     resolution: {integrity: sha512-V5gRru+aD8YVyCOMAjMpWR1Ui577DD5KSJsHP8RAxopAH22jFz6GZd/qxqjO6MJHQhcsjvjOFXyDhyLQUnMveQ==}
 
-  '@switchboard-xyz/common@2.5.15':
-    resolution: {integrity: sha512-W4ub5Na0pf+OIBp8a8JhHzDIqleNI8iClNE5SeQeAMeElzT99fzfEXlY0gVXA7tXOrsLer9I383dCku0H7TDEw==}
+  '@switchboard-xyz/common@2.5.16':
+    resolution: {integrity: sha512-j2WK7Mv47XvGyMlt37bc4Hy/bRhSrDvhOlD7ykotoyUX5jrulnx0ege+8LIoKNGD8TMltsIEh7Ea24xY8EL54A==}
     engines: {node: '>=12'}
 
   '@switchboard-xyz/on-demand@1.2.42':
@@ -14081,6 +14112,17 @@ packages:
   arweave@1.15.5:
     resolution: {integrity: sha512-Zj3b8juz1ZtDaQDPQlzWyk2I4wZPx3RmcGq8pVJeZXl2Tjw0WRy5ueHPelxZtBLqCirGoZxZEAFRs6SZUSCBjg==}
     engines: {node: '>=18'}
+
+  ask-sdk-core@2.14.0:
+    resolution: {integrity: sha512-G2yEKbY+XYTFzJXGRpsg7xJHqqgBcgnKEgklXUMRWRFv10gwHgtWDLLlBV6h4IdysTx782rCVJK/UcHcaGbEpA==}
+    peerDependencies:
+      ask-sdk-model: ^1.29.0
+
+  ask-sdk-model@1.86.0:
+    resolution: {integrity: sha512-JmC5mypPBz5Q1Yx1WyeAr2Q/z2Cjm98EjLjTlYAolXF4gokU7fDDjeOAyAD5dkyHjyGLeCEvlC0MJYWFwc84dw==}
+
+  ask-sdk-runtime@2.14.0:
+    resolution: {integrity: sha512-a96pPs1RU3GgXBHplqAVqh2uxEuSYjTD5+XSbHsf6Fz4KhHpgaxJogOIIybjA6O/d1B9sG+6bjHJGzxBJEcccA==}
 
   asn1.js@4.10.1:
     resolution: {integrity: sha512-p32cOF5q0Zqs9uBiONKYLm6BClCoBCM5O9JfeUSlnQLBTxYdTK+pW+nXflm8UkKd2UYlEbYz5qEi0JuZR9ckSw==}
@@ -17383,8 +17425,8 @@ packages:
     peerDependencies:
       webpack: ^4.0.0 || ^5.0.0
 
-  file-type-checker@1.1.2:
-    resolution: {integrity: sha512-HodBNiinBQNHQfXhXzAuHkU2udHF3LFS6PAOEZqxW+BjotZVCaMR7ckpTTnvLi718dbzRavnjRX0kbSb5pJG3g==}
+  file-type-checker@1.1.3:
+    resolution: {integrity: sha512-SLMNPu0RZEQsfR+GRNnVBlBPdtXn2BTpvSzBRw9MDjDacobK+Vc0WtbQ/mZx7vqNy+b6juKsza5DvEN5i7LwCw==}
 
   file-uri-to-path@1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
@@ -43380,7 +43422,7 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@switchboard-xyz/common@2.5.15(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)':
+  '@switchboard-xyz/common@2.5.16(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/web3.js': 1.95.8(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       axios: 1.7.9
@@ -43405,7 +43447,7 @@ snapshots:
       '@coral-xyz/anchor-30': '@coral-xyz/anchor@0.30.1(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)'
       '@solana/web3.js': 1.95.8(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       '@solworks/soltoolkit-sdk': 0.0.23(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
-      '@switchboard-xyz/common': 2.5.15(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
+      '@switchboard-xyz/common': 2.5.16(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       axios: 1.7.9
       big.js: 6.2.2
       bs58: 5.0.0
@@ -46854,6 +46896,15 @@ snapshots:
       base64-js: 1.5.1
       bignumber.js: 9.1.2
     optional: true
+
+  ask-sdk-core@2.14.0(ask-sdk-model@1.86.0):
+    dependencies:
+      ask-sdk-model: 1.86.0
+      ask-sdk-runtime: 2.14.0
+
+  ask-sdk-model@1.86.0: {}
+
+  ask-sdk-runtime@2.14.0: {}
 
   asn1.js@4.10.1:
     dependencies:
@@ -51375,7 +51426,7 @@ snapshots:
       schema-utils: 3.3.0
       webpack: 5.97.1(@swc/core@1.10.9(@swc/helpers@0.5.15))
 
-  file-type-checker@1.1.2: {}
+  file-type-checker@1.1.3: {}
 
   file-uri-to-path@1.0.0: {}
 

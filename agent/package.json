@@ -34,6 +34,7 @@
 		"@elizaos/client-twitter": "workspace:*",
 		"@elizaos/client-instagram": "workspace:*",
 		"@elizaos/client-slack": "workspace:*",
+        "@elizaos/client-alexa": "workspace:*",
 		"@elizaos/client-simsai": "workspace:*",
 		"@elizaos/core": "workspace:*",
 		"@elizaos/plugin-0g": "workspace:*",

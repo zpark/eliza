@@ -11,6 +11,7 @@ import { LensAgentClient } from "@elizaos/client-lens"
 import { SlackClientInterface } from "@elizaos/client-slack"
 import { TelegramClientInterface } from "@elizaos/client-telegram"
 import { TwitterClientInterface } from "@elizaos/client-twitter"
+import { AlexaClientInterface } from "@elizaos/client-alexa";
 import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb"
 
 import { FarcasterClientInterface } from "@elizaos/client-farcaster"
@@ -638,6 +639,13 @@ export async function initializeClients(character: Character, runtime: IAgentRun
 			clients.twitter = twitterClient
 		}
 	}
+
+    if (clientTypes.includes(Clients.ALEXA)) {
+        const alexaClient = await AlexaClientInterface.start(runtime);
+        if (alexaClient) {
+            clients.alexa = alexaClient;
+        }
+    }
 
 	if (clientTypes.includes(Clients.INSTAGRAM)) {
 		const instagramClient = await InstagramClientInterface.start(runtime)
