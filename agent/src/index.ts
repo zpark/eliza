@@ -134,6 +134,7 @@ import { imgflipPlugin } from "@elizaos/plugin-imgflip"
 import { ethstoragePlugin } from "@elizaos/plugin-ethstorage"
 import { zerionPlugin } from "@elizaos/plugin-zerion"
 import { minaPlugin } from "@elizaos/plugin-mina"
+import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
 
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
@@ -852,6 +853,7 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "ETHSTORAGE_PRIVATE_KEY") ? ethstoragePlugin : null,
 			getSecret(character, "MINA_PRIVATE_KEY") ? minaPlugin : null,
             getSecret(character, "FORM_PRIVATE_KEY") ? formPlugin : null,
+            getSecret(character, "ANKR_WALLET") ? ankrPlugin : null,
 		].filter(Boolean),
 		providers: [],
 		managers: [],
