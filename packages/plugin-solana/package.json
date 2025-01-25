@@ -24,7 +24,7 @@
         "@elizaos/plugin-tee": "workspace:*",
         "@elizaos/plugin-trustdb": "workspace:*",
         "@solana/spl-token": "0.4.9",
-        "@solana/web3.js": "1.95.8",
+        "@solana/web3.js": "npm:@solana/web3.js@1.95.8",
         "bignumber.js": "9.1.2",
         "bs58": "6.0.0",
         "fomo-sdk-solana": "1.3.2",
