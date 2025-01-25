@@ -93,6 +93,7 @@ export function parseJsonArrayFromText(text: string) {
         } catch (e) {
             console.error("Error parsing JSON:", e);
             console.error("Text is not JSON", text);
+            return extractAttributes(jsonBlockMatch[1]);
         }
     }
 
@@ -109,6 +110,7 @@ export function parseJsonArrayFromText(text: string) {
             } catch (e) {
                 console.error("Text is not JSON", text);
                 console.error("Error parsing JSON:", e);
+                return extractAttributes(arrayMatch[0]);
             }
         }
     }
@@ -143,7 +145,7 @@ export function parseJSONObjectFromText(
         } catch (e) {
             console.error("Error parsing JSON:", e);
             console.error("Text is not JSON", text);
-            return null;
+            return extractAttributes(jsonBlockMatch[1]);
         }
     } else {
         const objectPattern = /{[\s\S]*?}/;
@@ -155,7 +157,7 @@ export function parseJSONObjectFromText(
             } catch (e) {
                 console.error("Error parsing JSON:", e);
                 console.error("Text is not JSON", text);
-                return null;
+                return extractAttributes(objectMatch[0]);
             }
         }
     }
