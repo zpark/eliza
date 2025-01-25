@@ -1,6 +1,10 @@
-
-import { Action } from "@elizaos/core";
-import { validatePrompt, validateApiKey, callOpenAiApi } from "./action";
+import type { Action } from "@elizaos/core";
+import {
+    validatePrompt,
+    validateApiKey,
+    callOpenAiApi,
+    buildRequestData,
+} from "./action";
 
 export const editTextAction: Action = {
     name: "editText",
@@ -18,7 +22,15 @@ export const editTextAction: Action = {
             instruction,
         };
 
-        const response = await callOpenAiApi("https://api.openai.com/v1/edits", requestData, apiKey);
+        const response = await callOpenAiApi(
+            "https://api.openai.com/v1/edits",
+            requestData,
+            apiKey,
+        );
         return response.choices[0].text.trim();
     },
+    validate: async (runtime, message) => {
+        return !!runtime.getSetting("OPENAI_API_KEY");
+    },
+    examples: [],
 };

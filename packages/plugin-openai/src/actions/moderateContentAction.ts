@@ -1,5 +1,4 @@
-
-import { Action } from "@elizaos/core";
+import type { Action } from "@elizaos/core";
 import { validatePrompt, validateApiKey, callOpenAiApi } from "./action";
 
 export const moderateContentAction: Action = {
@@ -12,7 +11,15 @@ export const moderateContentAction: Action = {
         const apiKey = validateApiKey();
         const requestData = { input };
 
-        const response = await callOpenAiApi("https://api.openai.com/v1/moderations", requestData, apiKey);
+        const response = await callOpenAiApi(
+            "https://api.openai.com/v1/moderations",
+            requestData,
+            apiKey,
+        );
         return response.results;
     },
+    validate: async (runtime, message) => {
+        return !!runtime.getSetting("OPENAI_API_KEY");
+    },
+    examples: [],
 };

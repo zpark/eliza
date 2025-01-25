@@ -1,6 +1,10 @@
-
-import { Action } from "@elizaos/core";
-import { validatePrompt, validateApiKey, callOpenAiApi, buildRequestData } from "./action";
+import type { Action } from "@elizaos/core";
+import {
+    validatePrompt,
+    validateApiKey,
+    callOpenAiApi,
+    buildRequestData,
+} from "./action";
 
 export const generateTextAction: Action = {
     name: "generateText",
@@ -14,10 +18,18 @@ export const generateTextAction: Action = {
             prompt,
             message.content.model,
             message.content.maxTokens,
-            message.content.temperature
+            message.content.temperature,
         );
 
-        const response = await callOpenAiApi("https://api.openai.com/v1/completions", requestData, apiKey);
+        const response = await callOpenAiApi(
+            "https://api.openai.com/v1/completions",
+            requestData,
+            apiKey,
+        );
         return { text: response.choices[0].text.trim() };
     },
+    validate: async (runtime, message) => {
+        return !!runtime.getSetting("OPENAI_API_KEY");
+    },
+    examples: [],
 };

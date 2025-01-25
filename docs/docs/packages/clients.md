@@ -35,11 +35,12 @@ graph TD
 
 ## Available Clients
 
-- **Discord** (`@elizaos/client-discord`) - Full Discord bot integration
-- **Twitter** (`@elizaos/client-twitter`) - Twitter bot and interaction handling
-- **Telegram** (`@elizaos/client-telegram`) - Telegram bot integration
-- **Direct** (`@elizaos/client-direct`) - Direct API interface for custom integrations
-- **Auto** (`@elizaos/client-auto`) - Automated trading and interaction client
+-   **Discord** (`@elizaos/client-discord`) - Full Discord bot integration
+-   **Twitter** (`@elizaos/client-twitter`) - Twitter bot and interaction handling
+-   **Telegram** (`@elizaos/client-telegram`) - Telegram bot integration
+-   **Direct** (`@elizaos/client-direct`) - Direct API for custom integrations
+-   **Auto** (`@elizaos/client-auto`) - Automated trading and interaction client
+-   **Alexa skill** (`@elizaos/client-alexa`) - Alexa skill API integration
 
 ---
 
@@ -83,11 +84,11 @@ DISCORD_API_TOKEN = your_bot_token;
 
 ### Features
 
-- Voice channel integration
-- Message attachments
-- Reactions handling
-- Media transcription
-- Room management
+-   Voice channel integration
+-   Message attachments
+-   Reactions handling
+-   Media transcription
+-   Room management
 
 ### Voice Integration
 
@@ -145,9 +146,9 @@ TWITTER_EMAIL = your_email;
 
 ### Components
 
-- **PostClient**: Handles creating and managing posts
-- **SearchClient**: Handles search functionality
-- **InteractionClient**: Manages user interactions
+-   **PostClient**: Handles creating and managing posts
+-   **SearchClient**: Handles search functionality
+-   **InteractionClient**: Manages user interactions
 
 ### Post Management
 
@@ -272,12 +273,9 @@ class AutoClient {
         this.runtime = runtime;
 
         // Start trading loop
-        this.interval = setInterval(
-            () => {
-                this.makeTrades();
-            },
-            60 * 60 * 1000,
-        ); // 1 hour interval
+        this.interval = setInterval(() => {
+            this.makeTrades();
+        }, 60 * 60 * 1000); // 1 hour interval
     }
 
     async makeTrades() {
@@ -293,6 +291,24 @@ class AutoClient {
 }
 ```
 
+## Alexa Client
+
+The Alexa client provides API integration with alexa skill.
+
+### Basic Setup
+
+```typescript
+import { AlexaClientInterface } from "@elizaos/client-alexa";
+
+// Initialize client
+const client = await AlexaClientInterface.start(runtime);
+
+// Configuration in .env
+ALEXA_SKILL_ID= your_alexa_skill_id
+ALEXA_CLIENT_ID= your_alexa_client_id #Alexa developer console permissions tab
+ALEXA_CLIENT_SECRET= your_alexa_client_secret #Alexa developer console permissions tab
+```
+
 ## Common Features
 
 ### Message Handling
@@ -301,9 +317,9 @@ All clients implement standard message handling:
 
 ```typescript
 interface ClientInterface {
-  async handleMessage(message: Message): Promise<void>;
-  async generateResponse(context: Context): Promise<Response>;
-  async sendMessage(destination: string, content: Content): Promise<void>;
+    handleMessage(message: Message): Promise<void>;
+    generateResponse(context: Context): Promise<Response>;
+    sendMessage(destination: string, content: Content): Promise<void>;
 }
 ```
 
@@ -311,9 +327,9 @@ interface ClientInterface {
 
 ```typescript
 interface MediaProcessor {
-  async processImage(image: Image): Promise<ProcessedImage>;
-  async processVideo(video: Video): Promise<ProcessedVideo>;
-  async processAudio(audio: Audio): Promise<ProcessedAudio>;
+    processImage(image: Image): Promise<ProcessedImage>;
+    processVideo(video: Video): Promise<ProcessedVideo>;
+    processAudio(audio: Audio): Promise<ProcessedAudio>;
 }
 ```
 
@@ -420,7 +436,7 @@ class RateLimiter {
     private calculateBackoff(error: RateLimitError): number {
         return Math.min(
             this.baseDelay * Math.pow(2, this.attempts),
-            this.maxDelay,
+            this.maxDelay
         );
     }
 }
@@ -507,4 +523,4 @@ async processMessage(message) {
 
 ## Related Resources
 
-- [Error Handling](../../packages/core)
+-   [Error Handling](../../packages/core)

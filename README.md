@@ -100,7 +100,7 @@ pnpm clean
 
 Once the agent is running, you should see the message to run "pnpm start:client" at the end.
 
-Open another terminal, move to same directory, run the command below, then follow the URL to chat with your agent.
+Open another terminal, move to the same directory, run the command below, then follow the URL to chat with your agent.
 
 ```bash
 pnpm start:client
@@ -149,6 +149,17 @@ pnpm install --include=optional sharp
 ### Start Eliza with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
+
+---
+
+### Deploy Eliza in one click 
+
+Use [Fleek](https://fleek.xyz/eliza/) to deploy Eliza in one click. This opens Eliza to non-developers and provides the following options to build your agent:
+1. Start with a template
+2. Build characterfile from scratch
+3. Upload pre-made characterfile
+
+Click [here](https://fleek.xyz/eliza/) to get started!
 
 ---
 
