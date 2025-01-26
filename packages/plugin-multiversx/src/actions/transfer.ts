@@ -23,6 +23,7 @@ export interface TransferContent extends Content {
     amount: string;
     tokenIdentifier?: string;
 }
+import { isUserAuthorized } from "../utils/accessTokenManagement";
 
 const transferTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
 
@@ -67,6 +68,22 @@ export default {
         callback?: HandlerCallback,
     ) => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
+
+        console.log("Handler initialized. Checking user authorization...");
+
+        if (!isUserAuthorized(message.userId, runtime)) {
+            console.error(
+                "Unauthorized user attempted to transfer a token:",
+                message.userId
+            );
+            if (callback) {
+                callback({
+                    text: "You do not have permission to transfer a token.",
+                    content: { error: "Unauthorized user" },
+                });
+            }
+            return false;
+        }
 
         // Initialize or update state
         if (!state) {

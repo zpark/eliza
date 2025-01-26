@@ -26,6 +26,8 @@ import {
 import { denominateAmount, getRawAmount } from "../utils/amount";
 import { getToken } from "../utils/getToken";
 import { filteredTokensQuery } from "../graphql/tokensQuery";
+import { isUserAuthorized } from "../utils/accessTokenManagement";
+
 
 type SwapResultType = {
     swap: {
@@ -86,6 +88,22 @@ export default {
         callback?: HandlerCallback,
     ) => {
         elizaLogger.log("Starting SWAP handler...");
+
+        console.log("Handler initialized. Checking user authorization...");
+
+                if (!isUserAuthorized(message.userId, runtime)) {
+                    console.error(
+                        "Unauthorized user attempted to swap:",
+                        message.userId
+                    );
+                    if (callback) {
+                        callback({
+                            text: "You do not have permission to swap.",
+                            content: { error: "Unauthorized user" },
+                        });
+                    }
+                    return false;
+                }
 
         // Initialize or update state
         if (!state) {
