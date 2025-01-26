@@ -1,10 +1,13 @@
 import type { ActionResponse } from "./types.ts";
 const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 
-export const messageCompletionFooter = `\nResponse format should be formatted in a JSON block like this:
+export const messageCompletionFooter = `\nResponse format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "user": "{{agentName}}", "text": "string", "action": "string" }
-\`\`\``;
+{ "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+\`\`\`
+
+The “action” field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
+`;
 
 export const shouldRespondFooter = `The available options are [RESPOND], [IGNORE], or [STOP]. Choose the most appropriate option.
 If {{agentName}} is talking too much, you can choose [IGNORE]
@@ -60,7 +63,7 @@ export const parseBooleanFromText = (text: string) => {
     return null; // Return null for unrecognized inputs
 };
 
-export const stringArrayFooter = `Respond with a JSON array containing the values in a JSON block formatted for markdown with this structure:
+export const stringArrayFooter = `Respond with a JSON array containing the values in a valid JSON block formatted for markdown with this structure:
 \`\`\`json
 [
   'value',
@@ -68,7 +71,7 @@ export const stringArrayFooter = `Respond with a JSON array containing the value
 ]
 \`\`\`
 
-Your response must include the JSON block.`;
+Your response must include the valid JSON block.`;
 
 /**
  * Parses a JSON array from a given text. The function looks for a JSON block wrapped in triple backticks

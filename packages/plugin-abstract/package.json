@@ -19,13 +19,21 @@
         "dist"
     ],
     "dependencies": {
+        "@abstract-foundation/agw-client": "1.0.1",
         "@elizaos/core": "workspace:*",
-        "@abstract-foundation/agw-client": "1.0.1"
+        "tsup": "^8.3.5",
+        "viem": "2.22.2"
     },
     "scripts": {
         "lint": "eslint --fix  --cache .",
         "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --no-dts --watch"
+        "dev": "tsup --format esm --no-dts --watch",
+        "test": "vitest run",
+        "test:watch": "vitest watch",
+        "test:coverage": "vitest run --coverage"
+    },
+    "devDependencies": {
+        "vitest": "^1.0.0"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

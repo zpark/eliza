@@ -1051,6 +1051,45 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.BEDROCK]: {
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_BEDROCK_MODEL || "amazon.nova-micro-v1:0",
+                maxInputTokens: 128000,
+                maxOutputTokens: 5120,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.6,
+                stop: [],
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_BEDROCK_MODEL || "amazon.nova-lite-v1:0",
+                maxInputTokens: 128000,
+                maxOutputTokens: 5120,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.6,
+                stop: [],
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_BEDROCK_MODEL || "amazon.nova-pro-v1:0",
+                maxInputTokens: 128000,
+                maxOutputTokens: 5120,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                temperature: 0.6,
+                stop: [],
+            },
+            [ModelClass.EMBEDDING]: {
+                name:
+                    settings.EMBEDDING_BEDROCK_MODEL ||
+                    "amazon.titan-embed-text-v1",
+            },
+            [ModelClass.IMAGE]: {
+                name: settings.IMAGE_BEDROCK_MODEL || "amazon.nova-canvas-v1:0",
+            },
+        },
+    },
     [ModelProviderName.ATOMA]: {
         endpoint: settings.ATOMA_API_URL || "https://api.atoma.network/v1",
         model: {

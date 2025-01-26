@@ -230,6 +230,7 @@ export type Models = {
     [ModelProviderName.LIVEPEER]: Model;
     [ModelProviderName.DEEPSEEK]: Model;
     [ModelProviderName.INFERA]: Model;
+    [ModelProviderName.BEDROCK]: Model;
     [ModelProviderName.ATOMA]: Model;
 };
 
@@ -267,6 +268,7 @@ export enum ModelProviderName {
     LETZAI = "letzai",
     DEEPSEEK = "deepseek",
     INFERA = "infera",
+    BEDROCK = "bedrock",
     ATOMA = "atoma",
 }
 
@@ -644,6 +646,7 @@ export type Plugin = {
  * Available client platforms
  */
 export enum Clients {
+    ALEXA= "alexa",
     DISCORD = "discord",
     DIRECT = "direct",
     TWITTER = "twitter",
@@ -1514,6 +1517,7 @@ export enum ServiceType {
     TEE_LOG = "tee_log",
     GOPLUS_SECURITY = "goplus_security",
     WEB_SEARCH = "web_search",
+    EMAIL_AUTOMATION = "email_automation",
 }
 
 export enum LoggingLevel {
