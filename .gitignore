@@ -12,6 +12,8 @@ packages/plugin-buttplug/intiface-engine
 node-compile-cache
 
 .idea
+.vscode
+.zed
 .DS_Store
 
 dist/

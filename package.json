@@ -45,6 +45,9 @@
     "pnpm": {
         "overrides": {
             "onnxruntime-node": "1.20.1",
+            "@solana/web3.js@1.95.5": "npm:@solana/web3.js@1.95.5",
+            "@solana/web3.js@1.95.8": "npm:@solana/web3.js@1.95.8",
+            "@solana/web3.js@2": "npm:@solana/web3.js@2.0.0",
             "viem": "2.21.58",
             "@polkadot/util": "12.6.2",
             "@polkadot/util-crypto": "12.6.2",
