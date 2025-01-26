@@ -101,7 +101,7 @@ export function parseJsonArrayFromText(text: string) {
 
     // If that fails, try to find an array pattern
     if (!jsonData) {
-        const arrayPattern = /\[\s*['"][^'"]*['"]\s*\]/;
+        const arrayPattern = /\[\s*(['"])(.*?)\1\s*\]/;
         const arrayMatch = text.match(arrayPattern);
 
         if (arrayMatch) {
