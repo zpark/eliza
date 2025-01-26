@@ -90,8 +90,8 @@ export function parseJsonArrayFromText(text: string) {
 
     if (jsonBlockMatch) {
         try {
-            // Replace single quotes with double quotes before parsing
-            const normalizedJson = jsonBlockMatch[1].replace(/'/g, '"');
+            // Only replace quotes that are actually being used for string delimitation
+            const normalizedJson = jsonBlockMatch[1].replace(/(?<!\\)'([^']*)'(?=[,}\]])/g, '"$1"');
             jsonData = JSON.parse(normalizedJson);
         } catch (e) {
             console.error("Error parsing JSON:", e);
@@ -106,8 +106,8 @@ export function parseJsonArrayFromText(text: string) {
 
         if (arrayMatch) {
             try {
-                // Replace single quotes with double quotes before parsing
-                const normalizedJson = arrayMatch[0].replace(/'/g, '"');
+                // Only replace quotes that are actually being used for string delimitation
+                const normalizedJson = arrayMatch[0].replace(/(?<!\\)'([^']*)'(?=[,}\]])/g, '"$1"');
                 jsonData = JSON.parse(normalizedJson);
             } catch (e) {
                 console.error("Text is not JSON", text);
