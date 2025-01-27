@@ -17,7 +17,7 @@ import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb"
 import { FarcasterClientInterface } from "@elizaos/client-farcaster"
 import { OmniflixPlugin } from "@elizaos/plugin-omniflix"
 import { JeeterClientInterface } from "@elizaos/client-simsai"
-
+import { XmtpClientInterface } from "@elizaos/client-xmtp";
 import { DirectClient } from "@elizaos/client-direct"
 import { agentKitPlugin } from "@elizaos/plugin-agentkit"
 import { gelatoPlugin } from "@elizaos/plugin-gelato";
@@ -626,6 +626,11 @@ export async function initializeClients(character: Character, runtime: IAgentRun
 		const autoClient = await AutoClientInterface.start(runtime)
 		if (autoClient) clients.auto = autoClient
 	}
+
+	if (clientTypes.includes(Clients.XMTP)) {
+        const xmtpClient = await XmtpClientInterface.start(runtime);
+        if (xmtpClient) clients.xmtp = xmtpClient;
+    }
 
 	if (clientTypes.includes(Clients.DISCORD)) {
 		const discordClient = await DiscordClientInterface.start(runtime)
