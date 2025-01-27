@@ -55,7 +55,7 @@ export default {
         "PAY",
     ],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for user:", message.userId);
         await validateMultiversxConfig(runtime);
         return true;
     },
@@ -69,10 +69,10 @@ export default {
     ) => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
 
-        console.log("Handler initialized. Checking user authorization...");
+        elizaLogger.log("Handler initialized. Checking user authorization...");
 
         if (!isUserAuthorized(message.userId, runtime)) {
-            console.error(
+            elizaLogger.error(
                 "Unauthorized user attempted to transfer a token:",
                 message.userId
             );
@@ -113,7 +113,7 @@ export default {
 
         // Validate transfer content
         if (!isTransferContent) {
-            console.error("Invalid content for TRANSFER_TOKEN action.");
+            elizaLogger.error("Invalid content for TRANSFER_TOKEN action.");
             if (callback) {
                 callback({
                     text: "Unable to process transfer request. Invalid content provided.",
@@ -187,7 +187,7 @@ export default {
 
             return true;
         } catch (error) {
-            console.error("Error during token transfer:", error);
+            elizaLogger.error("Error during token transfer:", error);
             callback?.({
                 text: error.message,
                 content: { error: error.message },
