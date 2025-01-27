@@ -91,8 +91,8 @@
         "onnxruntime-node": "1.20.1",
         "whatwg-url": "7.1.0"
     },
-    "trustedDependencies": {
-        "onnxruntime-node": "1.20.1",
-        "sharp": "0.33.5"
-    }
+    "trustedDependencies": [
+        "onnxruntime-node",
+        "sharp"
+    ]
 }

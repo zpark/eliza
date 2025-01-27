@@ -160,9 +160,9 @@ To set up your environment for TEE development:
     Make sure to set the `TEE_MODE` environment variable to `LOCAL`. Then you can install the dependencies and run the agent locally:
 
     ```bash
-    pnpm i
-    pnpm build
-    pnpm start --character=./characters/yourcharacter.character.json
+    bun i
+    bun run build
+    bun start --character=./characters/yourcharacter.character.json
     ```
 
 4. **Verify TEE Attestation**
@@ -245,7 +245,7 @@ services:
     tee:
         command:
             [
-                "pnpm",
+                "bun",
                 "start",
                 "--character=./characters/yourcharacter.character.json",
             ]

@@ -11,7 +11,7 @@
         "clean": "rimraf dist",
         "build:schemas": "openapi-zod-client ./schema.json --output src/types/zodSchemas.ts",
         "pull:schema": "curl -o schema.json -z schema.json https://hermes.pyth.network/docs/openapi.json",
-        "prebuild": "pnpm run pull:schema && pnpm run build:schemas"
+        "prebuild": "bun run pull:schema && bun run build:schemas"
     },
     "dependencies": {
         "@elizaos/core": "^0.1.7",

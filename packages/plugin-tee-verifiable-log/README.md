@@ -1,9 +1,9 @@
 ## Build
 Execute the following command to build the code.
 ```
-pnpm clean
-pnpm install  or  pnpm install --no-frozen-lockfile
-pnpm build
+bun clean
+bun install  or  bun install
+bun run build
 ```
 
 ## Configuration
@@ -30,6 +30,6 @@ For detailed configuration of plugin-tee, see the documentation.[docs/docs/advan
 Test files are located in the `test` folder. To run the tests, execute the following command:
 
 ```shell
-pnpm test
+bun test
 
 ```

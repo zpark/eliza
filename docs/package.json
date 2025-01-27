@@ -2,7 +2,7 @@
     "name": "eliza-docs",
     "version": "0.1.9-alpha.1",
     "private": true,
-    "packageManager": "pnpm@9.4.0",
+    "packageManager": "bun@9.4.0",
     "scripts": {
         "docusaurus": "docusaurus",
         "start": "docusaurus start --no-open",

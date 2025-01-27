@@ -7,7 +7,7 @@ The Agent Package (`@eliza/agent`) provides the high-level orchestration layer f
 ## Installation
 
 ```bash
-pnpm add @eliza/agent
+bun add @eliza/agent
 ```
 
 ## Quick Start

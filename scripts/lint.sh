@@ -14,7 +14,7 @@ cd "$(dirname "$0")"/..
 
 # Run Biome lint for the entire project
 echo -e "\033[1mRunning Biome lint\033[0m"
-if pnpm lint; then
+if bun lint; then
     echo -e "\033[1;32mLint completed successfully\033[0m"
 else
     echo -e "\033[1;31mLint failed\033[0m"

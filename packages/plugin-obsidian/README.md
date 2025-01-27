@@ -130,7 +130,7 @@ npm install @elizaos/plugin-obsidian
 # or
 yarn add @elizaos/plugin-obsidian
 # or
-pnpm add @elizaos/plugin-obsidian
+bun add @elizaos/plugin-obsidian
 ```
 
 ## Configuration
@@ -170,16 +170,16 @@ export default {
 
 ```bash
 # Build the plugin
-pnpm build
+bun run build
 
 # Run in development mode
-pnpm dev
+bun dev
 
 # Run tests
-pnpm test
+bun test
 
 # Run linting
-pnpm lint
+bun lint
 ```
 
 ## Actions

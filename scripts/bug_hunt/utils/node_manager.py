@@ -30,7 +30,7 @@ class NodeManager:
 
             # Base command for checking only (no fixes)
             cmd = [
-                "pnpm",
+                "bun",
                 "biome",
                 "check",
                 "src",  # Just check src directory
@@ -120,10 +120,10 @@ class NodeManager:
             }
 
     def run_dependency_check(self, target_path: str) -> Dict[str, Any]:
-        """Run dependency analysis using pnpm-based madge"""
+        """Run dependency analysis using bun-based madge"""
         try:
             cmd = [
-                "pnpm",
+                "bun",
                 "dlx",
                 "madge",
                 "--json",

@@ -48,19 +48,19 @@ graph TD
 
 ```bash
 # Discord
-pnpm add @elizaos/client-discord
+bun add @elizaos/client-discord
 
 # Twitter
-pnpm add @elizaos/client-twitter
+bun add @elizaos/client-twitter
 
 # Telegram
-pnpm add @elizaos/client-telegram
+bun add @elizaos/client-telegram
 
 # Direct API
-pnpm add @elizaos/client-direct
+bun add @elizaos/client-direct
 
 # Auto Client
-pnpm add @elizaos/client-auto
+bun add @elizaos/client-auto
 ```
 
 ---

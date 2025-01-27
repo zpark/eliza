@@ -7,5 +7,5 @@
         "client",
         "!packages/_examples"
     ],
-    "npmClient": "pnpm"
+    "npmClient": "bun"
 }

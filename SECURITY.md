@@ -43,7 +43,7 @@ We take the security of Eliza seriously. If you believe you have found a securit
 
     - Keep all dependencies up to date
     - Review security advisories for dependencies regularly
-    - Use `pnpm audit` to check for known vulnerabilities
+    - Use `bun audit` to check for known vulnerabilities
 
 3. **Code Review**
     - All code changes must go through pull request review

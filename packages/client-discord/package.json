@@ -38,10 +38,10 @@
         "dev": "tsup --format esm --dts --watch",
         "test": "vitest run"
     },
-    "trustedDependencies": {
-        "@discordjs/opus": "github:discordjs/opus",
-        "@discordjs/voice": "0.17.0"
-    },
+    "trustedDependencies": [
+        "@discordjs/opus",
+        "@discordjs/voice"
+    ],
     "peerDependencies": {
         "whatwg-url": "7.1.0"
     }

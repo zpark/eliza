@@ -23,7 +23,7 @@ Depedency for the plugin:
 To install the plugin, use the following command:
 
 ```bash
-pnpm install @elizaos/plugin-mind-network
+bun install @elizaos/plugin-mind-network
 ```
 
 ## Configuration

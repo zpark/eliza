@@ -157,7 +157,7 @@ export const postTweetAction: Action = {
 ## Installation
 
 ```bash
-pnpm add @elizaos/plugin-primus
+bun add @elizaos/plugin-primus
 ```
 
 ## Configuration
@@ -196,12 +196,12 @@ To use the plugin, add `@elizaos/plugin-primus` to the plugins field in your cha
 
 ```bash
 # Start the server
-pnpm start --characters="characters/xxx.character.json"
+bun start --characters="characters/xxx.character.json"
 ```
 
 ```bash
 # Start the client
-pnpm start:client
+bun start:client
 ```
 
 You can ask the agent: "Get the BTC price and tweet."

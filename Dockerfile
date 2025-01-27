@@ -1,8 +1,8 @@
 # Use a specific Node.js version for better reproducibility
 FROM node:23.3.0-slim AS builder
 
-# Install pnpm globally and necessary build tools
-RUN npm install -g pnpm@9.4.0 && \
+# Install bun globally and necessary build tools
+RUN npm install -g bun@9.4.0 && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
@@ -38,16 +38,16 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-RUN pnpm install --no-frozen-lockfile
+RUN bun install
 
 # Build the project
-RUN pnpm run build && pnpm prune --prod
+RUN bun run build && bun prune --prod
 
 # Final runtime image
 FROM node:23.3.0-slim
 
 # Install runtime dependencies
-RUN npm install -g pnpm@9.4.0 && \
+RUN npm install -g bun@9.4.0 && \
     apt-get update && \
     apt-get install -y \
         git \
@@ -61,7 +61,7 @@ WORKDIR /app
 
 # Copy built artifacts and production dependencies from the builder stage
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/bun-workspace.yaml ./
 COPY --from=builder /app/eslint.config.mjs ./
 COPY --from=builder /app/.eslintrc.json ./
 COPY --from=builder /app/.npmrc ./
@@ -78,4 +78,4 @@ COPY --from=builder /app/characters ./characters
 EXPOSE 3000 5173
 
 # Command to start the application
-CMD ["sh", "-c", "pnpm start & pnpm start:client"]
+CMD ["sh", "-c", "bun start & bun start:client"]

@@ -26,7 +26,7 @@ Que pouvez-vous faire avec Eliza?
 
 - [Python 2.7+](https://www.python.org/downloads/)
 - [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- [pnpm](https://pnpm.io/installation)
+- [bun](https://bun.io/installation)
 
 > **Note pour Windows :** WSL est requis
 
@@ -43,7 +43,7 @@ cp .env.example .env
 1. Ouvrir le document `packages/core/src/defaultCharacter.ts` afin de modifier le personnage par défaut
 
 2. Pour ajouter des personnages personnalisés :
-    - Lancer la commande `pnpm start --characters="path/to/your/character.json"`
+    - Lancer la commande `bun start --characters="path/to/your/character.json"`
     - Plusieurs fichiers personnages peuvent être ajoutés en même temps
 
 ### Lancer Eliza
@@ -51,12 +51,12 @@ cp .env.example .env
 Après avoir terminé la configuration et les fichiers personnage, lancer le bot en tapant la ligne de commande suivante:
 
 ```bash
-pnpm i
-pnpm build
-pnpm start
+bun i
+bun run build
+bun start
 
 # Le projet étant régulièrement mis à jour, il vous faudra parfois le nettoyer avant de recommencer à travailler dessus
-pnpm clean
+bun clean
 ```
 
 #### Ressources additionnelles
@@ -65,7 +65,7 @@ Il vous faudra peut-être installer Sharp.
 S'il y a une erreur lors du lancement du bot, essayez d'installer Sharp comme ceci :
 
 ```
-pnpm install --include=optional sharp
+bun install --include=optional sharp
 ```
 
 ### Communauté et réseaux sociaux

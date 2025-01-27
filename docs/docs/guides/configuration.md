@@ -184,13 +184,13 @@ You can load characters in several ways:
 
 ```bash
 # Load default character
-pnpm start
+bun start
 
 # Load specific character
-pnpm start --characters="characters/your-character.json"
+bun start --characters="characters/your-character.json"
 
 # Load multiple characters
-pnpm start --characters="characters/char1.json,characters/char2.json"
+bun start --characters="characters/char1.json,characters/char2.json"
 ```
 
 ### Secrets for Multiple Characters
@@ -383,7 +383,7 @@ plugins:
 Use the built-in config validator:
 
 ```bash
-pnpm run validate-config
+bun run validate-config
 ```
 
 This will check:

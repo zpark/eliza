@@ -19,7 +19,7 @@ This plugin provides core functionality for interacting with the Quai Network, o
 ## Installation
 
 ```bash
-pnpm install @elizaos/plugin-quai
+bun install @elizaos/plugin-quai
 ```
 
 ## Configuration
@@ -122,7 +122,7 @@ const provider = getQuaiProvider(runtime);
 Run the test suite:
 
 ```bash
-pnpm test
+bun test
 ```
 
 ## Dependencies

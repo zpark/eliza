@@ -49,8 +49,8 @@ runMain({
                 console.log("\nGetting Started:");
                 console.log(`  cd ${res.dir}`);
                 console.log("  cp .env.example .env");
-                console.log("  pnpm install");
-                console.log("  pnpm start");
+                console.log("  bun install");
+                console.log("  bun start");
             }
         } catch (error: any) {
             console.error(

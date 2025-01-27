@@ -1,5 +1,5 @@
 # system: debian11
-# required: jq, tmux, pnpm
+# required: jq, tmux, bun
 
 # you can uncomment above if using openai provider
 OPENAI_API_KEY="$OPENAI_API_KEY"
@@ -32,12 +32,12 @@ grep -C 4 'let characters = ' agent/src/index.ts
 # add below to the root package.json to fix https://github.com/elizaOS/eliza/issues/1965
 jq '. + { "resolutions": { "agent-twitter-client": "github:timmyg/agent-twitter-client#main" } }' package.json  > tmp.json && mv tmp.json package.json
 
-pnpm install --no-frozen-lockfile
+bun install
 
 # generate ton private key if you do not have one
-# pnpm --dir packages/plugin-ton mnemonic
+# bun --dir packages/plugin-ton mnemonic
 
-pnpm build
+bun run build
 
 TON_RPC_URL="https://testnet.toncenter.com/api/v2/jsonRPC"
 TON_PRIVATE_KEY="demise portion caught unit slot patient pumpkin second faint surround vote awkward afraid turtle extra donate core auction share arrest spend maid say chuckle"
@@ -48,11 +48,11 @@ tmux kill-session -t client && tmux kill-session -t agent || true
 # start client
 tmux new -s client -d \
 "export TON_RPC_URL='$TON_RPC_URL' && export TON_PRIVATE_KEY='$TON_PRIVATE_KEY' && \
-export OPENAI_API_KEY='$OPENAI_API_KEY' && export TON_RPC_API_KEY=$TON_RPC_API_KEY && pnpm --dir client dev -- --host"
+export OPENAI_API_KEY='$OPENAI_API_KEY' && export TON_RPC_API_KEY=$TON_RPC_API_KEY && bun --dir client dev -- --host"
 # start agent using the default character
 tmux new -s agent -d \
 "export TON_RPC_URL='$TON_RPC_URL' && export TON_PRIVATE_KEY='$TON_PRIVATE_KEY' && \
-export OPENAI_API_KEY='$OPENAI_API_KEY' && export TON_RPC_API_KEY='$TON_RPC_API_KEY' && echo '$TON_PRIVATE_KEY' && env && pnpm --dir agent dev --"
+export OPENAI_API_KEY='$OPENAI_API_KEY' && export TON_RPC_API_KEY='$TON_RPC_API_KEY' && echo '$TON_PRIVATE_KEY' && env && bun --dir agent dev --"
 
 # check the status
 tmux ls

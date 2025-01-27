@@ -20,8 +20,8 @@ You can create a new ELIZA app with your preferred package manager:
 # npm
 npx create-eliza-app@latest path
 
-# pnpm
-pnpm dlx create-eliza-app@latest path
+# bun
+bun dlx create-eliza-app@latest path
 
 # bun
 bunx create-eliza-app@latest path
@@ -57,12 +57,12 @@ Once your project is created:
 3. Install dependencies:
 
     ```bash
-    pnpm install
+    bun install
     ```
 
 4. Start the development server:
     ```bash
-    pnpm start
+    bun start
     ```
 
 <!-- automd:with-automd -->

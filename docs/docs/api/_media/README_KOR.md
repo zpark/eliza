@@ -23,10 +23,10 @@ eliza로 뭘 할 수 있나요?
 
 **전제 요구(필수):**
 
-- [Node.js 22 +](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- [Node.js 23 +](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - Nodejs 설치
-- [pnpm](https://pnpm.io/installation)
-- pnpm을사용한다
+- [bun](https://bun.sh/)
+- bun을사용한다
 
 ## 편집.env 파일
 
@@ -41,8 +41,8 @@ eliza로 뭘 할 수 있나요?
 아이디와 캐릭터 파일 설정이 완료되었다면, 다음 명령줄을 입력하여 로봇을 실행시키십시오:
 
 ```
-pnpm i
-pnpm start
+bun i
+bun start
 ```
 
 # 사용자 정의 Eliza
@@ -66,7 +66,7 @@ pnpm start
 Sharp를 설치해야 할 수도 있습니다.시작시 오류가 발견되면 다음 명령으로 설치하십시오:
 
 ```
-pnpm install-include=optional sharp
+bun install-include=optional sharp
 ```
 
 # 환경 설정
@@ -135,7 +135,7 @@ TOGETHER_API_KEY=
 고성능 엔비디아 그래픽을 가지고 있다면 다음 명령줄에서 cuda를 사용하여 로컬 가속을 할 수 있다
 
 ```
-pnpm install
+bun install
 npx --no node-llama-cpp source download --gpu cuda
 ```
 
@@ -157,15 +157,15 @@ discord bot을 설정하는 방법에 대해 discord의 공식 문서를 볼 수
 여러 테스트 방법을 위한 명령줄:
 
 ```bash
-pnpm test           # Run tests once
-pnpm test:watch    # Run tests in watch mode
+bun test           # Run tests once
+bun test:watch    # Run tests in watch mode
 ```
 
 데이터베이스에 특화된 테스트:
 
 ```bash
-pnpm test:sqlite   # Run tests with SQLite
-pnpm test:sqljs    # Run tests with SQL.js
+bun test:sqlite   # Run tests with SQLite
+bun test:sqljs    # Run tests with SQL.js
 ```
 
 테스트는 src/\*_/_.test.ts 파일에 있는 Jest로 작성된다.테스트 환경 설정은 다음과 같습니다:

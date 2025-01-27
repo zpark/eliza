@@ -27,8 +27,8 @@ Video: https://youtu.be/6PZVwNTl5hI?si=0zB3OvYU4KiRQTxI
 2. Install dependencies:
 
     ```bash
-    pnpm install
-    pnpm build
+    bun install
+    bun run build
     ```
 
 ## Environment Variables
@@ -72,7 +72,7 @@ Video: https://youtu.be/6PZVwNTl5hI?si=0zB3OvYU4KiRQTxI
 
 ## Running the Agent
 
-1. Run `pnpm start`
+1. Run `bun start`
 
 2. The agent will post a tweet and start listening for replies. Test it out by replying to the tweet.
 
@@ -88,7 +88,7 @@ Video: https://youtu.be/6PZVwNTl5hI?si=0zB3OvYU4KiRQTxI
 
 3. Delete the SQLite DB at `data/sqlite.db` to reset tweet history.
 
-4. Run `pnpm start` again to see the updated agent in action!
+4. Run `bun start` again to see the updated agent in action!
 
 ## Next Steps
 

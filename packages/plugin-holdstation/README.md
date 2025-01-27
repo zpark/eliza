@@ -19,25 +19,25 @@ HOLDSTATION_PRIVATE_KEY=            # Required: Your wallet's private key
 ## Installation
 
 ```bash
-pnpm add @elizaos/plugin-holdstation
+bun add @elizaos/plugin-holdstation
 ```
 
 ## Development
 
 ```bash
-pnpm install --no-frozen-lockfile
+bun install
 ```
 
 ### Building
 
 ```bash
-pnpm build
+bun run build
 ```
 
 ### Testing
 
 ```bash
-pnpm test
+bun test
 ```
 
 ## Credits
