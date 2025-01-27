@@ -31,6 +31,7 @@ class NodeManager:
             # Base command for checking only (no fixes)
             cmd = [
                 "bun",
+                "run",
                 "biome",
                 "check",
                 "src",  # Just check src directory

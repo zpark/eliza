@@ -58,12 +58,12 @@ async function runProcess(command, args = [], directory = projectRoot()) {
 
 async function installProjectDependencies() {
     log("Installing dependencies...");
-    return await runProcess("bun", ["install", "-r"]);
+    return await runProcess("bun", ["install"]);
 }
 
 async function buildProject() {
     log("Building project...");
-    return await runProcess("bun", ["build"]);
+    return await runProcess("bun", ["run", "build"]);
 }
 
 async function writeEnvFile(entries) {
