@@ -71,6 +71,7 @@ agent/content
 eliza.manifest
 eliza.manifest.sgx
 eliza.sig
+
 packages/plugin-nvidia-nim/extra
 packages/plugin-nvidia-nim/old_code
 packages/plugin-nvidia-nim/docs
@@ -87,3 +88,6 @@ scripts/bug_hunt/reports/
 scripts/bug_hunt/reports/*.md
 
 lit-config.json
+
+# Configuration to exclude the extra and local_docs directories
+extra

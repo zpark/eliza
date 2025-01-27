@@ -26,6 +26,8 @@ import {
 import { denominateAmount, getRawAmount } from "../utils/amount";
 import { getToken } from "../utils/getToken";
 import { filteredTokensQuery } from "../graphql/tokensQuery";
+import { isUserAuthorized } from "../utils/accessTokenManagement";
+
 
 type SwapResultType = {
     swap: {
@@ -73,7 +75,7 @@ export default {
     name: "SWAP",
     similes: ["SWAP_TOKEN", "SWAP_TOKENS"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for user:", message.userId);
         await validateMultiversxConfig(runtime);
         return true;
     },
@@ -86,6 +88,22 @@ export default {
         callback?: HandlerCallback,
     ) => {
         elizaLogger.log("Starting SWAP handler...");
+
+        elizaLogger.log("Handler initialized. Checking user authorization...");
+
+                if (!isUserAuthorized(message.userId, runtime)) {
+                    elizaLogger.error(
+                        "Unauthorized user attempted to swap:",
+                        message.userId
+                    );
+                    if (callback) {
+                        callback({
+                            text: "You do not have permission to swap.",
+                            content: { error: "Unauthorized user" },
+                        });
+                    }
+                    return false;
+                }
 
         // Initialize or update state
         if (!state) {
@@ -117,7 +135,7 @@ export default {
 
         // Validate transfer content
         if (!isSwapContent) {
-            console.error("Invalid content for SWAP action.");
+            elizaLogger.error("Invalid content for SWAP action.");
 
             callback?.({
                 text: "Unable to process swap request. Invalid content provided.",
@@ -252,7 +270,7 @@ export default {
             });
             return true;
         } catch (error) {
-            console.error("Error during token swap:", error);
+            elizaLogger.error("Error during token swap:", error);
             callback?.({
                 text: "Could not execute the swap.",
                 content: { error: error.message },
