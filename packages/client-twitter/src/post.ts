@@ -18,7 +18,7 @@ import type { ClientBase } from "./base.ts";
 import { postActionResponseFooter } from "@elizaos/core";
 import { generateTweetActions } from "@elizaos/core";
 import { type IImageDescriptionService, ServiceType } from "@elizaos/core";
-import { buildConversationThread } from "./utils.ts";
+import { buildConversationThread, fetchMediaData } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 import {
@@ -30,6 +30,7 @@ import {
 } from "discord.js";
 import type { State } from "@elizaos/core";
 import type { ActionResponse } from "@elizaos/core";
+import { MediaData } from "./types.ts";
 
 const MAX_TIMELINES_TO_FETCH = 15;
 
@@ -82,9 +83,9 @@ Tweet:
     postActionResponseFooter;
 
 interface PendingTweet {
-    cleanedContent: string;
+    tweetTextForPosting: string;
     roomId: UUID;
-    newTweetContent: string;
+    rawTweetContent: string;
     discordMessageId: string;
     channelId: string;
     timestamp: number;
@@ -338,7 +339,7 @@ export class TwitterPostClient {
         client: ClientBase,
         tweet: Tweet,
         roomId: UUID,
-        newTweetContent: string,
+        rawTweetContent: string,
     ) {
         // Cache the last post details
         await runtime.cacheManager.set(
@@ -365,7 +366,7 @@ export class TwitterPostClient {
             userId: runtime.agentId,
             agentId: runtime.agentId,
             content: {
-                text: newTweetContent.trim(),
+                text: rawTweetContent.trim(),
                 url: tweet.permanentUrl,
                 source: "twitter",
             },
@@ -379,11 +380,12 @@ export class TwitterPostClient {
         client: ClientBase,
         content: string,
         tweetId?: string,
+        mediaData?: MediaData[]
     ) {
         try {
             const noteTweetResult = await client.requestQueue.add(
                 async () =>
-                    await client.twitterClient.sendNoteTweet(content, tweetId),
+                    await client.twitterClient.sendNoteTweet(content, tweetId, mediaData),
             );
 
             if (noteTweetResult.errors && noteTweetResult.errors.length > 0) {
@@ -410,11 +412,12 @@ export class TwitterPostClient {
         client: ClientBase,
         content: string,
         tweetId?: string,
+        mediaData?: MediaData[]
     ) {
         try {
             const standardTweetResult = await client.requestQueue.add(
                 async () =>
-                    await client.twitterClient.sendTweet(content, tweetId),
+                    await client.twitterClient.sendTweet(content, tweetId, mediaData),
             );
             const body = await standardTweetResult.json();
             if (!body?.data?.create_tweet?.tweet_results?.result) {
@@ -431,20 +434,21 @@ export class TwitterPostClient {
     async postTweet(
         runtime: IAgentRuntime,
         client: ClientBase,
-        cleanedContent: string,
+        tweetTextForPosting: string,
         roomId: UUID,
-        newTweetContent: string,
+        rawTweetContent: string,
         twitterUsername: string,
+        mediaData?: MediaData[]
     ) {
         try {
             elizaLogger.log(`Posting new tweet:\n`);
 
             let result;
 
-            if (cleanedContent.length > DEFAULT_MAX_TWEET_LENGTH) {
-                result = await this.handleNoteTweet(client, cleanedContent);
+            if (tweetTextForPosting.length > DEFAULT_MAX_TWEET_LENGTH) {
+                result = await this.handleNoteTweet(client, tweetTextForPosting, undefined, mediaData); 
             } else {
-                result = await this.sendStandardTweet(client, cleanedContent);
+                result = await this.sendStandardTweet(client, tweetTextForPosting, undefined, mediaData);
             }
 
             const tweet = this.createTweetObject(
@@ -458,7 +462,7 @@ export class TwitterPostClient {
                 client,
                 tweet,
                 roomId,
-                newTweetContent,
+                rawTweetContent,
             );
         } catch (error) {
             elizaLogger.error("Error sending tweet:", error);
@@ -514,40 +518,45 @@ export class TwitterPostClient {
                 modelClass: ModelClass.SMALL,
             });
 
-            const newTweetContent = cleanJsonResponse(response);
+            const rawTweetContent = cleanJsonResponse(response);
 
             // First attempt to clean content
-            let cleanedContent = "";
+            let tweetTextForPosting = "";
+            let mediaData = null;
 
             // Try parsing as JSON first
-            const parsedResponse = parseJSONObjectFromText(newTweetContent);
+            const parsedResponse = parseJSONObjectFromText(rawTweetContent);
             if (parsedResponse.text) {
-                cleanedContent = parsedResponse.text;
+                tweetTextForPosting = parsedResponse.text;
+            }
+
+            if (parsedResponse.attachments && parsedResponse.attachments.length > 0) {
+                mediaData = await fetchMediaData(parsedResponse.attachments);
             }
 
             // Try extracting text attribute
-            if (!cleanedContent) {
-                const parsingText = extractAttributes(newTweetContent, [
+            if (!tweetTextForPosting) {
+                const parsingText = extractAttributes(rawTweetContent, [
                     "text",
                 ]).text;
                 if (parsingText) {
-                    cleanedContent = truncateToCompleteSentence(
-                        extractAttributes(newTweetContent, ["text"]).text,
+                    tweetTextForPosting = truncateToCompleteSentence(
+                        extractAttributes(rawTweetContent, ["text"]).text,
                         this.client.twitterConfig.MAX_TWEET_LENGTH,
                     );
                 }
             }
 
             // Use the raw text
-            if (!cleanedContent) {
-                cleanedContent = newTweetContent;
+            if (!tweetTextForPosting) {
+                tweetTextForPosting = rawTweetContent;
             }
 
             // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
             const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
             if (maxTweetLength) {
-                cleanedContent = truncateToCompleteSentence(
-                    cleanedContent,
+                tweetTextForPosting = truncateToCompleteSentence(
+                    tweetTextForPosting,
                     maxTweetLength,
                 );
             }
@@ -558,11 +567,11 @@ export class TwitterPostClient {
             const fixNewLines = (str: string) => str.replaceAll(/\\n/g, "\n\n"); //ensures double spaces
 
             // Final cleaning
-            cleanedContent = removeQuotes(fixNewLines(cleanedContent));
+            tweetTextForPosting = removeQuotes(fixNewLines(tweetTextForPosting));
 
             if (this.isDryRun) {
                 elizaLogger.info(
-                    `Dry run: would have posted tweet: ${cleanedContent}`,
+                    `Dry run: would have posted tweet: ${tweetTextForPosting}`,
                 );
                 return;
             }
@@ -571,23 +580,24 @@ export class TwitterPostClient {
                 if (this.approvalRequired) {
                     // Send for approval instead of posting directly
                     elizaLogger.log(
-                        `Sending Tweet For Approval:\n ${cleanedContent}`,
+                        `Sending Tweet For Approval:\n ${tweetTextForPosting}`,
                     );
                     await this.sendForApproval(
-                        cleanedContent,
+                        tweetTextForPosting,
                         roomId,
-                        newTweetContent,
+                        rawTweetContent,
                     );
                     elizaLogger.log("Tweet sent for approval");
                 } else {
-                    elizaLogger.log(`Posting new tweet:\n ${cleanedContent}`);
+                    elizaLogger.log(`Posting new tweet:\n ${tweetTextForPosting}`);
                     this.postTweet(
                         this.runtime,
                         this.client,
-                        cleanedContent,
+                        tweetTextForPosting,
                         roomId,
-                        newTweetContent,
+                        rawTweetContent,
                         this.twitterUsername,
+                        mediaData,
                     );
                 }
             } catch (error) {
@@ -1216,14 +1226,14 @@ export class TwitterPostClient {
     }
 
     private async sendForApproval(
-        cleanedContent: string,
+        tweetTextForPosting: string,
         roomId: UUID,
-        newTweetContent: string,
+        rawTweetContent: string,
     ): Promise<string | null> {
         try {
             const embed = {
                 title: "New Tweet Pending Approval",
-                description: cleanedContent,
+                description: tweetTextForPosting,
                 fields: [
                     {
                         name: "Character",
@@ -1232,7 +1242,7 @@ export class TwitterPostClient {
                     },
                     {
                         name: "Length",
-                        value: cleanedContent.length.toString(),
+                        value: tweetTextForPosting.length.toString(),
                         inline: true,
                     },
                 ],
@@ -1260,9 +1270,9 @@ export class TwitterPostClient {
                 )) || [];
             // Add new pending tweet
             currentPendingTweets.push({
-                cleanedContent,
+                tweetTextForPosting,
                 roomId,
-                newTweetContent,
+                rawTweetContent,
                 discordMessageId: message.id,
                 channelId: this.discordApprovalChannelId,
                 timestamp: Date.now(),
@@ -1411,9 +1421,9 @@ export class TwitterPostClient {
                 await this.postTweet(
                     this.runtime,
                     this.client,
-                    pendingTweet.cleanedContent,
+                    pendingTweet.tweetTextForPosting,
                     pendingTweet.roomId,
-                    pendingTweet.newTweetContent,
+                    pendingTweet.rawTweetContent,
                     this.twitterUsername,
                 );
 
