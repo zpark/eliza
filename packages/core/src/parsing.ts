@@ -95,8 +95,7 @@ export function parseJsonArrayFromText(text: string) {
             jsonData = JSON.parse(normalizedJson);
         } catch (e) {
             console.error("Error parsing JSON:", e);
-            console.error("Text is not JSON", text);
-            return extractAttributes(jsonBlockMatch[1]);
+            console.error("Failed parsing text:", jsonBlockMatch[1]);
         }
     }
 
@@ -111,9 +110,8 @@ export function parseJsonArrayFromText(text: string) {
                 const normalizedJson = arrayMatch[0].replace(/'/g, '"');
                 jsonData = JSON.parse(normalizedJson);
             } catch (e) {
-                console.error("Text is not JSON", text);
                 console.error("Error parsing JSON:", e);
-                return extractAttributes(arrayMatch[0]);
+                console.error("Failed parsing text:", arrayMatch[0]);
             }
         }
     }
