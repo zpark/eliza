@@ -18,7 +18,7 @@ import type { ClientBase } from "./base.ts";
 import { postActionResponseFooter } from "@elizaos/core";
 import { generateTweetActions } from "@elizaos/core";
 import { type IImageDescriptionService, ServiceType } from "@elizaos/core";
-import { buildConversationThread } from "./utils.ts";
+import { buildConversationThread, fetchMediaData } from "./utils.ts";
 import { twitterMessageHandlerTemplate } from "./interactions.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 import {
@@ -442,7 +442,7 @@ export class TwitterPostClient {
             let result;
 
             if (cleanedContent.length > DEFAULT_MAX_TWEET_LENGTH) {
-                result = await this.handleNoteTweet(client, cleanedContent);
+                result = await this.handleNoteTweet(client, cleanedContent); 
             } else {
                 result = await this.sendStandardTweet(client, cleanedContent);
             }
@@ -518,11 +518,16 @@ export class TwitterPostClient {
 
             // First attempt to clean content
             let cleanedContent = "";
+            let mediaData = null;
 
             // Try parsing as JSON first
             const parsedResponse = parseJSONObjectFromText(newTweetContent);
             if (parsedResponse.text) {
                 cleanedContent = parsedResponse.text;
+            }
+
+            if (parsedResponse.attachments && parsedResponse.attachments.length > 0) {
+                mediaData = await fetchMediaData(parsedResponse.attachments);
             }
 
             // Try extracting text attribute
