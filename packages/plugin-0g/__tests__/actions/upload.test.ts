@@ -24,8 +24,8 @@ vi.mock('@elizaos/core', () => ({
 }));
 
 interface MockZgFile {
-  upload: jest.Mock<Promise<string>>;
-  merkleTree: jest.Mock<Promise<string>>;
+  upload: vi.Mock<Promise<string>>;
+  merkleTree: vi.Mock<Promise<string>>;
 }
 
 vi.mock('@0glabs/0g-ts-sdk', () => ({
