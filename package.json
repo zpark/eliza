@@ -53,9 +53,11 @@
       "@polkadot/util-crypto": "12.6.2",
       "@polkadot/types-create": "10.13.1",
       "@polkadot/types-codec": "10.13.1",
+      "@polkadot/keyring": "12.6.2",
       "@ai-sdk/provider": "1.0.6",
       "@ai-sdk/provider-utils": "2.1.2",
-      "cookie": "0.7.0"
+      "cookie": "0.7.0",
+      "bs58": "5.0.0"
     }
   },
   "engines": {

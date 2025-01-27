@@ -8,6 +8,7 @@ export default defineConfig({
     format: ["esm"], // Ensure you're targeting CommonJS
     external: [
         "dotenv", // Externalize dotenv to prevent bundling
+        "crypto", // Externalize crypto to use Node.js built-in module
         "fs", // Externalize fs to use Node.js built-in module
         "path", // Externalize other built-ins if necessary
         "@reflink/reflink",
@@ -17,6 +18,5 @@ export default defineConfig({
         "agentkeepalive",
         "viem",
         "@lifi/sdk",
-        "tslog",
     ],
 });
