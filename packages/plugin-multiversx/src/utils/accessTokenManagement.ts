@@ -1,12 +1,12 @@
-import {type IAgentRuntime} from "@elizaos/core";
+import {type IAgentRuntime, elizaLogger} from "@elizaos/core";
 
 export function isUserAuthorized(
     userId: string,
     runtime: IAgentRuntime
 ): boolean {
-    const authorizedUserId = runtime.getSetting("ACCESS_TOKEN_MANAGMENT_TO");
-    console.log("UserID from message:", userId);
-    console.log("Authorized UserID:", authorizedUserId);
+    const authorizedUserId = runtime.getSetting("ACCESS_TOKEN_MANAGEMENT_TO");
+    elizaLogger.log("UserID from message:", userId);
+    elizaLogger.log("Authorized UserID:", authorizedUserId);
     if (authorizedUserId === "everyone") {
         return true;
     }
