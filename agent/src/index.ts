@@ -10,6 +10,7 @@ import { InstagramClientInterface } from "@elizaos/client-instagram"
 import { LensAgentClient } from "@elizaos/client-lens"
 import { SlackClientInterface } from "@elizaos/client-slack"
 import { TelegramClientInterface } from "@elizaos/client-telegram"
+import { TelegramAccountClientInterface } from "@elizaos/client-telegram-account"
 import { TwitterClientInterface } from "@elizaos/client-twitter"
 import { AlexaClientInterface } from "@elizaos/client-alexa";
 import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb"
@@ -644,6 +645,11 @@ export async function initializeClients(character: Character, runtime: IAgentRun
 		const telegramClient = await TelegramClientInterface.start(runtime)
 		if (telegramClient) clients.telegram = telegramClient
 	}
+
+    if (clientTypes.includes(Clients.TELEGRAM_ACCOUNT)) {
+        const telegramAccountClient = await TelegramAccountClientInterface.start(runtime);
+        if (telegramAccountClient) clients.telegram_account = telegramAccountClient;
+    }
 
 	if (clientTypes.includes(Clients.TWITTER)) {
 		const twitterClient = await TwitterClientInterface.start(runtime)
