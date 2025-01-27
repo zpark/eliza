@@ -7,6 +7,7 @@ import { elizaLogger } from "@elizaos/core";
 import type { Media } from "@elizaos/core";
 import fs from "fs";
 import path from "path";
+import { MediaData } from "./types";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -166,7 +167,7 @@ export async function buildConversationThread(
 
 export async function fetchMediaData(
     attachments: Media[]
-): Promise<{ data: Buffer; mediaType: string }[]> {
+): Promise<MediaData[]> {
     return Promise.all(
         attachments.map(async (attachment: Media) => {
             if (/^(http|https):\/\//.test(attachment.url)) {
