@@ -520,44 +520,27 @@ export class TwitterPostClient {
             let cleanedContent = "";
 
             // Try parsing as JSON first
-            try {
-                const parsedResponse = parseJSONObjectFromText(newTweetContent);
-                if (parsedResponse.text) {
-                    cleanedContent = parsedResponse.text;
-                } else if (typeof parsedResponse === "string") {
-                    cleanedContent = parsedResponse;
+            const parsedResponse = parseJSONObjectFromText(newTweetContent);
+            if (parsedResponse.text) {
+                cleanedContent = parsedResponse.text;
+            }
+
+            // Try extracting text attribute
+            if (!cleanedContent) {
+                const parsingText = extractAttributes(newTweetContent, [
+                    "text",
+                ]).text;
+                if (parsingText) {
+                    cleanedContent = truncateToCompleteSentence(
+                        extractAttributes(newTweetContent, ["text"]).text,
+                        this.client.twitterConfig.MAX_TWEET_LENGTH,
+                    );
                 }
-            } catch (error) {
-                elizaLogger.error(
-                    "Response is not JSON, treating as plain text",
-                    response,
-                );
-                error.linted = true; // make linter happy since catch needs a variable
-                // If not JSON, clean the raw content
-                cleanedContent = newTweetContent
-                    .replace(/^\s*{?\s*"text":\s*"|"\s*}?\s*$/g, "") // Remove JSON-like wrapper
-                    .replace(/^['"](.*)['"]$/g, "$1") // Remove quotes
-                    .replace(/\\"/g, '"') // Unescape quotes
-                    .replace(/\\n/g, "\n\n") // Unescape newlines, ensures double spaces
-                    .trim();
             }
 
+            // Use the raw text
             if (!cleanedContent) {
-                cleanedContent = truncateToCompleteSentence(
-                    extractAttributes(newTweetContent, ["text"]).text,
-                    this.client.twitterConfig.MAX_TWEET_LENGTH,
-                );
-            }
-
-            if (!cleanedContent) {
-                elizaLogger.error(
-                    "Failed to extract valid content from response:",
-                    {
-                        rawResponse: newTweetContent,
-                        attempted: "JSON parsing",
-                    },
-                );
-                return;
+                cleanedContent = newTweetContent;
             }
 
             // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
@@ -642,42 +625,37 @@ export class TwitterPostClient {
         const cleanedResponse = cleanJsonResponse(response);
 
         // Try to parse as JSON first
-        try {
-            const jsonResponse = parseJSONObjectFromText(cleanedResponse);
-            if (jsonResponse.text) {
+        const jsonResponse = parseJSONObjectFromText(cleanedResponse);
+        if (jsonResponse.text) {
+            const truncateContent = truncateToCompleteSentence(
+                jsonResponse.text,
+                this.client.twitterConfig.MAX_TWEET_LENGTH,
+            );
+            return truncateContent;
+        }
+        if (typeof jsonResponse === "object") {
+            const possibleContent =
+                jsonResponse.content ||
+                jsonResponse.message ||
+                jsonResponse.response;
+            if (possibleContent) {
                 const truncateContent = truncateToCompleteSentence(
-                    jsonResponse.text,
+                    possibleContent,
                     this.client.twitterConfig.MAX_TWEET_LENGTH,
                 );
                 return truncateContent;
             }
-            if (typeof jsonResponse === "object") {
-                const possibleContent =
-                    jsonResponse.content ||
-                    jsonResponse.message ||
-                    jsonResponse.response;
-                if (possibleContent) {
-                    const truncateContent = truncateToCompleteSentence(
-                        possibleContent,
-                        this.client.twitterConfig.MAX_TWEET_LENGTH,
-                    );
-                    return truncateContent;
-                }
-            }
-        } catch (error) {
-            error.linted = true; // make linter happy since catch needs a variable
-
-            // If JSON parsing fails, treat as plain text
-            elizaLogger.error(
-                "Response is not JSON, treating as plain text",
-                response,
-            );
         }
 
-        let truncateContent = truncateToCompleteSentence(
-            extractAttributes(cleanedResponse, ["text"]).text,
-            this.client.twitterConfig.MAX_TWEET_LENGTH,
-        );
+        let truncateContent = null;
+        // Try extracting text attribute
+        const parsingText = extractAttributes(cleanedResponse, ["text"]).text;
+        if (parsingText) {
+            truncateContent = truncateToCompleteSentence(
+                parsingText,
+                this.client.twitterConfig.MAX_TWEET_LENGTH,
+            );
+        }
 
         if (!truncateContent) {
             // If not JSON or no valid content found, clean the raw text
