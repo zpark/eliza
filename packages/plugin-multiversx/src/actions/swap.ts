@@ -75,7 +75,7 @@ export default {
     name: "SWAP",
     similes: ["SWAP_TOKEN", "SWAP_TOKENS"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for user:", message.userId);
         await validateMultiversxConfig(runtime);
         return true;
     },
@@ -89,10 +89,10 @@ export default {
     ) => {
         elizaLogger.log("Starting SWAP handler...");
 
-        console.log("Handler initialized. Checking user authorization...");
+        elizaLogger.log("Handler initialized. Checking user authorization...");
 
                 if (!isUserAuthorized(message.userId, runtime)) {
-                    console.error(
+                    elizaLogger.error(
                         "Unauthorized user attempted to swap:",
                         message.userId
                     );
@@ -135,7 +135,7 @@ export default {
 
         // Validate transfer content
         if (!isSwapContent) {
-            console.error("Invalid content for SWAP action.");
+            elizaLogger.error("Invalid content for SWAP action.");
 
             callback?.({
                 text: "Unable to process swap request. Invalid content provided.",
@@ -270,7 +270,7 @@ export default {
             });
             return true;
         } catch (error) {
-            console.error("Error during token swap:", error);
+            elizaLogger.error("Error during token swap:", error);
             callback?.({
                 text: "Could not execute the swap.",
                 content: { error: error.message },
