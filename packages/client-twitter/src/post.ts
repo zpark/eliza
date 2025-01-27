@@ -30,6 +30,7 @@ import {
 } from "discord.js";
 import type { State } from "@elizaos/core";
 import type { ActionResponse } from "@elizaos/core";
+import { MediaData } from "./types.ts";
 
 const MAX_TIMELINES_TO_FETCH = 15;
 
@@ -379,11 +380,12 @@ export class TwitterPostClient {
         client: ClientBase,
         content: string,
         tweetId?: string,
+        mediaData?: MediaData[]
     ) {
         try {
             const noteTweetResult = await client.requestQueue.add(
                 async () =>
-                    await client.twitterClient.sendNoteTweet(content, tweetId),
+                    await client.twitterClient.sendNoteTweet(content, tweetId, mediaData),
             );
 
             if (noteTweetResult.errors && noteTweetResult.errors.length > 0) {
@@ -410,11 +412,12 @@ export class TwitterPostClient {
         client: ClientBase,
         content: string,
         tweetId?: string,
+        mediaData?: MediaData[]
     ) {
         try {
             const standardTweetResult = await client.requestQueue.add(
                 async () =>
-                    await client.twitterClient.sendTweet(content, tweetId),
+                    await client.twitterClient.sendTweet(content, tweetId, mediaData),
             );
             const body = await standardTweetResult.json();
             if (!body?.data?.create_tweet?.tweet_results?.result) {
@@ -435,6 +438,7 @@ export class TwitterPostClient {
         roomId: UUID,
         rawTweetContent: string,
         twitterUsername: string,
+        mediaData?: MediaData[]
     ) {
         try {
             elizaLogger.log(`Posting new tweet:\n`);
@@ -442,9 +446,9 @@ export class TwitterPostClient {
             let result;
 
             if (tweetTextForPosting.length > DEFAULT_MAX_TWEET_LENGTH) {
-                result = await this.handleNoteTweet(client, tweetTextForPosting); 
+                result = await this.handleNoteTweet(client, tweetTextForPosting, undefined, mediaData); 
             } else {
-                result = await this.sendStandardTweet(client, tweetTextForPosting);
+                result = await this.sendStandardTweet(client, tweetTextForPosting, undefined, mediaData);
             }
 
             const tweet = this.createTweetObject(
@@ -593,6 +597,7 @@ export class TwitterPostClient {
                         roomId,
                         rawTweetContent,
                         this.twitterUsername,
+                        mediaData,
                     );
                 }
             } catch (error) {
