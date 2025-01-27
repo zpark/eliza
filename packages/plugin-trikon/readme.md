@@ -13,8 +13,8 @@ pnpm add @elizaos/plugin-trikon
 
 The plugin requires the following environment variables:
 
-- `TRIKON_API_KEY`: Your Trikon API key.
-- `TRIKON_INITIAL_BALANCE`: The initial balance for the wallet.
+- `TRIKON_WALLET_ADDRESS`: Your Trikon wallet address (must be a valid 64-character hex string starting with '0x')
+- `TRIKON_INITIAL_BALANCE`: (Optional) The initial balance for the wallet. Defaults to "0" if not provided.
 
 ## Usage
 

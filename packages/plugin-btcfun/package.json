@@ -10,7 +10,10 @@
     "@lifi/sdk": "3.4.1",
     "@lifi/types": "16.3.0",
     "tsup": "8.3.5",
-    "viem": "2.21.53"
+    "viem": "2.21.53",
+    "@okxweb3/coin-bitcoin": "1.2.0",
+    "@okxweb3/crypto-lib": "1.0.10",
+    "tiny-secp256k1": "2.2.3"
   },
   "scripts": {
     "build": "tsup --format esm --dts",

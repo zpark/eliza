@@ -145,6 +145,8 @@
 		"@elizaos/plugin-form": "workspace:*",
 		"@elizaos/plugin-ankr": "workspace:*",
         "@elizaos/client-xmtp": "workspace:*",
+		"@elizaos/plugin-btcfun": "workspace:*",
+		"@elizaos/plugin-trikon": "workspace:*",
 		"readline": "1.3.0",
 		"ws": "8.18.0",
 		"yargs": "17.7.2"

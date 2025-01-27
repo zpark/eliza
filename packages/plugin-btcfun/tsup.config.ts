@@ -17,6 +17,6 @@ export default defineConfig({
         "agentkeepalive",
         "viem",
         "@lifi/sdk",
-        "@okxweb3/crypto-lib",
+        "tslog",
     ],
 });
