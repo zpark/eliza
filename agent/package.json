@@ -70,6 +70,7 @@
 		"@elizaos/plugin-mind-network": "workspace:*",
 		"@elizaos/plugin-movement": "workspace:*",
 		"@elizaos/plugin-massa": "workspace:*",
+        "@elizaos/plugin-news": "workspace:*",
 		"@elizaos/plugin-nft-generation": "workspace:*",
 		"@elizaos/plugin-node": "workspace:*",
 		"@elizaos/plugin-quick-intel": "workspace:*",

@@ -88,7 +88,7 @@ async function handler(
                     ...goal,
                     ...update,
                     objectives: goal.objectives.map((objective) => {
-                        const updatedObjective = update.objectives?.find(uo => uo.id === objective.id);
+                        const updatedObjective = update.objectives?.find(uo => uo.description === objective.description);
                         return updatedObjective ? { ...objective, ...updatedObjective } : objective;
                     }),
                 };
