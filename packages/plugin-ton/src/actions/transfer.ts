@@ -50,6 +50,15 @@ Given the recent messages, extract the following information about the requested
 
 Respond with a JSON markdown block containing only the extracted values.`;
 
+// Add interface for contract methods
+interface TonWalletContract {
+    getSeqno: () => Promise<number>;
+}
+
+interface ActionOptions {
+    [key: string]: unknown;
+}
+
 export class TransferAction {
     private walletProvider: WalletProvider;
 
@@ -97,16 +106,14 @@ export class TransferAction {
         }
     }
 
-    async waitForTransaction(seqno: number, contract: any) {
+    async waitForTransaction(seqno: number, contract: TonWalletContract) {
         let currentSeqno = seqno;
         const startTime = Date.now();
         const TIMEOUT = 120000; // 2 minutes
 
-        while (currentSeqno == seqno) {
+        while (currentSeqno === seqno) {
             if (Date.now() - startTime > TIMEOUT) {
-                throw new Error(
-                    "Transaction confirmation timed out after 2 minutes",
-                );
+                throw new Error("Transaction confirmation timed out after 2 minutes");
             }
             await sleep(2000);
             currentSeqno = await contract.getSeqno();
@@ -124,10 +131,11 @@ const buildTransferDetails = async (
     state.walletInfo = walletInfo;
 
     // Initialize or update state
-    if (!state) {
-        state = (await runtime.composeState(message)) as State;
+    let currentState = state;
+    if (!currentState) {
+        currentState = (await runtime.composeState(message)) as State;
     } else {
-        state = await runtime.updateRecentMessageState(state);
+        currentState = await runtime.updateRecentMessageState(currentState);
     }
 
     // Define the schema for the expected output
@@ -153,7 +161,7 @@ const buildTransferDetails = async (
     let transferContent: TransferContent = content.object as TransferContent;
 
     if (transferContent === undefined) {
-        transferContent = content as any;
+        transferContent = content as unknown as TransferContent;
     }
 
     return transferContent;
@@ -168,7 +176,7 @@ export default {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: ActionOptions,
         callback?: HandlerCallback,
     ) => {
         elizaLogger.log("Starting SEND_TOKEN handler...");
@@ -224,7 +232,7 @@ export default {
     },
     template: transferTemplate,
     // eslint-disable-next-line
-    validate: async (runtime: IAgentRuntime) => {
+    validate: async (_runtime: IAgentRuntime) => {
         //console.log("Validating TON transfer from user:", message.userId);
         return true;
     },
