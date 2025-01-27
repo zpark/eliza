@@ -23,7 +23,7 @@
         "@elizaos/plugin-tee": "^0.1.8",
         "@gelatonetwork/relay-sdk-viem": "^1.2.0",
         "tsup": "8.3.5",
-        "viem": "2.21.58",
+        "viem": "2.22.2",
         "whatwg-url": "7.1.0"
     },
     "scripts": {

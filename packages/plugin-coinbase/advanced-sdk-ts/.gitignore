@@ -3,4 +3,3 @@ src/rest/main.ts
 dist/
 node_modules/
 .idea/
-package-lock.json

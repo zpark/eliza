@@ -37,7 +37,6 @@ plugin-injective/
 │   ├── .eslintignore
 │   ├── .eslintrc.js
 │   ├── eslint.config.mjs
-│   ├── package-lock.json
 │   ├── package.json
 │   └── tsconfig.json
 ```
