@@ -145,7 +145,7 @@ import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
 import { MongoClient } from "mongodb";
 import { quickIntelPlugin } from "@elizaos/plugin-quick-intel"
-import { btcfunPlugin } from "@elizaos/plugin-btcfun"
+
 import { trikonPlugin } from "@elizaos/plugin-trikon"
 const __filename = fileURLToPath(import.meta.url) // get the resolved path to the file
 const __dirname = path.dirname(__filename) // get the name of the directory
@@ -912,7 +912,6 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "DCAP_EVM_PRIVATE_KEY") && getSecret(character, "DCAP_MODE") ? dcapPlugin : null,
 			getSecret(character, "QUICKINTEL_API_KEY") ? quickIntelPlugin : null,
 			getSecret(character, "GELATO_RELAY_API_KEY") ? gelatoPlugin : null,
-			getSecret(character, "BTC_PRIVATE_KEY_WIF") && getSecret(character, "BTC_FUN_API_URL") ? btcfunPlugin : null,
 			getSecret(character, "TRIKON_WALLET_ADDRESS") ? trikonPlugin : null,
 		].flat().filter(Boolean),
 		providers: [],
