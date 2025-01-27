@@ -14,6 +14,7 @@ import { TelegramAccountClientInterface } from "@elizaos/client-telegram-account
 import { TwitterClientInterface } from "@elizaos/client-twitter"
 import { AlexaClientInterface } from "@elizaos/client-alexa";
 import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb"
+import { DevaClientInterface } from "@elizaos/client-deva"
 
 import { FarcasterClientInterface } from "@elizaos/client-farcaster"
 import { OmniflixPlugin } from "@elizaos/plugin-omniflix"
@@ -693,8 +694,21 @@ export async function initializeClients(character: Character, runtime: IAgentRun
 
 	elizaLogger.log("client keys", Object.keys(clients))
 
-	// TODO: Add Slack client to the list
-	// Initialize clients as an object
+    if (clientTypes.includes("deva")) {
+        if (clientTypes.includes("deva")) {
+            const devaClient = await DevaClientInterface.start(runtime);
+            if (devaClient) clients.deva = devaClient;
+        }
+    }
+
+    function determineClientType(client: Client): string {
+        // Check if client has a direct type identifier
+        if ("type" in client) {
+            return (client as any).type;
+        }
+
+		// TODO: Add Slack client to the list
+		// Initialize clients as an object
 
 	if (clientTypes.includes("slack")) {
 		const slackClient = await SlackClientInterface.start(runtime)
