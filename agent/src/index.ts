@@ -52,6 +52,8 @@ import { footballPlugin } from "@elizaos/plugin-football"
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap"
 import { normalizeCharacter } from "@elizaos/plugin-di"
 import createGoatPlugin from "@elizaos/plugin-goat"
+import createZilliqaPlugin from "@elizaos/plugin-zilliqa";
+
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
 import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation"
 import { abstractPlugin } from "@elizaos/plugin-abstract"
@@ -750,6 +752,13 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 		goatPlugin = await createGoatPlugin((secret) => getSecret(character, secret))
 	}
 
+        let zilliqaPlugin: any | undefined;
+        if (getSecret(character, "ZILLIQA_PRIVATE_KEY")) {
+          zilliqaPlugin = await createZilliqaPlugin((secret) =>
+             getSecret(character, secret)
+          );
+        }
+
 	// Initialize Reclaim adapter if environment variables are present
 	// let verifiableInferenceAdapter;
 	// if (
@@ -846,7 +855,8 @@ export async function createAgent(character: Character, db: IDatabaseAdapter, ca
 			getSecret(character, "ENABLE_TEE_LOG") && ((teeMode !== TEEMode.OFF && walletSecretSalt) || getSecret(character, "SGX")) ? teeLogPlugin : null,
 			getSecret(character, "OMNIFLIX_API_URL") && getSecret(character, "OMNIFLIX_MNEMONIC") ? OmniflixPlugin : null,
 			getSecret(character, "COINBASE_API_KEY") && getSecret(character, "COINBASE_PRIVATE_KEY") && getSecret(character, "COINBASE_NOTIFICATION_URI") ? webhookPlugin : null,
-			goatPlugin,
+   		        goatPlugin,
+                        zilliqaPlugin,
 			getSecret(character, "COINGECKO_API_KEY") || getSecret(character, "COINGECKO_PRO_API_KEY") ? coingeckoPlugin : null,
 			getSecret(character, "MORALIS_API_KEY") ? moralisPlugin : null,
 			getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
