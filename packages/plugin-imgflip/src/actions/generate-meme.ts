@@ -89,23 +89,29 @@ async function getImgflipTemplate(template: string): Promise<ImgflipTemplate> {
             throw new Error("Failed to find meme template");
         }
 
-        // Try to find a close match
-        const closestMatch = allMemes.data.memes.find(
+        // Try to find close matches
+        const closeMatches = allMemes.data.memes.filter(
             (meme) =>
                 meme.name.toLowerCase().includes(template.toLowerCase()) ||
                 template.toLowerCase().includes(meme.name.toLowerCase())
         );
 
-        if (!closestMatch) {
-            // If no match found, return a popular template
-            return allMemes.data.memes[0];
+        if (closeMatches.length === 0) {
+            // If no match found, return a random popular template
+            const randomIndex = Math.floor(
+                Math.random() * Math.min(10, allMemes.data.memes.length)
+            );
+            return allMemes.data.memes[randomIndex];
         }
 
-        return closestMatch;
+        // Return a random template from close matches
+        const randomIndex = Math.floor(Math.random() * closeMatches.length);
+        return closeMatches[randomIndex];
     }
 
-    // Return the first (best) match from search results
-    return result.data.memes[0];
+    // Return a random template from search results
+    const randomIndex = Math.floor(Math.random() * result.data.memes.length);
+    return result.data.memes[randomIndex];
 }
 
 async function generateMemeCaptions(
@@ -180,42 +186,6 @@ async function genereateMeme(
     return result.data.url;
 }
 
-async function generateMemeText(
-    runtime: IAgentRuntime,
-    state: State,
-    imgflipTemplate: string,
-    captions: string[]
-): Promise<string> {
-    const template = `
-# About Arony:
-{{bio}}
-{{lore}}
-
-# Task: Generate a single sentence accompanying a meme in the character's voice and style.
-The imgflip template used for the meme is: **${imgflipTemplate}**
-The captions used for the meme are:
-${captions.join("\n")}
-
-# Instructions:
-Do not include hashtags.
-Only respond with the text - do not include any other text.`;
-
-    const context = await composeContext({
-        state,
-        template,
-    });
-
-    elizaLogger.debug("generateMemeText context: ", context);
-
-    const response = await generateText({
-        runtime,
-        context,
-        modelClass: ModelClass.SMALL,
-    });
-
-    return response;
-}
-
 export interface Meme {
     url: string;
     text: string;
@@ -223,7 +193,7 @@ export interface Meme {
 
 export async function generateMemeActionHandler(
     runtime: IAgentRuntime,
-    message: Memory,
+    message: string,
     state: State
 ): Promise<Meme> {
     // STEPS
@@ -231,26 +201,20 @@ export async function generateMemeActionHandler(
     // 2. Get the template's captions number from imgflip -> imgflip API call
     // 2. Generate the captions for the meme, based on the template (**also consider the agent character**) -> LLM call
     // 3. Generate the meme -> imgflip API call
-    // 4. Generate a text for the meme (**also consider the agent character**) -> LLM call
-    // 5. Return the meme url and the text
+    // 5. Return the meme url and text, description of the meme
 
-    const template = await findImgflipTemplate(runtime, message.content.text);
+    const template = await findImgflipTemplate(runtime, message);
     const imgflipTemplate = await getImgflipTemplate(template);
     const captions = await generateMemeCaptions(
         runtime,
-        message.content.text,
+        message,
         state,
         template,
         imgflipTemplate.box_count
     );
 
     const url = await genereateMeme(imgflipTemplate, captions);
-    const text = await generateMemeText(
-        runtime,
-        state,
-        imgflipTemplate.name,
-        captions
-    );
+    const text = `Generated a meme, using imgflip.com:\nMeme template: "${template}".\nCaptions:\n${captions.join("\n")}\nMeme URL: ${url}`;
 
     return {
         url,
@@ -272,7 +236,11 @@ export const generateMemeAction: Action = {
         options: any,
         callback: HandlerCallback
     ) => {
-        const meme = await generateMemeActionHandler(runtime, message, state);
+        const meme = await generateMemeActionHandler(
+            runtime,
+            message.content.text,
+            state
+        );
 
         const newMemory: Memory = {
             ...message,
@@ -291,7 +259,10 @@ export const generateMemeAction: Action = {
 
         await runtime.messageManager.createMemory(newMemory);
 
-        callback(newMemory.content);
+        callback({
+            text: "",
+            attachments: newMemory.content.attachments,
+        });
 
         return true;
     },

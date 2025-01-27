@@ -1,4 +1,4 @@
-import { type Plugin, type Provider } from "@elizaos/core";
+import type { Plugin, Provider } from "@elizaos/core";
 import generateMusic from "./actions/generate";
 import extendMusic from "./actions/extend";
 import { UdioProvider } from "./providers/udio";

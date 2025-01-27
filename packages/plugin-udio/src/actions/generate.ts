@@ -1,6 +1,6 @@
 import type { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { UdioProvider } from "../providers/udio";
-import { UdioGenerateOptions, UdioResponse } from "../types";
+import type { UdioGenerateOptions } from "../types";
 
 const generateMusic: Action = {
     name: "generate",
@@ -22,7 +22,7 @@ const generateMusic: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: { [key: string]: unknown },
+        _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
         try {
@@ -45,7 +45,7 @@ const generateMusic: Action = {
                 if (status.songs.every(song => song.finished)) {
                     if (callback) {
                         callback({
-                            text: `Successfully generated music based on your prompt`,
+                            text: 'Successfully generated music based on your prompt',
                             content: status
                         });
                     }
