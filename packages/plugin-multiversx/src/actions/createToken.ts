@@ -20,6 +20,7 @@ export interface CreateTokenContent extends Content {
     decimals: string;
     amount: string;
 }
+import { isUserAuthorized } from "../utils/accessTokenManagement";
 
 const createTokenTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
 
@@ -47,7 +48,7 @@ export default {
     name: "CREATE_TOKEN",
     similes: ["DEPLOY_TOKEN"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        console.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for user:", message.userId);
         await validateMultiversxConfig(runtime);
         return true;
     },
@@ -57,9 +58,25 @@ export default {
         message: Memory,
         state: State,
         _options: { [key: string]: unknown },
-        callback?: HandlerCallback,
+        callback?: HandlerCallback
     ) => {
         elizaLogger.log("Starting CREATE_TOKEN handler...");
+
+        elizaLogger.log("Handler initialized. Checking user authorization...");
+
+        if (!isUserAuthorized(message.userId, runtime)) {
+            elizaLogger.error(
+                "Unauthorized user attempted to create a token:",
+                message.userId
+            );
+            if (callback) {
+                callback({
+                    text: "You do not have permission to create a token.",
+                    content: { error: "Unauthorized user" },
+                });
+            }
+            return false;
+        }
 
         // Initialize or update state
         if (!state) {
@@ -88,7 +105,7 @@ export default {
 
         // Validate transfer content
         if (!isCreateTokenContent) {
-            console.error("Invalid content for CREATE_TOKEN action.");
+            elizaLogger.error("Invalid content for CREATE_TOKEN action.");
             if (callback) {
                 callback({
                     text: "Unable to process transfer request. Invalid content provided.",
@@ -117,7 +134,7 @@ export default {
             });
             return true;
         } catch (error) {
-            console.error("Error during creating token:", error);
+            elizaLogger.error("Error during creating token:", error);
             if (callback) {
                 callback({
                     text: `Error creating token: ${error.message}`,
