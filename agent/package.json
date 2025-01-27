@@ -66,6 +66,7 @@
 		"@elizaos/plugin-initia": "workspace:*",
 		"@elizaos/plugin-image-generation": "workspace:*",
 		"@elizaos/plugin-lit": "workspace:*",
+		"@elizaos/plugin-gelato": "workspace:*",
 		"@elizaos/plugin-moralis": "workspace:*",
 		"@elizaos/plugin-mind-network": "workspace:*",
 		"@elizaos/plugin-movement": "workspace:*",
