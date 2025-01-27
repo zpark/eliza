@@ -1,6 +1,6 @@
 import type { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { UdioProvider } from "../providers/udio";
-import { UdioExtendOptions, UdioResponse } from "../types";
+import type { UdioExtendOptions } from "../types";
 
 const extendMusic: Action = {
     name: "extend",
@@ -22,7 +22,7 @@ const extendMusic: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: { [key: string]: unknown },
+        _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
         try {
@@ -51,7 +51,7 @@ const extendMusic: Action = {
                 if (status.songs.every(song => song.finished)) {
                     if (callback) {
                         callback({
-                            text: `Successfully extended the music based on your prompt`,
+                            text: 'Successfully extended the music based on your prompt',
                             content: status
                         });
                     }
