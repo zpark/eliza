@@ -180,8 +180,8 @@ This mathematical workflow demonstrates how anonymous voting can be securely imp
 ## Tutorial
 
 
-### Depedency
-Depedency for the plugin:
+### Dependency
+Dependency for the plugin:
 - [mind-randgen-sdk](https://github.com/mind-network/mind-sdk-randgen-ts)
 - [mind-sdk-hubs](https://github.com/mind-network/mind-sdk-hubs-ts)
 - [elizaos](https://github.com/elizaOS/eliza)
@@ -204,7 +204,7 @@ MIND_COLD_WALLET_ADDRESS=<Cold wallet address to receive rewards>
 
 
 ### Run
-Congratulations! You should be able to run an Eliza agent with FHE successfully. Bellow are two examples of real depoyment.
+Congratulations! You should be able to run an Eliza agent with FHE successfully. Below are two examples of real deployment.
 
 ### Real Deployment Screenshot
 
@@ -225,7 +225,7 @@ character_trump: Your voting reward amount is 10.0 vFHE.
 
 user: I want to encrypt 88 with FHE for Mind Network voting.
 character_trump: LET'S GET THAT NUMBER ENCRYPTED FOR YOUR VOTING! I'll encrypt 88 with FHE for you. (WE'RE KEEPING THINGS SECURE AND STRONG!)
-character_trump: Encryption is successful. Your encrypted number is available: https://fvno-tn.mindnetwork.xyz/0xb0edc92ec05309711c6ede0641f672715f5b144a4757b7ba51666468d2f7f65d. It is safe to share as no body can decrypt but can run computation to get another encrypted number.
+character_trump: Encryption is successful. Your encrypted number is available: https://fvno-tn.mindnetwork.xyz/0xb0edc92ec05309711c6ede0641f672715f5b144a4757b7ba51666468d2f7f65d. It is safe to share as nobody can decrypt but can run computation to get another encrypted number.
 
 user: I want to submit my vote to Mind Network.
 character_trump: TIME TO CAST THAT VOTE IN THE MIND NETWORK! I'll submit your vote right now. (WE'RE MAKING HISTORY TOGETHER!)
