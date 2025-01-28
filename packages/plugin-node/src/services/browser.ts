@@ -16,7 +16,7 @@ import { elizaLogger } from "@elizaos/core";
 
 async function generateSummary(
     runtime: IAgentRuntime,
-    text: string,
+    text: string
 ): Promise<{ title: string; description: string }> {
     // make sure text is under 128k characters
     text = await trimTokens(text, 100000, runtime);
@@ -43,7 +43,7 @@ async function generateSummary(
 
     const parsedResponse = parseJSONObjectFromText(response);
 
-    if (parsedResponse.title && parsedResponse.summary) {
+    if (parsedResponse?.title && parsedResponse?.summary) {
         return {
             title: parsedResponse.title,
             description: parsedResponse.summary,
@@ -86,7 +86,7 @@ export class BrowserService extends Service implements IBrowserService {
         this.context = undefined;
         this.blocker = undefined;
         this.captchaSolver = new CaptchaSolver(
-            settings.CAPSOLVER_API_KEY || "",
+            settings.CAPSOLVER_API_KEY || ""
         );
     }
 
@@ -129,8 +129,9 @@ export class BrowserService extends Service implements IBrowserService {
                 acceptDownloads: false,
             });
 
-            this.blocker =
-                await PlaywrightBlocker.fromPrebuiltAdsAndTracking(fetch);
+            this.blocker = await PlaywrightBlocker.fromPrebuiltAdsAndTracking(
+                fetch
+            );
         }
     }
 
@@ -147,7 +148,7 @@ export class BrowserService extends Service implements IBrowserService {
 
     async getPageContent(
         url: string,
-        runtime: IAgentRuntime,
+        runtime: IAgentRuntime
     ): Promise<PageContent> {
         await this.initializeBrowser();
         return await this.fetchPageContent(url, runtime);
@@ -159,7 +160,7 @@ export class BrowserService extends Service implements IBrowserService {
 
     private async fetchPageContent(
         url: string,
-        runtime: IAgentRuntime,
+        runtime: IAgentRuntime
     ): Promise<PageContent> {
         const cacheKey = this.getCacheKey(url);
         const cached = await runtime.cacheManager.get<{
@@ -176,7 +177,7 @@ export class BrowserService extends Service implements IBrowserService {
         try {
             if (!this.context) {
                 elizaLogger.log(
-                    "Browser context not initialized. Call initializeBrowser() first.",
+                    "Browser context not initialized. Call initializeBrowser() first."
                 );
             }
 
@@ -209,11 +210,11 @@ export class BrowserService extends Service implements IBrowserService {
             }
             const documentTitle = await page.evaluate(() => document.title);
             const bodyContent = await page.evaluate(
-                () => document.body.innerText,
+                () => document.body.innerText
             );
             const { title: parsedTitle, description } = await generateSummary(
                 runtime,
-                documentTitle + "\n" + bodyContent,
+                documentTitle + "\n" + bodyContent
             );
             const content = { title: parsedTitle, description, bodyContent };
             await runtime.cacheManager.set(`${this.cacheKey}/${cacheKey}`, {
@@ -289,7 +290,7 @@ export class BrowserService extends Service implements IBrowserService {
     private async getHCaptchaWebsiteKey(page: Page): Promise<string> {
         return page.evaluate(() => {
             const hcaptchaIframe = document.querySelector(
-                'iframe[src*="hcaptcha.com"]',
+                'iframe[src*="hcaptcha.com"]'
             );
             if (hcaptchaIframe) {
                 const src = hcaptchaIframe.getAttribute("src");
@@ -311,7 +312,7 @@ export class BrowserService extends Service implements IBrowserService {
 
     private async tryAlternativeSources(
         url: string,
-        runtime: IAgentRuntime,
+        runtime: IAgentRuntime
     ): Promise<{ title: string; description: string; bodyContent: string }> {
         // Try Internet Archive
         const archiveUrl = `https://web.archive.org/web/${url}`;
@@ -322,13 +323,15 @@ export class BrowserService extends Service implements IBrowserService {
         }
 
         // Try Google Search as a last resort
-        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+            url
+        )}`;
         try {
             return await this.fetchPageContent(googleSearchUrl, runtime);
         } catch (error) {
             elizaLogger.error("Error fetching from Google Search:", error);
             elizaLogger.error(
-                "Failed to fetch content from alternative sources",
+                "Failed to fetch content from alternative sources"
             );
             return {
                 title: url,

@@ -115,11 +115,11 @@ export const postTweetAction: Action = {
     similes: ["TWEET", "POST", "SEND_TWEET"],
     validate: async (
         // eslint-disable-next-line
-        runtime: IAgentRuntime,
+        _runtime: IAgentRuntime,
         // eslint-disable-next-line
-        message: Memory,
+        _message: Memory,
         // eslint-disable-next-line
-        state?: State
+        _state?: State
     ) => {
         const hasCredentials =
             !!process.env.TWITTER_USERNAME && !!process.env.TWITTER_PASSWORD;

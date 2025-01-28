@@ -3,7 +3,7 @@ import {TwitterScraper} from "../util/twitterScraper.ts";
 
 const tweetProvider: Provider = {
     // eslint-disable-next-line
-    get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
+    get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {
         const scraperWithPrimus = new TwitterScraper();
         try {
             elizaLogger.info("Attempting Twitter login");
