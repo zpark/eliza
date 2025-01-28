@@ -90,28 +90,28 @@ export function parseJsonArrayFromText(text: string) {
 
     if (jsonBlockMatch) {
         try {
-            // Replace single quotes with double quotes before parsing
-            const normalizedJson = jsonBlockMatch[1].replace(/'/g, '"');
+            // Only replace quotes that are actually being used for string delimitation
+            const normalizedJson = jsonBlockMatch[1].replace(/(?<!\\)'([^']*)'(?=[,}\]])/g, '"$1"');
             jsonData = JSON.parse(normalizedJson);
         } catch (e) {
             console.error("Error parsing JSON:", e);
-            console.error("Text is not JSON", text);
+            console.error("Failed parsing text:", jsonBlockMatch[1]);
         }
     }
 
     // If that fails, try to find an array pattern
     if (!jsonData) {
-        const arrayPattern = /\[\s*['"][^'"]*['"]\s*\]/;
+        const arrayPattern = /\[\s*(['"])(.*?)\1\s*\]/;
         const arrayMatch = text.match(arrayPattern);
 
         if (arrayMatch) {
             try {
-                // Replace single quotes with double quotes before parsing
-                const normalizedJson = arrayMatch[0].replace(/'/g, '"');
+                // Only replace quotes that are actually being used for string delimitation
+                const normalizedJson = arrayMatch[0].replace(/(?<!\\)'([^']*)'(?=[,}\]])/g, '"$1"');
                 jsonData = JSON.parse(normalizedJson);
             } catch (e) {
-                console.error("Text is not JSON", text);
                 console.error("Error parsing JSON:", e);
+                console.error("Failed parsing text:", arrayMatch[0]);
             }
         }
     }
@@ -146,7 +146,7 @@ export function parseJSONObjectFromText(
         } catch (e) {
             console.error("Error parsing JSON:", e);
             console.error("Text is not JSON", text);
-            return null;
+            return extractAttributes(jsonBlockMatch[1]);
         }
     } else {
         const objectPattern = /{[\s\S]*?}/;
@@ -158,7 +158,7 @@ export function parseJSONObjectFromText(
             } catch (e) {
                 console.error("Error parsing JSON:", e);
                 console.error("Text is not JSON", text);
-                return null;
+                return extractAttributes(objectMatch[0]);
             }
         }
     }
@@ -184,18 +184,27 @@ export function parseJSONObjectFromText(
  */
 export function extractAttributes(
     response: string,
-    attributesToExtract: string[],
+    attributesToExtract?: string[],
 ): { [key: string]: string | undefined } {
     const attributes: { [key: string]: string | undefined } = {};
 
-    attributesToExtract.forEach((attribute) => {
-        const match = response.match(
-            new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i"),
-        );
-        if (match) {
-            attributes[attribute] = match[1];
+    if (!attributesToExtract || attributesToExtract.length === 0) {
+        // Extract all attributes if no specific attributes are provided
+        const matches = response.matchAll(/"([^"]+)"\s*:\s*"([^"]*)"/g);
+        for (const match of matches) {
+            attributes[match[1]] = match[2];
         }
-    });
+    } else {
+        // Extract only specified attributes
+        attributesToExtract.forEach((attribute) => {
+            const match = response.match(
+                new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i"),
+            );
+            if (match) {
+                attributes[attribute] = match[1];
+            }
+        });
+    }
 
     return attributes;
 }

@@ -1,5 +1,5 @@
 import { IAgentRuntime, Memory, State, type Provider } from "@elizaos/core";
-import { UdioGenerateResponse, UdioSamplerOptions, UdioSong } from "../types";
+import type { UdioGenerateResponse, UdioSamplerOptions, UdioSong } from "../types";
 
 const API_BASE_URL = "https://www.udio.com/api";
 
@@ -25,11 +25,11 @@ export class UdioProvider implements Provider {
         this.baseUrl = config.baseUrl || API_BASE_URL;
     }
 
-    async get(_runtime: IAgentRuntime, _message: Memory, _state?: State): Promise<any> {
+    async get(_runtime: IAgentRuntime, _message: Memory, _state?: State): Promise<UdioProvider> {
         return this;
     }
 
-    async makeRequest(url: string, method: string, data?: any) {
+    async makeRequest(url: string, method: string, data?: Record<string, unknown>) {
         const headers = {
             "Accept": method === 'GET' ? "application/json, text/plain, */*" : "application/json",
             "Content-Type": "application/json",
