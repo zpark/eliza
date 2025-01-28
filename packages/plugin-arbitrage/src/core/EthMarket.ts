@@ -26,37 +26,37 @@ export abstract class EthMarket implements MarketType {
         public protocol: any
     ) {}
 
-    async getReserves(tokenAddress: string): Promise<BigNumber> {
+    async getReserves(_tokenAddress: string): Promise<BigNumber> {
         // Implementation
         return BigNumber.from(0);
     }
 
-    async getTokensOut(tokenIn: string, tokenOut: string, amountIn: BigNumber): Promise<BigNumber> {
+    async getTokensOut(_tokenIn: string, _tokenOut: string, _amountIn: BigNumber): Promise<BigNumber> {
         // Implementation
         return BigNumber.from(0);
     }
 
-    async getPriceImpact(tokenAddress: string, tradeSize: BigNumber): Promise<BigNumber> {
+    async getPriceImpact(_tokenAddress: string, _tradeSize: BigNumber): Promise<BigNumber> {
         // Implementation
         return BigNumber.from(0);
     }
 
-    async getTradingFee(tokenAddress: string): Promise<BigNumber> {
+    async getTradingFee(_tokenAddress: string): Promise<BigNumber> {
         // Implementation
         return BigNumber.from(0);
     }
 
-    async getBalance(tokenAddress: string): Promise<BigNumber> {
+    async getBalance(_tokenAddress: string): Promise<BigNumber> {
         // Implementation
         return BigNumber.from(0);
     }
 
-    async sellTokens(tokenAddress: string, volume: BigNumber, recipient: string): Promise<string> {
+    async sellTokens(_tokenAddress: string, _volume: BigNumber, _recipient: string): Promise<string> {
         // Implementation
         return "";
     }
 
-    async sellTokensToNextMarket(tokenAddress: string, volume: BigNumber, nextMarket: MarketType): Promise<BuyCalls> {
+    async sellTokensToNextMarket(_tokenAddress: string, _volume: BigNumber, _nextMarket: MarketType): Promise<BuyCalls> {
         // Implementation
         return { targets: [], data: [] };
     }

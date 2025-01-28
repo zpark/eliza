@@ -4,13 +4,13 @@ import { Contract } from "@ethersproject/contracts";
 import { Wallet } from "@ethersproject/wallet";
 import { Provider } from "@ethersproject/providers";
 import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
-import { WETH_ADDRESS } from "././addresses";
+// import { WETH_ADDRESS } from "././addresses";
 import { EthMarket } from "././EthMarket";
-import { ETHER, bigNumberToDecimal } from "./utils";
+// import { ETHER, bigNumberToDecimal } from "./utils";
 import { EthMarket as EthMarketType, CrossedMarketDetails, MarketsByToken, MarketType, BuyCalls } from "././types";
-import { TransactionResponse } from "@ethersproject/providers";
-import { DEFAULT_THRESHOLDS, MarketThresholds } from '../config/thresholds';
-import { MarketsByToken as ImportedMarketsByToken, CrossedMarketDetails as ImportedCrossedMarketDetails } from "../type";
+// import { TransactionResponse } from "@ethersproject/providers";
+// import { DEFAULT_THRESHOLDS, MarketThresholds } from '../config/thresholds';
+// import { MarketsByToken as ImportedMarketsByToken, CrossedMarketDetails as ImportedCrossedMarketDetails } from "../type";
 export { MarketsByToken, EthMarket, CrossedMarketDetails } from '././types';
 
 export interface BundleEntry {
@@ -24,12 +24,17 @@ export interface BundleEntry {
   signer: string,
 }
 
-let CFMM = {
+interface ArbitrageTransaction {
+  hash: string;
+  wait: () => Promise<{ blockNumber: number }>;
+}
+
+const CFMM = {
   reserves: {
     x: BigNumber.from(0),
     y: BigNumber.from(0),
   },
-  getOutputAmount: function (inputAmount: BigNumber, inputReserve: BigNumber, outputReserve: BigNumber) {
+  getOutputAmount: (inputAmount: BigNumber, inputReserve: BigNumber, outputReserve: BigNumber) => {
     const inputAmountWithFee = inputAmount.mul(997);
     const numerator = inputAmountWithFee.mul(outputReserve);
     const denominator = inputReserve.mul(1000).add(inputAmountWithFee);
@@ -38,9 +43,9 @@ let CFMM = {
   tradingFee: BigNumber.from("3000"),
 };
 
-let acceptTrade = (R: BigNumber, deltaPlus: number, deltaMinus: number) => {
-  let tradingFunctionResult = CFMM.getOutputAmount(R.sub(CFMM.tradingFee.mul(deltaMinus)).sub(deltaPlus), CFMM.reserves.x, CFMM.reserves.y);
-  let tradingFunctionResult2 = CFMM.getOutputAmount(R, CFMM.reserves.x, CFMM.reserves.y);
+const acceptTrade = (R: BigNumber, deltaPlus: number, deltaMinus: number) => {
+  const tradingFunctionResult = CFMM.getOutputAmount(R.sub(CFMM.tradingFee.mul(deltaMinus)).sub(deltaPlus), CFMM.reserves.x, CFMM.reserves.y);
+  const tradingFunctionResult2 = CFMM.getOutputAmount(R, CFMM.reserves.x, CFMM.reserves.y);
   console.log(`acceptTrade: tradingFunctionResult = ${tradingFunctionResult}, tradingFunctionResult2 = ${tradingFunctionResult2}`);
   return tradingFunctionResult.gte(tradingFunctionResult2) && R.sub(CFMM.tradingFee.mul(deltaMinus)).sub(deltaPlus).gte(0);
 };
@@ -48,7 +53,7 @@ let acceptTrade = (R: BigNumber, deltaPlus: number, deltaMinus: number) => {
 
 export const dualDecomposition = (referencePrices: string | any[], objectiveFunction: (arg0: any) => any, penaltyVector: number[]) => {
   console.log("Entering dualDecomposition");
-  let T = [];
+  const T = [];
   for (let i = 0; i < referencePrices.length; i++) {
     let deltaPlus = referencePrices[i].cumulativePrice;
     let deltaMinus = Math.min(referencePrices[i].cumulativePrice, 0);
@@ -130,60 +135,60 @@ export async function calculateOptimalVolume(
 
   return optimalVolume;
 }
-// Define the bisection search
-    // Define the bisection search
-    let bisectionSearch = (referencePrices: Array<{cumulativePrice: number, marketCount: number}>, objectiveFunction:  (arg0: number) => number, penaltyVector: number[]) => {
-      console.log("Entering bisectionSearch");
-        let left = 0;
-        let right = referencePrices.length - 1;
-        let tolerance = 1e-6;
-        let psi;
+// // Define the bisection search
+//     // Define the bisection search
+//     let bisectionSearch = (referencePrices: Array<{cumulativePrice: number, marketCount: number}>, objectiveFunction:  (arg0: number) => number, penaltyVector: number[]) => {
+//       console.log("Entering bisectionSearch");
+//         let left = 0;
+//         let right = referencePrices.length - 1;
+//         let tolerance = 1e-6;
+//         let psi;
 
-        while (right - left > tolerance) {
-          let mid = Math.floor((left + right) / 2);
-          let midValue = objectiveFunction(mid);
-          let penaltyResult = penaltyVector[mid] * mid;
+//         while (right - left > tolerance) {
+//           let mid = Math.floor((left + right) / 2);
+//           let midValue = objectiveFunction(mid);
+//           let penaltyResult = penaltyVector[mid] * mid;
 
-          if (midValue > penaltyResult) {
-            left = mid;
-            psi = mid;
-          } else {
-            right = mid;
-          }
-        }
-        console.log(`bisectionSearch: final psi = ${psi}`);
+//           if (midValue > penaltyResult) {
+//             left = mid;
+//             psi = mid;
+//           } else {
+//             right = mid;
+//           }
+//         }
+//         console.log(`bisectionSearch: final psi = ${psi}`);
 
-        return psi;
-      };
+//         return psi;
+//       };
 
-let swapMarketArbitrage = (referencePrices: Array<{cumulativePrice: number, marketCount: number}> = [], objectiveFunction: (price: number) => number, penaltyVector: number[]) => {
-    // Initialize the dual variable ν
-    console.log("Entering swapMarketArbitrage");
+// let swapMarketArbitrage = (referencePrices: Array<{cumulativePrice: number, marketCount: number}> = [], objectiveFunction: (price: number) => number, penaltyVector: number[]) => {
+//     // Initialize the dual variable ν
+//     console.log("Entering swapMarketArbitrage");
 
-    let nu = 0;
+//     let nu = 0;
 
-    // Use bisection or ternary search to solve for the vector Ψ
-    // Assuming that bisectionSearch accepts a number, not an array
-    let psi = bisectionSearch(referencePrices, objectiveFunction, penaltyVector);
+//     // Use bisection or ternary search to solve for the vector Ψ
+//     // Assuming that bisectionSearch accepts a number, not an array
+//     let psi = bisectionSearch(referencePrices, objectiveFunction, penaltyVector);
 
-    // Iterate through the ∆i with i = 1, . . . , m
-    for (let i = 0; i < referencePrices.length; i++) {
-      // Compute the objective function U(Ψ)
-      // Ensure psi is used correctly as an index
-      if (psi !== undefined && psi >= 0 && psi < referencePrices.length) {
-        const objectiveFunctionResult = objectiveFunction(referencePrices[psi].cumulativePrice);
+//     // Iterate through the ∆i with i = 1, . . . , m
+//     for (let i = 0; i < referencePrices.length; i++) {
+//       // Compute the objective function U(Ψ)
+//       // Ensure psi is used correctly as an index
+//       if (psi !== undefined && psi >= 0 && psi < referencePrices.length) {
+//         const objectiveFunctionResult = objectiveFunction(referencePrices[psi].cumulativePrice);
 
-        // Compute the linear penalty in the objective
-        let penaltyResult = penaltyVector[i] * nu;
+//         // Compute the linear penalty in the objective
+//         let penaltyResult = penaltyVector[i] * nu;
 
-        // Update the dual variable ν
-        nu = Math.max(nu, (objectiveFunctionResult - penaltyResult));
-      }
-    }
-    // Return the dual variable ν
-    console.log(`swapMarketArbitrage: final nu = ${nu}`);
-    return nu;
-  };
+//         // Update the dual variable ν
+//         nu = Math.max(nu, (objectiveFunctionResult - penaltyResult));
+//       }
+//     }
+//     // Return the dual variable ν
+//     console.log(`swapMarketArbitrage: final nu = ${nu}`);
+//     return nu;
+//   };
 
 export async function getGasPriceInfo(provider: Provider): Promise<{ currentGasPrice: BigNumber, avgGasPrice: BigNumber }> {
   console.log("Entering getGasPriceInfo");
@@ -205,7 +210,7 @@ export async function getGasPriceInfo(provider: Provider): Promise<{ currentGasP
     let transactionCountInBlock = 0;
     for (const txHash of transactions) {
         const tx = await provider.getTransaction(txHash);
-        if (tx && tx.gasPrice) {
+        if (tx?.gasPrice) {
           totalGasPriceInBlock = totalGasPriceInBlock.add(tx.gasPrice);
           transactionCountInBlock++;
         }
@@ -231,31 +236,40 @@ export async function ensureHigherEffectiveGasPrice(transactionGasPrice: BigNumb
   console.log(`ensureHigherEffectiveGasPrice: transactionGasPrice = ${transactionGasPrice}, tailTransactionGasPrice = ${tailTransactionGasPrice}, effectiveGasPrice = ${effectiveGasPrice}`);
   return effectiveGasPrice;
 }
-async function checkBundleGas(bundleGas: BigNumber): Promise<boolean> {
-  const isValid = bundleGas.gte(42000);
-  console.log(`checkBundleGas: bundleGas = ${bundleGas}, isValid = ${isValid}`);
-  return isValid;
+
+// async function checkBundleGas(bundleGas: BigNumber): Promise<boolean> {
+//   const isValid = bundleGas.gte(42000);
+//   console.log(`checkBundleGas: bundleGas = ${bundleGas}, isValid = ${isValid}`);
+//   return isValid;
+// }
+interface Block {
+  bundleGasPrice: BigNumber;
 }
-export async function monitorCompetingBundlesGasPrices(blocksApi: { getRecentBlocks: () => any; }): Promise<Array<BigNumber>> {
+
+interface BlocksApi {
+  getRecentBlocks: () => Promise<Block[]>;
+}
+
+export async function monitorCompetingBundlesGasPrices(blocksApi: BlocksApi): Promise<Array<BigNumber>> {
   console.log("Entering monitorCompetingBundlesGasPrices");
   const recentBlocks = await blocksApi.getRecentBlocks();
-  const competingBundlesGasPrices = recentBlocks.map((block: { bundleGasPrice: any; }) => block.bundleGasPrice);
+  const competingBundlesGasPrices = recentBlocks.map((block: Block) => block.bundleGasPrice);
   console.log(`monitorCompetingBundlesGasPrices: competingBundlesGasPrices = ${competingBundlesGasPrices}`);
   return competingBundlesGasPrices;
 }
 export class Arbitrage {
-    constructor(
-        private wallet: any,
-        private flashbotsProvider: any,
-        private bundleExecutorContract: any
-    ) {}
+  constructor(
+      private wallet: Wallet,
+      private flashbotsProvider: FlashbotsBundleProvider,
+      private bundleExecutorContract: Contract
+  ) {}
 
-    async evaluateMarkets(marketsByToken: MarketsByToken): Promise<CrossedMarketDetails[]> {
+    async evaluateMarkets(_marketsByToken: MarketsByToken): Promise<CrossedMarketDetails[]> {
         // Implement market evaluation logic
         return [];
     }
 
-    async takeCrossedMarkets(markets: CrossedMarketDetails[], currentBlock: number, maxAttempts: number): Promise<void> {
+    async takeCrossedMarkets(_markets: CrossedMarketDetails[], _currentBlock: number, _maxAttempts: number): Promise<void> {
         // Implement arbitrage execution logic
     }
 
@@ -279,9 +293,9 @@ export class Arbitrage {
         sourceRouter: string,
         targetRouter: string,
         tokenIn: string,
-        tokenOut: string,
+        _tokenOut: string,
         amountIn: BigNumber
-    ): Promise<any> {
+    ): Promise<ArbitrageTransaction>  {
         // Create the arbitrage transaction
         const markets: CrossedMarketDetails[] = [{
             marketPairs: [{
@@ -301,12 +315,12 @@ export class Arbitrage {
         // Return a mock transaction response for now
         // In a real implementation, this should return the actual transaction
         return {
-            hash: "0x" + Math.random().toString(16).slice(2),
+            hash: `0x${Math.random().toString(16).slice(2)}`,
             wait: async () => ({ blockNumber: await this.getCurrentBlock() })
         };
     }
 
-    private async getMarketForDex(dexAddress: string): Promise<EthMarket | null> {
+    private async getMarketForDex(_dexAddress: string): Promise<EthMarket | null> {
         // This should be implemented to return the appropriate market instance
         // based on the DEX address
         return null;
@@ -341,26 +355,26 @@ export class Arbitrage {
     }
 }
 
-async function fetchWETHBalance(address: string, provider: Provider, retries = 5, delayMs = 500): Promise<BigNumber | null> {
-  const WETH_CONTRACT_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-  const ABI = [
-    "function balanceOf(address owner) view returns (uint256)"
-  ];
-  const contract = new Contract(WETH_CONTRACT_ADDRESS, ABI, provider);
+// async function fetchWETHBalance(address: string, provider: Provider, retries = 5, delayMs = 500): Promise<BigNumber | null> {
+//   const WETH_CONTRACT_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+//   const ABI = [
+//     "function balanceOf(address owner) view returns (uint256)"
+//   ];
+//   const contract = new Contract(WETH_CONTRACT_ADDRESS, ABI, provider);
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const balance: BigNumber = await contract.balanceOf(address);
-      return balance;
-    } catch (error: any) {
-      console.error(`Attempt ${attempt} - Failed to fetch WETH balance for address ${address}:`, error.message);
-      if (attempt < retries) {
-        await new Promise(res => setTimeout(res, delayMs * attempt));
-      } else {
-        console.error(`All ${retries} attempts failed for address ${address}`);
-        return null;
-      }
-    }
-  }
-  return null;
-}
+//   for (let attempt = 1; attempt <= retries; attempt++) {
+//     try {
+//       const balance: BigNumber = await contract.balanceOf(address);
+//       return balance;
+//     } catch (error: any) {
+//       console.error(`Attempt ${attempt} - Failed to fetch WETH balance for address ${address}:`, error.message);
+//       if (attempt < retries) {
+//         await new Promise(res => setTimeout(res, delayMs * attempt));
+//       } else {
+//         console.error(`All ${retries} attempts failed for address ${address}`);
+//         return null;
+//       }
+//     }
+//   }
+//   return null;
+// }
