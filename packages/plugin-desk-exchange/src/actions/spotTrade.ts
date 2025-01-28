@@ -13,6 +13,13 @@ import {
 import { DeskExchangeError } from "../types.js";
 import { perpTradeTemplate } from "../templates.js";
 
+const generateNonce = (): bigint => {
+    const expiredAt = BigInt(Date.now() + 1000 * 60 * 5) * BigInt(1 << 20); // 5 minutes
+    // random number between 0 and 2^20
+    const random = Math.floor(Math.random() * (1 << 20)) - 1;
+    return expiredAt + BigInt(random);
+};
+
 export const spotTrade: Action = {
     name: "SPOT_TRADE",
     similes: ["PERP_ORDER", "PERP_BUY", "PERP_SELL"],
@@ -60,7 +67,7 @@ export const spotTrade: Action = {
             side: content.side,
             amount: content.amount,
             price: content.price,
-            nonce: "1822468699971776000",
+            nonce: generateNonce().toString(),
             broker_id: "DESK",
             order_type: "Market",
             reduce_only: false,
@@ -72,7 +79,7 @@ export const spotTrade: Action = {
             JSON.stringify(processesOrder, null, 2)
         );
 
-        const result = await fetch(
+        const rawResponse = await fetch(
             "https://stg-trade-api.happytrading.global/v2/place-order",
             {
                 headers: {
@@ -84,161 +91,17 @@ export const spotTrade: Action = {
                 method: "POST",
             }
         );
-        elizaLogger.info(await result.json());
+        const response = await rawResponse.json();
+        elizaLogger.info(response);
 
-        // Validate order parameters
-        //     const validatedOrder = SpotOrderSchema.parse(content);
-        //     elizaLogger.info("Validated order:", validatedOrder);
+        if (callback && response.code === 200) {
+            callback({
+                text: `Successfully placed a ${response.data.order_type} order of size ${response.data.quantity} on ${response.data.symbol} market at ${response.data.avg_fill_price} USD on DESK Exchange.`,
+                content: response,
+            });
+        }
 
-        //     // Initialize SDK
-        //     const sdk = new Hyperliquid({
-        //         privateKey: runtime.getSetting("HYPERLIQUID_PRIVATE_KEY"),
-        //         testnet: runtime.getSetting("HYPERLIQUID_TESTNET") === "true",
-        //         enableWs: false,
-        //     });
-        //     await sdk.connect();
-
-        //     // Get market data
-        //     const [meta, assetCtxs] =
-        //         await sdk.info.spot.getSpotMetaAndAssetCtxs();
-
-        //     // Find token and market
-        //     const tokenIndex = meta.tokens.findIndex(
-        //         (token) =>
-        //             token.name.toUpperCase() ===
-        //             validatedOrder.coin.toUpperCase()
-        //     );
-        //     if (tokenIndex === -1) {
-        //         throw new HyperliquidError(
-        //             `Could not find token ${validatedOrder.coin}`
-        //         );
-        //     }
-        //     const tokenInfo = meta.tokens[tokenIndex];
-        //     elizaLogger.info("Found token:", tokenInfo.name);
-
-        //     const marketIndex = assetCtxs.findIndex(
-        //         (ctx) => ctx.coin === `${validatedOrder.coin}-SPOT`
-        //     );
-        //     if (marketIndex === -1) {
-        //         throw new HyperliquidError(
-        //             `Could not find market for ${validatedOrder.coin}`
-        //         );
-        //     }
-        //     const marketCtx = assetCtxs[marketIndex];
-        //     if (!marketCtx || !marketCtx.midPx) {
-        //         throw new HyperliquidError(
-        //             `Could not get market price for ${validatedOrder.coin}`
-        //         );
-        //     }
-
-        //     // Calculate prices
-        //     const midPrice = Number(marketCtx.midPx);
-        //     const isMarketOrder = !validatedOrder.limit_px;
-        //     let finalPrice: number;
-
-        //     if (isMarketOrder) {
-        //         // For market orders, use current price with slippage
-        //         const slippage = PRICE_VALIDATION.SLIPPAGE;
-        //         finalPrice = validatedOrder.is_buy
-        //             ? midPrice * (1 + slippage)
-        //             : midPrice * (1 - slippage);
-
-        //         // Validate market order price
-        //         if (
-        //             finalPrice <
-        //                 midPrice * PRICE_VALIDATION.MARKET_ORDER.MIN_RATIO ||
-        //             finalPrice >
-        //                 midPrice * PRICE_VALIDATION.MARKET_ORDER.MAX_RATIO
-        //         ) {
-        //             throw new HyperliquidError(
-        //                 `Market order price (${finalPrice.toFixed(2)} USDC) is too far from market price (${midPrice.toFixed(2)} USDC). This might be due to low liquidity.`
-        //             );
-        //         }
-        //     } else {
-        //         // For limit orders
-        //         finalPrice = validatedOrder.limit_px;
-
-        //         // Validate limit order price is optimal
-        //         if (validatedOrder.is_buy && finalPrice > midPrice) {
-        //             throw new HyperliquidError(
-        //                 `Cannot place buy limit order at ${finalPrice.toFixed(2)} USDC because it's above market price (${midPrice.toFixed(2)} USDC). To execute immediately, use a market order. For a limit order, set a price below ${midPrice.toFixed(2)} USDC.`
-        //             );
-        //         } else if (!validatedOrder.is_buy && finalPrice < midPrice) {
-        //             throw new HyperliquidError(
-        //                 `Cannot place sell limit order at ${finalPrice.toFixed(2)} USDC because it's below market price (${midPrice.toFixed(2)} USDC). To execute immediately, use a market order. For a limit order, set a price above ${midPrice.toFixed(2)} USDC.`
-        //             );
-        //         }
-
-        //         // Log warning if price is very different from market
-        //         if (
-        //             finalPrice <
-        //                 midPrice *
-        //                     PRICE_VALIDATION.LIMIT_ORDER.WARNING_MIN_RATIO ||
-        //             finalPrice >
-        //                 midPrice *
-        //                     PRICE_VALIDATION.LIMIT_ORDER.WARNING_MAX_RATIO
-        //         ) {
-        //             elizaLogger.warn(
-        //                 `Limit price (${finalPrice.toFixed(2)} USDC) is very different from market price (${midPrice.toFixed(2)} USDC). Make sure this is intentional.`,
-        //                 {
-        //                     finalPrice,
-        //                     midPrice,
-        //                     ratio: finalPrice / midPrice,
-        //                 }
-        //             );
-        //         }
-        //     }
-
-        //     // Prepare and place order
-        //     const rounded_px = Number(finalPrice.toFixed(tokenInfo.szDecimals));
-        //     const orderRequest = {
-        //         coin: `${validatedOrder.coin}-SPOT`,
-        //         asset: 10000 + marketIndex,
-        //         is_buy: validatedOrder.is_buy,
-        //         sz: validatedOrder.sz,
-        //         limit_px: rounded_px,
-        //         reduce_only: false,
-        //         order_type: isMarketOrder
-        //             ? { market: {} }
-        //             : { limit: { tif: "Gtc" as const } },
-        //     };
-
-        //     elizaLogger.info("Placing order:", orderRequest);
-        //     const result = await sdk.exchange.placeOrder(orderRequest);
-
-        //     // Check if order was rejected
-        //     if (
-        //         result.status === "ok" &&
-        //         result.response?.type === "order" &&
-        //         result.response.data?.statuses?.[0]?.error
-        //     ) {
-        //         throw new HyperliquidError(
-        //             result.response.data.statuses[0].error
-        //         );
-        //     }
-
-        //     // Send success callback
-        //     if (callback) {
-        //         const action = validatedOrder.is_buy ? "buy" : "sell";
-        //         const executionPrice =
-        //             result.response?.data?.statuses?.[0]?.px || rounded_px;
-        //         callback({
-        //             text: `Successfully placed ${isMarketOrder ? "a market" : "a limit"} order to ${action} ${validatedOrder.sz} ${validatedOrder.coin} at ${executionPrice}`,
-        //             content: result,
-        //         });
-        //     }
-
-        //     return true;
-        // } catch (error) {
-        //     elizaLogger.error("Error placing spot order:", error);
-        //     if (callback) {
-        //         callback({
-        //             text: `Error placing spot order: ${error.message}`,
-        //             content: { error: error.message },
-        //         });
-        //     }
-        //     return false;
-        // }
+        return true;
     },
     examples: [
         [
