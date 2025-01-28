@@ -45,6 +45,7 @@
         "@elizaos/plugin-birdeye": "workspace:*",
         "@elizaos/plugin-coingecko": "workspace:*",
         "@elizaos/plugin-coinmarketcap": "workspace:*",
+        "@elizaos/plugin-desk-exchange": "workspace:*",
         "@elizaos/plugin-zerion": "workspace:*",
         "@elizaos/plugin-binance": "workspace:*",
         "@elizaos/plugin-avail": "workspace:*",
