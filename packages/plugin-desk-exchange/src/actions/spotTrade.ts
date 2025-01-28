@@ -12,13 +12,50 @@ import {
 } from "@elizaos/core";
 import { DeskExchangeError } from "../types.js";
 import { perpTradeTemplate } from "../templates.js";
+import { ethers } from "ethers";
 
-const generateNonce = (): bigint => {
-    const expiredAt = BigInt(Date.now() + 1000 * 60 * 5) * BigInt(1 << 20); // 5 minutes
+const generateNonce = (): string => {
+    const expiredAt = (Date.now() + 1000 * 60 * 1) * (1 << 20); // 1 minutes
     // random number between 0 and 2^20
     const random = Math.floor(Math.random() * (1 << 20)) - 1;
-    return expiredAt + BigInt(random);
+    return (expiredAt + random).toString();
 };
+
+const generateJwt = async (
+    endpoint: string,
+    wallet: ethers.Wallet,
+    subaccountId: number,
+    nonce: string
+): Promise<string> => {
+    const message = `generate jwt for ${wallet.address?.toLowerCase()} and subaccount id ${subaccountId} to trade on happytrading.global with nonce: ${nonce}`;
+    const signature = await wallet.signMessage(message);
+
+    const rawResponse = await fetch(`${endpoint}/v2/auth/evm`, {
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+            account: wallet.address,
+            subaccount_id: subaccountId.toString(),
+            nonce,
+            signature,
+        }),
+        method: "POST",
+    });
+    const response = await rawResponse.json();
+    if (response.code === 200) {
+        return response.data.jwt;
+    } else {
+        throw new DeskExchangeError("Could not generate JWT");
+    }
+};
+
+const getSubaccount = (account: string, subaccountId: number): string => {
+    // pad address with subaccountId to be 32 bytes (64 hex characters)
+    //  0x + 40 hex characters (address) + 24 hex characters (subaccountId)
+    const subaccountIdHex = BigInt(subaccountId).toString(16).padStart(24, "0");
+    return account.concat(subaccountIdHex);
+};
+
+let jwt: string = null;
 
 export const spotTrade: Action = {
     name: "SPOT_TRADE",
@@ -34,7 +71,7 @@ export const spotTrade: Action = {
         options: Record<string, unknown>,
         callback?: HandlerCallback
     ) => {
-        elizaLogger.info("DESK EXCHANGE");
+        elizaLogger.info("DESK EXCHANGE", jwt);
         // Initialize or update state
         state = !state
             ? await runtime.composeState(message)
@@ -57,6 +94,18 @@ export const spotTrade: Action = {
             );
         }
 
+        const endpoint =
+            runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
+                ? "https://trade-api.happytrading.global"
+                : "https://stg-trade-api.happytrading.global";
+
+        const wallet = new ethers.Wallet(
+            runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
+        );
+        if (!jwt) {
+            jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
+        }
+        elizaLogger.info("jwt", jwt);
         elizaLogger.info(
             "Raw content from LLM:",
             JSON.stringify(content, null, 2)
@@ -67,36 +116,36 @@ export const spotTrade: Action = {
             side: content.side,
             amount: content.amount,
             price: content.price,
-            nonce: generateNonce().toString(),
+            nonce: generateNonce(),
             broker_id: "DESK",
             order_type: "Market",
             reduce_only: false,
-            subaccount:
-                "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a000000000000000000000000",
+            subaccount: getSubaccount(wallet.address, 0),
         };
         elizaLogger.info(
             "Processed order:",
             JSON.stringify(processesOrder, null, 2)
         );
 
-        const rawResponse = await fetch(
-            "https://stg-trade-api.happytrading.global/v2/place-order",
-            {
-                headers: {
-                    authorization:
-                        "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NDA1NjAyNTAsImFjY291bnQiOiIweDY2MjllQzM1YzhBYTI3OUJBNDVEYmZiNTc1YzcyOGQzODEyYUUzMWEiLCJzdWJhY2NvdW50X2lkIjowfQ.RUazgjZM3Vulq1MAQ22eYmVVAH1pHbsqzG18VP9VPyI",
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify(processesOrder),
-                method: "POST",
-            }
-        );
+        const rawResponse = await fetch(`${endpoint}/v2/place-order`, {
+            headers: {
+                authorization: `Bearer ${jwt}`,
+                "content-type": "application/json",
+            },
+            body: JSON.stringify(processesOrder),
+            method: "POST",
+        });
         const response = await rawResponse.json();
         elizaLogger.info(response);
 
         if (callback && response.code === 200) {
             callback({
                 text: `Successfully placed a ${response.data.order_type} order of size ${response.data.quantity} on ${response.data.symbol} market at ${response.data.avg_fill_price} USD on DESK Exchange.`,
+                content: response,
+            });
+        } else {
+            callback({
+                text: `Place order failed with ${response.errors}.`,
                 content: response,
             });
         }
