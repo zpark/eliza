@@ -41,7 +41,7 @@ export class GovProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in voteOnProposal: " + e);
+            elizaLogger.error(`Error in voteOnProposal: ${e}`);
             throw e;
         }
     }
