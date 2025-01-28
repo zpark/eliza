@@ -18,6 +18,7 @@ FHE is a form of encryption that enables computations to be performed on encrypt
 The FHE Plugin in the Eliza Framework is built on top of the [Mind Network FHE TypeScript SDK](https://github.com/mind-network/mind-sdk-randgen-ts). This SDK is designed to simplify the process for developers to enable FHE capabilities in their agents while adhering to default security best practices. FHE unlocks [many use cases](https://docs.mindnetwork.xyz/minddocs/products/mindv/hubs-explanation). In this tutorial, we will use the anonymous voting use case to demonstrate how AI agents can be equipped with FHE.
 
 ## Key Features of the FHE Plugin
+- **Web3 Wallet Integration**: Enhance Eliza agent interactions with robust Web3 wallet functionality. Currently, both MetaMask and OKX Web3 wallets are supported, with more integrations planned.
 - **Voter Registration Use Case**: Join Mind Network's Randgen Hub and other hubs to participate in secure voting, validation, and consensus.
 - **FHE Encryption**: Protect vote content using Fully Homomorphic Encryption. Unlike traditional encryption, the encryption key is never shared, yet computations can still be performed on encrypted data.
 - **Submit Encrypted Votes**: Cast votes in Mind Network Hubs elections without compromising data privacy. This allows AI agents to achieve consensus on collective predictions, inference, and serving.
@@ -37,63 +38,57 @@ The main idea of FHE is that operations performed on the encrypted data produce 
 #### Core Components
 
 1. **Encryption**: Transform plaintext data into ciphertext using an encryption key.
-   $$
+   ```math
    c = E_k(m)
-   $$
+   ```
    Where:
-   - \( m \): plaintext message
-   - \( k \): encryption key
-   - \( E_k \): encryption function
-   - \( c \): ciphertext
+   - $m$: plaintext message
+   - $k$: encryption key
+   - $E_k$: encryption function
+   - $c$: ciphertext
 
-2. **Computation on Encrypted Data**: Perform operations directly on the ciphertext, such as addition or multiplication, to produce a new ciphertext.
-   $$
+3. **Computation on Encrypted Data**: Perform operations directly on the ciphertext, such as addition or multiplication, to produce a new ciphertext.
+   ```math
    c' = F(c_1, c_2)
-   $$
+   ```
    Where:
-   - \( c_1, c_2 \): input ciphertexts
-   - \( F \): homomorphic function (e.g., addition, multiplication)
-   - \( c' \): resulting ciphertext after computation
+   - $c_1, c_2$: input ciphertexts
+   - $F$: homomorphic function (e.g., addition, multiplication)
+   - $c'$: resulting ciphertext after computation
 
-3. **Decryption**: Decrypt the result to reveal the final output, which matches the result of performing the operation on the plaintext.
-   $$
+4. **Decryption**: Decrypt the result to reveal the final output, which matches the result of performing the operation on the plaintext.
+   ```math
    m' = D_k(c')
-   $$
+   ```
    Where:
-   - \( D_k \): decryption function
-   - \( m' \): result of computation in plaintext form
+   - $D_k$: decryption function
+   - $m'$: result of computation in plaintext form
 
 #### Example: Addition Using FHE
 
-Suppose we have two plaintext values, \( m_1 \) and \( m_2 \):
+Suppose we have two plaintext values, $m_1$ and $m_2$:
 1. Encrypt them:
-   \[
-   c_1 = E_k(m_1), \quad c_2 = E_k(m_2)
-   \]
+   ```math
+   c_1 = E_k(m_1), c_2 = E_k(m_2)
+   ```
 2. Perform homomorphic addition on the ciphertexts:
-   \[
+   ```math
    c' = c_1 + c_2
-   \]
+   ```
 3. Decrypt the result:
-   \[
-   m' = D_k(c') \implies m' = m_1 + m_2
-   \]
+   ```math
+   m' = D_k(c') => m' = m_1 + m_2
+   ```
 
 #### Example: Multiplication Using FHE
 
 For multiplication, the process is similar:
 1. Encrypt two plaintext values:
-   \[
-   c_1 = E_k(m_1), \quad c_2 = E_k(m_2)
-   \]
+   $$c_1 = E_k(m_1), \quad c_2 = E_k(m_2)$$
 2. Perform homomorphic multiplication:
-   \[
-   c' = c_1 \cdot c_2
-   \]
+   $$c' = c_1 \cdot c_2$$
 3. Decrypt the result:
-   \[
-   m' = D_k(c') \implies m' = m_1 \cdot m_2
-   \]
+   $$m' = D_k(c') \implies m' = m_1 \cdot m_2$$
 
 
 ### Anonymous Voting and Consensus with FHE use case
@@ -103,74 +98,74 @@ Anonymous voting with FHE ensures that individual votes remain private while ena
 
 #### 1. Voter Setup
 
-Each voter \( i \) has a plaintext vote \( v_i \) where:
-\[
+Each voter i has a plaintext vote $v_i$ where:
+```math
 v_i \in \{0, 1\}
-\]
-- \( 0 \): Vote for option A.
-- \( 1 \): Vote for option B.
+```
+- $0$: Vote for option A.
+- $1$: Vote for option B.
 
-Each voter encrypts their vote using a public encryption key \( k \):
-\[
+Each voter encrypts their vote using a public encryption key k:
+```math
 c_i = E_k(v_i)
-\]
+```
 Where:
-- \( E_k \): FHE encryption function.
-- \( c_i \): Encrypted vote (ciphertext).
+- $E_k$: FHE encryption function.
+- $c_i$: Encrypted vote (ciphertext).
 
 #### 2. Collecting Encrypted Votes
 
-All encrypted votes \( c_i \) are submitted to a secure voting server. The server collects the ciphertexts:
-\[
+All encrypted votes c_i are submitted to a secure voting server. The server collects the ciphertexts:
+```math
 C = \{c_1, c_2, \dots, c_n\}
-\]
-Where \( n \) is the total number of voters.
+```
+Where $n$ is the total number of voters.
 
 #### 3. Homomorphic Aggregation
 
 The server computes the encrypted sum of all votes directly on the ciphertexts using FHE's additive homomorphism:
-\[
+```math
 c_{\text{sum}} = \sum_{i=1}^n c_i
-\]
-This operation produces a single ciphertext \( c_{\text{sum}} \) representing the total votes in encrypted form, without revealing individual votes.
+```
+This operation produces a single ciphertext c_sum representing the total votes in encrypted form, without revealing individual votes.
 
 #### 4. Decryption of the Result
 
-Once the computation is complete, an authorized party with the private key \( k \) decrypts the aggregated ciphertext to obtain the final tally:
-\[
+Once the computation is complete, an authorized party with the private key $k$ decrypts the aggregated ciphertext to obtain the final tally:
+```math
 v_{\text{sum}} = D_k(c_{\text{sum}})
-\]
+```
 Where:
-- \( D_k \): Decryption function.
-- \( v_{\text{sum}} \): The total number of votes for option B.
+- $D_k$: Decryption function.
+- $v_sum$: The total number of votes for option B.
 
 The final tally is:
-\[
+```math
 v_{\text{sum}} = \sum_{i=1}^n v_i
-\]
+```
 
 #### Example Walkthrough
 
 1. **Voter Encryption**:
-   - Voter 1: \( v_1 = 1 \), \( c_1 = E_k(1) \)
-   - Voter 2: \( v_2 = 0 \), \( c_2 = E_k(0) \)
-   - Voter 3: \( v_3 = 1 \), \( c_3 = E_k(1) \)
+   - Voter 1: $v₁ = 1, c₁ = E_k(1)$
+   - Voter 2: $v₂ = 0, c₂ = E_k(0)$
+   - Voter 3: $v₃ = 1, c₃ = E_k(1)$
 
 2. **Homomorphic Aggregation**:
-   \[
-   c_{\text{sum}} = c_1 + c_2 + c_3
-   \]
+```math
+c_{\text{sum}} = c_1 + c_2 + c_3
+```
 
 3. **Decryption of the Result**:
-   \[
-   v_{\text{sum}} = D_k(c_{\text{sum}}) \implies v_{\text{sum}} = 1 + 0 + 1 = 2
-   \]
+```math
+v_{\text{sum}} = D_k(c_{\text{sum}}) \implies v_{\text{sum}} = 1 + 0 + 1 = 2
+```
 
 #### Security and Privacy
 
-- **Privacy**: Individual votes \( v_i \) remain encrypted and are never exposed during aggregation.
+- **Privacy**: Individual votes v_i remain encrypted and are never exposed during aggregation.
 - **Anonymity**: Votes are aggregated in ciphertext form, ensuring that no voter can be linked to their vote.
-- **Integrity**: The final result \( v_{\text{sum}} \) accurately reflects the sum of all votes, guaranteed by FHE.
+- **Integrity**: The final result v_sum accurately reflects the sum of all votes, guaranteed by FHE.
 
 This mathematical workflow demonstrates how anonymous voting can be securely implemented using FHE.
 
