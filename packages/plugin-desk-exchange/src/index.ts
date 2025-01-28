@@ -1,10 +1,10 @@
 import type { Plugin } from "@elizaos/core";
-import { spotTrade } from "./actions/spotTrade";
+import { perpTrade } from "./actions/perpTrade";
 
 export const deskExchangePlugin: Plugin = {
     name: "deskExchange",
     description: "DESK Exchange plugin",
-    actions: [spotTrade],
+    actions: [perpTrade],
     providers: [],
     evaluators: [],
     services: [],

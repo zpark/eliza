@@ -57,8 +57,8 @@ const getSubaccount = (account: string, subaccountId: number): string => {
 
 let jwt: string = null;
 
-export const spotTrade: Action = {
-    name: "SPOT_TRADE",
+export const perpTrade: Action = {
+    name: "PERP_TRADE",
     similes: ["PERP_ORDER", "PERP_BUY", "PERP_SELL"],
     description: "Place a perpetual contract trade order on DESK Exchange",
     validate: async (runtime: IAgentRuntime) => {
@@ -164,7 +164,7 @@ export const spotTrade: Action = {
                 user: "{{agent}}",
                 content: {
                     text: "I'll place a buy order for 0.1 BTC at 20 USD.",
-                    action: "SPOT_TRADE",
+                    action: "PERP_TRADE",
                 },
             },
             {
@@ -185,7 +185,7 @@ export const spotTrade: Action = {
                 user: "{{agent}}",
                 content: {
                     text: "I'll place a sell order for 2 BTC at 21 USD.",
-                    action: "SPOT_TRADE",
+                    action: "PERP_TRADE",
                 },
             },
             {
@@ -198,4 +198,4 @@ export const spotTrade: Action = {
     ] as ActionExample[][],
 };
 
-export default spotTrade;
+export default perpTrade;
