@@ -8,7 +8,7 @@ const parseAccount = (runtime: IAgentRuntime): Ed25519Keypair => {
     } else if (privateKey.startsWith("suiprivkey")) {
         return Ed25519Keypair.fromSecretKey(privateKey);
     } else {
-        return Ed25519Keypair.deriveKeypairFromSeed(privateKey);
+        return Ed25519Keypair.deriveKeypair(privateKey);
     }
 };
 
