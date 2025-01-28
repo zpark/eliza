@@ -29,7 +29,7 @@ import { LitPlugin } from '@elizaos/plugin-lit';
 export default {
   plugins: [
     // ... other plugins
-    LitPlugin,
+    litPlugin,
   ],
   // ... rest of your agent configuration
 };
