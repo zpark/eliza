@@ -140,7 +140,7 @@ export const perpTrade: Action = {
 
         if (callback && response.code === 200) {
             callback({
-                text: `Successfully placed a ${response.data.order_type} order of size ${response.data.quantity} on ${response.data.symbol} market at ${response.data.avg_fill_price} USD on DESK Exchange.`,
+                text: `Successfully placed a ${response.data.side} ${response.data.order_type} order of size ${response.data.quantity} on ${response.data.symbol} market at ${response.data.avg_fill_price} USD on DESK Exchange.`,
                 content: response,
             });
         } else {
@@ -157,7 +157,7 @@ export const perpTrade: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Buy 0.1 BTC at 20 USD",
+                    text: "Long 0.1 BTC at 20 USD",
                 },
             },
             {
@@ -178,7 +178,7 @@ export const perpTrade: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Sell 2 BTC at 21 USD",
+                    text: "Short 2 BTC at 21 USD",
                 },
             },
             {
