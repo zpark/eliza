@@ -5,6 +5,7 @@ import type {
     Provider,
     State,
 } from "@elizaos/core";
+import axios from "axios";
 
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 
@@ -89,19 +90,18 @@ export class WalletProvider {
             try {
                 const cetusSuiUsdcPoolAddr =
                     "0x51e883ba7c0b566a26cbc8a94cd33eb0abd418a77cc1e60ad22fd9b1f29cd2ab";
-                const response = await fetch(
-                    `https://api.dexscreener.com/latest/dex/pairs/sui/${cetusSuiUsdcPoolAddr}`
-                );
+                const url = `https://api.dexscreener.com/latest/dex/pairs/sui/${cetusSuiUsdcPoolAddr}`;
+                const response = await axios.get(url);
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(
-                        `HTTP error! status: ${response.status}, message: ${errorText}`
-                    );
-                }
+                // if (!response.ok) {
+                //     const errorText = await response.text();
+                //     throw new Error(
+                //         `HTTP error! status: ${response.status}, message: ${errorText}`
+                //     );
+                // }
 
-                const data = await response.json();
-                return data;
+                // const data = await response.json();
+                return response.data;
             } catch (error) {
                 console.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;

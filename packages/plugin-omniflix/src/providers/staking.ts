@@ -29,7 +29,7 @@ export class StakingProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in delegate: " + e);
+            elizaLogger.error(`Error in delegate: ${e}`);
             throw e;
         }
     }
@@ -53,7 +53,7 @@ export class StakingProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in undelegate: " + e);
+            elizaLogger.error(`Error in undelegate: ${e}`);
             throw e;
         }
     }
@@ -87,7 +87,7 @@ export class StakingProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in redelegate: " + e);
+            elizaLogger.error(`Error in redelegate: ${e}`);
             throw e;
         }
     }
@@ -122,7 +122,7 @@ export class StakingProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in cancelUnbondingDelegation: " + e);
+            elizaLogger.error(`Error in cancelUnbondingDelegation: ${e}`);
             throw e;
         }
     }

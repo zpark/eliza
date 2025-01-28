@@ -82,12 +82,14 @@ export const walletProvider: Provider = {
                     "omniflix"
                 );
                 elizaLogger.info("Wallet initialized with private key");
-            } else {
+            } else if (mnemonic) {
                 // Use mnemonic
-                wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic!, {
+                wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
                     prefix: "omniflix",
                 });
                 elizaLogger.info("Wallet initialized with mnemonic");
+            } else {
+                throw new Error("Neither private key nor mnemonic available");
             }
 
             const client = await SigningStargateClient.connectWithSigner(

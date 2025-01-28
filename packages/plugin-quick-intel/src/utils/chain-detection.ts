@@ -96,7 +96,7 @@ function normalizeChainName(chain: string): string | null {
 }
 
 export function extractTokenInfo(message: string): TokenInfo {
-    let result: TokenInfo = {
+    const result: TokenInfo = {
         chain: null,
         tokenAddress: null
     };
