@@ -39,9 +39,9 @@ The main idea of FHE is that operations performed on the encrypted data produce 
 
 1. **Encryption**: Transform plaintext data into ciphertext using an encryption key.
    
-   $$
+   ```math
    c = E_k(m)
-   $$
+   ```
 
    Where:
    - $m$: plaintext message
@@ -51,9 +51,9 @@ The main idea of FHE is that operations performed on the encrypted data produce 
 
 3. **Computation on Encrypted Data**: Perform operations directly on the ciphertext, such as addition or multiplication, to produce a new ciphertext.
    
-   $$
+   ```math
    c' = F(c_1, c_2)
-   $$
+   ```
 
    Where:
    - $c_1, c_2$: input ciphertexts
@@ -61,10 +61,9 @@ The main idea of FHE is that operations performed on the encrypted data produce 
    - $c'$: resulting ciphertext after computation
 
 4. **Decryption**: Decrypt the result to reveal the final output, which matches the result of performing the operation on the plaintext.
-   
-   $$
+   ```math
    m' = D_k(c')
-   $$
+   ```
 
    Where:
    - $D_k$: decryption function
