@@ -1,1 +1,1 @@
-export * from "./generate-meme.ts";
+export * from "./generate-meme";

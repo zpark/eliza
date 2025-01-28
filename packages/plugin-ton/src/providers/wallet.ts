@@ -14,7 +14,7 @@ import {
 } from "@ton/crypto";
 
 import NodeCache from "node-cache";
-import * as path from "path";
+import * as path from "node:path";  // Changed to use node: protocol
 import BigNumber from "bignumber.js";
 import { CONFIG_KEYS } from "../enviroment";
 
@@ -123,9 +123,9 @@ export class WalletProvider {
                 console.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
-                    const delay = PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i);
+                    const delay = PROVIDER_CONFIG.RETRY_DELAY * (2 ** i);  // Changed Math.pow to ** operator
                     await new Promise((resolve) => setTimeout(resolve, delay));
-                    continue;
+                    // Removed unnecessary continue
                 }
             }
         }
@@ -272,17 +272,29 @@ export class WalletProvider {
     }
 }
 
+// export const initWalletProvider = async (runtime: IAgentRuntime) => {
+//     const privateKey = runtime.getSetting(CONFIG_KEYS.TON_PRIVATE_KEY);
+//     let mnemonics: string[];
+
+//     if (!privateKey) {
+//         throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} is missing`);
+//     } else {
+//         mnemonics = privateKey.split(" ");
+//         if (mnemonics.length < 2) {
+//             throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} mnemonic seems invalid`);
+//         }
+//     }
+
 export const initWalletProvider = async (runtime: IAgentRuntime) => {
     const privateKey = runtime.getSetting(CONFIG_KEYS.TON_PRIVATE_KEY);
-    let mnemonics: string[];
-
+    // Removed unnecessary else clause
     if (!privateKey) {
         throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} is missing`);
-    } else {
-        mnemonics = privateKey.split(" ");
-        if (mnemonics.length < 2) {
-            throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} mnemonic seems invalid`);
-        }
+    }
+    
+    const mnemonics = privateKey.split(" ");
+    if (mnemonics.length < 2) {
+        throw new Error(`${CONFIG_KEYS.TON_PRIVATE_KEY} mnemonic seems invalid`);
     }
 
     const rpcUrl =
@@ -296,9 +308,9 @@ export const nativeWalletProvider: Provider = {
     async get(
         runtime: IAgentRuntime,
         // eslint-disable-next-line
-        message: Memory,
+        _message: Memory,
         // eslint-disable-next-line
-        state?: State,
+        _state?: State,
     ): Promise<string | null> {
         try {
             const walletProvider = await initWalletProvider(runtime);

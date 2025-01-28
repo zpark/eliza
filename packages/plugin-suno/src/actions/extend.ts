@@ -1,6 +1,6 @@
-import { type Action, type IAgentRuntime, type Memory, type State, type HandlerCallback } from "@elizaos/core";
+import type { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { SunoProvider } from "../providers/suno";
-import { ExtendParams, GenerationResponse } from "../types";
+import type { ExtendParams } from "../types";
 
 const extendAudio: Action = {
     name: "extend-audio",
@@ -20,7 +20,7 @@ const extendAudio: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: { [key: string]: unknown },
+        _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
         try {

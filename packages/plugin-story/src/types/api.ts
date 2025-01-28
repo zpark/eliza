@@ -399,7 +399,7 @@ export interface IPMetadata {
         userAgent?: string;
         allow?: string;
     };
-    [key: string]: any;
+    [key: string]: unknown;  // Replaced any with unknown
 }
 
 export interface AssetMetadata {

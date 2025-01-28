@@ -1,16 +1,13 @@
 import { Plugin } from "@elizaos/core";
-import { generateMemeAction } from "./actions/generate-meme.ts";
+import { generateMemeAction, generateMemeActionHandler, Meme } from "./actions";
 
-export * as actions from "./actions";
+export { generateMemeAction, generateMemeActionHandler, Meme };
 
 export const imgflipPlugin: Plugin = {
     name: "imgflip",
     description: "Generate memes using imgflip.com",
-    actions: [
-        generateMemeAction,
-    ],
+    actions: [generateMemeAction],
     evaluators: [],
     providers: [],
 };
 export default imgflipPlugin;
-
