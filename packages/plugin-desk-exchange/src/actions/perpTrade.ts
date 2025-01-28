@@ -13,6 +13,7 @@ import {
 import { DeskExchangeError } from "../types.js";
 import { perpTradeTemplate } from "../templates.js";
 import { ethers } from "ethers";
+import axios from "axios";
 
 const generateNonce = (): string => {
     const expiredAt = (Date.now() + 1000 * 60 * 1) * (1 << 20); // 1 minutes
@@ -30,19 +31,21 @@ const generateJwt = async (
     const message = `generate jwt for ${wallet.address?.toLowerCase()} and subaccount id ${subaccountId} to trade on happytrading.global with nonce: ${nonce}`;
     const signature = await wallet.signMessage(message);
 
-    const rawResponse = await fetch(`${endpoint}/v2/auth/evm`, {
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+    const response = await axios.post(
+        `${endpoint}/v2/auth/evm`,
+        {
             account: wallet.address,
             subaccount_id: subaccountId.toString(),
             nonce,
             signature,
-        }),
-        method: "POST",
-    });
-    const response = await rawResponse.json();
-    if (response.code === 200) {
-        return response.data.jwt;
+        },
+        {
+            headers: { "content-type": "application/json" },
+        }
+    );
+
+    if (response.status === 200) {
+        return response.data.data.jwt;
     } else {
         throw new DeskExchangeError("Could not generate JWT");
     }
@@ -98,7 +101,6 @@ export const perpTrade: Action = {
             runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
                 ? "https://trade-api.happytrading.global"
                 : "https://stg-trade-api.happytrading.global";
-
         const wallet = new ethers.Wallet(
             runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
         );
@@ -127,26 +129,29 @@ export const perpTrade: Action = {
             JSON.stringify(processesOrder, null, 2)
         );
 
-        const rawResponse = await fetch(`${endpoint}/v2/place-order`, {
-            headers: {
-                authorization: `Bearer ${jwt}`,
-                "content-type": "application/json",
-            },
-            body: JSON.stringify(processesOrder),
-            method: "POST",
-        });
-        const response = await rawResponse.json();
-        elizaLogger.info(response);
+        const response = await axios.post(
+            `${endpoint}/v2/place-order`,
+            processesOrder,
+            {
+                headers: {
+                    authorization: `Bearer ${jwt}`,
+                    "content-type": "application/json",
+                },
+            }
+        );
 
-        if (callback && response.code === 200) {
+        elizaLogger.info(response.data);
+
+        if (callback && response.status === 200) {
+            const orderResponse = response.data.data;
             callback({
-                text: `Successfully placed a ${response.data.side} ${response.data.order_type} order of size ${response.data.quantity} on ${response.data.symbol} market at ${response.data.avg_fill_price} USD on DESK Exchange.`,
-                content: response,
+                text: `Successfully placed a ${orderResponse.side} ${orderResponse.order_type} order of size ${orderResponse.quantity} on ${orderResponse.symbol} market at ${orderResponse.avg_fill_price} USD on DESK Exchange.`,
+                content: response.data,
             });
         } else {
             callback({
-                text: `Place order failed with ${response.errors}.`,
-                content: response,
+                text: `Place order failed with ${response.data.errors}.`,
+                content: response.data,
             });
         }
 
