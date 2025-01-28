@@ -113,9 +113,9 @@ export const storyWalletProvider: Provider = {
     async get(
         runtime: IAgentRuntime,
 // eslint-disable-next-line
-        message: Memory,
+        _message: Memory,
 // eslint-disable-next-line
-        state?: State
+        _state?: State
     ): Promise<string | null> {
         // Check if the user has a Story wallet
         if (!runtime.getSetting("STORY_PRIVATE_KEY")) {

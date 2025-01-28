@@ -18,11 +18,11 @@ export const getWalletPositions: Action = {
         "get token positions",
         "list tokens",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         const addressRegex = /0x[a-fA-F0-9]{40}/;
         return addressRegex.test(message.content.text);
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback): Promise<boolean> => {
+    handler: async (runtime: IAgentRuntime, message: Memory, _state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback): Promise<boolean> => {
 
         const response = await zerionProvider.getPositions(runtime, message);
         console.log("ZERION positions API response: ", response);

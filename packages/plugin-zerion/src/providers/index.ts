@@ -3,11 +3,12 @@ import { ZERION_V1_BASE_URL } from "../constants.ts";
 import { PortfolioData, PositionData, ZerionPortfolioResponse, ZerionPositionResponse, ZerionProviderResponse } from "../types.ts";
 
 interface ZerionProvider extends Provider {
-    getPositions(runtime: any, message: Memory): Promise<ZerionProviderResponse>;
+    getPositions(runtime: IAgentRuntime, message: Memory): Promise<ZerionProviderResponse>;
+    get(runtime: IAgentRuntime, message: Memory, state?: State): Promise<ZerionProviderResponse>;
 }
 
 export const zerionProvider: ZerionProvider = {
-    get: async (runtime: IAgentRuntime, message: Memory, state?: State): Promise<ZerionProviderResponse> => {
+    get: async (_runtime: IAgentRuntime, message: Memory, _state?: State): Promise<ZerionProviderResponse> => {
         try {
             if (!process.env.ZERION_API_KEY) {
                 throw new Error("Zerion API key not found in environment variables. Make sure to set the ZERION_API_KEY environment variable.");
@@ -55,7 +56,7 @@ export const zerionProvider: ZerionProvider = {
 
     },
 
-    getPositions: async (runtime: any, message: Memory): Promise<ZerionProviderResponse> => {
+    getPositions: async (_runtime: IAgentRuntime, message: Memory): Promise<ZerionProviderResponse> => {
         const addressMatch = message.content.text.match(/0x[a-fA-F0-9]{40}/);
         if (!addressMatch) {
             return {

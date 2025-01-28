@@ -18,7 +18,7 @@ export function getWavHeader(
     audioLength: number,
     sampleRate: number,
     channelCount = 1,
-    bitsPerSample = 16
+    bitsPerSample = 16,
 ): Buffer {
     const wavHeader = Buffer.alloc(44);
     wavHeader.write("RIFF", 0);
@@ -31,7 +31,7 @@ export function getWavHeader(
     wavHeader.writeUInt32LE(sampleRate, 24); // Sample rate
     wavHeader.writeUInt32LE(
         (sampleRate * bitsPerSample * channelCount) / 8,
-        28
+        28,
     ); // Byte rate
     wavHeader.writeUInt16LE((bitsPerSample * channelCount) / 8, 32); // Block align ((BitsPerSample * Channels) / 8)
     wavHeader.writeUInt16LE(bitsPerSample, 34); // Bits per sample
@@ -44,7 +44,7 @@ const MAX_MESSAGE_LENGTH = 1900;
 
 export async function generateSummary(
     runtime: IAgentRuntime,
-    text: string
+    text: string,
 ): Promise<{ title: string; description: string }> {
     // make sure text is under 128k characters
     text = await trimTokens(text, 100000, runtime);
@@ -71,7 +71,7 @@ export async function generateSummary(
 
     const parsedResponse = parseJSONObjectFromText(response);
 
-    if (parsedResponse) {
+    if (parsedResponse.title && parsedResponse.summary) {
         return {
             title: parsedResponse.title,
             description: parsedResponse.summary,
@@ -88,7 +88,7 @@ export async function sendMessageInChunks(
     channel: TextChannel,
     content: string,
     inReplyTo: string,
-    files: any[]
+    files: any[],
 ): Promise<DiscordMessage[]> {
     const sentMessages: DiscordMessage[] = [];
     const messages = splitMessage(content);
@@ -132,16 +132,15 @@ function splitMessage(content: string): string[] {
 
     const rawLines = content?.split("\n") || [];
     // split all lines into MAX_MESSAGE_LENGTH chunks so any long lines are split
-    const lines = rawLines
-        .flatMap((line) => {
-            const chunks = [];
-            while (line.length > MAX_MESSAGE_LENGTH) {
-                chunks.push(line.slice(0, MAX_MESSAGE_LENGTH));
-                line = line.slice(MAX_MESSAGE_LENGTH);
-            }
-            chunks.push(line);
-            return chunks;
-        });
+    const lines = rawLines.flatMap((line) => {
+        const chunks = [];
+        while (line.length > MAX_MESSAGE_LENGTH) {
+            chunks.push(line.slice(0, MAX_MESSAGE_LENGTH));
+            line = line.slice(MAX_MESSAGE_LENGTH);
+        }
+        chunks.push(line);
+        return chunks;
+    });
 
     for (const line of lines) {
         if (currentMessage.length + line.length + 1 > MAX_MESSAGE_LENGTH) {
@@ -192,7 +191,7 @@ export function canSendMessage(channel) {
     // Add thread-specific permission if it's a thread
     if (channel instanceof ThreadChannel) {
         requiredPermissions.push(
-            PermissionsBitField.Flags.SendMessagesInThreads
+            PermissionsBitField.Flags.SendMessagesInThreads,
         );
     }
 
@@ -208,7 +207,7 @@ export function canSendMessage(channel) {
 
     // Check each required permission
     const missingPermissions = requiredPermissions.filter(
-        (perm) => !permissions.has(perm)
+        (perm) => !permissions.has(perm),
     );
 
     return {
@@ -224,7 +223,7 @@ export function canSendMessage(channel) {
 export function cosineSimilarity(
     text1: string,
     text2: string,
-    text3?: string
+    text3?: string,
 ): number {
     const preprocessText = (text: string) =>
         text
@@ -306,7 +305,7 @@ export function cosineSimilarity(
     const maxMagnitude = Math.max(
         magnitude1 * magnitude2,
         magnitude2 * magnitude3,
-        magnitude1 * magnitude3
+        magnitude1 * magnitude3,
     );
 
     return dotProduct / maxMagnitude;
