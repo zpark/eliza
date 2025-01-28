@@ -1,4 +1,4 @@
-import { Plugin } from "@elizaos/core";
+import type { Plugin } from "@elizaos/core";
 import { evmWalletProvider } from "./providers/wallet.ts";
 
 import { transferAction } from "./actions/transfer";

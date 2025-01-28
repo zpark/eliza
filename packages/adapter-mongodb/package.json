@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/adapter-mongodb",
-    "version": "0.0.1",
+    "version": "0.1.9",
     "description": "MongoDB adapter for ElizaOS",
     "main": "dist/index.js",
     "type": "module",
@@ -32,6 +32,8 @@
     "jest": {
         "preset": "ts-jest",
         "testEnvironment": "node",
-        "testMatch": ["<rootDir>/src/__tests__/**/*.test.ts"]
+        "testMatch": [
+            "<rootDir>/src/__tests__/**/*.test.ts"
+        ]
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-hyperbolic",
-    "version": "0.1.8+build.1",
+    "version": "0.1.9",
     "description": "HyperBolic Plugin for ElizaOS",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
