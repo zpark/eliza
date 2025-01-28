@@ -1,4 +1,5 @@
-import { IAgentRuntime, Memory, State, type Provider } from "@elizaos/core";
+import type { IAgentRuntime, Memory, State } from "@elizaos/core";  // Added type keyword
+import type { Provider } from "@elizaos/core";  // Added type keyword
 
 export interface SunoConfig {
     apiKey: string;
@@ -22,8 +23,8 @@ export class SunoProvider implements Provider {
         this.baseUrl = config.baseUrl || 'https://api.suno.ai/v1';
     }
 
-    async get(_runtime: IAgentRuntime, _message: Memory, _state?: State): Promise<any> {
-        return this;
+    async get(_runtime: IAgentRuntime, _message: Memory, _state?: State): Promise<{ status: string }> {
+        return { status: 'ready' };
     }
 
     async request(endpoint: string, options: RequestInit = {}) {

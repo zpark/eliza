@@ -1,6 +1,6 @@
-import { type Action, type IAgentRuntime, type Memory, type State, type HandlerCallback } from "@elizaos/core";
+import type { Action, IAgentRuntime, Memory, State, HandlerCallback } from "@elizaos/core";
 import { SunoProvider } from "../providers/suno";
-import { CustomGenerateParams, GenerationResponse } from "../types";
+import type { CustomGenerateParams } from "../types";
 
 const customGenerateMusic: Action = {
     name: "custom-generate-music",
@@ -24,7 +24,7 @@ const customGenerateMusic: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: { [key: string]: unknown },
+        _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
         try {
@@ -54,7 +54,7 @@ const customGenerateMusic: Action = {
 
             if (callback) {
                 callback({
-                    text: `Successfully generated custom music`,
+                    text: 'Successfully generated custom music',
                     content: response
                 });
             }

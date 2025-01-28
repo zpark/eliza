@@ -118,18 +118,13 @@ async function postTweet(
         try {
             if (content.length > DEFAULT_MAX_TWEET_LENGTH) {
                 const noteTweetResult = await scraper.sendNoteTweet(content);
-                if (
-                    noteTweetResult.errors &&
-                    noteTweetResult.errors.length > 0
-                ) {
+                if (noteTweetResult.errors && noteTweetResult.errors.length > 0) {
                     // Note Tweet failed due to authorization. Falling back to standard Tweet.
                     return await sendTweet(scraper, content);
-                } else {
-                    return true;
                 }
-            } else {
-                return await sendTweet(scraper, content);
+                return true;
             }
+            return await sendTweet(scraper, content);
         } catch (error) {
             throw new Error(`Note Tweet failed: ${error}`);
         }
@@ -152,9 +147,9 @@ export const postAction: Action = {
     validate: async (
         runtime: IAgentRuntime,
 // eslint-disable-next-line
-        message: Memory,
+        _message: Memory,
 // eslint-disable-next-line
-        state?: State
+        _state?: State
     ) => {
         const username = runtime.getSetting("TWITTER_USERNAME");
         const password = runtime.getSetting("TWITTER_PASSWORD");

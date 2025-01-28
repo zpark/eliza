@@ -1,6 +1,7 @@
 import { Action, HandlerCallback, IAgentRuntime, Memory, State } from "@elizaos/core";
 import { zerionProvider } from "../../providers/index.ts";
 import { formatPortfolioData } from "../../utils.ts";
+import { PortfolioData, PositionData } from "../../types.ts";
 import examples from "./examples.ts";
 
 
@@ -21,13 +22,12 @@ export const getWalletPortfolio: Action = {
         "get wallet value",
     ],
     examples: examples,
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
 
         const addressRegex = /0x[a-fA-F0-9]{40}/;
         return addressRegex.test(message.content.text);
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback): Promise<boolean> => {
-        // implement zerion provider here
+    handler: async (runtime: IAgentRuntime, message: Memory, _state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback): Promise<boolean> => {
         console.log("inside handler of zerion");
         const response = await zerionProvider.get(runtime, message);
         console.log("ZERION portfolioAPI response: ", response);
@@ -36,6 +36,11 @@ export const getWalletPortfolio: Action = {
         }
 
         console.log("ZERION API response: ", response);
+
+        // Add type guard to ensure we have PortfolioData
+        if (!isPortfolioData(response.data)) {
+            return false;
+        }
 
         // format response into a message string;
         const formattedResponse = formatPortfolioData(response.data);
@@ -51,6 +56,13 @@ export const getWalletPortfolio: Action = {
         }
         return true;
     }
+}
 
-
+// Add type guard function
+function isPortfolioData(data: PortfolioData | PositionData): data is PortfolioData {
+    return (
+        'chainDistribution' in data &&
+        'positionTypes' in data &&
+        'changes' in data
+    );
 }
