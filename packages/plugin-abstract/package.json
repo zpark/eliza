@@ -33,13 +33,11 @@
         "test:coverage": "vitest run --coverage"
     },
     "devDependencies": {
+        "tsup": "8.3.5",
+        "typescript": "4.9",
         "vitest": "^1.0.0"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"
-    },
-    "devDependencies": {
-        "tsup": "8.3.5",
-        "typescript": "4.9"
     }
 }
