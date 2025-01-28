@@ -64,6 +64,7 @@
         "@elizaos/plugin-image-generation": "workspace:*",
         "@elizaos/plugin-intiface": "workspace:*",
         "@elizaos/plugin-lensNetwork": "workspace:*",
+        "@elizaos/plugin-lit": "workspace:*",
         "@elizaos/plugin-letzai": "workspace:*",
         "@elizaos/plugin-massa": "workspace:*",
         "@elizaos/plugin-movement": "workspace:*",
