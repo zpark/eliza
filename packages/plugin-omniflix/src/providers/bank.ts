@@ -29,7 +29,7 @@ export class BankProvider {
             );
             return tx;
         } catch (e) {
-            elizaLogger.error("Error in sendTokens: " + e);
+            elizaLogger.error(`Error in sendTokens: ${e}`);
             throw e;
         }
     }
