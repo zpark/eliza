@@ -1,5 +1,6 @@
 import { ByteArray, formatEther, parseEther, type Hex } from "viem";
 import {
+    elizaLogger,
     Action,
     composeContext,
     generateObjectDeprecated,
@@ -63,7 +64,7 @@ export class TransferAction {
 
     async transfer(params: TransferParams): Promise<Transaction> {
         const chain = this.walletProvider.getCurrentChain()
-        console.log(
+        elizaLogger.log(
             `Transferring: ${params.amount} tokens to (${params.toAddress} on ${chain.name})`
         );
         // let recipientAddress
@@ -82,7 +83,7 @@ export class TransferAction {
                 throw new Error(`ERROR: Recipient does not have valid EVM address. Got: ${evmAddress}`);
             }
 
-            console.log(`Translated address ${params.toAddress} to EVM address ${evmAddress}`);
+            elizaLogger.log(`Translated address ${params.toAddress} to EVM address ${evmAddress}`);
             recipientAddress = evmAddress as `0x${string}`; // Ensure it's a valid Ethereum address
         } else {
             if (!params.toAddress.startsWith("0x")) {
@@ -184,7 +185,7 @@ export const transferAction: Action = {
             updatedState = await runtime.updateRecentMessageState(updatedState);
         }
 
-        console.log("Transfer action handler called");
+        elizaLogger.debug("Transfer action handler called");
         const walletProvider = await initWalletProvider(runtime);
         const action = new TransferAction(walletProvider);
 
@@ -218,7 +219,7 @@ export const transferAction: Action = {
             }
             return true;
         } catch (error) {
-            console.error("Error during token transfer:", error);
+            elizaLogger.error("Error during token transfer:", error);
             if (callback) {
                 callback({
                     text: `Error transferring tokens: ${error.message}`,
