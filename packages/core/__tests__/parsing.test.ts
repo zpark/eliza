@@ -74,17 +74,23 @@ describe("Parsing Module", () => {
                 "item2",
                 "item3",
             ]);
-            input = "```json\n[\"A's item\", \"B's item\", \"C's item\"]\n```";
+            input = '```json\n["A\'s item", "B\'s item", "C\'s item"]\n```';
             expect(parseJsonArrayFromText(input)).toEqual([
                 "A's item",
                 "B's item",
                 "C's item",
             ]);
-            input = "[\"A's item\", \"B's item\", \"C's item\"]";
+            input = '["A\'s item", "B\'s item", "C\'s item"]';
             expect(parseJsonArrayFromText(input)).toEqual([
                 "A's item",
                 "B's item",
                 "C's item",
+            ]);
+            input = `[
+                'MANAGE_POSITIONS_RETRIGGER_EVALUATOR'
+              ]`;
+            expect(parseJsonArrayFromText(input)).toEqual([
+                "MANAGE_POSITIONS_RETRIGGER_EVALUATOR",
             ]);
         });
 
