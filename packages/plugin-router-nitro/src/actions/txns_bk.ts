@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ethers } from 'ethers'
 import { erc20Abi } from 'viem';
 
-export const checkUserBalance = async (wallet, tokenAddress: string, _decimals) => {
+export const checkUserBalance = async (wallet, tokenAddress: string, decimals) => {
     try {
         if (!wallet.provider) {
             throw new Error("Wallet must be connected to a provider.");
@@ -16,7 +16,7 @@ export const checkUserBalance = async (wallet, tokenAddress: string, _decimals) 
     }
 };
 
-export const checkNativeTokenBalance = async (wallet, _decimals) => {
+export const checkNativeTokenBalance = async (wallet, decimals) => {
 
     try {
         if (!wallet.provider) {
@@ -26,7 +26,7 @@ export const checkNativeTokenBalance = async (wallet, _decimals) => {
         const address = await wallet.getAddress();
         const balance = await wallet.provider.getBalance(address);
         return balance.toString();
-    } catch (_error) {  // Changed from 'error' to '_error' to indicate it's intentionally unused
+    } catch (error) {
         throw new Error("Unable to fetch native token balance");
     }
 };
@@ -62,7 +62,7 @@ export const checkAndSetAllowance = async (wallet, tokenAddress, approvalAddress
 };
 
 export const getSwapTransaction = async (quoteData, senderAddress, receiverAddress) => {
-    const txDataUrl = "https://api-beta.pathfinder.routerprotocol.com/api/v2/transaction";
+    const txDataUrl = `https://api-beta.pathfinder.routerprotocol.com/api/v2/transaction`
 
     const requestData = {
         ...quoteData,
@@ -70,9 +70,9 @@ export const getSwapTransaction = async (quoteData, senderAddress, receiverAddre
         receiverAddress: receiverAddress
     };
 
-    const config = {
+    let config = {
         method: 'post',
-        maxBodyLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Infinity,
         url: txDataUrl,
         headers: {
             'content-type': 'application/json'
@@ -81,10 +81,10 @@ export const getSwapTransaction = async (quoteData, senderAddress, receiverAddre
     };
 
     try {
-        const res = await axios.request(config);
+        let res = await axios.request(config);
         return res.data;
     } catch (e) {
-        console.error(`Fetching tx data from pathfinder: ${e}`);
+        console.error(`Fetching tx data from pathfinder: ${e}`)
     }
 }
 

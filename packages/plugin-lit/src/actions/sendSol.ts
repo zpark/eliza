@@ -16,6 +16,7 @@ import * as ethers from "ethers";
 import { LitConfigManager } from "../config/configManager";
 import { composeContext, generateObject, ModelClass } from "@elizaos/core";
 import { z } from "zod";
+import { sendUsdcSchema } from "./sendUSDC";
 
 const { importPrivateKey, signTransactionWithEncryptedKey } = api;
 
@@ -82,7 +83,7 @@ export const sendSol: Action = {
         "transfer * sol to *",
         "transfer * SOL to *",
     ],
-    validate: async (runtime: IAgentRuntime) => true,
+    validate: async (_runtime: IAgentRuntime) => true,
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -92,19 +93,21 @@ export const sendSol: Action = {
     ): Promise<boolean> => {
         console.log("SEND_SOL handler started");
         try {
-            // Update state if needed
+            // Initialize or update state
+            let currentState: State;
             if (!state) {
-                state = await runtime.composeState(message);
+                currentState = (await runtime.composeState(message)) as State;
             } else {
-                state = await runtime.updateRecentMessageState(state);
+                currentState = await runtime.updateRecentMessageState(state);
             }
 
             // Compose context and generate content
             const sendSolContext = composeContext({
-                state,
+                state: currentState,
                 template: sendSolTemplate,
             });
 
+            // Generate content with the schema
             // Generate content with the schema
             const content = await generateObject({
                 runtime,
@@ -207,7 +210,10 @@ export const sendSol: Action = {
             }
 
             // Fund the wallet with 2 devnet SOL if needed
-            const fromPubkey = new web3.PublicKey(litState.pkp.solanaAddress!);
+            if (!litState.pkp.solanaAddress) {
+                throw new Error("Solana address not found in PKP");
+            }
+            const fromPubkey = new web3.PublicKey(litState.pkp.solanaAddress);
             const toPubkey = new web3.PublicKey(sendSolContent.to);
 
             console.log("Sending from wallet address:", fromPubkey.toString());
@@ -249,7 +255,7 @@ export const sendSol: Action = {
                 web3.SystemProgram.transfer({
                     fromPubkey,
                     toPubkey,
-                    lamports: web3.LAMPORTS_PER_SOL * parseFloat(sendSolContent.amount),
+                    lamports: web3.LAMPORTS_PER_SOL * Number.parseFloat(sendSolContent.amount),
                 })
             );
 
@@ -279,10 +285,13 @@ export const sendSol: Action = {
 
             // Sign and send transaction
             // For devnet: change 'mainnet-beta' to 'devnet'
+            if (!litState.wrappedKeyId) {
+                throw new Error("Wrapped key ID not found");
+            }
             const signedTx = await signTransactionWithEncryptedKey({
                 pkpSessionSigs,
                 network: "solana",
-                id: litState.wrappedKeyId!,
+                id: litState.wrappedKeyId,
                 unsignedTransaction: {
                     chain: 'mainnet-beta',
                     serializedTransaction: transaction.serialize({
