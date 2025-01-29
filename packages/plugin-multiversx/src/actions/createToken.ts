@@ -79,15 +79,23 @@ export default {
         }
 
         // Initialize or update state
+        // if (!state) {
+        //     state = (await runtime.composeState(message)) as State;
+        // } else {
+        //     state = await runtime.updateRecentMessageState(state);
+        // }
+
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         // Compose transfer context
         const transferContext = composeContext({
-            state,
+            state: currentState,
             template: createTokenTemplate,
         });
 
@@ -157,7 +165,7 @@ export default {
             {
                 user: "{{user2}}",
                 content: {
-                    text: "Succesfully created token.",
+                    text: "Successfully created token.",
                 },
             },
         ],
@@ -172,7 +180,7 @@ export default {
             {
                 user: "{{user2}}",
                 content: {
-                    text: "Succesfully created token.",
+                    text: "Successfully created token.",
                 },
             },
         ],

@@ -32,25 +32,14 @@ export const currentNewsAction: Action = {
     ): Promise<boolean> => {
         async function getCurrentNews(searchTerm: string) {
             try {
-                // Add quotes and additional context terms
                 const enhancedSearchTerm = encodeURIComponent(`"${searchTerm}" AND (Spain OR Spanish OR Madrid OR Felipe)`);
 
                 const [everythingResponse, headlinesResponse] = await Promise.all([
                     fetch(
-                        `https://newsapi.org/v2/everything?` +
-                        `q=${enhancedSearchTerm}&` +
-                        `sortBy=relevancy&` +
-                        `language=en&` +
-                        `pageSize=50&` +
-                        `apiKey=${process.env.NEWS_API_KEY}`
+                        `https://newsapi.org/v2/everything?q=${enhancedSearchTerm}&sortBy=relevancy&language=en&pageSize=50&apiKey=${process.env.NEWS_API_KEY}`
                     ),
                     fetch(
-                        `https://newsapi.org/v2/top-headlines?` +
-                        `q=${searchTerm}&` +
-                        `country=es&` +
-                        `language=en&` +
-                        `pageSize=50&` +
-                        `apiKey=${process.env.NEWS_API_KEY}`
+                        `https://newsapi.org/v2/top-headlines?q=${searchTerm}&country=es&language=en&pageSize=50&apiKey=${process.env.NEWS_API_KEY}`
                     )
                 ]);
 
@@ -80,17 +69,19 @@ export const currentNewsAction: Action = {
                 }
 
                 return uniqueArticles.map((article, index) => {
-                    const content = article.description || "No content available";
-                    const urlDomain = article.url ? new URL(article.url).hostname : "";
-                    return `📰 Article ${index + 1}\n` +
-                           `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                           `📌 **${article.title || "No title"}**\n\n` +
-                           `📝 ${content}\n\n` +
-                           `🔗 Read more at: ${urlDomain}\n`;
-                }).join("\n");
+                    const content = article.description || 'No content available';
+                    const urlDomain = article.url ? new URL(article.url).hostname : '';
+                    return [
+                        `📰 Article ${index + 1}`,
+                        '━━━━━━━━━━━━━━━━━━━━━━',
+                        `📌 **${article.title || 'No title'}**\n`,
+                        `📝 ${content}\n`,
+                        `🔗 Read more at: ${urlDomain}`
+                    ].join('\n');
+                }).join('\n');
             } catch (error) {
-                console.error("Error fetching news:", error);
-                return "Sorry, there was an error fetching the news.";
+                console.error('Failed to fetch news:', error);
+                return 'Sorry, there was an error fetching the news.';
             }
         }
 
