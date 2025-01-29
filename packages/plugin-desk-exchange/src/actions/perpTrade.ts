@@ -10,53 +10,21 @@ import {
     generateObjectDeprecated,
     ModelClass,
 } from "@elizaos/core";
-import { DeskExchangeError, PlaceOrderSchema } from "../types.js";
+import {
+    DeskExchangeError,
+    PlaceOrderRequest,
+    PlaceOrderSchema,
+} from "../types.js";
 import { perpTradeTemplate } from "../templates.js";
 import { ethers } from "ethers";
 import axios from "axios";
-
-const generateNonce = (): string => {
-    const expiredAt = (Date.now() + 1000 * 60 * 1) * (1 << 20); // 1 minutes
-    // random number between 0 and 2^20
-    const random = Math.floor(Math.random() * (1 << 20)) - 1;
-    return (expiredAt + random).toString();
-};
-
-const generateJwt = async (
-    endpoint: string,
-    wallet: ethers.Wallet,
-    subaccountId: number,
-    nonce: string
-): Promise<string> => {
-    const message = `generate jwt for ${wallet.address?.toLowerCase()} and subaccount id ${subaccountId} to trade on happytrading.global with nonce: ${nonce}`;
-    const signature = await wallet.signMessage(message);
-
-    const response = await axios.post(
-        `${endpoint}/v2/auth/evm`,
-        {
-            account: wallet.address,
-            subaccount_id: subaccountId.toString(),
-            nonce,
-            signature,
-        },
-        {
-            headers: { "content-type": "application/json" },
-        }
-    );
-
-    if (response.status === 200) {
-        return response.data.data.jwt;
-    } else {
-        throw new DeskExchangeError("Could not generate JWT");
-    }
-};
-
-const getSubaccount = (account: string, subaccountId: number): string => {
-    // pad address with subaccountId to be 32 bytes (64 hex characters)
-    //  0x + 40 hex characters (address) + 24 hex characters (subaccountId)
-    const subaccountIdHex = BigInt(subaccountId).toString(16).padStart(24, "0");
-    return account.concat(subaccountIdHex);
-};
+import {
+    generateNonce,
+    generateJwt,
+    getSubaccount,
+    getEndpoint,
+} from "../services/utils";
+import { placeOrder } from "../services/trade.js";
 
 let jwt: string = null;
 
@@ -99,10 +67,8 @@ export const perpTrade: Action = {
                 );
             }
 
-            const endpoint =
-                runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
-                    ? "https://trade-api.happytrading.global"
-                    : "https://stg-trade-api.happytrading.global";
+            const endpoint = getEndpoint(runtime);
+
             const wallet = new ethers.Wallet(
                 runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
             );
@@ -141,15 +107,10 @@ export const perpTrade: Action = {
                 JSON.stringify(processesOrder, null, 2)
             );
 
-            const response = await axios.post(
-                `${endpoint}/v2/place-order`,
-                processesOrder,
-                {
-                    headers: {
-                        authorization: `Bearer ${jwt}`,
-                        "content-type": "application/json",
-                    },
-                }
+            const response = await placeOrder(
+                endpoint,
+                jwt,
+                processesOrder as PlaceOrderRequest
             );
 
             elizaLogger.info(response.data);
@@ -164,7 +125,7 @@ export const perpTrade: Action = {
                     } at ${
                         orderResponse.order_type === "Market"
                             ? "market price"
-                            : orderResponse.price + ' USD'
+                            : orderResponse.price + " USD"
                     } on DESK Exchange.`,
                     content: response.data,
                 });

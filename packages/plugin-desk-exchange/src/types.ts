@@ -19,6 +19,7 @@ export const PlaceOrderSchema = z.object({
     subaccount: z.string(),
     timeInForce: z.enum(["GTC", "IOC", "FOK"]).optional(),
 });
+export type PlaceOrderRequest = z.infer<typeof PlaceOrderSchema>;
 
 // Error handling types
 export class DeskExchangeError extends Error {
