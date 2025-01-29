@@ -60,7 +60,7 @@ export default {
         "SEND_MINA",
         "PAY",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         console.log("Validating mina transfer from user:", message.userId);
         return true;
     },
@@ -78,10 +78,11 @@ export default {
         state.walletInfo = walletInfo;
 
         // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         // Define the schema for the expected output
@@ -92,7 +93,7 @@ export default {
 
         // Compose transfer context
         const transferContext = composeContext({
-            state,
+            state: currentState,
             template: transferTemplate,
         });
 

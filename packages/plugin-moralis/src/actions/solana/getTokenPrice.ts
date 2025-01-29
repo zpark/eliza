@@ -23,7 +23,7 @@ export default {
         "CHECK_SOLANA_TOKEN_PRICE",
         "SHOW_SOLANA_TOKEN_PRICE",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -37,16 +37,18 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting Moralis GET_SOLANA_TOKEN_PRICE handler...");
 
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing token price context...");
             const priceContext = composeContext({
-                state,
+                state: currentState,
                 template: getTokenPriceTemplate,
             });
 
@@ -86,11 +88,13 @@ export default {
             );
 
             if (callback) {
-                const formattedText =
-                    `Current price for the Solana token:\n\n` +
-                    `USD Price: $${price.usdPrice.toFixed(6)}\n` +
-                    `Native Price: ${(Number(price.nativePrice.value) / Math.pow(10, price.nativePrice.decimals)).toFixed(6)} ${price.nativePrice.symbol}\n` +
-                    `Exchange: ${price.exchangeName} (${price.exchangeAddress})`;
+                const formattedText = [
+                    'Current price for the Solana token:',
+                    '',
+                    `USD Price: $${price.usdPrice.toFixed(6)}`,
+                    `Native Price: ${(Number(price.nativePrice.value) / (10 ** price.nativePrice.decimals)).toFixed(6)} ${price.nativePrice.symbol}`,
+                    `Exchange: ${price.exchangeName} (${price.exchangeAddress})`
+                ].join('\n');
 
                 callback({
                     text: formattedText,
@@ -99,12 +103,12 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error(
                 "Error in GET_SOLANA_TOKEN_PRICE handler:",
                 error
             );
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
                     text: `Error fetching Solana token price: ${errorMessage}`,

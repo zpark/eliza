@@ -40,7 +40,7 @@ export const createInvoiceAction = {
         runtime: IAgentRuntime,
         _message: Memory,
         state: State,
-        _options: any,
+        _options: Record<string, unknown>,
         callback?: (response: {
             text: string;
             content?: { success: boolean; invoice?: string };

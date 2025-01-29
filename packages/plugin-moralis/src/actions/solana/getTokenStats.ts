@@ -24,7 +24,7 @@ export default {
         "SHOW_SOLANA_TOKEN_STATS",
         "CHECK_SOLANA_TOKEN_STATS",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -39,16 +39,18 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting Moralis GET_SOLANA_TOKEN_STATS handler...");
 
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing token stats context...");
             const statsContext = composeContext({
-                state,
+                state: currentState,
                 template: getTokenStatsTemplate,
             });
 
@@ -88,24 +90,27 @@ export default {
             );
 
             if (callback) {
-                const formattedStats =
-                    `Token Statistics Overview:\n\n` +
-                    `Market Overview:\n` +
-                    `- Total Liquidity: $${Math.round(stats.totalLiquidityUsd).toLocaleString()}\n` +
-                    `- Active Pairs: ${stats.totalActivePairs}\n` +
-                    `- Active DEXes: ${stats.totalActiveDexes}\n\n` +
-                    `24h Trading Activity:\n` +
-                    `- Total Volume: $${Math.round(stats.totalVolume["24h"]).toLocaleString()}\n` +
-                    `  • Buy Volume: $${Math.round(stats.totalBuyVolume["24h"]).toLocaleString()}\n` +
-                    `  • Sell Volume: $${Math.round(stats.totalSellVolume["24h"]).toLocaleString()}\n` +
-                    `- Total Trades: ${stats.totalSwaps["24h"].toLocaleString()}\n` +
-                    `- Unique Traders:\n` +
-                    `  • Buyers: ${stats.totalBuyers["24h"]}\n` +
-                    `  • Sellers: ${stats.totalSellers["24h"]}\n\n` +
-                    `Recent Activity (Past Hour):\n` +
-                    `- Volume: $${Math.round(stats.totalVolume["1h"]).toLocaleString()}\n` +
-                    `- Trades: ${stats.totalSwaps["1h"]}\n` +
-                    `- Active Traders: ${stats.totalBuyers["1h"] + stats.totalSellers["1h"]}`;
+                const formattedStats = [
+                    'Token Statistics Overview:\n',
+                    'Market Overview:',
+                    `- Total Liquidity: $${Math.round(stats.totalLiquidityUsd).toLocaleString()}`,
+                    `- Active Pairs: ${stats.totalActivePairs}`,
+                    `- Active DEXes: ${stats.totalActiveDexes}`,
+                    '',
+                    '24h Trading Activity:',
+                    `- Total Volume: $${Math.round(stats.totalVolume["24h"]).toLocaleString()}`,
+                    `  • Buy Volume: $${Math.round(stats.totalBuyVolume["24h"]).toLocaleString()}`,
+                    `  • Sell Volume: $${Math.round(stats.totalSellVolume["24h"]).toLocaleString()}`,
+                    `- Total Trades: ${stats.totalSwaps["24h"].toLocaleString()}`,
+                    '- Unique Traders:',
+                    `  • Buyers: ${stats.totalBuyers["24h"]}`,
+                    `  • Sellers: ${stats.totalSellers["24h"]}`,
+                    '',
+                    'Recent Activity (Past Hour):',
+                    `- Volume: $${Math.round(stats.totalVolume["1h"]).toLocaleString()}`,
+                    `- Trades: ${stats.totalSwaps["1h"]}`,
+                    `- Active Traders: ${stats.totalBuyers["1h"] + stats.totalSellers["1h"]}`
+                ].join('\n');
 
                 callback({
                     text: formattedStats,
@@ -114,12 +119,12 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error(
                 "Error in GET_SOLANA_TOKEN_STATS handler:",
                 error
             );
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
                     text: `Error fetching Solana token stats: ${errorMessage}`,
