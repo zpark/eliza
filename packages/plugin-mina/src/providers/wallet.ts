@@ -8,7 +8,7 @@ import type {
 
 import { Mina, PublicKey, UInt64, fetchAccount } from "o1js";
 import NodeCache from "node-cache";
-import * as path from "path";
+import * as path from "node:path";
 import { parseAccount } from "../utils";
 import { MINA_UNIT, USD_UNIT } from "../constants";
 import BigNumber from "bignumber.js";
@@ -93,7 +93,7 @@ export class WalletProvider {
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
             try {
                 const response = await fetch(
-                    `https://data-api.binance.vision/api/v3/ticker/price?symbols=[%22MINAUSDT%22]`,
+                    "https://data-api.binance.vision/api/v3/ticker/price?symbols=[%22MINAUSDT%22]",
                 );
 
                 if (!response.ok) {
@@ -109,9 +109,8 @@ export class WalletProvider {
                 console.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
-                    const delay = PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i);
+                    const delay = PROVIDER_CONFIG.RETRY_DELAY * (2 ** i); // Using ** instead of Math.pow
                     await new Promise((resolve) => setTimeout(resolve, delay));
-                    continue;
                 }
             }
         }

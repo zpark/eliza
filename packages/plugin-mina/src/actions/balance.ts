@@ -14,6 +14,7 @@ import {
 import { z } from "zod";
 import { walletProvider } from "../providers/wallet";
 import { PublicKey, TokenId, fetchAccount } from "o1js";
+import type { UInt64 } from "o1js";
 import BigNumber from "bignumber.js";
 
 export interface BalanceContent extends Content {
@@ -44,10 +45,16 @@ Extract the following information about the requested Balance request:
 
 Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.`;
 
+interface MinaAccount {
+    account: {
+        balance: UInt64;
+    };
+}
+
 export default {
     name: "BALANCE",
     similes: ["BALANCE", "GET_BALANCE", "CHECK_BALANCE"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         console.log("Validating mina Balance from user:", message.userId);
         return true;
     },
@@ -65,21 +72,22 @@ export default {
         state.walletInfo = walletInfo;
 
         // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
-
+        
         // Define the schema for the expected output
         const BalanceSchema = z.object({
             address: z.string(),
             token: z.union([z.string(), z.null()]),
         });
-
+        
         // Compose Balance context
         const BalanceContext = composeContext({
-            state,
+            state: currentState,
             template: BalanceTemplate,
         });
 
@@ -107,7 +115,7 @@ export default {
 
         try {
             const address = PublicKey.fromBase58(BalanceContent.address);
-            let account;
+            let account: MinaAccount;
             if (!BalanceContent.token) {
                 account = await fetchAccount({ publicKey: address });
             } else {
@@ -118,8 +126,8 @@ export default {
                 });
             }
             const balance = new BigNumber(
-                account.account.balance.div(1e9),
-            ).toFixed(2);
+                account.account.balance.toString()
+            ).div(1e9).toFixed(2);
 
             console.log("Balance successful: ", balance.toString());
 
