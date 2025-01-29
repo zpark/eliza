@@ -2,11 +2,11 @@ import {
     composeContext,
     elizaLogger,
     generateObjectDeprecated,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State
+    type State
 } from "@elizaos/core";
 import { swapTemplate } from "./swapTemplate.ts";
 import { ChainUtils, fetchChains, fetchPathfinderQuote, fetchTokenConfig } from "./utils.ts";
