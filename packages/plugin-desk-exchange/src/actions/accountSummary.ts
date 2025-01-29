@@ -11,7 +11,7 @@ import {
     ModelClass,
 } from "@elizaos/core";
 import { DeskExchangeError, PlaceOrderSchema } from "../types.js";
-import { perpTradeTemplate } from "../templates.js";
+import { accountSummaryTemplate, perpTradeTemplate } from "../templates.js";
 import { ethers } from "ethers";
 import axios from "axios";
 import {
@@ -50,13 +50,7 @@ export const accountSummary: Action = {
 
         const context = composeContext({
             state,
-            template: perpTradeTemplate,
-        });
-
-        const content = await generateObjectDeprecated({
-            runtime,
-            context,
-            modelClass: ModelClass.SMALL,
+            template: accountSummaryTemplate,
         });
 
         try {
@@ -123,15 +117,14 @@ export const accountSummary: Action = {
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error executing trade:", {
-                content,
+            elizaLogger.error("Error getting account summary:", {
                 message: error.message,
                 code: error.code,
                 data: error.response?.data,
             });
             if (callback) {
                 callback({
-                    text: `Error executing trade: ${error.message} ${error.response?.data?.errors}`,
+                    text: `Error getting account summary: ${error.message} ${error.response?.data?.errors}`,
                     content: { error: error.message },
                 });
             }

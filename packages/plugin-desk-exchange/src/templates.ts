@@ -33,6 +33,18 @@ Note:
 Recent conversation:
 {{recentMessages}}`;
 
+export const cancelOrderTemplate = `Look at your LAST RESPONSE in the conversation where you confirmed that user want to cancel all orders.
+
+For example:
+- I would like to cancel all my orders.
+- Cancel all orders
+- Cancel orders please
+
+If the user ask to cancel a specific order, please let them know that it is not possible at the moment. Let them know that you now only have the ability to cancel all order only.
+
+Recent conversation:
+{{recentMessages}}`;
+
 export const accountSummaryTemplate = `Look at ONLY your LAST RESPONSE message in this conversation, where you just confirmed if the user want to check the information of their account.
 
 For example:

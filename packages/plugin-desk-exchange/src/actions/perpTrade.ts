@@ -42,8 +42,6 @@ export const perpTrade: Action = {
         options: Record<string, unknown>,
         callback?: HandlerCallback
     ) => {
-        elizaLogger.info("DESK EXCHANGE", jwt);
-
         // Initialize or update state
         state = !state
             ? await runtime.composeState(message)
