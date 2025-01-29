@@ -1295,9 +1295,7 @@ export async function createAgent(
             getSecret(character, "ARBITRAGE_BUNDLE_EXECUTOR_ADDRESS")
                 ? arbitragePlugin
                 : null,
-            getSecret(character, "DESK_EXCHANGE_PRIVATE_KEY")
-                ? deskExchangePlugin
-                : null,
+            getSecret(character, "DESK_EXCHANGE_PRIVATE_KEY") ||
             getSecret(character, "DESK_EXCHANGE_NETWORK")
                 ? deskExchangePlugin
                 : null,
