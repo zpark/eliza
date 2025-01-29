@@ -3,23 +3,23 @@ Based on ONLY that last message, extract the trading details:
 
 For DESK Exchange perp trading:
 - Market orders (executes immediately at best available price):
-  "perp buy 1 HYPE" -> { "symbol": "HYPE", "side": true, "amount": 1 }
-  "perp sell 2 HYPE" -> { "symbol": "HYPE", "side": false, "amount": 2 }
-  "perp market buy 1 HYPE" -> { "symbol": "HYPE", "side": true, "amount": 1 }
-  "perp market sell 2 HYPE" -> { "symbol": "HYPE", "side": false, "amount": 2 }
+  "perp buy 1 HYPE" -> { "symbol": "HYPE", "side": "Long", "amount": "1" }
+  "perp sell 2 HYPE" -> { "symbol": "HYPE", "side": "Short", "amount": "2" }
+  "perp market buy 1 HYPE" -> { "symbol": "HYPE", "side": "Long", "amount": "1" }
+  "perp market sell 2 HYPE" -> { "symbol": "HYPE", "side": "Short", "amount": "2" }
 
 - Limit orders (waits for specified price):
-  "buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": true, "amount": 1, "price": 20 }
-  "sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": false, "amount": 0.5, "price": 21 }
-  "limit buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": true, "amount": 1, "price": 20 }
-  "limit sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": false, "amount": 0.5, "price": 21 }
+  "buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": "Long", "amount": "1", "price": "20" }
+  "sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": "Short", "amount": "0.5", "price": "21" }
+  "limit buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": "Long", "amount": "1", "price": "20" }
+  "limit sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": "Short", "amount": "0.5", "price": "21" }
 
 \`\`\`json
 {
     "symbol": "<coin symbol>",
     "side": "<Long for buy, Short for sell>",
     "amount": "<quantity to trade>",
-    "price": "<price in USD if limit order, 0 if market order>"
+    "price": "<"price in USD if limit order, 0 if market order>"
 }
 \`\`\`
 
