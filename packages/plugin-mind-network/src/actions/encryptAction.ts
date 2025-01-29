@@ -53,6 +53,8 @@ export const encryptAction: Action = {
             state: resolvedState,
             template: dataExtractionTemplate,
         });
+        elizaLogger.log("Data context:", dataContext);
+        
         const content = (
             await generateObject({
                 runtime,
