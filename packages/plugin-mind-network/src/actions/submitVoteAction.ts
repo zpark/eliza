@@ -93,7 +93,7 @@ export const submitVoteAction: Action = {
             {
                 user: "{{agent}}",
                 content: {
-                    text: "Vote has been sumitted successfully!",
+                    text: "Vote has been submitted successfully!",
                 },
             },
         ], [

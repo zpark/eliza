@@ -14,6 +14,23 @@ import {
 import { auditTemplate } from "../templates";
 import { extractTokenInfo } from "../utils/chain-detection";
 
+interface AuditResponse {
+    tokenDetails?: {
+        tokenName: string;
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+}
+
+interface DexPair {
+    chainId: string;
+    [key: string]: unknown;
+}
+
+interface DexResponse {
+    pairs?: DexPair[];
+    otherChains?: string[];
+}
 class TokenAuditAction {
     private apiKey: string;
 
@@ -21,7 +38,7 @@ class TokenAuditAction {
         this.apiKey = apiKey;
     }
 
-    async audit(chain: string, tokenAddress: string): Promise<any> {
+    async audit(chain: string, tokenAddress: string): Promise<AuditResponse> {
         elizaLogger.log("Auditing token:", { chain, tokenAddress });
         const myHeaders = new Headers();
         myHeaders.append("X-QKNTL-KEY", this.apiKey);
@@ -41,7 +58,7 @@ class TokenAuditAction {
         return await response.json();
     }
 
-    async fetchDexData(tokenAddress: string, chain: string): Promise<any> {
+    async fetchDexData(tokenAddress: string, chain: string): Promise<DexResponse | null> {
         elizaLogger.log("Fetching DEX data:", { tokenAddress, chain });
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -62,13 +79,13 @@ class TokenAuditAction {
         }
 
         // Filter pairs for the target chain
-        const chainPairs = data.pairs.filter((pair: any) =>
+        const chainPairs = data.pairs.filter((pair: DexPair) =>
             pair.chainId.toLowerCase() === chain.toLowerCase() || pair.chainId.toLowerCase().includes(chain.toLowerCase())
         );
 
         const otherChains = data.pairs
-            .filter((pair: any) => pair.chainId.toLowerCase() !== chain.toLowerCase())
-            .map((pair: any) => pair.chainId);
+            .filter((pair: DexPair) => pair.chainId.toLowerCase() !== chain.toLowerCase())
+            .map((pair: DexPair) => pair.chainId) as string[];
 
         return {
             pairs: chainPairs,
@@ -116,14 +133,16 @@ export const auditAction: Action = {
                 action.fetchDexData(tokenAddress, chain)
             ]);
 
-            state = await runtime.composeState(message, {
+            const newState = await runtime.composeState(message, {
                 ...state,
                 auditData: JSON.stringify(auditData, null, 2),
                 marketData: auditData?.tokenDetails?.tokenName ? JSON.stringify(dexData, null, 2) : null,
             });
+
+
             // Generate analysis using audit data
             const context = composeContext({
-                state,
+                state: newState,
                 template: auditTemplate
             });
 
@@ -159,7 +178,7 @@ export const auditAction: Action = {
 
             if (callback) {
                 await callback({
-                    text: `An error occurred while performing the token audit. Please try again later, and ensure the address is correct, and chain is supported.`,
+                    text: "An error occurred while performing the token audit. Please try again later, and ensure the address is correct, and chain is supported.",
                     content: { error: "Internal server error" },
                     inReplyTo: message.id
                 });
