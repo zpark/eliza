@@ -19,8 +19,6 @@ import { getSubaccountSummary } from "../services/account";
 import { cancelOrder } from "../services/trade";
 import { cancelOrderTemplate } from "../templates";
 
-let jwt: string = null;
-
 export const cancelOrders: Action = {
     name: "CANCEL_ORDERS",
     similes: ["CANCEL_ALL_ORDERS", "CANCEL", "CANCEL_ALL"],
@@ -49,9 +47,7 @@ export const cancelOrders: Action = {
             const wallet = new ethers.Wallet(
                 runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
             );
-            if (!jwt) {
-                jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
-            }
+            const jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
 
             const subaccountSummaryResponse = await getSubaccountSummary(
                 endpoint,

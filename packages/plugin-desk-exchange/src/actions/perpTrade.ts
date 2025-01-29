@@ -26,8 +26,6 @@ import {
 } from "../services/utils";
 import { placeOrder } from "../services/trade.js";
 
-let jwt: string = null;
-
 export const perpTrade: Action = {
     name: "PERP_TRADE",
     similes: ["PERP_ORDER", "PERP_BUY", "PERP_SELL"],
@@ -70,10 +68,8 @@ export const perpTrade: Action = {
             const wallet = new ethers.Wallet(
                 runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
             );
-            if (!jwt) {
-                jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
-            }
-            elizaLogger.info("jwt", jwt);
+            const jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
+
             elizaLogger.info(
                 "Raw content from LLM:",
                 JSON.stringify(content, null, 2)

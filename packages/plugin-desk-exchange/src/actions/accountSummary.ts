@@ -22,8 +22,6 @@ import {
 } from "../services/utils";
 import { getSubaccountSummary } from "../services/account.js";
 
-let jwt: string = null;
-
 export const accountSummary: Action = {
     name: "GET_PERP_ACCOUNT_SUMMARY",
     similes: [
@@ -58,10 +56,8 @@ export const accountSummary: Action = {
             const wallet = new ethers.Wallet(
                 runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
             );
-            if (!jwt) {
-                jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
-            }
-            elizaLogger.info("jwt", jwt);
+            const jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
+
             const response = await getSubaccountSummary(
                 endpoint,
                 jwt,
