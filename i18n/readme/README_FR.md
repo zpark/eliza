@@ -114,7 +114,7 @@ pnpm clean
 pnpm start:client
 ```
 
-> Lisez ensuite la [Documentation] (https://elizaos.github.io/eliza/) pour savoir comment personnaliser votre Eliza.
+> Lisez ensuite la [Documentation](https://elizaos.github.io/eliza/) pour savoir comment personnaliser votre Eliza.
 
 ---
 
@@ -179,7 +179,7 @@ Utilisez  [Fleek](https://fleek.xyz/eliza/) pour déployer Eliza en un seul clic
 3. Télécharger un fichier de personnage pré-fabriqué
 
 
-Cliquez [here](https://fleek.xyz/eliza/) pour commencer!
+Cliquez [ici](https://fleek.xyz/eliza/) pour commencer!
 
 ---
 
