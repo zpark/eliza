@@ -6,8 +6,7 @@ import {
     type State,
     elizaLogger,
 } from "@elizaos/core";
-import type { InjectableProvider } from "../types";
-import { globalContainer } from "../di";
+import { globalContainer, type InjectableProvider } from "@elizaos/plugin-di";
 
 // Dynamic Data Provider
 
