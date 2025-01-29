@@ -24,7 +24,7 @@ export default {
         "SHOW_SOLANA_PAIR_CANDLES",
         "CHECK_SOLANA_PRICE_CHART",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -39,16 +39,18 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting Moralis GET_SOLANA_PAIR_OHLCV handler...");
 
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing OHLCV request context...");
             const ohlcvContext = composeContext({
-                state,
+                state: currentState,
                 template: getPairOHLCVTemplate,
             });
 
@@ -112,7 +114,7 @@ export default {
             if (candles.length === 0) {
                 if (callback) {
                     callback({
-                        text: `No price history data available for this Solana trading pair in the specified time range.`,
+                        text: "No price history data available for this Solana trading pair in the specified time range.",
                         content: {
                             candles: [],
                             pairAddress: content.pairAddress,
@@ -177,7 +179,7 @@ export default {
                 summaryText += `Latest ${displayCount} candles:\n`;
 
                 // Add latest candles
-                sortedCandles.slice(0, displayCount).forEach((candle) => {
+                for (const candle of sortedCandles.slice(0, displayCount)) {
                     const date = new Date(candle.timestamp).toLocaleString();
                     summaryText +=
                         `\nTime: ${date}\n` +
@@ -185,7 +187,7 @@ export default {
                         `Low: $${candle.low.toFixed(4)}, Close: $${candle.close.toFixed(4)}\n` +
                         `Volume: $${Math.round(candle.volume).toLocaleString()}, ` +
                         `Trades: ${candle.trades.toLocaleString()}`;
-                });
+                }
 
                 callback({
                     text: summaryText,
@@ -202,9 +204,9 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error("Error in GET_SOLANA_PAIR_OHLCV handler:", error);
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
                     text: `Error fetching Solana pair OHLCV data: ${errorMessage}`,
