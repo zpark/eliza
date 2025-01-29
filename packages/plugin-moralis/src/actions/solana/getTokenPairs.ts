@@ -24,7 +24,7 @@ export default {
         "SHOW_SOLANA_PAIRS",
         "GET_SOLANA_TRADING_PAIRS",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -38,16 +38,18 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting Moralis GET_SOLANA_TOKEN_PAIRS handler...");
 
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing token pairs context...");
             const pairsContext = composeContext({
-                state,
+                state: currentState,
                 template: getTokenPairsTemplate,
             });
 
@@ -121,15 +123,17 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error(
                 "Error in GET_SOLANA_TOKEN_PAIRS handler:",
                 error
             );
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
-                    text: `Error fetching Solana token pairs: ${error.message}`,
-                    content: { error: error.message },
+                    text: `Error fetching Solana token pairs: ${errorMessage}`,
+                    content: { error: errorMessage },
                 });
             }
             return false;

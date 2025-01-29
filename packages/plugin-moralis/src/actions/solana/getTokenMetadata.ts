@@ -24,7 +24,7 @@ export default {
         "CHECK_SOLANA_TOKEN_FDV",
         "SHOW_SOLANA_TOKEN_METADATA",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -41,16 +41,18 @@ export default {
             "Starting Moralis GET_SOLANA_TOKEN_METADATA handler..."
         );
 
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing token metadata context...");
             const metadataContext = composeContext({
-                state,
+                state: currentState,
                 template: getTokenMetadataTemplate,
             });
 
@@ -90,19 +92,20 @@ export default {
             );
 
             if (callback) {
-                const formattedText =
-                    `Token Metadata:\n\n` +
-                    `Name: ${metadata.name} (${metadata.symbol})\n` +
-                    `Token Address: ${metadata.mint}\n` +
-                    `Total Supply: ${metadata.totalSupplyFormatted}\n` +
-                    `Fully Diluted Value: $${Number(metadata.fullyDilutedValue).toLocaleString()}\n` +
-                    `Standard: ${metadata.standard}\n` +
-                    `Decimals: ${metadata.decimals}\n\n` +
-                    `Metaplex Details:\n` +
-                    `- Update Authority: ${metadata.metaplex.updateAuthority}\n` +
-                    `- Mutable: ${metadata.metaplex.isMutable}\n` +
-                    `- Master Edition: ${metadata.metaplex.masterEdition}\n` +
-                    `- Seller Fee: ${metadata.metaplex.sellerFeeBasisPoints / 100}%`;
+                const formattedText = [
+                    'Token Metadata:\n',
+                    `Name: ${metadata.name} (${metadata.symbol})`,
+                    `Token Address: ${metadata.mint}`,
+                    `Total Supply: ${metadata.totalSupplyFormatted}`,
+                    `Fully Diluted Value: $${Number(metadata.fullyDilutedValue).toLocaleString()}`,
+                    `Standard: ${metadata.standard}`,
+                    `Decimals: ${metadata.decimals}\n`,
+                    'Metaplex Details:',
+                    `- Update Authority: ${metadata.metaplex.updateAuthority}`,
+                    `- Mutable: ${metadata.metaplex.isMutable}`,
+                    `- Master Edition: ${metadata.metaplex.masterEdition}`,
+                    `- Seller Fee: ${metadata.metaplex.sellerFeeBasisPoints / 100}%`
+                ].join('\n');
 
                 callback({
                     text: formattedText,
@@ -111,12 +114,12 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error(
                 "Error in GET_SOLANA_TOKEN_METADATA handler:",
                 error
             );
-            const errorMessage = error.response?.data?.message || error.message;
+            const errorMessage = error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
                     text: `Error fetching Solana token metadata: ${errorMessage}`,

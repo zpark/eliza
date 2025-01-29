@@ -24,7 +24,7 @@ export default {
         "GET_SOLANA_PAIR_INFO",
         "CHECK_SOLANA_PAIR_STATS",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateMoralisConfig(runtime);
         return true;
     },
@@ -38,17 +38,18 @@ export default {
         callback?: HandlerCallback
     ): Promise<boolean> => {
         elizaLogger.log("Starting Moralis GET_SOLANA_PAIR_STATS handler...");
-
+        // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         try {
             elizaLogger.log("Composing pair stats context...");
             const statsContext = composeContext({
-                state,
+                state: currentState,
                 template: getPairStatsTemplate,
             });
 
@@ -115,12 +116,14 @@ export default {
             }
 
             return true;
-        } catch (error: any) {
+        } catch (error: unknown) {
             elizaLogger.error("Error in GET_SOLANA_PAIR_STATS handler:", error);
+            const errorMessage =
+                error instanceof Error ? error.message : String(error);
             if (callback) {
                 callback({
-                    text: `Error fetching Solana pair stats: ${error.message}`,
-                    content: { error: error.message },
+                    text: `Error fetching Solana pair stats: ${errorMessage}`,
+                    content: { error: errorMessage },
                 });
             }
             return false;
