@@ -54,7 +54,7 @@ export class UniswapV2EthPair implements EthMarket, MarketType {
   tokenAddress: string; // Add this line
   protocol: string;
   provider: StaticJsonRpcProvider;
-  static buyFromMarket(buyFromMarket: any, sellToMarket: EthMarket, tokenAddress: string, profit: number) {
+  static buyFromMarket(_buyFromMarket: any, _sellToMarket: EthMarket, _tokenAddress: string, _profit: number) {
     throw new Error("Method not implemented.");
   }
   static impactAndFeeFuncs(provider: StaticJsonRpcProvider, FACTORY_ADDRESSES: string[], impactAndFeeFuncs: any) {
@@ -462,7 +462,7 @@ async getBalance(tokenAddress: string): Promise<BigNumber> {
     provider: StaticJsonRpcProvider,
     pairs: UniswapV2EthPair[]
   ): Promise<UniswapV2EthPair[]> {
-    console.log(`Attempting to update reserves in one or more multicall batches`);
+    console.log('Attempting to update reserves in one or more multicall batches');
     const MULTICALL2_ADDRESS = "0x5BA1e12693Dc8F9c48aAD8770482f4739bEeD696";
     const MULTICALL2_ABI = [
      "function aggregate(tuple(address target, bytes callData)[] calls) public returns (uint256 blockNumber, bytes[] returnData)"
@@ -516,7 +516,7 @@ async getBalance(tokenAddress: string): Promise<BigNumber> {
           }
         });
       } catch (e) {
-        console.error(`Multicall chunk failed:`, e);
+        console.error(`Multicall chunk failed: ${e}`);
       }
     }
 

@@ -425,7 +425,7 @@ async function getChainBalance(
 ): Promise<number> {
     // Use existing Solana balance fetching logic
     return await getTokenBalance(
-        connection,
+        connection as any, // TODO: Resolve type conflict caused by multiple versions of @solana/web3.js
         walletAddress,
         new PublicKey(tokenAddress)
     );
@@ -461,7 +461,8 @@ async function createRabbiTraderPlugin(
 
     // Move connection initialization to the top
     const connection = new Connection(
-        runtime?.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com"
+        runtime?.getSetting("SOLANA_RPC_URL") ||
+            "https://api.mainnet-beta.solana.com"
     );
 
     const keypair = getWalletKeypair(runtime);
@@ -475,7 +476,9 @@ async function createRabbiTraderPlugin(
     }
 
     if (missingSettings.length > 0) {
-        const errorMsg = `Missing required settings: ${missingSettings.join(", ")}`;
+        const errorMsg = `Missing required settings: ${missingSettings.join(
+            ", "
+        )}`;
         elizaLogger.error(errorMsg);
         throw new Error(errorMsg);
     }
@@ -510,7 +513,7 @@ async function createRabbiTraderPlugin(
                     // Existing Solana logic
                     const tokenPublicKey = new PublicKey(tokenAddress);
                     const amount = await getTokenBalance(
-                        connection,
+                        connection as any, // TODO: Resolve type conflict caused by multiple versions of @solana/web3.js
                         keypair.publicKey,
                         tokenPublicKey
                     );
@@ -560,9 +563,9 @@ async function createRabbiTraderPlugin(
         },
         executeTrade: async (_params) => {
             //try {
-                return { success: true };
+            return { success: true };
             //} catch (error) {
-                //throw error;
+            //throw error;
             //}
         },
         getFormattedPortfolio: async () => "",
@@ -646,7 +649,9 @@ async function createRabbiTraderPlugin(
     } catch (error) {
         elizaLogger.error("Failed to initialize plugin components:", error);
         throw new Error(
-            `Plugin initialization failed: ${error instanceof Error ? error.message : String(error)}`
+            `Plugin initialization failed: ${
+                error instanceof Error ? error.message : String(error)
+            }`
         );
     }
 }
@@ -665,7 +670,9 @@ async function analyzeToken(
         // Skip if analyzed within last 20 minutes
         if (cachedData && now - cachedData.lastAnalysis < 1200000) {
             elizaLogger.log(
-                `Using cached data for ${tokenAddress}, last analyzed ${Math.floor((now - cachedData.lastAnalysis) / 1000)}s ago`
+                `Using cached data for ${tokenAddress}, last analyzed ${Math.floor(
+                    (now - cachedData.lastAnalysis) / 1000
+                )}s ago`
             );
             return;
         }
@@ -845,7 +852,9 @@ async function analyzeToken(
                             result
                         );
                     }
-                } catch (err) { elizaLogger.error('rabbi - trade error', err) }
+                } catch (err) {
+                    elizaLogger.error("rabbi - trade error", err);
+                }
                 return [];
             }
         );
