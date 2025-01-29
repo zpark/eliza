@@ -1,5 +1,5 @@
 import { type IAgentRuntime } from "@elizaos/core";
-import { DeskExchangeError } from "../types.js";
+import { DeskExchangeError } from "../types";
 import { ethers } from "ethers";
 import axios from "axios";
 import { randomBytes } from "crypto";
@@ -51,6 +51,6 @@ export const getSubaccount = (
 
 export const getEndpoint = (runtime: IAgentRuntime): string => {
     return runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
-        ? "https://trade-api.happytrading.global"
+        ? "https://api.happytrading.global"
         : "https://stg-trade-api.happytrading.global";
 };
