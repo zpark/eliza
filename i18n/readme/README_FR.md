@@ -6,7 +6,7 @@
 
 <div align="center">
 
-📑 [Technical Report](https://arxiv.org/pdf/2501.06781) |  📖 [Documentation](https://elizaos.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
+📑 [Technical Report](https://arxiv.org/pdf/2501.06781) | 📖 [Documentation](https://elizaos.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
 
 </div>
 
@@ -22,13 +22,13 @@
 
 ## ✨ Fonctionnalités
 
-- 🛠 Support des connecteurs Discord/ Twitter / Telegram
-- 🔗 Support des différents modèles d'IA (Llama, Grok, OpenAI, Anthropic, etc.)
-- 👥 Gestion de plusieurs agents et assistance
-- 📚 Import et interactions avec différents types de documents simplifiés
-- 💾 Accès aux données en mémoire et aux documents stockés
-- 🚀 Grande personnalisation possible : création de nouveaux clients et de nouvelles actions
-- 📦 Simplicité d'utilisation
+-   🛠 Support des connecteurs Discord/ Twitter / Telegram
+-   🔗 Support des différents modèles d'IA (Llama, Grok, OpenAI, Anthropic, etc.)
+-   👥 Gestion de plusieurs agents et assistance
+-   📚 Import et interactions avec différents types de documents simplifiés
+-   💾 Accès aux données en mémoire et aux documents stockés
+-   🚀 Grande personnalisation possible : création de nouveaux clients et de nouvelles actions
+-   📦 Simplicité d'utilisation
 
 ## Tutoriels vidéo
 
@@ -36,19 +36,19 @@
 
 ## 🎯 Cas d'usage
 
-- 🤖 Chatbot
-- 🕵 Agents autonomes
-- 📈 Processus automatisés
-- 🎮 PNJ interactifs
-- 🧠 Trading automatisé
+-   🤖 Chatbot
+-   🕵 Agents autonomes
+-   📈 Processus automatisés
+-   🎮 PNJ interactifs
+-   🧠 Trading automatisé
 
 # Premiers pas
 
 **Pré-requis (obligatoire) :**
 
-- [Python 2.7+](https://www.python.org/downloads/)
-- [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- [pnpm](https://pnpm.io/installation)
+-   [Python 2.7+](https://www.python.org/downloads/)
+-   [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+-   [pnpm](https://pnpm.io/installation)
 
 > **Note pour Windows :** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) est requis
 
@@ -77,7 +77,7 @@ git checkout $(git describe --tags --abbrev=0)
 
 ### Editer le fichier .env
 
-- Copier le fichier d'exemple .env.example et le remplir avec les valeurs adéquates
+-   Copier le fichier d'exemple .env.example et le remplir avec les valeurs adéquates
 
 ```bash
 cp .env.example .env
@@ -108,7 +108,7 @@ pnpm clean
 
 ### Interagir via le navigateur
 
-- Ouvrez un autre terminal, allez dans le même répertoire, exécutez la commande ci-dessous, puis cliquer sur l'URL pour discuter avec votre agent.
+-   Ouvrez un autre terminal, allez dans le même répertoire, exécutez la commande ci-dessous, puis cliquer sur l'URL pour discuter avec votre agent.
 
 ```bash
 pnpm start:client
@@ -126,7 +126,7 @@ Le script de démarrage permet de configurer et d'exécuter Eliza de manière au
 sh scripts/start.sh
 ```
 
-Pour des instructions détaillées sur l'utilisation du script de démarrage, y compris la gestion des caractère et le dépannage, voir notre [start-script](./docs/docs/guides/start-script.md).
+Pour des instructions détaillées sur l'utilisation du script de démarrage, y compris la gestion des caractère et le dépannage, voir notre [start-script](/docs/docs/guides/start-script.md).
 
 **Note** : Le script de démarrage gère automatiquement toutes les dépendances, la configuration de l'environnement et la gestion des caractères.
 
@@ -155,11 +155,11 @@ pnpm install --include=optional sharp
 
 ---
 
-####  Exigences supplémentaires
+#### Exigences supplémentaires
 
 Il se peut que vous deviez installer Sharp. Si vous voyez une erreur au démarrage, essayez de l'installer avec la commande suivante :
 
-``` bash
+```bash
 pnpm install --include=optional sharp
 ```
 
@@ -173,11 +173,11 @@ pnpm install --include=optional sharp
 
 ### Déployer Eliza en un clic
 
-Utilisez  [Fleek](https://fleek.xyz/eliza/) pour déployer Eliza en un seul clic. Cela ouvre Eliza aux non-développeurs et fournit les options suivantes pour construire votre agent :
+Utilisez [Fleek](https://fleek.xyz/eliza/) pour déployer Eliza en un seul clic. Cela ouvre Eliza aux non-développeurs et fournit les options suivantes pour construire votre agent :
+
 1. Commencer par un modèle
 2. Créer un fichier de caractères à partir de zéro
 3. Télécharger un fichier de personnage pré-fabriqué
-
 
 Cliquez [ici](https://fleek.xyz/eliza/) pour commencer!
 
@@ -185,8 +185,8 @@ Cliquez [ici](https://fleek.xyz/eliza/) pour commencer!
 
 ### Communauté et réseaux sociaux
 
-- [GitHub](https://github.com/elizaos/eliza/issues). Pour partager les bugs découverts lors de l'utilisation d'Eliza, et proposer de nouvelles fonctionnalités.
-- [Discord](https://discord.gg/ai16z). Pour partager ses applications et rencontrer la communauté.
+-   [GitHub](https://github.com/elizaos/eliza/issues). Pour partager les bugs découverts lors de l'utilisation d'Eliza, et proposer de nouvelles fonctionnalités.
+-   [Discord](https://discord.gg/ai16z). Pour partager ses applications et rencontrer la communauté.
 
 ## Contributeurs
 
