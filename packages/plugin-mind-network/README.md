@@ -15,7 +15,7 @@ The [Mind Network](https://www.mindnetwork.xyz/) plugin empowers users to partic
 
 ## Installation
 
-Depedency for the plugin:
+Dependency for the plugin:
 - [mind-randgen-sdk](https://github.com/mind-network/mind-sdk-randgen-ts)
 - [mind-sdk-hubs](https://github.com/mind-network/mind-sdk-hubs-ts)
 - [elizaos](https://github.com/elizaOS/eliza)
@@ -111,7 +111,7 @@ character_trump: Your vote has been submitted successfully.
 
 ## Contributing & License
 
-This plugin is part of the [Eliza project](https://github.com/elizaos/eliza). For details on contributing and licensing, please refer to the main project repository. [Mind Network](https://www.mindnetwork.xyz/) welcomes contribution and collabration.
+This plugin is part of the [Eliza project](https://github.com/elizaos/eliza). For details on contributing and licensing, please refer to the main project repository. [Mind Network](https://www.mindnetwork.xyz/) welcomes contribution and collaboration.
 
 ## Support
 
