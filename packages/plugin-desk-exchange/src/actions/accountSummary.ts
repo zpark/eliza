@@ -32,7 +32,10 @@ export const accountSummary: Action = {
     ],
     description: "Get the current account summary",
     validate: async (runtime: IAgentRuntime) => {
-        return !!runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY");
+        return !!(
+            runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY") &&
+            runtime.getSetting("DESK_EXCHANGE_NETWORK")
+        );
     },
     handler: async (
         runtime: IAgentRuntime,

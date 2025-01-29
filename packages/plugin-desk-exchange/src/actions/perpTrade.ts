@@ -31,7 +31,10 @@ export const perpTrade: Action = {
     similes: ["PERP_ORDER", "PERP_BUY", "PERP_SELL"],
     description: "Place a perpetual contract trade order on DESK Exchange",
     validate: async (runtime: IAgentRuntime) => {
-        return !!runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY");
+        return !!(
+            runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY") &&
+            runtime.getSetting("DESK_EXCHANGE_NETWORK")
+        );
     },
     handler: async (
         runtime: IAgentRuntime,

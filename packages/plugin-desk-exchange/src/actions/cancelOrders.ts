@@ -24,7 +24,10 @@ export const cancelOrders: Action = {
     similes: ["CANCEL_ALL_ORDERS", "CANCEL", "CANCEL_ALL"],
     description: "Cancel all open orders on DESK Exchange",
     validate: async (runtime: IAgentRuntime) => {
-        return !!runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY");
+        return !!(
+            runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY") &&
+            runtime.getSetting("DESK_EXCHANGE_NETWORK")
+        );
     },
     handler: async (
         runtime: IAgentRuntime,
