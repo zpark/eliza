@@ -33,6 +33,18 @@ Note:
 Recent conversation:
 {{recentMessages}}`;
 
+export const accountSummaryTemplate = `Look at ONLY your LAST RESPONSE message in this conversation, where you just confirmed if the user want to check the information of their account.
+
+For example:
+- I would like to check the summary of my account on DESK Exchange.
+- I want to check the information on my account.
+- How is my positions going?
+- How is my account?
+- Check account summary please
+
+Last part of conversation:
+{{recentMessages}}`;
+
 export const priceCheckTemplate = `Look at your LAST RESPONSE in the conversation where you confirmed which token price to check.
 Based on ONLY that last message, extract the token symbol.
 

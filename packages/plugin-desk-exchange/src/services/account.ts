@@ -1,13 +1,12 @@
 import { AxiosResponse } from "axios";
-import { PlaceOrderRequest } from "../types";
 import axios from "axios";
 
-export const placeOrder = async (
+export const getSubaccountSummary = async (
     endpoint: string,
     jwt: string,
-    order: PlaceOrderRequest
+    subaccount: string
 ): Promise<AxiosResponse> => {
-    return await axios.post(`${endpoint}/v2/place-order`, order, {
+    return await axios.get(`${endpoint}/v2/subaccount-summary/${subaccount}`, {
         headers: {
             authorization: `Bearer ${jwt}`,
             "content-type": "application/json",
