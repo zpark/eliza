@@ -6,12 +6,12 @@ export const executeArbitrageAction: Action = {
     similes: ["TRADE_ARBITRAGE", "RUN_ARBITRAGE"],
     description: "Execute arbitrage trades across markets",
 
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         // Validate settings are present
         return runtime.getSetting("arbitrage.walletPrivateKey") !== undefined;
     },
 
-    handler: async (runtime: IAgentRuntime, message: Memory) => {
+    handler: async (runtime: IAgentRuntime, _message: Memory) => {
         const service = runtime.getService(ServiceType.ARBITRAGE) as ArbitrageService;
         const markets = await service.evaluateMarkets();
 
