@@ -136,20 +136,14 @@ export const accountSummary: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Long 0.1 BTC at 20 USD",
+                    text: "Check my account please",
                 },
             },
             {
                 user: "{{agent}}",
                 content: {
-                    text: "I'll place a buy order for 0.1 BTC at 20 USD.",
-                    action: "PERP_TRADE",
-                },
-            },
-            {
-                user: "{{agent}}",
-                content: {
-                    text: "Successfully placed a limit order to buy 0.1 BTC at 20 USD",
+                    text: "Here is the summary of your account",
+                    action: "GET_PERP_ACCOUNT_SUMMARY",
                 },
             },
         ],
@@ -157,20 +151,29 @@ export const accountSummary: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Short 2 BTC at 21 USD",
+                    text: "How is my account doing?",
                 },
             },
             {
                 user: "{{agent}}",
                 content: {
-                    text: "I'll place a sell order for 2 BTC at 21 USD.",
-                    action: "PERP_TRADE",
+                    text: "Here is the summary of your account",
+                    action: "GET_PERP_ACCOUNT_SUMMARY",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "Account summary",
                 },
             },
             {
                 user: "{{agent}}",
                 content: {
-                    text: "Successfully placed a limit order to sell 2 BTC at 21 USD",
+                    text: "Here is the summary of your account",
+                    action: "GET_PERP_ACCOUNT_SUMMARY",
                 },
             },
         ],

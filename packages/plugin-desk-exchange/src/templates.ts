@@ -3,16 +3,16 @@ Based on ONLY that last message, extract the trading details:
 
 For Hyperliquid spot trading:
 - Market orders (executes immediately at best available price):
-  "perp buy 1 HYPE" -> { "coin": "HYPE", "is_buy": true, "sz": 1 }
-  "perp sell 2 HYPE" -> { "coin": "HYPE", "is_buy": false, "sz": 2 }
-  "perp market buy 1 HYPE" -> { "coin": "HYPE", "is_buy": true, "sz": 1 }
-  "perp market sell 2 HYPE" -> { "coin": "HYPE", "is_buy": false, "sz": 2 }
+  "perp buy 1 HYPE" -> { "symbol": "HYPE", "side": true, "amount": 1 }
+  "perp sell 2 HYPE" -> { "symbol": "HYPE", "side": false, "amount": 2 }
+  "perp market buy 1 HYPE" -> { "symbol": "HYPE", "side": true, "amount": 1 }
+  "perp market sell 2 HYPE" -> { "symbol": "HYPE", "side": false, "amount": 2 }
 
 - Limit orders (waits for specified price):
-  "buy 1 HYPE at 20 USDC" -> { "coin": "HYPE", "is_buy": true, "sz": 1, "limit_px": 20 }
-  "sell 0.5 HYPE at 21 USDC" -> { "coin": "HYPE", "is_buy": false, "sz": 0.5, "limit_px": 21 }
-  "limit buy 1 HYPE at 20 USDC" -> { "coin": "HYPE", "is_buy": true, "sz": 1, "limit_px": 20 }
-  "limit sell 0.5 HYPE at 21 USDC" -> { "coin": "HYPE", "is_buy": false, "sz": 0.5, "limit_px": 21 }
+  "buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": true, "amount": 1, "price": 20 }
+  "sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": false, "amount": 0.5, "price": 21 }
+  "limit buy 1 HYPE at 20 USDC" -> { "symbol": "HYPE", "side": true, "amount": 1, "price": 20 }
+  "limit sell 0.5 HYPE at 21 USDC" -> { "symbol": "HYPE", "side": false, "amount": 0.5, "price": 21 }
 
 \`\`\`json
 {
