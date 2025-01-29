@@ -2,11 +2,11 @@ import { type IAgentRuntime } from "@elizaos/core";
 import { DeskExchangeError } from "../types.js";
 import { ethers } from "ethers";
 import axios from "axios";
+import { randomBytes } from "crypto";
 
 export const generateNonce = (): string => {
     const expiredAt = (Date.now() + 1000 * 60 * 1) * (1 << 20); // 1 minutes
-    // random number between 0 and 2^20
-    const random = Math.floor(Math.random() * (1 << 20)) - 1;
+    const random = parseInt(randomBytes(3).toString("hex"), 16) % (1 << 20);
     return (expiredAt + random).toString();
 };
 
