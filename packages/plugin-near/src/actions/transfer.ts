@@ -93,11 +93,8 @@ async function transferNEAR(
     if (!parsedAmount) {
         throw new Error("Failed to parse NEAR amount");
     }
-    
-    const result = await account.sendMoney(
-        recipient,
-        BigInt(parsedAmount)
-    );
+
+    const result = await account.sendMoney(recipient, BigInt(parsedAmount));
 
     return result.transaction.hash;
 }
@@ -117,15 +114,8 @@ export const executeTransfer: Action = {
         callback?: HandlerCallback
     ): Promise<boolean> => {
         // Initialize or update state
-
-        // if (!state) {
-        //     state = (await runtime.composeState(message)) as State;
-        // } else {
-        //     state = await runtime.updateRecentMessageState(state);
-        // }
-
         let currentState: State;
-        
+
         if (!state) {
             currentState = (await runtime.composeState(message)) as State;
         } else {
