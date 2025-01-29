@@ -13,7 +13,8 @@ import {
 } from "@elizaos/core";
 import { validateLensConfig } from "../environment";
 import { getDefaultProvider, Network, Wallet } from "@lens-network/sdk/ethers";
-import { ethers } from "ethers";
+import { ethers, type Provider as EthersProvider } from "ethers";
+import { Provider as ZkSyncProvider } from "zksync-ethers";
 
 import {
     type Address,
@@ -22,12 +23,6 @@ import {
 } from "viem";
 
 import { z } from "zod";
-
-const TransferSchema = z.object({
-    tokenAddress: z.string(),
-    recipient: z.string(),
-    amount: z.string(),
-});
 
 export interface TransferContent extends Content {
     tokenAddress: string;
@@ -83,18 +78,18 @@ Respond with a JSON markdown block containing only the extracted values.`;
 
 //const ETH_ADDRESS = "0x000000000000000000000000000000000000800A";
 
-export async function setupProviders() {
+export async function setupProviders(): Promise<{ lensProvider: ZkSyncProvider; ethProvider: EthersProvider }> {
     // Initialize providers for both L2 (Lens) and L1 (Ethereum)
-    const lensProvider = getDefaultProvider(Network.Testnet);
+    const lensProvider = getDefaultProvider(Network.Testnet) as unknown as ZkSyncProvider;
     const ethProvider = ethers.getDefaultProvider("sepolia");
 
     return { lensProvider, ethProvider };
 }
 
 export async function setupWallet(
-    lensProvider: any,
-    ethProvider: any,
-    key: any
+    lensProvider: ZkSyncProvider,
+    ethProvider: EthersProvider,
+    key: string
 ) {
     // Create wallet instance with both L2 and L1 providers
     const wallet = new Wallet(key, lensProvider, ethProvider);
@@ -103,7 +98,7 @@ export async function setupWallet(
 }
 
 export async function transferTokens(
-    wallet: any,
+    wallet: Wallet,
     recipientAddress: string,
     amount: string
 ) {
@@ -151,7 +146,7 @@ export default {
         "MOVE_GRASS_ON_LENS",
     ],
     // eslint-disable-next-line
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateLensConfig(runtime);
         return true;
     },
@@ -166,15 +161,16 @@ export default {
         elizaLogger.log("Starting LENS SEND_TOKEN handler...");
 
         // Initialize or update state
+        let currentState: State;
         if (!state) {
-            state = (await runtime.composeState(message)) as State;
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(state);
         }
 
         // Compose transfer context
         const transferContext = composeContext({
-            state,
+            state: currentState,
             template: transferTemplate,
         });
 
@@ -184,9 +180,10 @@ export default {
                 runtime,
                 context: transferContext,
                 modelClass: ModelClass.SMALL,
-                schema: TransferSchema,
+                schemaName: "TransferSchema",
+                schemaDescription: "Schema for token transfer with tokenAddress, recipient, and amount"
             })
-        ).object as unknown as TransferContent;
+        ).object as TransferContent;
 
         // Validate transfer content
         if (!isTransferContent(content)) {
@@ -201,7 +198,10 @@ export default {
         }
 
         try {
-            const PRIVATE_KEY = runtime.getSetting("LENS_PRIVATE_KEY")!;
+            const PRIVATE_KEY = runtime.getSetting("LENS_PRIVATE_KEY");
+            if (!PRIVATE_KEY) {
+                throw new Error("LENS_PRIVATE_KEY not found in runtime settings");
+            }
             const { lensProvider, ethProvider } = await setupProviders();
             const wallet = await setupWallet(
                 lensProvider,
@@ -210,7 +210,7 @@ export default {
             );
             const amount = content.amount.toString();
 
-            let hash;
+            let hash: string;
 
             hash = await transferTokens(
                 wallet,
@@ -219,24 +219,22 @@ export default {
             );
 
             elizaLogger.success(
-                "Transfer completed successfully! Transaction hash: " + hash
+                `Transfer completed successfully! Transaction hash: ${hash}`
             );
             if (callback) {
                 callback({
-                    text:
-                        "Transfer completed successfully! Transaction hash: " +
-                        hash,
+                    text: `Transfer completed successfully! Transaction hash: ${hash}`,
                     content: {},
                 });
             }
 
             return true;
-        } catch (error) {
+        } catch (error: unknown) {
             elizaLogger.error("Error during token transfer:", error);
             if (callback) {
                 callback({
-                    text: `Error transferring tokens: ${error.message}`,
-                    content: { error: error.message },
+                    text: `Error transferring tokens: ${error instanceof Error ? error.message : String(error)}`,
+                    content: { error: error instanceof Error ? error.message : String(error) },
                 });
             }
             return false;
