@@ -7,11 +7,16 @@ export const placeOrder = async (
     jwt: string,
     order: PlaceOrderRequest
 ): Promise<AxiosResponse> => {
+    if (!endpoint || !jwt || !order) {
+        throw new Error("Missing required parameters");
+    }
     return await axios.post(`${endpoint}/v2/place-order`, order, {
         headers: {
             authorization: `Bearer ${jwt}`,
             "content-type": "application/json",
         },
+        timeout: 5000,
+        validateStatus: (status) => status === 200,
     });
 };
 
@@ -20,10 +25,18 @@ export const cancelOrder = async (
     jwt: string,
     order: CancelOrderRequest
 ): Promise<AxiosResponse> => {
+    if (!endpoint || !jwt || !order) {
+        throw new Error("Missing required parameters");
+    }
+    if (!order.order_digest) {
+        throw new Error("Missing order digest");
+    }
     return await axios.post(`${endpoint}/v2/cancel-order`, order, {
         headers: {
             authorization: `Bearer ${jwt}`,
             "content-type": "application/json",
         },
+        timeout: 5000,
+        validateStatus: (status) => status === 200,
     });
 };
