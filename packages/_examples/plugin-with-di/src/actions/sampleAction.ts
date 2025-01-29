@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { inject, injectable } from "inversify";
 import {
     type IAgentRuntime,
     type Memory,
@@ -5,13 +7,14 @@ import {
     type State,
     elizaLogger,
 } from "@elizaos/core";
-import { z } from "zod";
-import { inject, injectable } from "inversify";
-import { BaseInjectableAction } from "../actions";
-import type { ActionOptions } from "../types";
-import { property } from "../decorators";
-import { globalContainer } from "../di";
-import { SampleProvider } from "./sampleProvider";
+import {
+    property,
+    globalContainer,
+    BaseInjectableAction,
+    type ActionOptions
+} from "@elizaos/plugin-di";
+
+import { SampleProvider } from "../providers/sampleProvider";
 
 /**
  * The content class for the action
