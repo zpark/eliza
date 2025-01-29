@@ -10,7 +10,7 @@ import {
     generateObjectDeprecated,
     ModelClass,
 } from "@elizaos/core";
-import { DeskExchangeError } from "../types.js";
+import { DeskExchangeError, PlaceOrderSchema } from "../types.js";
 import { perpTradeTemplate } from "../templates.js";
 import { ethers } from "ethers";
 import axios from "axios";
@@ -124,6 +124,12 @@ export const perpTrade: Action = {
             reduce_only: false,
             subaccount: getSubaccount(wallet.address, 0),
         };
+        const parseResult = PlaceOrderSchema.safeParse(processesOrder);
+        if (!parseResult.success) {
+            throw new Error(
+                `Invalid perp trade content: ${JSON.stringify(parseResult.error.errors, null, 2)}`
+            );
+        }
         elizaLogger.info(
             "Processed order:",
             JSON.stringify(processesOrder, null, 2)
