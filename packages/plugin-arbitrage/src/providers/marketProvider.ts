@@ -3,7 +3,7 @@ import { ArbitrageService } from "../services/ArbitrageService";
 import { ArbitrageState } from "../type";
 
 export const marketProvider: Provider = {
-    get: async (runtime: IAgentRuntime, message: Memory): Promise<ArbitrageState> => {
+    get: async (runtime: IAgentRuntime, _message: Memory): Promise<ArbitrageState> => {
         const service = runtime.getService(ServiceType.ARBITRAGE) as ArbitrageService;
         const markets = await service.evaluateMarkets();
 
