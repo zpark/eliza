@@ -15,7 +15,7 @@ import {
     elizaLogger,
     getEmbeddingZeroVector,
     type IImageDescriptionService,
-    ServiceType
+    ServiceType,
 } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
@@ -207,7 +207,10 @@ export class TwitterInteractionClient {
                                 ];
                             selectedTweets.push(randomTweet);
                             elizaLogger.log(
-                                `Selected tweet from ${username}: ${randomTweet.text?.substring(0, 100)}`
+                                `Selected tweet from ${username}: ${randomTweet.text?.substring(
+                                    0,
+                                    100
+                                )}`
                             );
                         }
                     }
@@ -277,9 +280,10 @@ export class TwitterInteractionClient {
                     );
 
                     const message = {
-                        content: { 
+                        content: {
                             text: tweet.text,
-                            imageUrls: tweet.photos?.map(photo => photo.url) || []
+                            imageUrls:
+                                tweet.photos?.map((photo) => photo.url) || [],
                         },
                         agentId: this.runtime.agentId,
                         userId: userIdUUID,
@@ -316,8 +320,12 @@ export class TwitterInteractionClient {
         thread: Tweet[];
     }) {
         // Only skip if tweet is from self AND not from a target user
-        if (tweet.userId === this.client.profile.id &&
-            !this.client.twitterConfig.TWITTER_TARGET_USERS.includes(tweet.username)) {
+        if (
+            tweet.userId === this.client.profile.id &&
+            !this.client.twitterConfig.TWITTER_TARGET_USERS.includes(
+                tweet.username
+            )
+        ) {
             return;
         }
 
@@ -349,7 +357,7 @@ export class TwitterInteractionClient {
             .join("\n\n");
 
         const imageDescriptionsArray = [];
-        try{
+        try {
             for (const photo of tweet.photos) {
                 const description = await this.runtime
                     .getService<IImageDescriptionService>(
@@ -359,27 +367,33 @@ export class TwitterInteractionClient {
                 imageDescriptionsArray.push(description);
             }
         } catch (error) {
-    // Handle the error
-    elizaLogger.error("Error Occured during describing image: ", error);
-}
-
-
-
+            // Handle the error
+            elizaLogger.error("Error Occured during describing image: ", error);
+        }
 
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
             twitterUserName: this.client.twitterConfig.TWITTER_USERNAME,
             currentPost,
             formattedConversation,
-            imageDescriptions: imageDescriptionsArray.length > 0
-            ? `\nImages in Tweet:\n${imageDescriptionsArray.map((desc, i) =>
-              `Image ${i + 1}: Title: ${desc.title}\nDescription: ${desc.description}`).join("\n\n")}`:""
+            imageDescriptions:
+                imageDescriptionsArray.length > 0
+                    ? `\nImages in Tweet:\n${imageDescriptionsArray
+                          .map(
+                              (desc, i) =>
+                                  `Image ${i + 1}: Title: ${
+                                      desc.title
+                                  }\nDescription: ${desc.description}`
+                          )
+                          .join("\n\n")}`
+                    : "",
         });
 
         // check if the tweet exists, save if it doesn't
         const tweetId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
-        const tweetExists =
-            await this.runtime.messageManager.getMemoryById(tweetId);
+        const tweetExists = await this.runtime.messageManager.getMemoryById(
+            tweetId
+        );
 
         if (!tweetExists) {
             elizaLogger.log("tweet does not exist, saving");
@@ -392,7 +406,7 @@ export class TwitterInteractionClient {
                 content: {
                     text: tweet.text,
                     url: tweet.permanentUrl,
-                    imageUrls: tweet.photos?.map(photo => photo.url) || [],
+                    imageUrls: tweet.photos?.map((photo) => photo.url) || [],
                     inReplyTo: tweet.inReplyToStatusId
                         ? stringToUuid(
                               tweet.inReplyToStatusId +
@@ -438,20 +452,28 @@ export class TwitterInteractionClient {
                 ...state,
                 // Convert actionNames array to string
                 actionNames: Array.isArray(state.actionNames)
-                    ? state.actionNames.join(', ')
-                    : state.actionNames || '',
+                    ? state.actionNames.join(", ")
+                    : state.actionNames || "",
                 actions: Array.isArray(state.actions)
-                    ? state.actions.join('\n')
-                    : state.actions || '',
+                    ? state.actions.join("\n")
+                    : state.actions || "",
                 // Ensure character examples are included
                 characterPostExamples: this.runtime.character.messageExamples
                     ? this.runtime.character.messageExamples
-                        .map(example =>
-                            example.map(msg =>
-                                `${msg.user}: ${msg.content.text}${msg.content.action ? ` [Action: ${msg.content.action}]` : ''}`
-                            ).join('\n')
-                        ).join('\n\n')
-                    : '',
+                          .map((example) =>
+                              example
+                                  .map(
+                                      (msg) =>
+                                          `${msg.user}: ${msg.content.text}${
+                                              msg.content.action
+                                                  ? ` [Action: ${msg.content.action}]`
+                                                  : ""
+                                          }`
+                                  )
+                                  .join("\n")
+                          )
+                          .join("\n\n")
+                    : "",
             },
             template:
                 this.runtime.character.templates
@@ -483,14 +505,15 @@ export class TwitterInteractionClient {
             } else {
                 try {
                     const callback: HandlerCallback = async (
-                        response: Content
+                        response: Content,
+                        tweetId?: string
                     ) => {
                         const memories = await sendTweet(
                             this.client,
                             response,
                             message.roomId,
                             this.client.twitterConfig.TWITTER_USERNAME,
-                            tweet.id
+                            tweetId || tweet.id
                         );
                         return memories;
                     };
@@ -515,11 +538,16 @@ export class TwitterInteractionClient {
                         );
                     }
 
+                    const responseTweetId =
+                        responseMessages[responseMessages.length - 1]?.content
+                            ?.tweetId;
                     await this.runtime.processActions(
                         message,
                         responseMessages,
                         state,
-                        callback
+                        (response: Content) => {
+                            return callback(response, responseTweetId);
+                        }
                     );
 
                     const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
@@ -587,7 +615,9 @@ export class TwitterInteractionClient {
                         text: currentTweet.text,
                         source: "twitter",
                         url: currentTweet.permanentUrl,
-                        imageUrls: currentTweet.photos?.map(photo => photo.url) || [],
+                        imageUrls:
+                            currentTweet.photos?.map((photo) => photo.url) ||
+                            [],
                         inReplyTo: currentTweet.inReplyToStatusId
                             ? stringToUuid(
                                   currentTweet.inReplyToStatusId +

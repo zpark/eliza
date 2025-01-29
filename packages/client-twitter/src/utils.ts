@@ -216,7 +216,7 @@ export async function sendTweet(
             mediaData = await fetchMediaData(content.attachments);
         }
 
-        const cleanChunk = deduplicateMentions(chunk.trim())
+        const cleanChunk = deduplicateMentions(chunk.trim());
 
         const result = await client.requestQueue.add(async () =>
             isLongTweet
@@ -274,6 +274,7 @@ export async function sendTweet(
         agentId: client.runtime.agentId,
         userId: client.runtime.agentId,
         content: {
+            tweetId: tweet.id,
             text: tweet.text,
             source: "twitter",
             url: tweet.permanentUrl,
@@ -285,7 +286,7 @@ export async function sendTweet(
         },
         roomId,
         embedding: getEmbeddingZeroVector(),
-        createdAt: tweet.timestamp * 1000, 
+        createdAt: tweet.timestamp * 1000,
     }));
 
     return memories;
@@ -405,29 +406,29 @@ function splitSentencesAndWords(text: string, maxLength: number): string[] {
 
 function deduplicateMentions(paragraph: string) {
     // Regex to match mentions at the beginning of the string
-  const mentionRegex = /^@(\w+)(?:\s+@(\w+))*(\s+|$)/;
+    const mentionRegex = /^@(\w+)(?:\s+@(\w+))*(\s+|$)/;
 
-  // Find all matches
-  const matches = paragraph.match(mentionRegex);
+    // Find all matches
+    const matches = paragraph.match(mentionRegex);
 
-  if (!matches) {
-    return paragraph; // If no matches, return the original string
-  }
+    if (!matches) {
+        return paragraph; // If no matches, return the original string
+    }
 
-  // Extract mentions from the match groups
-  let mentions = matches.slice(0, 1)[0].trim().split(' ')
+    // Extract mentions from the match groups
+    let mentions = matches.slice(0, 1)[0].trim().split(" ");
 
-  // Deduplicate mentions
-  mentions = [...new Set(mentions)];
+    // Deduplicate mentions
+    mentions = [...new Set(mentions)];
 
-  // Reconstruct the string with deduplicated mentions
-  const uniqueMentionsString = mentions.join(' ');
+    // Reconstruct the string with deduplicated mentions
+    const uniqueMentionsString = mentions.join(" ");
 
-  // Find where the mentions end in the original string
-  const endOfMentions = paragraph.indexOf(matches[0]) + matches[0].length;
+    // Find where the mentions end in the original string
+    const endOfMentions = paragraph.indexOf(matches[0]) + matches[0].length;
 
-  // Construct the result by combining unique mentions with the rest of the string
-  return uniqueMentionsString + ' ' + paragraph.slice(endOfMentions);
+    // Construct the result by combining unique mentions with the rest of the string
+    return uniqueMentionsString + " " + paragraph.slice(endOfMentions);
 }
 
 function restoreUrls(
