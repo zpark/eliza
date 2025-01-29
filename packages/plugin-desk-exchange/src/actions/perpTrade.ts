@@ -75,6 +75,7 @@ export const perpTrade: Action = {
         callback?: HandlerCallback
     ) => {
         elizaLogger.info("DESK EXCHANGE", jwt);
+
         // Initialize or update state
         state = !state
             ? await runtime.composeState(message)
@@ -91,77 +92,105 @@ export const perpTrade: Action = {
             modelClass: ModelClass.SMALL,
         });
 
-        if (!content) {
-            throw new DeskExchangeError(
-                "Could not parse trading parameters from conversation"
-            );
-        }
-
-        const endpoint =
-            runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
-                ? "https://trade-api.happytrading.global"
-                : "https://stg-trade-api.happytrading.global";
-        const wallet = new ethers.Wallet(
-            runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
-        );
-        if (!jwt) {
-            jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
-        }
-        elizaLogger.info("jwt", jwt);
-        elizaLogger.info(
-            "Raw content from LLM:",
-            JSON.stringify(content, null, 2)
-        );
-
-        const processesOrder = {
-            symbol: `${content.symbol}USD`,
-            side: content.side,
-            amount: content.amount,
-            price: content.price,
-            nonce: generateNonce(),
-            broker_id: "DESK",
-            order_type: "Market",
-            reduce_only: false,
-            subaccount: getSubaccount(wallet.address, 0),
-        };
-        const parseResult = PlaceOrderSchema.safeParse(processesOrder);
-        if (!parseResult.success) {
-            throw new Error(
-                `Invalid perp trade content: ${JSON.stringify(parseResult.error.errors, null, 2)}`
-            );
-        }
-        elizaLogger.info(
-            "Processed order:",
-            JSON.stringify(processesOrder, null, 2)
-        );
-
-        const response = await axios.post(
-            `${endpoint}/v2/place-order`,
-            processesOrder,
-            {
-                headers: {
-                    authorization: `Bearer ${jwt}`,
-                    "content-type": "application/json",
-                },
+        try {
+            if (!content) {
+                throw new DeskExchangeError(
+                    "Could not parse trading parameters from conversation"
+                );
             }
-        );
 
-        elizaLogger.info(response.data);
+            const endpoint =
+                runtime.getSetting("DESK_EXCHANGE_NETWORK") === "mainnet"
+                    ? "https://trade-api.happytrading.global"
+                    : "https://stg-trade-api.happytrading.global";
+            const wallet = new ethers.Wallet(
+                runtime.getSetting("DESK_EXCHANGE_PRIVATE_KEY")
+            );
+            if (!jwt) {
+                jwt = await generateJwt(endpoint, wallet, 0, generateNonce());
+            }
+            elizaLogger.info("jwt", jwt);
+            elizaLogger.info(
+                "Raw content from LLM:",
+                JSON.stringify(content, null, 2)
+            );
 
-        if (callback && response.status === 200) {
-            const orderResponse = response.data.data;
-            callback({
-                text: `Successfully placed a ${orderResponse.side} ${orderResponse.order_type} order of size ${orderResponse.quantity} on ${orderResponse.symbol} market at ${orderResponse.avg_fill_price} USD on DESK Exchange.`,
-                content: response.data,
+            const processesOrder = {
+                symbol: `${content.symbol}USD`,
+                side: content.side,
+                amount: content.amount,
+                price: content.price,
+                nonce: generateNonce(),
+                broker_id: "DESK",
+                order_type: Number(content.price) === 0 ? "Market" : "Limit",
+                reduce_only: false,
+                subaccount: getSubaccount(wallet.address, 0),
+            };
+            const parseResult = PlaceOrderSchema.safeParse(processesOrder);
+            if (!parseResult.success) {
+                throw new Error(
+                    `Invalid perp trade content: ${JSON.stringify(
+                        parseResult.error.errors,
+                        null,
+                        2
+                    )}`
+                );
+            }
+            elizaLogger.info(
+                "Processed order:",
+                JSON.stringify(processesOrder, null, 2)
+            );
+
+            const response = await axios.post(
+                `${endpoint}/v2/place-order`,
+                processesOrder,
+                {
+                    headers: {
+                        authorization: `Bearer ${jwt}`,
+                        "content-type": "application/json",
+                    },
+                }
+            );
+
+            elizaLogger.info(response.data);
+
+            if (callback && response.status === 200) {
+                const orderResponse = response.data.data;
+                callback({
+                    text: `Successfully placed a ${orderResponse.side} ${
+                        orderResponse.order_type
+                    } order of size ${orderResponse.quantity} on ${
+                        orderResponse.symbol
+                    } at ${
+                        orderResponse.order_type === "Market"
+                            ? "market price"
+                            : orderResponse.price + ' USD'
+                    } on DESK Exchange.`,
+                    content: response.data,
+                });
+            } else {
+                callback({
+                    text: `Place order failed with ${response.data.errors}.`,
+                    content: response.data,
+                });
+            }
+
+            return true;
+        } catch (error) {
+            elizaLogger.error("Error executing trade:", {
+                content,
+                message: error.message,
+                code: error.code,
+                data: error.response?.data,
             });
-        } else {
-            callback({
-                text: `Place order failed with ${response.data.errors}.`,
-                content: response.data,
-            });
+            if (callback) {
+                callback({
+                    text: `Error executing trade: ${error.message} ${error.response?.data?.errors}`,
+                    content: { error: error.message },
+                });
+            }
+            return false;
         }
-
-        return true;
     },
     examples: [
         [
