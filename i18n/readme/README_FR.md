@@ -126,9 +126,9 @@ Le script de démarrage permet de configurer et d'exécuter Eliza de manière au
 sh scripts/start.sh
 ```
 
-Pour des instructions détaillées sur l'utilisation du script de démarrage, y compris la gestion des caractère et le dépannage, voir notre [start-script] (./docs/docs/guides/start-script.md).
+Pour des instructions détaillées sur l'utilisation du script de démarrage, y compris la gestion des caractère et le dépannage, voir notre [start-script](./docs/docs/guides/start-script.md).
 
-**Note** : Le script de démarrage gère automatiquement toutes les dépendances, la configuration de l'environnement et la gestion des caractère.
+**Note** : Le script de démarrage gère automatiquement toutes les dépendances, la configuration de l'environnement et la gestion des caractères.
 
 ---
 
