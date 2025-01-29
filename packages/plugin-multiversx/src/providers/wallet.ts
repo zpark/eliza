@@ -25,7 +25,7 @@ export class WalletProvider {
     private apiNetworkProvider: ApiNetworkProvider; // Interacts with the MultiversX network
     private chainID: string; // Current network chain ID
     private explorerURL: string; // Current network explorer URL
-    private minEGLD: number = 0.0005; // Minimum balance for EGLD, in order to cover gas fees
+    private minEGLD = 0.0005; // Minimum balance for EGLD, in order to cover gas fees
 
     /**
      * Constructor to initialize WalletProvider with a private key and network configuration
@@ -364,7 +364,7 @@ export class WalletProvider {
      */
     public async signMessage(messageToSign: string) {
         const computer = new MessageComputer();
-        let message = new Message({
+        const message = new Message({
             data: Buffer.from(messageToSign),
         });
 
