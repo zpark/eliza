@@ -1,7 +1,7 @@
 export const perpTradeTemplate = `Look at your LAST RESPONSE in the conversation where you confirmed a trade request.
 Based on ONLY that last message, extract the trading details:
 
-For Hyperliquid spot trading:
+For DESK Exchange perp trading:
 - Market orders (executes immediately at best available price):
   "perp buy 1 HYPE" -> { "symbol": "HYPE", "side": true, "amount": 1 }
   "perp sell 2 HYPE" -> { "symbol": "HYPE", "side": false, "amount": 2 }
@@ -55,26 +55,4 @@ For example:
 - Check account summary please
 
 Last part of conversation:
-{{recentMessages}}`;
-
-export const priceCheckTemplate = `Look at your LAST RESPONSE in the conversation where you confirmed which token price to check.
-Based on ONLY that last message, extract the token symbol.
-
-For example:
-- "I'll check PIP price for you" -> { "symbol": "PIP" }
-- "Let me check the price of HYPE" -> { "symbol": "HYPE" }
-- "I'll get the current ETH price" -> { "symbol": "ETH" }
-
-\`\`\`json
-{
-    "symbol": "<token symbol from your last message>"
-}
-\`\`\`
-
-Note:
-- Just return the token symbol (PIP, HYPE, ETH, etc.)
-- Remove any suffixes like "-SPOT" or "USDC"
-- If multiple tokens are mentioned, use the last one
-
-Recent conversation:
 {{recentMessages}}`;
