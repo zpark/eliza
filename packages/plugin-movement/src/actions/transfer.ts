@@ -28,12 +28,12 @@ export interface TransferContent extends Content {
     amount: string | number;
 }
 
-function isTransferContent(content: any): content is TransferContent {
+function isTransferContent(content: unknown): content is TransferContent {
     elizaLogger.debug("Validating transfer content:", content);
     return (
-        typeof content.recipient === "string" &&
-        (typeof content.amount === "string" ||
-            typeof content.amount === "number")
+        typeof (content as TransferContent).recipient === "string" &&
+        (typeof (content as TransferContent).amount === "string" ||
+            typeof (content as TransferContent).amount === "number")
     );
 }
 
@@ -86,7 +86,7 @@ export default {
         const text = message.content?.text?.toLowerCase() || "";
         return text.includes("send") && text.includes("move") && text.includes("0x");
     },
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         elizaLogger.debug("Starting transfer validation for user:", message.userId);
         elizaLogger.debug("Message text:", message.content?.text);
         return true; // Let the handler do the validation
@@ -136,16 +136,23 @@ export default {
             const walletInfo = await walletProvider.get(runtime, message, state);
             state.walletInfo = walletInfo;
 
-            // Initialize or update state
-            if (!state) {
-                state = (await runtime.composeState(message)) as State;
-            } else {
-                state = await runtime.updateRecentMessageState(state);
-            }
+            // // Initialize or update state
+            // if (!state) {
+            //     state = (await runtime.composeState(message)) as State;
+            // } else {
+            //     state = await runtime.updateRecentMessageState(state);
+            // }
 
+            let currentState: State;
+            if (!state) {
+                currentState = (await runtime.composeState(message)) as State;
+            } else {
+                currentState = await runtime.updateRecentMessageState(state);
+            }
+    
             // Compose transfer context
             const transferContext = composeContext({
-                state,
+                state: currentState,
                 template: transferTemplate,
             });
 
@@ -169,7 +176,7 @@ export default {
             }
 
             const adjustedAmount = BigInt(
-                Number(content.amount) * Math.pow(10, MOVE_DECIMALS)
+                Number(content.amount) * (10 ** MOVE_DECIMALS)
             );
             console.log(
                 `Transferring: ${content.amount} tokens (${adjustedAmount} base units)`
