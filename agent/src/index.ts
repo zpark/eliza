@@ -105,12 +105,6 @@ import yargs from "yargs";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
-const packageJsonFileName = 'package.json';
-
-// XXX TODO: validate parameters against jsonSchema
-const validateParameters = (parameters: any, jsonSchema: any) => {
-    return parameters;
-};
 
 export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     const waitTime =
@@ -302,22 +296,6 @@ async function handlePluginImporting(plugins: string[]) {
             plugins.map(async (plugin) => {
                 const pluginSpec: string = plugin;
                 try {
-                    const u = `${pluginSpec}/${packageJsonFileName}`;
-                    const packageJson = await import(u, {
-                        with: {
-                            type: 'json',
-                        },
-                    });
-                    const {
-                        pluginType,
-                        pluginParameters,
-                    } = packageJson.agentConfig ?? {};
-                    // const mergedParameters = validateParameters(pluginSpec.parameters, pluginParameters);
-                    // console.log('merge custom plugin schema', {
-                    //     parameters: pluginSpec.parameters,
-                    //     pluginParameters,
-                    //     mergedParameters,
-                    // });
                     const plugin: any | Promise<any> = await import(pluginSpec);
                     const pluginInstance = plugin.default || plugin;
                     return pluginInstance;
@@ -551,36 +529,9 @@ export async function initializeClients(
     }[] = character.clients ?
         await Promise.all(character.clients.map(async (str) => {
             const clientSpec: string = str;
-            const u = `${clientSpec}/${packageJsonFileName}`;
-            console.log('load client spec A', {
-                clientSpec,
-                u,
-            });
-            let packageJson = await import(u, {
-                with: {
-                    type: 'json',
-                },
-            });
-            packageJson = packageJson.default || packageJson;
-            console.log('load client spec B', {
-                u,
-                packageJson,
-            });
-            const {
-                name,
-            } = packageJson;
-            const {
-                pluginType,
-                parameters,
-            } = packageJson.agentConfig ?? {};
-            // const mergedParameters = validateParameters(clientSpec.parameters, parameters);
-            // console.log('merge custom client schema', {
-            //     packageJson,
-            //     clientSpec,
-            //     mergedParameters,
-            // });
             let client: any | Promise<any> = await import(clientSpec);
             client = client.default || client;
+            const { name } = client;
             console.log('got client', client, Object.keys(client))
             const clientInstance = await client.start(runtime);
             return {
