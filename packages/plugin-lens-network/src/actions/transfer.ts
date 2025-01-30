@@ -22,6 +22,8 @@ import {
     isAddress,
 } from "viem";
 
+import { z } from "zod";
+
 export interface TransferContent extends Content {
     tokenAddress: string;
     recipient: string;
