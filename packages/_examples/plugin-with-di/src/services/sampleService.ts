@@ -26,11 +26,11 @@ export class SampleService extends Service {
     private intervalId: NodeJS.Timeout | null = null;
     private readonly DEFAULT_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-    constructor(
-        @inject(SampleProvider)
-        private readonly sampleProvider: SampleProvider
-    ) {
+    private sampleProvider: SampleProvider;
+
+    constructor(sampleProvider: SampleProvider) {
         super();
+        this.sampleProvider = sampleProvider;
     }
 
     static get serviceType(): ServiceType {

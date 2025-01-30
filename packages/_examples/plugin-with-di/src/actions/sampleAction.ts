@@ -94,11 +94,11 @@ const options: ActionOptions<CreateResourceContent> = {
  */
 @injectable()
 export class CreateResourceAction extends BaseInjectableAction<CreateResourceContent> {
-    constructor(
-        @inject(SampleProvider)
-        private readonly sampleProvider: SampleProvider
-    ) {
+    private sampleProvider: SampleProvider;
+
+    constructor(sampleProvider: SampleProvider) {
         super(options);
+        this.sampleProvider = sampleProvider;
     }
 
     async validate(
