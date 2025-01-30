@@ -30,7 +30,7 @@ Set the following environment variables:
 
 ```env
 DESK_EXCHANGE_PRIVATE_KEY=your_private_key  # Required for trading and cancelling orders
-DESK_EXCHANGE_NETWORK=                      # "mainent" or "testnet
+DESK_EXCHANGE_NETWORK=                      # "mainnet" or "testnet
 ```
 
 ## Available Actions
