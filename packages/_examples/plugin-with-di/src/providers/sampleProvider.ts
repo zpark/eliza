@@ -25,10 +25,11 @@ export class SampleProvider
 {
     private _sharedInstance: Record<string, string>;
 
-    constructor(
-        @inject("DYNAMIC_DATA")
-        private readonly dynamicData: Record<string, string>
-    ) {}
+    private dynamicData: Record<string, string>;
+
+    constructor(dynamicData: Record<string, string>) {
+        this.dynamicData = dynamicData;
+    }
 
     // ---- Implementing the InjectableProvider interface ----
 
