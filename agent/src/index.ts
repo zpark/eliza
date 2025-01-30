@@ -101,6 +101,7 @@ import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
+import { dynamicImport } from "dynamic-imports";
 // import {dominosPlugin} from "@elizaos/plugin-dominos";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -296,7 +297,7 @@ async function handlePluginImporting(plugins: string[]) {
             plugins.map(async (plugin) => {
                 const pluginSpec: string = plugin;
                 try {
-                    const plugin: any | Promise<any> = await import(pluginSpec);
+                    const plugin: any | Promise<any> = await dynamicImport(pluginSpec);
                     const pluginInstance = plugin.default || plugin;
                     return pluginInstance;
                 } catch (importError) {
@@ -529,7 +530,7 @@ export async function initializeClients(
     }[] = character.clients ?
         await Promise.all(character.clients.map(async (str) => {
             const clientSpec: string = str;
-            let client: any | Promise<any> = await import(clientSpec);
+            let client: any | Promise<any> = await dynamicImport(clientSpec);
             client = client.default || client;
             const { name } = client;
             console.log('got client', client, Object.keys(client))
