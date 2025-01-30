@@ -54,3 +54,14 @@ export const getEndpoint = (runtime: IAgentRuntime): string => {
         ? "https://api.happytrading.global"
         : "https://stg-trade-api.happytrading.global";
 };
+
+export const formatNumber = (
+    num: string | number,
+    decimalPlaces?: number
+): string => {
+    return Number(num).toLocaleString(undefined, {
+        style: "decimal",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: decimalPlaces || 8,
+    });
+};

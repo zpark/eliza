@@ -14,17 +14,17 @@ import {
     DeskExchangeError,
     PlaceOrderRequest,
     PlaceOrderSchema,
-} from "../types.js";
-import { perpTradeTemplate } from "../templates.js";
+} from "../types";
+import { perpTradeTemplate } from "../templates";
 import { ethers } from "ethers";
-import axios from "axios";
 import {
     generateNonce,
     generateJwt,
     getSubaccount,
     getEndpoint,
+    formatNumber,
 } from "../services/utils";
-import { placeOrder } from "../services/trade.js";
+import { placeOrder } from "../services/trade";
 
 export const perpTrade: Action = {
     name: "PERP_TRADE",
@@ -117,12 +117,12 @@ export const perpTrade: Action = {
                 callback({
                     text: `Successfully placed a ${orderResponse.side} ${
                         orderResponse.order_type
-                    } order of size ${orderResponse.quantity} on ${
-                        orderResponse.symbol
-                    } at ${
+                    } order of size ${formatNumber(
+                        orderResponse.quantity
+                    )} on ${orderResponse.symbol} at ${
                         orderResponse.order_type === "Market"
                             ? "market price"
-                            : orderResponse.price + " USD"
+                            : formatNumber(orderResponse.price) + " USD"
                     } on DESK Exchange.`,
                     content: response.data,
                 });

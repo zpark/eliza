@@ -7,20 +7,17 @@ import {
     type HandlerCallback,
     composeContext,
     elizaLogger,
-    generateObjectDeprecated,
-    ModelClass,
 } from "@elizaos/core";
-import { DeskExchangeError, PlaceOrderSchema } from "../types.js";
-import { accountSummaryTemplate, perpTradeTemplate } from "../templates.js";
+import { accountSummaryTemplate } from "../templates";
 import { ethers } from "ethers";
-import axios from "axios";
 import {
     generateNonce,
     generateJwt,
     getSubaccount,
     getEndpoint,
+    formatNumber,
 } from "../services/utils";
-import { getSubaccountSummary } from "../services/account.js";
+import { getSubaccountSummary } from "../services/account";
 
 export const accountSummary: Action = {
     name: "GET_PERP_ACCOUNT_SUMMARY",
@@ -73,7 +70,9 @@ export const accountSummary: Action = {
                 subaccountSummaryData.positions.length > 0
                     ? subaccountSummaryData.positions
                           .map((p) => {
-                              return `- ${p.side} ${p.quantity} ${p.symbol}`;
+                              return `- ${p.side} ${formatNumber(p.quantity)} ${
+                                  p.symbol
+                              }`;
                           })
                           .join("\n")
                     : "- No active position";
@@ -81,13 +80,17 @@ export const accountSummary: Action = {
                 subaccountSummaryData.open_orders.length > 0
                     ? subaccountSummaryData.open_orders
                           .map((o) => {
-                              return `- ${o.side === "Long" ? "Buy" : "Sell"} ${
+                              return `- ${
+                                  o.side === "Long" ? "Buy" : "Sell"
+                              } ${formatNumber(
                                   Number(o.original_quantity) -
-                                  Number(o.remaining_quantity)
-                              }/${o.original_quantity} ${o.symbol} @${
+                                      Number(o.remaining_quantity)
+                              )}/${formatNumber(o.original_quantity)} ${
+                                  o.symbol
+                              } @${
                                   Number(o.price) > 0
-                                      ? o.price
-                                      : o.trigger_price
+                                      ? formatNumber(o.price)
+                                      : formatNumber(o.trigger_price)
                               }`;
                           })
                           .join("\n")
@@ -96,7 +99,9 @@ export const accountSummary: Action = {
                 subaccountSummaryData.collaterals.length > 0
                     ? subaccountSummaryData.collaterals
                           .map((c) => {
-                              return `- ${c.amount} ${c.asset}`;
+                              return `- ${formatNumber(c.amount, 4)} ${
+                                  c.asset
+                              }`;
                           })
                           .join("\n")
                     : "- No collateral";
