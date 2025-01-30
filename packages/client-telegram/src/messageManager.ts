@@ -195,11 +195,8 @@ export class MessageManager {
 
             // Check if we should post
             if (
-                timeSinceLastMessage >
-                    this.autoPostConfig.inactivityThreshold ||
-                (randomThreshold &&
-                    timeSinceLastAutoPost >
-                        (this.autoPostConfig.minTimeBetweenPosts || 0))
+                (timeSinceLastMessage > randomThreshold) &&
+                timeSinceLastAutoPost > (this.autoPostConfig.minTimeBetweenPosts || 0)
             ) {
                 try {
                     const roomId = stringToUuid(
