@@ -603,6 +603,12 @@ export type Media = {
  * Client interface for platform connections
  */
 export type Client = {
+    /** Client name */
+    name: string;
+
+    /** Client configuration */
+    config: { [key: string]: any };
+
     /** Start client connection */
     start: (runtime: IAgentRuntime) => Promise<unknown>;
 
@@ -616,6 +622,9 @@ export type Client = {
 export type Plugin = {
     /** Plugin name */
     name: string;
+
+    /** Plugin configuration */
+    config: { [key: string]: any };
 
     /** Plugin description */
     description: string;
