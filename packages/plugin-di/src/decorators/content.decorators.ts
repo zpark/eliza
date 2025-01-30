@@ -28,9 +28,9 @@ export function property(config: ContentPropertyConfig) {
  * @param constructor
  * @returns
  */
-export function createZodSchema<T>(constructor: ContentClass<T>): z.ZodType<T> {
+export function createZodSchema<T>(targetClass: ContentClass<T>): z.ZodType<T> {
     const properties: Record<string, ContentPropertyConfig> =
-        Reflect.getMetadata(CONTENT_METADATA_KEY, constructor.prototype) || {};
+        Reflect.getMetadata(CONTENT_METADATA_KEY, targetClass.prototype) || {};
     const schemaProperties = Object.entries(properties).reduce(
         (acc, [key, { schema }]) => {
             acc[key] = schema;
@@ -48,10 +48,10 @@ export function createZodSchema<T>(constructor: ContentClass<T>): z.ZodType<T> {
  * @returns
  */
 export function loadPropertyDescriptions<T>(
-    constructor: ContentClass<T>
+    targetClass: ContentClass<T>
 ): Record<string, ContentPropertyDescription> {
     const properties: Record<string, ContentPropertyConfig> =
-        Reflect.getMetadata(CONTENT_METADATA_KEY, constructor.prototype) || {};
+        Reflect.getMetadata(CONTENT_METADATA_KEY, targetClass.prototype) || {};
     return Object.entries(properties).reduce(
         (acc, [key, { description, examples }]) => {
             acc[key] = { description, examples };
