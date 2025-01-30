@@ -221,6 +221,10 @@ export function extractAttributes(
  * - Removes extra spaces after '{' and before '}'.
  * - Wraps unquoted values in double quotes.
  * - Converts single-quoted values to double-quoted.
+ * - Ensures consistency in key-value formatting.
+ * - Collapses multiple double quotes into a single one.
+ * - Normalizes mixed adjacent quote pairs.
+ *
  * This is useful for cleaning up improperly formatted JSON strings
  * before parsing them into valid JSON.
  *
@@ -232,18 +236,26 @@ export const normalizeJsonString = (str: string) => {
     // Remove extra spaces after '{' and before '}'
     str = str.replace(/\{\s+/, '{').replace(/\s+\}/, '}').trim();
 
-    // "key": 'value' → "key": "value"
-    str = str.replace(
-      /"([^"]+)"\s*:\s*'([^']*)'/g,
-      (_, key, value) => `"${key}": "${value}"`,
-    );
-
     // "key": unquotedValue → "key": "unquotedValue"
     str = str.replace(
       /("[\w\d_-]+")\s*: \s*(?!")([\s\S]+?)(?=(,\s*"|\}$))/g,
       '$1: "$2"',
     );
 
+    // "key": 'value' → "key": "value"
+    str = str.replace(
+      /"([^"]+)"\s*:\s*'([^']*)'/g,
+      (_, key, value) => `"${key}": "${value}"`,
+    );
+
+    // "key": someWord → "key": "someWord"
+    str = str.replace(/("[\w\d_-]+")\s*:\s*([A-Za-z_]+)(?!["\w])/g, '$1: "$2"');
+
+    // Collapse multiple double quotes ("") into one
+    str = str.replace(/"+/g, '"');
+
+    // Replace adjacent quote pairs with a single double quote
+    str = str.replace(/(["'])(['"])/g, '"');
     return str;
 };
 
