@@ -9,10 +9,10 @@ Here are several frequently used addresses. Use these for the corresponding toke
 Example response:
 \`\`\`json
 {
-    "inputTokenSymbol": "USDC | null",
-    "outputTokenSymbol": "HOLD | null",
-    "inputTokenCA": "0x1d17CBcF0D6D143135aE902365D2E5e2A16538D4 | null",
-    "outputTokenCA": "0xed4040fD47629e7c8FBB7DA76bb50B3e7695F0f2 | null",
+    "inputTokenSymbol": "USDC",
+    "outputTokenSymbol": "HOLD",
+    "inputTokenCA": "0x1d17CBcF0D6D143135aE902365D2E5e2A16538D4",
+    "outputTokenCA": "0xed4040fD47629e7c8FBB7DA76bb50B3e7695F0f2",
     "amount": "100",
     "slippage": "0.005"
 }

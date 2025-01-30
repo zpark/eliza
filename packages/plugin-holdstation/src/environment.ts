@@ -10,7 +10,7 @@ export const holdStationEnvSchema = z.object({
 export type holdStationConfig = z.infer<typeof holdStationEnvSchema>;
 
 export async function validateHoldStationConfig(
-    runtime: IAgentRuntime,
+    runtime: IAgentRuntime
 ): Promise<holdStationConfig> {
     try {
         const config = {
