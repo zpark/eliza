@@ -1642,6 +1642,10 @@ export const generateImage = async (
     error?: any;
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
+    if (!modelSettings) {
+        elizaLogger.warn("No model settings found for the image model provider.");
+        return { success: false, error: "No model settings available" };
+    }
     const model = modelSettings.name;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
