@@ -1,11 +1,11 @@
-import { Character, ModelProviderName } from "./types.ts";
+import { type Character, ModelProviderName } from "./types.ts";
 
 export const defaultCharacter: Character = {
     name: "Eliza",
     username: "eliza",
     plugins: [],
     clients: [],
-    modelProvider: ModelProviderName.LLAMALOCAL,
+    modelProvider: ModelProviderName.GOOGLE,
     settings: {
         secrets: {},
         voice: {

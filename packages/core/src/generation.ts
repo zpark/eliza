@@ -58,6 +58,15 @@ import { createPublicClient, http } from "viem";
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
+// Add logging helper function at the top
+function logFunctionCall(functionName: string, runtime: IAgentRuntime) {
+    elizaLogger.info(`Function call: ${functionName}`, {
+        functionName,
+        modelProvider: runtime.modelProvider,
+        runtime
+    });
+}
+
 /**
  * Trims the provided text context to a specified token limit using a tokenizer model and type.
  *
@@ -84,6 +93,7 @@ export async function trimTokens(
     maxTokens: number,
     runtime: IAgentRuntime
 ) {
+    logFunctionCall('trimTokens', runtime);
     if (!context) return "";
     if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
@@ -217,9 +227,8 @@ async function getOnChainEternalAISystemPrompt(
                 const content = Buffer.from(value, "hex").toString("utf-8");
                 elizaLogger.info("on-chain system-prompt", content);
                 return await fetchEternalAISystemPrompt(runtime, content);
-            } else {
-                return undefined;
             }
+            return undefined;
         } catch (error) {
             elizaLogger.error(error);
             elizaLogger.error("err", error);
@@ -233,7 +242,7 @@ async function getOnChainEternalAISystemPrompt(
  * @returns System Prompt
  */
 async function fetchEternalAISystemPrompt(
-    runtime: IAgentRuntime,
+    _runtime: IAgentRuntime,
     content: string
 ): Promise<string> | undefined {
     const IPFS = "ipfs://";
@@ -251,26 +260,23 @@ async function fetchEternalAISystemPrompt(
         if (responseLH.ok) {
             const data = await responseLH.text();
             return data;
-        } else {
-            const gcs = content.replace(
-                IPFS,
-                "https://cdn.eternalai.org/upload/"
-            );
-            elizaLogger.info("fetch gcs", gcs);
-            const responseGCS = await fetch(gcs, {
-                method: "GET",
-            });
-            elizaLogger.info("fetch lightHouse gcs", responseGCS);
-            if (responseGCS.ok) {
-                const data = await responseGCS.text();
-                return data;
-            } else {
-                throw new Error("invalid on-chain system prompt");
-            }
         }
-    } else {
-        return content;
+        const gcs = content.replace(
+            IPFS,
+            "https://cdn.eternalai.org/upload/"
+        );
+        elizaLogger.info("fetch gcs", gcs);
+        const responseGCS = await fetch(gcs, {
+            method: "GET",
+        });
+        elizaLogger.info("fetch lightHouse gcs", responseGCS);
+        if (responseGCS.ok) {
+            const data = await responseGCS.text();
+            return data;
+        }
+        throw new Error("invalid on-chain system prompt");
     }
+    return content;
 }
 
 /**
@@ -362,6 +368,7 @@ export async function generateText({
     verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     verifiableInferenceOptions?: VerifiableInferenceOptions;
 }): Promise<string> {
+    logFunctionCall('generateText', runtime);
     if (!context) {
         console.error("generateText context is empty");
         return "";
@@ -404,6 +411,7 @@ export async function generateText({
     }
 
     const provider = runtime.modelProvider;
+    console.log(["provider", provider, runtime]);
     elizaLogger.debug("Provider settings:", {
         provider,
         hasRuntime: !!runtime,
@@ -991,7 +999,7 @@ export async function generateText({
             case ModelProviderName.GAIANET: {
                 elizaLogger.debug("Initializing GAIANET model.");
 
-                var baseURL = getEndpoint(provider);
+                let baseURL = getEndpoint(provider);
                 if (!baseURL) {
                     switch (modelClass) {
                         case ModelClass.SMALL:
@@ -1250,7 +1258,7 @@ export async function generateText({
                     stream: false,
                 };
 
-                const fetchResponse = await runtime.fetch(endpoint + "/llm", {
+                const fetchResponse = await runtime.fetch(`${endpoint}/llm`, {
                     method: "POST",
                     headers: {
                         accept: "text/event-stream",
@@ -1320,6 +1328,7 @@ export async function generateShouldRespond({
     context: string;
     modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
+    logFunctionCall('generateShouldRespond', runtime);
     let retryDelay = 1000;
     while (true) {
         try {
@@ -1371,7 +1380,7 @@ export async function splitChunks(
     chunkSize = 512,
     bleed = 20
 ): Promise<string[]> {
-    elizaLogger.debug(`[splitChunks] Starting text split`);
+    elizaLogger.debug("[splitChunks] Starting text split");
 
     const textSplitter = new RecursiveCharacterTextSplitter({
         chunkSize: Number(chunkSize),
@@ -1379,7 +1388,7 @@ export async function splitChunks(
     });
 
     const chunks = await textSplitter.splitText(content);
-    elizaLogger.debug(`[splitChunks] Split complete:`, {
+    elizaLogger.debug("[splitChunks] Split complete:", {
         numberOfChunks: chunks.length,
         averageChunkSize:
             chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
@@ -1412,6 +1421,7 @@ export async function generateTrueOrFalse({
     context: string;
     modelClass: ModelClass;
 }): Promise<boolean> {
+    logFunctionCall('generateTrueOrFalse', runtime);
     let retryDelay = 1000;
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const stop = Array.from(
@@ -1464,6 +1474,7 @@ export async function generateTextArray({
     context: string;
     modelClass: ModelClass;
 }): Promise<string[]> {
+    logFunctionCall('generateTextArray', runtime);
     if (!context) {
         elizaLogger.error("generateTextArray context is empty");
         return [];
@@ -1500,6 +1511,7 @@ export async function generateObjectDeprecated({
     context: string;
     modelClass: ModelClass;
 }): Promise<any> {
+    logFunctionCall('generateObjectDeprecated', runtime);
     if (!context) {
         elizaLogger.error("generateObjectDeprecated context is empty");
         return null;
@@ -1536,6 +1548,7 @@ export async function generateObjectArray({
     context: string;
     modelClass: ModelClass;
 }): Promise<any[]> {
+    logFunctionCall('generateObjectArray', runtime);
     if (!context) {
         elizaLogger.error("generateObjectArray context is empty");
         return [];
@@ -1584,6 +1597,7 @@ export async function generateMessageResponse({
     context: string;
     modelClass: ModelClass;
 }): Promise<Content> {
+    logFunctionCall('generateMessageResponse', runtime);
     const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const max_context_length = modelSettings.maxInputTokens;
 
@@ -1641,6 +1655,7 @@ export const generateImage = async (
     data?: string[];
     error?: any;
 }> => {
+    logFunctionCall('generateImage', runtime);
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     if (!modelSettings) {
         elizaLogger.warn("No model settings found for the image model provider.");
@@ -1655,33 +1670,33 @@ export const generateImage = async (
         runtime.imageModelProvider === runtime.modelProvider
             ? runtime.token
             : (() => {
-                  // First try to match the specific provider
-                  switch (runtime.imageModelProvider) {
-                      case ModelProviderName.HEURIST:
-                          return runtime.getSetting("HEURIST_API_KEY");
-                      case ModelProviderName.TOGETHER:
-                          return runtime.getSetting("TOGETHER_API_KEY");
-                      case ModelProviderName.FAL:
-                          return runtime.getSetting("FAL_API_KEY");
-                      case ModelProviderName.OPENAI:
-                          return runtime.getSetting("OPENAI_API_KEY");
-                      case ModelProviderName.VENICE:
-                          return runtime.getSetting("VENICE_API_KEY");
-                      case ModelProviderName.LIVEPEER:
-                          return runtime.getSetting("LIVEPEER_GATEWAY_URL");
-                      default:
-                          // If no specific match, try the fallback chain
-                          return (
-                              runtime.getSetting("HEURIST_API_KEY") ??
-                              runtime.getSetting("NINETEEN_AI_API_KEY") ??
-                              runtime.getSetting("TOGETHER_API_KEY") ??
-                              runtime.getSetting("FAL_API_KEY") ??
-                              runtime.getSetting("OPENAI_API_KEY") ??
-                              runtime.getSetting("VENICE_API_KEY") ??
-                              runtime.getSetting("LIVEPEER_GATEWAY_URL")
-                          );
-                  }
-              })();
+                // First try to match the specific provider
+                switch (runtime.imageModelProvider) {
+                    case ModelProviderName.HEURIST:
+                        return runtime.getSetting("HEURIST_API_KEY");
+                    case ModelProviderName.TOGETHER:
+                        return runtime.getSetting("TOGETHER_API_KEY");
+                    case ModelProviderName.FAL:
+                        return runtime.getSetting("FAL_API_KEY");
+                    case ModelProviderName.OPENAI:
+                        return runtime.getSetting("OPENAI_API_KEY");
+                    case ModelProviderName.VENICE:
+                        return runtime.getSetting("VENICE_API_KEY");
+                    case ModelProviderName.LIVEPEER:
+                        return runtime.getSetting("LIVEPEER_GATEWAY_URL");
+                    default:
+                        // If no specific match, try the fallback chain
+                        return (
+                            runtime.getSetting("HEURIST_API_KEY") ??
+                            runtime.getSetting("NINETEEN_AI_API_KEY") ??
+                            runtime.getSetting("TOGETHER_API_KEY") ??
+                            runtime.getSetting("FAL_API_KEY") ??
+                            runtime.getSetting("OPENAI_API_KEY") ??
+                            runtime.getSetting("VENICE_API_KEY") ??
+                            runtime.getSetting("LIVEPEER_GATEWAY_URL")
+                        );
+                }
+            })();
     try {
         if (runtime.imageModelProvider === ModelProviderName.HEURIST) {
             const response = await fetch(
@@ -1720,7 +1735,7 @@ export const generateImage = async (
 
             const imageURL = await response.json();
             return { success: true, data: [imageURL] };
-        } else if (
+        } if (
             runtime.imageModelProvider === ModelProviderName.TOGETHER ||
             // for backwards compat
             runtime.imageModelProvider === ModelProviderName.LLAMACLOUD
@@ -1778,7 +1793,7 @@ export const generateImage = async (
 
             elizaLogger.debug(`Generated ${base64s.length} images`);
             return { success: true, data: base64s };
-        } else if (runtime.imageModelProvider === ModelProviderName.FAL) {
+        }if (runtime.imageModelProvider === ModelProviderName.FAL) {
             fal.config({
                 credentials: apiKey as string,
             });
@@ -1800,13 +1815,13 @@ export const generateImage = async (
                 seed: data.seed ?? 6252023,
                 ...(runtime.getSetting("FAL_AI_LORA_PATH")
                     ? {
-                          loras: [
-                              {
-                                  path: runtime.getSetting("FAL_AI_LORA_PATH"),
-                                  scale: 1,
-                              },
-                          ],
-                      }
+                        loras: [
+                            {
+                                path: runtime.getSetting("FAL_AI_LORA_PATH"),
+                                scale: 1,
+                            },
+                        ],
+                    }
                     : {}),
             };
 
@@ -1831,7 +1846,7 @@ export const generateImage = async (
 
             const base64s = await Promise.all(base64Promises);
             return { success: true, data: base64s };
-        } else if (runtime.imageModelProvider === ModelProviderName.VENICE) {
+        }if (runtime.imageModelProvider === ModelProviderName.VENICE) {
             const response = await fetch(
                 "https://api.venice.ai/api/v1/image/generate",
                 {
@@ -1872,7 +1887,7 @@ export const generateImage = async (
             });
 
             return { success: true, data: base64s };
-        } else if (
+        }if (
             runtime.imageModelProvider === ModelProviderName.NINETEEN_AI
         ) {
             const response = await fetch(
@@ -1911,7 +1926,7 @@ export const generateImage = async (
             });
 
             return { success: true, data: base64s };
-        } else if (runtime.imageModelProvider === ModelProviderName.LIVEPEER) {
+        }if (runtime.imageModelProvider === ModelProviderName.LIVEPEER) {
             if (!apiKey) {
                 throw new Error("Livepeer Gateway is not defined");
             }
@@ -2013,6 +2028,7 @@ export const generateCaption = async (
     title: string;
     description: string;
 }> => {
+    logFunctionCall('generateCaption', runtime);
     const { imageUrl } = data;
     const imageDescriptionService =
         runtime.getService<IImageDescriptionService>(
@@ -2081,6 +2097,7 @@ export const generateObject = async ({
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
 }: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
+    logFunctionCall('generateObject', runtime);
     if (!context) {
         const errorMessage = "generateObject context is empty";
         console.error(errorMessage);
@@ -2174,6 +2191,7 @@ export async function handleProvider(
         //verifiableInferenceAdapter,
         //verifiableInferenceOptions,
     } = options;
+    console.log(["provider", provider, runtime]);
     switch (provider) {
         case ModelProviderName.OPENAI:
         case ModelProviderName.ETERNALAI:
@@ -2577,6 +2595,7 @@ export async function generateTweetActions({
     context: string;
     modelClass: ModelClass;
 }): Promise<ActionResponse | null> {
+    logFunctionCall('generateTweetActions', runtime);
     let retryDelay = 1000;
     while (true) {
         try {
@@ -2593,9 +2612,8 @@ export async function generateTweetActions({
             if (actions) {
                 elizaLogger.debug("Parsed tweet actions:", actions);
                 return actions;
-            } else {
-                elizaLogger.debug("generateTweetActions no valid response");
             }
+                elizaLogger.debug("generateTweetActions no valid response");
         } catch (error) {
             elizaLogger.error("Error in generateTweetActions:", error);
             if (
