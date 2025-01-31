@@ -62,18 +62,16 @@ export const cancelOrders: Action = {
                 subaccountSummaryResponse.data?.data?.open_orders;
 
             if (openOrders && openOrders.length > 0) {
-                await Promise.all(
-                    openOrders.map((o) => {
-                        return cancelOrder(endpoint, jwt, {
-                            symbol: o.symbol,
-                            subaccount: getSubaccount(wallet.address, 0),
-                            order_digest: o.order_digest,
-                            nonce: generateNonce(),
-                            is_conditional_order: false,
-                            wait_for_reply: false,
-                        });
-                    })
-                );
+                for (const o of openOrders) {
+                    await cancelOrder(endpoint, jwt, {
+                        symbol: o.symbol,
+                        subaccount: getSubaccount(wallet.address, 0),
+                        order_digest: o.order_digest,
+                        nonce: generateNonce(),
+                        is_conditional_order: false,
+                        wait_for_reply: false,
+                    });
+                }
                 callback({
                     text: `Successfully cancelled ${openOrders.length} orders.`,
                 });
