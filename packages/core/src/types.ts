@@ -1312,7 +1312,7 @@ export interface IAgentRuntime {
 
     getSetting(key: string): string | null;
 
-    getProvider(provider: ModelProviderName): IModelProvider | null;
+    getModelProvider(): IModelProvider;
 
     // Methods
     getConversationLength(): number;
@@ -1669,9 +1669,15 @@ export interface ChunkRow {
     // Add other properties if needed
 }
 
+
+
 export interface IModelProvider {
     endpoint: string;
-    model: Record<ModelClass, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    defaultModel: Record<ModelClass, ModelSettings>;
+    smallModel: Record<ModelClass, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    embeddingModel: Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    imageModel: Record<ModelClass.IMAGE, ImageModelSettings>;
+    imageVisionModel: Record<ModelClass.IMAGE, ImageModelSettings>;
     apiKey: string;
-    provider: string;
+    provider: ModelProviderName;
 }
