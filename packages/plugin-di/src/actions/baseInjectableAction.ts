@@ -49,7 +49,7 @@ export abstract class BaseInjectableAction<T> implements InjectableAction<T> {
     /**
      * Constructor for the base injectable action
      */
-    constructor(opts: ActionOptions<T>) {
+    constructor(@unmanaged() opts: ActionOptions<T>) {
         // Set the action properties
         this.name = opts.name;
         this.similes = opts.similes;
