@@ -1670,14 +1670,15 @@ export interface ChunkRow {
 }
 
 
-
 export interface IModelProvider {
     endpoint: string;
-    defaultModel: Record<ModelClass, ModelSettings>;
-    smallModel: Record<ModelClass, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
-    embeddingModel: Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
-    imageModel: Record<ModelClass.IMAGE, ImageModelSettings>;
-    imageVisionModel: Record<ModelClass.IMAGE, ImageModelSettings>;
+    defaultModel?: Record<ModelClass, ModelSettings>;
+    smallModel?: Record<ModelClass.SMALL, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    largeModel?: Record<ModelClass.LARGE, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    mediumModel?: Record<ModelClass.MEDIUM, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    embeddingModel?: Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    imageModel?: Record<ModelClass.IMAGE, ImageModelSettings>;
+    imageVisionModel?: Record<ModelClass.IMAGE, ImageModelSettings>;
     apiKey: string;
     provider: ModelProviderName;
 }
