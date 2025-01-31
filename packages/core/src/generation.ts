@@ -63,7 +63,8 @@ function logFunctionCall(functionName: string, runtime: IAgentRuntime) {
     elizaLogger.info(`Function call: ${functionName}`, {
         functionName,
         modelProvider: runtime.modelProvider,
-        runtime
+        endpoint: runtime.character.modelEndpointOverride,
+        // runtime,
     });
 }
 
@@ -941,7 +942,7 @@ export async function generateText({
                     elizaLogger.debug("Initializing Ollama model.");
 
                     const ollamaProvider = createOllama({
-                        baseURL: getEndpoint(provider) + "/api",
+                        baseURL: `${getEndpoint(provider)}/api`,
                         fetch: runtime.fetch,
                     });
                     const ollama = ollamaProvider(model);
