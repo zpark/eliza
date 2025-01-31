@@ -5,9 +5,9 @@ import axios from "axios";
 import { randomBytes } from "crypto";
 
 export const generateNonce = (): string => {
-    const expiredAt = (Date.now() + 1000 * 60 * 1) * (1 << 20); // 1 minutes
+    const expiredAt = BigInt(Date.now() + 1000 * 60) * BigInt(1 << 20);
     const random = parseInt(randomBytes(3).toString("hex"), 16) % (1 << 20);
-    return (expiredAt + random).toString();
+    return (expiredAt + BigInt(random)).toString();
 };
 
 export const generateJwt = async (
