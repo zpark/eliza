@@ -1,5 +1,5 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -484,15 +484,14 @@ export class AgentRuntime implements IAgentRuntime {
         */
 
         if (
-            this.character &&
-            this.character.knowledge &&
+            this.character?.knowledge &&
             this.character.knowledge.length > 0
         ) {
             elizaLogger.info(
-                `[RAG Check] RAG Knowledge enabled: ${this.character.settings.ragKnowledge ? true : false}`,
+                `[RAG Check] RAG Knowledge enabled: ${!!this.character.settings.ragKnowledge}`,
             );
             elizaLogger.info(
-                `[RAG Check] Knowledge items:`,
+                "[RAG Check] Knowledge items:",
                 this.character.knowledge,
             );
 
@@ -535,7 +534,7 @@ export class AgentRuntime implements IAgentRuntime {
                 // Process each type of knowledge
                 if (directoryKnowledge.length > 0) {
                     elizaLogger.info(
-                        `[RAG Process] Processing directory knowledge sources:`,
+                        "[RAG Process] Processing directory knowledge sources:",
                     );
                     for (const dir of directoryKnowledge) {
                         elizaLogger.info(
@@ -547,14 +546,14 @@ export class AgentRuntime implements IAgentRuntime {
 
                 if (pathKnowledge.length > 0) {
                     elizaLogger.info(
-                        `[RAG Process] Processing individual file knowledge sources`,
+                        "[RAG Process] Processing individual file knowledge sources",
                     );
                     await this.processCharacterRAGKnowledge(pathKnowledge);
                 }
 
                 if (stringKnowledge.length > 0) {
                     elizaLogger.info(
-                        `[RAG Process] Processing direct string knowledge`,
+                        "[RAG Process] Processing direct string knowledge",
                     );
                     await this.processCharacterKnowledge(stringKnowledge);
                 }
