@@ -64,7 +64,6 @@ function logFunctionCall(functionName: string, runtime: IAgentRuntime) {
         functionName,
         modelProvider: runtime.modelProvider,
         endpoint: runtime.character.modelEndpointOverride,
-        // runtime,
     });
 }
 
@@ -412,7 +411,6 @@ export async function generateText({
     }
 
     const provider = runtime.modelProvider;
-    console.log(["provider", provider, runtime]);
     elizaLogger.debug("Provider settings:", {
         provider,
         hasRuntime: !!runtime,
@@ -533,6 +531,8 @@ export async function generateText({
             `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
         );
 
+        logFunctionCall('generateText', runtime);
+
         switch (provider) {
             // OPENAI & LLAMACLOUD shared same structure.
             case ModelProviderName.OPENAI:
@@ -576,7 +576,7 @@ export async function generateText({
                 });
 
                 response = openaiResponse;
-                console.log("Received response from OpenAI model.");
+                elizaLogger.debug("Received response from OpenAI model.");
                 break;
             }
 
@@ -1960,8 +1960,8 @@ export const generateImage = async (
                 }
                 const base64Images = await Promise.all(
                     result.images.map(async (image) => {
-                        console.log("imageUrl console log", image.url);
-                        let imageUrl;
+                        elizaLogger.debug("imageUrl console log", image.url);
+                        let imageUrl: string | URL | Request;
                         if (image.url.includes("http")) {
                             imageUrl = image.url;
                         } else {
@@ -2192,7 +2192,6 @@ export async function handleProvider(
         //verifiableInferenceAdapter,
         //verifiableInferenceOptions,
     } = options;
-    console.log(["provider", provider, runtime]);
     switch (provider) {
         case ModelProviderName.OPENAI:
         case ModelProviderName.ETERNALAI:
@@ -2259,6 +2258,7 @@ async function handleOpenAI({
         getCloudflareGatewayBaseURL(runtime, "openai") ||
         models.openai.endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
+    elizaLogger.debug({openai, baseURL, ...modelOptions, model});
     return await aiGenerateObject({
         model: openai.languageModel(model),
         schema,
@@ -2336,30 +2336,30 @@ async function handleGrok({
  * @param {ProviderOptions} options - Options specific to Groq.
  * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
  */
-async function handleGroq({
-    model,
-    apiKey,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "json",
-    modelOptions,
-    runtime,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    elizaLogger.debug("Handling Groq request with Cloudflare check");
-    const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
-    elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
+// async function handleGroq({
+//     model,
+//     apiKey,
+//     schema,
+//     schemaName,
+//     schemaDescription,
+//     mode = "json",
+//     modelOptions,
+//     runtime,
+// }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+//     elizaLogger.debug("Handling Groq request with Cloudflare check");
+//     const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
+//     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
-    const groq = createGroq({ apiKey, baseURL });
-    return await aiGenerateObject({
-        model: groq.languageModel(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
+//     const groq = createGroq({ apiKey, baseURL });
+//     return await aiGenerateObject({
+//         model: groq.languageModel(model),
+//         schema,
+//         schemaName,
+//         schemaDescription,
+//         mode,
+//         ...modelOptions,
+//     });
+// }
 
 /**
  * Handles object generation for Google models.
@@ -2418,25 +2418,25 @@ async function handleMistral({
  * @param {ProviderOptions} options - Options specific to Redpill.
  * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
  */
-async function handleRedPill({
-    model,
-    apiKey,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "json",
-    modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const redPill = createOpenAI({ apiKey, baseURL: models.redpill.endpoint });
-    return await aiGenerateObject({
-        model: redPill.languageModel(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
+// async function handleRedPill({
+//     model,
+//     apiKey,
+//     schema,
+//     schemaName,
+//     schemaDescription,
+//     mode = "json",
+//     modelOptions,
+// }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+//     const redPill = createOpenAI({ apiKey, baseURL: models.redpill.endpoint });
+//     return await aiGenerateObject({
+//         model: redPill.languageModel(model),
+//         schema,
+//         schemaName,
+//         schemaDescription,
+//         mode,
+//         ...modelOptions,
+//     });
+// }
 
 /**
  * Handles object generation for OpenRouter models.
@@ -2556,7 +2556,7 @@ async function handleLivepeer({
     mode,
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    console.log("Livepeer provider api key:", apiKey);
+    elizaLogger.debug("Livepeer provider api key:", apiKey);
     if (!apiKey) {
         throw new Error(
             "Livepeer provider requires LIVEPEER_GATEWAY_URL to be configured"

@@ -1312,6 +1312,8 @@ export interface IAgentRuntime {
 
     getSetting(key: string): string | null;
 
+    getProvider(provider: ModelProviderName): IModelProvider | null;
+
     // Methods
     getConversationLength(): number;
 
@@ -1665,4 +1667,11 @@ export interface DirectoryItem {
 export interface ChunkRow {
     id: string;
     // Add other properties if needed
+}
+
+export interface IModelProvider {
+    endpoint: string;
+    model: Record<ModelClass, ModelSettings> | Record<ModelClass.IMAGE, ImageModelSettings> | Record<ModelClass.EMBEDDING, EmbeddingModelSettings>;
+    apiKey: string;
+    provider: string;
 }
