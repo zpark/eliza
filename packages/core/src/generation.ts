@@ -1,34 +1,23 @@
+// ================ IMPORTS ================
 import { createOpenAI } from "@ai-sdk/openai";
-import { z } from "zod";
-
 import {
-    generateText as aiGenerateText,
-    generateObject as aiGenerateObject,
     generateImage as aiGenerateImage,
+    generateObject as aiGenerateObject,
+    generateText as aiGenerateText,
     type StepResult as AIStepResult,
     type CoreTool,
-    type GenerateTextOptions,
-    type GenerateObjectOptions,
-    type GenerateImageOptions,
-    type GenerateObjectResult,
-    type GenerateImageResult,
-    type GenerateTextResult,
+    type GenerateObjectResult
 } from "ai";
-
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { Buffer } from "node:buffer";
-import { object, type ZodSchema } from "zod";
+import { z, type ZodSchema } from "zod";
 import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
-    parseActionResponseFromText,
-    parseBooleanFromText,
     parseJsonArrayFromText,
     parseJSONObjectFromText,
-    parseShouldRespondFromText,
+    parseShouldRespondFromText
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
-    type ActionResponse,
     type Content,
     type IAgentRuntime,
     type IImageDescriptionService,
@@ -36,26 +25,56 @@ import {
     type ModelClass,
     type ModelProviderName,
     ServiceType,
-    //VerifiableInferenceProvider,
     type TelemetrySettings,
-    TokenizerType,
     type VerifiableInferenceOptions,
     type VerifiableInferenceResult
 } from "./types.ts";
 
-import BigNumber from "bignumber.js";
-import { createPublicClient, http } from "viem";
-
+// ================ TYPE DEFINITIONS ================
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
+interface TogetherAIImageResponse {
+    data: Array<{
+        url: string;
+        content_type?: string;
+        image_type?: string;
+    }>;
+}
 
+interface ModelSettings {
+    prompt: string;
+    temperature: number;
+    maxTokens: number;
+    frequencyPenalty: number;
+    presencePenalty: number;
+    stop?: string[];
+    experimental_telemetry?: TelemetrySettings;
+}
+
+interface GenerationOptions {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+    stop?: string[];
+    mode?: "auto" | "json" | "tool";
+    output?: "object" | "array" | "enum" | "no-schema" | undefined;
+    enum?: string[];
+    experimental_providerMetadata?: Record<string, unknown>;
+    verifiableInference?: boolean;
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    verifiableInferenceOptions?: VerifiableInferenceOptions;
+}
+
+// ================ UTILITY FUNCTIONS ================
 function getCloudflareGatewayBaseURL(
     runtime: IAgentRuntime,
     provider: string
 ): string | undefined {
-    const isCloudflareEnabled =
-        runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
+    const isCloudflareEnabled = runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
     const cloudflareAccountId = runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID");
     const cloudflareGatewayId = runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID");
 
@@ -72,16 +91,12 @@ function getCloudflareGatewayBaseURL(
     }
 
     if (!cloudflareAccountId) {
-        elizaLogger.warn(
-            "Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set"
-        );
+        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set");
         return undefined;
     }
 
     if (!cloudflareGatewayId) {
-        elizaLogger.warn(
-            "Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set"
-        );
+        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set");
         return undefined;
     }
 
@@ -96,19 +111,28 @@ function getCloudflareGatewayBaseURL(
     return baseURL;
 }
 
-/**
- * Send a message to the model for a text generateText - receive a string back and parse how you'd like
- * @param opts - The options for the generateText request.
- * @param opts.context The context of the message to be completed.
- * @param opts.stop A list of strings to stop the generateText at.
- * @param opts.model The model to use for generateText.
- * @param opts.frequency_penalty The frequency penalty to apply to the generateText.
- * @param opts.presence_penalty The presence penalty to apply to the generateText.
- * @param opts.temperature The temperature to apply to the generateText.
- * @param opts.max_context_length The maximum length of the context to apply to the generateText.
- * @returns The completed message.
- */
+export async function splitChunks(
+    content: string,
+    chunkSize = 512,
+    bleed = 20
+): Promise<string[]> {
+    elizaLogger.debug("[splitChunks] Starting text split");
 
+    const textSplitter = new RecursiveCharacterTextSplitter({
+        chunkSize: Number(chunkSize),
+        chunkOverlap: Number(bleed),
+    });
+
+    const chunks = await textSplitter.splitText(content);
+    elizaLogger.debug("[splitChunks] Split complete:", {
+        numberOfChunks: chunks.length,
+        averageChunkSize: chunks.reduce((acc, chunk) => acc + chunk.length, 0) / chunks.length,
+    });
+
+    return chunks;
+}
+
+// ================ TEXT GENERATION FUNCTIONS ================
 export async function generateText({
     runtime,
     context,
@@ -194,7 +218,7 @@ export async function generateText({
 
     // test: make it work without modelSettings
     // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    let model = runtime.getModelProvider().defaultModel;
+    const model = runtime.getModelProvider().defaultModel;
 
     // allow character.json settings => secrets to override models
     // FIXME: Add MODEL_MEDIUM and other model class support
@@ -202,8 +226,6 @@ export async function generateText({
 
     elizaLogger.info("Selected model:", model);
 
-    // TODO: add model settings
-    // TODO: handle Model Settings
     const apiKey = runtime.token;
 
     try {
@@ -234,7 +256,6 @@ export async function generateText({
         const { text } = await aiGenerateText({
             model: createOpenAICompabitbleModel.languageModel(model),
             prompt: context,
-            // temperature: temperature,
             system:
                 runtime.character.system ??
                 settings.SYSTEM_PROMPT ??
@@ -242,10 +263,6 @@ export async function generateText({
             tools: tools,
             onStepFinish: onStepFinish,
             maxSteps: maxSteps,
-            // maxTokens: max_response_length,
-            // frequencyPenalty: frequency_penalty,
-            // presencePenalty: presence_penalty,
-            // experimental_telemetry: experimental_telemetry,
         });
 
         elizaLogger.debug(`Received response from ${model} model.`);
@@ -258,22 +275,45 @@ export async function generateText({
 }
 
 
-// ## DO NOT TOUCH, THIS FUNCTION IS FINE
 
-/**
- * Sends a message to the model to determine if it should respond to the given context.
- * @param opts - The options for the generateText request
- * @param opts.context The context to evaluate for response
- * @param opts.stop A list of strings to stop the generateText at
- * @param opts.model The model to use for generateText
- * @param opts.frequency_penalty The frequency penalty to apply (0.0 to 2.0)
- * @param opts.presence_penalty The presence penalty to apply (0.0 to 2.0)
- * @param opts.temperature The temperature to control randomness (0.0 to 2.0)
- * @param opts.serverUrl The URL of the API server
- * @param opts.max_context_length Maximum allowed context length in tokens
- * @param opts.max_response_length Maximum allowed response length in tokens
- * @returns Promise resolving to "RESPOND", "IGNORE", "STOP" or null
- */
+export async function generateTextArray({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+}): Promise<string[]> {
+    logFunctionCall('generateTextArray', runtime);
+    if (!context) {
+        elizaLogger.error("generateTextArray context is empty");
+        return [];
+    }
+    let retryDelay = 1000;
+
+    while (true) {
+        try {
+            const response = await generateObject({
+                runtime,
+                context,
+                modelClass,
+                output: "array",
+            });
+
+            const parsedResponse = parseJsonArrayFromText(response);
+            if (parsedResponse) {
+                return parsedResponse;
+            }
+        } catch (error) {
+            elizaLogger.error("Error in generateTextArray:", error);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        retryDelay *= 2;
+    }
+}
+
 export async function generateShouldRespond({
     runtime,
     context,
@@ -291,19 +331,19 @@ export async function generateShouldRespond({
                 "Attempting to generate text with context:",
                 context
             );
-            const response = await generateText({
+            const {object} = await generateObject({
                 runtime,
                 context,
                 modelClass,
+                output: 'enum',
+                enum: ['RESPOND', 'IGNORE', 'STOP'],
+                schema: z.enum(['RESPOND', 'IGNORE', 'STOP']),
             });
 
-            elizaLogger.debug("Received response from generateText:", response);
-            const parsedResponse = parseShouldRespondFromText(response.trim());
-            if (parsedResponse) {
-                elizaLogger.debug("Parsed response:", parsedResponse);
-                return parsedResponse;
-            }
-                elizaLogger.debug("generateShouldRespond no response");
+            elizaLogger.debug("Received response from generateObject:", object);
+            
+            return object;
+
         } catch (error) {
             elizaLogger.error("Error in generateShouldRespond:", error);
             if (
@@ -322,57 +362,6 @@ export async function generateShouldRespond({
     }
 }
 
-
-// ## DO NOT TOUCH, THIS FUNCTION IS FINE
-
-/**
- * Splits content into chunks of specified size with optional overlapping bleed sections
- * @param content - The text content to split into chunks
- * @param chunkSize - The maximum size of each chunk in tokens
- * @param bleed - Number of characters to overlap between chunks (default: 100)
- * @returns Promise resolving to array of text chunks with bleed sections
- */
-export async function splitChunks(
-    content: string,
-    chunkSize = 512,
-    bleed = 20
-): Promise<string[]> {
-    elizaLogger.debug("[splitChunks] Starting text split");
-
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: Number(chunkSize),
-        chunkOverlap: Number(bleed),
-    });
-
-    const chunks = await textSplitter.splitText(content);
-    elizaLogger.debug("[splitChunks] Split complete:", {
-        numberOfChunks: chunks.length,
-        averageChunkSize:
-            chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
-            chunks.length,
-    });
-
-    return chunks;
-}
-
-
-
-
-
-/**
- * Sends a message to the model and parses the response as a boolean value
- * @param opts - The options for the generateText request
- * @param opts.context The context to evaluate for the boolean response
- * @param opts.stop A list of strings to stop the generateText at
- * @param opts.model The model to use for generateText
- * @param opts.frequency_penalty The frequency penalty to apply (0.0 to 2.0)
- * @param opts.presence_penalty The presence penalty to apply (0.0 to 2.0)
- * @param opts.temperature The temperature to control randomness (0.0 to 2.0)
- * @param opts.serverUrl The URL of the API server
- * @param opts.max_context_length Maximum allowed context length in tokens
- * @param opts.max_response_length Maximum allowed response length in tokens
- * @returns Promise resolving to a boolean value parsed from the model's response
- */
 export async function generateTrueOrFalse({
     runtime,
     context = "",
@@ -403,64 +392,57 @@ export async function generateTrueOrFalse({
 }
 
 
-// ## DO NOT TOUCH, THIS FUNCTION IS FINE
 
-/**
- * Send a message to the model and parse the response as a string array
- * @param opts - The options for the generateText request
- * @param opts.context The context/prompt to send to the model
- * @param opts.stop Array of strings that will stop the model's generation if encountered
- * @param opts.model The language model to use
- * @param opts.frequency_penalty The frequency penalty to apply (0.0 to 2.0)
- * @param opts.presence_penalty The presence penalty to apply (0.0 to 2.0)
- * @param opts.temperature The temperature to control randomness (0.0 to 2.0)
- * @param opts.serverUrl The URL of the API server
- * @param opts.token The API token for authentication
- * @param opts.max_context_length Maximum allowed context length in tokens
- * @param opts.max_response_length Maximum allowed response length in tokens
- * @returns Promise resolving to an array of strings parsed from the model's response
- */
-export async function generateTextArray({
+// ================ OBJECT GENERATION FUNCTIONS ================
+export const generateObject = async ({
     runtime,
     context,
+    output,
     modelClass,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-}): Promise<string[]> {
-    logFunctionCall('generateTextArray', runtime);
+    schema,
+    schemaName,
+    schemaDescription,
+    stop,
+    mode = "json",
+    verifiableInference,
+    verifiableInferenceAdapter,
+    verifiableInferenceOptions,
+}: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
+    logFunctionCall('generateObject', runtime);
     if (!context) {
-        elizaLogger.error("generateTextArray context is empty");
-        return [];
+        const errorMessage = "generateObject context is empty";
+        console.error(errorMessage);
+        throw new Error(errorMessage);
     }
-    let retryDelay = 1000;
-
-    while (true) {
-        try {
-            const response = await generateText({
-                runtime,
-                context,
-                modelClass,
-            });
-
-            const parsedResponse = parseJsonArrayFromText(response);
-            if (parsedResponse) {
-                return parsedResponse;
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateTextArray:", error);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
-}
 
 
-// ## DO NOT TOUCH, THIS FUNCTION IS FINE
+    elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
+        const serverUrl = runtime.getModelProvider().endpoint;
+        const apiKey = runtime.token;
+        const model = runtime.getModelProvider().defaultModel;
+        
+        const createOpenAICompabitbleModel = createOpenAI({
+            apiKey,
+            baseURL: serverUrl,
+            fetch: runtime.fetch,
+        });
 
-// make it a pass through to generateObject 
+        const result = await aiGenerateObject({
+            model: createOpenAICompabitbleModel.languageModel(model),
+            prompt: context.toString(),
+            schema,
+            schemaName,
+            schemaDescription,
+            output,
+            system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+            stop
+        });
+
+        elizaLogger.debug(`Received Object response from ${model} model.`);
+        
+        return result.object;
+};
+
 export async function generateObjectDeprecated({
     runtime,
     context,
@@ -469,7 +451,7 @@ export async function generateObjectDeprecated({
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-}): Promise<any> {
+}): Promise<GenerateObjectResult> {
     logFunctionCall('generateObjectDeprecated', runtime);
     return generateObject({
         runtime,
@@ -486,7 +468,7 @@ export async function generateObjectArray({
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-}): Promise<any[]> {
+}): Promise<Array<any>> {
     logFunctionCall('generateObjectArray', runtime);
     if (!context) {
         elizaLogger.error("generateObjectArray context is empty");
@@ -501,18 +483,7 @@ export async function generateObjectArray({
     return object;
 }
 
-/**
- * Send a message to the model for generateText.
- * @param opts - The options for the generateText request.
- * @param opts.context The context of the message to be completed.
- * @param opts.stop A list of strings to stop the generateText at.
- * @param opts.model The model to use for generateText.
- * @param opts.frequency_penalty The frequency penalty to apply to the generateText.
- * @param opts.presence_penalty The presence penalty to apply to the generateText.
- * @param opts.temperature The temperature to apply to the generateText.
- * @param opts.max_context_length The maximum length of the context to apply to the generateText.
- * @returns The completed message.
- */
+
 export async function generateMessageResponse({
     runtime,
     context,
@@ -533,7 +504,7 @@ export async function generateMessageResponse({
         try {
             elizaLogger.log("Generating message response..");
 
-            const response = await generateText({
+            const response = await aiGenerateText({
                 runtime,
                 context,
                 modelClass,
@@ -558,8 +529,7 @@ export async function generateMessageResponse({
 }
 
 
-// TODO: FIX THIS FUNCTION
-
+// ================ IMAGE-RELATED FUNCTIONS ================
 export const generateImage = async (
     data: {
         prompt: string;
@@ -622,6 +592,7 @@ export const generateImage = async (
     }
 };
 
+
 export const generateCaption = async (
     data: { imageUrl: string },
     runtime: IAgentRuntime
@@ -647,205 +618,11 @@ export const generateCaption = async (
     };
 };
 
-/**
- * Configuration options for generating objects with a model.
- */
-export interface GenerationOptions {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    stop?: string[];
-    mode?: "auto" | "json" | "tool";
-    output?: "object" | "array" | "enum" | "no-schema" | undefined;
-    enum?: string[];
-    experimental_providerMetadata?: Record<string, unknown>;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
-}
-
-/**
- * Base settings for model generation.
- */
-interface ModelSettings {
-    prompt: string;
-    temperature: number;
-    maxTokens: number;
-    frequencyPenalty: number;
-    presencePenalty: number;
-    stop?: string[];
-    experimental_telemetry?: TelemetrySettings;
-}
-
-/**
- * Generates structured objects from a prompt using specified AI models and configuration options.
- *
- * @param {GenerationOptions} options - Configuration options for generating objects.
- * @returns {Promise<any[]>} - A promise that resolves to an array of generated objects.
- * @throws {Error} - Throws an error if the provider is unsupported or if generation fails.
- */
-export const generateObject = async ({
-    runtime,
-    context,
-    output,
-    modelClass,
-    schema,
-    schemaName,
-    schemaDescription,
-    stop,
-    mode = "json",
-    verifiableInference,
-    verifiableInferenceAdapter,
-    verifiableInferenceOptions,
-}: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
-    logFunctionCall('generateObject', runtime);
-    if (!context) {
-        const errorMessage = "generateObject context is empty";
-        console.error(errorMessage);
-        throw new Error(errorMessage);
-    }
 
 
-    elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
-        const serverUrl = runtime.getModelProvider().endpoint;
-        const apiKey = runtime.token;
-        const model = runtime.getModelProvider().defaultModel;
-        
-        const createOpenAICompabitbleModel = createOpenAI({
-            apiKey,
-            baseURL: serverUrl,
-            fetch: runtime.fetch,
-        });
-
-        const result = await aiGenerateObject({
-            model: createOpenAICompabitbleModel.languageModel(model),
-            prompt: context.toString(),
-            schema,
-            schemaName,
-            schemaDescription,
-            output,
-            system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-            stop
-        });
-
-        elizaLogger.debug(`Received Object response from ${model} model.`);
-        
-        return result.object;
-};
-
-/**
- * Interface for provider-specific generation options.
- */
-interface ProviderOptions {
-    runtime: IAgentRuntime;
-    provider: ModelProviderName;
-    model: any;
-    apiKey: string;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    mode?: "auto" | "json" | "tool";
-    experimental_providerMetadata?: Record<string, unknown>;
-    modelOptions: ModelSettings;
-    modelClass: ModelClass;
-    context: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
-}
 
 
-// Add type definition for Together AI response
-interface TogetherAIImageResponse {
-    data: Array<{
-        url: string;
-        content_type?: string;
-        image_type?: string;
-    }>;
-}
 
-
-// THIS SHOULD BE IN TWITTER CLIENT PACKAGE
-// export async function generateTweetActions({
-//     runtime,
-//     context,
-//     modelClass,
-// }: {
-//     runtime: IAgentRuntime;
-//     context: string;
-//     modelClass: ModelClass;
-// }): Promise<ActionResponse | null> {
-//     logFunctionCall('generateTweetActions', runtime);
-//     let retryDelay = 1000;
-//     while (true) {
-//         try {
-//             const response = await generateText({
-//                 runtime,
-//                 context,
-//                 modelClass,
-//             });
-//             elizaLogger.debug(
-//                 "Received response from generateText for tweet actions:",
-//                 response
-//             );
-//             const { actions } = parseActionResponseFromText(response.trim());
-//             if (actions) {
-//                 elizaLogger.debug("Parsed tweet actions:", actions);
-//                 return actions;
-//             }
-//                 elizaLogger.debug("generateTweetActions no valid response");
-//         } catch (error) {
-//             elizaLogger.error("Error in generateTweetActions:", error);
-//             if (
-//                 error instanceof TypeError &&
-//                 error.message.includes("queueTextCompletion")
-//             ) {
-//                 elizaLogger.error(
-//                     "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
-//                 );
-//             }
-//         }
-//         elizaLogger.log(`Retrying in ${retryDelay}ms...`);
-//         await new Promise((resolve) => setTimeout(resolve, retryDelay));
-//         retryDelay *= 2;
-//     }
-// }
-
-//             schema,
-//             schemaName,
-//             schemaDescription,
-//             output: output ?? "object",
-//             system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-//         });
-
-//         elizaLogger.debug(`Received Object response from ${model} model.`);
-        
-//         return result.object;
-// };
-
-/**
- * Interface for provider-specific generation options.
- */
-interface ProviderOptions {
-    runtime: IAgentRuntime;
-    provider: ModelProviderName;
-    model: any;
-    apiKey: string;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    mode?: "auto" | "json" | "tool";
-    experimental_providerMetadata?: Record<string, unknown>;
-    modelOptions: ModelSettings;
-    modelClass: ModelClass;
-    context: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
-}
 
 
 
