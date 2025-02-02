@@ -29,7 +29,6 @@
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "tsup": "^8.0.1",
         "whatwg-url": "7.1.0",
         "@0x/swap-ts-sdk": "2.1.1"
     },
