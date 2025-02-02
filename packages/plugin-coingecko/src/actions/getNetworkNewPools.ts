@@ -15,6 +15,7 @@ import axios from "axios";
 import { z } from "zod";
 import { getApiConfig, validateCoingeckoConfig } from "../environment";
 import { getNetworkNewPoolsTemplate } from "../templates/networkNewPools";
+import { getNetworksData } from "../providers/networkProvider";
 
 interface NewPool {
     id: string;
@@ -98,15 +99,40 @@ export default {
                 return false;
             }
 
+            // Fetch networks data first
+            const networks = await getNetworksData(runtime);
+
+            // Fetch networks data first
+            const networksResponse = await getNetworksData(runtime);
+
+            // Find the matching network from the data array
+            const network = networksResponse.find((n) => {
+                const searchTerm = (
+                    result.object as { networkId: string }
+                ).networkId.toLowerCase();
+                return (
+                    n.id.toLowerCase() === searchTerm ||
+                    n.attributes.name.toLowerCase().includes(searchTerm) ||
+                    n.attributes.coingecko_asset_platform_id.toLowerCase() ===
+                        searchTerm
+                );
+            });
+
+            if (!network) {
+                throw new Error(
+                    `Network ${result.object.networkId} not found in available networks`
+                );
+            }
+
             const config = await validateCoingeckoConfig(runtime);
             const { baseUrl, apiKey, headerKey } = getApiConfig(config);
 
             elizaLogger.log(
-                `Fetching new pools data for network: ${result.object.networkId}`
+                `Fetching new pools data for network: ${network.id}`
             );
 
             const response = await axios.get<NewPoolsResponse>(
-                `${baseUrl}/onchain/networks/${result.object.networkId}/new_pools?include=base_token,dex`,
+                `${baseUrl}/onchain/networks/${network.id}/new_pools?include=base_token,dex`,
                 {
                     headers: {
                         [headerKey]: apiKey,
@@ -147,7 +173,7 @@ export default {
                 }));
 
             const responseText = [
-                `New Pools Overview for ${result.object.networkId.toUpperCase()}:`,
+                `New Pools Overview for ${network.attributes.name}:`,
                 "",
                 ...formattedData.map((pool, index) =>
                     [
@@ -169,7 +195,8 @@ export default {
                 callback({
                     text: responseText,
                     content: {
-                        networkId: result.object.networkId,
+                        networkId: network.id,
+                        networkName: network.attributes.name,
                         newPools: formattedData,
                         timestamp: new Date().toISOString(),
                     },
