@@ -1275,9 +1275,9 @@ export interface IAgentRuntime {
     token: string | null;
 
     // TODO: remove these three
-    modelProvider: ModelProviderName;
-    imageModelProvider: ModelProviderName;
-    imageVisionModelProvider: ModelProviderName;
+    modelProvider: string;
+    imageModelProvider: string;
+    imageVisionModelProvider: string;
     //////////////////////////////
 
     

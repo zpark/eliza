@@ -116,17 +116,17 @@ export class AgentRuntime implements IAgentRuntime {
     /**
      * The model to use for generateText.
      */
-    modelProvider: ModelProviderName;
+    modelProvider: string;
 
     /**
      * The model to use for generateImage.
      */
-    imageModelProvider: ModelProviderName;
+    imageModelProvider: string;
 
     /**
      * The model to use for describing images.
      */
-    imageVisionModelProvider: ModelProviderName;
+    imageVisionModelProvider: string;
 
     /**
      * Fetch function to use
