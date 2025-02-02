@@ -1,7 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
-import { fal } from "@fal-ai/client";
-import { AutoTokenizer } from "@huggingface/transformers";
+
 import {
     generateText as aiGenerateText,
     generateObject as aiGenerateObject,
@@ -15,11 +14,11 @@ import {
     type GenerateImageResult,
     type GenerateTextResult,
 } from "ai";
-import { encodingForModel, type TiktokenModel } from "js-tiktoken";
+
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Buffer } from "node:buffer";
 import { object, type ZodSchema } from "zod";
-import { elizaLogger } from "./index.ts";
+import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
     parseActionResponseFromText,
     parseBooleanFromText,
@@ -50,233 +49,7 @@ import { createPublicClient, http } from "viem";
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
-// Add logging helper function at the top
-function logFunctionCall(functionName: string, runtime: IAgentRuntime) {
-    elizaLogger.info(`Function call: ${functionName}`, {
-        functionName,
-        modelProvider: runtime.modelProvider,
-        endpoint: runtime.character.modelEndpointOverride,
-    });
-}
 
-/**
- * Trims the provided text context to a specified token limit using a tokenizer model and type.
- *
- * The function dynamically determines the truncation method based on the tokenizer settings
- * provided by the runtime. If no tokenizer settings are defined, it defaults to using the
- * TikToken truncation method with the "gpt-4o" model.
- *
- * @async
- * @function trimTokens
- * @param {string} context - The text to be tokenized and trimmed.
- * @param {number} maxTokens - The maximum number of tokens allowed after truncation.
- * @param {IAgentRuntime} runtime - The runtime interface providing tokenizer settings.
- *
- * @returns {Promise<string>} A promise that resolves to the trimmed text.
- *
- * @throws {Error} Throws an error if the runtime settings are invalid or missing required fields.
- *
- * @example
- * const trimmedText = await trimTokens("This is an example text", 50, runtime);
- * console.log(trimmedText); // Output will be a truncated version of the input text.
- */
-export async function trimTokens(
-    context: string,
-    maxTokens: number,
-    runtime: IAgentRuntime
-) {
-    logFunctionCall('trimTokens', runtime);
-    if (!context) return "";
-    if (maxTokens <= 0) throw new Error("maxTokens must be positive");
-
-    const tokenizerModel = runtime.getSetting("TOKENIZER_MODEL");
-    const tokenizerType = runtime.getSetting("TOKENIZER_TYPE");
-
-    if (!tokenizerModel || !tokenizerType) {
-        // Default to TikToken truncation using the "gpt-4o" model if tokenizer settings are not defined
-        return truncateTiktoken("gpt-4o", context, maxTokens);
-    }
-
-    // Choose the truncation method based on tokenizer type
-    if (tokenizerType === TokenizerType.Auto) {
-        return truncateAuto(tokenizerModel, context, maxTokens);
-    }
-
-    if (tokenizerType === TokenizerType.TikToken) {
-        return truncateTiktoken(
-            tokenizerModel as TiktokenModel,
-            context,
-            maxTokens
-        );
-    }
-
-    elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
-    return truncateTiktoken("gpt-4o", context, maxTokens);
-}
-
-async function truncateAuto(
-    modelPath: string,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-        const tokens = tokenizer.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return tokenizer.decode(truncatedTokens);
-    } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
-}
-
-async function truncateTiktoken(
-    model: TiktokenModel,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const encoding = encodingForModel(model);
-
-        // Encode the text into tokens
-        const tokens = encoding.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return encoding.decode(truncatedTokens);
-    } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
-}
-
-/**
- * Get OnChain EternalAI System Prompt
- * @returns System Prompt
- */
-async function getOnChainEternalAISystemPrompt(
-    runtime: IAgentRuntime
-): Promise<string> | undefined {
-    const agentId = runtime.getSetting("ETERNALAI_AGENT_ID");
-    const providerUrl = runtime.getSetting("ETERNALAI_RPC_URL");
-    const contractAddress = runtime.getSetting(
-        "ETERNALAI_AGENT_CONTRACT_ADDRESS"
-    );
-    if (agentId && providerUrl && contractAddress) {
-        // get on-chain system-prompt
-        const contractABI = [
-            {
-                inputs: [
-                    {
-                        internalType: "uint256",
-                        name: "_agentId",
-                        type: "uint256",
-                    },
-                ],
-                name: "getAgentSystemPrompt",
-                outputs: [
-                    { internalType: "bytes[]", name: "", type: "bytes[]" },
-                ],
-                stateMutability: "view",
-                type: "function",
-            },
-        ];
-
-        const publicClient = createPublicClient({
-            transport: http(providerUrl),
-        });
-
-        try {
-            const validAddress: `0x${string}` =
-                contractAddress as `0x${string}`;
-            const result = await publicClient.readContract({
-                address: validAddress,
-                abi: contractABI,
-                functionName: "getAgentSystemPrompt",
-                args: [new BigNumber(agentId)],
-            });
-            if (result) {
-                elizaLogger.info("on-chain system-prompt response", result[0]);
-                const value = result[0].toString().replace("0x", "");
-                const content = Buffer.from(value, "hex").toString("utf-8");
-                elizaLogger.info("on-chain system-prompt", content);
-                return await fetchEternalAISystemPrompt(runtime, content);
-            }
-            return undefined;
-        } catch (error) {
-            elizaLogger.error(error);
-            elizaLogger.error("err", error);
-        }
-    }
-    return undefined;
-}
-
-/**
- * Fetch EternalAI System Prompt
- * @returns System Prompt
- */
-async function fetchEternalAISystemPrompt(
-    _runtime: IAgentRuntime,
-    content: string
-): Promise<string> | undefined {
-    const IPFS = "ipfs://";
-    const containsSubstring: boolean = content.includes(IPFS);
-    if (containsSubstring) {
-        const lightHouse = content.replace(
-            IPFS,
-            "https://gateway.lighthouse.storage/ipfs/"
-        );
-        elizaLogger.info("fetch lightHouse", lightHouse);
-        const responseLH = await fetch(lightHouse, {
-            method: "GET",
-        });
-        elizaLogger.info("fetch lightHouse resp", responseLH);
-        if (responseLH.ok) {
-            const data = await responseLH.text();
-            return data;
-        }
-        const gcs = content.replace(
-            IPFS,
-            "https://cdn.eternalai.org/upload/"
-        );
-        elizaLogger.info("fetch gcs", gcs);
-        const responseGCS = await fetch(gcs, {
-            method: "GET",
-        });
-        elizaLogger.info("fetch lightHouse gcs", responseGCS);
-        if (responseGCS.ok) {
-            const data = await responseGCS.text();
-            return data;
-        }
-        throw new Error("invalid on-chain system prompt");
-    }
-    return content;
-}
-
-/**
- * Gets the Cloudflare Gateway base URL for a specific provider if enabled
- * @param runtime The runtime environment
- * @param provider The model provider name
- * @returns The Cloudflare Gateway base URL if enabled, undefined otherwise
- */
 function getCloudflareGatewayBaseURL(
     runtime: IAgentRuntime,
     provider: string
@@ -1075,58 +848,4 @@ interface ProviderOptions {
 }
 
 
-// Add type definition for Together AI response
-interface TogetherAIImageResponse {
-    data: Array<{
-        url: string;
-        content_type?: string;
-        image_type?: string;
-    }>;
-}
 
-
-// THIS SHOULD BE IN TWITTER CLIENT PACKAGE
-export async function generateTweetActions({
-    runtime,
-    context,
-    modelClass,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-}): Promise<ActionResponse | null> {
-    logFunctionCall('generateTweetActions', runtime);
-    let retryDelay = 1000;
-    while (true) {
-        try {
-            const response = await generateText({
-                runtime,
-                context,
-                modelClass,
-            });
-            elizaLogger.debug(
-                "Received response from generateText for tweet actions:",
-                response
-            );
-            const { actions } = parseActionResponseFromText(response.trim());
-            if (actions) {
-                elizaLogger.debug("Parsed tweet actions:", actions);
-                return actions;
-            }
-                elizaLogger.debug("generateTweetActions no valid response");
-        } catch (error) {
-            elizaLogger.error("Error in generateTweetActions:", error);
-            if (
-                error instanceof TypeError &&
-                error.message.includes("queueTextCompletion")
-            ) {
-                elizaLogger.error(
-                    "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
-                );
-            }
-        }
-        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
-}

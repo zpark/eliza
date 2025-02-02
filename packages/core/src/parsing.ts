@@ -6,7 +6,7 @@ export const messageCompletionFooter = `\nResponse format should be formatted in
 { "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
 \`\`\`
 
-The “action” field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
+The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
 `;
 
 export const shouldRespondFooter = `The available options are [RESPOND], [IGNORE], or [STOP]. Choose the most appropriate option.
@@ -56,7 +56,7 @@ export const parseBooleanFromText = (text: string) => {
 
     if (affirmative.includes(normalizedText)) {
         return true;
-    } else if (negative.includes(normalizedText)) {
+    }if (negative.includes(normalizedText)) {
         return false;
     }
 
@@ -176,11 +176,10 @@ export function parseJSONObjectFromText(
         !Array.isArray(jsonData)
     ) {
         return jsonData;
-    } else if (typeof jsonData === "object" && Array.isArray(jsonData)) {
+    }if (typeof jsonData === "object" && Array.isArray(jsonData)) {
         return parseJsonArrayFromText(text);
-    } else {
-        return null;
     }
+        return null;
 }
 
 /**
@@ -203,14 +202,14 @@ export function extractAttributes(
         }
     } else {
         // Extract only specified attributes
-        attributesToExtract.forEach((attribute) => {
+        for (const attribute of attributesToExtract) {
             const match = response.match(
                 new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i")
             );
             if (match) {
                 attributes[attribute] = match[1];
             }
-        });
+        }
     }
 
     return attributes;
@@ -271,7 +270,7 @@ export function cleanJsonResponse(response: string): string {
         .trim();
 }
 
-export const postActionResponseFooter = `Choose any combination of [LIKE], [RETWEET], [QUOTE], and [REPLY] that are appropriate. Each action must be on its own line. Your response must only include the chosen actions.`;
+export const postActionResponseFooter = "Choose any combination of [LIKE], [RETWEET], [QUOTE], and [REPLY] that are appropriate. Each action must be on its own line. Your response must only include the chosen actions.";
 
 export const parseActionResponseFromText = (
     text: string
@@ -333,11 +332,11 @@ export function truncateToCompleteSentence(
     if (lastSpaceIndex !== -1) {
         const truncatedAtSpace = text.slice(0, lastSpaceIndex).trim();
         if (truncatedAtSpace.length > 0) {
-            return truncatedAtSpace + "...";
+            return `${truncatedAtSpace}...`;
         }
     }
 
     // Fallback: Hard truncate and add ellipsis
     const hardTruncated = text.slice(0, maxLength - 3).trim();
-    return hardTruncated + "...";
+    return `${hardTruncated}...`;
 }
