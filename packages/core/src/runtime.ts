@@ -40,7 +40,7 @@ import {
     // RAGKnowledgeItem,
     //Media,
     ModelClass,
-    ModelProviderName,
+    type ModelProviderName,
     type Plugin,
     type Provider,
     type Service,
@@ -56,7 +56,7 @@ import {
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { glob } from "glob";
-import { existsSync } from "fs";
+import { existsSync } from "node:fs";
 /**
  * Represents the runtime environment for an agent, handling message processing,
  * action registration, and interaction with external services like OpenAI and Supabase.
@@ -344,13 +344,13 @@ export class AgentRuntime implements IAgentRuntime {
             knowledgeRoot: this.knowledgeRoot,
         });
 
-        (opts.managers ?? []).forEach((manager: IMemoryManager) => {
+        for (const manager of (opts.managers ?? [])) {
             this.registerMemoryManager(manager);
-        });
+        }
 
-        (opts.services ?? []).forEach((service: Service) => {
+        for (const service of (opts.services ?? [])) {
             this.registerService(service);
-        });
+        }
 
         this.serverUrl = opts.serverUrl ?? this.serverUrl;
 
@@ -391,13 +391,10 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         // Validate model provider
-        if (!Object.values(ModelProviderName).includes(this.modelProvider)) {
+        // must be string, without special characters other than hyphen
+        if (typeof this.modelProvider !== "string" || !/^[a-zA-Z0-9-]+$/.test(this.modelProvider)) {
             elizaLogger.error("Invalid model provider:", this.modelProvider);
-            elizaLogger.error(
-                "Available providers:",
-                Object.values(ModelProviderName),
-            );
-            throw new Error(`Invalid model provider: ${this.modelProvider}`);
+            throw new Error(`Invalid model provider Name: ${this.modelProvider}`);
         }
 
         if (!this.serverUrl) {
@@ -567,10 +564,10 @@ export class AgentRuntime implements IAgentRuntime {
 
             // After all new knowledge is processed, clean up any deleted files
             elizaLogger.info(
-                `[RAG Cleanup] Starting cleanup of deleted knowledge files`,
+                "[RAG Cleanup] Starting cleanup of deleted knowledge files",
             );
             await this.ragKnowledgeManager.cleanupDeletedKnowledgeFiles();
-            elizaLogger.info(`[RAG Cleanup] Cleanup complete`);
+            elizaLogger.info("[RAG Cleanup] Cleanup complete");
         }
     }
 
@@ -1219,8 +1216,8 @@ export class AgentRuntime implements IAgentRuntime {
             ),
             this.ensureUserExists(
                 userId,
-                userName ?? "User" + userId,
-                userScreenName ?? "User" + userId,
+                userName ?? `User${userId}`,
+                userScreenName ?? `User${userId}`,
                 source,
             ),
             this.ensureRoomExists(roomId),
@@ -1325,9 +1322,9 @@ export class AgentRuntime implements IAgentRuntime {
                     const isWithinTime = msgTime >= oneHourBeforeLastMessage;
                     const attachments = msg.content.attachments || [];
                     if (!isWithinTime) {
-                        attachments.forEach((attachment) => {
+                        for (const attachment of attachments) {
                             attachment.text = "[Hidden]";
-                        });
+                        }
                     }
                     return attachments;
                 });
