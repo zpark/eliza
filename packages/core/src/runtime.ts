@@ -450,6 +450,7 @@ export class AgentRuntime implements IAgentRuntime {
             embeddingModel: this.getSetting("EMBEDDING_MODEL"),
             imageModel: this.getSetting("IMAGE_MODEL"),
             imageVisionModel: this.getSetting("IMAGE_VISION_MODEL"),
+            modelSettings: this.getSetting("MODEL_SETTINGS"),
         }
     }
 
