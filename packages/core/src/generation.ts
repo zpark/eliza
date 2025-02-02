@@ -1,8 +1,10 @@
 import { createOpenAI } from "@ai-sdk/openai";
+import { z } from "zod";
 import { fal } from "@fal-ai/client";
 import { AutoTokenizer } from "@huggingface/transformers";
 import {
     generateText as aiGenerateText,
+    generateObject as aiGenerateObject,
     type StepResult as AIStepResult,
     type CoreTool,
     type GenerateObjectResult
@@ -12,7 +14,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Buffer } from "node:buffer";
 import OpenAI from "openai";
 import Together from "together-ai";
-import type { ZodSchema } from "zod";
+import { object, type ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import {
     parseActionResponseFromText,
@@ -604,32 +606,23 @@ export async function generateTrueOrFalse({
     modelClass: ModelClass;
 }): Promise<boolean> {
     logFunctionCall('generateTrueOrFalse', runtime);
-    let retryDelay = 1000;
-    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    const stop = Array.from(
-        new Set([...(modelSettings.stop || []), ["\n"]])
-    ) as string[];
+    // generate based on enum using generateObject
+    const response = await generateObject({
+        runtime,
+        context,
+        modelClass,
+        output: 'enum',
+        enum: ['true', 'false'],
+        schema: z.enum(['true', 'false']),
+    });
 
-    while (true) {
-        try {
-            const response = await generateText({
-                stop,
-                runtime,
-                context,
-                modelClass,
-            });
-
-            const parsedResponse = parseBooleanFromText(response.trim());
-            if (parsedResponse !== null) {
-                return parsedResponse;
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateTrueOrFalse:", error);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
+    if (response.object === 'true') {
+        return true;
+    } 
+    if (response.object === 'false') {
+        return false;
     }
+    throw new Error('Invalid response from model');
 }
 
 
@@ -1230,6 +1223,8 @@ export interface GenerationOptions {
     schemaDescription?: string;
     stop?: string[];
     mode?: "auto" | "json" | "tool";
+    output?: 'object' | 'array' | 'enum' | 'no-schema' | undefined;
+    enum?: string[];
     experimental_providerMetadata?: Record<string, unknown>;
     verifiableInference?: boolean;
     verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
@@ -1265,7 +1260,7 @@ export const generateObject = async ({
     schemaDescription,
     stop,
     mode = "json",
-    verifiableInference = false,
+    verifiableInference,
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
 }: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
@@ -1277,9 +1272,37 @@ export const generateObject = async ({
     }
 
 
+    elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
+        const serverUrl = runtime.getModelProvider().endpoint;
+        const apiKey = runtime.token;
+        const model = runtime.getModelProvider().defaultModel;
+        
+        const createOpenAICompabitbleModel = createOpenAI({
+            apiKey,
+            baseURL: serverUrl,
+            fetch: runtime.fetch,
+        });
 
-    // TODO: implement this 
+        const { object } = await aiGenerateObject({
+            model: createOpenAICompabitbleModel.languageModel(model),
+            prompt: context.toString(),
+            schemaName,
+            schemaDescription,
+            schema : schema ?? "no-schema",
+            // temperature: temperature,
+            system:
+                runtime.character.system ??
+                settings.SYSTEM_PROMPT ??
+                undefined,
+            // maxTokens: max_response_length,
+            // frequencyPenalty: frequency_penalty,
+            // presencePenalty: presence_penalty,
+            // experimental_telemetry: experimental_telemetry,
+        });
 
+        elizaLogger.debug(`Received Object response from ${model} model.`);
+        
+        return object;    
 };
 
 /**
