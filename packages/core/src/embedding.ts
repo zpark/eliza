@@ -15,7 +15,7 @@ interface EmbeddingOptions {
     dimensions?: number;
     provider?: string;
 }
-
+ 
 
 export type EmbeddingConfig = {
     readonly dimensions: number;
