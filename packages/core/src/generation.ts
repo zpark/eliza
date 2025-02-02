@@ -428,16 +428,18 @@ export async function generateText({
     const apiKey = runtime.token;
 
     try {
-        elizaLogger.debug(
-            `Trimming context to max length of ${max_context_length} tokens.`
-        );
 
-        context = await trimTokens(context, max_context_length, runtime);
 
-        const _stop = stop || modelSettings.stop;
-        elizaLogger.debug(
-            `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
-        );
+        // elizaLogger.debug(
+        //     `Trimming context to max length of ${max_context_length} tokens.`
+        // );
+
+        // context = await trimTokens(context, max_context_length, runtime);
+
+        // const _stop = stop || modelSettings.stop;
+        // elizaLogger.debug(
+        //     `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
+        // );
 
         logFunctionCall('generateText', runtime);
 
@@ -475,6 +477,9 @@ export async function generateText({
         throw error;
     }
 }
+
+
+// ## DO NOT TOUCH, THIS FUNCTION IS FINE
 
 /**
  * Sends a message to the model to determine if it should respond to the given context.
@@ -538,6 +543,9 @@ export async function generateShouldRespond({
     }
 }
 
+
+// ## DO NOT TOUCH, THIS FUNCTION IS FINE
+
 /**
  * Splits content into chunks of specified size with optional overlapping bleed sections
  * @param content - The text content to split into chunks
@@ -568,6 +576,10 @@ export async function splitChunks(
     return chunks;
 }
 
+
+
+
+
 /**
  * Sends a message to the model and parses the response as a boolean value
  * @param opts - The options for the generateText request
@@ -593,7 +605,7 @@ export async function generateTrueOrFalse({
 }): Promise<boolean> {
     logFunctionCall('generateTrueOrFalse', runtime);
     let retryDelay = 1000;
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
     const stop = Array.from(
         new Set([...(modelSettings.stop || []), ["\n"]])
     ) as string[];
@@ -619,6 +631,9 @@ export async function generateTrueOrFalse({
         retryDelay *= 2;
     }
 }
+
+
+// ## DO NOT TOUCH, THIS FUNCTION IS FINE
 
 /**
  * Send a message to the model and parse the response as a string array
@@ -672,6 +687,10 @@ export async function generateTextArray({
     }
 }
 
+
+// ## DO NOT TOUCH, THIS FUNCTION IS FINE
+
+// make it a pass through to generateObject 
 export async function generateObjectDeprecated({
     runtime,
     context,
@@ -682,31 +701,11 @@ export async function generateObjectDeprecated({
     modelClass: ModelClass;
 }): Promise<any> {
     logFunctionCall('generateObjectDeprecated', runtime);
-    if (!context) {
-        elizaLogger.error("generateObjectDeprecated context is empty");
-        return null;
-    }
-    let retryDelay = 1000;
-
-    while (true) {
-        try {
-            // this is slightly different than generateObjectArray, in that we parse object, not object array
-            const response = await generateText({
-                runtime,
-                context,
-                modelClass,
-            });
-            const parsedResponse = parseJSONObjectFromText(response);
-            if (parsedResponse) {
-                return parsedResponse;
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateObject:", error);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
+    return generateObject({
+        runtime,
+        context,
+        modelClass,
+    });
 }
 
 export async function generateObjectArray({
@@ -768,10 +767,10 @@ export async function generateMessageResponse({
     modelClass: ModelClass;
 }): Promise<Content> {
     logFunctionCall('generateMessageResponse', runtime);
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    const max_context_length = modelSettings.maxInputTokens;
+    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    // const max_context_length = modelSettings.maxInputTokens;
 
-    context = await trimTokens(context, max_context_length, runtime);
+    // context = await trimTokens(context, max_context_length, runtime);
     elizaLogger.debug("Context:", context);
     let retryLength = 1000; // exponential backoff
     while (true) {
@@ -801,6 +800,9 @@ export async function generateMessageResponse({
         }
     }
 }
+
+
+// TODO: FIX THIS FUNCTION
 
 export const generateImage = async (
     data: {
@@ -1311,6 +1313,8 @@ interface TogetherAIImageResponse {
     }>;
 }
 
+
+// THIS SHOULD BE IN TWITTER CLIENT PACKAGE
 export async function generateTweetActions({
     runtime,
     context,
