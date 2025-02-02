@@ -12,7 +12,7 @@ import {
     type GenerateObjectResult,
     type StepResult as AIStepResult,
 } from "ai";
-import { Buffer } from "buffer";
+import { Buffer } from "node:buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
@@ -20,12 +20,6 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
-import {
-    models,
-    getModelSettings,
-    getImageModelSettings,
-    getEndpoint,
-} from "./models.ts";
 import {
     parseBooleanFromText,
     parseJsonArrayFromText,

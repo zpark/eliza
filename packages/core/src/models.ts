@@ -1154,32 +1154,3 @@ import {
 //     },
 // };
 
-export function getModelSettings(
-    provider: ModelProviderName,
-    type: ModelClass,
-    runtime: IAgentRuntime
-): ModelSettings | undefined {
-    return runtime.getProvider(provider)?.model[type] as ModelSettings | undefined;
-}
-
-export function getImageModelSettings(
-    provider: ModelProviderName,
-    runtime: IAgentRuntime
-): ImageModelSettings | undefined {
-    return runtime.getProvider(provider)?.model[ModelClass.IMAGE] as
-        | ImageModelSettings
-        | undefined;
-}
-
-export function getEmbeddingModelSettings(
-    provider: ModelProviderName,
-    runtime: IAgentRuntime
-): EmbeddingModelSettings | undefined {
-    return runtime.getProvider(provider)?.model[ModelClass.EMBEDDING]  as
-        | EmbeddingModelSettings
-        | undefined;
-}
-
-export function getEndpoint(provider: ModelProviderName, runtime: IAgentRuntime) {
-    return runtime.getProvider(provider).endpoint;
-}
