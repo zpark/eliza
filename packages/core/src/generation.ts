@@ -444,7 +444,7 @@ export async function generateText({
         logFunctionCall('generateText', runtime);
 
         
-        elizaLogger.debug("Initializing Deepseek model.");
+        elizaLogger.debug(`Initializing ${model} model.`);
         const serverUrl = endpoint;
         const createOpenAICompabitbleModel = createOpenAI({
             apiKey,
