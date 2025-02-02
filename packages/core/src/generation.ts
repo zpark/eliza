@@ -5,15 +5,19 @@ import { AutoTokenizer } from "@huggingface/transformers";
 import {
     generateText as aiGenerateText,
     generateObject as aiGenerateObject,
+    generateImage as aiGenerateImage,
     type StepResult as AIStepResult,
     type CoreTool,
-    type GenerateObjectResult
+    type GenerateTextOptions,
+    type GenerateObjectOptions,
+    type GenerateImageOptions,
+    type GenerateObjectResult,
+    type GenerateImageResult,
+    type GenerateTextResult,
 } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { Buffer } from "node:buffer";
-import OpenAI from "openai";
-import Together from "together-ai";
 import { object, type ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import {
@@ -31,7 +35,7 @@ import {
     type IImageDescriptionService,
     type IVerifiableInferenceAdapter,
     type ModelClass,
-    ModelProviderName,
+    type ModelProviderName,
     ServiceType,
     //VerifiableInferenceProvider,
     type TelemetrySettings,
@@ -715,27 +719,13 @@ export async function generateObjectArray({
         elizaLogger.error("generateObjectArray context is empty");
         return [];
     }
-    let retryDelay = 1000;
-
-    while (true) {
-        try {
-            const response = await generateText({
-                runtime,
-                context,
-                modelClass,
-            });
-
-            const parsedResponse = parseJsonArrayFromText(response);
-            if (parsedResponse) {
-                return parsedResponse;
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateTextArray:", error);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
+    const {object } = await generateObject({
+        runtime,
+        context,
+        modelClass,
+        output: "array",
+    });
+    return object;
 }
 
 /**
@@ -821,368 +811,41 @@ export const generateImage = async (
     error?: any;
 }> => {
     logFunctionCall('generateImage', runtime);
-    const modelSettings = getImageModelSettings(runtime.imageModelProvider);
+    const modelSettings = runtime.imageModelProvider;
+
     if (!modelSettings) {
         elizaLogger.warn("No model settings found for the image model provider.");
         return { success: false, error: "No model settings available" };
     }
-    const model = modelSettings.name;
+    const model = runtime.getModelProvider().imageModel;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
     });
 
-    const apiKey =
-        runtime.imageModelProvider === runtime.modelProvider
-            ? runtime.token
-            : (() => {
-                // First try to match the specific provider
-                switch (runtime.imageModelProvider) {
-                    case ModelProviderName.HEURIST:
-                        return runtime.getSetting("HEURIST_API_KEY");
-                    case ModelProviderName.TOGETHER:
-                        return runtime.getSetting("TOGETHER_API_KEY");
-                    case ModelProviderName.FAL:
-                        return runtime.getSetting("FAL_API_KEY");
-                    case ModelProviderName.OPENAI:
-                        return runtime.getSetting("OPENAI_API_KEY");
-                    case ModelProviderName.VENICE:
-                        return runtime.getSetting("VENICE_API_KEY");
-                    case ModelProviderName.LIVEPEER:
-                        return runtime.getSetting("LIVEPEER_GATEWAY_URL");
-                    default:
-                        // If no specific match, try the fallback chain
-                        return (
-                            runtime.getSetting("HEURIST_API_KEY") ??
-                            runtime.getSetting("NINETEEN_AI_API_KEY") ??
-                            runtime.getSetting("TOGETHER_API_KEY") ??
-                            runtime.getSetting("FAL_API_KEY") ??
-                            runtime.getSetting("OPENAI_API_KEY") ??
-                            runtime.getSetting("VENICE_API_KEY") ??
-                            runtime.getSetting("LIVEPEER_GATEWAY_URL")
-                        );
-                }
-            })();
-    try {
-        if (runtime.imageModelProvider === ModelProviderName.HEURIST) {
-            const response = await fetch(
-                "http://sequencer.heurist.xyz/submit_job",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${apiKey}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        job_id: data.jobId || crypto.randomUUID(),
-                        model_input: {
-                            SD: {
-                                prompt: data.prompt,
-                                neg_prompt: data.negativePrompt,
-                                num_iterations: data.numIterations || 20,
-                                width: data.width || 512,
-                                height: data.height || 512,
-                                guidance_scale: data.guidanceScale || 3,
-                                seed: data.seed || -1,
-                            },
-                        },
-                        model_id: model,
-                        deadline: 60,
-                        priority: 1,
-                    }),
-                }
-            );
+    const apiKey = runtime.getModelProvider().apiKey;
+    try{
+        // GENERATE IMAGES USING VERCEL AI SDK
 
-            if (!response.ok) {
-                throw new Error(
-                    `Heurist image generation failed: ${response.statusText}`
-                );
-            }
-
-            const imageURL = await response.json();
-            return { success: true, data: [imageURL] };
-        } if (
-            runtime.imageModelProvider === ModelProviderName.TOGETHER ||
-            // for backwards compat
-            runtime.imageModelProvider === ModelProviderName.LLAMACLOUD
-        ) {
-            const together = new Together({ apiKey: apiKey as string });
-            const response = await together.images.create({
-                model: model,
-                prompt: data.prompt,
-                width: data.width,
-                height: data.height,
-                steps: modelSettings?.steps ?? 4,
-                n: data.count,
-            });
-
-            // Add type assertion to handle the response properly
-            const togetherResponse =
-                response as unknown as TogetherAIImageResponse;
-
-            if (
-                !togetherResponse.data ||
-                !Array.isArray(togetherResponse.data)
-            ) {
-                throw new Error("Invalid response format from Together AI");
-            }
-
-            // Rest of the code remains the same...
-            const base64s = await Promise.all(
-                togetherResponse.data.map(async (image) => {
-                    if (!image.url) {
-                        elizaLogger.error("Missing URL in image data:", image);
-                        throw new Error("Missing URL in Together AI response");
-                    }
-
-                    // Fetch the image from the URL
-                    const imageResponse = await fetch(image.url);
-                    if (!imageResponse.ok) {
-                        throw new Error(
-                            `Failed to fetch image: ${imageResponse.statusText}`
-                        );
-                    }
-
-                    // Convert to blob and then to base64
-                    const blob = await imageResponse.blob();
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-                    // Return with proper MIME type
-                    return `data:image/jpeg;base64,${base64}`;
-                })
-            );
-
-            if (base64s.length === 0) {
-                throw new Error("No images generated by Together AI");
-            }
-
-            elizaLogger.debug(`Generated ${base64s.length} images`);
-            return { success: true, data: base64s };
-        }if (runtime.imageModelProvider === ModelProviderName.FAL) {
-            fal.config({
-                credentials: apiKey as string,
-            });
-
-            // Prepare the input parameters according to their schema
-            const input = {
-                prompt: data.prompt,
-                image_size: "square" as const,
-                num_inference_steps: modelSettings?.steps ?? 50,
-                guidance_scale: data.guidanceScale || 3.5,
-                num_images: data.count,
-                enable_safety_checker:
-                    runtime.getSetting("FAL_AI_ENABLE_SAFETY_CHECKER") ===
-                    "true",
-                safety_tolerance: Number(
-                    runtime.getSetting("FAL_AI_SAFETY_TOLERANCE") || "2"
-                ),
-                output_format: "png" as const,
-                seed: data.seed ?? 6252023,
-                ...(runtime.getSetting("FAL_AI_LORA_PATH")
-                    ? {
-                        loras: [
-                            {
-                                path: runtime.getSetting("FAL_AI_LORA_PATH"),
-                                scale: 1,
-                            },
-                        ],
-                    }
-                    : {}),
-            };
-
-            // Subscribe to the model
-            const result = await fal.subscribe(model, {
-                input,
-                logs: true,
-                onQueueUpdate: (update) => {
-                    if (update.status === "IN_PROGRESS") {
-                        elizaLogger.info(update.logs.map((log) => log.message));
-                    }
-                },
-            });
-            // Convert the returned image URLs to base64 to match existing functionality
-            const base64Promises = result.data.images.map(async (image) => {
-                const response = await fetch(image.url);
-                const blob = await response.blob();
-                const buffer = await blob.arrayBuffer();
-                const base64 = Buffer.from(buffer).toString("base64");
-                return `data:${image.content_type};base64,${base64}`;
-            });
-
-            const base64s = await Promise.all(base64Promises);
-            return { success: true, data: base64s };
-        }if (runtime.imageModelProvider === ModelProviderName.VENICE) {
-            const response = await fetch(
-                "https://api.venice.ai/api/v1/image/generate",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${apiKey}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        prompt: data.prompt,
-                        cfg_scale: data.guidanceScale,
-                        negative_prompt: data.negativePrompt,
-                        width: data.width,
-                        height: data.height,
-                        steps: data.numIterations,
-                        safe_mode: data.safeMode,
-                        seed: data.seed,
-                        style_preset: data.stylePreset,
-                        hide_watermark: data.hideWatermark,
-                    }),
-                }
-            );
-
-            const result = await response.json();
-
-            if (!result.images || !Array.isArray(result.images)) {
-                throw new Error("Invalid response format from Venice AI");
-            }
-
-            const base64s = result.images.map((base64String) => {
-                if (!base64String) {
-                    throw new Error(
-                        "Empty base64 string in Venice AI response"
-                    );
-                }
-                return `data:image/png;base64,${base64String}`;
-            });
-
-            return { success: true, data: base64s };
-        }if (
-            runtime.imageModelProvider === ModelProviderName.NINETEEN_AI
-        ) {
-            const response = await fetch(
-                "https://api.nineteen.ai/v1/text-to-image",
-                {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${apiKey}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        prompt: data.prompt,
-                        negative_prompt: data.negativePrompt,
-                        width: data.width,
-                        height: data.height,
-                        steps: data.numIterations,
-                        cfg_scale: data.guidanceScale || 3,
-                    }),
-                }
-            );
-
-            const result = await response.json();
-
-            if (!result.images || !Array.isArray(result.images)) {
-                throw new Error("Invalid response format from Nineteen AI");
-            }
-
-            const base64s = result.images.map((base64String) => {
-                if (!base64String) {
-                    throw new Error(
-                        "Empty base64 string in Nineteen AI response"
-                    );
-                }
-                return `data:image/png;base64,${base64String}`;
-            });
-
-            return { success: true, data: base64s };
-        }if (runtime.imageModelProvider === ModelProviderName.LIVEPEER) {
-            if (!apiKey) {
-                throw new Error("Livepeer Gateway is not defined");
-            }
-            try {
-                const baseUrl = new URL(apiKey);
-                if (!baseUrl.protocol.startsWith("http")) {
-                    throw new Error("Invalid Livepeer Gateway URL protocol");
-                }
-
-                const response = await fetch(
-                    `${baseUrl.toString()}text-to-image`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: "Bearer eliza-app-img",
-                        },
-                        body: JSON.stringify({
-                            model_id:
-                                data.modelId || "ByteDance/SDXL-Lightning",
-                            prompt: data.prompt,
-                            width: data.width || 1024,
-                            height: data.height || 1024,
-                        }),
-                    }
-                );
-                const result = await response.json();
-                if (!result.images?.length) {
-                    throw new Error("No images generated");
-                }
-                const base64Images = await Promise.all(
-                    result.images.map(async (image) => {
-                        elizaLogger.debug("imageUrl console log", image.url);
-                        let imageUrl: string | URL | Request;
-                        if (image.url.includes("http")) {
-                            imageUrl = image.url;
-                        } else {
-                            imageUrl = `${apiKey}${image.url}`;
-                        }
-                        const imageResponse = await fetch(imageUrl);
-                        if (!imageResponse.ok) {
-                            throw new Error(
-                                `Failed to fetch image: ${imageResponse.statusText}`
-                            );
-                        }
-                        const blob = await imageResponse.blob();
-                        const arrayBuffer = await blob.arrayBuffer();
-                        const base64 =
-                            Buffer.from(arrayBuffer).toString("base64");
-                        return `data:image/jpeg;base64,${base64}`;
-                    })
-                );
-                return {
-                    success: true,
-                    data: base64Images,
-                };
-            } catch (error) {
-                console.error(error);
-                return { success: false, error: error };
-            }
-        } else {
-            let targetSize = `${data.width}x${data.height}`;
-            if (
-                targetSize !== "1024x1024" &&
-                targetSize !== "1792x1024" &&
-                targetSize !== "1024x1792"
-            ) {
-                targetSize = "1024x1024";
-            }
-            const openaiApiKey = runtime.getSetting("OPENAI_API_KEY") as string;
-            if (!openaiApiKey) {
-                throw new Error("OPENAI_API_KEY is not set");
-            }
-            const openai = new OpenAI({
-                apiKey: openaiApiKey as string,
-            });
-            const response = await openai.images.generate({
-                model,
-                prompt: data.prompt,
-                size: targetSize as "1024x1024" | "1792x1024" | "1024x1792",
-                n: data.count,
-                response_format: "b64_json",
-            });
-            const base64s = response.data.map(
-                (image) => `data:image/png;base64,${image.b64_json}`
-            );
-            return { success: true, data: base64s };
-        }
-    } catch (error) {
-        console.error(error);
-        return { success: false, error: error };
+        const result = await aiGenerateImage({
+            provider: runtime.imageModelProvider,
+            model: model,
+            apiKey: apiKey,
+            prompt: data.prompt,
+            width: data.width,
+            height: data.height,
+            count: data.count,
+            negativePrompt: data.negativePrompt,
+            numIterations: data.numIterations,
+            guidanceScale: data.guidanceScale,
+            seed: data.seed,
+            modelId: data.modelId,
+            jobId: data.jobId,
+        });
+        return result;
+        
+    } catch (_error) {
+        elizaLogger.error("Error in generateImage:", error);
+        return { success: false, error: _error };
     }
 };
 
@@ -1223,7 +886,7 @@ export interface GenerationOptions {
     schemaDescription?: string;
     stop?: string[];
     mode?: "auto" | "json" | "tool";
-    output?: 'object' | 'array' | 'enum' | 'no-schema' | undefined;
+    output?: "object" | "array" | "enum" | "no-schema" | undefined;
     enum?: string[];
     experimental_providerMetadata?: Record<string, unknown>;
     verifiableInference?: boolean;
@@ -1254,6 +917,7 @@ interface ModelSettings {
 export const generateObject = async ({
     runtime,
     context,
+    output,
     modelClass,
     schema,
     schemaName,
@@ -1283,27 +947,111 @@ export const generateObject = async ({
             fetch: runtime.fetch,
         });
 
-        const { object } = await aiGenerateObject({
+        const result = await aiGenerateObject({
             model: createOpenAICompabitbleModel.languageModel(model),
             prompt: context.toString(),
+            schema,
             schemaName,
             schemaDescription,
-            schema : schema ?? "no-schema",
-            // temperature: temperature,
-            system:
-                runtime.character.system ??
-                settings.SYSTEM_PROMPT ??
-                undefined,
-            // maxTokens: max_response_length,
-            // frequencyPenalty: frequency_penalty,
-            // presencePenalty: presence_penalty,
-            // experimental_telemetry: experimental_telemetry,
+            output,
+            system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+            stop
         });
 
         elizaLogger.debug(`Received Object response from ${model} model.`);
         
-        return object;    
+        return result.object;
 };
+
+/**
+ * Interface for provider-specific generation options.
+ */
+interface ProviderOptions {
+    runtime: IAgentRuntime;
+    provider: ModelProviderName;
+    model: any;
+    apiKey: string;
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+    mode?: "auto" | "json" | "tool";
+    experimental_providerMetadata?: Record<string, unknown>;
+    modelOptions: ModelSettings;
+    modelClass: ModelClass;
+    context: string;
+    verifiableInference?: boolean;
+    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    verifiableInferenceOptions?: VerifiableInferenceOptions;
+}
+
+
+// Add type definition for Together AI response
+interface TogetherAIImageResponse {
+    data: Array<{
+        url: string;
+        content_type?: string;
+        image_type?: string;
+    }>;
+}
+
+
+// THIS SHOULD BE IN TWITTER CLIENT PACKAGE
+// export async function generateTweetActions({
+//     runtime,
+//     context,
+//     modelClass,
+// }: {
+//     runtime: IAgentRuntime;
+//     context: string;
+//     modelClass: ModelClass;
+// }): Promise<ActionResponse | null> {
+//     logFunctionCall('generateTweetActions', runtime);
+//     let retryDelay = 1000;
+//     while (true) {
+//         try {
+//             const response = await generateText({
+//                 runtime,
+//                 context,
+//                 modelClass,
+//             });
+//             elizaLogger.debug(
+//                 "Received response from generateText for tweet actions:",
+//                 response
+//             );
+//             const { actions } = parseActionResponseFromText(response.trim());
+//             if (actions) {
+//                 elizaLogger.debug("Parsed tweet actions:", actions);
+//                 return actions;
+//             }
+//                 elizaLogger.debug("generateTweetActions no valid response");
+//         } catch (error) {
+//             elizaLogger.error("Error in generateTweetActions:", error);
+//             if (
+//                 error instanceof TypeError &&
+//                 error.message.includes("queueTextCompletion")
+//             ) {
+//                 elizaLogger.error(
+//                     "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
+//                 );
+//             }
+//         }
+//         elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+//         await new Promise((resolve) => setTimeout(resolve, retryDelay));
+//         retryDelay *= 2;
+//     }
+// }
+
+//             schema,
+//             schemaName,
+//             schemaDescription,
+//             output: output ?? "object",
+//             system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+//         });
+
+//         elizaLogger.debug(`Received Object response from ${model} model.`);
+        
+//         return result.object;
+// };
 
 /**
  * Interface for provider-specific generation options.
