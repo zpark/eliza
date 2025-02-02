@@ -1,50 +1,42 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createMistral } from "@ai-sdk/mistral";
-import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
-import { bedrock } from "@ai-sdk/amazon-bedrock";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import {
-    generateObject as aiGenerateObject,
-    generateText as aiGenerateText,
-    type CoreTool,
-    type GenerateObjectResult,
-    type StepResult as AIStepResult,
-} from "ai";
-import { Buffer } from "node:buffer";
-import { createOllama } from "ollama-ai-provider";
-import OpenAI from "openai";
-import { encodingForModel, type TiktokenModel } from "js-tiktoken";
+import { fal } from "@fal-ai/client";
 import { AutoTokenizer } from "@huggingface/transformers";
+import {
+    generateText as aiGenerateText,
+    type StepResult as AIStepResult,
+    type CoreTool,
+    type GenerateObjectResult
+} from "ai";
+import { encodingForModel, type TiktokenModel } from "js-tiktoken";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { Buffer } from "node:buffer";
+import OpenAI from "openai";
 import Together from "together-ai";
 import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import {
+    parseActionResponseFromText,
     parseBooleanFromText,
     parseJsonArrayFromText,
     parseJSONObjectFromText,
     parseShouldRespondFromText,
-    parseActionResponseFromText,
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
+    type ActionResponse,
     type Content,
     type IAgentRuntime,
     type IImageDescriptionService,
-    type ITextGenerationService,
-    ModelClass,
+    type IVerifiableInferenceAdapter,
+    type ModelClass,
     ModelProviderName,
     ServiceType,
-    type ActionResponse,
-    type IVerifiableInferenceAdapter,
-    type VerifiableInferenceOptions,
-    type VerifiableInferenceResult,
     //VerifiableInferenceProvider,
     type TelemetrySettings,
     TokenizerType,
+    type VerifiableInferenceOptions,
+    type VerifiableInferenceResult
 } from "./types.ts";
-import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import { createPublicClient, http } from "viem";
@@ -346,7 +338,6 @@ export async function generateText({
     onStepFinish,
     maxSteps = 1,
     stop,
-    customSystemPrompt,
     verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
     verifiableInferenceOptions,
 }: {
@@ -420,95 +411,20 @@ export async function generateText({
     });
 
     const endpoint =
-        runtime.character.modelEndpointOverride || getEndpoint(provider);
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    let model = modelSettings.name;
+        runtime.character.modelEndpointOverride || runtime.getSetting("MODEL_ENDPOINT");
+
+    // test: make it work without modelSettings
+    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    let model = runtime.getModelProvider().defaultModel;
 
     // allow character.json settings => secrets to override models
-    // FIXME: add MODEL_MEDIUM support
-    switch (provider) {
-        // if runtime.getSetting("LLAMACLOUD_MODEL_LARGE") is true and modelProvider is LLAMACLOUD, then use the large model
-        case ModelProviderName.LLAMACLOUD:
-            {
-                switch (modelClass) {
-                    case ModelClass.LARGE:
-                        {
-                            model =
-                                runtime.getSetting("LLAMACLOUD_MODEL_LARGE") ||
-                                model;
-                        }
-                        break;
-                    case ModelClass.SMALL:
-                        {
-                            model =
-                                runtime.getSetting("LLAMACLOUD_MODEL_SMALL") ||
-                                model;
-                        }
-                        break;
-                }
-            }
-            break;
-        case ModelProviderName.TOGETHER:
-            {
-                switch (modelClass) {
-                    case ModelClass.LARGE:
-                        {
-                            model =
-                                runtime.getSetting("TOGETHER_MODEL_LARGE") ||
-                                model;
-                        }
-                        break;
-                    case ModelClass.SMALL:
-                        {
-                            model =
-                                runtime.getSetting("TOGETHER_MODEL_SMALL") ||
-                                model;
-                        }
-                        break;
-                }
-            }
-            break;
-        case ModelProviderName.OPENROUTER:
-            {
-                switch (modelClass) {
-                    case ModelClass.LARGE:
-                        {
-                            model =
-                                runtime.getSetting("LARGE_OPENROUTER_MODEL") ||
-                                model;
-                        }
-                        break;
-                    case ModelClass.SMALL:
-                        {
-                            model =
-                                runtime.getSetting("SMALL_OPENROUTER_MODEL") ||
-                                model;
-                        }
-                        break;
-                }
-            }
-            break;
-    }
+    // FIXME: Add MODEL_MEDIUM and other model class support
+    
 
     elizaLogger.info("Selected model:", model);
 
-    const modelConfiguration = runtime.character?.settings?.modelConfig;
-    const temperature =
-        modelConfiguration?.temperature || modelSettings.temperature;
-    const frequency_penalty =
-        modelConfiguration?.frequency_penalty ||
-        modelSettings.frequency_penalty;
-    const presence_penalty =
-        modelConfiguration?.presence_penalty || modelSettings.presence_penalty;
-    const max_context_length =
-        modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
-    const max_response_length =
-        modelConfiguration?.max_response_length ||
-        modelSettings.maxOutputTokens;
-    const experimental_telemetry =
-        modelConfiguration?.experimental_telemetry ||
-        modelSettings.experimental_telemetry;
-
+    // TODO: add model settings
+    // TODO: handle Model Settings
     const apiKey = runtime.token;
 
     try {
@@ -518,8 +434,6 @@ export async function generateText({
 
         context = await trimTokens(context, max_context_length, runtime);
 
-        let response: string;
-
         const _stop = stop || modelSettings.stop;
         elizaLogger.debug(
             `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
@@ -527,773 +441,35 @@ export async function generateText({
 
         logFunctionCall('generateText', runtime);
 
-        switch (provider) {
-            // OPENAI & LLAMACLOUD shared same structure.
-            case ModelProviderName.OPENAI:
-            case ModelProviderName.ALI_BAILIAN:
-            case ModelProviderName.VOLENGINE:
-            case ModelProviderName.LLAMACLOUD:
-            case ModelProviderName.NANOGPT:
-            case ModelProviderName.HYPERBOLIC:
-            case ModelProviderName.TOGETHER:
-            case ModelProviderName.NINETEEN_AI:
-            case ModelProviderName.AKASH_CHAT_API:
-            case ModelProviderName.LMSTUDIO: {
-                elizaLogger.debug(
-                    "Initializing OpenAI model with Cloudflare check"
-                );
-                const baseURL =
-                    getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
-
-                //elizaLogger.debug("OpenAI baseURL result:", { baseURL });
-                const openai = createOpenAI({
-                    apiKey,
-                    baseURL,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: openaiResponse } = await aiGenerateText({
-                    model: openai.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = openaiResponse;
-                elizaLogger.debug("Received response from OpenAI model.");
-                break;
-            }
-
-            case ModelProviderName.ETERNALAI: {
-                elizaLogger.debug("Initializing EternalAI model.");
-                const openai = createOpenAI({
-                    apiKey,
-                    baseURL: endpoint,
-                    fetch: async (
-                        input: RequestInfo | URL,
-                        init?: RequestInit
-                    ): Promise<Response> => {
-                        const url =
-                            typeof input === "string"
-                                ? input
-                                : input.toString();
-                        const chain_id =
-                            runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
-
-                        const options: RequestInit = { ...init };
-                        if (options?.body) {
-                            const body = JSON.parse(options.body as string);
-                            body.chain_id = chain_id;
-                            options.body = JSON.stringify(body);
-                        }
-
-                        const fetching = await runtime.fetch(url, options);
-
-                        if (
-                            parseBooleanFromText(
-                                runtime.getSetting("ETERNALAI_LOG")
-                            )
-                        ) {
-                            elizaLogger.info(
-                                "Request data: ",
-                                JSON.stringify(options, null, 2)
-                            );
-                            const clonedResponse = fetching.clone();
-                            try {
-                                clonedResponse.json().then((data) => {
-                                    elizaLogger.info(
-                                        "Response data: ",
-                                        JSON.stringify(data, null, 2)
-                                    );
-                                });
-                            } catch (e) {
-                                elizaLogger.debug(e);
-                            }
-                        }
-                        return fetching;
-                    },
-                });
-
-                let system_prompt =
-                    runtime.character.system ??
-                    settings.SYSTEM_PROMPT ??
-                    undefined;
-                try {
-                    const on_chain_system_prompt =
-                        await getOnChainEternalAISystemPrompt(runtime);
-                    if (!on_chain_system_prompt) {
-                        elizaLogger.error(
-                            new Error("invalid on_chain_system_prompt")
-                        );
-                    } else {
-                        system_prompt = on_chain_system_prompt;
-                        elizaLogger.info(
-                            "new on-chain system prompt",
-                            system_prompt
-                        );
-                    }
-                } catch (e) {
-                    elizaLogger.error(e);
-                }
-
-                const { text: openaiResponse } = await aiGenerateText({
-                    model: openai.languageModel(model),
-                    prompt: context,
-                    system: system_prompt,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                });
-
-                response = openaiResponse;
-                elizaLogger.debug("Received response from EternalAI model.");
-                break;
-            }
-
-            case ModelProviderName.GOOGLE: {
-                const google = createGoogleGenerativeAI({
-                    apiKey,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: googleResponse } = await aiGenerateText({
-                    model: google(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = googleResponse;
-                elizaLogger.debug("Received response from Google model.");
-                break;
-            }
-
-            case ModelProviderName.MISTRAL: {
-                const mistral = createMistral();
-
-                const { text: mistralResponse } = await aiGenerateText({
-                    model: mistral(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                });
-
-                response = mistralResponse;
-                elizaLogger.debug("Received response from Mistral model.");
-                break;
-            }
-
-            case ModelProviderName.ANTHROPIC: {
-                elizaLogger.debug(
-                    "Initializing Anthropic model with Cloudflare check"
-                );
-                const baseURL =
-                    getCloudflareGatewayBaseURL(runtime, "anthropic") ||
-                    "https://api.anthropic.com/v1";
-                elizaLogger.debug("Anthropic baseURL result:", { baseURL });
-
-                const anthropic = createAnthropic({
-                    apiKey,
-                    baseURL,
-                    fetch: runtime.fetch,
-                });
-                const { text: anthropicResponse } = await aiGenerateText({
-                    model: anthropic.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = anthropicResponse;
-                elizaLogger.debug("Received response from Anthropic model.");
-                break;
-            }
-
-            case ModelProviderName.CLAUDE_VERTEX: {
-                elizaLogger.debug("Initializing Claude Vertex model.");
-
-                const anthropic = createAnthropic({
-                    apiKey,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: anthropicResponse } = await aiGenerateText({
-                    model: anthropic.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = anthropicResponse;
-                elizaLogger.debug(
-                    "Received response from Claude Vertex model."
-                );
-                break;
-            }
-
-            case ModelProviderName.GROK: {
-                elizaLogger.debug("Initializing Grok model.");
-                const grok = createOpenAI({
-                    apiKey,
-                    baseURL: endpoint,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: grokResponse } = await aiGenerateText({
-                    model: grok.languageModel(model, {
-                        parallelToolCalls: false,
-                    }),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = grokResponse;
-                elizaLogger.debug("Received response from Grok model.");
-                break;
-            }
-
-            case ModelProviderName.GROQ: {
-                elizaLogger.debug(
-                    "Initializing Groq model with Cloudflare check"
-                );
-                const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
-                elizaLogger.debug("Groq baseURL result:", { baseURL });
-                const groq = createGroq({
-                    apiKey,
-                    fetch: runtime.fetch,
-                    baseURL,
-                });
-
-                const { text: groqResponse } = await aiGenerateText({
-                    model: groq.languageModel(model),
-                    prompt: context,
-                    temperature,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry,
-                });
-
-                response = groqResponse;
-                elizaLogger.debug("Received response from Groq model.");
-                break;
-            }
-
-            case ModelProviderName.LLAMALOCAL: {
-                elizaLogger.debug(
-                    "Using local Llama model for text completion."
-                );
-                const textGenerationService =
-                    runtime.getService<ITextGenerationService>(
-                        ServiceType.TEXT_GENERATION
-                    );
-
-                if (!textGenerationService) {
-                    throw new Error("Text generation service not found");
-                }
-
-                response = await textGenerationService.queueTextCompletion(
-                    context,
-                    temperature,
-                    _stop,
-                    frequency_penalty,
-                    presence_penalty,
-                    max_response_length
-                );
-                elizaLogger.debug("Received response from local Llama model.");
-                break;
-            }
-
-            case ModelProviderName.REDPILL: {
-                elizaLogger.debug("Initializing RedPill model.");
-                const serverUrl = getEndpoint(provider);
-                const openai = createOpenAI({
-                    apiKey,
-                    baseURL: serverUrl,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: redpillResponse } = await aiGenerateText({
-                    model: openai.languageModel(model),
-                    prompt: context,
-                    temperature: temperature,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = redpillResponse;
-                elizaLogger.debug("Received response from redpill model.");
-                break;
-            }
-
-            case ModelProviderName.OPENROUTER: {
-                elizaLogger.debug("Initializing OpenRouter model.");
-                const serverUrl = getEndpoint(provider);
-                const openrouter = createOpenAI({
-                    apiKey,
-                    baseURL: serverUrl,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: openrouterResponse } = await aiGenerateText({
-                    model: openrouter.languageModel(model),
-                    prompt: context,
-                    temperature: temperature,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = openrouterResponse;
-                elizaLogger.debug("Received response from OpenRouter model.");
-                break;
-            }
-
-            case ModelProviderName.OLLAMA:
-                {
-                    elizaLogger.debug("Initializing Ollama model.");
-
-                    const ollamaProvider = createOllama({
-                        baseURL: `${getEndpoint(provider)}/api`,
-                        fetch: runtime.fetch,
-                    });
-                    const ollama = ollamaProvider(model);
-
-                    elizaLogger.debug("****** MODEL\n", model);
-
-                    const { text: ollamaResponse } = await aiGenerateText({
-                        model: ollama,
-                        prompt: context,
-                        tools: tools,
-                        onStepFinish: onStepFinish,
-                        temperature: temperature,
-                        maxSteps: maxSteps,
-                        maxTokens: max_response_length,
-                        frequencyPenalty: frequency_penalty,
-                        presencePenalty: presence_penalty,
-                        experimental_telemetry: experimental_telemetry,
-                    });
-
-                    response = ollamaResponse;
-                }
-                elizaLogger.debug("Received response from Ollama model.");
-                break;
-
-            case ModelProviderName.HEURIST: {
-                elizaLogger.debug("Initializing Heurist model.");
-                const heurist = createOpenAI({
-                    apiKey: apiKey,
-                    baseURL: endpoint,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: heuristResponse } = await aiGenerateText({
-                    model: heurist.languageModel(model),
-                    prompt: context,
-                    system:
-                        customSystemPrompt ??
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    maxSteps: maxSteps,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = heuristResponse;
-                elizaLogger.debug("Received response from Heurist model.");
-                break;
-            }
-            case ModelProviderName.GAIANET: {
-                elizaLogger.debug("Initializing GAIANET model.");
-
-                let baseURL = getEndpoint(provider);
-                if (!baseURL) {
-                    switch (modelClass) {
-                        case ModelClass.SMALL:
-                            baseURL =
-                                settings.SMALL_GAIANET_SERVER_URL ||
-                                "https://llama3b.gaia.domains/v1";
-                            break;
-                        case ModelClass.MEDIUM:
-                            baseURL =
-                                settings.MEDIUM_GAIANET_SERVER_URL ||
-                                "https://llama8b.gaia.domains/v1";
-                            break;
-                        case ModelClass.LARGE:
-                            baseURL =
-                                settings.LARGE_GAIANET_SERVER_URL ||
-                                "https://qwen72b.gaia.domains/v1";
-                            break;
-                    }
-                }
-
-                elizaLogger.debug("Using GAIANET model with baseURL:", baseURL);
-
-                const openai = createOpenAI({
-                    apiKey,
-                    baseURL: endpoint,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: openaiResponse } = await aiGenerateText({
-                    model: openai.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = openaiResponse;
-                elizaLogger.debug("Received response from GAIANET model.");
-                break;
-            }
-
-            case ModelProviderName.ATOMA: {
-                elizaLogger.debug("Initializing Atoma model.");
-                const atoma = createOpenAI({
-                    apiKey,
-                    baseURL: endpoint,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: atomaResponse } = await aiGenerateText({
-                    model: atoma.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = atomaResponse;
-                elizaLogger.debug("Received response from Atoma model.");
-                break;
-            }
-
-            case ModelProviderName.GALADRIEL: {
-                elizaLogger.debug("Initializing Galadriel model.");
-                const headers = {};
-                const fineTuneApiKey = runtime.getSetting(
-                    "GALADRIEL_FINE_TUNE_API_KEY"
-                );
-                if (fineTuneApiKey) {
-                    headers["Fine-Tune-Authentication"] = fineTuneApiKey;
-                }
-                const galadriel = createOpenAI({
-                    headers,
-                    apiKey: apiKey,
-                    baseURL: endpoint,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: galadrielResponse } = await aiGenerateText({
-                    model: galadriel.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = galadrielResponse;
-                elizaLogger.debug("Received response from Galadriel model.");
-                break;
-            }
-
-            case ModelProviderName.INFERA: {
-                elizaLogger.debug("Initializing Infera model.");
-
-                const apiKey = settings.INFERA_API_KEY || runtime.token;
-
-                const infera = createOpenAI({
-                    apiKey,
-                    baseURL: endpoint,
-                    headers: {
-                        api_key: apiKey,
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                const { text: inferaResponse } = await aiGenerateText({
-                    model: infera.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    temperature: temperature,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                });
-                response = inferaResponse;
-                elizaLogger.debug("Received response from Infera model.");
-                break;
-            }
-
-            case ModelProviderName.VENICE: {
-                elizaLogger.debug("Initializing Venice model.");
-                const venice = createOpenAI({
-                    apiKey: apiKey,
-                    baseURL: endpoint,
-                });
-
-                const { text: veniceResponse } = await aiGenerateText({
-                    model: venice.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    temperature: temperature,
-                    maxSteps: maxSteps,
-                    maxTokens: max_response_length,
-                });
-
-                response = veniceResponse;
-                elizaLogger.debug("Received response from Venice model.");
-                break;
-            }
-
-            case ModelProviderName.NVIDIA: {
-                elizaLogger.debug("Initializing NVIDIA model.");
-                const nvidia = createOpenAI({
-                    apiKey: apiKey,
-                    baseURL: endpoint,
-                });
-
-                const { text: nvidiaResponse } = await aiGenerateText({
-                    model: nvidia.languageModel(model),
-                    prompt: context,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    temperature: temperature,
-                    maxSteps: maxSteps,
-                    maxTokens: max_response_length,
-                });
-
-                response = nvidiaResponse;
-                elizaLogger.debug("Received response from NVIDIA model.");
-                break;
-            }
-
-            case ModelProviderName.DEEPSEEK: {
-                elizaLogger.debug("Initializing Deepseek model.");
-                const serverUrl = models[provider].endpoint;
-                const deepseek = createOpenAI({
-                    apiKey,
-                    baseURL: serverUrl,
-                    fetch: runtime.fetch,
-                });
-
-                const { text: deepseekResponse } = await aiGenerateText({
-                    model: deepseek.languageModel(model),
-                    prompt: context,
-                    temperature: temperature,
-                    system:
-                        runtime.character.system ??
-                        settings.SYSTEM_PROMPT ??
-                        undefined,
-                    tools: tools,
-                    onStepFinish: onStepFinish,
-                    maxSteps: maxSteps,
-                    maxTokens: max_response_length,
-                    frequencyPenalty: frequency_penalty,
-                    presencePenalty: presence_penalty,
-                    experimental_telemetry: experimental_telemetry,
-                });
-
-                response = deepseekResponse;
-                elizaLogger.debug("Received response from Deepseek model.");
-                break;
-            }
-
-            case ModelProviderName.LIVEPEER: {
-                elizaLogger.debug("Initializing Livepeer model.");
-
-                if (!endpoint) {
-                    throw new Error("Livepeer Gateway URL is not defined");
-                }
-
-                const requestBody = {
-                    model: model,
-                    messages: [
-                        {
-                            role: "system",
-                            content:
-                                runtime.character.system ??
-                                settings.SYSTEM_PROMPT ??
-                                "You are a helpful assistant",
-                        },
-                        {
-                            role: "user",
-                            content: context,
-                        },
-                    ],
-                    max_tokens: max_response_length,
-                    stream: false,
-                };
-
-                const fetchResponse = await runtime.fetch(`${endpoint}/llm`, {
-                    method: "POST",
-                    headers: {
-                        accept: "text/event-stream",
-                        "Content-Type": "application/json",
-                        Authorization: "Bearer eliza-app-llm",
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (!fetchResponse.ok) {
-                    const errorText = await fetchResponse.text();
-                    throw new Error(
-                        `Livepeer request failed (${fetchResponse.status}): ${errorText}`
-                    );
-                }
-
-                const json = await fetchResponse.json();
-
-                if (!json?.choices?.[0]?.message?.content) {
-                    throw new Error("Invalid response format from Livepeer");
-                }
-
-                response = json.choices[0].message.content.replace(
-                    /<\|start_header_id\|>assistant<\|end_header_id\|>\n\n/,
-                    ""
-                );
-                elizaLogger.debug(
-                    "Successfully received response from Livepeer model"
-                );
-                break;
-            }
-
-            default: {
-                const errorMessage = `Unsupported provider: ${provider}`;
-                elizaLogger.error(errorMessage);
-                throw new Error(errorMessage);
-            }
-        }
-
-        return response;
+        
+        elizaLogger.debug("Initializing Deepseek model.");
+        const serverUrl = endpoint;
+        const createOpenAICompabitbleModel = createOpenAI({
+            apiKey,
+            baseURL: serverUrl,
+            fetch: runtime.fetch,
+        });
+
+        const { text } = await aiGenerateText({
+            model: createOpenAICompabitbleModel.languageModel(model),
+            prompt: context,
+            // temperature: temperature,
+            system:
+                runtime.character.system ??
+                settings.SYSTEM_PROMPT ??
+                undefined,
+            tools: tools,
+            onStepFinish: onStepFinish,
+            maxSteps: maxSteps,
+            // maxTokens: max_response_length,
+            // frequencyPenalty: frequency_penalty,
+            // presencePenalty: presence_penalty,
+            // experimental_telemetry: experimental_telemetry,
+        });
+
+        elizaLogger.debug(`Received response from ${model} model.`);
+        
+        return text;    
     } catch (error) {
         elizaLogger.error("Error in generateText:", error);
         throw error;
@@ -2098,52 +1274,10 @@ export const generateObject = async ({
         throw new Error(errorMessage);
     }
 
-    const provider = runtime.modelProvider;
-    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    const model = modelSettings.name;
-    const temperature = modelSettings.temperature;
-    const frequency_penalty = modelSettings.frequency_penalty;
-    const presence_penalty = modelSettings.presence_penalty;
-    const max_context_length = modelSettings.maxInputTokens;
-    const max_response_length = modelSettings.maxOutputTokens;
-    const experimental_telemetry = modelSettings.experimental_telemetry;
-    const apiKey = runtime.token;
 
-    try {
-        context = await trimTokens(context, max_context_length, runtime);
 
-        const modelOptions: ModelSettings = {
-            prompt: context,
-            temperature,
-            maxTokens: max_response_length,
-            frequencyPenalty: frequency_penalty,
-            presencePenalty: presence_penalty,
-            stop: stop || modelSettings.stop,
-            experimental_telemetry: experimental_telemetry,
-        };
+    // TODO: implement this 
 
-        const response = await handleProvider({
-            provider,
-            model,
-            apiKey,
-            schema,
-            schemaName,
-            schemaDescription,
-            mode,
-            modelOptions,
-            runtime,
-            context,
-            modelClass,
-            verifiableInference,
-            verifiableInferenceAdapter,
-            verifiableInferenceOptions,
-        });
-
-        return response;
-    } catch (error) {
-        console.error("Error in generateObject:", error);
-        throw error;
-    }
 };
 
 /**
@@ -2167,196 +1301,6 @@ interface ProviderOptions {
     verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
-/**
- * Handles AI generation based on the specified provider.
- *
- * @param {ProviderOptions} options - Configuration options specific to the provider.
- * @returns {Promise<any[]>} - A promise that resolves to an array of generated objects.
- */
-export async function handleProvider(
-    options: ProviderOptions
-): Promise<GenerateObjectResult<unknown>> {
-    const {
-        provider,
-        runtime,
-        context,
-        modelClass,
-        //verifiableInference,
-        //verifiableInferenceAdapter,
-        //verifiableInferenceOptions,
-    } = options;
-    switch (provider) {
-
-        case ModelProviderName.OLLAMA:
-            return await handleOllama(options);
-        case ModelProviderName.LLAMALOCAL:
-            return await generateObjectDeprecated({
-                runtime,
-                context,
-                modelClass,
-            });
-        case ModelProviderName.GOOGLE:
-            return await handleGoogle(options);
-        case ModelProviderName.ANTHROPIC:
-        case ModelProviderName.CLAUDE_VERTEX:
-            return await handleAnthropic(options);
-        case ModelProviderName.MISTRAL:
-            return await handleMistral(options);
-        default: {
-            runtime.getProvider()
-            elizaLogger.error(errorMessage);
-            return await handleOpenAI(options);
-        }
-    }
-}
-/**
- * Handles object generation for OpenAI.
- *
- * @param {ProviderOptions} options - Options specific to OpenAI.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleOpenAI({
-    model,
-    apiKey,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "json",
-    modelOptions,
-    provider: _provider,
-    runtime,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") ||
-        models.openai.endpoint;
-    const openai = createOpenAI({ apiKey, baseURL });
-    elizaLogger.debug({openai, baseURL, ...modelOptions, model});
-    return await aiGenerateObject({
-        model: openai.languageModel(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
-
-/**
- * Handles object generation for Anthropic models.
- *
- * @param {ProviderOptions} options - Options specific to Anthropic.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleAnthropic({
-    model,
-    apiKey,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "auto",
-    modelOptions,
-    runtime,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    elizaLogger.debug("Handling Anthropic request with Cloudflare check");
-    if (mode === "json") {
-        elizaLogger.warn("Anthropic mode is set to json, changing to auto");
-        mode = "auto";
-    }
-    const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
-    elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
-
-    const anthropic = createAnthropic({ apiKey, baseURL });
-    return await aiGenerateObject({
-        model: anthropic.languageModel(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
-
-
-/**
- * Handles object generation for Google models.
- *
- * @param {ProviderOptions} options - Options specific to Google.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleGoogle({
-    model,
-    apiKey: _apiKey,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "json",
-    modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const google = createGoogleGenerativeAI();
-    return await aiGenerateObject({
-        model: google(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
-
-/**
- * Handles object generation for Mistral models.
- *
- * @param {ProviderOptions} options - Options specific to Mistral.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleMistral({
-    model,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode,
-    modelOptions,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const mistral = createMistral();
-    return await aiGenerateObject({
-        model: mistral(model),
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
-
-
-/**
- * Handles object generation for Ollama models.
- *
- * @param {ProviderOptions} options - Options specific to Ollama.
- * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
- */
-async function handleOllama({
-    model,
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = "json",
-    modelOptions,
-    provider,
-}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const ollamaProvider = createOllama({
-        baseURL: `${getEndpoint(provider)}/api`,
-    });
-    const ollama = ollamaProvider(model);
-    return await aiGenerateObject({
-        model: ollama,
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        ...modelOptions,
-    });
-}
 
 // Add type definition for Together AI response
 interface TogetherAIImageResponse {
