@@ -1201,19 +1201,17 @@ function initializeCache(
                 return new CacheManager(
                     new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
                 );
-            } else {
-                throw new Error("REDIS_URL environment variable is not set.");
             }
+                throw new Error("REDIS_URL environment variable is not set.");
 
         case CacheStore.DATABASE:
             if (db) {
                 elizaLogger.info("Using Database Cache...");
                 return initializeDbCache(character, db);
-            } else {
+            }
                 throw new Error(
                     "Database adapter is not provided for CacheStore.Database."
                 );
-            }
 
         case CacheStore.FILESYSTEM:
             elizaLogger.info("Using File System Cache...");
