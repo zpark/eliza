@@ -1,50 +1,69 @@
 import type { Address, Hash } from "viem";
-
+import { z } from "zod";
 export type SupportedChain = "bsc" | "bscTestnet" | "opBNB" | "opBNBTestnet";
 export type StakeAction = "deposit" | "withdraw" | "claim";
 
+export const SupportedChainSchema = z.enum(["bsc", "bscTestnet", "opBNB", "opBNBTestnet"]);
+export const AddressSchema = z.string().regex(/^0x[0-9a-fA-F]*$/);
+export const StakeActionSchema = z.enum(["deposit", "withdraw", "claim"]);
+
 // Action parameters
-export interface GetBalanceParams {
-    chain: SupportedChain;
-    address?: Address;
-    token: string;
-}
-
-export interface TransferParams {
-    chain: SupportedChain;
-    token?: string;
-    amount?: string;
-    toAddress: Address;
-    data?: `0x${string}`;
-}
-
-export interface SwapParams {
-    chain: SupportedChain;
-    fromToken: string;
-    toToken: string;
-    amount: string;
-    slippage?: number;
-}
-
-export interface BridgeParams {
-    fromChain: SupportedChain;
-    toChain: SupportedChain;
-    fromToken?: Address;
-    toToken?: Address;
-    amount: string;
-    toAddress?: Address;
-}
-
-export interface StakeParams {
-    chain: SupportedChain;
-    action: StakeAction;
-    amount?: string;
-}
-
-export interface FaucetParams {
-    token?: string;
-    toAddress?: Address;
-}
+// Get Balance Schema
+const GetBalanceParamsSchema = z.object({
+    chain: SupportedChainSchema,
+    address: AddressSchema.optional(),
+    token: z.string()
+  });
+  
+  // Transfer Schema
+  export const TransferParamsSchema = z.object({
+    chain: SupportedChainSchema,
+    toAddress: AddressSchema,
+    amount: z.string().optional(),
+    token: z.string().optional(),
+    data: z.string().regex(/^0x[0-9a-fA-F]*$/).optional()
+  });
+  
+  // Swap Schema
+  export const SwapParamsSchema = z.object({
+    chain: SupportedChainSchema,
+    fromToken: z.string(),
+    toToken: z.string(),
+    amount: z.string(),
+    slippage: z.number().optional()
+  });
+  
+  // Bridge Schema
+  const BridgeParamsSchema = z.object({
+    fromChain: SupportedChainSchema,
+    toChain: SupportedChainSchema,
+    fromToken: AddressSchema.optional(),
+    toToken: AddressSchema.optional(),
+    amount: z.string(),
+    toAddress: AddressSchema.optional()
+  });
+  
+  // Stake Schema
+  export const StakeParamsSchema = z.object({
+    chain: SupportedChainSchema,
+    action: StakeActionSchema,
+    amount: z.string().optional()
+  });
+  
+  // Faucet Schema
+  export const FaucetParamsSchema = z.object({
+    token: z.string().optional(),
+    toAddress: AddressSchema.optional()
+  });
+  
+  // Type inference
+  export type GetBalanceParams = z.infer<typeof GetBalanceParamsSchema>;
+  export type TransferParams = z.infer<typeof TransferParamsSchema>;
+  export type SwapParams = z.infer<typeof SwapParamsSchema>;
+  export type BridgeParams = z.infer<typeof BridgeParamsSchema>;
+  export type StakeParams = z.infer<typeof StakeParamsSchema>;
+  export type FaucetParams = z.infer<typeof FaucetParamsSchema>;
+  
 
 // Action return types
 export interface GetBalanceResponse {

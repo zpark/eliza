@@ -16,6 +16,13 @@ interface EmbeddingOptions {
     provider?: string;
 }
  
+export const EmbeddingProvider = {
+    OpenAI: "OpenAI",
+    Ollama: "Ollama",
+    GaiaNet: "GaiaNet",
+    Heurist: "Heurist",
+    BGE: "BGE",
+} as const;
 
 export type EmbeddingConfig = {
     readonly dimensions: number;
