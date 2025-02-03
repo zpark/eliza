@@ -6,41 +6,33 @@ import {
     generateText as aiGenerateText,
     type StepResult as AIStepResult,
     type CoreTool,
-    type GenerateObjectResult
+    type GenerateObjectResult,
 } from "ai";
-
 import { z, type ZodSchema } from "zod";
 import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
-    parseJsonArrayFromText,
-    parseJSONObjectFromText,
-    parseShouldRespondFromText
+    parseJSONObjectFromText
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
+    type ActionResponse,
     type Content,
     type IAgentRuntime,
     type IImageDescriptionService,
     type IVerifiableInferenceAdapter,
     type ModelClass,
-    type ModelProviderName,
     ServiceType,
     type TelemetrySettings,
     type VerifiableInferenceOptions,
     type VerifiableInferenceResult
 } from "./types.ts";
 
+
+
 // ================ TYPE DEFINITIONS ================
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
-interface TogetherAIImageResponse {
-    data: Array<{
-        url: string;
-        content_type?: string;
-        image_type?: string;
-    }>;
-}
 
 interface ModelSettings {
     prompt: string;
@@ -52,66 +44,94 @@ interface ModelSettings {
     experimental_telemetry?: TelemetrySettings;
 }
 
-interface GenerationOptions {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    stop?: string[];
-    mode?: "auto" | "json" | "tool";
-    output?: "object" | "array" | "enum" | "no-schema" | undefined;
-    enum?: string[];
-    experimental_providerMetadata?: Record<string, unknown>;
+
+interface VerifiedInferenceOptions {
     verifiableInference?: boolean;
     verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
-// ================ UTILITY FUNCTIONS ================
-export function getCloudflareGatewayBaseURL(
-    runtime: IAgentRuntime,
-    provider: string
-): string | undefined {
-    const isCloudflareEnabled = runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
-    const cloudflareAccountId = runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID");
-    const cloudflareGatewayId = runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID");
-
-    elizaLogger.debug("Cloudflare Gateway Configuration:", {
-        isEnabled: isCloudflareEnabled,
-        hasAccountId: !!cloudflareAccountId,
-        hasGatewayId: !!cloudflareGatewayId,
-        provider: provider,
-    });
-
-    if (!isCloudflareEnabled) {
-        elizaLogger.debug("Cloudflare Gateway is not enabled");
-        return undefined;
-    }
-
-    if (!cloudflareAccountId) {
-        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set");
-        return undefined;
-    }
-
-    if (!cloudflareGatewayId) {
-        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set");
-        return undefined;
-    }
-
-    const baseURL = `https://gateway.ai.cloudflare.com/v1/${cloudflareAccountId}/${cloudflareGatewayId}/${provider.toLowerCase()}`;
-    elizaLogger.info("Using Cloudflare Gateway:", {
-        provider,
-        baseURL,
-        accountId: cloudflareAccountId,
-        gatewayId: cloudflareGatewayId,
-    });
-
-    return baseURL;
+interface GenerateObjectOptions extends VerifiedInferenceOptions {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+    output?: 'object' | 'array' | 'enum' | 'no-schema' | undefined;
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+    stop?: string[];
+    mode?: 'auto' | 'json' | 'tool';
+    enum?: string[];
 }
 
+// ================ COMMON UTILITIES ================
+interface RetryOptions {
+    maxRetries?: number;
+    initialDelay?: number;
+    maxDelay?: number;
+    shouldRetry?: (error: any) => boolean;
+}
 
+async function withRetry<T>(
+    operation: () => Promise<T>,
+    options: RetryOptions = {}
+): Promise<T> {
+    const {
+        maxRetries = 3,
+        initialDelay = 1000,
+        maxDelay = 8000,
+        shouldRetry = (error: any) => !(error instanceof TypeError || error instanceof SyntaxError),
+    } = options;
+
+    let retryCount = 0;
+    let retryDelay = initialDelay;
+
+    while (true) {
+        try {
+            return await operation();
+        } catch (error) {
+            retryCount++;
+            elizaLogger.error(`Operation failed (attempt ${retryCount}/${maxRetries}):`, error);
+
+            if (!shouldRetry(error) || retryCount >= maxRetries) {
+                throw error;
+            }
+
+            retryDelay = Math.min(retryDelay * 2, maxDelay);
+            elizaLogger.debug(`Retrying in ${retryDelay}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        }
+    }
+}
+
+function initializeModelClient(runtime: IAgentRuntime, imageModel?: boolean) {
+    const serverUrl = runtime.getModelProvider().endpoint;
+    const apiKey = runtime.token;
+    const model = 
+    imageModel ?
+    runtime.getModelProvider().imageModel : 
+    runtime.getModelProvider().defaultModel;
+    
+    const client = createOpenAI({
+        apiKey,
+        baseURL: serverUrl,
+        fetch: runtime.fetch,
+    });
+
+    return {
+        client,
+        model,
+        systemPrompt: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined
+    };
+}
+
+function validateContext(context: string, functionName: string): void {
+    if (!context) {
+        const errorMessage = `${functionName} context is empty`;
+        elizaLogger.error(errorMessage);
+        throw new Error(errorMessage);
+    }
+}
 
 // ================ TEXT GENERATION FUNCTIONS ================
 export async function generateText({
@@ -138,124 +158,64 @@ export async function generateText({
     verifiableInferenceOptions?: VerifiableInferenceOptions;
 }): Promise<string> {
     logFunctionCall('generateText', runtime);
-    if (!context) {
-        console.error("generateText context is empty");
-        return "";
-    }
-
-    elizaLogger.log("Generating text...");
+    validateContext(context, 'generateText');
 
     elizaLogger.info("Generating text with options:", {
         modelProvider: runtime.modelProvider,
         model: modelClass,
         verifiableInference,
     });
-    elizaLogger.log("Using provider:", runtime.modelProvider);
-    // If verifiable inference is requested and adapter is provided, use it
-    if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log(
-            "Using verifiable inference adapter:",
-            runtime.verifiableInferenceAdapter
-        );
-        try {
-            const result: VerifiableInferenceResult =
-                await runtime.verifiableInferenceAdapter.generateText(
-                    context,
-                    modelClass,
-                    verifiableInferenceOptions
-                );
-            elizaLogger.log("Verifiable inference result:", result);
-            // Verify the proof
-            const isValid =
-                await runtime.verifiableInferenceAdapter.verifyProof(result);
-            if (!isValid) {
-                throw new Error("Failed to verify inference proof");
-            }
 
-            return result.text;
-        } catch (error) {
-            elizaLogger.error("Error in verifiable inference:", error);
-            throw error;
-        }
+    if (verifiableInference && runtime.verifiableInferenceAdapter) {
+        return await handleVerifiableInference(runtime, context, modelClass, verifiableInferenceOptions);
     }
 
-    const provider = runtime.modelProvider;
-    elizaLogger.debug("Provider settings:", {
-        provider,
-        hasRuntime: !!runtime,
-        runtimeSettings: {
-            CLOUDFLARE_GW_ENABLED: runtime.getSetting("CLOUDFLARE_GW_ENABLED"),
-            CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting(
-                "CLOUDFLARE_AI_ACCOUNT_ID"
-            ),
-            CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting(
-                "CLOUDFLARE_AI_GATEWAY_ID"
-            ),
-        },
+    const { client, model, systemPrompt } = initializeModelClient(runtime);
+
+    const { text } = await aiGenerateText({
+        model: client.languageModel(model),
+        prompt: context,
+        system: systemPrompt,
+        tools,
+        onStepFinish,
+        maxSteps
     });
 
-    const endpoint =
-        runtime.character.modelEndpointOverride || runtime.getSetting("MODEL_ENDPOINT");
+    return text;
+}
 
-    // test: make it work without modelSettings
-    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    const model = runtime.getModelProvider().defaultModel;
-
-    // allow character.json settings => secrets to override models
-    // FIXME: Add MODEL_MEDIUM and other model class support
+async function handleVerifiableInference(
+    runtime: IAgentRuntime,
+    context: string,
+    modelClass: ModelClass,
+    options?: VerifiableInferenceOptions
+): Promise<string> {
+    elizaLogger.log(
+        "Using verifiable inference adapter:",
+        runtime.verifiableInferenceAdapter
+    );
     
-
-    elizaLogger.info("Selected model:", model);
-
-    const apiKey = runtime.token;
-
     try {
-
-
-        // elizaLogger.debug(
-        //     `Trimming context to max length of ${max_context_length} tokens.`
-        // );
-
-        // context = await trimTokens(context, max_context_length, runtime);
-
-        // const _stop = stop || modelSettings.stop;
-        // elizaLogger.debug(
-        //     `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
-        // );
-
-        logFunctionCall('generateText', runtime);
-
+        const result: VerifiableInferenceResult =
+            await runtime.verifiableInferenceAdapter.generateText(
+                context,
+                modelClass,
+                options
+            );
         
-        elizaLogger.debug(`Initializing ${model} model.`);
-        const serverUrl = endpoint;
-        const createOpenAICompabitbleModel = createOpenAI({
-            apiKey,
-            baseURL: serverUrl,
-            fetch: runtime.fetch,
-        });
-
-        const { text } = await aiGenerateText({
-            model: createOpenAICompabitbleModel.languageModel(model),
-            prompt: context,
-            system:
-                runtime.character.system ??
-                settings.SYSTEM_PROMPT ??
-                undefined,
-            tools: tools,
-            onStepFinish: onStepFinish,
-            maxSteps: maxSteps,
-        });
-
-        elizaLogger.debug(`Received response from ${model} model.`);
+        elizaLogger.log("Verifiable inference result:", result);
         
-        return text;    
+        const isValid = await runtime.verifiableInferenceAdapter.verifyProof(result);
+        if (!isValid) {
+            throw new Error("Failed to verify inference proof");
+        }
+
+        return result.text;
     } catch (error) {
-        elizaLogger.error("Error in generateText:", error);
+        elizaLogger.error("Error in verifiable inference:", error);
         throw error;
     }
 }
-
-
 
 export async function generateTextArray({
     runtime,
@@ -267,32 +227,54 @@ export async function generateTextArray({
     modelClass: ModelClass;
 }): Promise<string[]> {
     logFunctionCall('generateTextArray', runtime);
-    if (!context) {
-        elizaLogger.error("generateTextArray context is empty");
-        return [];
-    }
-    let retryDelay = 1000;
+    validateContext(context, 'generateTextArray');
+    
+    return await withRetry(async () => {
+        const {object} = await generateObject({
+            runtime,
+            context,
+            modelClass,
+            output: "array",
+        });
+        elizaLogger.debug("Received response from generateObject:", object);
+        return object as string[];
+    });
+}
 
-    while (true) {
-        try {
-            const response = await generateObject({
-                runtime,
-                context,
-                modelClass,
-                output: "array",
-            });
+// ================ ENUM GENERATION FUNCTIONS ================
+async function generateEnum<T extends string>({
+    runtime,
+    context,
+    modelClass,
+    enumValues,
+    functionName,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+    enumValues: readonly T[];
+    functionName: string;
+}): Promise<T | null> {
+    logFunctionCall(functionName, runtime);
+    validateContext(context, functionName);
 
-            const parsedResponse = parseJsonArrayFromText(response.object);
-            if (parsedResponse) {
-                return parsedResponse;
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateTextArray:", error);
-        }
+    return await withRetry(async () => {
+        elizaLogger.debug(
+            "Attempting to generate enum value with context:",
+            context
+        );
+        const { object } = await generateObject({
+            runtime,
+            context,
+            modelClass,
+            output: 'enum',
+            enum: [...enumValues],
+            schema: z.enum(enumValues as [T, ...T[]]),
+        });
 
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
+        elizaLogger.debug("Received enum response:", object);
+        return object as T;
+    });
 }
 
 export async function generateShouldRespond({
@@ -304,43 +286,16 @@ export async function generateShouldRespond({
     context: string;
     modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-    logFunctionCall('generateShouldRespond', runtime);
-    let retryDelay = 1000;
-    while (true) {
-        try {
-            elizaLogger.debug(
-                "Attempting to generate text with context:",
-                context
-            );
-            const {object} = await generateObject({
-                runtime,
-                context,
-                modelClass,
-                output: 'enum',
-                enum: ['RESPOND', 'IGNORE', 'STOP'],
-                schema: z.enum(['RESPOND', 'IGNORE', 'STOP']),
-            });
+    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as const;
+    type ResponseType = typeof RESPONSE_VALUES[number];
 
-            elizaLogger.debug("Received response from generateObject:", object);
-            
-            return object;
-
-        } catch (error) {
-            elizaLogger.error("Error in generateShouldRespond:", error);
-            if (
-                error instanceof TypeError &&
-                error.message.includes("queueTextCompletion")
-            ) {
-                elizaLogger.error(
-                    "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
-                );
-            }
-        }
-
-        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
-    }
+    return generateEnum<ResponseType>({
+        runtime,
+        context,
+        modelClass,
+        enumValues: RESPONSE_VALUES,
+        functionName: 'generateShouldRespond'
+    });
 }
 
 export async function generateTrueOrFalse({
@@ -353,26 +308,20 @@ export async function generateTrueOrFalse({
     modelClass: ModelClass;
 }): Promise<boolean> {
     logFunctionCall('generateTrueOrFalse', runtime);
-    // generate based on enum using generateObject
-    const response = await generateObject({
+    
+    const BOOL_VALUES = ['true', 'false'] as const;
+    type BoolString = typeof BOOL_VALUES[number];
+    
+    const result = await generateEnum<BoolString>({
         runtime,
         context,
         modelClass,
-        output: 'enum',
-        enum: ['true', 'false'],
-        schema: z.enum(['true', 'false']),
+        enumValues: BOOL_VALUES,
+        functionName: 'generateTrueOrFalse'
     });
-
-    if (response.object === 'true') {
-        return true;
-    } 
-    if (response.object === 'false') {
-        return false;
-    }
-    throw new Error('Invalid response from model');
+    
+    return result === 'true';
 }
-
-
 
 // ================ OBJECT GENERATION FUNCTIONS ================
 export const generateObject = async ({
@@ -380,15 +329,15 @@ export const generateObject = async ({
     context,
     output,
     modelClass,
+    mode,
     schema,
     schemaName,
     schemaDescription,
     stop,
-    mode = "json",
     verifiableInference,
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
-}: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
+}: GenerateObjectOptions): Promise<GenerateObjectResult<unknown>> => {
     logFunctionCall('generateObject', runtime);
     if (!context) {
         const errorMessage = "generateObject context is empty";
@@ -396,32 +345,24 @@ export const generateObject = async ({
         throw new Error(errorMessage);
     }
 
-
     elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
-        const serverUrl = runtime.getModelProvider().endpoint;
-        const apiKey = runtime.token;
-        const model = runtime.getModelProvider().defaultModel;
-        
-        const createOpenAICompabitbleModel = createOpenAI({
-            apiKey,
-            baseURL: serverUrl,
-            fetch: runtime.fetch,
-        });
+    const { client, model } = initializeModelClient(runtime);
 
-        const result = await aiGenerateObject({
-            model: createOpenAICompabitbleModel.languageModel(model),
-            prompt: context.toString(),
-            schema,
-            schemaName,
-            schemaDescription,
-            output,
-            system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-            stop
-        });
+    // If schema is provided, use object output type with schema
+    const result = aiGenerateObject({
+        model: client.languageModel(model),
+        prompt: context.toString(),
+        system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        stop,
+    })
 
-        elizaLogger.debug(`Received Object response from ${model} model.`);
-        
-        return result.object;
+    elizaLogger.debug(`Received Object response from ${model} model.`);
+    
+    return result;
 };
 
 export async function generateObjectDeprecated({
@@ -432,7 +373,7 @@ export async function generateObjectDeprecated({
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-}): Promise<GenerateObjectResult> {
+}): Promise<GenerateObjectResult<unknown>> {
     logFunctionCall('generateObjectDeprecated', runtime);
     return generateObject({
         runtime,
@@ -455,13 +396,13 @@ export async function generateObjectArray({
         elizaLogger.error("generateObjectArray context is empty");
         return [];
     }
-    const {object } = await generateObject({
+    const result = await generateObject({
         runtime,
         context,
         modelClass,
         output: "array",
     });
-    return object;
+    return Array.isArray(result.object) ? result.object : [];
 }
 
 
@@ -475,38 +416,25 @@ export async function generateMessageResponse({
     modelClass: ModelClass;
 }): Promise<Content> {
     logFunctionCall('generateMessageResponse', runtime);
-    // const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
-    // const max_context_length = modelSettings.maxInputTokens;
-
-    // context = await trimTokens(context, max_context_length, runtime);
+    validateContext(context, 'generateMessageResponse');
     elizaLogger.debug("Context:", context);
-    let retryLength = 1000; // exponential backoff
-    while (true) {
-        try {
-            elizaLogger.log("Generating message response..");
 
-            const response = await aiGenerateText({
-                runtime,
-                context,
-                modelClass,
-            });
+    return await withRetry(async () => {
+        const { client, model, systemPrompt } = initializeModelClient(runtime);
+        
+        const {text} = await aiGenerateText({
+            model: client.languageModel(model),
+            prompt: context,
+            system: systemPrompt,
+        });
 
-            // try parsing the response as JSON, if null then try again
-            const parsedContent = parseJSONObjectFromText(response) as Content;
-            if (!parsedContent) {
-                elizaLogger.debug("parsedContent is null, retrying");
-                continue;
-            }
-
-            return parsedContent;
-        } catch (error) {
-            elizaLogger.error("ERROR:", error);
-            // wait for 2 seconds
-            retryLength *= 2;
-            await new Promise((resolve) => setTimeout(resolve, retryLength));
-            elizaLogger.debug("Retrying...");
+        const parsedContent = parseJSONObjectFromText(text) as Content;
+        if (!parsedContent) {
+            throw new Error("Failed to parse content");
         }
-    }
+
+        return parsedContent;
+    });
 }
 
 
@@ -541,36 +469,29 @@ export const generateImage = async (
         elizaLogger.warn("No model settings found for the image model provider.");
         return { success: false, error: "No model settings available" };
     }
-    const model = runtime.getModelProvider().imageModel;
+    const { model, client } = initializeModelClient(runtime, true);
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
     });
 
-    const apiKey = runtime.getModelProvider().apiKey;
-    try{
-        // GENERATE IMAGES USING VERCEL AI SDK
-
+    await withRetry(async () => {
         const result = await aiGenerateImage({
-            provider: runtime.imageModelProvider,
-            model: model,
-            apiKey: apiKey,
+            model: client.imageModel(model),
             prompt: data.prompt,
-            width: data.width,
-            height: data.height,
-            count: data.count,
-            negativePrompt: data.negativePrompt,
-            numIterations: data.numIterations,
-            guidanceScale: data.guidanceScale,
-            seed: data.seed,
-            modelId: data.modelId,
-            jobId: data.jobId,
+            size: `${data.width}x${data.height}`,
+            n: data.count,
+            seed: data.seed
         });
-        return result;
-        
-    } catch (_error) {
-        elizaLogger.error("Error in generateImage:", error);
-        return { success: false, error: _error };
-    }
+
+        return {
+            success: true,
+            data: result.images,
+            error: undefined
+        };
+    }, {
+        maxRetries: 2,
+        initialDelay: 2000
+    });
 };
 
 
@@ -600,7 +521,68 @@ export const generateCaption = async (
 };
 
 
+export async function generateTweetActions({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+}): Promise<ActionResponse | null> {
+    try {
+        const BOOL_VALUES = ['true', 'false'] as const;
+        type BoolString = typeof BOOL_VALUES[number];
 
+        // Generate each action using generateEnum
+        const like = await generateEnum<BoolString>({
+            runtime,
+            context: `${context}\nShould I like this tweet?`,
+            modelClass,
+            enumValues: BOOL_VALUES,
+            functionName: 'generateTweetActions_like'
+        });
+
+        const retweet = await generateEnum<BoolString>({
+            runtime,
+            context: `${context}\nShould I retweet this tweet?`,
+            modelClass,
+            enumValues: BOOL_VALUES,
+            functionName: 'generateTweetActions_retweet'
+        });
+
+        const quote = await generateEnum<BoolString>({
+            runtime,
+            context: `${context}\nShould I quote this tweet?`,
+            modelClass,
+            enumValues: BOOL_VALUES,
+            functionName: 'generateTweetActions_quote'
+        });
+
+        const reply = await generateEnum<BoolString>({
+            runtime,
+            context: `${context}\nShould I reply to this tweet?`,
+            modelClass,
+            enumValues: BOOL_VALUES,
+            functionName: 'generateTweetActions_reply'
+        });
+
+        if (!like || !retweet) {
+            elizaLogger.debug("Required tweet actions missing");
+            return null;
+        }
+
+        return {
+            like: like === 'true',
+            retweet: retweet === 'true',
+            quote: quote === 'true',
+            reply: reply === 'true'
+        };
+    } catch (error) {
+        elizaLogger.error("Error in generateTweetActions:", error);
+        return null;
+    }
+}
 
 
 
