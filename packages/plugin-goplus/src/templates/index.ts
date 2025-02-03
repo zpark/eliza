@@ -101,7 +101,7 @@ Available actions:
 
 \`\`\`json
 {
-"type": "ADDRESS_SECURITY_CHECK"
+"type": "ADDRESS_SECURITY_CHECK",
 "network": "1", //default: 1 (Ethereum:1, Optimism:10, Cronos:25, BSC:56, Gnosis:100, HECO:128, Polygon:137, Fantom:250, KCC:321, zkSync Era:324, FON:201022, Arbitrum:42161, Avalanche:43114, Linea Mainnet:59144, Tron:tron, Scroll:534352, opBNB:204, Base:8453, Solana:solana)
 "wallet": "" | null,
 }
