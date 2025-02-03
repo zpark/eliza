@@ -168,7 +168,7 @@ export default {
             );
 
             const config = {
-                origin: "https://devnet.xexchange.com",
+                origin: networkConfig.xExchangeOriginURL,
                 apiUrl: networkConfig.apiURL,
             };
 
