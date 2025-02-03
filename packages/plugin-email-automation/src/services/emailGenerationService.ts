@@ -15,7 +15,7 @@ export class EmailGenerationService {
             elizaLogger.debug("Options validated successfully");
 
             elizaLogger.debug("Generating email content via AI...");
-            const { object } = await generateObject({
+            const object = await generateObject({
                 runtime: this.runtime,
                 context: validatedOptions.content,
                 modelClass: ModelClass.LARGE,
