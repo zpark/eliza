@@ -4,7 +4,6 @@ import {
     type VerifiableInferenceResult,
     VerifiableInferenceProvider,
     ModelProviderName,
-    models,
     elizaLogger,
 } from "@elizaos/core";
 import {generateProof, verifyProof} from "../util/primusUtil.ts";
@@ -30,8 +29,24 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
         options?: VerifiableInferenceOptions
     ): Promise<VerifiableInferenceResult> {
         const provider = this.options.modelProvider || ModelProviderName.OPENAI;
-        const baseEndpoint = options?.endpoint || models[provider].endpoint;
-        const model = models[provider].model[modelClass];
+        
+        // Get model settings from runtime configuration
+        const modelSettings = {
+            endpoint: options?.endpoint || "https://api.openai.com/v1",
+            model: {
+                chat: {
+                    name: "gpt-3.5-turbo",
+                    temperature: 0.7
+                },
+                completion: {
+                    name: "text-davinci-003",
+                    temperature: 0.7
+                }
+            }
+        };
+
+        const baseEndpoint = modelSettings.endpoint;
+        const model = modelSettings.model[modelClass] || modelSettings.model.chat;
         const apiKey = this.options.token;
 
         if (!apiKey) {
@@ -65,9 +80,7 @@ export class PrimusAdapter implements IVerifiableInferenceAdapter {
             const body = {
                 model: model.name,
                 messages: [{ role: "user", content: context }],
-                temperature:
-                    options?.providerOptions?.temperature ||
-                    models[provider].model[modelClass].temperature,
+                temperature: options?.providerOptions?.temperature || model.temperature,
             };
             const attestation = await generateProof(endpoint,"POST",headers,JSON.stringify(body),responseParsePath);
             elizaLogger.log("model attestation:", attestation);

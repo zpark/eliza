@@ -343,7 +343,7 @@ export const generateObject = async ({
     verifiableInference,
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
-}: GenerateObjectOptions): Promise<JSONValue> => {
+}: GenerateObjectOptions): Promise<z.infer<typeof schema> | JSONValue> => {
     logFunctionCall('generateObject', runtime);
     if (!context) {
         const errorMessage = "generateObject context is empty";
