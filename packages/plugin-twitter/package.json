@@ -24,6 +24,7 @@
 		"tsup": "8.3.5"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "1.5.3",
 		"vitest": "^1.0.0"
 	},
 	"scripts": {
@@ -31,6 +32,9 @@
 		"dev": "tsup --format esm --dts --watch",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"lint": "eslint --fix  --cache ."
+		"lint": "biome check src/",
+		"lint:fix": "biome check --apply src/",
+		"format": "biome format src/",
+		"format:fix": "biome format --write src/"
 	}
 }
