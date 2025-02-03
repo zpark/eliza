@@ -1,5 +1,5 @@
-import { Evaluator, IAgentRuntime, Memory, State } from "@elizaos/core";
-import { NFTKnowledge } from "../types";
+import type { Evaluator, IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { NFTKnowledge } from "../types";
 
 export const nftKnowledgeEvaluator: Evaluator = {
     name: "nft-collection-evaluator",
@@ -11,7 +11,7 @@ export const nftKnowledgeEvaluator: Evaluator = {
         "artist-info",
     ],
     alwaysRun: false,
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         const content = message.content.text.toLowerCase();
         return (
             content.includes("nft") ||
@@ -24,7 +24,7 @@ export const nftKnowledgeEvaluator: Evaluator = {
             content.includes("onchain")
         );
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    handler: async (_runtime: IAgentRuntime, message: Memory, state: State) => {
         const content = message.content.text.toLowerCase();
 
         const extractedInfo: NFTKnowledge = {

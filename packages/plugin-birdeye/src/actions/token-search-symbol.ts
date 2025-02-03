@@ -1,13 +1,14 @@
 import {
-    Action,
-    ActionExample,
+    type Action,
+    type ActionExample,
     elizaLogger,
-    IAgentRuntime,
-    Memory,
-    State,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
+    type State,
 } from "@elizaos/core";
 import { BirdeyeProvider } from "../birdeye";
-import { TokenResult } from "../types/api/search";
+import type { TokenResult } from "../types/api/search";
 import {
     extractSymbols,
     formatPercentChange,
@@ -60,9 +61,9 @@ export const tokenSearchSymbolAction = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        _options: any,
-        callback?: any
+        _state: State,
+        _options: Record<string, unknown>,
+        callback?: HandlerCallback
     ) => {
         try {
             const provider = new BirdeyeProvider(runtime.cacheManager);
@@ -90,7 +91,7 @@ export const tokenSearchSymbolAction = {
                 )
             );
 
-            // get filter the resuls to only include the token results and then filter the results to only include the ones that match the symbol
+            // get filter the results to only include the token results and then filter the results to only include the ones that match the symbol
             const validResults = results.map((r, i) =>
                 r.data.items
                     .filter((item) => item.type === "token" && item.result)
@@ -200,12 +201,12 @@ export const tokenSearchSymbolAction = {
 
 const formatTokenSummary = (
     symbol: string,
-    index: number,
+    _index: number,
     tokens: TokenResult[]
 ) => {
     return tokens
         .map((token, i) => {
-            let output = ``;
+            let output = "";
             if (i === 0) {
                 output += `Search Results for ${symbol}:\n\n`;
             }

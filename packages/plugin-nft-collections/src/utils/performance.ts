@@ -1,4 +1,4 @@
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 
 interface PerformanceMetric {
     operation: string;
@@ -71,7 +71,7 @@ export class PerformanceMonitor extends EventEmitter {
     }
 
     // Get average latency for an operation
-    getAverageLatency(operation: string, timeWindowMs: number = 60000): number {
+    getAverageLatency(operation: string, timeWindowMs = 60000): number {
         const relevantMetrics = this.getRecentMetrics(operation, timeWindowMs);
         if (relevantMetrics.length === 0) return 0;
 
@@ -83,7 +83,7 @@ export class PerformanceMonitor extends EventEmitter {
     }
 
     // Get error rate for an operation
-    getErrorRate(operation: string, timeWindowMs: number = 60000): number {
+    getErrorRate(operation: string, timeWindowMs = 60000): number {
         const relevantMetrics = this.getRecentMetrics(operation, timeWindowMs);
         if (relevantMetrics.length === 0) return 0;
 
@@ -94,13 +94,13 @@ export class PerformanceMonitor extends EventEmitter {
     }
 
     // Get throughput (operations per second)
-    getThroughput(operation: string, timeWindowMs: number = 60000): number {
+    getThroughput(operation: string, timeWindowMs = 60000): number {
         const relevantMetrics = this.getRecentMetrics(operation, timeWindowMs);
         return (relevantMetrics.length / timeWindowMs) * 1000;
     }
 
     // Get performance summary
-    getPerformanceSummary(timeWindowMs: number = 60000): Record<
+    getPerformanceSummary(timeWindowMs = 60000): Record<
         string,
         {
             averageLatency: number;
@@ -109,7 +109,11 @@ export class PerformanceMonitor extends EventEmitter {
         }
     > {
         const operations = new Set(this.metrics.map((m) => m.operation));
-        const summary: Record<string, any> = {};
+        const summary: Record<string, {
+            averageLatency: number;
+            errorRate: number;
+            throughput: number;
+        }> = {};
 
         for (const operation of operations) {
             summary[operation] = {

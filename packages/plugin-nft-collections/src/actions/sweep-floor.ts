@@ -1,6 +1,6 @@
-import { Action, IAgentRuntime, Memory, State } from "@elizaos/core";
-import { ReservoirService } from "../services/reservoir";
-import { HandlerCallback } from "@elizaos/core";
+import type { Action, IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { ReservoirService } from "../services/reservoir";
+import type { HandlerCallback } from "@elizaos/core";
 
 // Helper function to extract NFT details from the message
 function extractNFTDetails(text: string): {
@@ -12,7 +12,7 @@ function extractNFTDetails(text: string): {
 
     return {
         collectionAddress: addressMatch ? addressMatch[0] : null,
-        quantity: quantityMatch ? parseInt(quantityMatch[0]) : 1,
+        quantity: quantityMatch ? Number.parseInt(quantityMatch[0]) : 1,
     };
 }
 
@@ -23,7 +23,7 @@ export const sweepFloorAction = (nftService: ReservoirService): Action => {
         description:
             "Sweeps the floor of a specified EVM NFT collection by purchasing the lowest-priced available NFTs.",
 
-        validate: async (runtime: IAgentRuntime, message: Memory) => {
+        validate: async (_runtime: IAgentRuntime, message: Memory) => {
             const content = message.content.text.toLowerCase();
             return (
                 (content.includes("sweep") || content.includes("buy")) &&
@@ -35,8 +35,8 @@ export const sweepFloorAction = (nftService: ReservoirService): Action => {
         handler: async (
             runtime: IAgentRuntime,
             message: Memory,
-            state: State,
-            options: any,
+            _state: State,
+            _options: { [key: string]: unknown },
             callback: HandlerCallback
         ) => {
             try {

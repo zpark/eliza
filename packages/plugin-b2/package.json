@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-b2",
-    "version": "0.1.9-alpha.1",
+    "version": "0.1.9",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -23,13 +23,16 @@
         "tsup": "8.3.5"
     },
     "devDependencies": {
+        "@biomejs/biome": "1.5.3",
         "tsup": "8.3.5"
     },
     "scripts": {
         "build": "tsup src/index.ts --format esm --no-dts",
         "dev": "tsup --format esm --dts --watch",
-        "lint": "eslint --fix  --cache .",
-        "test": "vitest run"
+        "test": "vitest run",
+        "lint": "biome lint .",
+        "format": "biome format . --write",
+        "check": "biome check --apply ."
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

@@ -6,7 +6,7 @@
 
 <div align="center">
 
-📖 [Documentation](https://elizaos.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
+📑 [Technical Report](https://arxiv.org/pdf/2501.06781) |  📖 [Documentation](https://elizaos.github.io/eliza/) | 🎯 [Examples](https://github.com/thejoven/awesome-eliza)
 
 </div>
 
@@ -22,7 +22,7 @@
 
 ## ✨ Features
 
-- 🛠️ Full-featured Discord, Twitter and Telegram connectors
+- 🛠️ Full-featured Discord, X (Twitter) and Telegram connectors
 - 🔗 Support for every model (Llama, Grok, OpenAI, Anthropic, Gemini, etc.)
 - 👥 Multi-agent and room support
 - 📚 Easily ingest and interact with your documents
@@ -100,7 +100,7 @@ pnpm clean
 
 Once the agent is running, you should see the message to run "pnpm start:client" at the end.
 
-Open another terminal, move to same directory, run the command below, then follow the URL to chat with your agent.
+Open another terminal, move to the same directory, run the command below, then follow the URL to chat with your agent.
 
 ```bash
 pnpm start:client
@@ -152,16 +152,40 @@ pnpm install --include=optional sharp
 
 ---
 
+### Deploy Eliza in one click 
+
+Use [Fleek](https://fleek.xyz/eliza/) to deploy Eliza in one click. This opens Eliza to non-developers and provides the following options to build your agent:
+1. Start with a template
+2. Build characterfile from scratch
+3. Upload pre-made characterfile
+
+Click [here](https://fleek.xyz/eliza/) to get started!
+
+---
+
 ### Community & contact
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). Best for: bugs you encounter using Eliza, and feature proposals.
 - [Discord](https://discord.gg/ai16z). Best for: sharing your applications and hanging out with the community.
 
+## Citation
+
+We now have a [paper](https://arxiv.org/pdf/2501.06781) you can cite for the Eliza OS:
+```bibtex
+@article{walters2025eliza,
+  title={Eliza: A Web3 friendly AI Agent Operating System},
+  author={Walters, Shaw and Gao, Sam and Nerd, Shakker and Da, Feng and Williams, Warren and Meng, Ting-Chien and Han, Hunter and He, Frank and Zhang, Allen and Wu, Ming and others},
+  journal={arXiv preprint arXiv:2501.06781},
+  year={2025}
+}
+```
+
 ## Contributors
 
 <a href="https://github.com/elizaos/eliza/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=elizaos/eliza" />
+  <img src="https://contrib.rocks/image?repo=elizaos/eliza" alt="Eliza project contributors" />
 </a>
+
 
 ## Star History
 

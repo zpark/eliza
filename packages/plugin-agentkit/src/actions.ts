@@ -9,7 +9,7 @@ import {
     composeContext,
     generateObject,
 } from "@elizaos/core";
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
+import type { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
 import { CdpToolkit, type Tool } from "@coinbase/cdp-langchain";
 
 type GetAgentKitActionsParams = {
@@ -37,15 +37,16 @@ export async function getAgentKitActions({
             runtime: IAgentRuntime,
             message: Memory,
             state: State | undefined,
-            options?: Record<string, unknown>,
+            _options?: Record<string, unknown>,
             callback?: HandlerCallback
         ): Promise<boolean> => {
             try {
                 const client = await getClient();
                 let currentState =
                     state ?? (await runtime.composeState(message));
-                currentState =
-                    await runtime.updateRecentMessageState(currentState);
+                currentState = await runtime.updateRecentMessageState(
+                    currentState
+                );
 
                 const parameterContext = composeParameterContext(
                     tool,
@@ -92,7 +93,7 @@ export async function getAgentKitActions({
 
 async function executeToolAction(
     tool: Tool,
-    parameters: any,
+    parameters: unknown,
     client: CdpAgentkit
 ): Promise<unknown> {
     const toolkit = new CdpToolkit(client);
@@ -106,7 +107,7 @@ async function executeToolAction(
     return await selectedTool.call(parameters);
 }
 
-function composeParameterContext(tool: any, state: State): string {
+function composeParameterContext(tool: Tool, state: State): string {
     const contextTemplate = `{{recentMessages}}
 
 Given the recent messages, extract the following information for the action "${tool.name}":

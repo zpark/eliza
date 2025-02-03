@@ -1,7 +1,7 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/core";
-import { NeynarAPIClient, isApiErrorResponse } from "@neynar/nodejs-sdk";
-import { NeynarCastResponse, Cast, Profile, FidRequest, CastId } from "./types";
-import { FarcasterConfig } from "./environment";
+import { type IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { type NeynarAPIClient, isApiErrorResponse } from "@neynar/nodejs-sdk";
+import type { NeynarCastResponse, Cast, Profile, FidRequest, CastId } from "./types";
+import type { FarcasterConfig } from "./environment";
 
 export class FarcasterClient {
     runtime: IAgentRuntime;
@@ -50,6 +50,7 @@ export class FarcasterClient {
     async publishCast(
         cast: string,
         parentCastId: CastId | undefined,
+        // eslint-disable-next-line
         retryTimes?: number
     ): Promise<NeynarCastResponse | undefined> {
         try {
@@ -189,6 +190,7 @@ export class FarcasterClient {
             username: "",
         };
 
+        /*
         const userDataBodyType = {
             1: "pfp",
             2: "name",
@@ -199,6 +201,7 @@ export class FarcasterClient {
             // 8: "twitter",
             // 9: "github",
         } as const;
+        */
 
         profile.name = neynarUserProfile.display_name!;
         profile.username = neynarUserProfile.username;

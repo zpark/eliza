@@ -1,4 +1,4 @@
-import { Provider, IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { Provider, IAgentRuntime, Memory, State } from "@elizaos/core";
 
 /*
 interface TokenPriceData {
@@ -20,9 +20,25 @@ interface TokenPriceData {
 }
 */
 
+interface DexScreenerPair {
+    baseToken: {
+        name: string;
+        symbol: string;
+        address: string;
+        decimals: number;
+    };
+    priceUsd: string;
+    liquidity?: {
+        usd: string;
+    };
+    volume?: {
+        h24: number;
+    };
+}
+
 export class TokenPriceProvider implements Provider {
     async get(
-        runtime: IAgentRuntime,
+        _lengthruntime: IAgentRuntime,
         message: Memory,
         _state?: State
     ): Promise<string> {
@@ -93,21 +109,20 @@ export class TokenPriceProvider implements Provider {
         return null;
     }
 
-    private getBestPair(pairs: any[]): any {
+    private getBestPair(pairs: DexScreenerPair[]): DexScreenerPair {
         return pairs.reduce((best, current) => {
-            const bestLiquidity = parseFloat(best.liquidity?.usd || "0");
-            const currentLiquidity = parseFloat(current.liquidity?.usd || "0");
+            const bestLiquidity = Number.parseFloat(best.liquidity?.usd || "0");
+            const currentLiquidity = Number.parseFloat(current.liquidity?.usd || "0");
             return currentLiquidity > bestLiquidity ? current : best;
         }, pairs[0]);
     }
 
-    private formatPriceData(pair: any): string {
-        const price = parseFloat(pair.priceUsd).toFixed(6);
-        //const change24h = pair.priceChange?.h24?.toFixed(2) || "0.00";
-        const liquidity = parseFloat(
+    private formatPriceData(pair: DexScreenerPair): string {
+        const price = Number.parseFloat(pair.priceUsd).toFixed(6);
+        const liquidity = Number.parseFloat(
             pair.liquidity?.usd || "0"
         ).toLocaleString();
-        const volume = parseFloat(pair.volume?.h24 || "0").toLocaleString();
+        const volume = (pair.volume?.h24 || 0).toLocaleString();
 
         return `
         The price of ${pair.baseToken.symbol} is $${price} USD, with liquidity of $${liquidity} and 24h volume of $${volume}.`;

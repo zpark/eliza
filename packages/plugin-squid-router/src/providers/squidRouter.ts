@@ -1,10 +1,10 @@
-import {IAgentRuntime, Memory, Provider, State} from "@elizaos/core";
+import type {IAgentRuntime, Memory, Provider, State} from "@elizaos/core";
 import {Squid} from "@0xsquid/sdk";
 import {ethers} from "ethers";
-import {ChainData, ChainType, RouteRequest, RouteResponse, Token} from "@0xsquid/squid-types";
+import {type ChainData, ChainType, type RouteRequest, type RouteResponse, type Token} from "@0xsquid/squid-types";
 import {validateSquidRouterConfig} from "../helpers/utils.ts";
-import {ExecuteRoute, TransactionResponses} from "@0xsquid/sdk/dist/types";
-import {nativeTokenConstant, SquidToken} from "../types";
+import type {ExecuteRoute, TransactionResponses} from "@0xsquid/sdk/dist/types";
+import {nativeTokenConstant, type SquidToken} from "../types";
 
 const getSDK = (baseUrl: string, integratorId: string): Squid => {
     const squid = new Squid({
@@ -84,13 +84,25 @@ export class SquidRouterProvider {
             if(chain.chainType === ChainType.EVM) {
                 const provider = new ethers.JsonRpcProvider(chain.rpc);
                 return new ethers.Wallet(runtime.getSetting("SQUID_EVM_PRIVATE_KEY"), provider);
-            } else {
-                throw Error("Cannot instantiate EVM signer for non-EVM chain");
             }
+            throw new Error('Cannot instantiate EVM signer for non-EVM chain'); // Fix: Use template literal and remove else
         } catch (error) {
-            throw Error("Cannot instantiate EVM signer: "+error);
+            throw new Error(`Cannot instantiate EVM signer: ${error}`); // Fix: Use template literal
         }
     }
+
+    // async getEVMSignerForChain(chain: ChainData, runtime): Promise<ethers.Signer> {
+    //     try {
+    //         if(chain.chainType === ChainType.EVM) {
+    //             const provider = new ethers.JsonRpcProvider(chain.rpc);
+    //             return new ethers.Wallet(runtime.getSetting("SQUID_EVM_PRIVATE_KEY"), provider);
+    //         } else {
+    //             throw Error("Cannot instantiate EVM signer for non-EVM chain");
+    //         }
+    //     } catch (error) {
+    //         throw Error("Cannot instantiate EVM signer: "+error);
+    //     }
+    // }
 }
 
 export const initSquidRouterProvider = (runtime: IAgentRuntime) => {

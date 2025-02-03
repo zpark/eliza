@@ -1,14 +1,14 @@
 import {
-    ActionExample,
+    type ActionExample,
     composeContext,
-    Content,
+    type Content,
     elizaLogger,
     generateObject,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
 } from "@elizaos/core";
 import axios from "axios";
@@ -26,7 +26,7 @@ export type GetTokenPriceContent = z.infer<typeof GetTokenPriceSchema> &
     Content;
 
 export const isGetTokenPriceContent = (
-    obj: any
+    obj: unknown
 ): obj is GetTokenPriceContent => {
     return GetTokenPriceSchema.safeParse(obj).success;
 };
@@ -52,7 +52,8 @@ export default {
         "CHECK_TOKEN_PRICE_BY_ADDRESS",
         "LOOKUP_TOKEN_BY_ADDRESS",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    // eslint-disable-next-line
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         await validateCoingeckoConfig(runtime);
         return true;
     },
@@ -67,16 +68,19 @@ export default {
     ): Promise<boolean> => {
         elizaLogger.log("Starting GET_TOKEN_PRICE_BY_ADDRESS handler...");
 
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
+        // Initialize or update state
+        let currentState = state;
+        if (!currentState) {
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(currentState);
         }
+
 
         try {
             elizaLogger.log("Composing token price context...");
             const context = composeContext({
-                state,
+                state: currentState,
                 template: getPriceByAddressTemplate,
             });
 
@@ -98,7 +102,7 @@ export default {
 
             // Get API configuration
             const config = await validateCoingeckoConfig(runtime);
-            const { baseUrl, apiKey } = getApiConfig(config);
+            const { baseUrl, apiKey, headerKey } = getApiConfig(config);
 
             // Fetch token data
             elizaLogger.log("Fetching token data...");
@@ -107,7 +111,7 @@ export default {
                 {
                     headers: {
                         accept: "application/json",
-                        "x-cg-pro-api-key": apiKey,
+                        [headerKey]: apiKey,
                     },
                 }
             );
@@ -159,7 +163,7 @@ export default {
                 error
             );
 
-            let errorMessage;
+            let errorMessage: string;
             if (error.response?.status === 429) {
                 errorMessage = "Rate limit exceeded. Please try again later.";
             } else if (error.response?.status === 403) {

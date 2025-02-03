@@ -1,6 +1,6 @@
 // src/services/post.ts
 import {
-    IAgentRuntime,
+    type IAgentRuntime,
     ModelClass,
     composeContext,
     elizaLogger,
@@ -13,7 +13,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import sharp from "sharp";
 import { getIgClient } from "../lib/state";
-import { InstagramState } from "../types";
+import type { InstagramState } from "../types";
 
 // Template for generating Instagram posts
 const instagramPostTemplate = `
@@ -48,9 +48,9 @@ interface PostOptions {
 export class InstagramPostService {
     private runtime: IAgentRuntime;
     private state: InstagramState;
-    private isProcessing: boolean = false;
-    private lastPostTime: number = 0;
-    private stopProcessing: boolean = false;
+    private isProcessing = false;
+    private lastPostTime = 0;
+    private stopProcessing = false;
 
     constructor(runtime: IAgentRuntime, state: InstagramState) {
         this.runtime = runtime;
@@ -64,12 +64,12 @@ export class InstagramPostService {
             }>("instagram/lastPost");
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
-            const minMinutes = parseInt(
-                this.runtime.getSetting("POST_INTERVAL_MIN") || "90",
+            const minMinutes = Number.parseInt(
+                this.runtime.getSetting("INSTAGRAM_POST_INTERVAL_MIN") || this.runtime.getSetting("POST_INTERVAL_MIN") || "90",
                 10
             );
-            const maxMinutes = parseInt(
-                this.runtime.getSetting("POST_INTERVAL_MAX") || "180",
+            const maxMinutes = Number.parseInt(
+                this.runtime.getSetting("INSTAGRAM_POST_INTERVAL_MAX") || this.runtime.getSetting("POST_INTERVAL_MAX") || "180",
                 10
             );
             const randomMinutes =
@@ -217,14 +217,24 @@ export class InstagramPostService {
         try {
             elizaLogger.log("Generating image for Instagram post");
 
+            let imageSettings = this.runtime.character.settings.imageSettings || {};
+
             const result = await generateImage(
                 {
                     prompt: content,
-                    width: 1024,
-                    height: 1024,
-                    count: 1,
-                    numIterations: 50,
-                    guidanceScale: 7.5,
+                    width: imageSettings?.width || 1024,
+                    height: imageSettings?.height || 1024,
+                    count: imageSettings?.count || 1,
+negativePrompt: imageSettings?.negativePrompt || null,
+                    numIterations: imageSettings?.numIterations || 50,
+                    guidanceScale: imageSettings?.guidanceScale || 7.5,
+seed: imageSettings?.seed || null,
+                    modelId: imageSettings?.modelId || null,
+                    jobId: imageSettings?.jobId || null,
+                    stylePreset: imageSettings?.stylePreset || "",
+                    hideWatermark: imageSettings?.hideWatermark ?? true,
+                    safeMode: imageSettings?.safeMode ?? true,
+                    cfgScale: imageSettings?.cfgScale || null,
                 },
                 this.runtime
             );
@@ -250,14 +260,55 @@ export class InstagramPostService {
             await fs.writeFile(tempFile, Buffer.from(imageData, "base64"));
 
             return tempFile;
-        } catch (error) {
-            elizaLogger.error("Error generating image:", {
-                error: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-                phase: "getOrGenerateImage",
-            });
-            throw error;
+        } catch {
+            // If not JSON, clean the raw content
+            cleanedContent = content
+              .replace(/^\s*{?\s*"text":\s*"|"\s*}?\s*$/g, "") // Remove JSON-like wrapper
+              .replace(/^['"](.*)['"]$/g, "$1") // Remove quotes
+              .replace(/\\"/g, '"') // Unescape quotes
+              .replace(/\\n/g, "\n\n") // Unescape newlines
+              .trim();
         }
+
+      if (!cleanedContent) {
+        elizaLogger.error("Failed to extract valid content from response:", {
+          rawResponse: content,
+          attempted: "JSON parsing",
+        });
+        return;
+      }
+
+      // For Instagram, we need to generate or get an image
+      const mediaUrl = await this.getOrGenerateImage(cleanedContent);
+
+      await this.createPost({
+        media: [{
+          type: 'IMAGE',
+          url: mediaUrl
+        }],
+        caption: cleanedContent
+      });
+
+      // Create memory of the post
+      await this.runtime.messageManager.createMemory({
+        id: stringToUuid(`instagram-post-${Date.now()}`),
+        userId: this.runtime.agentId,
+        agentId: this.runtime.agentId,
+        content: {
+          text: cleanedContent,
+          source: "instagram",
+        },
+        roomId,
+        embedding: getEmbeddingZeroVector(),
+        createdAt: Date.now(),
+      });
+
+    } catch (error) {
+      elizaLogger.error("Error generating Instagram post:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        phase: 'generateNewPost'
+      });
     }
 
     async createPost(options: PostOptions) {

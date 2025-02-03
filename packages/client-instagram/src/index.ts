@@ -1,5 +1,5 @@
 // src/index.ts
-import { Client, IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { type Client, type IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { validateInstagramConfig } from "./environment";
 import { initializeClient } from "./lib/auth";
 import { InstagramInteractionService } from "./services/interaction";
@@ -47,8 +47,8 @@ export const InstagramClientInterface: Client = {
             throw error;
         }
     },
-
-    async stop(_runtime: IAgentRuntime) {
+    // eslint-disable-next-line
+    async stop(runtime: IAgentRuntime) {
         elizaLogger.log("Stopping Instagram client services...");
         // Cleanup will be handled by the services themselves
     },

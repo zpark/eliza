@@ -29,13 +29,13 @@ import type {
 import * as viemChains from "viem/chains";
 import { DeriveKeyProvider, TEEMode } from "@elizaos/plugin-tee";
 import NodeCache from "node-cache";
-import * as path from "path";
+import * as path from "node:path";
 
 import type { SupportedChain } from "../types";
 
 export class WalletProvider {
     private cache: NodeCache;
-    private cacheKey: string = "evm/wallet";
+    private cacheKey = "evm/wallet";
     private currentChain: SupportedChain = "mainnet";
     private CACHE_EXPIRY_SEC = 5;
     chains: Record<string, Chain> = { ...viemChains };
@@ -109,12 +109,11 @@ export class WalletProvider {
     }
 
     async getWalletBalance(): Promise<string | null> {
-        const cacheKey = "walletBalance_" + this.currentChain;
+        const cacheKey = `walletBalance_${this.currentChain}`;
         const cachedData = await this.getCachedData<string>(cacheKey);
         if (cachedData) {
             elizaLogger.log(
-                "Returning cached wallet balance for chain: " +
-                    this.currentChain
+                `Returning cached wallet balance for chain: ${this.currentChain}`
             );
             return cachedData;
         }
@@ -220,9 +219,9 @@ export class WalletProvider {
         if (!chains) {
             return;
         }
-        Object.keys(chains).forEach((chain: string) => {
+        for (const chain of Object.keys(chains)) {
             this.chains[chain] = chains[chain];
-        });
+        }
     };
 
     private setCurrentChain = (chain: SupportedChain) => {
@@ -269,15 +268,15 @@ const genChainsFromRuntime = (
 ): Record<string, Chain> => {
     const chainNames =
         (runtime.character.settings.chains?.evm as SupportedChain[]) || [];
-    const chains = {};
+    const chains: Record<string, Chain> = {};
 
-    chainNames.forEach((chainName) => {
+    for (const chainName of chainNames) {
         const rpcUrl = runtime.getSetting(
-            "ETHEREUM_PROVIDER_" + chainName.toUpperCase()
+            `ETHEREUM_PROVIDER_${chainName.toUpperCase()}`
         );
         const chain = WalletProvider.genChainFromName(chainName, rpcUrl);
         chains[chainName] = chain;
-    });
+    }
 
     const mainnet_rpcurl = runtime.getSetting("EVM_PROVIDER_URL");
     if (mainnet_rpcurl) {

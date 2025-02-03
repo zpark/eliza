@@ -1,21 +1,21 @@
 import {
-    Action,
-    ActionExample,
-    IAgentRuntime,
+    type Action,
+    type ActionExample,
+    type IAgentRuntime,
     generateObjectDeprecated,
-    Memory,
-    State,
-    HandlerCallback,
+    type Memory,
+    type State,
+    type HandlerCallback,
     elizaLogger,
     composeContext,
     ModelClass,
 } from "@elizaos/core";
 import { getTxReceipt, withdraw } from "../utils";
-import { Hash } from "viem";
+import type { Hash } from "viem";
 import { validateB2NetworkConfig } from "../environment";
 import { withdrawTemplate } from "../templates";
-import { WalletProvider } from "../providers";
-import { WithdrawParams } from "../types";
+import type { WalletProvider } from "../providers";
+import type { WithdrawParams } from "../types";
 import { initWalletProvider } from "../providers";
 import { FARM_ADDRESS } from "../utils/constants";
 
@@ -27,8 +27,8 @@ export class WithdrawAction {
     async withdraw(_params: WithdrawParams): Promise<Hash> {
         try {
             const balance = await this.walletProvider.getNativeBalance(this.walletProvider.getAddress());
-            if ( balance == BigInt(0) ) {
-                throw new Error(`The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.`);
+            if ( balance === BigInt(0) ) {
+                throw new Error("The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.");
             }
             const txHash = await withdraw(
                 this.walletProvider,
@@ -45,9 +45,8 @@ export class WithdrawAction {
         const receipt = await getTxReceipt(this.walletProvider, tx);
         if (receipt.status === "success") {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     async buildWithdrawDetails(
@@ -93,22 +92,23 @@ export const withdrawAction: Action = {
         elizaLogger.debug("Starting WITHDRAW handler...");
 
         // Initialize or update state
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
+        let currentState = state;
+        if (!currentState) {
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(currentState);
         }
 
         elizaLogger.debug("withdraw action handler called");
         const walletProvider = await initWalletProvider(runtime);
         const action = new WithdrawAction(walletProvider);
 
-        // Compose unstake context
+        // Compose withdraw context
         const paramOptions = await action.buildWithdrawDetails(
-            state,
+            currentState,
             runtime,
         );
-        elizaLogger.debug("Unstake paramOptions:", paramOptions);
+        elizaLogger.debug("Withdraw paramOptions:", paramOptions);
 
         const txHash = await action.withdraw(paramOptions);
         if (txHash) {

@@ -1,7 +1,7 @@
 # Eliza 🤖
 
 <div align="center">
-  <img src="./docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
+  <img src="https://github.com/elizaOS/eliza/blob/develop/docs/static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
 </div>
 
 <div align="center">
@@ -135,6 +135,17 @@ pnpm start
 # 该项目迭代速度很快，有时如果您回到项目，需要清理项目
 pnpm clean
 ```
+
+## 一键部署 Eliza
+
+使用 [Fleek](https://fleek.xyz/eliza/) 一键部署 Eliza。这让那些非开发人员也能使用 Eliza，并提供以下选项来构建智能助手：
+
+1. 从模板开始
+2. 从头开始构建角色文件
+3. 上传预制的角色文件
+
+点击[这里](https://fleek.xyz/eliza/)开始！
+
 
 #### 其他要求
 

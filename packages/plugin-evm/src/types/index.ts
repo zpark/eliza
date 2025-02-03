@@ -1,4 +1,4 @@
-import type { Token } from "@lifi/types";
+import type { Route, Token } from "@lifi/types";
 import type {
     Account,
     Address,
@@ -7,6 +7,7 @@ import type {
     HttpTransport,
     PublicClient,
     WalletClient,
+    Log,
 } from "viem";
 import * as viemChains from "viem/chains";
 
@@ -23,6 +24,7 @@ export interface Transaction {
     value: bigint;
     data?: `0x${string}`;
     chainId?: number;
+    logs?: Log[];
 }
 
 // Token types
@@ -75,6 +77,23 @@ export interface SwapParams {
     toToken: Address;
     amount: string;
     slippage?: number;
+}
+
+export interface BebopRoute {
+    data: string;
+    approvalTarget: Address;
+    sellAmount: string;
+    from: Address;
+    to: Address;
+    value: string;
+    gas: string;
+    gasPrice: string;
+}
+
+export interface SwapQuote {
+    aggregator: "lifi" | "bebop";
+    minOutputAmount: string;
+    swapData: Route | BebopRoute;
 }
 
 export interface BridgeParams {

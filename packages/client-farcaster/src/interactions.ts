@@ -2,18 +2,18 @@ import {
     composeContext,
     generateMessageResponse,
     generateShouldRespond,
-    Memory,
+    type Memory,
     ModelClass,
     stringToUuid,
     elizaLogger,
-    HandlerCallback,
-    Content,
+    type HandlerCallback,
+    type Content,
     type IAgentRuntime,
 } from "@elizaos/core";
 import type { FarcasterClient } from "./client";
 import { toHex } from "viem";
 import { buildConversationThread, createCastMemory } from "./memory";
-import { Cast, Profile } from "./types";
+import type { Cast, Profile } from "./types";
 import {
     formatCast,
     formatTimeline,
@@ -38,9 +38,9 @@ export class FarcasterInteractionManager {
                 await this.handleInteractions();
             } catch (error) {
                 elizaLogger.error(error);
-                return;
             }
 
+            // Always set up next check, even if there was an error
             this.timeout = setTimeout(
                 handleInteractionsLoop,
                 Number(this.client.farcasterConfig?.FARCASTER_POLL_INTERVAL ?? 120) *
@@ -246,7 +246,7 @@ export class FarcasterInteractionManager {
 
         const callback: HandlerCallback = async (
             content: Content,
-            files: any[]
+            _files: any[]
         ) => {
             try {
                 if (memoryId && !content.inReplyTo) {

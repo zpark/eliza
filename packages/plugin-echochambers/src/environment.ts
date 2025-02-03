@@ -1,4 +1,4 @@
-import { IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { type IAgentRuntime, elizaLogger } from "@elizaos/core";
 
 export async function validateEchoChamberConfig(
     runtime: IAgentRuntime
@@ -23,7 +23,7 @@ export async function validateEchoChamberConfig(
     // Validate API URL format
     try {
         new URL(apiUrl);
-    } catch (error) {
+    } catch {
         elizaLogger.error(
             `Invalid ECHOCHAMBERS_API_URL format: ${apiUrl}. Please provide a valid URL.`
         );
@@ -41,7 +41,7 @@ export async function validateEchoChamberConfig(
         runtime.getSetting("ECHOCHAMBERS_POLL_INTERVAL") || 120
     );
 
-    if (isNaN(pollInterval) || pollInterval < 1) {
+    if (Number.isNaN(pollInterval) || pollInterval < 1) {
         elizaLogger.error(
             "ECHOCHAMBERS_POLL_INTERVAL must be a positive number in seconds"
         );

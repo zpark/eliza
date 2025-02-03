@@ -7,6 +7,11 @@ interface RateLimiterConfig {
     retryDelay?: number;
 }
 
+interface RateLimitError extends Error {
+    remainingPoints: number;
+    msBeforeNext: number;
+}
+
 export class RateLimiter {
     private limiter: RateLimiterMemory;
     private maxRetries: number;
@@ -21,12 +26,13 @@ export class RateLimiter {
         this.retryDelay = config.retryDelay || 1000;
     }
 
-    async consume(key: string, points: number = 1): Promise<void> {
+    async consume(key: string, points = 1): Promise<void> {
         try {
             await this.limiter.consume(key, points);
-        } catch (error: any) {
-            if (error.remainingPoints === 0) {
-                const retryAfter = Math.ceil(error.msBeforeNext / 1000);
+        } catch (error: unknown) {
+            if (error instanceof Error && 'remainingPoints' in error) {
+                const rateLimitError = error as RateLimitError;
+                const retryAfter = Math.ceil(rateLimitError.msBeforeNext / 1000);
                 throw new Error(
                     `Rate limit exceeded. Retry after ${retryAfter} seconds`
                 );
@@ -38,7 +44,7 @@ export class RateLimiter {
     async executeWithRetry<T>(
         key: string,
         operation: () => Promise<T>,
-        points: number = 1
+        points = 1
     ): Promise<T> {
         let lastError: Error | null = null;
         let retries = 0;
@@ -47,12 +53,12 @@ export class RateLimiter {
             try {
                 await this.consume(key, points);
                 return await operation();
-            } catch (error: any) {
-                lastError = error;
+            } catch (error: unknown) {
+                lastError = error as Error;
                 retries++;
 
-                if (error.message?.includes("Rate limit exceeded")) {
-                    const retryAfter = parseInt(
+                if (error instanceof Error && error.message?.includes("Rate limit exceeded")) {
+                    const retryAfter = Number.parseInt(
                         error.message.match(/\d+/)?.[0] || "1",
                         10
                     );

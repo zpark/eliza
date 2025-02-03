@@ -1,14 +1,15 @@
 import {
-    Action,
-    ActionExample,
+    type Action,
+    type ActionExample,
     elizaLogger,
-    IAgentRuntime,
-    Memory,
-    State,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
+    type State,
 } from "@elizaos/core";
 import { BirdeyeProvider } from "../birdeye";
-import { WalletPortfolioResponse } from "../types/api/wallet";
-import { BaseAddress } from "../types/shared";
+import type { WalletPortfolioResponse } from "../types/api/wallet";
+import type { BaseAddress } from "../types/shared";
 import { extractAddresses } from "../utils";
 
 export const walletSearchAddressAction = {
@@ -53,9 +54,9 @@ export const walletSearchAddressAction = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        _options: any,
-        callback?: any
+        _state: State,
+        _options: Record<string, unknown>,
+        callback?: HandlerCallback
     ) => {
         try {
             const provider = new BirdeyeProvider(runtime.cacheManager);
@@ -164,7 +165,7 @@ const formatWalletReport = (
     let header = `Wallet Result ${totalResults > 1 ? `#${index + 1}` : ""}\n`;
     header += `👛 Address ${address.address}*\n`;
     header += `💰 Total Value: $${totalValue.toLocaleString()}\n`;
-    header += `🔖 Top Holdings:`;
+    header += "🔖 Top Holdings:";
     const tokenList = tokens
         .map(
             (token) =>
