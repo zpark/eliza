@@ -234,7 +234,7 @@ export async function generateTextArray({
             runtime,
             context,
             modelClass,
-            output: "array",
+            schema: z.array(z.string()),
         });
         elizaLogger.debug("Received response from generateObject:", object);
         return object as string[];
@@ -267,8 +267,6 @@ async function generateEnum<T extends string>({
             runtime,
             context,
             modelClass,
-            output: 'enum',
-            enum: [...enumValues],
             schema: z.enum(enumValues as [T, ...T[]]),
         });
 
@@ -327,7 +325,6 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
     runtime,
     context,
-    output,
     modelClass,
     mode,
     schema,
@@ -348,16 +345,14 @@ export const generateObject = async ({
     elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
     const { client, model } = initializeModelClient(runtime);
 
-    // If schema is provided, use object output type with schema
+
     const result = aiGenerateObject({
         model: client.languageModel(model),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-        schema,
-        schemaName,
-        schemaDescription,
-        mode,
-        stop,
+        output: schema ? undefined : 'no-schema',
+        ...(schema ? { schema, schemaName, schemaDescription } : {}),
+        mode: 'json'
     })
 
     elizaLogger.debug(`Received Object response from ${model} model.`);
