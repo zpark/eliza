@@ -187,8 +187,8 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         model: config.model,
         endpoint:
             runtime.character.modelEndpointOverride ||
-            getEndpoint(runtime.character.modelProvider),
-        apiKey: runtime.token,
+            runtime.getSetting("MODEL_ENDPOINT"),
+        apiKey: runtime.getSetting("MODEL_API_KEY") || runtime.token,
         dimensions: config.dimensions,
     });
 

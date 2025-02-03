@@ -1,14 +1,14 @@
 // ================ IMPORTS ================
 import { createOpenAI } from "@ai-sdk/openai";
 import {
-    generateImage as aiGenerateImage,
+    experimental_generateImage as aiGenerateImage,
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
     type StepResult as AIStepResult,
     type CoreTool,
     type GenerateObjectResult
 } from "ai";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+
 import { z, type ZodSchema } from "zod";
 import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
@@ -70,7 +70,7 @@ interface GenerationOptions {
 }
 
 // ================ UTILITY FUNCTIONS ================
-function getCloudflareGatewayBaseURL(
+export function getCloudflareGatewayBaseURL(
     runtime: IAgentRuntime,
     provider: string
 ): string | undefined {
@@ -111,26 +111,7 @@ function getCloudflareGatewayBaseURL(
     return baseURL;
 }
 
-export async function splitChunks(
-    content: string,
-    chunkSize = 512,
-    bleed = 20
-): Promise<string[]> {
-    elizaLogger.debug("[splitChunks] Starting text split");
 
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: Number(chunkSize),
-        chunkOverlap: Number(bleed),
-    });
-
-    const chunks = await textSplitter.splitText(content);
-    elizaLogger.debug("[splitChunks] Split complete:", {
-        numberOfChunks: chunks.length,
-        averageChunkSize: chunks.reduce((acc, chunk) => acc + chunk.length, 0) / chunks.length,
-    });
-
-    return chunks;
-}
 
 // ================ TEXT GENERATION FUNCTIONS ================
 export async function generateText({
@@ -301,7 +282,7 @@ export async function generateTextArray({
                 output: "array",
             });
 
-            const parsedResponse = parseJsonArrayFromText(response);
+            const parsedResponse = parseJsonArrayFromText(response.object);
             if (parsedResponse) {
                 return parsedResponse;
             }
