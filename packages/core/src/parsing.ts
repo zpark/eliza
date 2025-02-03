@@ -152,7 +152,7 @@ export function parseJSONObjectFromText(
         } catch (e) {
             console.error("Error parsing JSON:", e);
             console.error("Text is not JSON", text);
-            return extractAttributes(parsingText);
+            return extractAttributes(text);
         }
     } else {
         const objectPattern = /{[\s\S]*?}/;
@@ -165,7 +165,7 @@ export function parseJSONObjectFromText(
             } catch (e) {
                 console.error("Error parsing JSON:", e);
                 console.error("Text is not JSON", text);
-                return extractAttributes(parsingText);
+                return extractAttributes(text);
             }
         }
     }
@@ -237,7 +237,7 @@ export const normalizeJsonString = (str: string) => {
 
     // "key": unquotedValue → "key": "unquotedValue"
     str = str.replace(
-      /("[\w\d_-]+")\s*: \s*(?!")([\s\S]+?)(?=(,\s*"|\}$))/g,
+      /("[\w\d_-]+")\s*: \s*(?!"|\[)([\s\S]+?)(?=(,\s*"|\}$))/g,
       '$1: "$2"',
     );
 
