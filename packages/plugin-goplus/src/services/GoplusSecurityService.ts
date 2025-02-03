@@ -32,12 +32,14 @@ export class GoplusSecurityService extends Service implements IGoplusSecuritySer
     async check(text: string): Promise<string> {
         try {
             elizaLogger.log("check input text", text);
+
             const obj = await generateObjectDeprecated({
                 runtime: this.runtime,
                 context: requestPrompt(text),
-                modelClass: ModelClass.SMALL, // gpt-4o-mini
+                modelClass: ModelClass.SMALL,
             }) as GoPlusParamType;
 
+        
             elizaLogger.log("check generateObjectDeprecated text", obj);
 
             const goPlusManage = new GoPlusManage(this.apiKey)

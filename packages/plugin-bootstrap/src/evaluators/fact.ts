@@ -1,6 +1,7 @@
 import { composeContext } from "@elizaos/core";
 import { generateObjectArray } from "@elizaos/core";
 import { MemoryManager } from "@elizaos/core";
+import { z } from "zod";
 import {
     type ActionExample,
     type IAgentRuntime,
@@ -61,10 +62,23 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         template: runtime.character.templates?.factsTemplate || factsTemplate,
     });
 
+    const claimSchema = z.array(
+        z.object({
+          claim: z.string(),
+          type: z.enum(["fact", "opinion", "status"]),
+          in_bio: z.boolean(),
+          already_known: z.boolean()
+        })
+      );
+      
+
     const facts = await generateObjectArray({
         runtime,
         context,
         modelClass: ModelClass.LARGE,
+        schema: claimSchema,
+        schemaName: "Fact",
+        schemaDescription: "A fact about the user or the world",
     });
 
     const factsManager = new MemoryManager({
@@ -91,7 +105,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
     for (const fact of filteredFacts) {
         const factMemory = await factsManager.addEmbeddingToMemory({
-            userId: agentId!,
+            userId: agentId,
             agentId,
             content: { text: fact },
             roomId,

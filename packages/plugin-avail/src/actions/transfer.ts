@@ -12,6 +12,7 @@ import {
     generateObjectDeprecated,
 } from "@elizaos/core";
 import { validateAvailConfig } from "../environment";
+import { z } from "zod";
 import {
     getDecimals,
     initialize,
@@ -110,6 +111,12 @@ export default {
             runtime,
             context: transferContext,
             modelClass: ModelClass.SMALL,
+            schema: z.object({
+                recipient: z.string(),
+                amount: z.string(),
+            }),
+            schemaName: "TransferContent",
+            schemaDescription: "The content of a transfer request",
         });
 
         // Validate transfer content

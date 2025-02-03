@@ -4,11 +4,12 @@ import {
     experimental_generateImage as aiGenerateImage,
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
+    type JSONValue,
     type StepResult as AIStepResult,
     type CoreTool,
     type GenerateObjectResult,
 } from "ai";
-import { z, type ZodSchema } from "zod";
+import { object, z, type ZodSchema } from "zod";
 import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
     parseJSONObjectFromText
@@ -104,8 +105,8 @@ async function withRetry<T>(
     }
 }
 
-function initializeModelClient(runtime: IAgentRuntime, imageModel?: boolean) {
-    const serverUrl = runtime.getModelProvider().endpoint;
+export function initializeModelClient(runtime: IAgentRuntime, imageModel?: boolean) {
+    const baseURL = runtime.getModelProvider().endpoint;
     const apiKey = runtime.token;
     const model = 
     imageModel ?
@@ -114,13 +115,15 @@ function initializeModelClient(runtime: IAgentRuntime, imageModel?: boolean) {
     
     const client = createOpenAI({
         apiKey,
-        baseURL: serverUrl,
+        baseURL,
         fetch: runtime.fetch,
     });
 
     return {
         client,
         model,
+        baseURL,
+        apiKey,
         systemPrompt: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined
     };
 }
@@ -229,16 +232,18 @@ export async function generateTextArray({
     logFunctionCall('generateTextArray', runtime);
     validateContext(context, 'generateTextArray');
     
-    return await withRetry(async () => {
-        const {object} = await generateObject({
+    const result = await withRetry(async () => {
+        const result = await generateObject({
             runtime,
             context,
             modelClass,
             schema: z.array(z.string()),
         });
-        elizaLogger.debug("Received response from generateObject:", object);
-        return object as string[];
+        elizaLogger.debug("Received response from generateObject:", result);
+        
     });
+
+    return Array.isArray(result) ? result : [];
 }
 
 // ================ ENUM GENERATION FUNCTIONS ================
@@ -254,25 +259,27 @@ async function generateEnum<T extends string>({
     modelClass: ModelClass;
     enumValues: readonly T[];
     functionName: string;
-}): Promise<T | null> {
+}): Promise<JSONValue> {
     logFunctionCall(functionName, runtime);
     validateContext(context, functionName);
 
-    return await withRetry(async () => {
+    const enumResult = await withRetry(async () => {
         elizaLogger.debug(
             "Attempting to generate enum value with context:",
             context
         );
-        const { object } = await generateObject({
+        const result = await generateObject({
             runtime,
             context,
             modelClass,
             schema: z.enum(enumValues as [T, ...T[]]),
         });
 
-        elizaLogger.debug("Received enum response:", object);
-        return object as T;
+        elizaLogger.debug("Received enum response:", result);
+        return result;
     });
+
+    return enumResult;
 }
 
 export async function generateShouldRespond({
@@ -287,13 +294,15 @@ export async function generateShouldRespond({
     const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as const;
     type ResponseType = typeof RESPONSE_VALUES[number];
 
-    return generateEnum<ResponseType>({
+    const result = await generateEnum<ResponseType>({
         runtime,
         context,
         modelClass,
         enumValues: RESPONSE_VALUES,
         functionName: 'generateShouldRespond'
     });
+
+    return result as ResponseType;
 }
 
 export async function generateTrueOrFalse({
@@ -334,7 +343,7 @@ export const generateObject = async ({
     verifiableInference,
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
-}: GenerateObjectOptions): Promise<GenerateObjectResult<unknown>> => {
+}: GenerateObjectOptions): Promise<JSONValue> => {
     logFunctionCall('generateObject', runtime);
     if (!context) {
         const errorMessage = "generateObject context is empty";
@@ -346,7 +355,7 @@ export const generateObject = async ({
     const { client, model } = initializeModelClient(runtime);
 
 
-    const result = aiGenerateObject({
+    const {object} = await aiGenerateObject({
         model: client.languageModel(model),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
@@ -357,35 +366,51 @@ export const generateObject = async ({
 
     elizaLogger.debug(`Received Object response from ${model} model.`);
     
-    return result;
+    return schema ? schema.parse(object) : object;
 };
 
 export async function generateObjectDeprecated({
     runtime,
     context,
     modelClass,
+    schema,
+    schemaName,
+    schemaDescription,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-}): Promise<GenerateObjectResult<unknown>> {
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+}): Promise<z.infer<typeof schema>> {
     logFunctionCall('generateObjectDeprecated', runtime);
-    return generateObject({
+    const object = await generateObject({
         runtime,
         context,
         modelClass,
+        schema,
+        schemaName,
+        schemaDescription,
     });
+    return object;
 }
 
 export async function generateObjectArray({
     runtime,
     context,
     modelClass,
+    schema,
+    schemaName,
+    schemaDescription,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-}): Promise<Array<any>> {
+    schema?: ZodSchema;
+    schemaName?: string;
+    schemaDescription?: string;
+}): Promise<z.infer<typeof schema>[]> {
     logFunctionCall('generateObjectArray', runtime);
     if (!context) {
         elizaLogger.error("generateObjectArray context is empty");
@@ -396,8 +421,11 @@ export async function generateObjectArray({
         context,
         modelClass,
         output: "array",
+        schema,
+        schemaName,
+        schemaDescription,
     });
-    return Array.isArray(result.object) ? result.object : [];
+    return schema ? schema.parse(result) : result;
 }
 
 
