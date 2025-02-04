@@ -156,6 +156,8 @@ import { ankrPlugin } from "@elizaos/plugin-ankr";
 import { formPlugin } from "@elizaos/plugin-form";
 import { MongoClient } from "mongodb";
 import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
+import { goatPlugin } from "@elizaos/plugin-goat";
+import { zilliqaPlugin } from "@elizaos/plugin-zilliqa";
 
 import { trikonPlugin } from "@elizaos/plugin-trikon";
 import arbitragePlugin from "@elizaos/plugin-arbitrage";
@@ -985,14 +987,11 @@ export async function createAgent(
             getSecret(character, "COINBASE_NOTIFICATION_URI")
                 ? webhookPlugin
                 : null,
-            goatPlugin,
-            zilliqaPlugin,
             getSecret(character, "COINGECKO_API_KEY") ||
             getSecret(character, "COINGECKO_PRO_API_KEY")
                 ? coingeckoPlugin
                 : null,
             getSecret(character, "MORALIS_API_KEY") ? moralisPlugin : null,
-            getSecret(character, "EVM_PROVIDER_URL") ? goatPlugin : null,
             getSecret(character, "ABSTRACT_PRIVATE_KEY")
                 ? abstractPlugin
                 : null,
@@ -1152,6 +1151,7 @@ export async function createAgent(
                 ? deskExchangePlugin
                 : null,
             getSecret(character, "GOAT_EVM_PRIVATE_KEY") ? goatPlugin : null,
+            getSecret(character, "ZILLIQA_PRIVATE_KEY") ? zilliqaPlugin : null,
         ]
             .flat()
             .filter(Boolean),
