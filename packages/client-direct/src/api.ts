@@ -13,7 +13,7 @@ import {
 
 // NOTE: This is disabled to make the core not depend on any external plugins
 // import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
-import { REST, Routes } from "discord.js";
+// import { REST, Routes } from "discord.js";
 import { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
 
@@ -143,35 +143,35 @@ export function createApiRouter(
         });
     });
 
-    router.get("/agents/:agentId/channels", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
+    // router.get("/agents/:agentId/channels", async (req, res) => {
+    //     const { agentId } = validateUUIDParams(req.params, res) ?? {
+    //         agentId: null,
+    //     };
+    //     if (!agentId) return;
 
-        const runtime = agents.get(agentId);
+    //     const runtime = agents.get(agentId);
 
-        if (!runtime) {
-            res.status(404).json({ error: "Runtime not found" });
-            return;
-        }
+    //     if (!runtime) {
+    //         res.status(404).json({ error: "Runtime not found" });
+    //         return;
+    //     }
 
-        const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
-        const rest = new REST({ version: "10" }).setToken(API_TOKEN);
+    //     const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
+    //     const rest = new REST({ version: "10" }).setToken(API_TOKEN);
 
-        try {
-            const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
+    //     try {
+    //         const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
 
-            res.json({
-                id: runtime.agentId,
-                guilds: guilds,
-                serverCount: guilds.length,
-            });
-        } catch (error) {
-            console.error("Error fetching guilds:", error);
-            res.status(500).json({ error: "Failed to fetch guilds" });
-        }
-    });
+    //         res.json({
+    //             id: runtime.agentId,
+    //             guilds: guilds,
+    //             serverCount: guilds.length,
+    //         });
+    //     } catch (error) {
+    //         console.error("Error fetching guilds:", error);
+    //         res.status(500).json({ error: "Failed to fetch guilds" });
+    //     }
+    // });
 
     router.get("/agents/:agentId/:roomId/memories", async (req, res) => {
         const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
