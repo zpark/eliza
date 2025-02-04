@@ -53,7 +53,6 @@ import { footballPlugin } from "@elizaos/plugin-football";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import { normalizeCharacter } from "@elizaos/plugin-di";
-import createGoatPlugin from "@elizaos/plugin-goat";
 import createZilliqaPlugin from "@elizaos/plugin-zilliqa";
 
 // import { intifacePlugin } from "@elizaos/plugin-intiface";
@@ -801,19 +800,6 @@ export async function createAgent(
     // TODO: Handle these plugins directly during plugin initialization
     // let goatPlugin: any | undefined;
 
-    // if (getSecret(character, "EVM_PRIVATE_KEY")) {
-    //     goatPlugin = await createGoatPlugin((secret) =>
-    //         getSecret(character, secret)
-    //     );
-    // }
-
-    // let zilliqaPlugin: any | undefined;
-    // if (getSecret(character, "ZILLIQA_PRIVATE_KEY")) {
-    //     zilliqaPlugin = await createZilliqaPlugin((secret) =>
-    //         getSecret(character, secret)
-    //     );
-    // }
-
 
     // Handle Verifiable Inference Separately with single abstracted adapter
 
@@ -1165,6 +1151,7 @@ export async function createAgent(
             getSecret(character, "DESK_EXCHANGE_NETWORK")
                 ? deskExchangePlugin
                 : null,
+            getSecret(character, "GOAT_EVM_PRIVATE_KEY") ? goatPlugin : null,
         ]
             .flat()
             .filter(Boolean),
