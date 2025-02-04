@@ -784,80 +784,16 @@ export async function createAgent(
     cache: ICacheManager,
     token: string
 ): Promise<AgentRuntime> {
-    elizaLogger.log(`Creating runtime for character ${character.name}`);
+    elizaLogger.log(`Creating runtime for character ${character.name} and token ${token} and db ${db} and cache ${cache}`);
 
     nodePlugin ??= createNodePlugin();
 
     const teeMode = getSecret(character, "TEE_MODE") || "OFF";
     const walletSecretSalt = getSecret(character, "WALLET_SECRET_SALT");
 
-    // Validate TEE configuration
-    // if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
-    //     elizaLogger.error(
-    //         "A WALLET_SECRET_SALT required when TEE_MODE is enabled"
-    //     );
-    //     throw new Error("Invalid TEE configuration");
-    // }
-
-    // TODO: Handle these plugins directly during plugin initialization
-    // let goatPlugin: any | undefined;
-
-
-    // Handle Verifiable Inference Separately with single abstracted adapter
-
-
-
-    // Initialize Reclaim adapter if environment variables are present
-    // let verifiableInferenceAdapter;
-    // if (
-    //     process.env.RECLAIM_APP_ID &&
-    //     process.env.RECLAIM_APP_SECRET &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new ReclaimAdapter({
-    //         appId: process.env.RECLAIM_APP_ID,
-    //         appSecret: process.env.RECLAIM_APP_SECRET,
-    //         modelProvider: character.modelProvider,
-    //         token,
-    //     });
-    //     elizaLogger.log("Verifiable inference adapter initialized");
-    // }
-    // Initialize Opacity adapter if environment variables are present
-    // let verifiableInferenceAdapter: VerifiableInferenceAdapter;
-    // if (
-    //     process.env.OPACITY_TEAM_ID &&
-    //     process.env.OPACITY_CLOUDFLARE_NAME &&
-    //     process.env.OPACITY_PROVER_URL &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new OpacityAdapter({
-    //         teamId: process.env.OPACITY_TEAM_ID,
-    //         teamName: process.env.OPACITY_CLOUDFLARE_NAME,
-    //         opacityProverUrl: process.env.OPACITY_PROVER_URL,
-    //         modelProvider: character.modelProvider,
-    //         token: token,
-    //     });
-    //     elizaLogger.log("Verifiable inference adapter initialized");
-    //     elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
-    //     elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
-    //     elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
-    //     elizaLogger.log("modelProvider", character.modelProvider);
-    //     elizaLogger.log("token", token);
-    // }
-    // if (
-    //     process.env.PRIMUS_APP_ID &&
-    //     process.env.PRIMUS_APP_SECRET &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new PrimusAdapter({
-    //         appId: process.env.PRIMUS_APP_ID,
-    //         appSecret: process.env.PRIMUS_APP_SECRET,
-    //         attMode: "proxytls",
-    //         modelProvider: character.modelProvider,
-    //         token,
-    //     });
-    //     elizaLogger.log("Verifiable inference primus adapter initialized");
-    // }
+    // TODO: handle TEE mode
+    // TODO: handle wallet secret salt
+    // TODO: handle Verifiable Inference
 
     return new AgentRuntime({
         databaseAdapter: db,
@@ -1265,6 +1201,8 @@ async function startAgent(
             cache,
             token
         );
+
+        elizaLogger.info(`Runtime initialized for ${character.name}`);
 
         // start services/plugins/process knowledge
         await runtime.initialize();

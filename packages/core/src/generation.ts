@@ -106,8 +106,18 @@ async function withRetry<T>(
 }
 
     export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelClass) {
+
+    const provider = runtime.getModelProvider().provider || runtime.modelProvider;
     const baseURL = runtime.getModelProvider().endpoint;
-    const apiKey = runtime.token;
+    const apiKey =  runtime.token ||
+                process.env.PROVIDER_API_KEY ||
+                runtime.character.settings.secrets.PROVIDER_API_KEY ||
+                runtime.getSetting('PROVIDER_API_KEY')
+
+    if (!apiKey) {
+        elizaLogger.error(`No API key found for ${provider}`);
+    }
+
     const model = runtime.getModelProvider().models[modelClass];
     
     const client = createOpenAI({
@@ -115,6 +125,8 @@ async function withRetry<T>(
         baseURL,
         fetch: runtime.fetch,
     });
+
+    elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and apiKey ${apiKey}`);
 
     return {
         client,
@@ -170,7 +182,11 @@ export async function generateText({
         return await handleVerifiableInference(runtime, context, modelClass, verifiableInferenceOptions);
     }
 
+
     const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
+
+
+    elizaLogger.info(`Generating text with model ${model.name} and system prompt ${systemPrompt} and context ${context} and tools ${tools} and onStepFinish ${onStepFinish} and maxSteps ${maxSteps}`);
 
     const { text } = await aiGenerateText({
         model: client.languageModel(model.name),

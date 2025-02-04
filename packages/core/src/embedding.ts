@@ -89,6 +89,7 @@ async function getRemoteEmbedding(
         const data: EmbeddingResponse = await response.json();
         return data?.data?.[0].embedding;
     } catch (e) {
+        elizaLogger.error("Error getting remote embedding:", e);
         elizaLogger.error("Full error details:", e);
         throw e;
     }
