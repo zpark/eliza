@@ -42,7 +42,7 @@ import {
     type ICacheManager,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
-    ModelProviderName,
+    type ModelProviderName,
     parseBooleanFromText,
     settings,
     stringToUuid,
@@ -791,27 +791,33 @@ export async function createAgent(
     const walletSecretSalt = getSecret(character, "WALLET_SECRET_SALT");
 
     // Validate TEE configuration
-    if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
-        elizaLogger.error(
-            "A WALLET_SECRET_SALT required when TEE_MODE is enabled"
-        );
-        throw new Error("Invalid TEE configuration");
-    }
+    // if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
+    //     elizaLogger.error(
+    //         "A WALLET_SECRET_SALT required when TEE_MODE is enabled"
+    //     );
+    //     throw new Error("Invalid TEE configuration");
+    // }
 
-    let goatPlugin: any | undefined;
+    // TODO: Handle these plugins directly during plugin initialization
+    // let goatPlugin: any | undefined;
 
-    if (getSecret(character, "EVM_PRIVATE_KEY")) {
-        goatPlugin = await createGoatPlugin((secret) =>
-            getSecret(character, secret)
-        );
-    }
+    // if (getSecret(character, "EVM_PRIVATE_KEY")) {
+    //     goatPlugin = await createGoatPlugin((secret) =>
+    //         getSecret(character, secret)
+    //     );
+    // }
 
-    let zilliqaPlugin: any | undefined;
-    if (getSecret(character, "ZILLIQA_PRIVATE_KEY")) {
-        zilliqaPlugin = await createZilliqaPlugin((secret) =>
-            getSecret(character, secret)
-        );
-    }
+    // let zilliqaPlugin: any | undefined;
+    // if (getSecret(character, "ZILLIQA_PRIVATE_KEY")) {
+    //     zilliqaPlugin = await createZilliqaPlugin((secret) =>
+    //         getSecret(character, secret)
+    //     );
+    // }
+
+
+    // Handle Verifiable Inference Separately with single abstracted adapter
+
+
 
     // Initialize Reclaim adapter if environment variables are present
     // let verifiableInferenceAdapter;
@@ -829,46 +835,46 @@ export async function createAgent(
     //     elizaLogger.log("Verifiable inference adapter initialized");
     // }
     // Initialize Opacity adapter if environment variables are present
-    let verifiableInferenceAdapter: VerifiableInferenceAdapter;
-    if (
-        process.env.OPACITY_TEAM_ID &&
-        process.env.OPACITY_CLOUDFLARE_NAME &&
-        process.env.OPACITY_PROVER_URL &&
-        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    ) {
-        verifiableInferenceAdapter = new OpacityAdapter({
-            teamId: process.env.OPACITY_TEAM_ID,
-            teamName: process.env.OPACITY_CLOUDFLARE_NAME,
-            opacityProverUrl: process.env.OPACITY_PROVER_URL,
-            modelProvider: character.modelProvider,
-            token: token,
-        });
-        elizaLogger.log("Verifiable inference adapter initialized");
-        elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
-        elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
-        elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
-        elizaLogger.log("modelProvider", character.modelProvider);
-        elizaLogger.log("token", token);
-    }
-    if (
-        process.env.PRIMUS_APP_ID &&
-        process.env.PRIMUS_APP_SECRET &&
-        process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    ) {
-        verifiableInferenceAdapter = new PrimusAdapter({
-            appId: process.env.PRIMUS_APP_ID,
-            appSecret: process.env.PRIMUS_APP_SECRET,
-            attMode: "proxytls",
-            modelProvider: character.modelProvider,
-            token,
-        });
-        elizaLogger.log("Verifiable inference primus adapter initialized");
-    }
+    // let verifiableInferenceAdapter: VerifiableInferenceAdapter;
+    // if (
+    //     process.env.OPACITY_TEAM_ID &&
+    //     process.env.OPACITY_CLOUDFLARE_NAME &&
+    //     process.env.OPACITY_PROVER_URL &&
+    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    // ) {
+    //     verifiableInferenceAdapter = new OpacityAdapter({
+    //         teamId: process.env.OPACITY_TEAM_ID,
+    //         teamName: process.env.OPACITY_CLOUDFLARE_NAME,
+    //         opacityProverUrl: process.env.OPACITY_PROVER_URL,
+    //         modelProvider: character.modelProvider,
+    //         token: token,
+    //     });
+    //     elizaLogger.log("Verifiable inference adapter initialized");
+    //     elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
+    //     elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
+    //     elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
+    //     elizaLogger.log("modelProvider", character.modelProvider);
+    //     elizaLogger.log("token", token);
+    // }
+    // if (
+    //     process.env.PRIMUS_APP_ID &&
+    //     process.env.PRIMUS_APP_SECRET &&
+    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
+    // ) {
+    //     verifiableInferenceAdapter = new PrimusAdapter({
+    //         appId: process.env.PRIMUS_APP_ID,
+    //         appSecret: process.env.PRIMUS_APP_SECRET,
+    //         attMode: "proxytls",
+    //         modelProvider: character.modelProvider,
+    //         token,
+    //     });
+    //     elizaLogger.log("Verifiable inference primus adapter initialized");
+    // }
 
     return new AgentRuntime({
         databaseAdapter: db,
         token,
-        modelProvider: character.modelProvider,
+        modelProvider: character.modelProvider as ModelProviderName,
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
@@ -1166,7 +1172,7 @@ export async function createAgent(
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        verifiableInferenceAdapter,
+        // verifiableInferenceAdapter,
     });
 }
 

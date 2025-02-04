@@ -1,7 +1,7 @@
 import { AutoTokenizer } from "@huggingface/transformers";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import elizaLogger from "./logger.ts";
-import { TokenizerType, type IAgentRuntime } from "./types.ts";
+import { TokenizerType, type IAgentRuntime, type ModelSettings } from "./types.ts";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 
@@ -125,4 +125,12 @@ export async function splitChunks(
     });
 
     return chunks;
+}
+
+
+export function getModelSettings(modelSettings: Record<string, ModelSettings>) {
+    if (!modelSettings) {
+        throw new Error("MODEL_SETTINGS is not defined");
+    }
+    return modelSettings.defaultModel;
 }

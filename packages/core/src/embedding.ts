@@ -136,7 +136,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     elizaLogger.debug("Embedding request:", {
         modelProvider: runtime.character.modelProvider,
         useOpenAI: runtime.getSetting("USE_OPENAI_EMBEDDING"),
-        input: input?.slice(0, 50) + "...",
+        input: `${input?.slice(0, 50)}...`,
         inputType: typeof input,
         inputLength: input?.length,
         isString: typeof input === "string",

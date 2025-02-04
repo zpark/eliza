@@ -3,6 +3,7 @@ import {
     type IAgentRuntime,
     type IImageDescriptionService,
     initializeModelClient,
+    ModelClass,
     ModelProviderName,
     Service,
     ServiceType,
@@ -66,7 +67,7 @@ export class OpenAIImageProvider implements ImageProvider {
         mimeType: string
     ): Promise<{ title: string; description: string }> {
         const imageUrl = convertToBase64DataUrl(imageData, mimeType);
-        const { apiKey, model, baseURL } = initializeModelClient(this.runtime, true);
+        const { apiKey, model, baseURL } = initializeModelClient(this.runtime, ModelClass.IMAGE);
 
         const content = [
             { type: "text", text: IMAGE_DESCRIPTION_PROMPT },

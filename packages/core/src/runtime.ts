@@ -53,6 +53,7 @@ import {
     type Memory,
     type DirectoryItem,
     type IModelProvider,
+    type ModelSettings,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { glob } from "glob";
@@ -247,7 +248,7 @@ export class AgentRuntime implements IAgentRuntime {
         evaluators?: Evaluator[]; // Optional custom evaluators
         plugins?: Plugin[];
         providers?: Provider[];
-        modelProvider: ModelProviderName;
+        modelProvider: ModelProviderName | 'string';
 
         services?: Service[]; // Map of service name to service instance
         managers?: IMemoryManager[]; // Map of table name to memory manager
@@ -440,19 +441,122 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
     }
+
+
+    
+
+
+    private parseNumber(value: string | undefined, defaultValue: number): number {
+        if (!value) return defaultValue;
+        const parsed = Number(value);
+        return Number.isNaN(parsed) ? defaultValue : parsed;
+    }
+    
+    private parseStringArray(value: string | undefined, delimiter = ','): string[] {
+        return value ? value.split(delimiter) : [];
+    }
+    
     getModelProvider(): IModelProvider {
+        // Default model settings
+        const defaultModelSettings: ModelSettings = {
+            name: this.getSetting("DEFAULT_MODEL"),
+            maxInputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
+            maxOutputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
+            temperature: this.parseNumber(this.getSetting("DEFAULT_TEMPERATURE"), 0.7),
+            stop: this.parseStringArray(this.getSetting("DEFAULT_STOP_SEQUENCES")),
+            frequency_penalty: this.parseNumber(this.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
+            presence_penalty: this.parseNumber(this.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
+            repetition_penalty: this.parseNumber(this.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
+        };
+    
+        // Helper function to get model-specific settings
+        const getModelSettings = (prefix: string): ModelSettings => ({
+            name: this.getSetting(`${prefix}_MODEL`),
+            maxInputTokens: this.parseNumber(
+                this.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
+                defaultModelSettings.maxInputTokens
+            ),
+            maxOutputTokens: this.parseNumber(
+                this.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`), 
+                defaultModelSettings.maxOutputTokens
+            ),
+            temperature: this.parseNumber(
+                this.getSetting(`${prefix}_TEMPERATURE`), 
+                defaultModelSettings.temperature
+            ),
+            stop: this.parseStringArray(
+                this.getSetting(`${prefix}_STOP_SEQUENCES`)
+            ) || defaultModelSettings.stop,
+            frequency_penalty: this.parseNumber(
+                this.getSetting(`${prefix}_FREQUENCY_PENALTY`), 
+                defaultModelSettings.frequency_penalty
+            ),
+            presence_penalty: this.parseNumber(
+                this.getSetting(`${prefix}_PRESENCE_PENALTY`), 
+                defaultModelSettings.presence_penalty
+            ),
+            repetition_penalty: this.parseNumber(
+                this.getSetting(`${prefix}_REPETITION_PENALTY`), 
+                defaultModelSettings.repetition_penalty
+            )
+        });
+    
         return {
-            endpoint: this.getSetting("MODEL_ENDPOINT"),
-            defaultModel: this.getSetting("DEFAULT_MODEL"),
-            apiKey: this.getSetting("MODEL_API_KEY"),
-            provider: this.getSetting("MODEL_PROVIDER"),
-            smallModel: this.getSetting("SMALL_MODEL"),
-            embeddingModel: this.getSetting("EMBEDDING_MODEL"),
-            imageModel: this.getSetting("IMAGE_MODEL"),
-            imageVisionModel: this.getSetting("IMAGE_VISION_MODEL"),
-            modelSettings: this.getSetting("MODEL_SETTINGS"),
+            apiKey: this.getSetting("PROVIDER_API_KEY"),
+            endpoint: this.getSetting("PROVIDER_ENDPOINT"),
+            provider: this.getSetting("PROVIDER_NAME"),
+    
+            models: {
+                default: defaultModelSettings,
+    
+                ...(this.getSetting("SMALL_MODEL") && {
+                    [ModelClass.SMALL]: getModelSettings("SMALL")
+                }),
+    
+                ...(this.getSetting("MEDIUM_MODEL") && {
+                    [ModelClass.MEDIUM]: getModelSettings("MEDIUM")
+                }),
+    
+                ...(this.getSetting("LARGE_MODEL") && {
+                    [ModelClass.LARGE]: getModelSettings("LARGE")
+                }),
+    
+                ...(this.getSetting("EMBEDDING_MODEL") && {
+                    [ModelClass.EMBEDDING]: {
+                        name: this.getSetting("EMBEDDING_MODEL"),
+                        dimensions: this.parseNumber(
+                            this.getSetting("EMBEDDING_DIMENSIONS"), 
+                            1536
+                        )
+                    }
+                }),
+    
+                ...(this.getSetting("IMAGE_MODEL") && {
+                    [ModelClass.IMAGE]: {
+                        name: this.getSetting("IMAGE_MODEL"),
+                        steps: this.parseNumber(
+                            this.getSetting("IMAGE_STEPS"), 
+                            50
+                        )
+                    }
+                })
+            }
+        };
+    }
+    
+    
+    // Helper method to parse headers from settings
+    private parseHeaders(): Record<string, string> | undefined {
+        const customHeaders = this.getSetting("CUSTOM_HEADERS");
+        if (!customHeaders) return undefined;
+        
+        try {
+            return JSON.parse(customHeaders);
+        } catch {
+            return undefined;
         }
     }
+    
 
     async initialize() {
         for (const [serviceType, service] of this.services.entries()) {
@@ -571,6 +675,9 @@ export class AgentRuntime implements IAgentRuntime {
             elizaLogger.info("[RAG Cleanup] Cleanup complete");
         }
     }
+
+    
+    
 
     async stop() {
         elizaLogger.debug("runtime::stop - character", this.character.name);
@@ -771,13 +878,12 @@ export class AgentRuntime implements IAgentRuntime {
                             type: fileExtension as "pdf" | "md" | "txt",
                             isShared: isShared,
                         });
-                    } catch (error: any) {
+                    } catch (error) {
                         hasError = true;
                         elizaLogger.error(
                             `Failed to read knowledge file ${contentItem}. Error details:`,
                             error?.message || error || "Unknown error",
                         );
-                        continue;
                     }
                 } else {
                     // Handle direct knowledge string
@@ -1747,14 +1853,14 @@ Text: ${attachment.text}
 
         const formattedAttachments = allAttachments
             .map(
-                (attachment) =>
-                    `ID: ${attachment.id}
-Name: ${attachment.title}
-URL: ${attachment.url}
-Type: ${attachment.source}
-Description: ${attachment.description}
-Text: ${attachment.text}
-    `,
+            (attachment) =>
+                `ID: ${attachment.id}
+            Name: ${attachment.title}
+            URL: ${attachment.url}
+            Type: ${attachment.source}
+            Description: ${attachment.description}
+            Text: ${attachment.text}
+                `,
             )
             .join("\n");
 

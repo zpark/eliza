@@ -129,11 +129,13 @@ export interface Goal {
  * Model size/type classification
  */
 export enum ModelClass {
+    DEFAULT = "default",
     SMALL = "small",
     MEDIUM = "medium",
     LARGE = "large",
     EMBEDDING = "embedding",
     IMAGE = "image",
+    IMAGE_VISION = "image_vision",
 }
 
 /**
@@ -1676,15 +1678,30 @@ export interface ChunkRow {
 
 
 export interface IModelProvider {
+    // Core provider configuration 
     apiKey: string;
-    provider: string;
     endpoint: string;
-    defaultModel?: string;
-    smallModel?: string;
-    largeModel?: string;
-    mediumModel?: string;
-    embeddingModel?: string;
-    imageModel?: string;
-    imageVisionModel?: string;
-    modelSettings?: Record<string, ImageModelSettings | EmbeddingModelSettings | ModelSettings>;
+    provider: string;
+    
+    // Models configuration
+    models: {
+        // Required default model
+        default: ModelSettings;
+        
+        // Optional models
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
+        [ModelClass.IMAGE_VISION]?: ImageModelSettings;
+    };
+
+    // Optional configuration
+    config?: {
+        maxRetries?: number;
+        timeout?: number;
+        headers?: Record<string, string>;  // For additional auth headers if needed
+    };
 }
+

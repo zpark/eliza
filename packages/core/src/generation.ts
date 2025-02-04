@@ -21,7 +21,7 @@ import {
     type IAgentRuntime,
     type IImageDescriptionService,
     type IVerifiableInferenceAdapter,
-    type ModelClass,
+    ModelClass,
     ServiceType,
     type TelemetrySettings,
     type VerifiableInferenceOptions,
@@ -105,13 +105,10 @@ async function withRetry<T>(
     }
 }
 
-export function initializeModelClient(runtime: IAgentRuntime, imageModel?: boolean) {
+    export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelClass) {
     const baseURL = runtime.getModelProvider().endpoint;
     const apiKey = runtime.token;
-    const model = 
-    imageModel ?
-    runtime.getModelProvider().imageModel : 
-    runtime.getModelProvider().defaultModel;
+    const model = runtime.getModelProvider().models[modelClass];
     
     const client = createOpenAI({
         apiKey,
@@ -173,10 +170,10 @@ export async function generateText({
         return await handleVerifiableInference(runtime, context, modelClass, verifiableInferenceOptions);
     }
 
-    const { client, model, systemPrompt } = initializeModelClient(runtime);
+    const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
 
     const { text } = await aiGenerateText({
-        model: client.languageModel(model),
+        model: client.languageModel(model.name),
         prompt: context,
         system: systemPrompt,
         tools,
@@ -352,11 +349,11 @@ export const generateObject = async ({
     }
 
     elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
-    const { client, model } = initializeModelClient(runtime);
+    const { client, model } = initializeModelClient(runtime, modelClass);
 
 
     const {object} = await aiGenerateObject({
-        model: client.languageModel(model),
+        model: client.languageModel(model.name),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
         output: schema ? undefined : 'no-schema',
@@ -443,10 +440,10 @@ export async function generateMessageResponse({
     elizaLogger.debug("Context:", context);
 
     return await withRetry(async () => {
-        const { client, model, systemPrompt } = initializeModelClient(runtime);
+        const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
         
         const {text} = await aiGenerateText({
-            model: client.languageModel(model),
+            model: client.languageModel(model.name),
             prompt: context,
             system: systemPrompt,
         });
@@ -492,14 +489,14 @@ export const generateImage = async (
         elizaLogger.warn("No model settings found for the image model provider.");
         return { success: false, error: "No model settings available" };
     }
-    const { model, client } = initializeModelClient(runtime, true);
+    const { model, client } = initializeModelClient(runtime, ModelClass.IMAGE);
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
     });
 
     await withRetry(async () => {
         const result = await aiGenerateImage({
-            model: client.imageModel(model),
+            model: client.imageModel(model.name),
             prompt: data.prompt,
             size: `${data.width}x${data.height}`,
             n: data.count,

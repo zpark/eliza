@@ -30,8 +30,8 @@ export class OpacityAdapter implements IVerifiableInferenceAdapter {
         modelClass: string,
         options?: VerifiableInferenceOptions
     ): Promise<VerifiableInferenceResult> {
-        const provider = this.options.modelProvider ?? this.runtime.getModelProvider().provider;
-        const model = this.runtime.getModelProvider().defaultModel
+        const provider = this.options.modelProvider ?? this.runtime.modelProvider;
+        const model = this.runtime.getModelProvider().models[modelClass];
 
 
         elizaLogger.log("Generating text with options:", {
