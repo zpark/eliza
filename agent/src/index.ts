@@ -538,8 +538,8 @@ async function handlePluginImporting(plugins: string[]) {
 export function getTokenForProvider(
     character: Character
 ): string | undefined {
-    // change: unified single MODEL_API_KEY for all providers
-    return character.settings?.secrets?.MODEL_API_KEY || settings.MODEL_API_KEY;
+    // change: unified single PROVIDER_API_KEY for all providers
+    return character.settings?.secrets?.PROVIDER_API_KEY || settings.PROVIDER_API_KEY;
 }
 
 function initializeDatabase(dataDir: string) {

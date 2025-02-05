@@ -162,8 +162,8 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     const isNode = typeof process !== "undefined" && process.versions?.node;
 
     // use endpoint from model provider
-    const endpoint = runtime.getSetting("MODEL_ENDPOINT");  
-    const apiKey = runtime.getSetting("MODEL_API_KEY");
+    const endpoint = runtime.getSetting("PROVIDER_ENDPOINT");  
+    const apiKey = runtime.getSetting("PROVIDER_API_KEY");
 
 
     // Determine which embedding settings to use
@@ -171,8 +171,8 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     if (config.provider) {
         return await getRemoteEmbedding(input, {
             model: config.model,
-            endpoint: settings.MODEL_ENDPOINT || "https://api.openai.com/v1",
-            apiKey: settings.MODEL_API_KEY,
+            endpoint: settings.PROVIDER_ENDPOINT || "https://api.openai.com/v1",
+            apiKey: settings.PROVIDER_API_KEY,
             dimensions: config.dimensions,
         });
     }
@@ -195,8 +195,8 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         model: config.model,
         endpoint:
             runtime.character.modelEndpointOverride ||
-            runtime.getSetting("MODEL_ENDPOINT"),
-        apiKey: runtime.getSetting("MODEL_API_KEY") || runtime.token,
+            runtime.getSetting("PROVIDER_ENDPOINT"),
+        apiKey: runtime.getSetting("PROVIDER_API_KEY") || runtime.token,
         dimensions: config.dimensions,
     });
 
