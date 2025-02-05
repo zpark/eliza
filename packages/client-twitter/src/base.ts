@@ -261,9 +261,9 @@ export class ClientBase extends EventEmitter {
             throw new Error("Twitter username not configured");
         }
 
-        const authToken = this.runtime.getSetting("TWITTER_AUTH_TOKEN");
-        const ct0 = this.runtime.getSetting("TWITTER_CT0");
-        const guestId = this.runtime.getSetting("TWITTER_GUEST_ID");
+        const authToken = this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
+        const ct0 = this.runtime.getSetting("TWITTER_COOKIES_CT0");
+        const guestId = this.runtime.getSetting("TWITTER_COOKIES_GUEST_ID");
 
         const createTwitterCookies = (authToken: string, ct0: string, guestId: string) => 
         authToken && ct0 && guestId
