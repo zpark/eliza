@@ -8,6 +8,8 @@ declare class DirectClient {
     private agents;
     private server;
     startAgent: Function;
+    loadCharacterTryPath: Function;
+    jsonToCharacter: Function;
     constructor();
     registerAgent(runtime: AgentRuntime): void;
     unregisterAgent(runtime: AgentRuntime): void;

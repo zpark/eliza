@@ -1,7 +1,7 @@
 // src/index.ts
-import bodyParser2 from "body-parser";
-import cors2 from "cors";
-import express2 from "express";
+import bodyParser3 from "body-parser";
+import cors3 from "cors";
+import express3 from "express";
 import multer from "multer";
 
 // ../../node_modules/zod/lib/index.mjs
@@ -357,8 +357,8 @@ function getErrorMap() {
   return overrideErrorMap;
 }
 var makeIssue = (params) => {
-  const { data, path: path2, errorMaps, issueData } = params;
-  const fullPath = [...path2, ...issueData.path || []];
+  const { data, path: path3, errorMaps, issueData } = params;
+  const fullPath = [...path3, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -480,11 +480,11 @@ var errorUtil;
 var _ZodEnum_cache;
 var _ZodNativeEnum_cache;
 var ParseInputLazyPath = class {
-  constructor(parent, value, path2, key) {
+  constructor(parent, value, path3, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path2;
+    this._path = path3;
     this._key = key;
   }
   get path() {
@@ -3920,7 +3920,7 @@ var z = /* @__PURE__ */ Object.freeze({
 
 // src/index.ts
 import {
-  elizaLogger as elizaLogger2,
+  elizaLogger as elizaLogger3,
   messageCompletionFooter,
   generateCaption,
   generateImage,
@@ -3937,13 +3937,13 @@ import {
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import path from "path";
+import fs from "fs";
 import {
   elizaLogger,
   getEnvVariable,
-  validateCharacterConfig,
-  ServiceType
+  validateCharacterConfig
 } from "@elizaos/core";
-import { REST, Routes } from "discord.js";
 import { validateUuid } from "@elizaos/core";
 function validateUUIDParams(params, res) {
   const agentId = validateUuid(params.agentId);
@@ -3989,6 +3989,15 @@ function createApiRouter(agents, directClient) {
     }));
     res.json({ agents: agentsList });
   });
+  router.get("/storage", async (req, res) => {
+    try {
+      const uploadDir = path.join(process.cwd(), "data", "characters");
+      const files = await fs.promises.readdir(uploadDir);
+      res.json({ files });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
   router.get("/agents/:agentId", (req, res) => {
     const { agentId } = validateUUIDParams(req.params, res) ?? {
       agentId: null
@@ -4008,6 +4017,20 @@ function createApiRouter(agents, directClient) {
       character: agent.character
     });
   });
+  router.delete("/agents/:agentId", async (req, res) => {
+    const { agentId } = validateUUIDParams(req.params, res) ?? {
+      agentId: null
+    };
+    if (!agentId) return;
+    const agent = agents.get(agentId);
+    if (agent) {
+      agent.stop();
+      directClient.unregisterAgent(agent);
+      res.status(204).json({ success: true });
+    } else {
+      res.status(404).json({ error: "Agent not found" });
+    }
+  });
   router.post("/agents/:agentId/set", async (req, res) => {
     const { agentId } = validateUUIDParams(req.params, res) ?? {
       agentId: null
@@ -4018,6 +4041,7 @@ function createApiRouter(agents, directClient) {
       agent.stop();
       directClient.unregisterAgent(agent);
     }
+    const characterJson = { ...req.body };
     const character = req.body;
     try {
       validateCharacterConfig(character);
@@ -4029,36 +4053,48 @@ function createApiRouter(agents, directClient) {
       });
       return;
     }
-    agent = await directClient.startAgent(character);
-    elizaLogger.log(`${character.name} started`);
+    try {
+      agent = await directClient.startAgent(character);
+      elizaLogger.log(`${character.name} started`);
+    } catch (e) {
+      elizaLogger.error(`Error starting agent: ${e}`);
+      res.status(500).json({
+        success: false,
+        message: e.message
+      });
+      return;
+    }
+    if (process.env.USE_CHARACTER_STORAGE === "true") {
+      try {
+        const filename = `${agent.agentId}.json`;
+        const uploadDir = path.join(
+          process.cwd(),
+          "data",
+          "characters"
+        );
+        const filepath = path.join(uploadDir, filename);
+        await fs.promises.mkdir(uploadDir, { recursive: true });
+        await fs.promises.writeFile(
+          filepath,
+          JSON.stringify(
+            { ...characterJson, id: agent.agentId },
+            null,
+            2
+          )
+        );
+        elizaLogger.info(
+          `Character stored successfully at ${filepath}`
+        );
+      } catch (error) {
+        elizaLogger.error(
+          `Failed to store character: ${error.message}`
+        );
+      }
+    }
     res.json({
       id: character.id,
       character
     });
-  });
-  router.get("/agents/:agentId/channels", async (req, res) => {
-    const { agentId } = validateUUIDParams(req.params, res) ?? {
-      agentId: null
-    };
-    if (!agentId) return;
-    const runtime = agents.get(agentId);
-    if (!runtime) {
-      res.status(404).json({ error: "Runtime not found" });
-      return;
-    }
-    const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN");
-    const rest = new REST({ version: "10" }).setToken(API_TOKEN);
-    try {
-      const guilds = await rest.get(Routes.userGuilds());
-      res.json({
-        id: runtime.agentId,
-        guilds,
-        serverCount: guilds.length
-      });
-    } catch (error) {
-      console.error("Error fetching guilds:", error);
-      res.status(500).json({ error: "Failed to fetch guilds" });
-    }
   });
   router.get("/agents/:agentId/:roomId/memories", async (req, res) => {
     const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
@@ -4118,60 +4154,161 @@ function createApiRouter(agents, directClient) {
       res.status(500).json({ error: "Failed to fetch memories" });
     }
   });
-  router.get("/tee/agents", async (req, res) => {
+  router.post("/agent/start", async (req, res) => {
+    const { characterPath, characterJson } = req.body;
+    console.log("characterPath:", characterPath);
+    console.log("characterJson:", characterJson);
     try {
-      const allAgents = [];
-      for (const agentRuntime of agents.values()) {
-        const teeLogService2 = agentRuntime.getService(
-          ServiceType.TEE_LOG
-        ).getInstance();
-        const agents2 = await teeLogService2.getAllAgents();
-        allAgents.push(...agents2);
+      let character;
+      if (characterJson) {
+        character = await directClient.jsonToCharacter(
+          characterPath,
+          characterJson
+        );
+      } else if (characterPath) {
+        character = await directClient.loadCharacterTryPath(characterPath);
+      } else {
+        throw new Error("No character path or JSON provided");
       }
-      const runtime = agents.values().next().value;
-      const teeLogService = runtime.getService(ServiceType.TEE_LOG).getInstance();
-      const attestation = await teeLogService.generateAttestation(JSON.stringify(allAgents));
-      res.json({ agents: allAgents, attestation });
-    } catch (error) {
-      elizaLogger.error("Failed to get TEE agents:", error);
-      res.status(500).json({
-        error: "Failed to get TEE agents"
+      await directClient.startAgent(character);
+      elizaLogger.log(`${character.name} started`);
+      res.json({
+        id: character.id,
+        character
       });
+    } catch (e) {
+      elizaLogger.error(`Error parsing character: ${e}`);
+      res.status(400).json({
+        error: e.message
+      });
+      return;
     }
   });
-  router.get("/tee/agents/:agentId", async (req, res) => {
-    try {
-      const agentId = req.params.agentId;
-      const agentRuntime = agents.get(agentId);
-      if (!agentRuntime) {
-        res.status(404).json({ error: "Agent not found" });
-        return;
-      }
-      const teeLogService = agentRuntime.getService(
-        ServiceType.TEE_LOG
-      ).getInstance();
-      const teeAgent = await teeLogService.getAgent(agentId);
-      const attestation = await teeLogService.generateAttestation(JSON.stringify(teeAgent));
-      res.json({ agent: teeAgent, attestation });
-    } catch (error) {
-      elizaLogger.error("Failed to get TEE agent:", error);
-      res.status(500).json({
-        error: "Failed to get TEE agent"
-      });
+  router.post("/agents/:agentId/stop", async (req, res) => {
+    const agentId = req.params.agentId;
+    console.log("agentId", agentId);
+    const agent = agents.get(agentId);
+    if (agent) {
+      agent.stop();
+      directClient.unregisterAgent(agent);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: "Agent not found" });
     }
   });
   return router;
 }
 
 // src/index.ts
-import * as fs from "fs";
-import * as path from "path";
+import * as fs2 from "fs";
+import * as path2 from "path";
+
+// src/verifiable-log-api.ts
+import express2 from "express";
+import bodyParser2 from "body-parser";
+import cors2 from "cors";
+import { elizaLogger as elizaLogger2, ServiceType as ServiceType2 } from "@elizaos/core";
+function createVerifiableLogApiRouter(agents) {
+  const router = express2.Router();
+  router.use(cors2());
+  router.use(bodyParser2.json());
+  router.use(bodyParser2.urlencoded({ extended: true }));
+  router.get(
+    "/verifiable/agents",
+    async (req, res) => {
+      try {
+        const agentRuntime = agents.values().next().value;
+        const pageQuery = await agentRuntime.getService(
+          ServiceType2.VERIFIABLE_LOGGING
+        ).listAgent();
+        res.json({
+          success: true,
+          message: "Successfully get Agents",
+          data: pageQuery
+        });
+      } catch (error) {
+        elizaLogger2.error("Detailed error:", error);
+        res.status(500).json({
+          error: "failed to get agents registered ",
+          details: error.message,
+          stack: error.stack
+        });
+      }
+    }
+  );
+  router.post(
+    "/verifiable/attestation",
+    async (req, res) => {
+      try {
+        const query = req.body || {};
+        const verifiableLogQuery = {
+          agentId: query.agentId || "",
+          publicKey: query.publicKey || ""
+        };
+        const agentRuntime = agents.values().next().value;
+        const pageQuery = await agentRuntime.getService(
+          ServiceType2.VERIFIABLE_LOGGING
+        ).generateAttestation(verifiableLogQuery);
+        res.json({
+          success: true,
+          message: "Successfully get Attestation",
+          data: pageQuery
+        });
+      } catch (error) {
+        elizaLogger2.error("Detailed error:", error);
+        res.status(500).json({
+          error: "Failed to Get Attestation",
+          details: error.message,
+          stack: error.stack
+        });
+      }
+    }
+  );
+  router.post(
+    "/verifiable/logs",
+    async (req, res) => {
+      try {
+        const query = req.body.query || {};
+        const page = Number.parseInt(req.body.page) || 1;
+        const pageSize = Number.parseInt(req.body.pageSize) || 10;
+        const verifiableLogQuery = {
+          idEq: query.idEq || "",
+          agentIdEq: query.agentIdEq || "",
+          roomIdEq: query.roomIdEq || "",
+          userIdEq: query.userIdEq || "",
+          typeEq: query.typeEq || "",
+          contLike: query.contLike || "",
+          signatureEq: query.signatureEq || ""
+        };
+        const agentRuntime = agents.values().next().value;
+        const pageQuery = await agentRuntime.getService(
+          ServiceType2.VERIFIABLE_LOGGING
+        ).pageQueryLogs(verifiableLogQuery, page, pageSize);
+        res.json({
+          success: true,
+          message: "Successfully retrieved logs",
+          data: pageQuery
+        });
+      } catch (error) {
+        elizaLogger2.error("Detailed error:", error);
+        res.status(500).json({
+          error: "Failed to Get Verifiable Logs",
+          details: error.message,
+          stack: error.stack
+        });
+      }
+    }
+  );
+  return router;
+}
+
+// src/index.ts
 import OpenAI from "openai";
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), "data", "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const uploadDir = path2.join(process.cwd(), "data", "uploads");
+    if (!fs2.existsSync(uploadDir)) {
+      fs2.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
@@ -4253,23 +4390,29 @@ var DirectClient = class {
   // Store server instance
   startAgent;
   // Store startAgent functor
+  loadCharacterTryPath;
+  // Store loadCharacterTryPath functor
+  jsonToCharacter;
+  // Store jsonToCharacter functor
   constructor() {
-    elizaLogger2.log("DirectClient constructor");
-    this.app = express2();
-    this.app.use(cors2());
+    elizaLogger3.log("DirectClient constructor");
+    this.app = express3();
+    this.app.use(cors3());
     this.agents = /* @__PURE__ */ new Map();
-    this.app.use(bodyParser2.json());
-    this.app.use(bodyParser2.urlencoded({ extended: true }));
+    this.app.use(bodyParser3.json());
+    this.app.use(bodyParser3.urlencoded({ extended: true }));
     this.app.use(
       "/media/uploads",
-      express2.static(path.join(process.cwd(), "/data/uploads"))
+      express3.static(path2.join(process.cwd(), "/data/uploads"))
     );
     this.app.use(
       "/media/generated",
-      express2.static(path.join(process.cwd(), "/generatedImages"))
+      express3.static(path2.join(process.cwd(), "/generatedImages"))
     );
     const apiRouter = createApiRouter(this.agents, this);
     this.app.use(apiRouter);
+    const apiLogRouter = createVerifiableLogApiRouter(this.agents);
+    this.app.use(apiLogRouter);
     this.app.post(
       "/:agentId/whisper",
       upload.single("file"),
@@ -4295,7 +4438,7 @@ var DirectClient = class {
           apiKey
         });
         const transcription = await openai.audio.transcriptions.create({
-          file: fs.createReadStream(audioFile.path),
+          file: fs2.createReadStream(audioFile.path),
           model: "whisper-1"
         });
         res.json(transcription);
@@ -4335,7 +4478,7 @@ var DirectClient = class {
         const messageId = stringToUuid(Date.now().toString());
         const attachments = [];
         if (req.file) {
-          const filePath = path.join(
+          const filePath = path2.join(
             process.cwd(),
             "data",
             "uploads",
@@ -4550,7 +4693,7 @@ var DirectClient = class {
         try {
           hfOut = hyperfiOutSchema.parse(response.object);
         } catch {
-          elizaLogger2.error(
+          elizaLogger3.error(
             "cant serialize response",
             response.object
           );
@@ -4582,7 +4725,9 @@ var DirectClient = class {
             content: contentObj
           };
           runtime.messageManager.createMemory(responseMessage).then(() => {
-            const messageId = stringToUuid(Date.now().toString());
+            const messageId = stringToUuid(
+              Date.now().toString()
+            );
             const memory = {
               id: messageId,
               agentId: runtime.agentId,
@@ -4664,16 +4809,16 @@ var DirectClient = class {
       "/fine-tune/:assetId",
       async (req, res) => {
         const assetId = req.params.assetId;
-        const downloadDir = path.join(
+        const downloadDir = path2.join(
           process.cwd(),
           "downloads",
           assetId
         );
-        elizaLogger2.log("Download directory:", downloadDir);
+        elizaLogger3.log("Download directory:", downloadDir);
         try {
-          elizaLogger2.log("Creating directory...");
-          await fs.promises.mkdir(downloadDir, { recursive: true });
-          elizaLogger2.log("Fetching file...");
+          elizaLogger3.log("Creating directory...");
+          await fs2.promises.mkdir(downloadDir, { recursive: true });
+          elizaLogger3.log("Fetching file...");
           const fileResponse = await fetch(
             `https://api.bageldb.ai/api/v1/asset/${assetId}/download`,
             {
@@ -4687,20 +4832,20 @@ var DirectClient = class {
               `API responded with status ${fileResponse.status}: ${await fileResponse.text()}`
             );
           }
-          elizaLogger2.log("Response headers:", fileResponse.headers);
+          elizaLogger3.log("Response headers:", fileResponse.headers);
           const fileName = fileResponse.headers.get("content-disposition")?.split("filename=")[1]?.replace(
             /"/g,
             /* " */
             ""
           ) || "default_name.txt";
-          elizaLogger2.log("Saving as:", fileName);
+          elizaLogger3.log("Saving as:", fileName);
           const arrayBuffer = await fileResponse.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
-          const filePath = path.join(downloadDir, fileName);
-          elizaLogger2.log("Full file path:", filePath);
-          await fs.promises.writeFile(filePath, buffer);
-          const stats = await fs.promises.stat(filePath);
-          elizaLogger2.log(
+          const filePath = path2.join(downloadDir, fileName);
+          elizaLogger3.log("Full file path:", filePath);
+          await fs2.promises.writeFile(filePath, buffer);
+          const stats = await fs2.promises.stat(filePath);
+          elizaLogger3.log(
             "File written successfully. Size:",
             stats.size,
             "bytes"
@@ -4714,7 +4859,7 @@ var DirectClient = class {
             fileSize: stats.size
           });
         } catch (error) {
-          elizaLogger2.error("Detailed error:", error);
+          elizaLogger3.error("Detailed error:", error);
           res.status(500).json({
             error: "Failed to download files from BagelDB",
             details: error.message,
@@ -4823,13 +4968,13 @@ var DirectClient = class {
             text: textToSpeak,
             model_id: process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2",
             voice_settings: {
-              stability: parseFloat(
+              stability: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_STABILITY || "0.5"
               ),
-              similarity_boost: parseFloat(
+              similarity_boost: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST || "0.9"
               ),
-              style: parseFloat(
+              style: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_STYLE || "0.66"
               ),
               use_speaker_boost: process.env.ELEVENLABS_VOICE_USE_SPEAKER_BOOST === "true"
@@ -4848,7 +4993,7 @@ var DirectClient = class {
         });
         res.send(Buffer.from(audioBuffer));
       } catch (error) {
-        elizaLogger2.error(
+        elizaLogger3.error(
           "Error processing message or generating speech:",
           error
         );
@@ -4880,13 +5025,13 @@ var DirectClient = class {
             text,
             model_id: process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2",
             voice_settings: {
-              stability: parseFloat(
+              stability: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_STABILITY || "0.5"
               ),
-              similarity_boost: parseFloat(
+              similarity_boost: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_SIMILARITY_BOOST || "0.9"
               ),
-              style: parseFloat(
+              style: Number.parseFloat(
                 process.env.ELEVENLABS_VOICE_STYLE || "0.66"
               ),
               use_speaker_boost: process.env.ELEVENLABS_VOICE_USE_SPEAKER_BOOST === "true"
@@ -4905,7 +5050,7 @@ var DirectClient = class {
         });
         res.send(Buffer.from(audioBuffer));
       } catch (error) {
-        elizaLogger2.error(
+        elizaLogger3.error(
           "Error processing message or generating speech:",
           error
         );
@@ -4925,18 +5070,18 @@ var DirectClient = class {
   }
   start(port) {
     this.server = this.app.listen(port, () => {
-      elizaLogger2.success(
+      elizaLogger3.success(
         `REST API bound to 0.0.0.0:${port}. If running locally, access it at http://localhost:${port}.`
       );
     });
     const gracefulShutdown = () => {
-      elizaLogger2.log("Received shutdown signal, closing server...");
+      elizaLogger3.log("Received shutdown signal, closing server...");
       this.server.close(() => {
-        elizaLogger2.success("Server closed successfully");
+        elizaLogger3.success("Server closed successfully");
         process.exit(0);
       });
       setTimeout(() => {
-        elizaLogger2.error(
+        elizaLogger3.error(
           "Could not close connections in time, forcefully shutting down"
         );
         process.exit(1);
@@ -4948,16 +5093,18 @@ var DirectClient = class {
   stop() {
     if (this.server) {
       this.server.close(() => {
-        elizaLogger2.success("Server stopped");
+        elizaLogger3.success("Server stopped");
       });
     }
   }
 };
 var DirectClientInterface = {
+  name: "direct",
+  config: {},
   start: async (_runtime) => {
-    elizaLogger2.log("DirectClientInterface start");
+    elizaLogger3.log("DirectClientInterface start");
     const client = new DirectClient();
-    const serverPort = parseInt(settings.SERVER_PORT || "3000");
+    const serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
     client.start(serverPort);
     return client;
   },
