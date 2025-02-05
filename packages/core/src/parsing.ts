@@ -146,7 +146,7 @@ export function parseJSONObjectFromText(
     const jsonBlockMatch = text.match(jsonBlockPattern);
 
     if (jsonBlockMatch) {
-        const parsingText = normalizeJsonString(jsonBlockMatch[1]);
+        const parsingText = normalizeJsonString(text);
         try {
             jsonData = JSON.parse(parsingText);
         } catch (e) {
@@ -159,7 +159,7 @@ export function parseJSONObjectFromText(
         const objectMatch = text.match(objectPattern);
 
         if (objectMatch) {
-            const parsingText = normalizeJsonString(objectMatch[0]);
+            const parsingText = normalizeJsonString(text);
             try {
                 jsonData = JSON.parse(parsingText);
             } catch (e) {
