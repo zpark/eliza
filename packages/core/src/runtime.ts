@@ -248,7 +248,7 @@ export class AgentRuntime implements IAgentRuntime {
         evaluators?: Evaluator[]; // Optional custom evaluators
         plugins?: Plugin[];
         providers?: Provider[];
-        modelProvider: ModelProviderName | 'string';
+        modelProvider: ModelProviderName | string;
 
         services?: Service[]; // Map of service name to service instance
         managers?: IMemoryManager[]; // Map of table name to memory manager
