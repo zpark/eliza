@@ -52,7 +52,7 @@ import {
 // import { footballPlugin } from "@elizaos/plugin-football";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
-import { normalizeCharacter } from "@elizaos/plugin-di";
+// import { normalizeCharacter } from "@elizaos/plugin-di";
 // import createGoatPlugin from "@elizaos/plugin-goat";
 // import createZilliqaPlugin from "@elizaos/plugin-zilliqa";
 
@@ -1203,7 +1203,7 @@ const startAgents = async () => {
     }
 
     // Normalize characters for injectable plugins
-    characters = await Promise.all(characters.map(normalizeCharacter));
+    // characters = await Promise.all(characters.map(normalizeCharacter));
 
     try {
         for (const character of characters) {
