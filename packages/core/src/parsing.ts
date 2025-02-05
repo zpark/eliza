@@ -193,6 +193,7 @@ export function extractAttributes(
     response: string,
     attributesToExtract?: string[]
 ): { [key: string]: string | undefined } {
+    response = response.trim();
     const attributes: { [key: string]: string | undefined } = {};
 
     if (!attributesToExtract || attributesToExtract.length === 0) {
