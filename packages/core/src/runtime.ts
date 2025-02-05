@@ -1,7 +1,9 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from "fs/promises";
+import { join } from "path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
+import { existsSync } from "fs";
+import { glob } from "glob";
 import {
     composeActionExamples,
     formatActionNames,
@@ -37,8 +39,6 @@ import {
     type IRAGKnowledgeManager,
     type IVerifiableInferenceAdapter,
     type KnowledgeItem,
-    // RAGKnowledgeItem,
-    //Media,
     ModelClass,
     type ModelProviderName,
     type Plugin,
@@ -56,13 +56,8 @@ import {
     type ModelSettings,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-import { glob } from "glob";
-import { existsSync } from "node:fs";
-/**
- * Represents the runtime environment for an agent, handling message processing,
- * action registration, and interaction with external services like OpenAI and Supabase.
- */
 
+// Utility functions
 function isDirectoryItem(item: any): item is DirectoryItem {
     return (
         typeof item === "object" &&
@@ -72,109 +67,510 @@ function isDirectoryItem(item: any): item is DirectoryItem {
     );
 }
 
-export class AgentRuntime implements IAgentRuntime {
-    /**
-     * Default count for recent messages to be kept in memory.
-     * @private
-     */
-    readonly #conversationLength = 32 as number;
-    /**
-     * The ID of the agent
-     */
-    agentId: UUID;
-    /**
-     * The base URL of the server where the agent's requests are processed.
-     */
-    serverUrl = "http://localhost:7998";
+function formatKnowledge(knowledge: KnowledgeItem[]): string {
+    return knowledge
+        .map((knowledge) => `- ${knowledge.content.text}`)
+        .join("\n");
+}
 
-    /**
-     * The database adapter used for interacting with the database.
-     */
-    databaseAdapter: IDatabaseAdapter;
+/**
+ * Manages knowledge-related operations for the agent runtime
+ */
+class KnowledgeManager {
+    private knowledgeRoot: string;
+    private runtime: AgentRuntime;
 
-    /**
-     * Authentication token used for securing requests.
-     */
-    token: string | null;
+    constructor(runtime: AgentRuntime, knowledgeRoot: string) {
+        this.runtime = runtime;
+        this.knowledgeRoot = knowledgeRoot;
+    }
 
-    /**
-     * Custom actions that the agent can perform.
-     */
-    actions: Action[] = [];
+    async processCharacterKnowledge(items: string[]) {
+        for (const item of items) {
+            const knowledgeId = stringToUuid(item);
+            const existingDocument = await this.runtime.documentsManager.getMemoryById(knowledgeId);
+            if (existingDocument) {
+                continue;
+            }
 
-    /**
-     * Evaluators used to assess and guide the agent's responses.
-     */
-    evaluators: Evaluator[] = [];
+            elizaLogger.info(
+                "Processing knowledge for ",
+                this.runtime.character.name,
+                " - ",
+                item.slice(0, 100),
+            );
 
-    /**
-     * Context providers used to provide context for message generation.
-     */
-    providers: Provider[] = [];
+            await knowledge.set(this.runtime, {
+                id: knowledgeId,
+                content: {
+                    text: item,
+                },
+            });
+        }
+    }
 
-    plugins: Plugin[] = [];
+    async processCharacterRAGKnowledge(items: (string | { path: string; shared?: boolean })[]) {
+        let hasError = false;
 
-    /**
-     * The model to use for generateText.
-     */
-    modelProvider: string;
+        for (const item of items) {
+            if (!item) continue;
 
-    /**
-     * The model to use for generateImage.
-     */
-    imageModelProvider: string;
+            try {
+                let isShared = false;
+                let contentItem: string;
 
-    /**
-     * The model to use for describing images.
-     */
-    imageVisionModelProvider: string;
+                if (typeof item === "object" && "path" in item) {
+                    isShared = item.shared === true;
+                    contentItem = item.path;
+                } else {
+                    contentItem = item as string;
+                }
 
-    /**
-     * Fetch function to use
-     * Some environments may not have access to the global fetch function and need a custom fetch override.
-     */
-    fetch = fetch;
+                const knowledgeId = this.runtime.ragKnowledgeManager.generateScopedId(
+                    contentItem,
+                    isShared,
+                );
+                const fileExtension = contentItem
+                    .split(".")
+                    .pop()
+                    ?.toLowerCase();
 
-    /**
-     * The character to use for the agent
-     */
-    character: Character;
+                if (fileExtension && ["md", "txt", "pdf"].includes(fileExtension)) {
+                    await this.processFile(contentItem, isShared, knowledgeId, fileExtension);
+                } else {
+                    await this.processDirectKnowledge(contentItem, knowledgeId);
+                }
+            } catch (error: any) {
+                hasError = true;
+                elizaLogger.error(
+                    `Error processing knowledge item ${item}:`,
+                    error?.message || error || "Unknown error",
+                );
+            }
+        }
 
-    /**
-     * Store messages that are sent and received by the agent.
-     */
-    messageManager: IMemoryManager;
+        if (hasError) {
+            elizaLogger.warn(
+                "Some knowledge items failed to process, but continuing with available knowledge",
+            );
+        }
+    }
 
-    /**
-     * Store and recall descriptions of users based on conversations.
-     */
-    descriptionManager: IMemoryManager;
+    private async processFile(path: string, isShared: boolean, knowledgeId: UUID, fileExtension: string) {
+        try {
+            const filePath = join(this.knowledgeRoot, path);
+            const existingKnowledge = await this.runtime.ragKnowledgeManager.getKnowledge({
+                id: knowledgeId,
+                agentId: this.runtime.agentId,
+            });
 
-    /**
-     * Manage the creation and recall of static information (documents, historical game lore, etc)
-     */
-    loreManager: IMemoryManager;
+            const content: string = await readFile(filePath, "utf8");
+            if (!content) {
+                throw new Error("Empty file content");
+            }
 
-    /**
-     * Hold large documents that can be referenced
-     */
-    documentsManager: IMemoryManager;
+            if (existingKnowledge.length > 0) {
+                const existingContent = existingKnowledge[0].content.text;
+                if (existingContent === content) {
+                    elizaLogger.info(
+                        `${isShared ? "Shared knowledge" : "Knowledge"} ${path} unchanged, skipping`,
+                    );
+                    return;
+                }
 
-    /**
-     * Searchable document fragments
-     */
-    knowledgeManager: IMemoryManager;
+                elizaLogger.info(
+                    `${isShared ? "Shared knowledge" : "Knowledge"} ${path} changed, updating...`,
+                );
+                await this.runtime.ragKnowledgeManager.removeKnowledge(knowledgeId);
+                await this.runtime.ragKnowledgeManager.removeKnowledge(`${knowledgeId}-chunk-*` as UUID);
+            }
 
-    ragKnowledgeManager: IRAGKnowledgeManager;
+            elizaLogger.info(
+                `Processing ${fileExtension.toUpperCase()} file content for`,
+                this.runtime.character.name,
+                "-",
+                path,
+            );
 
-    private readonly knowledgeRoot: string;
+            await this.runtime.ragKnowledgeManager.processFile({
+                path,
+                content,
+                type: fileExtension as "pdf" | "md" | "txt",
+                isShared,
+            });
+        } catch (error) {
+            throw new Error(`Failed to process file: ${error}`);
+        }
+    }
 
-    services: Map<ServiceType, Service> = new Map();
-    memoryManagers: Map<string, IMemoryManager> = new Map();
-    cacheManager: ICacheManager;
-    clients: Record<string, any>;
+    private async processDirectKnowledge(content: string, knowledgeId: UUID) {
+        elizaLogger.info(
+            "Processing direct knowledge for",
+            this.runtime.character.name,
+            "-",
+            content.slice(0, 100),
+        );
 
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+        const existingKnowledge = await this.runtime.ragKnowledgeManager.getKnowledge({
+            id: knowledgeId,
+            agentId: this.runtime.agentId,
+        });
+
+        if (existingKnowledge.length > 0) {
+            elizaLogger.info(
+                `Direct knowledge ${knowledgeId} already exists, skipping`,
+            );
+            return;
+        }
+
+        await this.runtime.ragKnowledgeManager.createKnowledge({
+            id: knowledgeId,
+            agentId: this.runtime.agentId,
+            content: {
+                text: content,
+                metadata: {
+                    type: "direct",
+                },
+            },
+        });
+    }
+
+    async processCharacterRAGDirectory(dirConfig: { directory: string; shared?: boolean }) {
+        if (!dirConfig.directory) {
+            elizaLogger.error("[RAG Directory] No directory specified");
+            return;
+        }
+
+        const sanitizedDir = dirConfig.directory.replace(/\.\./g, "");
+        const dirPath = join(this.knowledgeRoot, sanitizedDir);
+
+        try {
+            if (!existsSync(dirPath)) {
+                elizaLogger.error(
+                    `[RAG Directory] Directory does not exist: ${sanitizedDir}`,
+                );
+                return;
+            }
+
+            elizaLogger.debug(`[RAG Directory] Searching in: ${dirPath}`);
+            const files = await glob("**/*.{md,txt,pdf}", {
+                cwd: dirPath,
+                nodir: true,
+                absolute: false,
+            });
+
+            if (files.length === 0) {
+                elizaLogger.warn(
+                    `No matching files found in directory: ${dirConfig.directory}`,
+                );
+                return;
+            }
+
+            elizaLogger.info(
+                `[RAG Directory] Found ${files.length} files in ${dirConfig.directory}`,
+            );
+
+            const BATCH_SIZE = 5;
+            for (let i = 0; i < files.length; i += BATCH_SIZE) {
+                const batch = files.slice(i, i + BATCH_SIZE);
+                await this.processBatch(batch, sanitizedDir, dirConfig.shared);
+                elizaLogger.debug(
+                    `[RAG Directory] Completed batch ${Math.min(i + BATCH_SIZE, files.length)}/${files.length} files`,
+                );
+            }
+
+            elizaLogger.success(
+                `[RAG Directory] Successfully processed directory: ${sanitizedDir}`,
+            );
+        } catch (error) {
+            elizaLogger.error(
+                `[RAG Directory] Failed to process directory: ${sanitizedDir}`,
+                error instanceof Error
+                    ? {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack,
+                    }
+                    : error,
+            );
+            throw error;
+        }
+    }
+
+    private async processBatch(batch: string[], sanitizedDir: string, shared?: boolean) {
+        await Promise.all(
+            batch.map(async (file) => {
+                try {
+                    const relativePath = join(sanitizedDir, file);
+                    elizaLogger.debug(
+                        `[RAG Directory] Processing file:`,
+                        {
+                            file,
+                            relativePath,
+                            shared,
+                        },
+                    );
+
+                    await this.processCharacterRAGKnowledge([
+                        {
+                            path: relativePath,
+                            shared,
+                        },
+                    ]);
+                } catch (error) {
+                    elizaLogger.error(
+                        `[RAG Directory] Failed to process file: ${file}`,
+                        error instanceof Error
+                            ? {
+                                name: error.name,
+                                message: error.message,
+                                stack: error.stack,
+                            }
+                            : error,
+                    );
+                }
+            }),
+        );
+    }
+}
+
+/**
+ * Manages model provider settings and configuration
+ */
+class ModelProviderManager {
+    private runtime: AgentRuntime;
+
+    constructor(runtime: AgentRuntime) {
+        this.runtime = runtime;
+    }
+
+    private parseNumber(value: string | undefined, defaultValue: number): number {
+        if (!value) return defaultValue;
+        const parsed = Number(value);
+        return Number.isNaN(parsed) ? defaultValue : parsed;
+    }
+
+    private parseStringArray(value: string | undefined, delimiter = ','): string[] {
+        return value ? value.split(delimiter) : [];
+    }
+
+    private parseHeaders(): Record<string, string> | undefined {
+        const customHeaders = this.runtime.getSetting("CUSTOM_HEADERS");
+        if (!customHeaders) return undefined;
+
+        try {
+            return JSON.parse(customHeaders);
+        } catch {
+            return undefined;
+        }
+    }
+
+    getModelProvider(): IModelProvider {
+        // Default model settings
+        const defaultModelSettings: ModelSettings = {
+            name: this.runtime.getSetting("DEFAULT_MODEL"),
+            maxInputTokens: this.parseNumber(this.runtime.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
+            maxOutputTokens: this.parseNumber(this.runtime.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
+            temperature: this.parseNumber(this.runtime.getSetting("DEFAULT_TEMPERATURE"), 0.7),
+            stop: this.parseStringArray(this.runtime.getSetting("DEFAULT_STOP_SEQUENCES")),
+            frequency_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
+            presence_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
+            repetition_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
+        };
+
+        // Helper function to get model-specific settings
+        const getModelSettings = (prefix: string): ModelSettings => ({
+            name: this.runtime.getSetting(`${prefix}_MODEL`),
+            maxInputTokens: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
+                defaultModelSettings.maxInputTokens
+            ),
+            maxOutputTokens: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`), 
+                defaultModelSettings.maxOutputTokens
+            ),
+            temperature: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_TEMPERATURE`), 
+                defaultModelSettings.temperature
+            ),
+            stop: this.parseStringArray(
+                this.runtime.getSetting(`${prefix}_STOP_SEQUENCES`)
+            ) || defaultModelSettings.stop,
+            frequency_penalty: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_FREQUENCY_PENALTY`), 
+                defaultModelSettings.frequency_penalty
+            ),
+            presence_penalty: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_PRESENCE_PENALTY`), 
+                defaultModelSettings.presence_penalty
+            ),
+            repetition_penalty: this.parseNumber(
+                this.runtime.getSetting(`${prefix}_REPETITION_PENALTY`), 
+                defaultModelSettings.repetition_penalty
+            )
+        });
+
+        return {
+            apiKey: this.runtime.getSetting("PROVIDER_API_KEY"),
+            endpoint: this.runtime.getSetting("PROVIDER_ENDPOINT"),
+            provider: this.runtime.getSetting("PROVIDER_NAME"),
+
+            models: {
+                default: defaultModelSettings,
+
+                ...(this.runtime.getSetting("SMALL_MODEL") && {
+                    [ModelClass.SMALL]: getModelSettings("SMALL")
+                }),
+
+                ...(this.runtime.getSetting("MEDIUM_MODEL") && {
+                    [ModelClass.MEDIUM]: getModelSettings("MEDIUM")
+                }),
+
+                ...(this.runtime.getSetting("LARGE_MODEL") && {
+                    [ModelClass.LARGE]: getModelSettings("LARGE")
+                }),
+
+                ...(this.runtime.getSetting("EMBEDDING_MODEL") && {
+                    [ModelClass.EMBEDDING]: {
+                        name: this.runtime.getSetting("EMBEDDING_MODEL"),
+                        dimensions: this.parseNumber(
+                            this.runtime.getSetting("EMBEDDING_DIMENSIONS"), 
+                            1536
+                        )
+                    }
+                }),
+
+                ...(this.runtime.getSetting("IMAGE_MODEL") && {
+                    [ModelClass.IMAGE]: {
+                        name: this.runtime.getSetting("IMAGE_MODEL"),
+                        steps: this.parseNumber(
+                            this.runtime.getSetting("IMAGE_STEPS"), 
+                            50
+                        )
+                    }
+                })
+            }
+        };
+    }
+}
+
+/**
+ * Manages services and their lifecycle
+ */
+class ServiceManager {
+    private runtime: AgentRuntime;
+    private services: Map<ServiceType, Service>;
+
+    constructor(runtime: AgentRuntime) {
+        this.runtime = runtime;
+        this.services = new Map();
+    }
+
+    async registerService(service: Service): Promise<void> {
+        const serviceType = service.serviceType;
+        elizaLogger.log(`${this.runtime.character.name}(${this.runtime.agentId}) - Registering service:`, serviceType);
+
+        if (this.services.has(serviceType)) {
+            elizaLogger.warn(
+                `${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} is already registered. Skipping registration.`
+            );
+            return;
+        }
+
+        // Add the service to the services map
+        this.services.set(serviceType, service);
+        elizaLogger.success(`${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} registered successfully`);
+    }
+
+    getService<T extends Service>(service: ServiceType): T | null {
+        const serviceInstance = this.services.get(service);
+        if (!serviceInstance) {
+            elizaLogger.error(`Service ${service} not found`);
+            return null;
+        }
+        return serviceInstance as T;
+    }
+
+    async initializeServices(): Promise<void> {
+        for (const [serviceType, service] of this.services.entries()) {
+            try {
+                await service.initialize(this.runtime);
+                this.services.set(serviceType, service);
+                elizaLogger.success(
+                    `${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} initialized successfully`
+                );
+            } catch (error) {
+                elizaLogger.error(
+                    `${this.runtime.character.name}(${this.runtime.agentId}) - Failed to initialize service ${serviceType}:`,
+                    error
+                );
+                throw error;
+            }
+        }
+    }
+
+    getAllServices(): Map<ServiceType, Service> {
+        return this.services;
+    }
+}
+
+/**
+ * Manages memory-related operations and memory managers
+ */
+class MemoryManagerService {
+    private runtime: IAgentRuntime;
+    private memoryManagers: Map<string, IMemoryManager>;
+    private ragKnowledgeManager: IRAGKnowledgeManager;
+
+    constructor(runtime: IAgentRuntime, knowledgeRoot: string) {
+        this.runtime = runtime;
+        this.memoryManagers = new Map();
+
+        // Initialize default memory managers
+        this.initializeDefaultManagers(knowledgeRoot);
+    }
+
+    private initializeDefaultManagers(knowledgeRoot: string) {
+        // Message manager for storing messages
+        this.registerMemoryManager(new MemoryManager({
+            runtime: this.runtime,
+            tableName: "messages",
+        }));
+
+        // Description manager for storing user descriptions
+        this.registerMemoryManager(new MemoryManager({
+            runtime: this.runtime,
+            tableName: "descriptions",
+        }));
+
+        // Lore manager for static information
+        this.registerMemoryManager(new MemoryManager({
+            runtime: this.runtime,
+            tableName: "lore",
+        }));
+
+        // Documents manager for large documents
+        this.registerMemoryManager(new MemoryManager({
+            runtime: this.runtime,
+            tableName: "documents",
+        }));
+
+        // Knowledge manager for searchable fragments
+        this.registerMemoryManager(new MemoryManager({
+            runtime: this.runtime,
+            tableName: "fragments",
+        }));
+
+        // Initialize RAG knowledge manager
+        this.ragKnowledgeManager = new RAGKnowledgeManager({
+            runtime: this.runtime,
+            tableName: "knowledge",
+            knowledgeRoot,
+        });
+        
+        // Register RAG knowledge manager in the memory managers map
+        this.memoryManagers.set("knowledge", this.ragKnowledgeManager as unknown as IMemoryManager);
+    }
 
     registerMemoryManager(manager: IMemoryManager): void {
         if (!manager.tableName) {
@@ -195,68 +591,80 @@ export class AgentRuntime implements IAgentRuntime {
         return this.memoryManagers.get(tableName) || null;
     }
 
-    getService<T extends Service>(service: ServiceType): T | null {
-        const serviceInstance = this.services.get(service);
-        if (!serviceInstance) {
-            elizaLogger.error(`Service ${service} not found`);
-            return null;
-        }
-        return serviceInstance as T;
+    getMessageManager(): IMemoryManager {
+        return this.getMemoryManager("messages")!;
     }
 
-    async registerService(service: Service): Promise<void> {
-        const serviceType = service.serviceType;
-        elizaLogger.log(`${this.character.name}(${this.agentId}) - Registering service:`, serviceType);
-
-        if (this.services.has(serviceType)) {
-            elizaLogger.warn(
-                `${this.character.name}(${this.agentId}) - Service ${serviceType} is already registered. Skipping registration.`
-            );
-            return;
-        }
-
-        // Add the service to the services map
-        this.services.set(serviceType, service);
-        elizaLogger.success(`${this.character.name}(${this.agentId}) - Service ${serviceType} registered successfully`);
+    getDescriptionManager(): IMemoryManager {
+        return this.getMemoryManager("descriptions")!;
     }
 
-    /**
-     * Creates an instance of AgentRuntime.
-     * @param opts - The options for configuring the AgentRuntime.
-     * @param opts.conversationLength - The number of messages to hold in the recent message cache.
-     * @param opts.token - The JWT token, can be a JWT token if outside worker, or an OpenAI token if inside worker.
-     * @param opts.serverUrl - The URL of the worker.
-     * @param opts.actions - Optional custom actions.
-     * @param opts.evaluators - Optional custom evaluators.
-     * @param opts.services - Optional custom services.
-     * @param opts.memoryManagers - Optional custom memory managers.
-     * @param opts.providers - Optional context providers.
-     * @param opts.model - The model to use for generateText.
-     * @param opts.embeddingModel - The model to use for embedding.
-     * @param opts.agentId - Optional ID of the agent.
-     * @param opts.databaseAdapter - The database adapter used for interacting with the database.
-     * @param opts.fetch - Custom fetch function to use for making requests.
-     */
+    getLoreManager(): IMemoryManager {
+        return this.getMemoryManager("lore")!;
+    }
+
+    getDocumentsManager(): IMemoryManager {
+        return this.getMemoryManager("documents")!;
+    }
+
+    getKnowledgeManager(): IMemoryManager {
+        return this.getMemoryManager("fragments")!;
+    }
+
+    getRAGKnowledgeManager(): IRAGKnowledgeManager {
+        return this.ragKnowledgeManager;
+    }
+
+    getAllManagers(): Map<string, IMemoryManager> {
+        return this.memoryManagers;
+    }
+}
+
+/**
+ * Represents the runtime environment for an agent, handling message processing,
+ * action registration, and interaction with external services like OpenAI and Supabase.
+ */
+export class AgentRuntime implements IAgentRuntime {
+    readonly #conversationLength = 32 as number;
+    readonly agentId: UUID;
+    readonly character: Character;
+    readonly serverUrl: string;
+    readonly databaseAdapter: IDatabaseAdapter;
+    readonly token: string | null;
+    readonly actions: Action[] = [];
+    readonly evaluators: Evaluator[] = [];
+    readonly providers: Provider[] = [];
+    readonly plugins: Plugin[] = [];
+    readonly modelProvider: string;
+    readonly imageModelProvider: string;
+    readonly imageVisionModelProvider: string;
+    readonly fetch = fetch;
+    readonly cacheManager: ICacheManager;
+    readonly clients: Record<string, any>;
+    readonly services: Map<ServiceType, Service>;
+    private _verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+
+    private readonly knowledgeRoot: string;
+    private readonly modelProviderManager: ModelProviderManager;
+    private readonly serviceManager: ServiceManager;
+    private readonly memoryManagerService: MemoryManagerService;
 
     constructor(opts: {
-        conversationLength?: number; // number of messages to hold in the recent message cache
-        agentId?: UUID; // ID of the agent
-        character?: Character; // The character to use for the agent
-        token: string; // JWT token, can be a JWT token if outside worker, or an OpenAI token if inside worker
-        serverUrl?: string; // The URL of the worker
-        actions?: Action[]; // Optional custom actions
-        evaluators?: Evaluator[]; // Optional custom evaluators
+        conversationLength?: number;
+        agentId?: UUID;
+        character?: Character;
+        token: string;
+        serverUrl?: string;
+        actions?: Action[];
+        evaluators?: Evaluator[];
         plugins?: Plugin[];
         providers?: Provider[];
         modelProvider: ModelProviderName | string;
-
-        services?: Service[]; // Map of service name to service instance
-        managers?: IMemoryManager[]; // Map of table name to memory manager
-        databaseAdapter: IDatabaseAdapter; // The database adapter used for interacting with the database
-        fetch?: typeof fetch | unknown;
-        speechModelPath?: string;
+        services?: Service[];
+        managers?: IMemoryManager[];
+        databaseAdapter: IDatabaseAdapter;
+        fetch?: typeof fetch;
         cacheManager: ICacheManager;
-        logging?: boolean;
         verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
@@ -314,56 +722,36 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.cacheManager = opts.cacheManager;
 
-        this.messageManager = new MemoryManager({
-            runtime: this,
-            tableName: "messages",
-        });
+        this.services = new Map();
 
-        this.descriptionManager = new MemoryManager({
-            runtime: this,
-            tableName: "descriptions",
-        });
-
-        this.loreManager = new MemoryManager({
-            runtime: this,
-            tableName: "lore",
-        });
-
-        this.documentsManager = new MemoryManager({
-            runtime: this,
-            tableName: "documents",
-        });
-
-        this.knowledgeManager = new MemoryManager({
-            runtime: this,
-            tableName: "fragments",
-        });
-
-        this.ragKnowledgeManager = new RAGKnowledgeManager({
-            runtime: this,
-            tableName: "knowledge",
-            knowledgeRoot: this.knowledgeRoot,
-        });
-
-        for (const manager of (opts.managers ?? [])) {
-            this.registerMemoryManager(manager);
+        // Initialize managers
+        this.modelProviderManager = new ModelProviderManager(this);
+        this.serviceManager = new ServiceManager(this);
+        this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
+        
+        // Register additional memory managers from options
+        if (opts.managers) {
+            for (const manager of opts.managers) {
+                this.registerMemoryManager(manager);
+            }
         }
 
-        for (const service of (opts.services ?? [])) {
-            this.registerService(service);
+        // Register services from options and plugins
+        if (opts.services) {
+            for (const service of opts.services) {
+                this.registerService(service);
+            }
         }
 
-        this.serverUrl = opts.serverUrl ?? this.serverUrl;
+        for (const plugin of this.plugins) {
+            if (plugin.services) {
+                for (const service of plugin.services) {
+                    this.registerService(service);
+                }
+            }
+        }
 
-        elizaLogger.info(`${this.character.name}(${this.agentId}) - Setting Model Provider:`, {
-            characterModelProvider: this.character.modelProvider,
-            optsModelProvider: opts.modelProvider,
-            currentModelProvider: this.modelProvider,
-            finalSelection:
-                this.character.modelProvider ??
-                opts.modelProvider ??
-                this.modelProvider,
-        });
+        this._verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
 
         this.modelProvider =
             this.character.modelProvider ??
@@ -438,157 +826,28 @@ export class AgentRuntime implements IAgentRuntime {
         for (const evaluator of (opts.evaluators ?? [])) {
             this.registerEvaluator(evaluator);
         }
-
-        this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
     }
 
-
-    
-
-
-    private parseNumber(value: string | undefined, defaultValue: number): number {
-        if (!value) return defaultValue;
-        const parsed = Number(value);
-        return Number.isNaN(parsed) ? defaultValue : parsed;
-    }
-    
-    private parseStringArray(value: string | undefined, delimiter = ','): string[] {
-        return value ? value.split(delimiter) : [];
-    }
-    
     getModelProvider(): IModelProvider {
-        // Default model settings
-        const defaultModelSettings: ModelSettings = {
-            name: this.getSetting("DEFAULT_MODEL"),
-            maxInputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
-            maxOutputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
-            temperature: this.parseNumber(this.getSetting("DEFAULT_TEMPERATURE"), 0.7),
-            stop: this.parseStringArray(this.getSetting("DEFAULT_STOP_SEQUENCES")),
-            frequency_penalty: this.parseNumber(this.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
-            presence_penalty: this.parseNumber(this.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
-            repetition_penalty: this.parseNumber(this.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
-        };
-    
-        // Helper function to get model-specific settings
-        const getModelSettings = (prefix: string): ModelSettings => ({
-            name: this.getSetting(`${prefix}_MODEL`),
-            maxInputTokens: this.parseNumber(
-                this.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
-                defaultModelSettings.maxInputTokens
-            ),
-            maxOutputTokens: this.parseNumber(
-                this.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`), 
-                defaultModelSettings.maxOutputTokens
-            ),
-            temperature: this.parseNumber(
-                this.getSetting(`${prefix}_TEMPERATURE`), 
-                defaultModelSettings.temperature
-            ),
-            stop: this.parseStringArray(
-                this.getSetting(`${prefix}_STOP_SEQUENCES`)
-            ) || defaultModelSettings.stop,
-            frequency_penalty: this.parseNumber(
-                this.getSetting(`${prefix}_FREQUENCY_PENALTY`), 
-                defaultModelSettings.frequency_penalty
-            ),
-            presence_penalty: this.parseNumber(
-                this.getSetting(`${prefix}_PRESENCE_PENALTY`), 
-                defaultModelSettings.presence_penalty
-            ),
-            repetition_penalty: this.parseNumber(
-                this.getSetting(`${prefix}_REPETITION_PENALTY`), 
-                defaultModelSettings.repetition_penalty
-            )
-        });
-    
-        return {
-            apiKey: this.getSetting("PROVIDER_API_KEY"),
-            endpoint: this.getSetting("PROVIDER_ENDPOINT"),
-            provider: this.getSetting("PROVIDER_NAME"),
-    
-            models: {
-                default: defaultModelSettings,
-    
-                ...(this.getSetting("SMALL_MODEL") && {
-                    [ModelClass.SMALL]: getModelSettings("SMALL")
-                }),
-    
-                ...(this.getSetting("MEDIUM_MODEL") && {
-                    [ModelClass.MEDIUM]: getModelSettings("MEDIUM")
-                }),
-    
-                ...(this.getSetting("LARGE_MODEL") && {
-                    [ModelClass.LARGE]: getModelSettings("LARGE")
-                }),
-    
-                ...(this.getSetting("EMBEDDING_MODEL") && {
-                    [ModelClass.EMBEDDING]: {
-                        name: this.getSetting("EMBEDDING_MODEL"),
-                        dimensions: this.parseNumber(
-                            this.getSetting("EMBEDDING_DIMENSIONS"), 
-                            1536
-                        )
-                    }
-                }),
-    
-                ...(this.getSetting("IMAGE_MODEL") && {
-                    [ModelClass.IMAGE]: {
-                        name: this.getSetting("IMAGE_MODEL"),
-                        steps: this.parseNumber(
-                            this.getSetting("IMAGE_STEPS"), 
-                            50
-                        )
-                    }
-                })
-            }
-        };
+        return this.modelProviderManager.getModelProvider();
     }
-    
-    
+
     // Helper method to parse headers from settings
     private parseHeaders(): Record<string, string> | undefined {
         const customHeaders = this.getSetting("CUSTOM_HEADERS");
         if (!customHeaders) return undefined;
-        
+
         try {
             return JSON.parse(customHeaders);
         } catch {
             return undefined;
         }
     }
-    
 
     async initialize() {
-        for (const [serviceType, service] of this.services.entries()) {
-            try {
-                await service.initialize(this);
-                this.services.set(serviceType, service);
-                elizaLogger.success(
-                    `${this.character.name}(${this.agentId}) - Service ${serviceType} initialized successfully`
-                );
-            } catch (error) {
-                elizaLogger.error(
-                    `${this.character.name}(${this.agentId}) - Failed to initialize service ${serviceType}:`,
-                    error
-                );
-                throw error;
-            }
-        }
+        await this.serviceManager.initializeServices();
 
-        // should already be initiailized
-        /*
-        for (const plugin of this.plugins) {
-            if (plugin.services)
-                await Promise.all(
-                    plugin.services?.map((service) => service.initialize(this)),
-                );
-        }
-        */
-
-        if (
-            this.character?.knowledge &&
-            this.character.knowledge.length > 0
-        ) {
+        if (this.character?.knowledge && this.character.knowledge.length > 0) {
             elizaLogger.info(
                 `[RAG Check] RAG Knowledge enabled: ${!!this.character.settings.ragKnowledge}`,
             );
@@ -676,9 +935,6 @@ export class AgentRuntime implements IAgentRuntime {
         }
     }
 
-    
-    
-
     async stop() {
         elizaLogger.debug("runtime::stop - character", this.character.name);
         // stop services, they don't have a stop function
@@ -703,345 +959,19 @@ export class AgentRuntime implements IAgentRuntime {
         // don't need to worry about knowledge
     }
 
-    /**
-     * Processes character knowledge by creating document memories and fragment memories.
-     * This function takes an array of knowledge items, creates a document memory for each item if it doesn't exist,
-     * then chunks the content into fragments, embeds each fragment, and creates fragment memories.
-     * @param knowledge An array of knowledge items containing id, path, and content.
-     */
+    private async processCharacterRAGDirectory(dirConfig: { directory: string; shared?: boolean }) {
+        const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
+        await knowledgeManager.processCharacterRAGDirectory(dirConfig);
+    }
+
+    private async processCharacterRAGKnowledge(items: (string | { path: string; shared?: boolean })[]) {
+        const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
+        await knowledgeManager.processCharacterRAGKnowledge(items);
+    }
+
     private async processCharacterKnowledge(items: string[]) {
-        for (const item of items) {
-            const knowledgeId = stringToUuid(item);
-            const existingDocument =
-                await this.documentsManager.getMemoryById(knowledgeId);
-            if (existingDocument) {
-                continue;
-            }
-
-            elizaLogger.info(
-                "Processing knowledge for ",
-                this.character.name,
-                " - ",
-                item.slice(0, 100),
-            );
-
-            await knowledge.set(this, {
-                id: knowledgeId,
-                content: {
-                    text: item,
-                },
-            });
-        }
-    }
-
-    /**
-     * Processes character knowledge by creating document memories and fragment memories.
-     * This function takes an array of knowledge items, creates a document knowledge for each item if it doesn't exist,
-     * then chunks the content into fragments, embeds each fragment, and creates fragment knowledge.
-     * An array of knowledge items or objects containing id, path, and content.
-     */
-    private async processCharacterRAGKnowledge(
-        items: (string | { path: string; shared?: boolean })[],
-    ) {
-        let hasError = false;
-
-        for (const item of items) {
-            if (!item) continue;
-
-            try {
-                // Check if item is marked as shared
-                let isShared = false;
-                let contentItem = item;
-
-                // Only treat as shared if explicitly marked
-                if (typeof item === "object" && "path" in item) {
-                    isShared = item.shared === true;
-                    contentItem = item.path;
-                } else {
-                    contentItem = item;
-                }
-
-                // const knowledgeId = stringToUuid(contentItem);
-                const knowledgeId = this.ragKnowledgeManager.generateScopedId(
-                    contentItem,
-                    isShared,
-                );
-                const fileExtension = contentItem
-                    .split(".")
-                    .pop()
-                    ?.toLowerCase();
-
-                // Check if it's a file or direct knowledge
-                if (
-                    fileExtension &&
-                    ["md", "txt", "pdf"].includes(fileExtension)
-                ) {
-                    try {
-                        const filePath = join(this.knowledgeRoot, contentItem);
-                        // Get existing knowledge first with more detailed logging
-                        elizaLogger.debug("[RAG Query]", {
-                            knowledgeId,
-                            agentId: this.agentId,
-                            relativePath: contentItem,
-                            fullPath: filePath,
-                            isShared,
-                            knowledgeRoot: this.knowledgeRoot,
-                        });
-
-                        // Get existing knowledge first
-                        const existingKnowledge =
-                            await this.ragKnowledgeManager.getKnowledge({
-                                id: knowledgeId,
-                                agentId: this.agentId, // Keep agentId as it's used in OR query
-                            });
-
-                        elizaLogger.debug("[RAG Query Result]", {
-                            relativePath: contentItem,
-                            fullPath: filePath,
-                            knowledgeId,
-                            isShared,
-                            exists: existingKnowledge.length > 0,
-                            knowledgeCount: existingKnowledge.length,
-                            firstResult: existingKnowledge[0]
-                                ? {
-                                    id: existingKnowledge[0].id,
-                                    agentId: existingKnowledge[0].agentId,
-                                    contentLength:
-                                        existingKnowledge[0].content.text
-                                            .length,
-                                }
-                                : null,
-                            results: existingKnowledge.map((k) => ({
-                                id: k.id,
-                                agentId: k.agentId,
-                                isBaseKnowledge: !k.id.includes("chunk"),
-                            })),
-                        });
-
-                        // Read file content
-                        const content: string = await readFile(
-                            filePath,
-                            "utf8",
-                        );
-                        if (!content) {
-                            hasError = true;
-                            continue;
-                        }
-
-                        if (existingKnowledge.length > 0) {
-                            const existingContent =
-                                existingKnowledge[0].content.text;
-
-                            elizaLogger.debug("[RAG Compare]", {
-                                path: contentItem,
-                                knowledgeId,
-                                isShared,
-                                existingContentLength: existingContent.length,
-                                newContentLength: content.length,
-                                contentSample: content.slice(0, 100),
-                                existingContentSample: existingContent.slice(
-                                    0,
-                                    100,
-                                ),
-                                matches: existingContent === content,
-                            });
-
-                            if (existingContent === content) {
-                                elizaLogger.info(
-                                    `${isShared ? "Shared knowledge" : "Knowledge"} ${contentItem} unchanged, skipping`,
-                                );
-                                continue;
-                            }
-
-                            // Content changed, remove old knowledge before adding new
-                            elizaLogger.info(
-                                `${isShared ? "Shared knowledge" : "Knowledge"} ${contentItem} changed, updating...`,
-                            );
-                            await this.ragKnowledgeManager.removeKnowledge(
-                                knowledgeId,
-                            );
-                            await this.ragKnowledgeManager.removeKnowledge(
-                                `${knowledgeId}-chunk-*` as UUID,
-                            );
-                        }
-
-                        elizaLogger.info(
-                            `Processing ${fileExtension.toUpperCase()} file content for`,
-                            this.character.name,
-                            "-",
-                            contentItem,
-                        );
-
-                        await this.ragKnowledgeManager.processFile({
-                            path: contentItem,
-                            content: content,
-                            type: fileExtension as "pdf" | "md" | "txt",
-                            isShared: isShared,
-                        });
-                    } catch (error) {
-                        hasError = true;
-                        elizaLogger.error(
-                            `Failed to read knowledge file ${contentItem}. Error details:`,
-                            error?.message || error || "Unknown error",
-                        );
-                    }
-                } else {
-                    // Handle direct knowledge string
-                    elizaLogger.info(
-                        "Processing direct knowledge for",
-                        this.character.name,
-                        "-",
-                        contentItem.slice(0, 100),
-                    );
-
-                    const existingKnowledge =
-                        await this.ragKnowledgeManager.getKnowledge({
-                            id: knowledgeId,
-                            agentId: this.agentId,
-                        });
-
-                    if (existingKnowledge.length > 0) {
-                        elizaLogger.info(
-                            `Direct knowledge ${knowledgeId} already exists, skipping`,
-                        );
-                        continue;
-                    }
-
-                    await this.ragKnowledgeManager.createKnowledge({
-                        id: knowledgeId,
-                        agentId: this.agentId,
-                        content: {
-                            text: contentItem,
-                            metadata: {
-                                type: "direct",
-                            },
-                        },
-                    });
-                }
-            } catch (error: any) {
-                hasError = true;
-                elizaLogger.error(
-                    `Error processing knowledge item ${item}:`,
-                    error?.message || error || "Unknown error",
-                );
-                continue;
-            }
-        }
-
-        if (hasError) {
-            elizaLogger.warn(
-                "Some knowledge items failed to process, but continuing with available knowledge",
-            );
-        }
-    }
-
-    /**
-     * Processes directory-based RAG knowledge by recursively loading and processing files.
-     * @param dirConfig The directory configuration containing path and shared flag
-     */
-    private async processCharacterRAGDirectory(dirConfig: {
-        directory: string;
-        shared?: boolean;
-    }) {
-        if (!dirConfig.directory) {
-            elizaLogger.error("[RAG Directory] No directory specified");
-            return;
-        }
-
-        // Sanitize directory path to prevent traversal attacks
-        const sanitizedDir = dirConfig.directory.replace(/\.\./g, "");
-        const dirPath = join(this.knowledgeRoot, sanitizedDir);
-
-        try {
-            // Check if directory exists
-            const dirExists = existsSync(dirPath);
-            if (!dirExists) {
-                elizaLogger.error(
-                    `[RAG Directory] Directory does not exist: ${sanitizedDir}`,
-                );
-                return;
-            }
-
-            elizaLogger.debug(`[RAG Directory] Searching in: ${dirPath}`);
-            // Use glob to find all matching files in directory
-            const files = await glob("**/*.{md,txt,pdf}", {
-                cwd: dirPath,
-                nodir: true,
-                absolute: false,
-            });
-
-            if (files.length === 0) {
-                elizaLogger.warn(
-                    `No matching files found in directory: ${dirConfig.directory}`,
-                );
-                return;
-            }
-
-            elizaLogger.info(
-                `[RAG Directory] Found ${files.length} files in ${dirConfig.directory}`,
-            );
-
-            // Process files in batches to avoid memory issues
-            const BATCH_SIZE = 5;
-            for (let i = 0; i < files.length; i += BATCH_SIZE) {
-                const batch = files.slice(i, i + BATCH_SIZE);
-
-                await Promise.all(
-                    batch.map(async (file) => {
-                        try {
-                            const relativePath = join(sanitizedDir, file);
-
-                            elizaLogger.debug(
-                                `[RAG Directory] Processing file ${i + 1}/${files.length}:`,
-                                {
-                                    file,
-                                    relativePath,
-                                    shared: dirConfig.shared,
-                                },
-                            );
-
-                            await this.processCharacterRAGKnowledge([
-                                {
-                                    path: relativePath,
-                                    shared: dirConfig.shared,
-                                },
-                            ]);
-                        } catch (error) {
-                            elizaLogger.error(
-                                `[RAG Directory] Failed to process file: ${file}`,
-                                error instanceof Error
-                                    ? {
-                                        name: error.name,
-                                        message: error.message,
-                                        stack: error.stack,
-                                    }
-                                    : error,
-                            );
-                        }
-                    }),
-                );
-
-                elizaLogger.debug(
-                    `[RAG Directory] Completed batch ${Math.min(i + BATCH_SIZE, files.length)}/${files.length} files`,
-                );
-            }
-
-            elizaLogger.success(
-                `[RAG Directory] Successfully processed directory: ${sanitizedDir}`,
-            );
-        } catch (error) {
-            elizaLogger.error(
-                `[RAG Directory] Failed to process directory: ${sanitizedDir}`,
-                error instanceof Error
-                    ? {
-                        name: error.name,
-                        message: error.message,
-                        stack: error.stack,
-                    }
-                    : error,
-            );
-            throw error; // Re-throw to let caller handle it
-        }
+        const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
+        await knowledgeManager.processCharacterKnowledge(items);
     }
 
     getSetting(key: string) {
@@ -1232,7 +1162,7 @@ export class AgentRuntime implements IAgentRuntime {
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
-            verifiableInferenceAdapter: this.verifiableInferenceAdapter,
+            verifiableInferenceAdapter: this._verifiableInferenceAdapter,
         });
 
         const evaluators = parseJsonArrayFromText(
@@ -1876,16 +1806,52 @@ Text: ${attachment.text}
     }
 
     getVerifiableInferenceAdapter(): IVerifiableInferenceAdapter | undefined {
-        return this.verifiableInferenceAdapter;
+        return this._verifiableInferenceAdapter;
     }
 
-    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter): void {
-        this.verifiableInferenceAdapter = adapter;
+    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter | undefined): void {
+        this._verifiableInferenceAdapter = adapter;
+    }
+
+    // IAgentRuntime interface implementation
+    registerMemoryManager(manager: IMemoryManager): void {
+        this.memoryManagerService.registerMemoryManager(manager);
+    }
+
+    getMemoryManager(tableName: string): IMemoryManager | null {
+        return this.memoryManagerService.getMemoryManager(tableName);
+    }
+
+    getService<T extends Service>(service: ServiceType): T | null {
+        return this.serviceManager.getService<T>(service);
+    }
+
+    async registerService(service: Service): Promise<void> {
+        await this.serviceManager.registerService(service);
+    }
+
+    // Memory manager getters
+    get messageManager(): IMemoryManager {
+        return this.memoryManagerService.getMessageManager();
+    }
+
+    get descriptionManager(): IMemoryManager {
+        return this.memoryManagerService.getDescriptionManager();
+    }
+
+    get loreManager(): IMemoryManager {
+        return this.memoryManagerService.getLoreManager();
+    }
+
+    get documentsManager(): IMemoryManager {
+        return this.memoryManagerService.getDocumentsManager();
+    }
+
+    get knowledgeManager(): IMemoryManager {
+        return this.memoryManagerService.getKnowledgeManager();
+    }
+
+    get ragKnowledgeManager(): IRAGKnowledgeManager {
+        return this.memoryManagerService.getRAGKnowledgeManager();
     }
 }
-
-const formatKnowledge = (knowledge: KnowledgeItem[]) => {
-    return knowledge
-        .map((knowledge) => `- ${knowledge.content.text}`)
-        .join("\n");
-};
