@@ -211,6 +211,7 @@ export const auditAction: Action = {
     name: "AUDIT_TOKEN",
     description: "Perform a security audit on a token using QuickIntel",
     similes: ["SCAN_TOKEN", "CHECK_TOKEN", "TOKEN_SECURITY", "ANALYZE_TOKEN"],
+    suppressInitialMessage: true,
     validate: async (runtime: IAgentRuntime) => {
         const apiKey = runtime.getSetting("QUICKINTEL_API_KEY");
         return typeof apiKey === "string" && apiKey.length > 0;
