@@ -671,6 +671,18 @@ export function getTokenForProvider(
                 character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
                 settings.LIVEPEER_GATEWAY_URL
             );
+        case ModelProviderName.NEARAI:
+            try {
+                const config = JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.nearai/config.json'), 'utf8'));
+                return config?.auth.signature;
+            } catch (e) {
+                elizaLogger.warn(`Error loading NEAR AI config: ${e}`);
+            }
+            return (
+                character.settings?.secrets?.NEARAI_API_KEY ||
+                settings.NEARAI_API_KEY
+            );
+
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);

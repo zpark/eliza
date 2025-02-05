@@ -243,3 +243,11 @@ Available model providers
 #### Defined in
 
 [packages/core/src/types.ts:245](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L245)
+
+### NEARAI
+
+> **NEARAI**: `"nearai"`
+
+#### Defined in
+
+[packages/core/src/types.ts:242](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L275)

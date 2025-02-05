@@ -535,7 +535,8 @@ export async function generateText({
             case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
             case ModelProviderName.AKASH_CHAT_API:
-            case ModelProviderName.LMSTUDIO: {
+            case ModelProviderName.LMSTUDIO:
+            case ModelProviderName.NEARAI: {
                 elizaLogger.debug(
                     "Initializing OpenAI model with Cloudflare check"
                 );

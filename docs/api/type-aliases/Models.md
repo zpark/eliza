@@ -104,6 +104,10 @@ Model configurations by provider
 
 > **livepeer**: [`Model`](Model.md)
 
+### nearai
+
+> **nearai**: [`Model`](Model.md)
+
 ## Defined in
 
 [packages/core/src/types.ts:191](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L191)
