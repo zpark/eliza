@@ -1030,16 +1030,6 @@ var ignoreAction = {
     [
       {
         user: "{{user1}}",
-        content: { text: "I want to have sex with you" }
-      },
-      {
-        user: "{{user2}}",
-        content: { text: "That is not appropriate", action: "IGNORE" }
-      }
-    ],
-    [
-      {
-        user: "{{user1}}",
         content: {
           text: "ur so dumb"
         }
@@ -1928,7 +1918,7 @@ var factsTemplate = (
   `TASK: Extract Claims from the conversation as an array of claims in JSON format.
 
 # START OF EXAMPLES
-These are an examples of the expected output of this task:
+These are examples of the expected output of this task:
 {{evaluationExamples}}
 # END OF EXAMPLES
 
@@ -1942,7 +1932,7 @@ Extract any claims from the conversation that are not already present in the lis
 - For true facts about the world or the character that do not change, set the claim type to 'fact'
 - For facts that are true but change over time, set the claim type to 'status'
 - For non-facts, set the type to 'opinion'
-- 'opinion' inlcudes non-factual opinions and also includes the character's thoughts, feelings, judgments or recommendations
+- 'opinion' includes non-factual opinions and also includes the character's thoughts, feelings, judgments or recommendations
 - Include any factual detail, including where the user lives, works, or goes to school, what they do for a living, their hobbies, and any other relevant information
 
 Recent Messages:
@@ -2186,27 +2176,14 @@ async function handler2(runtime, message, state, options = { onlyInProgress: tru
   const updatedGoals = goalsData.map((goal) => {
     const update = updates?.find((u) => u.id === goal.id);
     if (update) {
-      const objectives = goal.objectives;
-      if (update.objectives) {
-        for (const objective of objectives) {
-          const updatedObjective = update.objectives.find(
-            (o) => o.description === objective.description
-          );
-          if (updatedObjective) {
-            objective.completed = updatedObjective.completed;
-          }
-        }
-      }
       return {
         ...goal,
         ...update,
-        objectives: [
-          ...goal.objectives,
-          ...update?.objectives || []
-        ]
+        objectives: goal.objectives.map((objective) => {
+          const updatedObjective = update.objectives?.find((uo) => uo.description === objective.description);
+          return updatedObjective ? { ...objective, ...updatedObjective } : objective;
+        })
       };
-    } else {
-      console.warn("**** ID NOT FOUND");
     }
     return null;
   }).filter(Boolean);
@@ -2617,7 +2594,7 @@ var cringeWords = [
   "uncharted",
   "multifaceted",
   "comprehensive",
-  "multi-dimentional",
+  "multi-dimensional",
   "explore",
   "elevate",
   "leverage",
