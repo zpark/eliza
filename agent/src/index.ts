@@ -240,7 +240,7 @@ function mergeCharacters(base: Character, child: Character): Character {
 function isAllStrings(arr: unknown[]): boolean {
     return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
-export async function loadCharacterFromOnchain(): Promise<Character[]> {
+/* export async function loadCharacterFromOnchain(): Promise<Character[]> {
     const jsonText = onchainJson;
 
     console.log("JSON:", jsonText);
@@ -295,7 +295,7 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
         );
         process.exit(1);
     }
-}
+} */
 
 async function loadCharactersFromUrl(url: string): Promise<Character[]> {
     try {
@@ -1192,13 +1192,13 @@ const startAgents = async () => {
     const charactersArg = args.characters || args.character;
     let characters = [defaultCharacter];
 
-    if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
-        characters = await loadCharacterFromOnchain();
-    }
+    // if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
+    //     characters = await loadCharacterFromOnchain();
+    // }
 
-    const notOnchainJson = !onchainJson || onchainJson == "null";
+    // const notOnchainJson = !onchainJson || onchainJson == "null";
 
-    if ((notOnchainJson && charactersArg) || hasValidRemoteUrls()) {
+    if ((/* notOnchainJson && */ charactersArg) || hasValidRemoteUrls()) {
         characters = await loadCharacters(charactersArg);
     }
 
