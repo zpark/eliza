@@ -155,7 +155,7 @@ export function parseJSONObjectFromText(
             return extractAttributes(parsingText);
         }
     } else {
-        const objectPattern = /{[\s\S]*?}/;
+        const objectPattern = /{[\s\S]*?}?/;
         const objectMatch = text.match(objectPattern);
 
         if (objectMatch) {
@@ -197,7 +197,7 @@ export function extractAttributes(
 
     if (!attributesToExtract || attributesToExtract.length === 0) {
         // Extract all attributes if no specific attributes are provided
-        const matches = response.matchAll(/"([^"]+)"\s*:\s*"([^"]*)"/g);
+        const matches = response.matchAll(/"([^"]+)"\s*:\s*"([^"]*)"?/g);
         for (const match of matches) {
             attributes[match[1]] = match[2];
         }
@@ -205,7 +205,7 @@ export function extractAttributes(
         // Extract only specified attributes
         attributesToExtract.forEach((attribute) => {
             const match = response.match(
-                new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i")
+                new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"?`, "i")
             );
             if (match) {
                 attributes[attribute] = match[1];
