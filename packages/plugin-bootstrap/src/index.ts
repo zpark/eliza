@@ -16,11 +16,8 @@ export * as actions from "./actions";
 export * as evaluators from "./evaluators";
 export * as providers from "./providers";
 
-import packageJson from "../package.json";
-
 export const bootstrapPlugin: Plugin = {
     name: "bootstrap",
-    config: packageJson.agentConfig,
     description: "Agent bootstrap with basic actions and evaluators",
     actions: [
         continueAction,
