@@ -1152,7 +1152,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.NEARAI]: {
-        endpoint: "https://api.near.ai/v1",
+        endpoint: settings.NEARAI_API_URL || "https://api.near.ai/v1",
         model: {
             [ModelClass.SMALL]: {
                 name:
