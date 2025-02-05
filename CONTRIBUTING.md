@@ -80,7 +80,7 @@ This section lists the labels we use to help us track and manage issues and pull
 
 - Join [Discord](https://discord.gg/ai16z)
 - Check [FAQ](docs/docs/faq.md)
-- Create GitHub issues
+- Create [GitHub issues](https://github.com/elizaOS/eliza/issues)
 
 ## Additional Resources
 
