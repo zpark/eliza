@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/agent",
-    "version": "0.1.8+build.1",
+    "version": "0.1.9",
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
@@ -19,10 +19,12 @@
     },
     "dependencies": {
         "@elizaos/adapter-supabase": "workspace:*",
+        "@elizaos/adapter-pglite": "workspace:*",
         "@elizaos/adapter-postgres": "workspace:*",
         "@elizaos/adapter-redis": "workspace:*",
         "@elizaos/adapter-sqlite": "workspace:*",
-        "@elizaos/adapter-pglite": "workspace:*",
+        "@elizaos/adapter-qdrant": "workspace:*",
+        "@elizaos/adapter-mongodb": "workspace:*",
         "@elizaos/client-direct": "workspace:*",
         "@elizaos/plugin-bootstrap": "workspace:*",
         "@elizaos/core": "workspace:*",
