@@ -615,7 +615,7 @@ export type Client = {
     name: string;
 
     /** Client configuration */
-    config: { [key: string]: any };
+    config?: { [key: string]: any };
 
     /** Start client connection */
     start: (runtime: IAgentRuntime) => Promise<unknown>;
@@ -632,7 +632,7 @@ export type Plugin = {
     name: string;
 
     /** Plugin configuration */
-    config: { [key: string]: any };
+    config?: { [key: string]: any };
 
     /** Plugin description */
     description: string;
