@@ -674,7 +674,7 @@ export function getTokenForProvider(
         case ModelProviderName.NEARAI:
             try {
                 const config = JSON.parse(fs.readFileSync(path.join(process.env.HOME, '.nearai/config.json'), 'utf8'));
-                return config?.auth.signature;
+                return JSON.stringify(config?.auth);
             } catch (e) {
                 elizaLogger.warn(`Error loading NEAR AI config: ${e}`);
             }
