@@ -27,7 +27,7 @@
 		"starknet": "6.18.0",
 		"tsup": "8.3.5",
 		"unruggable-sdk": "1.4.0",
-		"vitest": "2.1.5"
+		"vitest": "2.1.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.5.3"

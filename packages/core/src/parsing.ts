@@ -146,7 +146,7 @@ export function parseJSONObjectFromText(
     const jsonBlockMatch = text.match(jsonBlockPattern);
 
     if (jsonBlockMatch) {
-        const parsingText = normalizeJsonString(jsonBlockMatch[1]);
+        const parsingText = normalizeJsonString(text);
         try {
             jsonData = JSON.parse(parsingText);
         } catch (e) {
@@ -155,11 +155,11 @@ export function parseJSONObjectFromText(
             return extractAttributes(text);
         }
     } else {
-        const objectPattern = /{[\s\S]*?}/;
+        const objectPattern = /{[\s\S]*?}?/;
         const objectMatch = text.match(objectPattern);
 
         if (objectMatch) {
-            const parsingText = normalizeJsonString(objectMatch[0]);
+            const parsingText = normalizeJsonString(text);
             try {
                 jsonData = JSON.parse(parsingText);
             } catch (e) {
@@ -193,11 +193,12 @@ export function extractAttributes(
     response: string,
     attributesToExtract?: string[]
 ): { [key: string]: string | undefined } {
+    response = response.trim();
     const attributes: { [key: string]: string | undefined } = {};
 
     if (!attributesToExtract || attributesToExtract.length === 0) {
         // Extract all attributes if no specific attributes are provided
-        const matches = response.matchAll(/"([^"]+)"\s*:\s*"([^"]*)"/g);
+        const matches = response.matchAll(/"([^"]+)"\s*:\s*"([^"]*)"?/g);
         for (const match of matches) {
             attributes[match[1]] = match[2];
         }
@@ -205,7 +206,7 @@ export function extractAttributes(
         // Extract only specified attributes
         attributesToExtract.forEach((attribute) => {
             const match = response.match(
-                new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"`, "i")
+                new RegExp(`"${attribute}"\\s*:\\s*"([^"]*)"?`, "i")
             );
             if (match) {
                 attributes[attribute] = match[1];
