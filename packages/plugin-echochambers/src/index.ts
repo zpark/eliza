@@ -5,6 +5,7 @@ import type { EchoChamberConfig } from "./types";
 import { validateEchoChamberConfig } from "./environment";
 
 export const EchoChamberClientInterface: Client = {
+    name: "echochamber",
     async start(runtime: IAgentRuntime) {
         try {
             // Validate configuration before starting

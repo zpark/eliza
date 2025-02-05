@@ -204,6 +204,7 @@ export class GitHubClient {
 }
 
 export const GitHubClientInterface: Client = {
+    name: 'github',
     start: async (runtime: IAgentRuntime) => {
         await validateGithubConfig(runtime);
         elizaLogger.log("GitHubClientInterface start");

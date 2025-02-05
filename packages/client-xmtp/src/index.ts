@@ -46,6 +46,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 ` + messageCompletionFooter;
 
 export const XmtpClientInterface: Client = {
+    name: 'xmtp',
     start: async (runtime: IAgentRuntime) => {
         if (!xmtp) {
             elizaRuntime = runtime;

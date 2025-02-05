@@ -6,6 +6,7 @@ import { InstagramInteractionService } from "./services/interaction";
 import { InstagramPostService } from "./services/post";
 
 export const InstagramClientInterface: Client = {
+    name: 'instagram',
     async start(runtime: IAgentRuntime) {
         try {
             // Validate configuration

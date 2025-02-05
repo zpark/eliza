@@ -3,6 +3,7 @@ import { DevaClient } from "./devaClient.ts";
 import { validateDevaConfig } from "./enviroment.ts";
 
 export const DevaClientInterface: Client = {
+    name: 'deva',
     async start(runtime: IAgentRuntime) {
         await validateDevaConfig(runtime);
 

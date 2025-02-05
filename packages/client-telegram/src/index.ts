@@ -4,6 +4,7 @@ import { TelegramClient } from "./telegramClient.ts";
 import { validateTelegramConfig } from "./environment.ts";
 
 export const TelegramClientInterface: Client = {
+    name: 'telegram',
     start: async (runtime: IAgentRuntime) => {
         await validateTelegramConfig(runtime);
 

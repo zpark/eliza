@@ -2,6 +2,7 @@ import { type Client, type IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { AlexaClient } from "./alexa-client";
 
 export const AlexaClientInterface: Client = {
+    name: 'alexa',
     start: async (runtime: IAgentRuntime) => {
         const alexaClient = new AlexaClient(runtime);
 

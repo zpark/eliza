@@ -401,6 +401,7 @@ export function startDiscord(runtime: IAgentRuntime) {
 }
 
 export const DiscordClientInterface: ElizaClient = {
+    name: 'discord',
     start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
     stop: async (runtime: IAgentRuntime) => {
         try {

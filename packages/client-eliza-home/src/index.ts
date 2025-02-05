@@ -98,6 +98,7 @@ export class HomeClient extends EventEmitter {
 }
 
 export const HomeClientInterface: ElizaClient = {
+    name: 'home',
     start: async (runtime: IAgentRuntime) => new HomeClient(runtime),
     stop: async (runtime: IAgentRuntime) => {
         elizaLogger.warn("Home Assistant client does not support stopping yet");
