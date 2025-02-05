@@ -1,8 +1,8 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
-import { existsSync } from "fs";
+import { existsSync } from "node:fs";
 import { glob } from "glob";
 import {
     composeActionExamples,
