@@ -8,7 +8,6 @@ import {
     formatActions,
 } from "./actions.ts";
 import { addHeader, composeContext } from "./context.ts";
-import { defaultCharacter } from "./defaultCharacter.ts";
 import {
     evaluationTemplate,
     formatEvaluatorExamples,
@@ -269,7 +268,11 @@ export class AgentRuntime implements IAgentRuntime {
             opts.character?.id ??
             opts?.agentId ??
             stringToUuid(opts.character?.name ?? uuidv4());
-        this.character = opts.character || defaultCharacter;
+        this.character = opts.character;
+
+        if(!this.character) {
+            throw new Error("Character input is required");
+        }
 
         elizaLogger.info(`${this.character.name}(${this.agentId}) - Initializing AgentRuntime with options:`, {
             character: opts.character?.name,

@@ -16,7 +16,7 @@ import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
-import { AutoTokenizer } from "@huggingface/transformers";
+// import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
 import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
@@ -96,9 +96,9 @@ export async function trimTokens(
     }
 
     // Choose the truncation method based on tokenizer type
-    if (tokenizerType === TokenizerType.Auto) {
-        return truncateAuto(tokenizerModel, context, maxTokens);
-    }
+    // if (tokenizerType === TokenizerType.Auto) {
+    //     return truncateAuto(tokenizerModel, context, maxTokens);
+    // }
 
     if (tokenizerType === TokenizerType.TikToken) {
         return truncateTiktoken(
@@ -112,31 +112,31 @@ export async function trimTokens(
     return truncateTiktoken("gpt-4o", context, maxTokens);
 }
 
-async function truncateAuto(
-    modelPath: string,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-        const tokens = tokenizer.encode(context);
+// async function truncateAuto(
+//     modelPath: string,
+//     context: string,
+//     maxTokens: number
+// ) {
+//     try {
+//         const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
+//         const tokens = tokenizer.encode(context);
 
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
+//         // If already within limits, return unchanged
+//         if (tokens.length <= maxTokens) {
+//             return context;
+//         }
 
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
+//         // Keep the most recent tokens by slicing from the end
+//         const truncatedTokens = tokens.slice(-maxTokens);
 
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return tokenizer.decode(truncatedTokens);
-    } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
-}
+//         // Decode back to text - js-tiktoken decode() returns a string directly
+//         return tokenizer.decode(truncatedTokens);
+//     } catch (error) {
+//         elizaLogger.error("Error in trimTokens:", error);
+//         // Return truncated string if tokenization fails
+//         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+//     }
+// }
 
 async function truncateTiktoken(
     model: TiktokenModel,

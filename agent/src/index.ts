@@ -35,7 +35,6 @@ import {
     type Client,
     // Clients,
     DbCacheAdapter,
-    defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
@@ -49,6 +48,7 @@ import {
     stringToUuid,
     validateCharacterConfig,
 } from "@elizaos/core";
+import { defaultCharacter } from "./defaultCharacter.ts";
 // import { zgPlugin } from "@elizaos/plugin-0g";
 // import { footballPlugin } from "@elizaos/plugin-football";
 
