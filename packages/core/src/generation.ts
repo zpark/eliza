@@ -43,9 +43,9 @@ import {
     ModelProviderName,
     ServiceType,
     type ActionResponse,
-    type IVerifiableInferenceAdapter,
-    type VerifiableInferenceOptions,
-    type VerifiableInferenceResult,
+    // type IVerifiableInferenceAdapter,
+    // type VerifiableInferenceOptions,
+    // type VerifiableInferenceResult,
     //VerifiableInferenceProvider,
     type TelemetrySettings,
     TokenizerType,
@@ -347,8 +347,8 @@ export async function generateText({
     maxSteps = 1,
     stop,
     customSystemPrompt,
-    verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
-    verifiableInferenceOptions,
+    // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
+    // verifiableInferenceOptions,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -358,9 +358,9 @@ export async function generateText({
     maxSteps?: number;
     stop?: string[];
     customSystemPrompt?: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }): Promise<string> {
     if (!context) {
         console.error("generateText context is empty");
@@ -372,36 +372,36 @@ export async function generateText({
     elizaLogger.info("Generating text with options:", {
         modelProvider: runtime.modelProvider,
         model: modelClass,
-        verifiableInference,
+        // verifiableInference,
     });
     elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
-    if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log(
-            "Using verifiable inference adapter:",
-            runtime.verifiableInferenceAdapter
-        );
-        try {
-            const result: VerifiableInferenceResult =
-                await runtime.verifiableInferenceAdapter.generateText(
-                    context,
-                    modelClass,
-                    verifiableInferenceOptions
-                );
-            elizaLogger.log("Verifiable inference result:", result);
-            // Verify the proof
-            const isValid =
-                await runtime.verifiableInferenceAdapter.verifyProof(result);
-            if (!isValid) {
-                throw new Error("Failed to verify inference proof");
-            }
+    // if (verifiableInference && runtime.verifiableInferenceAdapter) {
+    //     elizaLogger.log(
+    //         "Using verifiable inference adapter:",
+    //         runtime.verifiableInferenceAdapter
+    //     );
+    //     try {
+    //         const result: VerifiableInferenceResult =
+    //             await runtime.verifiableInferenceAdapter.generateText(
+    //                 context,
+    //                 modelClass,
+    //                 verifiableInferenceOptions
+    //             );
+    //         elizaLogger.log("Verifiable inference result:", result);
+    //         // Verify the proof
+    //         const isValid =
+    //             await runtime.verifiableInferenceAdapter.verifyProof(result);
+    //         if (!isValid) {
+    //             throw new Error("Failed to verify inference proof");
+    //         }
 
-            return result.text;
-        } catch (error) {
-            elizaLogger.error("Error in verifiable inference:", error);
-            throw error;
-        }
-    }
+    //         return result.text;
+    //     } catch (error) {
+    //         elizaLogger.error("Error in verifiable inference:", error);
+    //         throw error;
+    //     }
+    // }
 
     const provider = runtime.modelProvider;
     elizaLogger.debug("Provider settings:", {
@@ -2050,9 +2050,9 @@ export interface GenerationOptions {
     stop?: string[];
     mode?: "auto" | "json" | "tool";
     experimental_providerMetadata?: Record<string, unknown>;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
 /**
@@ -2084,9 +2084,9 @@ export const generateObject = async ({
     schemaDescription,
     stop,
     mode = "json",
-    verifiableInference = false,
-    verifiableInferenceAdapter,
-    verifiableInferenceOptions,
+    // verifiableInference = false,
+    // verifiableInferenceAdapter,
+    // verifiableInferenceOptions,
 }: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
     if (!context) {
         const errorMessage = "generateObject context is empty";
@@ -2130,9 +2130,9 @@ export const generateObject = async ({
             runtime,
             context,
             modelClass,
-            verifiableInference,
-            verifiableInferenceAdapter,
-            verifiableInferenceOptions,
+            // verifiableInference,
+            // verifiableInferenceAdapter,
+            // verifiableInferenceOptions,
         });
 
         return response;
@@ -2158,9 +2158,9 @@ interface ProviderOptions {
     modelOptions: ModelSettings;
     modelClass: ModelClass;
     context: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
 /**

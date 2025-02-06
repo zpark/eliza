@@ -556,8 +556,8 @@ export async function initializeClients(
     // each client can only register once
     // and if we want two we can explicitly support it
     const clients: ClientInstance[] = [];
-    const clientTypes = clients.map((c) => c.name);
-    elizaLogger.log("initializeClients", clientTypes, "for", character.name);
+    // const clientTypes = clients.map((c) => c.name);
+    // elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
@@ -581,7 +581,6 @@ export async function createAgent(
     token: string
 ): Promise<AgentRuntime> {
     elizaLogger.log(`Creating runtime for character ${character.name}`);
-
     return new AgentRuntime({
         token,
         modelProvider: character.modelProvider,
@@ -596,6 +595,7 @@ export async function createAgent(
         providers: [],
         managers: [],
         fetch: logFetch,
+        // verifiableInferenceAdapter,
     });
 }
 
@@ -684,8 +684,8 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
   } else if (adapters.length === 1) {
     adapter = adapters[0];
   } else {
-    throw new Error("Multiple database adapters found: " + adapters.map(a => a.name).join(", ") + '. You must have no more than one. Adjust your plugins configuration.');
-  }
+    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
+    }
   const adapterInterface = adapter?.init(runtime);
   return adapterInterface;
 }

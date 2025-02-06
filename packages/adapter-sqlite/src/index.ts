@@ -31,7 +31,7 @@ import { sqliteTables } from "./sqliteTables.ts";
 
 import Database from "better-sqlite3";
 
-class SqliteDatabaseAdapter
+export class SqliteDatabaseAdapter
     extends DatabaseAdapter<BetterSqlite3Database>
     implements IDatabaseCacheAdapter
 {
