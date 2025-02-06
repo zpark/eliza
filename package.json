@@ -59,9 +59,6 @@
       "cookie": "0.7.0",
       "bs58": "5.0.0",
       "@coral-xyz/anchor": "0.28.0"
-    },
-    "patchedDependencies": {
-      "@solana-developers/helpers": "patches/@solana-developers__helpers.patch"
     }
   },
   "engines": {
@@ -70,7 +67,6 @@
   "dependencies": {
     "@0glabs/0g-ts-sdk": "0.2.1",
     "@coinbase/coinbase-sdk": "0.10.0",
-    "@elizaos-plugins/adapter-sqlite": "workspace:*",
     "@deepgram/sdk": "^3.9.0",
     "@injectivelabs/sdk-ts": "^1.14.33",
     "@vitest/eslint-plugin": "1.0.1",
