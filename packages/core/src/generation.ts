@@ -1305,6 +1305,7 @@ export async function generateText({
 
                 response = bedrockResponse;
                 elizaLogger.debug("Received response from Bedrock model.");
+                break;
             }
 
             default: {
