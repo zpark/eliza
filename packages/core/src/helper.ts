@@ -8,8 +8,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 export function logFunctionCall(functionName: string, runtime?: IAgentRuntime) {
     elizaLogger.info(`Function call: ${functionName}`, {
         functionName,
-        modelProvider: runtime?.modelProvider,
-        endpoint: runtime?.character.modelEndpointOverride,
+        runtime: JSON.stringify(runtime?.getModelProvider())
     });
 }
 

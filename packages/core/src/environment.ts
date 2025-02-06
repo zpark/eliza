@@ -169,11 +169,11 @@ export function validateCharacterConfig(json: unknown): CharacterConfig {
                 {} as Record<string, string[]>
             );
 
-            Object.entries(groupedErrors).forEach(([field, messages]) => {
+            for (const field in groupedErrors) {
                 elizaLogger.error(
-                    `Validation errors in ${field}: ${messages.join(" - ")}`
+                    `Validation errors in ${field}: ${groupedErrors[field].join(" - ")}`
                 );
-            });
+            }
 
             throw new Error(
                 "Character configuration validation failed. Check logs for details."

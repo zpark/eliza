@@ -386,20 +386,32 @@ class ModelProviderManager {
         return value ? value.split(delimiter) : [];
     }
 
-    private parseHeaders(): Record<string, string> | undefined {
-        const customHeaders = this.getSetting("CUSTOM_HEADERS");
-        if (!customHeaders) return undefined;
+    private getModelSettingsForClass(modelClass: ModelClass, defaultSettings: ModelSettings): ModelSettings | undefined {
+        const prefix = modelClass.toUpperCase();
+        const modelName = this.getSetting(`${prefix}_MODEL`);
 
-        try {
-            return JSON.parse(customHeaders);
-        } catch {
+        elizaLogger.debug(`[getModelSettingsForClass] Loading settings for ${modelClass}:`, {
+            modelName,
+            settingKey: `${prefix}_MODEL`,
+            allSettings: {
+                model: modelName,
+                maxInputTokens: this.getSetting(`${prefix}_MAX_INPUT_TOKENS`),
+                maxOutputTokens: this.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`),
+                temperature: this.getSetting(`${prefix}_TEMPERATURE`),
+                stop: this.getSetting(`${prefix}_STOP_SEQUENCES`),
+                frequencyPenalty: this.getSetting(`${prefix}_FREQUENCY_PENALTY`),
+                presencePenalty: this.getSetting(`${prefix}_PRESENCE_PENALTY`),
+                repetitionPenalty: this.getSetting(`${prefix}_REPETITION_PENALTY`)
+            }
+        });
+
+        if (!modelName) {
+            elizaLogger.debug(`No model name found for ${modelClass}`);
             return undefined;
         }
-    }
 
-    private getModelSettingsWithPrefix(prefix: string, defaultSettings: ModelSettings): ModelSettings {
         return {
-            name: this.getSetting(`${prefix}_MODEL`),
+            name: modelName,
             maxInputTokens: this.parseNumber(
                 this.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
                 defaultSettings.maxInputTokens
@@ -431,47 +443,88 @@ class ModelProviderManager {
     }
 
     private getSpecializedModelSettings(modelClass: ModelClass, defaultSettings: ModelSettings): ModelSettings | undefined {
-        const modelName = this.getSetting(`${modelClass}_MODEL`);
+        if (modelClass === ModelClass.DEFAULT) {
+            return defaultSettings;
+        }
+        return this.getModelSettingsForClass(modelClass, defaultSettings);
+    }
+
+    private getImageModelSettings(): ImageModelSettings | undefined {
+        const modelName = this.getSetting("IMAGE_MODEL");
         if (!modelName) return undefined;
 
-        return this.getModelSettingsWithPrefix(modelClass, defaultSettings);
+        return {
+            name: modelName,
+            steps: this.parseNumber(this.getSetting("IMAGE_STEPS"), 50)
+        };
+    }
+
+    private getEmbeddingModelSettings(): EmbeddingModelSettings | undefined {
+        const modelName = this.getSetting("EMBEDDING_MODEL");
+        if (!modelName) return undefined;
+
+        return {
+            name: modelName,
+            dimensions: this.parseNumber(this.getSetting("EMBEDDING_DIMENSIONS"), 1536)
+        };
     }
 
     getModelProvider(): IModelProvider {
-        const defaultModelSettings: ModelSettings = {
-            name: this.getSetting("DEFAULT_MODEL"),
-            maxInputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
-            maxOutputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
-            temperature: this.parseNumber(this.getSetting("DEFAULT_TEMPERATURE"), 0.7),
-            stop: this.parseStringArray(this.getSetting("DEFAULT_STOP_SEQUENCES")),
-            frequency_penalty: this.parseNumber(this.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
-            presence_penalty: this.parseNumber(this.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
-            repetition_penalty: this.parseNumber(this.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
+        const defaultModelSettings = this.getModelSettingsForClass(ModelClass.DEFAULT, {
+            name: "gpt-4",
+            maxInputTokens: 4096,
+            maxOutputTokens: 1024,
+            temperature: 0.7,
+            stop: [],
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            repetition_penalty: 1.0
+        }) || {
+            name: "gpt-4",
+            maxInputTokens: 4096,
+            maxOutputTokens: 1024,
+            temperature: 0.7,
+            stop: [],
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            repetition_penalty: 1.0
         };
 
-        const modelSettings: Record<ModelClass, ModelSettings | ImageModelSettings | EmbeddingModelSettings | undefined> = {
-            [ModelClass.DEFAULT]: defaultModelSettings,
-            [ModelClass.SMALL]: this.getSpecializedModelSettings(ModelClass.SMALL, defaultModelSettings),
-            [ModelClass.MEDIUM]: this.getSpecializedModelSettings(ModelClass.MEDIUM, defaultModelSettings),
-            [ModelClass.LARGE]: this.getSpecializedModelSettings(ModelClass.LARGE, defaultModelSettings),
-            [ModelClass.EMBEDDING]: this.getSetting("EMBEDDING_MODEL") ? {
-                name: this.getSetting("EMBEDDING_MODEL"),
-                dimensions: this.parseNumber(this.getSetting("EMBEDDING_DIMENSIONS"), 1536)
-            } : undefined,
-            [ModelClass.IMAGE]: this.getSetting("IMAGE_MODEL") ? {
-                name: this.getSetting("IMAGE_MODEL"),
-                steps: this.parseNumber(this.getSetting("IMAGE_STEPS"), 50)
-            } : undefined,
-            [ModelClass.IMAGE_VISION]: undefined // Add any specific settings if needed
-        };
+        const modelClasses = [
+            ModelClass.DEFAULT,
+            ModelClass.SMALL,
+            ModelClass.MEDIUM,
+            ModelClass.LARGE,
+            ModelClass.IMAGE_VISION
+        ];
+
+        const modelSettings = {
+            ...Object.fromEntries(
+                modelClasses.map(modelClass => [
+                    modelClass,
+                    this.getSpecializedModelSettings(modelClass, defaultModelSettings)
+                ])
+            ),
+            [ModelClass.EMBEDDING]: this.getEmbeddingModelSettings(),
+            [ModelClass.IMAGE]: this.getImageModelSettings(),
+        } as Record<ModelClass, ModelSettings | ImageModelSettings | EmbeddingModelSettings | undefined>;
+
+        // Log model configurations for debugging
+        elizaLogger.debug("Model configurations:", {
+            provider: this.getSetting("PROVIDER_NAME"),
+            endpoint: this.getSetting("PROVIDER_ENDPOINT"),
+            models: Object.fromEntries(
+                Object.entries(modelSettings)
+                    .filter(([_, value]) => value !== undefined)
+                    .map(([key, value]) => [key, value.name])
+            )
+        });
 
         return {
             apiKey: this.getSetting("PROVIDER_API_KEY"),
             endpoint: this.getSetting("PROVIDER_ENDPOINT"),
             provider: this.getSetting("PROVIDER_NAME"),
-            models: Object.fromEntries(
-                Object.entries(modelSettings).filter(([_, value]) => value !== undefined)
-            ) as Record<ModelClass, ModelSettings>
+            models: modelSettings as Record<ModelClass, ModelSettings>
         };
     }
 }

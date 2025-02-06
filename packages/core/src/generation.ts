@@ -105,20 +105,48 @@ async function withRetry<T>(
     }
 }
 
-    export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelClass) {
+    export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelClass = ModelClass.DEFAULT) {
 
-    const provider = runtime.getModelProvider().provider || runtime.modelProvider;
-    const baseURL = runtime.getModelProvider().endpoint;
-    const apiKey =  runtime.token ||
+    elizaLogger.info("Initializing model client with runtime:", JSON.stringify(runtime.getModelProvider()));
+    const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
+    const baseURL = runtime.getModelProvider()?.endpoint;
+    const apiKey = runtime.token ||
                 process.env.PROVIDER_API_KEY ||
                 runtime.character.settings.secrets.PROVIDER_API_KEY ||
-                runtime.getSetting('PROVIDER_API_KEY')
+                runtime.getSetting('PROVIDER_API_KEY');
 
     if (!apiKey) {
         elizaLogger.error(`No API key found for ${provider}`);
+        throw new Error(`No API key found for ${provider}`);
     }
 
-    const model = runtime.getModelProvider().models[modelClass];
+    if (!baseURL) {
+        elizaLogger.error(`No endpoint URL found for ${provider}`);
+        throw new Error(`No endpoint URL found for ${provider}`);
+    }
+
+    const modelProvider = runtime.getModelProvider();
+    if (!modelProvider) {
+        elizaLogger.error('Model provider not initialized');
+        throw new Error('Model provider not initialized');
+    }
+
+    if (!modelProvider.models) {
+        elizaLogger.error('Model configurations not found in provider');
+        throw new Error('Model configurations not found in provider');
+    }
+
+    const modelConfig = modelProvider.models[modelClass];
+    if (!modelConfig) {
+        elizaLogger.error(`No model configuration found for class ${modelClass}`);
+        throw new Error(`No model configuration found for class ${modelClass}`);
+    }
+
+    const model = modelConfig.name;
+    if (!model) {
+        elizaLogger.error(`Model name not specified for class ${modelClass}`);
+        throw new Error(`Model name not specified for class ${modelClass}`);
+    }
     
     const client = createOpenAI({
         apiKey,
@@ -126,7 +154,7 @@ async function withRetry<T>(
         fetch: runtime.fetch,
     });
 
-    elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and apiKey ${apiKey}`);
+    elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
 
     return {
         client,
@@ -149,7 +177,7 @@ function validateContext(context: string, functionName: string): void {
 export async function generateText({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
     tools = {},
     onStepFinish,
     maxSteps = 1,
@@ -186,10 +214,10 @@ export async function generateText({
     const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
 
 
-    elizaLogger.info(`Generating text with model ${model.name} and system prompt ${systemPrompt} and context ${context} and tools ${tools} and onStepFinish ${onStepFinish} and maxSteps ${maxSteps}`);
+    elizaLogger.info(`Generating text with model ${model} and system prompt ${systemPrompt} and context ${context} and tools ${tools} and onStepFinish ${onStepFinish} and maxSteps ${maxSteps}`);
 
     const { text } = await aiGenerateText({
-        model: client.languageModel(model.name),
+        model: client.languageModel(model),
         prompt: context,
         system: systemPrompt,
         tools,
@@ -236,7 +264,7 @@ async function handleVerifiableInference(
 export async function generateTextArray({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -263,7 +291,7 @@ export async function generateTextArray({
 async function generateEnum<T extends string>({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
     enumValues,
     functionName,
 }: {
@@ -298,7 +326,7 @@ async function generateEnum<T extends string>({
 export async function generateShouldRespond({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -321,7 +349,7 @@ export async function generateShouldRespond({
 export async function generateTrueOrFalse({
     runtime,
     context = "",
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -347,7 +375,7 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
     mode,
     schema,
     schemaName,
@@ -369,7 +397,7 @@ export const generateObject = async ({
 
 
     const {object} = await aiGenerateObject({
-        model: client.languageModel(model.name),
+        model: client.languageModel(model),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
         output: schema ? undefined : 'no-schema',
@@ -385,7 +413,7 @@ export const generateObject = async ({
 export async function generateObjectDeprecated({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
     schema,
     schemaName,
     schemaDescription,
@@ -412,7 +440,7 @@ export async function generateObjectDeprecated({
 export async function generateObjectArray({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
     schema,
     schemaName,
     schemaDescription,
@@ -445,7 +473,7 @@ export async function generateObjectArray({
 export async function generateMessageResponse({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -458,13 +486,24 @@ export async function generateMessageResponse({
     return await withRetry(async () => {
         const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
         
+        elizaLogger.info("Generating message response with model:", model);
+
+        elizaLogger.info("System prompt:", systemPrompt);
+        elizaLogger.info("Client:", client);
+        elizaLogger.info("Model:", model);
+        elizaLogger.info("Context:", context);
+
         const {text} = await aiGenerateText({
-            model: client.languageModel(model.name),
+            model: client.languageModel(model),
             prompt: context,
             system: systemPrompt,
         });
 
+        elizaLogger.info("Text:", text);
+
         const parsedContent = parseJSONObjectFromText(text) as Content;
+        elizaLogger.info("Parsed content:", parsedContent);
+
         if (!parsedContent) {
             throw new Error("Failed to parse content");
         }
@@ -512,7 +551,7 @@ export const generateImage = async (
 
     await withRetry(async () => {
         const result = await aiGenerateImage({
-            model: client.imageModel(model.name),
+            model: client.imageModel(model),
             prompt: data.prompt,
             size: `${data.width}x${data.height}`,
             n: data.count,
@@ -560,7 +599,7 @@ export const generateCaption = async (
 export async function generateTweetActions({
     runtime,
     context,
-    modelClass,
+    modelClass=ModelClass.DEFAULT,
 }: {
     runtime: IAgentRuntime;
     context: string;

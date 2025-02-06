@@ -1,7 +1,6 @@
-
 // TODO: Maybe create these functions to read from character settings or env
 // import { getEmbeddingModelSettings, getEndpoint } from "./models.ts";
-import { type IAgentRuntime, ModelProviderName } from "./types.ts";
+import { type IAgentRuntime, ModelProviderName, ModelClass } from "./types.ts";
 import settings from "./settings.ts";
 import elizaLogger from "./logger.ts";
 import LocalEmbeddingModelManager from "./localembeddingManager.ts";
@@ -30,15 +29,27 @@ export type EmbeddingConfig = {
     readonly provider: string;
 };
 
-export const getEmbeddingConfig = (): EmbeddingConfig => ({
-    dimensions:
-        // TODO: get from env or character settings
-        384,
-    model:
-        // TODO: get from env or character settings
-        "BGE-small-en-v1.5",
-    provider: "BGE",
-});
+export const getEmbeddingConfig = (runtime?: IAgentRuntime): EmbeddingConfig => {
+    if (runtime) {
+        const modelProvider = runtime.getModelProvider();
+        const embeddingModel = modelProvider?.models?.[ModelClass.EMBEDDING];
+        
+        if (embeddingModel?.name) {
+            return {
+                dimensions: embeddingModel.dimensions || 1536,
+                model: embeddingModel.name,
+                provider: modelProvider?.provider || EmbeddingProvider.OpenAI,
+            };
+        }
+    }
+    
+    // Fallback to default config
+    return {
+        dimensions: 1536, // OpenAI's text-embedding-ada-002 dimension
+        model: "text-embedding-3-small", // Default to OpenAI's latest embedding model
+        provider: EmbeddingProvider.OpenAI
+    };
+};
 
 async function getRemoteEmbedding(
     input: string,
@@ -52,6 +63,26 @@ async function getRemoteEmbedding(
     // Construct full URL
     const fullUrl = `${baseEndpoint}/embeddings`;
 
+    elizaLogger.info("Embedding request:", {
+        modelProvider: options.provider,
+        useOpenAI: options.provider === EmbeddingProvider.OpenAI,
+        input: `${input?.slice(0, 50)}...`,
+        inputType: typeof input,
+        inputLength: input?.length,
+        isString: typeof input === "string",
+        isEmpty: !input,
+    });
+
+    const requestBody: any = {
+        input,
+        model: options.model,
+    };
+
+    // Only include dimensions for non-OpenAI providers
+    if (options.provider !== EmbeddingProvider.OpenAI) {
+        requestBody.dimensions = options.dimensions || options.length || getEmbeddingConfig().dimensions;
+    }
+
     const requestOptions = {
         method: "POST",
         headers: {
@@ -62,18 +93,13 @@ async function getRemoteEmbedding(
                   }
                 : {}),
         },
-        body: JSON.stringify({
-            input,
-            model: options.model,
-            dimensions:
-                options.dimensions ||
-                options.length ||
-                getEmbeddingConfig().dimensions, // Prefer dimensions, fallback to length
-        }),
+        body: JSON.stringify(requestBody),
     };
 
     try {
         const response = await fetch(fullUrl, requestOptions);
+
+        elizaLogger.info("Embedding response:", requestOptions);
 
         if (!response.ok) {
             elizaLogger.error("API Response:", await response.text()); // Debug log
@@ -158,28 +184,13 @@ export async function embed(runtime: IAgentRuntime, input: string) {
     const cachedEmbedding = await retrieveCachedEmbedding(runtime, input);
     if (cachedEmbedding) return cachedEmbedding;
 
-    const config = getEmbeddingConfig();
     const isNode = typeof process !== "undefined" && process.versions?.node;
 
-    // use endpoint from model provider
-    const endpoint = runtime.getSetting("PROVIDER_ENDPOINT");  
-    const apiKey = runtime.getSetting("PROVIDER_API_KEY");
+    // Get embedding configuration from runtime
+    const embeddingConfig = getEmbeddingConfig(runtime);
 
-
-    // Determine which embedding settings to use
-    // TODO: enhance + verify logic to get from character settings or env
-    if (config.provider) {
-        return await getRemoteEmbedding(input, {
-            model: config.model,
-            endpoint: settings.PROVIDER_ENDPOINT || "https://api.openai.com/v1",
-            apiKey: settings.PROVIDER_API_KEY,
-            dimensions: config.dimensions,
-        });
-    }
-
-
-    // BGE - try local first if in Node
-    if (isNode) {
+    // BGE - try local first if in Node and not using OpenAI
+    if (isNode && embeddingConfig.provider !== EmbeddingProvider.OpenAI) {
         try {
             return await getLocalEmbedding(input);
         } catch (error) {
@@ -190,14 +201,13 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         }
     }
 
-    // Fallback to remote override
+    // Use remote embedding
     return await getRemoteEmbedding(input, {
-        model: config.model,
-        endpoint:
-            runtime.character.modelEndpointOverride ||
-            runtime.getSetting("PROVIDER_ENDPOINT"),
+        model: embeddingConfig.model,
+        endpoint: runtime.character.modelEndpointOverride || runtime.getSetting("PROVIDER_ENDPOINT") || "https://api.openai.com/v1",
         apiKey: runtime.getSetting("PROVIDER_API_KEY") || runtime.token,
-        dimensions: config.dimensions,
+        dimensions: embeddingConfig.dimensions,
+        provider: embeddingConfig.provider
     });
 
     async function getLocalEmbedding(input: string): Promise<number[]> {

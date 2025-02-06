@@ -96,7 +96,7 @@ const mockImageSettings: ImageModelSettings = {
 };
 
 const mockEmbeddingSettings: EmbeddingModelSettings = {
-    name: "test-embedding-model",
+    name: "text-embedding-ada-002",
     dimensions: 1536,
 };
 
@@ -331,7 +331,7 @@ describe("Model Provider Configuration", () => {
                     repetition_penalty: 1.0,
                 },
                 [ModelClass.EMBEDDING]: {
-                    name: "test-embedding-model",
+                    name: "text-embedding-ada-002",
                     dimensions: 1536,
                 },
                 [ModelClass.IMAGE]: {
