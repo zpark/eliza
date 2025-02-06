@@ -1,4 +1,4 @@
-import { type Client, type IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { type Client, type IAgentRuntime, elizaLogger, type Plugin } from "@elizaos/core";
 import { FarcasterClient } from "./client";
 import { FarcasterPostManager } from "./post";
 import { FarcasterInteractionManager } from "./interactions";
@@ -75,21 +75,14 @@ export const FarcasterClientInterface: Client = {
 
         // Start all services
         await manager.start();
-        runtime.clients.farcaster = manager;
+        // runtime.clients.farcaster = manager;
         return manager;
-    },
-
-    async stop(runtime: IAgentRuntime) {
-        try {
-            // stop it
-            elizaLogger.log("Stopping farcaster client", runtime.agentId);
-            if (runtime.clients.farcaster) {
-                await runtime.clients.farcaster.stop();
-            }
-        } catch (e) {
-            elizaLogger.error("client-farcaster interface stop error", e);
-        }
     },
 };
 
-export default FarcasterClientInterface;
+const farcasterPlugin: Plugin = {
+    name: "farcaster",
+    description: "Farcaster client",
+    clients: [FarcasterClientInterface],
+};
+export default farcasterPlugin;
