@@ -635,7 +635,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly evaluators: Evaluator[] = [];
     readonly providers: Provider[] = [];
     readonly plugins: Plugin[] = [];
-    readonly modelProvider: ModelProviderName;
+    readonly modelProvider: string;
     readonly imageModelProvider: string;
     readonly imageVisionModelProvider: string;
     readonly fetch = fetch;
