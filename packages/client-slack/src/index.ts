@@ -1,5 +1,8 @@
 import type { Character, Client as ElizaClient, IAgentRuntime } from "@elizaos/core";
-import { elizaLogger } from "@elizaos/core";
+import {
+    elizaLogger,
+    type Plugin,
+} from "@elizaos/core";
 import { WebClient } from "@slack/web-api";
 import express, { type Request } from "express";
 import { EventEmitter } from "events";
@@ -15,7 +18,7 @@ interface SlackRequest extends Request {
     rawBody?: Buffer;
 }
 
-export class SlackClient extends EventEmitter {
+class SlackClient extends EventEmitter {
     private client: WebClient;
     private runtime: IAgentRuntime;
     private server: express.Application;
@@ -331,16 +334,18 @@ export class SlackClient extends EventEmitter {
     }
 }
 
-export const SlackClientInterface: ElizaClient = {
+const SlackClientInterface: ElizaClient = {
     name: 'slack',
     start: async (runtime: IAgentRuntime) => {
         const client = new SlackClient(runtime);
         await client.start();
         return client;
     },
-    stop: async (_runtime: IAgentRuntime) => {
-        elizaLogger.warn("Slack client stopping...");
-    },
 };
 
-export default SlackClientInterface;
+const slackPlugin: Plugin = {
+    name: "slack",
+    description: "Slack client plugin",
+    clients: [SlackClientInterface],
+};
+export default slackPlugin;
