@@ -145,41 +145,25 @@ export function parseJSONObjectFromText(
     let jsonData = null;
     const jsonBlockMatch = text.match(jsonBlockPattern);
 
-    if (jsonBlockMatch) {
-        const parsingText = normalizeJsonString(jsonBlockMatch[1]);
-        try {
-            jsonData = JSON.parse(parsingText);
-        } catch (e) {
-            console.error("Error parsing JSON:", e);
-            console.error("Text is not JSON", text);
-            return extractAttributes(text);
+    try {
+        if (jsonBlockMatch) {
+            // Parse the JSON from inside the code block
+            jsonData = JSON.parse(jsonBlockMatch[1].trim());
+        } else {
+            // Try to parse the text directly if it's not in a code block
+            jsonData = JSON.parse(text.trim());
         }
-    } else {
-        const objectPattern = /{[\s\S]*?}/;
-        const objectMatch = text.match(objectPattern);
-
-        if (objectMatch) {
-            const parsingText = normalizeJsonString(objectMatch[0]);
-            try {
-                jsonData = JSON.parse(parsingText);
-            } catch (e) {
-                console.error("Error parsing JSON:", e);
-                console.error("Text is not JSON", text);
-                return extractAttributes(text);
-            }
-        }
-    }
-
-    if (
-        typeof jsonData === "object" &&
-        jsonData !== null &&
-        !Array.isArray(jsonData)
-    ) {
-        return jsonData;
-    }if (typeof jsonData === "object" && Array.isArray(jsonData)) {
-        return parseJsonArrayFromText(text);
-    }
+    } catch (e) {
+        console.error("Error parsing JSON:", e);
         return null;
+    }
+
+    // Ensure we have a non-null object that's not an array
+    if (jsonData && typeof jsonData === "object" && !Array.isArray(jsonData)) {
+        return jsonData;
+    }
+
+    return null;
 }
 
 /**

@@ -635,7 +635,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly evaluators: Evaluator[] = [];
     readonly providers: Provider[] = [];
     readonly plugins: Plugin[] = [];
-    readonly modelProvider: string;
+    readonly modelProvider: ModelProviderName;
     readonly imageModelProvider: string;
     readonly imageVisionModelProvider: string;
     readonly fetch = fetch;
@@ -756,32 +756,32 @@ export class AgentRuntime implements IAgentRuntime {
         this.modelProvider =
             this.character.modelProvider ??
             opts.modelProvider ??
-            this.getModelProvider().models[ModelClass.DEFAULT].name;
+            this.getModelProvider()?.models?.[ModelClass.DEFAULT]?.name;
 
         this.imageModelProvider =
-            this.character.imageModelProvider ?? this.getModelProvider().models[ModelClass.IMAGE].name;
+            this.character.imageModelProvider ?? this.getModelProvider()?.models?.[ModelClass.IMAGE]?.name;
 
         this.imageVisionModelProvider =
-            this.character.imageVisionModelProvider ?? this.getModelProvider().models[ModelClass.IMAGE_VISION].name;
+            this.character.imageVisionModelProvider ?? this.getModelProvider()?.models[ModelClass.IMAGE_VISION]?.name;
 
         elizaLogger.info(
             `${this.character.name}(${this.agentId}) - Selected model provider:`,
-            this.getModelProvider().models[ModelClass.DEFAULT].name
+            this.getModelProvider()?.models?.[ModelClass.DEFAULT]?.name
         );
 
         elizaLogger.info(
             `${this.character.name}(${this.agentId}) - Selected image model provider:`,
-            this.getModelProvider().models[ModelClass.IMAGE].name
+            this.getModelProvider()?.models?.[ModelClass.IMAGE]?.name
         );
 
         elizaLogger.info(
             `${this.character.name}(${this.agentId}) - Selected image vision model provider:`,
-            this.getModelProvider().models[ModelClass.IMAGE_VISION].name
+            this.getModelProvider()?.models?.[ModelClass.IMAGE_VISION]?.name
         );
 
         // Validate model provider
         // must be string, without special characters other than hyphen
-        if (typeof this.modelProvider !== "string" || !/^[a-zA-Z0-9-]+$/.test(this.modelProvider)) {
+        if (typeof this.modelProvider !== "string" || !/^[a-z]+$/.test(this.modelProvider)) {
             elizaLogger.error("Invalid model provider:", this.modelProvider);
             throw new Error(`Invalid model provider Name: ${this.modelProvider}`);
         }
