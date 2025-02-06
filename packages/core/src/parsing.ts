@@ -196,7 +196,7 @@ export function extractAttributes(
     attributesToExtract?: string[]
 ): { [key: string]: string | undefined } {
     response = response.trim();
-    const attributes: { [key: string]: string | undefined } = null;
+    const attributes: { [key: string]: string | undefined } = {};
 
     if (!attributesToExtract || attributesToExtract.length === 0) {
         // Extract all attributes if no specific attributes are provided
@@ -216,7 +216,7 @@ export function extractAttributes(
         });
     }
 
-    return attributes;
+    return Object.entries(attributes).length > 0 ? attributes : null;
 }
 
 /**
