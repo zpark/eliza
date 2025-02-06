@@ -1,9 +1,9 @@
-import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
-import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
-import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
-import { RedisClient } from "@elizaos/adapter-redis";
-import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
-import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
+// import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
+// import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+// import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
+import { RedisClient } from "@elizaos/cache-redis";
+// import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+// import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 // import { AutoClientInterface } from "@elizaos/client-auto";
 // import { DiscordClientInterface } from "@elizaos/client-discord";
 // import { InstagramClientInterface } from "@elizaos/client-instagram";
@@ -13,7 +13,7 @@ import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 // import { TelegramAccountClientInterface } from "@elizaos/client-telegram-account";
 // import { TwitterClientInterface } from "@elizaos/client-twitter";
 // import { AlexaClientInterface } from "@elizaos/client-alexa";
-import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb";
+// import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb";
 // import { DevaClientInterface } from "@elizaos/client-deva";
 
 // import { FarcasterClientInterface } from "@elizaos/client-farcaster";
@@ -33,15 +33,16 @@ import {
     CacheStore,
     type Character,
     type Client,
-    Clients,
+    // Clients,
     DbCacheAdapter,
     defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
-    type ICacheManager,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
+    type ClientInstance,
+    type Adapter,
     ModelProviderName,
     parseBooleanFromText,
     settings,
@@ -138,7 +139,6 @@ import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 // import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
 // import { zxPlugin } from "@elizaos/plugin-0x";
 // import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
-import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
 import path from "path";
@@ -155,7 +155,6 @@ import yargs from "yargs";
 // import { minaPlugin } from "@elizaos/plugin-mina";
 // import { ankrPlugin } from "@elizaos/plugin-ankr";
 // import { formPlugin } from "@elizaos/plugin-form";
-import { MongoClient } from "mongodb";
 // import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
 
 // import { trikonPlugin } from "@elizaos/plugin-trikon";
@@ -681,7 +680,7 @@ export function getTokenForProvider(
 }
 
 function initializeDatabase(dataDir: string) {
-    if (process.env.MONGODB_CONNECTION_STRING) {
+    /* if (process.env.MONGODB_CONNECTION_STRING) {
         elizaLogger.log("Initializing database on MongoDB Atlas");
         const client = new MongoClient(process.env.MONGODB_CONNECTION_STRING, {
             maxPoolSize: 100,
@@ -786,7 +785,7 @@ function initializeDatabase(dataDir: string) {
             });
 
         return db;
-    }
+    } */
 }
 
 // also adds plugins from character file into the runtime
@@ -796,9 +795,8 @@ export async function initializeClients(
 ) {
     // each client can only register once
     // and if we want two we can explicitly support it
-    const clients: Record<string, any> = {};
-    const clientTypes: string[] =
-        character.clients?.map((str) => str.toLowerCase()) || [];
+    const clients: ClientInstance[] = [];
+    const clientTypes = clients.map((c) => c.name);
     elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
     // Start Auto Client if "auto" detected as a configured client
@@ -868,8 +866,6 @@ export async function initializeClients(
     //     if (simsaiClient) clients.simsai = simsaiClient;
     // }
 
-    elizaLogger.log("client keys", Object.keys(clients));
-
     // if (clientTypes.includes("deva")) {
     //     if (clientTypes.includes("deva")) {
     //         const devaClient = await DevaClientInterface.start(runtime);
@@ -882,32 +878,32 @@ export async function initializeClients(
     //     if (slackClient) clients.slack = slackClient; // Use object property instead of push
     // }
 
-    function determineClientType(client: Client): string {
-        // Check if client has a direct type identifier
-        if ("type" in client) {
-            return (client as any).type;
-        }
+    // function determineClientType(client: Client): string {
+    //     // Check if client has a direct type identifier
+    //     if ("type" in client) {
+    //         return (client as any).type;
+    //     }
 
-        // Check constructor name
-        const constructorName = client.constructor?.name;
-        if (constructorName && !constructorName.includes("Object")) {
-            return constructorName.toLowerCase().replace("client", "");
-        }
+    //     // Check constructor name
+    //     const constructorName = client.constructor?.name;
+    //     if (constructorName && !constructorName.includes("Object")) {
+    //         return constructorName.toLowerCase().replace("client", "");
+    //     }
 
-        // Fallback: Generate a unique identifier
-        return `client_${Date.now()}`;
-    }
+    //     // Fallback: Generate a unique identifier
+    //     return `client_${Date.now()}`;
+    // }
 
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
-                    const clientType = determineClientType(client);
+                    // const clientType = determineClientType(client);
                     elizaLogger.debug(
-                        `Initializing client of type: ${clientType}`
+                        `Initializing client: ${client.name}`
                     );
-                    clients[clientType] = startedClient;
+                    clients.push(startedClient);
                 }
             }
         }
@@ -924,8 +920,6 @@ function getSecret(character: Character, secret: string) {
 
 export async function createAgent(
     character: Character,
-    db: IDatabaseAdapter,
-    cache: ICacheManager,
     token: string
 ): Promise<AgentRuntime> {
     elizaLogger.log(`Creating runtime for character ${character.name}`);
@@ -1011,7 +1005,6 @@ export async function createAgent(
     // }
 
     return new AgentRuntime({
-        databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
         evaluators: [],
@@ -1024,7 +1017,6 @@ export async function createAgent(
             .filter(Boolean),
         providers: [],
         managers: [],
-        cacheManager: cache,
         fetch: logFetch,
         verifiableInferenceAdapter,
     });
@@ -1101,6 +1093,26 @@ function initializeCache(
     }
 }
 
+async function findDatabaseAdapter(runtime: AgentRuntime) {
+  const { adapters } = runtime;
+  let adapter: Adapter | undefined;
+  // if not found, default to sqlite
+  if (adapters.length === 0) {
+    const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
+    const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
+    adapter = sqliteAdapterPluginDefault.adapters[0];
+    if (!adapter) {
+      throw new Error("Internal error: No database adapter found for default adapter-sqlite");
+    }
+  } else if (adapters.length === 1) {
+    adapter = adapters[0];
+  } else {
+    throw new Error("Multiple database adapters found: " + adapters.map(a => a.name).join(", ") + '. You must have no more than one. Adjust your plugins configuration.');
+  }
+  const adapterInterface = adapter?.init(runtime);
+  return adapterInterface;
+}
+
 async function startAgent(
     character: Character,
     directClient: DirectClient
@@ -1111,29 +1123,25 @@ async function startAgent(
         character.username ??= character.name;
 
         const token = getTokenForProvider(character.modelProvider, character);
-        const dataDir = path.join(__dirname, "../data");
 
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
+        const runtime: AgentRuntime = await createAgent(
+            character,
+            token
+        );
 
-        db = initializeDatabase(dataDir) as IDatabaseAdapter &
-            IDatabaseCacheAdapter;
+        // initialize database
+        // find a db from the plugins
+        db = await findDatabaseAdapter(runtime);
+        runtime.databaseAdapter = db;
 
-        await db.init();
-
+        // initialize cache
         const cache = initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",
             db
         ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
-        const runtime: AgentRuntime = await createAgent(
-            character,
-            db,
-            cache,
-            token
-        );
+        runtime.cacheManager = cache;
 
         // start services/plugins/process knowledge
         await runtime.initialize();
