@@ -795,8 +795,8 @@ export async function initializeClients(
     // each client can only register once
     // and if we want two we can explicitly support it
     const clients: ClientInstance[] = [];
-    const clientTypes = clients.map((c) => c.name);
-    elizaLogger.log("initializeClients", clientTypes, "for", character.name);
+    // const clientTypes = clients.map((c) => c.name);
+    // elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
     // Start Auto Client if "auto" detected as a configured client
     // if (clientTypes.includes(Clients.AUTO)) {
@@ -1106,8 +1106,8 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
   } else if (adapters.length === 1) {
     adapter = adapters[0];
   } else {
-    throw new Error("Multiple database adapters found: " + adapters.map(a => a.name).join(", ") + '. You must have no more than one. Adjust your plugins configuration.');
-  }
+    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
+    }
   const adapterInterface = adapter?.init(runtime);
   return adapterInterface;
 }
