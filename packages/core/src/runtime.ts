@@ -418,6 +418,10 @@ export class AgentRuntime implements IAgentRuntime {
             plugin.providers?.forEach((provider) => {
                 this.registerContextProvider(provider);
             });
+
+            plugin.adapters?.forEach((adapter) => {
+                this.registerAdapter(adapter);
+            });
         });
 
         (opts.actions ?? []).forEach((action) => {
@@ -984,6 +988,14 @@ export class AgentRuntime implements IAgentRuntime {
      */
     registerContextProvider(provider: Provider) {
         this.providers.push(provider);
+    }
+
+    /**
+     * Register an adapter for the agent to use.
+     * @param adapter The adapter to register.
+     */
+    registerAdapter(adapter: Adapter) {
+        this.adapters.push(adapter);
     }
 
     /**
