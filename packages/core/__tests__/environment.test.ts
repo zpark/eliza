@@ -8,13 +8,17 @@ describe("Environment Configuration", () => {
     beforeEach(() => {
         process.env = {
             ...originalEnv,
-            OPENAI_API_KEY: "sk-test123",
-            REDPILL_API_KEY: "test-key",
-            GROK_API_KEY: "test-key",
-            GROQ_API_KEY: "gsk_test123",
-            OPENROUTER_API_KEY: "test-key",
-            GOOGLE_GENERATIVE_AI_API_KEY: "test-key",
+            PROVIDER_NAME: "OPENAI",
+            PROVIDER_API_KEY: "sk-test123",
+            PROVIDER_ENDPOINT: "https://api.openai.com/v1",
             ELEVENLABS_XI_API_KEY: "test-key",
+            DEFAULT_MODEL: "gpt-4",
+            SMALL_MODEL: "gpt-3.5-turbo",
+            MEDIUM_MODEL: "gpt-4",
+            LARGE_MODEL: "gpt-4-turbo",
+            EMBEDDING_MODEL: "text-embedding-3-small",
+            IMAGE_MODEL: "dall-e-3",
+            IMAGE_VISION_MODEL: "gpt-4-vision-preview",
         };
     });
 
@@ -26,35 +30,38 @@ describe("Environment Configuration", () => {
         expect(() => validateEnv()).not.toThrow();
     });
 
-    it("should throw error for invalid OpenAI API key format", () => {
-        process.env.OPENAI_API_KEY = "invalid-key";
-        expect(() => validateEnv()).toThrow(
-            "OpenAI API key must start with 'sk-'"
-        );
-    });
-
-    it("should throw error for invalid GROQ API key format", () => {
-        process.env.GROQ_API_KEY = "invalid-key";
-        expect(() => validateEnv()).toThrow(
-            "GROQ API key must start with 'gsk_'"
-        );
-    });
-
-    it("should throw error for missing required keys", () => {
-        delete process.env.REDPILL_API_KEY;
-        expect(() => validateEnv()).toThrow("REDPILL_API_KEY: Required");
-    });
-
-    it("should throw error for multiple missing required keys", () => {
-        delete process.env.REDPILL_API_KEY;
-        delete process.env.GROK_API_KEY;
-        delete process.env.OPENROUTER_API_KEY;
+    it("should throw error for missing required provider configuration", () => {
+        delete process.env.PROVIDER_NAME;
+        delete process.env.PROVIDER_API_KEY;
         expect(() => validateEnv()).toThrow(
             "Environment validation failed:\n" +
-                "REDPILL_API_KEY: Required\n" +
-                "GROK_API_KEY: Required\n" +
-                "OPENROUTER_API_KEY: Required"
+            "PROVIDER_NAME: Required\n" +
+            "PROVIDER_API_KEY: Required"
         );
+    });
+
+    it("should throw error for invalid provider endpoint URL", () => {
+        process.env.PROVIDER_ENDPOINT = "invalid-url";
+        expect(() => validateEnv()).toThrow(
+            "Provider endpoint must be a valid URL"
+        );
+    });
+
+    it("should validate with optional fields missing", () => {
+        delete process.env.DEFAULT_MODEL;
+        delete process.env.SMALL_MODEL;
+        delete process.env.MEDIUM_MODEL;
+        delete process.env.LARGE_MODEL;
+        delete process.env.EMBEDDING_MODEL;
+        delete process.env.IMAGE_MODEL;
+        delete process.env.IMAGE_VISION_MODEL;
+        delete process.env.ELEVENLABS_XI_API_KEY;
+        expect(() => validateEnv()).not.toThrow();
+    });
+
+    it("should validate with invalid model provider name", () => {
+        process.env.PROVIDER_NAME = "INVALID_PROVIDER";
+        expect(() => validateEnv()).toThrow();
     });
 });
 

@@ -28,7 +28,12 @@ export type EnvConfig = z.infer<typeof envSchema>;
 // Validation function
 export function validateEnv(): EnvConfig {
     try {
-        return envSchema.parse(process.env);
+        // Transform provider name to lowercase before validation
+        const envWithLowercaseProvider = {
+            ...process.env,
+            PROVIDER_NAME: process.env.PROVIDER_NAME?.toLowerCase(),
+        };
+        return envSchema.parse(envWithLowercaseProvider);
     } catch (error) {
         if (error instanceof z.ZodError) {
             const errorMessages = error.errors

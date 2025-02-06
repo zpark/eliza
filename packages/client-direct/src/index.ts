@@ -302,7 +302,7 @@ export class DirectClient {
 
                 // save response to memory
                 const responseMessage: Memory = {
-                    id: stringToUuid(messageId + "-" + runtime.agentId),
+                    id: stringToUuid(`${messageId}-${runtime.agentId}`),
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,

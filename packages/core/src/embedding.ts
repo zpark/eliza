@@ -45,7 +45,7 @@ export const getEmbeddingConfig = (runtime?: IAgentRuntime): EmbeddingConfig => 
     
     // Fallback to default config
     return {
-        dimensions: 1536, // OpenAI's text-embedding-ada-002 dimension
+        dimensions: 1536, // OpenAI's text-embedding-3-small dimension
         model: "text-embedding-3-small", // Default to OpenAI's latest embedding model
         provider: EmbeddingProvider.OpenAI
     };
@@ -131,16 +131,14 @@ export function getEmbeddingType(runtime: IAgentRuntime): "local" | "remote" {
     // - Running in Node.js
     // - Not using OpenAI provider
     // - Not forcing OpenAI embeddings
-    const isLocal = isNode && !settings.USE_OPENAI_EMBEDDING;
+    const useOpenAI = runtime.getSetting("USE_OPENAI_EMBEDDING") === "true" || settings.USE_OPENAI_EMBEDDING === "true";
+    const isLocal = isNode && !useOpenAI;
 
     return isLocal ? "local" : "remote";
 }
 
 export function getEmbeddingZeroVector(): number[] {
-    let embeddingDimension = 384; // Default BGE dimension
-
-    // TODO: add logic to get from character settings
-
+    let embeddingDimension = settings.USE_OPENAI_EMBEDDING === "true" ? 1536 : 384;
     return Array(embeddingDimension).fill(0);
 }
 

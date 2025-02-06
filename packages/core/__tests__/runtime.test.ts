@@ -16,6 +16,13 @@ import {
 } from "../src/types";
 import { defaultCharacter } from "../src/defaultCharacter";
 
+// Mock the embedding module
+vi.mock("../src/embedding", () => ({
+    embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+    getRemoteEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3])),
+    getLocalEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3]))
+}));
+
 // Mock dependencies with minimal implementations
 const mockDatabaseAdapter: IDatabaseAdapter = {
     db: {},
@@ -66,7 +73,7 @@ const mockDatabaseAdapter: IDatabaseAdapter = {
 const mockCacheManager = {
     get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
-    delete: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined)
 };
 
 // Mock action creator
@@ -114,12 +121,6 @@ const mockModelProvider: IModelProvider = {
         [ModelClass.EMBEDDING]: mockEmbeddingSettings,
     },
 };
-
-// Mock embedding API
-vi.mock("../src/embedding", () => ({
-    getRemoteEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3])),
-    getLocalEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3])),
-}));
 
 describe("AgentRuntime", () => {
     let runtime: AgentRuntime;
@@ -482,5 +483,116 @@ describe("Model Provider Configuration", () => {
                 })).not.toThrow();
             });
         });
+    });
+});
+
+describe("ModelProviderManager", () => {
+    test("should get correct model provider settings", async () => {
+        const runtime = new AgentRuntime({
+            token: "test-token",
+            modelProvider: ModelProviderName.OPENAI,
+            databaseAdapter: mockDatabaseAdapter,
+            cacheManager: {
+                get: vi.fn(),
+                set: vi.fn(),
+                delete: vi.fn(),
+            },
+        });
+
+        const provider = runtime.getModelProvider();
+        expect(provider).toBeDefined();
+        expect(provider.provider).toBe(ModelProviderName.OPENAI);
+    });
+});
+
+describe("MemoryManagerService", () => {
+    test("should provide access to different memory managers", async () => {
+        const runtime = new AgentRuntime({
+            token: "test-token",
+            modelProvider: ModelProviderName.OPENAI,
+            databaseAdapter: mockDatabaseAdapter,
+            cacheManager: mockCacheManager
+        });
+
+        expect(runtime.messageManager).toBeDefined();
+        expect(runtime.descriptionManager).toBeDefined();
+        expect(runtime.loreManager).toBeDefined();
+        expect(runtime.documentsManager).toBeDefined();
+        expect(runtime.knowledgeManager).toBeDefined();
+        expect(runtime.ragKnowledgeManager).toBeDefined();
+    });
+
+    test("should allow registering custom memory managers", async () => {
+        const runtime = new AgentRuntime({
+            token: "test-token",
+            modelProvider: ModelProviderName.OPENAI,
+            databaseAdapter: mockDatabaseAdapter,
+            cacheManager: mockCacheManager
+        });
+
+        const customManager: IMemoryManager = {
+            runtime: runtime,
+            tableName: "custom",
+            getMemories: vi.fn(),
+            getCachedEmbeddings: vi.fn(),
+            getMemoryById: vi.fn(),
+            getMemoriesByRoomIds: vi.fn(),
+            searchMemoriesByEmbedding: vi.fn(),
+            createMemory: vi.fn(),
+            removeMemory: vi.fn(),
+            removeAllMemories: vi.fn(),
+            countMemories: vi.fn(),
+            addEmbeddingToMemory: vi.fn()
+        };
+
+        runtime.registerMemoryManager(customManager);
+        expect(runtime.getMemoryManager("custom")).toBe(customManager);
+    });
+});
+
+describe("ServiceManager", () => {
+    test("should handle service registration and retrieval", async () => {
+        const runtime = new AgentRuntime({
+            token: "test-token",
+            modelProvider: ModelProviderName.OPENAI,
+            databaseAdapter: mockDatabaseAdapter,
+            cacheManager: mockCacheManager
+        });
+
+        const mockService = {
+            serviceType: ServiceType.TEXT_GENERATION,
+            type: ServiceType.TEXT_GENERATION,
+            initialize: vi.fn().mockResolvedValue(undefined)
+        };
+
+        await runtime.registerService(mockService);
+        const retrievedService = runtime.getService(ServiceType.TEXT_GENERATION);
+        expect(retrievedService).toBe(mockService);
+    });
+});
+
+describe("Verifiable Inference", () => {
+    test("should handle verifiable inference adapter", async () => {
+        const runtime = new AgentRuntime({
+            token: "test-token",
+            modelProvider: ModelProviderName.OPENAI,
+            databaseAdapter: mockDatabaseAdapter,
+            cacheManager: mockCacheManager
+        });
+
+        const mockAdapter = {
+            verify: vi.fn(),
+            options: {},
+            generateText: vi.fn(),
+            verifyProof: vi.fn()
+        };
+
+        expect(runtime.getVerifiableInferenceAdapter()).toBeUndefined();
+        
+        runtime.setVerifiableInferenceAdapter(mockAdapter);
+        expect(runtime.getVerifiableInferenceAdapter()).toBe(mockAdapter);
+        
+        runtime.setVerifiableInferenceAdapter(undefined);
+        expect(runtime.getVerifiableInferenceAdapter()).toBeUndefined();
     });
 });

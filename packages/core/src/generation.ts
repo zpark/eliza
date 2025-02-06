@@ -35,17 +35,6 @@ type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
 
-interface ModelSettings {
-    prompt: string;
-    temperature: number;
-    maxTokens: number;
-    frequencyPenalty: number;
-    presencePenalty: number;
-    stop?: string[];
-    experimental_telemetry?: TelemetrySettings;
-}
-
-
 interface VerifiedInferenceOptions {
     verifiableInference?: boolean;
     verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
@@ -62,7 +51,7 @@ interface GenerateObjectOptions extends VerifiedInferenceOptions {
     schemaDescription?: string;
     stop?: string[];
     mode?: 'auto' | 'json' | 'tool';
-    enum?: string[];
+    enum?: Array<string>;
 }
 
 // ================ COMMON UTILITIES ================
@@ -313,7 +302,8 @@ async function generateEnum<T extends string>({
             runtime,
             context,
             modelClass,
-            schema: z.enum(enumValues as [T, ...T[]]),
+            output: 'enum',
+            enum: enumValues as unknown as string[],
         });
 
         elizaLogger.debug("Received enum response:", result);
@@ -340,7 +330,7 @@ export async function generateShouldRespond({
         context,
         modelClass,
         enumValues: RESPONSE_VALUES,
-        functionName: 'generateShouldRespond'
+        functionName: 'generateShouldRespond',
     });
 
     return result as ResponseType;
@@ -376,7 +366,7 @@ export const generateObject = async ({
     runtime,
     context,
     modelClass=ModelClass.DEFAULT,
-    mode,
+    output='object',
     schema,
     schemaName,
     schemaDescription,
@@ -400,7 +390,7 @@ export const generateObject = async ({
         model: client.languageModel(model),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-        output: schema ? undefined : 'no-schema',
+        output: output as never,
         ...(schema ? { schema, schemaName, schemaDescription } : {}),
         mode: 'json'
     })
