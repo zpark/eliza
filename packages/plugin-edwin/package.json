@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-edwin",
-    "version": "0.1.0",
+    "version": "0.1.9",
     "description": "Edwin plugin for elizaos agent",
     "main": "dist/index.js",
     "type": "module",
