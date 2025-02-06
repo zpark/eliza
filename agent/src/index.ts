@@ -1,32 +1,4 @@
-// import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
-// import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
-// import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
-// import { RedisClient } from "@elizaos/cache-redis";
-// import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
-// import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
-// import { AutoClientInterface } from "@elizaos/client-auto";
-// import { DiscordClientInterface } from "@elizaos/client-discord";
-// import { InstagramClientInterface } from "@elizaos/client-instagram";
-// import { LensAgentClient } from "@elizaos/client-lens";
-// import { SlackClientInterface } from "@elizaos/client-slack";
-// import { TelegramClientInterface } from "@elizaos/client-telegram";
-// import { TelegramAccountClientInterface } from "@elizaos/client-telegram-account";
-// import { TwitterClientInterface } from "@elizaos/client-twitter";
-// import { AlexaClientInterface } from "@elizaos/client-alexa";
-// import { MongoDBDatabaseAdapter } from "@elizaos/adapter-mongodb";
-// import { DevaClientInterface } from "@elizaos/client-deva";
-
-// import { FarcasterClientInterface } from "@elizaos/client-farcaster";
-// import { OmniflixPlugin } from "@elizaos/plugin-omniflix";
-// import { JeeterClientInterface } from "@elizaos/client-simsai";
-// import { XmtpClientInterface } from "@elizaos/client-xmtp";
 import { DirectClient } from "@elizaos/client-direct";
-// import { agentKitPlugin } from "@elizaos/plugin-agentkit";
-// import { gelatoPlugin } from "@elizaos/plugin-gelato";
-// import { PrimusAdapter } from "@elizaos/plugin-primus";
-// import { lightningPlugin } from "@elizaos/plugin-lightning";
-// import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
-// import { dcapPlugin } from "@elizaos/plugin-dcap";
 import {
     AgentRuntime,
     CacheManager,
@@ -49,115 +21,15 @@ import {
     validateCharacterConfig,
 } from "@elizaos/core";
 import { defaultCharacter } from "./defaultCharacter.ts";
-// import { zgPlugin } from "@elizaos/plugin-0g";
-// import { footballPlugin } from "@elizaos/plugin-football";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
-// import { normalizeCharacter } from "@elizaos/plugin-di";
-// import createGoatPlugin from "@elizaos/plugin-goat";
-// import createZilliqaPlugin from "@elizaos/plugin-zilliqa";
 
-// import { intifacePlugin } from "@elizaos/plugin-intiface";
-// import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
-// import { abstractPlugin } from "@elizaos/plugin-abstract";
-// import { akashPlugin } from "@elizaos/plugin-akash";
-// import { alloraPlugin } from "@elizaos/plugin-allora";
-// import { aptosPlugin } from "@elizaos/plugin-aptos";
-// import { artheraPlugin } from "@elizaos/plugin-arthera";
-// import { autonomePlugin } from "@elizaos/plugin-autonome";
-// import { availPlugin } from "@elizaos/plugin-avail";
-// import { avalanchePlugin } from "@elizaos/plugin-avalanche";
-// import { b2Plugin } from "@elizaos/plugin-b2";
-// import { binancePlugin } from "@elizaos/plugin-binance";
-// import { birdeyePlugin } from "@elizaos/plugin-birdeye";
-// import { bittensorPlugin } from "@elizaos/plugin-bittensor";
-// import { bnbPlugin } from "@elizaos/plugin-bnb";
-// import {
-//     advancedTradePlugin,
-//     coinbaseCommercePlugin,
-//     coinbaseMassPaymentsPlugin,
-//     tokenContractPlugin,
-//     tradePlugin,
-//     webhookPlugin,
-// } from "@elizaos/plugin-coinbase";
-// import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
-// import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
-// import { confluxPlugin } from "@elizaos/plugin-conflux";
-// import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
-// import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
-// import { deskExchangePlugin } from "@elizaos/plugin-desk-exchange";
-// import { evmPlugin } from "@elizaos/plugin-evm";
-// import { edwinPlugin } from "@elizaos/plugin-edwin";
-// import { flowPlugin } from "@elizaos/plugin-flow";
-// import { fuelPlugin } from "@elizaos/plugin-fuel";
-// import { genLayerPlugin } from "@elizaos/plugin-genlayer";
-// import { gitcoinPassportPlugin } from "@elizaos/plugin-gitcoin-passport";
-// import { initiaPlugin } from "@elizaos/plugin-initia";
-// import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
-// import { lensPlugin } from "@elizaos/plugin-lens-network";
-// import { litPlugin } from "@elizaos/plugin-lit";
-// import { mindNetworkPlugin } from "@elizaos/plugin-mind-network";
-// import { multiversxPlugin } from "@elizaos/plugin-multiversx";
-// import { nearPlugin } from "@elizaos/plugin-near";
-// import createNFTCollectionsPlugin from "@elizaos/plugin-nft-collections";
-// import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
-// import { createNodePlugin } from "@elizaos/plugin-node";
-// import { obsidianPlugin } from "@elizaos/plugin-obsidian";
-// import { OpacityAdapter } from "@elizaos/plugin-opacity";
-// import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
-// import { quaiPlugin } from "@elizaos/plugin-quai";
-// import { sgxPlugin } from "@elizaos/plugin-sgx";
-// import { solanaPlugin } from "@elizaos/plugin-solana";
-// import { solanaPluginV2 } from "@elizaos/plugin-solana-v2";
-// import { solanaAgentkitPlugin } from "@elizaos/plugin-solana-agent-kit";
-// import { squidRouterPlugin } from "@elizaos/plugin-squid-router";
-// import { stargazePlugin } from "@elizaos/plugin-stargaze";
-// import { storyPlugin } from "@elizaos/plugin-story";
-// import { suiPlugin } from "@elizaos/plugin-sui";
-// import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
-// import { teeLogPlugin } from "@elizaos/plugin-tee-log";
-// import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
-// import { verifiableLogPlugin } from "@elizaos/plugin-tee-verifiable-log";
-// import { tonPlugin } from "@elizaos/plugin-ton";
-// import { webSearchPlugin } from "@elizaos/plugin-web-search";
-// import { dkgPlugin } from "@elizaos/plugin-dkg";
-// import { injectivePlugin } from "@elizaos/plugin-injective";
-// import { giphyPlugin } from "@elizaos/plugin-giphy";
-// import { letzAIPlugin } from "@elizaos/plugin-letzai";
-// import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
-// import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
-// import { moralisPlugin } from "@elizaos/plugin-moralis";
-// import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
-// import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
-// import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
-// import { openaiPlugin } from "@elizaos/plugin-openai";
-// import nitroPlugin from "@elizaos/plugin-router-nitro";
-// import { devinPlugin } from "@elizaos/plugin-devin";
-// import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-// import { chainbasePlugin } from "@elizaos/plugin-chainbase";
-// import { holdstationPlugin } from "@elizaos/plugin-holdstation";
-// import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
-// import { zxPlugin } from "@elizaos/plugin-0x";
-// import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
 import fs from "fs";
 import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-// import { emailPlugin } from "@elizaos/plugin-email";
-// import { seiPlugin } from "@elizaos/plugin-sei";
-// import { sunoPlugin } from "@elizaos/plugin-suno";
-// import { udioPlugin } from "@elizaos/plugin-udio";
-// import { imgflipPlugin } from "@elizaos/plugin-imgflip";
-// import { ethstoragePlugin } from "@elizaos/plugin-ethstorage";
-// import { zerionPlugin } from "@elizaos/plugin-zerion";
-// import { minaPlugin } from "@elizaos/plugin-mina";
-// import { ankrPlugin } from "@elizaos/plugin-ankr";
-// import { formPlugin } from "@elizaos/plugin-form";
-// import { quickIntelPlugin } from "@elizaos/plugin-quick-intel";
 
-// import { trikonPlugin } from "@elizaos/plugin-trikon";
-// import arbitragePlugin from "@elizaos/plugin-arbitrage";
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
@@ -235,10 +107,10 @@ function mergeCharacters(base: Character, child: Character): Character {
     };
     return mergeObjects(base, child);
 }
-function isAllStrings(arr: unknown[]): boolean {
+/* function isAllStrings(arr: unknown[]): boolean {
     return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
-/* export async function loadCharacterFromOnchain(): Promise<Character[]> {
+export async function loadCharacterFromOnchain(): Promise<Character[]> {
     const jsonText = onchainJson;
 
     console.log("JSON:", jsonText);
@@ -678,115 +550,6 @@ export function getTokenForProvider(
     }
 }
 
-function initializeDatabase(dataDir: string) {
-    /* if (process.env.MONGODB_CONNECTION_STRING) {
-        elizaLogger.log("Initializing database on MongoDB Atlas");
-        const client = new MongoClient(process.env.MONGODB_CONNECTION_STRING, {
-            maxPoolSize: 100,
-            minPoolSize: 5,
-            maxIdleTimeMS: 60000,
-            connectTimeoutMS: 10000,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-            compressors: ["zlib"],
-            retryWrites: true,
-            retryReads: true,
-        });
-
-        const dbName = process.env.MONGODB_DATABASE || "elizaAgent";
-        const db = new MongoDBDatabaseAdapter(client, dbName);
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success("Successfully connected to MongoDB Atlas");
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to MongoDB Atlas:", error);
-                throw error; // Re-throw to handle it in the calling code
-            });
-
-        return db;
-    } else if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-        elizaLogger.info("Initializing Supabase connection...");
-        const db = new SupabaseDatabaseAdapter(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_ANON_KEY
-        );
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to Supabase database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to Supabase:", error);
-            });
-
-        return db;
-    } else if (process.env.POSTGRES_URL) {
-        elizaLogger.info("Initializing PostgreSQL connection...");
-        const db = new PostgresDatabaseAdapter({
-            connectionString: process.env.POSTGRES_URL,
-            parseInputs: true,
-        });
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to PostgreSQL database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to PostgreSQL:", error);
-            });
-
-        return db;
-    } else if (process.env.PGLITE_DATA_DIR) {
-        elizaLogger.info("Initializing PgLite adapter...");
-        // `dataDir: memory://` for in memory pg
-        const db = new PGLiteDatabaseAdapter({
-            dataDir: process.env.PGLITE_DATA_DIR,
-        });
-        return db;
-    } else if (
-        process.env.QDRANT_URL &&
-        process.env.QDRANT_KEY &&
-        process.env.QDRANT_PORT &&
-        process.env.QDRANT_VECTOR_SIZE
-    ) {
-        elizaLogger.info("Initializing Qdrant adapter...");
-        const db = new QdrantDatabaseAdapter(
-            process.env.QDRANT_URL,
-            process.env.QDRANT_KEY,
-            Number(process.env.QDRANT_PORT),
-            Number(process.env.QDRANT_VECTOR_SIZE)
-        );
-        return db;
-    } else {
-        const filePath =
-            process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
-        elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
-        const db = new SqliteDatabaseAdapter(new Database(filePath));
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to SQLite database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to SQLite:", error);
-            });
-
-        return db;
-    } */
-}
-
 // also adds plugins from character file into the runtime
 export async function initializeClients(
     character: Character,
@@ -798,107 +561,11 @@ export async function initializeClients(
     const clientTypes = clients.map((c) => c.name);
     elizaLogger.log("initializeClients", clientTypes, "for", character.name);
 
-    // Start Auto Client if "auto" detected as a configured client
-    // if (clientTypes.includes(Clients.AUTO)) {
-    //     const autoClient = await AutoClientInterface.start(runtime);
-    //     if (autoClient) clients.auto = autoClient;
-    // }
-
-    // if (clientTypes.includes(Clients.XMTP)) {
-    //     const xmtpClient = await XmtpClientInterface.start(runtime);
-    //     if (xmtpClient) clients.xmtp = xmtpClient;
-    // }
-
-    // if (clientTypes.includes(Clients.DISCORD)) {
-    //     const discordClient = await DiscordClientInterface.start(runtime);
-    //     if (discordClient) clients.discord = discordClient;
-    // }
-
-    // if (clientTypes.includes(Clients.TELEGRAM)) {
-    //     const telegramClient = await TelegramClientInterface.start(runtime);
-    //     if (telegramClient) clients.telegram = telegramClient;
-    // }
-
-    // if (clientTypes.includes(Clients.TELEGRAM_ACCOUNT)) {
-    //     const telegramAccountClient =
-    //         await TelegramAccountClientInterface.start(runtime);
-    //     if (telegramAccountClient)
-    //         clients.telegram_account = telegramAccountClient;
-    // }
-
-    // if (clientTypes.includes(Clients.TWITTER)) {
-    //     const twitterClient = await TwitterClientInterface.start(runtime);
-    //     if (twitterClient) {
-    //         clients.twitter = twitterClient;
-    //     }
-    // }
-
-    // if (clientTypes.includes(Clients.ALEXA)) {
-    //     const alexaClient = await AlexaClientInterface.start(runtime);
-    //     if (alexaClient) {
-    //         clients.alexa = alexaClient;
-    //     }
-    // }
-
-    // if (clientTypes.includes(Clients.INSTAGRAM)) {
-    //     const instagramClient = await InstagramClientInterface.start(runtime);
-    //     if (instagramClient) {
-    //         clients.instagram = instagramClient;
-    //     }
-    // }
-
-    // if (clientTypes.includes(Clients.FARCASTER)) {
-    //     const farcasterClient = await FarcasterClientInterface.start(runtime);
-    //     if (farcasterClient) {
-    //         clients.farcaster = farcasterClient;
-    //     }
-    // }
-
-    // if (clientTypes.includes("lens")) {
-    //     const lensClient = new LensAgentClient(runtime);
-    //     lensClient.start();
-    //     clients.lens = lensClient;
-    // }
-
-    // if (clientTypes.includes(Clients.SIMSAI)) {
-    //     const simsaiClient = await JeeterClientInterface.start(runtime);
-    //     if (simsaiClient) clients.simsai = simsaiClient;
-    // }
-
-    // if (clientTypes.includes("deva")) {
-    //     if (clientTypes.includes("deva")) {
-    //         const devaClient = await DevaClientInterface.start(runtime);
-    //         if (devaClient) clients.deva = devaClient;
-    //     }
-    // }
-
-    // if (clientTypes.includes("slack")) {
-    //     const slackClient = await SlackClientInterface.start(runtime);
-    //     if (slackClient) clients.slack = slackClient; // Use object property instead of push
-    // }
-
-    // function determineClientType(client: Client): string {
-    //     // Check if client has a direct type identifier
-    //     if ("type" in client) {
-    //         return (client as any).type;
-    //     }
-
-    //     // Check constructor name
-    //     const constructorName = client.constructor?.name;
-    //     if (constructorName && !constructorName.includes("Object")) {
-    //         return constructorName.toLowerCase().replace("client", "");
-    //     }
-
-    //     // Fallback: Generate a unique identifier
-    //     return `client_${Date.now()}`;
-    // }
-
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
             if (plugin.clients) {
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
-                    // const clientType = determineClientType(client);
                     elizaLogger.debug(
                         `Initializing client: ${client.name}`
                     );
@@ -911,97 +578,11 @@ export async function initializeClients(
     return clients;
 }
 
-function getSecret(character: Character, secret: string) {
-    return character.settings?.secrets?.[secret] || process.env[secret];
-}
-
-// let nodePlugin: any | undefined;
-
 export async function createAgent(
     character: Character,
     token: string
 ): Promise<AgentRuntime> {
     elizaLogger.log(`Creating runtime for character ${character.name}`);
-
-    // nodePlugin ??= createNodePlugin();
-
-    // const teeMode = getSecret(character, "TEE_MODE") || "OFF";
-    // const walletSecretSalt = getSecret(character, "WALLET_SECRET_SALT");
-
-    // Validate TEE configuration
-    // if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
-    //     elizaLogger.error(
-    //         "A WALLET_SECRET_SALT required when TEE_MODE is enabled"
-    //     );
-    //     throw new Error("Invalid TEE configuration");
-    // }
-
-    // let goatPlugin: any | undefined;
-
-    // if (getSecret(character, "EVM_PRIVATE_KEY")) {
-    //     goatPlugin = await createGoatPlugin((secret) =>
-    //         getSecret(character, secret)
-    //     );
-    // }
-
-    // let zilliqaPlugin: any | undefined;
-    // if (getSecret(character, "ZILLIQA_PRIVATE_KEY")) {
-    //     zilliqaPlugin = await createZilliqaPlugin((secret) =>
-    //         getSecret(character, secret)
-    //     );
-    // }
-
-    // Initialize Reclaim adapter if environment variables are present
-    // let verifiableInferenceAdapter;
-    // if (
-    //     process.env.RECLAIM_APP_ID &&
-    //     process.env.RECLAIM_APP_SECRET &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new ReclaimAdapter({
-    //         appId: process.env.RECLAIM_APP_ID,
-    //         appSecret: process.env.RECLAIM_APP_SECRET,
-    //         modelProvider: character.modelProvider,
-    //         token,
-    //     });
-    //     elizaLogger.log("Verifiable inference adapter initialized");
-    // }
-    // Initialize Opacity adapter if environment variables are present
-    let verifiableInferenceAdapter = null;
-    // if (
-    //     process.env.OPACITY_TEAM_ID &&
-    //     process.env.OPACITY_CLOUDFLARE_NAME &&
-    //     process.env.OPACITY_PROVER_URL &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new OpacityAdapter({
-    //         teamId: process.env.OPACITY_TEAM_ID,
-    //         teamName: process.env.OPACITY_CLOUDFLARE_NAME,
-    //         opacityProverUrl: process.env.OPACITY_PROVER_URL,
-    //         modelProvider: character.modelProvider,
-    //         token: token,
-    //     });
-    //     elizaLogger.log("Verifiable inference adapter initialized");
-    //     elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
-    //     elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
-    //     elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
-    //     elizaLogger.log("modelProvider", character.modelProvider);
-    //     elizaLogger.log("token", token);
-    // }
-    // if (
-    //     process.env.PRIMUS_APP_ID &&
-    //     process.env.PRIMUS_APP_SECRET &&
-    //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-    // ) {
-    //     verifiableInferenceAdapter = new PrimusAdapter({
-    //         appId: process.env.PRIMUS_APP_ID,
-    //         appSecret: process.env.PRIMUS_APP_SECRET,
-    //         attMode: "proxytls",
-    //         modelProvider: character.modelProvider,
-    //         token,
-    //     });
-    //     elizaLogger.log("Verifiable inference primus adapter initialized");
-    // }
 
     return new AgentRuntime({
         token,
@@ -1017,7 +598,6 @@ export async function createAgent(
         providers: [],
         managers: [],
         fetch: logFetch,
-        verifiableInferenceAdapter,
     });
 }
 
@@ -1199,18 +779,9 @@ const startAgents = async () => {
     const charactersArg = args.characters || args.character;
     let characters = [defaultCharacter];
 
-    // if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
-    //     characters = await loadCharacterFromOnchain();
-    // }
-
-    // const notOnchainJson = !onchainJson || onchainJson == "null";
-
-    if ((/* notOnchainJson && */ charactersArg) || hasValidRemoteUrls()) {
+    if ((charactersArg) || hasValidRemoteUrls()) {
         characters = await loadCharacters(charactersArg);
     }
-
-    // Normalize characters for injectable plugins
-    // characters = await Promise.all(characters.map(normalizeCharacter));
 
     try {
         for (const character of characters) {
