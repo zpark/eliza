@@ -1,4 +1,4 @@
-import { getModel, getEndpoint, models } from "../src/models.ts";
+import { getModelSettings, getEndpoint, models } from "../src/models.ts";
 import { ModelProviderName, ModelClass } from "../src/types.ts";
 import { describe, test, expect, vi } from "vitest";
 
@@ -169,10 +169,10 @@ describe("Model Retrieval Functions", () => {
             ).toBe("nousresearch/hermes-3-llama-3.1-405b");
         });
 
-        test("should throw error for invalid model provider", () => {
-            expect(() =>
-                getModel("INVALID_PROVIDER" as any, ModelClass.SMALL)
-            ).toThrow();
+        test("Test to ensure an invalid model provider returns undefined", () => {
+            expect(
+                getModelSettings("INVALID_PROVIDER" as any, ModelClass.SMALL)
+            ).toBe(undefined);
         });
     });
 
