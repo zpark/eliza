@@ -107,7 +107,7 @@ async function withRetry<T>(
 
     export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelClass = ModelClass.DEFAULT) {
 
-    elizaLogger.info("Initializing model client with runtime:", JSON.stringify(runtime.getModelProvider()));
+    elizaLogger.info(`Initializing model client with runtime: ${runtime.modelProvider}`);
     const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
     const baseURL = runtime.getModelProvider()?.endpoint;
     const apiKey = runtime.token ||
@@ -486,12 +486,7 @@ export async function generateMessageResponse({
     return await withRetry(async () => {
         const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
         
-        elizaLogger.info("Generating message response with model:", model);
-
-        elizaLogger.info("System prompt:", systemPrompt);
-        elizaLogger.info("Client:", client);
-        elizaLogger.info("Model:", model);
-        elizaLogger.info("Context:", context);
+        elizaLogger.info(`Generating message response with model: ${model} & model class: ${modelClass}`);
 
         const {text} = await aiGenerateText({
             model: client.languageModel(model),
