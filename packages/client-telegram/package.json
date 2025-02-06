@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/client-telegram",
+	"name": "@elizaos-plugins/client-telegram",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

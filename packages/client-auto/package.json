@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/client-auto",
+	"name": "@elizaos-plugins/client-auto",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

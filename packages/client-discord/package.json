@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/client-discord",
+	"name": "@elizaos-plugins/client-discord",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

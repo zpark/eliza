@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/client-github",
+	"name": "@elizaos-plugins/client-github",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

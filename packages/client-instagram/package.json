@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/client-instagram",
+    "name": "@elizaos-plugins/client-instagram",
     "version": "0.1.9",
     "type": "module",
     "main": "dist/index.js",
