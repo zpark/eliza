@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/adapter-sqljs",
+	"name": "@elizaos-plugins/adapter-sqljs",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

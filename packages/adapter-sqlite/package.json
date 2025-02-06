@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/adapter-sqlite",
+	"name": "@elizaos-plugins/adapter-sqlite",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

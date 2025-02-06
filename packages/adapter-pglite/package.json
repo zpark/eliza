@@ -1,5 +1,5 @@
 {
-	"name": "@elizaos/adapter-pglite",
+	"name": "@elizaos-plugins/adapter-pglite",
 	"version": "0.1.9",
 	"type": "module",
 	"main": "dist/index.js",

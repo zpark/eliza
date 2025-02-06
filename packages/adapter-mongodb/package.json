@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/adapter-mongodb",
+    "name": "@elizaos-plugins/adapter-mongodb",
     "version": "0.1.9",
     "description": "MongoDB adapter for ElizaOS",
     "main": "dist/index.js",
