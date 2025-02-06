@@ -21,8 +21,7 @@
     "dependencies": {
         "@elizaos/core": "workspace:*",
         "@telegraf/types": "7.1.0",
-        "telegraf": "4.16.3",
-        "zod": "3.23.8"
+        "telegraf": "4.16.3"
     },
     "devDependencies": {
         "tsup": "8.3.5",
@@ -33,5 +32,8 @@
         "dev": "tsup --format esm --dts --watch",
         "test": "vitest run",
         "test:watch": "vitest"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }

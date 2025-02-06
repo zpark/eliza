@@ -8,7 +8,7 @@
         "@elizaos/core": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
         "@elizaos/plugin-sgx": "workspace:*",
-        "better-sqlite3": "11.6.0",
+        "better-sqlite3": "11.8.1",
         "elliptic": "6.6.1"
     },
     "devDependencies": {
@@ -23,5 +23,8 @@
         "lint:fix": "biome check --apply src/",
         "format": "biome format src/",
         "format:fix": "biome format --write src/"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }

@@ -20,8 +20,7 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "glob": "11.0.0",
-        "zod": "3.23.8"
+        "glob": "11.0.0"
     },
     "devDependencies": {
         "tsup": "8.3.5"
@@ -33,5 +32,8 @@
         "build": "tsup --format esm --dts",
         "dev": "tsup --format esm --dts --watch",
         "lint": "eslint --fix"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }

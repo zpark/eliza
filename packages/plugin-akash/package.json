@@ -25,7 +25,6 @@
         "@cosmjs/stargate": "0.31.3",
         "@elizaos/core": "workspace:*",
         "@types/js-yaml": "^4.0.9",
-        "zod": "^3.22.4",
         "axios": "^1.7.9",
         "dotenv": "^16.4.1",
         "jsrsasign": "^11.1.0",
@@ -50,5 +49,8 @@
     },
     "peerDependencies": {
         "@elizaos/core": "workspace:*"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
