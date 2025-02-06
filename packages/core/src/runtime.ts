@@ -54,6 +54,8 @@ import {
     type DirectoryItem,
     type IModelProvider,
     type ModelSettings,
+    type ImageModelSettings,
+    type EmbeddingModelSettings,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -85,27 +87,43 @@ class KnowledgeManager {
         this.knowledgeRoot = knowledgeRoot;
     }
 
+    private async handleProcessingError(error: any, context: string) {
+        elizaLogger.error(
+            `Error ${context}:`,
+            error?.message || error || "Unknown error"
+        );
+        throw error;
+    }
+
+    private async checkExistingKnowledge(knowledgeId: UUID): Promise<boolean> {
+        const existingDocument = await this.runtime.documentsManager.getMemoryById(knowledgeId);
+        return !!existingDocument;
+    }
+
     async processCharacterKnowledge(items: string[]) {
         for (const item of items) {
-            const knowledgeId = stringToUuid(item);
-            const existingDocument = await this.runtime.documentsManager.getMemoryById(knowledgeId);
-            if (existingDocument) {
-                continue;
+            try {
+                const knowledgeId = stringToUuid(item);
+                if (await this.checkExistingKnowledge(knowledgeId)) {
+                    continue;
+                }
+
+                elizaLogger.info(
+                    "Processing knowledge for ",
+                    this.runtime.character.name,
+                    " - ",
+                    item.slice(0, 100),
+                );
+
+                await knowledge.set(this.runtime, {
+                    id: knowledgeId,
+                    content: {
+                        text: item,
+                    },
+                });
+            } catch (error) {
+                await this.handleProcessingError(error, "processing character knowledge");
             }
-
-            elizaLogger.info(
-                "Processing knowledge for ",
-                this.runtime.character.name,
-                " - ",
-                item.slice(0, 100),
-            );
-
-            await knowledge.set(this.runtime, {
-                id: knowledgeId,
-                content: {
-                    text: item,
-                },
-            });
         }
     }
 
@@ -116,24 +134,12 @@ class KnowledgeManager {
             if (!item) continue;
 
             try {
-                let isShared = false;
-                let contentItem: string;
-
-                if (typeof item === "object" && "path" in item) {
-                    isShared = item.shared === true;
-                    contentItem = item.path;
-                } else {
-                    contentItem = item as string;
-                }
-
+                const { contentItem, isShared } = this.parseKnowledgeItem(item);
                 const knowledgeId = this.runtime.ragKnowledgeManager.generateScopedId(
                     contentItem,
                     isShared,
                 );
-                const fileExtension = contentItem
-                    .split(".")
-                    .pop()
-                    ?.toLowerCase();
+                const fileExtension = this.getFileExtension(contentItem);
 
                 if (fileExtension && ["md", "txt", "pdf"].includes(fileExtension)) {
                     await this.processFile(contentItem, isShared, knowledgeId, fileExtension);
@@ -142,10 +148,7 @@ class KnowledgeManager {
                 }
             } catch (error: any) {
                 hasError = true;
-                elizaLogger.error(
-                    `Error processing knowledge item ${item}:`,
-                    error?.message || error || "Unknown error",
-                );
+                await this.handleProcessingError(error, `processing knowledge item ${item}`);
             }
         }
 
@@ -156,33 +159,40 @@ class KnowledgeManager {
         }
     }
 
+    private parseKnowledgeItem(item: string | { path: string; shared?: boolean }): { contentItem: string; isShared: boolean } {
+        if (typeof item === "object" && "path" in item) {
+            return {
+                isShared: item.shared === true,
+                contentItem: item.path
+            };
+        }
+        return {
+            isShared: false,
+            contentItem: item as string
+        };
+    }
+
+    private getFileExtension(path: string): string | null {
+        return path.split(".").pop()?.toLowerCase() || null;
+    }
+
     private async processFile(path: string, isShared: boolean, knowledgeId: UUID, fileExtension: string) {
         try {
             const filePath = join(this.knowledgeRoot, path);
+            const content: string = await readFile(filePath, "utf8");
+            
+            if (!content) {
+                throw new Error("Empty file content");
+            }
+
             const existingKnowledge = await this.runtime.ragKnowledgeManager.getKnowledge({
                 id: knowledgeId,
                 agentId: this.runtime.agentId,
             });
 
-            const content: string = await readFile(filePath, "utf8");
-            if (!content) {
-                throw new Error("Empty file content");
-            }
-
             if (existingKnowledge.length > 0) {
-                const existingContent = existingKnowledge[0].content.text;
-                if (existingContent === content) {
-                    elizaLogger.info(
-                        `${isShared ? "Shared knowledge" : "Knowledge"} ${path} unchanged, skipping`,
-                    );
-                    return;
-                }
-
-                elizaLogger.info(
-                    `${isShared ? "Shared knowledge" : "Knowledge"} ${path} changed, updating...`,
-                );
-                await this.runtime.ragKnowledgeManager.removeKnowledge(knowledgeId);
-                await this.runtime.ragKnowledgeManager.removeKnowledge(`${knowledgeId}-chunk-*` as UUID);
+                await this.handleExistingKnowledge(existingKnowledge[0], content, path, isShared);
+                return;
             }
 
             elizaLogger.info(
@@ -199,8 +209,26 @@ class KnowledgeManager {
                 isShared,
             });
         } catch (error) {
-            throw new Error(`Failed to process file: ${error}`);
+            await this.handleProcessingError(error, "processing file");
         }
+    }
+
+    private async handleExistingKnowledge(existingKnowledge: any, newContent: string, path: string, isShared: boolean) {
+        const existingContent = existingKnowledge.content.text;
+        if (existingContent === newContent) {
+            elizaLogger.info(
+                `${isShared ? "Shared knowledge" : "Knowledge"} ${path} unchanged, skipping`,
+            );
+            return;
+        }
+
+        elizaLogger.info(
+            `${isShared ? "Shared knowledge" : "Knowledge"} ${path} changed, updating...`,
+        );
+        
+        const knowledgeId = existingKnowledge.id;
+        await this.runtime.ragKnowledgeManager.removeKnowledge(knowledgeId);
+        await this.runtime.ragKnowledgeManager.removeKnowledge(`${knowledgeId}-chunk-*` as UUID);
     }
 
     private async processDirectKnowledge(content: string, knowledgeId: UUID) {
@@ -303,7 +331,7 @@ class KnowledgeManager {
                 try {
                     const relativePath = join(sanitizedDir, file);
                     elizaLogger.debug(
-                        `[RAG Directory] Processing file:`,
+                        "[RAG Directory] Processing file:",
                         {
                             file,
                             relativePath,
@@ -344,6 +372,10 @@ class ModelProviderManager {
         this.runtime = runtime;
     }
 
+    private getSetting(key: string): string | undefined {
+        return this.runtime.getSetting(key);
+    }
+
     private parseNumber(value: string | undefined, defaultValue: number): number {
         if (!value) return defaultValue;
         const parsed = Number(value);
@@ -355,7 +387,7 @@ class ModelProviderManager {
     }
 
     private parseHeaders(): Record<string, string> | undefined {
-        const customHeaders = this.runtime.getSetting("CUSTOM_HEADERS");
+        const customHeaders = this.getSetting("CUSTOM_HEADERS");
         if (!customHeaders) return undefined;
 
         try {
@@ -365,91 +397,81 @@ class ModelProviderManager {
         }
     }
 
-    getModelProvider(): IModelProvider {
-        // Default model settings
-        const defaultModelSettings: ModelSettings = {
-            name: this.runtime.getSetting("DEFAULT_MODEL"),
-            maxInputTokens: this.parseNumber(this.runtime.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
-            maxOutputTokens: this.parseNumber(this.runtime.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
-            temperature: this.parseNumber(this.runtime.getSetting("DEFAULT_TEMPERATURE"), 0.7),
-            stop: this.parseStringArray(this.runtime.getSetting("DEFAULT_STOP_SEQUENCES")),
-            frequency_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
-            presence_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
-            repetition_penalty: this.parseNumber(this.runtime.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
-        };
-
-        // Helper function to get model-specific settings
-        const getModelSettings = (prefix: string): ModelSettings => ({
-            name: this.runtime.getSetting(`${prefix}_MODEL`),
+    private getModelSettingsWithPrefix(prefix: string, defaultSettings: ModelSettings): ModelSettings {
+        return {
+            name: this.getSetting(`${prefix}_MODEL`),
             maxInputTokens: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
-                defaultModelSettings.maxInputTokens
+                this.getSetting(`${prefix}_MAX_INPUT_TOKENS`), 
+                defaultSettings.maxInputTokens
             ),
             maxOutputTokens: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`), 
-                defaultModelSettings.maxOutputTokens
+                this.getSetting(`${prefix}_MAX_OUTPUT_TOKENS`), 
+                defaultSettings.maxOutputTokens
             ),
             temperature: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_TEMPERATURE`), 
-                defaultModelSettings.temperature
+                this.getSetting(`${prefix}_TEMPERATURE`), 
+                defaultSettings.temperature
             ),
             stop: this.parseStringArray(
-                this.runtime.getSetting(`${prefix}_STOP_SEQUENCES`)
-            ) || defaultModelSettings.stop,
+                this.getSetting(`${prefix}_STOP_SEQUENCES`)
+            ) || defaultSettings.stop,
             frequency_penalty: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_FREQUENCY_PENALTY`), 
-                defaultModelSettings.frequency_penalty
+                this.getSetting(`${prefix}_FREQUENCY_PENALTY`), 
+                defaultSettings.frequency_penalty
             ),
             presence_penalty: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_PRESENCE_PENALTY`), 
-                defaultModelSettings.presence_penalty
+                this.getSetting(`${prefix}_PRESENCE_PENALTY`), 
+                defaultSettings.presence_penalty
             ),
             repetition_penalty: this.parseNumber(
-                this.runtime.getSetting(`${prefix}_REPETITION_PENALTY`), 
-                defaultModelSettings.repetition_penalty
+                this.getSetting(`${prefix}_REPETITION_PENALTY`), 
+                defaultSettings.repetition_penalty
             )
-        });
+        };
+    }
+
+    private getSpecializedModelSettings(modelClass: ModelClass, defaultSettings: ModelSettings): ModelSettings | undefined {
+        const modelName = this.getSetting(`${modelClass}_MODEL`);
+        if (!modelName) return undefined;
+
+        return this.getModelSettingsWithPrefix(modelClass, defaultSettings);
+    }
+
+    getModelProvider(): IModelProvider {
+        const defaultModelSettings: ModelSettings = {
+            name: this.getSetting("DEFAULT_MODEL"),
+            maxInputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_INPUT_TOKENS"), 4096),
+            maxOutputTokens: this.parseNumber(this.getSetting("DEFAULT_MAX_OUTPUT_TOKENS"), 1024),
+            temperature: this.parseNumber(this.getSetting("DEFAULT_TEMPERATURE"), 0.7),
+            stop: this.parseStringArray(this.getSetting("DEFAULT_STOP_SEQUENCES")),
+            frequency_penalty: this.parseNumber(this.getSetting("DEFAULT_FREQUENCY_PENALTY"), 0),
+            presence_penalty: this.parseNumber(this.getSetting("DEFAULT_PRESENCE_PENALTY"), 0),
+            repetition_penalty: this.parseNumber(this.getSetting("DEFAULT_REPETITION_PENALTY"), 1.0)
+        };
+
+        const modelSettings: Record<ModelClass, ModelSettings | ImageModelSettings | EmbeddingModelSettings | undefined> = {
+            [ModelClass.DEFAULT]: defaultModelSettings,
+            [ModelClass.SMALL]: this.getSpecializedModelSettings(ModelClass.SMALL, defaultModelSettings),
+            [ModelClass.MEDIUM]: this.getSpecializedModelSettings(ModelClass.MEDIUM, defaultModelSettings),
+            [ModelClass.LARGE]: this.getSpecializedModelSettings(ModelClass.LARGE, defaultModelSettings),
+            [ModelClass.EMBEDDING]: this.getSetting("EMBEDDING_MODEL") ? {
+                name: this.getSetting("EMBEDDING_MODEL"),
+                dimensions: this.parseNumber(this.getSetting("EMBEDDING_DIMENSIONS"), 1536)
+            } : undefined,
+            [ModelClass.IMAGE]: this.getSetting("IMAGE_MODEL") ? {
+                name: this.getSetting("IMAGE_MODEL"),
+                steps: this.parseNumber(this.getSetting("IMAGE_STEPS"), 50)
+            } : undefined,
+            [ModelClass.IMAGE_VISION]: undefined // Add any specific settings if needed
+        };
 
         return {
-            apiKey: this.runtime.getSetting("PROVIDER_API_KEY"),
-            endpoint: this.runtime.getSetting("PROVIDER_ENDPOINT"),
-            provider: this.runtime.getSetting("PROVIDER_NAME"),
-
-            models: {
-                default: defaultModelSettings,
-
-                ...(this.runtime.getSetting("SMALL_MODEL") && {
-                    [ModelClass.SMALL]: getModelSettings("SMALL")
-                }),
-
-                ...(this.runtime.getSetting("MEDIUM_MODEL") && {
-                    [ModelClass.MEDIUM]: getModelSettings("MEDIUM")
-                }),
-
-                ...(this.runtime.getSetting("LARGE_MODEL") && {
-                    [ModelClass.LARGE]: getModelSettings("LARGE")
-                }),
-
-                ...(this.runtime.getSetting("EMBEDDING_MODEL") && {
-                    [ModelClass.EMBEDDING]: {
-                        name: this.runtime.getSetting("EMBEDDING_MODEL"),
-                        dimensions: this.parseNumber(
-                            this.runtime.getSetting("EMBEDDING_DIMENSIONS"), 
-                            1536
-                        )
-                    }
-                }),
-
-                ...(this.runtime.getSetting("IMAGE_MODEL") && {
-                    [ModelClass.IMAGE]: {
-                        name: this.runtime.getSetting("IMAGE_MODEL"),
-                        steps: this.parseNumber(
-                            this.runtime.getSetting("IMAGE_STEPS"), 
-                            50
-                        )
-                    }
-                })
-            }
+            apiKey: this.getSetting("PROVIDER_API_KEY"),
+            endpoint: this.getSetting("PROVIDER_ENDPOINT"),
+            provider: this.getSetting("PROVIDER_NAME"),
+            models: Object.fromEntries(
+                Object.entries(modelSettings).filter(([_, value]) => value !== undefined)
+            ) as Record<ModelClass, ModelSettings>
         };
     }
 }
@@ -588,27 +610,41 @@ class MemoryManagerService {
     }
 
     getMemoryManager(tableName: string): IMemoryManager | null {
-        return this.memoryManagers.get(tableName) || null;
+        const manager = this.memoryManagers.get(tableName);
+        if (!manager) {
+            elizaLogger.error(`Memory manager ${tableName} not found`);
+            return null;
+        }
+        return manager;
+    }
+
+    private getRequiredMemoryManager(tableName: string, managerType: string): IMemoryManager {
+        const manager = this.getMemoryManager(tableName);
+        if (!manager) {
+            elizaLogger.error(`${managerType} manager not found`);
+            throw new Error(`${managerType} manager not found`);
+        }
+        return manager;
     }
 
     getMessageManager(): IMemoryManager {
-        return this.getMemoryManager("messages")!;
+        return this.getRequiredMemoryManager("messages", "Message");
     }
 
     getDescriptionManager(): IMemoryManager {
-        return this.getMemoryManager("descriptions")!;
+        return this.getRequiredMemoryManager("descriptions", "Description");
     }
 
     getLoreManager(): IMemoryManager {
-        return this.getMemoryManager("lore")!;
+        return this.getRequiredMemoryManager("lore", "Lore");
     }
 
     getDocumentsManager(): IMemoryManager {
-        return this.getMemoryManager("documents")!;
+        return this.getRequiredMemoryManager("documents", "Documents");
     }
 
     getKnowledgeManager(): IMemoryManager {
-        return this.getMemoryManager("fragments")!;
+        return this.getRequiredMemoryManager("fragments", "Knowledge");
     }
 
     getRAGKnowledgeManager(): IRAGKnowledgeManager {
@@ -638,6 +674,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly modelProvider: string;
     readonly imageModelProvider: string;
     readonly imageVisionModelProvider: string;
+    readonly embeddingModelProvider: string;
     readonly fetch = fetch;
     readonly cacheManager: ICacheManager;
     readonly clients: Record<string, any>;
@@ -673,6 +710,8 @@ export class AgentRuntime implements IAgentRuntime {
             opts?.agentId ??
             stringToUuid(opts.character?.name ?? uuidv4());
         this.character = opts.character || defaultCharacter;
+
+        
 
         elizaLogger.info(`${this.character.name}(${this.agentId}) - Initializing AgentRuntime with options:`, {
             character: opts.character?.name,
@@ -724,7 +763,7 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.services = new Map();
 
-        // Initialize managers
+        // Initialize managers - moved modelProviderManager initialization earlier
         this.modelProviderManager = new ModelProviderManager(this);
         this.serviceManager = new ServiceManager(this);
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
@@ -753,30 +792,34 @@ export class AgentRuntime implements IAgentRuntime {
 
         this._verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
 
+        // Now initialize properties that depend on modelProviderManager
         this.modelProvider =
             this.character.modelProvider ??
             opts.modelProvider ??
             this.getModelProvider()?.models?.[ModelClass.DEFAULT]?.name;
 
         this.imageModelProvider =
-            this.character.imageModelProvider ?? this.getModelProvider()?.models?.[ModelClass.IMAGE]?.name;
+            this.character.imageModelProvider ?? this.modelProvider
 
         this.imageVisionModelProvider =
-            this.character.imageVisionModelProvider ?? this.getModelProvider()?.models[ModelClass.IMAGE_VISION]?.name;
+            this.character.imageVisionModelProvider ?? this.modelProvider
+
+        this.embeddingModelProvider =
+            this.character.embeddingModelProvider ?? this.modelProvider
+
+        this.serverUrl = opts.serverUrl ?? this.character?.modelEndpointOverride  ?? this.getSetting("PROVIDER_ENDPOINT");
 
         elizaLogger.info(
-            `${this.character.name}(${this.agentId}) - Selected model provider:`,
-            this.getModelProvider()?.models?.[ModelClass.DEFAULT]?.name
+            `${this.character.name}(${this.agentId}) - Selected model providers:\n` +
+            `- Default: ${`${this.modelProvider}--${this.getModelProvider()?.models?.[ModelClass.DEFAULT]?.name}`}\n` +
+            `- Image: ${`${this.imageModelProvider}--${this.getModelProvider()?.models?.[ModelClass.IMAGE]?.name}`}\n` +
+            `- Image Vision: ${`${this.imageVisionModelProvider}--${this.getModelProvider()?.models?.[ModelClass.IMAGE_VISION]?.name}`}\n` +
+            `- Embedding: ${`${this.embeddingModelProvider}--${this.getModelProvider()?.models?.[ModelClass.EMBEDDING]?.name}`}` +
+            `- Endpoint: ${`${this.serverUrl}`}`
         );
 
         elizaLogger.info(
-            `${this.character.name}(${this.agentId}) - Selected image model provider:`,
-            this.getModelProvider()?.models?.[ModelClass.IMAGE]?.name
-        );
-
-        elizaLogger.info(
-            `${this.character.name}(${this.agentId}) - Selected image vision model provider:`,
-            this.getModelProvider()?.models?.[ModelClass.IMAGE_VISION]?.name
+            `${this.character.name}(${this.agentId}) - Selected [${this.serverUrl}] server url`,
         );
 
         // Validate model provider

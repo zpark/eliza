@@ -735,6 +735,9 @@ export type Character = {
     /** Image Vision model provider to use, if different from modelProvider */
     imageVisionModelProvider?: string;
 
+    /** Embedding model provider to use, if different from modelProvider */
+    embeddingModelProvider?: string;
+
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
 
@@ -1280,6 +1283,7 @@ export interface IAgentRuntime {
     modelProvider: string;
     imageModelProvider: string;
     imageVisionModelProvider: string;
+    embeddingModelProvider: string;
     //////////////////////////////
 
     

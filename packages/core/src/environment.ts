@@ -4,20 +4,22 @@ import elizaLogger from "./logger";
 
 // TODO: TO COMPLETE
 export const envSchema = z.object({
-    // API Keys with specific formats
-    OPENAI_API_KEY: z
-        .string()
-        .startsWith("sk-", "OpenAI API key must start with 'sk-'"),
-    REDPILL_API_KEY: z.string().min(1, "REDPILL API key is required"),
-    GROK_API_KEY: z.string().min(1, "GROK API key is required"),
-    GROQ_API_KEY: z
-        .string()
-        .startsWith("gsk_", "GROQ API key must start with 'gsk_'"),
-    OPENROUTER_API_KEY: z.string().min(1, "OpenRouter API key is required"),
-    GOOGLE_GENERATIVE_AI_API_KEY: z
-        .string()
-        .min(1, "Gemini API key is required"),
-    ELEVENLABS_XI_API_KEY: z.string().min(1, "ElevenLabs API key is required"),
+    // Generic Provider Configuration
+    PROVIDER_NAME: z.nativeEnum(ModelProviderName),
+    PROVIDER_API_KEY: z.string().min(1, "Provider API key is required"),
+    PROVIDER_ENDPOINT: z.string().url("Provider endpoint must be a valid URL").optional(),
+
+    // Optional Provider-Specific Keys (for additional services)
+    ELEVENLABS_XI_API_KEY: z.string().min(1, "ElevenLabs API key is required").optional(),
+
+    // Model Settings
+    DEFAULT_MODEL: z.string().optional(),
+    SMALL_MODEL: z.string().optional(),
+    MEDIUM_MODEL: z.string().optional(),
+    LARGE_MODEL: z.string().optional(),
+    EMBEDDING_MODEL: z.string().optional(),
+    IMAGE_MODEL: z.string().optional(),
+    IMAGE_VISION_MODEL: z.string().optional(),
 });
 
 // Type inference
