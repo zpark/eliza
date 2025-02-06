@@ -1,7 +1,7 @@
 {
     "name": "@elizaos/plugin-devin",
     "description": "Devin API integration plugin for Eliza",
-    "version": "0.1.9",
+    "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
