@@ -1,11 +1,13 @@
-import { type Client, type IAgentRuntime, elizaLogger } from "@elizaos/core";
+import { type Client, type IAgentRuntime, elizaLogger, type Plugin } from "@elizaos/core";
 import { privateKeyToAccount } from "viem/accounts";
 import { LensClient } from "./client";
 import { LensPostManager } from "./post";
 import { LensInteractionManager } from "./interactions";
 import StorjProvider from "./providers/StorjProvider";
 
-export class LensAgentClient implements Client {
+class LensAgentClient implements Client {
+    name = 'lens';
+
     client: LensClient;
     posts: LensPostManager;
     interactions: LensInteractionManager;
@@ -58,9 +60,23 @@ export class LensAgentClient implements Client {
 
     async start() {
         await Promise.all([this.posts.start(), this.interactions.start()]);
+
+        return {
+            stop: async () => {
+                await Promise.all([this.posts.stop(), this.interactions.stop()]);
+            },
+        };
     }
 
-    async stop() {
-        await Promise.all([this.posts.stop(), this.interactions.stop()]);
+    static async start(runtime: IAgentRuntime) {
+        const client = new LensAgentClient(runtime);
+        return await client.start();
     }
 }
+
+const lensPlugin: Plugin = {
+    name: "lens",
+    description: "Lens client plugin",
+    clients: [LensAgentClient],
+};
+export default lensPlugin;

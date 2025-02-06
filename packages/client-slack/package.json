@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/client-slack",
+    "name": "@elizaos-plugins/client-slack",
     "version": "0.25.6-alpha.1",
     "description": "Slack client plugin for Eliza framework",
     "type": "module",

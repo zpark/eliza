@@ -608,14 +608,33 @@ export type Media = {
 };
 
 /**
- * Client interface for platform connections
+ * Client instance
  */
-export type Client = {
-    /** Start client connection */
-    start: (runtime: IAgentRuntime) => Promise<unknown>;
+export type ClientInstance = {
+    /** Client name */
+    // name: string;
 
     /** Stop client connection */
     stop: (runtime: IAgentRuntime) => Promise<unknown>;
+};
+
+/**
+ * Client interface for platform connections
+ */
+export type Client = {
+    /** Client name */
+    name: string;
+
+    /** Client configuration */
+    config?: { [key: string]: any };
+
+    /** Start client connection */
+    start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
+};
+
+export type Adapter = {
+    /** Initialize adapter */
+    init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
 };
 
 /**
@@ -624,6 +643,9 @@ export type Client = {
 export type Plugin = {
     /** Plugin name */
     name: string;
+
+    /** Plugin configuration */
+    config?: { [key: string]: any };
 
     /** Plugin description */
     description: string;
@@ -642,28 +664,10 @@ export type Plugin = {
 
     /** Optional clients */
     clients?: Client[];
-};
 
-/**
- * Available client platforms
- */
-export enum Clients {
-    ALEXA= "alexa",
-    DISCORD = "discord",
-    DIRECT = "direct",
-    TWITTER = "twitter",
-    TELEGRAM = "telegram",
-    TELEGRAM_ACCOUNT = "telegram-account",
-    FARCASTER = "farcaster",
-    LENS = "lens",
-    AUTO = "auto",
-    SLACK = "slack",
-    GITHUB = "github",
-    INSTAGRAM = "instagram",
-    SIMSAI = "simsai",
-    XMTP = "xmtp",
-    DEVA = "deva",
-}
+    /** Optional adapters */
+    adapters?: Adapter[];
+};
 
 export interface IAgentConfig {
     [key: string]: string;
@@ -798,9 +802,6 @@ export type Character = {
 
     /** Optional knowledge base */
     knowledge?: (string | { path: string; shared?: boolean })[];
-
-    /** Supported client platforms */
-    clients: Clients[];
 
     /** Available plugins */
     plugins: Plugin[];
@@ -1294,9 +1295,7 @@ export interface IAgentRuntime {
     cacheManager: ICacheManager;
 
     services: Map<ServiceType, Service>;
-    // any could be EventEmitter
-    // but I think the real solution is forthcoming as a base client interface
-    clients: Record<string, any>;
+    clients: ClientInstance[];
 
     verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 

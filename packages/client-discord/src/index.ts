@@ -5,6 +5,7 @@ import {
     type Character,
     type Client as ElizaClient,
     type IAgentRuntime,
+    type Plugin,
 } from "@elizaos/core";
 import {
     Client,
@@ -28,7 +29,7 @@ import voiceStateProvider from "./providers/voiceState.ts";
 import { VoiceManager } from "./voice.ts";
 import { PermissionsBitField } from "discord.js";
 
-export class DiscordClient extends EventEmitter {
+class DiscordClient extends EventEmitter {
     apiToken: string;
     client: Client;
     runtime: IAgentRuntime;
@@ -396,19 +397,18 @@ export class DiscordClient extends EventEmitter {
     }
 }
 
-export function startDiscord(runtime: IAgentRuntime) {
-    return new DiscordClient(runtime);
-}
+// function startDiscord(runtime: IAgentRuntime) {
+//     return new DiscordClient(runtime);
+// }
 
-export const DiscordClientInterface: ElizaClient = {
+const DiscordClientInterface: ElizaClient = {
+    name: 'discord',
     start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
-    stop: async (runtime: IAgentRuntime) => {
-        try {
-            // stop it
-            elizaLogger.log("Stopping discord client", runtime.agentId);
-            await runtime.clients.discord.stop();
-        } catch (e) {
-            elizaLogger.error("client-discord interface stop error", e);
-        }
-    },
 };
+
+const discordPlugin: Plugin = {
+    name: "discord",
+    description: "Discord client plugin",
+    clients: [DiscordClientInterface],
+};
+export default discordPlugin;

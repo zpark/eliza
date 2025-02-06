@@ -11,7 +11,7 @@ export class WhatsAppPlugin implements Plugin {
     name: string;
     description: string;
 
-    constructor(private config: WhatsAppConfig) {
+    constructor(config: WhatsAppConfig) {
         this.name = "WhatsApp Cloud API Plugin";
         this.description =
             "A plugin for integrating WhatsApp Cloud API with your application.";

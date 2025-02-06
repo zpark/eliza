@@ -24,6 +24,7 @@ export default defineConfig({
   ],
 
   external: [
+        "zod",
     ...builtinModules.filter(mod => mod !== 'util'),
     ...Object.keys(pkg.dependencies || {})
             .filter(dep => !dep.startsWith('@injectivelabs/'))

@@ -13,10 +13,12 @@ import {
     type Memory,
     type Goal,
     type Relationship,
+    type IAgentRuntime,
+    type Adapter,
+    type Plugin,
 } from "@elizaos/core";
 
-
-export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  implements IDatabaseCacheAdapter {
+class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  implements IDatabaseCacheAdapter {
     db: QdrantClient;
     collectionName: string = 'collection';
     qdrantV5UUIDNamespace: string = "00000000-0000-0000-0000-000000000000";
@@ -403,4 +405,36 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
     }
 }
 
-export default QdrantDatabaseAdapter;
+const qdrantDatabaseAdapter: Adapter = {
+    init: (runtime: IAgentRuntime) => {
+        const QDRANT_URL = runtime.getSetting("QDRANT_URL");
+        const QDRANT_KEY = runtime.getSetting("QDRANT_KEY"); 
+        const QDRANT_PORT = runtime.getSetting("QDRANT_PORT");
+        const QDRANT_VECTOR_SIZE = runtime.getSetting("QDRANT_VECTOR_SIZE");
+
+        if (
+            QDRANT_URL &&
+            QDRANT_KEY &&
+            QDRANT_PORT &&
+            QDRANT_VECTOR_SIZE
+        ) {
+            elizaLogger.info("Initializing Qdrant adapter...");
+            const db = new QdrantDatabaseAdapter(
+                QDRANT_URL,
+                QDRANT_KEY,
+                Number(QDRANT_PORT),
+                Number(QDRANT_VECTOR_SIZE)
+            );
+            return db;
+        } else {
+            throw new Error("QDRANT_URL, QDRANT_KEY, QDRANT_PORT, and QDRANT_VECTOR_SIZE are not set");
+        }
+    },
+};
+
+const qdrantPlugin: Plugin = {
+    name: "qdrant",
+    description: "Qdrant database adapter plugin",
+    adapters: [qdrantDatabaseAdapter],
+};
+export default qdrantPlugin;

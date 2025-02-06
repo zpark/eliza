@@ -1,8 +1,9 @@
-import { IAgentRuntime, Client, elizaLogger } from "@elizaos/core";
+import { IAgentRuntime, Client, elizaLogger, type Plugin } from "@elizaos/core";
 import { DevaClient } from "./devaClient.ts";
 import { validateDevaConfig } from "./enviroment.ts";
 
 export const DevaClientInterface: Client = {
+    name: 'deva',
     async start(runtime: IAgentRuntime) {
         await validateDevaConfig(runtime);
 
@@ -20,15 +21,11 @@ export const DevaClientInterface: Client = {
 
         return deva;
     },
-    async stop(_runtime: IAgentRuntime) {
-        try {
-            // Add cleanup logic here
-              elizaLogger.warn("Deva client does not support stopping yet");
-        } catch (error) {
-            elizaLogger.error("Failed to stop Deva client:", error);
-            throw error;
-        }
-    },
 };
 
-export default DevaClientInterface;
+const devaPlugin: Plugin = {
+    name: "deva",
+    description: "Deva client plugin",
+    clients: [DevaClientInterface],
+};
+export default devaPlugin;

@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/adapter-postgres",
+    "name": "@elizaos-plugins/adapter-postgres",
     "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",

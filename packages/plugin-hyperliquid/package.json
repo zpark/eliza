@@ -6,7 +6,8 @@
     "types": "dist/index.d.ts",
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "hyperliquid": "^1.5.6"
+        "hyperliquid": "^1.5.6",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@types/node": "^20.0.0",

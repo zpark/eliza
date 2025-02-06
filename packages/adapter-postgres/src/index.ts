@@ -19,6 +19,9 @@ import {
     type Memory,
     type Relationship,
     type UUID,
+    type IAgentRuntime,
+    type Adapter,
+    type Plugin,
 } from "@elizaos/core";
 import fs from "fs";
 import path from "path";
@@ -33,7 +36,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
-export class PostgresDatabaseAdapter
+class PostgresDatabaseAdapter
     extends DatabaseAdapter<Pool>
     implements IDatabaseCacheAdapter
 {
@@ -1811,4 +1814,36 @@ export class PostgresDatabaseAdapter
     }
 }
 
-export default PostgresDatabaseAdapter;
+const postgresAdapter: Adapter = {
+    init: (runtime: IAgentRuntime) => {
+        const POSTGRES_URL = runtime.getSetting("POSTGRES_URL");
+        if (POSTGRES_URL) {
+            elizaLogger.info("Initializing PostgreSQL connection...");
+            const db = new PostgresDatabaseAdapter({
+                connectionString: POSTGRES_URL,
+                parseInputs: true,
+            });
+    
+            // Test the connection
+            db.init()
+                .then(() => {
+                    elizaLogger.success(
+                        "Successfully connected to PostgreSQL database"
+                    );
+                })
+                .catch((error) => {
+                    elizaLogger.error("Failed to connect to PostgreSQL:", error);
+                });
+    
+            return db;
+        } else {
+            throw new Error("POSTGRES_URL is not set");
+        }
+    },
+};
+const postgresPlugin: Plugin = {
+    name: "postgres",
+    description: "PostgreSQL database adapter plugin",
+    adapters: [postgresAdapter],
+};
+export default postgresPlugin;

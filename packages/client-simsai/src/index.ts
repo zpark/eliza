@@ -1,7 +1,7 @@
 import { JeeterPostClient } from "./jeeter/post.ts";
 import { JeeterSearchClient } from "./jeeter/search.ts";
 import { JeeterInteractionClient } from "./jeeter/interactions.ts";
-import { IAgentRuntime, Client, elizaLogger } from "@elizaos/core";
+import { IAgentRuntime, Client, elizaLogger, type Plugin } from "@elizaos/core";
 import { validateJeeterConfig } from "./jeeter/environment.ts";
 import { ClientBase } from "./jeeter/base.ts";
 
@@ -17,22 +17,24 @@ class SimsAIManager {
         this.search = new JeeterSearchClient(this.client, runtime);
         this.interaction = new JeeterInteractionClient(this.client, runtime);
     }
+
+    async stop() {
+        elizaLogger.log("Stopping SimsAI client");
+        await this.interaction.stop();
+        await this.search.stop();
+        await this.post.stop();
+        elizaLogger.log("SimsAI client stopped successfully");
+    }
 }
 
-let activeManager: SimsAIManager | null = null;
-
-export const JeeterClientInterface: Client = {
+const JeeterClientInterface: Client = {
+    name: 'jeeter',
     async start(runtime: IAgentRuntime) {
-        if (activeManager) {
-            elizaLogger.warn("SimsAI client already started");
-            return activeManager;
-        }
-
         await validateJeeterConfig(runtime);
 
         elizaLogger.log("SimsAI client started");
 
-        activeManager = new SimsAIManager(runtime);
+        const activeManager = new SimsAIManager(runtime);
 
         await activeManager.client.init();
 
@@ -44,22 +46,11 @@ export const JeeterClientInterface: Client = {
 
         return activeManager;
     },
-    async stop(_runtime: IAgentRuntime) {
-        elizaLogger.log("Stopping SimsAI client");
-        if (activeManager) {
-            try {
-                await activeManager.interaction.stop();
-                await activeManager.search.stop();
-                await activeManager.post.stop();
-                activeManager = null;
-                elizaLogger.log("SimsAI client stopped successfully");
-            } catch (error) {
-                elizaLogger.error("Error stopping SimsAI client:", error);
-                throw error;
-            }
-        }
-        elizaLogger.log("SimsAI client stopped");
-    },
 };
 
-export default JeeterClientInterface;
+const simsaiPlugin: Plugin = {
+    name: "simsai",
+    description: "SimsAI client plugin",
+    clients: [JeeterClientInterface],
+};
+export default simsaiPlugin;

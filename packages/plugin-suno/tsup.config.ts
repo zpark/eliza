@@ -7,5 +7,6 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   clean: true,
-  external: ["@elizaos/core"]
+  external: [
+        "zod","@elizaos/core"]
 });
