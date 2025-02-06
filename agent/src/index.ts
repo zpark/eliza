@@ -967,7 +967,7 @@ export async function createAgent(
     //     elizaLogger.log("Verifiable inference adapter initialized");
     // }
     // Initialize Opacity adapter if environment variables are present
-    let verifiableInferenceAdapter = null;
+    // let verifiableInferenceAdapter = null;
     // if (
     //     process.env.OPACITY_TEAM_ID &&
     //     process.env.OPACITY_CLOUDFLARE_NAME &&
@@ -1017,7 +1017,7 @@ export async function createAgent(
         providers: [],
         managers: [],
         fetch: logFetch,
-        verifiableInferenceAdapter,
+        // verifiableInferenceAdapter,
     });
 }
 

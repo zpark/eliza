@@ -34,7 +34,7 @@ import {
     type IDatabaseAdapter,
     type IMemoryManager,
     type IRAGKnowledgeManager,
-    type IVerifiableInferenceAdapter,
+    // type IVerifiableInferenceAdapter,
     type KnowledgeItem,
     // RAGKnowledgeItem,
     //Media,
@@ -178,7 +178,7 @@ export class AgentRuntime implements IAgentRuntime {
     cacheManager: ICacheManager;
     clients: ClientInstance[] = [];
 
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
 
     registerMemoryManager(manager: IMemoryManager): void {
         if (!manager.tableName) {
@@ -261,7 +261,7 @@ export class AgentRuntime implements IAgentRuntime {
         speechModelPath?: string;
         cacheManager?: ICacheManager;
         logging?: boolean;
-        verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+        // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -439,7 +439,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.registerEvaluator(evaluator);
         });
 
-        this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
+        // this.verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
     }
 
     private async initializeDatabase() {
@@ -1138,7 +1138,7 @@ export class AgentRuntime implements IAgentRuntime {
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
-            verifiableInferenceAdapter: this.verifiableInferenceAdapter,
+            // verifiableInferenceAdapter: this.verifiableInferenceAdapter,
         });
 
         const evaluators = parseJsonArrayFromText(
@@ -1782,14 +1782,6 @@ Text: ${attachment.text}
             recentMessagesData,
             attachments: formattedAttachments,
         } as State;
-    }
-
-    getVerifiableInferenceAdapter(): IVerifiableInferenceAdapter | undefined {
-        return this.verifiableInferenceAdapter;
-    }
-
-    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter): void {
-        this.verifiableInferenceAdapter = adapter;
     }
 }
 
