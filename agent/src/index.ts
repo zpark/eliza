@@ -1,7 +1,7 @@
 // import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
 // import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
 // import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
-import { RedisClient } from "@elizaos/cache-redis";
+// import { RedisClient } from "@elizaos/cache-redis";
 // import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
 // import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 // import { AutoClientInterface } from "@elizaos/client-auto";
@@ -1050,21 +1050,21 @@ function initializeCache(
     db?: IDatabaseCacheAdapter
 ) {
     switch (cacheStore) {
-        case CacheStore.REDIS:
-            if (process.env.REDIS_URL) {
-                elizaLogger.info("Connecting to Redis...");
-                const redisClient = new RedisClient(process.env.REDIS_URL);
-                if (!character?.id) {
-                    throw new Error(
-                        "CacheStore.REDIS requires id to be set in character definition"
-                    );
-                }
-                return new CacheManager(
-                    new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
-                );
-            } else {
-                throw new Error("REDIS_URL environment variable is not set.");
-            }
+        // case CacheStore.REDIS:
+        //     if (process.env.REDIS_URL) {
+        //         elizaLogger.info("Connecting to Redis...");
+        //         const redisClient = new RedisClient(process.env.REDIS_URL);
+        //         if (!character?.id) {
+        //             throw new Error(
+        //                 "CacheStore.REDIS requires id to be set in character definition"
+        //             );
+        //         }
+        //         return new CacheManager(
+        //             new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
+        //         );
+        //     } else {
+        //         throw new Error("REDIS_URL environment variable is not set.");
+        //     }
 
         case CacheStore.DATABASE:
             if (db) {

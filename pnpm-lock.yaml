@@ -127,9 +127,6 @@ importers:
 
   agent:
     dependencies:
-      '@elizaos/cache-redis':
-        specifier: workspace:*
-        version: link:../packages/cache-redis
       '@elizaos/client-direct':
         specifier: workspace:*
         version: link:../packages/client-direct
@@ -530,28 +527,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^3.0.2
         version: 3.0.5(vitest@3.0.5(@types/debug@4.1.12)(@types/node@22.13.1)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@6.0.5))(terser@5.38.1))
-      tsup:
-        specifier: 8.3.5
-        version: 8.3.5(@swc/core@1.10.14(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
-      vitest:
-        specifier: ^3.0.2
-        version: 3.0.5(@types/debug@4.1.12)(@types/node@22.13.1)(jsdom@25.0.1(bufferutil@4.0.9)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@6.0.5))(terser@5.38.1)
-
-  packages/cache-redis:
-    dependencies:
-      '@elizaos/core':
-        specifier: workspace:*
-        version: link:../core
-      ioredis:
-        specifier: 5.4.2
-        version: 5.4.2
-      whatwg-url:
-        specifier: 7.1.0
-        version: 7.1.0
-    devDependencies:
-      '@types/ioredis':
-        specifier: ^5.0.0
-        version: 5.0.0
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.14(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.1)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
