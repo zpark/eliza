@@ -4,8 +4,6 @@ import {
     CacheManager,
     CacheStore,
     type Character,
-    type Client,
-    // Clients,
     DbCacheAdapter,
     elizaLogger,
     FsCacheAdapter,
