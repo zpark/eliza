@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-ankr",
-    "version": "0.1.9",
+    "version": "0.25.6-alpha.1",
     "description": "ANKR Plugin for ElizaOS",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

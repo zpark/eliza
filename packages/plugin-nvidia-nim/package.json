@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-nvidia-nim",
-    "version": "0.1.9",
+    "version": "0.25.6-alpha.1",
     "description": "NVIDIA NIM API plugin for ElizaOS",
     "type": "module",
     "main": "dist/index.js",
