@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/plugin-di",
-    "version": "0.1.9",
+    "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -22,8 +22,7 @@
         "@elizaos/core": "workspace:*",
         "inversify": "^6.2.1",
         "reflect-metadata": "^0.2.2",
-        "uuid": "11.0.3",
-        "zod": "3.23.8"
+        "uuid": "11.0.3"
     },
     "devDependencies": {
         "@biomejs/biome": "1.9.4",
