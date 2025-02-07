@@ -64,6 +64,9 @@ importers:
       sharp:
         specifier: 0.33.5
         version: 0.33.5
+      ws:
+        specifier: 8.18.0
+        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       zod:
         specifier: 3.24.1
         version: 3.24.1
