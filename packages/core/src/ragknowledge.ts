@@ -1,11 +1,11 @@
 import { embed } from "./embedding.ts";
 import { splitChunks } from "./generation.ts";
 import elizaLogger from "./logger.ts";
-import {
-    type IAgentRuntime,
-    type IRAGKnowledgeManager,
-    type RAGKnowledgeItem,
-    type UUID,
+import type {
+    IAgentRuntime,
+    IRAGKnowledgeManager,
+    RAGKnowledgeItem,
+    UUID,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { existsSync } from "node:fs";
