@@ -86,13 +86,18 @@ async function withRetry<T>(
     }
 }
 
-function createModelClient(provider: string, apiKey: string, baseURL: string, runtime: IAgentRuntime) {
-    const modelClients: Record<string, any> = {
-        "anthropic": createAnthropic,
-        "claude": createAnthropic,
-    };
+function isAnthropicProvider(runtime: IAgentRuntime): boolean {
+    const provider = runtime.getModelProvider()?.provider;
+    return (
+        provider.toLowerCase().includes("anthropic") ||
+        provider.toLowerCase().includes("claude")
+    );
+}
 
-    const createClient = modelClients[provider] || createOpenAI;
+function createModelClient(apiKey: string, baseURL: string, runtime: IAgentRuntime) {
+    const createClient = isAnthropicProvider(runtime)
+        ? createAnthropic
+        : createOpenAI;
 
     return createClient({
         apiKey,
@@ -144,7 +149,7 @@ export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelCl
         throw new Error(`Model name not specified for class ${modelClass}`);
     }
     
-    const client = createModelClient(provider, apiKey, baseURL, runtime);
+    const client = createModelClient(apiKey, baseURL, runtime);
 
     elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
 
@@ -356,7 +361,7 @@ function getModelConfig(
         runtime.getModelProvider()?.provider === "anthropic" ||
         runtime.getModelProvider()?.provider === "claude";
 
-    if (isAnthropic && mode === "json") {
+    if (isAnthropicProvider(runtime) && mode === "json") {
         elizaLogger.warn("Anthropic does not support JSON mode. Switching to 'auto'.");
         mode = "auto";
     }
