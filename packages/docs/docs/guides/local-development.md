@@ -441,34 +441,6 @@ bun run analyze
     - Follow conventional commits
     - Keep PRs focused
 
-## Additional Tools
-
-### Character Development
-
-```bash
-# Generate character from Twitter data
-npx tweets2character
-
-# Convert documents to knowledge base
-npx folder2knowledge <path/to/folder>
-
-# Add knowledge to character
-npx knowledge2character <character-file> <knowledge-file>
-```
-
-### Development Scripts
-
-```bash
-# Analyze codebase
-./scripts/analyze-codebase.ts
-
-# Extract tweets for training
-./scripts/extracttweets.js
-
-# Clean build artifacts
-./scripts/clean.sh
-```
-
 ## Further Resources
 
 - [Configuration Guide](./configuration.md) for setup details
