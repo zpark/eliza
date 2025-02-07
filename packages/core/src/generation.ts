@@ -145,8 +145,7 @@ export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelCl
     }
     
     const client = createModelClient(provider, apiKey, baseURL, runtime);
-    // console.log(client)
-     
+
     elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
 
     return {
