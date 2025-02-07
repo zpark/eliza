@@ -99,9 +99,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Das Projekt entwickelt sich schnell weiter. Manchmal musst du das Projekt bereinigen, wenn du es nach einiger Zeit erneut aufrufst.
-bun clean
 ```
 
 #### Zusätzliche Anforderungen

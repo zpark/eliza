@@ -63,9 +63,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Il progetto evolve rapidamente; a volte è necessario pulire il progetto se si ritorna sul progetto dopo un po' di tempo
-bun clean
 ```
 
 #### Requisiti Aggiuntivi

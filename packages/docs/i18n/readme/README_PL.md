@@ -110,9 +110,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Projekt rozwija się bardzo szybko, dlatego jeżeli robisz sobie przerwę na jakiś czas i wejdzie w międzyczasie dużo zmian, dobrze jest użyć tej komendy:
-bun clean
 ```
 
 #### Dodatkowe wymagania

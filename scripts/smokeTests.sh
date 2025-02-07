@@ -36,8 +36,6 @@ cd "$PROJECT_DIR"
 
 cp .env.example .env
 
-bun clean
-
 bun install
 
 bun run build

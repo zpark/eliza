@@ -100,9 +100,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Dự án cải tiến rất nhanh, đôi khi bạn cần phải dọn dẹp dự án nếu bạn quay lại dự án
-bun clean
 ```
 
 #### Yêu cầu bổ sung

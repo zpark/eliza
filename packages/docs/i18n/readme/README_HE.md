@@ -152,9 +152,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# לעיתים צריך לנקות את הפרויקט אם חוזרים אליו לאחר זמן
-bun clean
 ```
 
 </div>

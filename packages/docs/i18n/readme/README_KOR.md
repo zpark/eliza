@@ -129,9 +129,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# 프로젝트가 빠르게 변경되기 때문에, 다시 작업을 시작할 때는 clean 명령어 입력이 필요할 수도 있습니다.
-bun clean
 ```
 
 #### 추가 요구 사항

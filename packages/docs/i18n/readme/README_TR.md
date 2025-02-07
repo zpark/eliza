@@ -63,9 +63,6 @@ cp .env.example .env
 bun i
 bun run build
 bun start
-
-# Proje hızlı gelişiyor, projeye geri döndüğünüzde bazen projeyi temizlemeniz gerekebilir
-bun clean
 ```
 
 #### Ek Gereksinimler

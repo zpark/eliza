@@ -570,14 +570,7 @@ build_and_start() {
         exit 1
     fi
 
-    # Clean and install
-    log_verbose "Cleaning project..."
-    if ! bun clean; then
-        log_error "Failed to clean project"
-        exit 1
-    fi
-    log_success "Project cleaned"
-
+    # INSTALL
     log_verbose "Installing dependencies..."
     if ! bun install; then
         log_error "Failed to install dependencies"

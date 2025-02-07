@@ -131,9 +131,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# 该项目迭代速度很快，有时如果您回到项目，需要清理项目
-bun clean
 ```
 
 ## 一键部署 Eliza

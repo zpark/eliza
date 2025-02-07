@@ -255,9 +255,6 @@ bun add -D ts-node typescript @types/node --filter "@elizaos/agent"
 # Also add to the core package since it's needed there too
 bun add -D ts-node typescript @types/node --filter "@elizaos/core"
 
-# First clean everything
-bun clean
-
 # Install all dependencies recursively
 bun install -r
 

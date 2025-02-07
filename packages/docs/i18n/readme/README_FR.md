@@ -95,9 +95,6 @@ Après avoir terminé la configuration et les fichiers personnage, lancer le bot
 bun i
 bun run build
 bun start
-
-# Le projet étant régulièrement mis à jour, il vous faudra parfois le nettoyer avant de recommencer à travailler dessus
-bun clean
 ```
 
 ---

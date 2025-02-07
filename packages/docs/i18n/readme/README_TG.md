@@ -99,9 +99,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Linisin ang proyekto kung bumalik ka dito matapos ang mahabang panahon
-bun clean
 ```
 
 #### Karagdagang Mga Kinakailangan

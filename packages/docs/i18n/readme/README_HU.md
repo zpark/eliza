@@ -108,9 +108,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# A projekt gyorsan fejlődik. Néha meg kell tisztítania a projektet, amikor egy idő után újra visszatérsz.
-bun clean
 ```
 
 #### További követelmények

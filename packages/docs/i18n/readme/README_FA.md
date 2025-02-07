@@ -117,9 +117,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# اگر پروژه به دلیل تغییرات سریع نیاز به پاکسازی داشت، دستور زیر را اجرا کنید:
-bun clean
 ```
 
 #### نیازمندی‌های اضافی

@@ -131,9 +131,6 @@ sh scripts/start.sh
 bun i
 bun run build
 bun start
-
-# Het project ontwikkelt snel, soms moet je het project opschonen als je terugkomt bij het project
-bun clean
 ```
 
 #### Aanvullende Vereisten
