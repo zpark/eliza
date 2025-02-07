@@ -458,25 +458,28 @@ function initializeCache(
     }
 }
 
+
 async function findDatabaseAdapter(runtime: AgentRuntime) {
-  const { adapters } = runtime;
-  let adapter: Adapter | undefined;
-  // if not found, default to sqlite
-  if (adapters.length === 0) {
-    const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
-    const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
-    adapter = sqliteAdapterPluginDefault.adapters[0];
-    if (!adapter) {
-      throw new Error("Internal error: No database adapter found for default adapter-sqlite");
-    }
-  } else if (adapters.length === 1) {
-    adapter = adapters[0];
-  } else {
-    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
-    }
-  const adapterInterface = adapter?.init(runtime);
-  return adapterInterface;
-}
+    const { adapters } = runtime;
+    let adapter: Adapter | undefined;
+    // if not found, default to sqlite
+    if (adapters.length === 0) {
+      const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
+      const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
+      adapter = sqliteAdapterPluginDefault.adapters[0];
+      if (!adapter) {
+        throw new Error("Internal error: No database adapter found for default adapter-sqlite");
+      }
+    } else if (adapters.length === 1) {
+      adapter = adapters[0];
+    } else {
+      throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
+      }
+    const adapterInterface = adapter?.init(runtime);
+    return adapterInterface;
+  }
+
+  
 
 async function startAgent(
     character: Character,
@@ -487,7 +490,7 @@ async function startAgent(
         character.id ??= stringToUuid(character.name);
         character.username ??= character.name;
 
-        const token = getTokenForProvider(character.modelProvider, character);
+        const token = getTokenForProvider(character);
 
         const runtime: AgentRuntime = await createAgent(
             character,

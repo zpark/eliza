@@ -59,6 +59,7 @@ import {
     type IImageDescriptionService,
     type TelemetrySettings,
     type ClientInstance,
+    type Adapter,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -721,7 +722,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly agentId: UUID;
     readonly character: Character;
     readonly serverUrl: string;
-    readonly databaseAdapter: IDatabaseAdapter;
+    public databaseAdapter!: IDatabaseAdapter;
     readonly token: string | null;
     readonly actions: Action[] = [];
     readonly evaluators: Evaluator[] = [];
@@ -732,10 +733,11 @@ export class AgentRuntime implements IAgentRuntime {
     readonly imageVisionModelProvider: string;
     readonly embeddingModelProvider: string;
     readonly fetch = fetch;
-    readonly cacheManager: ICacheManager;
-    readonly clients: ClientInstance[] = [];
+    public cacheManager!: ICacheManager;
+    public clients: ClientInstance[] = [];
     readonly services: Map<ServiceType, Service>;
     
+    public adapters: Adapter[];
 
     private readonly knowledgeRoot: string;
     private readonly modelProviderManager: ModelProviderManager;
@@ -755,9 +757,10 @@ export class AgentRuntime implements IAgentRuntime {
         modelProvider: ModelProviderName | string;
         services?: Service[];
         managers?: IMemoryManager[];
-        databaseAdapter: IDatabaseAdapter;
+        databaseAdapter?: IDatabaseAdapter;
         fetch?: typeof fetch;
-        cacheManager: ICacheManager;
+        cacheManager?: ICacheManager;
+        adapters?: Adapter[];
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -793,28 +796,17 @@ export class AgentRuntime implements IAgentRuntime {
         this.#conversationLength =
             opts.conversationLength ?? this.#conversationLength;
 
-        if (!opts.databaseAdapter) {
-            throw new Error("No database adapter provided");
+        if (opts.databaseAdapter) {
+            this.databaseAdapter = opts.databaseAdapter;
         }
-        this.databaseAdapter = opts.databaseAdapter;
-
-        // By convention, we create a user and room using the agent id.
-        // Memories related to it are considered global context for the agent.
-        this.ensureRoomExists(this.agentId);
-        this.ensureUserExists(
-            this.agentId,
-            this.character.username || this.character.name,
-            this.character.name,
-        ).then(() => {
-            // postgres needs the user to exist before you can add a participant
-            this.ensureParticipantExists(this.agentId, this.agentId);
-        });
 
         elizaLogger.success(`Agent ID: ${this.agentId}`);
 
         this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
 
-        this.cacheManager = opts.cacheManager;
+        if (opts.cacheManager) {
+            this.cacheManager = opts.cacheManager;
+        }
 
         this.services = new Map();
 
@@ -877,8 +869,8 @@ export class AgentRuntime implements IAgentRuntime {
         );
 
         // Validate model provider
-        // must be string, without special characters other than hyphen
-        if (typeof this.modelProvider !== "string" || !/^[a-z]+$/.test(this.modelProvider)) {
+        // Must be a string containing only allowed characters: lowercase letters, digits, hyphen and underscore
+        if (typeof this.modelProvider !== "string" || !/^[a-z0-9_-]+$/.test(this.modelProvider)) {
             elizaLogger.error("Invalid model provider:", this.modelProvider);
             throw new Error(`Invalid model provider Name: ${this.modelProvider}`);
         }
@@ -923,6 +915,9 @@ export class AgentRuntime implements IAgentRuntime {
         for (const evaluator of (opts.evaluators ?? [])) {
             this.registerEvaluator(evaluator);
         }
+
+        // Initialize adapters from options or empty array if not provided
+        this.adapters = opts.adapters ?? [];
     }
 
     getModelProvider(): IModelProvider {
@@ -942,6 +937,14 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async initialize() {
+        await this.ensureRoomExists(this.agentId);
+        await this.ensureUserExists(
+            this.agentId,
+            this.character.username || this.character.name,
+            this.character.name,
+        );
+        await this.ensureParticipantExists(this.agentId, this.agentId);
+
         await this.serviceManager.initializeServices();
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {

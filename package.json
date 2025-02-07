@@ -44,7 +44,6 @@
   },
   "pnpm": {
     "overrides": {
-      "zod": "3.24.1",
       "onnxruntime-node": "1.20.1",
       "@solana/web3.js@1.95.5": "npm:@solana/web3.js@1.95.5",
       "@solana/web3.js@1.95.8": "npm:@solana/web3.js@1.95.8",
@@ -68,6 +67,7 @@
   "dependencies": {
     "@0glabs/0g-ts-sdk": "0.2.1",
     "@coinbase/coinbase-sdk": "0.10.0",
+    "@elizaos-plugins/adapter-sqlite": "workspace:*",
     "@deepgram/sdk": "^3.9.0",
     "@injectivelabs/sdk-ts": "^1.14.33",
     "@vitest/eslint-plugin": "1.0.1",
@@ -78,9 +78,7 @@
     "ollama-ai-provider": "0.16.1",
     "optional": "0.1.4",
     "pnpm": "9.15.0",
-    "sharp": "0.33.5",
-    "ws": "8.18.0",
-    "zod": "3.24.1"
+    "sharp": "0.33.5"
   },
   "packageManager": "pnpm@9.15.0",
   "workspaces": [
