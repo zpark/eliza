@@ -2,7 +2,8 @@
   "name": "eliza",
   "scripts": {
     "format": "biome format --write .",
-    "lint": "biome lint .",
+    "cli": "bun --filter=@elizaos/cli cli",
+    "lint": "biome lint . --write",
     "check": "biome check --apply .",
     "preinstall": "npx only-allow bun",
     "build": "turbo run build --filter=./packages/*",

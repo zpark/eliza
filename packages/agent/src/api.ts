@@ -1,23 +1,18 @@
-import express from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
-import path from "node:path";
-import fs from "node:fs";
-
 import {
     type AgentRuntime,
+    type Character,
     elizaLogger,
     getEnvVariable,
     type UUID,
     validateCharacterConfig,
-    ServiceType,
-    type Character,
+    validateUuid,
 } from "@elizaos/core";
-
-// import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
-// import { REST, Routes } from "discord.js";
-import type { DirectClient } from ".";
-import { validateUuid } from "@elizaos/core";
+import bodyParser from "body-parser";
+import cors from "cors";
+import express from "express";
+import fs from "node:fs";
+import path from "node:path";
+import type { CharacterServer } from "./server";
 
 interface UUIDParams {
     agentId: UUID;
@@ -52,8 +47,8 @@ function validateUUIDParams(
 
 export function createApiRouter(
     agents: Map<string, AgentRuntime>,
-    directClient: DirectClient
-) {
+    directClient: CharacterServer
+): express.Router {
     const router = express.Router();
 
     router.use(cors());

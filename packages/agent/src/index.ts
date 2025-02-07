@@ -1,4 +1,3 @@
-import { CharacterServer } from "./server";
 import {
     type Adapter,
     AgentRuntime,
@@ -24,6 +23,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./defaultCharacter.js";
+import { CharacterServer } from "./server";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
