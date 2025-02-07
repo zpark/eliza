@@ -46,7 +46,7 @@ export function validateEnv(): EnvConfig {
 }
 
 // Helper schemas for nested types
-const MessageExampleSchema = z.object({
+export const MessageExampleSchema = z.object({
     user: z.string(),
     content: z
         .object({
@@ -60,7 +60,7 @@ const MessageExampleSchema = z.object({
         .and(z.record(z.string(), z.unknown())), // For additional properties
 });
 
-const PluginSchema = z.object({
+export const PluginSchema = z.object({
     name: z.string(),
     description: z.string(),
     actions: z.array(z.any()).optional(),
