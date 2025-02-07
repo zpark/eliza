@@ -18,7 +18,7 @@ Each adapter is optimized for different use cases:
     - Connection pooling and high performance
     - JSONB and pgvector support
 
-- **SQLite** (`@elizaos/adapter-sqlite`)
+- **SQLite** (`@elizaos/plugin-sqlite`)
 
     - Lightweight local development
     - No external dependencies
@@ -149,7 +149,7 @@ Key components:
 bun add @elizaos/adapter-postgres pg
 
 # SQLite
-bun add @elizaos/adapter-sqlite better-sqlite3
+bun add @elizaos/plugin-sqlite better-sqlite3
 
 # SQL.js
 bun add @elizaos/adapter-sqljs sql.js
@@ -184,7 +184,7 @@ await db.testConnection();
 ### SQLite Setup
 
 ```typescript
-import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite";
 import Database from "better-sqlite3";
 
 const db = new SqliteDatabaseAdapter(
@@ -209,7 +209,7 @@ const db = new SupabaseDatabaseAdapter(
 ```
 
 ```typescript
-import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite";
 import Database from "better-sqlite3";
 
 const db = new SqliteDatabaseAdapter(

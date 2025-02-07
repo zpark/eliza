@@ -9,7 +9,7 @@ Database Adapters provide the persistence layer for Eliza, enabling storage and 
 Eliza includes the following database adapters:
 
 - **PostgreSQL Adapter** (`@eliza/adapter-postgres`) - Production-ready adapter for PostgreSQL databases
-- **SQLite Adapter** (`@eliza/adapter-sqlite`) - Lightweight adapter for SQLite, perfect for development
+- **SQLite Adapter** (`@eliza/plugin-sqlite`) - Lightweight adapter for SQLite, perfect for development
 - **SQL.js Adapter** (`@eliza/adapter-sqljs`) - In-memory SQLite adapter for testing
 - **Supabase Adapter** (`@eliza/adapter-supabase`) - Cloud-native adapter for Supabase
 
@@ -20,7 +20,7 @@ Eliza includes the following database adapters:
 bun add @eliza/adapter-postgres
 
 # SQLite
-bun add @eliza/adapter-sqlite
+bun add @eliza/plugin-sqlite
 
 # SQL.js
 bun add @eliza/adapter-sqljs
@@ -34,7 +34,7 @@ bun add @eliza/adapter-supabase
 ### SQLite (Development)
 
 ```typescript
-import { SqliteDatabaseAdapter } from "@eliza/adapter-sqlite";
+import { SqliteDatabaseAdapter } from "@eliza/plugin-sqlite";
 import Database from "better-sqlite3";
 
 const db = new SqliteDatabaseAdapter(new Database("./dev.db"));

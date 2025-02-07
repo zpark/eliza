@@ -108,7 +108,7 @@ Response format should be formatted in a JSON block like this:
 \`\`\`
 `;
 
-export class DirectClient {
+export class CharacterServer {
     public app: express.Application;
     private agents: Map<string, AgentRuntime>; // container management
     private server: any; // Store server instance
@@ -1022,27 +1022,3 @@ export class DirectClient {
         }
     }
 }
-
-export const DirectClientInterface: Client = {
-    name: 'direct',
-    config: {},
-    start: async (_runtime: IAgentRuntime) => {
-        elizaLogger.log("DirectClientInterface start");
-        const client = new DirectClient();
-        const serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
-        client.start(serverPort);
-        return client;
-    },
-    // stop: async (_runtime: IAgentRuntime, client?: Client) => {
-    //     if (client instanceof DirectClient) {
-    //         client.stop();
-    //     }
-    // },
-};
-
-const directPlugin: Plugin = {
-    name: "direct",
-    description: "Direct client",
-    clients: [DirectClientInterface],
-};
-export default directPlugin;

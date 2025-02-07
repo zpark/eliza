@@ -1,4 +1,4 @@
-import { DirectClient } from "@elizaos/client-direct";
+import { CharacterServer } from "./server";
 import {
     type Adapter,
     AgentRuntime,
@@ -672,11 +672,11 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
   let adapter: Adapter | undefined;
   // if not found, default to sqlite
   if (adapters.length === 0) {
-    const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
+    const sqliteAdapterPlugin = await import('@elizaos-plugins/sqlite');
     const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
     adapter = sqliteAdapterPluginDefault.adapters[0];
     if (!adapter) {
-      throw new Error("Internal error: No database adapter found for default adapter-sqlite");
+      throw new Error("Internal error: No database adapter found for default plugin-sqlite");
     }
   } else if (adapters.length === 1) {
     adapter = adapters[0];
@@ -689,7 +689,7 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
 
 async function startAgent(
     character: Character,
-    directClient: DirectClient
+    characterServer: CharacterServer
 ): Promise<AgentRuntime> {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
@@ -724,7 +724,7 @@ async function startAgent(
         runtime.clients = await initializeClients(character, runtime);
 
         // add to container
-        directClient.registerAgent(runtime);
+        characterServer.registerAgent(runtime);
 
         // report to console
         elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`);
@@ -768,7 +768,7 @@ const hasValidRemoteUrls = () =>
     process.env.REMOTE_CHARACTER_URLS.startsWith("http");
 
 const startAgents = async () => {
-    const directClient = new DirectClient();
+    const characterServer = new CharacterServer();
     let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
     const charactersArg = args.characters || args.character;
@@ -780,7 +780,7 @@ const startAgents = async () => {
 
     try {
         for (const character of characters) {
-            await startAgent(character, directClient);
+            await startAgent(character, characterServer);
         }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
@@ -794,22 +794,22 @@ const startAgents = async () => {
         serverPort++;
     }
 
-    // upload some agent functionality into directClient
+    // upload some agent functionality into characterServer
     // XXX TODO: is this still used?
-    directClient.startAgent = async (character) => {
+    characterServer.startAgent = async (character) => {
         throw new Error('not implemented');
 
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
 
-        // wrap it so we don't have to inject directClient later
-        return startAgent(character, directClient);
+        // wrap it so we don't have to inject characterServer later
+        return startAgent(character, characterServer);
     };
 
-    directClient.loadCharacterTryPath = loadCharacterTryPath;
-    directClient.jsonToCharacter = jsonToCharacter;
+    characterServer.loadCharacterTryPath = loadCharacterTryPath;
+    characterServer.jsonToCharacter = jsonToCharacter;
 
-    directClient.start(serverPort);
+    characterServer.start(serverPort);
 
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);

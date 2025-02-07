@@ -43,7 +43,7 @@ bun add @elizaos/core
 
 # Install specific adapters
 bun add @elizaos/adapter-postgres
-bun add @elizaos/adapter-sqlite
+bun add @elizaos/plugin-sqlite
 
 # Install clients
 bun add @elizaos/client-discord

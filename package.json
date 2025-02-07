@@ -7,6 +7,7 @@
     "preinstall": "npx only-allow bun",
     "build": "turbo run build --filter=./packages/*",
     "start": "bun --filter=./packages/* start",
+    "agent": "bun --filter=@elizaos/agent start",
     "dev": "bun --filter=./packages/* dev",
     "release": "bun run build && bun format && npx lerna publish --no-private --force-publish",
     "docker:build": "bash ./scripts/docker.sh build",
