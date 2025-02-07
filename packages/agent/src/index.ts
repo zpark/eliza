@@ -1,31 +1,29 @@
 import {
+    type Adapter,
     AgentRuntime,
     CacheManager,
     CacheStore,
     type Character,
+    type ClientInstance,
     DbCacheAdapter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
-    type ClientInstance,
-    type Adapter,
-    ModelProviderName,
     parseBooleanFromText,
     settings,
     stringToUuid,
     validateCharacterConfig,
 } from "@elizaos/core";
-import { defaultCharacter } from "./defaultCharacter.ts";
-import { CharacterServer } from "./server";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
-
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import yargs from "yargs";
+import { defaultCharacter } from "./defaultCharacter.ts";
+import { CharacterServer } from "./server";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -443,23 +441,23 @@ function initializeCache(
 
 
 async function findDatabaseAdapter(runtime: AgentRuntime) {
-    const { adapters } = runtime;
-    let adapter: Adapter | undefined;
-    // if not found, default to sqlite
-    if (adapters.length === 0) {
-        const sqliteAdapterPlugin = await import('@elizaos-plugins/sqlite');
-        const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
-        adapter = sqliteAdapterPluginDefault.adapters[0];
-        if (!adapter) {
-        throw new Error("Internal error: No database adapter found for default plugin-sqlite");
-        }
-    } else if (adapters.length === 1) {
-        adapter = adapters[0];
-    } else {
-        throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
-        }
-    const adapterInterface = adapter?.init(runtime);
-    return adapterInterface;
+  const { adapters } = runtime;
+  let adapter: Adapter | undefined;
+  // if not found, default to sqlite
+  if (adapters.length === 0) {
+    const sqliteAdapterPlugin = await import('@elizaos-plugins/sqlite');
+    const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
+    adapter = sqliteAdapterPluginDefault.adapters[0];
+    if (!adapter) {
+      throw new Error("Internal error: No database adapter found for default plugin-sqlite");
+    }
+  } else if (adapters.length === 1) {
+    adapter = adapters[0];
+  } else {
+    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
+    }
+  const adapterInterface = adapter?.init(runtime);
+  return adapterInterface;
 }
 
   

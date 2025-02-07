@@ -2,6 +2,7 @@
     "version": "0.25.6-alpha.1",
     "packages": [
         "packages/*",
+        "docs",
         "agent",
         "client"
     ],
