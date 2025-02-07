@@ -742,7 +742,7 @@ setup_node() {
     # Install bun if not present
     if ! command -v bun &> /dev/null; then
         log_info "Installing bun..."
-        if ! npm install -g bun; then
+        if ! curl -fsSL https://bun.sh/install | bash; then
             log_error "Failed to install bun"
             exit 1
         fi
@@ -752,8 +752,8 @@ setup_node() {
     # Verify versions
     if [ "$VERBOSE" = true ]; then
         log_verbose "Node version: $(node -v)"
-        log_verbose "NPM version: $(npm -v)"
-        log_verbose "PNPM version: $(bun -v)"
+        log_verbose "npm version: $(npm -v)"
+        log_verbose "bun version: $(bun -v)"
     fi
     
     log_success "Node.js environment setup complete"

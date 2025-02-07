@@ -22,9 +22,9 @@ This guide provides instructions for installing and running the Eliza chatbot us
     apt install -y build-essential
     ```
 
-3. **Install PNPM**:
+3. **Install Bun**:
     ```bash
-    curl -fsSL https://get.bun.io/install.sh | sh -
+    curl -fsSL https://bun.sh/install | bash
     source /root/.bashrc
     ```
 
