@@ -304,6 +304,7 @@ async function generateEnum<T extends string>({
             modelClass,
             output: 'enum',
             enum: enumValues,
+            mode: 'json'
         });
 
         elizaLogger.debug("Received enum response:", result);
@@ -322,7 +323,7 @@ export async function generateShouldRespond({
     context: string;
     modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'];
+    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as string[];
 
     const result = await generateEnum({
         runtime,

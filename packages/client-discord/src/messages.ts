@@ -271,7 +271,7 @@ export class MessageManager {
             if (message.author.bot) {
                 if (this._isTeamMember(authorId) && !isDirectlyMentioned) {
                     return;
-                } else if (
+                }if (
                     this.runtime.character.clientConfig.discord
                         .shouldIgnoreBotMessages
                 ) {
@@ -295,7 +295,7 @@ export class MessageManager {
                 attachments.push(...processedAudioAttachments);
             }
 
-            const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
+            const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
             const userIdUUID = stringToUuid(userId);
 
             await this.runtime.ensureConnection(
@@ -307,7 +307,7 @@ export class MessageManager {
             );
 
             const messageId = stringToUuid(
-                message.id + "-" + this.runtime.agentId
+                `${message.id}-${this.runtime.agentId}`
             );
 
             let shouldIgnore = false;
@@ -320,9 +320,7 @@ export class MessageManager {
                 url: message.url,
                 inReplyTo: message.reference?.messageId
                     ? stringToUuid(
-                          message.reference.messageId +
-                              "-" +
-                              this.runtime.agentId
+                          `${message.reference.messageId}-${this.runtime.agentId}`
                       )
                     : undefined,
             };
@@ -335,7 +333,7 @@ export class MessageManager {
             };
 
             const memory: Memory = {
-                id: stringToUuid(message.id + "-" + this.runtime.agentId),
+                id: stringToUuid(`${message.id}-${this.runtime.agentId}`),
                 ...userMessage,
                 userId: userIdUUID,
                 agentId: this.runtime.agentId,
@@ -728,7 +726,7 @@ export class MessageManager {
 
                                 // Create and store memories
                                 const memories = messages.map(m => ({
-                                    id: stringToUuid(m.id + "-" + this.runtime.agentId),
+                                    id: stringToUuid(`${m.id}-${this.runtime.agentId}`),
                                     userId: this.runtime.agentId,
                                     agentId: this.runtime.agentId,
                                     content: {

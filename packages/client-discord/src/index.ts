@@ -15,7 +15,7 @@ import {
     Partials,
     type User,
 } from "discord.js";
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import chat_with_attachments from "./actions/chat_with_attachments.ts";
 import download_media from "./actions/download_media.ts";
 import joinvoice from "./actions/joinvoice.ts";

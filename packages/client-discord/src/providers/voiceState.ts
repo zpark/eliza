@@ -12,7 +12,7 @@ const voiceStateProvider: Provider = {
         );
         const agentName = state?.agentName || "The agent";
         if (!connection) {
-            return agentName + " is not currently in a voice channel";
+            return `${agentName} is not currently in a voice channel`;
         }
 
         const channel = (
@@ -23,7 +23,7 @@ const voiceStateProvider: Provider = {
         );
 
         if (!channel || channel.type !== ChannelType.GuildVoice) {
-            return agentName + " is in an invalid voice channel";
+            return `${agentName} is in an invalid voice channel`;
         }
 
         return `${agentName} is currently in the voice channel: ${channel.name} (ID: ${channel.id})`;
