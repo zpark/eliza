@@ -6,23 +6,22 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { useTransition, animated, type AnimatedProps } from "@react-spring/web";
-import { Paperclip, Send, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import type { Content, UUID } from "@elizaos/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
-import { Avatar, AvatarImage } from "./ui/avatar";
-import CopyButton from "./copy-button";
-import ChatTtsButton from "./ui/chat/chat-tts-button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import AIWriter from "react-aiwriter";
 import type { IAttachment } from "@/types";
+import type { Content, UUID } from "@elizaos/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Paperclip, Send, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import AIWriter from "react-aiwriter";
 import { AudioRecorder } from "./audio-recorder";
+import CopyButton from "./copy-button";
+import { Avatar, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
+import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type ExtraContentFields = {
     user: string;
@@ -32,10 +31,6 @@ type ExtraContentFields = {
 
 type ContentWithUser = Content & ExtraContentFields;
 
-type AnimatedDivProps = AnimatedProps<{ style: React.CSSProperties }> & {
-    children?: React.ReactNode;
-};
-
 export default function Page({ agentId }: { agentId: UUID }) {
     const { toast } = useToast();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -43,8 +38,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
-
     const queryClient = useQueryClient();
+    const messages =
+        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
+        [];
 
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
@@ -156,20 +153,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     };
 
-    const messages =
-        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
-        [];
-
-    const transitions = useTransition(messages, {
-        keys: (message) =>
-            `${message.createdAt}-${message.user}-${message.text}`,
-        from: { opacity: 0, transform: "translateY(50px)" },
-        enter: { opacity: 1, transform: "translateY(0px)" },
-        leave: { opacity: 0, transform: "translateY(10px)" },
-    });
-
-    const CustomAnimatedDiv = animated.div as React.FC<AnimatedDivProps>;
-
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             <div className="flex-1 overflow-y-auto">
@@ -179,12 +162,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     scrollToBottom={scrollToBottom}
                     disableAutoScroll={disableAutoScroll}
                 >
-                    {transitions((style, message: ContentWithUser) => {
+                    {messages.map((message: ContentWithUser) => {
                         const variant = getMessageVariant(message?.user);
                         return (
-                            <CustomAnimatedDiv
+                            <div
                                 style={{
-                                    ...style,
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "0.5rem",
@@ -277,7 +259,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                         </div>
                                     </div>
                                 </ChatBubble>
-                            </CustomAnimatedDiv>
+                            </div>
                         );
                     })}
                 </ChatMessageList>
