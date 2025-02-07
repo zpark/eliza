@@ -401,7 +401,7 @@ export const generateObject = async ({
         throw new Error('Enum values are required when output type is enum');
     }
 
-    const finalConfig = getModelConfig(runtime, client, model, mode, {
+    const config = getModelConfig(runtime, client, model, mode, {
         context,
         output,
         schema,
@@ -411,7 +411,7 @@ export const generateObject = async ({
         stopSequences,
     });
 
-    const {object} = await aiGenerateObject(finalConfig);
+    const {object} = await aiGenerateObject(config);
 
     elizaLogger.debug(`Received Object response from ${model} model.`);
     return schema ? schema.parse(object) : object;
