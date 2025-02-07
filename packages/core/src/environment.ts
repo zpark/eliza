@@ -75,7 +75,7 @@ export const CharacterSchema = z.object({
     id: z.string().uuid().optional(),
     name: z.string(),
     system: z.string().optional(),
-    modelProvider: z.nativeEnum(ModelProviderName).optional(),
+    modelProvider: z.string().optional(),
     modelEndpointOverride: z.string().optional(),
     templates: z.record(z.string()).optional(),
     bio: z.union([z.string(), z.array(z.string())]),
