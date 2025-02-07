@@ -22,10 +22,10 @@ import { defaultCharacter } from "./defaultCharacter.ts";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
-import fs from "fs";
-import net from "net";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -80,7 +80,7 @@ function mergeCharacters(base: Character, child: Character): Character {
             ...Object.keys(baseObj || {}),
             ...Object.keys(childObj || {}),
         ]);
-        keys.forEach((key) => {
+        for (const key of keys) {
             if (
                 typeof baseObj[key] === "object" &&
                 typeof childObj[key] === "object" &&
@@ -100,70 +100,12 @@ function mergeCharacters(base: Character, child: Character): Character {
                 result[key] =
                     childObj[key] !== undefined ? childObj[key] : baseObj[key];
             }
-        });
+        }
         return result;
     };
     return mergeObjects(base, child);
 }
-/* function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
-}
-export async function loadCharacterFromOnchain(): Promise<Character[]> {
-    const jsonText = onchainJson;
 
-    console.log("JSON:", jsonText);
-    if (!jsonText) return [];
-    const loadedCharacters = [];
-    try {
-        const character = JSON.parse(jsonText);
-        validateCharacterConfig(character);
-
-        // .id isn't really valid
-        const characterId = character.id || character.name;
-        const characterPrefix = `CHARACTER.${characterId
-            .toUpperCase()
-            .replace(/ /g, "_")}.`;
-
-        const characterSettings = Object.entries(process.env)
-            .filter(([key]) => key.startsWith(characterPrefix))
-            .reduce((settings, [key, value]) => {
-                const settingKey = key.slice(characterPrefix.length);
-                settings[settingKey] = value;
-                return settings;
-            }, {});
-
-        if (Object.keys(characterSettings).length > 0) {
-            character.settings = character.settings || {};
-            character.settings.secrets = {
-                ...characterSettings,
-                ...character.settings.secrets,
-            };
-        }
-
-        // Handle plugins
-        if (isAllStrings(character.plugins)) {
-            elizaLogger.info("Plugins are: ", character.plugins);
-            const importedPlugins = await Promise.all(
-                character.plugins.map(async (plugin) => {
-                    const importedPlugin = await import(plugin);
-                    return importedPlugin.default;
-                })
-            );
-            character.plugins = importedPlugins;
-        }
-
-        loadedCharacters.push(character);
-        elizaLogger.info(
-            `Successfully loaded character from: ${process.env.IQ_WALLET_ADDRESS}`
-        );
-        return loadedCharacters;
-    } catch (e) {
-        elizaLogger.error(
-            `Error parsing character from ${process.env.IQ_WALLET_ADDRESS}: ${e}`
-        );
-        process.exit(1);
-    }
-} */
 
 async function loadCharactersFromUrl(url: string): Promise<Character[]> {
     try {
@@ -278,7 +220,9 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
             `Error loading character from ${characterPath}: File not found in any of the expected locations`
         );
         elizaLogger.error("Tried the following paths:");
-        pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
+        for (const p of pathsToTry) {
+            elizaLogger.error(` - ${p}`);
+        }
         throw new Error(
             `Error loading character from ${characterPath}: File not found in any of the expected locations`
         );
@@ -304,9 +248,9 @@ async function readCharactersFromStorage(
         const uploadDir = path.join(process.cwd(), "data", "characters");
         await fs.promises.mkdir(uploadDir, { recursive: true });
         const fileNames = await fs.promises.readdir(uploadDir);
-        fileNames.forEach((fileName) => {
+        for (const fileName of fileNames) {
             characterPaths.push(path.join(uploadDir, fileName));
-        });
+        }
     } catch (err) {
         elizaLogger.error(`Error reading directory: ${err.message}`);
     }
@@ -333,6 +277,7 @@ export async function loadCharacters(
                 );
                 loadedCharacters.push(character);
             } catch (e) {
+                elizaLogger.error(`Error loading character from ${characterPath}: ${e}`);
                 process.exit(1);
             }
         }
@@ -365,10 +310,9 @@ async function handlePluginImporting(plugins: string[]) {
                 try {
                     const importedPlugin = await import(plugin);
                     const functionName =
-                        plugin
+                        `${plugin
                             .replace("@elizaos/plugin-", "")
-                            .replace(/-./g, (x) => x[1].toUpperCase()) +
-                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
+                            .replace(/-./g, (x) => x[1].toUpperCase())}Plugin`; // Assumes plugin function is camelCased with Plugin suffix
                     return (
                         importedPlugin.default || importedPlugin[functionName]
                     );
@@ -382,170 +326,15 @@ async function handlePluginImporting(plugins: string[]) {
             })
         );
         return importedPlugins;
-    } else {
-        return [];
     }
+        return [];
 }
 
 export function getTokenForProvider(
-    provider: ModelProviderName,
     character: Character
 ): string | undefined {
-    switch (provider) {
-        // no key needed for llama_local, ollama, lmstudio, gaianet or bedrock
-        case ModelProviderName.LLAMALOCAL:
-            return "";
-        case ModelProviderName.OLLAMA:
-            return "";
-        case ModelProviderName.LMSTUDIO:
-            return "";
-        case ModelProviderName.GAIANET:
-            return "";
-        case ModelProviderName.BEDROCK:
-            return "";
-        case ModelProviderName.OPENAI:
-            return (
-                character.settings?.secrets?.OPENAI_API_KEY ||
-                settings.OPENAI_API_KEY
-            );
-        case ModelProviderName.ETERNALAI:
-            return (
-                character.settings?.secrets?.ETERNALAI_API_KEY ||
-                settings.ETERNALAI_API_KEY
-            );
-        case ModelProviderName.NINETEEN_AI:
-            return (
-                character.settings?.secrets?.NINETEEN_AI_API_KEY ||
-                settings.NINETEEN_AI_API_KEY
-            );
-        case ModelProviderName.LLAMACLOUD:
-        case ModelProviderName.TOGETHER:
-            return (
-                character.settings?.secrets?.LLAMACLOUD_API_KEY ||
-                settings.LLAMACLOUD_API_KEY ||
-                character.settings?.secrets?.TOGETHER_API_KEY ||
-                settings.TOGETHER_API_KEY ||
-                character.settings?.secrets?.OPENAI_API_KEY ||
-                settings.OPENAI_API_KEY
-            );
-        case ModelProviderName.CLAUDE_VERTEX:
-        case ModelProviderName.ANTHROPIC:
-            return (
-                character.settings?.secrets?.ANTHROPIC_API_KEY ||
-                character.settings?.secrets?.CLAUDE_API_KEY ||
-                settings.ANTHROPIC_API_KEY ||
-                settings.CLAUDE_API_KEY
-            );
-        case ModelProviderName.REDPILL:
-            return (
-                character.settings?.secrets?.REDPILL_API_KEY ||
-                settings.REDPILL_API_KEY
-            );
-        case ModelProviderName.OPENROUTER:
-            return (
-                character.settings?.secrets?.OPENROUTER_API_KEY ||
-                settings.OPENROUTER_API_KEY
-            );
-        case ModelProviderName.GROK:
-            return (
-                character.settings?.secrets?.GROK_API_KEY ||
-                settings.GROK_API_KEY
-            );
-        case ModelProviderName.HEURIST:
-            return (
-                character.settings?.secrets?.HEURIST_API_KEY ||
-                settings.HEURIST_API_KEY
-            );
-        case ModelProviderName.GROQ:
-            return (
-                character.settings?.secrets?.GROQ_API_KEY ||
-                settings.GROQ_API_KEY
-            );
-        case ModelProviderName.GALADRIEL:
-            return (
-                character.settings?.secrets?.GALADRIEL_API_KEY ||
-                settings.GALADRIEL_API_KEY
-            );
-        case ModelProviderName.FAL:
-            return (
-                character.settings?.secrets?.FAL_API_KEY || settings.FAL_API_KEY
-            );
-        case ModelProviderName.ALI_BAILIAN:
-            return (
-                character.settings?.secrets?.ALI_BAILIAN_API_KEY ||
-                settings.ALI_BAILIAN_API_KEY
-            );
-        case ModelProviderName.VOLENGINE:
-            return (
-                character.settings?.secrets?.VOLENGINE_API_KEY ||
-                settings.VOLENGINE_API_KEY
-            );
-        case ModelProviderName.NANOGPT:
-            return (
-                character.settings?.secrets?.NANOGPT_API_KEY ||
-                settings.NANOGPT_API_KEY
-            );
-        case ModelProviderName.HYPERBOLIC:
-            return (
-                character.settings?.secrets?.HYPERBOLIC_API_KEY ||
-                settings.HYPERBOLIC_API_KEY
-            );
-
-        case ModelProviderName.VENICE:
-            return (
-                character.settings?.secrets?.VENICE_API_KEY ||
-                settings.VENICE_API_KEY
-            );
-        case ModelProviderName.ATOMA:
-            return (
-                character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
-                settings.ATOMASDK_BEARER_AUTH
-            );
-        case ModelProviderName.NVIDIA:
-            return (
-                character.settings?.secrets?.NVIDIA_API_KEY ||
-                settings.NVIDIA_API_KEY
-            );
-        case ModelProviderName.AKASH_CHAT_API:
-            return (
-                character.settings?.secrets?.AKASH_CHAT_API_KEY ||
-                settings.AKASH_CHAT_API_KEY
-            );
-        case ModelProviderName.GOOGLE:
-            return (
-                character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
-                settings.GOOGLE_GENERATIVE_AI_API_KEY
-            );
-        case ModelProviderName.MISTRAL:
-            return (
-                character.settings?.secrets?.MISTRAL_API_KEY ||
-                settings.MISTRAL_API_KEY
-            );
-        case ModelProviderName.LETZAI:
-            return (
-                character.settings?.secrets?.LETZAI_API_KEY ||
-                settings.LETZAI_API_KEY
-            );
-        case ModelProviderName.INFERA:
-            return (
-                character.settings?.secrets?.INFERA_API_KEY ||
-                settings.INFERA_API_KEY
-            );
-        case ModelProviderName.DEEPSEEK:
-            return (
-                character.settings?.secrets?.DEEPSEEK_API_KEY ||
-                settings.DEEPSEEK_API_KEY
-            );
-        case ModelProviderName.LIVEPEER:
-            return (
-                character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
-                settings.LIVEPEER_GATEWAY_URL
-            );
-        default:
-            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
-            elizaLogger.error(errorMessage);
-            throw new Error(errorMessage);
-    }
+    // change: unified single PROVIDER_API_KEY for all providers
+    return character.settings?.secrets?.PROVIDER_API_KEY || settings.PROVIDER_API_KEY;
 }
 
 // also adds plugins from character file into the runtime
@@ -628,31 +417,14 @@ function initializeCache(
     db?: IDatabaseCacheAdapter
 ) {
     switch (cacheStore) {
-        // case CacheStore.REDIS:
-        //     if (process.env.REDIS_URL) {
-        //         elizaLogger.info("Connecting to Redis...");
-        //         const redisClient = new RedisClient(process.env.REDIS_URL);
-        //         if (!character?.id) {
-        //             throw new Error(
-        //                 "CacheStore.REDIS requires id to be set in character definition"
-        //             );
-        //         }
-        //         return new CacheManager(
-        //             new DbCacheAdapter(redisClient, character.id) // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
-        //         );
-        //     } else {
-        //         throw new Error("REDIS_URL environment variable is not set.");
-        //     }
-
         case CacheStore.DATABASE:
             if (db) {
                 elizaLogger.info("Using Database Cache...");
                 return initializeDbCache(character, db);
-            } else {
+            }
                 throw new Error(
                     "Database adapter is not provided for CacheStore.Database."
                 );
-            }
 
         case CacheStore.FILESYSTEM:
             elizaLogger.info("Using File System Cache...");
@@ -670,25 +442,28 @@ function initializeCache(
     }
 }
 
+
 async function findDatabaseAdapter(runtime: AgentRuntime) {
-  const { adapters } = runtime;
-  let adapter: Adapter | undefined;
-  // if not found, default to sqlite
-  if (adapters.length === 0) {
-    const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
-    const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
-    adapter = sqliteAdapterPluginDefault.adapters[0];
-    if (!adapter) {
-      throw new Error("Internal error: No database adapter found for default adapter-sqlite");
-    }
-  } else if (adapters.length === 1) {
-    adapter = adapters[0];
-  } else {
-    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
-    }
-  const adapterInterface = adapter?.init(runtime);
-  return adapterInterface;
-}
+    const { adapters } = runtime;
+    let adapter: Adapter | undefined;
+    // if not found, default to sqlite
+    if (adapters.length === 0) {
+      const sqliteAdapterPlugin = await import('@elizaos-plugins/adapter-sqlite');
+      const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
+      adapter = sqliteAdapterPluginDefault.adapters[0];
+      if (!adapter) {
+        throw new Error("Internal error: No database adapter found for default adapter-sqlite");
+      }
+    } else if (adapters.length === 1) {
+      adapter = adapters[0];
+    } else {
+      throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
+      }
+    const adapterInterface = adapter?.init(runtime);
+    return adapterInterface;
+  }
+
+  
 
 async function startAgent(
     character: Character,
@@ -699,7 +474,7 @@ async function startAgent(
         character.id ??= stringToUuid(character.name);
         character.username ??= character.name;
 
-        const token = getTokenForProvider(character.modelProvider, character);
+        const token = getTokenForProvider(character);
 
         const runtime: AgentRuntime = await createAgent(
             character,
@@ -834,12 +609,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", function (err) {
+    process.on("unhandledRejection", (err) => {
         console.error("unhandledRejection", err);
     });
 }

@@ -138,7 +138,7 @@ export function getEmbeddingType(runtime: IAgentRuntime): "local" | "remote" {
 }
 
 export function getEmbeddingZeroVector(): number[] {
-    let embeddingDimension = settings.USE_OPENAI_EMBEDDING === "true" ? 1536 : 384;
+    const embeddingDimension = settings.USE_OPENAI_EMBEDDING === "true" ? 1536 : 384;
     return Array(embeddingDimension).fill(0);
 }
 
