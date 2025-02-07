@@ -93,5 +93,8 @@ lit-config.json
 extra
 **/dist/**
 
-**/local_cache/**
-**/local_cache
+ton_nft_metadata/
+ton_nft_metadata/*
+
+ton_nft_images/
+ton_nft_images/*

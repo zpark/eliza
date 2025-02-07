@@ -40,7 +40,7 @@
     "typescript": "5.6.3",
     "viem": "2.21.58",
     "vite": "5.4.12",
-    "vitest": "2.1.5"
+    "vitest": "3.0.5"
   },
   "pnpm": {
     "overrides": {
@@ -54,17 +54,11 @@
       "@polkadot/types-create": "10.13.1",
       "@polkadot/types-codec": "10.13.1",
       "@polkadot/keyring": "12.6.2",
-      "ai": "4.1.16",
-      "@ai-sdk/openai": "1.1.9",
-      "@ai-sdk/provider": "1.0.7",
+      "@ai-sdk/provider": "1.0.6",
       "@ai-sdk/provider-utils": "2.1.6",
       "cookie": "0.7.0",
       "bs58": "5.0.0",
-      "@coral-xyz/anchor": "0.28.0",
-      "zod": "3.24.1"
-    },
-    "patchedDependencies": {
-      "@solana-developers/helpers": "patches/@solana-developers__helpers.patch"
+      "@coral-xyz/anchor": "0.28.0"
     }
   },
   "engines": {
@@ -76,7 +70,6 @@
     "@deepgram/sdk": "^3.9.0",
     "@injectivelabs/sdk-ts": "^1.14.33",
     "@vitest/eslint-plugin": "1.0.1",
-    "ai": "4.1.16",
     "amqplib": "0.10.5",
     "bs58": "4.0.0",
     "csv-parse": "5.6.0",
@@ -85,6 +78,7 @@
     "optional": "0.1.4",
     "pnpm": "9.15.0",
     "sharp": "0.33.5",
+    "ws": "8.18.0",
     "zod": "3.24.1"
   },
   "packageManager": "pnpm@9.15.0",

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ModelProviderName, Clients } from "./types";
+import { ModelProviderName } from "./types";
 import elizaLogger from "./logger";
 
 // TODO: TO COMPLETE
@@ -101,7 +101,6 @@ export const CharacterSchema = z.object({
             ])
         )
         .optional(),
-    clients: z.array(z.nativeEnum(Clients)),
     plugins: z.union([z.array(z.string()), z.array(PluginSchema)]),
     settings: z
         .object({
@@ -113,6 +112,14 @@ export const CharacterSchema = z.object({
                 })
                 .optional(),
             model: z.string().optional(),
+            modelConfig: z.object({
+                maxInputTokens: z.number().optional(),
+                maxOutputTokens: z.number().optional(),
+                temperature: z.number().optional(),
+                frequency_penalty: z.number().optional(),
+                presence_penalty:z.number().optional()
+            })
+            .optional(),
             embeddingModel: z.string().optional(),
         })
         .optional(),
