@@ -1,5 +1,6 @@
 // ================ IMPORTS ================
 import { createOpenAI } from "@ai-sdk/openai";
+import { createAnthropic } from "@ai-sdk/anthropic";
 import {
     experimental_generateImage as aiGenerateImage,
     generateObject as aiGenerateObject,
@@ -85,7 +86,22 @@ async function withRetry<T>(
     }
 }
 
-    export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelClass = ModelClass.DEFAULT) {
+function createModelClient(provider: string, apiKey: string, baseURL: string, runtime: IAgentRuntime) {
+    const modelClients: Record<string, any> = {
+        "anthropic": createAnthropic,
+        "claude": createAnthropic,
+    };
+
+    const createClient = modelClients[provider] || createOpenAI;
+
+    return createClient({
+        apiKey,
+        baseURL,
+        fetch: runtime.fetch,
+    });
+}
+
+export function initializeModelClient(runtime: IAgentRuntime, modelClass:ModelClass = ModelClass.DEFAULT) {
 
     elizaLogger.info(`Initializing model client with runtime: ${runtime.modelProvider}`);
     const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
@@ -128,12 +144,9 @@ async function withRetry<T>(
         throw new Error(`Model name not specified for class ${modelClass}`);
     }
     
-    const client = createOpenAI({
-        apiKey,
-        baseURL,
-        fetch: runtime.fetch,
-    });
-
+    const client = createModelClient(provider, apiKey, baseURL, runtime);
+    // console.log(client)
+     
     elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
 
     return {
@@ -325,6 +338,43 @@ export async function generateTrueOrFalse({
     return result === 'true';
 }
 
+function getModelConfig(
+    runtime: IAgentRuntime,
+    client: any,
+    model: string,
+    mode: 'auto' | 'json' | 'tool',
+    options: {
+        context: string;
+        output?: 'object' | 'array' | 'enum' | 'no-schema';
+        schema?: ZodSchema;
+        schemaName?: string;
+        schemaDescription?: string;
+        enumValues?: string[];
+        stopSequences?: string[];
+    }
+): any {
+    const isAnthropic =
+        runtime.getModelProvider()?.provider === "anthropic" ||
+        runtime.getModelProvider()?.provider === "claude";
+
+    if (isAnthropic && mode === "json") {
+        elizaLogger.warn("Anthropic does not support JSON mode. Switching to 'auto'.");
+        mode = "auto";
+    }
+
+    const config = {
+        model: client.languageModel(model),
+        prompt: options.context.toString(),
+        system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+        output: options.output as never,
+        mode: mode as never,
+        ...(options.schema ? { schema: options.schema, schemaName: options.schemaName, schemaDescription: options.schemaDescription } : {}),
+        ...(options.enumValues ? { enum: options.enumValues } : {}),
+    };
+
+    return options.stopSequences ? { ...config, stopSequences: options.stopSequences } : config;
+}
+
 // ================ OBJECT GENERATION FUNCTIONS ================
 export const generateObject = async ({
     runtime,
@@ -352,19 +402,15 @@ export const generateObject = async ({
         throw new Error('Enum values are required when output type is enum');
     }
 
-    // Create the base configuration object
-    const config = {
-        model: client.languageModel(model),
-        prompt: context.toString(),
-        system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-        output: output as never,
-        mode: mode as never,
-        ...(schema ? { schema, schemaName, schemaDescription } : {}),
-        ...(enumValues ? { enum: enumValues } : {})
-    };
-
-    // Only add stopSequences if it's defined
-    const finalConfig = stopSequences ? { ...config, stopSequences } : config;
+    const finalConfig = getModelConfig(runtime, client, model, mode, {
+        context,
+        output,
+        schema,
+        schemaName,
+        schemaDescription,
+        enumValues,
+        stopSequences,
+    });
 
     const {object} = await aiGenerateObject(finalConfig);
 
