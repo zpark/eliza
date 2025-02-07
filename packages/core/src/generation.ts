@@ -357,10 +357,6 @@ function getModelConfig(
         stopSequences?: string[];
     }
 ): any {
-    const isAnthropic =
-        runtime.getModelProvider()?.provider === "anthropic" ||
-        runtime.getModelProvider()?.provider === "claude";
-
     if (isAnthropicProvider(runtime) && mode === "json") {
         elizaLogger.warn("Anthropic does not support JSON mode. Switching to 'auto'.");
         mode = "auto";
