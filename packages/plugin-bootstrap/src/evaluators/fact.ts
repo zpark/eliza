@@ -52,6 +52,16 @@ Response should be a JSON object array inside a JSON markdown block. Correct res
 ]
 \`\`\``;
 
+// Updated schema with an explicit type cast to bypass mismatches between Zod versions.
+const claimSchema = (z.array(
+    z.object({
+        claim: z.string(),
+        type: z.enum(["fact", "opinion", "status"]),
+        in_bio: z.boolean(),
+        already_known: z.boolean(),
+    })
+) as unknown) as any;
+
 async function handler(runtime: IAgentRuntime, message: Memory) {
     const state = await runtime.composeState(message);
 
@@ -61,16 +71,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         state,
         template: runtime.character.templates?.factsTemplate || factsTemplate,
     });
-
-    const claimSchema = z.array(
-        z.object({
-          claim: z.string(),
-          type: z.enum(["fact", "opinion", "status"]),
-          in_bio: z.boolean(),
-          already_known: z.boolean()
-        })
-      );
-      
 
     const facts = await generateObjectArray({
         runtime,

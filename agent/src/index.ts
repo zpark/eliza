@@ -22,10 +22,10 @@ import { defaultCharacter } from "./defaultCharacter.ts";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
-import fs from "fs";
-import net from "net";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -80,7 +80,7 @@ function mergeCharacters(base: Character, child: Character): Character {
             ...Object.keys(baseObj || {}),
             ...Object.keys(childObj || {}),
         ]);
-        keys.forEach((key) => {
+        for (const key of keys) {
             if (
                 typeof baseObj[key] === "object" &&
                 typeof childObj[key] === "object" &&
@@ -100,70 +100,12 @@ function mergeCharacters(base: Character, child: Character): Character {
                 result[key] =
                     childObj[key] !== undefined ? childObj[key] : baseObj[key];
             }
-        });
+        }
         return result;
     };
     return mergeObjects(base, child);
 }
-/* function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
-}
-export async function loadCharacterFromOnchain(): Promise<Character[]> {
-    const jsonText = onchainJson;
 
-    console.log("JSON:", jsonText);
-    if (!jsonText) return [];
-    const loadedCharacters = [];
-    try {
-        const character = JSON.parse(jsonText);
-        validateCharacterConfig(character);
-
-        // .id isn't really valid
-        const characterId = character.id || character.name;
-        const characterPrefix = `CHARACTER.${characterId
-            .toUpperCase()
-            .replace(/ /g, "_")}.`;
-
-        const characterSettings = Object.entries(process.env)
-            .filter(([key]) => key.startsWith(characterPrefix))
-            .reduce((settings, [key, value]) => {
-                const settingKey = key.slice(characterPrefix.length);
-                settings[settingKey] = value;
-                return settings;
-            }, {} as Character["settings"]);
-
-        if (Object.keys(characterSettings).length > 0) {
-            character.settings = character.settings || {};
-            character.settings.secrets = {
-                ...characterSettings,
-                ...character.settings.secrets,
-            };
-        }
-
-        // Handle plugins
-        if (isAllStrings(character.plugins)) {
-            elizaLogger.info("Plugins are: ", character.plugins);
-            const importedPlugins = await Promise.all(
-                character.plugins.map(async (plugin) => {
-                    const importedPlugin = await import(plugin);
-                    return importedPlugin.default;
-                })
-            );
-            character.plugins = importedPlugins;
-        }
-
-        loadedCharacters.push(character);
-        elizaLogger.info(
-            `Successfully loaded character from: ${process.env.IQ_WALLET_ADDRESS}`
-        );
-        return loadedCharacters;
-    } catch (e) {
-        elizaLogger.error(
-            `Error parsing character from ${process.env.IQ_WALLET_ADDRESS}: ${e}`
-        );
-        process.exit(1);
-    }
-} */
 
 async function loadCharactersFromUrl(url: string): Promise<Character[]> {
     try {
@@ -188,7 +130,7 @@ async function loadCharactersFromUrl(url: string): Promise<Character[]> {
 
 async function jsonToCharacter(
     filePath: string,
-    character: Partial<Character>
+    character: any
 ): Promise<Character> {
     validateCharacterConfig(character);
 
@@ -201,7 +143,7 @@ async function jsonToCharacter(
         .filter(([key]) => key.startsWith(characterPrefix))
         .reduce((settings, [key, value]) => {
             const settingKey = key.slice(characterPrefix.length);
-            return { ...settings, [settingKey]: value } as Character["settings"];
+            return { ...settings, [settingKey]: value };
         }, {});
     if (Object.keys(characterSettings).length > 0) {
         character.settings = character.settings || {};
@@ -211,24 +153,22 @@ async function jsonToCharacter(
         };
     }
     // Handle plugins
-    character.plugins = await handlePluginImporting(character.plugins as unknown as Array<string>);
+    character.plugins = await handlePluginImporting(character.plugins);
     if (character.extends) {
         elizaLogger.info(
             `Merging  ${character.name} character with parent characters`
         );
-        let mergedCharacter = character;
         for (const extendPath of character.extends) {
             const baseCharacter = await loadCharacter(
                 path.resolve(path.dirname(filePath), extendPath)
             );
-            mergedCharacter = mergeCharacters(baseCharacter, mergedCharacter);
+            character = mergeCharacters(baseCharacter, character);
             elizaLogger.info(
-                `Merged ${mergedCharacter.name} with ${baseCharacter.name}`
+                `Merged ${character.name} with ${baseCharacter.name}`
             );
         }
-        return mergedCharacter as Character;
     }
-    return character as Character;
+    return character;
 }
 
 async function loadCharacter(filePath: string): Promise<Character> {
@@ -244,6 +184,7 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
     let content: string | null = null;
     let resolvedPath = "";
 
+    // Try different path resolutions in order
     const pathsToTry = [
         characterPath, // exact path as specified
         path.resolve(process.cwd(), characterPath), // relative to cwd
@@ -258,13 +199,13 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
         ), // relative to project root characters dir
     ];
 
-    elizaLogger.info("Trying paths:");
-    for (const p of pathsToTry) {
-        elizaLogger.info({
+    elizaLogger.info(
+        "Trying paths:",
+        pathsToTry.map((p) => ({
             path: p,
             exists: fs.existsSync(p),
-        });
-    }
+        }))
+    );
 
     for (const tryPath of pathsToTry) {
         content = tryLoadFile(tryPath);
@@ -307,7 +248,7 @@ async function readCharactersFromStorage(
         const uploadDir = path.join(process.cwd(), "data", "characters");
         await fs.promises.mkdir(uploadDir, { recursive: true });
         const fileNames = await fs.promises.readdir(uploadDir);
-        for (const fileName of fileNames) { 
+        for (const fileName of fileNames) {
             characterPaths.push(path.join(uploadDir, fileName));
         }
     } catch (err) {
@@ -335,7 +276,8 @@ export async function loadCharacters(
                     characterPath
                 );
                 loadedCharacters.push(character);
-            } catch {
+            } catch (e) {
+                elizaLogger.error(`Error loading character from ${characterPath}: ${e}`);
                 process.exit(1);
             }
         }
@@ -395,8 +337,6 @@ export function getTokenForProvider(
     return character.settings?.secrets?.PROVIDER_API_KEY || settings.PROVIDER_API_KEY;
 }
 
-
-
 // also adds plugins from character file into the runtime
 export async function initializeClients(
     character: Character,
@@ -432,7 +372,7 @@ export async function createAgent(
     elizaLogger.log(`Creating runtime for character ${character.name}`);
     return new AgentRuntime({
         token,
-        modelProvider: character.modelProvider as ModelProviderName,
+        modelProvider: character.modelProvider,
         evaluators: [],
         character,
         // character.plugins are handled when clients are added
@@ -682,12 +622,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", (err) => {
+    process.on("uncaughtException", function (err) {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", (err) => {
+    process.on("unhandledRejection", function (err) {
         console.error("unhandledRejection", err);
     });
 }

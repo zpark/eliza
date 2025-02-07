@@ -20,12 +20,9 @@ import {
     type Content,
     type IAgentRuntime,
     type IImageDescriptionService,
-    type IVerifiableInferenceAdapter,
     ModelClass,
     ServiceType,
     type TelemetrySettings,
-    type VerifiableInferenceOptions,
-    type VerifiableInferenceResult
 } from "./types.ts";
 
 
@@ -35,13 +32,7 @@ type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
 
-interface VerifiedInferenceOptions {
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
-}
-
-interface GenerateObjectOptions extends VerifiedInferenceOptions {
+interface GenerateObjectOptions {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
@@ -49,9 +40,9 @@ interface GenerateObjectOptions extends VerifiedInferenceOptions {
     schema?: ZodSchema;
     schemaName?: string;
     schemaDescription?: string;
-    stop?: string[];
     mode?: 'auto' | 'json' | 'tool';
     enum?: Array<string>;
+    stopSequences?: string[];
 }
 
 // ================ COMMON UTILITIES ================
@@ -170,9 +161,7 @@ export async function generateText({
     tools = {},
     onStepFinish,
     maxSteps = 1,
-    stop,
-    verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
-    verifiableInferenceOptions,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -180,11 +169,9 @@ export async function generateText({
     tools?: Record<string, Tool>;
     onStepFinish?: (event: StepResult) => Promise<void> | void;
     maxSteps?: number;
-    stop?: string[];
+    stopSequences?: string[];
     customSystemPrompt?: string;
     verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
 }): Promise<string> {
     logFunctionCall('generateText', runtime);
     validateContext(context, 'generateText');
@@ -192,12 +179,8 @@ export async function generateText({
     elizaLogger.info("Generating text with options:", {
         modelProvider: runtime.modelProvider,
         model: modelClass,
-        verifiableInference,
     });
 
-    if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        return await handleVerifiableInference(runtime, context, modelClass, verifiableInferenceOptions);
-    }
 
 
     const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
@@ -211,53 +194,24 @@ export async function generateText({
         system: systemPrompt,
         tools,
         onStepFinish,
-        maxSteps
+        maxSteps,
+        stopSequences
     });
 
     return text;
 }
 
-async function handleVerifiableInference(
-    runtime: IAgentRuntime,
-    context: string,
-    modelClass: ModelClass,
-    options?: VerifiableInferenceOptions
-): Promise<string> {
-    elizaLogger.log(
-        "Using verifiable inference adapter:",
-        runtime.verifiableInferenceAdapter
-    );
-    
-    try {
-        const result: VerifiableInferenceResult =
-            await runtime.verifiableInferenceAdapter.generateText(
-                context,
-                modelClass,
-                options
-            );
-        
-        elizaLogger.log("Verifiable inference result:", result);
-        
-        const isValid = await runtime.verifiableInferenceAdapter.verifyProof(result);
-        if (!isValid) {
-            throw new Error("Failed to verify inference proof");
-        }
-
-        return result.text;
-    } catch (error) {
-        elizaLogger.error("Error in verifiable inference:", error);
-        throw error;
-    }
-}
 
 export async function generateTextArray({
     runtime,
     context,
     modelClass=ModelClass.DEFAULT,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
+    stopSequences?: string[];
 }): Promise<string[]> {
     logFunctionCall('generateTextArray', runtime);
     validateContext(context, 'generateTextArray');
@@ -268,6 +222,7 @@ export async function generateTextArray({
             context,
             modelClass,
             schema: z.array(z.string()),
+            stopSequences
         });
         elizaLogger.debug("Received response from generateObject:", result);
         
@@ -283,12 +238,14 @@ async function generateEnum<T extends string>({
     modelClass=ModelClass.DEFAULT,
     enumValues,
     functionName,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
     enumValues: Array<T>;
     functionName: string;
+    stopSequences?: string[];
 }): Promise<JSONValue> {
     logFunctionCall(functionName, runtime);
     validateContext(context, functionName);
@@ -304,7 +261,8 @@ async function generateEnum<T extends string>({
             modelClass,
             output: 'enum',
             enum: enumValues,
-            mode: 'json'
+            mode: 'json',
+            stopSequences: stopSequences
         });
 
         elizaLogger.debug("Received enum response:", result);
@@ -318,10 +276,12 @@ export async function generateShouldRespond({
     runtime,
     context,
     modelClass=ModelClass.DEFAULT,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
+    stopSequences?: string[];
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
     const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as string[];
 
@@ -331,6 +291,7 @@ export async function generateShouldRespond({
         modelClass,
         enumValues: RESPONSE_VALUES,
         functionName: 'generateShouldRespond',
+        stopSequences
     });
 
     return result as "RESPOND" | "IGNORE" | "STOP";
@@ -340,10 +301,12 @@ export async function generateTrueOrFalse({
     runtime,
     context = "",
     modelClass=ModelClass.DEFAULT,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
+    stopSequences?: string[];
 }): Promise<boolean> {
     logFunctionCall('generateTrueOrFalse', runtime);
     
@@ -355,7 +318,8 @@ export async function generateTrueOrFalse({
         context,
         modelClass,
         enumValues: BOOL_VALUES,
-        functionName: 'generateTrueOrFalse'
+        functionName: 'generateTrueOrFalse',
+        stopSequences
     });
     
     return result === 'true';
@@ -370,12 +334,9 @@ export const generateObject = async ({
     schema,
     schemaName,
     schemaDescription,
-    stop,
     mode = 'json',
     enum: enumValues,
-    verifiableInference,
-    verifiableInferenceAdapter,
-    verifiableInferenceOptions,
+    stopSequences,
 }: GenerateObjectOptions): Promise<z.infer<typeof schema> | JSONValue> => {
     logFunctionCall('generateObject', runtime);
     if (!context) {
@@ -391,18 +352,23 @@ export const generateObject = async ({
         throw new Error('Enum values are required when output type is enum');
     }
 
-    const {object} = await aiGenerateObject({
+    // Create the base configuration object
+    const config = {
         model: client.languageModel(model),
         prompt: context.toString(),
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
         output: output as never,
+        mode: mode as never,
         ...(schema ? { schema, schemaName, schemaDescription } : {}),
-        ...(enumValues ? { enum: enumValues } : {}),
-        mode: mode as never
-    });
+        ...(enumValues ? { enum: enumValues } : {})
+    };
+
+    // Only add stopSequences if it's defined
+    const finalConfig = stopSequences ? { ...config, stopSequences } : config;
+
+    const {object} = await aiGenerateObject(finalConfig);
 
     elizaLogger.debug(`Received Object response from ${model} model.`);
-    
     return schema ? schema.parse(object) : object;
 };
 
@@ -429,6 +395,7 @@ export async function generateObjectDeprecated({
         schema,
         schemaName,
         schemaDescription,
+        mode: 'json'
     });
     return object;
 }
@@ -461,6 +428,7 @@ export async function generateObjectArray({
         schema,
         schemaName,
         schemaDescription,
+        mode: 'json'
     });
     return schema ? schema.parse(result) : result;
 }
@@ -470,10 +438,12 @@ export async function generateMessageResponse({
     runtime,
     context,
     modelClass=ModelClass.DEFAULT,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
+    stopSequences?: string[];
 }): Promise<Content> {
     logFunctionCall('generateMessageResponse', runtime);
     validateContext(context, 'generateMessageResponse');
@@ -488,6 +458,7 @@ export async function generateMessageResponse({
             model: client.languageModel(model),
             prompt: context,
             system: systemPrompt,
+            stopSequences
         });
 
         elizaLogger.info("Text:", text);
@@ -591,10 +562,12 @@ export async function generateTweetActions({
     runtime,
     context,
     modelClass=ModelClass.DEFAULT,
+    stopSequences,
 }: {
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
+    stopSequences?: string[];
 }): Promise<ActionResponse | null> {
     try {
         const BOOL_VALUES = ['true', 'false'];
@@ -605,7 +578,8 @@ export async function generateTweetActions({
             context: `${context}\nShould I like this tweet?`,
             modelClass,
             enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_like'
+            functionName: 'generateTweetActions_like',
+            stopSequences
         });
 
         const retweet = await generateEnum({
@@ -613,7 +587,8 @@ export async function generateTweetActions({
             context: `${context}\nShould I retweet this tweet?`,
             modelClass,
             enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_retweet'
+            functionName: 'generateTweetActions_retweet',
+            stopSequences
         });
 
         const quote = await generateEnum({
@@ -621,7 +596,8 @@ export async function generateTweetActions({
             context: `${context}\nShould I quote this tweet?`,
             modelClass,
             enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_quote'
+            functionName: 'generateTweetActions_quote',
+            stopSequences
         });
 
         const reply = await generateEnum({
@@ -629,7 +605,8 @@ export async function generateTweetActions({
             context: `${context}\nShould I reply to this tweet?`,
             modelClass,
             enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_reply'
+            functionName: 'generateTweetActions_reply',
+            stopSequences
         });
 
         if (!like || !retweet) {

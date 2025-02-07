@@ -31,6 +31,7 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@huggingface/transformers":"3.3.3",
 		"@eslint/js": "9.16.0",
 		"@rollup/plugin-commonjs": "25.0.8",
 		"@rollup/plugin-json": "6.1.0",
@@ -63,6 +64,8 @@
 	},
 	"dependencies": {
 		"@tavily/core": "^0.0.2",
+		"@ai-sdk/openai": "1.1.9",
+		"ai": "4.1.24",
 		"@types/uuid": "10.0.0",
 		"dotenv": "16.4.5",
 		"fastembed": "1.14.1",
@@ -81,6 +84,6 @@
 		"together-ai": "0.7.0",
 		"unique-names-generator": "4.7.1",
 		"uuid": "11.0.3",
-		"zod": "3.23.8"
+		"zod": "3.24.1"
 	}
 }

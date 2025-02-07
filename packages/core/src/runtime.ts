@@ -10,7 +10,6 @@ import {
     formatActions,
 } from "./actions.ts";
 import { addHeader, composeContext } from "./context.ts";
-import { defaultCharacter } from "./defaultCharacter.ts";
 import {
     evaluationTemplate,
     formatEvaluatorExamples,
@@ -37,7 +36,6 @@ import {
     type IDatabaseAdapter,
     type IMemoryManager,
     type IRAGKnowledgeManager,
-    type IVerifiableInferenceAdapter,
     type KnowledgeItem,
     ModelClass,
     type ModelProviderName,
@@ -56,6 +54,11 @@ import {
     type ModelSettings,
     type ImageModelSettings,
     type EmbeddingModelSettings,
+    type ActionResponse,
+    type Content,
+    type IImageDescriptionService,
+    type TelemetrySettings,
+    type ClientInstance,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -730,9 +733,9 @@ export class AgentRuntime implements IAgentRuntime {
     readonly embeddingModelProvider: string;
     readonly fetch = fetch;
     readonly cacheManager: ICacheManager;
-    readonly clients: Record<string, any>;
+    readonly clients: ClientInstance[] = [];
     readonly services: Map<ServiceType, Service>;
-    private _verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    
 
     private readonly knowledgeRoot: string;
     private readonly modelProviderManager: ModelProviderManager;
@@ -755,14 +758,13 @@ export class AgentRuntime implements IAgentRuntime {
         databaseAdapter: IDatabaseAdapter;
         fetch?: typeof fetch;
         cacheManager: ICacheManager;
-        verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
             opts.character?.id ??
             opts?.agentId ??
             stringToUuid(opts.character?.name ?? uuidv4());
-        this.character = opts.character || defaultCharacter;
+        this.character = opts.character;
 
         
 
@@ -843,7 +845,6 @@ export class AgentRuntime implements IAgentRuntime {
             }
         }
 
-        this._verifiableInferenceAdapter = opts.verifiableInferenceAdapter;
 
         // Now initialize properties that depend on modelProviderManager
         this.modelProvider =
@@ -1033,23 +1034,10 @@ export class AgentRuntime implements IAgentRuntime {
 
     async stop() {
         elizaLogger.debug("runtime::stop - character", this.character.name);
-        // stop services, they don't have a stop function
-        // just initialize
-
-        // plugins
-        // have actions, providers, evaluators (no start/stop)
-        // services (just initialized), clients
-
-        // client have a start
-        for (const cStr in this.clients) {
-            const c = this.clients[cStr];
-            elizaLogger.log(
-                "runtime::stop - requesting",
-                cStr,
-                "client stop for",
-                this.character.name,
-            );
-            c.stop();
+        // Loop over the array of clients directly.
+        for (const client of this.clients) {
+            elizaLogger.log("runtime::stop - requesting client stop for", this.character.name);
+            client.stop(this);
         }
         // we don't need to unregister with directClient
         // don't need to worry about knowledge
@@ -1258,7 +1246,6 @@ export class AgentRuntime implements IAgentRuntime {
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
-            verifiableInferenceAdapter: this._verifiableInferenceAdapter,
         });
 
         const evaluators = parseJsonArrayFromText(
@@ -1899,14 +1886,6 @@ Text: ${attachment.text}
             recentMessagesData,
             attachments: formattedAttachments,
         } as State;
-    }
-
-    getVerifiableInferenceAdapter(): IVerifiableInferenceAdapter | undefined {
-        return this._verifiableInferenceAdapter;
-    }
-
-    setVerifiableInferenceAdapter(adapter: IVerifiableInferenceAdapter | undefined): void {
-        this._verifiableInferenceAdapter = adapter;
     }
 
     // IAgentRuntime interface implementation

@@ -1308,7 +1308,6 @@ export interface IAgentRuntime {
     services: Map<ServiceType, Service>;
     clients: ClientInstance[];
 
-    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
     initialize(): Promise<void>;
 
