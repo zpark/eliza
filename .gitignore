@@ -103,3 +103,6 @@ packages/*/dist/*
 
 
 **/dist/**
+
+**/.docusaurus/**
+**/docs/build/**
