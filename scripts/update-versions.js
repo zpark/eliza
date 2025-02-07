@@ -5,7 +5,7 @@ const { execSync } = require("node:child_process");
 
 const packagesDir = path.join(__dirname, "../packages");
 const externalDirs = ["../agent", "../client", "../docs"];
-const lernaPath = path.join(__dirname, "../lerna.json");
+const lernaPath = path.join(__dirname, "../../lerna.json");
 
 // Simple Logger
 function log(level, message) {

@@ -51,7 +51,6 @@ import {
     type Actor,
     type Evaluator,
     type Memory,
-    type DirectoryItem,
     type ClientInstance,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
@@ -62,7 +61,7 @@ import { existsSync } from "fs";
  * action registration, and interaction with external services like OpenAI and Supabase.
  */
 
-function isDirectoryItem(item: any): item is DirectoryItem {
+function isDirectoryItem(item: any) {
     return (
         typeof item === "object" &&
         item !== null &&
@@ -508,7 +507,7 @@ export class AgentRuntime implements IAgentRuntime {
                                     elizaLogger.debug(
                                         `[RAG Filter] Found directory item: ${JSON.stringify(item)}`,
                                     );
-                                    acc[0].push(item);
+                                    acc[0].push(item as any); // any is probably a bug
                                 } else if ("path" in item) {
                                     elizaLogger.debug(
                                         `[RAG Filter] Found path item: ${JSON.stringify(item)}`,

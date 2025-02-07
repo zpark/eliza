@@ -203,8 +203,8 @@ export class FullDocumentationGenerator {
                  \`\`\`
                - Then, explain they need to:
                  1. cd into the agent/ directory
-                 2. Run pnpm install to install the new dependency
-                 3. Run pnpm build to build the project with the new plugin
+                 2. Run bun install to install the new dependency
+                 3. Run bun run build to build the project with the new plugin
 
             2. After installation, show how to import and use the plugin:
                - Import syntax using: import { ${exportName} } from "${packageJson.name}";

@@ -6,7 +6,6 @@ import {
     type IRAGKnowledgeManager,
     type RAGKnowledgeItem,
     type UUID,
-    KnowledgeScope,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { existsSync } from "fs";
@@ -500,7 +499,7 @@ export class RAGKnowledgeManager implements IRAGKnowledgeManager {
 
     public generateScopedId(path: string, isShared: boolean): UUID {
         // Prefix the path with scope before generating UUID to ensure different IDs for shared vs private
-        const scope = isShared ? KnowledgeScope.SHARED : KnowledgeScope.PRIVATE;
+        const scope = isShared ? "shared" : "private";
         const scopedPath = `${scope}-${path}`;
         return stringToUuid(scopedPath);
     }

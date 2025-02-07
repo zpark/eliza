@@ -22,6 +22,6 @@
         "allowArbitraryExtensions": true,
         "customConditions": ["@elizaos/source"]
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "../agent/src/import.ts"],
     "exclude": ["node_modules", "dist", "src/**/*.d.ts", "types/**/*.test.ts"]
 }

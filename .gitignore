@@ -59,7 +59,6 @@ tsup.config.bundled_*.mjs
 
 .turbo
 .cursorrules
-.pnpm-store
 instructions.md
 wallet_data.txt
 

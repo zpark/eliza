@@ -82,7 +82,7 @@ COMMANDS=()
 # Ensure "core" package runs first
 CORE_PACKAGE="$PACKAGES_DIR/core"
 if [ -d "$CORE_PACKAGE" ]; then
-  COMMANDS+=("pnpm --dir $CORE_PACKAGE dev -- $*")
+  COMMANDS+=("bun --dir $CORE_PACKAGE dev -- $*")
 else
   echo "Warning: 'core' package not found in $PACKAGES_DIR."
 fi
@@ -93,7 +93,7 @@ for FOLDER in "${WORKING_FOLDERS[@]}"; do
 
   # Check if the folder exists and add the command
   if [ -d "$PACKAGE" ]; then
-    COMMANDS+=("pnpm --dir $PACKAGE dev -- $*")
+    COMMANDS+=("bun --dir $PACKAGE dev -- $*")
   else
     echo "Warning: '$FOLDER' folder not found in $PACKAGES_DIR."
   fi
@@ -101,7 +101,7 @@ done
 
 # Add specific commands for other directories or cases
 if [ -d "./client" ]; then
-  COMMANDS+=("pnpm --dir client dev -- $*")
+  COMMANDS+=("bun --dir client dev -- $*")
 else
   echo "Warning: 'client' directory not found."
 fi
@@ -113,13 +113,13 @@ if [ -d "./agent" ]; then
     WATCH_PATHS+=("--watch './packages/$FOLDER/dist'")
   done
 
-  COMMANDS+=("nodemon ${WATCH_PATHS[@]} -e js,json,map --delay 2 --exec 'pnpm --dir agent dev -- $*'")
+  COMMANDS+=("nodemon ${WATCH_PATHS[@]} -e js,json,map --delay 2 --exec 'bun --dir agent dev -- $*'")
 else
   echo "Warning: 'agent' directory not found."
 fi
 
 # Run build command first
-if ! pnpm build; then
+if ! bun run build; then
   echo "Build failed. Exiting."
   exit 1
 fi

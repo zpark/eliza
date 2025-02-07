@@ -19,7 +19,6 @@ import type {
     Relationship,
     UUID,
     RAGKnowledgeItem,
-    ChunkRow,
     Adapter,
     IAgentRuntime,
     Plugin,
@@ -1003,12 +1002,10 @@ export class SqliteDatabaseAdapter
                         Main: ${selectSql} [${id}]
                         Chunks: ${chunkSql} [${id}]`);
 
-                    const mainEntry = this.db.prepare(selectSql).get(id) as
-                        | ChunkRow
-                        | undefined;
+                    const mainEntry = this.db.prepare(selectSql).get(id) as { id: any } | undefined;
                     const chunks = this.db
                         .prepare(chunkSql)
-                        .all(id) as ChunkRow[];
+                        .all(id) as { id: any }[];
 
                     elizaLogger.debug(`[Knowledge Remove] Found:`, {
                         mainEntryExists: !!mainEntry?.id,
