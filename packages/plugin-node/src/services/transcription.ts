@@ -49,92 +49,6 @@ export class TranscriptionService
     private queue: { audioBuffer: ArrayBuffer; resolve: Function }[] = [];
     private processing = false;
 
-    /**
-     * CHANGED: initialize() now checks:
-     * 1) character.settings.transcription (if available and keys exist),
-     * 2) then the .env TRANSCRIPTION_PROVIDER,
-     * 3) then old fallback logic (Deepgram -> OpenAI -> local).
-     */
-    async initialize(_runtime: IAgentRuntime): Promise<void> {
-        this.runtime = _runtime;
-
-        // 1) Check character settings
-        let chosenProvider: TranscriptionProvider | null = null;
-        const charSetting = this.runtime.character?.settings?.transcription;
-
-        if (charSetting === TranscriptionProvider.Deepgram) {
-            const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
-            if (deepgramKey) {
-                this.deepgram = createClient(deepgramKey);
-                chosenProvider = TranscriptionProvider.Deepgram;
-            }
-        } else if (charSetting === TranscriptionProvider.OpenAI) {
-            const openaiKey = this.runtime.getSetting("OPENAI_API_KEY");
-            if (openaiKey) {
-                this.openai = new OpenAI({ apiKey: openaiKey });
-                chosenProvider = TranscriptionProvider.OpenAI;
-            }
-        } else if (charSetting === TranscriptionProvider.Local) {
-            chosenProvider = TranscriptionProvider.Local;
-        }
-
-        // 2) If not chosen from character, check .env
-        if (!chosenProvider) {
-            const envProvider = this.runtime.getSetting(
-                "TRANSCRIPTION_PROVIDER"
-            );
-            if (envProvider) {
-                switch (envProvider.toLowerCase()) {
-                    case "deepgram":
-                        {
-                            const dgKey =
-                                this.runtime.getSetting("DEEPGRAM_API_KEY");
-                            if (dgKey) {
-                                this.deepgram = createClient(dgKey);
-                                chosenProvider = TranscriptionProvider.Deepgram;
-                            }
-                        }
-                        break;
-                    case "openai":
-                        {
-                            const openaiKey =
-                                this.runtime.getSetting("OPENAI_API_KEY");
-                            if (openaiKey) {
-                                this.openai = new OpenAI({ apiKey: openaiKey });
-                                chosenProvider = TranscriptionProvider.OpenAI;
-                            }
-                        }
-                        break;
-                    case "local":
-                        chosenProvider = TranscriptionProvider.Local;
-                        break;
-                }
-            }
-        }
-
-        // 3) If still none, fallback to old logic: Deepgram -> OpenAI -> local
-        if (!chosenProvider) {
-            const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
-            if (deepgramKey) {
-                this.deepgram = createClient(deepgramKey);
-                chosenProvider = TranscriptionProvider.Deepgram;
-            } else {
-                const openaiKey = this.runtime.getSetting("OPENAI_API_KEY");
-                if (openaiKey) {
-                    this.openai = new OpenAI({ apiKey: openaiKey });
-                    chosenProvider = TranscriptionProvider.OpenAI;
-                } else {
-                    chosenProvider = TranscriptionProvider.Local;
-                }
-            }
-        }
-
-        this.transcriptionProvider = chosenProvider;
-
-        // Leave detectCuda as is.
-        this.detectCuda();
-    }
-
     constructor() {
         super();
         const rootDir = path.resolve(__dirname, "../../");
@@ -317,14 +231,14 @@ export class TranscriptionService
     /**
      * Original logic from main is now handled by the final fallback in initialize().
      * We'll keep transcribeUsingDefaultLogic() if needed by other code references,
-     * but it’s no longer invoked in the new flow.
+     * but it's no longer invoked in the new flow.
      */
     private async transcribeUsingDefaultLogic(
         audioBuffer: ArrayBuffer
     ): Promise<string | null> {
         if (this.deepgram) {
             return await this.transcribeWithDeepgram(audioBuffer);
-        } else if (this.openai) {
+        }if (this.openai) {
             return await this.transcribeWithOpenAI(audioBuffer);
         }
         return await this.transcribeLocally(audioBuffer);
@@ -467,5 +381,73 @@ export class TranscriptionService
             );
             return null;
         }
+    }
+
+    private async setupProvider(providerType: TranscriptionProvider): Promise<TranscriptionProvider | null> {
+        switch (providerType) {
+            case TranscriptionProvider.Deepgram: {
+                const deepgramKey = this.runtime.getSetting("DEEPGRAM_API_KEY");
+                if (deepgramKey) {
+                    this.deepgram = createClient(deepgramKey);
+                    return TranscriptionProvider.Deepgram;
+                }
+                break;
+            }
+            case TranscriptionProvider.OpenAI: {
+                const openaiKey = this.runtime.getSetting("OPENAI_API_KEY");
+                if (openaiKey) {
+                    this.openai = new OpenAI({ apiKey: openaiKey });
+                    return TranscriptionProvider.OpenAI;
+                }
+                break;
+            }
+            case TranscriptionProvider.Local: {
+                return TranscriptionProvider.Local;
+            }
+        }
+        return null;
+    }
+
+    async initialize(_runtime: IAgentRuntime): Promise<void> {
+        this.runtime = _runtime;
+        let chosenProvider: TranscriptionProvider | null = null;
+
+        // 1) Check character settings
+        const charSetting = this.runtime.character?.settings?.transcription;
+        if (charSetting) {
+            chosenProvider = await this.setupProvider(charSetting);
+        }
+
+        // 2) If not chosen from character, check .env
+        if (!chosenProvider) {
+            const envProvider = this.runtime.getSetting("TRANSCRIPTION_PROVIDER");
+            if (envProvider) {
+                switch (envProvider.toLowerCase()) {
+                    case "deepgram":
+                        chosenProvider = await this.setupProvider(TranscriptionProvider.Deepgram);
+                        break;
+                    case "openai":
+                        chosenProvider = await this.setupProvider(TranscriptionProvider.OpenAI);
+                        break;
+                    case "local":
+                        chosenProvider = TranscriptionProvider.Local;
+                        break;
+                }
+            }
+        }
+
+        // 3) If still none, try Deepgram first and only check OpenAI if Deepgram fails
+        if (!chosenProvider) {
+            chosenProvider = await this.setupProvider(TranscriptionProvider.Deepgram);
+            if (!chosenProvider) {
+                chosenProvider = await this.setupProvider(TranscriptionProvider.OpenAI);
+            }
+            if (!chosenProvider) {
+                chosenProvider = TranscriptionProvider.Local;
+            }
+        }
+
+        this.transcriptionProvider = chosenProvider;
+        this.detectCuda();
     }
 }

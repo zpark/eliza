@@ -2,7 +2,10 @@ import type { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
 
 export const nodeEnvSchema = z.object({
-    OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
+
+    // TODO: check if single interface can work for these providers
+    OPENAI_API_KEY: z.string().optional(),
+    DEEPGRAM_API_KEY: z.string().optional(),
 
     // Core settings
     ELEVENLABS_XI_API_KEY: z.string().optional(),
@@ -31,9 +34,10 @@ export async function validateNodeConfig(
 
         // Only include what's absolutely required
         const config = {
-            OPENAI_API_KEY:
-                runtime.getSetting("OPENAI_API_KEY") ||
-                process.env.OPENAI_API_KEY,
+            // Only include OpenAI key if it exists
+            ...(runtime.getSetting("OPENAI_API_KEY") || process.env.OPENAI_API_KEY ? {
+                OPENAI_API_KEY: runtime.getSetting("OPENAI_API_KEY") || process.env.OPENAI_API_KEY,
+            } : {}),
             ELEVENLABS_XI_API_KEY:
                 runtime.getSetting("ELEVENLABS_XI_API_KEY") ||
                 process.env.ELEVENLABS_XI_API_KEY,
