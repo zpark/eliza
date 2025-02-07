@@ -7,7 +7,7 @@ export default defineConfig({
     clean: true,
     format: ["esm"], // Ensure you're targeting CommonJS
     platform: "node",
-    target: "node18",
+    target: "node23",
     bundle: true,
     splitting: true, // Add this for better code splitting
     dts: true, // Generate declaration files
