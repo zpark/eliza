@@ -86,15 +86,16 @@ async function withRetry<T>(
     }
 }
 
-function isAnthropicProvider(provider: string): boolean {
+function isAnthropicProvider(runtime: IAgentRuntime): boolean {
+    const provider = runtime.getModelProvider()?.provider;
     return (
         provider.toLowerCase().includes("anthropic") ||
         provider.toLowerCase().includes("claude")
     );
 }
 
-function createModelClient(provider: string, apiKey: string, baseURL: string, runtime: IAgentRuntime) {
-    const createClient = isAnthropicProvider(provider)
+function createModelClient(apiKey: string, baseURL: string, runtime: IAgentRuntime) {
+    const createClient = isAnthropicProvider(runtime)
         ? createAnthropic
         : createOpenAI;
 
@@ -105,13 +106,10 @@ function createModelClient(provider: string, apiKey: string, baseURL: string, ru
     });
 }
 
-export function initializeModelClient(
-    provider: string, 
-    runtime: IAgentRuntime, 
-    modelClass: ModelClass = ModelClass.DEFAULT
-) {
+export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelClass = ModelClass.DEFAULT) {
 
     elizaLogger.info(`Initializing model client with runtime: ${runtime.modelProvider}`);
+    const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
     const baseURL = runtime.getModelProvider()?.endpoint;
     const apiKey = runtime.token ||
                 process.env.PROVIDER_API_KEY ||
@@ -151,7 +149,7 @@ export function initializeModelClient(
         throw new Error(`Model name not specified for class ${modelClass}`);
     }
     
-    const client = createModelClient(provider, apiKey, baseURL, runtime);
+    const client = createModelClient(apiKey, baseURL, runtime);
 
     elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
 
@@ -201,8 +199,8 @@ export async function generateText({
     });
 
 
-    const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
-    const { client, model, systemPrompt } = initializeModelClient(provider, runtime, modelClass);
+
+    const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
 
 
     elizaLogger.info(`Generating text with model ${model} and system prompt ${systemPrompt} and context ${context} and tools ${tools} and onStepFinish ${onStepFinish} and maxSteps ${maxSteps}`);
@@ -359,9 +357,11 @@ function getModelConfig(
         stopSequences?: string[];
     }
 ): any {
-    const provider = runtime.getModelProvider()?.provider;
+    const isAnthropic =
+        runtime.getModelProvider()?.provider === "anthropic" ||
+        runtime.getModelProvider()?.provider === "claude";
 
-    if (isAnthropicProvider(provider) && mode === "json") {
+    if (isAnthropicProvider(runtime) && mode === "json") {
         elizaLogger.warn("Anthropic does not support JSON mode. Switching to 'auto'.");
         mode = "auto";
     }
@@ -400,8 +400,7 @@ export const generateObject = async ({
     }
 
     elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
-    const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
-    const { client, model } = initializeModelClient(provider, runtime, modelClass);
+    const { client, model } = initializeModelClient(runtime, modelClass);
 
     if (output === 'enum' && !enumValues) {
         throw new Error('Enum values are required when output type is enum');
@@ -501,8 +500,7 @@ export async function generateMessageResponse({
     elizaLogger.debug("Context:", context);
 
     return await withRetry(async () => {
-        const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
-        const { client, model, systemPrompt } = initializeModelClient(provider, runtime, modelClass);
+        const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
         
         elizaLogger.info(`Generating message response with model: ${model} & model class: ${modelClass}`);
 
@@ -558,10 +556,15 @@ export const generateImage = async (
         elizaLogger.warn("No model settings found for the image model provider.");
         return { success: false, error: "No model settings available" };
     }
-    
 
-    const provider = runtime.imageVisionModelProvider;
-    const { model, client } = initializeModelClient(provider, runtime, ModelClass.IMAGE);
+    if (isAnthropicProvider(runtime)) {
+        return {
+            success: false,
+            error: "Unsupported provider: Anthropic does not support image generation.",
+        };
+    }
+
+    const { model, client } = initializeModelClient(runtime, ModelClass.IMAGE);
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
     });
