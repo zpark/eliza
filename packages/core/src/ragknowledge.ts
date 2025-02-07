@@ -8,8 +8,8 @@ import {
     type UUID,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-import { existsSync } from "fs";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 
 /**
  * Manage knowledge in the database.

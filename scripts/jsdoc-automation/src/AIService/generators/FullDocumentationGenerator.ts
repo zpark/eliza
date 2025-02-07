@@ -3,11 +3,11 @@ import type { Configuration } from "../../Configuration.js";
 import { TypeScriptParser } from "../../TypeScriptParser.js";
 import { CodeFormatter } from "../utils/CodeFormatter.js";
 import { DocumentOrganizer } from "../utils/DocumentOrganizer.js";
-import path from "path";
+import path from "node:path";
 import { PROMPT_TEMPLATES } from "../../utils/prompts";
 import type { FileDocsGroup, OrganizedDocs } from "../types";
 import { AIService } from "../AIService.js";
-import { promises as fs } from "fs";
+import { promises as fs } from "node:fs";
 
 interface FAQ {
     question: string;

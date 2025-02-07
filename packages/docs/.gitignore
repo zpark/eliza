@@ -4,7 +4,7 @@
 # Production
 /build
 
-docs/api/
+./api/*
 
 # Generated files
 .docusaurus

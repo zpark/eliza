@@ -18,10 +18,10 @@ import {
     validateCharacterConfig
 } from "@elizaos/core";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
-import fs from "fs";
-import net from "net";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./defaultCharacter.js";
 

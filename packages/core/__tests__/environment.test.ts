@@ -118,7 +118,7 @@ describe("Character Configuration", () => {
 
     it("should throw error for missing required fields", () => {
         const invalidConfig = { ...validCharacterConfig };
-        delete (invalidConfig as any).name;
+        (invalidConfig as any).name = undefined;
         expect(() => validateCharacterConfig(invalidConfig)).toThrow();
     });
 

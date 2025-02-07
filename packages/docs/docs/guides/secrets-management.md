@@ -62,7 +62,7 @@ cp .env.example .env
 
 ```typescript
 import { config } from "dotenv";
-import path from "path";
+import path from "node:path";
 
 export function findNearestEnvFile(startDir = process.cwd()) {
     let currentDir = startDir;

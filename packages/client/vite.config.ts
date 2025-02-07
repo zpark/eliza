@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, Plugin, UserConfig } from "vite";
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import viteCompression from "vite-plugin-compression";
 import path from "node:path";

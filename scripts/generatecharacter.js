@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 
 // Replace agent values
 const agentName = "Dobby";

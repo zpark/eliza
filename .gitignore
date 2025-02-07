@@ -97,3 +97,6 @@ ton_nft_metadata/*
 
 ton_nft_images/
 ton_nft_images/*
+
+packages/docs/api/*
+packages/*/dist/*

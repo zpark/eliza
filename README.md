@@ -87,13 +87,13 @@ Note: .env is optional. If you're planning to run multiple distinct agents, you 
 
 #### Start Eliza
 
-```bash
-bun i
-bun run build
-bun start
+Important! We now use Bun. If you are using npm, you will need to install Bun:
+https://bun.sh/docs/installation
 
-# The project iterates fast, sometimes you need to clean the project if you are coming back to the project
-bun clean
+```bash
+bun install
+bun run build # npm will work too
+bun start # npm will work too
 ```
 
 ### Interact via Browser

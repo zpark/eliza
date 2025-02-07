@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 
 const EXPORTED_DATA_FILE = "tweets.json";
 const TWEETS_FILE = "exportedtweets.json";

@@ -1,8 +1,8 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 
 import {
     type AgentRuntime,
@@ -65,15 +65,15 @@ export function createApiRouter(
         })
     );
 
-    router.get("/", (req, res) => {
+    router.get("/", (_req, res) => {
         res.send("Welcome, this is the REST API!");
     });
 
-    router.get("/hello", (req, res) => {
+    router.get("/hello", (_req, res) => {
         res.json({ message: "Hello World!" });
     });
 
-    router.get("/agents", (req, res) => {
+    router.get("/agents", (_req, res) => {
         const agentsList = Array.from(agents.values()).map((agent) => ({
             id: agent.agentId,
             name: agent.character.name,
@@ -82,7 +82,7 @@ export function createApiRouter(
         res.json({ agents: agentsList });
     });
 
-    router.get('/storage', async (req, res) => {
+    router.get('/storage', async (_req, res) => {
         try {
             const uploadDir = path.join(process.cwd(), "data", "characters");
             const files = await fs.promises.readdir(uploadDir);
@@ -107,7 +107,7 @@ export function createApiRouter(
 
         const character = agent?.character;
         if (character?.settings?.secrets) {
-            delete character.settings.secrets;
+            character.settings.secrets = undefined;
         }
 
         res.json({

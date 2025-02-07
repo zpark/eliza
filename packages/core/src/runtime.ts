@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import { join } from "path";
+import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -55,7 +55,7 @@ import {
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { glob } from "glob";
-import { existsSync } from "fs";
+import { existsSync } from "node:fs";
 /**
  * Represents the runtime environment for an agent, handling message processing,
  * action registration, and interaction with external services like OpenAI and Supabase.
@@ -1736,7 +1736,7 @@ Text: ${attachment.text}
             actors: state.actorsData ?? [],
             messages: recentMessagesData.map((memory: Memory) => {
                 const newMemory = { ...memory };
-                delete newMemory.embedding;
+                newMemory.embedding = undefined;
                 return newMemory;
             }),
         });
