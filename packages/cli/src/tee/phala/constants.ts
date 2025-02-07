@@ -33,7 +33,7 @@ services:
       /bin/sh -c "
       cd /app &&
       echo {{characterBase64Data}} | base64 -d > characters/{{characterName}}.character.json &&
-      pnpm run start --non-interactive --character=characters/{{characterName}}.character.json
+      bun run start --non-interactive --character=characters/{{characterName}}.character.json
       "
     stdin_open: true
     tty: true

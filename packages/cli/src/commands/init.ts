@@ -69,25 +69,25 @@ async function selectPlugins() {
 async function installDependencies(targetDir: string, database: string, selectedPlugins: string[]) {
   logger.info("Installing dependencies...")
 
-  // Install pnpm if not already installed
-  await execa("npm", ["install", "-g", "pnpm"], {
+  // Install bun if not already installed
+  await execa("npm", ["install", "-g", "bun"], {
     stdio: "inherit"
   })
 
-  // Use pnpm for installation
-  await execa("pnpm", ["install", "--no-frozen-lockfile"], { 
+  // Use bun for installation
+  await execa("bun", ["install", "--no-frozen-lockfile"], { 
     cwd: targetDir, 
     stdio: "inherit" 
   })
 
-  await execa("pnpm", ["add", `@elizaos/adapter-${database}`, "--workspace-root"], {
+  await execa("bun", ["add", `@elizaos/adapter-${database}`, "--workspace-root"], {
     cwd: targetDir,
     stdio: "inherit"
   })
 
   if (selectedPlugins.length > 0) {
     console.log(selectedPlugins)
-    await execa("pnpm", ["add", ...selectedPlugins, "--workspace-root"], {
+    await execa("bun", ["add", ...selectedPlugins, "--workspace-root"], {
       cwd: targetDir,
       stdio: "inherit"
     })

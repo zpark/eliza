@@ -7,7 +7,7 @@ The TEE CLI provides a set of commands to manage your ElizaOS TEE deployments, f
 ### Prerequisites
 
 - Docker installed and running
-- Node.js and npm/pnpm installed
+- Node.js and npm/bun installed
 - A Docker Hub account for publishing images
 - A Phala Cloud (https://cloud.phala.network/login) API key for cloud deployments
 

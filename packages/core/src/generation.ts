@@ -1,16 +1,15 @@
 // ================ IMPORTS ================
-import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
 import {
     experimental_generateImage as aiGenerateImage,
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
-    type JSONValue,
     type StepResult as AIStepResult,
     type CoreTool,
-    type GenerateObjectResult,
+    type JSONValue
 } from "ai";
-import { object, z, type ZodSchema } from "zod";
+import { z, type ZodSchema } from "zod";
 import { elizaLogger, logFunctionCall } from "./index.ts";
 import {
     parseJSONObjectFromText
@@ -22,8 +21,7 @@ import {
     type IAgentRuntime,
     type IImageDescriptionService,
     ModelClass,
-    ServiceType,
-    type TelemetrySettings,
+    ServiceType
 } from "./types.ts";
 
 
@@ -89,8 +87,8 @@ async function withRetry<T>(
 function isAnthropicProvider(runtime: IAgentRuntime): boolean {
     const provider = runtime.getModelProvider()?.provider;
     return (
-        provider.toLowerCase().includes("anthropic") ||
-        provider.toLowerCase().includes("claude")
+        provider?.toLowerCase().includes("anthropic") ||
+        provider?.toLowerCase().includes("claude")
     );
 }
 
@@ -119,7 +117,7 @@ function validateModelConfig(
 ) {
     const validations = [
         { value: config.apiKey, name: 'API key', for: provider },
-        { value: config.baseURL, name: 'endpoint URL', for: provider },
+        // { value: config.baseURL, name: 'endpoint URL', for: provider },
         { value: config.modelProvider, name: 'model provider' },
         { value: config.modelProvider?.models, name: 'model configurations', in: 'provider' },
         { value: config.model, name: 'model name', for: `class ${config.modelClass}` }
@@ -149,7 +147,7 @@ export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelC
 
     const modelProvider = runtime.getModelProvider();
     const modelConfig = modelProvider?.models?.[modelClass];
-    const model = modelConfig?.name;
+    const model = modelConfig?.name || "gpt-4o";
 
     // Single validation call replaces multiple if-checks
     validateModelConfig(provider, {

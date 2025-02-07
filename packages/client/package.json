@@ -5,6 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"extract-version": "bash ./version.sh",
+		"start": "bun run extract-version && vite",
 		"dev": "bun run extract-version && vite",
 		"build": "bun run extract-version && tsc -b && vite build",
 		"preview": "vite preview"
