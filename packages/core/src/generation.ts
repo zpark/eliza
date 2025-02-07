@@ -371,6 +371,8 @@ export const generateObject = async ({
     schemaName,
     schemaDescription,
     stop,
+    mode = 'json',
+    enum: enumValues,
     verifiableInference,
     verifiableInferenceAdapter,
     verifiableInferenceOptions,
@@ -385,6 +387,9 @@ export const generateObject = async ({
     elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
     const { client, model } = initializeModelClient(runtime, modelClass);
 
+    if (output === 'enum' && !enumValues) {
+        throw new Error('Enum values are required when output type is enum');
+    }
 
     const {object} = await aiGenerateObject({
         model: client.languageModel(model),
@@ -392,8 +397,9 @@ export const generateObject = async ({
         system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
         output: output as never,
         ...(schema ? { schema, schemaName, schemaDescription } : {}),
-        mode: 'json'
-    })
+        ...(enumValues ? { enum: enumValues } : {}),
+        mode: mode as never
+    });
 
     elizaLogger.debug(`Received Object response from ${model} model.`);
     
