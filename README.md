@@ -143,13 +143,6 @@ You may need to install Sharp. If you see an error when starting up, try install
 ```
 bun install --include=optional sharp
 ```
-
----
-
-### Start Eliza with Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ---
 
 ### Deploy Eliza in one click 

@@ -64,10 +64,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Simulan ang Eliza gamit ang Gitpod
-
-[![Buksan sa Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### Ipasadya ang .env File
 
 Kopyahin ang `.env.example` sa `.env` at punan ang tamang mga halaga.

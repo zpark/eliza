@@ -98,14 +98,6 @@ git checkout $(git describe --tags --abbrev=0)
 
 </div>
 
-### התחלת אלייזה עם Gitpod
-
-<div align="right">
-
-[![פתח ב-Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
-</div>
-
 ### עריכת קובץ .env
 
 <div align="right">

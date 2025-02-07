@@ -93,10 +93,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### 使用 Gitpod 启动 Eliza
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### 编辑 .env 文件
 
 将 .env.example 复制为 .env 并填写适当的值.

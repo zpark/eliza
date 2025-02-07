@@ -158,12 +158,6 @@ bun install --include=optional sharp
 
 ---
 
-### Démarrer Eliza avec Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
----
-
 ### Déployer Eliza en un clic
 
 Utilisez [Fleek](https://fleek.xyz/eliza/) pour déployer Eliza en un seul clic. Cela ouvre Eliza aux non-développeurs et fournit les options suivantes pour construire votre agent :

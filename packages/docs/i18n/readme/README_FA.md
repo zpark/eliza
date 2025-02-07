@@ -80,10 +80,6 @@ git checkout $(git describe --tags --abbrev=0)
 # git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 ```
 
-### اجرای الیزا با Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### ویرایش فایل .env
 
 یک کپی از .env.example بگیرید و مقادیر مناسب را وارد کنید:

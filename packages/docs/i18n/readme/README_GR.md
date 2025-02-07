@@ -82,9 +82,6 @@ git checkout $(git describe --tags --abbrev=0)
 # git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
 ```
 
-### Εκκίνηση του Eliza με το Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
 ### Τροποποιήστε το .env αρχείο
 
 Αντιγράψτε το αρχείο .env.example σε ένα νέο αρχείο .env και συμπληρώστε τις παραμέτρους που χρειάζεστε.

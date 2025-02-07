@@ -61,10 +61,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Eliza mit Gitpod starten
-
-[![In Gitpod öffnen](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### Bearbeite die .env-Datei
 
 Kopiere .env.example nach .env und fülle die entsprechenden Werte aus.

@@ -91,10 +91,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Gitpod로 Eliza 시작
-
-[![Gitpod로 열기](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### .env 파일 편집
 
 .env.example을 복사해서 필요한 값들을 채워넣어 .env파일을 만드세요.

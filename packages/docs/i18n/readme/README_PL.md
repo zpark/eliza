@@ -72,10 +72,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Start przy użyciu Gitpod'a
-
-[![Otwórz w Gitpodzie](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### Edytuj plik .env
 
 Zmień nazwę pliku .env.example na .env i wypełnij wartości zmiennych, które będą potrzebne do uruchomienia aplikacji.

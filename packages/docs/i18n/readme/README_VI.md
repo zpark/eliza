@@ -62,10 +62,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Bắt đầu Eliza với Gitpod
-
-[![Mở Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### Chỉnh sửa tệp .env
 
 Sao chép .env.example vào .env và điền các giá trị thích hợp.

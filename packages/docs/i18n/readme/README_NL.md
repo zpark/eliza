@@ -93,10 +93,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### Start Eliza met Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### Bewerk het .env bestand
 
 Kopieer .env.example naar .env en vul de juiste gegevens in.

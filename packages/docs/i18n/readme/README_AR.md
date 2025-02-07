@@ -65,10 +65,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### تشغل إليزا مع Gitpod
-
-[![In Gitpod öffnen](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### عدّل ملف .env-Datei
 
 انسخ ملف .env.example إلى .env واملأ القيم المناسبة.

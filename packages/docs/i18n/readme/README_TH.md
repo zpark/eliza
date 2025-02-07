@@ -62,10 +62,6 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-### เริ่มใช้งาน Eliza ผ่าน Gitpod
-
-[![เปิดใน Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)
-
 ### แก้ไขไฟล์ .env
 
 คัดลอก .env.example ไปเป็น .env และระบุค่าที่เหมาะสม
