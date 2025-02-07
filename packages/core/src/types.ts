@@ -129,11 +129,13 @@ export interface Goal {
  * Model size/type classification
  */
 export enum ModelClass {
+    DEFAULT = "default",
     SMALL = "small",
     MEDIUM = "medium",
     LARGE = "large",
     EMBEDDING = "embedding",
     IMAGE = "image",
+    IMAGE_VISION = "image_vision",
 }
 
 /**
@@ -729,13 +731,16 @@ export type Character = {
     system?: string;
 
     /** Model provider to use */
-    modelProvider: ModelProviderName;
+    modelProvider: string;
 
     /** Image model provider to use, if different from modelProvider */
-    imageModelProvider?: ModelProviderName;
+    imageModelProvider?: string;
 
     /** Image Vision model provider to use, if different from modelProvider */
-    imageVisionModelProvider?: ModelProviderName;
+    imageVisionModelProvider?: string;
+
+    /** Embedding model provider to use, if different from modelProvider */
+    embeddingModelProvider?: string;
 
     /** Optional model endpoint override */
     modelEndpointOverride?: string;
@@ -847,7 +852,7 @@ export type Character = {
             solana?: any[];
             [key: string]: any[];
         };
-        transcription?: string;
+        transcription?: TranscriptionProvider;
         ragKnowledge?: boolean;
     };
 
@@ -1274,9 +1279,15 @@ export interface IAgentRuntime {
     serverUrl: string;
     databaseAdapter: IDatabaseAdapter;
     token: string | null;
-    modelProvider: ModelProviderName;
-    imageModelProvider: ModelProviderName;
-    imageVisionModelProvider: ModelProviderName;
+
+    // TODO: remove these three
+    modelProvider: string;
+    imageModelProvider: string;
+    imageVisionModelProvider: string;
+    embeddingModelProvider: string;
+    //////////////////////////////
+
+    
     character: Character;
     providers: Provider[];
     actions: Action[];
@@ -1297,7 +1308,6 @@ export interface IAgentRuntime {
     services: Map<ServiceType, Service>;
     clients: ClientInstance[];
 
-    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
     initialize(): Promise<void>;
 
@@ -1310,6 +1320,8 @@ export interface IAgentRuntime {
     registerService(service: Service): void;
 
     getSetting(key: string): string | null;
+
+    getModelProvider(): IModelProvider;
 
     // Methods
     getConversationLength(): number;
@@ -1564,3 +1576,71 @@ export interface ActionResponse {
     quote?: boolean;
     reply?: boolean;
 }
+
+export interface ISlackService extends Service {
+    client: any;
+}
+
+export enum TokenizerType {
+    Auto = "auto",
+    TikToken = "tiktoken",
+}
+
+export enum TranscriptionProvider {
+    OpenAI = "openai",
+    Deepgram = "deepgram",
+    Local = "local",
+}
+
+export enum ActionTimelineType {
+    ForYou = "foryou",
+    Following = "following",
+}
+export enum KnowledgeScope {
+    SHARED = "shared",
+    PRIVATE = "private",
+}
+
+export enum CacheKeyPrefix {
+    KNOWLEDGE = "knowledge",
+}
+
+export interface DirectoryItem {
+    directory: string;
+    shared?: boolean;
+}
+
+export interface ChunkRow {
+    id: string;
+    // Add other properties if needed
+}
+
+
+export interface IModelProvider {
+    // Core provider configuration 
+    apiKey: string;
+    endpoint: string;
+    provider: string;
+    
+    // Models configuration
+    models: {
+        // Required default model
+        default: ModelSettings;
+        
+        // Optional models
+        [ModelClass.SMALL]?: ModelSettings;
+        [ModelClass.MEDIUM]?: ModelSettings;
+        [ModelClass.LARGE]?: ModelSettings;
+        [ModelClass.EMBEDDING]?: EmbeddingModelSettings;
+        [ModelClass.IMAGE]?: ImageModelSettings;
+        [ModelClass.IMAGE_VISION]?: ImageModelSettings;
+    };
+
+    // Optional configuration
+    config?: {
+        maxRetries?: number;
+        timeout?: number;
+        headers?: Record<string, string>;  // For additional auth headers if needed
+    };
+}
+

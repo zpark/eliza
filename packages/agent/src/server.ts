@@ -74,7 +74,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 {{actions}}
 
 # Instructions: Write the next message for {{agentName}}.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const hyperfiHandlerTemplate = `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
@@ -299,7 +299,7 @@ export class CharacterServer {
 
                 // save response to memory
                 const responseMessage: Memory = {
-                    id: stringToUuid(messageId + "-" + runtime.agentId),
+                    id: stringToUuid(`${messageId}-${runtime.agentId}`),
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,

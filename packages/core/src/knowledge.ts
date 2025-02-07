@@ -2,7 +2,7 @@ import type { AgentRuntime } from "./runtime.ts";
 import { embed, getEmbeddingZeroVector } from "./embedding.ts";
 import type { KnowledgeItem, UUID, Memory } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-import { splitChunks } from "./generation.ts";
+import { splitChunks } from "./helper.ts";
 import elizaLogger from "./logger.ts";
 
 async function get(

@@ -4,20 +4,22 @@ import elizaLogger from "./logger";
 
 // TODO: TO COMPLETE
 export const envSchema = z.object({
-    // API Keys with specific formats
-    OPENAI_API_KEY: z
-        .string()
-        .startsWith("sk-", "OpenAI API key must start with 'sk-'"),
-    REDPILL_API_KEY: z.string().min(1, "REDPILL API key is required"),
-    GROK_API_KEY: z.string().min(1, "GROK API key is required"),
-    GROQ_API_KEY: z
-        .string()
-        .startsWith("gsk_", "GROQ API key must start with 'gsk_'"),
-    OPENROUTER_API_KEY: z.string().min(1, "OpenRouter API key is required"),
-    GOOGLE_GENERATIVE_AI_API_KEY: z
-        .string()
-        .min(1, "Gemini API key is required"),
-    ELEVENLABS_XI_API_KEY: z.string().min(1, "ElevenLabs API key is required"),
+    // Generic Provider Configuration
+    PROVIDER_NAME: z.nativeEnum(ModelProviderName),
+    PROVIDER_API_KEY: z.string().min(1, "Provider API key is required"),
+    PROVIDER_ENDPOINT: z.string().url("Provider endpoint must be a valid URL").optional(),
+
+    // Optional Provider-Specific Keys (for additional services)
+    ELEVENLABS_XI_API_KEY: z.string().min(1, "ElevenLabs API key is required").optional(),
+
+    // Model Settings
+    DEFAULT_MODEL: z.string().optional(),
+    SMALL_MODEL: z.string().optional(),
+    MEDIUM_MODEL: z.string().optional(),
+    LARGE_MODEL: z.string().optional(),
+    EMBEDDING_MODEL: z.string().optional(),
+    IMAGE_MODEL: z.string().optional(),
+    IMAGE_VISION_MODEL: z.string().optional(),
 });
 
 // Type inference
@@ -26,7 +28,12 @@ export type EnvConfig = z.infer<typeof envSchema>;
 // Validation function
 export function validateEnv(): EnvConfig {
     try {
-        return envSchema.parse(process.env);
+        // Transform provider name to lowercase before validation
+        const envWithLowercaseProvider = {
+            ...process.env,
+            PROVIDER_NAME: process.env.PROVIDER_NAME?.toLowerCase(),
+        };
+        return envSchema.parse(envWithLowercaseProvider);
     } catch (error) {
         if (error instanceof z.ZodError) {
             const errorMessages = error.errors
@@ -68,7 +75,7 @@ export const CharacterSchema = z.object({
     id: z.string().uuid().optional(),
     name: z.string(),
     system: z.string().optional(),
-    modelProvider: z.nativeEnum(ModelProviderName),
+    modelProvider: z.string().optional(),
     modelEndpointOverride: z.string().optional(),
     templates: z.record(z.string()).optional(),
     bio: z.union([z.string(), z.array(z.string())]),
@@ -174,11 +181,11 @@ export function validateCharacterConfig(json: unknown): CharacterConfig {
                 {} as Record<string, string[]>
             );
 
-            Object.entries(groupedErrors).forEach(([field, messages]) => {
+            for (const field in groupedErrors) {
                 elizaLogger.error(
-                    `Validation errors in ${field}: ${messages.join(" - ")}`
+                    `Validation errors in ${field}: ${groupedErrors[field].join(" - ")}`
                 );
-            });
+            }
 
             throw new Error(
                 "Character configuration validation failed. Check logs for details."

@@ -100,3 +100,9 @@ ton_nft_images/*
 
 packages/docs/api/*
 packages/*/dist/*
+
+
+**/dist/**
+
+**/.docusaurus/**
+**/docs/build/**

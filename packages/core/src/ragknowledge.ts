@@ -1,5 +1,5 @@
 import { embed } from "./embedding.ts";
-import { splitChunks } from "./generation.ts";
+import { splitChunks } from "./helper.ts";
 import elizaLogger from "./logger.ts";
 import type {
     IAgentRuntime,
