@@ -4655,7 +4655,7 @@ importers:
     dependencies:
       '@cetusprotocol/aggregator-sdk':
         specifier: ^0.3.21
-        version: 0.3.21(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-plugin-macros@3.1.0)(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)
+        version: 0.3.22(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-plugin-macros@3.1.0)(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
@@ -6435,8 +6435,8 @@ packages:
   '@brokerloop/ttlcache@3.2.3':
     resolution: {integrity: sha512-kZWoyJGBYTv1cL5oHBYEixlJysJBf2RVnub3gbclD+dwaW9aKubbHzbZ9q1q6bONosxaOqMsoBorOrZKzBDiqg==}
 
-  '@cetusprotocol/aggregator-sdk@0.3.21':
-    resolution: {integrity: sha512-ZvYphduw/VHik48Lc+f0SzwkzH3pK8c73mQAI85AIJ/xwxCTTC528ePuRnFd/Era0Vo6kHT4AN65XK4ipqTvwQ==}
+  '@cetusprotocol/aggregator-sdk@0.3.22':
+    resolution: {integrity: sha512-CM3QAqjusAJuq8XxPRboz5Md9KFS9L9po3O83ZV6WAxNqiB+dJsMEK7fGOwIleo08MkmzKf57SVk0I8n0H2pcw==}
     peerDependencies:
       typescript: ^5.0.0
 
@@ -9259,13 +9259,13 @@ packages:
   '@keplr-wallet/types@0.11.64':
     resolution: {integrity: sha512-GgzeLDHHfZFyne3O7UIfFHj/uYqVbxAZI31RbBwt460OBbvwQzjrlZwvJW3vieWRAgxKSITjzEDBl2WneFTQdQ==}
 
-  '@keplr-wallet/types@0.12.182':
-    resolution: {integrity: sha512-UsIR/ix39hH/yygj0ZrdOsMqOGCq43NzkU8famtwQFQjB+jkKKADPq6SmhJjSrVr8PqPtWfIfUxa3jaAmsAUJQ==}
+  '@keplr-wallet/types@0.12.183':
+    resolution: {integrity: sha512-z59MGLg44Bex9CQ65n6Ylioa/Cy67+yBTKvP1WGmftlFuoEh1B9XfM6RUEgo3rA/ugFrVesuEYc9m11PpHXNnQ==}
     peerDependencies:
       starknet: ^6
 
-  '@keplr-wallet/unit@0.12.182':
-    resolution: {integrity: sha512-pvooXBlP/z4euWLa7e/5U0CLwOsTFVE/jZcomLbNSLc84WKtGDyctjNFfmbq7YQeiSa64KEbuSFKgoSXbcg50w==}
+  '@keplr-wallet/unit@0.12.183':
+    resolution: {integrity: sha512-mIcXtOfi+cGpBdBdeh7OYdPP5ucz8nA8stHulRMwT/bS6VUTcByUujNGCfP4CvVjj8bWLcE6qh3HK4/JkSRpjg==}
 
   '@kikobeats/time-span@1.0.5':
     resolution: {integrity: sha512-txRAdmi35N1wnsLS1AO5mTlbY5Cv5/61WXqek2y3L9Q7u4mgdUVq819so5xe753hL5gYeLzlWoJ/VJfXg9nx8g==}
@@ -15356,8 +15356,8 @@ packages:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
 
-  assertion-tools@8.0.0-gamma.2:
-    resolution: {integrity: sha512-X9uyTTZiux5NClP25AG0RjhMD2AB8FVy15NW/2JbdJEDKRwUsLTddzYRDdQWFtMv4+TOq+GWe6P2CkCzqN096Q==}
+  assertion-tools@8.0.1:
+    resolution: {integrity: sha512-9LJf5O3X30/UcDs5FyBJ+pLJl3dWbIKgTC3REMuJjhqtTMu7W3Dl0AOPg/HBxWYIYMPjBQtSK6KUKdpX6QrHHg==}
 
   ast-types-flow@0.0.8:
     resolution: {integrity: sha512-OH/2E5Fg20h2aPrbe+QL8JZQFko0YZaF+j4mnQ7BGhfavO7OpSLa8a0y9sBwomHdSbkhTS8TQNayBfnW5DwbvQ==}
@@ -25965,8 +25965,8 @@ packages:
   stylis@4.2.0:
     resolution: {integrity: sha512-Orov6g6BB1sDfYgzWfTHDOxamtX1bE/zo104Dh9e6fqJ3PooipYyfJ0pUmrZO2wAvO8YbEyeFrkV91XTsGMSrw==}
 
-  stylis@4.3.5:
-    resolution: {integrity: sha512-K7npNOKGRYuhAFFzkzMGfxFDpN6gDwf8hcMiE+uveTVbBgm93HrNP3ZDUpKqzZ4pG7TP6fmb+EMAQPjq9FqqvA==}
+  stylis@4.3.6:
+    resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
 
   subarg@1.0.0:
     resolution: {integrity: sha512-RIrIdRY0X1xojthNcVtgT9sjpOGagEUKpZdgBUi054OEPFo282yg+zE+t1Rj3+RqKq2xStL7uUHhY+AjbC4BXg==}
@@ -26607,8 +26607,8 @@ packages:
   ts-xor@1.3.0:
     resolution: {integrity: sha512-RLXVjliCzc1gfKQFLRpfeD0rrWmjnSTgj7+RFhoq3KRkUYa8LE/TIidYOzM5h+IdFBDSjjSgk9Lto9sdMfDFEA==}
 
-  tsconfck@3.1.4:
-    resolution: {integrity: sha512-kdqWFGVJqe+KGYvlSO9NIaWn9jT1Ny4oKVzAJsKii5eoE9snzTJzL4+MMVOMn+fikWGFmKEylcXL710V/kIPJQ==}
+  tsconfck@3.1.5:
+    resolution: {integrity: sha512-CLDfGgUp7XPswWnezWwsCRxNmgQjhYq3VXHM0/XIRxhVrKw0M1if9agzryh1QS3nxjCROvV+xWxoJO1YctzzWg==}
     engines: {node: ^18 || >=20}
     hasBin: true
     peerDependencies:
@@ -30871,7 +30871,7 @@ snapshots:
     dependencies:
       '@soncodi/signal': 2.0.7
 
-  '@cetusprotocol/aggregator-sdk@0.3.21(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-plugin-macros@3.1.0)(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)':
+  '@cetusprotocol/aggregator-sdk@0.3.22(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-plugin-macros@3.1.0)(bufferutil@4.0.9)(typescript@5.7.3)(utf-8-validate@6.0.5)':
     dependencies:
       '@babel/core': 7.26.7
       '@babel/preset-env': 7.26.7(@babel/core@7.26.7)
@@ -36445,14 +36445,14 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@keplr-wallet/types@0.12.182(starknet@6.18.0(encoding@0.1.13))':
+  '@keplr-wallet/types@0.12.183(starknet@6.18.0(encoding@0.1.13))':
     dependencies:
       long: 4.0.0
       starknet: 6.18.0(encoding@0.1.13)
 
-  '@keplr-wallet/unit@0.12.182(starknet@6.18.0(encoding@0.1.13))':
+  '@keplr-wallet/unit@0.12.183(starknet@6.18.0(encoding@0.1.13))':
     dependencies:
-      '@keplr-wallet/types': 0.12.182(starknet@6.18.0(encoding@0.1.13))
+      '@keplr-wallet/types': 0.12.183(starknet@6.18.0(encoding@0.1.13))
       big-integer: 1.6.52
       utility-types: 3.11.0
     transitivePeerDependencies:
@@ -43248,7 +43248,7 @@ snapshots:
       '@cosmjs/tendermint-rpc': 0.32.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@injectivelabs/core-proto-ts': 0.0.21
       '@injectivelabs/sdk-ts': 1.14.5(@types/react@19.0.8)(bufferutil@4.0.9)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(utf-8-validate@5.0.10)
-      '@keplr-wallet/unit': 0.12.182(starknet@6.18.0(encoding@0.1.13))
+      '@keplr-wallet/unit': 0.12.183(starknet@6.18.0(encoding@0.1.13))
       '@solana/wallet-adapter-base': 0.9.23(@solana/web3.js@1.92.3(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10))
       axios: 1.7.9
       cosmjs-types: 0.9.0
@@ -49336,7 +49336,7 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  assertion-tools@8.0.0-gamma.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(web-streams-polyfill@3.3.3):
+  assertion-tools@8.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)(web-streams-polyfill@3.3.3):
     dependencies:
       ethers: 5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       jsonld: 8.3.3(web-streams-polyfill@3.3.3)
@@ -52201,7 +52201,7 @@ snapshots:
 
   dkg.js@8.0.4(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10))(hardhat@2.22.18(bufferutil@4.0.9)(ts-node@10.9.2(@swc/core@1.10.14(@swc/helpers@0.5.15))(@types/node@22.13.1)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)))(@swc/core@1.10.14(@swc/helpers@0.5.15))(@types/node@22.13.1)(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)(web-streams-polyfill@3.3.3):
     dependencies:
-      assertion-tools: 8.0.0-gamma.2(bufferutil@4.0.9)(utf-8-validate@5.0.10)(web-streams-polyfill@3.3.3)
+      assertion-tools: 8.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)(web-streams-polyfill@3.3.3)
       axios: 0.27.2(debug@4.3.4)
       dkg-evm-module: 8.0.2(@nomicfoundation/hardhat-ethers@3.0.8(ethers@5.7.2(bufferutil@4.0.9)(utf-8-validate@5.0.10))(hardhat@2.22.18(bufferutil@4.0.9)(ts-node@10.9.2(@swc/core@1.10.14(@swc/helpers@0.5.15))(@types/node@22.13.1)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)))(@swc/core@1.10.14(@swc/helpers@0.5.15))(@types/node@22.13.1)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       ethers: 6.13.5(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -58451,7 +58451,7 @@ snapshots:
       lodash-es: 4.17.21
       marked: 13.0.3
       roughjs: 4.6.6
-      stylis: 4.3.5
+      stylis: 4.3.6
       ts-dedent: 2.2.0
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -64022,7 +64022,7 @@ snapshots:
 
   stylis@4.2.0: {}
 
-  stylis@4.3.5: {}
+  stylis@4.3.6: {}
 
   subarg@1.0.0:
     dependencies:
@@ -64930,11 +64930,11 @@ snapshots:
 
   ts-xor@1.3.0: {}
 
-  tsconfck@3.1.4(typescript@5.6.3):
+  tsconfck@3.1.5(typescript@5.6.3):
     optionalDependencies:
       typescript: 5.6.3
 
-  tsconfck@3.1.4(typescript@5.7.3):
+  tsconfck@3.1.5(typescript@5.7.3):
     optionalDependencies:
       typescript: 5.7.3
 
@@ -66191,7 +66191,7 @@ snapshots:
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       globrex: 0.1.2
-      tsconfck: 3.1.4(typescript@5.7.3)
+      tsconfck: 3.1.5(typescript@5.7.3)
     optionalDependencies:
       vite: 5.4.12(@types/node@20.17.9)(terser@5.38.0)
     transitivePeerDependencies:
@@ -66202,7 +66202,7 @@ snapshots:
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       globrex: 0.1.2
-      tsconfck: 3.1.4(typescript@5.6.3)
+      tsconfck: 3.1.5(typescript@5.6.3)
     optionalDependencies:
       vite: 6.1.0(@types/node@22.13.1)(jiti@2.4.2)(terser@5.38.0)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
@@ -66213,7 +66213,7 @@ snapshots:
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       globrex: 0.1.2
-      tsconfck: 3.1.4(typescript@5.7.3)
+      tsconfck: 3.1.5(typescript@5.7.3)
     optionalDependencies:
       vite: 6.1.0(@types/node@20.17.9)(jiti@2.4.2)(terser@5.38.0)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:

@@ -287,7 +287,7 @@ async function generateEnum<T extends string>({
     runtime: IAgentRuntime;
     context: string;
     modelClass: ModelClass;
-    enumValues: readonly T[];
+    enumValues: Array<T>;
     functionName: string;
 }): Promise<JSONValue> {
     logFunctionCall(functionName, runtime);
@@ -303,7 +303,7 @@ async function generateEnum<T extends string>({
             context,
             modelClass,
             output: 'enum',
-            enum: enumValues as unknown as string[],
+            enum: enumValues,
         });
 
         elizaLogger.debug("Received enum response:", result);
@@ -322,10 +322,9 @@ export async function generateShouldRespond({
     context: string;
     modelClass: ModelClass;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as const;
-    type ResponseType = typeof RESPONSE_VALUES[number];
+    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'];
 
-    const result = await generateEnum<ResponseType>({
+    const result = await generateEnum({
         runtime,
         context,
         modelClass,
@@ -333,7 +332,7 @@ export async function generateShouldRespond({
         functionName: 'generateShouldRespond',
     });
 
-    return result as ResponseType;
+    return result as "RESPOND" | "IGNORE" | "STOP";
 }
 
 export async function generateTrueOrFalse({
@@ -347,10 +346,10 @@ export async function generateTrueOrFalse({
 }): Promise<boolean> {
     logFunctionCall('generateTrueOrFalse', runtime);
     
-    const BOOL_VALUES = ['true', 'false'] as const;
-    type BoolString = typeof BOOL_VALUES[number];
+    const BOOL_VALUES = ['true', 'false'];
     
-    const result = await generateEnum<BoolString>({
+    
+    const result = await generateEnum({
         runtime,
         context,
         modelClass,
@@ -591,11 +590,10 @@ export async function generateTweetActions({
     modelClass: ModelClass;
 }): Promise<ActionResponse | null> {
     try {
-        const BOOL_VALUES = ['true', 'false'] as const;
-        type BoolString = typeof BOOL_VALUES[number];
+        const BOOL_VALUES = ['true', 'false'];
 
         // Generate each action using generateEnum
-        const like = await generateEnum<BoolString>({
+        const like = await generateEnum({
             runtime,
             context: `${context}\nShould I like this tweet?`,
             modelClass,
@@ -603,7 +601,7 @@ export async function generateTweetActions({
             functionName: 'generateTweetActions_like'
         });
 
-        const retweet = await generateEnum<BoolString>({
+        const retweet = await generateEnum({
             runtime,
             context: `${context}\nShould I retweet this tweet?`,
             modelClass,
@@ -611,7 +609,7 @@ export async function generateTweetActions({
             functionName: 'generateTweetActions_retweet'
         });
 
-        const quote = await generateEnum<BoolString>({
+        const quote = await generateEnum({
             runtime,
             context: `${context}\nShould I quote this tweet?`,
             modelClass,
@@ -619,7 +617,7 @@ export async function generateTweetActions({
             functionName: 'generateTweetActions_quote'
         });
 
-        const reply = await generateEnum<BoolString>({
+        const reply = await generateEnum({
             runtime,
             context: `${context}\nShould I reply to this tweet?`,
             modelClass,
