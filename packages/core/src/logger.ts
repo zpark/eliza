@@ -69,4 +69,7 @@ const options = {
 
 export const logger = pino(options, createStream());
 
+// for backward compatibility
+export const elizaLogger = logger;
+
 export default logger;
