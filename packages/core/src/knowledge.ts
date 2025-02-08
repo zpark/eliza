@@ -32,9 +32,9 @@ async function get(
     }
 
     const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, processed);
-    const fragments = await runtime.knowledgeManager.searchMemoriesByEmbedding(
-        embedding,
+    const fragments = await runtime.knowledgeManager.searchMemories(
         {
+            embedding,
             roomId: message.agentId,
             count: 5,
             match_threshold: 0.1,

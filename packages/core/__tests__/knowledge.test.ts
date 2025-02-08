@@ -68,7 +68,7 @@ describe("Knowledge Module", () => {
                     getCachedEmbeddings: vi.fn().mockResolvedValue([]),
                 },
                 knowledgeManager: {
-                    searchMemoriesByEmbedding: vi.fn().mockResolvedValue([
+                    searchMemories: vi.fn().mockResolvedValue([
                         {
                             content: {
                                 text: "test fragment",

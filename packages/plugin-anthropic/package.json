@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos/plugin-openai",
+    "name": "@elizaos/plugin-anthropic",
     "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",
@@ -18,13 +18,9 @@
         "dist"
     ],
     "dependencies": {
-        "@ai-sdk/openai": "^1.1.9",
-        "@ai-sdk/ui-utils": "1.1.9",
         "@elizaos/core": "workspace:*",
-        "ai": "^4.1.25",
-        "js-tiktoken": "^1.0.18",
-        "tsup": "8.3.5",
-        "zod": "3.21.4"
+        "zod": "3.21.4",
+        "tsup": "8.3.5"
     },
     "scripts": {
         "build": "tsup --format esm --dts",
@@ -41,12 +37,12 @@
         "zod": "3.24.1"
     },
     "agentConfig": {
-        "pluginType": "elizaos:plugin:1.0.0",
-        "pluginParameters": {
-            "OPENAI_API_KEY": {
-                "type": "string",
-                "description": "API key for the service"
-            }
-        }
+       "pluginType": "elizaos:plugin:1.0.0",
+       "pluginParameters": {
+         "ANTHROPIC_API_KEY": {
+           "type": "string",
+           "description": "API key for the service"
+         }
+       }
     }
 }

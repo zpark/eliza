@@ -38,19 +38,6 @@ class MockDatabaseAdapter extends DatabaseAdapter {
     getActorDetails(_params: { roomId: UUID }): Promise<Actor[]> {
         throw new Error("Method not implemented.");
     }
-    searchMemoriesByEmbedding(
-        _embedding: number[],
-        _params: {
-            match_threshold?: number;
-            count?: number;
-            roomId?: UUID;
-            agentId?: UUID;
-            unique?: boolean;
-            tableName: string;
-        }
-    ): Promise<Memory[]> {
-        throw new Error("Method not implemented.");
-    }
     createMemory(
         _memory: Memory,
         _tableName: string,
@@ -195,7 +182,7 @@ class MockDatabaseAdapter extends DatabaseAdapter {
         roomId: `${string}-${string}-${string}-${string}-${string}`;
         embedding: number[];
         match_threshold: number;
-        match_count: number;
+        count: number;
         unique: boolean;
     }): Promise<Memory[]> {
         return [
@@ -310,7 +297,7 @@ describe("DatabaseAdapter Tests", () => {
             roomId: "room-id" as `${string}-${string}-${string}-${string}-${string}`,
             embedding: [0.1, 0.2, 0.3],
             match_threshold: 0.5,
-            match_count: 3,
+            count: 3,
             unique: true,
         });
         expect(memories).toHaveLength(1);

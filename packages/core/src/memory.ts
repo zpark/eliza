@@ -134,9 +134,9 @@ export class MemoryManager implements IMemoryManager {
      * @param opts.unique Whether to retrieve unique memories only.
      * @returns A Promise resolving to an array of Memory objects that match the embedding.
      */
-    async searchMemoriesByEmbedding(
-        embedding: number[],
+    async searchMemories(
         opts: {
+            embedding: number[],
             match_threshold?: number;
             count?: number;
             roomId: UUID;
@@ -146,6 +146,7 @@ export class MemoryManager implements IMemoryManager {
     ): Promise<Memory[]> {
         const {
             match_threshold = defaultMatchThreshold,
+            embedding,
             count = defaultMatchCount,
             roomId,
             unique,
@@ -157,7 +158,7 @@ export class MemoryManager implements IMemoryManager {
             agentId: this.runtime.agentId,
             embedding: embedding,
             match_threshold: match_threshold,
-            match_count: count,
+            count,
             unique: !!unique,
         });
 

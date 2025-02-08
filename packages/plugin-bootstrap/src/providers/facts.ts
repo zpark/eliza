@@ -23,14 +23,12 @@ const factsProvider: Provider = {
             tableName: "facts",
         });
 
-        const relevantFacts = await memoryManager.searchMemoriesByEmbedding(
+        const relevantFacts = await memoryManager.searchMemories({
             embedding,
-            {
-                roomId: message.roomId,
-                count: 10,
-                agentId: runtime.agentId,
-            }
-        );
+            roomId: message.roomId,
+            count: 10,
+            agentId: runtime.agentId,
+        });
 
         const recentFactsData = await memoryManager.getMemories({
             roomId: message.roomId,

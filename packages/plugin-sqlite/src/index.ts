@@ -241,14 +241,15 @@ export class SqliteDatabaseAdapter
 
         if (memory.embedding) {
             // Check if a similar memory already exists
-            const similarMemories = await this.searchMemoriesByEmbedding(
-                memory.embedding,
+            const similarMemories = await this.searchMemories(
                 {
                     tableName,
+                    embedding: memory.embedding,
                     agentId: memory.agentId,
                     roomId: memory.roomId,
                     match_threshold: 0.95, // 5% similarity threshold
                     count: 1,
+                    unique: true,
                 }
             );
 
@@ -287,7 +288,7 @@ export class SqliteDatabaseAdapter
         agentId?: UUID;
         embedding: number[];
         match_threshold: number;
-        match_count: number;
+        count: number;
         unique: boolean;
     }): Promise<Memory[]> {
         // Build the query and parameters carefully
@@ -312,64 +313,13 @@ export class SqliteDatabaseAdapter
             queryParams.push(params.agentId);
         }
         sql += ` ORDER BY similarity ASC LIMIT ?`; // ASC for lower distance
-        queryParams.push(params.match_count.toString()); // Convert number to string
+        queryParams.push(params.count.toString()); // Convert number to string
 
         // Execute the prepared statement with the correct number of parameters
         const memories = this.db.prepare(sql).all(...queryParams) as (Memory & {
             similarity: number;
         })[];
 
-        return memories.map((memory) => ({
-            ...memory,
-            createdAt:
-                typeof memory.createdAt === "string"
-                    ? Date.parse(memory.createdAt as string)
-                    : memory.createdAt,
-            content: JSON.parse(memory.content as unknown as string),
-        }));
-    }
-
-    async searchMemoriesByEmbedding(
-        embedding: number[],
-        params: {
-            match_threshold?: number;
-            count?: number;
-            roomId?: UUID;
-            agentId: UUID;
-            unique?: boolean;
-            tableName: string;
-        }
-    ): Promise<Memory[]> {
-        const queryParams = [
-            // JSON.stringify(embedding),
-            new Float32Array(embedding),
-            params.tableName,
-            params.agentId,
-        ];
-
-        let sql = `
-      SELECT *, vec_distance_L2(embedding, ?) AS similarity
-      FROM memories
-      WHERE embedding IS NOT NULL AND type = ? AND agentId = ?`;
-
-        if (params.unique) {
-            sql += " AND `unique` = 1";
-        }
-
-        if (params.roomId) {
-            sql += " AND roomId = ?";
-            queryParams.push(params.roomId);
-        }
-        sql += ` ORDER BY similarity DESC`;
-
-        if (params.count) {
-            sql += " LIMIT ?";
-            queryParams.push(params.count.toString());
-        }
-
-        const memories = this.db.prepare(sql).all(...queryParams) as (Memory & {
-            similarity: number;
-        })[];
         return memories.map((memory) => ({
             ...memory,
             createdAt:

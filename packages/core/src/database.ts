@@ -135,7 +135,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         roomId: UUID;
         embedding: number[];
         match_threshold: number;
-        match_count: number;
+        count: number;
         unique: boolean;
     }): Promise<Memory[]>;
 
@@ -148,24 +148,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         goalId: UUID;
         status: GoalStatus;
     }): Promise<void>;
-
-    /**
-     * Searches for memories by embedding and other specified parameters.
-     * @param embedding The embedding vector to search with.
-     * @param params Additional parameters for the search.
-     * @returns A Promise that resolves to an array of Memory objects.
-     */
-    abstract searchMemoriesByEmbedding(
-        embedding: number[],
-        params: {
-            match_threshold?: number;
-            count?: number;
-            roomId?: UUID;
-            agentId?: UUID;
-            unique?: boolean;
-            tableName: string;
-        }
-    ): Promise<Memory[]>;
 
     /**
      * Creates a new memory in the database.
