@@ -1,5 +1,3 @@
-import path from "node:path";
-import fs from "fs/promises";
 import type {
     CacheOptions,
     ICacheManager,
