@@ -10,12 +10,8 @@ export default defineConfig({
         "dotenv", // Externalize dotenv to prevent bundling
         "fs", // Externalize fs to use Node.js built-in module
         "path", // Externalize other built-ins if necessary
-        "@reflink/reflink",
-        "@node-llama-cpp",
         "https",
         "http",
-        "agentkeepalive",
-        "@anush008/tokenizers",
         "uuid",
         // Add other modules you want to externalize
     ],

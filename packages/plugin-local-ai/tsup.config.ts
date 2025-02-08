@@ -12,6 +12,7 @@ export default defineConfig({
         "path", // Externalize other built-ins if necessary
         "https",
         "http",
+        "events",
         // Add other modules you want to externalize
     ],
 });

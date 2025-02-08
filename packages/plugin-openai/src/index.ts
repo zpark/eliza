@@ -103,13 +103,13 @@ export const openaiPlugin: Plugin = {
       const data = await response.json();
       return data.data[0].embedding;
     },
-    [ModelType.TOKENIZE_TEXT]: async ({
+    [ModelType.TEXT_TOKENIZER_ENCODE]: async ({
       context,
       modelType,
     }: TokenizeTextParams) => {
       return tokenizeText(modelType ?? ModelType.TEXT_LARGE, context);
     },
-    [ModelType.DETOKENIZE_TEXT]: async ({
+    [ModelType.TEXT_TOKENIZER_DECODE]: async ({
       tokens,
       modelType,
     }: DetokenizeTextParams) => {
