@@ -126,7 +126,6 @@ export enum ModelType {
   IMAGE_DESCRIPTION = "image_description",
   TRANSCRIPTION = "transcription",
   TEXT_TO_SPEECH = "text_to_speech",
-  SPEECH_TO_TEXT = "speech_to_text",
   AUDIO = "audio",
   VIDEO = "video",
 }
@@ -547,6 +546,9 @@ export type Adapter = {
 export type Plugin = {
   /** Plugin name */
   name: string;
+
+  /** Initialization function */
+  init?: (config: Record<string, string>) => Promise<void>;
 
   /** Plugin configuration */
   config?: { [key: string]: any };
@@ -969,7 +971,7 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  call(modelType: ModelType, params: any): Promise<any>;
+  call<T = any>(modelType: ModelType, params: T): Promise<any>;
   registerHandler(modelType: ModelType, handler: (params: any) => Promise<any>): void;
   getHandler(modelType: ModelType): ((params: any) => Promise<any>) | undefined;
 }

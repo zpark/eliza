@@ -213,14 +213,8 @@ export const generateObject = async ({
   runtime,
   context,
   modelType = ModelType.TEXT_SMALL,
-  output = "object",
-  schema,
-  schemaName,
-  schemaDescription,
-  mode = "json",
-  enum: enumValues,
   stopSequences,
-}: GenerateObjectOptions): Promise<z.infer<typeof schema> | any> => {
+}: GenerateObjectOptions): Promise<any> => {
   logFunctionCall("generateObject", runtime);
   if (!context) {
     const errorMessage = "generateObject context is empty";
@@ -231,11 +225,13 @@ export const generateObject = async ({
   const { object } = await runtime.call(modelType, {
     runtime,
     context,
-    stop: stopSequences,
+    modelType,
+    stopSequences,
+    object: true,
   });
 
   logger.debug(`Received Object response from ${modelType} model.`);
-  return schema ? schema.parse(object) : object;
+  return object;
 };
 
 export async function generateObjectArray({
