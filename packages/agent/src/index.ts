@@ -46,7 +46,7 @@ export function parseArguments(): {
     characters?: string;
 } {
     try {
-        return yargs(process.argv.slice(3))
+        return yargs(process.argv.slice(2))
             .option("character", {
                 type: "string",
                 description: "Path to the character JSON file",
