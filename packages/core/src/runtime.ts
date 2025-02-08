@@ -1238,11 +1238,34 @@ Text: ${attachment.text}
         return handlers[0];
     }
 
-    call(modelType: ModelType, params: any): Promise<any> {
+    async call(modelType: ModelType, params: any): Promise<any> {
         const handler = this.getHandler(modelType);
         if (!handler) {
             throw new Error(`No handler found for model type: ${modelType}`);
         }
-        return handler(params);
+        return await handler(params);
+    }
+
+    events: Map<string, ((params: any) => Promise<any>)[]> = new Map();
+
+    registerEvent(event: string, handler: (params: any) => Promise<any>) {
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+        this.events.get(event)?.push(handler);
+    }
+
+    getEvent(event: string): ((params: any) => Promise<any>)[] | undefined {
+        return this.events.get(event);
+    }
+
+    async onEvent(event: string, params: any) {
+        // call the events associated with the event
+        const eventHandlers = this.events.get(event);
+        if (eventHandlers) {
+            for (const handler of eventHandlers) {
+                await handler(params);
+            }
+        }
     }
 }
