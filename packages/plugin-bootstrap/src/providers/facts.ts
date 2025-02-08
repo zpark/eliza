@@ -1,9 +1,9 @@
 import type { Memory, Provider, State } from "@elizaos/core";
 import {
-    MemoryManager,
-    ModelType,
     formatMessages,
-    type AgentRuntime as IAgentRuntime,
+    IAgentRuntime,
+    MemoryManager,
+    ModelType
 } from "@elizaos/core";
 import { formatFacts } from "../evaluators/fact.ts";
 
