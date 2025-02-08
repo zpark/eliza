@@ -66,15 +66,11 @@ export class MemoryManager implements IMemoryManager {
 
         try {
             // Generate embedding from text content
-            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, {
-                text: memoryText,
-            });
+            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, memoryText);
         } catch (error) {
             logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, {
-                text: null,
-            });
+            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, null);
         }
 
         return memory;

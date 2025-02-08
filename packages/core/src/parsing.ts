@@ -85,7 +85,7 @@ export function parseJsonArrayFromText(text: string) {
     let jsonData = null;
 
     // First try to parse with the original JSON format
-    const jsonBlockMatch = text.match(jsonBlockPattern);
+    const jsonBlockMatch = text?.match(jsonBlockPattern);
 
     if (jsonBlockMatch) {
         try {
@@ -143,6 +143,8 @@ export function parseJSONObjectFromText(
 ): Record<string, any> | null {
     let jsonData = null;
     const jsonBlockMatch = text.match(jsonBlockPattern);
+
+    console.log("parseJsonArrayFromText", text);
 
     try {
         if (jsonBlockMatch) {

@@ -31,9 +31,7 @@ async function get(
         return [];
     }
 
-    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
-        text: processed,
-    });
+    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, processed);
     const fragments = await runtime.knowledgeManager.searchMemoriesByEmbedding(
         embedding,
         {
@@ -71,9 +69,7 @@ async function set(
     chunkSize = 512,
     bleed = 20
 ) {
-    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
-        text: null,
-    });
+    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, null);
     await runtime.documentsManager.createMemory({
         id: item.id,
         agentId: runtime.agentId,
@@ -88,9 +84,7 @@ async function set(
     const fragments = await splitChunks(preprocessed, chunkSize, bleed);
 
     for (const fragment of fragments) {
-        const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
-            text: fragment,
-        });
+        const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, fragment);
         await runtime.knowledgeManager.createMemory({
             // We namespace the knowledge base uuid to avoid id
             // collision with the document above.

@@ -80,7 +80,8 @@ export async function generateText({
 }): Promise<string> {
   logFunctionCall("generateText", runtime);
 
-  const { text } = await runtime.call(modelType, {
+  const text = await runtime.call(modelType, {
+    runtime,
     context,
     stopSequences,
   });
@@ -228,6 +229,7 @@ export const generateObject = async ({
   }
 
   const { object } = await runtime.call(modelType, {
+    runtime,
     context,
     stop: stopSequences,
   });
@@ -285,7 +287,8 @@ export async function generateMessageResponse({
   logger.debug("Context:", context);
 
   return await withRetry(async () => {
-    const { text } = await runtime.call(modelType, {
+    const text = await runtime.call(modelType, {
+    runtime,
       context,
       stop: stopSequences,
     });

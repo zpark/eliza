@@ -46,7 +46,7 @@ export function parseArguments(): {
     characters?: string;
 } {
     try {
-        return yargs(process.argv.slice(3))
+        return yargs(process.argv.slice(2))
             .option("character", {
                 type: "string",
                 description: "Path to the character JSON file",
@@ -184,6 +184,7 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
     // Try different path resolutions in order
     const pathsToTry = [
         characterPath, // exact path as specified
+        path.resolve(process.cwd(), '..', '..', characterPath), // relative to root directory
         path.resolve(process.cwd(), characterPath), // relative to cwd
         path.resolve(process.cwd(), "agent", characterPath), // Add this
         path.resolve(__dirname, characterPath), // relative to current script

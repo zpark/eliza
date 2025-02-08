@@ -1,11 +1,11 @@
 import { type Character } from "@elizaos/core";
-import { OpenAIPlugin } from "@elizaos/plugin-openai";
+import { openaiPlugin } from "@elizaos/plugin-openai";
 
 export const defaultCharacter: Character = {
     name: "Eliza",
     username: "eliza",
     plugins: [
-        OpenAIPlugin
+        openaiPlugin
     ],
     settings: {
         secrets: {},

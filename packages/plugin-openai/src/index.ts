@@ -13,6 +13,8 @@ export const openaiPlugin: Plugin = {
           return new Array(1536).fill(0);
         }
 
+        console.log("text", text)
+
         const baseURL = process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
 
         // use fetch to call embedding endpoint
@@ -29,13 +31,14 @@ export const openaiPlugin: Plugin = {
         });
         
         const data = await response.json();
+        console.log("data", data);
         return data.data[0].embedding;
       },
       [ModelType.TEXT_LARGE]: async ({
         runtime,
         context,
         modelType,
-        stopSequences = ["\n"],
+        stopSequences = [],
       }: GenerateTextParams
     ) => {
         // TODO: pull variables from json
@@ -51,7 +54,6 @@ export const openaiPlugin: Plugin = {
         const openai = createOpenAI({
           apiKey: process.env.OPENAI_API_KEY,
           baseURL,
-          fetch: runtime.fetch,
         });
 
         const smallModel = process.env.OPENAI_SMALL_MODEL ?? process.env.SMALL_MODEL ?? "gpt-4o-mini";

@@ -166,7 +166,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.getModelProviderManager().call(ModelType.AUDIO_TRANSCRIPTION, {
+                const transcription = await runtime.call(ModelType.TRANSCRIPTION, {
                     file: fs.createReadStream(audioFile.path),
                     model: "whisper-1",
                 });
@@ -286,9 +286,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const zeroVector = runtime.getModelProviderManager().call(ModelType.EMBEDDING, {
-                    text: null,
-                });
+                const zeroVector = await runtime.call(ModelType.TEXT_EMBEDDING, text);
 
                 // save response to memory
                 const responseMessage: Memory = {
@@ -828,7 +826,7 @@ export class CharacterServer {
                 // Get the text to convert to speech
                 const textToSpeak = response.text;
 
-                const speechResponse = await runtime.getModelProviderManager().call(ModelType.AUDIO_TRANSCRIPTION, {
+                const speechResponse = await runtime.call(ModelType.TRANSCRIPTION, {
                     text: textToSpeak,
                     runtime,
                 });

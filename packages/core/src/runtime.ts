@@ -567,6 +567,8 @@ export class AgentRuntime implements IAgentRuntime {
             modelType: ModelType.TEXT_SMALL,
         });
 
+        console.log("***** result", result);
+
         const evaluators = parseJsonArrayFromText(
             result,
         ) as unknown as string[];
