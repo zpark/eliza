@@ -1,5 +1,3 @@
-import "./config.ts";
-
 export * from "./actions.ts";
 export * from "./cache.ts";
 export * from "./context.ts";
