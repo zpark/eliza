@@ -21,7 +21,7 @@ vi.mock('@elizaos/core', () => ({
             }
         })
     })),
-    ModelType: {
+    ModelClass: {
         SMALL: 'small'
     }
 }));

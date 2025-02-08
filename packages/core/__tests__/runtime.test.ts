@@ -5,7 +5,7 @@ import {
     type IDatabaseAdapter,
     type IMemoryManager,
     type Memory,
-    ModelType,
+    ModelClass,
     type UUID
 } from "../src/types";
 import { mockCharacter } from "./mockCharacter";
@@ -221,8 +221,8 @@ describe("Model Provider Configuration", () => {
             const provider = runtime;
             
             // These might be undefined but shouldn't throw errors
-            expect(() => provider.models[ModelType.IMAGE_GENERATION]).not.toThrow();
-            expect(() => provider.models[ModelType.IMAGE_DESCRIPTION]).not.toThrow();
+            expect(() => provider.models[ModelClass.IMAGE_GENERATION]).not.toThrow();
+            expect(() => provider.models[ModelClass.IMAGE_DESCRIPTION]).not.toThrow();
         });
 
         test("should validate model provider name format", () => {

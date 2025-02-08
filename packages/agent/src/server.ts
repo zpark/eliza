@@ -6,7 +6,7 @@ import {
     generateMessageResponse,
     generateObject,
     messageCompletionFooter,
-    ModelType,
+    ModelClass,
     stringToUuid,
     type Content,
     type Media,
@@ -166,7 +166,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.call(ModelType.TRANSCRIPTION, {
+                const transcription = await runtime.call(ModelClass.TRANSCRIPTION, {
                     file: fs.createReadStream(audioFile.path),
                     model: "whisper-1",
                 });
@@ -276,7 +276,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelType: ModelType.TEXT_LARGE,
+                    modelClass: ModelClass.TEXT_LARGE,
                 });
 
                 if (!response) {
@@ -286,7 +286,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const zeroVector = await runtime.call(ModelType.TEXT_EMBEDDING, text);
+                const zeroVector = await runtime.call(ModelClass.TEXT_EMBEDDING, text);
 
                 // save response to memory
                 const responseMessage: Memory = {
@@ -490,7 +490,7 @@ export class CharacterServer {
                 const response = await generateObject({
                     runtime,
                     context,
-                    modelType: ModelType.TEXT_SMALL,
+                    modelClass: ModelClass.TEXT_SMALL,
                     schema: hyperfiOutSchema,
                 });
 
@@ -793,7 +793,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelType: ModelType.TEXT_LARGE,
+                    modelClass: ModelClass.TEXT_LARGE,
                 });
 
                 // save response to memory
@@ -826,7 +826,7 @@ export class CharacterServer {
                 // Get the text to convert to speech
                 const textToSpeak = response.text;
 
-                const speechResponse = await runtime.call(ModelType.TRANSCRIPTION, {
+                const speechResponse = await runtime.call(ModelClass.TRANSCRIPTION, {
                     text: textToSpeak,
                     runtime,
                 });

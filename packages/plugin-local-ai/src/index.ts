@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Plugin } from "@elizaos/core";
-import { ModelType, logger } from "@elizaos/core";
+import { ModelClass, logger } from "@elizaos/core";
 import { AutoTokenizer } from "@huggingface/transformers";
 import { FlagEmbedding, EmbeddingModel } from "fastembed";
 import path from "node:path";
@@ -137,7 +137,7 @@ export const localAIPlugin: Plugin = {
 
   handlers: {
     // Text generation for small tasks
-    [ModelType.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async ({
       context,
       stopSequences = [],
       runtime,
@@ -145,15 +145,10 @@ export const localAIPlugin: Plugin = {
       try {
         const modelPath = process.env.LLAMALOCAL_PATH || "./model.gguf";
 
-        return await runtime.call(ModelType.TEXT_SMALL, {
-          prompt: context,
-          temperature: 0.7,
-          maxTokens: 2048,
-          stopSequences,
-          model: modelPath,
-          frequencyPenalty: 0.5,
-          presencePenalty: 0.5,
-        });
+        // TODO: implement hermes here
+
+
+
       } catch (error) {
         logger.error("Error in TEXT_SMALL handler:", error);
         throw error;
@@ -161,7 +156,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text generation for larger tasks
-    [ModelType.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async ({
       context,
       stopSequences = [],
       runtime,
@@ -169,15 +164,8 @@ export const localAIPlugin: Plugin = {
       try {
         const modelPath = process.env.LLAMALOCAL_PATH || "./model.gguf";
 
-        return await runtime.call(ModelType.TEXT_LARGE, {
-          prompt: context,
-          temperature: 0.8,
-          maxTokens: 4096,
-          stopSequences,
-          model: modelPath,
-          frequencyPenalty: 0.7,
-          presencePenalty: 0.7,
-        });
+        // TODO: implement hermes
+        
       } catch (error) {
         logger.error("Error in TEXT_LARGE handler:", error);
         throw error;
@@ -185,7 +173,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text embedding using FastEmbed
-    [ModelType.TEXT_EMBEDDING]: async ({ text }) => {
+    [ModelClass.TEXT_EMBEDDING]: async ({ text }) => {
       try {
         return await localAIManager.generateEmbedding(text);
       } catch (error) {
@@ -195,7 +183,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text tokenization using AutoTokenizer
-    [ModelType.TEXT_TOKENIZER_ENCODE]: async ({ text }) => {
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({ text }) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -208,7 +196,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text detokenization using AutoTokenizer
-    [ModelType.TEXT_TOKENIZER_DECODE]: async ({ tokens }) => {
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({ tokens }) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -221,12 +209,12 @@ export const localAIPlugin: Plugin = {
     },
 
     // Image description using local Florence model
-    [ModelType.IMAGE_DESCRIPTION]: async ({ imageUrl, runtime }) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async ({ imageUrl, runtime }) => {
       try {
-        return await runtime.call(ModelType.IMAGE_DESCRIPTION, {
-          imageUrl,
-          modelProvider: "LLAMALOCAL",
-        });
+        
+        // TODO: Add florence
+
+
       } catch (error) {
         logger.error("Error in IMAGE_DESCRIPTION handler:", error);
         throw error;

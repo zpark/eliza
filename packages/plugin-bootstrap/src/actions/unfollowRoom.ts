@@ -6,7 +6,7 @@ import {
     type ActionExample,
     type IAgentRuntime,
     type Memory,
-    ModelType,
+    ModelClass,
     type State,
 } from "@elizaos/core";
 
@@ -52,7 +52,7 @@ export const unfollowRoomAction: Action = {
             const response = await generateTrueOrFalse({
                 runtime,
                 context: shouldUnfollowContext,
-                modelType: ModelType.TEXT_LARGE,
+                modelClass: ModelClass.TEXT_LARGE,
             });
 
             return response;

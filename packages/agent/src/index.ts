@@ -10,7 +10,7 @@ import {
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
     logger,
-    ModelType,
+    ModelClass,
     parseBooleanFromText,
     settings,
     stringToUuid,
@@ -24,6 +24,10 @@ import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./defaultCharacter.ts";
 import { CharacterServer } from "./server";
+
+// dotenv
+import dotenv from "dotenv";
+dotenv.config({ path: "../../.env" });
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -351,8 +355,8 @@ export async function initializeClients(
                 }
             }
             if (plugin.handlers) {
-                for (const [modelType, handler] of Object.entries(plugin.handlers)) {
-                    runtime.registerHandler(modelType as ModelType, handler);
+                for (const [modelClass, handler] of Object.entries(plugin.handlers)) {
+                    runtime.registerHandler(modelClass as ModelClass, handler);
                 }
             }
         }

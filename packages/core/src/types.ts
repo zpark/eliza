@@ -116,12 +116,17 @@ export interface Goal {
 /**
  * Model size/type classification
  */
-export enum ModelType {
+export enum ModelClass {
+  SMALL = "text_small", // for backwards compatibility
+  MEDIUM = "text_large", // for backwards compatibility
+  LARGE = "text_large", // for backwards compatibility
   TEXT_SMALL = "text_small",
   TEXT_LARGE = "text_large",
   TEXT_EMBEDDING = "text_embedding",
   TEXT_TOKENIZER_ENCODE = "TEXT_TOKENIZER_ENCODE",
   TEXT_TOKENIZER_DECODE = "TEXT_TOKENIZER_DECODE",
+  TEXT_REASONING_SMALL = "reasoning_small",
+  TEXT_REASONING_LARGE = "reasoning_large",
   IMAGE = "image",
   IMAGE_DESCRIPTION = "image_description",
   TRANSCRIPTION = "transcription",
@@ -130,10 +135,22 @@ export enum ModelType {
   VIDEO = "video",
 }
 
+export type AsyncEventHandler = ModelClass | string;
+
+export enum ServiceType {
+  TRANSCRIPTION = "transcription",
+  VIDEO = "video",
+  BROWSER = "browser",
+  PDF = "pdf",
+  REMOTE_FILES = "aws_s3",
+  WEB_SEARCH = "web_search",
+  EMAIL = "email",
+}
+
 /**
  * Model settings
  */
-export type ModelSettings = {
+export type TextModelSettings = {
   /** Model name */
   name: string;
 
@@ -568,6 +585,9 @@ export type Plugin = {
   /** Optional clients */
   clients?: Client[];
 
+  /** Optional services */
+  services?: Service[];
+
   /** Optional adapters */
   adapters?: Adapter[];
 
@@ -891,6 +911,28 @@ export interface ICacheManager {
   delete(key: string): Promise<void>;
 }
 
+export abstract class Service {
+  private static instance: Service | null = null;
+
+  static get serviceType(): ServiceType {
+      throw new Error("Service must implement static serviceType getter");
+  }
+
+  public static getInstance<T extends Service>(): T {
+      if (!Service.instance) {
+          Service.instance = new (this as any)();
+      }
+      return Service.instance as T;
+  }
+
+  get serviceType(): ServiceType {
+      return (this.constructor as typeof Service).serviceType;
+  }
+
+  // Add abstract initialize method that must be implemented by derived classes
+  abstract initialize(runtime: IAgentRuntime): Promise<void>;
+}
+
 export interface IAgentRuntime {
   // Properties
   agentId: UUID;
@@ -921,6 +963,10 @@ export interface IAgentRuntime {
   registerMemoryManager(manager: IMemoryManager): void;
 
   getMemoryManager(name: string): IMemoryManager | null;
+
+  getService<T extends Service>(service: ServiceType): T | null;
+
+  registerService(service: Service): Promise<void>;
 
   getSetting(key: string): string | null;
 
@@ -971,9 +1017,9 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  call<T = any>(modelType: ModelType, params: T): Promise<any>;
-  registerHandler(modelType: ModelType, handler: (params: any) => Promise<any>): void;
-  getHandler(modelType: ModelType): ((params: any) => Promise<any>) | undefined;
+  call<T = any>(modelClass: ModelClass, params: T): Promise<any>;
+  registerHandler(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
+  getHandler(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined;
 }
 
 export enum LoggingLevel {
@@ -1009,18 +1055,18 @@ export interface ChunkRow {
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
-  modelType: ModelType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 };
 
 export interface TokenizeTextParams {
   context: string;
-  modelType: ModelType;
+  modelClass: ModelClass;
 }
 
 export interface DetokenizeTextParams {
   tokens: number[];
-  modelType: ModelType;
+  modelClass: ModelClass;
 }
 
 // Inventory
@@ -1054,3 +1100,78 @@ export type ClientHandler = (
   user: Account,
   text: string,
 ) => Promise<void>;
+
+export interface IImageDescriptionService extends Service {
+  describeImage(
+      imageUrl: string,
+  ): Promise<{ title: string; description: string }>;
+}
+
+export interface ITranscriptionService extends Service {
+  transcribeAttachment(audioBuffer: ArrayBuffer): Promise<string | null>;
+  transcribeAttachmentLocally(
+      audioBuffer: ArrayBuffer,
+  ): Promise<string | null>;
+  transcribe(audioBuffer: ArrayBuffer): Promise<string | null>;
+  transcribeLocally(audioBuffer: ArrayBuffer): Promise<string | null>;
+}
+
+export interface IVideoService extends Service {
+  isVideoUrl(url: string): boolean;
+  fetchVideoInfo(url: string): Promise<Media>;
+  downloadVideo(videoInfo: Media): Promise<string>;
+  processVideo(url: string, runtime: IAgentRuntime): Promise<Media>;
+}
+
+export interface ITextGenerationService extends Service {
+  initializeModel(): Promise<void>;
+  queueMessageCompletion(
+      context: string,
+      temperature: number,
+      stop: string[],
+      frequency_penalty: number,
+      presence_penalty: number,
+      max_tokens: number,
+  ): Promise<any>;
+  queueTextCompletion(
+      context: string,
+      temperature: number,
+      stop: string[],
+      frequency_penalty: number,
+      presence_penalty: number,
+      max_tokens: number,
+  ): Promise<string>;
+  getEmbeddingResponse(input: string): Promise<number[] | undefined>;
+}
+
+export interface IBrowserService extends Service {
+  closeBrowser(): Promise<void>;
+  getPageContent(
+      url: string,
+      runtime: IAgentRuntime,
+  ): Promise<{ title: string; description: string; bodyContent: string }>;
+}
+
+export interface ISpeechService extends Service {
+  getInstance(): ISpeechService;
+  generate(runtime: IAgentRuntime, text: string): Promise<Readable>;
+}
+
+export interface IPdfService extends Service {
+  getInstance(): IPdfService;
+  convertPdfToText(pdfBuffer: Buffer): Promise<string>;
+}
+
+export interface IAwsS3Service extends Service {
+  uploadFile(
+      imagePath: string,
+      subDirectory: string,
+      useSignedUrl: boolean,
+      expiresIn: number,
+  ): Promise<{
+      success: boolean;
+      url?: string;
+      error?: string;
+  }>;
+  generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
+}

@@ -3,16 +3,16 @@ import type { Plugin } from "@elizaos/core";
 import {
   DetokenizeTextParams,
   GenerateTextParams,
-  ModelType,
+  ModelClass,
   TokenizeTextParams,
 } from "@elizaos/core";
 import { generateText as aiGenerateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
 
-async function tokenizeText(model: ModelType, context: string) {
+async function tokenizeText(model: ModelClass, context: string) {
   const modelName =
-    model === ModelType.TEXT_SMALL
+    model === ModelClass.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -22,9 +22,9 @@ async function tokenizeText(model: ModelType, context: string) {
   return tokens;
 }
 
-async function detokenizeText(model: ModelType, tokens: number[]) {
+async function detokenizeText(model: ModelClass, tokens: number[]) {
   const modelName =
-    model === ModelType.TEXT_SMALL
+    model === ModelClass.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -78,7 +78,7 @@ export const openaiPlugin: Plugin = {
     }
   },
   handlers: {
-    [ModelType.TEXT_EMBEDDING]: async (text: string | null) => {
+    [ModelClass.TEXT_EMBEDDING]: async (text: string | null) => {
       if (!text) {
         // Return zero vector of appropriate length for model
         return new Array(1536).fill(0);
@@ -103,19 +103,19 @@ export const openaiPlugin: Plugin = {
       const data = await response.json();
       return data.data[0].embedding;
     },
-    [ModelType.TEXT_TOKENIZER_ENCODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({
       context,
-      modelType,
+      modelClass,
     }: TokenizeTextParams) => {
-      return tokenizeText(modelType ?? ModelType.TEXT_LARGE, context);
+      return tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
     },
-    [ModelType.TEXT_TOKENIZER_DECODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({
       tokens,
-      modelType,
+      modelClass,
     }: DetokenizeTextParams) => {
-      return detokenizeText(modelType ?? ModelType.TEXT_LARGE, tokens);
+      return detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
     },
-    [ModelType.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async ({
       runtime,
       context,
       stopSequences = [],
@@ -151,7 +151,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelType.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async ({
       runtime,
       context,
       stopSequences = [],
@@ -189,7 +189,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelType.IMAGE]: async (params: {
+    [ModelClass.IMAGE]: async (params: {
       prompt: string;
       n?: number;
       size?: string;
@@ -214,7 +214,7 @@ export const openaiPlugin: Plugin = {
       const data = await response.json();
       return data.data; // Typically an array of image URLs/data
     },
-    [ModelType.IMAGE_DESCRIPTION]: async (params: { imageUrl: string }) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (params: { imageUrl: string }) => {
       const baseURL =
         process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
       const openai = createOpenAI({
@@ -235,7 +235,7 @@ export const openaiPlugin: Plugin = {
       });
       return description;
     },
-    [ModelType.TRANSCRIPTION]: async (params: {
+    [ModelClass.TRANSCRIPTION]: async (params: {
       audioFile: any;
       language?: string;
     }) => {

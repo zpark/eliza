@@ -3,7 +3,7 @@ import {
     formatMessages,
     IAgentRuntime,
     MemoryManager,
-    ModelType
+    ModelClass
 } from "@elizaos/core";
 import { formatFacts } from "../evaluators/fact.ts";
 
@@ -16,7 +16,7 @@ const factsProvider: Provider = {
             actors: state?.actorsData,
         });
 
-        const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, recentMessages);
+        const embedding = await runtime.call(ModelClass.TEXT_EMBEDDING, recentMessages);
 
         const memoryManager = new MemoryManager({
             runtime,

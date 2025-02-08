@@ -1,6 +1,6 @@
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import logger from "./logger.ts";
-import { type IAgentRuntime, type ModelSettings } from "./types.ts";
+import { type IAgentRuntime, type TextModelSettings } from "./types.ts";
 
 
 export function logFunctionCall(functionName: string, runtime?: IAgentRuntime) {
@@ -31,7 +31,7 @@ export async function splitChunks(
     return chunks;
 }
 
-export function getModelSettings(modelSettings: Record<string, ModelSettings>) {
+export function getModelSettings(modelSettings: Record<string, TextModelSettings>) {
     if (!modelSettings) {
         throw new Error("MODEL_SETTINGS is not defined");
     }

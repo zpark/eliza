@@ -8,7 +8,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelType,
+    ModelClass,
     type State,
 } from "@elizaos/core";
 
@@ -167,7 +167,7 @@ export const continueAction: Action = {
 
             const response = await generateTrueOrFalse({
                 context: shouldRespondContext,
-                modelType: ModelType.TEXT_SMALL,
+                modelClass: ModelClass.TEXT_SMALL,
                 runtime,
             });
 
@@ -194,7 +194,7 @@ export const continueAction: Action = {
         const response = await generateMessageResponse({
             runtime,
             context,
-            modelType: ModelType.TEXT_LARGE,
+            modelClass: ModelClass.TEXT_LARGE,
         });
 
         response.inReplyTo = message.id;
