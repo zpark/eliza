@@ -1,381 +1,178 @@
----
-sidebar_position: 4
----
+# Character File Documentation
 
-# 📝 Character Files
-
-Character files are JSON-formatted configurations that define an AI character's personality, knowledge, and behavior patterns. This guide explains how to create effective character files for use with Eliza agents.
-
----
+A character file defines the personality, behavior, and capabilities of an agent in the Eliza system. This guide explains how to create and configure character files.
 
 ## Overview
 
-A `characterfile` implements the [Character](/api/type-aliases/character) type and defines the character's:
+Character files are stored in the [elizaos/characters](https://github.com/elizaos/characters) repository. Each character has its own directory containing configuration and knowledge files.
 
-- Core identity and behavior
-- Model provider configuration
-- Client settings and capabilities
-- Interaction examples and style guidelines
+## Basic Structure
 
-**Example:**
+A character file consists of several key components:
 
 ```json
 {
-    "name": "trump",
-    "clients": ["discord", "direct"],
-    "settings": {
-        "voice": { "model": "en_US-male-medium" }
-    },
-    "bio": [
-        "Built a strong economy and reduced inflation.",
-        "Promises to make America the crypto capital and restore affordability."
-    ],
-    "lore": [
-        "Secret Service allocations used for election interference.",
-        "Promotes WorldLibertyFi for crypto leadership."
-    ],
-    "knowledge": [
-        "Understands border issues, Secret Service dynamics, and financial impacts on families."
-    ],
-    "messageExamples": [
-        {
-            "user": "{{user1}}",
-            "content": { "text": "What about the border crisis?" },
-            "response": "Current administration lets in violent criminals. I secured the border; they destroyed it."
-        }
-    ],
-    "postExamples": [
-        "End inflation and make America affordable again.",
-        "America needs law and order, not crime creation."
+  "id": "unique-character-id",
+  "name": "Character Name",
+  "username": "character_username",
+  "modelProvider": "anthropic",
+  "description": "A brief description of the character",
+  "personality": {
+    "traits": ["friendly", "helpful", "knowledgeable"],
+    "background": "Character's backstory and context",
+    "speech_style": "How the character typically communicates"
+  },
+  "knowledge": {
+    "base_path": "./knowledge",
+    "files": [
+      "core_knowledge.md",
+      "specialized_topics.md"
     ]
+  },
+  "capabilities": {
+    "can_generate_images": true,
+    "can_analyze_images": true,
+    "memory_retention": "long"
+  }
 }
 ```
 
----
+## Key Components
 
-## Core Components
+### Basic Information
+- `id`: Unique identifier for the character
+- `name`: Display name of the character
+- `username`: System username for the character
+- `modelProvider`: The AI model provider to use (e.g., "anthropic")
+- `description`: Brief overview of the character's purpose and role
 
-```json
-{
-    "id": "unique-identifier",
-    "name": "character_name",
-    "modelProvider": "ModelProviderName",
-    "clients": ["Client1", "Client2"],
-    "settings": {
-        "secrets": { "key": "value" },
-        "voice": { "model": "VoiceModelName", "url": "VoiceModelURL" },
-        "model": "CharacterModel",
-        "embeddingModel": "EmbeddingModelName"
-    },
-    "bio": "Character biography or description",
-    "lore": [
-        "Storyline or backstory element 1",
-        "Storyline or backstory element 2"
-    ],
-    "messageExamples": [["Message example 1", "Message example 2"]],
-    "postExamples": ["Post example 1", "Post example 2"],
-    "topics": ["Topic1", "Topic2"],
-    "adjectives": ["Adjective1", "Adjective2"],
-    "style": {
-        "all": ["All style guidelines"],
-        "chat": ["Chat-specific style guidelines"],
-        "post": ["Post-specific style guidelines"]
-    }
-}
+### Personality Configuration
+- `traits`: Array of key personality characteristics
+- `background`: Character's history and context
+- `speech_style`: Guidelines for how the character should communicate
+
+### Knowledge Management
+- `base_path`: Root directory for character knowledge files
+- `files`: Array of knowledge files to load
+- Knowledge files can include:
+  - Core knowledge (fundamental information)
+  - Specialized topics
+  - Historical records
+  - Training data
+
+### Capabilities
+- `can_generate_images`: Boolean for image generation ability
+- `can_analyze_images`: Boolean for image analysis ability
+- `memory_retention`: Memory retention configuration
+
+## Directory Structure
+
 ```
-
-### Key Fields
-
-#### `name` (required)
-
-The character's display name for identification and in conversations.
-
-#### `modelProvider` (required)
-
-Specifies the AI model provider. Supported options from [ModelProviderName](/api/enumerations/modelprovidername) include `anthropic`, `llama_local`, `openai`, `livepeer`, and others.
-
-#### `clients` (required)
-
-Array of supported client types from [Clients](/api/enumerations/clients) e.g., `discord`, `direct`, `twitter`, `telegram`, `farcaster`.
-
-#### `bio`
-
-Character background as a string or array of statements.
-
-- Contains biographical information about the character
-- Can be a single comprehensive biography or multiple shorter statements
-- Multiple statements are randomized to create variety in responses
-
-Example:
-
-```json
-"bio": [
-  "Mark Andreessen is an American entrepreneur and investor",
-  "Co-founder of Netscape and Andreessen Horowitz",
-  "Pioneer of the early web, created NCSA Mosaic"
-]
+characters/
+├── character-name/
+│   ├── character.json
+│   ├── knowledge/
+│   │   ├── core_knowledge.md
+│   │   └── specialized_topics.md
+│   └── assets/
+│       └── profile.jpg
 ```
-
-#### `lore`
-
-Backstory elements and unique character traits. These help define personality and can be randomly sampled in conversations.
-
-Example:
-
-```json
-"lore": [
-  "Believes strongly in the power of software to transform industries",
-  "Known for saying 'Software is eating the world'",
-  "Early investor in Facebook, Twitter, and other tech giants"
-]
-```
-
-#### `knowledge`
-
-Array used for Retrieval Augmented Generation (RAG), containing facts or references to ground the character's responses.
-
-- Can contain chunks of text from articles, books, or other sources
-- Helps ground the character's responses in factual information
-- Knowledge can be generated from PDFs or other documents using provided tools
-
-#### `messageExamples`
-
-Sample conversations for establishing interaction patterns, help establish the character's conversational style.
-
-```json
-"messageExamples": [
-  [
-    {"user": "user1", "content": {"text": "What's your view on AI?"}},
-    {"user": "character", "content": {"text": "AI is transforming every industry..."}}
-  ]
-]
-```
-
-#### `postExamples`
-
-Sample social media posts to guide content style:
-
-```json
-"postExamples": [
-  "No tax on tips, overtime, or social security for seniors!",
-  "End inflation and make America affordable again."
-]
-```
-
-### Style Configuration
-
-Contains three key sections:
-
-1. `all`: General style instructions for all interactions
-2. `chat`: Specific instructions for chat interactions
-3. `post`: Specific instructions for social media posts
-
-Each section can contain multiple instructions that guide the character's communication style.
-
-The `style` object defines behavior patterns across contexts:
-
-```json
-"style": {
-  "all": ["maintain technical accuracy", "be approachable and clear"],
-  "chat": ["ask clarifying questions", "provide examples when helpful"],
-  "post": ["share insights concisely", "focus on practical applications"]
-}
-```
-
-### Topics Array
-
-- List of subjects the character is interested in or knowledgeable about
-- Used to guide conversations and generate relevant content
-- Helps maintain character consistency
-
-### Adjectives Array
-
-- Words that describe the character's traits and personality
-- Used for generating responses with a consistent tone
-- Can be used in "Mad Libs" style content generation
-
-### Settings Configuration
-
-The `settings` object defines additional configurations like secrets and voice models.
-
-```json
-"settings": {
-  "secrets": { "API_KEY": "your-api-key" },
-  "voice": { "model": "voice-model-id", "url": "voice-service-url" },
-  "model": "specific-model-name",
-  "embeddingModel": "embedding-model-name"
-}
-```
-
-### Templates Configuration
-
-The `templates` object defines customizable prompt templates used for various tasks and interactions. Below is the list of available templates:
-
-- `goalsTemplate`
-- `factsTemplate`
-- `messageHandlerTemplate`
-- `shouldRespondTemplate`
-- `continueMessageHandlerTemplate`
-- `evaluationTemplate`
-- `twitterSearchTemplate`
-- `twitterPostTemplate`
-- `twitterMessageHandlerTemplate`
-- `twitterShouldRespondTemplate`
-- `telegramMessageHandlerTemplate`
-- `telegramShouldRespondTemplate`
-- `discordVoiceHandlerTemplate`
-- `discordShouldRespondTemplate`
-- `discordMessageHandlerTemplate`
-
-### Example: Twitter Post Template
-
-Here’s an example of a `twitterPostTemplate`:
-
-```js
-templates: {
-    twitterPostTemplate: `
-# Areas of Expertise
-{{knowledge}}
-
-# About {{agentName}} (@{{twitterUserName}}):
-{{bio}}
-{{lore}}
-{{topics}}
-
-{{providers}}
-
-{{characterPostExamples}}
-
-{{postDirections}}
-
-# Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
-Write a 1-3 sentence post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than {{maxTweetLength}}. No emojis. Use \\n\\n (double spaces) between statements.`,
-}
-```
-
----
-
-## Example: Complete Character File
-
-```json
-{
-    "name": "TechAI",
-    "modelProvider": "anthropic",
-    "clients": ["discord", "direct"],
-    "bio": "AI researcher and educator focused on practical applications",
-    "lore": [
-        "Pioneer in open-source AI development",
-        "Advocate for AI accessibility"
-    ],
-    "messageExamples": [
-        [
-            {
-                "user": "{{user1}}",
-                "content": { "text": "Can you explain how AI models work?" }
-            },
-            {
-                "user": "TechAI",
-                "content": {
-                    "text": "Think of AI models like pattern recognition systems."
-                }
-            }
-        ]
-    ],
-    "postExamples": [
-        "Understanding AI doesn't require a PhD - let's break it down simply",
-        "The best AI solutions focus on real human needs"
-    ],
-    "topics": [
-        "artificial intelligence",
-        "machine learning",
-        "technology education"
-    ],
-    "style": {
-        "all": [
-            "explain complex topics simply",
-            "be encouraging and supportive"
-        ],
-        "chat": ["use relevant examples", "check understanding"],
-        "post": ["focus on practical insights", "encourage learning"]
-    },
-    "adjectives": ["knowledgeable", "approachable", "practical"],
-    "settings": {
-        "model": "claude-3-opus-20240229",
-        "voice": { "model": "en-US-neural" }
-    }
-}
-```
-
----
 
 ## Best Practices
 
-1. **Randomization for Variety**
+1. **Knowledge Organization**
+   - Keep knowledge files focused and well-organized
+   - Use clear file names that indicate content
+   - Structure knowledge hierarchically
 
-- Break bio and lore into smaller chunks
-- This creates more natural, varied responses
-- Prevents repetitive or predictable behavior
+2. **Personality Definition**
+   - Be specific about personality traits
+   - Provide clear speech patterns and communication style
+   - Include relevant background information
 
-2. **Knowledge Management**
+3. **Capability Configuration**
+   - Only enable necessary capabilities
+   - Configure memory settings based on use case
+   - Document any special requirements
 
-Use the provided tools to convert documents into knowledge:
+4. **Maintenance**
+   - Regularly update knowledge files
+   - Version control character configurations
+   - Test changes before deployment
 
-- [folder2knowledge](https://github.com/elizaos/characterfile/blob/main/scripts/folder2knowledge.js)
-- [knowledge2character](https://github.com/elizaos/characterfile/blob/main/scripts/knowledge2character.js)
-- [tweets2character](https://github.com/elizaos/characterfile/blob/main/scripts/tweets2character.js)
+## Integration
 
-Example:
+To use a character in your application:
 
-```bash
-npx folder2knowledge <path/to/folder>
-npx knowledge2character <character-file> <knowledge-file>
+```typescript
+import { Character } from '@eliza/core';
+
+const character = new Character({
+  characterPath: './characters/character-name',
+  // Additional runtime configuration
+});
 ```
 
-3. **Style Instructions**
+## Advanced Features
 
-- Be specific about communication patterns
-- Include both dos and don'ts
-- Consider platform-specific behavior (chat vs posts)
+### Custom Knowledge Integration
+Characters can integrate with custom knowledge sources:
 
-4. **Message Examples**
+```typescript
+{
+  "knowledge": {
+    "custom_providers": [
+      {
+        "type": "database",
+        "config": {
+          "connection": "connection_string",
+          "query": "knowledge_query"
+        }
+      }
+    ]
+  }
+}
+```
 
-- Include diverse scenarios
-- Show character-specific responses
-- Demonstrate typical interaction patterns
+### Memory Configuration
+Fine-tune memory settings:
 
----
+```typescript
+{
+  "memory": {
+    "retention_period": "30d",
+    "priority_topics": ["user_preferences", "key_events"],
+    "forget_rules": [
+      {
+        "type": "time_based",
+        "duration": "7d"
+      }
+    ]
+  }
+}
+```
 
-## Tips for Quality
+## Troubleshooting
 
-1. **Bio and Lore**
+Common issues and solutions:
 
-- Mix factual and personality-defining information
-- Include both historical and current details
-- Break into modular, reusable pieces
+1. **Knowledge Loading Failures**
+   - Verify file paths are correct
+   - Check file permissions
+   - Validate JSON syntax
 
-2. **Style Instructions**
+2. **Character Behavior Issues**
+   - Review personality configuration
+   - Check knowledge file coverage
+   - Verify capability settings
 
-- Be specific about tone and mannerisms
-- Include platform-specific guidance
-- Define clear boundaries and limitations
+3. **Integration Problems**
+   - Confirm correct file structure
+   - Validate all required fields
+   - Check system compatibility
 
-3. **Examples**
+## Resources
 
-- Cover common scenarios
-- Show character-specific reactions
-- Demonstrate proper tone and style
-
-4. **Knowledge**
-
-- Focus on relevant information
-- Organize in digestible chunks
-- Update regularly to maintain relevance
-
----
-
-## Further Reading
-
-- [Agents Documentation](./agents.md)
-- [Model Providers](../../advanced/fine-tuning)
-- [Client Integration](../../packages/clients)
+- [Character Repository](https://github.com/elizaos/characters)
+- [API Documentation](link-to-api-docs)
+- [Developer Guide](link-to-dev-guide)

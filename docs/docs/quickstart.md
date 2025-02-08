@@ -296,6 +296,40 @@ Then reinstall the requirements
 pnpm i
 ```
 
+
+---
+
+## FAQ
+
+### Which Node.js version should I use?
+Use Node.js v23.3.0 with pnpm v9.x for optimal compatibility.
+
+### How do I run multiple agents?
+Create separate projects with unique character files and run in separate terminals, or use `pnpm start --characters="characters/agent1.json,characters/agent2.json"`.
+
+### How do I install and set up ElizaOS?
+Clone the repository, run `pnpm install --no-frozen-lockfile`, then `pnpm build`. Requires Node.js version 23.3.0.
+
+### What's the difference between eliza and eliza-starter?
+Eliza-starter is a lightweight version for simpler setups, while the main eliza repository includes all advanced features and plugins.
+
+### How do I fix build/installation issues?
+Use Node v23.3.0, run `pnpm clean`, then `pnpm install --no-frozen-lockfile`, followed by `pnpm build`. If issues persist, checkout the latest stable tag.
+
+### What are the minimum system requirements?
+8GB RAM recommended for build process. For deployment, a t2.large instance on AWS with 20GB storage running Ubuntu is the minimum tested configuration.
+
+### Which Node.js version should I use?
+Use Node.js version 23+ (specifically 23.3.0 is recommended). You can use nvm to manage Node versions with `nvm install 23` and `nvm use 23`.
+
+### How do I fix "Exit Status 1" errors?
+If you see `triggerUncaughtException` errors, try:
+1. Add dependencies to workspace root
+2. Add dependencies to specific packages
+3. Clean and rebuild
+
+---
+
 ## Next Steps
 
 Once you have your agent running, explore:
@@ -304,7 +338,5 @@ Once you have your agent running, explore:
 2. 📝 [Create Custom Characters](./core/characterfile.md)
 3. ⚡ [Add Custom Actions](./core/actions.md)
 4. 🔧 [Advanced Configuration](./guides/configuration.md)
-
-For detailed API documentation, troubleshooting, and advanced features, check out our [full documentation](https://elizaos.github.io/eliza/).
 
 Join our [Discord community](https://discord.gg/ai16z) for support and updates!

@@ -255,6 +255,27 @@ await memoryManager.createMemory({
 
 ---
 
+## FAQ
+
+### How do I run multiple agents simultaneously?
+Use `pnpm start --characters="characters/agent1.json,characters/agent2.json"` to run multiple character files. Ensure each has unique credentials.
+
+### How do I deploy my agent to production?
+Most users deploy on a VPS using PM2 or screen to keep the process running. 2-4GB RAM is sufficient if using remote providers for inference.
+
+### Do agents share memory across platforms?
+By default, agents maintain separate memory contexts for different platforms to avoid mixing conversations.
+
+### I'm trying to unify knowledge base across multiple chats. Is this possible?
+Yes, you can unify knowledge across different chat platforms:
+- Use a centralized vector database
+- Implement proper context management
+- Consider privacy implications
+- Use unified embedding storage
+- Configure shared memory contexts
+
+---
+
 ## Further Reading
 
 - [Actions Documentation](./actions.md)

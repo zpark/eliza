@@ -393,9 +393,57 @@ This will check:
 - Database configuration
 - Plugin settings
 
+---
+
+## FAQ
+
+### How do I manage multiple environment configurations?
+Use different .env files (.env.development, .env.staging, .env.production) and load them based on NODE_ENV.
+
+### How do I configure different model providers?
+Set `modelProvider` in your character.json and add corresponding API keys in `.env` or character secrets. Supports Anthropic, OpenAI, DeepSeek, and others.
+
+### How do I handle secrets and credentials?
+Use `.env` file for global settings or add secrets in `character.json` under `settings.secrets` for per-agent configuration.
+
+### How do I adjust the temperature setting in my character file?
+The temperature setting controls response randomness and can be configured in your character's JSON file:
+
+```json
+{
+    "modelProvider": "openrouter",
+    "temperature": 0.7,
+    "settings": {
+        "maxInputTokens": 200000,
+        "maxOutputTokens": 8192,
+        "model": "large"
+    }
+}
+```
+Increase temperature for more creative responses, decrease for more consistent outputs.
+
+### I'm getting an authentication error ("No auth credentials found"). What should I do?
+Check these common issues:
+1. Verify API keys in your .env file
+2. Ensure keys are properly formatted
+3. Check logs for specific authentication errors
+4. Try restarting the application after updating credentials
+
+### How do I debug when my agent isn't responding?
+1. Enable debug logging: `DEBUG=eliza:*` in your .env file
+2. Check database for saved messages
+3. Verify model provider connectivity
+4. Review logs for error messages
+
+### How do I control my agent's behavior across platforms?
+Configure platform-specific settings in `.env` (like `TWITTER_TARGET_USERS`) and adjust response templates in your character file.
+
+---
+
 ## Further Resources
 
 - [Quickstart Guide](../quickstart.md) for initial setup
 - [Secrets Management](./secrets-management.md) for secure configuration
 - [Local Development](./local-development.md) for development setup
 - [Advanced Usage](./advanced.md) for complex configurations
+
