@@ -575,6 +575,14 @@ export type Plugin = {
   handlers?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
+
+  /** Optional inventory providers */
+  inventoryProviders?: InventoryProvider[];
+
+  /** Optional events */
+  events?: {
+    [key: string]: ((params: any) => Promise<any>)[]
+  };
 };
 
 export interface ModelConfiguration {
@@ -902,6 +910,8 @@ export interface IAgentRuntime {
   knowledgeManager: IMemoryManager;
   loreManager: IMemoryManager;
 
+  inventoryProviders?: InventoryProvider[];
+
   cacheManager: ICacheManager;
 
   clients: ClientInstance[];
@@ -1012,3 +1022,35 @@ export interface DetokenizeTextParams {
   tokens: number[];
   modelType: ModelType;
 }
+
+// Inventory
+
+export type InventoryItem = {
+  name: string
+  ticker: string
+  address: string
+  description: string
+  quantity: number
+}
+
+export type InventoryAction = {
+  name: string
+  description: string
+  parameters: any
+  handler: (runtime: IAgentRuntime, params: any, callback?: HandlerCallback) => Promise<any>;
+}
+
+export type InventoryProvider = {
+  name: string
+  description: string
+  items: InventoryItem[]
+  actions: InventoryAction[]
+}
+
+// WIP
+export type ClientHandler = (
+  client: Client,
+  roomId: UUID,
+  user: Account,
+  text: string,
+) => Promise<void>;
