@@ -1,7 +1,7 @@
 import {
     type AgentRuntime,
     type Character,
-    elizaLogger,
+    logger,
     getEnvVariable,
     type UUID,
     validateCharacterConfig,
@@ -152,7 +152,7 @@ export function createApiRouter(
         try {
             validateCharacterConfig(character);
         } catch (e) {
-            elizaLogger.error(`Error parsing character: ${e}`);
+            logger.error(`Error parsing character: ${e}`);
             res.status(400).json({
                 success: false,
                 message: e.message,
@@ -163,9 +163,9 @@ export function createApiRouter(
         // start it up (and register it)
         try {
             agent = await directClient.startAgent(character);
-            elizaLogger.log(`${character.name} started`);
+            logger.log(`${character.name} started`);
         } catch (e) {
-            elizaLogger.error(`Error starting agent: ${e}`);
+            logger.error(`Error starting agent: ${e}`);
             res.status(500).json({
                 success: false,
                 message: e.message,
@@ -191,11 +191,11 @@ export function createApiRouter(
                         2
                     )
                 );
-                elizaLogger.info(
+                logger.info(
                     `Character stored successfully at ${filepath}`
                 );
             } catch (error) {
-                elizaLogger.error(
+                logger.error(
                     `Failed to store character: ${error.message}`
                 );
             }
@@ -324,7 +324,7 @@ export function createApiRouter(
     //         );
     //         res.json({ agents: allAgents, attestation: attestation });
     //     } catch (error) {
-    //         elizaLogger.error("Failed to get TEE agents:", error);
+    //         logger.error("Failed to get TEE agents:", error);
     //         res.status(500).json({
     //             error: "Failed to get TEE agents",
     //         });
@@ -350,7 +350,7 @@ export function createApiRouter(
     //         );
     //         res.json({ agent: teeAgent, attestation: attestation });
     //     } catch (error) {
-    //         elizaLogger.error("Failed to get TEE agent:", error);
+    //         logger.error("Failed to get TEE agent:", error);
     //         res.status(500).json({
     //             error: "Failed to get TEE agent",
     //         });
@@ -391,7 +391,7 @@ export function createApiRouter(
     //                 attestation: attestation,
     //             });
     //         } catch (error) {
-    //             elizaLogger.error("Failed to get TEE logs:", error);
+    //             logger.error("Failed to get TEE logs:", error);
     //             res.status(500).json({
     //                 error: "Failed to get TEE logs",
     //             });
@@ -417,14 +417,14 @@ export function createApiRouter(
                 throw new Error("No character path or JSON provided");
             }
             await directClient.startAgent(character);
-            elizaLogger.log(`${character.name} started`);
+            logger.log(`${character.name} started`);
 
             res.json({
                 id: character.id,
                 character: character,
             });
         } catch (e) {
-            elizaLogger.error(`Error parsing character: ${e}`);
+            logger.error(`Error parsing character: ${e}`);
             res.status(400).json({
                 error: e.message,
             });

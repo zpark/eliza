@@ -75,7 +75,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     const facts = await generateObjectArray({
         runtime,
         context,
-        modelClass: ModelClass.LARGE,
+        modelClass: ModelClass.TEXT_LARGE,
         schema: claimSchema,
         schemaName: "Fact",
         schemaDescription: "A fact about the user or the world",

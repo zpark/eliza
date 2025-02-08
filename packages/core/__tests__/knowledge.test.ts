@@ -72,9 +72,6 @@ describe("Knowledge Module", () => {
         beforeEach(() => {
             mockRuntime = {
                 agentId: "test-agent",
-                character: {
-                    modelProvider: "openai",
-                },
                 messageManager: {
                     getCachedEmbeddings: vi.fn().mockResolvedValue([]),
                 },

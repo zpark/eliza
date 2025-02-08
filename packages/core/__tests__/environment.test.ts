@@ -1,74 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { validateEnv, validateCharacterConfig } from "../src/environment";
-import { ModelProviderName } from "../src/types";
-
-describe("Environment Configuration", () => {
-    const originalEnv = process.env;
-
-    beforeEach(() => {
-        process.env = {
-            ...originalEnv,
-            PROVIDER_NAME: "OPENAI",
-            PROVIDER_API_KEY: "sk-test123",
-            PROVIDER_ENDPOINT: "https://api.openai.com/v1",
-            ELEVENLABS_XI_API_KEY: "test-key",
-            DEFAULT_MODEL: "gpt-4",
-            SMALL_MODEL: "gpt-3.5-turbo",
-            MEDIUM_MODEL: "gpt-4",
-            LARGE_MODEL: "gpt-4-turbo",
-            EMBEDDING_MODEL: "text-embedding-3-small",
-            IMAGE_MODEL: "dall-e-3",
-            IMAGE_VISION_MODEL: "gpt-4-vision-preview",
-        };
-    });
-
-    afterEach(() => {
-        process.env = originalEnv;
-    });
-
-    it("should validate correct environment variables", () => {
-        expect(() => validateEnv()).not.toThrow();
-    });
-
-    it("should throw error for missing required provider configuration", () => {
-        delete process.env.PROVIDER_NAME;
-        delete process.env.PROVIDER_API_KEY;
-        expect(() => validateEnv()).toThrow(
-            "Environment validation failed:\n" +
-            "PROVIDER_NAME: Required\n" +
-            "PROVIDER_API_KEY: Required"
-        );
-    });
-
-    it("should throw error for invalid provider endpoint URL", () => {
-        process.env.PROVIDER_ENDPOINT = "invalid-url";
-        expect(() => validateEnv()).toThrow(
-            "Provider endpoint must be a valid URL"
-        );
-    });
-
-    it("should validate with optional fields missing", () => {
-        delete process.env.DEFAULT_MODEL;
-        delete process.env.SMALL_MODEL;
-        delete process.env.MEDIUM_MODEL;
-        delete process.env.LARGE_MODEL;
-        delete process.env.EMBEDDING_MODEL;
-        delete process.env.IMAGE_MODEL;
-        delete process.env.IMAGE_VISION_MODEL;
-        delete process.env.ELEVENLABS_XI_API_KEY;
-        expect(() => validateEnv()).not.toThrow();
-    });
-
-    it("should validate with invalid model provider name", () => {
-        process.env.PROVIDER_NAME = "INVALID_PROVIDER";
-        expect(() => validateEnv()).toThrow();
-    });
-});
+import { describe, expect, it } from "vitest";
+import { validateCharacterConfig } from "../src/environment";
 
 describe("Character Configuration", () => {
     const validCharacterConfig = {
         name: "Test Character",
-        modelProvider: ModelProviderName.OPENAI,
         bio: "Test bio",
         lore: ["Test lore"],
         messageExamples: [
@@ -142,46 +77,6 @@ describe("Character Configuration", () => {
         expect(() =>
             validateCharacterConfig(configWithPluginObjects)
         ).not.toThrow();
-    });
-
-    it("should validate client-specific configurations", () => {
-        const configWithClientConfig = {
-            ...validCharacterConfig,
-            clientConfig: {
-                discord: {
-                    shouldIgnoreBotMessages: true,
-                    shouldIgnoreDirectMessages: false,
-                },
-                telegram: {
-                    shouldIgnoreBotMessages: true,
-                    shouldIgnoreDirectMessages: true,
-                },
-            },
-        };
-        expect(() =>
-            validateCharacterConfig(configWithClientConfig)
-        ).not.toThrow();
-    });
-
-    it("should validate twitter profile configuration", () => {
-        const configWithTwitter = {
-            ...validCharacterConfig,
-            twitterProfile: {
-                username: "testuser",
-                screenName: "Test User",
-                bio: "Test bio",
-                nicknames: ["test"],
-            },
-        };
-        expect(() => validateCharacterConfig(configWithTwitter)).not.toThrow();
-    });
-
-    it("should validate model endpoint override", () => {
-        const configWithEndpoint = {
-            ...validCharacterConfig,
-            modelEndpointOverride: "custom-endpoint",
-        };
-        expect(() => validateCharacterConfig(configWithEndpoint)).not.toThrow();
     });
 
     it("should validate message examples with additional properties", () => {

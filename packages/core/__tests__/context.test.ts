@@ -153,7 +153,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result).toBe("Hello, Alice!");
@@ -174,7 +173,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result).toBe("Hello, Alice! You are 30 years old.");
@@ -192,7 +190,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result).toBe("Age: 30");
@@ -209,7 +206,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result).toBe("red, blue, green");
@@ -238,7 +234,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result.trim()).toMatch(/Hello, Alice! You are an adult./);
@@ -254,7 +249,6 @@ describe("composeContext", () => {
             const result = composeContext({
                 state,
                 template,
-                templatingEngine: "handlebars",
             });
 
             expect(result).toBe("Hello, !");

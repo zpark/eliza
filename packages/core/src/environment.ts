@@ -1,49 +1,5 @@
 import { z } from "zod";
-import { ModelProviderName } from "./types";
-import elizaLogger from "./logger";
-
-// TODO: TO COMPLETE
-export const envSchema = z.object({
-    // Generic Provider Configuration
-    PROVIDER_NAME: z.nativeEnum(ModelProviderName),
-    PROVIDER_API_KEY: z.string().min(1, "Provider API key is required"),
-    PROVIDER_ENDPOINT: z.string().url("Provider endpoint must be a valid URL").optional(),
-
-    // Optional Provider-Specific Keys (for additional services)
-    ELEVENLABS_XI_API_KEY: z.string().min(1, "ElevenLabs API key is required").optional(),
-
-    // Model Settings
-    DEFAULT_MODEL: z.string().optional(),
-    SMALL_MODEL: z.string().optional(),
-    MEDIUM_MODEL: z.string().optional(),
-    LARGE_MODEL: z.string().optional(),
-    EMBEDDING_MODEL: z.string().optional(),
-    IMAGE_MODEL: z.string().optional(),
-    IMAGE_VISION_MODEL: z.string().optional(),
-});
-
-// Type inference
-export type EnvConfig = z.infer<typeof envSchema>;
-
-// Validation function
-export function validateEnv(): EnvConfig {
-    try {
-        // Transform provider name to lowercase before validation
-        const envWithLowercaseProvider = {
-            ...process.env,
-            PROVIDER_NAME: process.env.PROVIDER_NAME?.toLowerCase(),
-        };
-        return envSchema.parse(envWithLowercaseProvider);
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            const errorMessages = error.errors
-                .map((err) => `${err.path}: ${err.message}`)
-                .join("\n");
-            throw new Error(`Environment validation failed:\n${errorMessages}`);
-        }
-        throw error;
-    }
-}
+import logger from "./logger";
 
 // Helper schemas for nested types
 export const MessageExampleSchema = z.object({
@@ -75,8 +31,6 @@ export const CharacterSchema = z.object({
     id: z.string().uuid().optional(),
     name: z.string(),
     system: z.string().optional(),
-    modelProvider: z.string().optional(),
-    modelEndpointOverride: z.string().optional(),
     templates: z.record(z.string()).optional(),
     bio: z.union([z.string(), z.array(z.string())]),
     lore: z.array(z.string()),
@@ -123,40 +77,11 @@ export const CharacterSchema = z.object({
             embeddingModel: z.string().optional(),
         })
         .optional(),
-    clientConfig: z
-        .object({
-            discord: z
-                .object({
-                    shouldIgnoreBotMessages: z.boolean().optional(),
-                    shouldIgnoreDirectMessages: z.boolean().optional(),
-                })
-                .optional(),
-            telegram: z
-                .object({
-                    shouldIgnoreBotMessages: z.boolean().optional(),
-                    shouldIgnoreDirectMessages: z.boolean().optional(),
-                })
-                .optional(),
-        })
-        .optional(),
     style: z.object({
         all: z.array(z.string()),
         chat: z.array(z.string()),
         post: z.array(z.string()),
     }),
-    twitterProfile: z
-        .object({
-            username: z.string(),
-            screenName: z.string(),
-            bio: z.string(),
-            nicknames: z.array(z.string()).optional(),
-        })
-        .optional(),
-    nft: z
-        .object({
-            prompt: z.string().optional(),
-        })
-        .optional(),
     extends: z.array(z.string()).optional(),
 });
 
@@ -182,7 +107,7 @@ export function validateCharacterConfig(json: unknown): CharacterConfig {
             );
 
             for (const field in groupedErrors) {
-                elizaLogger.error(
+                logger.error(
                     `Validation errors in ${field}: ${groupedErrors[field].join(" - ")}`
                 );
             }

@@ -3,7 +3,7 @@ import { embed, getEmbeddingZeroVector } from "./embedding.ts";
 import type { KnowledgeItem, UUID, Memory } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { splitChunks } from "./helper.ts";
-import elizaLogger from "./logger.ts";
+import logger from "./logger.ts";
 
 async function get(
     runtime: AgentRuntime,
@@ -11,7 +11,7 @@ async function get(
 ): Promise<KnowledgeItem[]> {
     // Add validation for message
     if (!message?.content?.text) {
-        elizaLogger.warn("Invalid message for knowledge query:", {
+        logger.warn("Invalid message for knowledge query:", {
             message,
             content: message?.content,
             text: message?.content?.text,
@@ -20,7 +20,7 @@ async function get(
     }
 
     const processed = preprocess(message.content.text);
-    elizaLogger.debug("Knowledge query:", {
+    logger.debug("Knowledge query:", {
         original: message.content.text,
         processed,
         length: processed?.length,
@@ -28,7 +28,7 @@ async function get(
 
     // Validate processed text
     if (!processed || processed.trim().length === 0) {
-        elizaLogger.warn("Empty processed text for knowledge query");
+        logger.warn("Empty processed text for knowledge query");
         return [];
     }
 
@@ -45,7 +45,7 @@ async function get(
     const uniqueSources = [
         ...new Set(
             fragments.map((memory) => {
-                elizaLogger.log(
+                logger.log(
                     `Matched fragment: ${memory.content.text} with similarity: ${memory.similarity}`
                 );
                 return memory.content.source;
@@ -103,13 +103,13 @@ async function set(
 }
 
 export function preprocess(content: string): string {
-    elizaLogger.debug("Preprocessing text:", {
+    logger.debug("Preprocessing text:", {
         input: content,
         length: content?.length,
     });
 
     if (!content || typeof content !== "string") {
-        elizaLogger.warn("Invalid input for preprocessing");
+        logger.warn("Invalid input for preprocessing");
         return "";
     }
 

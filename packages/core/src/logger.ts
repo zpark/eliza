@@ -67,6 +67,6 @@ const options = {
     },
 };
 
-export const elizaLogger = pino(options, createStream());
+export const logger = pino(options, createStream());
 
-export default elizaLogger;
+export default logger;

@@ -1,14 +1,14 @@
 import { AutoTokenizer } from "@huggingface/transformers";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
-import elizaLogger from "./logger.ts";
+import logger from "./logger.ts";
 import { TokenizerType, type IAgentRuntime, type ModelSettings } from "./types.ts";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 
 export function logFunctionCall(functionName: string, runtime?: IAgentRuntime) {
-    elizaLogger.info(`Function call: ${functionName}`, {
+    logger.info(`Function call: ${functionName}`, {
         functionName,
-        // runtime: JSON.stringify(runtime?.getModelProvider())
+        // runtime: JSON.stringify(runtime?.getModelManager())
     });
 }
 
@@ -43,7 +43,7 @@ export async function trimTokens(
         );
     }
 
-    elizaLogger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
+    logger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
     return truncateTiktoken("gpt-4o", context, maxTokens);
 }
 
@@ -70,7 +70,7 @@ async function truncateAuto(
         // Decode back to text - js-tiktoken decode() returns a string directly
         return tokenizer.decode(truncatedTokens);
     } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
+        logger.error("Error in trimTokens:", error);
         // Return truncated string if tokenization fails
         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
@@ -98,7 +98,7 @@ async function truncateTiktoken(
         // Decode back to text - js-tiktoken decode() returns a string directly
         return encoding.decode(truncatedTokens);
     } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
+        logger.error("Error in trimTokens:", error);
         // Return truncated string if tokenization fails
         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
@@ -110,7 +110,7 @@ export async function splitChunks(
     chunkSize = 512,
     bleed = 20
 ): Promise<string[]> {
-    elizaLogger.debug("[splitChunks] Starting text split");
+    logger.debug("[splitChunks] Starting text split");
 
     const textSplitter = new RecursiveCharacterTextSplitter({
         chunkSize: Number(chunkSize),
@@ -118,7 +118,7 @@ export async function splitChunks(
     });
 
     const chunks = await textSplitter.splitText(content);
-    elizaLogger.debug("[splitChunks] Split complete:", {
+    logger.debug("[splitChunks] Split complete:", {
         numberOfChunks: chunks.length,
         averageChunkSize: chunks.reduce((acc, chunk) => acc + chunk.length, 0) / chunks.length,
     });

@@ -348,7 +348,7 @@
 - Implement Redis Caching for Performance [\#1277](https://github.com/elizaOS/eliza/issues/1277)
 - Improve logging for the Coinbase plugin [\#1261](https://github.com/elizaOS/eliza/issues/1261)
 - doc: Add Twitter automation label requirement to quickstart guide [\#1253](https://github.com/elizaOS/eliza/issues/1253)
-- Enhance Logging in /packages/plugin-coinbase/src/plugins Using elizaLogger [\#1192](https://github.com/elizaOS/eliza/issues/1192)
+- Enhance Logging in /packages/plugin-coinbase/src/plugins Using logger [\#1192](https://github.com/elizaOS/eliza/issues/1192)
 - Improve Logging in /packages/plugin-coinbase/src/plugins [\#1189](https://github.com/elizaOS/eliza/issues/1189)
 - Feat: add github client to core agent [\#1130](https://github.com/elizaOS/eliza/issues/1130)
 

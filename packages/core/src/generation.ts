@@ -1,696 +1,371 @@
 // ================ IMPORTS ================
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createOpenAI } from "@ai-sdk/openai";
-import {
-    experimental_generateImage as aiGenerateImage,
-    generateObject as aiGenerateObject,
-    generateText as aiGenerateText,
-    type StepResult as AIStepResult,
-    type CoreTool,
-    type JSONValue
-} from "ai";
 import { z, type ZodSchema } from "zod";
-import { elizaLogger, logFunctionCall } from "./index.ts";
+import { logFunctionCall, logger } from "./index.ts";
+import { parseJSONObjectFromText } from "./parsing.ts";
 import {
-    parseJSONObjectFromText
-} from "./parsing.ts";
-import settings from "./settings.ts";
-import {
-    type ActionResponse,
     type Content,
     type IAgentRuntime,
-    type IImageDescriptionService,
-    ModelClass,
-    ServiceType
+    ModelClass
 } from "./types.ts";
 
-
-
-// ================ TYPE DEFINITIONS ================
-type Tool = CoreTool<any, any>;
-type StepResult = AIStepResult<any>;
-
-
 interface GenerateObjectOptions {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    output?: 'object' | 'array' | 'enum' | 'no-schema' | undefined;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-    mode?: 'auto' | 'json' | 'tool';
-    enum?: Array<string>;
-    stopSequences?: string[];
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  output?: "object" | "array" | "enum" | "no-schema" | undefined;
+  schema?: ZodSchema;
+  schemaName?: string;
+  schemaDescription?: string;
+  mode?: "auto" | "json" | "tool";
+  enum?: Array<string>;
+  stopSequences?: string[];
 }
 
 // ================ COMMON UTILITIES ================
 interface RetryOptions {
-    maxRetries?: number;
-    initialDelay?: number;
-    maxDelay?: number;
-    shouldRetry?: (error: any) => boolean;
+  maxRetries?: number;
+  initialDelay?: number;
+  maxDelay?: number;
+  shouldRetry?: (error: any) => boolean;
 }
 
 async function withRetry<T>(
-    operation: () => Promise<T>,
-    options: RetryOptions = {}
+  operation: () => Promise<T>,
+  options: RetryOptions = {}
 ): Promise<T> {
-    const {
-        maxRetries = 3,
-        initialDelay = 1000,
-        maxDelay = 8000,
-        shouldRetry = (error: any) => !(error instanceof TypeError || error instanceof SyntaxError),
-    } = options;
+  const {
+    maxRetries = 3,
+    initialDelay = 1000,
+    maxDelay = 8000,
+    shouldRetry = (error: any) =>
+      !(error instanceof TypeError || error instanceof SyntaxError),
+  } = options;
 
-    let retryCount = 0;
-    let retryDelay = initialDelay;
+  let retryCount = 0;
+  let retryDelay = initialDelay;
 
-    while (true) {
-        try {
-            return await operation();
-        } catch (error) {
-            retryCount++;
-            elizaLogger.error(`Operation failed (attempt ${retryCount}/${maxRetries}):`, error);
+  while (true) {
+    try {
+      return await operation();
+    } catch (error) {
+      retryCount++;
+      logger.error(
+        `Operation failed (attempt ${retryCount}/${maxRetries}):`,
+        error
+      );
 
-            if (!shouldRetry(error) || retryCount >= maxRetries) {
-                throw error;
-            }
+      if (!shouldRetry(error) || retryCount >= maxRetries) {
+        throw error;
+      }
 
-            retryDelay = Math.min(retryDelay * 2, maxDelay);
-            elizaLogger.debug(`Retrying in ${retryDelay}ms...`);
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        }
+      retryDelay = Math.min(retryDelay * 2, maxDelay);
+      logger.debug(`Retrying in ${retryDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }
-}
-
-function isAnthropicProvider(runtime: IAgentRuntime): boolean {
-    const provider = runtime.getModelProvider()?.provider;
-    return (
-        provider?.toLowerCase().includes("anthropic") ||
-        provider?.toLowerCase().includes("claude")
-    );
-}
-
-function createModelClient(apiKey: string, baseURL: string, runtime: IAgentRuntime) {
-    const createClient = isAnthropicProvider(runtime)
-        ? createAnthropic
-        : createOpenAI;
-
-    return createClient({
-        apiKey,
-        baseURL,
-        fetch: runtime.fetch,
-    });
-}
-
-// Add this utility function near other utility functions
-function validateModelConfig(
-    provider: string,
-    config: { 
-        apiKey?: string; 
-        baseURL?: string; 
-        modelProvider?: any; 
-        modelClass?: ModelClass;
-        model?: string;
-    }
-) {
-    const validations = [
-        { value: config.apiKey, name: 'API key', for: provider },
-        // { value: config.baseURL, name: 'endpoint URL', for: provider },
-        { value: config.modelProvider, name: 'model provider' },
-        { value: config.modelProvider?.models, name: 'model configurations', in: 'provider' },
-        { value: config.model, name: 'model name', for: `class ${config.modelClass}` }
-    ];
-
-    for (const check of validations) {
-        if (!check.value) {
-            const message = check.for 
-                ? `No ${check.name} found for ${check.for}`
-                : check.in 
-                    ? `${check.name} not found in ${check.in}`
-                    : `${check.name} not initialized`;
-            elizaLogger.error(message);
-            throw new Error(message);
-        }
-    }
-}
-
-export function initializeModelClient(runtime: IAgentRuntime, modelClass: ModelClass = ModelClass.DEFAULT) {
-    elizaLogger.info(`Initializing model client with runtime: ${runtime.modelProvider}`);
-    const provider = runtime.getModelProvider()?.provider || runtime.modelProvider;
-    const baseURL = runtime.getModelProvider()?.endpoint;
-    const apiKey = runtime.token ||
-                process.env.PROVIDER_API_KEY ||
-                runtime.character.settings.secrets.PROVIDER_API_KEY ||
-                runtime.getSetting('PROVIDER_API_KEY');
-
-    const modelProvider = runtime.getModelProvider();
-    const modelConfig = modelProvider?.models?.[modelClass];
-    const model = modelConfig?.name || "gpt-4o";
-
-    // Single validation call replaces multiple if-checks
-    validateModelConfig(provider, {
-        apiKey,
-        baseURL,
-        modelProvider,
-        modelClass,
-        model
-    });
-    
-    const client = createModelClient(apiKey, baseURL, runtime);
-
-    elizaLogger.info(`Initialized model client for ${provider} with baseURL ${baseURL} and model ${model}`);
-
-    return {
-        client,
-        model,
-        baseURL,
-        apiKey,
-        systemPrompt: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined
-    };
-}
-
-function validateContext(context: string, functionName: string): void {
-    if (!context) {
-        const errorMessage = `${functionName} context is empty`;
-        elizaLogger.error(errorMessage);
-        throw new Error(errorMessage);
-    }
+  }
 }
 
 // ================ TEXT GENERATION FUNCTIONS ================
 export async function generateText({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    tools = {},
-    onStepFinish,
-    maxSteps = 1,
-    stopSequences,
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
 }: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    tools?: Record<string, Tool>;
-    onStepFinish?: (event: StepResult) => Promise<void> | void;
-    maxSteps?: number;
-    stopSequences?: string[];
-    customSystemPrompt?: string;
-    verifiableInference?: boolean;
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
+  customSystemPrompt?: string;
 }): Promise<string> {
-    logFunctionCall('generateText', runtime);
-    validateContext(context, 'generateText');
+  logFunctionCall("generateText", runtime);
 
-    elizaLogger.info("Generating text with options:", {
-        modelProvider: runtime.modelProvider,
-        model: modelClass,
-    });
+  const { text } = await runtime.getModelManager().generateText({
+    context,
+    modelClass,
+    stop: stopSequences,
+  });
 
-
-
-    const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
-
-
-    elizaLogger.info(`Generating text with model ${model} and system prompt ${systemPrompt} and context ${context} and tools ${tools} and onStepFinish ${onStepFinish} and maxSteps ${maxSteps}`);
-
-    const { text } = await aiGenerateText({
-        model: client.languageModel(model),
-        prompt: context,
-        system: systemPrompt,
-        tools,
-        onStepFinish,
-        maxSteps,
-        stopSequences
-    });
-
-    return text;
+  return text;
 }
 
-
 export async function generateTextArray({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    stopSequences,
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
 }: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    stopSequences?: string[];
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
 }): Promise<string[]> {
-    logFunctionCall('generateTextArray', runtime);
-    validateContext(context, 'generateTextArray');
-    
-    const result = await withRetry(async () => {
-        const result = await generateObject({
-            runtime,
-            context,
-            modelClass,
-            schema: z.array(z.string()),
-            stopSequences
-        });
-        elizaLogger.debug("Received response from generateObject:", result);
-        
-    });
+  logFunctionCall("generateTextArray", runtime);
 
-    return Array.isArray(result) ? result : [];
+  const result = await withRetry(async () => {
+    const result = await generateObject({
+      runtime,
+      context,
+      modelClass,
+      schema: z.array(z.string()),
+      stopSequences,
+    });
+    logger.debug("Received response from generateObject:", result);
+  });
+
+  return Array.isArray(result) ? result : [];
 }
 
 // ================ ENUM GENERATION FUNCTIONS ================
 async function generateEnum<T extends string>({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    enumValues,
-    functionName,
-    stopSequences,
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  enumValues,
+  functionName,
+  stopSequences,
 }: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    enumValues: Array<T>;
-    functionName: string;
-    stopSequences?: string[];
-}): Promise<JSONValue> {
-    logFunctionCall(functionName, runtime);
-    validateContext(context, functionName);
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  enumValues: Array<T>;
+  functionName: string;
+  stopSequences?: string[];
+}): Promise<any> {
+  logFunctionCall(functionName, runtime);
 
-    const enumResult = await withRetry(async () => {
-        elizaLogger.debug(
-            "Attempting to generate enum value with context:",
-            context
-        );
-        const result = await generateObject({
-            runtime,
-            context,
-            modelClass,
-            output: 'enum',
-            enum: enumValues,
-            mode: 'json',
-            stopSequences: stopSequences
-        });
-
-        elizaLogger.debug("Received enum response:", result);
-        return result;
+  const enumResult = await withRetry(async () => {
+    logger.debug(
+      "Attempting to generate enum value with context:",
+      context
+    );
+    const result = await generateObject({
+      runtime,
+      context,
+      modelClass,
+      output: "enum",
+      enum: enumValues,
+      mode: "json",
+      stopSequences: stopSequences,
     });
 
-    return enumResult;
+    logger.debug("Received enum response:", result);
+    return result;
+  });
+
+  return enumResult;
 }
 
 export async function generateShouldRespond({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
+}): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
+  const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"] as string[];
+
+  const result = await generateEnum({
     runtime,
     context,
-    modelClass=ModelClass.DEFAULT,
+    modelClass,
+    enumValues: RESPONSE_VALUES,
+    functionName: "generateShouldRespond",
     stopSequences,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    stopSequences?: string[];
-}): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-    const RESPONSE_VALUES = ['RESPOND', 'IGNORE', 'STOP'] as string[];
+  });
 
-    const result = await generateEnum({
-        runtime,
-        context,
-        modelClass,
-        enumValues: RESPONSE_VALUES,
-        functionName: 'generateShouldRespond',
-        stopSequences
-    });
-
-    return result as "RESPOND" | "IGNORE" | "STOP";
+  return result as "RESPOND" | "IGNORE" | "STOP";
 }
 
 export async function generateTrueOrFalse({
-    runtime,
-    context = "",
-    modelClass=ModelClass.DEFAULT,
-    stopSequences,
+  runtime,
+  context = "",
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
 }: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    stopSequences?: string[];
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
 }): Promise<boolean> {
-    logFunctionCall('generateTrueOrFalse', runtime);
-    
-    const BOOL_VALUES = ['true', 'false'];
-    
-    
-    const result = await generateEnum({
-        runtime,
-        context,
-        modelClass,
-        enumValues: BOOL_VALUES,
-        functionName: 'generateTrueOrFalse',
-        stopSequences
-    });
-    
-    return result === 'true';
-}
+  logFunctionCall("generateTrueOrFalse", runtime);
 
-function getModelConfig(
-    runtime: IAgentRuntime,
-    client: any,
-    model: string,
-    mode: 'auto' | 'json' | 'tool',
-    options: {
-        context: string;
-        output?: 'object' | 'array' | 'enum' | 'no-schema';
-        schema?: ZodSchema;
-        schemaName?: string;
-        schemaDescription?: string;
-        enumValues?: string[];
-        stopSequences?: string[];
-    }
-): any {
-    if (isAnthropicProvider(runtime) && mode === "json") {
-        elizaLogger.warn("Anthropic does not support JSON mode. Switching to 'auto'.");
-        mode = "auto";
-    }
+  const BOOL_VALUES = ["true", "false"];
 
-    const config = {
-        model: client.languageModel(model),
-        prompt: options.context.toString(),
-        system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
-        output: options.output as never,
-        mode: mode as never,
-        ...(options.schema ? { schema: options.schema, schemaName: options.schemaName, schemaDescription: options.schemaDescription } : {}),
-        ...(options.enumValues ? { enum: options.enumValues } : {}),
-    };
+  const result = await generateEnum({
+    runtime,
+    context,
+    modelClass,
+    enumValues: BOOL_VALUES,
+    functionName: "generateTrueOrFalse",
+    stopSequences,
+  });
 
-    return options.stopSequences ? { ...config, stopSequences: options.stopSequences } : config;
+  return result === "true";
 }
 
 // ================ OBJECT GENERATION FUNCTIONS ================
 export const generateObject = async ({
-    runtime,
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  output = "object",
+  schema,
+  schemaName,
+  schemaDescription,
+  mode = "json",
+  enum: enumValues,
+  stopSequences,
+}: GenerateObjectOptions): Promise<z.infer<typeof schema> | any> => {
+  logFunctionCall("generateObject", runtime);
+  if (!context) {
+    const errorMessage = "generateObject context is empty";
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  const { object } = await runtime.getModelManager().generateObject({
     context,
-    modelClass=ModelClass.DEFAULT,
-    output='object',
-    schema,
-    schemaName,
-    schemaDescription,
-    mode = 'json',
-    enum: enumValues,
-    stopSequences,
-}: GenerateObjectOptions): Promise<z.infer<typeof schema> | JSONValue> => {
-    logFunctionCall('generateObject', runtime);
-    if (!context) {
-        const errorMessage = "generateObject context is empty";
-        console.error(errorMessage);
-        throw new Error(errorMessage);
-    }
+    modelClass,
+    stop: stopSequences,
+  });
 
-    elizaLogger.debug(`Generating object with ${runtime.modelProvider} model. for ${schemaName}`);
-    const { client, model } = initializeModelClient(runtime, modelClass);
-
-    if (output === 'enum' && !enumValues) {
-        throw new Error('Enum values are required when output type is enum');
-    }
-
-    const config = getModelConfig(runtime, client, model, mode, {
-        context,
-        output,
-        schema,
-        schemaName,
-        schemaDescription,
-        enumValues,
-        stopSequences,
-    });
-
-    const {object} = await aiGenerateObject(config);
-
-    elizaLogger.debug(`Received Object response from ${model} model.`);
-    return schema ? schema.parse(object) : object;
+  logger.debug(`Received Object response from ${modelClass} model.`);
+  return schema ? schema.parse(object) : object;
 };
 
-export async function generateObjectDeprecated({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    schema,
-    schemaName,
-    schemaDescription,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-}): Promise<z.infer<typeof schema>> {
-    logFunctionCall('generateObjectDeprecated', runtime);
-    const object = await generateObject({
-        runtime,
-        context,
-        modelClass,
-        schema,
-        schemaName,
-        schemaDescription,
-        mode: 'json'
-    });
-    return object;
-}
-
 export async function generateObjectArray({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  schema,
+  schemaName,
+  schemaDescription,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  schema?: ZodSchema;
+  schemaName?: string;
+  schemaDescription?: string;
+}): Promise<z.infer<typeof schema>[]> {
+  logFunctionCall("generateObjectArray", runtime);
+  if (!context) {
+    logger.error("generateObjectArray context is empty");
+    return [];
+  }
+  const result = await generateObject({
     runtime,
     context,
-    modelClass=ModelClass.DEFAULT,
+    modelClass,
+    output: "array",
     schema,
     schemaName,
     schemaDescription,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    schema?: ZodSchema;
-    schemaName?: string;
-    schemaDescription?: string;
-}): Promise<z.infer<typeof schema>[]> {
-    logFunctionCall('generateObjectArray', runtime);
-    if (!context) {
-        elizaLogger.error("generateObjectArray context is empty");
-        return [];
-    }
-    const result = await generateObject({
-        runtime,
-        context,
-        modelClass,
-        output: "array",
-        schema,
-        schemaName,
-        schemaDescription,
-        mode: 'json'
-    });
-    return schema ? schema.parse(result) : result;
+    mode: "json",
+  });
+  return schema ? schema.parse(result) : result;
 }
-
 
 export async function generateMessageResponse({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    stopSequences,
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
 }: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    stopSequences?: string[];
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
 }): Promise<Content> {
-    logFunctionCall('generateMessageResponse', runtime);
-    validateContext(context, 'generateMessageResponse');
-    elizaLogger.debug("Context:", context);
+  logFunctionCall("generateMessageResponse", runtime);
 
-    return await withRetry(async () => {
-        const { client, model, systemPrompt } = initializeModelClient(runtime, modelClass);
-        
-        elizaLogger.info(`Generating message response with model: ${model} & model class: ${modelClass}`);
+  logger.debug("Context:", context);
 
-        const {text} = await aiGenerateText({
-            model: client.languageModel(model),
-            prompt: context,
-            system: systemPrompt,
-            stopSequences
-        });
-
-        elizaLogger.info("Text:", text);
-
-        const parsedContent = parseJSONObjectFromText(text) as Content;
-        elizaLogger.info("Parsed content:", parsedContent);
-
-        if (!parsedContent) {
-            throw new Error("Failed to parse content");
-        }
-
-        return parsedContent;
+  return await withRetry(async () => {
+    const { text } = await runtime.getModelManager().generateText({
+      context,
+      modelClass,
+      stop: stopSequences,
     });
-}
 
+    logger.info("Text:", text);
+
+    const parsedContent = parseJSONObjectFromText(text) as Content;
+    logger.info("Parsed content:", parsedContent);
+
+    if (!parsedContent) {
+      throw new Error("Failed to parse content");
+    }
+
+    return parsedContent;
+  });
+}
 
 // ================ IMAGE-RELATED FUNCTIONS ================
 export const generateImage = async (
-    data: {
-        prompt: string;
-        width: number;
-        height: number;
-        count?: number;
-        negativePrompt?: string;
-        numIterations?: number;
-        guidanceScale?: number;
-        seed?: number;
-        modelId?: string;
-        jobId?: string;
-        stylePreset?: string;
-        hideWatermark?: boolean;
-        safeMode?: boolean;
-        cfgScale?: number;
-    },
-    runtime: IAgentRuntime
+  data: {
+    prompt: string;
+    width: number;
+    height: number;
+    count?: number;
+    negativePrompt?: string;
+    numIterations?: number;
+    guidanceScale?: number;
+    seed?: number;
+    modelId?: string;
+    jobId?: string;
+    stylePreset?: string;
+    hideWatermark?: boolean;
+    safeMode?: boolean;
+    cfgScale?: number;
+  },
+  runtime: IAgentRuntime
 ): Promise<{
-    success: boolean;
-    data?: string[];
-    error?: any;
+  success: boolean;
+  data?: string[];
+  error?: any;
 }> => {
-    logFunctionCall('generateImage', runtime);
-    const modelSettings = runtime.imageModelProvider;
+  logFunctionCall("generateImage", runtime);
 
-    if (!modelSettings) {
-        elizaLogger.warn("No model settings found for the image model provider.");
-        return { success: false, error: "No model settings available" };
+  return await withRetry(
+    async () => {
+      const result = await runtime.getModelManager().generateImage(data);
+      return {
+        success: true,
+        data: result.images,
+        error: undefined,
+      };
+    },
+    {
+      maxRetries: 2,
+      initialDelay: 2000,
     }
-
-    if (isAnthropicProvider(runtime)) {
-        return {
-            success: false,
-            error: "Unsupported provider: Anthropic does not support image generation.",
-        };
-    }
-
-    const { model, client } = initializeModelClient(runtime, ModelClass.IMAGE);
-    elizaLogger.info("Generating image with options:", {
-        imageModelProvider: model,
-    });
-
-    await withRetry(async () => {
-        const result = await aiGenerateImage({
-            model: (client as any).imageModel(model),
-            prompt: data.prompt,
-            size: `${data.width}x${data.height}`,
-            n: data.count,
-            seed: data.seed
-        });
-
-        return {
-            success: true,
-            data: result.images,
-            error: undefined
-        };
-    }, {
-        maxRetries: 2,
-        initialDelay: 2000
-    });
+  );
 };
-
 
 export const generateCaption = async (
-    data: { imageUrl: string },
-    runtime: IAgentRuntime
+  data: { imageUrl: string },
+  runtime: IAgentRuntime
 ): Promise<{
-    title: string;
-    description: string;
+  title: string;
+  description: string;
 }> => {
-    logFunctionCall('generateCaption', runtime);
-    const { imageUrl } = data;
-    const imageDescriptionService =
-        runtime.getService<IImageDescriptionService>(
-            ServiceType.IMAGE_DESCRIPTION
-        );
+  logFunctionCall("generateCaption", runtime);
+  const { imageUrl } = data;
+  const imageDescriptionService = runtime.getModelManager().describeImage(imageUrl);
 
-    if (!imageDescriptionService) {
-        throw new Error("Image description service not found");
-    }
+  if (!imageDescriptionService) {
+    throw new Error("Image description service not found");
+  }
 
-    const resp = await imageDescriptionService.describeImage(imageUrl);
-    return {
-        title: resp.title.trim(),
-        description: resp.description.trim(),
-    };
+  const resp = await imageDescriptionService.describeImage(imageUrl);
+  return {
+    title: resp.title.trim(),
+    description: resp.description.trim(),
+  };
 };
-
-
-export async function generateTweetActions({
-    runtime,
-    context,
-    modelClass=ModelClass.DEFAULT,
-    stopSequences,
-}: {
-    runtime: IAgentRuntime;
-    context: string;
-    modelClass: ModelClass;
-    stopSequences?: string[];
-}): Promise<ActionResponse | null> {
-    try {
-        const BOOL_VALUES = ['true', 'false'];
-
-        // Generate each action using generateEnum
-        const like = await generateEnum({
-            runtime,
-            context: `${context}\nShould I like this tweet?`,
-            modelClass,
-            enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_like',
-            stopSequences
-        });
-
-        const retweet = await generateEnum({
-            runtime,
-            context: `${context}\nShould I retweet this tweet?`,
-            modelClass,
-            enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_retweet',
-            stopSequences
-        });
-
-        const quote = await generateEnum({
-            runtime,
-            context: `${context}\nShould I quote this tweet?`,
-            modelClass,
-            enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_quote',
-            stopSequences
-        });
-
-        const reply = await generateEnum({
-            runtime,
-            context: `${context}\nShould I reply to this tweet?`,
-            modelClass,
-            enumValues: BOOL_VALUES,
-            functionName: 'generateTweetActions_reply',
-            stopSequences
-        });
-
-        if (!like || !retweet) {
-            elizaLogger.debug("Required tweet actions missing");
-            return null;
-        }
-
-        return {
-            like: like === 'true',
-            retweet: retweet === 'true',
-            quote: quote === 'true',
-            reply: reply === 'true'
-        };
-    } catch (error) {
-        elizaLogger.error("Error in generateTweetActions:", error);
-        return null;
-    }
-}
-
-
-
-
-
-

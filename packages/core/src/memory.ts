@@ -1,5 +1,5 @@
 import { embed, getEmbeddingZeroVector } from "./embedding.ts";
-import elizaLogger from "./logger.ts";
+import logger from "./logger.ts";
 import type {
     IAgentRuntime,
     IMemoryManager,
@@ -68,7 +68,7 @@ export class MemoryManager implements IMemoryManager {
             // Generate embedding from text content
             memory.embedding = await embed(this.runtime, memoryText);
         } catch (error) {
-            elizaLogger.error("Failed to generate embedding:", error);
+            logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
             memory.embedding = getEmbeddingZeroVector().slice();
         }
@@ -176,11 +176,11 @@ export class MemoryManager implements IMemoryManager {
             await this.runtime.databaseAdapter.getMemoryById(memory.id);
 
         if (existingMessage) {
-            elizaLogger.debug("Memory already exists, skipping");
+            logger.debug("Memory already exists, skipping");
             return;
         }
 
-        elizaLogger.log("Creating Memory", memory.id, memory.content.text);
+        logger.log("Creating Memory", memory.id, memory.content.text);
 
         await this.runtime.databaseAdapter.createMemory(
             memory,

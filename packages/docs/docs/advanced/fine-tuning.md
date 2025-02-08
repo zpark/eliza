@@ -47,7 +47,7 @@ const models = {
         },
         endpoint: "https://api.anthropic.com/v1",
         model: {
-            [ModelClass.SMALL]: "claude-3-5-haiku",
+            [ModelClass.TEXT_SMALL]: "claude-3-5-haiku",
             [ModelClass.MEDIUM]: "claude-3-5-sonnet-20241022",
             [ModelClass.LARGE]: "claude-3-5-opus-20240229",
         },
@@ -197,7 +197,7 @@ async function selectOptimalModel(
     requirements: ModelRequirements,
 ): Promise<ModelClass> {
     if (requirements.speed === "fast") {
-        return ModelClass.SMALL;
+        return ModelClass.TEXT_SMALL;
     } else if (requirements.complexity === "high") {
         return ModelClass.LARGE;
     }
@@ -221,10 +221,10 @@ const openAISettings = {
         temperature: 0.6,
     },
     model: {
-        [ModelClass.SMALL]: "gpt-4o-mini",
+        [ModelClass.TEXT_SMALL]: "gpt-4o-mini",
         [ModelClass.MEDIUM]: "gpt-4o",
         [ModelClass.LARGE]: "gpt-4o",
-        [ModelClass.EMBEDDING]: "text-embedding-3-small",
+        [ModelClass.TEXT_EMBEDDING]: "text-embedding-3-small",
         [ModelClass.IMAGE]: "dall-e-3",
     },
 };
@@ -242,7 +242,7 @@ const anthropicSettings = {
         temperature: 0.3,
     },
     model: {
-        [ModelClass.SMALL]: "claude-3-5-haiku",
+        [ModelClass.TEXT_SMALL]: "claude-3-5-haiku",
         [ModelClass.MEDIUM]: "claude-3-5-sonnet-20241022",
         [ModelClass.LARGE]: "claude-3-5-opus-20240229",
     },
@@ -261,10 +261,10 @@ const llamaLocalSettings = {
         temperature: 0.3,
     },
     model: {
-        [ModelClass.SMALL]: "NousResearch/Hermes-3-Llama-3.1-8B-GGUF",
+        [ModelClass.TEXT_SMALL]: "NousResearch/Hermes-3-Llama-3.1-8B-GGUF",
         [ModelClass.MEDIUM]: "NousResearch/Hermes-3-Llama-3.1-8B-GGUF",
         [ModelClass.LARGE]: "NousResearch/Hermes-3-Llama-3.1-8B-GGUF",
-        [ModelClass.EMBEDDING]: "togethercomputer/m2-bert-80M-32k-retrieval",
+        [ModelClass.TEXT_EMBEDDING]: "togethercomputer/m2-bert-80M-32k-retrieval",
     },
 };
 ```
@@ -285,10 +285,10 @@ const heuristSettings = {
   },
   endpoint: "https://llm-gateway.heurist.xyz",
   model: {
-    [ModelClass.SMALL]: "hermes-3-llama3.1-8b",
+    [ModelClass.TEXT_SMALL]: "hermes-3-llama3.1-8b",
     [ModelClass.MEDIUM]: "mistralai/mixtral-8x7b-instruct",
     [ModelClass.LARGE]: "nvidia/llama-3.1-nemotron-70b-instruct",
-    [ModelClass.EMBEDDING]: "", // Add later
+    [ModelClass.TEXT_EMBEDDING]: "", // Add later
     [ModelClass.IMAGE]: "FLUX.1-dev",
   },
 };
@@ -307,7 +307,7 @@ const livepeerSettings = {
   },
   endpoint: "https://dream-gateway.livepeer.cloud",
   model: {
-    [ModelClass.SMALL]: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+    [ModelClass.TEXT_SMALL]: "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [ModelClass.MEDIUM]: "meta-llama/Meta-Llama-3.1-8B-Instruct",
     [ModelClass.LARGE]: "meta-llama/Llama-3.3-70B-Instruct",
     [ModelClass.IMAGE]: "ByteDance/SDXL-Lightning",

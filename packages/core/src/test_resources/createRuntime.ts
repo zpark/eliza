@@ -1,13 +1,9 @@
 import { SqliteDatabaseAdapter, loadVecExtensions } from "@elizaos-plugins/adapter-sqlite";
 import type { DatabaseAdapter } from "../database.ts";
 import { AgentRuntime } from "../runtime.ts";
-import { type Action, type Evaluator, ModelProviderName, type Provider } from "../types.ts";
+import { type Action, type Evaluator, type Provider } from "../types.ts";
 import {
-    SUPABASE_ANON_KEY,
-    SUPABASE_URL,
-    TEST_EMAIL,
-    TEST_PASSWORD,
-    zeroUuid,
+    zeroUuid
 } from "./constants.ts";
 import type { User } from "./types.ts";
 
@@ -49,16 +45,8 @@ export async function createRuntime({
     };
     const session = { user };
 
-    // Ensure environment variables are provided.
-    if (!env || !env.PROVIDER_API_KEY) {
-        throw new Error("Missing PROVIDER_API_KEY in environment variables.");
-    }
-
     const runtime = new AgentRuntime({
-        serverUrl: "http://localhost",
         conversationLength,
-        token: env.PROVIDER_API_KEY,
-        modelProvider: ModelProviderName.OPENAI,
         actions: actions ?? [],
         evaluators: evaluators ?? [],
         providers: providers ?? [],

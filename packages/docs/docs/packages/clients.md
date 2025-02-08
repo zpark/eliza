@@ -331,7 +331,7 @@ export const DevaClientInterface: Client = {
 
         await deva.start();
 
-        elizaLogger.success(
+        logger.success(
             `✅ Deva client successfully started for character ${runtime.character.name}`,
         );
 

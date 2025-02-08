@@ -4,12 +4,12 @@ import { SqliteDatabaseAdapter } from '../src';
 import { load } from '../src/sqlite_vec';
 import type { Database } from 'better-sqlite3';
 
-// Mock the elizaLogger
+// Mock the logger
 vi.mock('@elizaos/core', async () => {
     const actual = await vi.importActual('@elizaos/core');
     return {
         ...actual as any,
-        elizaLogger: {
+        logger: {
             error: vi.fn()
         }
     };
