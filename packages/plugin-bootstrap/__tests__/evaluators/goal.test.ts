@@ -7,7 +7,7 @@ vi.mock('@elizaos/core', () => ({
     generateText: vi.fn(),
     getGoals: vi.fn(),
     parseJsonArrayFromText: vi.fn(),
-    ModelClass: {
+    ModelType: {
         SMALL: 'small'
     }
 }));

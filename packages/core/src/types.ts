@@ -116,12 +116,12 @@ export interface Goal {
 /**
  * Model size/type classification
  */
-export enum ModelClass {
+export enum ModelType {
   TEXT_SMALL = "text_small",
   TEXT_LARGE = "text_large",
   TEXT_EMBEDDING = "text_embedding",
   IMAGE = "image",
-  VISION = "vision",
+  IMAGE_DESCRIPTION = "image_description",
   TRANSCRIPTION = "transcription",
   TEXT_TO_SPEECH = "text_to_speech",
   SPEECH_TO_TEXT = "speech_to_text",
@@ -561,14 +561,16 @@ export type Plugin = {
   /** Optional evaluators */
   evaluators?: Evaluator[];
 
-  /** Optional services */
-  services?: Service[];
-
   /** Optional clients */
   clients?: Client[];
 
   /** Optional adapters */
   adapters?: Adapter[];
+
+  /** Optional handlers */
+  handlers?: {
+    [key: string]: (...args: any[]) => Promise<any>;
+  };
 };
 
 export interface ModelConfiguration {
@@ -887,36 +889,6 @@ export interface ICacheManager {
   delete(key: string): Promise<void>;
 }
 
-export abstract class Service {
-  private static instance: Service | null = null;
-
-  static get serviceType(): ServiceType {
-    throw new Error("Service must implement static serviceType getter");
-  }
-
-  public static getInstance<T extends Service>(): T {
-    if (!Service.instance) {
-      Service.instance = new (this as any)();
-    }
-    return Service.instance as T;
-  }
-
-  get serviceType(): ServiceType {
-    return (this.constructor as typeof Service).serviceType;
-  }
-
-  // Add abstract initialize method that must be implemented by derived classes
-  abstract initialize(runtime: IAgentRuntime): Promise<void>;
-}
-
-export interface IModelManager {
-  generateText(params: GenerateTextParams): Promise<{ text: string }>;
-  generateObject(params: GenerateTextParams): Promise<{ object: any }>;
-  generateEmbedding(text: string): Promise<number[]>;
-  generateImage(params: ImageModelSettings): Promise<{ images: string[] }>;
-  generateAudio(params: any): Promise<{ audio: string }>;
-}
-
 export interface IAgentRuntime {
   // Properties
   agentId: UUID;
@@ -938,7 +910,6 @@ export interface IAgentRuntime {
 
   cacheManager: ICacheManager;
 
-  services: Map<ServiceType, Service>;
   clients: ClientInstance[];
 
   initialize(): Promise<void>;
@@ -947,13 +918,7 @@ export interface IAgentRuntime {
 
   getMemoryManager(name: string): IMemoryManager | null;
 
-  getService<T extends Service>(service: ServiceType): T | null;
-
-  registerService(service: Service): void;
-
   getSetting(key: string): string | null;
-
-  getModelManager(): IModelManager;
 
   // Methods
   getConversationLength(): number;
@@ -1001,156 +966,10 @@ export interface IAgentRuntime {
   ): Promise<State>;
 
   updateRecentMessageState(state: State): Promise<State>;
-}
 
-export interface IImageDescriptionService extends Service {
-  describeImage(
-    imageUrl: string
-  ): Promise<{ title: string; description: string }>;
-}
-
-export interface ITranscriptionService extends Service {
-  transcribeAttachment(audioBuffer: ArrayBuffer): Promise<string | null>;
-  transcribeAttachmentLocally(audioBuffer: ArrayBuffer): Promise<string | null>;
-  transcribe(audioBuffer: ArrayBuffer): Promise<string | null>;
-  transcribeLocally(audioBuffer: ArrayBuffer): Promise<string | null>;
-}
-
-export interface IVideoService extends Service {
-  isVideoUrl(url: string): boolean;
-  fetchVideoInfo(url: string): Promise<Media>;
-  downloadVideo(videoInfo: Media): Promise<string>;
-  processVideo(url: string, runtime: IAgentRuntime): Promise<Media>;
-}
-
-export interface ITextGenerationService extends Service {
-  initializeModel(): Promise<void>;
-  queueMessageCompletion(
-    context: string,
-    temperature: number,
-    stop: string[],
-    frequency_penalty: number,
-    presence_penalty: number,
-    max_tokens: number
-  ): Promise<any>;
-  queueTextCompletion(
-    context: string,
-    temperature: number,
-    stop: string[],
-    frequency_penalty: number,
-    presence_penalty: number,
-    max_tokens: number
-  ): Promise<string>;
-  getEmbeddingResponse(input: string): Promise<number[] | undefined>;
-}
-
-export interface IBrowserService extends Service {
-  closeBrowser(): Promise<void>;
-  getPageContent(
-    url: string,
-    runtime: IAgentRuntime
-  ): Promise<{ title: string; description: string; bodyContent: string }>;
-}
-
-export interface ISpeechService extends Service {
-  getInstance(): ISpeechService;
-  generate(runtime: IAgentRuntime, text: string): Promise<Readable>;
-}
-
-export interface IPdfService extends Service {
-  getInstance(): IPdfService;
-  convertPdfToText(pdfBuffer: Buffer): Promise<string>;
-}
-
-export interface IAwsS3Service extends Service {
-  uploadFile(
-    imagePath: string,
-    subDirectory: string,
-    useSignedUrl: boolean,
-    expiresIn: number
-  ): Promise<{
-    success: boolean;
-    url?: string;
-    error?: string;
-  }>;
-  generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
-}
-
-export interface UploadIrysResult {
-  success: boolean;
-  url?: string;
-  error?: string;
-  data?: any;
-}
-
-export interface DataIrysFetchedFromGQL {
-  success: boolean;
-  data: any;
-  error?: string;
-}
-
-export interface GraphQLTag {
-  name: string;
-  values: any[];
-}
-
-export enum IrysMessageType {
-  REQUEST = "REQUEST",
-  DATA_STORAGE = "DATA_STORAGE",
-  REQUEST_RESPONSE = "REQUEST_RESPONSE",
-}
-
-export enum IrysDataType {
-  FILE = "FILE",
-  IMAGE = "IMAGE",
-  OTHER = "OTHER",
-}
-
-export interface IrysTimestamp {
-  from: number;
-  to: number;
-}
-
-export interface IIrysService extends Service {
-  getDataFromAnAgent(
-    agentsWalletPublicKeys: string[],
-    tags: GraphQLTag[],
-    timestamp: IrysTimestamp
-  ): Promise<DataIrysFetchedFromGQL>;
-  workerUploadDataOnIrys(
-    data: any,
-    dataType: IrysDataType,
-    messageType: IrysMessageType,
-    serviceCategory: string[],
-    protocol: string[],
-    validationThreshold: number[],
-    minimumProviders: number[],
-    testProvider: boolean[],
-    reputation: number[]
-  ): Promise<UploadIrysResult>;
-  providerUploadDataOnIrys(
-    data: any,
-    dataType: IrysDataType,
-    serviceCategory: string[],
-    protocol: string[]
-  ): Promise<UploadIrysResult>;
-}
-
-export interface ITeeLogService extends Service {
-  getInstance(): ITeeLogService;
-  log(
-    agentId: string,
-    roomId: string,
-    userId: string,
-    type: string,
-    content: string
-  ): Promise<boolean>;
-}
-
-export enum ServiceType {
-  BROWSER = "browser",
-  PDF = "pdf",
-  STORAGE = "STORAGE",
+  call(modelType: ModelType, params: any): Promise<any>;
+  registerHandler(modelType: ModelType, handler: (params: any) => Promise<any>): void;
+  getHandler(modelType: ModelType): ((params: any) => Promise<any>) | undefined;
 }
 
 export enum LoggingLevel {
@@ -1184,7 +1003,8 @@ export interface ChunkRow {
 }
 
 export type GenerateTextParams = {
+  runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
-  stop?: string[];
+  modelType: ModelType;
+  stopSequences?: string[];
 };

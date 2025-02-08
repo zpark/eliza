@@ -1,6 +1,3 @@
-import { glob } from "glob";
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
@@ -33,24 +30,18 @@ import {
     type Character,
     type ClientInstance,
     type DirectoryItem,
-    type EmbeddingModelSettings,
     type Evaluator,
-    GenerateTextParams,
     type Goal,
     type HandlerCallback,
     type IAgentRuntime,
     type ICacheManager,
     type IDatabaseAdapter,
-    type ImageModelSettings,
     type IMemoryManager,
-    IModelManager,
     type KnowledgeItem,
     type Memory,
-    ModelClass,
+    ModelType,
     type Plugin,
     type Provider,
-    type Service,
-    type ServiceType,
     type State,
     type UUID
 } from "./types.ts";
@@ -122,131 +113,6 @@ class KnowledgeManager {
                 await this.handleProcessingError(error, "processing character knowledge");
             }
         }
-    }
-}
-
-/**
- * Manages model provider settings and configuration
- */
-class ModelManager implements IModelManager {
-    private runtime: AgentRuntime;
-
-    constructor(runtime: AgentRuntime) {
-        this.runtime = runtime;
-    }
-
-    modelHandlers = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
-
-    registerModelHandler(modelClass: ModelClass, handler: (params: any) => Promise<any>) {
-        if (!this.modelHandlers.has(modelClass)) {
-            this.modelHandlers.set(modelClass, []);
-        }
-        this.modelHandlers.get(modelClass)?.push(handler);
-    }
-
-    getModelHandler(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined {
-        const handlers = this.modelHandlers.get(modelClass);
-        if (!handlers?.length) {
-            return undefined;
-        }
-        return handlers[0];
-    }
-
-    getApiKey() {
-        return this.runtime.getSetting("API_KEY");
-    }
-
-    // TODO: This could be more of a pure registration handler
-    generateText (params: GenerateTextParams) {
-        const handler = this.getModelHandler(params.modelClass);
-        if (!handler) {
-            throw new Error(`No handler found for ${params.modelClass}`);
-        }
-        return handler(params);
-    }
-
-    generateEmbedding (text: string) {
-        const handler = this.getModelHandler(ModelClass.TEXT_EMBEDDING);
-        if (!handler) {
-            throw new Error(`No handler found for ${ModelClass.TEXT_EMBEDDING}`);
-        }
-        return handler(text);
-    }
-
-    generateImage (params: ImageModelSettings) {
-        const handler = this.getModelHandler(ModelClass.IMAGE);
-        if (!handler) {
-            throw new Error(`No handler found for ${ModelClass.IMAGE}`);
-        }
-        return handler(params);
-    }
-    
-    generateAudio (params: any) {
-        const handler = this.getModelHandler(ModelClass.AUDIO);
-        if (!handler) {
-            throw new Error(`No handler found for ${ModelClass.AUDIO}`);
-        }
-        return handler(params);
-    }
-}
-
-/**
- * Manages services and their lifecycle
- */
-class ServiceManager {
-    private runtime: AgentRuntime;
-    private services: Map<ServiceType, Service>;
-
-    constructor(runtime: AgentRuntime) {
-        this.runtime = runtime;
-        this.services = new Map();
-    }
-
-    async registerService(service: Service): Promise<void> {
-        const serviceType = service.serviceType;
-        logger.log(`${this.runtime.character.name}(${this.runtime.agentId}) - Registering service:`, serviceType);
-
-        if (this.services.has(serviceType)) {
-            logger.warn(
-                `${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} is already registered. Skipping registration.`
-            );
-            return;
-        }
-
-        // Add the service to the services map
-        this.services.set(serviceType, service);
-        logger.success(`${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} registered successfully`);
-    }
-
-    getService<T extends Service>(service: ServiceType): T | null {
-        const serviceInstance = this.services.get(service);
-        if (!serviceInstance) {
-            logger.error(`Service ${service} not found`);
-            return null;
-        }
-        return serviceInstance as T;
-    }
-
-    async initializeServices(): Promise<void> {
-        for (const [serviceType, service] of this.services.entries()) {
-            try {
-                await service.initialize(this.runtime);
-                this.services.set(serviceType, service);
-                logger.success(
-                    `${this.runtime.character.name}(${this.runtime.agentId}) - Service ${serviceType} initialized successfully`
-                );
-            } catch (error) {
-                logger.error(
-                    `${this.runtime.character.name}(${this.runtime.agentId}) - Failed to initialize service ${serviceType}:`,
-                    error
-                );
-                throw error;
-            }
-        }
-    }
-
-    getAllServices(): Map<ServiceType, Service> {
-        return this.services;
     }
 }
 
@@ -372,14 +238,13 @@ export class AgentRuntime implements IAgentRuntime {
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
     public clients: ClientInstance[] = [];
-    readonly services: Map<ServiceType, Service>;
     
     public adapters: Adapter[];
 
     private readonly knowledgeRoot: string;
-    private readonly modelManager: IModelManager;
-    private readonly serviceManager: ServiceManager;
     private readonly memoryManagerService: MemoryManagerService;
+
+    handlers = new Map<ModelType, ((params: any) => Promise<any>)[]>();
 
     constructor(opts: {
         conversationLength?: number;
@@ -390,7 +255,6 @@ export class AgentRuntime implements IAgentRuntime {
         evaluators?: Evaluator[];
         plugins?: Plugin[];
         providers?: Provider[];
-        services?: Service[];
         managers?: IMemoryManager[];
         databaseAdapter?: IDatabaseAdapter;
         fetch?: typeof fetch;
@@ -435,32 +299,12 @@ export class AgentRuntime implements IAgentRuntime {
             this.cacheManager = opts.cacheManager;
         }
 
-        this.services = new Map();
-
-        // Initialize managers - moved ModelManager initialization earlier
-        this.modelManager = new ModelManager(this);
-        this.serviceManager = new ServiceManager(this);
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
         
         // Register additional memory managers from options
         if (opts.managers) {
             for (const manager of opts.managers) {
                 this.registerMemoryManager(manager);
-            }
-        }
-
-        // Register services from options and plugins
-        if (opts.services) {
-            for (const service of opts.services) {
-                this.registerService(service);
-            }
-        }
-
-        for (const plugin of this.plugins) {
-            if (plugin.services) {
-                for (const service of plugin.services) {
-                    this.registerService(service);
-                }
             }
         }
 
@@ -476,10 +320,6 @@ export class AgentRuntime implements IAgentRuntime {
 
             for (const evaluator of (plugin.evaluators ?? [])) {
                 this.registerEvaluator(evaluator);
-            }
-
-            for (const service of (plugin.services ?? [])) {
-                this.registerService(service);
             }
 
             for (const provider of (plugin.providers ?? [])) {
@@ -503,10 +343,6 @@ export class AgentRuntime implements IAgentRuntime {
         this.adapters = opts.adapters ?? [];
     }
 
-    getModelManager(): IModelManager {
-        return this.modelManager;
-    }
-
     async initialize() {
         await this.ensureRoomExists(this.agentId);
         await this.ensureUserExists(
@@ -515,8 +351,6 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.name,
         );
         await this.ensureParticipantExists(this.agentId, this.agentId);
-
-        await this.serviceManager.initializeServices();
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {
             // Non-RAG mode: only process string knowledge
@@ -730,7 +564,7 @@ export class AgentRuntime implements IAgentRuntime {
         const result = await generateText({
             runtime: this,
             context,
-            modelClass: ModelClass.TEXT_SMALL,
+            modelType: ModelType.TEXT_SMALL,
         });
 
         const evaluators = parseJsonArrayFromText(
@@ -1366,14 +1200,6 @@ Text: ${attachment.text}
         return this.memoryManagerService.getMemoryManager(tableName);
     }
 
-    getService<T extends Service>(service: ServiceType): T | null {
-        return this.serviceManager.getService<T>(service);
-    }
-
-    async registerService(service: Service): Promise<void> {
-        await this.serviceManager.registerService(service);
-    }
-
     // Memory manager getters
     get messageManager(): IMemoryManager {
         return this.memoryManagerService.getMessageManager();
@@ -1393,5 +1219,28 @@ Text: ${attachment.text}
 
     get knowledgeManager(): IMemoryManager {
         return this.memoryManagerService.getKnowledgeManager();
+    }
+
+    registerHandler(modelType: ModelType, handler: (params: any) => Promise<any>) {
+        if (!this.handlers.has(modelType)) {
+            this.handlers.set(modelType, []);
+        }
+        this.handlers.get(modelType)?.push(handler);
+    }
+
+    getHandler(modelType: ModelType): ((params: any) => Promise<any>) | undefined {
+        const handlers = this.handlers.get(modelType);
+        if (!handlers?.length) {
+            return undefined;
+        }
+        return handlers[0];
+    }
+
+    call(modelType: ModelType, params: any): Promise<any> {
+        const handler = this.getHandler(modelType);
+        if (!handler) {
+            throw new Error(`No handler found for model type: ${modelType}`);
+        }
+        return handler(params);
     }
 }

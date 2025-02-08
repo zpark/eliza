@@ -1,9 +1,8 @@
-import type { AgentRuntime } from "./runtime.ts";
-import { embed, getEmbeddingZeroVector } from "./embedding.ts";
-import type { KnowledgeItem, UUID, Memory } from "./types.ts";
-import { stringToUuid } from "./uuid.ts";
 import { splitChunks } from "./helper.ts";
 import logger from "./logger.ts";
+import type { AgentRuntime } from "./runtime.ts";
+import { type KnowledgeItem, type Memory, ModelType, type UUID } from "./types.ts";
+import { stringToUuid } from "./uuid.ts";
 
 async function get(
     runtime: AgentRuntime,
@@ -32,7 +31,9 @@ async function get(
         return [];
     }
 
-    const embedding = await embed(runtime, processed);
+    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
+        text: processed,
+    });
     const fragments = await runtime.knowledgeManager.searchMemoriesByEmbedding(
         embedding,
         {
@@ -70,6 +71,9 @@ async function set(
     chunkSize = 512,
     bleed = 20
 ) {
+    const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
+        text: null,
+    });
     await runtime.documentsManager.createMemory({
         id: item.id,
         agentId: runtime.agentId,
@@ -77,14 +81,16 @@ async function set(
         userId: runtime.agentId,
         createdAt: Date.now(),
         content: item.content,
-        embedding: getEmbeddingZeroVector(),
+        embedding: embedding,
     });
 
     const preprocessed = preprocess(item.content.text);
     const fragments = await splitChunks(preprocessed, chunkSize, bleed);
 
     for (const fragment of fragments) {
-        const embedding = await embed(runtime, fragment);
+        const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
+            text: fragment,
+        });
         await runtime.knowledgeManager.createMemory({
             // We namespace the knowledge base uuid to avoid id
             // collision with the document above.

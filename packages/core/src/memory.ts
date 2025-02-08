@@ -1,10 +1,10 @@
-import { embed, getEmbeddingZeroVector } from "./embedding.ts";
 import logger from "./logger.ts";
-import type {
-    IAgentRuntime,
-    IMemoryManager,
-    Memory,
-    UUID,
+import {
+    ModelType,
+    type IAgentRuntime,
+    type IMemoryManager,
+    type Memory,
+    type UUID,
 } from "./types.ts";
 
 const defaultMatchThreshold = 0.1;
@@ -66,11 +66,15 @@ export class MemoryManager implements IMemoryManager {
 
         try {
             // Generate embedding from text content
-            memory.embedding = await embed(this.runtime, memoryText);
+            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, {
+                text: memoryText,
+            });
         } catch (error) {
             logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = getEmbeddingZeroVector().slice();
+            memory.embedding = await this.runtime.call(ModelType.TEXT_EMBEDDING, {
+                text: null,
+            });
         }
 
         return memory;
@@ -140,6 +144,7 @@ export class MemoryManager implements IMemoryManager {
             match_threshold?: number;
             count?: number;
             roomId: UUID;
+            agentId: UUID;
             unique?: boolean;
         }
     ): Promise<Memory[]> {

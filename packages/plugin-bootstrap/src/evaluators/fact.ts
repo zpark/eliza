@@ -6,7 +6,7 @@ import {
     type ActionExample,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    ModelType,
     type Evaluator,
 } from "@elizaos/core";
 
@@ -75,7 +75,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     const facts = await generateObjectArray({
         runtime,
         context,
-        modelClass: ModelClass.TEXT_LARGE,
+        modelType: ModelType.TEXT_LARGE,
         schema: claimSchema,
         schemaName: "Fact",
         schemaDescription: "A fact about the user or the world",

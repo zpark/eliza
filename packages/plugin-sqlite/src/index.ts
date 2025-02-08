@@ -1,26 +1,26 @@
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
 
-export * from "./sqliteTables.ts";
 export * from "./sqlite_vec.ts";
+export * from "./sqliteTables.ts";
 
+import type {
+    Account,
+    Actor,
+    Adapter,
+    Goal,
+    GoalStatus,
+    IAgentRuntime,
+    Memory,
+    Participant,
+    Plugin,
+    Relationship,
+    UUID,
+} from "@elizaos/core";
 import {
     DatabaseAdapter,
     logger,
     type IDatabaseCacheAdapter,
-} from "@elizaos/core";
-import type {
-    Account,
-    Actor,
-    GoalStatus,
-    Participant,
-    Goal,
-    Memory,
-    Relationship,
-    UUID,
-    Adapter,
-    IAgentRuntime,
-    Plugin,
 } from "@elizaos/core";
 import type { Database as BetterSqlite3Database } from "better-sqlite3";
 import { v4 } from "uuid";
@@ -146,13 +146,7 @@ export class SqliteDatabaseAdapter
                 if (row === null) {
                     return null;
                 }
-                return {
-                    ...row,
-                    details:
-                        typeof row.details === "string"
-                            ? JSON.parse(row.details)
-                            : row.details,
-                };
+                return row;
             })
             .filter((row): row is Actor => row !== null);
     }

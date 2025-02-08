@@ -14,7 +14,6 @@ export default function Overview({ character }: { character: Character }) {
                 <InputCopy title="Name" value={character?.name} />
                 <InputCopy title="Username" value={character?.username} />
                 <InputCopy title="System" value={character?.system} />
-                <InputCopy title="Model" value={character?.modelProvider} />
                 <InputCopy
                     title="Voice Model"
                     value={character?.settings?.voice?.model}

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { continueAction } from '../../src/actions/continue';
-import { composeContext, generateMessageResponse, generateTrueOrFalse, ModelClass } from '@elizaos/core';
+import { composeContext, generateMessageResponse, generateTrueOrFalse, ModelType } from '@elizaos/core';
 
 vi.mock('@elizaos/core', () => ({
     composeContext: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('@elizaos/core', () => ({
     },
     messageCompletionFooter: '\nResponse format:\n```\n{"content": {"text": string}}\n```',
     booleanFooter: '\nResponse format: YES or NO',
-    ModelClass: {
+    ModelType: {
         SMALL: 'small',
         LARGE: 'large'
     }

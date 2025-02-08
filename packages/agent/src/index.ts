@@ -6,15 +6,15 @@ import {
     type Character,
     type ClientInstance,
     DbCacheAdapter,
-    logger,
-    FsCacheAdapter,
     type IAgentRuntime,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
+    logger,
+    ModelType,
     parseBooleanFromText,
     settings,
     stringToUuid,
-    validateCharacterConfig,
+    validateCharacterConfig
 } from "@elizaos/core";
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import fs from "node:fs";
@@ -349,10 +349,17 @@ export async function initializeClients(
                     clients.push(startedClient);
                 }
             }
+            if (plugin.handlers) {
+                for (const [modelType, handler] of Object.entries(plugin.handlers)) {
+                    runtime.registerHandler(modelType as ModelType, handler);
+                }
+            }
         }
     }
 
-    return clients;
+    runtime.clients = clients;
+    
+
 }
 
 export async function createAgent(
@@ -372,18 +379,6 @@ export async function createAgent(
         managers: [],
         fetch: logFetch,
     });
-}
-
-function initializeFsCache(baseDir: string, character: Character) {
-    if (!character?.id) {
-        throw new Error(
-            "initializeFsCache requires id to be set in character definition"
-        );
-    }
-    const cacheDir = path.resolve(baseDir, character.id, "cache");
-
-    const cache = new CacheManager(new FsCacheAdapter(cacheDir));
-    return cache;
 }
 
 function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
@@ -412,22 +407,12 @@ function initializeCache(
                     "Database adapter is not provided for CacheStore.Database."
                 );
 
-        case CacheStore.FILESYSTEM:
-            logger.info("Using File System Cache...");
-            if (!baseDir) {
-                throw new Error(
-                    "baseDir must be provided for CacheStore.FILESYSTEM."
-                );
-            }
-            return initializeFsCache(baseDir, character);
-
         default:
             throw new Error(
                 `Invalid cache store: ${cacheStore} or required configuration missing.`
             );
     }
 }
-
 
 async function findDatabaseAdapter(runtime: AgentRuntime) {
   const { adapters } = runtime;
@@ -448,8 +433,6 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
   const adapterInterface = adapter?.init(runtime);
   return adapterInterface;
 }
-
-  
 
 async function startAgent(
     character: Character,
@@ -482,7 +465,7 @@ async function startAgent(
         await runtime.initialize();
 
         // start assigned clients
-        runtime.clients = await initializeClients(character, runtime);
+        await initializeClients(character, runtime);
 
         // add to container
         characterServer.registerAgent(runtime);

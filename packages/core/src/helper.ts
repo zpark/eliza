@@ -1,17 +1,15 @@
-import { AutoTokenizer } from "@huggingface/transformers";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
-import logger from "./logger.ts";
-import { TokenizerType, type IAgentRuntime, type ModelSettings } from "./types.ts";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import logger from "./logger.ts";
+import { type IAgentRuntime, type ModelSettings } from "./types.ts";
 
 
 export function logFunctionCall(functionName: string, runtime?: IAgentRuntime) {
     logger.info(`Function call: ${functionName}`, {
         functionName,
-        // runtime: JSON.stringify(runtime?.getModelManager())
+        // runtime: JSON.stringify(runtime?)
     });
 }
-
 
 export async function trimTokens(
     context: string,
@@ -30,50 +28,14 @@ export async function trimTokens(
         return truncateTiktoken("gpt-4o", context, maxTokens);
     }
 
-    // Choose the truncation method based on tokenizer type
-    if (tokenizerType === TokenizerType.Auto) {
-        return truncateAuto(tokenizerModel, context, maxTokens);
-    }
-
-    if (tokenizerType === TokenizerType.TikToken) {
-        return truncateTiktoken(
-            tokenizerModel as TiktokenModel,
-            context,
-            maxTokens
-        );
-    }
+    return truncateTiktoken(
+        tokenizerModel as TiktokenModel,
+        context,
+        maxTokens
+    );
 
     logger.warn(`Unsupported tokenizer type: ${tokenizerType}`);
     return truncateTiktoken("gpt-4o", context, maxTokens);
-}
-
-
-
-
-async function truncateAuto(
-    modelPath: string,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-        const tokens = tokenizer.encode(context);
-
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
-
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
-
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return tokenizer.decode(truncatedTokens);
-    } catch (error) {
-        logger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
 }
 
 async function truncateTiktoken(
@@ -104,7 +66,6 @@ async function truncateTiktoken(
     }
 }
 
-
 export async function splitChunks(
     content: string,
     chunkSize = 512,
@@ -125,7 +86,6 @@ export async function splitChunks(
 
     return chunks;
 }
-
 
 export function getModelSettings(modelSettings: Record<string, ModelSettings>) {
     if (!modelSettings) {

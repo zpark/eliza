@@ -5,18 +5,10 @@ import {
     type IDatabaseAdapter,
     type IMemoryManager,
     type Memory,
-    ModelClass,
-    ServiceType,
+    ModelType,
     type UUID
 } from "../src/types";
 import { mockCharacter } from "./mockCharacter";
-
-// Mock the embedding module
-vi.mock("../src/embedding", () => ({
-    embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-    getRemoteEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3])),
-    getLocalEmbedding: vi.fn().mockResolvedValue(new Float32Array([0.1, 0.2, 0.3]))
-}));
 
 // Mock dependencies with minimal implementations
 const mockDatabaseAdapter: IDatabaseAdapter = {
@@ -86,9 +78,6 @@ describe("AgentRuntime", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        const ModelManager = {
-            getProvider: () => mockModelProvider,
-        };
         
         runtime = new AgentRuntime({
             character: {
@@ -142,23 +131,9 @@ describe("AgentRuntime", () => {
         });
     });
 
-    describe("service management", () => {
-        it("should allow registering and retrieving services", async () => {
-            const mockService = {
-                serviceType: ServiceType.TEXT_GENERATION,
-                type: ServiceType.TEXT_GENERATION,
-                initialize: vi.fn().mockResolvedValue(undefined),
-            };
-
-            await runtime.registerService(mockService);
-            const retrievedService = runtime.getService(ServiceType.TEXT_GENERATION);
-            expect(retrievedService).toBe(mockService);
-        });
-    });
-
     describe("model provider management", () => {
         it("should provide access to the configured model provider", () => {
-            const provider = runtime.getModelManager();
+            const provider = runtime;
             expect(provider).toBeDefined();
         });
     });
@@ -239,17 +214,17 @@ describe("Model Provider Configuration", () => {
                 cacheManager: mockCacheManager,
             });
 
-            const provider = runtime.getModelManager();
+            const provider = runtime;
             expect(provider.models.default).toBeDefined();
             expect(provider.models.default.name).toBeDefined();
         });
 
         test("should handle missing optional model configurations", () => {
-            const provider = runtime.getModelManager();
+            const provider = runtime;
             
             // These might be undefined but shouldn't throw errors
-            expect(() => provider.models[ModelClass.IMAGE]).not.toThrow();
-            expect(() => provider.models[ModelClass.IMAGE_VISION]).not.toThrow();
+            expect(() => provider.models[ModelType.IMAGE_GENERATION]).not.toThrow();
+            expect(() => provider.models[ModelType.IMAGE_DESCRIPTION]).not.toThrow();
         });
 
         test("should validate model provider name format", () => {
@@ -260,7 +235,6 @@ describe("Model Provider Configuration", () => {
                 expect(() => new AgentRuntime({
                     character: {
                         ...mockCharacter,
-                        modelProvider: invalidProvider,
                         bio: ["Test bio"], // Ensure bio is an array
                         lore: ["Test lore"], // Ensure lore is an array
                         messageExamples: [], // Required by Character type
@@ -285,7 +259,6 @@ describe("Model Provider Configuration", () => {
                 expect(() => new AgentRuntime({
                     character: {
                         ...mockCharacter,
-                        modelProvider: validProvider,
                         bio: ["Test bio"], // Ensure bio is an array
                         lore: ["Test lore"], // Ensure lore is an array
                         messageExamples: [], // Required by Character type
@@ -298,28 +271,11 @@ describe("Model Provider Configuration", () => {
                             post: []
                         }
                     },
-                    modelProvider: validProvider,
                     databaseAdapter: mockDatabaseAdapter,
                     cacheManager: mockCacheManager,
                 })).not.toThrow();
             });
         });
-    });
-});
-
-describe("ModelManager", () => {
-    test("should get correct model provider settings", async () => {
-        const runtime = new AgentRuntime({
-            databaseAdapter: mockDatabaseAdapter,
-            cacheManager: {
-                get: vi.fn(),
-                set: vi.fn(),
-                delete: vi.fn(),
-            },
-        });
-
-        const provider = runtime.getModelManager();
-        expect(provider).toBeDefined();
     });
 });
 
@@ -360,24 +316,5 @@ describe("MemoryManagerService", () => {
 
         runtime.registerMemoryManager(customManager);
         expect(runtime.getMemoryManager("custom")).toBe(customManager);
-    });
-});
-
-describe("ServiceManager", () => {
-    test("should handle service registration and retrieval", async () => {
-        const runtime = new AgentRuntime({
-            databaseAdapter: mockDatabaseAdapter,
-            cacheManager: mockCacheManager
-        });
-
-        const mockService = {
-            serviceType: ServiceType.TEXT_GENERATION,
-            type: ServiceType.TEXT_GENERATION,
-            initialize: vi.fn().mockResolvedValue(undefined)
-        };
-
-        await runtime.registerService(mockService);
-        const retrievedService = runtime.getService(ServiceType.TEXT_GENERATION);
-        expect(retrievedService).toBe(mockService);
     });
 });

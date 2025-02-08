@@ -1,10 +1,10 @@
+import type { Memory, Provider, State } from "@elizaos/core";
 import {
-    embed,
     MemoryManager,
+    ModelType,
     formatMessages,
     type AgentRuntime as IAgentRuntime,
 } from "@elizaos/core";
-import type { Memory, Provider, State } from "@elizaos/core";
 import { formatFacts } from "../evaluators/fact.ts";
 
 const factsProvider: Provider = {
@@ -16,22 +16,23 @@ const factsProvider: Provider = {
             actors: state?.actorsData,
         });
 
-        const _embedding = await embed(runtime, recentMessages);
+        const embedding = await runtime.call(ModelType.TEXT_EMBEDDING, {
+            text: recentMessages,
+        });
 
         const memoryManager = new MemoryManager({
             runtime,
             tableName: "facts",
         });
 
-        const relevantFacts = [];
-        //  await memoryManager.searchMemoriesByEmbedding(
-        //     embedding,
-        //     {
-        //         roomId: message.roomId,
-        //         count: 10,
-        //         agentId: runtime.agentId,
-        //     }
-        // );
+        const relevantFacts = await memoryManager.searchMemoriesByEmbedding(
+            embedding,
+            {
+                roomId: message.roomId,
+                count: 10,
+                agentId: runtime.agentId,
+            }
+        );
 
         const recentFactsData = await memoryManager.getMemories({
             roomId: message.roomId,

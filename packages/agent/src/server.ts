@@ -5,13 +5,13 @@ import {
     generateImage,
     generateMessageResponse,
     generateObject,
-    getEmbeddingZeroVector,
     messageCompletionFooter,
-    ModelClass,
+    ModelType,
     stringToUuid,
     type Content,
     type Media,
-    type Memory
+    type Memory,
+    type IAgentRuntime
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -166,7 +166,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.getModelProviderManager().call(ModelClass.AUDIO_TRANSCRIPTION, {
+                const transcription = await runtime.getModelProviderManager().call(ModelType.AUDIO_TRANSCRIPTION, {
                     file: fs.createReadStream(audioFile.path),
                     model: "whisper-1",
                 });
@@ -276,7 +276,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelClass: ModelClass.TEXT_LARGE,
+                    modelType: ModelType.TEXT_LARGE,
                 });
 
                 if (!response) {
@@ -286,13 +286,17 @@ export class CharacterServer {
                     return;
                 }
 
+                const zeroVector = runtime.getModelProviderManager().call(ModelType.EMBEDDING, {
+                    text: null,
+                });
+
                 // save response to memory
                 const responseMessage: Memory = {
                     id: stringToUuid(`${messageId}-${runtime.agentId}`),
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,
-                    embedding: getEmbeddingZeroVector(),
+                    embedding: zeroVector,
                     createdAt: Date.now(),
                 };
 
@@ -488,7 +492,7 @@ export class CharacterServer {
                 const response = await generateObject({
                     runtime,
                     context,
-                    modelClass: ModelClass.TEXT_SMALL,
+                    modelType: ModelType.TEXT_SMALL,
                     schema: hyperfiOutSchema,
                 });
 
@@ -791,7 +795,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelClass: ModelClass.TEXT_LARGE,
+                    modelType: ModelType.TEXT_LARGE,
                 });
 
                 // save response to memory
@@ -824,7 +828,7 @@ export class CharacterServer {
                 // Get the text to convert to speech
                 const textToSpeak = response.text;
 
-                const speechResponse = await runtime.getModelProviderManager().call(ModelClass.AUDIO_TRANSCRIPTION, {
+                const speechResponse = await runtime.getModelProviderManager().call(ModelType.AUDIO_TRANSCRIPTION, {
                     text: textToSpeak,
                     runtime,
                 });

@@ -5,13 +5,13 @@ import { parseJSONObjectFromText } from "./parsing.ts";
 import {
     type Content,
     type IAgentRuntime,
-    ModelClass
+    ModelType
 } from "./types.ts";
 
 interface GenerateObjectOptions {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   output?: "object" | "array" | "enum" | "no-schema" | undefined;
   schema?: ZodSchema;
   schemaName?: string;
@@ -69,21 +69,20 @@ async function withRetry<T>(
 export async function generateText({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   stopSequences?: string[];
   customSystemPrompt?: string;
 }): Promise<string> {
   logFunctionCall("generateText", runtime);
 
-  const { text } = await runtime.getModelManager().generateText({
+  const { text } = await runtime.call(modelType, {
     context,
-    modelClass,
-    stop: stopSequences,
+    stopSequences,
   });
 
   return text;
@@ -92,12 +91,12 @@ export async function generateText({
 export async function generateTextArray({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   stopSequences?: string[];
 }): Promise<string[]> {
   logFunctionCall("generateTextArray", runtime);
@@ -106,7 +105,7 @@ export async function generateTextArray({
     const result = await generateObject({
       runtime,
       context,
-      modelClass,
+      modelType,
       schema: z.array(z.string()),
       stopSequences,
     });
@@ -120,14 +119,14 @@ export async function generateTextArray({
 async function generateEnum<T extends string>({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   enumValues,
   functionName,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   enumValues: Array<T>;
   functionName: string;
   stopSequences?: string[];
@@ -142,7 +141,7 @@ async function generateEnum<T extends string>({
     const result = await generateObject({
       runtime,
       context,
-      modelClass,
+      modelType,
       output: "enum",
       enum: enumValues,
       mode: "json",
@@ -159,12 +158,12 @@ async function generateEnum<T extends string>({
 export async function generateShouldRespond({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   stopSequences?: string[];
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
   const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"] as string[];
@@ -172,7 +171,7 @@ export async function generateShouldRespond({
   const result = await generateEnum({
     runtime,
     context,
-    modelClass,
+    modelType,
     enumValues: RESPONSE_VALUES,
     functionName: "generateShouldRespond",
     stopSequences,
@@ -184,12 +183,12 @@ export async function generateShouldRespond({
 export async function generateTrueOrFalse({
   runtime,
   context = "",
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   stopSequences?: string[];
 }): Promise<boolean> {
   logFunctionCall("generateTrueOrFalse", runtime);
@@ -199,7 +198,7 @@ export async function generateTrueOrFalse({
   const result = await generateEnum({
     runtime,
     context,
-    modelClass,
+    modelType,
     enumValues: BOOL_VALUES,
     functionName: "generateTrueOrFalse",
     stopSequences,
@@ -212,7 +211,7 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   output = "object",
   schema,
   schemaName,
@@ -228,27 +227,26 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
-  const { object } = await runtime.getModelManager().generateObject({
+  const { object } = await runtime.call(modelType, {
     context,
-    modelClass,
     stop: stopSequences,
   });
 
-  logger.debug(`Received Object response from ${modelClass} model.`);
+  logger.debug(`Received Object response from ${modelType} model.`);
   return schema ? schema.parse(object) : object;
 };
 
 export async function generateObjectArray({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
@@ -261,7 +259,7 @@ export async function generateObjectArray({
   const result = await generateObject({
     runtime,
     context,
-    modelClass,
+    modelType,
     output: "array",
     schema,
     schemaName,
@@ -274,12 +272,12 @@ export async function generateObjectArray({
 export async function generateMessageResponse({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelType.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   stopSequences?: string[];
 }): Promise<Content> {
   logFunctionCall("generateMessageResponse", runtime);
@@ -287,9 +285,8 @@ export async function generateMessageResponse({
   logger.debug("Context:", context);
 
   return await withRetry(async () => {
-    const { text } = await runtime.getModelManager().generateText({
+    const { text } = await runtime.call(modelType, {
       context,
-      modelClass,
       stop: stopSequences,
     });
 
@@ -334,7 +331,7 @@ export const generateImage = async (
 
   return await withRetry(
     async () => {
-      const result = await runtime.getModelManager().generateImage(data);
+      const result = await runtime.call(ModelType.IMAGE, data);
       return {
         success: true,
         data: result.images,
@@ -357,13 +354,8 @@ export const generateCaption = async (
 }> => {
   logFunctionCall("generateCaption", runtime);
   const { imageUrl } = data;
-  const imageDescriptionService = runtime.getModelManager().describeImage(imageUrl);
+  const resp = await runtime.call(ModelType.IMAGE_DESCRIPTION, imageUrl);
 
-  if (!imageDescriptionService) {
-    throw new Error("Image description service not found");
-  }
-
-  const resp = await imageDescriptionService.describeImage(imageUrl);
   return {
     title: resp.title.trim(),
     description: resp.description.trim(),
