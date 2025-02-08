@@ -120,6 +120,8 @@ export enum ModelType {
   TEXT_SMALL = "text_small",
   TEXT_LARGE = "text_large",
   TEXT_EMBEDDING = "text_embedding",
+  TOKENIZE_TEXT = "tokenize_text",
+  DETOKENIZE_TEXT = "detokenize_text",
   IMAGE = "image",
   IMAGE_DESCRIPTION = "image_description",
   TRANSCRIPTION = "transcription",
@@ -1008,3 +1010,13 @@ export type GenerateTextParams = {
   modelType: ModelType;
   stopSequences?: string[];
 };
+
+export interface TokenizeTextParams {
+  context: string;
+  modelType: ModelType;
+}
+
+export interface DetokenizeTextParams {
+  tokens: number[];
+  modelType: ModelType;
+}

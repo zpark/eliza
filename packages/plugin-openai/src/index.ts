@@ -1,7 +1,28 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import type { Plugin } from "@elizaos/core";
 import { GenerateTextParams, ModelType } from "@elizaos/core";
+import { DetokenizeTextParams, TokenizeTextParams } from "@elizaos/core";
 import { generateText as aiGenerateText } from "ai";
+import { encodingForModel, type TiktokenModel } from "js-tiktoken";
+
+async function tokenizeText(
+  model: ModelType,
+  context: string,
+) {
+  const modelName = model === ModelType.TEXT_SMALL ? process.env.OPENAI_SMALL_MODEL ?? process.env.SMALL_MODEL ?? "gpt-4o-mini" : process.env.LARGE_MODEL ?? "gpt-4o";
+  const encoding = encodingForModel(modelName as TiktokenModel);
+  const tokens = encoding.encode(context);
+  return tokens;
+}
+
+async function detokenizeText(
+  model: ModelType,
+  tokens: number[],
+) {
+  const modelName = model === ModelType.TEXT_SMALL ? process.env.OPENAI_SMALL_MODEL ?? process.env.SMALL_MODEL ?? "gpt-4o-mini" : process.env.OPENAI_LARGE_MODEL ?? process.env.LARGE_MODEL ?? "gpt-4o";
+  const encoding = encodingForModel(modelName as TiktokenModel);
+  return encoding.decode(tokens);
+}
 
 export const openaiPlugin: Plugin = {
   name: "openai",
@@ -34,6 +55,20 @@ export const openaiPlugin: Plugin = {
         console.log("data", data);
         return data.data[0].embedding;
       },
+      [ModelType.TOKENIZE_TEXT]: async ({
+        context,
+        modelType,
+      }: TokenizeTextParams
+    ) => {
+      return tokenizeText(modelType ?? ModelType.TEXT_LARGE, context);
+    },
+    [ModelType.DETOKENIZE_TEXT]: async ({
+      tokens,
+      modelType,
+    }: DetokenizeTextParams
+  ) => {
+    return detokenizeText(modelType ?? ModelType.TEXT_LARGE, tokens);
+  },
       [ModelType.TEXT_LARGE]: async ({
         runtime,
         context,

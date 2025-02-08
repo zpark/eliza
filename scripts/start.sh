@@ -245,7 +245,6 @@ create_character_template() {
 {
     "name": "$name",
     "clients": [],
-    "modelProvider": "anthropic",
     "settings": {
         "voice": {
             "model": "en_GB-alan-medium"

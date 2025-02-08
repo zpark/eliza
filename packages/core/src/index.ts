@@ -9,7 +9,7 @@ export * from "./evaluators.ts";
 export * from "./generation.ts";
 export * from "./goals.ts";
 export * from "./helper.ts";
-export { default as knowledge } from "./knowledge.ts";
+export * from "./knowledge.ts";
 export * from "./logger.ts";
 export * from "./memory.ts";
 export * from "./messages.ts";
