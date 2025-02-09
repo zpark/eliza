@@ -3,7 +3,6 @@ import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type IAgentRuntime,
     type IPdfService,
-    type ITranscriptionService,
     type IVideoService,
     type Media,
     ModelClass,
@@ -134,16 +133,7 @@ export class AttachmentManager {
                 throw new Error("Unsupported audio/video format");
             }
 
-            const transcriptionService =
-                this.runtime.getService<ITranscriptionService>(
-                    ServiceType.TRANSCRIPTION
-                );
-            if (!transcriptionService) {
-                throw new Error("Transcription service not found");
-            }
-
-            const transcription =
-                await transcriptionService.transcribeAttachment(audioBuffer);
+            const transcription = await this.runtime.call(ModelClass.TRANSCRIPTION, audioBuffer);
             const { title, description } = await generateSummary(
                 this.runtime,
                 transcription

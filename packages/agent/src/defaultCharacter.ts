@@ -1,19 +1,11 @@
 import { type Character } from "@elizaos/core";
-import { anthropicPlugin } from "@elizaos/plugin-anthropic";
-import { localAIPlugin } from "@elizaos/plugin-local-ai";
-import { createNodePlugin } from "@elizaos/plugin-node";
-import { openaiPlugin } from "@elizaos/plugin-openai";
-import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
 export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
   plugins: [
-    openaiPlugin,
-    anthropicPlugin,
-    localAIPlugin,
-    createNodePlugin(),
-    bootstrapPlugin,
+    "@elizaos/plugin-node",
+    "@elizaos/plugin-bootstrap",
   ],
   settings: {
     secrets: {},
@@ -541,11 +533,13 @@ export const defaultCharacter: Character = {
 };
 
 if (process.env.ANTHROPIC_API_KEY) {
-  defaultCharacter.plugins.push(anthropicPlugin);
+  defaultCharacter.plugins.push("@elizaos/plugin-anthropic");
 }
 
 if (process.env.OPENAI_API_KEY) {
-    defaultCharacter.plugins.push(openaiPlugin);
+    defaultCharacter.plugins.push("@elizaos/plugin-openai");
   }
 
-defaultCharacter.plugins.push(localAIPlugin);
+if(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+  defaultCharacter.plugins.push("@elizaos/plugin-local-ai");
+}

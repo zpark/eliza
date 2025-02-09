@@ -26,7 +26,6 @@ import {
 } from "./templates.ts";
 import {
     canSendMessage,
-    cosineSimilarity,
     sendMessageInChunks,
 } from "./utils.ts";
 import type { VoiceManager } from "./voice.ts";
@@ -335,8 +334,6 @@ export class MessageManager {
                                 action = "CONTINUE";
                             }
 
-                            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
                             const memory: Memory = {
                                 id: stringToUuid(
                                     m.id + "-" + this.runtime.agentId
@@ -350,7 +347,6 @@ export class MessageManager {
                                     url: m.url,
                                 },
                                 roomId,
-                                embedding: zeroVector,
                                 createdAt: m.createdTimestamp,
                             };
                             memories.push(memory);
@@ -370,8 +366,6 @@ export class MessageManager {
 
                 let responseMessages = [];
 
-                const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
                 if (!shouldSuppressInitialMessage) {
                     responseMessages = await callback(responseContent);
                 } else {
@@ -382,7 +376,6 @@ export class MessageManager {
                             agentId: this.runtime.agentId,
                             content: responseContent,
                             roomId,
-                            embedding: zeroVector,
                             createdAt: Date.now(),
                         }
                     ]
@@ -404,20 +397,8 @@ export class MessageManager {
                 // For voice channels, use text-to-speech for the error message
                 const errorMessage = "Sorry, I had a glitch. What was that?";
 
-                const speechService = null;
+                const audioStream = await this.runtime.call(ModelClass.TEXT_TO_SPEECH, errorMessage)
 
-                // TODO: fix this
-                // this.runtime.getService<ISpeechService>(
-                //     ServiceType.SPEECH_GENERATION
-                // );
-                if (!speechService) {
-                    throw new Error("Speech generation service not found");
-                }
-
-                const audioStream = await speechService.generate(
-                    this.runtime,
-                    errorMessage
-                );
                 await this.voiceManager.playAudioStream(userId, audioStream);
             } else {
                 // For text channels, send the error message
@@ -482,8 +463,6 @@ export class MessageManager {
             const randomThreshold = this.autoPostConfig.inactivityThreshold +
                 (Math.random() * 1800000 - 900000);
             
-            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
             // Check if we should post
             if ((timeSinceLastMessage > randomThreshold) &&
                 timeSinceLastAutoPost > (this.autoPostConfig.minTimeBetweenPosts || 0)) {
@@ -498,7 +477,6 @@ export class MessageManager {
                         agentId: this.runtime.agentId,
                         roomId,
                         content: { text: "AUTO_POST_ENGAGEMENT", source: "discord" },
-                        embedding: zeroVector,
                         createdAt: Date.now()
                     };
 
@@ -530,7 +508,6 @@ export class MessageManager {
                             url: m.url,
                         },
                         roomId,
-                        embedding: zeroVector,
                         createdAt: m.createdTimestamp,
                     }));
 
@@ -575,8 +552,6 @@ export class MessageManager {
                             const mainChannel = this.client.channels.cache.get(this.autoPostConfig.mainChannelId) as TextChannel;
                             if (!mainChannel) return;
 
-                            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
                             try {
                                 // Create memory and generate response
                                 const roomId = stringToUuid(mainChannel.id + "-" + this.runtime.agentId);
@@ -590,7 +565,6 @@ export class MessageManager {
                                         source: "discord",
                                         metadata: { announcementUrl: message.url }
                                     },
-                                    embedding: zeroVector,
                                     createdAt: Date.now()
                                 };
 
@@ -625,7 +599,6 @@ export class MessageManager {
                                         url: m.url,
                                     },
                                     roomId,
-                                    embedding: zeroVector,
                                     createdAt: m.createdTimestamp,
                                 }));
 
@@ -776,83 +749,6 @@ export class MessageManager {
         return { processedContent, attachments };
     }
 
-    private async _analyzeContextSimilarity(
-        currentMessage: string,
-        previousContext?: MessageContext,
-        agentLastMessage?: string
-    ): Promise<number> {
-        if (!previousContext) return 1; // No previous context to compare against
-
-        // If more than 5 minutes have passed, reduce similarity weight
-        const timeDiff = Date.now() - previousContext.timestamp;
-        const timeWeight = Math.max(0, 1 - timeDiff / (5 * 60 * 1000)); // 5 minutes threshold
-
-        // Calculate content similarity
-        const similarity = cosineSimilarity(
-            currentMessage.toLowerCase(),
-            previousContext.content.toLowerCase(),
-            agentLastMessage?.toLowerCase()
-        );
-
-        // Weight the similarity by time factor
-        const weightedSimilarity = similarity * timeWeight;
-
-        return weightedSimilarity;
-    }
-
-    private async _shouldRespondBasedOnContext(
-        message: DiscordMessage,
-        channelState: InterestChannels[string]
-    ): Promise<boolean> {
-        // Always respond if directly mentioned
-        if (this._isMessageForMe(message)) return true;
-
-        // If we're not the current handler, don't respond
-        if (channelState?.currentHandler !== this.client.user?.id) return false;
-
-        // Check if we have messages to compare
-        if (!channelState.messages?.length) return false;
-
-        // Get last user message (not from the bot)
-        const lastUserMessage = [...channelState.messages].reverse().find(
-            (m, index) =>
-                index > 0 && // Skip first message (current)
-                m.userId !== this.runtime.agentId
-        );
-
-        if (!lastUserMessage) return false;
-
-        const lastSelfMemories = await this.runtime.messageManager.getMemories({
-            roomId: stringToUuid(
-                message.channel.id + "-" + this.runtime.agentId
-            ),
-            unique: false,
-            count: 5,
-        });
-
-        const lastSelfSortedMemories = lastSelfMemories
-            ?.filter((m) => m.userId === this.runtime.agentId)
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-        // Calculate context similarity
-        const contextSimilarity = await this._analyzeContextSimilarity(
-            message.content,
-            {
-                content: lastUserMessage.content.text || "",
-                timestamp: Date.now(),
-            },
-            lastSelfSortedMemories?.[0]?.content?.text
-        );
-
-        const similarityThreshold =
-            this.runtime.character.clientConfig?.discord
-                ?.messageSimilarityThreshold ||
-            channelState.contextSimilarityThreshold ||
-            MESSAGE_CONSTANTS.DEFAULT_SIMILARITY_THRESHOLD;
-
-        return contextSimilarity >= similarityThreshold;
-    }
-
     private _checkInterest(channelId: string): boolean {
         const channelState = this.interestChannels[channelId];
         if (!channelState) return false;
@@ -984,16 +880,6 @@ export class MessageManager {
 
         const channelState = this.interestChannels[message.channelId];
 
-        // Otherwise do context check
-        if (channelState?.previousContext) {
-            const shouldRespondContext =
-                await this._shouldRespondBasedOnContext(message, channelState);
-            if (!shouldRespondContext) {
-                delete this.interestChannels[message.channelId];
-                return false;
-            }
-        }
-
         if (message.mentions.has(this.client.user?.id as string)) return true;
 
         const guild = message.guild;
@@ -1010,10 +896,6 @@ export class MessageManager {
             (nickname &&
                 message.content.toLowerCase().includes(nickname.toLowerCase()))
         ) {
-            return true;
-        }
-
-        if (!message.guild) {
             return true;
         }
 

@@ -259,8 +259,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 "discord"
             );
 
-            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
             // Create memory with retry logic
             const memory = {
                 id: reactionUUID,
@@ -275,7 +273,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 roomId,
                 createdAt: timestamp,
-                embedding: zeroVector,
             };
 
             try {
@@ -352,9 +349,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         );
 
         try {
-
-            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
             // Save the reaction removal as a message
             await this.runtime.messageManager.createMemory({
                 id: reactionUUID, // This is the ID of the reaction removal message
@@ -369,7 +363,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 roomId,
                 createdAt: Date.now(),
-                embedding: zeroVector,
             });
         } catch (error) {
             console.error("Error creating reaction removal message:", error);

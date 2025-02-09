@@ -47,9 +47,15 @@ export async function createRuntime({
 
     const runtime = new AgentRuntime({
         conversationLength,
-        actions: actions ?? [],
-        evaluators: evaluators ?? [],
-        providers: providers ?? [],
+        plugins: [
+            {
+                name: "mockPlugin",
+                description: "This is a mock plugin",
+                actions: actions ?? [],
+                evaluators: evaluators ?? [],
+                providers: providers ?? [],
+            }
+        ],
         databaseAdapter: adapter,
     });
 

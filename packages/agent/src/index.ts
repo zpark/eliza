@@ -343,8 +343,11 @@ export async function initializeClients(
     // const clientTypes = clients.map((c) => c.name);
     // logger.log("initializeClients", clientTypes, "for", character.name);
 
-    if (character.plugins?.length > 0) {
-        for (const plugin of character.plugins) {
+    // load the character plugins dymamically from string
+    const plugins = await handlePluginImporting(character.plugins);
+
+    if (plugins?.length > 0) {
+        for (const plugin of plugins) {
             if (plugin.clients) {
                 for (const client of plugin.clients) {
                     const startedClient = await client.start(runtime);
@@ -356,7 +359,7 @@ export async function initializeClients(
             }
             if (plugin.handlers) {
                 for (const [modelClass, handler] of Object.entries(plugin.handlers)) {
-                    runtime.registerHandler(modelClass as ModelClass, handler);
+                    runtime.registerHandler(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                 }
             }
         }

@@ -15,10 +15,8 @@ import {
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
-    type ITranscriptionService,
     type Memory,
     ModelClass,
-    ServiceType,
     type State,
     type UUID,
     composeContext,
@@ -589,10 +587,7 @@ export class VoiceManager extends EventEmitter {
             const wavBuffer = await this.convertOpusToWav(inputBuffer);
             console.log("Starting transcription...");
 
-            const transcriptionText = await this.runtime
-                .getService<ITranscriptionService>(ServiceType.TRANSCRIPTION)
-                .transcribe(wavBuffer);
-
+            const transcriptionText = await this.runtime.call(ModelClass.TRANSCRIPTION, wavBuffer)
             function isValidTranscription(text: string): boolean {
                 if (!text || text.includes("[BLANK_AUDIO]")) return false;
                 return true;
@@ -661,8 +656,6 @@ export class VoiceManager extends EventEmitter {
                 return null;
             }
 
-            const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
-
             const memory = {
                 id: stringToUuid(channelId + "-voice-message-" + Date.now()),
                 agentId: this.runtime.agentId,
@@ -673,7 +666,6 @@ export class VoiceManager extends EventEmitter {
                 },
                 userId: userIdUUID,
                 roomId,
-                embedding: zeroVector,
                 createdAt: Date.now(),
             };
 
@@ -721,8 +713,6 @@ export class VoiceManager extends EventEmitter {
                 console.log("callback content: ", content);
                 const { roomId } = memory;
 
-                const zeroVector = await this.runtime.call(ModelClass.TEXT_EMBEDDING, content.text);
-
                 const responseMemory: Memory = {
                     id: stringToUuid(
                         memory.id + "-voice-response-" + Date.now()
@@ -735,7 +725,6 @@ export class VoiceManager extends EventEmitter {
                         inReplyTo: memory.id,
                     },
                     roomId,
-                    embedding: zeroVector,
                 };
 
                 if (responseMemory.content.text?.trim()) {
@@ -744,14 +733,7 @@ export class VoiceManager extends EventEmitter {
                     );
                     state = await this.runtime.updateRecentMessageState(state);
 
-                    const responseStream = null;
-
-                    // TODO: fix this
-                    // const responseStream = await this.runtime
-                    //     .getService<ISpeechService>(
-                    //         ServiceType.SPEECH_GENERATION
-                    //     )
-                    //   .generate(this.runtime, content.text);
+                    const responseStream = await this.runtime.call(ModelClass.TEXT_TO_SPEECH, content.text)
 
                     if (responseStream) {
                         await this.playAudioStream(

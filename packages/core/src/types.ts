@@ -669,7 +669,7 @@ export type Character = {
   knowledge?: (string | { path: string; shared?: boolean })[];
 
   /** Available plugins */
-  plugins: Plugin[];
+  plugins?: Plugin[];
 
   /** Optional configuration */
   settings?: {
@@ -1109,47 +1109,11 @@ export type ClientHandler = (
   text: string,
 ) => Promise<void>;
 
-export interface IImageDescriptionService extends Service {
-  describeImage(
-      imageUrl: string,
-  ): Promise<{ title: string; description: string }>;
-}
-
-export interface ITranscriptionService extends Service {
-  transcribeAttachment(audioBuffer: ArrayBuffer): Promise<string | null>;
-  transcribeAttachmentLocally(
-      audioBuffer: ArrayBuffer,
-  ): Promise<string | null>;
-  transcribe(audioBuffer: ArrayBuffer): Promise<string | null>;
-  transcribeLocally(audioBuffer: ArrayBuffer): Promise<string | null>;
-}
-
 export interface IVideoService extends Service {
   isVideoUrl(url: string): boolean;
   fetchVideoInfo(url: string): Promise<Media>;
   downloadVideo(videoInfo: Media): Promise<string>;
   processVideo(url: string, runtime: IAgentRuntime): Promise<Media>;
-}
-
-export interface ITextGenerationService extends Service {
-  initializeModel(): Promise<void>;
-  queueMessageCompletion(
-      context: string,
-      temperature: number,
-      stop: string[],
-      frequency_penalty: number,
-      presence_penalty: number,
-      max_tokens: number,
-  ): Promise<any>;
-  queueTextCompletion(
-      context: string,
-      temperature: number,
-      stop: string[],
-      frequency_penalty: number,
-      presence_penalty: number,
-      max_tokens: number,
-  ): Promise<string>;
-  getEmbeddingResponse(input: string): Promise<number[] | undefined>;
 }
 
 export interface IBrowserService extends Service {
@@ -1160,17 +1124,12 @@ export interface IBrowserService extends Service {
   ): Promise<{ title: string; description: string; bodyContent: string }>;
 }
 
-export interface ISpeechService extends Service {
-  getInstance(): ISpeechService;
-  generate(runtime: IAgentRuntime, text: string): Promise<Readable>;
-}
-
 export interface IPdfService extends Service {
   getInstance(): IPdfService;
   convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
 
-export interface IAwsS3Service extends Service {
+export interface IFileService extends Service {
   uploadFile(
       imagePath: string,
       subDirectory: string,

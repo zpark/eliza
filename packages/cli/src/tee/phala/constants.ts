@@ -39,7 +39,7 @@ services:
     tty: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - eliza:/app/packages/client-twitter/src/tweetcache
+      - eliza:/app/packages/plugin-twitter/src/tweetcache
       - eliza:/app/db.sqlite
     environment:
 {{#each envVars}}      - {{{this}}}

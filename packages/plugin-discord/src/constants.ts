@@ -24,11 +24,6 @@ export const TIMING_CONSTANTS = {
     TEAM_MEMBER_DELAY_MAX: 3000,
 } as const;
 
-export const RESPONSE_CHANCES = {
-    AFTER_LEADER: 0.5, // 50% chance
-    FREQUENT_CHATTER: 0.5, // Base chance for frequent responders
-} as const;
-
 export const LOSE_INTEREST_WORDS = [
     "shut up",
     "stop",

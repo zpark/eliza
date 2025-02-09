@@ -1,6 +1,6 @@
 import {
     type IAgentRuntime,
-    type IAwsS3Service,
+    type IFileService,
     Service,
     ServiceType,
     logger,
@@ -24,7 +24,7 @@ interface JsonUploadResult extends UploadResult {
     key?: string; // Add storage key
 }
 
-export class AwsS3Service extends Service implements IAwsS3Service {
+export class AwsS3Service extends Service implements IFileService {
     static serviceType: ServiceType = ServiceType.REMOTE_FILES;
 
     private s3Client: S3Client | null = null;

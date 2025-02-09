@@ -286,15 +286,12 @@ export class CharacterServer {
                     return;
                 }
 
-                const zeroVector = await runtime.call(ModelClass.TEXT_EMBEDDING, text);
-
                 // save response to memory
                 const responseMessage: Memory = {
                     id: stringToUuid(`${messageId}-${runtime.agentId}`),
                     ...userMessage,
                     userId: runtime.agentId,
                     content: response,
-                    embedding: zeroVector,
                     createdAt: Date.now(),
                 };
 

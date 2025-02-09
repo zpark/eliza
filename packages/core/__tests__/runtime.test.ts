@@ -5,10 +5,8 @@ import {
     type IDatabaseAdapter,
     type IMemoryManager,
     type Memory,
-    ModelClass,
     type UUID
 } from "../src/types";
-import { mockCharacter } from "./mockCharacter";
 
 // Mock dependencies with minimal implementations
 const mockDatabaseAdapter: IDatabaseAdapter = {
@@ -49,11 +47,6 @@ const mockDatabaseAdapter: IDatabaseAdapter = {
     createRelationship: vi.fn().mockResolvedValue(true),
     getRelationship: vi.fn().mockResolvedValue(null),
     getRelationships: vi.fn().mockResolvedValue([]),
-    getKnowledge: vi.fn().mockResolvedValue([]),
-    searchKnowledge: vi.fn().mockResolvedValue([]),
-    createKnowledge: vi.fn().mockResolvedValue(undefined),
-    removeKnowledge: vi.fn().mockResolvedValue(undefined),
-    clearKnowledge: vi.fn().mockResolvedValue(undefined),
 };
 
 const mockCacheManager = {
@@ -93,8 +86,6 @@ describe("AgentRuntime", () => {
                     chat: [],
                     post: []
                 },
-                clients: [],
-                plugins: [],
             },
             databaseAdapter: mockDatabaseAdapter,
             cacheManager: mockCacheManager,
@@ -115,6 +106,7 @@ describe("AgentRuntime", () => {
                 runtime: runtime,
                 tableName: "custom",
                 getMemories: vi.fn(),
+                searchMemories: vi.fn(),
                 getCachedEmbeddings: vi.fn(),
                 getMemoryById: vi.fn(),
                 getMemoriesByRoomIds: vi.fn(),
@@ -176,107 +168,6 @@ describe("AgentRuntime", () => {
     });
 });
 
-describe("Model Provider Configuration", () => {
-    let runtime: AgentRuntime;
-
-    beforeEach(() => {
-        vi.clearAllMocks();
-        runtime = new AgentRuntime({
-            character: {
-                name: "Test Character",
-                username: "test",
-                bio: ["Test bio"],
-                lore: ["Test lore"],
-                messageExamples: [],
-                postExamples: [],
-                topics: [],
-                adjectives: [],
-                style: {
-                    all: [],
-                    chat: [],
-                    post: []
-                },
-                clients: [],
-                plugins: [],
-            },
-            databaseAdapter: mockDatabaseAdapter,
-            cacheManager: mockCacheManager,
-        });
-    });
-
-    describe("Model Provider Initialization", () => {
-        test("should initialize with default values when no specific settings provided", () => {
-            const runtime = new AgentRuntime({
-                character: mockCharacter,
-                databaseAdapter: mockDatabaseAdapter,
-                cacheManager: mockCacheManager,
-            });
-
-            const provider = runtime;
-            expect(provider.models.default).toBeDefined();
-            expect(provider.models.default.name).toBeDefined();
-        });
-
-        test("should handle missing optional model configurations", () => {
-            const provider = runtime;
-            
-            // These might be undefined but shouldn't throw errors
-            expect(() => provider.models[ModelClass.IMAGE_GENERATION]).not.toThrow();
-            expect(() => provider.models[ModelClass.IMAGE_DESCRIPTION]).not.toThrow();
-        });
-
-        test("should validate model provider name format", () => {
-            // Test invalid provider names
-            const invalidProviders = ["invalid@provider", "123provider", "provider!", "provider space"];
-            
-            invalidProviders.forEach(invalidProvider => {
-                expect(() => new AgentRuntime({
-                    character: {
-                        ...mockCharacter,
-                        bio: ["Test bio"], // Ensure bio is an array
-                        lore: ["Test lore"], // Ensure lore is an array
-                        messageExamples: [], // Required by Character type
-                        postExamples: [], // Required by Character type
-                        topics: [], // Required by Character type
-                        adjectives: [], // Required by Character type
-                        style: { // Required by Character type
-                            all: [],
-                            chat: [],
-                            post: []
-                        }
-                    },
-                    databaseAdapter: mockDatabaseAdapter,
-                    cacheManager: mockCacheManager,
-                })).toThrow(/Invalid model provider/);
-            });
-
-            // Test valid provider names
-            const validProviders = [];
-            
-            validProviders.forEach(validProvider => {
-                expect(() => new AgentRuntime({
-                    character: {
-                        ...mockCharacter,
-                        bio: ["Test bio"], // Ensure bio is an array
-                        lore: ["Test lore"], // Ensure lore is an array
-                        messageExamples: [], // Required by Character type
-                        postExamples: [], // Required by Character type
-                        topics: [], // Required by Character type
-                        adjectives: [], // Required by Character type
-                        style: { // Required by Character type
-                            all: [],
-                            chat: [],
-                            post: []
-                        }
-                    },
-                    databaseAdapter: mockDatabaseAdapter,
-                    cacheManager: mockCacheManager,
-                })).not.toThrow();
-            });
-        });
-    });
-});
-
 describe("MemoryManagerService", () => {
     test("should provide access to different memory managers", async () => {
         const runtime = new AgentRuntime({
@@ -301,6 +192,7 @@ describe("MemoryManagerService", () => {
             runtime: runtime,
             tableName: "custom",
             getMemories: vi.fn(),
+            searchMemories: vi.fn(),
             getCachedEmbeddings: vi.fn(),
             getMemoryById: vi.fn(),
             getMemoriesByRoomIds: vi.fn(),
