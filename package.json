@@ -11,7 +11,7 @@
     "build:cli": "turbo run build --filter=./packages/cli && cd packages/cli && bun link",
     "start": "turbo run start --filter=!./packages/docs",
     "agent": "turbo run start --filter=@elizaos/agent",
-    "dev": "turbo run dev --filter=!./packages/docs",
+    "dev": "turbo run dev --filter=!./packages/docs --concurrency=20",
     "release": "bun run build && bun format && npx lerna publish --no-private --force-publish",
     "docker:build": "bash ./scripts/docker.sh build",
     "docker:run": "bash ./scripts/docker.sh run",
