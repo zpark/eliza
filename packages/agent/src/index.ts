@@ -363,8 +363,6 @@ export async function initializeClients(
     }
 
     runtime.clients = clients;
-    
-
 }
 
 export async function createAgent(
@@ -372,16 +370,7 @@ export async function createAgent(
 ): Promise<AgentRuntime> {
     logger.log(`Creating runtime for character ${character.name}`);
     return new AgentRuntime({
-        evaluators: [],
         character,
-        // character.plugins are handled when clients are added
-        plugins: [
-            bootstrapPlugin,
-        ]
-            .flat()
-            .filter(Boolean),
-        providers: [],
-        managers: [],
         fetch: logFetch,
     });
 }

@@ -6,7 +6,6 @@ export * from "./environment.ts";
 export * from "./evaluators.ts";
 export * from "./generation.ts";
 export * from "./goals.ts";
-export * from "./helper.ts";
 export * from "./knowledge.ts";
 export * from "./logger.ts";
 export * from "./memory.ts";

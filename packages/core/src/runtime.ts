@@ -236,6 +236,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly evaluators: Evaluator[] = [];
     readonly providers: Provider[] = [];
     readonly plugins: Plugin[] = [];
+    events: Map<string, ((params: any) => Promise<any>)[]> = new Map();
 
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
@@ -253,11 +254,9 @@ export class AgentRuntime implements IAgentRuntime {
         conversationLength?: number;
         agentId?: UUID;
         character?: Character;
-        serverUrl?: string;
         plugins?: Plugin[];
-        managers?: IMemoryManager[];
-        databaseAdapter?: IDatabaseAdapter;
         fetch?: typeof fetch;
+        databaseAdapter?: IDatabaseAdapter;
         cacheManager?: ICacheManager;
         adapters?: Adapter[];
     }) {
@@ -300,13 +299,6 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
-        
-        // Register additional memory managers from options
-        if (opts.managers) {
-            for (const manager of opts.managers) {
-                this.registerMemoryManager(manager);
-            }
-        }
 
         this.plugins = [
             ...(opts.character?.plugins ?? []),
@@ -324,6 +316,10 @@ export class AgentRuntime implements IAgentRuntime {
 
             for (const provider of (plugin.providers ?? [])) {
                 this.registerContextProvider(provider);
+            }
+
+            for (const manager of (plugin.memoryManagers ?? [])) {
+                this.registerMemoryManager(manager)
             }
         }
 
@@ -1274,8 +1270,6 @@ Text: ${attachment.text}
         }
         return await handler(params);
     }
-
-    events: Map<string, ((params: any) => Promise<any>)[]> = new Map();
 
     registerEvent(event: string, handler: (params: any) => Promise<any>) {
         if (!this.events.has(event)) {

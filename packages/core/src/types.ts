@@ -591,6 +591,9 @@ export type Plugin = {
   /** Optional adapters */
   adapters?: Adapter[];
 
+  /** Optional memory managers */
+  memoryManagers?: IMemoryManager[];
+
   /** Optional handlers */
   handlers?: {
     [key: string]: (...args: any[]) => Promise<any>;
@@ -637,6 +640,11 @@ export type Character = {
   /** Optional prompt templates */
   templates?: {
     [key: string]: TemplateType;
+  };
+
+  /** Optional client configuration */
+  clientConfig?: {
+    [key: string]: any;
   };
 
   /** Character biography */
@@ -966,7 +974,7 @@ export interface IAgentRuntime {
 
   getService<T extends Service>(service: ServiceType): T | null;
 
-  registerService(service: Service): Promise<void>;
+  registerService(service: Service): void;
 
   getSetting(key: string): string | null;
 

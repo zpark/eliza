@@ -1,3 +1,6 @@
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import logger from "./logger.ts";
+
 const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 
 export const messageCompletionFooter = `\nResponse format should be formatted in a valid JSON block like this:
@@ -331,4 +334,25 @@ export function truncateToCompleteSentence(
     // Fallback: Hard truncate and add ellipsis
     const hardTruncated = text.slice(0, maxLength - 3).trim();
     return `${hardTruncated}...`;
+}
+
+export async function splitChunks(
+    content: string,
+    chunkSize = 512,
+    bleed = 20
+): Promise<string[]> {
+    logger.debug("[splitChunks] Starting text split");
+
+    const textSplitter = new RecursiveCharacterTextSplitter({
+        chunkSize: Number(chunkSize),
+        chunkOverlap: Number(bleed),
+    });
+
+    const chunks = await textSplitter.splitText(content);
+    logger.debug("[splitChunks] Split complete:", {
+        numberOfChunks: chunks.length,
+        averageChunkSize: chunks.reduce((acc, chunk) => acc + chunk.length, 0) / chunks.length,
+    });
+
+    return chunks;
 }

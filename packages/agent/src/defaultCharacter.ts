@@ -1,12 +1,20 @@
 import { type Character } from "@elizaos/core";
-import { openaiPlugin } from "@elizaos/plugin-openai";
 import { anthropicPlugin } from "@elizaos/plugin-anthropic";
 import { localAIPlugin } from "@elizaos/plugin-local-ai";
+import { createNodePlugin } from "@elizaos/plugin-node";
+import { openaiPlugin } from "@elizaos/plugin-openai";
+import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
 export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
-  plugins: [],
+  plugins: [
+    openaiPlugin,
+    anthropicPlugin,
+    localAIPlugin,
+    createNodePlugin(),
+    bootstrapPlugin,
+  ],
   settings: {
     secrets: {},
     voice: {

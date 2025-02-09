@@ -19,7 +19,8 @@
     "dependencies": {
         "@elizaos/plugin-bootstrap": "workspace:*",
         "@elizaos/plugin-openai": "workspace:*",
-        "@elizaos-plugins/client-discord": "workspace:*",
+        "@elizaos-plugins/discord": "workspace:*",
+        "@elizaos/plugin-node": "workspace:*",
         "@elizaos/core": "workspace:*",
         "@types/body-parser": "1.19.5",
         "@types/cors": "2.8.17",

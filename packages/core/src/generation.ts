@@ -1,6 +1,6 @@
 // ================ IMPORTS ================
 import { z, type ZodSchema } from "zod";
-import { elizaLogger, logFunctionCall, logger } from "./index.ts";
+import { logger } from "./index.ts";
 import { parseJSONObjectFromText } from "./parsing.ts";
 import {
     type Content,
@@ -108,7 +108,7 @@ export async function trimTokens(
       // Decode back to text - js-tiktoken decode() returns a string directly
       return await runtime.call(ModelClass.TEXT_TOKENIZER_DECODE, truncatedTokens);
   } catch (error) {
-      elizaLogger.error("Error in trimTokens:", error);
+      logger.error("Error in trimTokens:", error);
       // Return truncated string if tokenization fails
       return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
   }
@@ -127,8 +127,6 @@ export async function generateText({
   stopSequences?: string[];
   customSystemPrompt?: string;
 }): Promise<string> {
-  logFunctionCall("generateText", runtime);
-
   const text = await runtime.call(modelClass, {
     runtime,
     context,
@@ -149,8 +147,6 @@ export async function generateTextArray({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<string[]> {
-  logFunctionCall("generateTextArray", runtime);
-
   const result = await withRetry(async () => {
     const result = await generateObject({
       runtime,
@@ -181,8 +177,6 @@ async function generateEnum<T extends string>({
   functionName: string;
   stopSequences?: string[];
 }): Promise<any> {
-  logFunctionCall(functionName, runtime);
-
   const enumResult = await withRetry(async () => {
     logger.debug(
       "Attempting to generate enum value with context:",
@@ -241,8 +235,6 @@ export async function generateTrueOrFalse({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<boolean> {
-  logFunctionCall("generateTrueOrFalse", runtime);
-
   const BOOL_VALUES = ["true", "false"];
 
   const result = await generateEnum({
@@ -264,7 +256,6 @@ export const generateObject = async ({
   modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: GenerateObjectOptions): Promise<any> => {
-  logFunctionCall("generateObject", runtime);
   if (!context) {
     const errorMessage = "generateObject context is empty";
     console.error(errorMessage);
@@ -298,7 +289,6 @@ export async function generateObjectArray({
   schemaName?: string;
   schemaDescription?: string;
 }): Promise<z.infer<typeof schema>[]> {
-  logFunctionCall("generateObjectArray", runtime);
   if (!context) {
     logger.error("generateObjectArray context is empty");
     return [];
@@ -327,8 +317,6 @@ export async function generateMessageResponse({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<Content> {
-  logFunctionCall("generateMessageResponse", runtime);
-
   logger.debug("Context:", context);
 
   return await withRetry(async () => {
@@ -375,8 +363,6 @@ export const generateImage = async (
   data?: string[];
   error?: any;
 }> => {
-  logFunctionCall("generateImage", runtime);
-
   return await withRetry(
     async () => {
       const result = await runtime.call(ModelClass.IMAGE, data);
@@ -400,7 +386,6 @@ export const generateCaption = async (
   title: string;
   description: string;
 }> => {
-  logFunctionCall("generateCaption", runtime);
   const { imageUrl } = data;
   const resp = await runtime.call(ModelClass.IMAGE_DESCRIPTION, imageUrl);
 

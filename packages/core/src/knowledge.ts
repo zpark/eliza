@@ -1,4 +1,4 @@
-import { splitChunks } from "./helper.ts";
+import { splitChunks } from "./parsing.ts";
 import logger from "./logger.ts";
 import type { AgentRuntime } from "./runtime.ts";
 import { type KnowledgeItem, type Memory, ModelClass, type UUID } from "./types.ts";
