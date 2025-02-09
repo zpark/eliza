@@ -1,10 +1,9 @@
-import { z } from "zod";
-import type { Plugin } from "@elizaos/core";
-import { ModelClass, logger } from "@elizaos/core";
+import { ModelClass, Plugin, logger } from "@elizaos/core";
 import { AutoTokenizer } from "@huggingface/transformers";
-import { FlagEmbedding, EmbeddingModel } from "fastembed";
+import { EmbeddingModel, FlagEmbedding } from "fastembed";
 import path from "node:path";
 import { fileURLToPath } from "url";
+import { z } from "zod";
 
 // Configuration schema for the local AI plugin
 const configSchema = z.object({
