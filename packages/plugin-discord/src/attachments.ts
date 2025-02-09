@@ -5,7 +5,7 @@ import {
     type IPdfService,
     type IVideoService,
     type Media,
-    ModelClass,
+    AsyncHandlerType,
     ServiceType,
 } from "@elizaos/core";
 import { type Attachment, Collection } from "discord.js";
@@ -36,7 +36,7 @@ async function generateSummary(
     const response = await generateText({
         runtime,
         context: prompt,
-        modelClass: ModelClass.TEXT_SMALL,
+        handlerType: AsyncHandlerType.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);
@@ -133,7 +133,7 @@ export class AttachmentManager {
                 throw new Error("Unsupported audio/video format");
             }
 
-            const transcription = await this.runtime.call(ModelClass.TRANSCRIPTION, audioBuffer);
+            const transcription = await this.runtime.call(AsyncHandlerType.TRANSCRIPTION, audioBuffer);
             const { title, description } = await generateSummary(
                 this.runtime,
                 transcription

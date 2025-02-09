@@ -1,6 +1,6 @@
 import logger from "./logger.ts";
 import {
-    ModelClass,
+    AsyncHandlerType,
     type IAgentRuntime,
     type IMemoryManager,
     type Memory,
@@ -66,11 +66,11 @@ export class MemoryManager implements IMemoryManager {
 
         try {
             // Generate embedding from text content
-            memory.embedding = await this.runtime.call(ModelClass.TEXT_EMBEDDING, memoryText);
+            memory.embedding = await this.runtime.call(AsyncHandlerType.TEXT_EMBEDDING, memoryText);
         } catch (error) {
             logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
+            memory.embedding = await this.runtime.call(AsyncHandlerType.TEXT_EMBEDDING, null);
         }
 
         return memory;
@@ -185,7 +185,7 @@ export class MemoryManager implements IMemoryManager {
         logger.log("Creating Memory", memory.id, memory.content.text);
 
         if(!memory.embedding){
-            const embedding = await this.runtime.call(ModelClass.TEXT_EMBEDDING, null);
+            const embedding = await this.runtime.call(AsyncHandlerType.TEXT_EMBEDDING, null);
             memory.embedding = embedding;
         }
 

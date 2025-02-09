@@ -8,7 +8,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    AsyncHandlerType,
     type State,
 } from "@elizaos/core";
 
@@ -47,7 +47,7 @@ const getMediaAttachmentId = async (
         const response = await generateText({
             runtime,
             context,
-            modelClass: ModelClass.TEXT_SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
         console.log("response", response);
 

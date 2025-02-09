@@ -6,7 +6,7 @@ import {
     generateMessageResponse,
     generateObject,
     messageCompletionFooter,
-    ModelClass,
+    AsyncHandlerType,
     stringToUuid,
     type Content,
     type Media,
@@ -166,7 +166,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.call(ModelClass.TRANSCRIPTION, {
+                const transcription = await runtime.call(AsyncHandlerType.TRANSCRIPTION, {
                     file: fs.createReadStream(audioFile.path),
                     model: "whisper-1",
                 });
@@ -276,7 +276,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelClass: ModelClass.TEXT_LARGE,
+                    handlerType: AsyncHandlerType.TEXT_LARGE,
                 });
 
                 if (!response) {
@@ -487,7 +487,7 @@ export class CharacterServer {
                 const response = await generateObject({
                     runtime,
                     context,
-                    modelClass: ModelClass.TEXT_SMALL,
+                    handlerType: AsyncHandlerType.TEXT_SMALL,
                     schema: hyperfiOutSchema,
                 });
 
@@ -790,7 +790,7 @@ export class CharacterServer {
                 const response = await generateMessageResponse({
                     runtime: runtime,
                     context,
-                    modelClass: ModelClass.TEXT_LARGE,
+                    handlerType: AsyncHandlerType.TEXT_LARGE,
                 });
 
                 // save response to memory
@@ -823,7 +823,7 @@ export class CharacterServer {
                 // Get the text to convert to speech
                 const textToSpeak = response.text;
 
-                const speechResponse = await runtime.call(ModelClass.TRANSCRIPTION, {
+                const speechResponse = await runtime.call(AsyncHandlerType.TRANSCRIPTION, {
                     text: textToSpeak,
                     runtime,
                 });

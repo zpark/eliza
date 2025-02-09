@@ -9,7 +9,7 @@ import {
     type Memory,
     type State,
     generateText,
-    ModelClass,
+    AsyncHandlerType,
 } from "@elizaos/core";
 import {
     type Channel,
@@ -170,7 +170,7 @@ You should only respond with the name of the voice channel or none, no commentar
             const responseContent = await generateText({
                 runtime,
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
+                handlerType: AsyncHandlerType.TEXT_SMALL,
             });
 
             runtime.databaseAdapter.log({

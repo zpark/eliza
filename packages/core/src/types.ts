@@ -116,7 +116,7 @@ export interface Goal {
 /**
  * Model size/type classification
  */
-export enum ModelClass {
+export enum AsyncHandlerType {
   SMALL = "text_small", // for backwards compatibility
   MEDIUM = "text_large", // for backwards compatibility
   LARGE = "text_large", // for backwards compatibility
@@ -1023,9 +1023,9 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  call<T = any>(modelClass: ModelClass, params: T): Promise<any>;
-  registerHandler(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
-  getHandler(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined;
+  call<T = any>(handlerType: AsyncHandlerType, params: T): Promise<any>;
+  registerHandler(handlerType: AsyncHandlerType, handler: (params: any) => Promise<any>): void;
+  getHandler(handlerType: AsyncHandlerType): ((params: any) => Promise<any>) | undefined;
 }
 
 export enum LoggingLevel {
@@ -1061,18 +1061,18 @@ export interface ChunkRow {
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  handlerType: AsyncHandlerType;
   stopSequences?: string[];
 };
 
 export interface TokenizeTextParams {
   context: string;
-  modelClass: ModelClass;
+  handlerType: AsyncHandlerType;
 }
 
 export interface DetokenizeTextParams {
   tokens: number[];
-  modelClass: ModelClass;
+  handlerType: AsyncHandlerType;
 }
 
 // Inventory

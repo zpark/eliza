@@ -6,7 +6,7 @@ import {
     generateText,
     type IAgentRuntime,
     logger,
-    ModelClass,
+    AsyncHandlerType,
     parseJSONObjectFromText,
     postActionResponseFooter,
     stringToUuid,
@@ -449,7 +449,7 @@ export class TwitterPostClient {
             const response = await generateText({
                 runtime: this.runtime,
                 context,
-                modelClass: ModelClass.SMALL,
+                handlerType: AsyncHandlerType.TEXT_SMALL,
             });
 
             const rawTweetContent = cleanJsonResponse(response);
@@ -556,7 +556,7 @@ export class TwitterPostClient {
         const response = await generateText({
             runtime: this.runtime,
             context: options?.context || context,
-            modelClass: ModelClass.SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
 
         logger.log("generate tweet content response:\n" + response);
@@ -679,7 +679,7 @@ export class TwitterPostClient {
                     const actionResponse = await generateTweetActions({
                         runtime: this.runtime,
                         context: actionContext,
-                        modelClass: ModelClass.SMALL,
+                        handlerType: AsyncHandlerType.TEXT_SMALL,
                     });
 
                     if (!actionResponse) {
@@ -832,7 +832,7 @@ export class TwitterPostClient {
                                 "Processing images in tweet for context"
                             );
                             for (const photo of tweet.photos) {
-                                const description = await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, photo.url);
+                                const description = await this.runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, photo.url);
                                 imageDescriptions.push(description);
                             }
                         }
@@ -1040,7 +1040,7 @@ export class TwitterPostClient {
             if (tweet.photos?.length > 0) {
                 logger.log("Processing images in tweet for context");
                 for (const photo of tweet.photos) {
-                    const description = await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, photo.url)
+                    const description = await this.runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, photo.url)
                     imageDescriptions.push(description);
                 }
             }

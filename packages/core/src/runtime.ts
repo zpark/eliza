@@ -39,7 +39,7 @@ import {
     type IMemoryManager,
     type KnowledgeItem,
     type Memory,
-    ModelClass,
+    AsyncHandlerType,
     type Plugin,
     type Provider,
     type State,
@@ -248,7 +248,7 @@ export class AgentRuntime implements IAgentRuntime {
     private readonly knowledgeRoot: string;
     private readonly memoryManagerService: MemoryManagerService;
 
-    handlers = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
+    handlers = new Map<AsyncHandlerType, ((params: any) => Promise<any>)[]>();
 
     constructor(opts: {
         conversationLength?: number;
@@ -348,8 +348,8 @@ export class AgentRuntime implements IAgentRuntime {
                         }
                     }
                     if (plugin.handlers) {
-                        for (const [modelClass, handler] of Object.entries(plugin.handlers)) {
-                            this.registerHandler(modelClass as ModelClass, handler as (params: any) => Promise<any>);
+                        for (const [handlerType, handler] of Object.entries(plugin.handlers)) {
+                            this.registerHandler(handlerType as AsyncHandlerType, handler as (params: any) => Promise<any>);
                         }
                     }
                     if (plugin.services) {
@@ -588,7 +588,7 @@ export class AgentRuntime implements IAgentRuntime {
         const result = await generateText({
             runtime: this,
             context,
-            modelClass: ModelClass.TEXT_SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
 
         console.log("***** result", result);
@@ -1271,14 +1271,14 @@ Text: ${attachment.text}
         return this.memoryManagerService.getKnowledgeManager();
     }
 
-    registerHandler(handlerType: ModelClass, handler: (params: any) => Promise<any>) {
+    registerHandler(handlerType: AsyncHandlerType, handler: (params: any) => Promise<any>) {
         if (!this.handlers.has(handlerType)) {
             this.handlers.set(handlerType, []);
         }
         this.handlers.get(handlerType)?.push(handler);
     }
 
-    getHandler(handlerType: ModelClass): ((params: any) => Promise<any>) | undefined {
+    getHandler(handlerType: AsyncHandlerType): ((params: any) => Promise<any>) | undefined {
         const handlers = this.handlers.get(handlerType);
         if (!handlers?.length) {
             return undefined;
@@ -1286,7 +1286,7 @@ Text: ${attachment.text}
         return handlers[0];
     }
 
-    async call(handlerType: ModelClass, params: any): Promise<any> {
+    async call(handlerType: AsyncHandlerType, params: any): Promise<any> {
         const handler = this.getHandler(handlerType);
         if (!handler) {
             throw new Error(`No handler found for delegate type: ${handlerType}`);

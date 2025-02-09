@@ -3,7 +3,7 @@ import {
     type IAgentRuntime,
     composeContext,
     generateText,
-    ModelClass,
+    AsyncHandlerType,
     type TwitterSpaceDecisionOptions,
     State,
 } from "@elizaos/core";
@@ -47,7 +47,7 @@ Only return the text, no additional formatting.
         const output = await generateText({
             runtime,
             context,
-            modelClass: ModelClass.SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
         return output.trim();
     } catch (err) {
@@ -99,7 +99,7 @@ Example:
         const response = await generateText({
             runtime,
             context,
-            modelClass: ModelClass.SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
         const topics = response
             .split(",")

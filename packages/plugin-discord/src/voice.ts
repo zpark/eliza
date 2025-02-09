@@ -16,7 +16,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    AsyncHandlerType,
     type State,
     type UUID,
     composeContext,
@@ -587,7 +587,7 @@ export class VoiceManager extends EventEmitter {
             const wavBuffer = await this.convertOpusToWav(inputBuffer);
             console.log("Starting transcription...");
 
-            const transcriptionText = await this.runtime.call(ModelClass.TRANSCRIPTION, wavBuffer)
+            const transcriptionText = await this.runtime.call(AsyncHandlerType.TRANSCRIPTION, wavBuffer)
             function isValidTranscription(text: string): boolean {
                 if (!text || text.includes("[BLANK_AUDIO]")) return false;
                 return true;
@@ -733,7 +733,7 @@ export class VoiceManager extends EventEmitter {
                     );
                     state = await this.runtime.updateRecentMessageState(state);
 
-                    const responseStream = await this.runtime.call(ModelClass.TEXT_TO_SPEECH, content.text)
+                    const responseStream = await this.runtime.call(AsyncHandlerType.TEXT_TO_SPEECH, content.text)
 
                     if (responseStream) {
                         await this.playAudioStream(
@@ -834,7 +834,7 @@ export class VoiceManager extends EventEmitter {
         const response = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
-            modelClass: ModelClass.TEXT_SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
 
         if (response === "RESPOND") {
@@ -862,7 +862,7 @@ export class VoiceManager extends EventEmitter {
         const response = await generateMessageResponse({
             runtime: this.runtime,
             context,
-            modelClass: ModelClass.TEXT_SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
 
         response.source = "discord";

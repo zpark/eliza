@@ -1,6 +1,6 @@
 import {
     logger,
-    ModelClass,
+    AsyncHandlerType,
     stringToUuid,
     type Character,
     type Client as ElizaClient,

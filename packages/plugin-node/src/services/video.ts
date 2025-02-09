@@ -6,7 +6,7 @@ import {
     ServiceType,
     stringToUuid,
     logger,
-    ModelClass,
+    AsyncHandlerType,
 } from "@elizaos/core";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
@@ -339,7 +339,7 @@ export class VideoService extends Service implements IVideoService {
 
         logger.log("Starting transcription...");
         const startTime = Date.now();
-        const transcript = await runtime.call(ModelClass.TRANSCRIPTION, audioBuffer);
+        const transcript = await runtime.call(AsyncHandlerType.TRANSCRIPTION, audioBuffer);
 
         const endTime = Date.now();
         logger.log(

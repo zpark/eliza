@@ -1,6 +1,6 @@
 import {
     composeContext, type Content, generateMessageResponse, generateText, type HandlerCallback,
-    type IAgentRuntime, logger, messageCompletionFooter, ModelClass, type State, stringToUuid
+    type IAgentRuntime, logger, messageCompletionFooter, AsyncHandlerType, type State, stringToUuid
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import { SearchMode } from "./client";
@@ -135,7 +135,7 @@ export class TwitterSearchClient {
             const mostInterestingTweetResponse = await generateText({
                 runtime: this.runtime,
                 context: prompt,
-                modelClass: ModelClass.SMALL,
+                handlerType: AsyncHandlerType.TEXT_SMALL,
             });
 
             const tweetId = mostInterestingTweetResponse.trim();
@@ -219,7 +219,7 @@ export class TwitterSearchClient {
             // Generate image descriptions using GPT-4 vision API
             const imageDescriptions = [];
             for (const photo of selectedTweet.photos) {
-                const description = await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, photo.url)
+                const description = await this.runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, photo.url)
                 imageDescriptions.push(description);
             }
 
@@ -249,7 +249,7 @@ export class TwitterSearchClient {
             const responseContent = await generateMessageResponse({
                 runtime: this.runtime,
                 context,
-                modelClass: ModelClass.LARGE,
+                handlerType: AsyncHandlerType.TEXT_LARGE,
             });
 
             responseContent.inReplyTo = message.id;

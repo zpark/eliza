@@ -9,7 +9,7 @@ import {
     type IAgentRuntime,
     type Media,
     type Memory,
-    ModelClass,
+    AsyncHandlerType,
     type State,
     stringToUuid,
     type UUID,
@@ -453,7 +453,7 @@ export class MessageManager {
 
             if (imageUrl) {
                 const { title, description } =
-                    await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, imageUrl)
+                    await this.runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, imageUrl)
                 return { description: `[Image: ${title}\n${description}]` };
             }
         } catch (error) {
@@ -505,7 +505,7 @@ export class MessageManager {
             const response = await generateShouldRespond({
                 runtime: this.runtime,
                 context: shouldRespondContext,
-                modelClass: ModelClass.SMALL,
+                handlerType: AsyncHandlerType.TEXT_SMALL,
             });
 
             return response === "RESPOND";
@@ -669,7 +669,7 @@ export class MessageManager {
         const response = await generateMessageResponse({
             runtime: this.runtime,
             context,
-            modelClass: ModelClass.LARGE,
+            handlerType: AsyncHandlerType.TEXT_LARGE,
         });
 
         if (!response) {

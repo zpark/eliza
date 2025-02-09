@@ -9,7 +9,7 @@ import {
     type IAgentRuntime,
     type IVideoService,
     type Memory,
-    ModelClass,
+    AsyncHandlerType,
     ServiceType,
     type State,
 } from "@elizaos/core";
@@ -47,7 +47,7 @@ const getMediaUrl = async (
         const response = await generateText({
             runtime,
             context,
-            modelClass: ModelClass.TEXT_SMALL,
+            handlerType: AsyncHandlerType.TEXT_SMALL,
         });
 
         const parsedResponse = parseJSONObjectFromText(response) as {
