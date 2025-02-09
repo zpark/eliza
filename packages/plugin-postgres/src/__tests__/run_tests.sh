@@ -65,7 +65,7 @@ echo -e "${GREEN}Schema loaded successfully!${NC}"
 
 # Run the tests
 echo -e "${YELLOW}Running tests...${NC}"
-if ! pnpm vitest vector-extension.test.ts; then
+if ! bun run vitest vector-extension.test.ts; then
     echo -e "${RED}Tests failed!${NC}"
     $DOCKER_COMPOSE_CMD -f docker-compose.test.yml down
     exit 1
