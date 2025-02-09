@@ -416,11 +416,8 @@ export class MessageManager {
 
         return (
             isReplyToBot ||
-            isMentioned ||
-            (!this.runtime.character.clientConfig?.telegram
-                ?.shouldRespondOnlyToMentions &&
-                hasUsername)
-        );
+            isMentioned
+        )
     }
 
     private _checkInterest(chatId: string): boolean {
@@ -456,9 +453,7 @@ export class MessageManager {
 
             if (imageUrl) {
                 const { title, description } =
-                    await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, {
-                        imageUrl
-                    })
+                    await this.runtime.call(ModelClass.IMAGE_DESCRIPTION, imageUrl)
                 return { description: `[Image: ${title}\n${description}]` };
             }
         } catch (error) {
@@ -473,13 +468,6 @@ export class MessageManager {
         message: Message,
         state: State
     ): Promise<boolean> {
-        if (
-            this.runtime.character.clientConfig?.telegram
-                ?.shouldRespondOnlyToMentions
-        ) {
-            return this._isMessageForMe(message);
-        }
-
         // Respond if bot is mentioned
         if (
             "text" in message &&

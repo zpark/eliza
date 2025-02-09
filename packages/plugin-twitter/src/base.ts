@@ -134,7 +134,7 @@ export class ClientBase extends EventEmitter {
   /**
    * Parse the raw tweet data into a standardized Tweet object.
    */
-  private parseTweet(raw: any, depth = 0, maxDepth = 3): Tweet {
+  parseTweet(raw: any, depth = 0, maxDepth = 3): Tweet {
     // If we've reached maxDepth, don't parse nested quotes/retweets further
     const canRecurse = depth < maxDepth;
 

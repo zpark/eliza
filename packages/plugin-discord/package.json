@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos-plugins/discord",
+    "name": "@elizaos/plugin-discord",
     "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",
@@ -37,6 +37,10 @@
         "dev": "tsup --format esm --dts --watch",
         "test": "vitest run"
     },
+    "trustedDependencies": [
+        "@discordjs/opus",
+        "@discordjs/voice"
+    ],
     "peerDependencies": {
         "whatwg-url": "7.1.0"
     },

@@ -4,11 +4,9 @@ export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
   plugins: [
-    "@elizaos/plugin-node",
-    "@elizaos/plugin-bootstrap",
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
-    "@elizaos/plugin-local-ai",
+    "@elizaos/plugin-discord",
   ],
   settings: {
     secrets: {},

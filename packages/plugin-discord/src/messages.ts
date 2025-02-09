@@ -89,7 +89,6 @@ export class MessageManager {
     }
 
     async handleMessage(message: DiscordMessage) {
-
         if (this.runtime.character.clientConfig?.discord?.allowedChannelIds &&
             !this.runtime.character.clientConfig.discord.allowedChannelIds.includes(message.channelId)) {
             return;
@@ -112,16 +111,6 @@ export class MessageManager {
             message.author?.bot
         ) {
             return;
-        }
-
-        // Check for mentions-only mode setting
-        if (
-            this.runtime.character.clientConfig?.discord
-                ?.shouldRespondOnlyToMentions
-        ) {
-            if (!this._isMessageForMe(message)) {
-                return;
-            }
         }
 
         if (
@@ -626,35 +615,6 @@ export class MessageManager {
         }
     }
 
-    private _isMessageForMe(message: DiscordMessage): boolean {
-        const isMentioned = message.mentions.users?.has(
-            this.client.user?.id as string
-        );
-        const guild = message.guild;
-        const member = guild?.members.cache.get(this.client.user?.id as string);
-        const nickname = member?.nickname;
-
-        return (
-            isMentioned ||
-            (!this.runtime.character.clientConfig?.discord
-                ?.shouldRespondOnlyToMentions &&
-                (message.content
-                    .toLowerCase()
-                    .includes(
-                        this.client.user?.username.toLowerCase() as string
-                    ) ||
-                    message.content
-                        .toLowerCase()
-                        .includes(
-                            this.client.user?.tag.toLowerCase() as string
-                        ) ||
-                    (nickname &&
-                        message.content
-                            .toLowerCase()
-                            .includes(nickname.toLowerCase()))))
-        );
-    }
-
     async processMessageMedia(
         message: DiscordMessage
     ): Promise<{ processedContent: string; attachments: Media[] }> {
@@ -778,14 +738,6 @@ export class MessageManager {
         // if the message is from us, ignore
         if (message.author.id === this.client.user?.id) return true;
 
-        // Honor mentions-only mode
-        if (
-            this.runtime.character.clientConfig?.discord
-                ?.shouldRespondOnlyToMentions
-        ) {
-            return !this._isMessageForMe(message);
-        }
-
         let messageContent = message.content.toLowerCase();
 
         // Replace the bot's @ping with the character name
@@ -869,14 +821,6 @@ export class MessageManager {
     ): Promise<boolean> {
         if (message.author.id === this.client.user?.id) return false;
         // if (message.author.bot) return false;
-
-        // Honor mentions-only mode
-        if (
-            this.runtime.character.clientConfig?.discord
-                ?.shouldRespondOnlyToMentions
-        ) {
-            return this._isMessageForMe(message);
-        }
 
         const channelState = this.interestChannels[message.channelId];
 

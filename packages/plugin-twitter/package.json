@@ -19,7 +19,6 @@
         "dist"
     ],
     "dependencies": {
-        "discord.js": "14.16.3",
         "glob": "11.0.0",
         "@roamhq/wrtc": "^0.8.0",
         "@sinclair/typebox": "^0.32.20",

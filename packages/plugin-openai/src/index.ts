@@ -218,26 +218,51 @@ export const openaiPlugin: Plugin = {
       const typedData = data as { data: { url: string }[] };
       return typedData.data;
     },
-    [ModelClass.IMAGE_DESCRIPTION]: async (params: { imageUrl: string }) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrl: string) => {
+      console.log("IMAGE_DESCRIPTION")
       const baseURL =
         process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        console.log("baseURL", baseURL)
       const openai = createOpenAI({
         apiKey: process.env.OPENAI_API_KEY,
         baseURL,
       });
-      const prompt = `Provide a detailed description of the image found at this URL: ${params.imageUrl}`;
-      const { text: description } = await aiGenerateText({
+      
+      const { text } = await aiGenerateText({
         model: openai.languageModel(
           process.env.OPENAI_SMALL_MODEL ?? "gpt-4o-mini"
         ),
-        prompt,
+        messages: [
+          {
+            role: "system",
+            content: "Provide a title and brief description of the image. Structure this as XML with the following syntax:\n<title>{{title}}</title>\n<description>{{description}}</description>\nReplacing the handlerbars with the actual text"
+          },
+          {
+            role: "user",
+            content: [{
+              type: "image" as "image",
+              image: imageUrl
+            }]
+          }
+        ],
         temperature: 0.7,
-        maxTokens: 256,
+        maxTokens: 1024,
         frequencyPenalty: 0,
         presencePenalty: 0,
         stopSequences: [],
       });
-      return description;
+      
+      const titleMatch = text.match(/<title>(.*?)<\/title>/);
+      const descriptionMatch = text.match(/<description>(.*?)<\/description>/);
+
+      if (!titleMatch || !descriptionMatch) {
+        throw new Error("Could not parse title or description from response");
+      }
+
+      return {
+        title: titleMatch[1],
+        description: descriptionMatch[1]
+      };
     },
     [ModelClass.TRANSCRIPTION]: async (params: {
       audioFile: any;

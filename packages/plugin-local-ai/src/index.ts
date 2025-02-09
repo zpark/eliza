@@ -209,7 +209,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Image description using local Florence model
-    [ModelClass.IMAGE_DESCRIPTION]: async ({ imageUrl, runtime }) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrl) => {
       try {
         
         // TODO: Add florence
