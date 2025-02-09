@@ -9,8 +9,11 @@ const agent = process.env.https_proxy
 
 export async function getRegistryIndex(): Promise<Registry> {
   try {
+    console.log("REGISTRY_URL", REGISTRY_URL)
     const response = await fetch(REGISTRY_URL, { agent })
+    console.log("repsonse", response);
     const result = await response.json()
+    console.log("result", result)
     return registrySchema.parse(result)
   } catch (error: any) {
     throw new Error(`Failed to fetch plugins from registry: ${error.message}`)

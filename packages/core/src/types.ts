@@ -135,8 +135,6 @@ export enum ModelClass {
   VIDEO = "video",
 }
 
-export type AsyncEventHandler = ModelClass | string;
-
 export enum ServiceType {
   TRANSCRIPTION = "transcription",
   VIDEO = "video",
@@ -669,7 +667,7 @@ export type Character = {
   knowledge?: (string | { path: string; shared?: boolean })[];
 
   /** Available plugins */
-  plugins?: Plugin[];
+  plugins?: string[];
 
   /** Optional configuration */
   settings?: {
@@ -945,7 +943,7 @@ export interface IAgentRuntime {
   // Properties
   agentId: UUID;
   databaseAdapter: IDatabaseAdapter;
-
+  adapters: Adapter[];
   character: Character;
   providers: Provider[];
   actions: Action[];

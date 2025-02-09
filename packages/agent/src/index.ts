@@ -1,22 +1,23 @@
+// dotenv
+import dotenv from "dotenv";
+dotenv.config({ path: "../../.env" });
+
 import {
     type Adapter,
     AgentRuntime,
     CacheManager,
     CacheStore,
     type Character,
-    type ClientInstance,
     DbCacheAdapter,
     type IAgentRuntime,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
     logger,
-    ModelClass,
     parseBooleanFromText,
     settings,
     stringToUuid,
     validateCharacterConfig
 } from "@elizaos/core";
-import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -24,10 +25,6 @@ import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./defaultCharacter.ts";
 import { CharacterServer } from "./server";
-
-// dotenv
-import dotenv from "dotenv";
-dotenv.config({ path: "../../.env" });
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -38,7 +35,7 @@ export const wait = (minTime = 1000, maxTime = 3000) => {
     return new Promise((resolve) => setTimeout(resolve, waitTime));
 };
 
-const logFetch = async (url: string, options: any) => {
+export const logFetch = async (url: string, options: any) => {
     logger.debug(`Fetching ${url}`);
     // Disabled to avoid disclosure of sensitive information such as API keys
     // logger.debug(JSON.stringify(options, null, 2));
@@ -67,14 +64,15 @@ export function parseArguments(): {
     }
 }
 
-function tryLoadFile(filePath: string): string | null {
+export function tryLoadFile(filePath: string): string | null {
     try {
         return fs.readFileSync(filePath, "utf8");
     } catch (e) {
         return null;
     }
 }
-function mergeCharacters(base: Character, child: Character): Character {
+
+export function mergeCharacters(base: Character, child: Character): Character {
     const mergeObjects = (baseObj: any, childObj: any) => {
         const result: any = {};
         const keys = new Set([
@@ -106,7 +104,6 @@ function mergeCharacters(base: Character, child: Character): Character {
     };
     return mergeObjects(base, child);
 }
-
 
 async function loadCharactersFromUrl(url: string): Promise<Character[]> {
     try {
@@ -154,7 +151,6 @@ async function jsonToCharacter(
         };
     }
     // Handle plugins
-    character.plugins = await handlePluginImporting(character.plugins);
     if (character.extends) {
         logger.info(
             `Merging  ${character.name} character with parent characters`
@@ -304,73 +300,9 @@ export async function loadCharacters(
     return loadedCharacters;
 }
 
-async function handlePluginImporting(plugins: string[]) {
-    if (plugins.length > 0) {
-        logger.info("Plugins are: ", plugins);
-        const importedPlugins = await Promise.all(
-            plugins.map(async (plugin) => {
-                try {
-                    const importedPlugin = await import(plugin);
-                    const functionName =
-                        `${plugin
-                            .replace("@elizaos/plugin-", "")
-                            .replace(/-./g, (x) => x[1].toUpperCase())}Plugin`; // Assumes plugin function is camelCased with Plugin suffix
-                    return (
-                        importedPlugin.default || importedPlugin[functionName]
-                    );
-                } catch (importError) {
-                    logger.error(
-                        `Failed to import plugin: ${plugin}`,
-                        importError
-                    );
-                    return []; // Return null for failed imports
-                }
-            })
-        );
-        return importedPlugins;
-    }
-        return [];
-}
-
-// also adds plugins from character file into the runtime
-export async function initializeClients(
-    character: Character,
-    runtime: IAgentRuntime
-) {
-    // each client can only register once
-    // and if we want two we can explicitly support it
-    const clients: ClientInstance[] = [];
-    // const clientTypes = clients.map((c) => c.name);
-    // logger.log("initializeClients", clientTypes, "for", character.name);
-
-    // load the character plugins dymamically from string
-    const plugins = await handlePluginImporting(character.plugins);
-
-    if (plugins?.length > 0) {
-        for (const plugin of plugins) {
-            if (plugin.clients) {
-                for (const client of plugin.clients) {
-                    const startedClient = await client.start(runtime);
-                    logger.debug(
-                        `Initializing client: ${client.name}`
-                    );
-                    clients.push(startedClient);
-                }
-            }
-            if (plugin.handlers) {
-                for (const [modelClass, handler] of Object.entries(plugin.handlers)) {
-                    runtime.registerHandler(modelClass as ModelClass, handler as (params: any) => Promise<any>);
-                }
-            }
-        }
-    }
-
-    runtime.clients = clients;
-}
-
 export async function createAgent(
     character: Character,
-): Promise<AgentRuntime> {
+): Promise<IAgentRuntime> {
     logger.log(`Creating runtime for character ${character.name}`);
     return new AgentRuntime({
         character,
@@ -411,7 +343,7 @@ function initializeCache(
     }
 }
 
-async function findDatabaseAdapter(runtime: AgentRuntime) {
+async function findDatabaseAdapter(runtime: IAgentRuntime) {
   const { adapters } = runtime;
   let adapter: Adapter | undefined;
   // if not found, default to sqlite
@@ -434,13 +366,13 @@ async function findDatabaseAdapter(runtime: AgentRuntime) {
 async function startAgent(
     character: Character,
     characterServer: CharacterServer
-): Promise<AgentRuntime> {
+): Promise<IAgentRuntime> {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
     try {
         character.id ??= stringToUuid(character.name);
         character.username ??= character.name;
 
-        const runtime: AgentRuntime = await createAgent(
+        const runtime: IAgentRuntime = await createAgent(
             character
         );
 
@@ -460,9 +392,6 @@ async function startAgent(
 
         // start services/plugins/process knowledge
         await runtime.initialize();
-
-        // start assigned clients
-        await initializeClients(character, runtime);
 
         // add to container
         characterServer.registerAgent(runtime);
@@ -538,11 +467,7 @@ const startAgents = async () => {
     // upload some agent functionality into characterServer
     // XXX TODO: is this still used?
     characterServer.startAgent = async (character) => {
-        throw new Error('not implemented');
-
-        // Handle plugins
-        character.plugins = await handlePluginImporting(character.plugins);
-
+        logger.info(`Starting agent for character ${character.name}`);
         // wrap it so we don't have to inject characterServer later
         return startAgent(character, characterServer);
     };

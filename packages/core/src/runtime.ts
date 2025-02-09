@@ -15,7 +15,7 @@ import {
 } from "./evaluators.ts";
 import { generateText } from "./generation.ts";
 import { formatGoalsAsString, getGoals } from "./goals.ts";
-import { logger } from "./index.ts";
+import { handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
 import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
@@ -299,13 +299,9 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
+        const plugins = opts?.plugins ?? [];
 
-        this.plugins = [
-            ...(opts.character?.plugins ?? []),
-            ...(opts.plugins ?? []),
-        ];
-
-        for (const plugin of this.plugins) {
+        for (const plugin of plugins) {
             for (const action of (plugin.actions ?? [])) {
                 this.registerAction(action);
             }
@@ -323,11 +319,40 @@ export class AgentRuntime implements IAgentRuntime {
             }
         }
 
+        this.plugins = plugins;
+
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
     }
 
     async initialize() {
+        // load the character plugins dymamically from string
+        if(this.character.plugins){
+            const plugins = await handlePluginImporting(this.character.plugins);
+            if (plugins?.length > 0) {
+                for (const plugin of plugins) {
+                    if(!plugin) {
+                        continue;
+                    }
+                    if (plugin.clients) {
+                        for (const client of plugin.clients) {
+                            const startedClient = await client.start(this);
+                            logger.debug(
+                                `Initializing client: ${client.name}`
+                            );
+                            this.clients.push(startedClient);
+                        }
+                    }
+                    if (plugin.handlers) {
+                        for (const [modelClass, handler] of Object.entries(plugin.handlers)) {
+                            this.registerHandler(modelClass as ModelClass, handler as (params: any) => Promise<any>);
+                        }
+                    }
+                    this.plugins.push(plugin);
+                }
+            }
+        }
+        
         await this.ensureRoomExists(this.agentId);
         await this.ensureUserExists(
             this.agentId,
@@ -617,8 +642,7 @@ export class AgentRuntime implements IAgentRuntime {
                 id: userId,
                 name: name || this.character.name || "Unknown User",
                 username: userName || this.character.username || "Unknown",
-                email: email || this.character.email || userId, // Temporary
-                details: this.character || { summary: "" },
+                email: email || this.character.email || userId,
             });
             logger.success(`User ${userName} created successfully.`);
         }

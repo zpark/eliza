@@ -99,20 +99,13 @@ export class SqliteDatabaseAdapter
         const sql = "SELECT * FROM accounts WHERE id = ?";
         const account = this.db.prepare(sql).get(userId) as Account;
         if (!account) return null;
-        if (account) {
-            if (typeof account.details === "string") {
-                account.details = JSON.parse(
-                    account.details as unknown as string
-                );
-            }
-        }
         return account;
     }
 
     async createAccount(account: Account): Promise<boolean> {
         try {
             const sql =
-                "INSERT INTO accounts (id, name, username, email, avatarUrl, details) VALUES (?, ?, ?, ?, ?, ?)";
+                "INSERT INTO accounts (id, name, username, email, avatarUrl) VALUES (?, ?, ?, ?, ?)";
             this.db
                 .prepare(sql)
                 .run(
@@ -120,8 +113,7 @@ export class SqliteDatabaseAdapter
                     account.name,
                     account.username,
                     account.email,
-                    account.avatarUrl,
-                    JSON.stringify(account.details)
+                    account.avatarUrl
                 );
             return true;
         } catch (error) {
@@ -132,7 +124,7 @@ export class SqliteDatabaseAdapter
 
     async getActorDetails(params: { roomId: UUID }): Promise<Actor[]> {
         const sql = `
-      SELECT a.id, a.name, a.username, a.details
+      SELECT a.id, a.name, a.username
       FROM participants p
       LEFT JOIN accounts a ON p.userId = a.id
       WHERE p.roomId = ?

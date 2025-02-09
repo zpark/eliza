@@ -6,6 +6,9 @@ export const defaultCharacter: Character = {
   plugins: [
     "@elizaos/plugin-node",
     "@elizaos/plugin-bootstrap",
+    "@elizaos/plugin-anthropic",
+    "@elizaos/plugin-openai",
+    "@elizaos/plugin-local-ai",
   ],
   settings: {
     secrets: {},
@@ -531,15 +534,3 @@ export const defaultCharacter: Character = {
   ],
   extends: [],
 };
-
-if (process.env.ANTHROPIC_API_KEY) {
-  defaultCharacter.plugins.push("@elizaos/plugin-anthropic");
-}
-
-if (process.env.OPENAI_API_KEY) {
-    defaultCharacter.plugins.push("@elizaos/plugin-openai");
-  }
-
-if(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_API_KEY) {
-  defaultCharacter.plugins.push("@elizaos/plugin-local-ai");
-}

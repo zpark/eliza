@@ -99,8 +99,11 @@ export const openaiPlugin: Plugin = {
           input: text,
         }),
       });
+      if (!response.ok) {
+        throw new Error(`Failed to get embedding: ${response.statusText}`);
+      }
 
-      const data = await response.json();
+      const data = await response.json() as { data: [{ embedding: number[] }] };
       return data.data[0].embedding;
     },
     [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({
@@ -212,7 +215,8 @@ export const openaiPlugin: Plugin = {
         throw new Error(`Failed to generate image: ${response.statusText}`);
       }
       const data = await response.json();
-      return data.data; // Typically an array of image URLs/data
+      const typedData = data as { data: { url: string }[] };
+      return typedData.data;
     },
     [ModelClass.IMAGE_DESCRIPTION]: async (params: { imageUrl: string }) => {
       const baseURL =
@@ -258,7 +262,7 @@ export const openaiPlugin: Plugin = {
       if (!response.ok) {
         throw new Error(`Failed to transcribe audio: ${response.statusText}`);
       }
-      const data = await response.json();
+      const data = await response.json() as { text: string };
       return data.text;
     },
   },
