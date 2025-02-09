@@ -317,6 +317,10 @@ export class AgentRuntime implements IAgentRuntime {
             for (const manager of (plugin.memoryManagers ?? [])) {
                 this.registerMemoryManager(manager)
             }
+
+            for(const service of plugin.services){
+                this.registerService(service);
+            }
         }
 
         this.plugins = plugins;
@@ -328,7 +332,7 @@ export class AgentRuntime implements IAgentRuntime {
     async initialize() {
         // load the character plugins dymamically from string
         if(this.character.plugins){
-            const plugins = await handlePluginImporting(this.character.plugins);
+            const plugins = await handlePluginImporting(this.character.plugins) as Plugin[];
             if (plugins?.length > 0) {
                 for (const plugin of plugins) {
                     if(!plugin) {
@@ -348,8 +352,19 @@ export class AgentRuntime implements IAgentRuntime {
                             this.registerHandler(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                         }
                     }
+                    if (plugin.services) {
+                        for(const service of plugin.services){
+                            this.services.set(service.serviceType, service);
+                        }
+                    }
                     this.plugins.push(plugin);
                 }
+            }
+        }
+
+        if (this.services) {
+            for(const [_, service] of this.services.entries()) {
+                await service.initialize(this);
             }
         }
         
@@ -360,22 +375,6 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.name,
         );
         await this.ensureParticipantExists(this.agentId, this.agentId);
-
-        for (const [serviceType, service] of this.services.entries()) {
-            try {
-                await service.initialize(this);
-                this.services.set(serviceType, service);
-                logger.success(
-                    `${this.character.name}(${this.agentId}) - Service ${serviceType} initialized successfully`
-                );
-            } catch (error) {
-                logger.error(
-                    `${this.character.name}(${this.agentId}) - Failed to initialize service ${serviceType}:`,
-                    error
-                );
-                throw error;
-            }
-        }
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {
             // Non-RAG mode: only process string knowledge

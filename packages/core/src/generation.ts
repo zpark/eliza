@@ -91,11 +91,15 @@ export async function trimTokens(
   maxTokens: number,
   runtime: IAgentRuntime
 ) {
-  if (!context) return "";
+  if (!context) throw new Error("Trim tokens received a null context");
+  
+  // if context is less than of maxtokens / 5, skip
+  if (context.length < (maxTokens / 5)) return context;
+
   if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
   try {
-      const tokens = await runtime.call(ModelClass.TEXT_TOKENIZER_ENCODE, context);
+      const tokens = await runtime.call(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
 
       // If already within limits, return unchanged
       if (tokens.length <= maxTokens) {
@@ -106,7 +110,7 @@ export async function trimTokens(
       const truncatedTokens = tokens.slice(-maxTokens);
 
       // Decode back to text - js-tiktoken decode() returns a string directly
-      return await runtime.call(ModelClass.TEXT_TOKENIZER_DECODE, truncatedTokens);
+      return await runtime.call(ModelClass.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
   } catch (error) {
       logger.error("Error in trimTokens:", error);
       // Return truncated string if tokenization fails

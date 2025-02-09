@@ -108,15 +108,15 @@ export const openaiPlugin: Plugin = {
     },
     [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({
       context,
-      modelClass,
+      modelClass = ModelClass.TEXT_LARGE,
     }: TokenizeTextParams) => {
-      return tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
+      return await tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
     },
     [ModelClass.TEXT_TOKENIZER_DECODE]: async ({
       tokens,
-      modelClass,
+      modelClass = ModelClass.TEXT_LARGE,
     }: DetokenizeTextParams) => {
-      return detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
+      return await detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
     },
     [ModelClass.TEXT_SMALL]: async ({
       runtime,

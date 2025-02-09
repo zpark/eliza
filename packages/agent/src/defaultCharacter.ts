@@ -7,6 +7,7 @@ export const defaultCharacter: Character = {
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
+    "@elizaos/plugin-node"
   ],
   settings: {
     secrets: {},
