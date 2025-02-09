@@ -3,6 +3,7 @@
         "outDir": "dist",
         "rootDir": "src",
         "lib": ["ESNext", "dom"],
+        "target": "ESNext",
         "module": "Preserve",
         "moduleResolution": "Bundler",
         "strict": false,
