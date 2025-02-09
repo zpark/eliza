@@ -212,43 +212,6 @@ export class DrizzleDatabaseAdapter
         }
     }
 
-    private async setEmbeddingProviderSettings(): Promise<void> {
-        const embeddingConfig = getEmbeddingConfig();
-        const providers = ["openai", "ollama", "gaianet"] as const;
-
-        try {
-            await this.db.transaction(async (tx) => {
-                for (const provider of providers) {
-                    const query = sql.raw(
-                        `SET app.use_${provider}_embedding = 'false'`
-                    );
-                    await tx.execute(query);
-                }
-
-                if (
-                    Object.values(EmbeddingProvider).includes(
-                        embeddingConfig.provider
-                    )
-                ) {
-                    const providerName = embeddingConfig.provider.toLowerCase();
-                    const query = sql.raw(
-                        `SET app.use_${providerName}_embedding = 'true'`
-                    );
-                    await tx.execute(query);
-                }
-            });
-        } catch (error) {
-            elizaLogger.error(
-                "Failed to configure database embedding provider settings:",
-                {
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                }
-            );
-            throw error;
-        }
-    }
-
     private async validateVectorSetup(): Promise<boolean> {
         try {
             const vectorExt = await this.db.execute(sql`
@@ -271,7 +234,8 @@ export class DrizzleDatabaseAdapter
 
     async init(): Promise<void> {
         try {
-            await this.setEmbeddingProviderSettings();
+            // TODO: Get the null embedding from provider, if no provider is set for embeddings, throw an error
+            // Store the embedding dimension on this class so we can use elsewhere
 
             const { rows } = await this.db.execute(sql`
                 SELECT EXISTS (
