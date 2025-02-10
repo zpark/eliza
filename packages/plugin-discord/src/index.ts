@@ -1,6 +1,7 @@
 import {
     logger,
     stringToUuid,
+    TestSuite,
     type Character,
     type Client as ElizaClient,
     type IAgentRuntime,
@@ -391,6 +392,19 @@ const DiscordClientInterface: ElizaClient = {
     start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
 };
 
+const testSuite: TestSuite = {
+    name: "discord",
+    tests: [
+        {
+            name: "discord",
+            fn: async (runtime: IAgentRuntime) => {
+                const discordClient = new DiscordClient(runtime);
+                console.log("Created a discord client");
+            }
+        }
+    ]
+};
+
 const discordPlugin: Plugin = {
     name: "discord",
     description: "Discord client plugin",
@@ -407,6 +421,9 @@ const discordPlugin: Plugin = {
     providers: [
         channelStateProvider,
         voiceStateProvider,
+    ],
+    tests: [
+        testSuite,
     ]
 };
 export default discordPlugin;

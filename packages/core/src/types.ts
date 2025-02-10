@@ -1105,10 +1105,9 @@ export interface IFileService extends Service {
   generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
-// types.ts or in core package
 export interface TestCase {
   name: string;
-  fn: () => Promise<void> | void;
+  fn: (runtime: IAgentRuntime) => Promise<void> | void;
 }
 
 export interface TestSuite {

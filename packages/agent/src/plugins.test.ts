@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '../../.env' });
 
+import type { IDatabaseAdapter, IDatabaseCacheAdapter, TestCase } from "@elizaos/core";
 import {
     AgentRuntime,
     CacheManager,
@@ -8,12 +9,11 @@ import {
     logger,
     stringToUuid,
     TestSuite,
-    type IAgentRuntime,
-    type IDatabaseAdapter,
-    type IDatabaseCacheAdapter
+    type IAgentRuntime
 } from "@elizaos/core";
 import { afterAll, beforeAll, describe, it } from 'vitest';
-import { defaultCharacter } from "./defaultCharacter";
+import { defaultCharacter } from './defaultCharacter';
+
 
 let runtime: IAgentRuntime;
 let db: IDatabaseAdapter & IDatabaseCacheAdapter;
@@ -121,7 +121,7 @@ describe('Plugin Tests', async () => {
                         const startTime = performance.now();
 
                         try {
-                            await test.fn();
+                            await test.fn(runtime);
                             stats.passed++;
                             const duration = performance.now() - startTime;
                             logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
@@ -145,5 +145,93 @@ describe('Plugin Tests', async () => {
         logger.info(`Passed: ${stats.passed}`);
         logger.info(`Failed: ${stats.failed}`);
         logger.info(`Skipped: ${stats.skipped}`);
+    });
+});
+interface TestStats {
+    total: number;
+    passed: number;
+    failed: number;
+    skipped: number;
+}
+
+class TestRunner {
+    private runtime: IAgentRuntime;
+    private stats: TestStats;
+
+    constructor(runtime: IAgentRuntime) {
+        this.runtime = runtime;
+        this.stats = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            skipped: 0
+        };
+    }
+
+    private async runTestCase(test: TestCase): Promise<void> {
+        const startTime = performance.now();
+        try {
+            await test.fn(this.runtime);
+            this.stats.passed++;
+            const duration = performance.now() - startTime;
+            logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
+        } catch (error) {
+            this.stats.failed++;
+            logger.error(`✗ ${test.name}`);
+            logger.error(error);
+            throw error;
+        }
+    }
+
+    private async runTestSuite(suite: TestSuite): Promise<void> {
+        logger.info(`\nTest suite: ${suite.name}`);
+        for (const test of suite.tests) {
+            this.stats.total++;
+            await this.runTestCase(test);
+        }
+    }
+
+    public async runPluginTests(): Promise<TestStats> {
+        const plugins = this.runtime.plugins;
+
+        for (const plugin of plugins) {
+            if (!plugin.tests) {
+                logger.info(`Plugin ${plugin.name} has no tests`);
+                continue;
+            }
+
+            try {
+                logger.info(`Running tests for plugin: ${plugin.name}`);
+                const pluginTests = plugin.tests;
+                // Handle both single suite and array of suites
+                const testSuites = Array.isArray(pluginTests) ? pluginTests : [pluginTests];
+
+                for (const suite of testSuites) {
+                    await this.runTestSuite(suite);
+                }
+            } catch (error) {
+                logger.error(`Error in plugin ${plugin.name}:`, error);
+                throw error;
+            }
+        }
+
+        this.logTestSummary();
+        return this.stats;
+    }
+
+    private logTestSummary(): void {
+        logger.info('\nTest Summary:');
+        logger.info(`Total: ${this.stats.total}`);
+        logger.info(`Passed: ${this.stats.passed}`);
+        logger.info(`Failed: ${this.stats.failed}`);
+        logger.info(`Skipped: ${this.stats.skipped}`);
+    }
+}
+
+// Main test suite that runs all plugin tests
+describe('Plugin Tests', () => {
+    it('should run all plugin tests', async () => {
+        const testRunner = new TestRunner(runtime);
+        await testRunner.runPluginTests();
     });
 });
