@@ -101,7 +101,7 @@
 - feat: add docs for story plugin [\#1672](https://github.com/elizaOS/eliza/pull/1672) ([chandiniv1](https://github.com/chandiniv1))
 - fix: 1668  fix twitter image link [\#1671](https://github.com/elizaOS/eliza/pull/1671) ([nusk0](https://github.com/nusk0))
 - fix: 1634  fix image description service [\#1667](https://github.com/elizaOS/eliza/pull/1667) ([nusk0](https://github.com/nusk0))
-- fix: Separated imageModelProvider and imageVisionModelProvider for ImageDescriptioServices [\#1664](https://github.com/elizaOS/eliza/pull/1664) ([denizekiz](https://github.com/denizekiz))
+- fix: Separated imageModelProvider and imageVisionModelProvider for ImageDescriptionServices [\#1664](https://github.com/elizaOS/eliza/pull/1664) ([denizekiz](https://github.com/denizekiz))
 - fix: Update Supabase schema.sql [\#1660](https://github.com/elizaOS/eliza/pull/1660) ([0xRider](https://github.com/0xRider))
 - fix: Fix bug in plugin-bootstrap/src/evaluators/facts.ts [\#1648](https://github.com/elizaOS/eliza/pull/1648) ([metakai1](https://github.com/metakai1))
 - Added Hungarian README [\#1645](https://github.com/elizaOS/eliza/pull/1645) ([mdominikd](https://github.com/mdominikd))
