@@ -1,11 +1,11 @@
 import {
-    type AgentRuntime,
     type Character,
-    logger,
     getEnvVariable,
+    IAgentRuntime,
+    logger,
     type UUID,
     validateCharacterConfig,
-    validateUuid,
+    validateUuid
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -46,7 +46,7 @@ function validateUUIDParams(
 }
 
 export function createApiRouter(
-    agents: Map<string, AgentRuntime>,
+    agents: Map<string, IAgentRuntime>,
     directClient: CharacterServer
 ): express.Router {
     const router = express.Router();
@@ -117,7 +117,7 @@ export function createApiRouter(
         };
         if (!agentId) return;
 
-        const agent: AgentRuntime = agents.get(agentId);
+        const agent: IAgentRuntime = agents.get(agentId);
 
         if (agent) {
             agent.stop();
@@ -134,7 +134,7 @@ export function createApiRouter(
         };
         if (!agentId) return;
 
-        let agent: AgentRuntime = agents.get(agentId);
+        let agent: IAgentRuntime = agents.get(agentId);
 
         // update character
         if (agent) {
@@ -338,7 +338,7 @@ export function createApiRouter(
     router.post("/agents/:agentId/stop", async (req, res) => {
         const agentId = req.params.agentId;
         console.log("agentId", agentId);
-        const agent: AgentRuntime = agents.get(agentId);
+        const agent: IAgentRuntime = agents.get(agentId);
 
         // update character
         if (agent) {

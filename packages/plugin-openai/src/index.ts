@@ -264,18 +264,13 @@ export const openaiPlugin: Plugin = {
         description: descriptionMatch[1]
       };
     },
-    [AsyncHandlerType.TRANSCRIPTION]: async (params: {
-      audioFile: any;
-      language?: string;
-    }) => {
+    [AsyncHandlerType.TRANSCRIPTION]: async (audioBuffer: Buffer) => {
+      console.log("audioBuffer", audioBuffer)
       const baseURL =
         process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
       const formData = new FormData();
-      formData.append("file", params.audioFile);
+      formData.append("file", new Blob([audioBuffer], { type: "audio/mp3" }));
       formData.append("model", "whisper-1");
-      if (params.language) {
-        formData.append("language", params.language);
-      }
       const response = await fetch(`${baseURL}/audio/transcriptions`, {
         method: "POST",
         headers: {

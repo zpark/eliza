@@ -18,15 +18,7 @@ import {
     type User,
 } from "discord.js";
 import { EventEmitter } from "events";
-import chat_with_attachments from "./actions/chat_with_attachments.ts";
-import download_media from "./actions/download_media.ts";
-import joinvoice from "./actions/joinvoice.ts";
-import leavevoice from "./actions/leavevoice.ts";
-import summarize from "./actions/summarize_conversation.ts";
-import transcribe_media from "./actions/transcribe_media.ts";
 import { MessageManager } from "./messages.ts";
-import channelStateProvider from "./providers/channelState.ts";
-import voiceStateProvider from "./providers/voiceState.ts";
 import { VoiceManager } from "./voice.ts";
 import { IDiscordClient } from "./types.ts";
 
@@ -69,16 +61,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         this.client.login(this.apiToken);
 
         this.setupEventListeners();
-
-        this.runtime.registerAction(joinvoice);
-        this.runtime.registerAction(leavevoice);
-        this.runtime.registerAction(summarize);
-        this.runtime.registerAction(chat_with_attachments);
-        this.runtime.registerAction(transcribe_media);
-        this.runtime.registerAction(download_media);
-
-        this.runtime.providers.push(channelStateProvider);
-        this.runtime.providers.push(voiceStateProvider);
     }
 
     private setupEventListeners() {

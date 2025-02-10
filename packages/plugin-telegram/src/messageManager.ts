@@ -1,15 +1,15 @@
 import {
+    AsyncHandlerType,
     composeContext,
     composeRandomUser,
     type Content,
-    logger,
     generateMessageResponse,
     generateShouldRespond,
     type HandlerCallback,
     type IAgentRuntime,
+    logger,
     type Media,
     type Memory,
-    AsyncHandlerType,
     type State,
     stringToUuid,
     type UUID,
@@ -17,10 +17,8 @@ import {
 import type { Message } from "@telegraf/types";
 import type { Context, Telegraf } from "telegraf";
 import {
-    telegramAutoPostTemplate,
     telegramMessageHandlerTemplate,
-    telegramPinnedMessageTemplate,
-    telegramShouldRespondTemplate,
+    telegramShouldRespondTemplate
 } from "./templates";
 import { escapeMarkdown } from "./utils";
 
@@ -41,16 +39,6 @@ interface MessageContext {
     timestamp: number;
 }
 
-interface AutoPostConfig {
-    enabled: boolean;
-    monitorTime: number;
-    inactivityThreshold: number; // milliseconds
-    mainChannelId: string;
-    pinnedMessagesGroups: string[]; // Instead of announcementChannelIds
-    lastAutoPost?: number;
-    minTimeBetweenPosts?: number;
-}
-
 export type InterestChats = {
     [key: string]: {
         currentHandler: string | undefined;
@@ -67,7 +55,6 @@ export class MessageManager {
     private interestChats: InterestChats = {};
     private teamMemberUsernames: Map<string, string> = new Map();
 
-    private autoPostConfig: AutoPostConfig;
     private lastChannelActivity: { [channelId: string]: number } = {};
     private autoPostInterval: NodeJS.Timeout;
 
@@ -81,31 +68,6 @@ export class MessageManager {
                 error
             )
         );
-
-        this.autoPostConfig = {
-            enabled:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.enabled || false,
-            monitorTime:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.monitorTime || 300000,
-            inactivityThreshold:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.inactivityThreshold || 3600000,
-            mainChannelId:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.mainChannelId,
-            pinnedMessagesGroups:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.pinnedMessagesGroups || [],
-            minTimeBetweenPosts:
-                this.runtime.character.clientConfig?.telegram?.autoPost
-                    ?.minTimeBetweenPosts || 7200000,
-        };
-
-        if (this.autoPostConfig.enabled) {
-            this._startAutoPostMonitoring();
-        }
     }
 
     private async _initializeTeamMemberUsernames(): Promise<void> {
@@ -131,299 +93,6 @@ export class MessageManager {
                 );
             }
         }
-    }
-
-    private _startAutoPostMonitoring(): void {
-        // Wait for bot to be ready
-        if (this.bot.botInfo) {
-            logger.info(
-                "[AutoPost Telegram] Bot ready, starting monitoring"
-            );
-            this._initializeAutoPost();
-        } else {
-            logger.info(
-                "[AutoPost Telegram] Bot not ready, waiting for ready event"
-            );
-            this.bot.telegram.getMe().then(() => {
-                logger.info(
-                    "[AutoPost Telegram] Bot ready, starting monitoring"
-                );
-                this._initializeAutoPost();
-            });
-        }
-    }
-
-    private _initializeAutoPost(): void {
-        // Give the bot a moment to fully initialize
-        setTimeout(() => {
-            // Monitor with random intervals between 2-6 hours
-            // Monitor with random intervals between 2-6 hours
-            this.autoPostInterval = setInterval(() => {
-                this._checkChannelActivity();
-            }, Math.floor(Math.random() * (4 * 60 * 60 * 1000) + 2 * 60 * 60 * 1000));
-        }, 5000);
-    }
-
-    private async _checkChannelActivity(): Promise<void> {
-        if (!this.autoPostConfig.enabled || !this.autoPostConfig.mainChannelId)
-            return;
-
-        try {
-            // Get last message time
-            const now = Date.now();
-            const lastActivityTime =
-                this.lastChannelActivity[this.autoPostConfig.mainChannelId] ||
-                0;
-            const timeSinceLastMessage = now - lastActivityTime;
-            const timeSinceLastAutoPost =
-                now - (this.autoPostConfig.lastAutoPost || 0);
-
-            // Add some randomness to the inactivity threshold (±30 minutes)
-            const randomThreshold =
-                this.autoPostConfig.inactivityThreshold +
-                (Math.random() * 1800000 - 900000);
-
-            // Check if we should post
-            if (
-                timeSinceLastMessage > randomThreshold &&
-                timeSinceLastAutoPost >
-                    (this.autoPostConfig.minTimeBetweenPosts || 0)
-            ) {
-                try {
-                    const roomId = stringToUuid(
-                        this.autoPostConfig.mainChannelId +
-                            "-" +
-                            this.runtime.agentId
-                    );
-                    const memory = {
-                        id: stringToUuid(`autopost-${Date.now()}`),
-                        userId: this.runtime.agentId,
-                        agentId: this.runtime.agentId,
-                        roomId,
-                        content: {
-                            text: "AUTO_POST_ENGAGEMENT",
-                            source: "telegram",
-                        },
-                        createdAt: Date.now(),
-                    };
-
-                    let state = await this.runtime.composeState(memory, {
-                        telegramBot: this.bot,
-                        agentName: this.runtime.character.name,
-                    });
-
-                    const context = composeContext({
-                        state,
-                        template:
-                            this.runtime.character.templates
-                                ?.telegramAutoPostTemplate ||
-                            telegramAutoPostTemplate,
-                    });
-
-                    const responseContent = await this._generateResponse(
-                        memory,
-                        state,
-                        context
-                    );
-                    if (!responseContent?.text) return;
-
-                    console.log(
-                        `[Auto Post Telegram] Recent Messages: ${responseContent}`
-                    );
-
-                    // Send message directly using telegram bot
-                    const messages = await Promise.all(
-                        this.splitMessage(responseContent.text.trim()).map(
-                            (chunk) =>
-                                this.bot.telegram.sendMessage(
-                                    this.autoPostConfig.mainChannelId,
-                                    chunk
-                                )
-                        )
-                    );
-
-                    // Create and store memories
-                    const memories = messages.map((m) => ({
-                        id: stringToUuid(
-                            roomId + "-" + m.message_id.toString()
-                        ),
-                        userId: this.runtime.agentId,
-                        agentId: this.runtime.agentId,
-                        content: {
-                            ...responseContent,
-                            text: m.text,
-                        },
-                        roomId,
-                        createdAt: m.date * 1000,
-                    }));
-
-                    for (const m of memories) {
-                        await this.runtime.messageManager.createMemory(m);
-                    }
-
-                    this.autoPostConfig.lastAutoPost = Date.now();
-                    state = await this.runtime.updateRecentMessageState(state);
-                    await this.runtime.evaluate(memory, state, true);
-                } catch (error) {
-                    logger.warn("[AutoPost Telegram] Error:", error);
-                }
-            } else {
-                logger.warn(
-                    "[AutoPost Telegram] Activity within threshold. Not posting."
-                );
-            }
-        } catch (error) {
-            logger.warn(
-                "[AutoPost Telegram] Error checking channel activity:",
-                error
-            );
-        }
-    }
-
-    private async _monitorPinnedMessages(ctx: Context): Promise<void> {
-        if (!this.autoPostConfig.pinnedMessagesGroups.length) {
-            logger.warn(
-                "[AutoPost Telegram] Auto post config no pinned message groups"
-            );
-            return;
-        }
-
-        if (!ctx.message || !("pinned_message" in ctx.message)) {
-            return;
-        }
-
-        const pinnedMessage = ctx.message.pinned_message;
-        if (!pinnedMessage) return;
-
-        if (
-            !this.autoPostConfig.pinnedMessagesGroups.includes(
-                ctx.chat.id.toString()
-            )
-        )
-            return;
-
-        const mainChannel = this.autoPostConfig.mainChannelId;
-        if (!mainChannel) return;
-
-        try {
-            logger.info(
-                `[AutoPost Telegram] Processing pinned message in group ${ctx.chat.id}`
-            );
-
-            // Explicitly type and handle message content
-            const messageContent: string =
-                "text" in pinnedMessage &&
-                typeof pinnedMessage.text === "string"
-                    ? pinnedMessage.text
-                    : "caption" in pinnedMessage &&
-                      typeof pinnedMessage.caption === "string"
-                    ? pinnedMessage.caption
-                    : "New pinned message";
-
-            const roomId = stringToUuid(
-                mainChannel + "-" + this.runtime.agentId
-            );
-            const memory = {
-                id: stringToUuid(`pinned-${Date.now()}`),
-                userId: this.runtime.agentId,
-                agentId: this.runtime.agentId,
-                roomId,
-                content: {
-                    text: messageContent,
-                    source: "telegram",
-                    metadata: {
-                        messageId: pinnedMessage.message_id,
-                        pinnedMessageData: pinnedMessage,
-                    },
-                },
-                createdAt: Date.now(),
-            };
-
-            let state = await this.runtime.composeState(memory, {
-                telegramBot: this.bot,
-                pinnedMessageContent: messageContent,
-                pinnedGroupId: ctx.chat.id.toString(),
-                agentName: this.runtime.character.name,
-            });
-
-            const context = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates
-                        ?.telegramPinnedMessageTemplate ||
-                    telegramPinnedMessageTemplate,
-            });
-
-            const responseContent = await this._generateResponse(
-                memory,
-                state,
-                context
-            );
-            if (!responseContent?.text) return;
-
-            // Send message using telegram bot
-            const messages = await Promise.all(
-                this.splitMessage(responseContent.text.trim()).map((chunk) =>
-                    this.bot.telegram.sendMessage(mainChannel, chunk)
-                )
-            );
-
-            const memories = messages.map((m) => ({
-                id: stringToUuid(roomId + "-" + m.message_id.toString()),
-                userId: this.runtime.agentId,
-                agentId: this.runtime.agentId,
-                content: {
-                    ...responseContent,
-                    text: m.text,
-                },
-                roomId,
-                createdAt: m.date * 1000,
-            }));
-
-            for (const m of memories) {
-                await this.runtime.messageManager.createMemory(m);
-            }
-
-            state = await this.runtime.updateRecentMessageState(state);
-            await this.runtime.evaluate(memory, state, true);
-        } catch (error) {
-            logger.warn(
-                `[AutoPost Telegram] Error processing pinned message:`,
-                error
-            );
-        }
-    }
-
-    private _isMessageForMe(message: Message): boolean {
-        const botUsername = this.bot.botInfo?.username;
-        if (!botUsername) return false;
-
-        const messageText =
-            "text" in message
-                ? message.text
-                : "caption" in message
-                ? message.caption
-                : "";
-        if (!messageText) return false;
-
-        const isReplyToBot =
-            (message as any).reply_to_message?.from?.is_bot === true &&
-            (message as any).reply_to_message?.from?.username === botUsername;
-        const isMentioned = messageText.includes(`@${botUsername}`);
-        const hasUsername = messageText
-            .toLowerCase()
-            .includes(botUsername.toLowerCase());
-
-        return (
-            isReplyToBot ||
-            isMentioned
-        )
-    }
-
-    private _checkInterest(chatId: string): boolean {
-        const chatState = this.interestChats[chatId];
-        if (!chatState) return false;
-        return true;
     }
 
     // Process image messages and generate descriptions
@@ -694,17 +363,6 @@ export class MessageManager {
         }
 
         this.lastChannelActivity[ctx.chat.id.toString()] = Date.now();
-
-        // Check for pinned message and route to monitor function
-        if (
-            this.autoPostConfig.enabled &&
-            ctx.message &&
-            "pinned_message" in ctx.message
-        ) {
-            // We know this is a message update context now
-            await this._monitorPinnedMessages(ctx);
-            return;
-        }
 
         if (
             this.runtime.character.clientConfig?.telegram

@@ -166,10 +166,7 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.call(AsyncHandlerType.TRANSCRIPTION, {
-                    file: fs.createReadStream(audioFile.path),
-                    model: "whisper-1",
-                });
+                const transcription = await runtime.call(AsyncHandlerType.TRANSCRIPTION, fs.createReadStream(audioFile.path));
 
                 res.json(transcription);
             }
@@ -823,10 +820,7 @@ export class CharacterServer {
                 // Get the text to convert to speech
                 const textToSpeak = response.text;
 
-                const speechResponse = await runtime.call(AsyncHandlerType.TRANSCRIPTION, {
-                    text: textToSpeak,
-                    runtime,
-                });
+                const speechResponse = await runtime.call(AsyncHandlerType.TEXT_TO_SPEECH, textToSpeak);
 
                 if (!speechResponse.ok) {
                     throw new Error(

@@ -12,7 +12,23 @@ import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import { tmpdir } from "os";
 import path from "path";
-import youtubeDl from "youtube-dl-exec";
+import ytdl, {create} from "youtube-dl-exec";
+
+function getYoutubeDL() {
+    // first check if /usr/local/bin/yt-dlp exists
+    if (fs.existsSync('/usr/local/bin/yt-dlp')) {
+        return create('/usr/local/bin/yt-dlp');
+    }
+
+    // if not, check if /usr/bin/yt-dlp exists
+    if (fs.existsSync('/usr/bin/yt-dlp')) {
+        return create('/usr/bin/yt-dlp');
+    }
+
+    // use default otherwise
+    return ytdl;
+}
+
 
 export class VideoService extends Service implements IVideoService {
     static serviceType: ServiceType = ServiceType.VIDEO;
@@ -57,7 +73,7 @@ export class VideoService extends Service implements IVideoService {
         }
 
         try {
-            await youtubeDl(url, {
+            await getYoutubeDL()(url, {
                 verbose: true,
                 output: outputFile,
                 writeInfoJson: true,
@@ -79,7 +95,7 @@ export class VideoService extends Service implements IVideoService {
         }
 
         try {
-            await youtubeDl(videoInfo.webpage_url, {
+            await getYoutubeDL()(videoInfo.webpage_url, {
                 verbose: true,
                 output: outputFile,
                 format: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
@@ -178,6 +194,7 @@ export class VideoService extends Service implements IVideoService {
     }
 
     async fetchVideoInfo(url: string): Promise<any> {
+        console.log("url", url)
         if (url.endsWith(".mp4") || url.includes(".mp4?")) {
             try {
                 const response = await fetch(url);
@@ -196,7 +213,7 @@ export class VideoService extends Service implements IVideoService {
         }
 
         try {
-            const result = await youtubeDl(url, {
+            const result = await getYoutubeDL()(url, {
                 dumpJson: true,
                 verbose: true,
                 callHome: false,
@@ -312,9 +329,28 @@ export class VideoService extends Service implements IVideoService {
         runtime: IAgentRuntime
     ): Promise<string> {
         logger.log("Preparing audio for transcription...");
+
+        // Check if ffmpeg exists in PATH
+        try {
+            await new Promise((resolve, reject) => {
+                ffmpeg.getAvailableCodecs((err, _codecs) => {
+                    if (err) reject(err);
+                    resolve(null);
+                });
+            });
+        } catch (error) {
+            logger.log("FFmpeg not found:", error);
+            return null;
+        }
+
         const mp4FilePath = path.join(
             this.dataDir,
             `${this.getVideoId(url)}.mp4`
+        );
+
+        const webmFilePath = path.join(
+            this.dataDir,
+            `${this.getVideoId(url)}.webm`
         );
 
         const mp3FilePath = path.join(
@@ -323,7 +359,10 @@ export class VideoService extends Service implements IVideoService {
         );
 
         if (!fs.existsSync(mp3FilePath)) {
-            if (fs.existsSync(mp4FilePath)) {
+            if(fs.existsSync(webmFilePath)) {
+                logger.log("WEBM file found. Converting to MP3...");
+                await this.convertWebmToMp3(webmFilePath, mp3FilePath);
+            } else if (fs.existsSync(mp4FilePath)) {
                 logger.log("MP4 file found. Converting to MP3...");
                 await this.convertMp4ToMp3(mp4FilePath, mp3FilePath);
             } else {
@@ -351,6 +390,27 @@ export class VideoService extends Service implements IVideoService {
     }
 
     private async convertMp4ToMp3(
+        inputPath: string,
+        outputPath: string
+    ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            ffmpeg(inputPath)
+                .output(outputPath)
+                .noVideo()
+                .audioCodec("libmp3lame")
+                .on("end", () => {
+                    logger.log("Conversion to MP3 complete");
+                    resolve();
+                })
+                .on("error", (err) => {
+                    logger.log("Error converting to MP3:", err);
+                    reject(err);
+                })
+                .run();
+        });
+    }
+
+    private async convertWebmToMp3(
         inputPath: string,
         outputPath: string
     ): Promise<void> {
@@ -412,7 +472,7 @@ export class VideoService extends Service implements IVideoService {
                 logger.log(
                     "YouTube video detected, downloading audio with youtube-dl"
                 );
-                await youtubeDl(url, {
+                await getYoutubeDL()(url, {
                     verbose: true,
                     extractAudio: true,
                     audioFormat: "mp3",

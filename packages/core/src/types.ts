@@ -1,5 +1,3 @@
-import type { Readable } from "stream";
-
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -1026,6 +1024,8 @@ export interface IAgentRuntime {
   call<T = any>(handlerType: AsyncHandlerType, params: T): Promise<any>;
   registerHandler(handlerType: AsyncHandlerType, handler: (params: any) => Promise<any>): void;
   getHandler(handlerType: AsyncHandlerType): ((params: any) => Promise<any>) | undefined;
+
+  stop(): Promise<void>;
 }
 
 export enum LoggingLevel {
