@@ -26,6 +26,7 @@ import transcribe_media from "./actions/transcribe_media.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
+import reply from "./actions/reply.ts";
 import { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
@@ -395,6 +396,7 @@ const discordPlugin: Plugin = {
     description: "Discord client plugin",
     clients: [DiscordClientInterface],
     actions: [
+        reply,
         chat_with_attachments,
         download_media,
         joinvoice,

@@ -1,4 +1,4 @@
-import { SearchMode, type Tweet } from "./client";
+import { SearchMode, type Tweet } from "./client/index.ts";
 import {
     composeContext,
     generateMessageResponse,
@@ -485,16 +485,8 @@ export class TwitterInteractionClient {
                         );
                         return memories;
                     };
-
-                    const action = this.runtime.actions.find((a) => a.name === response.action);
-                    const shouldSuppressInitialMessage = action?.suppressInitialMessage;
-
-                    let responseMessages = [];
-
-                    if (!shouldSuppressInitialMessage) {
-                        responseMessages = await callback(response);
-                    } else {
-                        responseMessages = [{
+                    
+                    const responseMessages = [{
                             id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
                             userId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
@@ -502,7 +494,6 @@ export class TwitterInteractionClient {
                             roomId: message.roomId,
                             createdAt: Date.now(),
                         }];
-                    }
 
                     state = (await this.runtime.updateRecentMessageState(
                         state

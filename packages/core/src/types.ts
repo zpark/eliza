@@ -332,7 +332,8 @@ export type Handler = (
   message: Memory,
   state?: State,
   options?: { [key: string]: unknown },
-  callback?: HandlerCallback
+  callback?: HandlerCallback,
+  responses?: Memory[],
 ) => Promise<unknown>;
 
 /**
@@ -357,13 +358,13 @@ export type Validator = (
  */
 export interface Action {
   /** Similar action descriptions */
-  similes: string[];
+  similes?: string[];
 
   /** Detailed description */
   description: string;
 
   /** Example usages */
-  examples: ActionExample[][];
+  examples?: ActionExample[][];
 
   /** Handler function */
   handler: Handler;
@@ -373,9 +374,6 @@ export interface Action {
 
   /** Validation function */
   validate: Validator;
-
-  /** Whether to suppress the initial message when this action is used */
-  suppressInitialMessage?: boolean;
 }
 
 /**
@@ -595,13 +593,13 @@ export type Plugin = {
     [key: string]: (...args: any[]) => Promise<any>;
   };
 
-  /** Optional inventory providers */
-  inventoryProviders?: InventoryProvider[];
-
   /** Optional events */
   events?: {
     [key: string]: ((params: any) => Promise<any>)[]
   };
+
+  /** Optional tests */
+  tests?: TestSuite[];
 };
 
 export interface ModelConfiguration {
@@ -956,8 +954,6 @@ export interface IAgentRuntime {
   knowledgeManager: IMemoryManager;
   loreManager: IMemoryManager;
 
-  inventoryProviders?: InventoryProvider[];
-
   cacheManager: ICacheManager;
 
   clients: ClientInstance[];
@@ -1023,7 +1019,7 @@ export interface IAgentRuntime {
 
   useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
   registerModel(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
-  getModel(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined;
+  getModel(modelClass: ModelClass): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
 
   stop(): Promise<void>;
 }
@@ -1075,38 +1071,6 @@ export interface DetokenizeTextParams {
   modelClass: ModelClass;
 }
 
-// Inventory
-
-export type InventoryItem = {
-  name: string
-  ticker: string
-  address: string
-  description: string
-  quantity: number
-}
-
-export type InventoryAction = {
-  name: string
-  description: string
-  parameters: any
-  handler: (runtime: IAgentRuntime, params: any, callback?: HandlerCallback) => Promise<any>;
-}
-
-export type InventoryProvider = {
-  name: string
-  description: string
-  providers: (runtime: IAgentRuntime, params: any) => Promise<InventoryItem[]>
-  actions: InventoryAction[]
-}
-
-// WIP
-export type ClientHandler = (
-  client: Client,
-  roomId: UUID,
-  user: Account,
-  text: string,
-) => Promise<void>;
-
 export interface IVideoService extends Service {
   isVideoUrl(url: string): boolean;
   fetchVideoInfo(url: string): Promise<Media>;
@@ -1139,4 +1103,15 @@ export interface IFileService extends Service {
       error?: string;
   }>;
   generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
+}
+
+// types.ts or in core package
+export interface TestCase {
+  name: string;
+  fn: () => Promise<void> | void;
+}
+
+export interface TestSuite {
+  name: string;
+  tests: TestCase[];
 }

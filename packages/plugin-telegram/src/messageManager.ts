@@ -60,38 +60,6 @@ export class MessageManager {
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;
         this.runtime = runtime;
-
-        this._initializeTeamMemberUsernames().catch((error) =>
-            logger.error(
-                "Error initializing team member usernames:",
-                error
-            )
-        );
-    }
-
-    private async _initializeTeamMemberUsernames(): Promise<void> {
-        if (!this.runtime.character.clientConfig?.telegram?.isPartOfTeam)
-            return;
-
-        const teamAgentIds =
-            this.runtime.character.clientConfig.telegram.teamAgentIds || [];
-
-        for (const id of teamAgentIds) {
-            try {
-                const chat = await this.bot.telegram.getChat(id);
-                if ("username" in chat && chat.username) {
-                    this.teamMemberUsernames.set(id, chat.username);
-                    logger.info(
-                        `Cached username for team member ${id}: ${chat.username}`
-                    );
-                }
-            } catch (error) {
-                logger.error(
-                    `Error getting username for team member ${id}:`,
-                    error
-                );
-            }
-        }
     }
 
     // Process image messages and generate descriptions
@@ -379,13 +347,8 @@ export class MessageManager {
         }
 
         const message = ctx.message;
-        const chatId = ctx.chat?.id.toString();
-        const messageText =
-            "text" in message
-                ? message.text
-                : "caption" in message
-                ? message.caption
-                : "";
+
+        console.log("message", message);
 
         try {
             // Convert IDs to UUIDs
@@ -537,27 +500,16 @@ export class MessageManager {
                 );
 
                 if (!responseContent || !responseContent.text) return;
-
-                const action = this.runtime.actions.find((a) => a.name === responseContent.action);
-                const shouldSuppressInitialMessage = action?.suppressInitialMessage;
-
-                let responseMessages = [];
-
-                if (!shouldSuppressInitialMessage) {
-                    // Execute callback to send messages and log memories
-                    responseMessages = await callback(responseContent);
-                } else {
-                    responseMessages = [
-                        {
-                            id: stringToUuid(messageId + "-" + this.runtime.agentId),
-                            userId: this.runtime.agentId,
-                            agentId: this.runtime.agentId,
-                            content: responseContent,
-                            roomId,
-                            createdAt: Date.now(),
-                        }
-                    ]
-                }
+                const responseMessages = [
+                    {
+                        id: stringToUuid(messageId + "-" + this.runtime.agentId),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: responseContent,
+                        roomId,
+                        createdAt: Date.now(),
+                    }
+                ]
 
                 // Update state after response
                 state = await this.runtime.updateRecentMessageState(state);

@@ -253,22 +253,23 @@ export class MessageManager {
                 // simulate discord typing while generating a response
                 const stopTyping = this.simulateTyping(message);
 
-                const responseContent = await this._generateResponse(
-                    memory,
-                    state,
-                    context
-                ).finally(() => {
-                    stopTyping();
+                const responseContent = await generateMessageResponse({
+                    runtime: this.runtime,
+                    context,
+                    modelClass: ModelClass.TEXT_LARGE,
+                });
+
+                await this.runtime.databaseAdapter.log({
+                    body: { message, context, response: responseContent },
+                    userId: userId,
+                    roomId,
+                    type: "response",
                 });
 
                 responseContent.text = responseContent.text?.trim();
                 responseContent.inReplyTo = stringToUuid(
                     message.id + "-" + this.runtime.agentId
                 );
-
-                if (!responseContent.text) {
-                    return;
-                }
 
                 const callback: HandlerCallback = async (
                     content: Content,
@@ -326,25 +327,16 @@ export class MessageManager {
                     }
                 };
 
-                const action = this.runtime.actions.find((a) => a.name === responseContent.action);
-                const shouldSuppressInitialMessage = action?.suppressInitialMessage;
-
-                let responseMessages = [];
-
-                if (!shouldSuppressInitialMessage) {
-                    responseMessages = await callback(responseContent);
-                } else {
-                    responseMessages = [
-                        {
-                            id: stringToUuid(messageId + "-" + this.runtime.agentId),
-                            userId: this.runtime.agentId,
-                            agentId: this.runtime.agentId,
-                            content: responseContent,
-                            roomId,
-                            createdAt: Date.now(),
-                        }
-                    ]
-                }
+                const responseMessages: Memory[] = [
+                    {
+                        id: stringToUuid(messageId + "-" + this.runtime.agentId),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: responseContent,
+                        roomId,
+                        createdAt: Date.now(),
+                    }
+                ];
 
                 state = await this.runtime.updateRecentMessageState(state);
 
@@ -354,6 +346,8 @@ export class MessageManager {
                     state,
                     callback
                 );
+
+                stopTyping();
             }
             await this.runtime.evaluate(memory, state, shouldRespond);
         } catch (error) {
@@ -646,34 +640,6 @@ export class MessageManager {
             );
             return false;
         }
-    }
-
-    private async _generateResponse(
-        message: Memory,
-        state: State,
-        context: string
-    ): Promise<Content> {
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
-            runtime: this.runtime,
-            context,
-            modelClass: ModelClass.TEXT_LARGE,
-        });
-
-        if (!response) {
-            console.error("No response from generateMessageResponse");
-            return;
-        }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId: userId,
-            roomId,
-            type: "response",
-        });
-
-        return response;
     }
 
     async fetchBotName(botToken: string) {

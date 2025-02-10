@@ -78,14 +78,6 @@ packages/plugin-nvidia-nim/docs
 # Edriziai specific ignores
 characters/edriziai-info/secrets.json
 
-# Bug Hunter logs and checkpoints
-scripts/bug_hunt/logs/
-scripts/bug_hunt/logs/*.log
-scripts/bug_hunt/checkpoints/
-scripts/bug_hunt/checkpoints/*.json
-scripts/bug_hunt/reports/
-scripts/bug_hunt/reports/*.md
-
 lit-config.json
 
 # Configuration to exclude the extra and local_docs directories

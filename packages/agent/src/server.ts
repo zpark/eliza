@@ -19,6 +19,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { z } from "zod";
 import { createApiRouter } from "./api.ts";
+import replyAction from "./reply.ts";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -294,40 +295,19 @@ export class CharacterServer {
 
                 state = await runtime.updateRecentMessageState(state);
 
-                let message = null as Content | null;
+                const replyHandler = async (message: Content) => {
+                    res.json([message]);
+                    return [memory];
+                }
 
                 await runtime.processActions(
                     memory,
                     [responseMessage],
                     state,
-                    async (newMessages) => {
-                        message = newMessages;
-                        return [memory];
-                    }
+                    replyHandler
                 );
 
                 await runtime.evaluate(memory, state);
-
-                // Check if we should suppress the initial message
-                const action = runtime.actions.find(
-                    (a) => a.name === response.action
-                );
-                const shouldSuppressInitialMessage =
-                    action?.suppressInitialMessage;
-
-                if (!shouldSuppressInitialMessage) {
-                    if (message) {
-                        res.json([response, message]);
-                    } else {
-                        res.json([response]);
-                    }
-                } else {
-                    if (message) {
-                        res.json([message]);
-                    } else {
-                        res.json([]);
-                    }
-                }
             }
         );
 
@@ -860,6 +840,8 @@ export class CharacterServer {
                     throw new Error("ELEVENLABS_XI_API_KEY not configured");
                 }
 
+                // TODO: Replace the process.env with settings from the character read from the database
+                    
                 const speechResponse = await fetch(elevenLabsApiUrl, {
                     method: "POST",
                     headers: {
@@ -922,6 +904,7 @@ export class CharacterServer {
         // register any plugin endpoints?
         // but once and only once
         this.agents.set(runtime.agentId, runtime);
+        runtime.registerAction(replyAction);
     }
 
     public unregisterAgent(runtime: IAgentRuntime) {

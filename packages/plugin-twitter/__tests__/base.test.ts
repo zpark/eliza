@@ -17,7 +17,6 @@ describe('Twitter Client Base', () => {
                 TWITTER_ACTION_INTERVAL: '5',
                 TWITTER_ENABLE_ACTION_PROCESSING: 'true',
                 TWITTER_POST_IMMEDIATELY: 'false',
-                TWITTER_SEARCH_ENABLE: 'false'
             },
             getEnv: function (key: string) {
                 return this.env[key] || null;
@@ -36,15 +35,18 @@ describe('Twitter Client Base', () => {
         mockConfig = {
             TWITTER_USERNAME: 'testuser',
             TWITTER_DRY_RUN: true,
-            TWITTER_SEARCH_ENABLE: false,
             TWITTER_SPACES_ENABLE: false,
             TWITTER_TARGET_USERS: [],
-            TWITTER_MAX_TWEETS_PER_DAY: 10,
-            TWITTER_MAX_TWEET_LENGTH: 280,
+            TWITTER_PASSWORD: 'hashedpassword',
+            TWITTER_EMAIL: 'test@example.com',
+            TWITTER_2FA_SECRET: '',
+            TWITTER_RETRY_LIMIT: 5,
+            TWITTER_POLL_INTERVAL: 120,
+            ENABLE_TWITTER_POST_GENERATION: true,
+            MAX_TWEET_LENGTH: 280,
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,
             ACTION_INTERVAL: 5,
-            ENABLE_ACTION_PROCESSING: true,
             POST_IMMEDIATELY: false
         };
     });
@@ -59,7 +61,7 @@ describe('Twitter Client Base', () => {
 
     it('should initialize with correct tweet length limit', () => {
         const client = new ClientBase(mockRuntime, mockConfig);
-        expect(client.twitterConfig.TWITTER_MAX_TWEET_LENGTH).toBe(280);
+        expect(client.twitterConfig.MAX_TWEET_LENGTH).toBe(280);
     });
 
     it('should initialize with correct post intervals', () => {
@@ -71,6 +73,5 @@ describe('Twitter Client Base', () => {
     it('should initialize with correct action settings', () => {
         const client = new ClientBase(mockRuntime, mockConfig);
         expect(client.twitterConfig.ACTION_INTERVAL).toBe(5);
-        expect(client.twitterConfig.ENABLE_ACTION_PROCESSING).toBe(true);
     });
 });

@@ -75,10 +75,17 @@ export default {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        state: State,
+        options: any,
+        callback: HandlerCallback,
+        responses: Memory[]
     ): Promise<boolean> => {
         if (!state) {
             console.error("State is not available.");
+        }
+
+        for (const response of responses) {
+            await callback(response.content);
         }
 
         // We normalize data in from voice channels

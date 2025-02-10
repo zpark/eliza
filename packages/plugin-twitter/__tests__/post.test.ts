@@ -19,14 +19,11 @@ describe('Twitter Post Client', () => {
                 TWITTER_ACTION_INTERVAL: '5',
                 TWITTER_ENABLE_ACTION_PROCESSING: 'true',
                 TWITTER_POST_IMMEDIATELY: 'false',
-                TWITTER_SEARCH_ENABLE: 'false',
                 TWITTER_EMAIL: 'test@example.com',
                 TWITTER_PASSWORD: 'hashedpassword',
                 TWITTER_2FA_SECRET: '',
                 TWITTER_POLL_INTERVAL: '120',
                 TWITTER_RETRY_LIMIT: '5',
-                ACTION_TIMELINE_TYPE: 'foryou',
-                MAX_ACTIONS_PROCESSING: '1',
                 MAX_TWEET_LENGTH: '280'
             },
             getEnv: function (key: string) {
@@ -46,17 +43,19 @@ describe('Twitter Post Client', () => {
         mockConfig = {
             TWITTER_USERNAME: 'testuser',
             TWITTER_DRY_RUN: true,
-            TWITTER_SEARCH_ENABLE: false,
             TWITTER_SPACES_ENABLE: false,
             TWITTER_TARGET_USERS: [],
-            TWITTER_MAX_TWEETS_PER_DAY: 10,
-            TWITTER_MAX_TWEET_LENGTH: 280,
+            TWITTER_PASSWORD: 'hashedpassword',
+            TWITTER_EMAIL: 'test@example.com',
+            TWITTER_2FA_SECRET: '',
+            TWITTER_RETRY_LIMIT: 5,
+            TWITTER_POLL_INTERVAL: 120,
+            MAX_TWEET_LENGTH: 280,
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,
             ACTION_INTERVAL: 5,
-            ENABLE_ACTION_PROCESSING: true,
+            ENABLE_TWITTER_POST_GENERATION: true,
             POST_IMMEDIATELY: false,
-            MAX_TWEET_LENGTH: 280
         };
 
         baseClient = new ClientBase(mockRuntime, mockConfig);

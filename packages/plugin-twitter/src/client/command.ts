@@ -1,18 +1,3 @@
-// Declare the types for our custom global properties
-declare global {
-  var PLATFORM_NODE: boolean;
-  var PLATFORM_NODE_JEST: boolean;
-}
-
-// Define platform constants before imports
-globalThis.PLATFORM_NODE = typeof process !== 'undefined' && (
-  // Node.js check
-  (process.versions?.node != null) ||
-  // Bun check
-  (process.versions?.bun != null)
-);
-globalThis.PLATFORM_NODE_JEST = false;
-
 // Your existing imports
 import { Scraper } from './scraper';
 import { Photo, Tweet } from './tweets';

@@ -383,7 +383,7 @@ async function startAgent(
 
         // initialize cache
         const cache = initializeCache(
-            process.env.CACHE_STORE ?? CacheStore.DATABASE,
+            runtime.getSetting("CACHE_STORE") ?? CacheStore.DATABASE,
             character,
             "",
             db

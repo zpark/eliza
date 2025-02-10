@@ -12,6 +12,10 @@
       "dev": {
         "persistent": true,
         "dependsOn": ["build"]
+      },
+      "test": {
+        "persistent": true,
+        "dependsOn": ["build"]
       }
     }
 }

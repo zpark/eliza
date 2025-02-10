@@ -193,8 +193,14 @@ const summarizeAction = {
         message: Memory,
         state: State,
         options: any,
-        callback: HandlerCallback
+        callback: HandlerCallback,
+        responses: Memory[]
     ) => {
+
+        for (const response of responses) {
+            await callback(response.content);
+        }
+
         state = (await runtime.composeState(message)) as State;
 
         const callbackData: Content = {

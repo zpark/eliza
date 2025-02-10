@@ -34,7 +34,6 @@ export const twitterEnvSchema = z.object({
     TWITTER_PASSWORD: z.string().min(1, "X/Twitter password is required"),
     TWITTER_EMAIL: z.string().email("Valid X/Twitter email is required"),
     MAX_TWEET_LENGTH: z.number().int().default(DEFAULT_MAX_TWEET_LENGTH),
-    TWITTER_SEARCH_ENABLE: z.boolean().default(false),
     TWITTER_2FA_SECRET: z.string(),
     TWITTER_RETRY_LIMIT: z.number().int(),
     TWITTER_POLL_INTERVAL: z.number().int(),
@@ -70,14 +69,9 @@ export const twitterEnvSchema = z.object({
     ENABLE_TWITTER_POST_GENERATION: z.boolean(),
     POST_INTERVAL_MIN: z.number().int(),
     POST_INTERVAL_MAX: z.number().int(),
-    ENABLE_ACTION_PROCESSING: z.boolean(),
     ACTION_INTERVAL: z.number().int(),
     POST_IMMEDIATELY: z.boolean(),
     TWITTER_SPACES_ENABLE: z.boolean().default(false),
-    MAX_ACTIONS_PROCESSING: z.number().int(),
-    ACTION_TIMELINE_TYPE: z
-        .nativeEnum(ActionTimelineType)
-        .default(ActionTimelineType.ForYou),
 });
 
 export type TwitterConfig = z.infer<typeof twitterEnvSchema>;
@@ -144,12 +138,6 @@ export async function validateTwitterConfig(
                 DEFAULT_MAX_TWEET_LENGTH
             ),
 
-            TWITTER_SEARCH_ENABLE:
-                parseBooleanFromText(
-                    runtime.getSetting("TWITTER_SEARCH_ENABLE") ||
-                        process.env.TWITTER_SEARCH_ENABLE
-                ) ?? false,
-
             // string passthru
             TWITTER_2FA_SECRET:
                 runtime.getSetting("TWITTER_2FA_SECRET") ||
@@ -173,7 +161,7 @@ export async function validateTwitterConfig(
             // comma separated string
             TWITTER_TARGET_USERS: parseTargetUsers(
                 runtime.getSetting("TWITTER_TARGET_USERS") ||
-                    process.env.TWITTER_TARGET_USERS || "[]"
+                    process.env.TWITTER_TARGET_USERS
             ),
 
             // bool
@@ -198,13 +186,6 @@ export async function validateTwitterConfig(
                 180 // 3 hours
             ),
 
-            // bool
-            ENABLE_ACTION_PROCESSING:
-                parseBooleanFromText(
-                    runtime.getSetting("ENABLE_ACTION_PROCESSING") ||
-                        process.env.ENABLE_ACTION_PROCESSING
-                ) ?? false,
-
             // init in minutes (min 1m)
             ACTION_INTERVAL: safeParseInt(
                 runtime.getSetting("ACTION_INTERVAL") ||
@@ -224,16 +205,6 @@ export async function validateTwitterConfig(
                     runtime.getSetting("TWITTER_SPACES_ENABLE") ||
                         process.env.TWITTER_SPACES_ENABLE
                 ) ?? false,
-
-            MAX_ACTIONS_PROCESSING: safeParseInt(
-                runtime.getSetting("MAX_ACTIONS_PROCESSING") ||
-                    process.env.MAX_ACTIONS_PROCESSING,
-                1
-            ),
-
-            ACTION_TIMELINE_TYPE:
-                runtime.getSetting("ACTION_TIMELINE_TYPE") ||
-                process.env.ACTION_TIMELINE_TYPE,
         };
 
         return twitterEnvSchema.parse(twitterConfig);

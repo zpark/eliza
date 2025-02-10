@@ -1,5 +1,5 @@
 {
-    "name": "@elizaos-plugins/twitter",
+    "name": "@elizaos/plugin-twitter",
     "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",

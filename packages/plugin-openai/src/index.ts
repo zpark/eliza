@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import type { Plugin } from "@elizaos/core";
+import type { IAgentRuntime, Plugin } from "@elizaos/core";
 import {
   DetokenizeTextParams,
   GenerateTextParams,
@@ -78,7 +78,7 @@ export const openaiPlugin: Plugin = {
     }
   },
   models: {
-    [ModelClass.TEXT_EMBEDDING]: async (text: string | null) => {
+    [ModelClass.TEXT_EMBEDDING]: async (runtime: IAgentRuntime, text: string | null) => {
       if (!text) {
         // Return zero vector of appropriate length for model
         return new Array(1536).fill(0);
@@ -106,20 +106,25 @@ export const openaiPlugin: Plugin = {
       const data = await response.json() as { data: [{ embedding: number[] }] };
       return data.data[0].embedding;
     },
-    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async (
+      runtime,
+      {
       context,
       modelClass = ModelClass.TEXT_LARGE,
     }: TokenizeTextParams) => {
       return await tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
     },
-    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async (
+      runtime,
+      {
       tokens,
       modelClass = ModelClass.TEXT_LARGE,
     }: DetokenizeTextParams) => {
       return await detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
     },
-    [ModelClass.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async (
       runtime,
+      {
       context,
       stopSequences = [],
     }: GenerateTextParams) => {
@@ -129,16 +134,16 @@ export const openaiPlugin: Plugin = {
       const max_response_length = 8192;
 
       const baseURL =
-        process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
 
       const openai = createOpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: runtime.getSetting("OPENAI_API_KEY"),
         baseURL,
       });
 
       const model =
-        process.env.OPENAI_SMALL_MODEL ??
-        process.env.SMALL_MODEL ??
+        runtime.getSetting("OPENAI_SMALL_MODEL") ??
+        runtime.getSetting("SMALL_MODEL") ??
         "gpt-4o-mini";
 
       const { text: openaiResponse } = await aiGenerateText({
@@ -154,8 +159,9 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelClass.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async (
       runtime,
+      {
       context,
       stopSequences = [],
     }: GenerateTextParams) => {
@@ -165,19 +171,19 @@ export const openaiPlugin: Plugin = {
       const max_response_length = 8192;
 
       const baseURL =
-        process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
 
       const openai = createOpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: runtime.getSetting("OPENAI_API_KEY"),
         baseURL,
       });
 
       const smallModel =
-        process.env.OPENAI_SMALL_MODEL ??
-        process.env.SMALL_MODEL ??
+        runtime.getSetting("OPENAI_SMALL_MODEL") ??
+        runtime.getSetting("SMALL_MODEL") ??
         "gpt-4o-mini";
       const model =
-        process.env.OPENAI_LARGE_MODEL ?? process.env.LARGE_MODEL ?? "gpt-4o";
+        runtime.getSetting("OPENAI_LARGE_MODEL") ?? runtime.getSetting("LARGE_MODEL") ?? "gpt-4o";
 
       const { text: openaiResponse } = await aiGenerateText({
         model: openai.languageModel(model),
@@ -192,17 +198,17 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelClass.IMAGE]: async (params: {
+    [ModelClass.IMAGE]: async (runtime, params: {
       prompt: string;
       n?: number;
       size?: string;
     }) => {
       const baseURL =
-        process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
       const response = await fetch(`${baseURL}/images/generations`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${runtime.getSetting("OPENAI_API_KEY")}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -218,19 +224,19 @@ export const openaiPlugin: Plugin = {
       const typedData = data as { data: { url: string }[] };
       return typedData.data;
     },
-    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrl: string) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (runtime, imageUrl) => {
       console.log("IMAGE_DESCRIPTION")
       const baseURL =
-        process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
         console.log("baseURL", baseURL)
       const openai = createOpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: runtime.getSetting("OPENAI_API_KEY"),
         baseURL,
       });
       
       const { text } = await aiGenerateText({
         model: openai.languageModel(
-          process.env.OPENAI_SMALL_MODEL ?? "gpt-4o-mini"
+          runtime.getSetting("OPENAI_SMALL_MODEL") ?? "gpt-4o-mini"
         ),
         messages: [
           {
@@ -264,17 +270,17 @@ export const openaiPlugin: Plugin = {
         description: descriptionMatch[1]
       };
     },
-    [ModelClass.TRANSCRIPTION]: async (audioBuffer: Buffer) => {
+    [ModelClass.TRANSCRIPTION]: async (runtime, audioBuffer: Buffer) => {
       console.log("audioBuffer", audioBuffer)
       const baseURL =
-        process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+        runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
       const formData = new FormData();
       formData.append("file", new Blob([audioBuffer], { type: "audio/mp3" }));
       formData.append("model", "whisper-1");
       const response = await fetch(`${baseURL}/audio/transcriptions`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${runtime.getSetting("OPENAI_API_KEY")}`,
           // Note: Do not set a Content-Type header—letting fetch set it for FormData is best
         },
         body: formData,

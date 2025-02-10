@@ -147,8 +147,6 @@ export function parseJSONObjectFromText(
     let jsonData = null;
     const jsonBlockMatch = text.match(jsonBlockPattern);
 
-    console.log("parseJsonArrayFromText", text);
-
     try {
         if (jsonBlockMatch) {
             // Parse the JSON from inside the code block

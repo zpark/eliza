@@ -18,8 +18,7 @@
     "docker:bash": "bash ./scripts/docker.sh bash",
     "docker:start": "bash ./scripts/docker.sh start",
     "docker": "bun docker:build && bun docker:run && bun docker:bash",
-    "smokeTests": "bash ./scripts/smokeTests.sh",
-    "test": "bash ./scripts/integrationTests.sh"
+    "test-e2e": "turbo run test --filter=@elizaos/agent"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

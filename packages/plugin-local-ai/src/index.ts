@@ -136,10 +136,11 @@ export const localAIPlugin: Plugin = {
 
   models: {
     // Text generation for small tasks
-    [ModelClass.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async (
+      runtime,
+      {
       context,
       stopSequences = [],
-      runtime,
     }) => {
       try {
         const modelPath = process.env.LLAMALOCAL_PATH || "./model.gguf";
@@ -155,10 +156,11 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text generation for larger tasks
-    [ModelClass.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async (
+      runtime,
+      {
       context,
       stopSequences = [],
-      runtime,
     }) => {
       try {
         const modelPath = process.env.LLAMALOCAL_PATH || "./model.gguf";
@@ -172,7 +174,10 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text embedding using FastEmbed
-    [ModelClass.TEXT_EMBEDDING]: async ({ text }) => {
+    [ModelClass.TEXT_EMBEDDING]: async (
+      runtime,
+      { text }
+    ) => {
       try {
         return await localAIManager.generateEmbedding(text);
       } catch (error) {
@@ -182,7 +187,10 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text tokenization using AutoTokenizer
-    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({ text }) => {
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async (
+      runtime,
+      { text }
+    ) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -195,7 +203,10 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text detokenization using AutoTokenizer
-    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({ tokens }) => {
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async (
+      runtime,
+      { tokens }
+    ) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -208,7 +219,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Image description using local Florence model
-    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrlw) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (runtime, imageUrl) => {
       try {
         
         // TODO: Add florence

@@ -526,7 +526,7 @@ export class AgentRuntime implements IAgentRuntime {
                 logger.info(
                     `Executing handler for action: ${action.name}`,
                 );
-                await action.handler(this, message, state, {}, callback);
+                await action.handler(this, message, state, {}, callback, responses);
             } catch (error) {
                 logger.error(error);
             }
@@ -1278,7 +1278,7 @@ Text: ${attachment.text}
         this.models.get(modelClass)?.push(handler);
     }
 
-    getModel(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined {
+    getModel(modelClass: ModelClass): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined {
         const models = this.models.get(modelClass);
         if (!models?.length) {
             return undefined;
@@ -1287,11 +1287,11 @@ Text: ${attachment.text}
     }
 
     async useModel(modelClass: ModelClass, params: any): Promise<any> {
-        const handler = this.getModel(modelClass);
-        if (!handler) {
+        const model = this.getModel(modelClass);
+        if (!model) {
             throw new Error(`No handler found for delegate type: ${modelClass}`);
         }
-        return await handler(params);
+        return await model(this, params);
     }
 
     registerEvent(event: string, handler: (params: any) => Promise<any>) {

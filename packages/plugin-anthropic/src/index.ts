@@ -38,14 +38,15 @@ export const anthropicPlugin: Plugin = {
     }
   },
   models: {
-    [ModelClass.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async (
       runtime,
+      {
       context,
       stopSequences = [],
     }: GenerateTextParams) => {
       const temperature = 0.7;
       const maxTokens = 8192;
-      const smallModel = process.env.ANTHROPIC_SMALL_MODEL ?? "claude-3-5-haiku-latest";
+      const smallModel = runtime.getSetting("ANTHROPIC_SMALL_MODEL") ?? "claude-3-5-haiku-latest";
 
       const { text } = await generateText({
         model: anthropic(smallModel),
@@ -60,14 +61,15 @@ export const anthropicPlugin: Plugin = {
     },
 
     // TEXT_LARGE generation using Anthropics (e.g. using a "claude-3" model).
-    [ModelClass.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async (
       runtime,
+      {
       context,
       stopSequences = [],
     }: GenerateTextParams) => {
       const temperature = 0.7;
       const maxTokens = 8192;
-      const largeModel = process.env.ANTHROPIC_LARGE_MODEL ?? "claude-3-5-sonnet-latest";
+      const largeModel = runtime.getSetting("ANTHROPIC_LARGE_MODEL") ?? "claude-3-5-sonnet-latest";
 
       const { text } = await generateText({
         model: anthropic(largeModel),

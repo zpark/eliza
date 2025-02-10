@@ -9,6 +9,7 @@ import {
 import type {
     Action,
     ActionExample,
+    HandlerCallback,
     IAgentRuntime,
     Memory,
     State,
@@ -72,10 +73,17 @@ export default {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        state: State,
+        options: any,
+        callback: HandlerCallback,
+        responses: Memory[]
     ): Promise<boolean> => {
         if (!state.discordClient) {
             return;
+        }
+
+        for (const response of responses) {
+            await callback(response.content);
         }
 
         const discordMessage = (state.discordMessage ||

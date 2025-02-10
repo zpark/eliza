@@ -3,8 +3,9 @@ import { ClientBase } from "./base.ts";
 import { validateTwitterConfig, type TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
-import { TwitterSearchClient } from "./search.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
+import post from "./actions/post.ts";
+import reply from "./actions/reply.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -17,7 +18,6 @@ import { TwitterSpaceClient } from "./spaces.ts";
 class TwitterManager {
     client: ClientBase;
     post: TwitterPostClient;
-    search: TwitterSearchClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
 
@@ -27,16 +27,6 @@ class TwitterManager {
 
         // Posting logic
         this.post = new TwitterPostClient(this.client, runtime);
-
-        // Optional search logic (enabled if TWITTER_SEARCH_ENABLE is true)
-        if (twitterConfig.TWITTER_SEARCH_ENABLE) {
-            logger.warn("Twitter/X client running in a mode that:");
-            logger.warn("1. violates consent of random users");
-            logger.warn("2. burns your rate limit");
-            logger.warn("3. can get your account banned");
-            logger.warn("use at your own risk");
-            this.search = new TwitterSearchClient(this.client, runtime);
-        }
 
         // Mentions and interactions
         this.interaction = new TwitterInteractionClient(this.client, runtime);
@@ -54,7 +44,7 @@ class TwitterManager {
 
 export const TwitterClientInterface: Client = {
     name: 'twitter',
-    async start(runtime: IAgentRuntime) {
+    start: async (runtime: IAgentRuntime) => {
         const twitterConfig: TwitterConfig =
             await validateTwitterConfig(runtime);
 
@@ -67,11 +57,6 @@ export const TwitterClientInterface: Client = {
 
         // Start the posting loop
         await manager.post.start();
-
-        // Start the search logic if it exists
-        if (manager.search) {
-            await manager.search.start();
-        }
 
         // Start interactions (mentions, replies)
         await manager.interaction.start();
@@ -89,5 +74,6 @@ const twitterPlugin: Plugin = {
     name: "twitter",
     description: "Twitter client",
     clients: [TwitterClientInterface],
+    actions: [post, reply]
 };
 export default twitterPlugin;

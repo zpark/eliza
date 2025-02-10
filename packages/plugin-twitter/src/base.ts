@@ -12,7 +12,7 @@ import {
   Scraper,
   SearchMode,
   type Tweet,
-} from "./client";
+} from "./client/index.ts";
 import { EventEmitter } from "events";
 import type { TwitterConfig } from "./environment.ts";
 

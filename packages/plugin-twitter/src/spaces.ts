@@ -15,7 +15,7 @@ import {
     RecordToDiskPlugin,
     IdleMonitorPlugin,
     type SpeakerRequest,
-} from "./client";
+} from "./client/index.ts";
 import { SttTtsPlugin } from "./SttTtsSpacesPlugin.ts";
 
 interface CurrentSpeakerState {

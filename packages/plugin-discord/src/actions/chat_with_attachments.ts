@@ -129,7 +129,7 @@ const summarizeAction = {
         message: Memory,
         state: State,
         options: any,
-        callback: HandlerCallback
+        callback: HandlerCallback,
     ) => {
         state = (await runtime.composeState(message)) as State;
 

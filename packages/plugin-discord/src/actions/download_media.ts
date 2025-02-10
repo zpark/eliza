@@ -86,11 +86,14 @@ export default {
         message: Memory,
         state: State,
         options: any,
-        callback: HandlerCallback
+        callback: HandlerCallback,
+        responses: Memory[]
     ) => {
+        for (const response of responses) {
+            await callback(response.content);
+        }
         const videoService = runtime
-            .getService<IVideoService>(ServiceType.VIDEO)
-            .getInstance() as IVideoService;
+            .getService<IVideoService>(ServiceType.VIDEO);
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         }
