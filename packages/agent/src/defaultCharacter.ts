@@ -8,7 +8,7 @@ export const defaultCharacter: Character = {
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "elizaos/plugin-telegram",
+    "@elizaos/plugin-telegram",
   ],
   settings: {
     secrets: {},
