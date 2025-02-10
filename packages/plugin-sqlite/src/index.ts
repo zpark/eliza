@@ -8,6 +8,7 @@ import type {
     Account,
     Actor,
     Adapter,
+    Character,
     Goal,
     GoalStatus,
     IAgentRuntime,
@@ -700,6 +701,63 @@ export class SqliteDatabaseAdapter
             return false;
         }
     }
+
+
+    // NEW STUFF  
+    // character methods
+    async listCharacters(): Promise<Character[]> {
+        const sql = "SELECT * FROM characters";
+        return this.db.prepare(sql).all() as Character[];
+    }
+
+    async getCharacter(id: UUID): Promise<Character | null> {
+        const sql = "SELECT * FROM characters WHERE id = ?";
+        return this.db.prepare(sql).get(id) as Character | undefined;
+    }
+
+    async createCharacter(character: Character): Promise<void> {
+        const sql = "INSERT INTO characters (id, name, bio, json, createdAt, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        this.db.prepare(sql).run(
+        character.id ?? v4(),
+        character.name,
+        character.bio,
+        JSON.stringify(character)
+        );
+    }
+
+    async updateCharacter(character: Character): Promise<void> {
+        const sql = "UPDATE characters SET name = ?, bio = ?, json = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?";
+        await this.db
+        .prepare(sql)
+        .run(
+            character.name,
+            character.bio,
+            JSON.stringify(character),
+            character.id
+        );
+
+    }
+
+    async removeCharacter(id: UUID): Promise<void> {
+        const sql = "DELETE FROM characters WHERE id = ?";
+        this.db.prepare(sql).run(id);
+    }
+
+    async importCharacter(character: Character): Promise<void> {
+        const sql = "INSERT INTO characters (id, name, bio, json, createdAt, updatedAt) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        this.db.prepare(sql).run(
+        character.id ?? v4(),
+        character.name,
+        character.bio,
+        JSON.stringify(character)
+        );
+    }
+
+    async exportCharacter(id: UUID): Promise<Character> {
+        const sql = "SELECT * FROM characters WHERE id = ?";
+        return this.db.prepare(sql).get(id) as Character;
+    }
+
 }
 
 const sqliteDatabaseAdapter: Adapter = {
@@ -735,3 +793,6 @@ const sqlitePlugin: Plugin = {
     adapters: [sqliteDatabaseAdapter],
 };
 export default sqlitePlugin;
+
+// Export the Database constructor so CLI files may use it
+export { Database };
