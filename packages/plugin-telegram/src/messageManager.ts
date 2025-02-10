@@ -1,7 +1,6 @@
 import {
-    AsyncHandlerType,
+    ModelClass,
     composeContext,
-    composeRandomUser,
     type Content,
     generateMessageResponse,
     generateShouldRespond,
@@ -122,7 +121,7 @@ export class MessageManager {
 
             if (imageUrl) {
                 const { title, description } =
-                    await this.runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, imageUrl)
+                    await this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, imageUrl)
                 return { description: `[Image: ${title}\n${description}]` };
             }
         } catch (error) {
@@ -168,13 +167,13 @@ export class MessageManager {
                     this.runtime.character.templates
                         ?.telegramShouldRespondTemplate ||
                     this.runtime.character?.templates?.shouldRespondTemplate ||
-                    composeRandomUser(telegramShouldRespondTemplate, 2),
+                    telegramShouldRespondTemplate,
             });
 
             const response = await generateShouldRespond({
                 runtime: this.runtime,
                 context: shouldRespondContext,
-                handlerType: AsyncHandlerType.TEXT_SMALL,
+                modelClass: ModelClass.TEXT_SMALL,
             });
 
             return response === "RESPOND";
@@ -338,7 +337,7 @@ export class MessageManager {
         const response = await generateMessageResponse({
             runtime: this.runtime,
             context,
-            handlerType: AsyncHandlerType.TEXT_LARGE,
+            modelClass: ModelClass.TEXT_LARGE,
         });
 
         if (!response) {

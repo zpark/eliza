@@ -39,7 +39,7 @@ export const composeContext = ({
     template: TemplateType;
 }) => {
     const templateStr =
-        typeof template === "function" ? template({ state }) : template;
+        composeRandomUser(typeof template === "function" ? template({ state }) : template, 10);
 
     const templateFunction = handlebars.compile(templateStr);
     return templateFunction(state);

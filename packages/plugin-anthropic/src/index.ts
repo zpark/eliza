@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import type { Plugin } from "@elizaos/core";
 import {
   GenerateTextParams,
-  AsyncHandlerType
+  ModelClass
 } from "@elizaos/core";
 import { generateText } from "ai";
 import { z } from "zod";
@@ -37,8 +37,8 @@ export const anthropicPlugin: Plugin = {
       throw error;
     }
   },
-  handlers: {
-    [AsyncHandlerType.TEXT_SMALL]: async ({
+  models: {
+    [ModelClass.TEXT_SMALL]: async ({
       runtime,
       context,
       stopSequences = [],
@@ -60,7 +60,7 @@ export const anthropicPlugin: Plugin = {
     },
 
     // TEXT_LARGE generation using Anthropics (e.g. using a "claude-3" model).
-    [AsyncHandlerType.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async ({
       runtime,
       context,
       stopSequences = [],

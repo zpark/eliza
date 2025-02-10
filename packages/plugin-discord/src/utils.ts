@@ -1,6 +1,6 @@
 import {
     type IAgentRuntime,
-    AsyncHandlerType,
+    ModelClass,
     logger,
     generateText,
     trimTokens,
@@ -66,7 +66,7 @@ export async function generateSummary(
     const response = await generateText({
         runtime,
         context: prompt,
-        handlerType: AsyncHandlerType.TEXT_SMALL,
+        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);

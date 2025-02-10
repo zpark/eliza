@@ -1,8 +1,8 @@
 import {
-    composeContext, composeRandomUser, type Content, generateMessageResponse, generateShouldRespond, type HandlerCallback,
+    composeContext, type Content, generateMessageResponse, generateShouldRespond, type HandlerCallback,
     type IAgentRuntime,
     type IBrowserService, type IVideoService, logger, type Media,
-    type Memory, AsyncHandlerType, ServiceType,
+    type Memory, ModelClass, ServiceType,
     type State, stringToUuid, type UUID
 } from "@elizaos/core";
 import {
@@ -362,7 +362,7 @@ export class MessageManager {
                 // For voice channels, use text-to-speech for the error message
                 const errorMessage = "Sorry, I had a glitch. What was that?";
 
-                const audioStream = await this.runtime.call(AsyncHandlerType.TEXT_TO_SPEECH, errorMessage)
+                const audioStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, errorMessage)
 
                 await this.voiceManager.playAudioStream(userId, audioStream);
             } else {
@@ -616,13 +616,13 @@ export class MessageManager {
                 this.runtime.character.templates
                     ?.discordShouldRespondTemplate ||
                 this.runtime.character.templates?.shouldRespondTemplate ||
-                composeRandomUser(discordShouldRespondTemplate, 2),
+                discordShouldRespondTemplate,
         });
 
         const response = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
-            handlerType: AsyncHandlerType.TEXT_SMALL,
+            modelClass: ModelClass.TEXT_SMALL,
         });
 
         if (response === "RESPOND") {
@@ -658,7 +658,7 @@ export class MessageManager {
         const response = await generateMessageResponse({
             runtime: this.runtime,
             context,
-            handlerType: AsyncHandlerType.TEXT_LARGE,
+            modelClass: ModelClass.TEXT_LARGE,
         });
 
         if (!response) {

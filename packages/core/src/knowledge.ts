@@ -1,7 +1,7 @@
 import { splitChunks } from "./parsing.ts";
 import logger from "./logger.ts";
 import type { AgentRuntime } from "./runtime.ts";
-import { type KnowledgeItem, type Memory, AsyncHandlerType, type UUID } from "./types.ts";
+import { type KnowledgeItem, type Memory, ModelClass, type UUID } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
 async function get(
@@ -31,7 +31,7 @@ async function get(
         return [];
     }
 
-    const embedding = await runtime.call(AsyncHandlerType.TEXT_EMBEDDING, processed);
+    const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, processed);
     const fragments = await runtime.knowledgeManager.searchMemories(
         {
             embedding,
@@ -69,7 +69,7 @@ async function set(
     chunkSize = 512,
     bleed = 20
 ) {
-    const embedding = await runtime.call(AsyncHandlerType.TEXT_EMBEDDING, null);
+    const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
     await runtime.documentsManager.createMemory({
         id: item.id,
         agentId: runtime.agentId,
@@ -84,7 +84,7 @@ async function set(
     const fragments = await splitChunks(preprocessed, chunkSize, bleed);
 
     for (const fragment of fragments) {
-        const embedding = await runtime.call(AsyncHandlerType.TEXT_EMBEDDING, fragment);
+        const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, fragment);
         await runtime.knowledgeManager.createMemory({
             // We namespace the knowledge base uuid to avoid id
             // collision with the document above.

@@ -10,7 +10,7 @@ import {
     type IAgentRuntime,
     type Media,
     type Memory,
-    AsyncHandlerType,
+    ModelClass,
     type State,
 } from "@elizaos/core";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
@@ -58,7 +58,7 @@ const getDateRange = async (
         const response = await generateText({
             runtime,
             context,
-            handlerType: AsyncHandlerType.TEXT_SMALL,
+            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -273,7 +273,7 @@ const summarizeAction = {
             const summary = await generateText({
                 runtime,
                 context,
-                handlerType: AsyncHandlerType.TEXT_SMALL,
+                modelClass: ModelClass.TEXT_SMALL,
             });
 
             currentSummary = currentSummary + "\n" + summary;

@@ -2,7 +2,7 @@ import { generateText, type IBrowserService, trimTokens } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import { Service } from "@elizaos/core";
 import { settings } from "@elizaos/core";
-import { type IAgentRuntime, AsyncHandlerType, ServiceType } from "@elizaos/core";
+import { type IAgentRuntime, ModelClass, ServiceType } from "@elizaos/core";
 import { stringToUuid } from "@elizaos/core";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import CaptchaSolver from "capsolver-npm";
@@ -38,7 +38,7 @@ async function generateSummary(
     const response = await generateText({
         runtime,
         context: prompt,
-        handlerType: AsyncHandlerType.TEXT_SMALL,
+        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);

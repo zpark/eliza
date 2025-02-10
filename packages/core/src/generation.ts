@@ -5,13 +5,13 @@ import { parseJSONObjectFromText } from "./parsing.ts";
 import {
     type Content,
     type IAgentRuntime,
-    AsyncHandlerType
+    ModelClass
 } from "./types.ts";
 
 interface GenerateObjectOptions {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   output?: "object" | "array" | "enum" | "no-schema" | undefined;
   schema?: ZodSchema;
   schemaName?: string;
@@ -99,7 +99,7 @@ export async function trimTokens(
   if (maxTokens <= 0) throw new Error("maxTokens must be positive");
 
   try {
-      const tokens = await runtime.call(AsyncHandlerType.TEXT_TOKENIZER_ENCODE, { context });
+      const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
 
       // If already within limits, return unchanged
       if (tokens.length <= maxTokens) {
@@ -110,7 +110,7 @@ export async function trimTokens(
       const truncatedTokens = tokens.slice(-maxTokens);
 
       // Decode back to text - js-tiktoken decode() returns a string directly
-      return await runtime.call(AsyncHandlerType.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
+      return await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
   } catch (error) {
       logger.error("Error in trimTokens:", error);
       // Return truncated string if tokenization fails
@@ -122,16 +122,16 @@ export async function trimTokens(
 export async function generateText({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences = [],
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
   customSystemPrompt?: string;
 }): Promise<string> {
-  const text = await runtime.call(handlerType, {
+  const text = await runtime.useModel(modelClass, {
     runtime,
     context,
     stopSequences,
@@ -143,19 +143,19 @@ export async function generateText({
 export async function generateTextArray({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<string[]> {
   const result = await withRetry(async () => {
     const result = await generateObject({
       runtime,
       context,
-      handlerType,
+      modelClass,
       schema: z.array(z.string()),
       stopSequences,
     });
@@ -169,14 +169,14 @@ export async function generateTextArray({
 async function generateEnum<T extends string>({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   enumValues,
   functionName,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   enumValues: Array<T>;
   functionName: string;
   stopSequences?: string[];
@@ -189,7 +189,7 @@ async function generateEnum<T extends string>({
     const result = await generateObject({
       runtime,
       context,
-      handlerType,
+      modelClass,
       output: "enum",
       enum: enumValues,
       mode: "json",
@@ -206,12 +206,12 @@ async function generateEnum<T extends string>({
 export async function generateShouldRespond({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
   const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"] as string[];
@@ -219,7 +219,7 @@ export async function generateShouldRespond({
   const result = await generateEnum({
     runtime,
     context,
-    handlerType,
+    modelClass,
     enumValues: RESPONSE_VALUES,
     functionName: "generateShouldRespond",
     stopSequences,
@@ -231,12 +231,12 @@ export async function generateShouldRespond({
 export async function generateTrueOrFalse({
   runtime,
   context = "",
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<boolean> {
   const BOOL_VALUES = ["true", "false"];
@@ -244,7 +244,7 @@ export async function generateTrueOrFalse({
   const result = await generateEnum({
     runtime,
     context,
-    handlerType,
+    modelClass,
     enumValues: BOOL_VALUES,
     functionName: "generateTrueOrFalse",
     stopSequences,
@@ -257,7 +257,7 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: GenerateObjectOptions): Promise<any> => {
   if (!context) {
@@ -266,29 +266,29 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
-  const { object } = await runtime.call(handlerType, {
+  const { object } = await runtime.useModel(modelClass, {
     runtime,
     context,
-    handlerType,
+    modelClass,
     stopSequences,
     object: true,
   });
 
-  logger.debug(`Received Object response from ${handlerType} model.`);
+  logger.debug(`Received Object response from ${modelClass} model.`);
   return object;
 };
 
 export async function generateObjectArray({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
@@ -300,7 +300,7 @@ export async function generateObjectArray({
   const result = await generateObject({
     runtime,
     context,
-    handlerType,
+    modelClass,
     output: "array",
     schema,
     schemaName,
@@ -313,18 +313,18 @@ export async function generateObjectArray({
 export async function generateMessageResponse({
   runtime,
   context,
-  handlerType = AsyncHandlerType.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_SMALL,
   stopSequences,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<Content> {
   logger.debug("Context:", context);
 
   return await withRetry(async () => {
-    const text = await runtime.call(handlerType, {
+    const text = await runtime.useModel(modelClass, {
     runtime,
       context,
       stop: stopSequences,
@@ -342,59 +342,3 @@ export async function generateMessageResponse({
     return parsedContent;
   });
 }
-
-// ================ IMAGE-RELATED FUNCTIONS ================
-export const generateImage = async (
-  data: {
-    prompt: string;
-    width: number;
-    height: number;
-    count?: number;
-    negativePrompt?: string;
-    numIterations?: number;
-    guidanceScale?: number;
-    seed?: number;
-    modelId?: string;
-    jobId?: string;
-    stylePreset?: string;
-    hideWatermark?: boolean;
-    safeMode?: boolean;
-    cfgScale?: number;
-  },
-  runtime: IAgentRuntime
-): Promise<{
-  success: boolean;
-  data?: string[];
-  error?: any;
-}> => {
-  return await withRetry(
-    async () => {
-      const result = await runtime.call(AsyncHandlerType.IMAGE, data);
-      return {
-        success: true,
-        data: result.images,
-        error: undefined,
-      };
-    },
-    {
-      maxRetries: 2,
-      initialDelay: 2000,
-    }
-  );
-};
-
-export const generateCaption = async (
-  data: { imageUrl: string },
-  runtime: IAgentRuntime
-): Promise<{
-  title: string;
-  description: string;
-}> => {
-  const { imageUrl } = data;
-  const resp = await runtime.call(AsyncHandlerType.IMAGE_DESCRIPTION, imageUrl);
-
-  return {
-    title: resp.title.trim(),
-    description: resp.description.trim(),
-  };
-};

@@ -15,7 +15,6 @@ vi.mock('@elizaos/core', () => ({
   generateMessageResponse: vi.fn(),
   generateShouldRespond: vi.fn(),
   composeContext: vi.fn(),
-  composeRandomUser: vi.fn(),
 }));
 
 // Mock discord.js Client

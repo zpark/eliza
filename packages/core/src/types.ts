@@ -114,7 +114,7 @@ export interface Goal {
 /**
  * Model size/type classification
  */
-export enum AsyncHandlerType {
+export enum ModelClass {
   SMALL = "text_small", // for backwards compatibility
   MEDIUM = "text_large", // for backwards compatibility
   LARGE = "text_large", // for backwards compatibility
@@ -590,8 +590,8 @@ export type Plugin = {
   /** Optional memory managers */
   memoryManagers?: IMemoryManager[];
 
-  /** Optional handlers */
-  handlers?: {
+  /** Optional models */
+  models?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
 
@@ -1021,9 +1021,9 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  call<T = any>(handlerType: AsyncHandlerType, params: T): Promise<any>;
-  registerHandler(handlerType: AsyncHandlerType, handler: (params: any) => Promise<any>): void;
-  getHandler(handlerType: AsyncHandlerType): ((params: any) => Promise<any>) | undefined;
+  useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
+  registerModel(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
+  getModel(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined;
 
   stop(): Promise<void>;
 }
@@ -1061,18 +1061,18 @@ export interface ChunkRow {
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
   stopSequences?: string[];
 };
 
 export interface TokenizeTextParams {
   context: string;
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
 }
 
 export interface DetokenizeTextParams {
   tokens: number[];
-  handlerType: AsyncHandlerType;
+  modelClass: ModelClass;
 }
 
 // Inventory
@@ -1095,7 +1095,7 @@ export type InventoryAction = {
 export type InventoryProvider = {
   name: string
   description: string
-  items: InventoryItem[]
+  providers: (runtime: IAgentRuntime, params: any) => Promise<InventoryItem[]>
   actions: InventoryAction[]
 }
 

@@ -3,7 +3,7 @@ import {
     type ActionExample, composeContext, type Content, generateText, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    AsyncHandlerType, parseJSONObjectFromText, type State, trimTokens
+    ModelClass, parseJSONObjectFromText, type State, trimTokens
 } from "@elizaos/core";
 import * as fs from "fs";
 
@@ -49,7 +49,7 @@ const getAttachmentIds = async (
         const response = await generateText({
             runtime,
             context,
-            handlerType: AsyncHandlerType.TEXT_SMALL,
+            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -197,7 +197,7 @@ const summarizeAction = {
         const summary = await generateText({
             runtime,
             context,
-            handlerType: AsyncHandlerType.TEXT_SMALL,
+            modelClass: ModelClass.TEXT_SMALL,
         });
 
         currentSummary = currentSummary + "\n" + summary;

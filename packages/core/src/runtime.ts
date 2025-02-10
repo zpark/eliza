@@ -39,7 +39,7 @@ import {
     type IMemoryManager,
     type KnowledgeItem,
     type Memory,
-    AsyncHandlerType,
+    ModelClass,
     type Plugin,
     type Provider,
     type State,
@@ -248,7 +248,7 @@ export class AgentRuntime implements IAgentRuntime {
     private readonly knowledgeRoot: string;
     private readonly memoryManagerService: MemoryManagerService;
 
-    handlers = new Map<AsyncHandlerType, ((params: any) => Promise<any>)[]>();
+    models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
 
     constructor(opts: {
         conversationLength?: number;
@@ -347,9 +347,9 @@ export class AgentRuntime implements IAgentRuntime {
                             this.clients.push(startedClient);
                         }
                     }
-                    if (plugin.handlers) {
-                        for (const [handlerType, handler] of Object.entries(plugin.handlers)) {
-                            this.registerHandler(handlerType as AsyncHandlerType, handler as (params: any) => Promise<any>);
+                    if (plugin.models) {
+                        for (const [modelClass, handler] of Object.entries(plugin.models)) {
+                            this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                         }
                     }
                     if (plugin.services) {
@@ -588,7 +588,7 @@ export class AgentRuntime implements IAgentRuntime {
         const result = await generateText({
             runtime: this,
             context,
-            handlerType: AsyncHandlerType.TEXT_SMALL,
+            modelClass: ModelClass.TEXT_SMALL,
         });
 
         console.log("***** result", result);
@@ -1271,25 +1271,25 @@ Text: ${attachment.text}
         return this.memoryManagerService.getKnowledgeManager();
     }
 
-    registerHandler(handlerType: AsyncHandlerType, handler: (params: any) => Promise<any>) {
-        if (!this.handlers.has(handlerType)) {
-            this.handlers.set(handlerType, []);
+    registerModel(modelClass: ModelClass, handler: (params: any) => Promise<any>) {
+        if (!this.models.has(modelClass)) {
+            this.models.set(modelClass, []);
         }
-        this.handlers.get(handlerType)?.push(handler);
+        this.models.get(modelClass)?.push(handler);
     }
 
-    getHandler(handlerType: AsyncHandlerType): ((params: any) => Promise<any>) | undefined {
-        const handlers = this.handlers.get(handlerType);
-        if (!handlers?.length) {
+    getModel(modelClass: ModelClass): ((params: any) => Promise<any>) | undefined {
+        const models = this.models.get(modelClass);
+        if (!models?.length) {
             return undefined;
         }
-        return handlers[0];
+        return models[0];
     }
 
-    async call(handlerType: AsyncHandlerType, params: any): Promise<any> {
-        const handler = this.getHandler(handlerType);
+    async useModel(modelClass: ModelClass, params: any): Promise<any> {
+        const handler = this.getModel(modelClass);
         if (!handler) {
-            throw new Error(`No handler found for delegate type: ${handlerType}`);
+            throw new Error(`No handler found for delegate type: ${modelClass}`);
         }
         return await handler(params);
     }

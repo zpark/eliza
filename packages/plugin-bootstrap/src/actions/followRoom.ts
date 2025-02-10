@@ -6,7 +6,7 @@ import {
     type ActionExample,
     type IAgentRuntime,
     type Memory,
-    AsyncHandlerType,
+    ModelClass,
     type State,
 } from "@elizaos/core";
 
@@ -67,7 +67,7 @@ export const followRoomAction: Action = {
             const response = await generateTrueOrFalse({
                 runtime,
                 context: shouldFollowContext,
-                handlerType: AsyncHandlerType.TEXT_LARGE,
+                modelClass: ModelClass.TEXT_LARGE,
             });
 
             return response;

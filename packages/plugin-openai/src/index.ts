@@ -3,16 +3,16 @@ import type { Plugin } from "@elizaos/core";
 import {
   DetokenizeTextParams,
   GenerateTextParams,
-  AsyncHandlerType,
+  ModelClass,
   TokenizeTextParams,
 } from "@elizaos/core";
 import { generateText as aiGenerateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
 
-async function tokenizeText(model: AsyncHandlerType, context: string) {
+async function tokenizeText(model: ModelClass, context: string) {
   const modelName =
-    model === AsyncHandlerType.TEXT_SMALL
+    model === ModelClass.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -22,9 +22,9 @@ async function tokenizeText(model: AsyncHandlerType, context: string) {
   return tokens;
 }
 
-async function detokenizeText(model: AsyncHandlerType, tokens: number[]) {
+async function detokenizeText(model: ModelClass, tokens: number[]) {
   const modelName =
-    model === AsyncHandlerType.TEXT_SMALL
+    model === ModelClass.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -77,8 +77,8 @@ export const openaiPlugin: Plugin = {
       throw error;
     }
   },
-  handlers: {
-    [AsyncHandlerType.TEXT_EMBEDDING]: async (text: string | null) => {
+  models: {
+    [ModelClass.TEXT_EMBEDDING]: async (text: string | null) => {
       if (!text) {
         // Return zero vector of appropriate length for model
         return new Array(1536).fill(0);
@@ -106,19 +106,19 @@ export const openaiPlugin: Plugin = {
       const data = await response.json() as { data: [{ embedding: number[] }] };
       return data.data[0].embedding;
     },
-    [AsyncHandlerType.TEXT_TOKENIZER_ENCODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({
       context,
-      handlerType = AsyncHandlerType.TEXT_LARGE,
+      modelClass = ModelClass.TEXT_LARGE,
     }: TokenizeTextParams) => {
-      return await tokenizeText(handlerType ?? AsyncHandlerType.TEXT_LARGE, context);
+      return await tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
     },
-    [AsyncHandlerType.TEXT_TOKENIZER_DECODE]: async ({
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({
       tokens,
-      handlerType = AsyncHandlerType.TEXT_LARGE,
+      modelClass = ModelClass.TEXT_LARGE,
     }: DetokenizeTextParams) => {
-      return await detokenizeText(handlerType ?? AsyncHandlerType.TEXT_LARGE, tokens);
+      return await detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
     },
-    [AsyncHandlerType.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async ({
       runtime,
       context,
       stopSequences = [],
@@ -154,7 +154,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [AsyncHandlerType.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async ({
       runtime,
       context,
       stopSequences = [],
@@ -192,7 +192,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [AsyncHandlerType.IMAGE]: async (params: {
+    [ModelClass.IMAGE]: async (params: {
       prompt: string;
       n?: number;
       size?: string;
@@ -218,7 +218,7 @@ export const openaiPlugin: Plugin = {
       const typedData = data as { data: { url: string }[] };
       return typedData.data;
     },
-    [AsyncHandlerType.IMAGE_DESCRIPTION]: async (imageUrl: string) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrl: string) => {
       console.log("IMAGE_DESCRIPTION")
       const baseURL =
         process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
@@ -264,7 +264,7 @@ export const openaiPlugin: Plugin = {
         description: descriptionMatch[1]
       };
     },
-    [AsyncHandlerType.TRANSCRIPTION]: async (audioBuffer: Buffer) => {
+    [ModelClass.TRANSCRIPTION]: async (audioBuffer: Buffer) => {
       console.log("audioBuffer", audioBuffer)
       const baseURL =
         process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";

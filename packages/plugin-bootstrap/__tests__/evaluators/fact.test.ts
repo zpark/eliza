@@ -21,7 +21,7 @@ vi.mock('@elizaos/core', () => ({
             }
         })
     })),
-    AsyncHandlerType: {
+    ModelClass: {
         SMALL: 'small'
     }
 }));

@@ -6,7 +6,7 @@ import {
     type ActionExample,
     type IAgentRuntime,
     type Memory,
-    AsyncHandlerType,
+    ModelClass,
     type State,
 } from "@elizaos/core";
 
@@ -52,7 +52,7 @@ export const unmuteRoomAction: Action = {
             const response = generateTrueOrFalse({
                 context: shouldUnmuteContext,
                 runtime,
-                handlerType: AsyncHandlerType.TEXT_LARGE,
+                modelClass: ModelClass.TEXT_LARGE,
             });
 
             return response;

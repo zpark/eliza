@@ -1,11 +1,11 @@
-import { generateCaption, generateText, trimTokens } from "@elizaos/core";
+import { generateText, trimTokens } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type IAgentRuntime,
     type IPdfService,
     type IVideoService,
     type Media,
-    AsyncHandlerType,
+    ModelClass,
     ServiceType,
 } from "@elizaos/core";
 import { type Attachment, Collection } from "discord.js";
@@ -36,7 +36,7 @@ async function generateSummary(
     const response = await generateText({
         runtime,
         context: prompt,
-        handlerType: AsyncHandlerType.TEXT_SMALL,
+        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);
@@ -133,7 +133,7 @@ export class AttachmentManager {
                 throw new Error("Unsupported audio/video format");
             }
 
-            const transcription = await this.runtime.call(AsyncHandlerType.TRANSCRIPTION, audioBuffer);
+            const transcription = await this.runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
             const { title, description } = await generateSummary(
                 this.runtime,
                 transcription
@@ -284,10 +284,8 @@ export class AttachmentManager {
         attachment: Attachment
     ): Promise<Media> {
         try {
-            const { description, title } = await generateCaption(
-                { imageUrl: attachment.url },
-                this.runtime
-            );
+            const { description, title } = await
+                this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, attachment.url);
             return {
                 id: attachment.id,
                 url: attachment.url,

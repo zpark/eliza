@@ -1,4 +1,4 @@
-import { AsyncHandlerType, Plugin, logger } from "@elizaos/core";
+import { ModelClass, Plugin, logger } from "@elizaos/core";
 import { AutoTokenizer } from "@huggingface/transformers";
 import { EmbeddingModel, FlagEmbedding } from "fastembed";
 import path from "node:path";
@@ -134,9 +134,9 @@ export const localAIPlugin: Plugin = {
     }
   },
 
-  handlers: {
+  models: {
     // Text generation for small tasks
-    [AsyncHandlerType.TEXT_SMALL]: async ({
+    [ModelClass.TEXT_SMALL]: async ({
       context,
       stopSequences = [],
       runtime,
@@ -155,7 +155,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text generation for larger tasks
-    [AsyncHandlerType.TEXT_LARGE]: async ({
+    [ModelClass.TEXT_LARGE]: async ({
       context,
       stopSequences = [],
       runtime,
@@ -172,7 +172,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text embedding using FastEmbed
-    [AsyncHandlerType.TEXT_EMBEDDING]: async ({ text }) => {
+    [ModelClass.TEXT_EMBEDDING]: async ({ text }) => {
       try {
         return await localAIManager.generateEmbedding(text);
       } catch (error) {
@@ -182,7 +182,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text tokenization using AutoTokenizer
-    [AsyncHandlerType.TEXT_TOKENIZER_ENCODE]: async ({ text }) => {
+    [ModelClass.TEXT_TOKENIZER_ENCODE]: async ({ text }) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -195,7 +195,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Text detokenization using AutoTokenizer
-    [AsyncHandlerType.TEXT_TOKENIZER_DECODE]: async ({ tokens }) => {
+    [ModelClass.TEXT_TOKENIZER_DECODE]: async ({ tokens }) => {
       try {
         if (!localAIManager.tokenizer) {
           throw new Error("Tokenizer not initialized");
@@ -208,7 +208,7 @@ export const localAIPlugin: Plugin = {
     },
 
     // Image description using local Florence model
-    [AsyncHandlerType.IMAGE_DESCRIPTION]: async (imageUrlw) => {
+    [ModelClass.IMAGE_DESCRIPTION]: async (imageUrlw) => {
       try {
         
         // TODO: Add florence

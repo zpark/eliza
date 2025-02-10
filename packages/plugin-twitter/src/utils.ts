@@ -1,5 +1,5 @@
 import type { Tweet } from "./client";
-import type { Content, IAgentRuntime, Memory, AsyncHandlerType, UUID } from "@elizaos/core";
+import type { Content, IAgentRuntime, Memory, ModelClass, UUID } from "@elizaos/core";
 import { generateText, stringToUuid } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import { logger } from "@elizaos/core";
@@ -497,11 +497,11 @@ export const parseActionResponseFromText = (
 export async function generateTweetActions({
     runtime,
     context,
-    handlerType,
+    modelClass,
 }: {
     runtime: IAgentRuntime;
     context: string;
-    handlerType: AsyncHandlerType;
+    modelClass: ModelClass;
 }): Promise<ActionResponse | null> {
     let retryDelay = 1000;
     while (true) {
@@ -509,7 +509,7 @@ export async function generateTweetActions({
             const response = await generateText({
                 runtime,
                 context,
-                handlerType,
+                modelClass,
             });
             logger.debug(
                 "Received response from generateText for tweet actions:",
