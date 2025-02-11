@@ -8,14 +8,12 @@
         "rules": {
             "recommended": true,
             "suspicious": {
-                "noExplicitAny": "warn",
                 "noArrayIndexKey": "warn",
                 "noPrototypeBuiltins": "warn",
                 "noDuplicateObjectKeys": "warn",
                 "noGlobalIsNan": "warn",
                 "noSelfCompare": "warn",
                 "noDoubleEquals": "warn",
-                "noImplicitAnyLet": "warn",
                 "noAssignInExpressions": "warn",
                 "noConstEnum": "warn",
                 "noEmptyInterface": "warn"
@@ -28,32 +26,11 @@
                 "noUnnecessaryContinue": "warn",
                 "noInnerDeclarations": "warn"
             },
-            "style": {
-                "useConst": "warn",
-                "useTemplate": "warn",
-                "noUselessElse": "warn",
-                "useSelfClosingElements": "warn",
-                "noUnusedTemplateLiteral": "warn",
-                "noInferrableTypes": "warn",
-                "noNonNullAssertion": "warn",
-                "noParameterAssign": "warn",
-                "useDefaultParameterLast": "warn",
-                "useExponentiationOperator": "warn",
-                "noVar": "warn",
-                "useSingleVarDeclarator": "warn"
-            },
-            "a11y": {
-                "useAltText": "warn",
-                "useMediaCaption": "warn",
-                "noSvgWithoutTitle": "warn",
-                "useKeyWithClickEvents": "warn"
-            },
             "complexity": {
                 "noForEach": "warn",
                 "useOptionalChain": "warn",
                 "useArrowFunction": "warn",
                 "useFlatMap": "warn",
-                "useLiteralKeys": "warn",
                 "noBannedTypes": "warn",
                 "noStaticOnlyClass": "warn",
                 "noThisInStatic": "warn",
