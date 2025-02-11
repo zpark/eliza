@@ -4,7 +4,7 @@ import {
     DatabaseAdapter,
     type GoalStatus,
     type Participant,
-    elizaLogger,
+    logger,
     type Goal,
     type IDatabaseCacheAdapter,
     type Memory,
@@ -67,7 +67,7 @@ export class DrizzleDatabaseAdapter
         this.pool = new pg.Pool(poolConfig);
 
         this.pool.on("error", (err) => {
-            elizaLogger.error("Unexpected pool error", err);
+            logger.error("Unexpected pool error", err);
             this.handlePoolError(err);
         });
 
@@ -92,7 +92,7 @@ export class DrizzleDatabaseAdapter
     }
 
     private async handlePoolError(error: Error) {
-        elizaLogger.error("Pool error occurred, attempting to reconnect", {
+        logger.error("Pool error occurred, attempting to reconnect", {
             error: error.message,
         });
 
@@ -107,9 +107,9 @@ export class DrizzleDatabaseAdapter
             });
 
             await this.testConnection();
-            elizaLogger.success("Pool reconnection successful");
+            logger.success("Pool reconnection successful");
         } catch (reconnectError) {
-            elizaLogger.error("Failed to reconnect pool", {
+            logger.error("Failed to reconnect pool", {
                 error:
                     reconnectError instanceof Error
                         ? reconnectError.message
@@ -146,7 +146,7 @@ export class DrizzleDatabaseAdapter
                     const jitter = Math.random() * this.jitterMax;
                     const delay = backoffDelay + jitter;
 
-                    elizaLogger.warn(
+                    logger.warn(
                         `Database operation failed (attempt ${attempt}/${this.maxRetries}):`,
                         {
                             error:
@@ -159,7 +159,7 @@ export class DrizzleDatabaseAdapter
 
                     await new Promise((resolve) => setTimeout(resolve, delay));
                 } else {
-                    elizaLogger.error("Max retry attempts reached:", {
+                    logger.error("Max retry attempts reached:", {
                         error:
                             error instanceof Error
                                 ? error.message
@@ -179,9 +179,9 @@ export class DrizzleDatabaseAdapter
     async cleanup(): Promise<void> {
         try {
             await this.pool.end();
-            elizaLogger.info("Database pool closed");
+            logger.info("Database pool closed");
         } catch (error) {
-            elizaLogger.error("Error closing database pool:", error);
+            logger.error("Error closing database pool:", error);
         }
     }
 
@@ -221,13 +221,13 @@ export class DrizzleDatabaseAdapter
             const hasVector = vectorExt?.rows.length > 0;
 
             if (!hasVector) {
-                elizaLogger.warn("Vector extension not found");
+                logger.warn("Vector extension not found");
                 return false;
             }
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error validating vector setup:", error);
+            logger.error("Error validating vector setup:", error);
             return false;
         }
     }
@@ -248,7 +248,7 @@ export class DrizzleDatabaseAdapter
                 await runMigrations(this.pool);
             }
         } catch (error) {
-            elizaLogger.error("Failed to initialize database:", error);
+            logger.error("Failed to initialize database:", error);
             throw error;
         }
     }
@@ -259,7 +259,7 @@ export class DrizzleDatabaseAdapter
                 await (this.db as any).client.close();
             }
         } catch (error) {
-            elizaLogger.error("Failed to close database connection:", {
+            logger.error("Failed to close database connection:", {
                 error: error instanceof Error ? error.message : String(error),
             });
             throw error;
@@ -269,13 +269,13 @@ export class DrizzleDatabaseAdapter
     async testConnection(): Promise<boolean> {
         try {
             const result = await this.db.execute(sql`SELECT NOW()`);
-            elizaLogger.success(
+            logger.success(
                 "Database connection test successful:",
                 result.rows[0]
             );
             return true;
         } catch (error) {
-            elizaLogger.error("Database connection test failed:", error);
+            logger.error("Database connection test failed:", error);
             throw new Error(
                 `Failed to connect to database: ${(error as Error).message}`
             );
@@ -319,13 +319,13 @@ export class DrizzleDatabaseAdapter
                     details: sql`${account.details}::jsonb` || {},
                 });
 
-                elizaLogger.debug("Account created successfully:", {
+                logger.debug("Account created successfully:", {
                     accountId,
                 });
 
                 return true;
             } catch (error) {
-                elizaLogger.error("Error creating account:", {
+                logger.error("Error creating account:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     accountId: account.id,
@@ -547,7 +547,7 @@ export class DrizzleDatabaseAdapter
                     }))
                     .filter((row) => Array.isArray(row.embedding));
             } catch (error) {
-                elizaLogger.error("Error in getCachedEmbeddings:", {
+                logger.error("Error in getCachedEmbeddings:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     tableName: opts.query_table_name,
@@ -580,7 +580,7 @@ export class DrizzleDatabaseAdapter
                     type: params.type,
                 });
             } catch (error) {
-                elizaLogger.error("Failed to create log entry:", {
+                logger.error("Failed to create log entry:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     type: params.type,
@@ -614,7 +614,7 @@ export class DrizzleDatabaseAdapter
                     .where(eq(participantTable.roomId, params.roomId))
                     .orderBy(accountTable.name);
 
-                elizaLogger.debug("Retrieved actor details:", {
+                logger.debug("Retrieved actor details:", {
                     roomId: params.roomId,
                     actorCount: result.length,
                 });
@@ -637,7 +637,7 @@ export class DrizzleDatabaseAdapter
                             },
                         };
                     } catch (error) {
-                        elizaLogger.warn("Failed to parse actor details:", {
+                        logger.warn("Failed to parse actor details:", {
                             actorId: row.id,
                             error:
                                 error instanceof Error
@@ -658,7 +658,7 @@ export class DrizzleDatabaseAdapter
                     }
                 });
             } catch (error) {
-                elizaLogger.error("Failed to fetch actor details:", {
+                logger.error("Failed to fetch actor details:", {
                     roomId: params.roomId,
                     error:
                         error instanceof Error ? error.message : String(error),
@@ -778,7 +778,7 @@ export class DrizzleDatabaseAdapter
 
     async createMemory(memory: Memory, tableName: string): Promise<void> {
         return this.withDatabase(async () => {
-            elizaLogger.debug("DrizzleAdapter createMemory:", {
+            logger.debug("DrizzleAdapter createMemory:", {
                 memoryId: memory.id,
                 embeddingLength: memory.embedding?.length,
                 contentLength: memory.content?.text?.length,
@@ -786,7 +786,7 @@ export class DrizzleDatabaseAdapter
 
             let isUnique = true;
             if (memory.embedding) {
-                elizaLogger.info("Searching for similar memories:");
+                logger.info("Searching for similar memories:");
                 const similarMemories = await this.searchMemoriesByEmbedding(
                     memory.embedding,
                     {
@@ -844,7 +844,7 @@ export class DrizzleDatabaseAdapter
                     )
                 );
 
-            elizaLogger.debug("All memories removed successfully:", {
+            logger.debug("All memories removed successfully:", {
                 roomId,
                 tableName,
             });
@@ -931,7 +931,7 @@ export class DrizzleDatabaseAdapter
                     })
                     .where(eq(goalTable.id, goal.id as string));
             } catch (error) {
-                elizaLogger.error("Failed to update goal:", {
+                logger.error("Failed to update goal:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     goalId: goal.id,
@@ -953,7 +953,7 @@ export class DrizzleDatabaseAdapter
                 objectives: sql`${goal.objectives}::jsonb`,
             });
         } catch (error) {
-            elizaLogger.error("Failed to update goal:", {
+            logger.error("Failed to update goal:", {
                 goalId: goal.id,
                 error: error instanceof Error ? error.message : String(error),
                 status: goal.status,
@@ -969,12 +969,12 @@ export class DrizzleDatabaseAdapter
             try {
                 await this.db.delete(goalTable).where(eq(goalTable.id, goalId));
 
-                elizaLogger.debug("Goal removal attempt:", {
+                logger.debug("Goal removal attempt:", {
                     goalId,
                     removed: true,
                 });
             } catch (error) {
-                elizaLogger.error("Failed to remove goal:", {
+                logger.error("Failed to remove goal:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     goalId,
@@ -1055,7 +1055,7 @@ export class DrizzleDatabaseAdapter
                 });
                 return true;
             } catch (error) {
-                elizaLogger.error("Failed to add participant:", {
+                logger.error("Failed to add participant:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     userId,
@@ -1081,7 +1081,7 @@ export class DrizzleDatabaseAdapter
 
                 return result.length > 0;
             } catch (error) {
-                elizaLogger.error("Failed to remove participant:", {
+                logger.error("Failed to remove participant:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     userId,
@@ -1183,7 +1183,7 @@ export class DrizzleDatabaseAdapter
                     userId: params.userA,
                 });
 
-                elizaLogger.debug("Relationship created successfully:", {
+                logger.debug("Relationship created successfully:", {
                     relationshipId,
                     userA: params.userA,
                     userB: params.userB,
@@ -1194,7 +1194,7 @@ export class DrizzleDatabaseAdapter
                 // Check for unique constraint violation or other specific errors
                 if ((error as { code?: string }).code === "23505") {
                     // Unique violation
-                    elizaLogger.warn("Relationship already exists:", {
+                    logger.warn("Relationship already exists:", {
                         userA: params.userA,
                         userB: params.userB,
                         error:
@@ -1203,7 +1203,7 @@ export class DrizzleDatabaseAdapter
                                 : String(error),
                     });
                 } else {
-                    elizaLogger.error("Failed to create relationship:", {
+                    logger.error("Failed to create relationship:", {
                         userA: params.userA,
                         userB: params.userB,
                         error:
@@ -1248,13 +1248,13 @@ export class DrizzleDatabaseAdapter
                     return result[0] as unknown as Relationship;
                 }
 
-                elizaLogger.debug("No relationship found between users:", {
+                logger.debug("No relationship found between users:", {
                     userA: params.userA,
                     userB: params.userB,
                 });
                 return null;
             } catch (error) {
-                elizaLogger.error("Error fetching relationship:", {
+                logger.error("Error fetching relationship:", {
                     userA: params.userA,
                     userB: params.userB,
                     error:
@@ -1282,14 +1282,14 @@ export class DrizzleDatabaseAdapter
                     )
                     .orderBy(desc(relationshipTable.createdAt));
 
-                elizaLogger.debug("Retrieved relationships:", {
+                logger.debug("Retrieved relationships:", {
                     userId: params.userId,
                     count: result.length,
                 });
 
                 return result as unknown as Relationship[];
             } catch (error) {
-                elizaLogger.error("Failed to fetch relationships:", {
+                logger.error("Failed to fetch relationships:", {
                     userId: params.userId,
                     error:
                         error instanceof Error ? error.message : String(error),
@@ -1345,7 +1345,7 @@ export class DrizzleDatabaseAdapter
                     .delete(knowledgeTable)
                     .where(eq(knowledgeTable.id, id));
             } catch (error) {
-                elizaLogger.error("Failed to remove knowledge:", {
+                logger.error("Failed to remove knowledge:", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     id,
@@ -1392,7 +1392,7 @@ export class DrizzleDatabaseAdapter
 
                 return result[0]?.value || undefined;
             } catch (error) {
-                elizaLogger.error("Error fetching cache", {
+                logger.error("Error fetching cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     key: params.key,
@@ -1425,7 +1425,7 @@ export class DrizzleDatabaseAdapter
                     });
                 return true;
             } catch (error) {
-                elizaLogger.error("Error setting cache", {
+                logger.error("Error setting cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     key: params.key,
@@ -1452,7 +1452,7 @@ export class DrizzleDatabaseAdapter
                     );
                 return true;
             } catch (error) {
-                elizaLogger.error("Error deleting cache", {
+                logger.error("Error deleting cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     key: params.key,

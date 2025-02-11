@@ -8,6 +8,7 @@ async function get(
     runtime: AgentRuntime,
     message: Memory
 ): Promise<KnowledgeItem[]> {
+    console.log("get", message);
     // Add validation for message
     if (!message?.content?.text) {
         logger.warn("Invalid message for knowledge query:", {
@@ -69,6 +70,7 @@ async function set(
     chunkSize = 512,
     bleed = 20
 ) {
+    console.log("set", item);
     const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
     await runtime.documentsManager.createMemory({
         id: item.id,

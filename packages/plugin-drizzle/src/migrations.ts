@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import path from "path";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { elizaLogger } from "@elizaos/core";
+import { logger } from "@elizaos/core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,9 +14,9 @@ export async function runMigrations(pgPool: Pool): Promise<void> {
         await migrate(db, {
             migrationsFolder: path.resolve(__dirname, "../drizzle/migrations"),
         });
-        elizaLogger.info("Migrations completed successfully!");
+        logger.info("Migrations completed successfully!");
     } catch (error) {
-        elizaLogger.error("Failed to run database migrations:", error);
+        logger.error("Failed to run database migrations:", error);
         throw error;
     }
 }
