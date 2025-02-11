@@ -6,7 +6,7 @@ const { Command } = require('commander')
 const program = new Command()
 
 program
-  .name('eliza')
+  .name('elizaos')
   .description('CLI to some JavaScript string utilities')
   .version('0.8.0');
 
