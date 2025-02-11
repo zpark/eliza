@@ -1,16 +1,16 @@
 // src/commands/agent.ts
-import { MessageExampleSchema } from "@elizaos/core"
-import type { MessageExample } from "@elizaos/core";
-import { Command } from "commander"
-import prompts from "prompts"
-import { logger } from "../utils/logger"
-import { z } from "zod"
-import { getConfig } from "../utils/get-config"
-import { handleError } from "../utils/handle-error"
-import { Database, SqliteDatabaseAdapter } from "@elizaos-plugins/sqlite"
-import { promises as fs } from "node:fs"
+import { Database, SqliteDatabaseAdapter } from "@elizaos-plugins/sqlite";
+import type { MessageExample, UUID } from "@elizaos/core";
+import { MessageExampleSchema } from "@elizaos/core";
+import { Command } from "commander";
+import fs from "node:fs";
+import prompts from "prompts";
 import { v4 as uuid } from "uuid";
-import type { UUID } from "@elizaos/core";
+import { z } from "zod";
+import { getConfig } from "../utils/get-config";
+import { handleError } from "../utils/handle-error";
+import { logger } from "../utils/logger";
+import { resolveDatabasePath } from "../utils/resolve-database-path";
 
 const characterSchema = z.object({
   id: z.string().uuid(),
@@ -46,9 +46,10 @@ async function collectCharacterData(
   let currentStep = 0;
   const steps = ['name', 'bio', 'lore', 'adjectives', 'postExamples', 'messageExamples'];
   
+  let response: { value?: string };
+
   while (currentStep < steps.length) {
     const field = steps[currentStep];
-    let response;
 
     switch (field) {
       case 'name':
@@ -140,31 +141,26 @@ character
   .description("list all characters")
   .action(async () => {
     try {
-      const cwd = process.cwd()
-      const config = await getConfig(cwd)
-      if (!config) {
-        logger.error("No project.json found. Please run init first.")
-        process.exit(1)
-      }
+      const dbPath = await resolveDatabasePath({ requiredConfig: false });
+      
+      const db = new Database(dbPath);
+      const adapter = new SqliteDatabaseAdapter(db);
+      await adapter.init();
 
-      const db = new Database((config.database.config as { path: string }).path)
-      const adapter = new SqliteDatabaseAdapter(db)
-      await adapter.init()
-
-      const characters = await adapter.listCharacters()
+      const characters = await adapter.listCharacters();
 
       if (characters.length === 0) {
-        logger.info("No characters found")
+        logger.info("No characters found");
       } else {
-        logger.info("\nCharacters:")
+        logger.info("\nCharacters:");
         for (const character of characters) {
-          logger.info(`  ${character.name} (${character.id})`)
+          logger.info(`  ${character.name} (${character.id})`);
         }
       }
 
-      await adapter.close()
+      await adapter.close();
     } catch (error) {
-      handleError(error)
+      handleError(error);
     }
   })
 
@@ -173,14 +169,6 @@ character
   .description("create a new character")
   .action(async () => {
     try {
-      const cwd = process.cwd()
-      const config = await getConfig(cwd)
-      if (!config) {
-        logger.error("No project.json found. Please run init first.")
-        process.exit(1)
-      }
-
-      logger.info("\nCreating new character (type 'back' or 'forward' to navigate)")
       
       const formData = await collectCharacterData()
       if (!formData) {
@@ -188,7 +176,8 @@ character
         return
       }
 
-      const db = new Database((config.database.config as { path: string }).path)
+      const dbPath = await resolveDatabasePath({ requiredConfig: true });
+      const db = new Database(dbPath);
       const adapter = new SqliteDatabaseAdapter(db)
       await adapter.init()
 
@@ -213,8 +202,8 @@ character
 
       const characterToCreate = {
         ...characterData,
-        messageExamples: characterData.messageExamples.map(
-          (msgArr: any) => msgArr.map((msg: any) => ({
+        messageExamples: (characterData.messageExamples as MessageExample[][]).map(
+          (msgArr: MessageExample[]): MessageExample[] => msgArr.map((msg: MessageExample) => ({
             user: msg.user || "unknown",
             content: msg.content
           }))
@@ -252,21 +241,15 @@ character
   .argument("<character-id>", "character ID")
   .action(async (characterId) => {
     try {
-      const cwd = process.cwd()
-      const config = await getConfig(cwd)
-      if (!config) {
-        logger.error("No project.json found. Please run init first.")
-        process.exit(1)
-      }
+      const dbPath = await resolveDatabasePath({ requiredConfig: true });
+      const db = new Database(dbPath);
+      const adapter = new SqliteDatabaseAdapter(db);
+      await adapter.init();
 
-      const db = new Database((config.database.config as { path: string }).path)
-      const adapter = new SqliteDatabaseAdapter(db)
-      await adapter.init()
-
-      const existingCharacter = await adapter.getCharacter(characterId)
+      const existingCharacter = await adapter.getCharacter(characterId);
       if (!existingCharacter) {
-        logger.error(`Character ${characterId} not found`)
-        process.exit(1)
+        logger.error(`Character ${characterId} not found`);
+        process.exit(1);
       }
 
       logger.info(`\nEditing character ${existingCharacter.name} (type 'back' or 'forward' to navigate)`)
@@ -277,8 +260,8 @@ character
         lore: existingCharacter.lore || [],
         adjectives: existingCharacter.adjectives || [],
         postExamples: existingCharacter.postExamples || [],
-        messageExamples: (existingCharacter.messageExamples || []).map(
-          (msgArr: any) => msgArr.map((msg: any) => ({ 
+        messageExamples: (existingCharacter.messageExamples || [] as MessageExample[][]).map(
+          (msgArr: MessageExample[]): MessageExample[] => msgArr.map((msg: MessageExample) => ({ 
             user: msg.user ?? "unknown", 
             content: msg.content 
           }))
@@ -320,19 +303,27 @@ character
   .command("import")
   .description("import a character from file") 
   .argument("<file>", "JSON file path")
-  .action(async (file) => {
+  .action(async (fileArg) => {
     try {
-      const cwd = process.cwd()
-      const config = await getConfig(cwd)
-      if (!config) {
-        logger.error("No project.json found. Please run init first.")
-        process.exit(1)
+      // Use the provided argument if available; otherwise, prompt the user.
+      const filePath: string = fileArg || (await prompts({
+        type: "text",
+        name: "file",
+        message: "Enter the path to the Character JSON file",
+      })).file;
+      
+      if (!filePath) {
+        logger.info("Import cancelled")
+        return
       }
-
-      const characterData = JSON.parse(await fs.readFile(file, "utf8"))
+      
+      const characterData = JSON.parse(await fs.promises.readFile(filePath, "utf8"))
       const character = characterSchema.parse(characterData)
       
-      const db = new Database((config.database.config as { path: string }).path)
+      // resolve database path
+      const dbPath = await resolveDatabasePath({ requiredConfig: true })
+
+      const db = new Database(dbPath)
       const adapter = new SqliteDatabaseAdapter(db)
       await adapter.init()
 
@@ -386,7 +377,7 @@ character
       }
 
       const outputPath = opts.output || `${character.name}.json`
-      await fs.writeFile(outputPath, JSON.stringify(character, null, 2))
+      await fs.promises.writeFile(outputPath, JSON.stringify(character, null, 2))
       logger.success(`Exported character to ${outputPath}`)
 
       await adapter.close()
@@ -401,14 +392,8 @@ character
   .argument("<character-id>", "character ID")
   .action(async (characterId) => {
     try {
-      const cwd = process.cwd()
-      const config = await getConfig(cwd)
-      if (!config) {
-        logger.error("No project.json found. Please run init first.")
-        process.exit(1)
-      }
-
-      const db = new Database((config.database.config as { path: string }).path)
+      const dbPath = await resolveDatabasePath({ requiredConfig: true })
+      const db = new Database(dbPath)
       const adapter = new SqliteDatabaseAdapter(db)
       await adapter.init()
 
