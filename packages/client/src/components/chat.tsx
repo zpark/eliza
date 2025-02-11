@@ -83,7 +83,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
         const newMessages = [
             {
                 text: input,
-                user: "user",
+                user: "{{user1}}",
                 createdAt: Date.now(),
                 attachments,
             },
