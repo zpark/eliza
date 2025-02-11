@@ -27,7 +27,7 @@ type Record = {
 
 let recorder: MediaRecorder;
 let recordingChunks: BlobPart[] = [];
-let timerTimeout: NodeJS.Timeout;
+let timerTimeout: ReturnType<typeof setTimeout>;
 
 // Utility function to pad a number with leading zeros
 const padWithLeadingZeros = (num: number, length: number): string => {

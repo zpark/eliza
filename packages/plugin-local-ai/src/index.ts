@@ -334,7 +334,7 @@ class LocalAIManager {
     }
 
     const blob = new Blob([imageData], { type: mimeType });
-    const image = await RawImage.fromBlob(blob);
+    const image = await RawImage.fromBlob(blob as any);
     const visionInputs = await this.florenceProcessor(image);
     const prompts = this.florenceProcessor.construct_prompts("<DETAILED_CAPTION>");
     const textInputs = this.florenceTokenizer(prompts);

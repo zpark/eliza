@@ -98,3 +98,5 @@ packages/*/dist/*
 
 **/.docusaurus/**
 **/docs/build/**
+
+**lock**
