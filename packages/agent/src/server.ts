@@ -9,105 +9,31 @@ import {
     type Content,
     type Media,
     type Memory,
-    type IAgentRuntime
+    type IAgentRuntime,
+    type Character
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { type Request as ExpressRequest } from "express";
-import multer from "multer";
+
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { z } from "zod";
 import { createApiRouter } from "./api.ts";
 import replyAction from "./reply.ts";
+import { messageHandlerTemplate } from "./helper.ts";
+import { upload } from "./helper.ts";
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(process.cwd(), "data", "uploads");
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`);
-    },
-});
 
-// some people have more memory than disk.io
-const upload = multer({ storage /*: multer.memoryStorage() */ });
 
-export const messageHandlerTemplate =
-    // {{goals}}
-    // "# Action Examples" is already included
-    `{{actionExamples}}
-(Action examples are for reference only. Do not use the information from them in your response.)
-
-# Knowledge
-{{knowledge}}
-
-# Task: Generate dialog and actions for the character {{agentName}}.
-About {{agentName}}:
-{{bio}}
-{{lore}}
-
-{{providers}}
-
-{{attachments}}
-
-# Capabilities
-Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
-
-{{messageDirections}}
-
-{{recentMessages}}
-
-{{actions}}
-
-# Instructions: Write the next message for {{agentName}}.
-${messageCompletionFooter}`;
-
-export const hyperfiHandlerTemplate = `{{actionExamples}}
-(Action examples are for reference only. Do not use the information from them in your response.)
-
-# Knowledge
-{{knowledge}}
-
-# Task: Generate dialog and actions for the character {{agentName}}.
-About {{agentName}}:
-{{bio}}
-{{lore}}
-
-{{providers}}
-
-{{attachments}}
-
-# Capabilities
-Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
-
-{{messageDirections}}
-
-{{recentMessages}}
-
-{{actions}}
-
-# Instructions: Write the next message for {{agentName}}.
-
-Response format should be formatted in a JSON block like this:
-\`\`\`json
-{ "lookAt": "{{nearby}}" or null, "emote": "{{emotes}}" or null, "say": "string" or null, "actions": (array of strings) or null }
-\`\`\`
-`;
 
 export class CharacterServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>; // container management
     private server: any; // Store server instance
-    public startAgent: Function; // Store startAgent functor
-    public loadCharacterTryPath: Function; // Store loadCharacterTryPath functor
-    public jsonToCharacter: Function; // Store jsonToCharacter functor
+    public startAgent: () => Promise<void>; // Store startAgent function
+    public loadCharacterTryPath: (characterPath: string) => Promise<Character>; // Store loadCharacterTryPath function
+    public jsonToCharacter: (filePath: string, character: string | never) => Promise<Character>; // Store jsonToCharacter function
 
     constructor() {
         logger.log("DirectClient constructor");
@@ -177,7 +103,7 @@ export class CharacterServer {
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
                 const roomId = stringToUuid(
-                    req.body.roomId ?? "default-room-" + agentId
+                    req.body.roomId ?? `default-room-${agentId}`
                 );
                 const userId = stringToUuid(req.body.userId ?? "user");
 
@@ -248,7 +174,7 @@ export class CharacterServer {
                 };
 
                 const memory: Memory = {
-                    id: stringToUuid(messageId + "-" + userId),
+                    id: stringToUuid(`${messageId}-${userId}`),
                     ...userMessage,
                     agentId: runtime.agentId,
                     userId,
@@ -494,7 +420,7 @@ export class CharacterServer {
                     if (hfOut.lookAt !== null || hfOut.emote !== null) {
                         contentObj.text += ". Then I ";
                         if (hfOut.lookAt !== null) {
-                            contentObj.text += "looked at " + hfOut.lookAt;
+                            contentObj.text += `looked at ${hfOut.lookAt}`;
                             if (hfOut.emote !== null) {
                                 contentObj.text += " and ";
                             }
