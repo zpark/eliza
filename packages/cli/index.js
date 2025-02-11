@@ -5,11 +5,12 @@ const fs = require('fs')
 const { Command } = require('commander')
 
 const program = new Command()
+const { version } = require('./package.json')
 
 program
   .name('elizaos')
-  .description('CLI to some JavaScript string utilities')
-  .version('0.8.0');
+  .description('elizaOS CLI - Manage your plugins')
+  .version(version);
 
 const plugins = new Command()
   .name("plugins")
