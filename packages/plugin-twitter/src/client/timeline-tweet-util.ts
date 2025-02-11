@@ -1,6 +1,6 @@
-import { LegacyTweetRaw, TimelineMediaExtendedRaw } from './timeline-v1';
-import { Photo, Video } from './tweets';
-import { isFieldDefined, NonNullableField } from './type-util';
+import type { LegacyTweetRaw, TimelineMediaExtendedRaw } from './timeline-v1';
+import type { Photo, Video } from './tweets';
+import { isFieldDefined, type NonNullableField } from './type-util';
 
 const reHashtag = /\B(\#\S+\b)/g;
 const reCashtag = /\B(\$\S+\b)/g;
@@ -127,7 +127,7 @@ function linkUsernameHtml(username: string) {
 }
 
 function unwrapTcoUrlHtml(tweet: LegacyTweetRaw, foundedMedia: string[]) {
-  return function (tco: string) {
+  return (tco: string) => {
     for (const entity of tweet.entities?.urls ?? []) {
       if (tco === entity.url && entity.expanded_url != null) {
         return `<a href="${entity.expanded_url}">${tco}</a>`;

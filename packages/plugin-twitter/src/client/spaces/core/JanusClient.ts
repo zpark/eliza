@@ -5,7 +5,7 @@ import wrtc from '@roamhq/wrtc';
 const { RTCPeerConnection, MediaStream } = wrtc;
 import { JanusAudioSink, JanusAudioSource } from './JanusAudio';
 import type { AudioDataWithUser, TurnServersInfo } from '../types';
-import { Logger } from '../logger';
+import type { Logger } from '../logger';
 
 interface JanusConfig {
   /**
@@ -213,7 +213,7 @@ export class JanusClient extends EventEmitter {
    */
   public async subscribeSpeaker(
     userId: string,
-    feedId: number = 0,
+    feedId = 0,
   ): Promise<void> {
     this.logger.debug('[JanusClient] subscribeSpeaker => userId=', userId);
 
@@ -569,7 +569,7 @@ export class JanusClient extends EventEmitter {
    * Creates an SDP offer and sends "configure" to Janus with it.
    * Used by both host and guest after attach + join.
    */
-  private async configurePublisher(sessionUUID: string = ''): Promise<void> {
+  private async configurePublisher(sessionUUID = ''): Promise<void> {
     if (!this.pc || !this.sessionId || !this.handleId) {
       return;
     }

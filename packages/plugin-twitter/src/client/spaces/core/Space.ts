@@ -21,7 +21,7 @@ import type {
   SpeakerInfo,
   SpaceConfig,
 } from '../types';
-import { Scraper } from '../../scraper';
+import type { Scraper } from '../../scraper';
 import { Logger } from '../logger';
 
 /**

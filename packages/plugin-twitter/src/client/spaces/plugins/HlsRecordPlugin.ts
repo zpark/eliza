@@ -1,6 +1,6 @@
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
-import { Plugin, OccupancyUpdate } from '../types';
-import { Space } from '../core/Space';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import type { Plugin, OccupancyUpdate } from '../types';
+import type { Space } from '../core/Space';
 import { Logger } from '../logger';
 
 /**

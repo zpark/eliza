@@ -1,7 +1,7 @@
 import {
     logger,
     stringToUuid,
-    TestSuite,
+    type TestSuite,
     type Character,
     type Client as ElizaClient,
     type IAgentRuntime,
@@ -28,7 +28,7 @@ import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
 import reply from "./actions/reply.ts";
-import { IDiscordClient } from "./types.ts";
+import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {

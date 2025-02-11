@@ -1,6 +1,6 @@
 // Your existing imports
 import { Scraper } from './scraper';
-import { Photo, Tweet } from './tweets';
+import type { Photo, Tweet } from './tweets';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';

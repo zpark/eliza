@@ -1,11 +1,11 @@
 import { addApiFeatures, requestApi, bearerToken } from './api';
 import { Headers } from 'headers-polyfill';
-import { TwitterAuth } from './auth';
-import { Profile, getUserIdByScreenName } from './profile';
-import { QueryProfilesResponse } from './timeline-v1';
+import type { TwitterAuth } from './auth';
+import { type Profile, getUserIdByScreenName } from './profile';
+import type { QueryProfilesResponse } from './timeline-v1';
 import { getUserTimeline } from './timeline-async';
 import {
-  RelationshipTimeline,
+  type RelationshipTimeline,
   parseRelationshipTimeline,
 } from './timeline-relationship';
 import stringify from 'json-stable-stringify';

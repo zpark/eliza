@@ -1,11 +1,11 @@
 import {
     type Character,
     getEnvVariable,
-    IAgentRuntime,
-    ITeeLogService,
+    type IAgentRuntime,
+    type ITeeLogService,
     logger,
     ServiceType,
-    TeeLogQuery,
+    type TeeLogQuery,
     type UUID,
     validateCharacterConfig,
     validateUuid

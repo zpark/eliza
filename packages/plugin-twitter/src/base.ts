@@ -70,7 +70,7 @@ class RequestQueue {
   }
 
   private async exponentialBackoff(retryCount: number): Promise<void> {
-    const delay = Math.pow(2, retryCount) * 1000;
+    const delay = (2 ** retryCount) * 1000;
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 

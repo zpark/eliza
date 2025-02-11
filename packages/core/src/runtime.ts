@@ -44,8 +44,8 @@ import {
     type Provider,
     type State,
     type UUID,
-    ServiceType,
-    Service
+    type ServiceType,
+    type Service
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 

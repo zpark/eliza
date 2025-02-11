@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { AudioDataWithUser, Plugin } from '../types';
-import { Space } from '../core/Space';
-import { SpaceParticipant } from '../core/SpaceParticipant';
+import type { AudioDataWithUser, Plugin } from '../types';
+import type { Space } from '../core/Space';
+import type { SpaceParticipant } from '../core/SpaceParticipant';
 import { Logger } from '../logger';
 
 interface RecordToDiskPluginConfig {
@@ -21,7 +21,7 @@ interface RecordToDiskPluginConfig {
  *  - cleanup(...) => close file stream
  */
 export class RecordToDiskPlugin implements Plugin {
-  private filePath: string = '/tmp/speaker_audio.raw';
+  private filePath = '/tmp/speaker_audio.raw';
   private outStream?: fs.WriteStream;
   private logger?: Logger;
 

@@ -1,10 +1,10 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import type { IAgentRuntime, Plugin } from "@elizaos/core";
 import {
-  DetokenizeTextParams,
-  GenerateTextParams,
+  type DetokenizeTextParams,
+  type GenerateTextParams,
   ModelClass,
-  TokenizeTextParams,
+  type TokenizeTextParams,
 } from "@elizaos/core";
 import { generateText as aiGenerateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
@@ -246,7 +246,7 @@ export const openaiPlugin: Plugin = {
           {
             role: "user",
             content: [{
-              type: "image" as "image",
+              type: "image" as const,
               image: imageUrl
             }]
           }

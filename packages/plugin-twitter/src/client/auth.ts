@@ -1,9 +1,9 @@
-import { Cookie, CookieJar, MemoryCookieStore } from 'tough-cookie';
+import { type Cookie, CookieJar, type MemoryCookieStore } from 'tough-cookie';
 import { updateCookieJar } from './requests';
 import { Headers } from 'headers-polyfill';
-import { FetchTransformOptions } from './api';
+import type { FetchTransformOptions } from './api';
 import { TwitterApi } from 'twitter-api-v2';
-import { Profile } from './profile';
+import type { Profile } from './profile';
 
 export interface TwitterAuthOptions {
   fetch: typeof fetch;

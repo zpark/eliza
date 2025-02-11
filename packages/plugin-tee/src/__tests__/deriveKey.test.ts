@@ -7,30 +7,30 @@ import { TEEMode } from '../src/types/tee';
 vi.mock('@phala/dstack-sdk', () => ({
     TappdClient: vi.fn().mockImplementation(() => ({
         deriveKey: vi.fn().mockResolvedValue({
-            asUint8Array: () => new Uint8Array([1, 2, 3, 4, 5])
+            asUint8Array: () => new Uint8Array([1, 2, 3, 4, 5]),
         }),
         tdxQuote: vi.fn().mockResolvedValue({
             quote: 'mock-quote-data',
-            replayRtmrs: () => ['rtmr0', 'rtmr1', 'rtmr2', 'rtmr3']
+            replayRtmrs: () => ['rtmr0', 'rtmr1', 'rtmr2', 'rtmr3'],
         }),
-        rawDeriveKey: vi.fn()
-    }))
+        rawDeriveKey: vi.fn(),
+    })),
 }));
 
 vi.mock('@solana/web3.js', () => ({
     Keypair: {
         fromSeed: vi.fn().mockReturnValue({
             publicKey: {
-                toBase58: () => 'mock-solana-public-key'
-            }
-        })
-    }
+                toBase58: () => 'mock-solana-public-key',
+            },
+        }),
+    },
 }));
 
 vi.mock('viem/accounts', () => ({
     privateKeyToAccount: vi.fn().mockReturnValue({
-        address: 'mock-evm-address'
-    })
+        address: 'mock-evm-address',
+    }),
 }));
 
 describe('DeriveKeyProvider', () => {

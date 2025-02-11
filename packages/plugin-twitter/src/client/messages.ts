@@ -1,4 +1,4 @@
-import { TwitterAuth } from './auth';
+import type { TwitterAuth } from './auth';
 import { updateCookieJar } from './requests';
 
 export interface DirectMessage {

@@ -1,13 +1,13 @@
-import { LegacyUserRaw } from './profile';
+import type { LegacyUserRaw } from './profile';
 import { parseMediaGroups, reconstructTweetHtml } from './timeline-tweet-util';
-import {
+import type {
   LegacyTweetRaw,
   ParseTweetResult,
   QueryTweetsResponse,
   SearchResultRaw,
   TimelineResultRaw,
 } from './timeline-v1';
-import { Tweet } from './tweets';
+import type { Tweet } from './tweets';
 import { isFieldDefined } from './type-util';
 
 export interface TimelineUserResultRaw {
@@ -214,7 +214,7 @@ export function parseLegacyTweet(
     }
   }
 
-  const views = parseInt(tweet.ext_views?.count ?? '');
+  const views = Number.parseInt(tweet.ext_views?.count ?? '');
   if (!isNaN(views)) {
     tw.views = views;
   }
@@ -251,7 +251,7 @@ function parseResult(result?: TimelineResultRaw): ParseTweetResult {
   }
 
   if (!tweetResult.tweet.views && result?.views?.count) {
-    const views = parseInt(result.views.count);
+    const views = Number.parseInt(result.views.count);
     if (!isNaN(views)) {
       tweetResult.tweet.views = views;
     }

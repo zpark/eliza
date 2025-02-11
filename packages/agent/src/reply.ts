@@ -1,10 +1,10 @@
-import {
-    type Action,
-    type ActionExample,
-    type HandlerCallback,
-    type IAgentRuntime,
-    type Memory,
-    type State,
+import type {
+    Action,
+    ActionExample,
+    HandlerCallback,
+    IAgentRuntime,
+    Memory,
+    State,
 } from "@elizaos/core";
 
 const replyAction = {

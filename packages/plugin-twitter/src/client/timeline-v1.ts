@@ -1,6 +1,6 @@
-import { LegacyUserRaw, parseProfile, Profile } from './profile';
+import { type LegacyUserRaw, parseProfile, type Profile } from './profile';
 import { parseMediaGroups, reconstructTweetHtml } from './timeline-tweet-util';
-import { PlaceRaw, Tweet } from './tweets';
+import type { PlaceRaw, Tweet } from './tweets';
 import { isFieldDefined } from './type-util';
 
 export interface Hashtag {
@@ -382,7 +382,7 @@ function parseTimelineTweet(
     }
   }
 
-  const views = parseInt(tweet.ext_views?.count ?? '');
+  const views = Number.parseInt(tweet.ext_views?.count ?? '');
   if (!isNaN(views)) {
     tw.views = views;
   }

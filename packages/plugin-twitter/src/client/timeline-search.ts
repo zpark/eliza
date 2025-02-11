@@ -1,7 +1,7 @@
-import { Profile, parseProfile } from './profile';
-import { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
-import { SearchEntryRaw, parseLegacyTweet } from './timeline-v2';
-import { Tweet } from './tweets';
+import { type Profile, parseProfile } from './profile';
+import type { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
+import { type SearchEntryRaw, parseLegacyTweet } from './timeline-v2';
+import type { Tweet } from './tweets';
 
 export interface SearchTimeline {
   data?: {
@@ -53,7 +53,7 @@ export function parseSearchTimelineTweets(
 
           if (tweetResult.success) {
             if (!tweetResult.tweet.views && tweetResultRaw?.views?.count) {
-              const views = parseInt(tweetResultRaw.views.count);
+              const views = Number.parseInt(tweetResultRaw.views.count);
               if (!isNaN(views)) {
                 tweetResult.tweet.views = views;
               }

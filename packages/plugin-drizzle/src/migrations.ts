@@ -2,7 +2,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { fileURLToPath } from 'url';
 import path from "path";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { logger } from "@elizaos/core";
 
 const __filename = fileURLToPath(import.meta.url);

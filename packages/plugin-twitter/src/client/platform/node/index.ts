@@ -1,4 +1,4 @@
-import { PlatformExtensions } from '../platform-interface';
+import type { PlatformExtensions } from '../platform-interface';
 import { randomizeCiphers } from './randomize-ciphers';
 
 class NodePlatform implements PlatformExtensions {

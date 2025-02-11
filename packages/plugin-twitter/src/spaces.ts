@@ -5,7 +5,7 @@ import {
     generateText,
     ModelClass,
     type TwitterSpaceDecisionOptions,
-    State,
+    type State,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import {

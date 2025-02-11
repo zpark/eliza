@@ -1,6 +1,6 @@
-import { QueryTweetsResponse } from './timeline-v1';
-import { parseAndPush, TimelineEntryRaw } from './timeline-v2';
-import { Tweet } from './tweets';
+import type { QueryTweetsResponse } from './timeline-v1';
+import { parseAndPush, type TimelineEntryRaw } from './timeline-v2';
+import type { Tweet } from './tweets';
 
 export interface ListTimeline {
   data?: {

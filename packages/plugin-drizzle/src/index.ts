@@ -33,10 +33,10 @@ import {
     knowledgeTable,
     cacheTable,
 } from "./schema";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { v4 } from "uuid";
 import { runMigrations } from "./migrations";
-import pg, { ConnectionConfig, PoolConfig } from "pg";
+import pg, { type ConnectionConfig, type PoolConfig } from "pg";
 type Pool = pg.Pool;
 
 export class DrizzleDatabaseAdapter
@@ -138,7 +138,7 @@ export class DrizzleDatabaseAdapter
                 if (attempt < this.maxRetries) {
                     // Calculate delay with exponential backoff
                     const backoffDelay = Math.min(
-                        this.baseDelay * Math.pow(2, attempt - 1),
+                        this.baseDelay * (2 ** (attempt - 1)),
                         this.maxDelay
                     );
 

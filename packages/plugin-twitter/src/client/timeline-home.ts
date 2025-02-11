@@ -1,7 +1,7 @@
 import { requestApi } from './api';
-import { TwitterAuth } from './auth';
+import type { TwitterAuth } from './auth';
 import { ApiError } from './errors';
-import { TimelineInstruction } from './timeline-v2';
+import type { TimelineInstruction } from './timeline-v2';
 
 export interface HomeTimelineResponse {
   data?: {

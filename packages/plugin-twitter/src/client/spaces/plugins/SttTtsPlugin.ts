@@ -3,10 +3,10 @@
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { AudioDataWithUser, Plugin } from '../types';
-import { Space } from '../core/Space';
-import { SpaceParticipant } from '../core/SpaceParticipant';
-import { JanusClient } from '../core/JanusClient';
+import type { AudioDataWithUser, Plugin } from '../types';
+import type { Space } from '../core/Space';
+import type { SpaceParticipant } from '../core/SpaceParticipant';
+import type { JanusClient } from '../core/JanusClient';
 import { Logger } from '../logger';
 
 interface PluginConfig {
@@ -52,12 +52,12 @@ export class SttTtsPlugin implements Plugin {
   // Credentials & config
   private openAiApiKey?: string;
   private elevenLabsApiKey?: string;
-  private sttLanguage: string = 'en';
-  private gptModel: string = 'gpt-3.5-turbo';
-  private voiceId: string = '21m00Tcm4TlvDq8ikWAM';
-  private elevenLabsModel: string = 'eleven_monolingual_v1';
-  private systemPrompt: string = 'You are a helpful AI assistant.';
-  private silenceThreshold: number = 50;
+  private sttLanguage = 'en';
+  private gptModel = 'gpt-3.5-turbo';
+  private voiceId = '21m00Tcm4TlvDq8ikWAM';
+  private elevenLabsModel = 'eleven_monolingual_v1';
+  private systemPrompt = 'You are a helpful AI assistant.';
+  private silenceThreshold = 50;
 
   /**
    * chatContext accumulates the conversation for GPT:
@@ -85,7 +85,7 @@ export class SttTtsPlugin implements Plugin {
    * TTS queue for sequential playback
    */
   private ttsQueue: string[] = [];
-  private isSpeaking: boolean = false;
+  private isSpeaking = false;
 
   /**
    * Called immediately after `.use(plugin)`.

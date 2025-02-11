@@ -3,7 +3,7 @@
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import type { SpeakerRequest, OccupancyUpdate } from '../types';
-import { Logger } from '../logger';
+import type { Logger } from '../logger';
 
 /**
  * Configuration object for ChatClient.

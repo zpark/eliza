@@ -1,8 +1,20 @@
-import { type IAgentRuntime, Service, ServiceType, type ITeeLogService, TeeType, type TeeLogDAO, type TeeAgent, type TeeLog, type TeeLogQuery, type TeePageQuery, TEEMode } from "@elizaos/core";
-import { SqliteTeeLogDAO } from "../adapters/sqliteDAO";
-import { TeeLogManager } from "./teeLogManager";
-import Database from "better-sqlite3";
-import path from "path";
+import {
+    type IAgentRuntime,
+    Service,
+    ServiceType,
+    type ITeeLogService,
+    TeeType,
+    type TeeLogDAO,
+    type TeeAgent,
+    type TeeLog,
+    type TeeLogQuery,
+    type TeePageQuery,
+    TEEMode,
+} from '@elizaos/core';
+import { SqliteTeeLogDAO } from '../adapters/sqliteDAO';
+import { TeeLogManager } from './teeLogManager';
+import Database from 'better-sqlite3';
+import path from 'path';
 
 export class TeeLogService extends Service implements ITeeLogService {
     private dbPath: string;
@@ -14,7 +26,6 @@ export class TeeLogService extends Service implements ITeeLogService {
 
     private teeLogDAO: TeeLogDAO;
     private teeLogManager: TeeLogManager;
-
 
     getInstance(): ITeeLogService {
         return this;
@@ -29,21 +40,21 @@ export class TeeLogService extends Service implements ITeeLogService {
             return;
         }
 
-        const enableValues = ["true", "1", "yes", "enable", "enabled", "on"];
+        const enableValues = ['true', '1', 'yes', 'enable', 'enabled', 'on'];
 
-        const enableTeeLog = runtime.getSetting("ENABLE_TEE_LOG");
+        const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG');
         if (enableTeeLog === null) {
-            throw new Error("ENABLE_TEE_LOG is not set.");
+            throw new Error('ENABLE_TEE_LOG is not set.');
         }
         this.enableTeeLog = enableValues.includes(enableTeeLog.toLowerCase());
         if (!this.enableTeeLog) {
-            console.log("TEE log is not enabled.");
+            console.log('TEE log is not enabled.');
             return;
         }
 
-        const runInSgx = runtime.getSetting("SGX");
-        const teeMode = runtime.getSetting("TEE_MODE");
-        const walletSecretSalt = runtime.getSetting("WALLET_SECRET_SALT");
+        const runInSgx = runtime.getSetting('SGX');
+        const teeMode = runtime.getSetting('TEE_MODE');
+        const walletSecretSalt = runtime.getSetting('WALLET_SECRET_SALT');
 
         this.teeMode = teeMode ? TEEMode[teeMode as keyof typeof TEEMode] : TEEMode.OFF;
 
@@ -51,17 +62,17 @@ export class TeeLogService extends Service implements ITeeLogService {
         const useTdxDstack = teeMode && teeMode !== TEEMode.OFF && walletSecretSalt;
 
         if (useSgxGramine && useTdxDstack) {
-            throw new Error("Cannot configure both SGX and TDX at the same time.");
+            throw new Error('Cannot configure both SGX and TDX at the same time.');
         } else if (useSgxGramine) {
             this.teeType = TeeType.SGX_GRAMINE;
         } else if (useTdxDstack) {
             this.teeType = TeeType.TDX_DSTACK;
         } else {
-            throw new Error("Invalid TEE configuration.");
+            throw new Error('Invalid TEE configuration.');
         }
 
-        const dbPathSetting = runtime.getSetting("TEE_LOG_DB_PATH");
-        this.dbPath = dbPathSetting || path.resolve("data/tee_log.sqlite");
+        const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH');
+        this.dbPath = dbPathSetting || path.resolve('data/tee_log.sqlite');
 
         const db = new Database(this.dbPath);
         this.teeLogDAO = new SqliteTeeLogDAO(db);
@@ -79,7 +90,13 @@ export class TeeLogService extends Service implements ITeeLogService {
         this.initialized = true;
     }
 
-    async log(agentId: string, roomId: string, userId: string, type: string, content: string): Promise<boolean> {
+    async log(
+        agentId: string,
+        roomId: string,
+        userId: string,
+        type: string,
+        content: string,
+    ): Promise<boolean> {
         if (!this.enableTeeLog) {
             return false;
         }
@@ -103,7 +120,11 @@ export class TeeLogService extends Service implements ITeeLogService {
         return this.teeLogManager.getAgent(agentId);
     }
 
-    async getLogs(query: TeeLogQuery, page: number, pageSize: number): Promise<TeePageQuery<TeeLog[]>> {
+    async getLogs(
+        query: TeeLogQuery,
+        page: number,
+        pageSize: number,
+    ): Promise<TeePageQuery<TeeLog[]>> {
         if (!this.enableTeeLog) {
             return {
                 data: [],

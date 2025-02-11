@@ -1,7 +1,7 @@
 import stringify from 'json-stable-stringify';
-import { requestApi, RequestApiResult } from './api';
-import { TwitterAuth } from './auth';
-import { TwitterApiErrorRaw } from './errors';
+import { requestApi, type RequestApiResult } from './api';
+import type { TwitterAuth } from './auth';
+import type { TwitterApiErrorRaw } from './errors';
 
 export interface LegacyUserRaw {
   created_at?: string;

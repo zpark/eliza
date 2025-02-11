@@ -2,9 +2,9 @@
 
 import { Headers } from 'headers-polyfill';
 import type { BroadcastCreated, TurnServersInfo } from './types';
-import { ChatClient } from './core/ChatClient';
-import { Logger } from './logger';
-import { EventEmitter } from 'events';
+import type { ChatClient } from './core/ChatClient';
+import type { Logger } from './logger';
+import type { EventEmitter } from 'events';
 
 /**
  * Authorizes a token for guest access, using the provided Periscope cookie.

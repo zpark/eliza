@@ -1,4 +1,4 @@
-import { PlatformExtensions, genericPlatform } from './platform-interface.js';
+import { type PlatformExtensions, genericPlatform } from './platform-interface.js';
 
 export * from './platform-interface.js';
 

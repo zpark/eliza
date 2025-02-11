@@ -1,8 +1,8 @@
-import {
-    type Character,
-    type IAgentRuntime
+import type {
+    Character,
+    IAgentRuntime
 } from "@elizaos/core";
-import {
+import type {
     Client
 } from "discord.js";
 

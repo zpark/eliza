@@ -62,7 +62,7 @@ agent
     try {
       // If input is a number, get agent ID from index
       if (!isNaN(Number(agentIdOrIndex))) {
-        agentIdOrIndex = await getAgentIdFromIndex(parseInt(agentIdOrIndex))
+        agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
       const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${agentIdOrIndex}`)
@@ -122,7 +122,7 @@ agent
   .action(async (agentIdOrIndex) => {
     try {
       if (!isNaN(Number(agentIdOrIndex))) {
-        agentIdOrIndex = await getAgentIdFromIndex(parseInt(agentIdOrIndex))
+        agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
       const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${agentIdOrIndex}/stop`, {
@@ -146,7 +146,7 @@ agent
   .action(async (agentIdOrIndex) => {
     try {
       if (!isNaN(Number(agentIdOrIndex))) {
-        agentIdOrIndex = await getAgentIdFromIndex(parseInt(agentIdOrIndex))
+        agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
       const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${agentIdOrIndex}`, {
@@ -171,7 +171,7 @@ agent
   .action(async (agentIdOrIndex, configPath) => {
     try {
       if (!isNaN(Number(agentIdOrIndex))) {
-        agentIdOrIndex = await getAgentIdFromIndex(parseInt(agentIdOrIndex))
+        agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'))

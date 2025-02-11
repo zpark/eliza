@@ -14,7 +14,7 @@ import {
 import type { ClientBase } from "./base.ts";
 import type { Tweet } from "./client/index.ts";
 import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
-import { MediaData } from "./types.ts";
+import type { MediaData } from "./types.ts";
 import { fetchMediaData } from "./utils.ts";
 
 const twitterPostTemplate = `

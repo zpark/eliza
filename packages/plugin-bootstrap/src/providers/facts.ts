@@ -1,7 +1,7 @@
 import type { Memory, Provider, State } from "@elizaos/core";
 import {
     formatMessages,
-    IAgentRuntime,
+    type IAgentRuntime,
     MemoryManager,
     ModelClass
 } from "@elizaos/core";

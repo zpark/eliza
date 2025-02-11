@@ -1,5 +1,5 @@
-import { Plugin, AudioDataWithUser } from '../types';
-import { Space } from '../core/Space';
+import type { Plugin, AudioDataWithUser } from '../types';
+import type { Space } from '../core/Space';
 import { Logger } from '../logger';
 
 /**
@@ -21,8 +21,8 @@ export class IdleMonitorPlugin implements Plugin {
    * @param checkEveryMs  How frequently (in ms) to check for silence. (Default: 10s)
    */
   constructor(
-    private idleTimeoutMs: number = 60_000,
-    private checkEveryMs: number = 10_000,
+    private idleTimeoutMs = 60_000,
+    private checkEveryMs = 10_000,
   ) {}
 
   /**

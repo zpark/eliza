@@ -8,10 +8,10 @@ vi.mock('@phala/dstack-sdk', () => ({
     TappdClient: vi.fn().mockImplementation(() => ({
         tdxQuote: vi.fn().mockResolvedValue({
             quote: 'mock-quote-data',
-            replayRtmrs: () => ['rtmr0', 'rtmr1', 'rtmr2', 'rtmr3']
+            replayRtmrs: () => ['rtmr0', 'rtmr1', 'rtmr2', 'rtmr3'],
         }),
-        deriveKey: vi.fn()
-    }))
+        deriveKey: vi.fn(),
+    })),
 }));
 
 describe('RemoteAttestationProvider', () => {
@@ -53,7 +53,7 @@ describe('RemoteAttestationProvider', () => {
 
             expect(quote).toEqual({
                 quote: 'mock-quote-data',
-                timestamp: expect.any(Number)
+                timestamp: expect.any(Number),
             });
         });
 
@@ -62,11 +62,13 @@ describe('RemoteAttestationProvider', () => {
             const mockTdxQuote = vi.fn().mockRejectedValue(mockError);
             vi.mocked(TappdClient).mockImplementationOnce(() => ({
                 tdxQuote: mockTdxQuote,
-                deriveKey: vi.fn()
+                deriveKey: vi.fn(),
             }));
 
             const provider = new RemoteAttestationProvider(TEEMode.LOCAL);
-            await expect(provider.generateAttestation('test-data')).rejects.toThrow('Failed to generate TDX Quote');
+            await expect(provider.generateAttestation('test-data')).rejects.toThrow(
+                'Failed to generate TDX Quote',
+            );
         });
 
         it('should pass hash algorithm to tdxQuote when provided', async () => {

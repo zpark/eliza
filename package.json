@@ -3,7 +3,7 @@
   "scripts": {
     "format": "biome format --write .",
     "cli": "bun --filter=@elizaos/cli cli",
-    "lint": "biome lint . --write",
+    "lint": "turbo run lint:fix --filter=./packages/*",
     "check": "biome check --apply .",
     "preinstall": "npx only-allow bun",
     "build": "turbo run build --filter=./packages/core && turbo run build --filter=./packages/*",

@@ -1,4 +1,4 @@
-import { Profile } from './profile';
+import type { Profile } from './profile';
 import { getScraper } from './test-utils';
 
 test('scraper can get screen name by user id', async () => {

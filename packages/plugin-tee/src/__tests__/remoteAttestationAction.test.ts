@@ -6,8 +6,8 @@ import { RemoteAttestationProvider } from '../src/providers/remoteAttestationPro
 vi.mock('../src/providers/remoteAttestationProvider');
 vi.mock('undici', () => ({
     fetch: vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ checksum: 'mock-checksum' })
-    })
+        json: () => Promise.resolve({ checksum: 'mock-checksum' }),
+    }),
 }));
 
 describe('remoteAttestationAction', () => {
@@ -16,8 +16,12 @@ describe('remoteAttestationAction', () => {
         getSetting: vi.fn().mockReturnValue('LOCAL'),
         getState: vi.fn(),
         setState: vi.fn(),
-        message:{ userId: 'user', roomId: 'room', content: { text: 'If you are running in a TEE, generate a remote attestation' } },
-        setConversation: vi.fn()
+        message: {
+            userId: 'user',
+            roomId: 'room',
+            content: { text: 'If you are running in a TEE, generate a remote attestation' },
+        },
+        setConversation: vi.fn(),
     };
 
     const mockCallback = vi.fn();
@@ -27,8 +31,8 @@ describe('remoteAttestationAction', () => {
         vi.mocked(RemoteAttestationProvider).mockImplementation(() => ({
             generateAttestation: vi.fn().mockResolvedValue({
                 quote: '0x1234',
-                timestamp: Date.now()
-            })
+                timestamp: Date.now(),
+            }),
         }));
     });
 
@@ -46,13 +50,13 @@ describe('remoteAttestationAction', () => {
                 mockRuntime.message,
                 {},
                 {},
-                mockCallback
+                mockCallback,
             );
 
             expect(result).toBe(true);
             expect(mockCallback).toHaveBeenCalledWith({
                 text: expect.stringContaining('https://proof.t16z.com/reports/mock-checksum'),
-                action: 'NONE'
+                action: 'NONE',
             });
         });
 
@@ -62,8 +66,8 @@ describe('remoteAttestationAction', () => {
                 generateAttestation: vi.fn().mockRejectedValueOnce(mockError),
                 client: {
                     tdxQuote: vi.fn(),
-                    deriveKey: vi.fn()
-                }
+                    deriveKey: vi.fn(),
+                },
             }));
 
             const result = await remoteAttestationAction.handler(
@@ -71,7 +75,7 @@ describe('remoteAttestationAction', () => {
                 {},
                 {},
                 {},
-                mockCallback
+                mockCallback,
             );
 
             expect(result).toBe(false);
@@ -92,7 +96,9 @@ describe('remoteAttestationAction', () => {
 
             const [userMessage, agentMessage] = remoteAttestationAction.examples[0];
             expect(userMessage.user).toBe('{{user1}}');
-            expect(userMessage.content.text).toBe('If you are running in a TEE, generate a remote attestation');
+            expect(userMessage.content.text).toBe(
+                'If you are running in a TEE, generate a remote attestation',
+            );
             expect(userMessage.content.action).toBe('REMOTE_ATTESTATION');
 
             expect(agentMessage.user).toBe('{{user2}}');

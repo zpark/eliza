@@ -1,6 +1,6 @@
-import { TwitterAuth } from './auth';
+import type { TwitterAuth } from './auth';
 import { ApiError } from './errors';
-import { Platform, PlatformExtensions } from './platform';
+import { Platform, type PlatformExtensions } from './platform';
 import { updateCookieJar } from './requests';
 import { Headers } from 'headers-polyfill';
 
@@ -89,7 +89,7 @@ export async function requestApi<T>(
       const xRateLimitReset = res.headers.get('x-rate-limit-reset');
       if (xRateLimitRemaining == '0' && xRateLimitReset) {
         const currentTime = new Date().valueOf() / 1000;
-        const timeDeltaMs = 1000 * (parseInt(xRateLimitReset) - currentTime);
+        const timeDeltaMs = 1000 * (Number.parseInt(xRateLimitReset) - currentTime);
 
         // I have seen this block for 800s (~13 *minutes*)
         await new Promise((resolve) => setTimeout(resolve, timeDeltaMs));

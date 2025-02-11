@@ -1,4 +1,4 @@
-import { Cookie, CookieJar } from 'tough-cookie';
+import { Cookie, type CookieJar } from 'tough-cookie';
 import setCookie from 'set-cookie-parser';
 import type { Headers as HeadersPolyfill } from 'headers-polyfill';
 

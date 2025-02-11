@@ -1,8 +1,16 @@
-import { SgxAttestationProvider } from "../providers/sgxAttestationProvider";
-import { RemoteAttestationProvider as TdxAttestationProvider } from "../providers/remoteAttestationProvider";
-import { TEEMode, TeeType, type TeeLogDAO, type TeeAgent, type TeeLog, type TeeLogQuery, type TeePageQuery } from "@elizaos/core";
-import elliptic from "elliptic";
-import { v4 } from "uuid";
+import { SgxAttestationProvider } from '../providers/sgxAttestationProvider';
+import { RemoteAttestationProvider as TdxAttestationProvider } from '../providers/remoteAttestationProvider';
+import {
+    type TEEMode,
+    TeeType,
+    type TeeLogDAO,
+    type TeeAgent,
+    type TeeLog,
+    type TeeLogQuery,
+    type TeePageQuery,
+} from '@elizaos/core';
+import elliptic from 'elliptic';
+import { v4 } from 'uuid';
 
 export class TeeLogManager {
     private teeLogDAO: TeeLogDAO;
@@ -22,7 +30,7 @@ export class TeeLogManager {
 
     public async registerAgent(agentId: string, agentName: string): Promise<boolean> {
         if (!agentId) {
-            throw new Error("Agent ID is required");
+            throw new Error('Agent ID is required');
         }
 
         const keyPair = this.generateKeyPair();
@@ -34,13 +42,13 @@ export class TeeLogManager {
         const new_agent = {
             id: v4(),
             agentId,
-            agentName: agentName || "",
+            agentName: agentName || '',
             createdAt: new Date().getTime(),
             publicKey,
             attestation,
         };
 
-        console.log("registerAgent new_agent", new_agent);
+        console.log('registerAgent new_agent', new_agent);
 
         return this.teeLogDAO.addAgent(new_agent);
     }
@@ -53,7 +61,13 @@ export class TeeLogManager {
         return this.teeLogDAO.getAgent(agentId);
     }
 
-    public async log(agentId: string, roomId: string, userId: string, type: string, content: string): Promise<boolean> {
+    public async log(
+        agentId: string,
+        roomId: string,
+        userId: string,
+        type: string,
+        content: string,
+    ): Promise<boolean> {
         const keyPair = this.keyPairs.get(agentId);
         if (!keyPair) {
             throw new Error(`Agent ${agentId} not found`);
@@ -65,7 +79,7 @@ export class TeeLogManager {
         const messageToSign = `${agentId}|${roomId}|${userId}|${type}|${content}|${timestamp}`;
 
         // Sign the joined message
-        const signature = "0x" + keyPair.sign(messageToSign).toDER('hex');
+        const signature = '0x' + keyPair.sign(messageToSign).toDER('hex');
 
         return this.teeLogDAO.addLog({
             id: v4(),
@@ -79,7 +93,11 @@ export class TeeLogManager {
         });
     }
 
-    public async getLogs(query: TeeLogQuery, page: number, pageSize: number): Promise<TeePageQuery<TeeLog[]>> {
+    public async getLogs(
+        query: TeeLogQuery,
+        page: number,
+        pageSize: number,
+    ): Promise<TeePageQuery<TeeLog[]>> {
         return this.teeLogDAO.getPagedLogs(query, page, pageSize);
     }
 
@@ -99,7 +117,7 @@ export class TeeLogManager {
             const tdxAttestation = await tdxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(tdxAttestation);
         } else {
-            throw new Error("Invalid TEE type");
+            throw new Error('Invalid TEE type');
         }
     }
 }

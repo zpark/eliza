@@ -3,9 +3,7 @@ export type NonNullableField<T, K extends keyof T> = {
 } & T;
 
 export function isFieldDefined<T, K extends keyof T>(key: K) {
-  return function (value: T): value is NonNullableField<T, K> {
-    return isDefined(value[key]);
-  };
+  return (value: T): value is NonNullableField<T, K> => isDefined(value[key]);
 }
 
 export function isDefined<T>(value: T | null | undefined): value is T {

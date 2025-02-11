@@ -1,11 +1,11 @@
 import { addApiFeatures, requestApi } from './api';
-import { TwitterAuth } from './auth';
-import { Profile } from './profile';
-import { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
+import type { TwitterAuth } from './auth';
+import type { Profile } from './profile';
+import type { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
 import { getTweetTimeline, getUserTimeline } from './timeline-async';
-import { Tweet } from './tweets';
+import type { Tweet } from './tweets';
 import {
-  SearchTimeline,
+  type SearchTimeline,
   parseSearchTimelineTweets,
   parseSearchTimelineUsers,
 } from './timeline-search';
@@ -15,11 +15,11 @@ import stringify from 'json-stable-stringify';
  * The categories that can be used in Twitter searches.
  */
 export enum SearchMode {
-  Top,
-  Latest,
-  Photos,
-  Videos,
-  Users,
+  Top = 0,
+  Latest = 1,
+  Photos = 2,
+  Videos = 3,
+  Users = 4,
 }
 
 export function searchTweets(

@@ -1,17 +1,17 @@
-import { Cookie } from 'tough-cookie';
+import type { Cookie } from 'tough-cookie';
 import {
   bearerToken,
-  FetchTransformOptions,
+  type FetchTransformOptions,
   requestApi,
-  RequestApiResult,
+  type RequestApiResult,
 } from './api';
-import { TwitterAuth, TwitterAuthOptions, TwitterGuestAuth } from './auth';
+import { type TwitterAuth, type TwitterAuthOptions, TwitterGuestAuth } from './auth';
 import { TwitterUserAuth } from './auth-user';
 import {
   getProfile,
   getUserIdByScreenName,
   getScreenNameByUserId,
-  Profile,
+  type Profile,
 } from './profile';
 import {
   fetchQuotedTweetsPage,
@@ -29,23 +29,23 @@ import {
   getFollowers,
   followUser,
 } from './relationships';
-import { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
+import type { QueryProfilesResponse, QueryTweetsResponse } from './timeline-v1';
 import { getTrends } from './trends';
 import {
-  Tweet,
+  type Tweet,
   getTweetAnonymous,
   getTweets,
   getLatestTweet,
   getTweetWhere,
   getTweetsWhere,
   getTweetsByUserId,
-  TweetQuery,
+  type TweetQuery,
   getTweet,
   fetchListTweets,
   getTweetsAndRepliesByUserId,
   getTweetsAndReplies,
   createCreateTweetRequest,
-  PollData,
+  type PollData,
   createCreateTweetRequestV2,
   getTweetV2,
   getTweetsV2,
@@ -57,16 +57,16 @@ import {
   createCreateLongTweetRequest,
   getArticle,
   getAllRetweeters,
-  Retweeter,
+  type Retweeter,
 } from './tweets';
 import {
   parseTimelineTweetsV2,
-  TimelineArticle,
-  TimelineV2,
+  type TimelineArticle,
+  type TimelineV2,
 } from './timeline-v2';
 import { fetchHomeTimeline } from './timeline-home';
 import { fetchFollowingTimeline } from './timeline-following';
-import {
+import type {
   TTweetv2Expansion,
   TTweetv2MediaField,
   TTweetv2PlaceField,
@@ -75,10 +75,10 @@ import {
   TTweetv2UserField,
 } from 'twitter-api-v2';
 import {
-  DirectMessagesResponse,
+  type DirectMessagesResponse,
   getDirectMessageConversations,
   sendDirectMessage,
-  SendDirectMessageResponse,
+  type SendDirectMessageResponse,
 } from './messages';
 import {
   fetchAudioSpaceById,
@@ -88,7 +88,7 @@ import {
   fetchLiveVideoStreamStatus,
   fetchLoginTwitterToken,
 } from './spaces';
-import {
+import type {
   AudioSpace,
   Community,
   LiveVideoStreamStatus,
@@ -98,8 +98,8 @@ import {
 import {
   createGrokConversation,
   grokChat,
-  GrokChatOptions,
-  GrokChatResponse,
+  type GrokChatOptions,
+  type GrokChatResponse,
 } from './grok';
 
 const twUrl = 'https://twitter.com';

@@ -281,7 +281,7 @@ class LocalAIManager {
   }
 
   // LLaMA text generation
-  async generateText(context: string, temperature: number = 0.7, stopSequences: string[] = []): Promise<string> {
+  async generateText(context: string, temperature = 0.7, stopSequences: string[] = []): Promise<string> {
     if (!this.sequence) {
       throw new Error("LLaMA model not initialized");
     }

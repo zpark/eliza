@@ -1,6 +1,6 @@
 export enum TeeType {
-    SGX_GRAMINE = "sgx_gramine",
-    TDX_DSTACK = "tdx_dstack",
+    SGX_GRAMINE = 'sgx_gramine',
+    TDX_DSTACK = 'tdx_dstack',
 }
 
 // Represents a log entry in the TeeLog table, containing details about agent activities.
@@ -55,7 +55,7 @@ export abstract class TeeLogDAO<DB = any> {
     abstract getPagedLogs(
         query: TeeLogQuery,
         page: number,
-        pageSize: number
+        pageSize: number,
     ): Promise<TeePageQuery<TeeLog[]>>;
 
     abstract addAgent(agent: TeeAgent): Promise<boolean>;

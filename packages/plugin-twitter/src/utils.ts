@@ -6,7 +6,7 @@ import { logger } from "@elizaos/core";
 import type { Media } from "@elizaos/core";
 import fs from "fs";
 import path from "path";
-import { ActionResponse, MediaData } from "./types";
+import type { ActionResponse, MediaData } from "./types";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =

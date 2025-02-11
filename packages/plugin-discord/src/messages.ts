@@ -9,7 +9,7 @@ import {
     ChannelType,
     type Client,
     type Message as DiscordMessage,
-    TextChannel,
+    type TextChannel,
 } from "discord.js";
 import { AttachmentManager } from "./attachments.ts";
 import {

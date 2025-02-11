@@ -1,5 +1,5 @@
 import { requestApi } from './api';
-import { TwitterAuth } from './auth';
+import type { TwitterAuth } from './auth';
 
 export interface GrokConversation {
   data: {

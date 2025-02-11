@@ -1,6 +1,6 @@
-import { Profile, parseProfile } from './profile';
-import { QueryProfilesResponse } from './timeline-v1';
-import { TimelineUserResultRaw } from './timeline-v2';
+import { type Profile, parseProfile } from './profile';
+import type { QueryProfilesResponse } from './timeline-v1';
+import type { TimelineUserResultRaw } from './timeline-v2';
 
 export interface RelationshipEntryItemContentRaw {
   itemType?: string;

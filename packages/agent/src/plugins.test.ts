@@ -8,7 +8,7 @@ import {
     DbCacheAdapter,
     logger,
     stringToUuid,
-    TestSuite,
+    type TestSuite,
     type IAgentRuntime
 } from "@elizaos/core";
 import { afterAll, beforeAll, describe, it } from 'vitest';

@@ -1,22 +1,22 @@
 import { addApiFeatures, requestApi } from './api';
-import { TwitterAuth } from './auth';
+import type { TwitterAuth } from './auth';
 import { getUserIdByScreenName } from './profile';
-import { QueryTweetsResponse } from './timeline-v1';
+import type { QueryTweetsResponse } from './timeline-v1';
 import {
   parseTimelineTweetsV2,
-  TimelineV2,
-  TimelineEntryItemContentRaw,
+  type TimelineV2,
+  type TimelineEntryItemContentRaw,
   parseTimelineEntryItemContentRaw,
-  ThreadedConversation,
+  type ThreadedConversation,
   parseThreadedConversation,
   parseArticle,
-  TimelineArticle,
+  type TimelineArticle,
 } from './timeline-v2';
 import { getTweetTimeline } from './timeline-async';
 import { apiRequestFactory } from './api-data';
-import { ListTimeline, parseListTimelineTweets } from './timeline-list';
+import { type ListTimeline, parseListTimelineTweets } from './timeline-list';
 import { updateCookieJar } from './requests';
-import {
+import type {
   ApiV2Includes,
   MediaObjectV2,
   PlaceV2,

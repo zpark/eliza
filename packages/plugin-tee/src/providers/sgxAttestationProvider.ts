@@ -1,5 +1,5 @@
-import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
-import type { SgxAttestation } from "@elizaos/core";
+import type { IAgentRuntime, Memory, Provider, State } from '@elizaos/core';
+import type { SgxAttestation } from '@elizaos/core';
 import { promises as fs } from 'node:fs'; // Fix: Use node: protocol
 import { createHash } from 'node:crypto'; // Fix: Use node: protocol
 
@@ -14,17 +14,15 @@ class SgxAttestationProvider {
     private readonly SGX_QUOTE_MAX_SIZE: number = 8192 * 4;
     private readonly SGX_TARGET_INFO_SIZE: number = 512;
 
-    private readonly MY_TARGET_INFO_PATH: string = "/dev/attestation/my_target_info";
-    private readonly TARGET_INFO_PATH: string = "/dev/attestation/target_info";
-    private readonly USER_REPORT_DATA_PATH: string = "/dev/attestation/user_report_data";
-    private readonly QUOTE_PATH: string = "/dev/attestation/quote";
+    private readonly MY_TARGET_INFO_PATH: string = '/dev/attestation/my_target_info';
+    private readonly TARGET_INFO_PATH: string = '/dev/attestation/target_info';
+    private readonly USER_REPORT_DATA_PATH: string = '/dev/attestation/user_report_data';
+    private readonly QUOTE_PATH: string = '/dev/attestation/quote';
 
     // Remove unnecessary constructor
     // constructor() {}
 
-    async generateAttestation(
-        reportData: string
-    ): Promise<SgxAttestation> {
+    async generateAttestation(reportData: string): Promise<SgxAttestation> {
         // Hash the report data to generate the raw user report.
         // The resulting hash value is 32 bytes long.
         // Ensure that the length of the raw user report does not exceed 64 bytes.
@@ -42,25 +40,23 @@ class SgxAttestationProvider {
             // console.log("SGX remote attestation: ", attestation);
             return attestation;
         } catch (error) {
-            console.error("Error generating SGX remote attestation:", error);
+            console.error('Error generating SGX remote attestation:', error);
             throw new Error(
                 `Failed to generate SGX Quote: ${
-                    error instanceof Error ? error.message : "Unknown error"
-                }`
+                    error instanceof Error ? error.message : 'Unknown error'
+                }`,
             );
         }
     }
 
-    async generateQuoteByGramine(
-        rawUserReport: Buffer
-    ): Promise<string> {
+    async generateQuoteByGramine(rawUserReport: Buffer): Promise<string> {
         if (rawUserReport.length > 64) {
-            throw new Error("the length of rawUserReport exceeds 64 bytes");
+            throw new Error('the length of rawUserReport exceeds 64 bytes');
         }
 
         const myTargetInfo = await fs.readFile(this.MY_TARGET_INFO_PATH);
         if (myTargetInfo.length !== this.SGX_TARGET_INFO_SIZE) {
-            throw new Error("Invalid my_target_info length");
+            throw new Error('Invalid my_target_info length');
         }
 
         await fs.writeFile(this.TARGET_INFO_PATH, myTargetInfo);
@@ -69,12 +65,12 @@ class SgxAttestationProvider {
         // Read quote
         const quoteData = await fs.readFile(this.QUOTE_PATH);
         if (quoteData.length > this.SGX_QUOTE_MAX_SIZE) {
-            throw new Error("Invalid quote length");
+            throw new Error('Invalid quote length');
         }
 
         const realLen = quoteData.lastIndexOf(0);
         if (realLen === -1) {
-            throw new Error("quote without EOF");
+            throw new Error('quote without EOF');
         }
 
         //return '0x' + quoteData.subarray(0, realLen + 1).toString('hex');
@@ -92,11 +88,11 @@ const sgxAttestationProvider: Provider = {
             const attestation = await provider.generateAttestation(agentId);
             return `Your Agent's remote attestation is: ${JSON.stringify(attestation)}`;
         } catch (error) {
-            console.error("Error in remote attestation provider:", error);
+            console.error('Error in remote attestation provider:', error);
             throw new Error(
                 `Failed to generate SGX Quote: ${
-                    error instanceof Error ? error.message : "Unknown error"
-                }`
+                    error instanceof Error ? error.message : 'Unknown error'
+                }`,
             );
         }
     },

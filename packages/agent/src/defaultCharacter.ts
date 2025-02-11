@@ -1,4 +1,4 @@
-import { type Character } from "@elizaos/core";
+import type { Character } from "@elizaos/core";
 
 export const defaultCharacter: Character = {
   name: "Eliza",

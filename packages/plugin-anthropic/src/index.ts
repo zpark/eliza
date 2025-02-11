@@ -1,7 +1,7 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import type { Plugin } from "@elizaos/core";
 import {
-  GenerateTextParams,
+  type GenerateTextParams,
   ModelClass
 } from "@elizaos/core";
 import { generateText } from "ai";

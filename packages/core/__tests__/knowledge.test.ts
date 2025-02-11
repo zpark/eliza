@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import knowledge from "../src/knowledge";
 import type { AgentRuntime } from "../src/runtime";
-import { type Memory } from "../src/types";
+import type { Memory } from "../src/types";
 
 vi.mock("../generation", () => ({
     splitChunks: vi.fn().mockImplementation(async (text) => [text]),
