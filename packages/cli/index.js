@@ -14,7 +14,7 @@ program
 
 const plugins = new Command()
   .name("plugins")
-  .description("manage ElizaOS plugins")
+  .description("manage elizaOS plugins")
 
 async function getPlugins() {
   const resp = await fetch('https://raw.githubusercontent.com/elizaos-plugins/registry/refs/heads/main/index.json')
