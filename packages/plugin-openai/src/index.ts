@@ -292,5 +292,17 @@ export const openaiPlugin: Plugin = {
       return data.text;
     },
   },
+  routes: [
+    {
+      path: "/helloworld",
+      type: "GET",
+      handler: async (req: any, res: any) => {
+        // send a response
+        res.json({
+          message: "Hello World"
+        });
+      }
+    }
+  ]
 };
 export default openaiPlugin;

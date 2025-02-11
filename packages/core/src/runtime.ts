@@ -45,7 +45,8 @@ import {
     type State,
     type UUID,
     type ServiceType,
-    type Service
+    type Service,
+    Route
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -249,6 +250,7 @@ export class AgentRuntime implements IAgentRuntime {
     private readonly memoryManagerService: MemoryManagerService;
 
     models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
+    routes: Route[] = [];
 
     constructor(opts: {
         conversationLength?: number;
@@ -321,6 +323,10 @@ export class AgentRuntime implements IAgentRuntime {
             for(const service of plugin.services){
                 this.registerService(service);
             }
+
+            for(const route of plugin.routes){
+                this.routes.push(route);
+            }
         }
 
         this.plugins = plugins;
@@ -355,6 +361,11 @@ export class AgentRuntime implements IAgentRuntime {
                     if (plugin.services) {
                         for(const service of plugin.services){
                             this.services.set(service.serviceType, service);
+                        }
+                    }
+                    if (plugin.routes) {
+                        for(const route of plugin.routes){
+                            this.routes.push(route);
                         }
                     }
                     this.plugins.push(plugin);

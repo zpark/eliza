@@ -552,6 +552,12 @@ export type Adapter = {
   init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
 };
 
+export type Route = {
+  type: "GET" | "POST" | "PUT" | "DELETE";
+  path: string;
+  handler: (req: Request, res: Response) => Promise<void>;
+};
+
 /**
  * Plugin for extending agent functionality
  */
@@ -601,6 +607,9 @@ export type Plugin = {
 
   /** Optional tests */
   tests?: TestSuite[];
+
+  /** Optional routes */
+  routes?: Route[];
 };
 
 export interface ModelConfiguration {
@@ -948,7 +957,7 @@ export interface IAgentRuntime {
   plugins: Plugin[];
 
   fetch?: typeof fetch | null;
-
+  routes: Route[];
   messageManager: IMemoryManager;
   descriptionManager: IMemoryManager;
   documentsManager: IMemoryManager;

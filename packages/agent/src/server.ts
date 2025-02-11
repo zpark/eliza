@@ -905,6 +905,26 @@ export class CharacterServer {
         // but once and only once
         this.agents.set(runtime.agentId, runtime);
         runtime.registerAction(replyAction);
+        // for each route on each plugin, add it to the router
+        for (const route of runtime.routes) {
+            // if the path hasn't been added yet, add it
+            switch (route.type) {
+                case "GET":
+                    this.app.get(route.path, (req: any, res: any) => route.handler(req, res));
+                    break;
+                case "POST": 
+                    this.app.post(route.path, (req: any, res: any) => route.handler(req, res));
+                    break;
+                case "PUT":
+                    this.app.put(route.path, (req: any, res: any) => route.handler(req, res));
+                    break;
+                case "DELETE":
+                    this.app.delete(route.path, (req: any, res: any) => route.handler(req, res));
+                    break;
+                default:
+                    logger.error(`Unknown route type: ${route.type}`);
+            }
+        }
     }
 
     public unregisterAgent(runtime: IAgentRuntime) {
