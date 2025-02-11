@@ -37,7 +37,6 @@ async function setupEnvironment(targetDir: string, database: string) {
 }
 
 async function selectPlugins() {
-  const registry = await getRegistryIndex()
   
   const clients = await listPluginsByType("client")
   const plugins = await listPluginsByType("plugin")
