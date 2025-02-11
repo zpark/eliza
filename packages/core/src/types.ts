@@ -141,6 +141,7 @@ export enum ServiceType {
   REMOTE_FILES = "aws_s3",
   WEB_SEARCH = "web_search",
   EMAIL = "email",
+  TEE = "tee",
 }
 
 /**
@@ -1105,6 +1106,23 @@ export interface IFileService extends Service {
   generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
 
+export interface ITeeLogService extends Service {
+  getInstance(): ITeeLogService;
+  log(
+      agentId: string,
+      roomId: string,
+      userId: string,
+      type: string,
+      content: string,
+  ): Promise<boolean>;
+  
+  generateAttestation<T>(reportData: string, hashAlgorithm?: T | any): Promise<string>;
+  getAllAgents(): Promise<TeeAgent[]>;
+  getAgent(agentId: string): Promise<TeeAgent | null>;
+  getLogs(query: TeeLogQuery, page: number, pageSize: number): Promise<TeePageQuery<TeeLog[]>>;
+
+}
+
 export interface TestCase {
   name: string;
   fn: (runtime: IAgentRuntime) => Promise<void> | void;
@@ -1113,4 +1131,104 @@ export interface TestCase {
 export interface TestSuite {
   name: string;
   tests: TestCase[];
+}
+
+// Represents a log entry in the TeeLog table, containing details about agent activities.
+export interface TeeLog {
+  id: string;
+  agentId: string;
+  roomId: string;
+  userId: string;
+  type: string;
+  content: string;
+  timestamp: number;
+  signature: string;
+}
+
+export interface TeeLogQuery {
+  agentId?: string;
+  roomId?: string;
+  userId?: string;
+  type?: string;
+  containsContent?: string;
+  startTimestamp?: number;
+  endTimestamp?: number;
+}
+
+// Represents an agent in the TeeAgent table, containing details about the agent.
+export interface TeeAgent {
+  id: string; // Primary key
+  // Allow duplicate agentId.
+  // This is to support the case where the same agentId is registered multiple times.
+  // Each time the agent restarts, we will generate a new keypair and attestation.
+  agentId: string;
+  agentName: string;
+  createdAt: number;
+  publicKey: string;
+  attestation: string;
+}
+
+export interface TeePageQuery<Result = any> {
+  page: number;
+  pageSize: number;
+  total?: number;
+  data?: Result;
+}
+
+export abstract class TeeLogDAO<DB = any> {
+  db: DB;
+
+  abstract initialize(): Promise<void>;
+
+  abstract addLog(log: TeeLog): Promise<boolean>;
+
+  abstract getPagedLogs(
+      query: TeeLogQuery,
+      page: number,
+      pageSize: number
+  ): Promise<TeePageQuery<TeeLog[]>>;
+
+  abstract addAgent(agent: TeeAgent): Promise<boolean>;
+
+  abstract getAgent(agentId: string): Promise<TeeAgent>;
+
+  abstract getAllAgents(): Promise<TeeAgent[]>;
+}
+
+export enum TEEMode {
+  OFF = "OFF",
+  LOCAL = "LOCAL", // For local development with simulator
+  DOCKER = "DOCKER", // For docker development with simulator
+  PRODUCTION = "PRODUCTION", // For production without simulator
+}
+
+export interface RemoteAttestationQuote {
+  quote: string;
+  timestamp: number;
+}
+
+export interface DeriveKeyAttestationData {
+  agentId: string;
+  publicKey: string;
+  subject?: string;
+}
+
+export interface RemoteAttestationMessage {
+  agentId: string;
+  timestamp: number;
+  message: {
+      userId: string;
+      roomId: string;
+      content: string;
+  }
+}
+
+export interface SgxAttestation {
+  quote: string;
+  timestamp: number;
+}
+
+export enum TeeType {
+    SGX_GRAMINE = "sgx_gramine",
+    TDX_DSTACK = "tdx_dstack",
 }
