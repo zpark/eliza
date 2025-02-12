@@ -4,6 +4,7 @@ import { logger } from "@/src/utils/logger"
 import { getPluginRepository, getRegistryIndex } from "@/src/utils/registry"
 import { Command } from "commander"
 import { execa } from "execa"
+import { installPlugin } from "@/src/utils/install-plugin"
 
 export const plugins = new Command()
   .name("plugins")
@@ -58,10 +59,7 @@ plugins
 
       // Install from GitHub
       logger.info(`Installing ${plugin}...`)
-      await execa("bun", ["add", repo], {
-        cwd,
-        stdio: "inherit"
-      })
+      await installPlugin(repo, cwd)
 
       logger.success(`Successfully installed ${plugin}`)
 
