@@ -9,7 +9,6 @@ const agent = process.env.https_proxy
 
 export async function getRegistryIndex(): Promise<Registry> {
   try {
-    console.log("REGISTRY_URL", REGISTRY_URL)
     const response = await fetch(REGISTRY_URL, { agent })
     // Get the response body as text first
     const text = await response.text()

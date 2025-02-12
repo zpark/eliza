@@ -304,6 +304,7 @@ export class AgentRuntime implements IAgentRuntime {
         const plugins = opts?.plugins ?? [];
 
         for (const plugin of plugins) {
+            console.log("Handling for plugin", plugin.name)
             for (const action of (plugin.actions ?? [])) {
                 this.registerAction(action);
             }
@@ -327,6 +328,15 @@ export class AgentRuntime implements IAgentRuntime {
             for(const route of plugin.routes){
                 this.routes.push(route);
             }
+
+            for(const client of plugin.clients){
+                client.start(this).then((startedClient) => {
+                    logger.debug(
+                        `Initializing client: ${client.name}`
+                    );
+                    this.clients.push(startedClient);
+                });
+            }
         }
 
         this.plugins = plugins;
@@ -345,7 +355,9 @@ export class AgentRuntime implements IAgentRuntime {
                         continue;
                     }
                     if (plugin.clients) {
+                        console.log("plugin has clients:", plugin.name)
                         for (const client of plugin.clients) {
+                            console.log("client", client)
                             const startedClient = await client.start(this);
                             logger.debug(
                                 `Initializing client: ${client.name}`
@@ -353,6 +365,25 @@ export class AgentRuntime implements IAgentRuntime {
                             this.clients.push(startedClient);
                         }
                     }
+
+                    if (plugin.actions) {
+                        for (const action of plugin.actions) {
+                            this.registerAction(action);
+                        }
+                    }
+
+                    if (plugin.evaluators) {
+                        for (const evaluator of plugin.evaluators) {
+                            this.registerEvaluator(evaluator);
+                        }
+                    }
+
+                    if (plugin.providers) {
+                        for (const provider of plugin.providers) {
+                            this.registerContextProvider(provider);
+                        }
+                    }
+
                     if (plugin.models) {
                         for (const [modelClass, handler] of Object.entries(plugin.models)) {
                             this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
