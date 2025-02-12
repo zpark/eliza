@@ -10,7 +10,6 @@ export const defaultCharacter: Character = {
     "@elizaos/plugin-local-ai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-elevenlabs",
     "@elizaos/plugin-telegram",
     "@elizaos/plugin-twitter",
   ],
