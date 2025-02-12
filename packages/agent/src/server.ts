@@ -89,9 +89,10 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, fs.createReadStream(audioFile.path));
-
-                res.json(transcription);
+                const audioBuffer = fs.readFileSync(audioFile.path);
+                const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+                
+                res.json({text: transcription});
             }
         );
 
