@@ -1,16 +1,15 @@
 import {
     composeContext,
-    logger,
     generateMessageResponse,
     generateObject,
-    messageCompletionFooter,
+    logger,
     ModelClass,
     stringToUuid,
+    type Character,
     type Content,
-    type Media,
-    type Memory,
     type IAgentRuntime,
-    type Character
+    type Media,
+    type Memory
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -20,9 +19,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { z } from "zod";
 import { createApiRouter } from "./api.ts";
+import { hyperfiHandlerTemplate, messageHandlerTemplate, upload } from "./helper.ts";
 import replyAction from "./reply.ts";
-import { messageHandlerTemplate } from "./helper.ts";
-import { upload } from "./helper.ts";
 
 
 
@@ -31,7 +29,7 @@ export class CharacterServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>; // container management
     private server: any; // Store server instance
-    public startAgent: () => Promise<void>; // Store startAgent function
+    public startAgent: (character: Character) => Promise<IAgentRuntime>; // Store startAgent function
     public loadCharacterTryPath: (characterPath: string) => Promise<Character>; // Store loadCharacterTryPath function
     public jsonToCharacter: (filePath: string, character: string | never) => Promise<Character>; // Store jsonToCharacter function
 
@@ -91,9 +89,10 @@ export class CharacterServer {
                     return;
                 }
 
-                const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, fs.createReadStream(audioFile.path));
-
-                res.json(transcription);
+                const audioBuffer = fs.readFileSync(audioFile.path);
+                const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+                
+                res.json({text: transcription});
             }
         );
 

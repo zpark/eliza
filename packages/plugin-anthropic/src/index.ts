@@ -20,10 +20,12 @@ export const anthropicPlugin: Plugin = {
   async init(config: Record<string, string>) {
     try {
       const validatedConfig = await configSchema.parseAsync(config);
-      // Set all validated configuration values as environment variables.
-      Object.entries(validatedConfig).forEach(([key, value]) => {
+
+      // Set all environment variables at once
+      for (const [key, value] of Object.entries(validatedConfig)) {
         if (value) process.env[key] = value;
-      });
+      }
+      
       // (Optional) If the Anthropics SDK supports API key verification,
       // you might add a check here.
     } catch (error) {

@@ -1,5 +1,5 @@
 // src/commands/agent.ts
-import { Database, SqliteDatabaseAdapter } from "@elizaos-plugins/sqlite";
+import { Database, SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite";
 import type { MessageExample, UUID } from "@elizaos/core";
 import { MessageExampleSchema } from "@elizaos/core";
 import { Command } from "commander";
@@ -116,10 +116,16 @@ async function collectCharacterData(
         const examples = response.value
           .split('\\n')
           .map(line => line.trim())
-          .filter(Boolean);
-        formData.messageExamples = examples.length > 0
-          ? examples
-          : [`{{user1}}: hey how are you?\n${formData.name}`];
+          .filter(Boolean)
+          .map(line => ({
+            user: line.split(':')[0].trim(),
+            content: {
+              text: line.split(':').slice(1).join(':').trim()
+            }
+          }));
+        formData.messageExamples = examples.length > 0 
+          ? [examples]
+          : [];
         break;
       }
 

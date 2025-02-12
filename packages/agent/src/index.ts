@@ -348,7 +348,7 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
   let adapter: Adapter | undefined;
   // if not found, default to sqlite
   if (adapters.length === 0) {
-    const sqliteAdapterPlugin = await import('@elizaos-plugins/sqlite');
+    const sqliteAdapterPlugin = await import('@elizaos/plugin-sqlite');
     const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
     adapter = sqliteAdapterPluginDefault.adapters[0];
     if (!adapter) {

@@ -307,8 +307,6 @@ export function createApiRouter(
 
     router.post("/agent/start", async (req, res) => {
         const { characterPath, characterJson } = req.body;
-        console.log("characterPath:", characterPath);
-        console.log("characterJson:", characterJson);
         try {
             let character: Character;
             if (characterJson) {
@@ -340,7 +338,6 @@ export function createApiRouter(
 
     router.post("/agents/:agentId/stop", async (req, res) => {
         const agentId = req.params.agentId;
-        console.log("agentId", agentId);
         const agent: IAgentRuntime = agents.get(agentId);
 
         // update character
