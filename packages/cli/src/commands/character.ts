@@ -1,5 +1,5 @@
 // src/commands/agent.ts
-import { Database, SqliteDatabaseAdapter } from "@elizaos-plugins/sqlite";
+import { Database, SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite";
 import type { MessageExample, UUID } from "@elizaos/core";
 import { MessageExampleSchema } from "@elizaos/core";
 import { Command } from "commander";
