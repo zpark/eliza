@@ -13,6 +13,9 @@ export default defineConfig({
         "https",
         "http",
         "uuid",
+        "better-sqlite3",
+        "node:fs",
         // Add other modules you want to externalize
     ],
 });
+

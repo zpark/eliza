@@ -6,7 +6,9 @@ export default defineConfig({
   entry: ["src/index.ts"],
   format: ["esm"],
   sourcemap: true,
-  minify: true,
+  external: ['better-sqlite3', 'node:fs'],
+  platform: 'node',
+  minify: false,
   target: "esnext",
   outDir: "dist",
 })
