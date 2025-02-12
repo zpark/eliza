@@ -11,7 +11,8 @@ export const defaultCharacter: Character = {
     "@elizaos/plugin-node",
     // "@elizaos/plugin-telegram",
     // "@elizaos/plugin-twitter",
-    "@elizaos/plugin-evm"
+    "@elizaos/plugin-evm",
+    "@elizaos/plugin-solana",
   ],
   settings: {
     secrets: {},
