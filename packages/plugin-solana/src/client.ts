@@ -1,8 +1,8 @@
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
-import { Connection, PublicKey } from "@solana/web3.js";
-import BigNumber from "bignumber.js";
 import { getWalletKey } from "./keypairUtils";
-import type { Item, Prices, WalletPortfolio } from "./types";
+import BigNumber from "bignumber.js";
+import type { Item, WalletPortfolio, Prices, ISolanaClient } from "./types";
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
@@ -16,7 +16,7 @@ const PROVIDER_CONFIG = {
     },
 };
 
-class SolanaClient {
+class SolanaClient implements ISolanaClient {
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate: number = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
@@ -175,6 +175,8 @@ class SolanaClient {
                     const portfolio: WalletPortfolio = {
                         totalUsd: totalUsd.toString(),
                         totalSol: totalUsd.div(solPriceInUSD).toFixed(6),
+                        prices,
+                        lastUpdated: now,
                         items: data.items.map((item: any) => ({
                             ...item,
                             valueSol: new BigNumber(item.valueUsd || 0)

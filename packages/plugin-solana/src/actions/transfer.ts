@@ -115,11 +115,16 @@ export default {
             template: transferTemplate,
         });
 
+
+        console.log("Transfer context:", transferContext);
+
         const content = await generateObject({
             runtime,
             context: transferContext,
             modelClass: ModelClass.LARGE,
         });
+
+        console.log("Content:", content);
 
         if (!isTransferContent(content)) {
             if (callback) {
@@ -133,7 +138,7 @@ export default {
 
         try {
             const { keypair: senderKeypair } = await getWalletKey(runtime, true);
-            const connection = new Connection(settings.SOLANA_RPC_URL!);
+            const connection = new Connection(runtime.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com");
             const recipientPubkey = new PublicKey(content.recipient);
 
             let signature: string;

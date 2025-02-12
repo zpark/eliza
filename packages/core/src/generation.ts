@@ -264,7 +264,7 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_LARGE,
   stopSequences,
 }: GenerateObjectOptions): Promise<any> => {
   if (!context) {
@@ -272,8 +272,9 @@ export const generateObject = async ({
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
+  console.log(context);
 
-  const { object } = await runtime.useModel(modelClass, {
+  const obj = await runtime.useModel(modelClass, {
     runtime,
     context,
     modelClass,
@@ -281,8 +282,35 @@ export const generateObject = async ({
     object: true,
   });
 
-  logger.debug(`Received Object response from ${modelClass} model.`);
-  return object;
+  console.log(obj);
+
+
+  let jsonString = obj;
+
+  // try to find a first and last bracket
+  const firstBracket = obj.indexOf("{");
+  const lastBracket = obj.lastIndexOf("}");
+  if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
+    jsonString = obj.slice(firstBracket, lastBracket + 1);
+  }
+
+  console.log("jsonString", jsonString);
+
+  if (jsonString.length === 0) {
+    logger.error("Failed to extract JSON string from model response");
+    return null;
+  }
+
+  // parse the json string
+  try {
+    const json = JSON.parse(jsonString);
+    console.log("json exported", json);
+    return json;
+  } catch (error) {
+    logger.error("Failed to parse JSON string");
+    logger.error(jsonString);
+    return null;
+  }
 };
 
 export async function generateObjectArray({

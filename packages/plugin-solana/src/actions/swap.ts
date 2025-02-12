@@ -13,18 +13,16 @@ import {
 } from "@elizaos/core";
 import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import { getWalletKey } from "../keypairUtils.ts";
-import { walletProvider, WalletProvider } from "../providers/wallet.ts";
+import { getWalletKey } from "../keypairUtils";
+import type { ISolanaClient, Item } from "../types";
 
 async function getTokenDecimals(
     connection: Connection,
     mintAddress: string
 ): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
-    const tokenAccountInfo =
-        await connection.getParsedAccountInfo(mintPublicKey);
+    const tokenAccountInfo = await connection.getParsedAccountInfo(mintPublicKey);
 
-    // Check if the data is parsed and contains the expected structure
     if (
         tokenAccountInfo.value &&
         typeof tokenAccountInfo.value.data === "object" &&
@@ -47,21 +45,15 @@ async function swapToken(
     amount: number
 ): Promise<any> {
     try {
-        // Get the decimals for the input token
         const decimals =
             inputTokenCA === settings.SOL_ADDRESS
                 ? new BigNumber(9)
-                : new BigNumber(
-                      await getTokenDecimals(connection, inputTokenCA)
-                  );
+                : new BigNumber(await getTokenDecimals(connection, inputTokenCA));
 
         elizaLogger.log("Decimals:", decimals.toString());
 
-        // Use BigNumber for adjustedAmount: amount * (10 ** decimals)
         const amountBN = new BigNumber(amount);
-        const adjustedAmount = amountBN.multipliedBy(
-            new BigNumber(10).pow(decimals)
-        );
+        const adjustedAmount = amountBN.multipliedBy(new BigNumber(10).pow(decimals));
 
         elizaLogger.log("Fetching quote with params:", {
             inputMint: inputTokenCA,
@@ -76,12 +68,8 @@ async function swapToken(
 
         if (!quoteData || quoteData.error) {
             elizaLogger.error("Quote error:", quoteData);
-            throw new Error(
-                `Failed to get quote: ${quoteData?.error || "Unknown error"}`
-            );
+            throw new Error(`Failed to get quote: ${quoteData?.error || "Unknown error"}`);
         }
-
-        elizaLogger.log("Quote received:", quoteData);
 
         const swapRequestBody = {
             quoteResponse: quoteData,
@@ -94,13 +82,9 @@ async function swapToken(
             },
         };
 
-        elizaLogger.log("Requesting swap with body:", swapRequestBody);
-
         const swapResponse = await fetch("https://quote-api.jup.ag/v6/swap", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(swapRequestBody),
         });
 
@@ -108,16 +92,37 @@ async function swapToken(
 
         if (!swapData || !swapData.swapTransaction) {
             elizaLogger.error("Swap error:", swapData);
-            throw new Error(
-                `Failed to get swap transaction: ${swapData?.error || "No swap transaction returned"}`
-            );
+            throw new Error(`Failed to get swap transaction: ${swapData?.error || "No swap transaction returned"}`);
         }
 
-        elizaLogger.log("Swap transaction received");
         return swapData;
     } catch (error) {
         elizaLogger.error("Error in swapToken:", error);
         throw error;
+    }
+}
+
+// Get token from wallet data using SolanaClient
+async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string): Promise<string | null> {
+    try {
+        const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient') as ISolanaClient;
+        if (!solanaClient) {
+            throw new Error('SolanaClient not initialized');
+        }
+
+        const walletData = await solanaClient.getCachedData();
+        if (!walletData) {
+            return null;
+        }
+
+        const token = walletData.items.find((item: Item) => 
+            item.symbol.toLowerCase() === tokenSymbol.toLowerCase()
+        );
+
+        return token ? token.address : null;
+    } catch (error) {
+        elizaLogger.error("Error checking token in wallet:", error);
+        return null;
     }
 }
 
@@ -147,58 +152,14 @@ Extract the following information about the requested token swap:
 - Output token contract address if provided
 - Amount to swap
 
-Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined. The result should be a valid JSON object with the following schema:
-\`\`\`json
-{
-    "inputTokenSymbol": string | null,
-    "outputTokenSymbol": string | null,
-    "inputTokenCA": string | null,
-    "outputTokenCA": string | null,
-    "amount": number | string | null
-}
-\`\`\``;
-
-// if we get the token symbol but not the CA, check walet for matching token, and if we have, get the CA for it
-
-// get all the tokens in the wallet using the wallet provider
-async function getTokensInWallet(runtime: IAgentRuntime) {
-    const { publicKey } = await getWalletKey(runtime, false);
-    const walletProvider = new WalletProvider(
-        new Connection("https://api.mainnet-beta.solana.com"),
-        publicKey
-    );
-
-    const walletInfo = await walletProvider.fetchPortfolioValue(runtime);
-    const items = walletInfo.items;
-    return items;
-}
-
-// check if the token symbol is in the wallet
-async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string) {
-    try {
-        const items = await getTokensInWallet(runtime);
-        const token = items.find((item) => item.symbol === tokenSymbol);
-
-        if (token) {
-            return token.address;
-        } else {
-            return null;
-        }
-    } catch (error) {
-        elizaLogger.error("Error checking token in wallet:", error);
-        return null;
-    }
-}
-
-// swapToken should took CA, not symbol
+Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.`;
 
 export const executeSwap: Action = {
     name: "SWAP_SOLANA",
     similes: ["SWAP_SOL", "SWAP_TOKENS_SOLANA", "TOKEN_SWAP_SOLANA", "TRADE_TOKENS_SOLANA", "EXCHANGE_TOKENS_SOLANA"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        // Check if the necessary parameters are provided in the message
-        elizaLogger.log("Message:", message);
-        return true;
+        const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient');
+        return !!solanaClient;
     },
     description: "Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.",
     handler: async (
@@ -208,122 +169,64 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback
     ): Promise<boolean> => {
-        // composeState
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
-        } else {
-            state = await runtime.updateRecentMessageState(state);
-        }
-
-        const walletInfo = await walletProvider.get(runtime, message, state);
-
-        state.walletInfo = walletInfo;
-
-        const swapContext = composeContext({
-            state,
-            template: swapTemplate,
-        });
-
-        const response = await generateObject({
-            runtime,
-            context: swapContext,
-            modelClass: ModelClass.LARGE,
-        });
-
-        elizaLogger.log("Response:", response);
-        // const type = response.inputTokenSymbol?.toUpperCase() === "SOL" ? "buy" : "sell";
-
-        // Add SOL handling logic
-        if (response.inputTokenSymbol?.toUpperCase() === "SOL") {
-            response.inputTokenCA = settings.SOL_ADDRESS;
-        }
-        if (response.outputTokenSymbol?.toUpperCase() === "SOL") {
-            response.outputTokenCA = settings.SOL_ADDRESS;
-        }
-
-        // if both contract addresses are set, lets execute the swap
-        // TODO: try to resolve CA from symbol based on existing symbol in wallet
-        if (!response.inputTokenCA && response.inputTokenSymbol) {
-            elizaLogger.log(
-                `Attempting to resolve CA for input token symbol: ${response.inputTokenSymbol}`
-            );
-            response.inputTokenCA = await getTokenFromWallet(
-                runtime,
-                response.inputTokenSymbol
-            );
-            if (response.inputTokenCA) {
-                elizaLogger.log(
-                    `Resolved inputTokenCA: ${response.inputTokenCA}`
-                );
-            } else {
-                elizaLogger.log(
-                    "No contract addresses provided, skipping swap"
-                );
-                const responseMsg = {
-                    text: "I need the contract addresses to perform the swap",
-                };
-                callback?.(responseMsg);
-                return true;
-            }
-        }
-
-        if (!response.outputTokenCA && response.outputTokenSymbol) {
-            elizaLogger.log(
-                `Attempting to resolve CA for output token symbol: ${response.outputTokenSymbol}`
-            );
-            response.outputTokenCA = await getTokenFromWallet(
-                runtime,
-                response.outputTokenSymbol
-            );
-            if (response.outputTokenCA) {
-                elizaLogger.log(
-                    `Resolved outputTokenCA: ${response.outputTokenCA}`
-                );
-            } else {
-                elizaLogger.log(
-                    "No contract addresses provided, skipping swap"
-                );
-                const responseMsg = {
-                    text: "I need the contract addresses to perform the swap",
-                };
-                callback?.(responseMsg);
-                return true;
-            }
-        }
-
-        if (!response.amount) {
-            elizaLogger.log("No amount provided, skipping swap");
-            const responseMsg = {
-                text: "I need the amount to perform the swap",
-            };
-            callback?.(responseMsg);
-            return true;
-        }
-
-        // TODO: if response amount is half, all, etc, semantically retrieve amount and return as number
-        if (!response.amount) {
-            elizaLogger.log("Amount is not a number, skipping swap");
-            const responseMsg = {
-                text: "The amount must be a number",
-            };
-            callback?.(responseMsg);
-            return true;
-        }
         try {
-            const connection = new Connection(
-                "https://api.mainnet-beta.solana.com"
-            );
-            const { publicKey: walletPublicKey } = await getWalletKey(
+            if (!state) {
+                state = await runtime.composeState(message);
+            } else {
+                state = await runtime.updateRecentMessageState(state);
+            }
+
+            const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient') as ISolanaClient;
+            if (!solanaClient) {
+                throw new Error('SolanaClient not initialized');
+            }
+
+            const walletData = await solanaClient.getCachedData();
+            state.walletInfo = walletData;
+
+            const swapContext = composeContext({
+                state,
+                template: swapTemplate,
+            });
+
+            const response = await generateObject({
                 runtime,
-                false
-            );
+                context: swapContext,
+                modelClass: ModelClass.LARGE,
+            });
 
-            // const provider = new WalletProvider(connection, walletPublicKey);
+            // Handle SOL addresses
+            if (response.inputTokenSymbol?.toUpperCase() === "SOL") {
+                response.inputTokenCA = settings.SOL_ADDRESS;
+            }
+            if (response.outputTokenSymbol?.toUpperCase() === "SOL") {
+                response.outputTokenCA = settings.SOL_ADDRESS;
+            }
 
-            elizaLogger.log("Wallet Public Key:", walletPublicKey);
-            elizaLogger.log("inputTokenSymbol:", response.inputTokenCA);
-            elizaLogger.log("outputTokenSymbol:", response.outputTokenCA);
-            elizaLogger.log("amount:", response.amount);
+            // Resolve token addresses if needed
+            if (!response.inputTokenCA && response.inputTokenSymbol) {
+                response.inputTokenCA = await getTokenFromWallet(runtime, response.inputTokenSymbol);
+                if (!response.inputTokenCA) {
+                    callback?.({ text: "Could not find the input token in your wallet" });
+                    return false;
+                }
+            }
+
+            if (!response.outputTokenCA && response.outputTokenSymbol) {
+                response.outputTokenCA = await getTokenFromWallet(runtime, response.outputTokenSymbol);
+                if (!response.outputTokenCA) {
+                    callback?.({ text: "Could not find the output token in your wallet" });
+                    return false;
+                }
+            }
+
+            if (!response.amount) {
+                callback?.({ text: "Please specify the amount you want to swap" });
+                return false;
+            }
+
+            const connection = new Connection(runtime.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com");
+            const { publicKey: walletPublicKey } = await getWalletKey(runtime, false);
 
             const swapResult = await swapToken(
                 connection,
@@ -333,74 +236,45 @@ export const executeSwap: Action = {
                 response.amount as number
             );
 
-            elizaLogger.log("Deserializing transaction...");
-            const transactionBuf = Buffer.from(
-                swapResult.swapTransaction,
-                "base64"
-            );
-            const transaction =
-                VersionedTransaction.deserialize(transactionBuf);
+            const transactionBuf = Buffer.from(swapResult.swapTransaction, "base64");
+            const transaction = VersionedTransaction.deserialize(transactionBuf);
 
-            elizaLogger.log("Preparing to sign transaction...");
-
-            elizaLogger.log("Creating keypair...");
             const { keypair } = await getWalletKey(runtime, true);
-            // Verify the public key matches what we expect
             if (keypair.publicKey.toBase58() !== walletPublicKey.toBase58()) {
-                throw new Error(
-                    "Generated public key doesn't match expected public key"
-                );
+                throw new Error("Generated public key doesn't match expected public key");
             }
 
-            elizaLogger.log("Signing transaction...");
             transaction.sign([keypair]);
 
-            elizaLogger.log("Sending transaction...");
-
             const latestBlockhash = await connection.getLatestBlockhash();
-
             const txid = await connection.sendTransaction(transaction, {
                 skipPreflight: false,
                 maxRetries: 3,
                 preflightCommitment: "confirmed",
             });
 
-            elizaLogger.log("Transaction sent:", txid);
-
-            // Confirm transaction using the blockhash
-            const confirmation = await connection.confirmTransaction(
-                {
-                    signature: txid,
-                    blockhash: latestBlockhash.blockhash,
-                    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-                },
-                "confirmed"
-            );
+            const confirmation = await connection.confirmTransaction({
+                signature: txid,
+                blockhash: latestBlockhash.blockhash,
+                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            }, "confirmed");
 
             if (confirmation.value.err) {
-                throw new Error(
-                    `Transaction failed: ${confirmation.value.err}`
-                );
+                throw new Error(`Transaction failed: ${confirmation.value.err}`);
             }
 
-            if (confirmation.value.err) {
-                throw new Error(
-                    `Transaction failed: ${confirmation.value.err}`
-                );
-            }
-
-            elizaLogger.log("Swap completed successfully!");
-            elizaLogger.log(`Transaction ID: ${txid}`);
-
-            const responseMsg = {
+            callback?.({
                 text: `Swap completed successfully! Transaction ID: ${txid}`,
-            };
-
-            callback?.(responseMsg);
+                content: { success: true, txid }
+            });
 
             return true;
         } catch (error) {
             elizaLogger.error("Error during token swap:", error);
+            callback?.({ 
+                text: `Swap failed: ${error.message}`,
+                content: { error: error.message }
+            });
             return false;
         }
     },
@@ -409,25 +283,16 @@ export const executeSwap: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    inputTokenSymbol: "SOL",
-                    outputTokenSymbol: "USDC",
-                    amount: 0.1,
+                    text: "Swap 0.1 SOL for USDC"
                 },
             },
             {
                 user: "{{user2}}",
                 content: {
-                    text: "Swapping 0.1 SOL for USDC...",
+                    text: "I'll help you swap 0.1 SOL for USDC",
                     action: "SWAP_SOLANA",
                 },
-            },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "Swap completed successfully! Transaction ID: ...",
-                },
-            },
-        ],
-        // Add more examples as needed
+            }
+        ]
     ] as ActionExample[][],
-} as Action;
+};
