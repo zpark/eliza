@@ -132,8 +132,8 @@ export async function generateText({
   customSystemPrompt?: string;
 }): Promise<string> {
   
-  console.log("Generating text")
-  console.log(context)
+  logger.debug("Generating text")
+  logger.debug(context)
 
   const text = await runtime.useModel(modelClass, {
     runtime,
@@ -141,8 +141,8 @@ export async function generateText({
     stopSequences,
   });
 
-  console.log("Generated text")
-  console.log(text)
+  logger.debug("Generated text")
+  logger.debug(text)
 
   return text;
 }
