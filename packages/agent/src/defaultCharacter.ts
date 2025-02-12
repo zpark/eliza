@@ -6,9 +6,11 @@ export const defaultCharacter: Character = {
   plugins: [
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
+    "@elizaos/plugin-elevenlabs",
     "@elizaos/plugin-local-ai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
+    "@elizaos/plugin-elevenlabs",
     "@elizaos/plugin-telegram",
     "@elizaos/plugin-twitter",
   ],
