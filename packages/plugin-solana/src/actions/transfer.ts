@@ -116,8 +116,6 @@ export default {
         });
 
 
-        console.log("Transfer context:", transferContext);
-
         const content = await generateObject({
             runtime,
             context: transferContext,

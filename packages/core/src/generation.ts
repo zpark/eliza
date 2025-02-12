@@ -272,7 +272,6 @@ export const generateObject = async ({
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
-  console.log(context);
 
   const obj = await runtime.useModel(modelClass, {
     runtime,
@@ -281,9 +280,6 @@ export const generateObject = async ({
     stopSequences,
     object: true,
   });
-
-  console.log(obj);
-
 
   let jsonString = obj;
 
@@ -294,8 +290,6 @@ export const generateObject = async ({
     jsonString = obj.slice(firstBracket, lastBracket + 1);
   }
 
-  console.log("jsonString", jsonString);
-
   if (jsonString.length === 0) {
     logger.error("Failed to extract JSON string from model response");
     return null;
@@ -304,7 +298,6 @@ export const generateObject = async ({
   // parse the json string
   try {
     const json = JSON.parse(jsonString);
-    console.log("json exported", json);
     return json;
   } catch (error) {
     logger.error("Failed to parse JSON string");
