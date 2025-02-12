@@ -38,16 +38,10 @@ export async function installPlugin(
       if (pkg.name) {
         pkgName = pkg.name;
         logger.info(`Found package.json name: ${pkgName}`);
+        logger.info(`Add ${pkgName} to your character's plugins config (packages/agent/defaultCharacter.ts)`);
       }
     } catch (err: any) {
       logger.warn(`Could not read package.json from ${pkgPath}: ${err.message}`);
     }
-    
-    logger.info(`Adding ${pkgName} to workspace's agent package (packages/agent/package.json)...`);
-    await runBunCommand(
-      ["add", `${pkgName}@workspace:*`, "--filter", "./packages/agent"],
-      cwd
-    );
-    logger.success(`Successfully added ${pkgName} to agent workspace.`);
   }
 }
