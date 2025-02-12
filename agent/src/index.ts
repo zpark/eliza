@@ -210,8 +210,16 @@ async function jsonToCharacter(
             ...character.settings.secrets,
         };
     }
-    // Handle plugins
-    character.plugins = await handlePluginImporting(character.plugins);
+    elizaLogger.debug(
+        `Constructing plugins for ${character.name} character ` +
+        `(count=${character.plugins.length})`,
+    );
+    const pluginConstructors = await handlePluginImporting(character.plugins);
+    const getSetting = (key: string) => settings[key];
+    character.plugins = [];
+    for (const pluginConstructor of pluginConstructors) {
+        character.plugins.push(await pluginConstructor(getSetting));
+    }
     if (character.extends) {
         elizaLogger.info(
             `Merging  ${character.name} character with parent characters`
