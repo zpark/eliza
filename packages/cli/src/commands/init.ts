@@ -85,7 +85,6 @@ async function installDependencies(targetDir: string, database: string, selected
   })
 
   if (selectedPlugins.length > 0) {
-    console.log(selectedPlugins)
     await execa("bun", ["add", ...selectedPlugins, "--workspace-root"], {
       cwd: targetDir,
       stdio: "inherit"

@@ -50,7 +50,6 @@ export class MemoryManager implements IMemoryManager {
      * @throws Error if the memory content is empty
      */
     async addEmbeddingToMemory(memory: Memory): Promise<Memory> {
-        console.log("addEmbeddingToMemory", memory);
         // Return early if embedding already exists
         if (memory.embedding) {
             return memory;
@@ -174,7 +173,6 @@ export class MemoryManager implements IMemoryManager {
      */
     async createMemory(memory: Memory, unique = false): Promise<void> {
         // TODO: check memory.agentId == this.runtime.agentId
-        console.log("createMemory", memory);
 
         const existingMessage =
             await this.runtime.databaseAdapter.getMemoryById(memory.id);

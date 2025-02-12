@@ -327,6 +327,15 @@ export class AgentRuntime implements IAgentRuntime {
             for(const route of plugin.routes){
                 this.routes.push(route);
             }
+
+            for(const client of plugin.clients){
+                client.start(this).then((startedClient) => {
+                    logger.debug(
+                        `Initializing client: ${client.name}`
+                    );
+                    this.clients.push(startedClient);
+                });
+            }
         }
 
         this.plugins = plugins;
@@ -353,6 +362,25 @@ export class AgentRuntime implements IAgentRuntime {
                             this.clients.push(startedClient);
                         }
                     }
+
+                    if (plugin.actions) {
+                        for (const action of plugin.actions) {
+                            this.registerAction(action);
+                        }
+                    }
+
+                    if (plugin.evaluators) {
+                        for (const evaluator of plugin.evaluators) {
+                            this.registerEvaluator(evaluator);
+                        }
+                    }
+
+                    if (plugin.providers) {
+                        for (const provider of plugin.providers) {
+                            this.registerContextProvider(provider);
+                        }
+                    }
+
                     if (plugin.models) {
                         for (const [modelClass, handler] of Object.entries(plugin.models)) {
                             this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
@@ -601,8 +629,6 @@ export class AgentRuntime implements IAgentRuntime {
             context,
             modelClass: ModelClass.TEXT_SMALL,
         });
-
-        console.log("***** result", result);
 
         const evaluators = parseJsonArrayFromText(
             result,

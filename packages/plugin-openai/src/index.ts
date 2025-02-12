@@ -146,6 +146,9 @@ export const openaiPlugin: Plugin = {
         runtime.getSetting("SMALL_MODEL") ??
         "gpt-4o-mini";
 
+        console.log("generating text")
+        console.log(context)
+
       const { text: openaiResponse } = await aiGenerateText({
         model: openai.languageModel(model),
         prompt: context,
@@ -178,10 +181,6 @@ export const openaiPlugin: Plugin = {
         baseURL,
       });
 
-      const smallModel =
-        runtime.getSetting("OPENAI_SMALL_MODEL") ??
-        runtime.getSetting("SMALL_MODEL") ??
-        "gpt-4o-mini";
       const model =
         runtime.getSetting("OPENAI_LARGE_MODEL") ?? runtime.getSetting("LARGE_MODEL") ?? "gpt-4o";
 

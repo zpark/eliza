@@ -527,7 +527,7 @@ export type Media = {
  */
 export type ClientInstance = {
   /** Client name */
-  // name: string;
+  name?: string;
 
   /** Stop client connection */
   stop: (runtime: IAgentRuntime) => Promise<unknown>;

@@ -4,14 +4,15 @@ export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
   plugins: [
-    "@elizaos/plugin-anthropic",
+    // "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-elevenlabs",
-    "@elizaos/plugin-local-ai",
-    "@elizaos/plugin-discord",
+    // "@elizaos/plugin-local-ai",
+    // "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-telegram",
-    "@elizaos/plugin-twitter",
+    // "@elizaos/plugin-telegram",
+    // "@elizaos/plugin-twitter",
+    "@elizaos-plugins/evm"
   ],
   settings: {
     secrets: {},
