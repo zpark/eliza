@@ -304,7 +304,6 @@ export class AgentRuntime implements IAgentRuntime {
         const plugins = opts?.plugins ?? [];
 
         for (const plugin of plugins) {
-            console.log("Handling for plugin", plugin.name)
             for (const action of (plugin.actions ?? [])) {
                 this.registerAction(action);
             }
@@ -355,9 +354,7 @@ export class AgentRuntime implements IAgentRuntime {
                         continue;
                     }
                     if (plugin.clients) {
-                        console.log("plugin has clients:", plugin.name)
                         for (const client of plugin.clients) {
-                            console.log("client", client)
                             const startedClient = await client.start(this);
                             logger.debug(
                                 `Initializing client: ${client.name}`
@@ -632,8 +629,6 @@ export class AgentRuntime implements IAgentRuntime {
             context,
             modelClass: ModelClass.TEXT_SMALL,
         });
-
-        console.log("***** result", result);
 
         const evaluators = parseJsonArrayFromText(
             result,
