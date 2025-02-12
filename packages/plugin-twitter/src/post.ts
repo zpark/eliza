@@ -23,7 +23,6 @@ const twitterPostTemplate = `
 
 # About {{agentName}} (@{{twitterUserName}}):
 {{bio}}
-{{lore}}
 {{topics}}
 
 {{providers}}

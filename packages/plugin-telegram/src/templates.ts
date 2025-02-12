@@ -87,7 +87,6 @@ export const telegramMessageHandlerTemplate =
 # Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
-{{lore}}
 
 Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}
@@ -120,7 +119,6 @@ NONE: Respond but perform no additional action. This is the default if the agent
 # Task: Generate an engaging community message as {{agentName}}.
 About {{agentName}}:
 {{bio}}
-{{lore}}
 
 Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}
@@ -158,7 +156,6 @@ NONE: Respond but perform no additional action. This is the default if the agent
 # Task: Generate pinned message highlight as {{agentName}}.
 About {{agentName}}:
 {{bio}}
-{{lore}}
 
 Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}

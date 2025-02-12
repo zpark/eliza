@@ -147,12 +147,6 @@ class MemoryManagerService {
             tableName: "descriptions",
         }));
 
-        // Lore manager for static information
-        this.registerMemoryManager(new MemoryManager({
-            runtime: this.runtime,
-            tableName: "lore",
-        }));
-
         // Documents manager for large documents
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
@@ -205,10 +199,6 @@ class MemoryManagerService {
 
     getDescriptionManager(): IMemoryManager {
         return this.getRequiredMemoryManager("descriptions", "Description");
-    }
-
-    getLoreManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("lore", "Lore");
     }
 
     getDocumentsManager(): IMemoryManager {
@@ -792,8 +782,6 @@ export class AgentRuntime implements IAgentRuntime {
             conversationHeader: false,
         });
 
-        // const lore = formatLore(loreData);
-
         const senderName = actorsData?.find(
             (actor: Actor) => actor.id === userId,
         )?.name;
@@ -845,18 +833,7 @@ Text: ${attachment.text}
             )
             .join("\n");
 
-        // randomly get 3 bits of lore and join them into a paragraph, divided by \n
-        let lore = "";
-        // Assuming this.lore is an array of lore bits
-        if (this.character.lore && this.character.lore.length > 0) {
-            const shuffledLore = [...this.character.lore].sort(
-                () => Math.random() - 0.5,
-            );
-            const selectedLore = shuffledLore.slice(0, 10);
-            lore = selectedLore.join("\n");
-        }
-
-        const formattedCharacterPostExamples = this.character.postExamples
+        const formattedCharacterPostExamples = !this.character.postExamples ? "" : this.character.postExamples
             .sort(() => 0.5 - Math.random())
             .map((post) => {
                 const messageString = `${post}`;
@@ -865,7 +842,7 @@ Text: ${attachment.text}
             .slice(0, 50)
             .join("\n");
 
-        const formattedCharacterMessageExamples = this.character.messageExamples
+        const formattedCharacterMessageExamples = !this.character.messageExamples ? "" : this.character.messageExamples
             .sort(() => 0.5 - Math.random())
             .slice(0, 5)
             .map((example) => {
@@ -978,7 +955,6 @@ Text: ${attachment.text}
             agentId: this.agentId,
             agentName,
             bio,
-            lore,
             adjective:
                 this.character.adjectives &&
                     this.character.adjectives.length > 0
@@ -1054,7 +1030,7 @@ Text: ${attachment.text}
 
             postDirections:
                 this.character?.style?.all?.length > 0 ||
-                    this.character?.style?.post.length > 0
+                    this.character?.style?.post?.length > 0
                     ? addHeader(
                         `# Post Directions for ${this.character.name}`,
                         (() => {
@@ -1294,10 +1270,6 @@ Text: ${attachment.text}
 
     get descriptionManager(): IMemoryManager {
         return this.memoryManagerService.getDescriptionManager();
-    }
-
-    get loreManager(): IMemoryManager {
-        return this.memoryManagerService.getLoreManager();
     }
 
     get documentsManager(): IMemoryManager {

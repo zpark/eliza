@@ -619,7 +619,7 @@ export class MessageManager {
             modelClass: ModelClass.TEXT_SMALL,
         });
 
-        if (response === "RESPOND") {
+        if (response.includes("RESPOND")) {
             if (channelState) {
                 channelState.previousContext = {
                     content: message.content,
@@ -628,9 +628,9 @@ export class MessageManager {
             }
 
             return true;
-        } else if (response === "IGNORE") {
+        } else if (response.includes("IGNORE")) {
             return false;
-        } else if (response === "STOP") {
+        } else if (response.includes("STOP")) {
             delete this.interestChannels[message.channelId];
             return false;
         } else {

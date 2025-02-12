@@ -210,9 +210,6 @@ export interface State {
   /** Agent's biography */
   bio: string;
 
-  /** Agent's background lore */
-  lore: string;
-
   /** Message handling directions */
   messageDirections: string;
 
@@ -654,20 +651,17 @@ export type Character = {
   /** Character biography */
   bio: string | string[];
 
-  /** Character background lore */
-  lore: string[];
-
   /** Example messages */
-  messageExamples: MessageExample[][];
+  messageExamples?: MessageExample[][];
 
   /** Example posts */
-  postExamples: string[];
+  postExamples?: string[];
 
   /** Known topics */
-  topics: string[];
+  topics?: string[];
 
   /** Character traits */
-  adjectives: string[];
+  adjectives?: string[];
 
   /** Optional knowledge base */
   knowledge?: (string | { path: string; shared?: boolean })[];
@@ -682,10 +676,10 @@ export type Character = {
   };
 
   /** Writing style guides */
-  style: {
-    all: string[];
-    chat: string[];
-    post: string[];
+  style?: {
+    all?: string[];
+    chat?: string[];
+    post?: string[];
   };
 
   /**Optinal Parent characters to inherit information from */
@@ -962,7 +956,6 @@ export interface IAgentRuntime {
   descriptionManager: IMemoryManager;
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
-  loreManager: IMemoryManager;
 
   cacheManager: ICacheManager;
 

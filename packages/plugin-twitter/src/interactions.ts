@@ -24,7 +24,7 @@ export const twitterMessageHandlerTemplate =
 
 # About {{agentName}} (@{{twitterUserName}}):
 {{bio}}
-{{lore}}
+
 {{topics}}
 
 {{providers}}

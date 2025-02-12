@@ -396,7 +396,7 @@ const testSuite: TestSuite = {
     name: "discord",
     tests: [
         {
-            name: "discord",
+            name: "test creating discord client",
             fn: async (runtime: IAgentRuntime) => {
                 const discordClient = new DiscordClient(runtime);
                 console.log("Created a discord client");

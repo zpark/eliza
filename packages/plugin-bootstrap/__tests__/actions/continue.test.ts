@@ -32,7 +32,6 @@ describe('continueAction', () => {
                 settings: {},
                 name: 'TestBot',
                 bio: 'A test bot',
-                lore: 'Test lore',
                 knowledge: 'Test knowledge',
                 templates: {
                     messageHandlerTemplate: 'Test template {{agentName}}'
@@ -179,7 +178,6 @@ describe('continueAction', () => {
                 ...mockState,
                 actionExamples: [],
                 bio: mockRuntime.character.bio,
-                lore: mockRuntime.character.lore,
                 knowledge: mockRuntime.character.knowledge,
                 agentName: mockRuntime.character.name,
                 messageDirections: 'Test directions',

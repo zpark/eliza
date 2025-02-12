@@ -257,12 +257,6 @@ create_character_template() {
         "Main purpose or role",
         "Notable characteristics"
     ],
-    "lore": [
-        "Background information",
-        "Important history",
-        "Key relationships",
-        "Significant attributes"
-    ],
     "knowledge": [
         "Area of expertise 1",
         "Area of expertise 2",

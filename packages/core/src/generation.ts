@@ -221,18 +221,23 @@ export async function generateShouldRespond({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-  const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"] as string[];
-
-  const result = await generateEnum({
+  const result = await generateText({
     runtime,
     context,
     modelClass,
-    enumValues: RESPONSE_VALUES,
-    functionName: "generateShouldRespond",
     stopSequences,
   });
 
-  return result as "RESPOND" | "IGNORE" | "STOP";
+  if(result.includes("RESPOND")) {
+    return "RESPOND";
+  } else if(result.includes("IGNORE")) {
+    return "IGNORE";
+  } else if(result.includes("STOP")) {
+    return "STOP";
+  } else {
+    logger.error("Invalid response from generateShouldRespond:", result);
+    return null;
+  }
 }
 
 export async function generateTrueOrFalse({

@@ -836,11 +836,11 @@ export class VoiceManager extends EventEmitter {
             modelClass: ModelClass.TEXT_SMALL,
         });
 
-        if (response === "RESPOND") {
+        if (response.includes("RESPOND")) {
             return true;
-        } else if (response === "IGNORE") {
+        } else if (response.includes("IGNORE")) {
             return false;
-        } else if (response === "STOP") {
+        } else if (response.includes("STOP")) {
             return false;
         } else {
             console.error(

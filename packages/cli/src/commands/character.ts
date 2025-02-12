@@ -21,7 +21,6 @@ const characterSchema = z.object({
   plugins: z.array(z.string()).optional(),
   secrets: z.record(z.string(), z.string()).optional(),
   bio: z.array(z.string()).optional(),
-  lore: z.array(z.string()).optional(),
   adjectives: z.array(z.string()).optional(),
   postExamples: z.array(z.string()).optional(),
   messageExamples: z.array(z.array(MessageExampleSchema)).optional(),
@@ -44,7 +43,7 @@ async function collectCharacterData(
 ): Promise<CharacterFormData | null> {
   const formData: Partial<CharacterFormData> = { ...initialData };
   let currentStep = 0;
-  const steps = ['name', 'bio', 'lore', 'adjectives', 'postExamples', 'messageExamples'];
+  const steps = ['name', 'bio', 'adjectives', 'postExamples', 'messageExamples'];
   
   let response: { value?: string };
 
@@ -62,7 +61,6 @@ async function collectCharacterData(
         break;
 
       case 'bio':
-      case 'lore':
       case 'postExamples':
       case 'messageExamples':
         response = await prompts({
@@ -104,7 +102,6 @@ async function collectCharacterData(
         break;
 
       case 'bio':
-      case 'lore':
       case 'postExamples':
         formData[field] = response.value
           .split('\\n')
@@ -192,7 +189,6 @@ character
         name: formData.name,
         username: formData.name.toLowerCase().replace(/\s+/g, '_'),
         bio: formData.bio,
-        lore: formData.lore,
         adjectives: formData.adjectives,
         postExamples: formData.postExamples,
         messageExamples: formData.messageExamples,
@@ -220,7 +216,6 @@ character
         id: characterData.id,
         name: characterData.name,
         bio: characterData.bio || [],
-        lore: characterData.lore || [],
         adjectives: characterData.adjectives || [],
         postExamples: characterData.postExamples || [],
         messageExamples: characterData.messageExamples as MessageExample[][],
@@ -263,7 +258,6 @@ character
       const formData = await collectCharacterData({
         name: existingCharacter.name,
         bio: Array.isArray(existingCharacter.bio) ? existingCharacter.bio : [existingCharacter.bio],
-        lore: existingCharacter.lore || [],
         adjectives: existingCharacter.adjectives || [],
         postExamples: existingCharacter.postExamples || [],
         messageExamples: (existingCharacter.messageExamples || [] as MessageExample[][]).map(
@@ -283,7 +277,6 @@ character
         ...existingCharacter,
         name: formData.name,
         bio: formData.bio || [],
-        lore: formData.lore || [],
         adjectives: formData.adjectives || [],
         postExamples: formData.postExamples || [],
         messageExamples: formData.messageExamples as MessageExample[][],
@@ -336,7 +329,6 @@ character
       await adapter.createCharacter({
         name: character.name,
         bio: character.bio || [],
-        lore: character.lore || [],
         adjectives: character.adjectives || [],
         postExamples: character.postExamples || [],
         messageExamples: character.messageExamples as MessageExample[][],

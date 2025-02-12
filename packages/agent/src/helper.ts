@@ -17,7 +17,6 @@ export const messageHandlerTemplate =
 # Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
-{{lore}}
 
 {{providers}}
 
@@ -44,7 +43,6 @@ export const hyperfiHandlerTemplate = `{{actionExamples}}
 # Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
-{{lore}}
 
 {{providers}}
 
