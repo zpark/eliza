@@ -63,10 +63,7 @@ describe('DiscordClient', () => {
 
   beforeEach(() => {
     mockRuntime = {
-      getSetting: vi.fn((key: string) => {
-        if (key === 'DISCORD_API_TOKEN') return 'mock-token';
-        return undefined;
-      }),
+      getSetting: vi.fn(),
       getState: vi.fn(),
       setState: vi.fn(),
       getMemory: vi.fn(),
