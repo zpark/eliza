@@ -38,6 +38,10 @@ export class DiscordTestSuite implements TestSuite {
         name: "test sending message",
         fn: this.testSendingTextMessage.bind(this),
       },
+      {
+        name: "handle message in message manager",
+        fn: this.testHandlingMessage.bind(this),
+      },
     ];
   }
 
@@ -104,7 +108,7 @@ export class DiscordTestSuite implements TestSuite {
 
       logger.success(`Joined voice channel: ${voiceChannel.id}`);
     } catch (error) {
-      console.error("Error joining voice channel:", error);
+      logger.error("Error joining voice channel:", error);
     }
   }
 
@@ -180,15 +184,55 @@ export class DiscordTestSuite implements TestSuite {
         });
       });
     } catch (error) {
-      console.error("Error in TTS playback test:", error);
+      logger.error("Error in TTS playback test:", error);
     }
   }
 
   async testSendingTextMessage(runtime: IAgentRuntime) {
     try {
-      let channel: TextChannel | null = null;
-      let channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
+      const channel = await this.getTextChannel();
+      if (!channel) return;
 
+      await this.sendMessageToChannel(channel, "Testing sending message");
+    } catch (error) {
+      logger.error("Error in sending text message:", error);
+    }
+  }
+
+  async testHandlingMessage(runtime: IAgentRuntime) {
+    try {
+      const channel = await this.getTextChannel();
+      if (!channel) return;
+
+      const fakeMessage = {
+        content: `Hello, ${runtime.character.name}! How are you?`,
+        author: {
+          id: "mock-user-id",
+          username: "MockUser",
+          bot: false,
+        },
+        channel,
+        id: "mock-message-id",
+        createdTimestamp: Date.now(),
+        mentions: {
+          has: () => false,
+        },
+        reference: null,
+        attachments: [],
+      };
+      await this.discordClient.messageManager.handleMessage(fakeMessage as any);
+  
+    } catch (error) {
+      logger.error("Error in sending text message:", error);
+    }
+  }
+
+
+  async getTextChannel(): Promise<TextChannel | null> {
+    try {
+      let channel: TextChannel | null = null;
+      const channelId = process.env.DISCORD_TEXT_CHANNEL_ID || null;
+  
       if (!channelId) {
         const guilds = await this.discordClient.client.guilds.fetch();
         for (const [, guild] of guilds) {
@@ -199,42 +243,38 @@ export class DiscordTestSuite implements TestSuite {
           channel = textChannels.next().value as TextChannel;
           if (channel) break; // Stop if we found a valid channel
         }
-
+  
         if (!channel) {
-          logger.warn("No suitable text channel found to send the message.");
-          return;
+          logger.warn("No suitable text channel found.");
+          return null;
         }
       } else {
-        const fetchedChannel = await this.discordClient.client.channels.fetch(
-          channelId
-        );
+        const fetchedChannel = await this.discordClient.client.channels.fetch(channelId);
         if (fetchedChannel && fetchedChannel.isTextBased()) {
           channel = fetchedChannel as TextChannel;
         } else {
-          logger.warn(
-            `Provided channel ID (${channelId}) is invalid or not a text channel.`
-          );
-          return;
+          logger.warn(`Provided channel ID (${channelId}) is invalid or not a text channel.`);
+          return null;
         }
       }
-
+  
       if (!channel) {
-        logger.warn(
-          "Failed to determine a valid channel for sending the message."
-        );
-        return;
+        logger.warn("Failed to determine a valid text channel.");
+        return null;
       }
-
-      await this.sendMessageToChannel(channel, "Testing sending message");
+  
+      return channel;
     } catch (error) {
-      logger.error("Error in sending text message:", error);
+      logger.error("Error fetching text channel:", error);
+      return null;
     }
   }
+  
 
   async sendMessageToChannel(channel: TextChannel, messageContent: string) {
     try {
       if (!channel || !channel.isTextBased()) {
-        console.error("Channel is not a text-based channel or does not exist.");
+        logger.error("Channel is not a text-based channel or does not exist.");
         return;
       }
 
@@ -245,7 +285,7 @@ export class DiscordTestSuite implements TestSuite {
         null
       );
     } catch (error) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message:", error);
     }
   }
 }
