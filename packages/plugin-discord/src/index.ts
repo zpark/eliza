@@ -38,8 +38,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   client: Client;
   runtime: IAgentRuntime;
   character: Character;
-  private messageManager: MessageManager;
-  private voiceManager: VoiceManager;
+  messageManager: MessageManager;
+  voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime, discordConfig: DiscordConfig) {
     super();

@@ -1,9 +1,19 @@
-import { logger, type TestSuite, type IAgentRuntime } from "@elizaos/core";
+import {
+  logger,
+  type TestSuite,
+  type IAgentRuntime,
+  ModelClass,
+} from "@elizaos/core";
 import { DiscordClient } from "./index.ts";
 import { DiscordConfig, validateDiscordConfig } from "./environment";
 import { sendMessageInChunks } from "./utils.ts";
 import { ChannelType, Events, TextChannel } from "discord.js";
-import { joinVoiceChannel } from "@discordjs/voice";
+import {
+  createAudioPlayer,
+  NoSubscriberBehavior,
+  createAudioResource,
+  AudioPlayerStatus,
+} from "@discordjs/voice";
 
 export class DiscordTestSuite implements TestSuite {
   name = "discord";
@@ -19,6 +29,10 @@ export class DiscordTestSuite implements TestSuite {
       {
         name: "test joining voice channel",
         fn: this.testJoiningVoiceChannel.bind(this),
+      },
+      {
+        name: "test text-to-speech playback",
+        fn: this.testTextToSpeechPlayback.bind(this),
       },
       {
         name: "test sending message",
@@ -78,18 +92,80 @@ export class DiscordTestSuite implements TestSuite {
         return;
       }
 
-      joinVoiceChannel({
-        channelId: voiceChannel.id,
-        guildId: voiceChannel.guild.id,
-        adapterCreator: voiceChannel.guild.voiceAdapterCreator as any,
-        selfDeaf: false,
-        selfMute: false,
-        group: this.discordClient.client.user.id,
-      });
+      await this.discordClient.voiceManager.joinChannel(voiceChannel);
 
       logger.success(`Joined voice channel: ${voiceChannel.id}`);
     } catch (error) {
       console.error("Error joining voice channel:", error);
+    }
+  }
+
+  async testTextToSpeechPlayback(runtime: IAgentRuntime) {
+    try {
+      let guildId = this.discordClient.client.guilds.cache.find(
+        (guild) => guild.members.me?.voice.channelId
+      )?.id;
+
+      if (!guildId) {
+        logger.warn(
+          "Bot is not connected to a voice channel. Attempting to join one..."
+        );
+
+        await this.testJoiningVoiceChannel(runtime);
+
+        guildId = this.discordClient.client.guilds.cache.find(
+          (guild) => guild.members.me?.voice.channelId
+        )?.id;
+
+        if (!guildId) {
+          logger.error("Failed to join a voice channel. TTS playback aborted.");
+          return;
+        }
+      }
+
+      const connection =
+        this.discordClient.voiceManager.getVoiceConnection(guildId);
+      if (!connection) {
+        logger.warn("No active voice connection found for the bot.");
+        return;
+      }
+
+      const responseStream = await runtime.useModel(
+        ModelClass.TEXT_TO_SPEECH,
+        `Hi! I'm ${runtime.character.name}! How are you doing today?`
+      );
+
+      if (!responseStream) {
+        logger.error("TTS response stream is null or undefined.");
+        return;
+      }
+
+      const audioPlayer = createAudioPlayer({
+        behaviors: {
+          noSubscriber: NoSubscriberBehavior.Pause,
+        },
+      });
+
+      const audioResource = createAudioResource(responseStream);
+
+      audioPlayer.play(audioResource);
+      connection.subscribe(audioPlayer);
+
+      logger.success("TTS playback started successfully.");
+
+      await new Promise<void>((resolve, reject) => {
+        audioPlayer.once(AudioPlayerStatus.Idle, () => {
+          logger.info("TTS playback finished.");
+          resolve();
+        });
+
+        audioPlayer.once("error", (error) => {
+          logger.error("TTS playback error:", error);
+          reject(error);
+        });
+      });
+    } catch (error) {
+      console.error("Error in TTS playback test:", error);
     }
   }
 

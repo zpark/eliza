@@ -327,7 +327,7 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private getVoiceConnection(guildId: string) {
+    getVoiceConnection(guildId: string) {
         const connections = getVoiceConnections(this.client.user.id);
         if (!connections) {
             return;
