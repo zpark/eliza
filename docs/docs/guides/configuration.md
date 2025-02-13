@@ -146,7 +146,7 @@ Example usage:
 ```typescript
 const result = await generateImage(
     {
-        prompt: 'A cute anime girl with big breasts and straight long black hair wearing orange T-shirt. The T-shirt has "ai16z" texts in the front. The girl is looking at the viewer',
+        prompt: 'A cute anime girl with big breasts and straight long black hair wearing orange T-shirt.',
         width: 1024,
         height: 1024,
         numIterations: 20, // optional
@@ -208,7 +208,6 @@ CHARACTER.C3PO.DISCORD_API_TOKEN=xyz
 # DOBBY
 CHARACTER.DOBBY.DISCORD_APPLICATION_ID=123
 CHARACTER.DOBBY.DISCORD_API_TOKEN=369
-
 ```
 
 ## Custom Actions
@@ -302,96 +301,32 @@ const settings = {
 };
 ```
 
-### Plugin Configuration
 
-Enable and configure plugins in `elizaConfig.yaml`:
-
-```yaml
-plugins:
-    - name: solana
-      enabled: true
-      settings:
-          network: mainnet-beta
-          endpoint: https://api.mainnet-beta.solana.com
-
-    - name: image-generation
-      enabled: true
-      settings:
-          provider: dalle
-          size: 1024x1024
-```
 
 ## Configuration Best Practices
 
 1. **Environment Segregation**
 
-    - Use different `.env` files for different environments
-    - Follow naming convention: `.env.development`, `.env.staging`, `.env.production`
+- Use different `.env` files for different environments
+- Follow naming convention: `.env.development`, `.env.staging`, `.env.production`
 
 2. **Secret Management**
 
-    - Never commit secrets to version control
-    - Use secret management services in production
-    - Rotate API keys regularly
+- Never commit secrets to version control
+  - Github has branch / workflow protection
+- Use secret management services in production
+- Rotate API keys regularly
 
 3. **Character Configuration**
 
-    - Keep character files modular and focused
-    - Use inheritance for shared traits
-    - Document character behaviors
+- Keep character files modular and focused
+- Use inheritance for shared traits
+- Document character behaviors
 
 4. **Plugin Management**
 
-    - Enable only needed plugins
-    - Configure plugin-specific settings in separate files
-    - Monitor plugin performance
-
-5. **Database Configuration**
-    - Use SQLite for development
-    - Configure connection pooling for production
-    - Set up proper indexes
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Environment Variables Not Loading**
-
-    ```bash
-    # Check .env file location
-    node -e "console.log(require('path').resolve('.env'))"
-
-    # Verify environment variables
-    node -e "console.log(process.env)"
-    ```
-
-2. **Character Loading Failures**
-
-    ```bash
-    # Validate character file
-    npx ajv validate -s character-schema.json -d your-character.json
-    ```
-
-3. **Database Connection Issues**
-    ```bash
-    # Test database connection
-    npx ts-node scripts/test-db-connection.ts
-    ```
-
-### Configuration Validation
-
-Use the built-in config validator:
-
-```bash
-pnpm run validate-config
-```
-
-This will check:
-
-- Environment variables
-- Character files
-- Database configuration
-- Plugin settings
+- Enable only needed plugins
+- Configure plugin-specific settings in separate files
 
 ---
 

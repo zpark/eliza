@@ -1,4 +1,4 @@
-# Memory Management in ElizaOS
+# Memory Management
 
 ## Overview
 
@@ -38,9 +38,7 @@ ElizaOS implements a sophisticated memory management system powered by Retrieval
    - Managed by `ragKnowledgeManager`
    - Supports dynamic knowledge integration
 
-## Implementation Guide
-
-### Basic Configuration
+## Basic Configuration
 
 ```typescript
 interface MemoryConfig {
@@ -306,5 +304,3 @@ Check runtime logs, verify database connections, and consider clearing cache and
 - [Configuration Guide](./configuration.md)
 - [Database Adapters](../packages/database-adapters.md)
 - [Knowledge Base Management](./knowledge-base.md)
-- [Vector Search Implementation](../packages/core.md#vector-search)
-- [API Documentation](https://docs.elizaos.com/api/memory)

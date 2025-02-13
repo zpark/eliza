@@ -257,6 +257,10 @@ await memoryManager.createMemory({
 
 ## FAQ
 
+### What's the difference between an agent and a character?
+
+A character defines personality and knowledge, while an agent provides the runtime environment and capabilities to bring that character to life.
+
 ### How do I run multiple agents simultaneously?
 Use `pnpm start --characters="characters/agent1.json,characters/agent2.json"` to run multiple character files. Ensure each has unique credentials.
 
@@ -264,15 +268,12 @@ Use `pnpm start --characters="characters/agent1.json,characters/agent2.json"` to
 Most users deploy on a VPS using PM2 or screen to keep the process running. 2-4GB RAM is sufficient if using remote providers for inference.
 
 ### Do agents share memory across platforms?
-By default, agents maintain separate memory contexts for different platforms to avoid mixing conversations.
+By default, agents maintain separate memory contexts for different platforms to avoid mixing conversations. Use the memory management system and database adapters to persist and retrieve state information.
 
-### I'm trying to unify knowledge base across multiple chats. Is this possible?
-Yes, you can unify knowledge across different chat platforms:
-- Use a centralized vector database
-- Implement proper context management
-- Consider privacy implications
-- Use unified embedding storage
-- Configure shared memory contexts
+### Can agents communicate with each other?
+
+Yes, through the message system and shared memory spaces when configured appropriately.
+
 
 ---
 

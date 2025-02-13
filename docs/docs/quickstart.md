@@ -14,34 +14,42 @@ Before getting started with Eliza, ensure you have:
 - A code editor ([VS Code](https://code.visualstudio.com/), [Cursor](https://cursor.com/) or [VSCodium](https://vscodium.com) recommended)
 - [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (optional, for GPU acceleration)
 
-## Installation
+---
 
-Clone the repository
+## Automated Installation
+
+Using https://github.com/elizaOS/eliza-starter
+
+```bash
+git clone https://github.com/elizaos/eliza-starter.git
+cd eliza-starter
+cp .env.example .env
+pnpm i && pnpm build && pnpm start
+```
+
+## Manual Installation
+
+After installing the prerequisites, clone the repository and enter the directory
 
 ```bash
 git clone https://github.com/elizaOS/eliza.git
-```
-
-Enter directory
-
-```bash
 cd eliza
 ```
 
-Switch to latest [stable version tag](https://github.com/elizaOS/eliza/tags)
+Switch to the latest [stable version tag](https://github.com/elizaOS/eliza/tags)
+This project moves quick, checkout the latest release known to work:
 
 ```bash
-# This project moves quickly, check out the latest release known to work
 git checkout $(git describe --tags --abbrev=0)
 ```
 
-Install dependencies
+Install the dependencies
 
 ```bash
 pnpm install --no-frozen-lockfile
 ```
 
-**Note:** Please only use the `--no-frozen-lockfile` option when you're initially instantiating the repo or are bumping the version of a package or adding a new package to your package.json. This practice helps maintain consistency in your project's dependencies and prevents unintended changes to the lockfile.
+> **Note:** Please only use the `--no-frozen-lockfile` option when you're initially instantiating the repo or are bumping the version of a package or adding a new package to your package.json. This practice helps maintain consistency in your project's dependencies and prevents unintended changes to the lockfile.
 
 Build the local libraries
 
@@ -49,7 +57,9 @@ Build the local libraries
 pnpm build
 ```
 
-## **Configure Environment**
+---
+
+## Configure Environment
 
 Copy example environment file
 
@@ -86,8 +96,6 @@ Eliza supports multiple AI models and you set which model to use inside the char
 - **Grok**: Set `XAI_MODEL=grok-beta`
 - **OpenAI**: Set `XAI_MODEL=gpt-4o-mini` or `gpt-4o`
 - **Livepeer**: Set `SMALL_LIVEPEER_MODEL`,`MEDIUM_LIVEPEER_MODEL`,`LARGE_LIVEPEER_MODEL` and `IMAGE_LIVEPEER_MODEL` to your desired models listed [here](https://livepeer-eliza.com/).
-
-## Local inference
 
 ### For llama_local inference:
 

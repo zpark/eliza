@@ -1,178 +1,186 @@
-# Character File Documentation
+# Character Files in ElizaOS
 
-A character file defines the personality, behavior, and capabilities of an agent in the Eliza system. This guide explains how to create and configure character files.
+Character files define AI personas within the ElizaOS ecosystem, combining personality traits, knowledge bases, and interaction patterns to create consistent and effective AI agents.
 
-## Overview
+## Core Components
 
-Character files are stored in the [elizaos/characters](https://github.com/elizaos/characters) repository. Each character has its own directory containing configuration and knowledge files.
-
-## Basic Structure
-
-A character file consists of several key components:
-
+### Required Fields
 ```json
 {
-  "id": "unique-character-id",
-  "name": "Character Name",
-  "username": "character_username",
-  "modelProvider": "anthropic",
-  "description": "A brief description of the character",
-  "personality": {
-    "traits": ["friendly", "helpful", "knowledgeable"],
-    "background": "Character's backstory and context",
-    "speech_style": "How the character typically communicates"
-  },
-  "knowledge": {
-    "base_path": "./knowledge",
-    "files": [
-      "core_knowledge.md",
-      "specialized_topics.md"
-    ]
-  },
-  "capabilities": {
-    "can_generate_images": true,
-    "can_analyze_images": true,
-    "memory_retention": "long"
-  }
+    "name": "character_name",           // Character's display name
+    "modelProvider": "openai",          // AI model provider (e.g., anthropic, openai, groq, mistral, google)
+    "clients": ["discord", "direct"],   // Supported client types
+    "plugins": [],                      // Array of plugins to use
+    "settings": {                       // Configuration settings
+        "ragKnowledge": false,          // Enable RAG for knowledge (default: false)
+        "secrets": {},                  // API keys and sensitive data
+        "voice": {},                    // Voice configuration
+        "model": "string",              // Optional model override
+        "modelConfig": {}               // Optional model configuration
+    },
+    "bio": [],                         // Character background
+    "style": {                         // Interaction style guide
+        "all": [],                     // General style rules
+        "chat": [],                    // Chat-specific style
+        "post": []                     // Post-specific style
+    }
 }
 ```
 
-## Key Components
-
-### Basic Information
-- `id`: Unique identifier for the character
-- `name`: Display name of the character
-- `username`: System username for the character
-- `modelProvider`: The AI model provider to use (e.g., "anthropic")
-- `description`: Brief overview of the character's purpose and role
-
-### Personality Configuration
-- `traits`: Array of key personality characteristics
-- `background`: Character's history and context
-- `speech_style`: Guidelines for how the character should communicate
-
-### Knowledge Management
-- `base_path`: Root directory for character knowledge files
-- `files`: Array of knowledge files to load
-- Knowledge files can include:
-  - Core knowledge (fundamental information)
-  - Specialized topics
-  - Historical records
-  - Training data
-
-### Capabilities
-- `can_generate_images`: Boolean for image generation ability
-- `can_analyze_images`: Boolean for image analysis ability
-- `memory_retention`: Memory retention configuration
-
-## Directory Structure
-
-```
-characters/
-├── character-name/
-│   ├── character.json
-│   ├── knowledge/
-│   │   ├── core_knowledge.md
-│   │   └── specialized_topics.md
-│   └── assets/
-│       └── profile.jpg
-```
-
-## Best Practices
-
-1. **Knowledge Organization**
-   - Keep knowledge files focused and well-organized
-   - Use clear file names that indicate content
-   - Structure knowledge hierarchically
-
-2. **Personality Definition**
-   - Be specific about personality traits
-   - Provide clear speech patterns and communication style
-   - Include relevant background information
-
-3. **Capability Configuration**
-   - Only enable necessary capabilities
-   - Configure memory settings based on use case
-   - Document any special requirements
-
-4. **Maintenance**
-   - Regularly update knowledge files
-   - Version control character configurations
-   - Test changes before deployment
-
-## Integration
-
-To use a character in your application:
-
-```typescript
-import { Character } from '@eliza/core';
-
-const character = new Character({
-  characterPath: './characters/character-name',
-  // Additional runtime configuration
-});
-```
-
-## Advanced Features
-
-### Custom Knowledge Integration
-Characters can integrate with custom knowledge sources:
-
-```typescript
+### Optional but Recommended Fields
+```json
 {
-  "knowledge": {
-    "custom_providers": [
-      {
-        "type": "database",
-        "config": {
-          "connection": "connection_string",
-          "query": "knowledge_query"
+    "username": "handle",              // Character's username/handle
+    "system": "System prompt text",    // Custom system prompt
+    "lore": [],                       // Additional background/history
+    "knowledge": [                     // Knowledge base entries
+        "Direct string knowledge",
+        { "path": "file/path.md", "shared": false },
+        { "directory": "knowledge/path", "shared": false }
+    ],
+    "messageExamples": [],           // Example conversations
+    "postExamples": [],             // Example social posts
+    "topics": [],                  // Areas of expertise
+    "adjectives": []              // Character traits
+}
+```
+
+## Knowledge Management
+
+The character system supports two knowledge modes:
+
+### Classic Mode (Default)
+- Direct string knowledge added to character's context
+- No chunking or semantic search
+- Enabled by default (`settings.ragKnowledge: false`)
+- Only processes string knowledge entries
+- Simpler but less sophisticated
+
+### RAG Mode
+- Advanced knowledge processing with semantic search
+- Chunks content and uses embeddings
+- Must be explicitly enabled (`settings.ragKnowledge: true`)
+- Supports three knowledge types:
+  1. Direct string knowledge
+  2. Single file references: `{ "path": "path/to/file.md", "shared": false }`
+  3. Directory references: `{ "directory": "knowledge/dir", "shared": false }`
+- Supported file types: .md, .txt, .pdf
+- Optional `shared` flag for knowledge reuse across characters
+
+### Knowledge Path Configuration
+- Knowledge files are relative to the `characters/knowledge` directory
+- Paths should not contain `../` (sanitized for security)
+- Both shared and private knowledge supported
+- Files automatically reloaded if content changes
+
+## Client Types
+
+Supported client integrations in `clients` array:
+- `discord`: Discord bot integration
+- `telegram`: Telegram bot  
+- `twitter`: Twitter/X bot
+- `slack`: Slack integration
+- `direct`: Direct chat interface
+- `simsai`: SimsAI platform integration
+
+## Settings Configuration
+
+The `settings` object supports:
+```json
+{
+    "settings": {
+        "ragKnowledge": false,         // Enable RAG knowledge mode
+        "voice": {
+            "model": "string",         // Voice synthesis model
+            "url": "string"           // Optional voice API URL
+        },
+        "secrets": {                  // API keys (use env vars in production)
+            "API_KEY": "string"
+        },
+        "model": "string",           // Optional model override
+        "modelConfig": {             // Optional model parameters
+            "temperature": 0.7,
+            "maxInputTokens": 4096,
+            "maxOutputTokens": 1024,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+        },
+        "imageSettings": {          // Optional image generation settings
+            "steps": 20,
+            "width": 1024,
+            "height": 1024,
+            "cfgScale": 7.5,
+            "negativePrompt": "string"
         }
-      }
-    ]
-  }
+    }
 }
 ```
 
-### Memory Configuration
-Fine-tune memory settings:
+## Character Definition Components
 
-```typescript
+### Bio & Lore
+Core identity and background elements:
+```json
 {
-  "memory": {
-    "retention_period": "30d",
-    "priority_topics": ["user_preferences", "key_events"],
-    "forget_rules": [
-      {
-        "type": "time_based",
-        "duration": "7d"
-      }
+    "bio": [
+        "Expert in blockchain development",
+        "Specializes in DeFi protocols"
+    ],
+    "lore": [
+        "Created first DeFi protocol in 2020",
+        "Helped launch multiple DAOs"
     ]
-  }
 }
 ```
 
-## Troubleshooting
+### Style Guidelines
+Define interaction patterns:
+```json
+{
+    "style": {
+        "all": [                     // Applied to all interactions
+            "Keep responses clear",
+            "Maintain professional tone"
+        ],
+        "chat": [                    // Chat-specific style
+            "Engage with curiosity",
+            "Provide explanations"
+        ],
+        "post": [                    // Social post style
+            "Keep posts informative",
+            "Focus on key points"
+        ]
+    }
+}
+```
 
-Common issues and solutions:
-
-1. **Knowledge Loading Failures**
-   - Verify file paths are correct
-   - Check file permissions
-   - Validate JSON syntax
-
-2. **Character Behavior Issues**
-   - Review personality configuration
-   - Check knowledge file coverage
-   - Verify capability settings
-
-3. **Integration Problems**
-   - Confirm correct file structure
-   - Validate all required fields
-   - Check system compatibility
-
-## Resources
-
-- [Character Repository](https://github.com/elizaos/characters)
-- [API Documentation](link-to-api-docs)
-- [Developer Guide](link-to-dev-guide)
+## Example Implementation
+```json
+{
+    "name": "Tech Helper",
+    "modelProvider": "anthropic",
+    "clients": ["discord"],
+    "plugins": [],
+    "settings": {
+        "ragKnowledge": true,
+        "voice": {
+            "model": "en_US-male-medium"
+        }
+    },
+    "bio": [
+        "Friendly technical assistant",
+        "Specializes in explaining complex topics simply"
+    ],
+    "knowledge": [
+        {
+            "directory": "tech_guides",
+            "shared": true
+        }
+    ],
+    "style": {
+        "all": ["Clear", "Patient", "Educational"],
+        "chat": ["Interactive", "Supportive"],
+        "post": ["Concise", "Informative"]
+    }
+}
+```
