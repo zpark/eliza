@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MessageManager } from "../src/messages.ts";
-import { ChannelType, Client, type Message as DiscordMessage, } from 'discord.js';
-import { composeContext, type IAgentRuntime } from '@elizaos/core';
-import { AttachmentManager } from '../src/attachments';
+import { ChannelType, Client } from 'discord.js';
+import { type IAgentRuntime } from '@elizaos/core';
 import type { VoiceManager } from '../src/voice';
 
 
