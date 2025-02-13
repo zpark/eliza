@@ -30,6 +30,7 @@ import voiceStateProvider from "./providers/voiceState.ts";
 import reply from "./actions/reply.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
+import { validateDiscordConfig, DiscordConfig } from "./environment.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
     apiToken: string;
@@ -39,10 +40,10 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     private messageManager: MessageManager;
     private voiceManager: VoiceManager;
 
-    constructor(runtime: IAgentRuntime) {
+    constructor(runtime: IAgentRuntime, discordConfig: DiscordConfig) {
         super();
 
-        this.apiToken = runtime.getSetting("DISCORD_API_TOKEN") as string;
+        this.apiToken = discordConfig.DISCORD_API_TOKEN;
         this.client = new Client({
             intents: [
                 GatewayIntentBits.Guilds,
@@ -389,7 +390,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
 const DiscordClientInterface: ElizaClient = {
     name: 'discord',
-    start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
+    start: async (runtime: IAgentRuntime) => {
+        const discordConfig: DiscordConfig =
+            await validateDiscordConfig(runtime); 
+        return new DiscordClient(runtime, discordConfig);
+    },
 };
 
 const testSuite: TestSuite = {
@@ -398,7 +403,9 @@ const testSuite: TestSuite = {
         {
             name: "test creating discord client",
             fn: async (runtime: IAgentRuntime) => {
-                const discordClient = new DiscordClient(runtime);
+                const discordConfig: DiscordConfig =
+                    await validateDiscordConfig(runtime);
+                const discordClient = new DiscordClient(runtime, discordConfig);
                 console.log("Created a discord client");
             }
         }
