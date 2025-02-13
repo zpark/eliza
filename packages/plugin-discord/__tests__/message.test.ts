@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MessageManager } from "../src/messages.ts";
-import { ChannelType, Client } from 'discord.js';
-import { type IAgentRuntime } from '@elizaos/core';
+import { ChannelType, Client, Collection, AttachmentBuilder } from 'discord.js';
+import { type IAgentRuntime, ServiceType } from '@elizaos/core';
 import type { VoiceManager } from '../src/voice';
+
 
 
 vi.mock('@elizaos/core', () => ({
@@ -19,6 +20,10 @@ vi.mock('@elizaos/core', () => ({
     composeContext: vi.fn(),
     ModelClass: {
         TEXT_SMALL: 'TEXT_SMALL'
+    },
+    ServiceType: {  // ✅ Add this missing mock
+        VIDEO: 'VIDEO',
+        BROWSER: 'BROWSER'
     }
 }));
 
@@ -31,6 +36,7 @@ describe('Discord MessageManager', () => {
     let messageManager: MessageManager;
 
     beforeEach(() => {
+        vi.clearAllMocks();
         mockRuntime = {
             character: {
                 name: 'TestBot',
@@ -125,8 +131,7 @@ describe('Discord MessageManager', () => {
 
     it('should process user messages', async () => {
         // Prevent further message processing after response check
-        const proto = Object.getPrototypeOf(messageManager);
-        vi.spyOn(proto, '_shouldRespond').mockReturnValueOnce(false); 
+        vi.spyOn(Object.getPrototypeOf(messageManager), '_shouldRespond').mockReturnValueOnce(false); 
 
         await messageManager.handleMessage(mockMessage);
         expect(mockRuntime.ensureConnection).toHaveBeenCalled();
@@ -148,11 +153,48 @@ describe('Discord MessageManager', () => {
     it.each([
         ["Hey MockBot, are you there?", "username"],
         ["MockBot#0001, respond please.", "tag"],
-        ["MockBotNickname, can you help?", "nickname"]
+        ["MockBotNickname, can you help?", "nickname"],
+        ["MoCkBoT, can you help?", "mixed case mention"]
     ])('should respond if the bot %s is included in the message', async (content) => {
         mockMessage.content = content;
     
         const result = await messageManager["_shouldRespond"](mockMessage, {});
         expect(result).toBe(true);
+    });
+
+    it('should process audio attachments', async () => {
+        vi.spyOn(Object.getPrototypeOf(messageManager), '_shouldRespond').mockReturnValueOnce(false); 
+        vi.spyOn(messageManager, 'processMessageMedia').mockReturnValueOnce(
+            Promise.resolve({ processedContent: '', attachments: [] })
+        );
+    
+        const myVariable = new Collection<string, any>([
+            [
+                'mock-attachment-id',
+                {
+                    attachment: 'https://www.example.mp3',
+                    name: 'mock-attachment.mp3',
+                    contentType: 'audio/mpeg',
+                }
+            ]
+        ]);
+        
+        mockMessage.attachments = myVariable;
+    
+        const processAttachmentsMock = vi.fn().mockResolvedValue([]);
+    
+        const mockAttachmentManager = {
+            processAttachments: processAttachmentsMock
+        } as unknown as typeof messageManager["attachmentManager"]; // ✅ Correct typing
+    
+        // Override the private property with a mock
+        Object.defineProperty(messageManager, 'attachmentManager', {
+            value: mockAttachmentManager,
+            writable: true
+        });
+    
+        await messageManager.handleMessage(mockMessage);
+    
+        expect(processAttachmentsMock).toHaveBeenCalled();
     });
 });
