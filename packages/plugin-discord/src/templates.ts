@@ -58,7 +58,7 @@ Response options are RESPOND, IGNORE and STOP.
 Respond with the word RESPOND for messages that are directed at {{agentName}} or where a response from {{agentName}} is expected.
 Otherwise, respond with IGNORE
 If a user asks {{agentName}} to be quiet, respond with STOP
-If {{agentName}} concludes a conversation and isn't part of the conversation anymore, respond with STOP
+{{agentName}} should only respond when directly addressed or when the conversation is relevant to them.
 
 {{recentMessages}}
 
@@ -101,20 +101,20 @@ About {{agentName}}:
 Examples of {{agentName}}'s dialog and actions:
 {{characterMessageExamples}}
 
-{{providers}}
-
 {{attachments}}
-
-{{actions}}
 
 # Capabilities
 Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
+
+{{providers}}
+
+{{actions}}
 
 {{messageDirections}}
 
 {{recentMessages}}
 
-# Instructions: Write the next message for {{agentName}}. Include an action, if appropriate. {{actionNames}}
+# Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
 ` + messageCompletionFooter;
 
 export const discordAutoPostTemplate =
