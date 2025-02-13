@@ -231,7 +231,7 @@ export class AgentRuntime implements IAgentRuntime {
 
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
-    public clients: ClientInstance[] = [];
+    private clients: Map<string, ClientInstance> = new Map();
     services: Map<ServiceType, Service> = new Map();
 
     public adapters: Adapter[];
@@ -323,7 +323,7 @@ export class AgentRuntime implements IAgentRuntime {
                     logger.debug(
                         `Initializing client: ${client.name}`
                     );
-                    this.clients.push(startedClient);
+                    this.registerClient(client.name, startedClient);
                 });
             }
         }
@@ -332,6 +332,50 @@ export class AgentRuntime implements IAgentRuntime {
 
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
+    }
+
+    registerClient(clientName: string, client: ClientInstance): void {
+        if (this.clients.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+            );
+            return;
+        }
+        this.clients.set(clientName, client);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`);
+    }
+
+    unregisterClient(clientName: string): void {
+        if (!this.clients.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is not registered. Skipping unregistration.`
+            );
+            return;
+        }
+        this.clients.delete(clientName);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} unregistered successfully`);
+    }
+
+    getClient(clientName: string): ClientInstance | null {
+        const client = this.clients.get(clientName);
+        if (!client) {
+            logger.error(`Client ${clientName} not found`);
+            return null;
+        }
+        return client;
+    }
+
+    getAllClients(): ClientInstance[] {
+        return Array.from(this.clients.values());
+    }
+
+    async stop() {
+        logger.debug("runtime::stop - character", this.character.name);
+        // Stop all registered clients
+        for (const [clientName, client] of this.clients) {
+            logger.log(`runtime::stop - requesting client stop for ${clientName}`);
+            await client.stop(this);
+        }
     }
 
     async initialize() {
@@ -349,7 +393,7 @@ export class AgentRuntime implements IAgentRuntime {
                             logger.debug(
                                 `Initializing client: ${client.name}`
                             );
-                            this.clients.push(startedClient);
+                            this.registerClient(client.name, startedClient);
                         }
                     }
 
@@ -412,17 +456,6 @@ export class AgentRuntime implements IAgentRuntime {
             );
             await this.processCharacterKnowledge(stringKnowledge);
         }
-    }
-
-    async stop() {
-        logger.debug("runtime::stop - character", this.character.name);
-        // Loop over the array of clients directly.
-        for (const client of this.clients) {
-            logger.log("runtime::stop - requesting client stop for", this.character.name);
-            client.stop(this);
-        }
-        // we don't need to unregister with directClient
-        // don't need to worry about knowledge
     }
 
     private async processCharacterKnowledge(items: string[]) {

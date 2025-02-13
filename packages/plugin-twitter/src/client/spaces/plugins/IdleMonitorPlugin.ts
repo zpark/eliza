@@ -59,7 +59,7 @@ export class IdleMonitorPlugin implements Plugin {
     };
 
     // Periodically check for silence
-    this.checkInterval = setInterval(() => this.checkIdle(), this.checkEveryMs);
+    this.checkInterval = setInterval(() => this.checkIdle(), this.checkEveryMs) as any;
   }
 
   /**

@@ -15,6 +15,7 @@ import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import { getWalletKey } from "../keypairUtils";
 import type { ISolanaClient, Item } from "../types";
+import { SOLANA_CLIENT_NAME } from "../constants";
 
 async function getTokenDecimals(
     connection: Connection,
@@ -105,7 +106,7 @@ async function swapToken(
 // Get token from wallet data using SolanaClient
 async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string): Promise<string | null> {
     try {
-        const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient') as ISolanaClient;
+        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
         if (!solanaClient) {
             throw new Error('SolanaClient not initialized');
         }
@@ -158,7 +159,7 @@ export const executeSwap: Action = {
     name: "SWAP_SOLANA",
     similes: ["SWAP_SOL", "SWAP_TOKENS_SOLANA", "TOKEN_SWAP_SOLANA", "TRADE_TOKENS_SOLANA", "EXCHANGE_TOKENS_SOLANA"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient');
+        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME);
         return !!solanaClient;
     },
     description: "Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.",
@@ -176,7 +177,7 @@ export const executeSwap: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
 
-            const solanaClient = runtime.clients.find(client => client.name === 'SolanaClient') as ISolanaClient;
+            const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
             if (!solanaClient) {
                 throw new Error('SolanaClient not initialized');
             }

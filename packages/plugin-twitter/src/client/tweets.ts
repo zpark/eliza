@@ -242,7 +242,7 @@ export async function fetchTweets(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return parseTimelineTweetsV2(res.value);
@@ -274,7 +274,7 @@ export async function fetchTweetsAndReplies(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return parseTimelineTweetsV2(res.value);
@@ -716,7 +716,7 @@ export async function fetchListTweets(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return parseListTimelineTweets(res.value);
@@ -731,7 +731,7 @@ export function getTweets(
     const userIdRes = await getUserIdByScreenName(q, auth);
 
     if (!userIdRes.success) {
-      throw userIdRes.err;
+      throw (userIdRes as any).err;
     }
 
     const { value: userId } = userIdRes;
@@ -759,7 +759,7 @@ export function getTweetsAndReplies(
     const userIdRes = await getUserIdByScreenName(q, auth);
 
     if (!userIdRes.success) {
-      throw userIdRes.err;
+      throw (userIdRes as any).err;
     }
 
     const { value: userId } = userIdRes;
@@ -807,7 +807,7 @@ export async function fetchLikedTweets(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return parseTimelineTweetsV2(res.value);
@@ -887,7 +887,7 @@ export async function getTweet(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   if (!res.value) {
@@ -1003,7 +1003,7 @@ export async function getTweetAnonymous(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   if (!res.value.data) {
@@ -1510,7 +1510,7 @@ export async function getArticle(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   if (!res.value) {

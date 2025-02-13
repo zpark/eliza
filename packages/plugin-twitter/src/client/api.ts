@@ -62,7 +62,7 @@ export async function requestApi<T>(
     try {
       res = await auth.fetch(url, {
         method,
-        headers,
+        headers: headers as any,
         credentials: 'include',
         ...(body && { body: JSON.stringify(body) }),
       });

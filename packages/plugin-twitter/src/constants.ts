@@ -1,0 +1,1 @@
+export const TWITTER_CLIENT_NAME = 'twitter';

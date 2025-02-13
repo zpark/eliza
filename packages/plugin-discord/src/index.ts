@@ -1,11 +1,12 @@
 import {
-  logger,
-  stringToUuid,
-  type TestSuite,
-  type Character,
-  type Client as ElizaClient,
-  type IAgentRuntime,
-  type Plugin,
+    logger,
+    stringToUuid,
+    type TestSuite,
+    type Character,
+    type Client as ElizaClient,
+    type IAgentRuntime,
+    type Plugin,
+    ClientInstance
 } from "@elizaos/core";
 import {
   Client,
@@ -32,6 +33,7 @@ import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 import { validateDiscordConfig, DiscordConfig } from "./environment.ts";
 import { DiscordTestSuite } from "./test-suite.ts";
+import { DISCORD_CLIENT_NAME } from "./constants.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
   apiToken: string;

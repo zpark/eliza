@@ -523,9 +523,6 @@ export type Media = {
  * Client instance
  */
 export type ClientInstance = {
-  /** Client name */
-  name?: string;
-
   /** Stop client connection */
   stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
@@ -671,8 +668,8 @@ export type Character = {
 
   /** Optional configuration */
   settings?: {
-    secrets?: { [key: string]: string };
-    [key: string]: any;
+    secrets?: { [key: string]: string | boolean | number };
+    [key: string]: any | string | boolean | number;
   };
 
   /** Writing style guides */
@@ -959,7 +956,11 @@ export interface IAgentRuntime {
 
   cacheManager: ICacheManager;
 
-  clients: ClientInstance[];
+  getClient(name: string): ClientInstance | null;
+
+  registerClient(name: string, client: ClientInstance): void;
+  
+  unregisterClient(name: string): void;
 
   initialize(): Promise<void>;
 
