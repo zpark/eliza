@@ -48,20 +48,18 @@ export class MessageManager {
     private runtime: IAgentRuntime;
     private attachmentManager: AttachmentManager;
     private interestChannels: InterestChannels = {};
-    private discordClient: any;
     private voiceManager: VoiceManager;
 
     constructor(discordClient: any, voiceManager: VoiceManager) {
         this.client = discordClient.client;
         this.voiceManager = voiceManager;
-        this.discordClient = discordClient;
         this.runtime = discordClient.runtime;
         this.attachmentManager = new AttachmentManager(this.runtime);
     }
 
-    async handleMessage(message: DiscordMessage) {
+    async handleMessage(message: DiscordMessage) {      
         if (this.runtime.character.clientConfig?.discord?.allowedChannelIds &&
-            !this.runtime.character.clientConfig.discord.allowedChannelIds.includes(message.channelId)) {
+            !this.runtime.character.clientConfig.discord.allowedChannelIds.some((id: string) => id == message.channel.id)) {
             return;
         }
 
@@ -98,7 +96,6 @@ export class MessageManager {
         try {
             const { processedContent, attachments } =
                 await this.processMessageMedia(message);
-
             const audioAttachments = message.attachments.filter((attachment) =>
                 attachment.contentType?.startsWith("audio/")
             );
