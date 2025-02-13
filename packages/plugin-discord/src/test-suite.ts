@@ -43,6 +43,13 @@ export class DiscordTestSuite implements TestSuite {
 
   async testCreatingDiscordClient(runtime: IAgentRuntime) {
     try {
+      const existingPlugin = runtime.getClient("discord");
+
+    if (existingPlugin) {
+        // Reuse the existing DiscordClient if available
+        this.discordClient = existingPlugin as any;
+        logger.info("Reusing existing DiscordClient instance.");
+    } else {
       if (!this.discordClient) {
         const discordConfig: DiscordConfig = await validateDiscordConfig(
           runtime
@@ -56,6 +63,7 @@ export class DiscordTestSuite implements TestSuite {
         logger.info("Reusing existing DiscordClient instance.");
       }
       logger.success("DiscordClient successfully initialized.");
+    }
     } catch (error) {
       throw new Error(`Error in test creating Discord client: ${error}`);
     }
