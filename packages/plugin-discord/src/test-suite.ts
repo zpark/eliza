@@ -138,10 +138,17 @@ export class DiscordTestSuite implements TestSuite {
         return;
       }
 
-      const responseStream = await runtime.useModel(
-        ModelClass.TEXT_TO_SPEECH,
-        `Hi! I'm ${runtime.character.name}! How are you doing today?`
-      );
+      let responseStream = null;
+      try {
+        responseStream = await runtime.useModel(
+          ModelClass.TEXT_TO_SPEECH,
+          `Hi! I'm ${runtime.character.name}! How are you doing today?`
+        );
+      } catch(error) {
+        logger.warn("No text to speech service found");
+        return;
+      }
+      
 
       if (!responseStream) {
         logger.error("TTS response stream is null or undefined.");
