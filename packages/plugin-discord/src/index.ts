@@ -31,6 +31,7 @@ import reply from "./actions/reply.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 import { validateDiscordConfig, DiscordConfig } from "./environment.ts";
+import { DiscordTestSuite } from "./test-suite.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
   apiToken: string;
@@ -388,22 +389,6 @@ const DiscordClientInterface: ElizaClient = {
   },
 };
 
-const testSuite: TestSuite = {
-  name: "discord",
-  tests: [
-    {
-      name: "test creating discord client",
-      fn: async (runtime: IAgentRuntime) => {
-        const discordConfig: DiscordConfig = await validateDiscordConfig(
-          runtime
-        );
-        const discordClient = new DiscordClient(runtime, discordConfig);
-        console.log("Created a discord client");
-      },
-    },
-  ],
-};
-
 const discordPlugin: Plugin = {
   name: "discord",
   description: "Discord client plugin",
@@ -418,6 +403,6 @@ const discordPlugin: Plugin = {
     transcribe_media,
   ],
   providers: [channelStateProvider, voiceStateProvider],
-  tests: [testSuite],
+  tests: [new DiscordTestSuite()],
 };
 export default discordPlugin;
