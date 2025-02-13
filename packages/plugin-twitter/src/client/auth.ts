@@ -103,6 +103,7 @@ function withTransform(
       input,
       init,
     ];
+    // @ts-expect-error don't care
     const res = await fetchFn(...fetchArgs);
     return (await transform?.response?.(res)) ?? res;
   };
@@ -220,7 +221,6 @@ export class TwitterGuestAuth implements TwitterAuth {
   }
 
   protected async removeCookie(key: string): Promise<void> {
-    //@ts-expect-error don't care
     const store: MemoryCookieStore = this.jar.store;
     const cookies = await this.jar.getCookies(this.getCookieJarUrl());
     for (const cookie of cookies) {
@@ -252,7 +252,7 @@ export class TwitterGuestAuth implements TwitterAuth {
 
     const res = await this.fetch(guestActivateUrl, {
       method: 'POST',
-      headers: headers,
+      headers: headers as any,
       referrerPolicy: 'no-referrer',
     });
 

@@ -5,7 +5,8 @@ import {
     type Character,
     type Client as ElizaClient,
     type IAgentRuntime,
-    type Plugin
+    type Plugin,
+    ClientInstance
 } from "@elizaos/core";
 import {
     Client,
@@ -30,6 +31,7 @@ import voiceStateProvider from "./providers/voiceState.ts";
 import reply from "./actions/reply.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
+import { DISCORD_CLIENT_NAME } from "./constants.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
     apiToken: string;
@@ -388,7 +390,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 }
 
 const DiscordClientInterface: ElizaClient = {
-    name: 'discord',
+    name: DISCORD_CLIENT_NAME,
     start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
 };
 

@@ -132,8 +132,8 @@ export async function generateText({
   customSystemPrompt?: string;
 }): Promise<string> {
   
-  logger.debug("Generating text")
-  logger.debug(context)
+  console.log("Generating text")
+  console.log(context)
 
   const text = await runtime.useModel(modelClass, {
     runtime,
@@ -141,8 +141,8 @@ export async function generateText({
     stopSequences,
   });
 
-  logger.debug("Generated text")
-  logger.debug(text)
+  console.log("Generated text")
+  console.log(text)
 
   return text;
 }
@@ -214,7 +214,7 @@ export async function generateShouldRespond({
   runtime,
   context,
   modelClass = ModelClass.TEXT_SMALL,
-  stopSequences,
+  stopSequences = ["\\n"],
 }: {
   runtime: IAgentRuntime;
   context: string;
@@ -278,6 +278,9 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
+  console.log("Generating object")
+  console.log(context)
+
   const obj = await runtime.useModel(modelClass, {
     runtime,
     context,
@@ -285,6 +288,9 @@ export const generateObject = async ({
     stopSequences,
     object: true,
   });
+
+  console.log("Generated object")
+  console.log(obj)
 
   let jsonString = obj;
 
@@ -354,7 +360,7 @@ export async function generateMessageResponse({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<Content> {
-  logger.debug("Context:", context);
+  console.log("Context:", context);
 
   return await withRetry(async () => {
     const text = await runtime.useModel(modelClass, {
@@ -363,10 +369,10 @@ export async function generateMessageResponse({
       stop: stopSequences,
     });
 
-    logger.info("Text:", text);
+    console.log("Text:", text);
 
     const parsedContent = parseJSONObjectFromText(text) as Content;
-    logger.info("Parsed content:", parsedContent);
+    console.log("Parsed content:", parsedContent);
 
     if (!parsedContent) {
       throw new Error("Failed to parse content");

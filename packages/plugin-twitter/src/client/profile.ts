@@ -158,7 +158,7 @@ export async function getProfile(
     auth,
   );
   if (!res.success) {
-    return res;
+    return (res as any);
   }
 
   const { value } = res;
@@ -238,7 +238,7 @@ export async function getScreenNameByUserId(
   );
 
   if (!res.success) {
-    return res;
+    return (res as any);
   }
 
   const { value } = res;
@@ -286,7 +286,7 @@ export async function getUserIdByScreenName(
 
   const profileRes = await getProfile(screenName, auth);
   if (!profileRes.success) {
-    return profileRes;
+    return (profileRes as any);
   }
 
   const profile = profileRes.value;
