@@ -45,25 +45,25 @@ export class DiscordTestSuite implements TestSuite {
     try {
       const existingPlugin = runtime.getClient("discord");
 
-    if (existingPlugin) {
+      if (existingPlugin) {
         // Reuse the existing DiscordClient if available
         this.discordClient = existingPlugin as any;
         logger.info("Reusing existing DiscordClient instance.");
-    } else {
-      if (!this.discordClient) {
-        const discordConfig: DiscordConfig = await validateDiscordConfig(
-          runtime
-        );
-        this.discordClient = new DiscordClient(runtime, discordConfig);
-        await new Promise((resolve, reject) => {
-          this.discordClient.client.once(Events.ClientReady, resolve);
-          this.discordClient.client.once(Events.Error, reject);
-        });
       } else {
-        logger.info("Reusing existing DiscordClient instance.");
+        if (!this.discordClient) {
+          const discordConfig: DiscordConfig = await validateDiscordConfig(
+            runtime
+          );
+          this.discordClient = new DiscordClient(runtime, discordConfig);
+          await new Promise((resolve, reject) => {
+            this.discordClient.client.once(Events.ClientReady, resolve);
+            this.discordClient.client.once(Events.Error, reject);
+          });
+        } else {
+          logger.info("Reusing existing DiscordClient instance.");
+        }
+        logger.success("DiscordClient successfully initialized.");
       }
-      logger.success("DiscordClient successfully initialized.");
-    }
     } catch (error) {
       throw new Error(`Error in test creating Discord client: ${error}`);
     }
