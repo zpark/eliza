@@ -26,13 +26,12 @@ describe('Discord Environment Configuration', () => {
         const invalidRuntime = {
             ...mockRuntime,
             env: {
-                ...mockRuntime.env,
                 DISCORD_API_TOKEN: undefined,
             },
         } as IAgentRuntime;
 
         await expect(validateDiscordConfig(invalidRuntime)).rejects.toThrowError(
-            'Discord configuration validation failed:\nDISCORD_API_TOKEN: Discord API token is required'
+            'Discord configuration validation failed:\nDISCORD_API_TOKEN: Expected string, received null'
         );
     });
 });

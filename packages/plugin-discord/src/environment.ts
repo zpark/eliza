@@ -13,7 +13,7 @@ export async function validateDiscordConfig(
     try {
         const config = {
             DISCORD_API_TOKEN:
-                runtime.getSetting("DISCORD_API_TOKEN") || "",
+                runtime.getSetting("DISCORD_API_TOKEN"),
         };
 
         return discordEnvSchema.parse(config);

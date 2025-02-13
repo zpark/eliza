@@ -57,7 +57,7 @@ export class DiscordTestSuite implements TestSuite {
       }
       logger.success("DiscordClient successfully initialized.");
     } catch (error) {
-      throw new Error("Error in test creating Discord client:", error);
+      throw new Error(`Error in test creating Discord client: ${error}`);
     }
   }
 
