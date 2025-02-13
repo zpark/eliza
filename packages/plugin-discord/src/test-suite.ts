@@ -47,7 +47,7 @@ export class DiscordTestSuite implements TestSuite {
 
       if (existingPlugin) {
         // Reuse the existing DiscordClient if available
-        this.discordClient = existingPlugin as any;
+        this.discordClient = existingPlugin as DiscordClient;
         logger.info("Reusing existing DiscordClient instance.");
       } else {
         if (!this.discordClient) {
