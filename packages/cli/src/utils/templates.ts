@@ -2,7 +2,7 @@
 export function createDatabaseTemplate(database: string) {
     if (database === "sqlite") {
       return `import { Database } from "better-sqlite3"
-  import { SqliteDatabaseAdapter } from "@elizaos-plugins/sqlite"
+  import { SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite"
   
   // Initialize database
   export const db = new Database("./eliza.db")

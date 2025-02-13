@@ -246,9 +246,13 @@ export class ClientBase extends EventEmitter {
 
     this.directions =
       "- " +
-      this.runtime.character.style.all.join("\n- ") +
+      (this.runtime.character.style?.all
+        ? this.runtime.character.style?.all?.join("\n- ")
+        : "") +
       "- " +
-      this.runtime.character.style.post.join();
+      (this.runtime.character.style?.post
+        ? this.runtime.character.style?.post?.join()
+        : "");
   }
 
   async init() {

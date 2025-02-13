@@ -5,7 +5,6 @@ describe("Character Configuration", () => {
     const validCharacterConfig = {
         name: "Test Character",
         bio: "Test bio",
-        lore: ["Test lore"],
         messageExamples: [
             [
                 {

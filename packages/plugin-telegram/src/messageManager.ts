@@ -144,7 +144,7 @@ export class MessageManager {
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            return response === "RESPOND";
+            return response.includes("RESPOND");
         }
 
         return false;

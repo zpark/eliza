@@ -18,7 +18,6 @@ const tweetGenerationTemplate = `# Task: Generate a tweet in the style and voice
 
 About {{agentName}}:
 {{bio}}
-{{lore}}
 {{topics}}
 
 {{characterPostExamples}}

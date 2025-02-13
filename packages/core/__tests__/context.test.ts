@@ -10,7 +10,6 @@ describe("composeContext", () => {
         recentMessagesData: [],
         roomId: "-----",
         bio: "",
-        lore: "",
         messageDirections: "",
         postDirections: "",
         userName: "",

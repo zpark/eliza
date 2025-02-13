@@ -290,11 +290,10 @@ describe('SqliteDatabaseAdapter', () => {
     });
 
     describe('Character operations', () => {
-        const mockCharacter: Required<Pick<Character, 'id' | 'name' | 'bio' | 'lore' | 'messageExamples' | 'postExamples' | 'topics' | 'adjectives' | 'style'>> = {
+        const mockCharacter: Required<Pick<Character, 'id' | 'name' | 'bio' | 'messageExamples' | 'postExamples' | 'topics' | 'adjectives' | 'style'>> = {
             id: testUuid,
             name: 'Test Character',
             bio: 'Test Bio',
-            lore: ['Test lore'],
             messageExamples: [[]],
             postExamples: ['Test post'],
             topics: ['Test topic'],
@@ -332,7 +331,6 @@ describe('SqliteDatabaseAdapter', () => {
             const characterWithoutId: Omit<typeof mockCharacter, 'id'> = {
                 name: mockCharacter.name,
                 bio: mockCharacter.bio,
-                lore: mockCharacter.lore,
                 messageExamples: mockCharacter.messageExamples,
                 postExamples: mockCharacter.postExamples,
                 topics: mockCharacter.topics,

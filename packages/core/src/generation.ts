@@ -221,18 +221,23 @@ export async function generateShouldRespond({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-  const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"] as string[];
-
-  const result = await generateEnum({
+  const result = await generateText({
     runtime,
     context,
     modelClass,
-    enumValues: RESPONSE_VALUES,
-    functionName: "generateShouldRespond",
     stopSequences,
   });
 
-  return result as "RESPOND" | "IGNORE" | "STOP";
+  if(result.includes("RESPOND")) {
+    return "RESPOND";
+  } else if(result.includes("IGNORE")) {
+    return "IGNORE";
+  } else if(result.includes("STOP")) {
+    return "STOP";
+  } else {
+    logger.error("Invalid response from generateShouldRespond:", result);
+    return null;
+  }
 }
 
 export async function generateTrueOrFalse({
@@ -264,7 +269,7 @@ export async function generateTrueOrFalse({
 export const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelClass = ModelClass.TEXT_LARGE,
   stopSequences,
 }: GenerateObjectOptions): Promise<any> => {
   if (!context) {
@@ -273,7 +278,7 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
-  const { object } = await runtime.useModel(modelClass, {
+  const obj = await runtime.useModel(modelClass, {
     runtime,
     context,
     modelClass,
@@ -281,8 +286,29 @@ export const generateObject = async ({
     object: true,
   });
 
-  logger.debug(`Received Object response from ${modelClass} model.`);
-  return object;
+  let jsonString = obj;
+
+  // try to find a first and last bracket
+  const firstBracket = obj.indexOf("{");
+  const lastBracket = obj.lastIndexOf("}");
+  if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
+    jsonString = obj.slice(firstBracket, lastBracket + 1);
+  }
+
+  if (jsonString.length === 0) {
+    logger.error("Failed to extract JSON string from model response");
+    return null;
+  }
+
+  // parse the json string
+  try {
+    const json = JSON.parse(jsonString);
+    return json;
+  } catch (error) {
+    logger.error("Failed to parse JSON string");
+    logger.error(jsonString);
+    return null;
+  }
 };
 
 export async function generateObjectArray({

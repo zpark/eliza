@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./defaultCharacter.ts";
 import { CharacterServer } from "./server";
+import swarmCharacters from './swarm/defaultSwarm.ts';
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -45,6 +46,7 @@ export const logFetch = async (url: string, options: any) => {
 export function parseArguments(): {
     character?: string;
     characters?: string;
+    swarm?: boolean;
 } {
     try {
         return yargs(process.argv.slice(2))
@@ -56,6 +58,10 @@ export function parseArguments(): {
                 type: "string",
                 description:
                     "Comma separated list of paths to character JSON files",
+            })
+            .option("swarm", {
+                type: "boolean",
+                description: "Load characters from swarm/defaultSwarm.ts",
             })
             .parseSync();
     } catch (error) {
@@ -348,7 +354,7 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
   let adapter: Adapter | undefined;
   // if not found, default to sqlite
   if (adapters.length === 0) {
-    const sqliteAdapterPlugin = await import('@elizaos-plugins/sqlite');
+    const sqliteAdapterPlugin = await import('@elizaos/plugin-sqlite');
     const sqliteAdapterPluginDefault = sqliteAdapterPlugin.default;
     adapter = sqliteAdapterPluginDefault.adapters[0];
     if (!adapter) {
@@ -437,54 +443,59 @@ const hasValidRemoteUrls = () =>
     process.env.REMOTE_CHARACTER_URLS !== "" &&
     process.env.REMOTE_CHARACTER_URLS.startsWith("http");
 
-const startAgents = async () => {
-    const characterServer = new CharacterServer();
-    let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
-    const args = parseArguments();
-    const charactersArg = args.characters || args.character;
-    let characters = [defaultCharacter];
-
-    if ((charactersArg) || hasValidRemoteUrls()) {
-        characters = await loadCharacters(charactersArg);
-    }
-
-    try {
-        for (const character of characters) {
-            await startAgent(character, characterServer);
+    const startAgents = async () => {
+        const characterServer = new CharacterServer();
+        let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
+        const args = parseArguments();
+        const charactersArg = args.characters || args.character;
+        let characters = [defaultCharacter];
+    
+        if (args.swarm) {
+            try {
+                characters = swarmCharacters;
+                logger.info("Loaded characters from swarm configuration");
+            } catch (error) {
+                logger.error("Error loading swarm characters:", error);
+                process.exit(1);
+            }
+        } else if ((charactersArg) || hasValidRemoteUrls()) {
+            characters = await loadCharacters(charactersArg);
         }
-    } catch (error) {
-        logger.error("Error starting agents:", error);
-    }
-
-    // Find available port
-    while (!(await checkPortAvailable(serverPort))) {
-        logger.warn(
-            `Port ${serverPort} is in use, trying ${serverPort + 1}`
+    
+        try {
+            for (const character of characters) {
+                await startAgent(character, characterServer);
+            }
+        } catch (error) {
+            logger.error("Error starting agents:", error);
+        }
+    
+        // Rest of the function remains the same...
+        while (!(await checkPortAvailable(serverPort))) {
+            logger.warn(
+                `Port ${serverPort} is in use, trying ${serverPort + 1}`
+            );
+            serverPort++;
+        }
+    
+        characterServer.startAgent = async (character) => {
+            logger.info(`Starting agent for character ${character.name}`);
+            return startAgent(character, characterServer);
+        };
+    
+        characterServer.loadCharacterTryPath = loadCharacterTryPath;
+        characterServer.jsonToCharacter = jsonToCharacter;
+    
+        characterServer.start(serverPort);
+    
+        if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
+            logger.log(`Server started on alternate port ${serverPort}`);
+        }
+    
+        logger.info(
+            "Run `bun start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 bun start:client`"
         );
-        serverPort++;
-    }
-
-    // upload some agent functionality into characterServer
-    // XXX TODO: is this still used?
-    characterServer.startAgent = async (character) => {
-        logger.info(`Starting agent for character ${character.name}`);
-        // wrap it so we don't have to inject characterServer later
-        return startAgent(character, characterServer);
     };
-
-    characterServer.loadCharacterTryPath = loadCharacterTryPath;
-    characterServer.jsonToCharacter = jsonToCharacter;
-
-    characterServer.start(serverPort);
-
-    if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
-        logger.log(`Server started on alternate port ${serverPort}`);
-    }
-
-    logger.info(
-        "Run `bun start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 bun start:client`"
-    );
-};
 
 startAgents().catch((error) => {
     logger.error("Unhandled error in startAgents:", error);

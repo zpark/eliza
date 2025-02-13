@@ -50,9 +50,9 @@ export const openaiPlugin: Plugin = {
       const validatedConfig = await configSchema.parseAsync(config);
 
       // Set all environment variables at once
-      Object.entries(validatedConfig).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(validatedConfig)) {
         if (value) process.env[key] = value;
-      });
+      }
 
       // Verify API key
       const baseURL =
