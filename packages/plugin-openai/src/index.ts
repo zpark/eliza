@@ -311,6 +311,18 @@ export const openaiPlugin: Plugin = {
           }
         },
         {
+          name: 'openai_test_text_embedding',
+          fn: async (runtime) => {
+            try {
+              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Hello, world!");
+              console.log("embedding", embedding);
+            } catch (error) {
+              console.error("Error in test_text_embedding:", error);
+              throw error;
+            }
+          }
+        },
+        {
           name: 'openai_test_text_large',
           fn: async (runtime) => {
             try {
