@@ -20,7 +20,51 @@ const sidebars = {
                     id: "faq",
                     label: "❓ FAQ",
                 },
-            ],
+				{
+					type: "category",
+					label: "Tutorials",
+                    items: [
+                        {
+                            type: "category",
+                            label: "AI Agent Dev School",
+                            items: [
+                                {
+                                    type: "doc",
+                                    id: "tutorials/index",
+                                    label: "Overview",
+                                },                            
+                                {
+                                    type: "doc",
+                                    id: "tutorials/part1",
+                                    label: "Part 1",
+                                },
+                                {
+                                    type: "doc",
+                                    id: "tutorials/part2",
+                                    label: "Part 2",
+                                },
+                                {
+                                    type: "doc",
+                                    id: "tutorials/part3",
+                                    label: "Part 3",
+                                },
+                            ],
+                            collapsed: true, // Expand by default
+                        },
+                        {
+                            type: "doc",
+                            id: "tutorials/nader_tutorial_10min",
+                            label: "Clone Yourself in 10min",
+                        },
+                        {
+                            type: "doc",
+                            id: "tutorials/nader_tutorial_15min",
+                            label: "Build Social Agents in 15min",
+                        },                        
+                    ],
+                    collapsed: true, // Expand by default
+                },
+			],
             collapsed: false,
         },
         {
@@ -74,6 +118,11 @@ const sidebars = {
                     type: "doc",
                     id: "guides/secrets-management",
                     label: "Secrets Management",
+                },
+                {
+                    type: "doc",
+                    id: "guides/memory-management",
+                    label: "Memory Management",
                 },
                 {
                     type: "doc",

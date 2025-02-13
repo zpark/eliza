@@ -52,8 +52,9 @@
 
 > **Note for Windows Users:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) is required.
 
-### Use the Starter (Recommended)
+### Use the Starter (Recommended for Agent Creation)
 
+Full steps and documentation can be found in the [Eliza Starter Repository](https://github.com/elizaOS/eliza-starter).
 ```bash
 git clone https://github.com/elizaos/eliza-starter.git
 cd eliza-starter
@@ -61,7 +62,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-### Manually Start Eliza (Only recommended if you know what you are doing)
+### Manually Start Eliza (Only recommended for platform development)
 
 #### Checkout the latest release
 
