@@ -155,7 +155,7 @@ describe('Discord MessageManager', () => {
         ["MockBot#0001, respond please.", "tag"],
         ["MockBotNickname, can you help?", "nickname"],
         ["MoCkBoT, can you help?", "mixed case mention"]
-    ])('should respond if the bot %s is included in the message', async (content) => {
+    ])('should respond if the bot name is included in the message', async (content) => {
         mockMessage.content = content;
     
         const result = await messageManager["_shouldRespond"](mockMessage, {});
