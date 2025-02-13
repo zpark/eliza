@@ -195,11 +195,6 @@ class TestRunner {
         const plugins = this.runtime.plugins;
 
         for (const plugin of plugins) {
-            if (!plugin.tests) {
-                logger.info(`Plugin ${plugin.name} has no tests`);
-                continue;
-            }
-
             try {
                 logger.info(`Running tests for plugin: ${plugin.name}`);
                 const pluginTests = plugin.tests;
