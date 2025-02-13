@@ -1,17 +1,9 @@
-import {
-  logger,
-  stringToUuid,
-  type TestSuite,
-  type Character,
-  type Client as ElizaClient,
-  type IAgentRuntime,
-  type Plugin,
-} from "@elizaos/core";
-
+import { logger, type TestSuite, type IAgentRuntime } from "@elizaos/core";
 import { DiscordClient } from "./index.ts";
 import { DiscordConfig, validateDiscordConfig } from "./environment";
 import { sendMessageInChunks } from "./utils.ts";
 import { ChannelType, Events, TextChannel } from "discord.js";
+import { joinVoiceChannel } from "@discordjs/voice";
 
 export class DiscordTestSuite implements TestSuite {
   name = "discord";
@@ -23,6 +15,10 @@ export class DiscordTestSuite implements TestSuite {
       {
         name: "test creating discord client",
         fn: this.testCreatingDiscordClient.bind(this),
+      },
+      {
+        name: "test joining voice channel",
+        fn: this.testJoiningVoiceChannel.bind(this),
       },
       {
         name: "test sending message",
@@ -48,6 +44,52 @@ export class DiscordTestSuite implements TestSuite {
       logger.success("DiscordClient successfully initialized.");
     } catch (error) {
       throw new Error("Error in test creating Discord client:", error);
+    }
+  }
+
+  async testJoiningVoiceChannel(runtime: IAgentRuntime) {
+    try {
+      let voiceChannel = null;
+      let channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
+
+      if (!channelId) {
+        const guilds = await this.discordClient.client.guilds.fetch();
+        for (const [, guild] of guilds) {
+          const fullGuild = await guild.fetch();
+          const voiceChannels = fullGuild.channels.cache
+            .filter((c) => c.type === ChannelType.GuildVoice)
+            .values();
+          voiceChannel = voiceChannels.next().value;
+          if (voiceChannel) break;
+        }
+
+        if (!voiceChannel) {
+          logger.warn("No suitable voice channel found to join.");
+          return;
+        }
+      } else {
+        voiceChannel = await this.discordClient.client.channels.fetch(
+          channelId
+        );
+      }
+
+      if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
+        logger.error("Invalid voice channel.");
+        return;
+      }
+
+      joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator as any,
+        selfDeaf: false,
+        selfMute: false,
+        group: this.discordClient.client.user.id,
+      });
+
+      logger.success(`Joined voice channel: ${voiceChannel.id}`);
+    } catch (error) {
+      console.error("Error joining voice channel:", error);
     }
   }
 
