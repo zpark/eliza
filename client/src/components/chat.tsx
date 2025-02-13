@@ -22,6 +22,7 @@ import AIWriter from "react-aiwriter";
 import type { IAttachment } from "@/types";
 import { AudioRecorder } from "./audio-recorder";
 import { Badge } from "./ui/badge";
+import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 
 type ExtraContentFields = {
     user: string;
@@ -39,7 +40,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const { toast } = useToast();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [input, setInput] = useState("");
-    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
@@ -49,12 +49,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
 
-    const scrollToBottom = () => {
-        if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop =
-                messagesContainerRef.current.scrollHeight;
-        }
-    };
+    const { scrollRef, isAtBottom, scrollToBottom, disableAutoScroll } = useAutoScroll({
+        smooth: true,
+    });
+   
     useEffect(() => {
         scrollToBottom();
     }, [queryClient.getQueryData(["messages", agentId])]);
@@ -153,7 +151,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && file.type.startsWith("image/")) {
+        if (file?.type.startsWith("image/")) {
             setSelectedFile(file);
         }
     };
@@ -175,13 +173,18 @@ export default function Page({ agentId }: { agentId: UUID }) {
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             <div className="flex-1 overflow-y-auto">
-                <ChatMessageList ref={messagesContainerRef}>
-                    {transitions((styles, message) => {
+                <ChatMessageList 
+                    scrollRef={scrollRef}
+                    isAtBottom={isAtBottom}
+                    scrollToBottom={scrollToBottom}
+                    disableAutoScroll={disableAutoScroll}
+                >
+                    {transitions((style, message: ContentWithUser) => {
                         const variant = getMessageVariant(message?.user);
                         return (
                             <CustomAnimatedDiv
                                 style={{
-                                    ...styles,
+                                    ...style,
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "0.5rem",
@@ -211,22 +214,21 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                             {/* Attachments */}
                                             <div>
                                                 {message?.attachments?.map(
-                                                    (attachment, idx) => (
+                                                    (attachment: IAttachment) => (
                                                         <div
                                                             className="flex flex-col gap-1 mt-2"
-                                                            key={idx}
+                                                            key={`${attachment.url}-${attachment.title}`}
                                                         >
                                                             <img
-                                                                src={
-                                                                    attachment.url
-                                                                }
+                                                                alt="attachment"
+                                                                src={attachment.url}
                                                                 width="100%"
                                                                 height="100%"
                                                                 className="w-64 rounded-md"
                                                             />
                                                             <div className="flex items-center justify-between gap-4">
-                                                                <span></span>
-                                                                <span></span>
+                                                                <span />
+                                                                <span />
                                                             </div>
                                                         </div>
                                                     )
@@ -298,6 +300,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                     <X />
                                 </Button>
                                 <img
+                                    alt="Selected file"
                                     src={URL.createObjectURL(selectedFile)}
                                     height="100%"
                                     width="100%"

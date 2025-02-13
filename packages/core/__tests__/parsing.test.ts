@@ -74,17 +74,23 @@ describe("Parsing Module", () => {
                 "item2",
                 "item3",
             ]);
-            input = "```json\n[\"A's item\", \"B's item\", \"C's item\"]\n```";
+            input = '```json\n["A\'s item", "B\'s item", "C\'s item"]\n```';
             expect(parseJsonArrayFromText(input)).toEqual([
                 "A's item",
                 "B's item",
                 "C's item",
             ]);
-            input = "[\"A's item\", \"B's item\", \"C's item\"]";
+            input = '["A\'s item", "B\'s item", "C\'s item"]';
             expect(parseJsonArrayFromText(input)).toEqual([
                 "A's item",
                 "B's item",
                 "C's item",
+            ]);
+            input = `[
+                'MANAGE_POSITIONS_RETRIGGER_EVALUATOR'
+              ]`;
+            expect(parseJsonArrayFromText(input)).toEqual([
+                "MANAGE_POSITIONS_RETRIGGER_EVALUATOR",
             ]);
         });
 
@@ -107,7 +113,7 @@ describe("Parsing Module", () => {
             const input = '```json\n{"key": "value", "number": 42}\n```';
             expect(parseJSONObjectFromText(input)).toEqual({
                 key: "value",
-                number: 42,
+                number: "42",
             });
         });
 
@@ -115,7 +121,14 @@ describe("Parsing Module", () => {
             const input = '{"key": "value", "number": 42}';
             expect(parseJSONObjectFromText(input)).toEqual({
                 key: "value",
-                number: 42,
+                number: "42",
+            });
+        });
+
+        it("should parse JSON objects containing array values", () => {
+            const input = '{"key": ["item1", "item2", "item3"]}';
+            expect(parseJSONObjectFromText(input)).toEqual({
+                key: ["item1", "item2", "item3"],
             });
         });
 

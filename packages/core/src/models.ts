@@ -331,6 +331,35 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.LMSTUDIO]: {
+        endpoint: settings.LMSTUDIO_SERVER_URL || "http://localhost:1234/v1",
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_LMSTUDIO_MODEL || settings.LMSTUDIO_MODEL || "hermes-3-llama-3.1-8b",
+                stop: ["<|eot_id|>", "<|eom_id|>"],
+                maxInputTokens: 32768,
+                maxOutputTokens: 8192,
+                repetition_penalty: 0.4,
+                temperature: 0.7,
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_LMSTUDIO_MODEL || settings.LMSTUDIO_MODEL || "hermes-3-llama-3.1-8b",
+                stop: ["<|eot_id|>", "<|eom_id|>"],
+                maxInputTokens: 32768,
+                maxOutputTokens: 8192,
+                repetition_penalty: 0.4,
+                temperature: 0.7,
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_LMSTUDIO_MODEL || settings.LMSTUDIO_MODEL || "hermes-3-llama-3.1-8b",
+                stop: ["<|eot_id|>", "<|eom_id|>"],
+                maxInputTokens: 32768,
+                maxOutputTokens: 8192,
+                repetition_penalty: 0.4,
+                temperature: 0.7,
+            },
+        },
+    },
     [ModelProviderName.GOOGLE]: {
         endpoint: "https://generativelanguage.googleapis.com",
         model: {
@@ -958,7 +987,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.LIVEPEER]: {
-        endpoint: settings.LIVEPEER_GATEWAY_URL,
+        endpoint: settings.LIVEPEER_GATEWAY_URL || "http://gateway.test-gateway",
         model: {
             [ModelClass.SMALL]: {
                 name:

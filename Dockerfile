@@ -2,29 +2,29 @@
 FROM node:23.3.0-slim AS builder
 
 # Install pnpm globally and necessary build tools
-RUN npm install -g pnpm@9.4.0 && \
+RUN npm install -g pnpm@9.15.4 && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
-        git \
-        python3 \
-        python3-pip \
-        curl \
-        node-gyp \
-        ffmpeg \
-        libtool-bin \
-        autoconf \
-        automake \
-        libopus-dev \
-        make \
-        g++ \
-        build-essential \
-        libcairo2-dev \
-        libjpeg-dev \
-        libpango1.0-dev \
-        libgif-dev \
-        openssl \
-        libssl-dev && \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    node-gyp \
+    ffmpeg \
+    libtool-bin \
+    autoconf \
+    automake \
+    libopus-dev \
+    make \
+    g++ \
+    build-essential \
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    openssl \
+    libssl-dev libsecret-1-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -47,12 +47,12 @@ RUN pnpm run build && pnpm prune --prod
 FROM node:23.3.0-slim
 
 # Install runtime dependencies
-RUN npm install -g pnpm@9.4.0 && \
+RUN npm install -g pnpm@9.15.4 && \
     apt-get update && \
     apt-get install -y \
-        git \
-        python3 \
-        ffmpeg && \
+    git \
+    python3 \
+    ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -62,8 +62,6 @@ WORKDIR /app
 # Copy built artifacts and production dependencies from the builder stage
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/eslint.config.mjs ./
-COPY --from=builder /app/.eslintrc.json ./
 COPY --from=builder /app/.npmrc ./
 COPY --from=builder /app/turbo.json ./
 COPY --from=builder /app/node_modules ./node_modules

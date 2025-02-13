@@ -1,6 +1,6 @@
 {
-    "name": "@elizaos/adapter-sqlite",
-    "version": "0.1.9-alpha.1",
+    "name": "@elizaos-plugins/adapter-sqlite",
+    "version": "0.25.6-alpha.1",
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -21,7 +21,7 @@
     "dependencies": {
         "@elizaos/core": "workspace:*",
         "@types/better-sqlite3": "7.6.12",
-        "better-sqlite3": "11.6.0",
+        "better-sqlite3": "11.8.1",
         "sqlite-vec": "0.1.6"
     },
     "devDependencies": {
@@ -37,5 +37,8 @@
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
