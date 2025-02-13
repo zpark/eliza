@@ -401,7 +401,7 @@ export class Scraper {
     );
 
     if (!res.success) {
-      throw res.err;
+      throw (res as any).err;
     }
 
     const timelineV2 = parseTimelineTweetsV2(res.value);
@@ -926,7 +926,7 @@ export class Scraper {
 
   private handleResponse<T>(res: RequestApiResult<T>): T {
     if (!res.success) {
-      throw res.err;
+      throw (res as any).err;
     }
 
     return res.value;

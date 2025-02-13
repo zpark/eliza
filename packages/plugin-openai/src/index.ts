@@ -291,6 +291,81 @@ export const openaiPlugin: Plugin = {
       return data.text;
     },
   },
+  tests: [
+    {
+      name: "openai_plugin_tests",
+      tests: [
+        {
+          name: 'openai_test_url_and_api_key_validation',
+          fn: async (runtime) => {
+            const baseURL =
+              runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
+            const response = await fetch(`${baseURL}/models`, {
+              headers: { Authorization: `Bearer ${runtime.getSetting("OPENAI_API_KEY")}` },
+            });
+            const data = await response.json();
+            console.log("Models Available:", (data as any)?.data.length);
+            if (!response.ok) {
+              throw new Error(`Failed to validate OpenAI API key: ${response.statusText}`);
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_large',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_large:", text);
+            } catch (error) {
+              console.error("Error in test_text_large:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_small',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_small:", text);
+            } catch (error) {
+              console.error("Error in test_text_small:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_image_generation',
+          fn: async (runtime) => {
+            console.log("openai_test_image_generation");
+            try {
+              const image = await runtime.useModel(ModelClass.IMAGE, {
+                prompt: "A beautiful sunset over a calm ocean",
+                n: 1,
+                size: "1024x1024"
+              });
+              console.log("generated with test_image_generation:", image);
+            } catch (error) {
+              console.error("Error in test_image_generation:", error);
+              throw error;
+            }
+          }
+        }
+      ]
+    }
+  ],
   routes: [
     {
       path: "/helloworld",

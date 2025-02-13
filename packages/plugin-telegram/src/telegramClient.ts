@@ -1,9 +1,10 @@
 import { type Context, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
-import { type IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger, ClientInstance } from "@elizaos/core";
 import { MessageManager } from "./messageManager.ts";
 
-export class TelegramClient {
+export class TelegramClient implements ClientInstance {
+    name: string = "telegram";
     private bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
     public messageManager: MessageManager;

@@ -9,9 +9,9 @@ import {
 describe("Parsing Module", () => {
     describe("parseShouldRespondFromText", () => {
         it("should parse exact matches", () => {
-            expect(parseShouldRespondFromText("[RESPOND]")).toBe("RESPOND");
-            expect(parseShouldRespondFromText("[IGNORE]")).toBe("IGNORE");
-            expect(parseShouldRespondFromText("[STOP]")).toBe("STOP");
+            expect(parseShouldRespondFromText("RESPOND")).toBe("RESPOND");
+            expect(parseShouldRespondFromText("IGNORE")).toBe("IGNORE");
+            expect(parseShouldRespondFromText("STOP")).toBe("STOP");
         });
 
         it("should handle case insensitive input", () => {

@@ -84,7 +84,7 @@ export async function createGrokConversation(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return res.value.data.create_grok_conversation.conversation_id;
@@ -141,7 +141,7 @@ export async function grokChat(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   // Parse response chunks - Grok may return either a single response or multiple chunks

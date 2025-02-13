@@ -256,11 +256,11 @@ export class ClientBase extends EventEmitter {
   }
 
   async init() {
-    const username = this.twitterConfig.TWITTER_USERNAME as string;
-    const password = this.twitterConfig.TWITTER_PASSWORD as string;
-    const email = this.twitterConfig.TWITTER_EMAIL as string;
-    let retries = this.twitterConfig.TWITTER_RETRY_LIMIT as number;
-    const twitter2faSecret = this.twitterConfig.TWITTER_2FA_SECRET as string;
+    const username = this.runtime.getSetting("TWITTER_USERNAME") || this.twitterConfig.TWITTER_USERNAME as string;
+    const password = this.runtime.getSetting("TWITTER_PASSWORD") || this.twitterConfig.TWITTER_PASSWORD as string;
+    const email = this.runtime.getSetting("TWITTER_EMAIL") || this.twitterConfig.TWITTER_EMAIL as string;
+    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number || this.twitterConfig.TWITTER_RETRY_LIMIT as number;
+    const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET") || this.twitterConfig.TWITTER_2FA_SECRET as string;
 
     if (!username) {
       throw new Error("Twitter username not configured");

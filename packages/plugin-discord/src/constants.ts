@@ -52,3 +52,5 @@ export const IGNORE_RESPONSE_WORDS = [
     "jfc",
     "omg",
 ] as const;
+
+export const DISCORD_CLIENT_NAME = 'discord';

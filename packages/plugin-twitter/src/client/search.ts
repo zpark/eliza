@@ -148,7 +148,7 @@ async function getSearchTimeline(
   );
 
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   return res.value;
@@ -235,7 +235,7 @@ export async function fetchQuotedTweetsPage(
   // Perform the request
   const res = await requestApi(url, auth);
   if (!res.success) {
-    throw res.err;
+    throw (res as any).err;
   }
 
   // Force cast for TypeScript

@@ -13,6 +13,9 @@ import {
     logger
 } from "@elizaos/core";
 import type { TwitterConfig } from '../environment';
+import { TWITTER_CLIENT_NAME } from "../constants";
+import { ClientBase } from "../base";
+import { ITwitterClient } from "../types";
 
 const tweetGenerationTemplate = `# Task: Generate a tweet in the style and voice of {{agentName}}.
 
@@ -51,30 +54,19 @@ const twitterPostAction = {
         message: Memory,
         state: State
     ) => {
-        // Only show for users with twitter configured
-        if (!state.twitterClient) {
-            return false;
-        }
+        return true;
+        // const keywords = [
+        //     "post",
+        //     "twitter",
+        //     "share",
+        //     "tweet",
+        //     "to x",
+        //     "on x",
+        //     "xeet",
+        // ];
 
-        const keywords = [
-            "tweet this",
-            "tweet that",
-            "post this",
-            "share this",
-            "tweet about",
-            "tweet it",
-            "post on twitter",
-            "share on twitter",
-            "make a tweet",
-            "write a tweet",
-            "tweet idea",
-            "twitter post",
-            "post that on twitter",
-            "share that on twitter"
-        ];
-
-        const messageText = message.content.text.toLowerCase();
-        return keywords.some(keyword => messageText.includes(keyword));
+        // const messageText = message.content.text.toLowerCase();
+        // return keywords.some(keyword => messageText.includes(keyword));
     },
     handler: async (
         runtime: IAgentRuntime,
@@ -101,11 +93,17 @@ const twitterPostAction = {
                 template: tweetGenerationTemplate
             });
 
+            console.log("Context")
+            console.log(context)
+
             const tweetContent = await generateText({
                 runtime,
                 context,
                 modelClass: ModelClass.TEXT_SMALL
             });
+
+            console.log("Tweet Content")
+            console.log(tweetContent)
 
             // Clean up the generated content
             const cleanTweet = tweetContent
@@ -120,24 +118,32 @@ const twitterPostAction = {
                 source: message.content.source,
             };
 
+            console.log("Response Content")
+            console.log(responseContent)
+
             // If we're in dry run mode, just show what would be tweeted
             if (twitterConfig?.TWITTER_DRY_RUN) {
                 await callback(responseContent);
                 return responseContent;
             }
 
-            // Post the tweet using the TwitterPost client
-            const memories = await (state.twitterClient as any).requestQueue.add(async () => {
-                const result = await (state.twitterClient as any).sendTweet(cleanTweet);
-                if (!result?.data?.create_tweet?.tweet_results?.result) {
-                    throw new Error("Failed to post tweet");
-                }
-                return result;
-            });
+            const client = runtime.getClient(TWITTER_CLIENT_NAME) as unknown as ITwitterClient
+            console.log("client.client", client.client)
+            console.log("client.twitterClient", client.client.twitterClient)
+            
+            console.log("Sending tweet")
+            const memories = await client.client.twitterClient.sendTweet(cleanTweet);
+            console.log("Sent tweet")
+
+            console.log("Tweet posted")
+            console.log(memories)
 
             // Send the response with the tweet URL
             await callback(responseContent);
-            
+
+            console.log("Response sent")
+            console.log(responseContent)
+
             return responseContent;
 
         } catch (error) {

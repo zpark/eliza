@@ -11,10 +11,7 @@ export const messageCompletionFooter = `\nResponse format should be formatted in
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
 `;
 
-export const shouldRespondFooter = `The available options are [RESPOND], [IGNORE], or [STOP]. Choose the most appropriate option.
-If {{agentName}} is talking too much, you can choose [IGNORE]
-
-Your response must include one of the options.`;
+export const shouldRespondFooter = `The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.`;
 
 export const parseShouldRespondFromText = (
     text: string

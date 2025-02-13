@@ -85,7 +85,7 @@ async function generateTopicsIfEmpty(
 ): Promise<string[]> {
     try {
         const context = composeContext({
-            state: {},
+            state: {} as any,
             template: `
 # INSTRUCTIONS:
 Please generate 5 short topic ideas for a Twitter Space about technology or random interesting subjects.
@@ -189,7 +189,7 @@ export class TwitterSpaceClient {
                         this.isSpaceRunning
                             ? intervalMsWhenRunning
                             : intervalMsWhenIdle
-                    );
+                    ) as any;
                 } else {
                     // Space is running => manage it more frequently
                     await this.manageCurrentSpace();
@@ -197,12 +197,12 @@ export class TwitterSpaceClient {
                     this.checkInterval = setTimeout(
                         routine,
                         intervalMsWhenRunning
-                    );
+                    ) as any;
                 }
             } catch (error) {
                 logger.error("[Space] Error in routine =>", error);
                 // In case of error, still schedule next iteration
-                this.checkInterval = setTimeout(routine, intervalMsWhenIdle);
+                this.checkInterval = setTimeout(routine, intervalMsWhenIdle) as any;
             }
         };
 

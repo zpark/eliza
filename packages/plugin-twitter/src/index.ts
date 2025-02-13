@@ -1,11 +1,13 @@
-import { type Client, logger, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { ClientInstance, logger, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import post from "./actions/post.ts";
+import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { validateTwitterConfig, type TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
-import post from "./actions/post.ts";
-import reply from "./actions/reply.ts";
+import { TWITTER_CLIENT_NAME } from "./constants.ts";
+import { ITwitterClient } from "./types.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -15,7 +17,8 @@ import reply from "./actions/reply.ts";
  * - interaction: handling mentions, replies
  * - space: launching and managing Twitter Spaces (optional)
  */
-class TwitterManager {
+export class TwitterClient implements ITwitterClient {
+    name: string = "twitter";
     client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
@@ -43,14 +46,13 @@ class TwitterManager {
 }
 
 export const TwitterClientInterface: Client = {
-    name: 'twitter',
+    name: TWITTER_CLIENT_NAME,
     start: async (runtime: IAgentRuntime) => {
-        const twitterConfig: TwitterConfig =
-            await validateTwitterConfig(runtime);
+        const twitterConfig: TwitterConfig = await validateTwitterConfig(runtime);
 
         logger.log("Twitter client started");
 
-        const manager = new TwitterManager(runtime, twitterConfig);
+        const manager = new TwitterClient(runtime, twitterConfig);
 
         // Initialize login/session
         await manager.client.init();
