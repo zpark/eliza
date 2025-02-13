@@ -162,7 +162,10 @@ describe("Discord MessageManager", () => {
     async (content) => {
       mockMessage.content = content;
 
-      const result = await messageManager["_shouldRespond"](mockMessage, {});
+      const result = await messageManager["_shouldRespond"](
+        mockMessage,
+        {} as any
+      );
       expect(result).toBe(true);
     }
   );
@@ -193,7 +196,7 @@ describe("Discord MessageManager", () => {
 
     const mockAttachmentManager = {
       processAttachments: processAttachmentsMock,
-    } as unknown as (typeof messageManager)["attachmentManager"]; // ✅ Correct typing
+    } as unknown as (typeof messageManager)["attachmentManager"];
 
     // Override the private property with a mock
     Object.defineProperty(messageManager, "attachmentManager", {
