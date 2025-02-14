@@ -64,7 +64,8 @@
   },
   "packageManager": "bun@1.2.2",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "projects/*"
   ],
   "module": "index.ts",
   "type": "module"

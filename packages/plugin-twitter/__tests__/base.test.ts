@@ -42,7 +42,7 @@ describe('Twitter Client Base', () => {
             TWITTER_2FA_SECRET: '',
             TWITTER_RETRY_LIMIT: 5,
             TWITTER_POLL_INTERVAL: 120,
-            ENABLE_TWITTER_POST_GENERATION: true,
+            TWITTER_ENABLE_POST_GENERATION: true,
             MAX_TWEET_LENGTH: 280,
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,

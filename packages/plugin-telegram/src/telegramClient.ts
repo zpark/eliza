@@ -49,7 +49,7 @@ export class TelegramClient implements ClientInstance {
     }
 
     private async isGroupAuthorized(ctx: Context): Promise<boolean> {
-        const config = this.runtime.character.clientConfig?.telegram;
+        const config = this.runtime.character.settings?.telegram;
         if (ctx.from?.id === ctx.botInfo?.id) {
             return false;
         }

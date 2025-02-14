@@ -73,7 +73,7 @@ describe('DiscordClient', () => {
       registerAction: vi.fn(),
       providers: [],
       character: {
-        clientConfig: {
+        settings: {
           discord: {
             shouldIgnoreBotMessages: true
           }

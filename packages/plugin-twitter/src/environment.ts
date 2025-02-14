@@ -66,7 +66,7 @@ export const twitterEnvSchema = z.object({
         .optional()
         .default(''),
     */
-    ENABLE_TWITTER_POST_GENERATION: z.boolean(),
+    TWITTER_ENABLE_POST_GENERATION: z.boolean(),
     POST_INTERVAL_MIN: z.number().int(),
     POST_INTERVAL_MAX: z.number().int(),
     ACTION_INTERVAL: z.number().int(),
@@ -165,10 +165,10 @@ export async function validateTwitterConfig(
             ),
 
             // bool
-            ENABLE_TWITTER_POST_GENERATION:
+            TWITTER_ENABLE_POST_GENERATION:
                 parseBooleanFromText(
-                    runtime.getSetting("ENABLE_TWITTER_POST_GENERATION") ||
-                        process.env.ENABLE_TWITTER_POST_GENERATION
+                    runtime.getSetting("TWITTER_ENABLE_POST_GENERATION") ||
+                        process.env.TWITTER_ENABLE_POST_GENERATION
                 ) ?? true,
 
 

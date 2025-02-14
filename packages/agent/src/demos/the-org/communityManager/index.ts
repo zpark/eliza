@@ -2,11 +2,13 @@
 
 // The community manager greets new users and helps them get started
 // The community manager also helps moderators with moderation tasks, including banning scammers
-
-import { Character } from "@elizaos/core";
-
 import dotenv from "dotenv";
-dotenv.config({ path: '../../.env' });
+dotenv.config({ path: "../../.env" });
+
+import { Character, IAgentRuntime } from "@elizaos/core";
+import { ChannelType, Guild, Message } from "discord.js";
+import { initializeOnboarding } from "../shared/onboarding/initialize";
+import { OnboardingConfig } from "../shared/onboarding/types";
 
 const character: Character = {
   name: "Kelsey",
@@ -17,10 +19,11 @@ const character: Character = {
     "@elizaos/plugin-node",
   ],
   settings: {
-    secrets: {
-      "DISCORD_APPLICATION_ID": process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
-      "DISCORD_API_TOKEN": process.env.COMMUNITY_MANAGER_DISCORD_API_TOKEN,
-    },
+
+  },
+  secrets: {
+    DISCORD_APPLICATION_ID: process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
+    DISCORD_API_TOKEN: process.env.COMMUNITY_MANAGER_DISCORD_API_TOKEN,
   },
   system:
     "Only respond to messages that are relevant to the community manager, like new users or people causing trouble, or when being asked to respond directly. Ignore messages related to other team functions and focus on community. Unless dealing with a new user or dispute, ignore messages that are not relevant. Ignore messages addressed to other people.",
@@ -333,4 +336,59 @@ const character: Character = {
   }
 };
 
-export default character;
+const config: OnboardingConfig = {
+  settings: {
+      SHOULD_GREET_NEW_USERS: {
+          name: "Greet New Users",
+          description: "Should I automatically greet new users when they join?",
+          required: true,
+          validation: (value: boolean) => typeof value === 'boolean'
+      },
+      GREETING_CHANNEL: {
+          name: "Greeting Channel",
+          description: "Which channel should I use for greeting new users? Please mention a channel.",
+          required: false,
+          dependsOn: ["SHOULD_GREET_NEW_USERS"],
+          validation: (value: string) => value.match(/^\d+$/) !== null || value.startsWith('#'),
+          onSetAction: (value: string) => {
+              return `I will now greet new users in ${value}`;
+          }
+      },
+      ALLOW_TIMEOUTS: {
+          name: "Allow Timeouts",
+          description: "Should I be allowed to timeout users who violate rules?",
+          required: true,
+          validation: (value: boolean) => typeof value === 'boolean'
+      },
+      POSITIVE_QUALITIES: {
+          name: "Positive Member Qualities",
+          description: "What qualities do you want to encourage in community members?",
+          required: true
+      },
+      NEGATIVE_QUALITIES: {
+          name: "Negative Member Qualities",
+          description: "What behaviors should I watch out for and discourage?",
+          required: true
+      }
+  },
+  roleRequired: "ADMIN",
+  allowedChannels: [ChannelType.DM]
+};
+
+export default { 
+  character, 
+  init: async (runtime: IAgentRuntime) => {
+    // Register runtime events
+    runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
+      console.log("Community manager joined server");
+      console.log(params);
+      // TODO: Save onboarding config to runtime
+      await initializeOnboarding(runtime, params.guild.id, config);
+    });
+
+    runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
+      console.log("Community manager received message");
+      console.log(params);
+    });
+  }
+};

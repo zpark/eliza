@@ -15,7 +15,7 @@ import cors from "cors";
 import express from "express";
 import fs from "node:fs";
 import path from "node:path";
-import type { CharacterServer } from "./server";
+import type { CharacterServer } from ".";
 
 interface UUIDParams {
     agentId: UUID;
@@ -75,7 +75,7 @@ export function createApiRouter(
         const agentsList = Array.from(agents.values()).map((agent) => ({
             id: agent.agentId,
             name: agent.character.name,
-            clients: Object.keys(agent.clients),
+            clients: agent.getAllClients().keys(),
         }));
         res.json({ agents: agentsList });
     });
@@ -106,6 +106,9 @@ export function createApiRouter(
         const character = agent?.character;
         if (character?.settings?.secrets) {
             character.settings.secrets = undefined;
+        }
+        if (character?.secrets) {
+            character.secrets = undefined;
         }
 
         res.json({

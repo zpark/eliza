@@ -54,7 +54,7 @@ describe('Twitter Post Client', () => {
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,
             ACTION_INTERVAL: 5,
-            ENABLE_TWITTER_POST_GENERATION: true,
+            TWITTER_ENABLE_POST_GENERATION: true,
             POST_IMMEDIATELY: false,
         };
 

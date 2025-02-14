@@ -332,14 +332,14 @@ export class MessageManager {
         this.lastChannelActivity[ctx.chat.id.toString()] = Date.now();
 
         if (
-            this.runtime.character.clientConfig?.telegram
+            this.runtime.character.settings?.telegram
                 ?.shouldIgnoreBotMessages &&
             ctx.from.is_bot
         ) {
             return;
         }
         if (
-            this.runtime.character.clientConfig?.telegram
+            this.runtime.character.settings?.telegram
                 ?.shouldIgnoreDirectMessages &&
             ctx.chat?.type === "private"
         ) {

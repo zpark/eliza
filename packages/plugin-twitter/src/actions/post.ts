@@ -118,31 +118,27 @@ const twitterPostAction = {
                 source: message.content.source,
             };
 
-            console.log("Response Content")
-            console.log(responseContent)
-
             // If we're in dry run mode, just show what would be tweeted
             if (twitterConfig?.TWITTER_DRY_RUN) {
                 await callback(responseContent);
                 return responseContent;
             }
 
-            const client = runtime.getClient(TWITTER_CLIENT_NAME) as unknown as ITwitterClient
-            console.log("client.client", client.client)
-            console.log("client.twitterClient", client.client.twitterClient)
-            
-            console.log("Sending tweet")
-            const memories = await client.client.twitterClient.sendTweet(cleanTweet);
-            console.log("Sent tweet")
+            runtime.registerTask({
+                roomId: message.roomId,
+                tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
+                handler: async (runtime: IAgentRuntime) => {
+                    const client = runtime.getClient(TWITTER_CLIENT_NAME) as unknown as ITwitterClient
+                    const memories = await client.client.twitterClient.sendTweet(cleanTweet);
+                    console.log("Sent tweet")
 
-            console.log("Tweet posted")
-            console.log(memories)
+                    // TODO: Get the tweet link and post it
+                    // await callback(responseContent);
 
-            // Send the response with the tweet URL
+                }
+            })
+
             await callback(responseContent);
-
-            console.log("Response sent")
-            console.log(responseContent)
 
             return responseContent;
 

@@ -522,6 +522,5 @@ export const mockCharacter: Character = {
         "unorthodox",
         "meticulous",
         "provocative",
-    ],
-    extends: [],
+    ]
 };

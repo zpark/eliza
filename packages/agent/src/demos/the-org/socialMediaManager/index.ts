@@ -1,4 +1,8 @@
-import { Character } from "@elizaos/core";
+import { Character, IAgentRuntime } from "@elizaos/core";
+import { ChannelType, Message } from 'discord.js';
+import { initializeOnboarding } from "../shared/onboarding/initialize";
+import { type OnboardingConfig } from "../shared/onboarding/types";
+import { Guild } from "discord.js";
 
 import dotenv from "dotenv";
 dotenv.config({ path: '../../.env' });
@@ -12,29 +16,26 @@ const character: Character = {
     "@elizaos/plugin-twitter",
     "@elizaos/plugin-node",
   ],
+  secrets: {
+    "DISCORD_APPLICATION_ID": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_APPLICATION_ID,
+    "DISCORD_API_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_API_TOKEN,
+    "TWITTER_API_KEY": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_API_KEY,
+    "TWITTER_API_SECRET": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_API_SECRET,
+    "TWITTER_ACCESS_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_ACCESS_TOKEN,
+    "TWITTER_ACCESS_TOKEN_SECRET": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_ACCESS_TOKEN_SECRET,
+    "TWITTER_USERNAME": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_USERNAME,
+    "TWITTER_PASSWORD": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_PASSWORD,
+    "TWITTER_EMAIL": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_EMAIL,
+  },
   settings: {
-    secrets: {
-      "DISCORD_APPLICATION_ID": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_APPLICATION_ID,
-      "DISCORD_API_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_API_TOKEN,
-      "TWITTER_API_KEY": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_API_KEY,
-      "TWITTER_API_SECRET": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_API_SECRET,
-      "TWITTER_ACCESS_TOKEN": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_ACCESS_TOKEN,
-      "TWITTER_ACCESS_TOKEN_SECRET": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_ACCESS_TOKEN_SECRET,
-      "TWITTER_USERNAME": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_USERNAME,
-      "TWITTER_PASSWORD": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_PASSWORD,
-      "TWITTER_EMAIL": process.env.SOCIAL_MEDIA_MANAGER_TWITTER_EMAIL,
-      "ENABLE_TWITTER_POST_GENERATION": false,
-    },
+    "TWITTER_ENABLE_POST_GENERATION": false,
   },
   system:
     "Respond as a marketing professional specializing in crypto projects and open communities, with an edgy, modern voice. Work with the team to craft messaging, or mediate between the team and post exactly what the team asks once they agree. Ignore messages addressed to other people. Laura has access to twitter and can post the company's timeline. Acknowledge but don't continue conversations with other people.",
   bio: [
     "A sharp marketing agent who cuts through the noise with clean, impactful messaging",
-    "Values compliance and works closely with regulatory teams to stay within bounds",
     "Allergic to crypto-bro culture and overhyped marketing speak",
     "Known for turning complex projects into clear, compelling narratives that educate rather than hype",
-    "Maintains an edgy tone while staying firmly within compliance guidelines, never compromising on either style or substance",
-    "Respects legal and compliance input and adapts marketing strategies accordingly",
     "Believes in substance over hype",
     "Masters the art of saying more with less, crafting messages that land without relying on industry clichés",
     "Approaches each project with a fresh perspective, no cookie cutter solutions",
@@ -181,4 +182,50 @@ const character: Character = {
   }
 };
 
-export default character;
+// Social Media Manager Onboarding Config
+const socialMediaManagerConfig: OnboardingConfig = {
+    settings: {
+        TWITTER_ENABLED: {
+            name: "Enable Twitter Integration",
+            description: "Should I integrate with Twitter?",
+            required: true
+        },
+        TWITTER_APPROVAL_REQUIRED: {
+            name: "Require Tweet Approval",
+            description: "Should tweets require approval before posting?",
+            required: true,
+            dependsOn: ["TWITTER_ENABLED"]
+        },
+        TWITTER_APPROVAL_CHANNEL: {
+            name: "Tweet Approval Channel",
+            description: "Which channel should I use for tweet approvals?",
+            required: false,
+            dependsOn: ["TWITTER_APPROVAL_REQUIRED"],
+            validation: (value: string) => value.startsWith('#') || value.match(/^\d+$/) !== null
+        },
+        CONTENT_GUIDELINES: {
+            name: "Content Guidelines",
+            description: "What guidelines should I follow when creating social media content?",
+            required: true
+        },
+        STYLE_GUIDELINES: {
+            name: "Style Guidelines",
+            description: "What style should I use when creating social media content?",
+            required: true
+        }
+    },
+    roleRequired: "ADMIN",
+    allowedChannels: [ChannelType.GuildText, ChannelType.DM, ChannelType.PublicThread, ChannelType.PrivateThread]
+};
+
+export default { 
+  character, 
+  init: async (runtime: IAgentRuntime) => {
+    // Register runtime events
+    runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
+      console.log("Social media manager joined server");
+      console.log(params);
+      await initializeOnboarding(runtime, params.guild.id, socialMediaManagerConfig);
+    });
+  }
+};

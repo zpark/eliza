@@ -141,7 +141,7 @@ export class TwitterSpaceClient {
         this.runtime = runtime;
 
         // TODO: Spaces should be added to and removed from cache probably, and it should be possible to join or leave a space from an action, etc
-        const charSpaces = runtime.character.clientConfig?.twitter?.spaces || {};
+        const charSpaces = runtime.character.settings?.twitter?.spaces || {};
 
         this.decisionOptions = {
             maxSpeakers: charSpaces.maxSpeakers ?? 1,

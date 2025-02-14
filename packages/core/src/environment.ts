@@ -80,8 +80,7 @@ export const CharacterSchema = z.object({
         all: z.array(z.string()),
         chat: z.array(z.string()),
         post: z.array(z.string()),
-    }),
-    extends: z.array(z.string()).optional(),
+    })
 });
 
 // Type inference

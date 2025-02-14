@@ -533,6 +533,5 @@ export const defaultCharacter: Character = {
     "unorthodox",
     "meticulous",
     "provocative",
-  ],
-  extends: [],
+  ]
 };

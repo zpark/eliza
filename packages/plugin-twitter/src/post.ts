@@ -59,7 +59,7 @@ export class TwitterPostClient {
         );
 
         logger.log(
-            `- Disable Post: ${this.client.twitterConfig.ENABLE_TWITTER_POST_GENERATION ? "disabled" : "enabled"}`
+            `- Disable Post: ${this.client.twitterConfig.TWITTER_ENABLE_POST_GENERATION ? "disabled" : "enabled"}`
         );
 
         logger.log(
@@ -117,11 +117,11 @@ export class TwitterPostClient {
             logger.log(`Next tweet scheduled in ${randomMinutes} minutes`);
         };
 
-        if (this.client.twitterConfig.POST_IMMEDIATELY) {
-            await this.generateNewTweet();
-        }
-
-        if (this.client.twitterConfig.ENABLE_TWITTER_POST_GENERATION) {
+        if (this.client.twitterConfig.TWITTER_ENABLE_POST_GENERATION) {
+            if (this.client.twitterConfig.POST_IMMEDIATELY) {
+                await this.generateNewTweet();
+            }
+            
             generateNewTweetLoop();
             logger.log("Tweet generation loop started");
         }

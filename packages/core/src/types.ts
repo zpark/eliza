@@ -331,7 +331,7 @@ export type Handler = (
   state?: State,
   options?: { [key: string]: unknown },
   callback?: HandlerCallback,
-  responses?: Memory[],
+  responses?: Memory[]
 ) => Promise<unknown>;
 
 /**
@@ -596,7 +596,7 @@ export type Plugin = {
 
   /** Optional events */
   events?: {
-    [key: string]: ((params: any) => Promise<any>)[]
+    [key: string]: ((params: any) => Promise<any>)[];
   };
 
   /** Optional tests */
@@ -640,11 +640,6 @@ export type Character = {
     [key: string]: TemplateType;
   };
 
-  /** Optional client configuration */
-  clientConfig?: {
-    [key: string]: any;
-  };
-
   /** Character biography */
   bio: string | string[];
 
@@ -668,8 +663,11 @@ export type Character = {
 
   /** Optional configuration */
   settings?: {
-    secrets?: { [key: string]: string | boolean | number };
     [key: string]: any | string | boolean | number;
+  };
+
+  secrets?: {
+    [key: string]: string | boolean | number;
   };
 
   /** Writing style guides */
@@ -760,17 +758,15 @@ export interface IDatabaseAdapter {
 
   updateGoalStatus(params: { goalId: UUID; status: GoalStatus }): Promise<void>;
 
-  searchMemories(
-    params: {
-      embedding: number[],
-      match_threshold?: number;
-      count?: number;
-      roomId?: UUID;
-      agentId?: UUID;
-      unique?: boolean;
-      tableName: string;
-    }
-  ): Promise<Memory[]>;
+  searchMemories(params: {
+    embedding: number[];
+    match_threshold?: number;
+    count?: number;
+    roomId?: UUID;
+    agentId?: UUID;
+    unique?: boolean;
+    tableName: string;
+  }): Promise<Memory[]>;
 
   createMemory(
     memory: Memory,
@@ -918,18 +914,18 @@ export abstract class Service {
   private static instance: Service | null = null;
 
   static get serviceType(): ServiceType {
-      throw new Error("Service must implement static serviceType getter");
+    throw new Error("Service must implement static serviceType getter");
   }
 
   public static getInstance<T extends Service>(): T {
-      if (!Service.instance) {
-          Service.instance = new (this as any)();
-      }
-      return Service.instance as T;
+    if (!Service.instance) {
+      Service.instance = new (this as any)();
+    }
+    return Service.instance as T;
   }
 
   get serviceType(): ServiceType {
-      return (this.constructor as typeof Service).serviceType;
+    return (this.constructor as typeof Service).serviceType;
   }
 
   // Add abstract initialize method that must be implemented by derived classes
@@ -957,9 +953,10 @@ export interface IAgentRuntime {
   cacheManager: ICacheManager;
 
   getClient(name: string): ClientInstance | null;
+  getAllClients(): Map<string, ClientInstance>;
 
   registerClient(name: string, client: ClientInstance): void;
-  
+
   unregisterClient(name: string): void;
 
   initialize(): Promise<void>;
@@ -971,6 +968,12 @@ export interface IAgentRuntime {
   getService<T extends Service>(service: ServiceType): T | null;
 
   registerService(service: Service): void;
+
+  setSetting(
+    key: string,
+    value: string | boolean | null,
+    secret: boolean
+  ): void;
 
   getSetting(key: string): string | null;
 
@@ -1022,8 +1025,29 @@ export interface IAgentRuntime {
   updateRecentMessageState(state: State): Promise<State>;
 
   useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
-  registerModel(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
-  getModel(modelClass: ModelClass): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
+  registerModel(
+    modelClass: ModelClass,
+    handler: (params: any) => Promise<any>
+  ): void;
+  getModel(
+    modelClass: ModelClass
+  ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
+
+  registerEvent(event: string, handler: (params: any) => void): void;
+  getEvent(event: string): ((params: any) => void)[] | undefined;
+  emitEvent(event: string, params: any): void;
+
+  registerTask(task: Task): UUID;
+  getTasks({
+    roomId,
+    tags,
+  }: {
+    roomId?: UUID;
+    tags?: string[];
+  }): Task[] | undefined;
+  getTask(id: UUID): Task | undefined;
+  updateTask(id: UUID, task: Task): void;
+  deleteTask(id: UUID): void;
 
   stop(): Promise<void>;
 }
@@ -1085,8 +1109,8 @@ export interface IVideoService extends Service {
 export interface IBrowserService extends Service {
   closeBrowser(): Promise<void>;
   getPageContent(
-      url: string,
-      runtime: IAgentRuntime,
+    url: string,
+    runtime: IAgentRuntime
   ): Promise<{ title: string; description: string; bodyContent: string }>;
 }
 
@@ -1097,14 +1121,14 @@ export interface IPdfService extends Service {
 
 export interface IFileService extends Service {
   uploadFile(
-      imagePath: string,
-      subDirectory: string,
-      useSignedUrl: boolean,
-      expiresIn: number,
+    imagePath: string,
+    subDirectory: string,
+    useSignedUrl: boolean,
+    expiresIn: number
   ): Promise<{
-      success: boolean;
-      url?: string;
-      error?: string;
+    success: boolean;
+    url?: string;
+    error?: string;
   }>;
   generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
@@ -1112,18 +1136,24 @@ export interface IFileService extends Service {
 export interface ITeeLogService extends Service {
   getInstance(): ITeeLogService;
   log(
-      agentId: string,
-      roomId: string,
-      userId: string,
-      type: string,
-      content: string,
+    agentId: string,
+    roomId: string,
+    userId: string,
+    type: string,
+    content: string
   ): Promise<boolean>;
-  
-  generateAttestation<T>(reportData: string, hashAlgorithm?: T | any): Promise<string>;
+
+  generateAttestation<T>(
+    reportData: string,
+    hashAlgorithm?: T | any
+  ): Promise<string>;
   getAllAgents(): Promise<TeeAgent[]>;
   getAgent(agentId: string): Promise<TeeAgent | null>;
-  getLogs(query: TeeLogQuery, page: number, pageSize: number): Promise<TeePageQuery<TeeLog[]>>;
-
+  getLogs(
+    query: TeeLogQuery,
+    page: number,
+    pageSize: number
+  ): Promise<TeePageQuery<TeeLog[]>>;
 }
 
 export interface TestCase {
@@ -1186,9 +1216,9 @@ export abstract class TeeLogDAO<DB = any> {
   abstract addLog(log: TeeLog): Promise<boolean>;
 
   abstract getPagedLogs(
-      query: TeeLogQuery,
-      page: number,
-      pageSize: number
+    query: TeeLogQuery,
+    page: number,
+    pageSize: number
   ): Promise<TeePageQuery<TeeLog[]>>;
 
   abstract addAgent(agent: TeeAgent): Promise<boolean>;
@@ -1220,10 +1250,10 @@ export interface RemoteAttestationMessage {
   agentId: string;
   timestamp: number;
   message: {
-      userId: string;
-      roomId: string;
-      content: string;
-  }
+    userId: string;
+    roomId: string;
+    content: string;
+  };
 }
 
 export interface SgxAttestation {
@@ -1232,6 +1262,19 @@ export interface SgxAttestation {
 }
 
 export enum TeeType {
-    SGX_GRAMINE = "sgx_gramine",
-    TDX_DSTACK = "tdx_dstack",
+  SGX_GRAMINE = "sgx_gramine",
+  TDX_DSTACK = "tdx_dstack",
+}
+
+export const CACHE_KEYS = {
+  SERVER_SETTINGS: (serverId: string) => `server_${serverId}_settings`,
+  SERVER_ROLES: (serverId: string) => `server_${serverId}_roles`,
+  // etc
+} as const;
+
+export interface Task {
+  id?: UUID;
+  roomId: UUID;
+  tags: string[];
+  handler: (runtime: IAgentRuntime) => Promise<void>;
 }

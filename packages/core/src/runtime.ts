@@ -46,7 +46,8 @@ import {
     type UUID,
     type ServiceType,
     type Service,
-    Route
+    Route,
+    Task
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -227,7 +228,8 @@ export class AgentRuntime implements IAgentRuntime {
     readonly evaluators: Evaluator[] = [];
     readonly providers: Provider[] = [];
     readonly plugins: Plugin[] = [];
-    events: Map<string, ((params: any) => Promise<any>)[]> = new Map();
+    events: Map<string, ((params: any) => void)[]> = new Map();
+    tasks = new Map<UUID, Task>();
 
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
@@ -365,8 +367,8 @@ export class AgentRuntime implements IAgentRuntime {
         return client;
     }
 
-    getAllClients(): ClientInstance[] {
-        return Array.from(this.clients.values());
+    getAllClients(): Map<string, ClientInstance> {
+        return this.clients;
     }
 
     async stop() {
@@ -463,14 +465,26 @@ export class AgentRuntime implements IAgentRuntime {
         await knowledgeManager.processCharacterKnowledge(items);
     }
 
+    setSetting(key: string, value: string | boolean | null, secret: boolean = false) {
+        if(secret) {
+            this.character.secrets[key] = value;
+        } else {
+            this.character.settings[key] = value;
+        }
+    }
+
     getSetting(key: string) {
-        // check if the key is in the character.settings.secrets object
-        if (this.character.settings?.secrets?.[key]) {
-            return this.character.settings.secrets[key];
+        // check if the key is in the character.secrets object
+        if (this.character.secrets?.[key]) {
+            return this.character.secrets[key];
         }
         // if not, check if it's in the settings object
         if (this.character.settings?.[key]) {
             return this.character.settings[key];
+        }
+
+        if(this.character.settings?.secrets?.[key]){
+            return this.character.settings.secrets[key];
         }
 
         // if not, check if it's in the settings object
@@ -1336,26 +1350,61 @@ Text: ${attachment.text}
         return await model(this, params);
     }
 
-    registerEvent(event: string, handler: (params: any) => Promise<any>) {
+    registerEvent(event: string, handler: (params: any) => void) {
         if (!this.events.has(event)) {
             this.events.set(event, []);
         }
         this.events.get(event)?.push(handler);
     }
 
-    getEvent(event: string): ((params: any) => Promise<any>)[] | undefined {
+    getEvent(event: string): ((params: any) => void)[] | undefined {
         return this.events.get(event);
     }
 
-    async onEvent(event: string, params: any) {
+    emitEvent(event: string, params: any) {
         // call the events associated with the event
         const eventHandlers = this.events.get(event);
         if (eventHandlers) {
             for (const handler of eventHandlers) {
-                await handler(params);
+                handler(params);
             }
         }
     }
 
-    
+    registerTask(task: Task): UUID {
+        // if task doesn't have an id, generate one
+        if (!task.id) {
+            task.id = uuidv4() as UUID;
+        }
+        this.tasks.set(task.id, task);
+        return task.id;
+    }
+
+    getTasks({
+        roomId,
+        tags
+    }: {roomId?: UUID, tags?: string[]}): Task[] | undefined {
+        // filter tasks by roomId, type, or both
+        const tasks = this.tasks;
+        if (!tasks) {
+            return undefined;
+        }
+        const values = Array.from(tasks.values());
+        return values.filter(task => 
+            (!roomId || task.roomId === roomId) && 
+            (!tags || task.tags.some(tag => tags.includes(tag)))
+        );
+    }
+
+    getTask(id: UUID): Task | undefined {
+        return this.tasks.get(id);
+    }
+
+    updateTask(id: UUID, task: Task) {
+        this.tasks.set(id, task);
+    }
+
+    deleteTask(id: UUID) {
+        this.tasks.delete(id);
+    }
 }
