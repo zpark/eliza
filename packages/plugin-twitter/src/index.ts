@@ -1,5 +1,4 @@
 import { ClientInstance, logger, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
-import post from "./actions/post.ts";
 import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { validateTwitterConfig, type TwitterConfig } from "./environment.ts";
@@ -76,6 +75,6 @@ const twitterPlugin: Plugin = {
     name: "twitter",
     description: "Twitter client",
     clients: [TwitterClientInterface],
-    actions: [post, reply]
+    actions: [reply]
 };
 export default twitterPlugin;

@@ -12,7 +12,7 @@ import {
     type IAgentRuntime
 } from "@elizaos/core";
 import { afterAll, beforeAll, describe, it } from 'vitest';
-import { defaultCharacter } from './demos/single-agent/character';
+import { defaultCharacter } from './single-agent/character';
 
 
 let runtime: IAgentRuntime;

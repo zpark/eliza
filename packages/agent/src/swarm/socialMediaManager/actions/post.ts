@@ -12,10 +12,8 @@ import {
     generateText,
     logger
 } from "@elizaos/core";
-import type { TwitterConfig } from '../environment';
-import { TWITTER_CLIENT_NAME } from "../constants";
-import { ClientBase } from "../base";
-import { ITwitterClient } from "../types";
+import { getUserServerRole } from "../../shared/role/types";
+import { Message } from "discord.js";
 
 const tweetGenerationTemplate = `# Task: Generate a tweet in the style and voice of {{agentName}}.
 
@@ -36,6 +34,8 @@ Recent Context:
 - Natural and conversational in tone
 
 Return only the tweet text, no additional commentary.`;
+
+const TWITTER_CLIENT_NAME = 'twitter';
 
 const twitterPostAction = {
     name: "TWITTER_POST",
@@ -81,7 +81,7 @@ const twitterPostAction = {
                 await callback(response.content);
             }
 
-            const twitterConfig = (state.twitterClient as any)?.twitterConfig as TwitterConfig;
+            const twitterConfig = (state.twitterClient as any)?.twitterConfig;
             const maxTweetLength = twitterConfig?.MAX_TWEET_LENGTH || 280;
 
             // Generate the tweet content
@@ -126,15 +126,26 @@ const twitterPostAction = {
 
             runtime.registerTask({
                 roomId: message.roomId,
+                name: "Confirm Twitter Post",
+                description: "Confirm the tweet to be posted.",
                 tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
                 handler: async (runtime: IAgentRuntime) => {
-                    const client = runtime.getClient(TWITTER_CLIENT_NAME) as unknown as ITwitterClient
+                    const client = runtime.getClient(TWITTER_CLIENT_NAME) as any
                     const memories = await client.client.twitterClient.sendTweet(cleanTweet);
                     console.log("Sent tweet")
 
                     // TODO: Get the tweet link and post it
                     // await callback(responseContent);
 
+                },
+                validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+                    const discordMessage = state.discordMessage as Message;
+                    if (!discordMessage) {
+                        throw new Error("Discord message not found in state");
+                    }
+
+                    const role = await getUserServerRole(runtime, discordMessage.author.id, discordMessage.guild.id);
+                    return role === "ADMIN" || role === "BOSS";
                 }
             })
 

@@ -23,9 +23,9 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import yargs from "yargs";
-import { defaultCharacter } from "./demos/single-agent/character.ts";
+import { defaultCharacter } from "./single-agent/character.ts";
 import { CharacterServer } from "./server/index.ts";
-import swarm from "./demos/the-org/index";
+import swarm from "./swarm/index";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

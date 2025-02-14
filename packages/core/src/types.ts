@@ -1274,7 +1274,10 @@ export const CACHE_KEYS = {
 
 export interface Task {
   id?: UUID;
+  name: string;
+  description: string;
   roomId: UUID;
   tags: string[];
   handler: (runtime: IAgentRuntime) => Promise<void>;
+  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }

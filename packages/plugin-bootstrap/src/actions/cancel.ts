@@ -1,11 +1,11 @@
 import {
-    type Action,
-    type ActionExample,
-    type HandlerCallback,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-    logger
+  type Action,
+  type ActionExample,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  logger,
 } from "@elizaos/core";
 
 export const cancelTaskAction: Action = {
@@ -24,8 +24,18 @@ export const cancelTaskAction: Action = {
       tags: ["AWAITING_CONFIRMATION"],
     });
 
+    // validate the tasks
+
+    const validTasks = await Promise.all(
+      pendingTasks.map(async (task) => {
+        return task.validate
+          ? await task.validate(runtime, message, state)
+          : true;
+      })
+    );
+
     // Only validate if there are pending tasks
-    return !!pendingTasks && pendingTasks.length > 0;
+    return !!validTasks && validTasks.length > 0;
   },
 
   handler: async (
