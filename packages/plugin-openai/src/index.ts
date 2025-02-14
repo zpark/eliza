@@ -284,6 +284,8 @@ export const openaiPlugin: Plugin = {
         },
         body: formData,
       });
+
+      console.log("response", response)
       if (!response.ok) {
         throw new Error(`Failed to transcribe audio: ${response.statusText}`);
       }
@@ -373,6 +375,59 @@ export const openaiPlugin: Plugin = {
               console.error("Error in test_image_generation:", error);
               throw error;
             }
+          }
+        },
+        {
+          name: 'openai_test_image_description',
+          fn: async (runtime) => {
+            console.log("openai_test_image_description");
+            try {
+              const {title, description} = await runtime.useModel(ModelClass.IMAGE_DESCRIPTION, "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg");
+              console.log("generated with test_image_description:", title, description);
+            } catch (error) {
+              console.error("Error in test_image_description:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_transcription',
+          fn: async (runtime) => {
+            console.log("openai_test_transcription");
+            try {
+              const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, 
+                Buffer.from(await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg")
+                  .then(res => res.arrayBuffer())));
+              console.log("generated with test_transcription:", transcription);
+            } catch (error) {
+              console.error("Error in test_transcription:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_tokenizer_encode',
+          fn: async (runtime) => {
+            const context = "Hello tokenizer encode!";
+            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            if (!Array.isArray(tokens) || tokens.length === 0) {
+              throw new Error("Failed to tokenize text: expected non-empty array of tokens");
+            }
+            console.log("Tokenized output:", tokens);
+          }
+        },
+        {
+          name: 'openai_test_text_tokenizer_decode',
+          fn: async (runtime) => {
+            const context = "Hello tokenizer decode!";
+            // Encode the string into tokens first
+            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            // Now decode tokens back into text
+            const decodedText = await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens });
+            if (decodedText !== context) {
+              throw new Error(`Decoded text does not match original. Expected "${context}", got "${decodedText}"`);
+            }
+            console.log("Decoded text:", decodedText);
           }
         }
       ]
