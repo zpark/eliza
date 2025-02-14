@@ -1004,3 +1004,16 @@ To contribute a new plugin:
 5. Update the plugin registry
 
 For detailed API documentation and examples, see the [API Reference](/api).
+
+---
+
+## FAQ
+
+### How do I add and configure plugins?
+Add plugin names to the plugins array in character.json, run `pnpm build`, and configure any required settings in `.env` or character file.
+
+### Can plugins interact with each other?
+Yes, plugins can share functionality and data. For example, one plugin can use another's image generation capabilities.
+
+### How do I create custom functionality?
+Create a new plugin in the packages directory, implement desired features, and add it to your character's plugin configuration.

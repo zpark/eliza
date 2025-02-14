@@ -558,7 +558,7 @@ export class AgentRuntime implements IAgentRuntime {
                     elizaLogger.info(
                         `[RAG Process] Processing direct string knowledge`,
                     );
-                    await this.processCharacterKnowledge(stringKnowledge);
+                    await this.processCharacterRAGKnowledge(stringKnowledge);
                 }
             } else {
                 // Non-RAG mode: only process string knowledge
