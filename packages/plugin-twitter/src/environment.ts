@@ -34,7 +34,7 @@ export const twitterEnvSchema = z.object({
     TWITTER_PASSWORD: z.string().min(1, "X/Twitter password is required"),
     TWITTER_EMAIL: z.string().email("Valid X/Twitter email is required"),
     MAX_TWEET_LENGTH: z.number().int().default(DEFAULT_MAX_TWEET_LENGTH),
-    TWITTER_2FA_SECRET: z.string(),
+    TWITTER_2FA_SECRET: z.string().default(undefined),
     TWITTER_RETRY_LIMIT: z.number().int(),
     TWITTER_POLL_INTERVAL: z.number().int(),
     TWITTER_TARGET_USERS: z.array(twitterUsernameSchema).default([]),

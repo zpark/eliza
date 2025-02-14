@@ -58,6 +58,11 @@ export class TwitterClientManager {
     }
 
     async createClient(runtime: IAgentRuntime, clientId: string, config: TwitterConfig): Promise<TwitterClient> {
+        console.log("Creating client", clientId, config);
+        // if TWITTER_2FA_SECRET === null, delete it
+        if (config.TWITTER_2FA_SECRET === null) {
+            delete config.TWITTER_2FA_SECRET;
+        }
         try {
             // Check if client already exists
             const existingClient = this.getClient(clientId, runtime.agentId);

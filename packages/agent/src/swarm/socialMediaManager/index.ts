@@ -1,5 +1,5 @@
-import { Character, IAgentRuntime } from "@elizaos/core";
-import { ChannelType, Guild } from 'discord.js';
+import { Character, Client, IAgentRuntime } from "@elizaos/core";
+import { ChannelType, Guild, Message } from 'discord.js';
 import dotenv from "dotenv";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import { type OnboardingConfig } from "../shared/onboarding/types";
@@ -275,7 +275,26 @@ export default {
     runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
       console.log("Social media manager joined server");
       console.log(params);
+      // TODO: Save onboarding config to runtime
       await initializeOnboarding(runtime, params.guild.id, socialMediaManagerConfig);
+    });
+
+    runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
+      console.log("Social media manager received message");
+      console.log(params);
+    });
+
+    runtime.registerEvent("DISCORD_CLIENT_STARTED", (params: { client: Client }) => {
+      console.log("Social media manager started");
+      console.log(params);
+    });
+
+    // when booting up into a server we're in, fire a connected event
+    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
+      console.log("Social media manager connected to server");
+      console.log(params);
+      console.log("ID is", params.guild[0])
+      await initializeOnboarding(runtime, params.guild[0], socialMediaManagerConfig);
     });
   }
 };

@@ -73,6 +73,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     this.client.login(this.apiToken);
 
     this.setupEventListeners();
+
+    // fire a connected event
+    this.runtime.emitEvent("DISCORD_CLIENT_STARTED", { client: this.client });
   }
 
   private setupEventListeners() {
@@ -377,11 +380,21 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 
   private async onReady() {
+    console.log("DISCORD ON READY")
     const guilds = await this.client.guilds.fetch();
     for (const [, guild] of guilds) {
       const fullGuild = await guild.fetch();
       this.voiceManager.scanGuild(fullGuild);
     }
+
+    // send in 1 second
+    setTimeout(() => {
+      // for each server the client is in, fire a connected event
+      for (const guild of guilds) {
+        console.log("DISCORD SERVER CONNECTED", guild);
+        this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { guild });
+      }
+    }, 1000);
   }
 }
 

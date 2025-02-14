@@ -51,15 +51,20 @@ export async function initializeOnboarding(
     config: OnboardingConfig
 ): Promise<void> {
     try {
+        console.log("*** initializeOnboarding", runtime)
         // Check if onboarding is already initialized
         const existingState = await runtime.cacheManager.get<OnboardingState>(
             `server_${serverId}_onboarding_state`
         );
 
+        console.log("*** existingState", existingState)
+
         if (existingState) {
             logger.info(`Onboarding already initialized for server ${serverId}`);
             return;
         }
+
+        console.log("*** initializing onboarding")
 
         // Initialize onboarding state with config settings
         const initialState: OnboardingState = {
@@ -74,11 +79,15 @@ export async function initializeOnboarding(
             completed: false
         };
 
+        console.log("*** initialState", initialState)
+
         // Save initial state
         await runtime.cacheManager.set(
             `server_${serverId}_onboarding_state`,
             initialState
         );
+
+        console.log("*** saved initialState")
 
         // Cache the config for reference
         await runtime.cacheManager.set(
@@ -87,16 +96,20 @@ export async function initializeOnboarding(
         );
 
         // Get Discord client and server info
-        const discordClient = runtime.getClient("discord") as unknown as Client;
+        const discordClient = (runtime.getClient("discord") as any).client as Client;
+        console.log("discordClient", discordClient)
+        console.log("guilds", discordClient.guilds)
         const guild = await discordClient.guilds.fetch(serverId);
         
         // Set server owner as admin
         const owner = await guild.members.fetch(guild.ownerId);
+        console.log("*** owner", owner)
         await setUserServerRole(runtime, {
             userId: owner.id,
             serverId: serverId,
             role: RoleName.ADMIN,
         });
+        console.log("*** setUserServerRole")
 
         // Start DM with owner
         const onboardingMessages = [
@@ -107,7 +120,8 @@ export async function initializeOnboarding(
         
         const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
         await owner.send(randomMessage);
-
+        console.log("*** sent onboarding message")
+        
         logger.info(`Initialized onboarding for server ${serverId}`);
     } catch (error) {
         logger.error(`Failed to initialize onboarding for server ${serverId}:`, error);

@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
 import { Character, IAgentRuntime } from "@elizaos/core";
-import { ChannelType, Guild, Message } from "discord.js";
+import { Client, ChannelType, Guild, Message } from "discord.js";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import { OnboardingConfig } from "../shared/onboarding/types";
 
@@ -378,6 +378,7 @@ const config: OnboardingConfig = {
 export default { 
   character, 
   init: async (runtime: IAgentRuntime) => {
+    console.log("*** INIT", runtime)
     // Register runtime events
     runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
       console.log("Community manager joined server");
@@ -389,6 +390,18 @@ export default {
     runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
       console.log("Community manager received message");
       console.log(params);
+    });
+
+    runtime.registerEvent("DISCORD_CLIENT_STARTED", (params: { client: Client }) => {
+      console.log("Community manager started");
+      console.log(params);
+    });
+
+    // when booting up into a server we're in, fire a connected event
+    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
+      console.log("Community manager connected to server");
+      console.log(params);
+      await initializeOnboarding(runtime, params.guild.id, config);
     });
   }
 };
