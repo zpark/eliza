@@ -1,7 +1,6 @@
-// TODO: 
+// src/plugin-twitter/src/actions/post.ts
 import {
     type Action,
-    type ActionExample,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -12,8 +11,8 @@ import {
     generateText,
     logger
 } from "@elizaos/core";
+import { OnboardingState } from "../../shared/onboarding/types";
 import { getUserServerRole } from "../../shared/role/types";
-import { Message } from "discord.js";
 
 const tweetGenerationTemplate = `# Task: Generate a tweet in the style and voice of {{agentName}}.
 
@@ -35,9 +34,7 @@ Recent Context:
 
 Return only the tweet text, no additional commentary.`;
 
-const TWITTER_CLIENT_NAME = 'twitter';
-
-const twitterPostAction = {
+const twitterPostAction: Action = {
     name: "TWITTER_POST",
     similes: [
         "POST_TWEET",
@@ -49,25 +46,42 @@ const twitterPostAction = {
         "SHARE_ON_TWITTER"
     ],
     description: "Creates and posts a tweet based on the conversation context",
-    validate: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State
-    ) => {
-        return true;
-        // const keywords = [
-        //     "post",
-        //     "twitter",
-        //     "share",
-        //     "tweet",
-        //     "to x",
-        //     "on x",
-        //     "xeet",
-        // ];
+    
+    validate: async (runtime: IAgentRuntime, message: Memory, state: State): Promise<boolean> => {
+        const serverId = state.serverId as string;
+        if (!serverId) {
+            return false;
+        }
 
-        // const messageText = message.content.text.toLowerCase();
-        // return keywords.some(keyword => messageText.includes(keyword));
+        const manager = (runtime.getClient("twitter") as any).getInstance();
+        const client = manager.getClient(serverId, runtime.agentId);
+        
+        // If no client exists yet, check if we can create one from settings
+        if (!client) {
+            const onboardingState = await runtime.cacheManager.get(`server_${serverId}_onboarding_state`) as OnboardingState;
+            if (!onboardingState?.settings) {
+                return false;
+            }
+
+            // Check if Twitter is enabled and configured
+            const settings = onboardingState.settings;
+            if (!(settings.ENABLED_PLATFORMS?.value as string)?.toLowerCase().includes('twitter')) {
+                return false;
+            }
+
+            try {
+                // Try to create client with onboarding settings
+                await manager.createClient(runtime, serverId, settings);
+                return true;
+            } catch (error) {
+                logger.error("Failed to create Twitter client:", error);
+                return false;
+            }
+        }
+
+        return true;
     },
+
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -77,24 +91,22 @@ const twitterPostAction = {
         responses: Memory[]
     ) => {
         try {
-            for (const response of responses) {
-                await callback(response.content);
+            const serverId = state.serverId as string;
+            
+            // Get onboarding state
+            const onboardingState = await runtime.cacheManager.get(`server_${serverId}_onboarding_state`) as OnboardingState;
+            if (!onboardingState?.settings) {
+                throw new Error("Twitter not configured for this server");
             }
-
-            const twitterConfig = (state.twitterClient as any)?.twitterConfig;
-            const maxTweetLength = twitterConfig?.MAX_TWEET_LENGTH || 280;
 
             // Generate the tweet content
             const context = composeContext({
                 state: {
                     ...state,
-                    maxTweetLength
+                    maxTweetLength: 280
                 },
                 template: tweetGenerationTemplate
             });
-
-            console.log("Context")
-            console.log(context)
 
             const tweetContent = await generateText({
                 runtime,
@@ -102,68 +114,81 @@ const twitterPostAction = {
                 modelClass: ModelClass.TEXT_SMALL
             });
 
-            console.log("Tweet Content")
-            console.log(tweetContent)
-
             // Clean up the generated content
             const cleanTweet = tweetContent
                 .trim()
-                .replace(/^["'](.*)["']$/, '$1') // Remove surrounding quotes if present
-                .replace(/\\n/g, '\n'); // Handle newlines properly
+                .replace(/^["'](.*)["']$/, '$1')
+                .replace(/\\n/g, '\n');
 
-            // Prepare the response content
+            // Prepare response content
             const responseContent: Content = {
                 text: `I'll tweet this:\n\n${cleanTweet}`,
                 action: "TWITTER_POST",
                 source: message.content.source,
             };
 
-            // If we're in dry run mode, just show what would be tweeted
-            if (twitterConfig?.TWITTER_DRY_RUN) {
-                await callback(responseContent);
-                return responseContent;
+            // Get or create Twitter client
+            const manager = (runtime.getClient("twitter") as any).getInstance();
+            let client = manager.getClient(serverId, runtime.agentId);
+            if (!client) {
+                client = await manager.createClient(runtime, serverId, onboardingState.settings);
             }
 
-            runtime.registerTask({
-                roomId: message.roomId,
-                name: "Confirm Twitter Post",
-                description: "Confirm the tweet to be posted.",
-                tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
-                handler: async (runtime: IAgentRuntime) => {
-                    const client = runtime.getClient(TWITTER_CLIENT_NAME) as any
-                    const memories = await client.client.twitterClient.sendTweet(cleanTweet);
-                    console.log("Sent tweet")
+            // Handle approval requirement
+            const requiresApproval = onboardingState.settings.POST_APPROVAL_REQUIRED?.value === "yes";
+            const approvalRole = (onboardingState.settings.POST_APPROVAL_ROLE?.value as string)?.toLowerCase();
 
-                    // TODO: Get the tweet link and post it
-                    // await callback(responseContent);
-
-                },
-                validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
-                    const discordMessage = state.discordMessage as Message;
-                    if (!discordMessage) {
-                        throw new Error("Discord message not found in state");
+            if (requiresApproval) {
+                runtime.registerTask({
+                    roomId: message.roomId,
+                    name: "Confirm Twitter Post",
+                    description: "Confirm the tweet to be posted.",
+                    tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
+                    handler: async (runtime: IAgentRuntime) => {
+                        const result = await client.client.twitterClient.sendTweet(cleanTweet);
+                        
+                        const tweetId = result.data?.create_tweet?.tweet_results?.result?.rest_id;
+                        const tweetUrl = `https://twitter.com/${onboardingState.settings.TWITTER_USERNAME.value}/status/${tweetId}`;
+                        
+                        await callback({
+                            ...responseContent,
+                            text: `Tweet posted!\n${tweetUrl}`,
+                            url: tweetUrl,
+                            tweetId
+                        });
+                    },
+                    validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+                        // Check if user has required role
+                        const userRole = await getUserServerRole(runtime, message.userId, serverId);
+                        if (approvalRole === "admin") {
+                            return userRole === "ADMIN";
+                        }
+                        return userRole === "ADMIN" || userRole === "BOSS";
                     }
+                });
 
-                    const role = await getUserServerRole(runtime, discordMessage.author.id, discordMessage.guild.id);
-                    return role === "ADMIN" || role === "BOSS";
-                }
-            })
+                responseContent.text += "\nWaiting for approval from ";
+                responseContent.text += approvalRole === "admin" ? "an admin" : "an admin or boss";
+            } else {
+                // Post immediately if no approval required
+                const result = await client.client.twitterClient.sendTweet(cleanTweet);
+                const tweetId = result.data?.create_tweet?.tweet_results?.result?.rest_id;
+                const tweetUrl = `https://twitter.com/${onboardingState.settings.TWITTER_USERNAME.value}/status/${tweetId}`;
+                
+                responseContent.text = `Tweet posted!\n${tweetUrl}`;
+                responseContent.url = tweetUrl;
+                responseContent.tweetId = tweetId;
+            }
 
             await callback(responseContent);
-
             return responseContent;
 
         } catch (error) {
             logger.error("Error in TWITTER_POST action:", error);
-            const errorContent: Content = {
-                text: "Sorry, I wasn't able to post that tweet.",
-                action: "TWITTER_POST",
-                source: message.content.source
-            };
-            await callback(errorContent);
-            return errorContent;
+            throw error;
         }
     },
+
     examples: [
         [
             {
@@ -184,21 +209,6 @@ const twitterPostAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Oh that gives me a great idea for a tweet!",
-                },
-            },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "Let me tweet that out right now",
-                    action: "TWITTER_POST",
-                },
-            },
-        ],
-        [
-            {
-                user: "{{user1}}",
-                content: {
                     text: "You should share your thoughts about this on Twitter",
                 },
             },
@@ -209,38 +219,8 @@ const twitterPostAction = {
                     action: "TWITTER_POST",
                 },
             },
-        ],
-        [
-            {
-                user: "{{user1}}",
-                content: {
-                    text: "Can you tweet what you just said about quantum computing?",
-                },
-            },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "I'll compose a tweet about that now",
-                    action: "TWITTER_POST",
-                },
-            },
-        ],
-        [
-            {
-                user: "{{user1}}",
-                content: {
-                    text: "Tweet this conversation, it's really insightful!",
-                },
-            },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "I'll tweet a summary of our discussion",
-                    action: "TWITTER_POST",
-                },
-            },
         ]
-    ] as ActionExample[][]
-} as Action;
+    ]
+};
 
 export default twitterPostAction;

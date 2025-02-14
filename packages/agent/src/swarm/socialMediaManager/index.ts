@@ -1,10 +1,9 @@
 import { Character, IAgentRuntime } from "@elizaos/core";
-import { ChannelType, Message } from 'discord.js';
+import { ChannelType, Guild } from 'discord.js';
+import dotenv from "dotenv";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import { type OnboardingConfig } from "../shared/onboarding/types";
-import { Guild } from "discord.js";
-
-import dotenv from "dotenv";
+import post from "./actions/post";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -182,45 +181,96 @@ const character: Character = {
   }
 };
 
-// Social Media Manager Onboarding Config
-const socialMediaManagerConfig: OnboardingConfig = {
-    settings: {
-        TWITTER_ENABLED: {
-            name: "Enable Twitter Integration",
-            description: "Should I integrate with Twitter?",
-            required: true
-        },
-        TWITTER_APPROVAL_REQUIRED: {
-            name: "Require Tweet Approval",
-            description: "Should tweets require approval before posting?",
-            required: true,
-            dependsOn: ["TWITTER_ENABLED"]
-        },
-        TWITTER_APPROVAL_CHANNEL: {
-            name: "Tweet Approval Channel",
-            description: "Which channel should I use for tweet approvals?",
-            required: false,
-            dependsOn: ["TWITTER_APPROVAL_REQUIRED"],
-            validation: (value: string) => value.startsWith('#') || value.match(/^\d+$/) !== null
-        },
-        CONTENT_GUIDELINES: {
-            name: "Content Guidelines",
-            description: "What guidelines should I follow when creating social media content?",
-            required: true
-        },
-        STYLE_GUIDELINES: {
-            name: "Style Guidelines",
-            description: "What style should I use when creating social media content?",
-            required: true
-        }
-    },
-    roleRequired: "ADMIN",
-    allowedChannels: [ChannelType.GuildText, ChannelType.DM, ChannelType.PublicThread, ChannelType.PrivateThread]
+export const socialMediaManagerConfig: OnboardingConfig = {
+  settings: {
+      // General Social Media Settings
+      ENABLED_PLATFORMS: {
+          name: "Enabled Platforms",
+          description: "Which social media platforms would you like to enable? (twitter)",
+          required: true,
+          validation: (value: string) => value.toLowerCase() === "twitter" // For now just Twitter
+      },
+
+      // Twitter Authentication Settings
+      TWITTER_AUTH_TYPE: {
+          name: "Twitter Authentication Type",
+          description: "How would you like to authenticate with Twitter? (basic/api) Basic requires username, password, and email. API requires API keys and tokens. You'll need to disable 2FA on your account to use basic auth. You'll need to create an app in the Twitter Developer Portal to use API auth.",
+          required: true,
+          dependsOn: ["ENABLED_PLATFORMS"],
+          validation: (value: string) => ["basic", "api"].includes(value.toLowerCase()),
+          visibleIf: (settings) => (settings.ENABLED_PLATFORMS?.value as string)?.toLowerCase().includes("twitter")
+      },
+
+      // Basic Auth Settings
+      TWITTER_USERNAME: {
+          name: "Twitter Username",
+          description: "Your Twitter username (without @)",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          validation: (value: string) => value.length > 0 && value.length <= 15,
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "basic"
+      },
+      TWITTER_EMAIL: {
+          name: "Twitter Email",
+          description: "Email associated with your Twitter account",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          validation: (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "basic"
+      },
+      TWITTER_PASSWORD: {
+          name: "Twitter Password",
+          description: "Your Twitter password",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "basic"
+      },
+      TWITTER_2FA_SECRET: {
+          name: "Twitter 2FA Secret",
+          description: "Your Twitter 2FA secret (if enabled)",
+          required: false,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "basic"
+      },
+
+      // API Auth Settings
+      TWITTER_API_KEY: {
+          name: "Twitter API Key",
+          description: "Your Twitter API key (from developer portal)",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "api"
+      },
+      TWITTER_API_SECRET: {
+          name: "Twitter API Secret",
+          description: "Your Twitter API secret",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "api"
+      },
+      TWITTER_ACCESS_TOKEN: {
+          name: "Twitter Access Token",
+          description: "Your Twitter access token",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "api"
+      },
+      TWITTER_ACCESS_TOKEN_SECRET: {
+          name: "Twitter Access Token Secret",
+          description: "Your Twitter access token secret",
+          required: true,
+          dependsOn: ["TWITTER_AUTH_TYPE"],
+          visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "api"
+      },
+  },
+  roleRequired: "ADMIN",
+  allowedChannels: [ChannelType.DM]
 };
 
 export default { 
   character, 
   init: async (runtime: IAgentRuntime) => {
+    runtime.registerAction(post);
     // Register runtime events
     runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
       console.log("Social media manager joined server");

@@ -12,8 +12,6 @@ export interface UserRole {
     userId: string;
     serverId: string;
     role: RoleName;
-    assignedBy: string;
-    assignedAt: number;
 }
 
 export interface ServerRoleState {
@@ -58,47 +56,5 @@ export async function getUserServerRole(
     } catch (error) {
         logger.error("Error getting user role:", error);
         return RoleName.NONE;
-    }
-}
-
-export async function setUserServerRole(
-    runtime: IAgentRuntime,
-    userRole: UserRole
-): Promise<void> {
-    try {
-        const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(userRole.serverId);
-        let roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
-
-        if (!roleState) {
-            roleState = {
-                roles: {},
-                lastUpdated: Date.now()
-            };
-        }
-
-        roleState.roles[userRole.userId] = userRole;
-        roleState.lastUpdated = Date.now();
-
-        await runtime.cacheManager.set(
-            cacheKey,
-            roleState
-        );
-
-        // Log role change
-        await runtime.databaseAdapter.log({
-            body: {
-                type: "role_update",
-                targetUser: userRole.userId,
-                serverId: userRole.serverId,
-                newRole: userRole.role,
-                assignedBy: userRole.assignedBy
-            },
-            userId: runtime.agentId,
-            roomId: userRole.serverId as UUID,
-            type: "role_management"
-        });
-    } catch (error) {
-        logger.error("Error setting user role:", error);
-        throw error;
     }
 }

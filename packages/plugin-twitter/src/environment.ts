@@ -109,7 +109,8 @@ function safeParseInt(
 // we also do a lot of typing/parsing here
 // so we can do it once and only once per character
 export async function validateTwitterConfig(
-    runtime: IAgentRuntime
+    runtime: IAgentRuntime,
+    config: Partial<TwitterConfig> = {}
 ): Promise<TwitterConfig> {
     try {
         const twitterConfig = {
@@ -205,6 +206,7 @@ export async function validateTwitterConfig(
                     runtime.getSetting("TWITTER_SPACES_ENABLE") ||
                         process.env.TWITTER_SPACES_ENABLE
                 ) ?? false,
+            ...config,
         };
 
         return twitterEnvSchema.parse(twitterConfig);

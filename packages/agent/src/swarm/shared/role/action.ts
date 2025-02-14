@@ -209,8 +209,6 @@ const updateOrgRoleAction: Action = {
         userId: mentionedUser.id,
         serverId,
         role: newRole,
-        assignedBy: requesterId,
-        assignedAt: Date.now(),
       };
 
       roleCache.lastUpdated = Date.now();
