@@ -85,12 +85,13 @@ export const anthropicPlugin: Plugin = {
       return text;
     },
     [ModelClass.TEXT_EMBEDDING]: async (runtime, text: string | null) => {
-
-      // TODO: Make this fallback only!!!
-      // TODO: pass on cacheDir to FlagEmbedding.init
-      if (!text) return new Array(1536).fill(0);
-      
-      const model = await FlagEmbedding.init({ model: EmbeddingModel.BGESmallENV15 });
+      // TODO: check if other plugin provides TEXT_EMBEDDING model 
+      // Runtime will break if openai was used for TEXT_EMBEDDING before
+      const model = await FlagEmbedding.init({ 
+        model: EmbeddingModel.BGESmallENV15,
+        cacheDir: runtime.cacheDir,
+        maxLength: 512
+      });
       const embedding = await model.queryEmbed(text);
       
       const finalEmbedding = Array.isArray(embedding) 
