@@ -125,7 +125,7 @@ describe("Discord MessageManager", () => {
   });
 
   it("should initialize MessageManager", () => {
-    expect(messageManager).toBeDefined();
+    expect(messageManager).toBeInstanceOf(MessageManager);
   });
 
   it("should process user messages", async () => {
@@ -179,7 +179,7 @@ describe("Discord MessageManager", () => {
       Promise.resolve({ processedContent: "", attachments: [] })
     );
 
-    const myVariable = new Collection<string, any>([
+    const mockAttachments = new Collection<string, any>([
       [
         "mock-attachment-id",
         {
@@ -190,7 +190,7 @@ describe("Discord MessageManager", () => {
       ],
     ]);
 
-    mockMessage.attachments = myVariable;
+    mockMessage.attachments = mockAttachments;
 
     const processAttachmentsMock = vi.fn().mockResolvedValue([]);
 
@@ -206,6 +206,6 @@ describe("Discord MessageManager", () => {
 
     await messageManager.handleMessage(mockMessage);
 
-    expect(processAttachmentsMock).toHaveBeenCalled();
+    expect(processAttachmentsMock).toHaveBeenCalledWith(mockAttachments);
   });
 });

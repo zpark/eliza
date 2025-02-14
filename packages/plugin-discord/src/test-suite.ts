@@ -35,7 +35,7 @@ export class DiscordTestSuite implements TestSuite {
         fn: this.testTextToSpeechPlayback.bind(this),
       },
       {
-        name: "test sending message",
+        name: "test sending message with files",
         fn: this.testSendingTextMessage.bind(this),
       },
       {
@@ -193,7 +193,11 @@ export class DiscordTestSuite implements TestSuite {
       const channel = await this.getTextChannel();
       if (!channel) return;
 
-      await this.sendMessageToChannel(channel, "Testing sending message");
+      await this.sendMessageToChannel(
+        channel, 
+        "Testing Message",
+        ["https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg"]
+      );
     } catch (error) {
       logger.error("Error in sending text message:", error);
     }
@@ -271,7 +275,7 @@ export class DiscordTestSuite implements TestSuite {
   }
   
 
-  async sendMessageToChannel(channel: TextChannel, messageContent: string) {
+  async sendMessageToChannel(channel: TextChannel, messageContent: string, files: any[]) {
     try {
       if (!channel || !channel.isTextBased()) {
         logger.error("Channel is not a text-based channel or does not exist.");
@@ -282,7 +286,7 @@ export class DiscordTestSuite implements TestSuite {
         channel as TextChannel,
         messageContent,
         null,
-        null
+        files
       );
     } catch (error) {
       logger.error("Error sending message:", error);
