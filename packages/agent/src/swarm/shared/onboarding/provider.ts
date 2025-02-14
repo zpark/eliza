@@ -20,46 +20,40 @@ export const createOnboardingProvider = (config: OnboardingConfig): Provider => 
         message: Memory,
         state?: State
     ): Promise<string> => {
+        console.log("*** get onboarding provider");
+
         if(!state?.discordMessage) {
             throw new Error("No discord message found");
         }
         const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id) {
+        let serverId;
+        if (discordMessage.guild?.id) {
+            serverId = discordMessage.guild.id;
+        } else if (discordMessage.channel.isDMBased()) {
+            serverId = discordMessage.channel.id;
+        } else {
+            logger.info("No valid ID found");
             return "";
         }
 
-        const serverId = discordMessage.guild.id;
-        const channelType = discordMessage.channel.type;
-
         try {
-            // Check channel type restrictions
-            if (config.allowedChannels && 
-                !config.allowedChannels.includes(channelType)) {
-                return "";
-            }
-
-            // Check role requirements
-            // TODO: Get this from the cache (role_state)
-
             // Get current onboarding state
             let onboardingState = await runtime.cacheManager.get<OnboardingState>(
                 `server_${serverId}_onboarding_state`
             );
 
             if (!onboardingState) {
+                console.log("No onboarding state found");
                 // Initialize onboarding state with provided settings
-                onboardingState = {
-                    settings: Object.entries(config.settings).reduce((acc, [key, setting]) => ({
+                onboardingState = Object.entries(config.settings).reduce((acc, [key, setting]) => ({
                         ...acc,
                         [key]: {
                             ...setting,
                             value: null
                         }
-                    }), {}),
-                    lastUpdated: Date.now(),
-                    completed: false
-                };
+                    }), {})
 
+                console.log("Initializing onboarding state");
                 await runtime.cacheManager.set(
                     `server_${serverId}_onboarding_state`,
                     onboardingState
@@ -68,12 +62,12 @@ export const createOnboardingProvider = (config: OnboardingConfig): Provider => 
 
             // Generate status message
             let statusMessage = "# Onboarding Status\n\n";
-
+            console.log("Generating onboarding status message");
             // Add settings status
-            for (const [key, setting] of Object.entries(onboardingState.settings)) {
+            for (const [key, setting] of Object.entries(onboardingState)) {
                 // Check if dependencies are met
                 const dependenciesMet = !setting.dependsOn || setting.dependsOn.every(dep => 
-                    onboardingState.settings[dep]?.value !== null
+                    onboardingState[dep]?.value !== null
                 );
 
                 if (!dependenciesMet) {
@@ -84,9 +78,12 @@ export const createOnboardingProvider = (config: OnboardingConfig): Provider => 
                 const requiredMark = setting.required ? "*" : "";
                 statusMessage += `${status} ${setting.name}${requiredMark}: ${setting.value !== null ? setting.value : "Not set"}\n`;
             }
+            console.log("statusMessage", statusMessage);
+
+            const completed = Object.values(onboardingState.settings).every(setting => setting.value !== null);
 
             // Add next step if not completed
-            if (!onboardingState.completed) {
+            if (!completed) {
                 const nextSetting = Object.entries(onboardingState.settings)
                     .find(([key, setting]) => {
                         if (setting.value === null) {

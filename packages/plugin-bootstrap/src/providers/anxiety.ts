@@ -93,7 +93,7 @@ const socialAwarenessProvider: Provider = {
                         }
                         break;
 
-                    case "USER":
+                    case "MEMBER":
                         // Increase anxiety if engaging unnecessarily with colleagues
                         if (anxietyData.recentMessageCount > 3) {
                             anxietyData.score = Math.min(anxietyData.score + 2, MAX_ANXIETY);

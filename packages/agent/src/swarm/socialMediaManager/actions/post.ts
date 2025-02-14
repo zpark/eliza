@@ -65,9 +65,6 @@ const twitterPostAction: Action = {
 
             // Check if Twitter is enabled and configured
             const settings = onboardingState.settings;
-            if (!(settings.ENABLED_PLATFORMS?.value as string)?.toLowerCase().includes('twitter')) {
-                return false;
-            }
 
             try {
                 // Try to create client with onboarding settings

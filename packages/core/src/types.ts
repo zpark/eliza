@@ -1002,6 +1002,8 @@ export interface IAgentRuntime {
     name: string | null,
     source: string | null
   ): Promise<void>;
+  
+  registerProvider(provider: Provider): void;
 
   registerAction(action: Action): void;
 

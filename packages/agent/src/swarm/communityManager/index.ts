@@ -6,9 +6,10 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
 import { Character, IAgentRuntime } from "@elizaos/core";
-import { Client, ChannelType, Guild, Message } from "discord.js";
+import { Client, Guild, Message } from "discord.js";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import { OnboardingConfig } from "../shared/onboarding/types";
+import { initializeRole } from "../shared/role/initialize";
 
 const character: Character = {
   name: "Kelsey",
@@ -370,15 +371,14 @@ const config: OnboardingConfig = {
           description: "What behaviors should I watch out for and discourage?",
           required: true
       }
-  },
-  roleRequired: "OWNER",
-  allowedChannels: [ChannelType.DM]
+  }
 };
 
 export default { 
   character, 
   init: async (runtime: IAgentRuntime) => {
-    console.log("*** INIT", runtime)
+    await initializeRole(runtime);
+
     // Register runtime events
     runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
       console.log("Community manager joined server");

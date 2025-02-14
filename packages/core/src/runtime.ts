@@ -504,6 +504,14 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     /**
+     * Register a provider for the agent to use.
+     * @param provider The provider to register.
+     */
+    registerProvider(provider: Provider) {
+        this.providers.push(provider);
+    }
+
+    /**
      * Register an action for the agent to perform.
      * @param action The action to register.
      */

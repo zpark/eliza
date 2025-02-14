@@ -10,6 +10,7 @@ import {
 import { type Message, ChannelType } from "discord.js";
 import { RoleName, getUserServerRole } from "../role/types";
 import { type OnboardingSetting, type OnboardingState } from "./types";
+import { validateOnboardingAccess } from "./ownership";
 
 interface SettingCacheItem<T> {
     value: T;
@@ -27,54 +28,41 @@ const onboardingAction: Action = {
         message: Memory,
         state: State
     ): Promise<boolean> => {
+        console.log("*** validating onboarding action");
         if(!state?.discordMessage) {
+            console.log("*** no discord message found");
             return false;
         }
         const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id || discordMessage?.channel.type !== ChannelType.DM) {
+        
+        if (discordMessage.channel.type !== ChannelType.DM) {
+            console.log("*** channel type not dm");
             return false;
         }
-
-        const serverId = discordMessage.guild.id;
+    
         const userId = discordMessage.author.id;
-
+    
         try {
-            // Check if user has admin role
-            const userRole = await getUserServerRole(runtime, userId, serverId);
-            if (userRole !== RoleName.OWNER) {
+            // Validate onboarding access using the new helper
+            const serverInfo = await validateOnboardingAccess(runtime, userId);
+            
+            if (!serverInfo) {
+                console.log("*** no active onboarding found for user");
                 return false;
             }
-
-            // Get current onboarding state
-            const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-                `server_${serverId}_onboarding_state`
-            );
-
-            if (!onboardingState || onboardingState.completed) {
-                return false;
-            }
-
-            // Check if message looks like a setting configuration
-            const settingKeywords = [
-                "set",
-                "enable",
-                "disable",
-                "configure",
-                "yes",
-                "no",
-                "true",
-                "false"
-            ];
-
-            return settingKeywords.some(keyword => 
-                message.content.text.toLowerCase().includes(keyword)
-            );
-
+    
+            // Store the server ID and onboarding state in state for handler
+            state.onboardingServerId = serverInfo.serverId;
+            state.onboardingState = serverInfo.onboardingState;
+            
+            console.log("*** found active onboarding for server", serverInfo.serverId);
+            return true;
+    
         } catch (error) {
             logger.error("Error validating onboarding action:", error);
             return false;
         }
-    },
+    },    
 
     handler: async (
         runtime: IAgentRuntime,
@@ -122,11 +110,11 @@ const onboardingAction: Action = {
             }
 
             // Find the next unconfigured setting
-            const nextSetting = Object.entries(onboardingState.settings)
+            const nextSetting = Object.entries(onboardingState)
                 .find(([_, setting]) => {
                     if (setting.value === null) {
                         const dependenciesMet = !setting.dependsOn || setting.dependsOn.every(dep => 
-                            onboardingState.settings[dep]?.value !== null
+                            onboardingState[dep]?.value !== null
                         );
                         return dependenciesMet;
                     }
@@ -134,7 +122,6 @@ const onboardingAction: Action = {
                 });
 
             if (!nextSetting) {
-                onboardingState.completed = true;
                 await runtime.cacheManager.set(
                     `server_${serverId}_onboarding_state`,
                     onboardingState,
@@ -208,7 +195,7 @@ const onboardingAction: Action = {
             }
 
             // Update the setting
-            onboardingState.settings[settingKey].value = value;
+            onboardingState[settingKey].value = value;
             onboardingState.lastUpdated = Date.now();
 
             // Save updated state
@@ -221,7 +208,7 @@ const onboardingAction: Action = {
             await applySettingToCache(runtime, serverId, settingKey, value);
 
             // Find next unconfigured setting
-            const nextUnconfiguredSetting = Object.entries(onboardingState.settings as { [key: string]: OnboardingSetting })
+            const nextUnconfiguredSetting = Object.entries(onboardingState as { [key: string]: OnboardingSetting })
                 .find(([_, s]) => s.value === null && (!s.dependsOn || s.dependsOn.every(dep => 
                     onboardingState.settings[dep]?.value !== null
                 )));
@@ -233,7 +220,6 @@ const onboardingAction: Action = {
                 responseText += `Next setting: ${nextSetting.name}\n${nextSetting.description}`;
             } else {
                 responseText += "All settings configured! Onboarding complete.";
-                onboardingState.completed = true;
                 await runtime.cacheManager.set(
                     `server_${serverId}_onboarding_state`,
                     onboardingState,

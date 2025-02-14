@@ -5,6 +5,7 @@ import { Character, IAgentRuntime } from "@elizaos/core";
 import { ChannelType, Guild } from "discord.js";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import { OnboardingConfig } from "../shared/onboarding/types";
+import { initializeRole } from "../shared/role/initialize";
 
 const character: Character = {
   name: "Gary",
@@ -306,14 +307,14 @@ const config: OnboardingConfig = {
           description: "What specific regulations or guidelines should I enforce? (e.g., SEC guidelines, GDPR, etc.)",
           required: true
       }
-  },
-  roleRequired: "OWNER",
-  allowedChannels: [ChannelType.DM]
+  }
 };
 
 export default { 
   character, 
   init: async (runtime: IAgentRuntime) => {
+    await initializeRole(runtime);
+
     // Register runtime events
     runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
       console.log("Compliance officer joined server");

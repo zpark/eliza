@@ -13,19 +13,13 @@ export interface OnboardingSetting {
 }
 
 export interface OnboardingState {
-    settings: {
-        [key: string]: OnboardingSetting;
-    };
-    lastUpdated: number;
-    completed: boolean;
+    [key: string]: OnboardingSetting;
 }
 
 export interface OnboardingConfig {
     settings: { 
         [key: string]: Omit<OnboardingSetting, 'value'>; 
     };
-    roleRequired?: "OWNER" | "ADMIN" | "USER";
-    allowedChannels?: ChannelType[];
 }
 
 // Helper function to check if onboarding settings are complete

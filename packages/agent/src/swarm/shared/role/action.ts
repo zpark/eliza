@@ -2,7 +2,7 @@
 // This should be done by the boss only
 // Only enable this action if the user who is asking has the boss role
 // recall and store the role of the user who is asking
-// roles are OWNER, ADMIN, USER, NONE, IGNORE
+// roles are OWNER, ADMIN, MEMBER, NONE, IGNORE
 // if the user is not a boss, do not validate this action
 // if the user is a boss, update the org role of the user the boss is requesting
 // if the boss provided a discord username, or the agent has clarified and the boss has confirmed, update the cache with the discord username and the org role
@@ -27,7 +27,7 @@ import { ServerRoleState } from "./types";
 export enum RoleName {
   OWNER = "OWNER",
   ADMIN = "ADMIN",
-  USER = "USER",
+  MEMBER = "MEMBER",
   NONE = "NONE",
   IGNORE = "IGNORE",
 }
@@ -42,7 +42,7 @@ const canModifyRole = (
     return targetRole !== RoleName.OWNER;
   }
 
-  // Bosses can only modify USER, NONE, and IGNORE roles
+  // Bosses can only modify MEMBER, NONE, and IGNORE roles
   if (currentRole === RoleName.ADMIN) {
     return (
       ![RoleName.OWNER, RoleName.ADMIN].includes(targetRole) &&
@@ -254,14 +254,14 @@ const updateOrgRoleAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Make {{user2}} a USER",
+          text: "Make {{user2}} a MEMBER",
           source: "discord",
         },
       },
       {
         user: "{{user3}}",
         content: {
-          text: "Updated {{user2}}'s role to USER.",
+          text: "Updated {{user2}}'s role to MEMBER.",
           action: "UPDATE_ORG_ROLE",
         },
       },

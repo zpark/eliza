@@ -3,7 +3,7 @@ import { IAgentRuntime, logger, UUID } from "@elizaos/core";
 export enum RoleName {
     OWNER = "OWNER",
     ADMIN = "ADMIN",
-    USER = "USER",
+    MEMBER = "MEMBER",
     NONE = "NONE",
     IGNORE = "IGNORE"
 }
@@ -33,7 +33,7 @@ export function canModifyRole(modifierRole: RoleName, targetRole: RoleName, newR
     }
     
     if (modifierRole === RoleName.ADMIN) {
-        // Bosses can only modify USER, NONE, and IGNORE roles
+        // Bosses can only modify MEMBER, NONE, and IGNORE roles
         return ![RoleName.OWNER, RoleName.ADMIN].includes(targetRole) &&
                ![RoleName.OWNER, RoleName.ADMIN].includes(newRole);
     }
@@ -51,6 +51,8 @@ export async function getUserServerRole(
         const roleState = await runtime.cacheManager.get<ServerRoleState>(
             ROLE_CACHE_KEYS.SERVER_ROLES(serverId)
         );
+
+        console.log("*** runtime.cacheManager roleState", roleState);
         
         return roleState?.roles[userId]?.role || RoleName.NONE;
     } catch (error) {
