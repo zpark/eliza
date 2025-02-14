@@ -1,6 +1,7 @@
 import { Events } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordClient } from '../src';
+import { DiscordConfig } from '../src/environment';
 
 // Mock @elizaos/core
 vi.mock('@elizaos/core', () => ({
@@ -56,15 +57,13 @@ vi.mock('discord.js', () => {
 });
 
 describe('DiscordClient', () => {
+  let mockConfig: DiscordConfig;
   let mockRuntime: any;
   let discordClient: DiscordClient;
 
   beforeEach(() => {
     mockRuntime = {
-      getSetting: vi.fn((key: string) => {
-        if (key === 'DISCORD_API_TOKEN') return 'mock-token';
-        return undefined;
-      }),
+      getSetting: vi.fn(),
       getState: vi.fn(),
       setState: vi.fn(),
       getMemory: vi.fn(),
@@ -81,13 +80,16 @@ describe('DiscordClient', () => {
       }
     };
 
-    discordClient = new DiscordClient(mockRuntime);
+    mockConfig = {
+      DISCORD_API_TOKEN: "mock-token",
+    }
+
+    discordClient = new DiscordClient(mockRuntime, mockConfig);
   });
 
   it('should initialize with correct configuration', () => {
     expect(discordClient.apiToken).toBe('mock-token');
     expect(discordClient.client).toBeDefined();
-    expect(mockRuntime.getSetting).toHaveBeenCalledWith('DISCORD_API_TOKEN');
   });
 
   it('should login to Discord on initialization', () => {
