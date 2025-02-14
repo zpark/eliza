@@ -179,7 +179,6 @@ class TestRunner {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
-            throw error;
         }
     }
 
@@ -202,7 +201,9 @@ class TestRunner {
                 const testSuites = Array.isArray(pluginTests) ? pluginTests : [pluginTests];
 
                 for (const suite of testSuites) {
-                    await this.runTestSuite(suite);
+                    if (suite) {
+                        await this.runTestSuite(suite);
+                    }
                 }
             } catch (error) {
                 logger.error(`Error in plugin ${plugin.name}:`, error);
