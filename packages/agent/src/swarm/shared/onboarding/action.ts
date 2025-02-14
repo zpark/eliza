@@ -41,7 +41,7 @@ const onboardingAction: Action = {
         try {
             // Check if user has admin role
             const userRole = await getUserServerRole(runtime, userId, serverId);
-            if (userRole !== RoleName.ADMIN) {
+            if (userRole !== RoleName.OWNER) {
                 return false;
             }
 
@@ -98,7 +98,7 @@ const onboardingAction: Action = {
         try {
             // Verify admin role again in handler
             const userRole = await getUserServerRole(runtime, userId, serverId);
-            if (userRole !== RoleName.ADMIN) {
+            if (userRole !== RoleName.OWNER) {
                 await callback({
                     text: "You need admin permissions to configure settings.",
                     action: "SAVE_SETTING",

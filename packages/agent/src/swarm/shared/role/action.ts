@@ -2,7 +2,7 @@
 // This should be done by the boss only
 // Only enable this action if the user who is asking has the boss role
 // recall and store the role of the user who is asking
-// roles are ADMIN, BOSS, COLLEAGUE, NONE, IGNORE
+// roles are OWNER, ADMIN, USER, NONE, IGNORE
 // if the user is not a boss, do not validate this action
 // if the user is a boss, update the org role of the user the boss is requesting
 // if the boss provided a discord username, or the agent has clarified and the boss has confirmed, update the cache with the discord username and the org role
@@ -25,9 +25,9 @@ import { type Message } from "discord.js";
 import { ServerRoleState } from "./types";
 
 export enum RoleName {
+  OWNER = "OWNER",
   ADMIN = "ADMIN",
-  BOSS = "BOSS",
-  COLLEAGUE = "COLLEAGUE",
+  USER = "USER",
   NONE = "NONE",
   IGNORE = "IGNORE",
 }
@@ -38,15 +38,15 @@ const canModifyRole = (
   newRole: RoleName
 ): boolean => {
   // Admins can modify any role except other admins
-  if (currentRole === RoleName.ADMIN) {
-    return targetRole !== RoleName.ADMIN;
+  if (currentRole === RoleName.OWNER) {
+    return targetRole !== RoleName.OWNER;
   }
 
-  // Bosses can only modify COLLEAGUE, NONE, and IGNORE roles
-  if (currentRole === RoleName.BOSS) {
+  // Bosses can only modify USER, NONE, and IGNORE roles
+  if (currentRole === RoleName.ADMIN) {
     return (
-      ![RoleName.ADMIN, RoleName.BOSS].includes(targetRole) &&
-      ![RoleName.ADMIN, RoleName.BOSS].includes(newRole)
+      ![RoleName.OWNER, RoleName.ADMIN].includes(targetRole) &&
+      ![RoleName.OWNER, RoleName.ADMIN].includes(newRole)
     );
   }
 
@@ -90,7 +90,7 @@ const updateOrgRoleAction: Action = {
 
       if (
         !requesterRole ||
-        ![RoleName.ADMIN, RoleName.BOSS].includes(requesterRole as RoleName)
+        ![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole as RoleName)
       ) {
         return false;
       }
@@ -254,14 +254,14 @@ const updateOrgRoleAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Make {{user2}} a COLLEAGUE",
+          text: "Make {{user2}} a USER",
           source: "discord",
         },
       },
       {
         user: "{{user3}}",
         content: {
-          text: "Updated {{user2}}'s role to COLLEAGUE.",
+          text: "Updated {{user2}}'s role to USER.",
           action: "UPDATE_ORG_ROLE",
         },
       },
@@ -270,7 +270,7 @@ const updateOrgRoleAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Change {{user2}}'s role to BOSS",
+          text: "Change {{user2}}'s role to ADMIN",
           source: "discord",
         },
       },

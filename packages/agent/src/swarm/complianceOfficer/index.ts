@@ -307,7 +307,7 @@ const config: OnboardingConfig = {
           required: true
       }
   },
-  roleRequired: "ADMIN",
+  roleRequired: "OWNER",
   allowedChannels: [ChannelType.DM]
 };
 

@@ -1,7 +1,7 @@
 // Provide the current social awareness state
 // Load this from cache and convert the anxiety score to a string
 // Consult a table of anxiety scores to strings, each score range should have a list of strings which are randomly chosen and returned
-// Anxiety should map to a work oriented setting, where the agent should listen to the BOSS and increasingly ignore colleagues
+// Anxiety should map to a work oriented setting, where the agent should listen to the ADMIN and increasingly ignore colleagues
 
 import {
     type IAgentRuntime,
@@ -85,15 +85,15 @@ const socialAwarenessProvider: Provider = {
             // Update anxiety based on message context
             if (senderRole) {
                 switch (senderRole) {
+                    case "OWNER":
                     case "ADMIN":
-                    case "BOSS":
                         // Reset anxiety if directly addressed by admin/boss
                         if (message.content.text.toLowerCase().includes(runtime.character.name.toLowerCase())) {
                             anxietyData.score = 0;
                         }
                         break;
 
-                    case "COLLEAGUE":
+                    case "USER":
                         // Increase anxiety if engaging unnecessarily with colleagues
                         if (anxietyData.recentMessageCount > 3) {
                             anxietyData.score = Math.min(anxietyData.score + 2, MAX_ANXIETY);

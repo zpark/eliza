@@ -327,7 +327,7 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private getVoiceConnection(guildId: string) {
+    getVoiceConnection(guildId: string) {
         const connections = getVoiceConnections(this.client.user.id);
         if (!connections) {
             return;
@@ -509,7 +509,7 @@ export class VoiceManager extends EventEmitter {
             } finally {
                 this.processingVoice = false;
             }
-        }, DEBOUNCE_TRANSCRIPTION_THRESHOLD);
+        }, DEBOUNCE_TRANSCRIPTION_THRESHOLD) as unknown as NodeJS.Timeout;
     }
 
     async handleUserStream(

@@ -2,7 +2,7 @@
 // For each setting or secret, indicate what has been set and what is missing
 // At the end of the string output, indicate the next step in the onboarding process based on the first missing setting or secret
 // Each setting should have a name and description
-// Only validate the provider if its in a DM with a user who is an ADMIN role in a server where the agent is invited
+// Only validate the provider if its in a DM with a user who is an OWNER role in a server where the agent is invited
 
 import {
     type IAgentRuntime,

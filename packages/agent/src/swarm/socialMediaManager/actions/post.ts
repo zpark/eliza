@@ -161,9 +161,9 @@ const twitterPostAction: Action = {
                         // Check if user has required role
                         const userRole = await getUserServerRole(runtime, message.userId, serverId);
                         if (approvalRole === "admin") {
-                            return userRole === "ADMIN";
+                            return userRole === "OWNER";
                         }
-                        return userRole === "ADMIN" || userRole === "BOSS";
+                        return userRole === "OWNER" || userRole === "ADMIN";
                     }
                 });
 

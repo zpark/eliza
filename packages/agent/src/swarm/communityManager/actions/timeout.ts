@@ -65,8 +65,8 @@ export const timeoutAction: Action = {
             const requesterId = discordMessage?.author?.id;
             const requesterRole = roles?.roles[requesterId]?.role;
 
-            // Only ADMIN and BOSS roles can timeout
-            if (!requesterRole || !["ADMIN", "BOSS"].includes(requesterRole)) {
+            // Only OWNER and ADMIN roles can timeout
+            if (!requesterRole || !["OWNER", "ADMIN"].includes(requesterRole)) {
                 return false;
             }
 
@@ -145,8 +145,8 @@ export const timeoutAction: Action = {
 
             const targetRole = roles?.roles[mentionedUser.id]?.role;
 
-            // Can't timeout ADMIN or BOSS roles
-            if (targetRole && ["ADMIN", "BOSS"].includes(targetRole)) {
+            // Can't timeout OWNER or ADMIN roles
+            if (targetRole && ["OWNER", "ADMIN"].includes(targetRole)) {
                 await callback({
                     text: "Cannot timeout administrators or managers.",
                     action: "TIMEOUT_USER",

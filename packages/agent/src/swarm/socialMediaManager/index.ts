@@ -263,7 +263,7 @@ export const socialMediaManagerConfig: OnboardingConfig = {
           visibleIf: (settings) => settings.TWITTER_AUTH_TYPE?.value === "api"
       },
   },
-  roleRequired: "ADMIN",
+  roleRequired: "OWNER",
   allowedChannels: [ChannelType.DM]
 };
 

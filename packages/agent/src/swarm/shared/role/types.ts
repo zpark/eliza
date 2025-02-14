@@ -1,9 +1,9 @@
 import { IAgentRuntime, logger, UUID } from "@elizaos/core";
 
 export enum RoleName {
+    OWNER = "OWNER",
     ADMIN = "ADMIN",
-    BOSS = "BOSS",
-    COLLEAGUE = "COLLEAGUE",
+    USER = "USER",
     NONE = "NONE",
     IGNORE = "IGNORE"
 }
@@ -28,14 +28,14 @@ export const ROLE_CACHE_KEYS = {
 
 // Role validation helpers
 export function canModifyRole(modifierRole: RoleName, targetRole: RoleName, newRole: RoleName): boolean {
-    if (modifierRole === RoleName.ADMIN) {
+    if (modifierRole === RoleName.OWNER) {
         return true; // Admins can modify any role
     }
     
-    if (modifierRole === RoleName.BOSS) {
-        // Bosses can only modify COLLEAGUE, NONE, and IGNORE roles
-        return ![RoleName.ADMIN, RoleName.BOSS].includes(targetRole) &&
-               ![RoleName.ADMIN, RoleName.BOSS].includes(newRole);
+    if (modifierRole === RoleName.ADMIN) {
+        // Bosses can only modify USER, NONE, and IGNORE roles
+        return ![RoleName.OWNER, RoleName.ADMIN].includes(targetRole) &&
+               ![RoleName.OWNER, RoleName.ADMIN].includes(newRole);
     }
     
     return false; // Other roles can't modify roles

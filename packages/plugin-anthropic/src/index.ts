@@ -6,6 +6,7 @@ import {
 } from "@elizaos/core";
 import { generateText } from "ai";
 import { z } from "zod";
+import { EmbeddingModel, FlagEmbedding } from "fastembed";
 
 // Define a configuration schema for the Anthropics plugin.
 const configSchema = z.object({
@@ -82,8 +83,87 @@ export const anthropicPlugin: Plugin = {
         stopSequences,
       });
       return text;
+    },
+    [ModelClass.TEXT_EMBEDDING]: async (runtime, text: string | null) => {
+      // TODO: check if other plugin provides TEXT_EMBEDDING model 
+      // Runtime will break if openai was used for TEXT_EMBEDDING before
+      const model = await FlagEmbedding.init({ 
+        model: EmbeddingModel.BGESmallENV15,
+        cacheDir: runtime.cacheDir,
+        maxLength: 512
+      });
+      const embedding = await model.queryEmbed(text);
+      
+      const finalEmbedding = Array.isArray(embedding) 
+        ? ArrayBuffer.isView(embedding[0]) 
+          ? Array.from(embedding[0] as never)
+          : embedding
+        : Array.from(embedding);
+        
+      if (!Array.isArray(finalEmbedding) || finalEmbedding[0] === undefined) {
+        throw new Error("Invalid embedding format");
+      }
+      
+      return finalEmbedding.map(Number);
     }
   },
+  tests: [
+    {
+      name: "anthropic_plugin_tests",
+      tests: [
+        {
+          name: 'anthropic_test_text_embedding',
+          fn: async (runtime) => {
+            try {
+              console.log("testing embedding");
+              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Hello, world!");
+              console.log("embedding done", embedding);
+            } catch (error) {
+              console.error("Error in test_text_embedding:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'anthropic_test_text_small',  
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_small:", text);
+            } catch (error) {
+              console.error("Error in test_text_small:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'anthropic_test_text_large',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_large:", text);
+            } catch (error) {
+              console.error("Error in test_text_large:", error);
+              throw error;
+            }
+          }
+        }
+      ]
+    }
+  ]
+
 };
 
 export default anthropicPlugin;

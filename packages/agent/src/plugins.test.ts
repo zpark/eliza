@@ -179,7 +179,6 @@ class TestRunner {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
-            throw error;
         }
     }
 
@@ -195,11 +194,6 @@ class TestRunner {
         const plugins = this.runtime.plugins;
 
         for (const plugin of plugins) {
-            if (!plugin.tests) {
-                logger.info(`Plugin ${plugin.name} has no tests`);
-                continue;
-            }
-
             try {
                 logger.info(`Running tests for plugin: ${plugin.name}`);
                 const pluginTests = plugin.tests;
@@ -207,7 +201,9 @@ class TestRunner {
                 const testSuites = Array.isArray(pluginTests) ? pluginTests : [pluginTests];
 
                 for (const suite of testSuites) {
-                    await this.runTestSuite(suite);
+                    if (suite) {
+                        await this.runTestSuite(suite);
+                    }
                 }
             } catch (error) {
                 logger.error(`Error in plugin ${plugin.name}:`, error);

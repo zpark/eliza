@@ -107,7 +107,7 @@ export async function initializeOnboarding(
         await setUserServerRole(runtime, {
             userId: owner.id,
             serverId: serverId,
-            role: RoleName.ADMIN,
+            role: RoleName.OWNER,
         });
         console.log("*** setUserServerRole")
 
@@ -149,11 +149,11 @@ export async function canAccessOnboarding(
     }
 
     const userRole = roleState.roles[userId].role;
-    if (config.roleRequired === RoleName.ADMIN) {
-        return userRole === RoleName.ADMIN;
+    if (config.roleRequired === RoleName.OWNER) {
+        return userRole === RoleName.OWNER;
     }
-    if (config.roleRequired === RoleName.BOSS) {
-        return userRole === RoleName.ADMIN || userRole === RoleName.BOSS;
+    if (config.roleRequired === RoleName.ADMIN) {
+        return userRole === RoleName.OWNER || userRole === RoleName.ADMIN;
     }
     return true;
 }

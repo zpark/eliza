@@ -24,7 +24,7 @@ export interface OnboardingConfig {
     settings: { 
         [key: string]: Omit<OnboardingSetting, 'value'>; 
     };
-    roleRequired?: "ADMIN" | "BOSS" | "COLLEAGUE";
+    roleRequired?: "OWNER" | "ADMIN" | "USER";
     allowedChannels?: ChannelType[];
 }
 

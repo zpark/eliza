@@ -54,7 +54,6 @@ export class MessageManager {
     private runtime: IAgentRuntime;
     private attachmentManager: AttachmentManager;
     private interestChannels: InterestChannels = {};
-    private discordClient: any;
     private voiceManager: VoiceManager;
     private lastChannelActivity: { [channelId: string]: number } = {};
     private autoPostInterval: NodeJS.Timeout;
@@ -64,7 +63,6 @@ export class MessageManager {
     constructor(discordClient: any, voiceManager: VoiceManager) {
         this.client = discordClient.client;
         this.voiceManager = voiceManager;
-        this.discordClient = discordClient;
         this.runtime = discordClient.runtime;
         this.attachmentManager = new AttachmentManager(this.runtime);
     }
