@@ -1,17 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
     getWavHeader,
-    generateSummary,
     sendMessageInChunks,
-    canSendMessage
 } from "../src/utils.ts";
-import { ChannelType, PermissionsBitField, Client, TextChannel, ThreadChannel } from "discord.js";
-
-// Mock runtime for generateSummary
-const mockRuntime = {
-    getService: vi.fn(),
-};
-
+import { TextChannel } from "discord.js";
 
 vi.mock("@elizaos/core", () => ({
     trimTokens: vi.fn((text) => Promise.resolve(text)),
