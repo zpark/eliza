@@ -8,6 +8,14 @@ export enum RoleName {
     IGNORE = "IGNORE"
 }
 
+export interface UserRole {
+    userId: string;
+    serverId: string;
+    role: RoleName;
+    assignedBy: string;
+    assignedAt: number;
+}
+
 export interface ServerRoleState {
     roles: {
         [userId: string]: UserRole;
@@ -33,15 +41,6 @@ export function canModifyRole(modifierRole: RoleName, targetRole: RoleName, newR
     }
     
     return false; // Other roles can't modify roles
-}
-
-export interface UserRole {
-    userId: string;
-    platformId: string; // Discord ID, Telegram ID, etc
-    serverId: string;
-    role: RoleName;
-    assignedBy: string;
-    assignedAt: number;
 }
 
 // Role access helpers

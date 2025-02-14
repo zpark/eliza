@@ -19,11 +19,10 @@ interface AnxietyScore {
     lastDecayTimestamp: number;
 }
 
-interface ServerRoleCache {
+interface ServerRoleState {
     roles: {
         [userId: string]: {
             role: string;
-            platformId: string;
         };
     };
     lastUpdated: number;
@@ -66,7 +65,7 @@ const socialAwarenessProvider: Provider = {
             }
 
             // Check roles for message sender
-            const roles = await runtime.cacheManager.get<ServerRoleCache>(
+            const roles = await runtime.cacheManager.get<ServerRoleState>(
                 `server_${serverId}_user_roles`
             );
 

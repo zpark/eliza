@@ -12,20 +12,11 @@ import {
     logger,
 } from "@elizaos/core";
 import { type Message } from "discord.js";
+import { ServerRoleState } from "../../shared/role/types";
 
 interface TimeoutSettings {
     enabled: boolean;
     duration: number; // timeout duration in minutes
-    lastUpdated: number;
-}
-
-interface ServerRoleCache {
-    roles: {
-        [userId: string]: {
-            role: string;
-            platformId: string;
-        };
-    };
     lastUpdated: number;
 }
 
@@ -66,7 +57,7 @@ export const timeoutAction: Action = {
             }
 
             // Get user roles
-            const roles = await runtime.cacheManager.get<ServerRoleCache>(
+            const roles = await runtime.cacheManager.get<ServerRoleState>(
                 `server_${serverId}_user_roles`
             );
 
@@ -148,7 +139,7 @@ export const timeoutAction: Action = {
             }
 
             // Get roles to check if we can timeout this user
-            const roles = await runtime.cacheManager.get<ServerRoleCache>(
+            const roles = await runtime.cacheManager.get<ServerRoleState>(
                 `server_${serverId}_user_roles`
             );
 

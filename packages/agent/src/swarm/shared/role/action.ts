@@ -22,6 +22,7 @@ import {
   logger,
 } from "@elizaos/core";
 import { type Message } from "discord.js";
+import { ServerRoleState } from "./types";
 
 export enum RoleName {
   ADMIN = "ADMIN",
@@ -29,22 +30,6 @@ export enum RoleName {
   COLLEAGUE = "COLLEAGUE",
   NONE = "NONE",
   IGNORE = "IGNORE",
-}
-
-interface UserRole {
-  userId: string;
-  platformId: string;
-  serverId: string;
-  role: RoleName;
-  assignedBy: string;
-  assignedAt: number;
-}
-
-interface ServerRoleCache {
-  roles: {
-    [userId: string]: UserRole;
-  };
-  lastUpdated: number;
 }
 
 const canModifyRole = (
@@ -92,7 +77,7 @@ const updateOrgRoleAction: Action = {
 
     try {
       // Get roles cache
-      const roleCache = await runtime.cacheManager.get<ServerRoleCache>(
+      const roleCache = await runtime.cacheManager.get<ServerRoleState>(
         `server_${serverId}_user_roles`
       );
 
@@ -159,7 +144,7 @@ const updateOrgRoleAction: Action = {
 
     try {
       // Get roles cache
-      let roleCache = await runtime.cacheManager.get<ServerRoleCache>(
+      let roleCache = await runtime.cacheManager.get<ServerRoleState>(
         `server_${serverId}_user_roles`
       );
 
@@ -222,7 +207,6 @@ const updateOrgRoleAction: Action = {
       // Update role
       roleCache.roles[mentionedUser.id] = {
         userId: mentionedUser.id,
-        platformId: mentionedUser.id,
         serverId,
         role: newRole,
         assignedBy: requesterId,
