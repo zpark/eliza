@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export * from "./sqlite_vec.ts";
+export * from "./sqliteVec.ts";
 export * from "./sqliteTables.ts";
 
 import type {
@@ -25,7 +25,7 @@ import {
 } from "@elizaos/core";
 import type { Database as BetterSqlite3Database } from "better-sqlite3";
 import { v4 } from "uuid";
-import { load } from "./sqlite_vec.ts";
+import { load } from "./sqliteVec.ts";
 import { sqliteTables } from "./sqliteTables.ts";
 
 import Database from "better-sqlite3";

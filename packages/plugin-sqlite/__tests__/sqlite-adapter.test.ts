@@ -3,7 +3,7 @@ import { stringToUuid } from '@elizaos/core';
 import type { Database } from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SqliteDatabaseAdapter } from '../src';
-import { load } from '../src/sqlite_vec';
+import { load } from '../src/sqliteVec';
 
 // Mock the logger
 vi.mock('@elizaos/core', async () => {
@@ -16,8 +16,8 @@ vi.mock('@elizaos/core', async () => {
     };
 });
 
-// Mock sqlite_vec
-vi.mock('../src/sqlite_vec', () => ({
+// Mock sqliteVec
+vi.mock('../src/sqliteVec', () => ({
     load: vi.fn()
 }));
 
