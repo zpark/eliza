@@ -25,7 +25,6 @@ export class TwitterClient implements ITwitterClient {
 
     constructor(runtime: IAgentRuntime) {
         console.log("*** CONSTRUCTING TWITTER CLIENT");
-        console.log("*** RUNTIME", runtime);
         // Pass twitterConfig to the base client
         this.client = new ClientBase(runtime);
 
@@ -126,7 +125,6 @@ const TwitterClientInterface: Client = {
     name: TWITTER_CLIENT_NAME,
     start: async (runtime: IAgentRuntime) => {
         console.log("*** STARTING TWITTER CLIENT");
-        console.log("*** RUNTIME", runtime);
         const manager = TwitterClientManager.getInstance();
         
         // Check for character-level Twitter credentials

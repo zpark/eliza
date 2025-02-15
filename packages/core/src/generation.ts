@@ -271,6 +271,7 @@ export const generateObject = async ({
   context,
   modelClass = ModelClass.TEXT_LARGE,
   stopSequences,
+  output = "object",
 }: GenerateObjectOptions): Promise<any> => {
   if (!context) {
     const errorMessage = "generateObject context is empty";
@@ -281,7 +282,7 @@ export const generateObject = async ({
   console.log("Generating object")
   console.log(context)
 
-  const obj = await runtime.useModel(modelClass, {
+  const response = await runtime.useModel(modelClass, {
     runtime,
     context,
     modelClass,
@@ -290,19 +291,23 @@ export const generateObject = async ({
   });
 
   console.log("Generated object")
-  console.log(obj)
+  console.log(response)
 
-  let jsonString = obj;
+  let jsonString = response;
 
-  // try to find a first and last bracket
-  const firstBracket = obj.indexOf("{");
-  const lastBracket = obj.lastIndexOf("}");
+  // Find appropriate brackets based on expected output type
+  const firstChar = output === "array" ? "[" : "{";
+  const lastChar = output === "array" ? "]" : "}";
+  
+  const firstBracket = response.indexOf(firstChar);
+  const lastBracket = response.lastIndexOf(lastChar);
+  
   if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
-    jsonString = obj.slice(firstBracket, lastBracket + 1);
+    jsonString = response.slice(firstBracket, lastBracket + 1);
   }
 
   if (jsonString.length === 0) {
-    logger.error("Failed to extract JSON string from model response");
+    logger.error(`Failed to extract JSON ${output} from model response`);
     return null;
   }
 
@@ -311,7 +316,7 @@ export const generateObject = async ({
     const json = JSON.parse(jsonString);
     return json;
   } catch (error) {
-    logger.error("Failed to parse JSON string");
+    logger.error(`Failed to parse JSON ${output}`);
     logger.error(jsonString);
     return null;
   }
@@ -340,12 +345,19 @@ export async function generateObjectArray({
     runtime,
     context,
     modelClass,
-    output: "array",
+    output: "array", // Explicitly specify array output
     schema,
     schemaName,
     schemaDescription,
     mode: "json",
   });
+  
+  // Ensure we have an array
+  if (!Array.isArray(result)) {
+    logger.error("Generated result is not an array");
+    return [];
+  }
+  
   return schema ? schema.parse(result) : result;
 }
 

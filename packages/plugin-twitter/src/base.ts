@@ -258,12 +258,22 @@ export class ClientBase extends EventEmitter {
     const username = this.runtime.getSetting("TWITTER_USERNAME");
     const password = this.runtime.getSetting("TWITTER_PASSWORD");
     const email = this.runtime.getSetting("TWITTER_EMAIL");
-    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number ?? 3;
     const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET");
+    
+    // Validate required credentials
+    if (!username || !password || !email) {
+        const missing = [];
+        if (!username) missing.push("TWITTER_USERNAME");
+        if (!password) missing.push("TWITTER_PASSWORD");
+        if (!email) missing.push("TWITTER_EMAIL");
+        throw new Error(`Missing required Twitter credentials: ${missing.join(", ")}`);
+    }
+
+    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number ?? 3;
     console.log("*** TWITTER_USERNAME", username);
 
     if (!username) {
-      throw new Error("Twitter username not configured");
+        throw new Error("Twitter username not configured");
     }
 
     console.log("*** TWITTER CLIENT INITIALIZED");

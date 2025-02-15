@@ -75,31 +75,44 @@ export async function initializeOnboarding(
     config: OnboardingConfig
 ): Promise<void> {
     try {
+        console.log("*** initializing onboarding");
         runtime.registerAction(onboardingAction);
         runtime.registerProvider(createOnboardingProvider(config));
 
         // Get Discord client and server info
         const discordClient = (runtime.getClient("discord") as any).client as Client;
         const guild = await discordClient.guilds.fetch(serverId);
-        
+
         // Register server owner
+        console.log("*** registering server owner");
         await registerServerOwner(runtime, serverId, guild.ownerId);
 
         // Initialize onboarding state if it doesn't exist
+        console.log("*** initializing onboarding state");
         const existingState = await runtime.cacheManager.get<OnboardingState>(
             `server_${serverId}_onboarding_state`
         );
 
-        if (!existingState) {
+        console.log("*** existingState", existingState);
+
+        if (!existingState || Object.keys(existingState).length === 0) {
+            console.log("*** initializing onboarding state with config settings");
             // Initialize onboarding state with config settings
             const initialState: OnboardingState = {};
+
+            console.log("*** config", config);
             
             // Properly construct each setting
             for (const [key, configSetting] of Object.entries(config.settings)) {
+                console.log("*** key", key);
+                console.log("*** configSetting", configSetting);
                 initialState[key] = createSettingFromConfig(configSetting);
             }
 
+            console.log("*** initialState", initialState);
+
             // Save initial state
+            console.log("*** saving initial state");
             await runtime.cacheManager.set(
                 `server_${serverId}_onboarding_state`,
                 initialState
@@ -115,6 +128,7 @@ export async function initializeOnboarding(
             
             const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
 
+            console.log("*** sending onboarding message to owner", randomMessage);
             const msg = await owner.send(randomMessage);
 
             const roomId = stringToUuid(msg.channelId + "-" + runtime.agentId);

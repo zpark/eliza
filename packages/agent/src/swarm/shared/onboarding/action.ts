@@ -4,11 +4,67 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
+    ModelClass,
     type State,
+    composeContext,
+    generateObject,
+    generateObjectArray,
     logger
 } from "@elizaos/core";
 import { type Message, ChannelType } from "discord.js";
 import { type OnboardingState } from "./types";
+import { findServerForOwner } from "./ownership";
+
+interface SettingUpdate {
+    key: string;
+    value: string;
+}
+
+const categorizeSettings = (onboardingState: OnboardingState) => {
+    const configured = [];
+    const requiredUnconfigured = [];
+    const optionalUnconfigured = [];
+
+    for (const [key, setting] of Object.entries(onboardingState)) {
+        if (setting.value !== null) {
+            configured.push({ key, ...setting });
+        } else if (setting.required) {
+            requiredUnconfigured.push({ key, ...setting });
+        } else {
+            optionalUnconfigured.push({ key, ...setting });
+        }
+    }
+
+    return { configured, requiredUnconfigured, optionalUnconfigured };
+};
+
+const formatSettingsList = (settings: OnboardingState) => {
+    const { configured, requiredUnconfigured, optionalUnconfigured } = categorizeSettings(settings);
+    let list = "Current Settings Status:\n";
+
+    if (configured.length > 0) {
+        list += "\nConfigured Settings:\n";
+        configured.forEach(setting => {
+            list += `- ${setting.name}: ${setting.value}\n`;
+        });
+    }
+
+    if (requiredUnconfigured.length > 0) {
+        list += "\nRequired Settings (Not Yet Configured):\n";
+        requiredUnconfigured.forEach(setting => {
+            list += `- ${setting.name}: ${setting.description}\n`;
+        });
+    }
+
+    if (optionalUnconfigured.length > 0) {
+        list += "\nOptional Settings (Not Yet Configured):\n";
+        optionalUnconfigured.forEach(setting => {
+            list += `- ${setting.name}: ${setting.description}\n`;
+        });
+    }
+
+    return list;
+};
 
 const onboardingAction: Action = {
     name: "SAVE_SETTING",
@@ -33,7 +89,6 @@ const onboardingAction: Action = {
         }
     
         const userId = discordMessage.author.id;
-        const serverId = discordMessage.guildId;
 
         try {
             // First check if there's an active onboarding session
@@ -62,14 +117,12 @@ const onboardingAction: Action = {
                 `server_${targetServerId}_onboarding_state`
             );
 
+            console.log("*** action onboardingState", onboardingState);
+
             if (!onboardingState) {
                 console.log("*** no onboarding state found");
                 return false;
             }
-
-            // Store these in state for the handler
-            state.onboardingServerId = targetServerId;
-            state.onboardingState = onboardingState;
             
             console.log("*** found active onboarding for server", targetServerId);
             return true;
@@ -87,115 +140,148 @@ const onboardingAction: Action = {
         options: any,
         callback: HandlerCallback
     ): Promise<void> => {
-        if (!state.onboardingServerId || !state.onboardingState) {
-            await callback({
-                text: "Onboarding session not found or expired.",
-                action: "SAVE_SETTING",
-                source: "discord"
-            });
+        console.log("*** handling onboarding action");
+
+        if(!state?.discordMessage) {
+            console.log("*** no discord message in state");
+            return;
+        }
+        const discordMessage = state.discordMessage as Message;
+        const userId = discordMessage.author.id;
+        console.log("*** userId", userId);
+
+        const serverOwnership = await findServerForOwner(runtime, userId, state);
+
+        if (!serverOwnership) {
+            console.log("*** no serverOwnership state found");
             return;
         }
 
-        const serverId = state.onboardingServerId;
-        const discordMessage = state.discordMessage as Message;
-        const userId = discordMessage.author.id;
+        const serverId = serverOwnership.serverId;
+        const onboardingState = await runtime.cacheManager.get<OnboardingState>(
+            `server_${serverId}_onboarding_state`
+        );
+
+        if (!onboardingState) {
+            console.log("*** no onboarding state found");
+            return;
+        }
 
         try {
-            // Get current onboarding state - we already validated it exists
-            const onboardingState = state.onboardingState;
-            console.log("*** onboardingState", onboardingState);
-
-            // Find the next unconfigured setting
-            const nextSetting = Object.entries(onboardingState)
-                .find(([_, setting]) => {
-                    if (setting.value === null && (!setting.visibleIf || setting.visibleIf(onboardingState))) {
-                        const dependenciesMet = !setting.dependsOn || setting.dependsOn.every(dep => 
-                            onboardingState[dep]?.value !== null
-                        );
-                        return dependenciesMet;
-                    }
-                    return false;
-                });
-
-            if (!nextSetting) {
+            const { requiredUnconfigured } = categorizeSettings(onboardingState);
+            
+            if (requiredUnconfigured.length === 0) {
                 await callback({
-                    text: "All settings have been configured.",
-                    action: "SAVE_SETTING",
+                    text: "All required settings have been configured.\n\n" + formatSettingsList(onboardingState),
+                    action: "SAVE_SETTING_COMPLETE",
                     source: "discord"
                 });
                 return;
             }
 
-            const [settingKey, setting] = nextSetting;
+            const extractionPrompt = `Extract setting values from the following message. Return an array of objects with 'key' and 'value' properties.
 
-            // Parse value based on the message
-            let value: string | boolean | null = message.content.text.trim();
+${formatSettingsList(onboardingState)}
 
-            // Validate the value if needed
-            if (setting.validation && !setting.validation(value)) {
+Available Settings:
+${Object.entries(onboardingState).map(([key, setting]) => `
+${key}:
+  Name: ${setting.name}
+  Description: ${setting.description}
+  Required: ${setting.required}
+  Current Value: ${setting.value !== null ? setting.value : 'undefined'}
+`).join('\n')}
+
+{{recentMessages}}
+
+Message from {{senderName}}: \`${message.content.text}\`
+
+Extract setting values from the following message. Return an array of objects with 'key' and 'value' properties. Only set values that are present, ignore values that are not present.
+
+Don't include any other text in your response. Only return the array of objects. Response should be an array of objects like:
+[
+  { "key": "SETTING_KEY", "value": "extracted value" }
+]`;
+
+            const context = composeContext({ state, template: extractionPrompt });
+            console.log("*** context", context);
+            const extractedSettings = await generateObjectArray({
+                runtime: runtime,
+                modelClass: ModelClass.TEXT_LARGE,
+                context: context,
+            }) as SettingUpdate[];
+
+            console.log("*** extractedSettings", extractedSettings);
+
+            let updatedAny = false;
+            let responseText = "";
+
+            for (const update of extractedSettings) {
+                console.log("*** update", update);
+                const setting = onboardingState[update.key];
+                if (!setting) {
+                    console.log(`*** unknown setting key: ${update.key}`);
+                    continue;
+                }
+
+                console.log("*** setting", setting);
+                if (setting.validation && !setting.validation(update.value)) {
+                    responseText += `❌ Invalid value for ${setting.name}: ${update.value}\n`;
+                    continue;
+                }
+
+                onboardingState[update.key].value = update.value;
+                responseText += `✓ Saved ${setting.name}: ${update.value}\n`;
+                updatedAny = true;
+            }
+
+            console.log("*** updatedAny", updatedAny);
+
+            if (updatedAny) {
+                console.log("*** updating onboarding state");
+                await runtime.cacheManager.set(
+                    `server_${serverId}_onboarding_state`,
+                    onboardingState
+                );
+
+                console.log("*** formatting settings list");
+                responseText += `\n${formatSettingsList(onboardingState)}`;
+
                 await callback({
-                    text: `Invalid value for ${setting.name}. ${setting.description}`,
+                    text: responseText,
                     action: "SAVE_SETTING",
                     source: "discord"
                 });
-                return;
-            }
 
-            // Update the setting
-            onboardingState[settingKey].value = value;
-
-            // Save updated state
-            await runtime.cacheManager.set(
-                `server_${serverId}_onboarding_state`,
-                onboardingState
-            );
-
-            // Find next unconfigured setting
-            const nextUnconfiguredSetting = Object.entries(onboardingState)
-                .find(([_, s]) => s.value === null && (!s.dependsOn || s.dependsOn.every(dep => 
-                    onboardingState[dep]?.value !== null
-                )));
-
-            console.log("*** nextUnconfiguredSetting", nextUnconfiguredSetting);
-            console.log("*** onboardingState", onboardingState);
-            console.log("*** settingKey", settingKey);
-            console.log("*** setting", setting);
-            console.log("*** value", value);
-
-            let responseText = `✓ Saved ${setting.name}: ${value}\n\n`;
-
-            if (nextUnconfiguredSetting) {
-                const [_, nextSetting] = nextUnconfiguredSetting;
-                responseText += `Next setting: ${nextSetting.name}\n${nextSetting.description}`;
+                console.log("*** logging updates");
+                // Log updates
+                for (const update of extractedSettings) {
+                    await runtime.databaseAdapter.log({
+                        body: {
+                            type: "setting_update",
+                            setting: update.key,
+                            serverId: serverId,
+                            updatedBy: userId
+                        },
+                        userId: runtime.agentId,
+                        roomId: message.roomId,
+                        type: "onboarding"
+                    });
+                }
             } else {
-                responseText += "All settings configured! Onboarding complete.";
+                console.log("*** could not extract any valid settings from your message");
+                await callback({
+                    text: "Could not extract any valid settings from your message. Please try again.\n\n" + formatSettingsList(onboardingState),
+                    action: "SAVE_SETTING_FAILED",
+                    source: "discord"
+                });
             }
-
-            await callback({
-                text: responseText,
-                action: "SAVE_SETTING",
-                source: "discord"
-            });
-
-            // Log setting update
-            await runtime.databaseAdapter.log({
-                body: {
-                    type: "setting_update",
-                    setting: settingKey,
-                    value: value,
-                    serverId: serverId,
-                    updatedBy: userId
-                },
-                userId: runtime.agentId,
-                roomId: message.roomId,
-                type: "onboarding"
-            });
 
         } catch (error) {
             logger.error("Error in onboarding handler:", error);
             await callback({
-                text: "There was an error saving your setting.",
-                action: "SAVE_SETTING",
+                text: "There was an error saving your settings.",
+                action: "SAVE_SETTING_FAILED",
                 source: "discord"
             });
         }
@@ -206,14 +292,14 @@ const onboardingAction: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Yes, enable greeting new users",
+                    text: "My Twitter username is @techguru and email is tech@example.com",
                     source: "discord"
                 }
             },
             {
                 user: "{{user2}}",
                 content: {
-                    text: "✓ Saved Greet New Users: true\n\nNext setting: Greeting Channel\nWhich channel should I use for greeting new users?",
+                    text: "✓ Saved Twitter Username: techguru\n✓ Saved Twitter Email: tech@example.com\n\nCurrent Settings:\nConfigured Settings:\n- Twitter Username: techguru\n- Twitter Email: tech@example.com\n\nRequired Settings (Not Yet Configured):\n- Twitter Password: Your Twitter password",
                     action: "SAVE_SETTING"
                 }
             }

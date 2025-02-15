@@ -111,7 +111,7 @@ export async function validateTwitterConfig(
                 parseBooleanFromText(
                     runtime.getSetting("TWITTER_DRY_RUN") ||
                         process.env.TWITTER_DRY_RUN
-                ) ?? false, // parseBooleanFromText return null if "", map "" to false
+                ) ?? false,
 
             TWITTER_USERNAME:
                 runtime.getSetting("TWITTER_USERNAME") ||
@@ -125,7 +125,6 @@ export async function validateTwitterConfig(
                 runtime.getSetting("TWITTER_EMAIL") ||
                 process.env.TWITTER_EMAIL,
 
-            // string passthru
             TWITTER_2FA_SECRET:
                 runtime.getSetting("TWITTER_2FA_SECRET") ||
                 process.env.TWITTER_2FA_SECRET ||

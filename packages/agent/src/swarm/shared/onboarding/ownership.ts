@@ -1,5 +1,6 @@
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { IAgentRuntime, logger, State } from "@elizaos/core";
 import { OnboardingState } from "./types";
+import { Message } from "discord.js";
 
 export interface ServerOwnership {
     ownerId: string;
@@ -68,23 +69,38 @@ export async function registerServerOwner(
     }
 }
 
+// In onboarding/ownership.ts, modify findServerForOwner:
 export async function findServerForOwner(
     runtime: IAgentRuntime,
-    ownerId: string
+    ownerId: string,
+    state?: State
 ): Promise<ServerOwnership | null> {
     try {
         const ownershipState = await runtime.cacheManager.get<ServerOwnershipState>(OWNERSHIP_CACHE_KEY);
-        
+        console.log("*** ownershipState", ownershipState);
         if (!ownershipState?.servers) {
             return null;
         }
 
-        // Find server where this user is owner and the agent is the one who registered it
+        // Get the Discord message from passed state
+        if (!state?.discordMessage) {
+            console.log("*** no discord message in state");
+            return null;
+        }
+        const discordMessage = state.discordMessage as Message;
+        const discordUserId = discordMessage?.author?.id;
+
+        if (!discordUserId) {
+            console.log("*** no discord user id found");
+            return null;
+        }
+
+        // Find server where this user is owner using the Discord ID
         const serverOwnership = Object.values(ownershipState.servers).find(server => 
-            server.ownerId === ownerId && 
-            server.agentId === runtime.agentId
+            server.ownerId === discordUserId
         );
 
+        console.log("*** found serverOwnership", serverOwnership);
         return serverOwnership || null;
     } catch (error) {
         logger.error('Error finding server for owner:', error);

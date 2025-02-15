@@ -22,18 +22,27 @@ export const createOnboardingProvider = (config: OnboardingConfig): Provider => 
         }
 
         const discordMessage = state.discordMessage as Message;
-        let serverId;
+        const userId = discordMessage.author.id;
 
-        // Get server ID from either guild or DM channel
-        if (discordMessage.guild?.id) {
-            serverId = discordMessage.guild.id;
-        } else if (discordMessage.channel.isDMBased()) {
-            serverId = discordMessage.channel.id;
-        } else {
-            logger.error("No valid server ID found");
-            return "Error: Could not determine server ID";
+        // Get serverId from ownership state, just like in the action
+        const ownershipState = await runtime.cacheManager.get<{ servers: { [key: string]: { ownerId: string } } }>(
+            'server_ownership_state'
+        );
+
+        if (!ownershipState?.servers) {
+            logger.error("No ownership state found");
+            return "Error: No server ownership found";
         }
 
+        const serverEntry = Object.entries(ownershipState.servers)
+            .find(([_, info]) => info.ownerId === userId);
+
+        if (!serverEntry) {
+            logger.error("User is not owner of any server");
+            return "Error: No server found for user";
+        }
+
+        const [serverId] = serverEntry;
         console.log("*** serverId", serverId);
         
         try {

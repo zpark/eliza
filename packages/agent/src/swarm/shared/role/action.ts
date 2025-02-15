@@ -64,8 +64,8 @@ const updateOrgRoleAction: Action = {
     state: State
   ): Promise<boolean> => {
     const discordMessage = state.discordMessage as Message;
-    if (!discordMessage.guild?.id) {
-      return;
+    if (!discordMessage?.guild?.id) {
+      return false;
     }
 
     if (!discordMessage?.guild?.id) {

@@ -4,9 +4,6 @@ dotenv.config({
   path: "../../.env",
 });
 
-console.log("*** process.env", process.env);
-console.log("*** process.env.TWITTER_USERNAME", process.env.TWITTER_USERNAME);
-
 export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
