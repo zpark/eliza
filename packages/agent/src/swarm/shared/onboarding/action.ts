@@ -7,8 +7,10 @@ import {
     ModelClass,
     type State,
     composeContext,
+    generateMessageResponse,
     generateObjectArray,
-    logger
+    logger,
+    messageCompletionFooter
 } from "@elizaos/core";
 import { ChannelType, type Message } from "discord.js";
 import { findServerForOwner } from "./ownership";
@@ -64,6 +66,33 @@ const formatSettingsList = (settings: OnboardingState) => {
 
     return list;
 };
+
+// New template for generating contextual responses
+const responseTemplate = `# Task: Generate a response about the onboarding settings status
+About {{agentName}}:
+{{bio}}
+
+# Current Settings Status:
+{{settingsStatus}}
+
+# Onboarding Outcome:
+Status: {{outcomeStatus}}
+Details: {{outcomeDetails}}
+
+# Recent Conversation Context:
+{{recentMessages}}
+
+# Instructions: Generate a natural response that:
+1. Acknowledges the current interaction and setting updates
+2. Maintains {{agentName}}'s personality and tone
+3. Provides clear next steps or guidance if needed
+4. Stays relevant to the conversation context
+5. Includes all necessary information about settings status
+6. Uses appropriate emotion based on the outcome (success, failure, completion)
+
+Write a message that {{agentName}} would send about the onboarding status. Include the appropriate action.
+Available actions: SAVE_SETTING_FAILED, SAVE_SETTING_COMPLETE
+` + messageCompletionFooter;
 
 const onboardingAction: Action = {
     name: "SAVE_SETTING",
@@ -154,9 +183,26 @@ const onboardingAction: Action = {
         try {
             const { requiredUnconfigured } = categorizeSettings(onboardingState);
             
+            // Handle completion case
             if (requiredUnconfigured.length === 0) {
+                const responseContext = composeContext({
+                    state: {
+                        ...state,
+                        settingsStatus: formatSettingsList(onboardingState),
+                        outcomeStatus: "COMPLETE",
+                        outcomeDetails: "All required settings have been configured successfully."
+                    },
+                    template: responseTemplate,
+                });
+
+                const response = await generateMessageResponse({
+                    runtime,
+                    context: responseContext,
+                    modelClass: ModelClass.TEXT_LARGE
+                });
+
                 await callback({
-                    text: "All required settings have been configured.\n\n" + formatSettingsList(onboardingState),
+                    ...response,
                     action: "SAVE_SETTING_COMPLETE",
                     source: "discord"
                 });
@@ -195,7 +241,7 @@ Don't include any other text in your response. Only return the array of objects.
             }) as SettingUpdate[];
 
             let updatedAny = false;
-            let responseText = "";
+            let updateResults: string[] = [];
 
             for (const update of extractedSettings) {
                 const setting = onboardingState[update.key];
@@ -204,12 +250,12 @@ Don't include any other text in your response. Only return the array of objects.
                 }
 
                 if (setting.validation && !setting.validation(update.value)) {
-                    responseText += `❌ Invalid value for ${setting.name}: ${update.value}\n`;
+                    updateResults.push(`Failed to update ${setting.name}: Invalid value "${update.value}"`);
                     continue;
                 }
 
                 onboardingState[update.key].value = update.value;
-                responseText += `✓ Saved ${setting.name}: ${update.value}\n`;
+                updateResults.push(`Successfully updated ${setting.name} to "${update.value}"`);
                 updatedAny = true;
             }
 
@@ -219,11 +265,25 @@ Don't include any other text in your response. Only return the array of objects.
                     onboardingState
                 );
 
-                responseText += `\n${formatSettingsList(onboardingState)}`;
+                const responseContext = composeContext({
+                    state: {
+                        ...state,
+                        settingsStatus: formatSettingsList(onboardingState),
+                        outcomeStatus: "SUCCESS",
+                        outcomeDetails: updateResults.join("\n")
+                    },
+                    template: responseTemplate,
+                });
+
+                const response = await generateMessageResponse({
+                    runtime,
+                    context: responseContext,
+                    modelClass: ModelClass.TEXT_LARGE
+                });
 
                 await callback({
-                    text: responseText,
-                    action: "SAVE_SETTING",
+                    ...response,
+                    action: "SAVE_SETTING_SUCCESS",
                     source: "discord"
                 });
 
@@ -242,8 +302,24 @@ Don't include any other text in your response. Only return the array of objects.
                     });
                 }
             } else {
+                const responseContext = composeContext({
+                    state: {
+                        ...state,
+                        settingsStatus: formatSettingsList(onboardingState),
+                        outcomeStatus: "FAILED",
+                        outcomeDetails: "Could not extract any valid settings from your message."
+                    },
+                    template: responseTemplate,
+                });
+
+                const response = await generateMessageResponse({
+                    runtime,
+                    context: responseContext,
+                    modelClass: ModelClass.TEXT_LARGE
+                });
+
                 await callback({
-                    text: "Could not extract any valid settings from your message. Please try again.\n\n" + formatSettingsList(onboardingState),
+                    ...response,
                     action: "SAVE_SETTING_FAILED",
                     source: "discord"
                 });
@@ -251,8 +327,25 @@ Don't include any other text in your response. Only return the array of objects.
 
         } catch (error) {
             logger.error("Error in onboarding handler:", error);
+            
+            const responseContext = composeContext({
+                state: {
+                    ...state,
+                    settingsStatus: formatSettingsList(onboardingState),
+                    outcomeStatus: "ERROR",
+                    outcomeDetails: "An error occurred while saving settings."
+                },
+                template: responseTemplate,
+            });
+
+            const response = await generateMessageResponse({
+                runtime,
+                context: responseContext,
+                modelClass: ModelClass.TEXT_LARGE
+            });
+
             await callback({
-                text: "There was an error saving your settings.",
+                ...response,
                 action: "SAVE_SETTING_FAILED",
                 source: "discord"
             });
@@ -271,8 +364,8 @@ Don't include any other text in your response. Only return the array of objects.
             {
                 user: "{{user2}}",
                 content: {
-                    text: "✓ Saved Twitter Username: techguru\n✓ Saved Twitter Email: tech@example.com\n\nCurrent Settings:\nConfigured Settings:\n- Twitter Username: techguru\n- Twitter Email: tech@example.com\n\nRequired Settings (Not Yet Configured):\n- Twitter Password: Your Twitter password",
-                    action: "SAVE_SETTING"
+                    text: "Great! I've saved your Twitter credentials. Your username (@techguru) and email are now set up. The only thing left is your Twitter password - could you provide that for me securely in DM?",
+                    action: "SAVE_SETTING_SUCCESS"
                 }
             }
         ]
