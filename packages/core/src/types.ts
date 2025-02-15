@@ -669,6 +669,7 @@ export type Character = {
     [key: string]: any | string | boolean | number;
   };
 
+  /** Optional secrets */
   secrets?: {
     [key: string]: string | boolean | number;
   };
@@ -679,9 +680,6 @@ export type Character = {
     chat?: string[];
     post?: string[];
   };
-
-  /**Optinal Parent characters to inherit information from */
-  extends?: string[];
 };
 
 export interface TwitterSpaceDecisionOptions {
@@ -974,11 +972,11 @@ export interface IAgentRuntime {
 
   setSetting(
     key: string,
-    value: string | boolean | null,
+    value: string | boolean | null | any,
     secret: boolean
   ): void;
 
-  getSetting(key: string): string | null;
+  getSetting(key: string): string | boolean | null | any;
 
   // Methods
   getConversationLength(): number;

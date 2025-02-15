@@ -465,7 +465,7 @@ export class AgentRuntime implements IAgentRuntime {
         await knowledgeManager.processCharacterKnowledge(items);
     }
 
-    setSetting(key: string, value: string | boolean | null, secret: boolean = false) {
+    setSetting(key: string, value: string | boolean | null | any, secret: boolean = false) {
         if(secret) {
             this.character.secrets[key] = value;
         } else {
@@ -473,26 +473,15 @@ export class AgentRuntime implements IAgentRuntime {
         }
     }
 
-    getSetting(key: string) {
-        // check if the key is in the character.secrets object
-        if (this.character.secrets?.[key]) {
-            return this.character.secrets[key];
-        }
-        // if not, check if it's in the settings object
-        if (this.character.settings?.[key]) {
-            return this.character.settings[key];
-        }
+    getSetting(key: string): string | boolean | null | any {
+        const value = this.character.secrets?.[key] || 
+                     this.character.settings?.[key] ||
+                     this.character.settings?.secrets?.[key] ||
+                     settings[key];
 
-        if(this.character.settings?.secrets?.[key]){
-            return this.character.settings.secrets[key];
-        }
-
-        // if not, check if it's in the settings object
-        if (settings[key]) {
-            return settings[key];
-        }
-
-        return null;
+        if (value === "true") return true;
+        if (value === "false") return false;
+        return value || null;
     }
 
     /**

@@ -84,7 +84,6 @@ export class ClientBase extends EventEmitter {
   static _twitterClients: { [accountIdentifier: string]: Scraper } = {};
   twitterClient: Scraper;
   runtime: IAgentRuntime;
-  twitterConfig: TwitterConfig;
   directions: string;
   lastCheckedTweetId: bigint | null = null;
   temperature = 0.5;
@@ -232,11 +231,10 @@ export class ClientBase extends EventEmitter {
     return t;
   }
 
-  constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
+  constructor(runtime: IAgentRuntime) {
     super();
     this.runtime = runtime;
-    this.twitterConfig = twitterConfig;
-    const username = twitterConfig.TWITTER_USERNAME as string;
+    const username = this.runtime.getSetting("TWITTER_USERNAME") as string;
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
@@ -256,15 +254,19 @@ export class ClientBase extends EventEmitter {
   }
 
   async init() {
-    const username = this.runtime.getSetting("TWITTER_USERNAME") || this.twitterConfig.TWITTER_USERNAME as string;
-    const password = this.runtime.getSetting("TWITTER_PASSWORD") || this.twitterConfig.TWITTER_PASSWORD as string;
-    const email = this.runtime.getSetting("TWITTER_EMAIL") || this.twitterConfig.TWITTER_EMAIL as string;
-    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number || this.twitterConfig.TWITTER_RETRY_LIMIT as number;
-    const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET") || this.twitterConfig.TWITTER_2FA_SECRET as string;
+    console.log("*** INITIALIZING TWITTER CLIENT");
+    const username = this.runtime.getSetting("TWITTER_USERNAME");
+    const password = this.runtime.getSetting("TWITTER_PASSWORD");
+    const email = this.runtime.getSetting("TWITTER_EMAIL");
+    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number ?? 3;
+    const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET");
+    console.log("*** TWITTER_USERNAME", username);
 
     if (!username) {
       throw new Error("Twitter username not configured");
     }
+
+    console.log("*** TWITTER CLIENT INITIALIZED");
 
     const authToken = this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
     const ct0 = this.runtime.getSetting("TWITTER_COOKIES_CT0");
@@ -287,25 +289,36 @@ export class ClientBase extends EventEmitter {
       (await this.getCachedCookies(username)) ||
       createTwitterCookies(authToken, ct0, guestId);
 
+    console.log("*** CACHED COOKIES", cachedCookies);
+
     if (cachedCookies) {
       logger.info("Using cached cookies");
+      console.log("*** SETTING COOKIES");
       await this.setCookiesFromArray(cachedCookies);
+      console.log("*** COOKIES SET");
+    } else {
+      console.log("*** NO CACHED COOKIES");
     }
+
+    console.log("retries", retries);
 
     logger.log("Waiting for Twitter login");
     while (retries > 0) {
+      console.log("*** while: RETRIES", retries);
       try {
         if (await this.twitterClient.isLoggedIn()) {
           // cookies are valid, no login required
           logger.info("Successfully logged in.");
           break;
         } else {
+          console.log("*** LOGIN ATTEMPT");
           await this.twitterClient.login(
             username,
             password,
             email,
             twitter2faSecret
           );
+          console.log("*** LOGIN ATTEMPT COMPLETE");
           if (await this.twitterClient.isLoggedIn()) {
             // fresh login, store new cookies
             logger.info("Successfully logged in.");
@@ -321,6 +334,8 @@ export class ClientBase extends EventEmitter {
         logger.error(`Login attempt failed: ${error.message}`);
       }
 
+
+      console.log("*** RETRIES", retries);
       retries--;
       logger.error(
         `Failed to login to Twitter. Retrying... (${retries} attempts left)`
@@ -541,7 +556,7 @@ export class ClientBase extends EventEmitter {
     }
 
     const timeline = await this.fetchHomeTimeline(cachedTimeline ? 10 : 50);
-    const username = this.twitterConfig.TWITTER_USERNAME;
+    const username = this.runtime.getSetting("TWITTER_USERNAME");
 
     // Get the most recent 20 mentions and interactions
     const mentionsAndInteractions = await this.fetchSearchTweets(

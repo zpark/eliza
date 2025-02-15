@@ -1,8 +1,8 @@
-import { ClientInstance, logger, UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { ClientInstance, logger, stringToUuid, UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { TWITTER_CLIENT_NAME } from "./constants.ts";
-import { validateTwitterConfig, type TwitterConfig } from "./environment.ts";
+import { type TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
@@ -23,9 +23,11 @@ export class TwitterClient implements ITwitterClient {
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
 
-    constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
+    constructor(runtime: IAgentRuntime) {
+        console.log("*** CONSTRUCTING TWITTER CLIENT");
+        console.log("*** RUNTIME", runtime);
         // Pass twitterConfig to the base client
-        this.client = new ClientBase(runtime, twitterConfig);
+        this.client = new ClientBase(runtime);
 
         // Posting logic
         this.post = new TwitterPostClient(this.client, runtime);
@@ -34,7 +36,7 @@ export class TwitterClient implements ITwitterClient {
         this.interaction = new TwitterInteractionClient(this.client, runtime);
 
         // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
-        if (twitterConfig.TWITTER_SPACES_ENABLE) {
+        if (runtime.getSetting("TWITTER_SPACES_ENABLE") === true) {
             this.space = new TwitterSpaceClient(this.client, runtime);
         }
     }
@@ -47,8 +49,6 @@ export class TwitterClient implements ITwitterClient {
 export class TwitterClientManager {
     private static instance: TwitterClientManager;
     private clients: Map<string, TwitterClient> = new Map();
-    
-    private constructor() {}
 
     static getInstance(): TwitterClientManager {
         if (!TwitterClientManager.instance) {
@@ -57,11 +57,10 @@ export class TwitterClientManager {
         return TwitterClientManager.instance;
     }
 
-    async createClient(runtime: IAgentRuntime, clientId: string, config: TwitterConfig): Promise<TwitterClient> {
-        console.log("Creating client", clientId, config);
-        // if TWITTER_2FA_SECRET === null, delete it
-        if (config.TWITTER_2FA_SECRET === null) {
-            delete config.TWITTER_2FA_SECRET;
+    async createClient(runtime: IAgentRuntime, clientId: string): Promise<TwitterClient> {
+        console.log("Creating client", clientId);
+        if (runtime.getSetting("TWITTER_2FA_SECRET") === null) {
+            runtime.setSetting("TWITTER_2FA_SECRET", undefined, false);
         }
         try {
             // Check if client already exists
@@ -70,19 +69,16 @@ export class TwitterClientManager {
                 logger.info(`Twitter client already exists for ${clientId}`);
                 return existingClient;
             }
-
-            // Validate the configuration
-            const validatedConfig = await validateTwitterConfig(runtime, config);
-
+            console.log("*** CREATING NEW CLIENT");
             // Create new client instance
-            const client = new TwitterClient(runtime, validatedConfig);
-            
+            const client = new TwitterClient(runtime);
+            console.log("*** CLIENT", client);
             // Initialize the client
             await client.client.init();
-
+            console.log("*** CLIENT INITIALIZED");
             // Store the client instance
             this.clients.set(this.getClientKey(clientId, runtime.agentId), client);
-
+            console.log("*** CLIENT STORED");
             logger.info(`Created Twitter client for ${clientId}`);
             return client;
 
@@ -129,15 +125,19 @@ export class TwitterClientManager {
 const TwitterClientInterface: Client = {
     name: TWITTER_CLIENT_NAME,
     start: async (runtime: IAgentRuntime) => {
+        console.log("*** STARTING TWITTER CLIENT");
+        console.log("*** RUNTIME", runtime);
         const manager = TwitterClientManager.getInstance();
         
         // Check for character-level Twitter credentials
         const twitterConfig: Partial<TwitterConfig> = {
-            TWITTER_USERNAME: runtime.getSetting("TWITTER_USERNAME") as string,
-            TWITTER_PASSWORD: runtime.getSetting("TWITTER_PASSWORD") as string,
-            TWITTER_EMAIL: runtime.getSetting("TWITTER_EMAIL") as string,
-            TWITTER_2FA_SECRET: runtime.getSetting("TWITTER_2FA_SECRET") as string,
+            TWITTER_USERNAME: (runtime.getSetting("TWITTER_USERNAME") as string) || runtime.character.settings?.TWITTER_USERNAME || runtime.character.secrets?.TWITTER_USERNAME,
+            TWITTER_PASSWORD: (runtime.getSetting("TWITTER_PASSWORD") as string) || runtime.character.settings?.TWITTER_PASSWORD || runtime.character.secrets?.TWITTER_PASSWORD,
+            TWITTER_EMAIL: (runtime.getSetting("TWITTER_EMAIL") as string) || runtime.character.settings?.TWITTER_EMAIL || runtime.character.secrets?.TWITTER_EMAIL,
+            TWITTER_2FA_SECRET: (runtime.getSetting("TWITTER_2FA_SECRET") as string) || runtime.character.settings?.TWITTER_2FA_SECRET || runtime.character.secrets?.TWITTER_2FA_SECRET,
         };
+
+        console.log("*** TWITTER CONFIG", twitterConfig);
 
         // Filter out undefined values
         const config = Object.fromEntries(
@@ -155,7 +155,8 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                await manager.createClient(runtime, "default", config);
+                console.log("*** CREATING DEFAULT CLIENT");
+                await manager.createClient(runtime, stringToUuid("default"));
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);

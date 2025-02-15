@@ -46,10 +46,14 @@ export class TwitterPostClient {
     private isDryRun: boolean;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
+        console.log("*** CONSTRUCTING TWITTER POST CLIENT");
         this.client = client;
         this.runtime = runtime;
-        this.twitterUsername = this.client.twitterConfig.TWITTER_USERNAME;
-        this.isDryRun = this.client.twitterConfig.TWITTER_DRY_RUN;
+        this.twitterUsername = this.runtime.getSetting("TWITTER_USERNAME") as string;
+        this.isDryRun = this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
+        console.log("*** TWITTER_USERNAME", this.twitterUsername);
+        console.log("*** TWITTER_DRY_RUN", this.isDryRun);
+        console.log("*** TWITTER_ENABLE_POST_GENERATION", this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION"));
 
         // Log configuration on initialization
         logger.log("Twitter Client Configuration:");
@@ -59,21 +63,21 @@ export class TwitterPostClient {
         );
 
         logger.log(
-            `- Disable Post: ${this.client.twitterConfig.TWITTER_ENABLE_POST_GENERATION ? "disabled" : "enabled"}`
+            `- Disable Post: ${this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION") ? "disabled" : "enabled"}`
         );
 
         logger.log(
-            `- Post Interval: ${this.client.twitterConfig.POST_INTERVAL_MIN}-${this.client.twitterConfig.POST_INTERVAL_MAX} minutes`
+            `- Post Interval: ${this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN")}-${this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX")} minutes`
         );
         logger.log(
             `- Post Immediately: ${
-                this.client.twitterConfig.TWITTER_POST_IMMEDIATELY
+                this.runtime.getSetting("TWITTER_POST_IMMEDIATELY")
                     ? "enabled"
                     : "disabled"
             }`
         );
 
-        const targetUsers = this.client.twitterConfig.TWITTER_TARGET_USERS;
+        const targetUsers = this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
         if (targetUsers) {
             logger.log(`- Target Users: ${targetUsers}`);
         }
@@ -83,11 +87,16 @@ export class TwitterPostClient {
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"
             );
         }
+
+        console.log("*** TWITTER POST CLIENT INITIALIZED");
+        this.start();
     }
 
     async start() {
         if (!this.client.profile) {
+            console.log("*** INITIALIZING TWITTER CLIENT");
             await this.client.init();
+            console.log("*** TWITTER CLIENT INITIALIZED");
         }
 
         const generateNewTweetLoop = async () => {
@@ -96,8 +105,8 @@ export class TwitterPostClient {
             }>("twitter/" + this.twitterUsername + "/lastPost");
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
-            const minMinutes = this.client.twitterConfig.POST_INTERVAL_MIN;
-            const maxMinutes = this.client.twitterConfig.POST_INTERVAL_MAX;
+            const minMinutes = this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN") as number ?? 90;
+            const maxMinutes = this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX") as number ?? 180;
             const randomMinutes =
                 Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) +
                 minMinutes;
@@ -114,8 +123,8 @@ export class TwitterPostClient {
             logger.log(`Next tweet scheduled in ${randomMinutes} minutes`);
         };
 
-        if (this.client.twitterConfig.TWITTER_ENABLE_POST_GENERATION) {
-            if (this.client.twitterConfig.TWITTER_POST_IMMEDIATELY) {
+        if (this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION")) {
+            if (this.runtime.getSetting("TWITTER_POST_IMMEDIATELY")) {
                 await this.generateNewTweet();
             }
             

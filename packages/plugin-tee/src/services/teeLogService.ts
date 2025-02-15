@@ -42,7 +42,7 @@ export class TeeLogService extends Service implements ITeeLogService {
 
         const enableValues = ['true', '1', 'yes', 'enable', 'enabled', 'on'];
 
-        const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG');
+        const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG') as string;
         if (enableTeeLog === null) {
             throw new Error('ENABLE_TEE_LOG is not set.');
         }
@@ -52,8 +52,8 @@ export class TeeLogService extends Service implements ITeeLogService {
             return;
         }
 
-        const runInSgx = runtime.getSetting('SGX');
-        const teeMode = runtime.getSetting('TEE_MODE');
+        const runInSgx = runtime.getSetting('SGX') as string;
+        const teeMode = runtime.getSetting('TEE_MODE') as string;
         const walletSecretSalt = runtime.getSetting('WALLET_SECRET_SALT');
 
         this.teeMode = teeMode ? TEEMode[teeMode as keyof typeof TEEMode] : TEEMode.OFF;
@@ -71,7 +71,7 @@ export class TeeLogService extends Service implements ITeeLogService {
             throw new Error('Invalid TEE configuration.');
         }
 
-        const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH');
+        const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH') as string;
         this.dbPath = dbPathSetting || path.resolve('data/tee_log.sqlite');
 
         const db = new Database(this.dbPath);

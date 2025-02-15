@@ -1,4 +1,11 @@
 import type { Character } from "@elizaos/core";
+import dotenv from "dotenv";
+dotenv.config({
+  path: "../../.env",
+});
+
+console.log("*** process.env", process.env);
+console.log("*** process.env.TWITTER_USERNAME", process.env.TWITTER_USERNAME);
 
 export const defaultCharacter: Character = {
   name: "Eliza",
@@ -17,7 +24,13 @@ export const defaultCharacter: Character = {
   ],
   settings: {
     TWITTER_POST_IMMEDIATELY: true,
-    secrets: {},
+    TWITTER_ENABLE_POST_GENERATION: true,
+    secrets: {
+      TWITTER_USERNAME: process.env.TWITTER_USERNAME,
+      TWITTER_PASSWORD: process.env.TWITTER_PASSWORD,
+      TWITTER_EMAIL: process.env.TWITTER_EMAIL,
+      TWITTER_2FA_SECRET: process.env.TWITTER_2FA_SECRET,
+    },
     voice: {
       model: "en_US-hfc_female-medium",
     },

@@ -65,7 +65,7 @@ class RemoteAttestationProvider {
 // Keep the original provider for backwards compatibility
 const remoteAttestationProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
-        const teeMode = runtime.getSetting('TEE_MODE');
+        const teeMode = runtime.getSetting('TEE_MODE') as string;
         const provider = new RemoteAttestationProvider(teeMode);
         const agentId = runtime.agentId;
 
