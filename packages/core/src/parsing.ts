@@ -96,8 +96,7 @@ export function parseJsonArrayFromText(text: string) {
             );
             jsonData = JSON.parse(normalizedJson);
         } catch (e) {
-            console.error("Error parsing JSON:", e);
-            console.error("Failed parsing text:", jsonBlockMatch[1]);
+            logger.warn("Could not parse text as JSON, will try pattern matching");
         }
     }
 
@@ -115,8 +114,7 @@ export function parseJsonArrayFromText(text: string) {
                 );
                 jsonData = JSON.parse(normalizedJson);
             } catch (e) {
-                console.error("Error parsing JSON:", e);
-                console.error("Failed parsing text:", arrayMatch[0]);
+                logger.warn("Could not parse text as JSON, returning null");
             }
         }
     }
@@ -153,7 +151,7 @@ export function parseJSONObjectFromText(
             jsonData = JSON.parse(text.trim());
         }
     } catch (e) {
-        console.error("Error parsing JSON:", e);
+        logger.warn("Could not parse text as JSON, returning null");
         return null;
     }
 
@@ -161,6 +159,8 @@ export function parseJSONObjectFromText(
     if (jsonData && typeof jsonData === "object" && !Array.isArray(jsonData)) {
         return jsonData;
     }
+
+    logger.warn("Could not parse text as JSON, returning null");
 
     return null;
 }

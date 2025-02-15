@@ -178,7 +178,7 @@ export const socialMediaManagerConfig: OnboardingConfig = {
       ORG_NAME: {
           name: "Organization Name",
           description: "The name of the organization, what it is called",
-          public: false,
+          public: true,
           secret: false,
           usageDescription: "What do you call the org? Any nicknames, abbreviations, etc?",
           required: true,
@@ -196,7 +196,7 @@ export const socialMediaManagerConfig: OnboardingConfig = {
       ORG_STYLE: {
           name: "Brand Style",
           description: "The style and voice of the org. What is the org's personality? What is our tone?",
-          public: false,
+          public: true,
           secret: false,
           usageDescription: "The style and voice of the org. What is the org's personality? What is our tone? Be descriptive, specific or vague, but specific with examples will help.",
           required: true,

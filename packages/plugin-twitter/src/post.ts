@@ -118,7 +118,10 @@ export class TwitterPostClient {
 
         if (this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION")) {
             if (this.runtime.getSetting("TWITTER_POST_IMMEDIATELY")) {
-                await this.generateNewTweet();
+                // generate in 5 seconds
+                setTimeout(() => {
+                    this.generateNewTweet();
+                }, 5000);
             }
             
             generateNewTweetLoop();
@@ -284,7 +287,6 @@ export class TwitterPostClient {
                     mediaData
                 );
             }
-
             const tweet = this.createTweetObject(
                 result,
                 client,
@@ -359,7 +361,6 @@ export class TwitterPostClient {
 
             // Try parsing as JSON first
             const parsedResponse = parseJSONObjectFromText(rawTweetContent);
-
             if (parsedResponse?.text) {
                 tweetTextForPosting = parsedResponse.text;
             } else {
@@ -419,6 +420,7 @@ export class TwitterPostClient {
                 logger.log(
                     `Posting new tweet:\n ${tweetTextForPosting}`
                 );
+
                 this.postTweet(
                     this.runtime,
                     this.client,
