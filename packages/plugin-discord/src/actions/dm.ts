@@ -11,7 +11,7 @@ import {
     logger,
     stringToUuid,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
+import type { Message } from "discord.js";
 
 const dmAction: Action = {
     name: "DM",

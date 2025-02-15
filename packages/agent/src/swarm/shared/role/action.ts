@@ -21,8 +21,8 @@ import {
   type State,
   logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
-import { ServerRoleState } from "./types";
+import type { Message } from "discord.js";
+import type { ServerRoleState } from "./types";
 
 export enum RoleName {
   OWNER = "OWNER",

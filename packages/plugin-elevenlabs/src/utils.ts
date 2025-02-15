@@ -1,5 +1,5 @@
 import { PassThrough } from "stream";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 
 export function getWavHeader(
   audioLength: number,

@@ -1,4 +1,4 @@
-import { IAgentRuntime, logger, UUID } from "@elizaos/core";
+import { type IAgentRuntime, logger, UUID } from "@elizaos/core";
 
 export enum RoleName {
     OWNER = "OWNER",

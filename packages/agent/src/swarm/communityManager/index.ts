@@ -5,10 +5,10 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
-import { Character, IAgentRuntime } from "@elizaos/core";
-import { Client, Guild, Message } from "discord.js";
+import type { Character, IAgentRuntime } from "@elizaos/core";
+import type { Client, Guild, Message } from "discord.js";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
-import { OnboardingConfig } from "../shared/onboarding/types";
+import type { OnboardingConfig } from "../shared/onboarding/types";
 import { initializeRole } from "../shared/role/initialize";
 
 const character: Character = {
@@ -403,3 +403,4 @@ export default {
     });
   }
 };
+

@@ -1,12 +1,12 @@
-import { ClientInstance, logger, stringToUuid, UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { ClientInstance, logger, stringToUuid, type UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { TWITTER_CLIENT_NAME } from "./constants.ts";
-import { type TwitterConfig } from "./environment.ts";
+import type { TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
-import { ITwitterClient } from "./types.ts";
+import type { ITwitterClient } from "./types.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -17,7 +17,7 @@ import { ITwitterClient } from "./types.ts";
  * - space: launching and managing Twitter Spaces (optional)
  */
 export class TwitterClient implements ITwitterClient {
-    name: string = "twitter";
+    name = "twitter";
     client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;

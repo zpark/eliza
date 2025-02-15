@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ClientInstance, logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
+import { type ClientInstance, logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
 import { getWalletKey } from "./keypairUtils";
 import BigNumber from "bignumber.js";
 import type { Item, WalletPortfolio, Prices, ISolanaClient } from "./types";
@@ -19,7 +19,7 @@ const PROVIDER_CONFIG = {
 
 class SolanaClient implements ISolanaClient, ClientInstance {
     private updateInterval: NodeJS.Timer | null = null;
-    private lastUpdate: number = 0;
+    private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
     private readonly CACHE_KEY = 'solana/walletData';
     private connection: Connection;
@@ -149,7 +149,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
         }
     }
 
-    private async updateWalletData(force: boolean = false): Promise<WalletPortfolio> {
+    private async updateWalletData(force = false): Promise<WalletPortfolio> {
         const now = Date.now();
         
         // Don't update if less than interval has passed, unless forced

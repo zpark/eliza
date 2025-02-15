@@ -6,7 +6,7 @@ import {
     type ActionExample,
     ModelClass,
     composeContext,
-    HandlerCallback,
+    type HandlerCallback,
     logger,
 } from "@elizaos/core";
 

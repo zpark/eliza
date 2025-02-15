@@ -12,7 +12,7 @@ import {
     logger
 } from "@elizaos/core";
 import { type Message, ChannelType } from "discord.js";
-import { type OnboardingState } from "./types";
+import type { OnboardingState } from "./types";
 import { findServerForOwner } from "./ownership";
 
 interface SettingUpdate {

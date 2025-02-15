@@ -5,8 +5,8 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
-import { OnboardingConfig, OnboardingState } from "./types";
+import type { Message } from "discord.js";
+import type { OnboardingConfig, OnboardingState } from "./types";
 
 export const createOnboardingProvider = (config: OnboardingConfig): Provider => ({
     get: async (

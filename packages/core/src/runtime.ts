@@ -46,8 +46,8 @@ import {
     type UUID,
     type ServiceType,
     type Service,
-    Route,
-    Task
+    type Route,
+    type Task
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -465,7 +465,7 @@ export class AgentRuntime implements IAgentRuntime {
         await knowledgeManager.processCharacterKnowledge(items);
     }
 
-    setSetting(key: string, value: string | boolean | null | any, secret: boolean = false) {
+    setSetting(key: string, value: string | boolean | null | any, secret = false) {
         if(secret) {
             this.character.secrets[key] = value;
         } else {

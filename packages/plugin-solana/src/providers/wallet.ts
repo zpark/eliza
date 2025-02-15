@@ -1,8 +1,8 @@
-import {
-    type IAgentRuntime,
-    type Memory,
-    type Provider,
-    type State,
+import type {
+    IAgentRuntime,
+    Memory,
+    Provider,
+    State,
 } from "@elizaos/core";
 import BigNumber from "bignumber.js";
 import type { WalletPortfolio } from "../types";

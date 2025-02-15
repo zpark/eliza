@@ -11,7 +11,7 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
+import type { Message } from "discord.js";
 
 interface GreetingSettings {
     enabled: boolean;

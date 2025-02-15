@@ -1,12 +1,12 @@
 // src/shared/onboarding/initialize.ts
-import { Content, logger, stringToUuid, UUID, type IAgentRuntime } from "@elizaos/core";
-import { Client } from "discord.js";
-import { ROLE_CACHE_KEYS, RoleName, ServerRoleState, UserRole } from "../role/types";
-import { OnboardingSetting, type OnboardingConfig, type OnboardingState } from "./types";
+import { Content, logger, stringToUuid, type UUID, type IAgentRuntime } from "@elizaos/core";
+import type { Client } from "discord.js";
+import { ROLE_CACHE_KEYS, RoleName, type ServerRoleState, type UserRole } from "../role/types";
+import type { OnboardingSetting, OnboardingConfig, OnboardingState } from "./types";
 import onboardingAction from "./action";
 import { createOnboardingProvider } from "./provider";
 import { registerServerOwner } from "./ownership";
-
+import type { Guild } from "discord.js";
 // Helper to create a proper setting object
 function createSettingFromConfig(configSetting: Omit<OnboardingSetting, 'value'>): OnboardingSetting {
     return {
@@ -71,9 +71,37 @@ export async function initializeOnboarding(
         runtime.registerAction(onboardingAction);
         runtime.registerProvider(createOnboardingProvider(config));
 
-        // Get Discord client and server info
+        // Retry handler for guild data
+        let retries = 0;
+        const maxRetries = 5;
         const discordClient = (runtime.getClient("discord") as any).client as Client;
-        const guild = await discordClient.guilds.fetch(serverId);
+
+        let guild = await discordClient.guilds.fetch({
+            guild: serverId,
+            withCounts: true,
+        }) as Guild;
+
+        // Get Discord client and server info
+        guild = await discordClient.guilds.fetch({
+            guild: serverId,
+            withCounts: true,
+        }) as Guild;
+
+
+            console.log(`*** Retrying guild data fetch, attempt ${retries + 1}`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between retries
+            guild = await discordClient.guilds.fetch({
+                guild: serverId,
+                withCounts: true,
+            }) as Guild;
+            retries++;
+        
+
+        if (!guild.ownerId || !guild.members) {
+            throw new Error("Failed to fetch guild data after retries");
+        }
+
+        const ownerId = guild.ownerId;
 
         // Register server owner
         await registerServerOwner(runtime, serverId, guild.ownerId);

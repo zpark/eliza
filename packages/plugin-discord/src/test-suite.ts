@@ -5,9 +5,9 @@ import {
   ModelClass,
 } from "@elizaos/core";
 import { DiscordClient } from "./index.ts";
-import { DiscordConfig, validateDiscordConfig } from "./environment";
+import { type DiscordConfig, validateDiscordConfig } from "./environment";
 import { sendMessageInChunks } from "./utils.ts";
-import { ChannelType, Events, TextChannel } from "discord.js";
+import { ChannelType, Events, type TextChannel } from "discord.js";
 import {
   createAudioPlayer,
   NoSubscriberBehavior,
@@ -76,7 +76,7 @@ export class DiscordTestSuite implements TestSuite {
   async testJoiningVoiceChannel(runtime: IAgentRuntime) {
     try {
       let voiceChannel = null;
-      let channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
+      const channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
 
       if (!channelId) {
         const guilds = await this.discordClient.client.guilds.fetch();

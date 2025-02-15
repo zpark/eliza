@@ -1,8 +1,8 @@
-import { Character, Client, IAgentRuntime } from "@elizaos/core";
-import { ChannelType, Guild, Message } from 'discord.js';
+import type { Character, Client, IAgentRuntime } from "@elizaos/core";
+import { ChannelType, type Guild, type Message } from 'discord.js';
 import dotenv from "dotenv";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
-import { type OnboardingConfig } from "../shared/onboarding/types";
+import type { OnboardingConfig } from "../shared/onboarding/types";
 import twitterPostAction from "./actions/post";
 import { initializeRole } from "../shared/role/initialize";
 dotenv.config({ path: '../../.env' });
@@ -228,7 +228,7 @@ export default {
 
     // when booting up into a server we're in, fire a connected event
     runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
-      await initializeOnboarding(runtime, params.guild[0], socialMediaManagerConfig);
+      await initializeOnboarding(runtime, params.guild.id, socialMediaManagerConfig);
     });
   }
 };

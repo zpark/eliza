@@ -10,8 +10,8 @@ import {
     generateText,
     logger
 } from "@elizaos/core";
-import { Message } from "discord.js";
-import { OnboardingState } from "../../shared/onboarding/types";
+import type { Message } from "discord.js";
+import type { OnboardingState } from "../../shared/onboarding/types";
 import { getUserServerRole } from "../../shared/role/types";
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
@@ -74,7 +74,6 @@ async function validateTwitterConfig(runtime: IAgentRuntime, serverId: string): 
             }
         }
 
-        console.log("*** Twitter config validation passed");
         return { isValid: true };
     } catch (error) {
         logger.error("Error validating Twitter config:", error);
@@ -120,21 +119,16 @@ const twitterPostAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State
-    ): Promise<boolean> => {
-        console.log("*** Validating Twitter post action");
-    
+    ): Promise<boolean> => {    
         if (!state?.discordMessage) {
-            console.log("*** No discord message in state");
             return false;
         }
         const discordMessage = state.discordMessage as Message;
         if (!discordMessage.guild?.id) {
-            console.log("*** No guild ID in discord message");
             return false;
         }
     
         const serverId = discordMessage.guild.id;
-        console.log("*** Got server ID from Discord guild:", serverId);
     
         // Check if there are any pending Twitter posts awaiting confirmation
         const pendingTasks = runtime.getTasks({
@@ -143,18 +137,15 @@ const twitterPostAction: Action = {
         });
     
         if (pendingTasks && pendingTasks.length > 0) {
-            console.log("*** Found pending Twitter post tasks, cannot create new one");
             return false;
         }
     
         // Validate Twitter configuration
         const validation = await validateTwitterConfig(runtime, serverId);
         if (!validation.isValid) {
-            console.log("*** Twitter validation failed:", validation.error);
             return false;
         }
         
-        console.log("*** Twitter validation passed");
         return true;
     },
 
@@ -222,7 +213,6 @@ const twitterPostAction: Action = {
                 source: message.content.source,
             };
 
-            console.log("*** Registering approval task");
                 // Register approval task
                 runtime.registerTask({
                     roomId: message.roomId,
@@ -230,9 +220,6 @@ const twitterPostAction: Action = {
                     description: "Confirm the tweet to be posted.",
                     tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
                     handler: async (runtime: IAgentRuntime) => {
-                        console.log("*** Sending tweet");
-
-
                         // const response = await fetch(
                         //     'https://twitter.com/i/api/graphql/a1p9RWpkYKBjWv_I3WzS-A/CreateTweet',
                         //     {
@@ -289,14 +276,11 @@ const twitterPostAction: Action = {
                         const result = await client.client.twitterClient.sendTweet(cleanTweet);
                         // result is a response object, get the data from it-- body is a readable stream
                         const data = await result.json();
-                        console.log("*** Tweet sent");
-                        console.log(data);
                         
                         const tweetId = data?.data?.create_tweet?.tweet_results?.result?.rest_id;
 
                         const tweetUrl = `https://twitter.com/${onboardingState.TWITTER_USERNAME.value}/status/${tweetId}`;
                         
-                        console.log("*** Callback");
                         await callback({
                             ...responseContent,
                             text: `Tweet posted!\n${tweetUrl}`,
@@ -305,7 +289,6 @@ const twitterPostAction: Action = {
                         });
                     },
                     validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
-                        console.log("*** Validating approval task");
                         return userRole === "OWNER" || userRole === "ADMIN";
                     }
                 });

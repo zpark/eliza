@@ -7,7 +7,7 @@ import {
     composeContext,
     logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
+import type { Message } from "discord.js";
 
 const REFLECTION_TEMPLATE = `
 As {{agentName}}, reflect on my recent social behavior in this conversation:

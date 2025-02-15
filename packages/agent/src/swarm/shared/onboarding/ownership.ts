@@ -1,6 +1,6 @@
-import { IAgentRuntime, logger, State } from "@elizaos/core";
-import { OnboardingState } from "./types";
-import { Message } from "discord.js";
+import { type IAgentRuntime, logger, type State } from "@elizaos/core";
+import type { OnboardingState } from "./types";
+import type { Message } from "discord.js";
 
 export interface ServerOwnership {
     ownerId: string;

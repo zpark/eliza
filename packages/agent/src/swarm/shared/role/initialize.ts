@@ -1,5 +1,5 @@
 
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger } from "@elizaos/core";
 import updateOrgRoleAction from "./action";
 
 export async function initializeRole(

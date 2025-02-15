@@ -11,8 +11,8 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
-import { ServerRoleState } from "../../shared/role/types";
+import type { Message } from "discord.js";
+import type { ServerRoleState } from "../../shared/role/types";
 
 interface TimeoutSettings {
     enabled: boolean;

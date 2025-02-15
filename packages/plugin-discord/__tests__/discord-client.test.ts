@@ -1,7 +1,7 @@
 import { Events } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordClient } from '../src';
-import { DiscordConfig } from '../src/environment';
+import type { DiscordConfig } from '../src/environment';
 
 // Mock @elizaos/core
 vi.mock('@elizaos/core', () => ({
