@@ -97,6 +97,14 @@ export const continueAction: Action = {
         }
         state = await runtime.updateRecentMessageState(state);
 
+        // if the action is continue, reply to the user
+        if (message.content.action === "CONTINUE") {
+            await callback({
+                text: message.content.text,
+                inReplyTo: message.id,
+            });
+        }
+
         // Get the agent's recent messages
         const agentMessages = state.recentMessagesData
             .filter((m: { userId: any }) => m.userId === runtime.agentId)
