@@ -15,7 +15,7 @@ import {
 } from "./evaluators.ts";
 import { generateText } from "./generation.ts";
 import { formatGoalsAsString, getGoals } from "./goals.ts";
-import { handlePluginImporting, logger } from "./index.ts";
+import { elizaLogger, handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
 import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
@@ -296,7 +296,10 @@ export class AgentRuntime implements IAgentRuntime {
         const plugins = opts?.plugins ?? [];
 
         for (const plugin of plugins) {
+            elizaLogger.info(`Initializing plugin: ${plugin.name}`);
+            elizaLogger.info(`Plugin actions: ${plugin.actions}`);
             for (const action of (plugin.actions ?? [])) {
+                elizaLogger.info(`Registering action: ${action.name}`);
                 this.registerAction(action);
             }
 

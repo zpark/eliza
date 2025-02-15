@@ -1268,6 +1268,23 @@ export enum TeeType {
   TDX_DSTACK = "tdx_dstack",
 }
 
+export enum TeeVendors {
+  PHALA = "phala",
+  MARLIN = "marlin",
+  FLEEK = "fleek",
+  SGX_GRAMINE = "sgx_gramine",
+}
+
+export interface TeeVendorConfig {
+  // Add vendor-specific configuration options here
+  [key: string]: unknown;
+}
+
+export interface TeePluginConfig {
+  vendor?: TeeVendors;
+  vendorConfig?: TeeVendorConfig;
+}
+
 export const CACHE_KEYS = {
   SERVER_SETTINGS: (serverId: string) => `server_${serverId}_settings`,
   SERVER_ROLES: (serverId: string) => `server_${serverId}_roles`,

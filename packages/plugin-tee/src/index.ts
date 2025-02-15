@@ -1,19 +1,22 @@
-import type { Plugin } from '@elizaos/core';
-import { deriveKeyProvider } from './providers/deriveKeyProvider';
-import { remoteAttestationProvider } from './providers/remoteAttestationProvider';
-
-export { DeriveKeyProvider } from './providers/deriveKeyProvider';
-
-import { sgxAttestationProvider } from './providers/sgxAttestationProvider';
+import { type Plugin, TeeVendors, TeePluginConfig, TeeVendorConfig } from '@elizaos/core';
 import { TeeLogService } from './services/teeLogService';
+import { getVendor } from './vendors';
 
+export { PhalaRemoteAttestationProvider } from './providers/remoteAttestationProvider';
+export { PhalaDeriveKeyProvider } from './providers/deriveKeyProvider';
 export { TeeLogService };
+export type { TeeVendorConfig };
 
-export const teePlugin: Plugin = {
-    name: 'tee',
-    description: 'TEE plugin with actions to generate remote attestations and derive keys',
-    actions: [],
-    evaluators: [],
-    providers: [remoteAttestationProvider, deriveKeyProvider, sgxAttestationProvider],
-    services: [new TeeLogService()],
+export const teePlugin = (config?: TeePluginConfig): Plugin => {
+    const vendorType = config?.vendor || TeeVendors.PHALA;
+    const vendor = getVendor(vendorType);
+    
+    return {
+        name: vendor.getName(),
+        description: vendor.getDescription(),
+        actions: vendor.getActions(),
+        evaluators: [],
+        providers: vendor.getProviders(),
+        services: [new TeeLogService()],
+    };
 };

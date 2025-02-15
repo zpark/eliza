@@ -87,8 +87,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 export const discordMessageHandlerTemplate =
     // {{goals}}
-    `# Action Examples
-{{actionExamples}}
+    `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
 # Knowledge
