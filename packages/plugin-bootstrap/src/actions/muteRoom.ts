@@ -11,7 +11,7 @@ import {
 } from "@elizaos/core";
 
 export const shouldMuteTemplate =
-    `Based on the conversation so far:
+    `# Task: Decide if {{agentName}} should mute this room and stop responding unless explicitly mentioned.
 
 {{recentMessages}}
 

@@ -11,7 +11,7 @@ import {
 } from "@elizaos/core";
 
 export const shouldUnmuteTemplate =
-    `Based on the conversation so far:
+    `# Task: Decide if {{agentName}} should unmute this previously muted room and start considering it for responses again.
 
 {{recentMessages}}
 

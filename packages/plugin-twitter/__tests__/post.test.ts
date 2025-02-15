@@ -16,7 +16,6 @@ describe('Twitter Post Client', () => {
                 TWITTER_DRY_RUN: 'true',
                 TWITTER_POST_INTERVAL_MIN: '5',
                 TWITTER_POST_INTERVAL_MAX: '10',
-                TWITTER_ACTION_INTERVAL: '5',
                 TWITTER_ENABLE_ACTION_PROCESSING: 'true',
                 TWITTER_POST_IMMEDIATELY: 'false',
                 TWITTER_EMAIL: 'test@example.com',
@@ -24,7 +23,6 @@ describe('Twitter Post Client', () => {
                 TWITTER_2FA_SECRET: '',
                 TWITTER_POLL_INTERVAL: '120',
                 TWITTER_RETRY_LIMIT: '5',
-                MAX_TWEET_LENGTH: '280'
             },
             getEnv: function (key: string) {
                 return this.env[key] || null;
@@ -50,12 +48,10 @@ describe('Twitter Post Client', () => {
             TWITTER_2FA_SECRET: '',
             TWITTER_RETRY_LIMIT: 5,
             TWITTER_POLL_INTERVAL: 120,
-            MAX_TWEET_LENGTH: 280,
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,
-            ACTION_INTERVAL: 5,
             TWITTER_ENABLE_POST_GENERATION: true,
-            POST_IMMEDIATELY: false,
+            TWITTER_POST_IMMEDIATELY: false,
         };
 
         baseClient = new ClientBase(mockRuntime, mockConfig);

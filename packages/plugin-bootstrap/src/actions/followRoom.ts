@@ -11,7 +11,7 @@ import {
 } from "@elizaos/core";
 
 export const shouldFollowTemplate =
-    `Based on the conversation so far:
+    `# Task: Decide if {{agentName}} should start following this room, i.e. eagerly participating without explicit mentions.
 
 {{recentMessages}}
 

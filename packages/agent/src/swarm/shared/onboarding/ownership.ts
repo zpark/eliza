@@ -1,11 +1,10 @@
-// New file: shared/serverOwnership.ts
 import { IAgentRuntime, logger } from "@elizaos/core";
 import { OnboardingState } from "./types";
 
 export interface ServerOwnership {
     ownerId: string;
     serverId: string;
-    agentId: string;  // Track which agent created this record
+    agentId: string;
     lastUpdated: number;
 }
 
@@ -33,6 +32,11 @@ export async function registerServerOwner(
             };
         }
 
+        // Ensure servers object exists
+        if (!ownershipState.servers) {
+            ownershipState.servers = {};
+        }
+
         ownershipState.servers[serverId] = {
             ownerId,
             serverId,
@@ -43,7 +47,21 @@ export async function registerServerOwner(
         ownershipState.lastUpdated = Date.now();
 
         await runtime.cacheManager.set(OWNERSHIP_CACHE_KEY, ownershipState);
+        
+        // Log the registration
         logger.info(`Registered owner ${ownerId} for server ${serverId}`);
+        
+        // Also initialize an empty onboarding state if it doesn't exist
+        const onboardingState = await runtime.cacheManager.get<OnboardingState>(
+            `server_${serverId}_onboarding_state`
+        );
+        
+        if (!onboardingState) {
+            await runtime.cacheManager.set(
+                `server_${serverId}_onboarding_state`,
+                {}
+            );
+        }
     } catch (error) {
         logger.error('Error registering server owner:', error);
         throw error;
@@ -57,7 +75,7 @@ export async function findServerForOwner(
     try {
         const ownershipState = await runtime.cacheManager.get<ServerOwnershipState>(OWNERSHIP_CACHE_KEY);
         
-        if (!ownershipState) {
+        if (!ownershipState?.servers) {
             return null;
         }
 
@@ -74,7 +92,7 @@ export async function findServerForOwner(
     }
 }
 
-// Updated onboarding validation
+// Validate onboarding access based on ownership
 export async function validateOnboardingAccess(
     runtime: IAgentRuntime,
     userId: string
@@ -92,14 +110,14 @@ export async function validateOnboardingAccess(
             `server_${serverOwnership.serverId}_onboarding_state`
         );
 
-        if (onboardingState) {
-            return {
-                serverId: serverOwnership.serverId,
-                onboardingState
-            };
+        if (!onboardingState) {
+            return null;
         }
 
-        return null;
+        return {
+            serverId: serverOwnership.serverId,
+            onboardingState
+        };
     } catch (error) {
         logger.error('Error validating onboarding access:', error);
         return null;

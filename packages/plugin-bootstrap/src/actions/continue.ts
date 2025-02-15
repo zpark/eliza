@@ -16,11 +16,13 @@ const maxContinuesInARow = 3;
 
 export const messageHandlerTemplate =
     // {{goals}}
-    `# Action Examples
+    `Generate dialog and actions for {{agentName}}.
+
 {{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
-# Task: Generate dialog and actions for the character {{agentName}}.
+{{system}}
+
 About {{agentName}}:
 {{bio}}
 {{knowledge}}

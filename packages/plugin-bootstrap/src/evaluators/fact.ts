@@ -20,7 +20,7 @@ export const formatFacts = (facts: Memory[]) => {
 
 const factsTemplate =
     // {{actors}}
-    `TASK: Extract Claims from the conversation as an array of claims in JSON format.
+    `# Task: Extract Claims from the conversation
 
 # START OF EXAMPLES
 These are examples of the expected output of this task:

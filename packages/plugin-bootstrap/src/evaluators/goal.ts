@@ -11,7 +11,7 @@ import {
     type Evaluator,
 } from "@elizaos/core";
 
-const goalsTemplate = `TASK: Update Goal
+const goalsTemplate = `# TASK: Update Goal
 Analyze the conversation and update the status of the goals based on the new information provided.
 
 # INSTRUCTIONS

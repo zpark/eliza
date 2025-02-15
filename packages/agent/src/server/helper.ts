@@ -7,7 +7,6 @@ import fs from "node:fs";
 
 export const messageHandlerTemplate =
     // {{goals}}
-    // "# Action Examples" is already included
     `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
@@ -17,6 +16,8 @@ export const messageHandlerTemplate =
 # Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
+
+{{system}}
 
 {{providers}}
 
@@ -34,15 +35,18 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 # Instructions: Write the next message for {{agentName}}.
 ${messageCompletionFooter}`;
 
-export const hyperfiHandlerTemplate = `{{actionExamples}}
+export const hyperfiHandlerTemplate = `Task: Generate dialog and actions for the character {{agentName}}.
+
+{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
 # Knowledge
 {{knowledge}}
 
-# Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
+
+{{system}}
 
 {{providers}}
 

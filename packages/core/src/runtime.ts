@@ -1006,9 +1006,12 @@ Text: ${attachment.text}
 
         formattedKnowledge = formatKnowledge(knowledgeData);
 
+        const system = this.character.system ?? "";
+
         const initialState = {
             agentId: this.agentId,
             agentName,
+            system,
             bio,
             adjective:
                 this.character.adjectives &&

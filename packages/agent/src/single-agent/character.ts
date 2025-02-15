@@ -11,11 +11,12 @@ export const defaultCharacter: Character = {
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
     // "@elizaos/plugin-telegram",
-    // "@elizaos/plugin-twitter",
+    "@elizaos/plugin-twitter",
     // "@elizaos/plugin-evm",
     // "@elizaos/plugin-solana",
   ],
   settings: {
+    TWITTER_POST_IMMEDIATELY: true,
     secrets: {},
     voice: {
       model: "en_US-hfc_female-medium",

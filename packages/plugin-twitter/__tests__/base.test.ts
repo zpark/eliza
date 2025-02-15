@@ -14,7 +14,6 @@ describe('Twitter Client Base', () => {
                 TWITTER_DRY_RUN: 'true',
                 TWITTER_POST_INTERVAL_MIN: '5',
                 TWITTER_POST_INTERVAL_MAX: '10',
-                TWITTER_ACTION_INTERVAL: '5',
                 TWITTER_ENABLE_ACTION_PROCESSING: 'true',
                 TWITTER_POST_IMMEDIATELY: 'false',
             },
@@ -43,11 +42,9 @@ describe('Twitter Client Base', () => {
             TWITTER_RETRY_LIMIT: 5,
             TWITTER_POLL_INTERVAL: 120,
             TWITTER_ENABLE_POST_GENERATION: true,
-            MAX_TWEET_LENGTH: 280,
             POST_INTERVAL_MIN: 5,
             POST_INTERVAL_MAX: 10,
-            ACTION_INTERVAL: 5,
-            POST_IMMEDIATELY: false
+            TWITTER_POST_IMMEDIATELY: false
         };
     });
 
@@ -59,19 +56,9 @@ describe('Twitter Client Base', () => {
         expect(client.twitterConfig.TWITTER_DRY_RUN).toBe(true);
     });
 
-    it('should initialize with correct tweet length limit', () => {
-        const client = new ClientBase(mockRuntime, mockConfig);
-        expect(client.twitterConfig.MAX_TWEET_LENGTH).toBe(280);
-    });
-
     it('should initialize with correct post intervals', () => {
         const client = new ClientBase(mockRuntime, mockConfig);
         expect(client.twitterConfig.POST_INTERVAL_MIN).toBe(5);
         expect(client.twitterConfig.POST_INTERVAL_MAX).toBe(10);
-    });
-
-    it('should initialize with correct action settings', () => {
-        const client = new ClientBase(mockRuntime, mockConfig);
-        expect(client.twitterConfig.ACTION_INTERVAL).toBe(5);
     });
 });

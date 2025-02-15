@@ -16,11 +16,6 @@ export interface ActionResponse {
     reply?: boolean;
 }
 
-export enum ActionTimelineType {
-    ForYou = "foryou",
-    Following = "following",
-}
-
 export interface ITwitterClient extends ClientInstance {
     client: ClientBase;
     post: TwitterPostClient;

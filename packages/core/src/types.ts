@@ -207,6 +207,9 @@ export interface State {
   /** ID of agent in conversation */
   agentId?: UUID;
 
+  /** System prompt */
+  system?: string;
+
   /** Agent's biography */
   bio: string;
 
@@ -1002,7 +1005,7 @@ export interface IAgentRuntime {
     name: string | null,
     source: string | null
   ): Promise<void>;
-  
+
   registerProvider(provider: Provider): void;
 
   registerAction(action: Action): void;

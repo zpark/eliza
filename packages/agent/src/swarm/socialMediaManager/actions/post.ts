@@ -14,10 +14,12 @@ import {
 import { OnboardingState } from "../../shared/onboarding/types";
 import { getUserServerRole } from "../../shared/role/types";
 
-const tweetGenerationTemplate = `# Task: Generate a tweet in the style and voice of {{agentName}}.
+const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
+{{system}}
 
 About {{agentName}}:
 {{bio}}
+
 {{topics}}
 
 {{characterPostExamples}}
@@ -26,7 +28,7 @@ Recent Context:
 {{recentMessages}}
 
 # Instructions: Write a tweet that captures the essence of what {{agentName}} wants to share. The tweet should be:
-- Under {{maxTweetLength}} characters
+- Under 280 characters
 - In {{agentName}}'s authentic voice and style
 - Related to the ongoing conversation or context
 - Not include hashtags unless specifically requested
@@ -59,16 +61,13 @@ const twitterPostAction: Action = {
         // If no client exists yet, check if we can create one from settings
         if (!client) {
             const onboardingState = await runtime.cacheManager.get(`server_${serverId}_onboarding_state`) as OnboardingState;
-            if (!onboardingState?.settings) {
+            if (!onboardingState) {
                 return false;
             }
 
-            // Check if Twitter is enabled and configured
-            const settings = onboardingState.settings;
-
             try {
                 // Try to create client with onboarding settings
-                await manager.createClient(runtime, serverId, settings);
+                await manager.createClient(runtime, serverId, onboardingState);
                 return true;
             } catch (error) {
                 logger.error("Failed to create Twitter client:", error);
@@ -92,16 +91,13 @@ const twitterPostAction: Action = {
             
             // Get onboarding state
             const onboardingState = await runtime.cacheManager.get(`server_${serverId}_onboarding_state`) as OnboardingState;
-            if (!onboardingState?.settings) {
+            if (!onboardingState) {
                 throw new Error("Twitter not configured for this server");
             }
 
             // Generate the tweet content
             const context = composeContext({
-                state: {
-                    ...state,
-                    maxTweetLength: 280
-                },
+                state,
                 template: tweetGenerationTemplate
             });
 
@@ -128,12 +124,12 @@ const twitterPostAction: Action = {
             const manager = (runtime.getClient("twitter") as any).getInstance();
             let client = manager.getClient(serverId, runtime.agentId);
             if (!client) {
-                client = await manager.createClient(runtime, serverId, onboardingState.settings);
+                client = await manager.createClient(runtime, serverId, onboardingState);
             }
 
             // Handle approval requirement
-            const requiresApproval = onboardingState.settings.POST_APPROVAL_REQUIRED?.value === "yes";
-            const approvalRole = (onboardingState.settings.POST_APPROVAL_ROLE?.value as string)?.toLowerCase();
+            const requiresApproval = onboardingState.POST_APPROVAL_REQUIRED?.value === "yes";
+            const approvalRole = (onboardingState.POST_APPROVAL_ROLE?.value as string)?.toLowerCase();
 
             if (requiresApproval) {
                 runtime.registerTask({
@@ -145,7 +141,7 @@ const twitterPostAction: Action = {
                         const result = await client.client.twitterClient.sendTweet(cleanTweet);
                         
                         const tweetId = result.data?.create_tweet?.tweet_results?.result?.rest_id;
-                        const tweetUrl = `https://twitter.com/${onboardingState.settings.TWITTER_USERNAME.value}/status/${tweetId}`;
+                        const tweetUrl = `https://twitter.com/${onboardingState.TWITTER_USERNAME.value}/status/${tweetId}`;
                         
                         await callback({
                             ...responseContent,
@@ -170,7 +166,7 @@ const twitterPostAction: Action = {
                 // Post immediately if no approval required
                 const result = await client.client.twitterClient.sendTweet(cleanTweet);
                 const tweetId = result.data?.create_tweet?.tweet_results?.result?.rest_id;
-                const tweetUrl = `https://twitter.com/${onboardingState.settings.TWITTER_USERNAME.value}/status/${tweetId}`;
+                const tweetUrl = `https://twitter.com/${onboardingState.TWITTER_USERNAME.value}/status/${tweetId}`;
                 
                 responseContent.text = `Tweet posted!\n${tweetUrl}`;
                 responseContent.url = tweetUrl;

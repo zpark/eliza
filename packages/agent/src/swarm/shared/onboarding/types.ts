@@ -1,5 +1,4 @@
 // src/shared/onboarding/types.ts
-import { ChannelType } from "discord.js";
 
 export interface OnboardingSetting {
     name: string;
@@ -24,11 +23,10 @@ export interface OnboardingConfig {
 
 // Helper function to check if onboarding settings are complete
 export function areSettingsComplete(state: OnboardingState): boolean {
-    const settings = state.settings;
 
-    for (const [key, setting] of Object.entries(settings)) {
+    for (const [key, setting] of Object.entries(state)) {
         // Skip if setting is not visible
-        if (setting.visibleIf && !setting.visibleIf(settings)) {
+        if (setting.visibleIf && !setting.visibleIf(state)) {
             continue;
         }
 
@@ -51,7 +49,7 @@ export function areSettingsComplete(state: OnboardingState): boolean {
         // Check dependencies
         if (setting.dependsOn) {
             for (const dependency of setting.dependsOn) {
-                const dependentSetting = settings[dependency];
+                const dependentSetting = state[dependency];
                 if (!dependentSetting || dependentSetting.value === null) {
                     return false;
                 }
@@ -66,8 +64,8 @@ export function areSettingsComplete(state: OnboardingState): boolean {
 export function getVisibleSettings(state: OnboardingState): string[] {
     const visibleSettings: string[] = [];
     
-    for (const [key, setting] of Object.entries(state.settings)) {
-        if (!setting.visibleIf || setting.visibleIf(state.settings)) {
+    for (const [key, setting] of Object.entries(state)) {
+        if (!setting.visibleIf || setting.visibleIf(state)) {
             visibleSettings.push(key);
         }
     }
@@ -80,11 +78,11 @@ export function getNextIncompleteSetting(state: OnboardingState): string | null 
     const visibleSettings = getVisibleSettings(state);
     
     for (const key of visibleSettings) {
-        const setting = state.settings[key];
+        const setting = state[key];
         
         // Skip if all dependencies aren't met
         if (setting.dependsOn && !setting.dependsOn.every(dep => 
-            state.settings[dep] && state.settings[dep].value !== null)) {
+            state[dep] && state[dep].value !== null)) {
             continue;
         }
         

@@ -20,9 +20,7 @@ const channelStateProvider: Provider = {
 
         if (!guild) {
             return (
-                agentName +
-                " is currently in a direct message conversation with " +
-                senderName
+                `${agentName} is currently in a direct message conversation with ${senderName}. ${agentName} should engage in conversation, should respond to messages that are addressed to them and only ignore messages that seem to not require a response.`
             );
         }
 
@@ -44,6 +42,9 @@ const channelStateProvider: Provider = {
             "` (@" +
             guildId +
             ")";
+
+        response += `\n${agentName} is in a room with other users and should be self-conscious and only participate when directly addressed or when the conversation is relevant to them.`;
+
         if (
             channel.type === ChannelType.GuildText &&
             (channel as TextChannel).topic

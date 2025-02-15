@@ -1,11 +1,25 @@
 // src/shared/onboarding/initialize.ts
-import { logger, UUID, type IAgentRuntime } from "@elizaos/core";
+import { Content, logger, stringToUuid, UUID, type IAgentRuntime } from "@elizaos/core";
 import { Client } from "discord.js";
 import { ROLE_CACHE_KEYS, RoleName, ServerRoleState, UserRole } from "../role/types";
-import { type OnboardingConfig, type OnboardingState } from "./types";
+import { OnboardingSetting, type OnboardingConfig, type OnboardingState } from "./types";
 import onboardingAction from "./action";
 import { createOnboardingProvider } from "./provider";
 import { registerServerOwner } from "./ownership";
+
+// Helper to create a proper setting object
+function createSettingFromConfig(configSetting: Omit<OnboardingSetting, 'value'>): OnboardingSetting {
+    return {
+        name: configSetting.name,
+        description: configSetting.description,
+        value: null,
+        required: configSetting.required,
+        validation: configSetting.validation || null,
+        dependsOn: configSetting.dependsOn || [],
+        onSetAction: configSetting.onSetAction || null,
+        visibleIf: configSetting.visibleIf || null
+    };
+}
 
 export async function setUserServerRole(
     runtime: IAgentRuntime,
@@ -78,36 +92,46 @@ export async function initializeOnboarding(
 
         if (!existingState) {
             // Initialize onboarding state with config settings
-            const initialState: OnboardingState = {
-                settings: Object.entries(config.settings).reduce((acc, [key, setting]) => ({
-                    ...acc,
-                    [key]: {
-                        ...setting,
-                        value: null
-                    }
-                }), {}),
-                lastUpdated: Date.now(),
-                completed: false
-            };
+            const initialState: OnboardingState = {};
+            
+            // Properly construct each setting
+            for (const [key, configSetting] of Object.entries(config.settings)) {
+                initialState[key] = createSettingFromConfig(configSetting);
+            }
 
             // Save initial state
             await runtime.cacheManager.set(
                 `server_${serverId}_onboarding_state`,
                 initialState
             );
+
+            // Start DM with owner
+            const owner = await guild.members.fetch(guild.ownerId);
+            const onboardingMessages = [
+                "Hi! I need to collect some information to get set up. Is now a good time?",
+                "Hey there! I need to configure a few things. Do you have a moment?",
+                "Hello! Could we take a few minutes to get everything set up?",
+            ];
+            
+            const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
+
+            const msg = await owner.send(randomMessage);
+
+            const roomId = stringToUuid(msg.channelId + "-" + runtime.agentId);
+            
+            // Create memory of the initial message
+            await runtime.messageManager.createMemory({
+                agentId: runtime.agentId as UUID,
+                userId: stringToUuid(owner.id) as UUID,
+                roomId: roomId,
+                content: {
+                    text: randomMessage,
+                    action: "BEGIN_ONBOARDING",
+                },
+                createdAt: Date.now(),
+            });
         }
 
-        // Start DM with owner
-        const owner = await guild.members.fetch(guild.ownerId);
-        const onboardingMessages = [
-            "Hi! I need to collect some information to get set up. Is now a good time?",
-            "Hey there! I need to configure a few things. Do you have a moment?",
-            "Hello! Could we take a few minutes to get everything set up?",
-        ];
-        
-        const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
-        await owner.send(randomMessage);
-        
         logger.info(`Initialized onboarding for server ${serverId}`);
     } catch (error) {
         logger.error(`Failed to initialize onboarding for server ${serverId}:`, error);

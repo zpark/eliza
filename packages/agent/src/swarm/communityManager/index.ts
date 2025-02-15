@@ -19,9 +19,6 @@ const character: Character = {
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
   ],
-  settings: {
-
-  },
   secrets: {
     DISCORD_APPLICATION_ID: process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
     DISCORD_API_TOKEN: process.env.COMMUNITY_MANAGER_DISCORD_API_TOKEN,
