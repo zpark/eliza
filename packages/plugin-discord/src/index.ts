@@ -17,13 +17,13 @@ import {
   type User,
 } from "discord.js";
 import { EventEmitter } from "events";
-import chat_with_attachments from "./actions/chat_with_attachments.ts";
-import download_media from "./actions/download_media.ts";
-import joinvoice from "./actions/joinvoice.ts";
-import leavevoice from "./actions/leavevoice.ts";
+import chatWithAttachments from "./actions/chatWithAttachments.ts";
+import downloadMedia from "./actions/downloadMedia.ts";
+import joinVoice from "./actions/joinVoice.ts";
+import leaveVoice from "./actions/leaveVoice.ts";
 import reply from "./actions/reply.ts";
-import summarize from "./actions/summarize_conversation.ts";
-import transcribe_media from "./actions/transcribe_media.ts";
+import summarize from "./actions/summarizeConversation.ts";
+import transcribe_media from "./actions/transcribeMedia.ts";
 import { DISCORD_CLIENT_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
@@ -407,10 +407,10 @@ const discordPlugin: Plugin = {
   clients: [DiscordClientInterface],
   actions: [
     reply,
-    chat_with_attachments,
-    download_media,
-    joinvoice,
-    leavevoice,
+    chatWithAttachments,
+    downloadMedia,
+    joinVoice,
+    leaveVoice,
     summarize,
     transcribe_media,
   ],

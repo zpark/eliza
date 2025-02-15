@@ -8,6 +8,7 @@ import {
     ModelClass
 } from "./types.ts";
 
+// ================ INTERFACES ================
 interface GenerateObjectOptions {
   runtime: IAgentRuntime;
   context: string;
@@ -17,11 +18,10 @@ interface GenerateObjectOptions {
   schemaName?: string;
   schemaDescription?: string;
   mode?: "auto" | "json" | "tool";
-  enum?: Array<string>;
+  enumValues?: Array<string>;  // Changed from 'enum' to 'enumValues'
   stopSequences?: string[];
 }
 
-// ================ COMMON UTILITIES ================
 interface RetryOptions {
   maxRetries?: number;
   initialDelay?: number;
@@ -29,6 +29,7 @@ interface RetryOptions {
   shouldRetry?: (error: any) => boolean;
 }
 
+// ================ COMMON UTILITIES ================
 async function withRetry<T>(
   operation: () => Promise<T>,
   options: RetryOptions = {}
@@ -67,24 +68,6 @@ async function withRetry<T>(
 
 /**
  * Trims the provided text context to a specified token limit using a tokenizer model and type.
- *
- * The function dynamically determines the truncation method based on the tokenizer settings
- * provided by the runtime. If no tokenizer settings are defined, it defaults to using the
- * TikToken truncation method with the "gpt-4o" model.
- *
- * @async
- * @function trimTokens
- * @param {string} context - The text to be tokenized and trimmed.
- * @param {number} maxTokens - The maximum number of tokens allowed after truncation.
- * @param {IAgentRuntime} runtime - The runtime interface providing tokenizer settings.
- *
- * @returns {Promise<string>} A promise that resolves to the trimmed text.
- *
- * @throws {Error} Throws an error if the runtime settings are invalid or missing required fields.
- *
- * @example
- * const trimmedText = await trimTokens("This is an example text", 50, runtime);
- * console.log(trimmedText); // Output will be a truncated version of the input text.
  */
 export async function trimTokens(
   context: string,
@@ -109,7 +92,7 @@ export async function trimTokens(
       // Keep the most recent tokens by slicing from the end
       const truncatedTokens = tokens.slice(-maxTokens);
 
-      // Decode back to text - js-tiktoken decode() returns a string directly
+      // Decode back to text
       return await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
   } catch (error) {
       logger.error("Error in trimTokens:", error);
@@ -131,9 +114,8 @@ export async function generateText({
   stopSequences?: string[];
   customSystemPrompt?: string;
 }): Promise<string> {
-  
-  console.log("Generating text")
-  console.log(context)
+  console.log("Generating text");
+  console.log(context);
 
   const text = await runtime.useModel(modelClass, {
     runtime,
@@ -141,8 +123,8 @@ export async function generateText({
     stopSequences,
   });
 
-  console.log("Generated text")
-  console.log(text)
+  console.log("Generated text");
+  console.log(text);
 
   return text;
 }
@@ -159,110 +141,19 @@ export async function generateTextArray({
   stopSequences?: string[];
 }): Promise<string[]> {
   const result = await withRetry(async () => {
-    const result = await generateObject({
+    const response = await generateObject({
       runtime,
       context,
       modelClass,
+      output: "array",
       schema: z.array(z.string()),
       stopSequences,
     });
-    logger.debug("Received response from generateObject:", result);
+    logger.debug("Received response from generateObject:", response);
+    return response;
   });
 
   return Array.isArray(result) ? result : [];
-}
-
-// ================ ENUM GENERATION FUNCTIONS ================
-async function generateEnum<T extends string>({
-  runtime,
-  context,
-  modelClass = ModelClass.TEXT_SMALL,
-  enumValues,
-  functionName,
-  stopSequences,
-}: {
-  runtime: IAgentRuntime;
-  context: string;
-  modelClass: ModelClass;
-  enumValues: Array<T>;
-  functionName: string;
-  stopSequences?: string[];
-}): Promise<any> {
-  const enumResult = await withRetry(async () => {
-    logger.debug(
-      "Attempting to generate enum value with context:",
-      context
-    );
-    const result = await generateObject({
-      runtime,
-      context,
-      modelClass,
-      output: "enum",
-      enum: enumValues,
-      mode: "json",
-      stopSequences: stopSequences,
-    });
-
-    logger.debug("Received enum response:", result);
-    return result;
-  });
-
-  return enumResult;
-}
-
-export async function generateShouldRespond({
-  runtime,
-  context,
-  modelClass = ModelClass.TEXT_SMALL,
-  stopSequences = ["\\n"],
-}: {
-  runtime: IAgentRuntime;
-  context: string;
-  modelClass: ModelClass;
-  stopSequences?: string[];
-}): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-  const result = await generateText({
-    runtime,
-    context,
-    modelClass,
-    stopSequences,
-  });
-
-  if(result.includes("RESPOND")) {
-    return "RESPOND";
-  } else if(result.includes("IGNORE")) {
-    return "IGNORE";
-  } else if(result.includes("STOP")) {
-    return "STOP";
-  } else {
-    logger.error("Invalid response from generateShouldRespond:", result);
-    return null;
-  }
-}
-
-export async function generateTrueOrFalse({
-  runtime,
-  context = "",
-  modelClass = ModelClass.TEXT_SMALL,
-  stopSequences,
-}: {
-  runtime: IAgentRuntime;
-  context: string;
-  modelClass: ModelClass;
-  stopSequences?: string[];
-}): Promise<boolean> {
-  const BOOL_VALUES = ["true", "false"];
-
-  const result = await generateEnum({
-    runtime,
-    context,
-    modelClass,
-    enumValues: BOOL_VALUES,
-    functionName: "generateTrueOrFalse",
-    stopSequences,
-  });
-
-  return result === "true";
 }
 
 // ================ OBJECT GENERATION FUNCTIONS ================
@@ -272,6 +163,9 @@ export const generateObject = async ({
   modelClass = ModelClass.TEXT_LARGE,
   stopSequences,
   output = "object",
+  enumValues,
+  schema,
+  mode,
 }: GenerateObjectOptions): Promise<any> => {
   if (!context) {
     const errorMessage = "generateObject context is empty";
@@ -279,9 +173,44 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
-  console.log("Generating object")
-  console.log(context)
+  console.log("Generating object");
+  console.log(context);
 
+  // Special handling for enum output type
+  if (output === "enum" && enumValues) {
+    const response = await runtime.useModel(modelClass, {
+      runtime,
+      context,
+      modelClass,
+      stopSequences,
+      object: true,
+    });
+
+    console.log("Generated enum response", response);
+
+    // Clean up the response to extract just the enum value
+    const cleanedResponse = response.trim();
+    
+    // Verify the response is one of the allowed enum values
+    if (enumValues.includes(cleanedResponse)) {
+      return cleanedResponse;
+    }
+    
+    // If the response includes one of the enum values (case insensitive)
+    const matchedValue = enumValues.find(value => 
+      cleanedResponse.toLowerCase().includes(value.toLowerCase())
+    );
+    
+    if (matchedValue) {
+      return matchedValue;
+    }
+
+    logger.error(`Invalid enum value received: ${cleanedResponse}`);
+    logger.error(`Expected one of: ${enumValues.join(", ")}`);
+    return null;
+  }
+
+  // Regular object/array generation
   const response = await runtime.useModel(modelClass, {
     runtime,
     context,
@@ -290,8 +219,8 @@ export const generateObject = async ({
     object: true,
   });
 
-  console.log("Generated object")
-  console.log(response)
+  console.log("Generated object");
+  console.log(response);
 
   let jsonString = response;
 
@@ -311,9 +240,15 @@ export const generateObject = async ({
     return null;
   }
 
-  // parse the json string
+  // Parse the JSON string
   try {
     const json = JSON.parse(jsonString);
+    
+    // Validate against schema if provided
+    if (schema) {
+      return schema.parse(json);
+    }
+    
     return json;
   } catch (error) {
     logger.error(`Failed to parse JSON ${output}`);
@@ -341,24 +276,129 @@ export async function generateObjectArray({
     logger.error("generateObjectArray context is empty");
     return [];
   }
+  
   const result = await generateObject({
     runtime,
     context,
     modelClass,
-    output: "array", // Explicitly specify array output
+    output: "array",
     schema,
     schemaName,
     schemaDescription,
     mode: "json",
   });
   
-  // Ensure we have an array
   if (!Array.isArray(result)) {
     logger.error("Generated result is not an array");
     return [];
   }
   
   return schema ? schema.parse(result) : result;
+}
+
+// ================ ENUM GENERATION FUNCTIONS ================
+async function generateEnum<T extends string>({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  enumValues,
+  functionName,
+  stopSequences,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  enumValues: Array<T>;
+  functionName: string;
+  stopSequences?: string[];
+}): Promise<T | null> {
+  const enumResult = await withRetry(async () => {
+    logger.debug(
+      "Attempting to generate enum value with context:",
+      context
+    );
+    const result = await generateObject({
+      runtime,
+      context,
+      modelClass,
+      output: "enum",
+      enumValues,
+      mode: "json",
+      stopSequences,
+    });
+
+    logger.debug("Received enum response:", result);
+    return result;
+  });
+
+  return enumResult as T | null;
+}
+
+export async function generateTrueOrFalse({
+  runtime,
+  context = "",
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
+}): Promise<boolean> {
+  const response = await runtime.useModel(modelClass, {
+    runtime,
+    context,
+    stopSequences,
+  });
+
+  const cleanedResponse = response.trim().toLowerCase();
+  
+  // Handle various affirmative responses
+  if (cleanedResponse === "true" || 
+      cleanedResponse === "yes" || 
+      cleanedResponse === "y" ||
+      cleanedResponse.includes("true") ||
+      cleanedResponse.includes("yes")) {
+    return true;
+  }
+  
+  // Handle various negative responses
+  if (cleanedResponse === "false" || 
+      cleanedResponse === "no" || 
+      cleanedResponse === "n" ||
+      cleanedResponse.includes("false") ||
+      cleanedResponse.includes("no")) {
+    return false;
+  }
+
+  // Default to false if response is unclear
+  logger.warn(`Unclear boolean response: ${response}, defaulting to false`);
+  return false;
+}
+
+export async function generateShouldRespond({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  stopSequences = ["\\n"],
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  stopSequences?: string[];
+}): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
+  const RESPONSE_VALUES = ["RESPOND", "IGNORE", "STOP"];
+  
+  const result = await generateEnum({
+    runtime,
+    context,
+    modelClass,
+    enumValues: RESPONSE_VALUES,
+    functionName: "generateShouldRespond",
+    stopSequences,
+  });
+
+  return result as "RESPOND" | "IGNORE" | "STOP" | null;
 }
 
 export async function generateMessageResponse({
@@ -376,7 +416,7 @@ export async function generateMessageResponse({
 
   return await withRetry(async () => {
     const text = await runtime.useModel(modelClass, {
-    runtime,
+      runtime,
       context,
       stop: stopSequences,
     });

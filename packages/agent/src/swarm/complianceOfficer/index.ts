@@ -294,22 +294,29 @@ const config: OnboardingConfig = {
     PROJECT_INFORMATION: {
       name: "Org Information",
       description:
-        "Tell me about the org. What are we doing here? Assume I don't know anything.",
+        "Information the Compliance Officer knows about the org.",
       required: true,
+      usageDescription: "Tell me about the org. What are we doing here? Assume I don't know anything.",
+      public: true,
+      secret: false,
     },
     COMPLIANCE_LEVEL: {
       name: "Compliance Level",
       description:
-        "How strict should compliance monitoring be? (strict/moderate/lenient)",
+        "Level of compliance monitoring",
       required: true,
-      validation: (value: string) =>
-        ["strict", "moderate", "lenient"].includes(value.toLowerCase()),
+      usageDescription: "How strict should compliance monitoring be? I can be strict, moderate, lenient or take specific direction from you.",
+      public: true,
+      secret: false,
     },
     REGULATORY_FRAMEWORK: {
       name: "Regulatory Framework",
       description:
-        "What specific regulations or guidelines should I enforce? (e.g., SEC guidelines, GDPR, etc.)",
-      required: true,
+        "The compliance officer follows these regulations.",
+      usageDescription: "What specific regulations or guidelines should I enforce? (e.g., SEC guidelines, GDPR, etc.)",
+      public: true,
+      secret: false,
+      required: false,
     },
   },
 };

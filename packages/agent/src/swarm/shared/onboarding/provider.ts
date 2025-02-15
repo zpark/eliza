@@ -5,104 +5,178 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import type { Message } from "discord.js";
-import { ServerRoleState, RoleName, ROLE_CACHE_KEYS } from "../role/types";
+import { Message, ChannelType } from "discord.js";
+import type { OnboardingConfig, OnboardingState, OnboardingSetting } from "./types";
 
-export const roleProvider: Provider = {
+const formatSettingValue = (setting: OnboardingSetting, isOnboarding: boolean): string => {
+    if (setting.value === null) return "Not set";
+    if (setting.secret && !isOnboarding) return "****************";
+    return String(setting.value);
+};
+
+const getSettingDescription = (setting: any, isOnboarding: boolean): string => {
+    return isOnboarding ? setting.usageDescription : setting.description;
+};
+
+export const createOnboardingProvider = (config: OnboardingConfig): Provider => ({
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
         state?: State
     ): Promise<string> => {
         if(!state?.discordMessage) {
-            return "Error: No discord message in state";
+            logger.error("No discord message in state");
+            return "Error: No discord message found";
         }
+
         const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild) {
-            return "Error: No guild found";
+        const isOnboarding = discordMessage.channel.type === ChannelType.DM;
+        const userId = discordMessage.author.id;
+
+        // Get serverId from ownership state
+        const ownershipState = await runtime.cacheManager.get(
+            'server_ownership_state'
+        ) as { servers: { [key: string]: { ownerId: string } } };
+
+        if (!ownershipState?.servers) {
+            logger.error("No ownership state found");
+            return "Error: No server ownership found";
         }
 
+        const serverEntry = Object.entries(ownershipState.servers)
+            .find(([_, info]) => info.ownerId === userId);
+
+        if (!serverEntry) {
+            logger.error("User is not owner of any server");
+            return "Error: No server found for user";
+        }
+
+        const [serverId] = serverEntry;
+        
         try {
-            // Fetch fresh guild data
-            const guild = await discordMessage.guild.fetch();
-            const serverId = guild.id;
-            logger.info(`Using server ID: ${serverId}`);
+            // Get current onboarding state
+            const onboardingState = await runtime.cacheManager.get<OnboardingState>(
+                `server_${serverId}_onboarding_state`
+            );
 
-            const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
-            logger.info(`Looking up roles with cache key: ${cacheKey}`);
-
-            const roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
-            
-            if (!roleState?.roles) {
-                logger.error(`No roles found for server ${serverId}`);
-                return "No role information available for this server.";
+            if (!onboardingState) {
+                logger.error("No onboarding state found");
+                return "Error: No configuration found";
             }
 
-            logger.info(`Found ${Object.keys(roleState.roles).length} roles`);
+            let statusMessage = "";
 
-            // Group users by role
-            const owners: string[] = [];
-            const managers: string[] = [];
-            const colleagues: string[] = [];
+            if (isOnboarding) {
+                // Private channel (DM) display
+                statusMessage += `# Onboarding Configuration\n`;
+                statusMessage += `Hello! I'm ${state.agentName}, and I'm here to help get everything set up.\n\n`;
+                statusMessage += "## Settings Status\n";
 
-            // Fetch all members to get usernames
-            const members = await guild.members.fetch();
+                // Group settings
+                const configuredSettings = [];
+                const requiredUnconfigured = [];
+                const optionalUnconfigured = [];
 
-            for (const [userId, userRole] of Object.entries(roleState.roles)) {
-                logger.info(`Processing user ${userId} with role ${userRole.role}`);
+                for (const [key, setting] of Object.entries(onboardingState) as [string, OnboardingSetting][]) {
+                    const dependenciesMet = !setting.dependsOn || setting.dependsOn.every(dep => 
+                        onboardingState[dep]?.value !== null
+                    );
+
+                    if (!dependenciesMet) continue;
+                    if (setting.visibleIf && !setting.visibleIf(onboardingState)) continue;
+
+                    const settingDisplay = {
+                        key,
+                        ...setting,
+                        displayValue: formatSettingValue(setting, true),
+                        displayDescription: getSettingDescription(setting, true)
+                    };
+
+                    if (setting.value !== null) {
+                        configuredSettings.push(settingDisplay);
+                    } else if (setting.required) {
+                        requiredUnconfigured.push(settingDisplay);
+                    } else {
+                        optionalUnconfigured.push(settingDisplay);
+                    }
+                }
+
+                // Display configured settings
+                if (configuredSettings.length > 0) {
+                    statusMessage += "\n### Configured Settings\n";
+                    for (const setting of configuredSettings) {
+                        statusMessage += `✓ ${setting.name} - ${setting.displayDescription}\n`;
+                        statusMessage += `  Current value: ${setting.displayValue}\n`;
+                    }
+                }
+
+                // Display required unconfigured settings
+                if (requiredUnconfigured.length > 0) {
+                    statusMessage += "\n### Required Settings (Not Configured)\n";
+                    for (const setting of requiredUnconfigured) {
+                        statusMessage += `○ ${setting.name} - ${setting.displayDescription}\n`;
+                    }
+                }
+
+                // Display optional settings
+                if (optionalUnconfigured.length > 0) {
+                    statusMessage += "\n### Optional Settings\n";
+                    for (const setting of optionalUnconfigured) {
+                        statusMessage += `○ ${setting.name} - ${setting.displayDescription}\n`;
+                    }
+                }
+
+                // Next steps
+                const allRequired = requiredUnconfigured.length === 0;
                 
-                // Skip NONE and IGNORE roles
-                if (userRole.role === RoleName.NONE || userRole.role === RoleName.IGNORE) {
-                    continue;
+                if (!allRequired) {
+                    statusMessage += "\n## Next Step\n";
+                    const nextSetting = requiredUnconfigured[0];
+                    statusMessage += `Please configure ${nextSetting.name}:\n`;
+                    statusMessage += `${nextSetting.displayDescription}\n`;
+                } else if (optionalUnconfigured.length > 0) {
+                    statusMessage += "\n## Optional Setup\n";
+                    statusMessage += "All required settings are configured! Would you like to configure any optional settings?\n";
+                } else {
+                    statusMessage += "\n## Setup Complete!\n";
+                    statusMessage += "All settings have been configured. You can always update these settings later.\n";
+                }
+            } else {
+                // Public channel display
+                statusMessage += "# Configuration\n\n";
+
+                // Only show configured public settings
+                let hasPublicSettings = false;
+                
+                for (const [key, setting] of Object.entries(onboardingState) as [string, OnboardingSetting][]) {
+                    // Skip if not public or not configured
+                    if (!setting.public || setting.value === null) continue;
+                    
+                    // Check dependencies
+                    const dependenciesMet = !setting.dependsOn || setting.dependsOn.every(dep => 
+                        onboardingState[dep]?.value !== null
+                    );
+                    if (!dependenciesMet) continue;
+                    
+                    // Check visibility condition
+                    if (setting.visibleIf && !setting.visibleIf(onboardingState)) continue;
+
+                    hasPublicSettings = true;
+                    statusMessage += `**${setting.name}**: ${formatSettingValue(setting, false)}\n`;
                 }
 
-                const member = members.get(userId);
-                const displayName = member?.displayName || member?.user.username || userId;
-
-                switch (userRole.role) {
-                    case RoleName.OWNER:
-                        owners.push(displayName);
-                        break;
-                    case RoleName.ADMIN:
-                        managers.push(displayName);
-                        break;
-                    case RoleName.MEMBER:
-                        colleagues.push(displayName);
-                        break;
+                if (!hasPublicSettings) {
+                    statusMessage += "No public configuration settings available.";
                 }
             }
 
-            // Build the formatted output
-            let output = "**Team Structure**\n\n";
-
-            if (owners.length > 0) {
-                output += "**Owners**\n";
-                owners.forEach(name => output += `• ${name}\n`);
-                output += "\n";
-            }
-
-            if (managers.length > 0) {
-                output += "**Managers**\n";
-                managers.forEach(name => output += `• ${name}\n`);
-                output += "\n";
-            }
-
-            if (colleagues.length > 0) {
-                output += "**Colleagues**\n";
-                colleagues.forEach(name => output += `• ${name}\n`);
-            }
-
-            if (output === "**Team Structure**\n\n") {
-                return "No team members found with assigned roles.";
-            }
-
-            return output.trim();
+            return statusMessage;
 
         } catch (error) {
-            logger.error("Error in role provider:", error);
-            return "Error retrieving role information.";
+            logger.error("Error in onboarding provider:", error);
+            return "Error retrieving onboarding status.";
         }
     }
-};
+});
 
-export default roleProvider;
+export default createOnboardingProvider;

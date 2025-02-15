@@ -175,33 +175,72 @@ const character: Character = {
 
 export const socialMediaManagerConfig: OnboardingConfig = {
   settings: {
+      ORG_NAME: {
+          name: "Organization Name",
+          description: "The name of the organization, what it is called",
+          public: false,
+          secret: false,
+          usageDescription: "What do you call the org? Any nicknames, abbreviations, etc?",
+          required: true,
+          dependsOn: []
+      },
+      ORG_DESCRIPTION: {
+          name: "Organization Description",
+          description: "What the social media manager knows about the organization.",
+          public: true,
+          secret: false,
+          usageDescription: "What is the goal of the organization? What is the mission? What do we make, what do we sell, what do we do? Tell me anything important about the org, the team, the community, etc.",
+          required: true,
+          dependsOn: []
+      },
+      ORG_STYLE: {
+          name: "Brand Style",
+          description: "The style and voice of the org. What is the org's personality? What is our tone?",
+          public: false,
+          secret: false,
+          usageDescription: "The style and voice of the org. What is the org's personality? What is our tone? Be descriptive, specific or vague, but specific with examples will help.",
+          required: true,
+          dependsOn: []
+      },
       // Basic Auth Settings
       TWITTER_USERNAME: {
           name: "Twitter Username",
-          description: "Your Twitter username (without @)",
+          description: "The Twitter username to use for posting",
           required: true,
           dependsOn: [],
+          public: true,
+          secret: false,
+          usageDescription: "The Twitter username to use for posting.",
           validation: (value: string) => value.length > 0 && value.length <= 15
       },
       TWITTER_EMAIL: {
           name: "Twitter Email",
-          description: "Email associated with your Twitter account",
+          description: "Email associated with the Twitter account to post from",
           required: true,
+          public: false,
+          secret: false,
           dependsOn: [],
+          usageDescription: "The email associated with the Twitter account to post from.",
           validation: (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
       },
       TWITTER_PASSWORD: {
           name: "Twitter Password",
-          description: "Your Twitter password",
+          description: "The password associated with the Twitter account to post from.",
+          public: false,
+          secret: true,
+          usageDescription: "The password associated with the Twitter account to post from.",
           required: true,
           dependsOn: []
       },
       TWITTER_2FA_SECRET: {
           name: "Twitter 2FA Secret",
-          description: "Your Twitter 2FA secret (if enabled)",
+          description: "The 2FA secret associated with the Twitter account to post from.",
+          public: false,
+          secret: true,
+          usageDescription: "The 2FA secret associated with the Twitter account to post from.",
           required: false,
           dependsOn: []
-      },
+      }
   }
 };
 

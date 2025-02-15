@@ -6,7 +6,7 @@ import {
     logger,
 } from "@elizaos/core";
 import type { Message } from "discord.js";
-import { ServerRoleState, RoleName, ROLE_CACHE_KEYS } from "./types";
+import { ServerRoleState, RoleName, ROLE_CACHE_KEYS } from "../role/types";
 
 export const roleProvider: Provider = {
     get: async (
@@ -31,24 +31,11 @@ export const roleProvider: Provider = {
             const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
             logger.info(`Looking up roles with cache key: ${cacheKey}`);
 
-            let roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
+            const roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
             
-            // Initialize role state if it doesn't exist
             if (!roleState?.roles) {
-                logger.info(`No role state found, initializing with owner`);
-                roleState = {
-                    roles: {
-                        [guild.ownerId]: {
-                            userId: guild.ownerId,
-                            serverId: serverId,
-                            role: RoleName.OWNER
-                        }
-                    },
-                    lastUpdated: Date.now()
-                };
-                
-                await runtime.cacheManager.set(cacheKey, roleState);
-                logger.info(`Initialized role state with owner ${guild.ownerId}`);
+                logger.error(`No roles found for server ${serverId}`);
+                return "No role information available for this server.";
             }
 
             logger.info(`Found ${Object.keys(roleState.roles).length} roles`);

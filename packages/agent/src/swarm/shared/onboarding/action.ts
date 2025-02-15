@@ -7,13 +7,12 @@ import {
     ModelClass,
     type State,
     composeContext,
-    generateObject,
     generateObjectArray,
     logger
 } from "@elizaos/core";
-import { type Message, ChannelType } from "discord.js";
-import type { OnboardingState } from "./types";
+import { ChannelType, type Message } from "discord.js";
 import { findServerForOwner } from "./ownership";
+import type { OnboardingState } from "./types";
 
 interface SettingUpdate {
     key: string;

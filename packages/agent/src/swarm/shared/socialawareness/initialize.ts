@@ -1,1 +1,0 @@
-// init social awareness provider and evaluator on a runtime

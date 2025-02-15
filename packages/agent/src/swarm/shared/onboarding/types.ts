@@ -2,9 +2,12 @@
 
 export interface OnboardingSetting {
     name: string;
-    description: string;
+    description: string;         // Used in chat context when discussing the setting
+    usageDescription: string;    // Used during onboarding to guide users
     value: string | boolean | null;
     required: boolean;
+    public?: boolean;           // If true, shown in public channels
+    secret?: boolean;           // If true, value is masked and only shown during onboarding
     validation?: (value: any) => boolean;
     dependsOn?: string[];
     onSetAction?: (value: any) => string;
@@ -21,76 +24,85 @@ export interface OnboardingConfig {
     };
 }
 
-// Helper function to check if onboarding settings are complete
-export function areSettingsComplete(state: OnboardingState): boolean {
-
-    for (const [key, setting] of Object.entries(state)) {
-        // Skip if setting is not visible
-        if (setting.visibleIf && !setting.visibleIf(state)) {
-            continue;
-        }
-
-        // Check if required setting has a value
-        if (setting.required && (setting.value === null || setting.value === undefined)) {
-            return false;
-        }
-
-        // If setting has validation function, check if value is valid
-        if (setting.validation && setting.value !== null) {
-            try {
-                if (!setting.validation(setting.value)) {
-                    return false;
-                }
-            } catch (error) {
-                return false;
-            }
-        }
-
-        // Check dependencies
-        if (setting.dependsOn) {
-            for (const dependency of setting.dependsOn) {
-                const dependentSetting = state[dependency];
-                if (!dependentSetting || dependentSetting.value === null) {
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
+// Helper to format a setting value for display
+export function formatSettingValue(setting: OnboardingSetting): string {
+    if (!setting.value) return "Not configured";
+    if (setting.secret) return "****************";
+    return String(setting.value);
 }
 
-// Helper to get visible settings based on current state
-export function getVisibleSettings(state: OnboardingState): string[] {
-    const visibleSettings: string[] = [];
-    
-    for (const [key, setting] of Object.entries(state)) {
-        if (!setting.visibleIf || setting.visibleIf(state)) {
-            visibleSettings.push(key);
-        }
-    }
-    
-    return visibleSettings;
+// Helper to format setting display for chat context
+export function formatSettingDisplay(setting: OnboardingSetting): string {
+    return `${setting.name} - ${setting.description}`;
 }
 
-// Helper to get next incomplete setting
-export function getNextIncompleteSetting(state: OnboardingState): string | null {
-    const visibleSettings = getVisibleSettings(state);
+// Helper to format setting for onboarding
+export function formatSettingOnboarding(setting: OnboardingSetting): string {
+    return `${setting.name} - ${setting.usageDescription}`;
+}
+
+// Filter settings for public display
+export function getPublicSettings(settings: OnboardingState): OnboardingState {
+    const publicSettings: OnboardingState = {};
     
-    for (const key of visibleSettings) {
-        const setting = state[key];
-        
-        // Skip if all dependencies aren't met
-        if (setting.dependsOn && !setting.dependsOn.every(dep => 
-            state[dep] && state[dep].value !== null)) {
-            continue;
-        }
-        
-        // Return first setting that's required and doesn't have a value
-        if (setting.required && setting.value === null) {
-            return key;
+    for (const [key, setting] of Object.entries(settings)) {
+        if (setting.public) {
+            publicSettings[key] = setting;
         }
     }
     
-    return null;
+    return publicSettings;
+}
+
+// Format settings list for display
+export function formatSettingsList(settings: OnboardingState, isOnboarding: boolean = false): string {
+    // If not in onboarding mode, only show public settings
+    const displaySettings = isOnboarding ? settings : getPublicSettings(settings);
+    const { configured, requiredUnconfigured, optionalUnconfigured } = categorizeSettings(displaySettings);
+    
+    let list = "Current Settings Status:\n";
+
+    const formatSetting = isOnboarding ? formatSettingOnboarding : formatSettingDisplay;
+
+    if (configured.length > 0) {
+        list += "\nConfigured Settings:\n";
+        configured.forEach(setting => {
+            list += `- ${formatSetting(setting)}: ${formatSettingValue(setting)}\n`;
+        });
+    }
+
+    if (requiredUnconfigured.length > 0) {
+        list += "\nRequired Settings (Not Yet Configured):\n";
+        requiredUnconfigured.forEach(setting => {
+            list += `- ${formatSetting(setting)}\n`;
+        });
+    }
+
+    if (optionalUnconfigured.length > 0) {
+        list += "\nOptional Settings (Not Yet Configured):\n";
+        optionalUnconfigured.forEach(setting => {
+            list += `- ${formatSetting(setting)}\n`;
+        });
+    }
+
+    return list;
+}
+
+// Helper to categorize settings
+function categorizeSettings(onboardingState: OnboardingState) {
+    const configured = [];
+    const requiredUnconfigured = [];
+    const optionalUnconfigured = [];
+
+    for (const [key, setting] of Object.entries(onboardingState)) {
+        if (setting.value !== null) {
+            configured.push({ key, ...setting });
+        } else if (setting.required) {
+            requiredUnconfigured.push({ key, ...setting });
+        } else {
+            optionalUnconfigured.push({ key, ...setting });
+        }
+    }
+
+    return { configured, requiredUnconfigured, optionalUnconfigured };
 }

@@ -1,5 +1,4 @@
 import type { Plugin } from "@elizaos/core";
-import { continueAction } from "./actions/continue.ts";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
@@ -21,7 +20,6 @@ export const bootstrapPlugin: Plugin = {
     name: "bootstrap",
     description: "Agent bootstrap with basic actions and evaluators",
     actions: [
-        continueAction,
         followRoomAction,
         unfollowRoomAction,
         ignoreAction,
