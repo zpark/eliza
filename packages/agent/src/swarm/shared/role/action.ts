@@ -1,17 +1,3 @@
-// Update the role of the user in the organization
-// This should be done by the boss only
-// Only enable this action if the user who is asking has the boss role
-// recall and store the role of the user who is asking
-// roles are OWNER, ADMIN, MEMBER, NONE, IGNORE
-// if the user is not a boss, do not validate this action
-// if the user is a boss, update the org role of the user the boss is requesting
-// if the boss provided a discord username, or the agent has clarified and the boss has confirmed, update the cache with the discord username and the org role
-// if they provided a nickname, try to identify the user in the conversation the boss is talking about and confirm their username
-// if cannot identify the user, try to identify any user who the agent and boss have both been in a room with and had a chat with and confirm their username
-// Bosses cannot change the role of admins or other bosses, only colleagues, none and ignore
-// Only admins can add or remove bosses and can change the role of bosses to colleague, none or ignore
-// Bosses cannot change the role of admins or other bosses, only colleagues, none and ignore
-
 import {
   type Action,
   type ActionExample,

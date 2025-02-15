@@ -19,7 +19,7 @@ import type {
   OnboardingState,
 } from "./types";
 import onboardingAction from "./action";
-import { createOnboardingProvider } from "./provider";
+import onboardingProvider from "./provider";
 import { registerServerOwner } from "./ownership";
 import type { Guild } from "discord.js";
 // Helper to create a proper setting object
@@ -83,7 +83,7 @@ export async function initializeOnboarding(
 ): Promise<void> {
   try {
     runtime.registerAction(onboardingAction);
-    runtime.registerProvider(createOnboardingProvider(config));
+    runtime.registerProvider(onboardingProvider);
 
     // Retry handler for guild data
     let retries = 0;
