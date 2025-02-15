@@ -434,7 +434,6 @@ const startAgents = async () => {
   if (args.swarm) {
     try {
       for (const swarmMember of swarm) {
-        console.log("*** INIT", swarmMember.init)
         await startAgent(
           swarmMember.character,
           characterServer,

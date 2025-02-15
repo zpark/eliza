@@ -76,15 +76,12 @@ const onboardingAction: Action = {
         message: Memory,
         state: State
     ): Promise<boolean> => {
-        console.log("*** validating onboarding action");
         if(!state?.discordMessage) {
-            console.log("*** no discord message found");
             return false;
         }
         const discordMessage = state.discordMessage as Message;
         
         if (discordMessage.channel.type !== ChannelType.DM) {
-            console.log("*** channel type not dm");
             return false;
         }
     
@@ -97,7 +94,6 @@ const onboardingAction: Action = {
             );
 
             if (!ownershipState?.servers) {
-                console.log("*** no ownership state found");
                 return false;
             }
 
@@ -106,7 +102,6 @@ const onboardingAction: Action = {
                 .find(([_, info]) => info.ownerId === userId);
 
             if (!serverEntry) {
-                console.log("*** user is not owner of any server");
                 return false;
             }
 
@@ -117,14 +112,10 @@ const onboardingAction: Action = {
                 `server_${targetServerId}_onboarding_state`
             );
 
-            console.log("*** action onboardingState", onboardingState);
-
             if (!onboardingState) {
-                console.log("*** no onboarding state found");
                 return false;
             }
             
-            console.log("*** found active onboarding for server", targetServerId);
             return true;
 
         } catch (error) {
@@ -140,20 +131,15 @@ const onboardingAction: Action = {
         options: any,
         callback: HandlerCallback
     ): Promise<void> => {
-        console.log("*** handling onboarding action");
-
         if(!state?.discordMessage) {
-            console.log("*** no discord message in state");
             return;
         }
         const discordMessage = state.discordMessage as Message;
         const userId = discordMessage.author.id;
-        console.log("*** userId", userId);
 
         const serverOwnership = await findServerForOwner(runtime, userId, state);
 
         if (!serverOwnership) {
-            console.log("*** no serverOwnership state found");
             return;
         }
 
@@ -163,7 +149,6 @@ const onboardingAction: Action = {
         );
 
         if (!onboardingState) {
-            console.log("*** no onboarding state found");
             return;
         }
 
@@ -204,27 +189,21 @@ Don't include any other text in your response. Only return the array of objects.
 ]`;
 
             const context = composeContext({ state, template: extractionPrompt });
-            console.log("*** context", context);
             const extractedSettings = await generateObjectArray({
                 runtime: runtime,
                 modelClass: ModelClass.TEXT_LARGE,
                 context: context,
             }) as SettingUpdate[];
 
-            console.log("*** extractedSettings", extractedSettings);
-
             let updatedAny = false;
             let responseText = "";
 
             for (const update of extractedSettings) {
-                console.log("*** update", update);
                 const setting = onboardingState[update.key];
                 if (!setting) {
-                    console.log(`*** unknown setting key: ${update.key}`);
                     continue;
                 }
 
-                console.log("*** setting", setting);
                 if (setting.validation && !setting.validation(update.value)) {
                     responseText += `❌ Invalid value for ${setting.name}: ${update.value}\n`;
                     continue;
@@ -235,16 +214,12 @@ Don't include any other text in your response. Only return the array of objects.
                 updatedAny = true;
             }
 
-            console.log("*** updatedAny", updatedAny);
-
             if (updatedAny) {
-                console.log("*** updating onboarding state");
                 await runtime.cacheManager.set(
                     `server_${serverId}_onboarding_state`,
                     onboardingState
                 );
 
-                console.log("*** formatting settings list");
                 responseText += `\n${formatSettingsList(onboardingState)}`;
 
                 await callback({
@@ -253,7 +228,6 @@ Don't include any other text in your response. Only return the array of objects.
                     source: "discord"
                 });
 
-                console.log("*** logging updates");
                 // Log updates
                 for (const update of extractedSettings) {
                     await runtime.databaseAdapter.log({
@@ -269,7 +243,6 @@ Don't include any other text in your response. Only return the array of objects.
                     });
                 }
             } else {
-                console.log("*** could not extract any valid settings from your message");
                 await callback({
                     text: "Could not extract any valid settings from your message. Please try again.\n\n" + formatSettingsList(onboardingState),
                     action: "SAVE_SETTING_FAILED",

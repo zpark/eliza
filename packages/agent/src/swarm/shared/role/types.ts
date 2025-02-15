@@ -51,8 +51,6 @@ export async function getUserServerRole(
         const roleState = await runtime.cacheManager.get<ServerRoleState>(
             ROLE_CACHE_KEYS.SERVER_ROLES(serverId)
         );
-
-        console.log("*** runtime.cacheManager roleState", roleState);
         
         return roleState?.roles[userId]?.role || RoleName.NONE;
     } catch (error) {

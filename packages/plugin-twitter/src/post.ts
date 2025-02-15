@@ -46,14 +46,10 @@ export class TwitterPostClient {
     private isDryRun: boolean;
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
-        console.log("*** CONSTRUCTING TWITTER POST CLIENT");
         this.client = client;
         this.runtime = runtime;
         this.twitterUsername = this.runtime.getSetting("TWITTER_USERNAME") as string;
         this.isDryRun = this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
-        console.log("*** TWITTER_USERNAME", this.twitterUsername);
-        console.log("*** TWITTER_DRY_RUN", this.isDryRun);
-        console.log("*** TWITTER_ENABLE_POST_GENERATION", this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION"));
 
         // Log configuration on initialization
         logger.log("Twitter Client Configuration:");
@@ -88,15 +84,12 @@ export class TwitterPostClient {
             );
         }
 
-        console.log("*** TWITTER POST CLIENT INITIALIZED");
         this.start();
     }
 
     async start() {
         if (!this.client.profile) {
-            console.log("*** INITIALIZING TWITTER CLIENT");
             await this.client.init();
-            console.log("*** TWITTER CLIENT INITIALIZED");
         }
 
         const generateNewTweetLoop = async () => {

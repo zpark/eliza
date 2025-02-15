@@ -26,11 +26,8 @@ export async function setUserServerRole(
     userRole: UserRole
 ): Promise<void> {
     try {
-        console.log("*** setting user server role", userRole);
         const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(userRole.serverId);
-        console.log("*** cacheKey", cacheKey);
         let roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
-        console.log("*** roleState", roleState);
 
         if (!roleState) {
             roleState = {
@@ -42,14 +39,10 @@ export async function setUserServerRole(
         roleState.roles[userRole.userId] = userRole;
         roleState.lastUpdated = Date.now();
 
-        console.log("*** setting roleState", roleState);
-
         await runtime.cacheManager.set(
             cacheKey,
             roleState
         );
-
-        console.log("*** roleState set");
 
         // Log role change
         await runtime.databaseAdapter.log({
@@ -75,7 +68,6 @@ export async function initializeOnboarding(
     config: OnboardingConfig
 ): Promise<void> {
     try {
-        console.log("*** initializing onboarding");
         runtime.registerAction(onboardingAction);
         runtime.registerProvider(createOnboardingProvider(config));
 
@@ -84,35 +76,23 @@ export async function initializeOnboarding(
         const guild = await discordClient.guilds.fetch(serverId);
 
         // Register server owner
-        console.log("*** registering server owner");
         await registerServerOwner(runtime, serverId, guild.ownerId);
 
         // Initialize onboarding state if it doesn't exist
-        console.log("*** initializing onboarding state");
         const existingState = await runtime.cacheManager.get<OnboardingState>(
             `server_${serverId}_onboarding_state`
         );
 
-        console.log("*** existingState", existingState);
-
         if (!existingState || Object.keys(existingState).length === 0) {
-            console.log("*** initializing onboarding state with config settings");
             // Initialize onboarding state with config settings
             const initialState: OnboardingState = {};
-
-            console.log("*** config", config);
             
             // Properly construct each setting
             for (const [key, configSetting] of Object.entries(config.settings)) {
-                console.log("*** key", key);
-                console.log("*** configSetting", configSetting);
                 initialState[key] = createSettingFromConfig(configSetting);
             }
 
-            console.log("*** initialState", initialState);
-
             // Save initial state
-            console.log("*** saving initial state");
             await runtime.cacheManager.set(
                 `server_${serverId}_onboarding_state`,
                 initialState
@@ -128,7 +108,6 @@ export async function initializeOnboarding(
             
             const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
 
-            console.log("*** sending onboarding message to owner", randomMessage);
             const msg = await owner.send(randomMessage);
 
             const roomId = stringToUuid(msg.channelId + "-" + runtime.agentId);

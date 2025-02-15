@@ -24,7 +24,6 @@ export class TwitterClient implements ITwitterClient {
     space?: TwitterSpaceClient;
 
     constructor(runtime: IAgentRuntime) {
-        console.log("*** CONSTRUCTING TWITTER CLIENT");
         // Pass twitterConfig to the base client
         this.client = new ClientBase(runtime);
 
@@ -68,16 +67,16 @@ export class TwitterClientManager {
                 logger.info(`Twitter client already exists for ${clientId}`);
                 return existingClient;
             }
-            console.log("*** CREATING NEW CLIENT");
+
             // Create new client instance
             const client = new TwitterClient(runtime);
-            console.log("*** CLIENT", client);
+
             // Initialize the client
             await client.client.init();
-            console.log("*** CLIENT INITIALIZED");
+
             // Store the client instance
             this.clients.set(this.getClientKey(clientId, runtime.agentId), client);
-            console.log("*** CLIENT STORED");
+
             logger.info(`Created Twitter client for ${clientId}`);
             return client;
 
@@ -105,6 +104,10 @@ export class TwitterClientManager {
         }
     }
 
+    async stop(): Promise<void> {
+        await this.stopAllClients();
+    }
+
     async stopAllClients(): Promise<void> {
         for (const [key, client] of this.clients.entries()) {
             try {
@@ -124,7 +127,6 @@ export class TwitterClientManager {
 const TwitterClientInterface: Client = {
     name: TWITTER_CLIENT_NAME,
     start: async (runtime: IAgentRuntime) => {
-        console.log("*** STARTING TWITTER CLIENT");
         const manager = TwitterClientManager.getInstance();
         
         // Check for character-level Twitter credentials
@@ -134,8 +136,6 @@ const TwitterClientInterface: Client = {
             TWITTER_EMAIL: (runtime.getSetting("TWITTER_EMAIL") as string) || runtime.character.settings?.TWITTER_EMAIL || runtime.character.secrets?.TWITTER_EMAIL,
             TWITTER_2FA_SECRET: (runtime.getSetting("TWITTER_2FA_SECRET") as string) || runtime.character.settings?.TWITTER_2FA_SECRET || runtime.character.secrets?.TWITTER_2FA_SECRET,
         };
-
-        console.log("*** TWITTER CONFIG", twitterConfig);
 
         // Filter out undefined values
         const config = Object.fromEntries(
@@ -153,19 +153,13 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                console.log("*** CREATING DEFAULT CLIENT");
                 await manager.createClient(runtime, stringToUuid("default"));
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);
         }
 
-        const clientInstance: ClientInstance = {
-            async stop() {
-                await manager.stopAllClients();
-            }
-        };
-        return clientInstance;
+        return manager;
     }
 };
 

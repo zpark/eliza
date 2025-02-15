@@ -77,21 +77,18 @@ export async function findServerForOwner(
 ): Promise<ServerOwnership | null> {
     try {
         const ownershipState = await runtime.cacheManager.get<ServerOwnershipState>(OWNERSHIP_CACHE_KEY);
-        console.log("*** ownershipState", ownershipState);
         if (!ownershipState?.servers) {
             return null;
         }
 
         // Get the Discord message from passed state
         if (!state?.discordMessage) {
-            console.log("*** no discord message in state");
             return null;
         }
         const discordMessage = state.discordMessage as Message;
         const discordUserId = discordMessage?.author?.id;
 
         if (!discordUserId) {
-            console.log("*** no discord user id found");
             return null;
         }
 
@@ -100,7 +97,6 @@ export async function findServerForOwner(
             server.ownerId === discordUserId
         );
 
-        console.log("*** found serverOwnership", serverOwnership);
         return serverOwnership || null;
     } catch (error) {
         logger.error('Error finding server for owner:', error);
