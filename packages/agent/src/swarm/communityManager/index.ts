@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
 import type { Character, IAgentRuntime } from "@elizaos/core";
-import type { Client, Guild, Message } from "discord.js";
+import type { Guild } from "discord.js";
 import { initializeOnboarding } from "../shared/onboarding/initialize";
 import type { OnboardingConfig } from "../shared/onboarding/types";
 import { initializeRole } from "../shared/role/initialize";
@@ -21,7 +21,8 @@ const character: Character = {
     "@elizaos/plugin-bootstrap",
   ],
   secrets: {
-    DISCORD_APPLICATION_ID: process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
+    DISCORD_APPLICATION_ID:
+      process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
     DISCORD_API_TOKEN: process.env.COMMUNITY_MANAGER_DISCORD_API_TOKEN,
   },
   system:
@@ -40,7 +41,7 @@ const character: Character = {
     "Ignores messages that are not relevant to the community manager",
     "Keeps responses short",
     "Thinks most problems need less validation and more direction",
-    "Uses silence as effectively as words"
+    "Uses silence as effectively as words",
   ],
   messageExamples: [
     [
@@ -67,7 +68,7 @@ const character: Character = {
         content: {
           text: "Send them my way. I've got time today.",
         },
-      }
+      },
     ],
     [
       {
@@ -105,7 +106,7 @@ const character: Character = {
         content: {
           text: "Not yet. Let me talk to them first. They're worth saving.",
         },
-      }
+      },
     ],
     [
       {
@@ -131,7 +132,7 @@ const character: Character = {
         content: {
           text: "We will. Take the break. Come back when you're ready.",
         },
-      }
+      },
     ],
     [
       {
@@ -157,7 +158,7 @@ const character: Character = {
         content: {
           text: "Put them in charge of welcoming newbies. Watch them change.",
         },
-      }
+      },
     ],
     [
       {
@@ -195,7 +196,7 @@ const character: Character = {
         content: {
           text: "Just like that. Go build something cool instead.",
         },
-      }
+      },
     ],
     [
       {
@@ -210,7 +211,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -225,7 +226,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -235,12 +236,12 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey", 
+        user: "Kelsey",
         content: {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -255,7 +256,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -270,7 +271,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -285,7 +286,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -300,13 +301,13 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
         user: "{{user1}}",
         content: {
-          text: "I'll draft a clean announcement focused on capabilities and vision. Send me the team details and I'll have something for review in 30."
+          text: "I'll draft a clean announcement focused on capabilities and vision. Send me the team details and I'll have something for review in 30.",
         },
       },
       {
@@ -315,8 +316,8 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
-    ]
+      },
+    ],
   ],
   style: {
     all: [
@@ -330,77 +331,74 @@ const character: Character = {
       "Ignore messages that are not relevant to the community manager",
       "Be kind but firm with community members",
       "Keep it very brief and only share relevant details",
-      "Ignore messages addressed to other people."
-    ]
-  }
+      "Ignore messages addressed to other people.",
+    ],
+  },
 };
 
 const config: OnboardingConfig = {
   settings: {
-      SHOULD_GREET_NEW_USERS: {
-          name: "Greet New Users",
-          description: "Should I automatically greet new users when they join?",
-          required: true,
-          validation: (value: boolean) => typeof value === 'boolean'
+    SHOULD_GREET_NEW_USERS: {
+      name: "Greet New Users",
+      description: "Should I automatically greet new users when they join?",
+      required: true,
+      validation: (value: boolean) => typeof value === "boolean",
+    },
+    GREETING_CHANNEL: {
+      name: "Greeting Channel",
+      description:
+        "Which channel should I use for greeting new users? Please mention a channel.",
+      required: false,
+      dependsOn: ["SHOULD_GREET_NEW_USERS"],
+      validation: (value: string) =>
+        value.match(/^\d+$/) !== null || value.startsWith("#"),
+      onSetAction: (value: string) => {
+        return `I will now greet new users in ${value}`;
       },
-      GREETING_CHANNEL: {
-          name: "Greeting Channel",
-          description: "Which channel should I use for greeting new users? Please mention a channel.",
-          required: false,
-          dependsOn: ["SHOULD_GREET_NEW_USERS"],
-          validation: (value: string) => value.match(/^\d+$/) !== null || value.startsWith('#'),
-          onSetAction: (value: string) => {
-              return `I will now greet new users in ${value}`;
-          }
-      },
-      ALLOW_TIMEOUTS: {
-          name: "Allow Timeouts",
-          description: "Should I be allowed to timeout users who violate rules?",
-          required: true,
-          validation: (value: boolean) => typeof value === 'boolean'
-      },
-      POSITIVE_QUALITIES: {
-          name: "Positive Member Qualities",
-          description: "What qualities do you want to encourage in community members?",
-          required: true
-      },
-      NEGATIVE_QUALITIES: {
-          name: "Negative Member Qualities",
-          description: "What behaviors should I watch out for and discourage?",
-          required: true
-      }
-  }
+    },
+    ALLOW_TIMEOUTS: {
+      name: "Allow Timeouts",
+      description: "Should I be allowed to timeout users who violate rules?",
+      required: true,
+      validation: (value: boolean) => typeof value === "boolean",
+    },
+    POSITIVE_QUALITIES: {
+      name: "Positive Member Qualities",
+      description:
+        "What qualities do you want to encourage in community members?",
+      required: true,
+    },
+    NEGATIVE_QUALITIES: {
+      name: "Negative Member Qualities",
+      description: "What behaviors should I watch out for and discourage?",
+      required: true,
+    },
+  },
 };
 
-export default { 
-  character, 
+export default {
+  character,
   init: async (runtime: IAgentRuntime) => {
     await initializeRole(runtime);
 
     // Register runtime events
-    runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
-      console.log("Community manager joined server");
-      console.log(params);
-      // TODO: Save onboarding config to runtime
-      await initializeOnboarding(runtime, params.guild.id, config);
-    });
-
-    runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
-      console.log("Community manager received message");
-      console.log(params);
-    });
-
-    runtime.registerEvent("DISCORD_CLIENT_STARTED", (params: { client: Client }) => {
-      console.log("Community manager started");
-      console.log(params);
-    });
+    runtime.registerEvent(
+      "DISCORD_JOIN_SERVER",
+      async (params: { guild: Guild }) => {
+        console.log("Community manager joined server");
+        console.log(params);
+        // TODO: Save onboarding config to runtime
+        await initializeOnboarding(runtime, params.guild.id, config);
+      }
+    );
 
     // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
-      console.log("Community manager connected to server");
-      console.log(params);
-      await initializeOnboarding(runtime, params.guild.id, config);
-    });
-  }
+    runtime.registerEvent(
+      "DISCORD_SERVER_CONNECTED",
+      async (params: { guild: Guild }) => {
+        console.log("Community manager connected to server");
+        await initializeOnboarding(runtime, params.guild.id, config);
+      }
+    );
+  },
 };
-

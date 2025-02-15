@@ -75,9 +75,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     this.client.login(this.apiToken);
 
     this.setupEventListeners();
-
-    // fire a connected event
-    this.runtime.emitEvent("DISCORD_CLIENT_STARTED", { client: this.client });
   }
 
   private setupEventListeners() {

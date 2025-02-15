@@ -35,13 +35,13 @@ const character: Character = {
     "Keeps it very brief and only shares relevant details",
     "Ignore messages addressed to other people.",
     "Doesn't waste time on disclaimers, or legal copy",
-    "Only steps in when the line has been crossed"
+    "Only steps in when the line has been crossed",
   ],
-  settings: {
-  },
+  settings: {},
   secrets: {
-    "DISCORD_APPLICATION_ID": process.env.COMPLIANCE_OFFICER_DISCORD_APPLICATION_ID,
-    "DISCORD_API_TOKEN": process.env.COMPLIANCE_OFFICER_DISCORD_API_TOKEN,
+    DISCORD_APPLICATION_ID:
+      process.env.COMPLIANCE_OFFICER_DISCORD_APPLICATION_ID,
+    DISCORD_API_TOKEN: process.env.COMPLIANCE_OFFICER_DISCORD_API_TOKEN,
   },
   messageExamples: [
     [
@@ -135,7 +135,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -150,7 +150,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -165,7 +165,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -180,7 +180,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -195,7 +195,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -210,7 +210,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -225,7 +225,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -240,7 +240,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -255,7 +255,7 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
+      },
     ],
     [
       {
@@ -270,77 +270,74 @@ const character: Character = {
           text: "",
           action: "IGNORE",
         },
-      }
-    ]
+      },
+    ],
   ],
   style: {
     all: [
-        "Don't use emojis",
-        "Be clear and concise.",
-        "Don't waste words",
-        "Be clear in what is the law and what is your opinion",
-        "Give opinions based on what the client is comfortable with",
-        "Emphasizes compliance",
-        "References regulations",
-        "Be very to the point. Ignore flowery language",
-        "Your audience is dumb, try to be very clear",
-        "Keep it very brief"
-      ]
-  }
+      "Don't use emojis",
+      "Be clear and concise.",
+      "Don't waste words",
+      "Be clear in what is the law and what is your opinion",
+      "Give opinions based on what the client is comfortable with",
+      "Emphasizes compliance",
+      "References regulations",
+      "Be very to the point. Ignore flowery language",
+      "Your audience is dumb, try to be very clear",
+      "Keep it very brief",
+    ],
+  },
 };
 
-    
 const config: OnboardingConfig = {
   settings: {
-      PROJECT_INFORMATION: {
-          name: "Org Information",
-          description: "Tell me about the org. What are we doing here? Assume I don't know anything.",
-          required: true
-      },
-      COMPLIANCE_LEVEL: {
-          name: "Compliance Level",
-          description: "How strict should compliance monitoring be? (strict/moderate/lenient)",
-          required: true,
-          validation: (value: string) => ['strict', 'moderate', 'lenient'].includes(value.toLowerCase())
-      },
-      REGULATORY_FRAMEWORK: {
-          name: "Regulatory Framework",
-          description: "What specific regulations or guidelines should I enforce? (e.g., SEC guidelines, GDPR, etc.)",
-          required: true
-      }
-  }
+    PROJECT_INFORMATION: {
+      name: "Org Information",
+      description:
+        "Tell me about the org. What are we doing here? Assume I don't know anything.",
+      required: true,
+    },
+    COMPLIANCE_LEVEL: {
+      name: "Compliance Level",
+      description:
+        "How strict should compliance monitoring be? (strict/moderate/lenient)",
+      required: true,
+      validation: (value: string) =>
+        ["strict", "moderate", "lenient"].includes(value.toLowerCase()),
+    },
+    REGULATORY_FRAMEWORK: {
+      name: "Regulatory Framework",
+      description:
+        "What specific regulations or guidelines should I enforce? (e.g., SEC guidelines, GDPR, etc.)",
+      required: true,
+    },
+  },
 };
 
-export default { 
-  character, 
+export default {
+  character,
   init: async (runtime: IAgentRuntime) => {
     await initializeRole(runtime);
 
     // Register runtime events
     // Register runtime events
-    runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
-      console.log("Compliance officer joined server");
-      console.log(params);
-      // TODO: Save onboarding config to runtime
-      await initializeOnboarding(runtime, params.guild.id, config);
-    });
-
-    runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
-      console.log("Compliance officer received message");
-      console.log(params);
-    });
-
-    runtime.registerEvent("DISCORD_CLIENT_STARTED", (params: { client: Client }) => {
-      console.log("Compliance officer started");
-      console.log(params);
-    });
+    runtime.registerEvent(
+      "DISCORD_JOIN_SERVER",
+      async (params: { guild: Guild }) => {
+        console.log("Compliance officer joined server");
+        console.log(params);
+        // TODO: Save onboarding config to runtime
+        await initializeOnboarding(runtime, params.guild.id, config);
+      }
+    );
 
     // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
-      console.log("Compliance officer connected to server");
-      console.log(params);
-      await initializeOnboarding(runtime, params.guild.id, config);
-    });
-  }
+    runtime.registerEvent(
+      "DISCORD_SERVER_CONNECTED",
+      async (params: { guild: Guild }) => {
+        console.log("Compliance officer connected to server");
+        await initializeOnboarding(runtime, params.guild.id, config);
+      }
+    );
+  },
 };
-

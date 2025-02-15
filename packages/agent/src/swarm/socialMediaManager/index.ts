@@ -218,14 +218,6 @@ export default {
       await initializeOnboarding(runtime, params.guild.id, socialMediaManagerConfig);
     });
 
-    runtime.registerEvent("DISCORD_MESSAGE_RECEIVED", (params: { message: Message }) => {
-      console.log("Social media manager received message");
-    });
-
-    runtime.registerEvent("DISCORD_CLIENT_STARTED", (params: { client: Client }) => {
-      console.log("Social media manager started");
-    });
-
     // when booting up into a server we're in, fire a connected event
     runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
       await initializeOnboarding(runtime, params.guild.id, socialMediaManagerConfig);
