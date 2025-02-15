@@ -341,37 +341,24 @@ const config: OnboardingConfig = {
     SHOULD_GREET_NEW_USERS: {
       name: "Greet New Users",
       description: "Should I automatically greet new users when they join?",
+      usageDescription: "Should I automatically greet new users when they join?",
       required: true,
+      public: true,
+      secret: false,
       validation: (value: boolean) => typeof value === "boolean",
     },
     GREETING_CHANNEL: {
       name: "Greeting Channel",
       description:
-        "Which channel should I use for greeting new users? Please mention a channel.",
+        "Which channel should I use for greeting new users? Give me a channel ID or channel name.",
       required: false,
+      public: false,
+      secret: false,
+      usageDescription: "The channel to use for greeting new users",
       dependsOn: ["SHOULD_GREET_NEW_USERS"],
-      validation: (value: string) =>
-        value.match(/^\d+$/) !== null || value.startsWith("#"),
       onSetAction: (value: string) => {
         return `I will now greet new users in ${value}`;
       },
-    },
-    ALLOW_TIMEOUTS: {
-      name: "Allow Timeouts",
-      description: "Should I be allowed to timeout users who violate rules?",
-      required: true,
-      validation: (value: boolean) => typeof value === "boolean",
-    },
-    POSITIVE_QUALITIES: {
-      name: "Positive Member Qualities",
-      description:
-        "What qualities do you want to encourage in community members?",
-      required: true,
-    },
-    NEGATIVE_QUALITIES: {
-      name: "Negative Member Qualities",
-      description: "What behaviors should I watch out for and discourage?",
-      required: true,
     },
   },
 };
