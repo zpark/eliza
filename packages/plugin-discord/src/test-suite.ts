@@ -127,11 +127,11 @@ export class DiscordTestSuite implements TestSuite {
 
         audioPlayer.once("error", (error) => {
           reject(error);
-          throw new Error("TTS playback error:", error);
+          throw new Error(`TTS playback error: ${error}`);
         });
       });
     } catch (error) {
-      throw new Error("Error in TTS playback test:", error);
+      throw new Error(`Error in TTS playback test: ${error}`);
     }
   }
 
@@ -144,7 +144,7 @@ export class DiscordTestSuite implements TestSuite {
         "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg",
       ]);
     } catch (error) {
-      throw new Error("Error in sending text message:", error);
+      throw new Error(`Error in sending text message: ${error}`);
     }
   }
 
@@ -171,7 +171,7 @@ export class DiscordTestSuite implements TestSuite {
       };
       await this.discordClient.messageManager.handleMessage(fakeMessage as any);
     } catch (error) {
-      throw new Error("Error in sending text message:", error);
+      throw new Error(`Error in sending text message: ${error}`);
     }
   }
 
@@ -216,7 +216,7 @@ export class DiscordTestSuite implements TestSuite {
 
       return channel;
     } catch (error) {
-      throw new Error("Error fetching text channel:", error);
+      throw new Error(`Error fetching text channel: ${error}`);
     }
   }
 
@@ -237,7 +237,7 @@ export class DiscordTestSuite implements TestSuite {
         files
       );
     } catch (error) {
-      throw new Error("Error sending message:", error);
+      throw new Error(`Error sending message: ${error}`);
     }
   }
 }
