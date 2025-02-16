@@ -154,11 +154,26 @@ export class VoiceManager extends EventEmitter {
         string,
         { channel: BaseGuildVoiceChannel; monitor: AudioMonitor }
     > = new Map();
+    private ready: boolean;
 
     constructor(client: DiscordClient) {
         super();
         this.client = client.client;
         this.runtime = client.runtime;
+
+        this.client.on("voiceManagerReady", () => {
+            this.setReady(true);
+        });
+    }
+
+    private setReady(status: boolean) {
+        this.ready = status;
+        this.emit("ready");
+        logger.success(`VoiceManager is now ready: ${this.ready}`);
+    }
+
+    isReady() {
+        return this.ready;
     }
 
     async handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
