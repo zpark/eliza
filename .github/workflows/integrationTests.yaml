@@ -17,6 +17,8 @@ jobs:
       TURBO_REMOTE_ONLY: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true  # Ensures submodules are checked out
 
       - uses: pnpm/action-setup@v3
         with:
