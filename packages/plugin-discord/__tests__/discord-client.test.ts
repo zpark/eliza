@@ -1,7 +1,6 @@
 import { Events } from 'discord.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordClient } from '../src';
-import type { DiscordConfig } from '../src/environment';
 
 // Mock @elizaos/core
 vi.mock('@elizaos/core', () => ({
@@ -57,7 +56,6 @@ vi.mock('discord.js', () => {
 });
 
 describe('DiscordClient', () => {
-  let mockConfig: DiscordConfig;
   let mockRuntime: any;
   let discordClient: DiscordClient;
 
@@ -82,10 +80,6 @@ describe('DiscordClient', () => {
         }
       }
     };
-
-    mockConfig = {
-      DISCORD_API_TOKEN: "mock-token",
-    }
 
     discordClient = new DiscordClient(mockRuntime);
   });
