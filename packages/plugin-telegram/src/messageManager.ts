@@ -23,7 +23,7 @@ import { escapeMarkdown } from "./utils";
 
 import fs from "fs";
 
-enum MediaType {
+export enum MediaType {
     PHOTO = "photo",
     VIDEO = "video",
     DOCUMENT = "document",

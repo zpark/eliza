@@ -40,7 +40,7 @@ describe("Discord MessageManager", () => {
       character: {
         name: "TestBot",
         templates: {},
-        clientConfig: {
+        settings: {
           discord: {
             allowedChannelIds: ["mock-channal-id"],
             shouldIgnoreBotMessages: true,
@@ -61,6 +61,7 @@ describe("Discord MessageManager", () => {
         log: vi.fn(),
       },
       processActions: vi.fn(),
+      emitEvent: vi.fn(),
     } as unknown as IAgentRuntime;
 
     mockClient = new Client({ intents: [] });

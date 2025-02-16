@@ -151,8 +151,8 @@ export class MessageManager {
   async handleMessage(message: DiscordMessage) {
     if (
       this.runtime.character.settings?.discord?.allowedChannelIds &&
-      !this.runtime.character.settings.discord.allowedChannelIds.includes(
-        message.channelId
+      !this.runtime.character.settings.discord.allowedChannelIds.some(
+        (id: string) => id == message.channel.id
       )
     ) {
       return;
@@ -166,7 +166,7 @@ export class MessageManager {
     }
 
     if (
-      this.runtime.character.settings?.discord?.BotMessages &&
+      this.runtime.character.settings?.discord?.shouldIgnoreBotMessages &&
       message.author?.bot
     ) {
       return;

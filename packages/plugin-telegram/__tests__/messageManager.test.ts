@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MessageManager } from '../src/messageManager';
+import { MediaType, MessageManager } from '../src/messageManager';
 import type { IAgentRuntime } from '@elizaos/core';
 import { type Context, Telegraf } from 'telegraf';
-import { Message } from '@telegraf/types';
+import { Readable } from 'stream';
 
 // Mock Telegraf
 vi.mock('telegraf', () => {
@@ -11,17 +11,24 @@ vi.mock('telegraf', () => {
             telegram: {
                 sendMessage: vi.fn().mockResolvedValue({ message_id: 123 }),
                 sendChatAction: vi.fn().mockResolvedValue(true),
-                sendPhoto: vi.fn().mockResolvedValue({ message_id: 124 })
+                sendPhoto: vi.fn().mockResolvedValue({ message_id: 124 }),
+                sendVideo: vi.fn().mockResolvedValue({ message_id: 125 }),
+                sendDocument: vi.fn().mockResolvedValue({ message_id: 126 }),
+                sendAudio: vi.fn().mockResolvedValue({ message_id: 127 }),
+                sendAnimation: vi.fn().mockResolvedValue({ message_id: 128 }),
             }
         }))
     };
 });
 
-// Mock fs module for image handling
 vi.mock('fs', () => ({
     default: {
         existsSync: vi.fn().mockReturnValue(true),
-        createReadStream: vi.fn().mockReturnValue({})
+        createReadStream: vi.fn(() => {
+            const stream = new Readable();
+            stream._read = () => {};
+            return stream;
+        }),
     }
 }));
 
@@ -44,10 +51,7 @@ describe('MessageManager', () => {
             removePlugin: vi.fn(),
             setCharacter: vi.fn(),
             setFlow: vi.fn(),
-            databaseAdapter: {
-                log: vi.fn().mockResolvedValue(undefined)
-            }
-        };
+        } as Partial<IAgentRuntime> as IAgentRuntime;
 
         mockBot = new Telegraf('mock_token') as any;
         messageManager = new MessageManager(mockBot, mockRuntime);
@@ -110,7 +114,11 @@ describe('MessageManager', () => {
             } as Context;
             
             const imageUrl = 'https://example.com/image.jpg';
-            await messageManager.sendImage(ctx, imageUrl);
+            await messageManager.sendMedia(
+                ctx, 
+                imageUrl,
+                MediaType.PHOTO
+            );
             
             expect(mockBot.telegram.sendPhoto).toHaveBeenCalledWith(
                 CHAT_ID,
@@ -126,7 +134,11 @@ describe('MessageManager', () => {
             } as Context;
             
             const localPath = '/path/to/image.jpg';
-            await messageManager.sendImage(ctx, localPath);
+            await messageManager.sendMedia(
+                ctx, 
+                localPath,
+                MediaType.PHOTO
+            );
             
             expect(mockBot.telegram.sendPhoto).toHaveBeenCalledWith(
                 CHAT_ID,
@@ -160,9 +172,9 @@ describe('MessageManager', () => {
             const error = new Error('Image send failed');
             mockBot.telegram.sendPhoto.mockRejectedValueOnce(error);
             
-            await messageManager.sendImage(ctx, 'test.jpg');
-            // Should not throw, but log error
-            expect(mockBot.telegram.sendPhoto).toHaveBeenCalled();
+            await expect(
+                messageManager.sendMedia(ctx, 'test.jpg', MediaType.PHOTO)
+            ).rejects.toThrow('Image send failed');
         });
     });
 });
