@@ -126,12 +126,12 @@ export class DiscordTestSuite implements TestSuite {
         });
 
         audioPlayer.once("error", (error) => {
-          logger.error("TTS playback error:", error);
           reject(error);
+          throw new Error("TTS playback error:", error);
         });
       });
     } catch (error) {
-      logger.error("Error in TTS playback test:", error);
+      throw new Error("Error in TTS playback test:", error);
     }
   }
 
@@ -144,7 +144,7 @@ export class DiscordTestSuite implements TestSuite {
         "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg",
       ]);
     } catch (error) {
-      logger.error("Error in sending text message:", error);
+      throw new Error("Error in sending text message:", error);
     }
   }
 
@@ -171,7 +171,7 @@ export class DiscordTestSuite implements TestSuite {
       };
       await this.discordClient.messageManager.handleMessage(fakeMessage as any);
     } catch (error) {
-      logger.error("Error in sending text message:", error);
+      throw new Error("Error in sending text message:", error);
     }
   }
 
@@ -216,8 +216,7 @@ export class DiscordTestSuite implements TestSuite {
 
       return channel;
     } catch (error) {
-      logger.error("Error fetching text channel:", error);
-      return null;
+      throw new Error("Error fetching text channel:", error);
     }
   }
 
@@ -228,8 +227,7 @@ export class DiscordTestSuite implements TestSuite {
   ) {
     try {
       if (!channel || !channel.isTextBased()) {
-        logger.error("Channel is not a text-based channel or does not exist.");
-        return;
+        throw new Error("Channel is not a text-based channel or does not exist.");
       }
 
       await sendMessageInChunks(
@@ -239,7 +237,7 @@ export class DiscordTestSuite implements TestSuite {
         files
       );
     } catch (error) {
-      logger.error("Error sending message:", error);
+      throw new Error("Error sending message:", error);
     }
   }
 }
