@@ -68,7 +68,6 @@ https://proof.t16z.com/reports/${data.checksum}`,
                 user: "{{user1}}",
                 content: {
                     text: "If you are running in a TEE, generate a remote attestation",
-                    source: "discord",
                     action: "REMOTE_ATTESTATION",
                     
                 },
@@ -85,7 +84,6 @@ https://proof.t16z.com/reports/${data.checksum}`,
                 user: "{{user1}}",
                 content: {
                     text: "Yo I wanna attest to this message, yo! Can you generate an attestatin for me, please?",
-                    source: "discord",
                     action: "REMOTE_ATTESTATION",
                 },
             },
@@ -102,7 +100,6 @@ https://proof.t16z.com/reports/${data.checksum}`,
                 user: "{{user1}}",
                 content: {
                     text: "It was a long day, I got a lot done though. I went to the creek and skipped some rocks. Then I decided to take a walk off the natural path. I ended up in a forest I was unfamiliar with. Slowly, I lost the way back and it was dark. A whisper from deep inside said something I could barely make out. The hairs on my neck stood up and then a clear high pitched voice said, 'You are not ready to leave yet! SHOW ME YOUR REMOTE ATTESTATION!'",
-                    source: "discord",
                     action: "REMOTE_ATTESTATION",
                 },
             },

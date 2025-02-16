@@ -1,81 +1,71 @@
-# Use a specific Node.js version for better reproducibility
 FROM node:23.3.0-slim AS builder
 
-# Install bun globally and necessary build tools
-RUN npm install -g bun@9.4.0 && \
-    apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y \
-    git \
-    python3 \
-    python3-pip \
-    curl \
-    node-gyp \
-    ffmpeg \
-    libtool-bin \
-    autoconf \
-    automake \
-    libopus-dev \
-    make \
-    g++ \
-    build-essential \
-    libcairo2-dev \
-    libjpeg-dev \
-    libpango1.0-dev \
-    libgif-dev \
-    openssl \
-    libssl-dev libsecret-1-dev && \
+# Set working directory
+WORKDIR /app
+
+# Install Node.js 23.3.0 and required dependencies
+RUN apt-get update && \
+    apt-get install -y curl git python3 make g++ unzip build-essential nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install bun using npm (more reliable across architectures)
+RUN npm install -g bun turbo@2.3.3
+
 # Set Python 3 as the default python
-RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Set the working directory
-WORKDIR /app
+# Copy package files
+COPY .npmrc .
+COPY package.json .
+COPY turbo.json .
+COPY tsconfig.json .
+COPY lerna.json .
+COPY biome.json .
+COPY renovate.json .
+COPY scripts ./scripts
+# Copy source code
+COPY packages ./packages
 
-# Copy application code
-COPY . .
+
 
 # Install dependencies
 RUN bun install
+RUN bun add better-sqlite3
 
 # Build the project
-RUN bun run build && bun prune --prod
+RUN turbo run build --filter=./packages/core
+RUN turbo run build --filter=./packages/*
 
-# Final runtime image
+# Create a new stage for the final image
 FROM node:23.3.0-slim
 
-# Install runtime dependencies
-RUN npm install -g bun@9.4.0 && \
-    apt-get update && \
-    apt-get install -y \
-    git \
-    python3 \
-    ffmpeg && \
+WORKDIR /app
+
+# Install Node.js 23.3.0 and required dependencies
+RUN apt-get update && \
+    apt-get install -y curl git python3 make g++ unzip build-essential nodejs && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
-WORKDIR /app
+# Install bun using npm
+RUN npm install -g bun turbo@2.3.3
 
 # Copy built artifacts and production dependencies from the builder stage
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun-workspace.yaml ./
-COPY --from=builder /app/eslint.config.mjs ./
-COPY --from=builder /app/.eslintrc.json ./
-COPY --from=builder /app/.npmrc ./
+COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/turbo.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/agent ./agent
-COPY --from=builder /app/client ./client
 COPY --from=builder /app/lerna.json ./
+COPY --from=builder /app/renovate.json ./
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/characters ./characters
 
-# Expose necessary ports
+# Set environment variables
+ENV NODE_ENV=production
+
+# Expose any necessary ports (if needed)
 EXPOSE 3000 5173
 
-# Command to start the application
-CMD ["sh", "-c", "bun start & bun start:client"]
+# Start the application
+CMD ["turbo", "run", "dev", "--filter=!./packages/core", "--filter=!./packages/docs", "--concurrency=20"] 

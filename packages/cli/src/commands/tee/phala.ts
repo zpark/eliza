@@ -181,7 +181,7 @@ const buildComposeCommand = new Command()
     .requiredOption('-i, --image <name>', 'Docker image name')
     .requiredOption('-u, --username <name>', 'Docker Hub username')
     .requiredOption('-t, --tag <tag>', 'Tag for the Docker image')
-    .requiredOption('-c, --character <path>', 'Path to the character file')
+    .option('-c, --character <path>', 'Path to the character file')
     .requiredOption('-e, --env-file <path>', 'Path to environment file')
     .option('-v, --version <version>', 'Version of Eliza to run (v1 or v2)', 'v2')
     .action(async (options) => {
