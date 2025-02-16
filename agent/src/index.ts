@@ -715,7 +715,7 @@ async function startAgent(
         const cache = initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
-            "",
+            process.env.CACHE_DIR ?? "",
             db
         ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
         runtime.cacheManager = cache;
