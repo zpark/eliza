@@ -29,7 +29,7 @@ describe('TelegramClient', () => {
     beforeEach(() => {
         mockRuntime = {
             getSetting: vi.fn(),
-        } as Partial<IAgentRuntime> as IAgentRuntime;;
+        } as Partial<IAgentRuntime> as IAgentRuntime;
 
         client = new TelegramClient(mockRuntime, TEST_BOT_TOKEN);
     });
