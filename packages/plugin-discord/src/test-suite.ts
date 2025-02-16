@@ -24,19 +24,19 @@ export class DiscordTestSuite implements TestSuite {
   constructor() {
     this.tests = [
       {
-        name: "test creating discord client",
+        name: "Initialize Discord Client",
         fn: this.testCreatingDiscordClient.bind(this),
       },
       {
-        name: "test voice manager playback",
+        name: "Voice Playback & TTS",
         fn: this.testTextToSpeechPlayback.bind(this),
       },
       {
-        name: "test message manager sending message with files",
+        name: "Send Message with Attachments",
         fn: this.testSendingTextMessage.bind(this),
       },
       {
-        name: "test message manager handleMessage",
+        name: "Handle Incoming Messages",
         fn: this.testHandlingMessage.bind(this),
       },
     ];
