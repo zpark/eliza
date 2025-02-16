@@ -12,14 +12,14 @@ import {
   type LlamaContextSequence,
   type LlamaModel
 } from "node-llama-cpp";
-import { nodewhisper } from "nodejs-whisper";
-import os from "node:os";
+// import { nodewhisper } from "nodejs-whisper";
+// import os from "node:os";
 import path from "node:path";
-import type { Readable } from "node:stream";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+// import { promisify } from "node:util";
 import { z } from "zod";
-import https from "node:https";
+// import https from "node:https";
 import { getPlatformManager } from "./utils/platform";
 import { TokenizerManager } from './utils/tokenizerManager';
 import { MODEL_SPECS, type ModelSpec } from './types';
@@ -48,6 +48,7 @@ const wordsToPunish = [
   " cosmic", " cool", " joke", " punchline", " fancy", " glad", " assist",
   " algorithm", " Indeed", " Furthermore", " However", " Notably", " Therefore"
 ];
+
 
 class LocalAIManager {
   private static instance: LocalAIManager | null = null;
@@ -578,7 +579,299 @@ export const localAIPlugin: Plugin = {
         throw error;
       }
     },
-  }
+  },
+  tests: [
+    {
+      name: "local_ai_plugin_tests",
+      tests: [
+        {
+          name: 'local_ai_test_initialization',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting initialization test");
+              
+              // Test TEXT_SMALL model initialization
+              const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
+                context: "Debug Mode: Test initialization. Respond with 'Initialization successful' if you can read this.",
+                stopSequences: []
+              });
+
+              logger.info("Model response:", result);
+
+              if (!result || typeof result !== 'string') {
+                throw new Error("Invalid response from model");
+              }
+
+              if (!result.includes("successful")) {
+                throw new Error("Model response does not indicate success");
+              }
+
+              logger.success("Initialization test completed successfully");
+            } catch (error) {
+              logger.error("Initialization test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_text_large',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TEXT_LARGE model test");
+              
+              const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                context: "Debug Mode: Generate a one-sentence response about artificial intelligence.",
+                stopSequences: []
+              });
+
+              logger.info("Large model response:", result);
+
+              if (!result || typeof result !== 'string') {
+                throw new Error("Invalid response from large model");
+              }
+
+              if (result.length < 10) {
+                throw new Error("Response too short, possible model failure");
+              }
+
+              logger.success("TEXT_LARGE test completed successfully");
+            } catch (error) {
+              logger.error("TEXT_LARGE test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_text_embedding',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TEXT_EMBEDDING test");
+              
+              // Test with normal text
+              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Test embedding generation");
+              
+              logger.info("Embedding generated with dimensions:", embedding.length);
+
+              if (!Array.isArray(embedding)) {
+                throw new Error("Embedding is not an array");
+              }
+
+              if (embedding.length === 0) {
+                throw new Error("Embedding array is empty");
+              }
+
+              if (embedding.some(val => typeof val !== 'number')) {
+                throw new Error("Embedding contains non-numeric values");
+              }
+
+              // Test with null input (should return zero vector)
+              const nullEmbedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
+              if (!Array.isArray(nullEmbedding) || nullEmbedding.some(val => val !== 0)) {
+                throw new Error("Null input did not return zero vector");
+              }
+
+              logger.success("TEXT_EMBEDDING test completed successfully");
+            } catch (error) {
+              logger.error("TEXT_EMBEDDING test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_tokenizer_encode',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TEXT_TOKENIZER_ENCODE test");
+              const text = "Hello tokenizer test!";
+              
+              const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { text });
+              logger.info("Encoded tokens:", { count: tokens.length });
+
+              if (!Array.isArray(tokens)) {
+                throw new Error("Tokens output is not an array");
+              }
+
+              if (tokens.length === 0) {
+                throw new Error("No tokens generated");
+              }
+
+              if (tokens.some(token => !Number.isInteger(token))) {
+                throw new Error("Tokens contain non-integer values");
+              }
+
+              logger.success("TEXT_TOKENIZER_ENCODE test completed successfully");
+            } catch (error) {
+              logger.error("TEXT_TOKENIZER_ENCODE test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_tokenizer_decode',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TEXT_TOKENIZER_DECODE test");
+              
+              // First encode some text
+              const originalText = "Hello tokenizer test!";
+              const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { text: originalText });
+              
+              // Then decode it back
+              const decodedText = await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens });
+              logger.info("Round trip tokenization:", { original: originalText, decoded: decodedText });
+
+              if (typeof decodedText !== 'string') {
+                throw new Error("Decoded output is not a string");
+              }
+
+              logger.success("TEXT_TOKENIZER_DECODE test completed successfully");
+            } catch (error) {
+              logger.error("TEXT_TOKENIZER_DECODE test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_image_description',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting IMAGE_DESCRIPTION test");
+              
+              const imageUrl = "https://raw.githubusercontent.com/microsoft/FLAML/main/website/static/img/flaml.png";
+              const result = await runtime.useModel(ModelClass.IMAGE_DESCRIPTION, imageUrl);
+              
+              logger.info("Image description result:", result);
+
+              if (!result || typeof result !== 'object') {
+                throw new Error("Invalid response format");
+              }
+
+              if (!result.title || !result.description) {
+                throw new Error("Missing title or description in response");
+              }
+
+              if (typeof result.title !== 'string' || typeof result.description !== 'string') {
+                throw new Error("Title or description is not a string");
+              }
+
+              logger.success("IMAGE_DESCRIPTION test completed successfully");
+            } catch (error) {
+              logger.error("IMAGE_DESCRIPTION test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_transcription',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TRANSCRIPTION test");
+              
+              // Create a simple audio buffer for testing
+              const audioData = new Uint8Array([
+                0x52, 0x49, 0x46, 0x46, // "RIFF"
+                0x24, 0x00, 0x00, 0x00, // Chunk size
+                0x57, 0x41, 0x56, 0x45, // "WAVE"
+                0x66, 0x6D, 0x74, 0x20  // "fmt "
+              ]);
+              const audioBuffer = Buffer.from(audioData);
+              
+              const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+              logger.info("Transcription result:", transcription);
+
+              if (typeof transcription !== 'string') {
+                throw new Error("Transcription result is not a string");
+              }
+
+              logger.success("TRANSCRIPTION test completed successfully");
+            } catch (error) {
+              logger.error("TRANSCRIPTION test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'local_ai_test_text_to_speech',
+          fn: async (runtime) => {
+            try {
+              logger.info("Starting TEXT_TO_SPEECH test");
+              
+              const testText = "This is a test of the text to speech system.";
+              const audioStream = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, testText);
+              
+              if (!(audioStream instanceof Readable)) {
+                throw new Error("TTS output is not a readable stream");
+              }
+
+              // Test stream readability
+              let dataReceived = false;
+              audioStream.on('data', () => {
+                dataReceived = true;
+              });
+
+              await new Promise((resolve, reject) => {
+                audioStream.on('end', () => {
+                  if (!dataReceived) {
+                    reject(new Error("No audio data received from stream"));
+                  } else {
+                    resolve(true);
+                  }
+                });
+                audioStream.on('error', reject);
+              });
+
+              logger.success("TEXT_TO_SPEECH test completed successfully");
+            } catch (error) {
+              logger.error("TEXT_TO_SPEECH test failed:", {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+              });
+              throw error;
+            }
+          }
+        }
+      ]
+    }
+  ],
+  routes: [
+    {
+      path: "/health",
+      type: "GET",
+      handler: async (req: any, res: any) => {
+        res.json({
+          status: "healthy",
+          models: {
+            small: true,
+            large: true,
+            vision: true,
+            transcription: true,
+            tts: true
+          }
+        });
+      }
+    }
+  ]
 };
 
 export default localAIPlugin;
