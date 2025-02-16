@@ -10,6 +10,8 @@ import {
 import path from 'node:path';
 import { vi } from 'vitest';
 import { MODEL_SPECS } from '../src/types';
+import fs from 'node:fs';
+import { logger } from '@elizaos/core';
 
 // Get the workspace root by going up from the current file location
 const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
@@ -65,7 +67,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   ensureRoomExists: async () => {},
   composeState: async () => ({} as State),
   updateRecentMessageState: async (state) => state,
-  useModel: async <T>(modelClass: ModelClass, _params: T): Promise<string> => {
+  useModel: async <T>(modelClass: ModelClass, params: T): Promise<string> => {
     // Check if there are any pending mock rejections
     const mockCalls = downloadModelMock.mock.calls;
     if (mockCalls.length > 0 && downloadModelMock.mock.results[mockCalls.length - 1].type === 'throw') {
@@ -81,6 +83,113 @@ export const createMockRuntime = (): IAgentRuntime => ({
     if (modelClass === ModelClass.TEXT_LARGE) {
       await downloadModelMock(MODEL_SPECS.medium, path.join(TEST_PATHS.MODELS_DIR, MODEL_SPECS.medium.name));
       return "Artificial intelligence is a transformative technology that continues to evolve.";
+    }
+    if (modelClass === ModelClass.TRANSCRIPTION) {
+      // For transcription, we expect a Buffer as the parameter
+      const audioBuffer = params as unknown as Buffer;
+      if (!Buffer.isBuffer(audioBuffer)) {
+        throw new Error('Invalid audio buffer');
+      }
+      if (audioBuffer.length === 0) {
+        throw new Error('Empty audio buffer');
+      }
+      
+      // Mock the transcription process
+      const { nodewhisper } = await import('nodejs-whisper');
+      const { exec } = await import('node:child_process');
+      
+      // Create a temporary file path for testing
+      const tempPath = path.join(TEST_PATHS.CACHE_DIR, 'whisper', `temp_${Date.now()}.wav`);
+      
+      // Mock the file system operations
+      if (!fs.existsSync(path.dirname(tempPath))) {
+        fs.mkdirSync(path.dirname(tempPath), { recursive: true });
+      }
+      fs.writeFileSync(tempPath, audioBuffer);
+      
+      try {
+        // Call the mocked exec for audio conversion
+        await new Promise((resolve, reject) => {
+          exec(`ffmpeg -y -i "${tempPath}" -acodec pcm_s16le -ar 16000 -ac 1 "${tempPath}"`, (error, stdout, stderr) => {
+            if (error) reject(error);
+            else resolve({ stdout, stderr });
+          });
+        });
+        
+        // Call the mocked whisper for transcription
+        const result = await nodewhisper(tempPath, {
+          modelName: "base.en",
+          autoDownloadModelName: "base.en"
+        });
+        
+        // Clean up
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
+        
+        return result;
+      } catch (error) {
+        // Clean up on error
+        if (fs.existsSync(tempPath)) {
+          fs.unlinkSync(tempPath);
+        }
+        throw error;
+      }
+    }
+    if (modelClass === ModelClass.IMAGE_DESCRIPTION) {
+      // For image description, we expect a URL as the parameter
+      const imageUrl = params as unknown as string;
+      if (typeof imageUrl !== 'string') {
+        throw new Error('Invalid image URL');
+      }
+      
+      try {
+        logger.info("Attempting to fetch image:", imageUrl);
+        
+        // Mock the fetch and vision processing
+        const response = await fetch(imageUrl);
+        logger.info("Fetch response:", {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type'),
+          ok: response.ok
+        });
+
+        if (!response.ok) {
+          const error = new Error(`Failed to fetch image: ${response.statusText}`);
+          logger.error("Fetch failed:", {
+            error: error.message,
+            status: response.status,
+            statusText: response.statusText
+          });
+          throw error;
+        }
+
+        // Import and initialize vision model
+        const { Florence2ForConditionalGeneration } = await import('@huggingface/transformers');
+        try {
+          await Florence2ForConditionalGeneration.from_pretrained('mock-model');
+        } catch (error) {
+          logger.error("Vision model initialization failed:", error);
+          throw new Error('Vision model failed to load');
+        }
+
+        // For successful responses, return mock description
+        const mockResult = {
+          title: "A test image from Picsum",
+          description: "This is a detailed description of a randomly generated test image from Picsum Photos, showing various visual elements in high quality."
+        };
+        logger.info("Generated mock description:", mockResult);
+        
+        return JSON.stringify(mockResult);
+      } catch (error) {
+        logger.error("Image description failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          imageUrl
+        });
+        throw error;
+      }
     }
     throw new Error(`Unexpected model class: ${modelClass}`);
   },
