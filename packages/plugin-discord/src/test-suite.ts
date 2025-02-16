@@ -5,7 +5,6 @@ import {
   ModelClass,
 } from "@elizaos/core";
 import { DiscordClient } from "./index.ts";
-import { type DiscordConfig, validateDiscordConfig } from "./environment";
 import { sendMessageInChunks } from "./utils.ts";
 import { ChannelType, Events, type TextChannel } from "discord.js";
 import {
@@ -55,10 +54,7 @@ export class DiscordTestSuite implements TestSuite {
         logger.info("Reusing existing DiscordClient instance.");
       } else {
         if (!this.discordClient) {
-          const discordConfig: DiscordConfig = await validateDiscordConfig(
-            runtime
-          );
-          this.discordClient = new DiscordClient(runtime, discordConfig);
+          this.discordClient = new DiscordClient(runtime);
           await new Promise((resolve, reject) => {
             this.discordClient.client.once(Events.ClientReady, resolve);
             this.discordClient.client.once(Events.Error, reject);
