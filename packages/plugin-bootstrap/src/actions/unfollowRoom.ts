@@ -1,4 +1,4 @@
-import { composeContext } from "@elizaos/core";
+import { composeContext, HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -42,7 +42,7 @@ export const unfollowRoomAction: Action = {
         );
         return userState === "FOLLOWED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldUnfollow(state: State): Promise<boolean> {
             const shouldUnfollowContext = composeContext({
                 state,
@@ -58,7 +58,7 @@ export const unfollowRoomAction: Action = {
             return response;
         }
 
-        const state = await runtime.composeState(message);
+        state = await runtime.composeState(message);
 
         if (await _shouldUnfollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
@@ -66,6 +66,10 @@ export const unfollowRoomAction: Action = {
                 runtime.agentId,
                 null
             );
+        }
+
+        for (const response of responses) {
+            await callback?.({...response.content, action: "UNFOLLOW_ROOM"});
         }
     },
     examples: [

@@ -76,13 +76,13 @@ export const roleProvider: Provider = {
             let output = "## Organizational Hierarchy\n\n";
 
             if (owners.length > 0) {
-                output += "### Owners\n";
+                output += `### Owners - People who ${runtime.character.name} works for and should listen to\n`;
                 owners.forEach(name => output += `• ${name}\n`);
                 output += "\n";
             }
 
             if (managers.length > 0) {
-                output += "### Managers\n";
+                output += `### Managers - People who ${runtime.character.name} reports to\n`;
                 managers.forEach(name => output += `• ${name}\n`);
                 output += "\n";
             }

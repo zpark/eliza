@@ -1,4 +1,4 @@
-import { composeContext } from "@elizaos/core";
+import { composeContext, HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -57,7 +57,7 @@ export const followRoomAction: Action = {
         );
         return userState !== "FOLLOWED" && userState !== "MUTED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldFollow(state: State): Promise<boolean> {
             const shouldFollowContext = composeContext({
                 state,
@@ -73,7 +73,7 @@ export const followRoomAction: Action = {
             return response;
         }
 
-        const state = await runtime.composeState(message);
+        state = await runtime.composeState(message);
 
         if (await _shouldFollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
@@ -81,6 +81,10 @@ export const followRoomAction: Action = {
                 runtime.agentId,
                 "FOLLOWED"
             );
+        }
+
+        for (const response of responses) {
+            await callback?.({...response.content, action: "FOLLOW_ROOM"});
         }
     },
     examples: [
