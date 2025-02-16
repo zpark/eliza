@@ -3,9 +3,7 @@ import { type IAgentRuntime, logger, UUID } from "@elizaos/core";
 export enum RoleName {
     OWNER = "OWNER",
     ADMIN = "ADMIN",
-    MEMBER = "MEMBER",
-    NONE = "NONE",
-    IGNORE = "IGNORE"
+    NONE = "NONE"
 }
 
 export interface UserRole {

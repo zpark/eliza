@@ -43,7 +43,6 @@ export const roleProvider: Provider = {
             // Group users by role
             const owners: string[] = [];
             const managers: string[] = [];
-            const colleagues: string[] = [];
 
             // Fetch all members to get usernames
             const members = await guild.members.fetch();
@@ -52,7 +51,7 @@ export const roleProvider: Provider = {
                 logger.info(`Processing user ${userId} with role ${userRole.role}`);
                 
                 // Skip NONE and IGNORE roles
-                if (userRole.role === RoleName.NONE || userRole.role === RoleName.IGNORE) {
+                if (userRole.role === RoleName.NONE) {
                     continue;
                 }
 
@@ -66,36 +65,29 @@ export const roleProvider: Provider = {
                     case RoleName.ADMIN:
                         managers.push(displayName);
                         break;
-                    case RoleName.MEMBER:
-                        colleagues.push(displayName);
-                        break;
                 }
             }
 
+            if (owners.length === 0 && managers.length === 0) {
+                return "";
+            }
+
             // Build the formatted output
-            let output = "**Team Structure**\n\n";
+            let output = "## Organizational Hierarchy\n\n";
 
             if (owners.length > 0) {
-                output += "**Owners**\n";
+                output += "### Owners\n";
                 owners.forEach(name => output += `• ${name}\n`);
                 output += "\n";
             }
 
             if (managers.length > 0) {
-                output += "**Managers**\n";
+                output += "### Managers\n";
                 managers.forEach(name => output += `• ${name}\n`);
                 output += "\n";
             }
 
-            if (colleagues.length > 0) {
-                output += "**Colleagues**\n";
-                colleagues.forEach(name => output += `• ${name}\n`);
-            }
-
-            if (output === "**Team Structure**\n\n") {
-                return "No team members found with assigned roles.";
-            }
-
+            output += "\n";
             return output.trim();
 
         } catch (error) {
