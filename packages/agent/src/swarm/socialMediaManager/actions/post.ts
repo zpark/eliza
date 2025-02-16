@@ -90,7 +90,7 @@ async function validateTwitterConfig(runtime: IAgentRuntime, serverId: string): 
 async function ensureTwitterClient(
     runtime: IAgentRuntime,
     serverId: string,
-    onboardingState: OnboardingState
+    onboardingState: { [key: string]: string | boolean | number | null }
 ) {
     const manager = runtime.getClient("twitter");
     if (!manager) {
@@ -164,9 +164,6 @@ const twitterPostAction: Action = {
                 throw new Error("Twitter not configured for this server");
             }
 
-            // Initialize/get Twitter client
-            const client = await ensureTwitterClient(runtime, serverId, onboardingState);
-
             // Generate tweet content
             const context = composeContext({
                 state,
@@ -223,13 +220,25 @@ const twitterPostAction: Action = {
                 description: "Confirm the tweet to be posted.",
                 tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
                 handler: async (runtime: IAgentRuntime) => {
+                    console.log("*** onboardingState", onboardingState);
+
+                    const vals = {
+                        TWITTER_USERNAME: onboardingState.TWITTER_USERNAME.value,
+                        TWITTER_EMAIL: onboardingState.TWITTER_EMAIL.value,
+                        TWITTER_PASSWORD: onboardingState.TWITTER_PASSWORD.value,
+                        TWITTER_2FA_SECRET: onboardingState.TWITTER_2FA_SECRET.value ?? undefined,
+                    }
+
+                    // Initialize/get Twitter client
+                    const client = await ensureTwitterClient(runtime, serverId, vals);
+        
                     const result = await client.client.twitterClient.sendTweet(cleanTweet);
                     // result is a response object, get the data from it-- body is a readable stream
                     const data = await result.json();
                     
                     const tweetId = data?.data?.create_tweet?.tweet_results?.result?.rest_id;
 
-                    const tweetUrl = `https://twitter.com/${onboardingState.TWITTER_USERNAME.value}/status/${tweetId}`;
+                    const tweetUrl = `https://twitter.com/${vals.value}/status/${tweetId}`;
                     
                     await callback({
                         ...responseContent,
