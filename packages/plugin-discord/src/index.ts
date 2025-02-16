@@ -37,8 +37,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   client: Client;
   runtime: IAgentRuntime;
   character: Character;
-  private messageManager: MessageManager;
-  private voiceManager: VoiceManager;
+  messageManager: MessageManager;
+  voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime) {
     super();
@@ -383,7 +383,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     const guilds = await this.client.guilds.fetch();
     for (const [, guild] of guilds) {
       const fullGuild = await guild.fetch();
-      this.voiceManager.scanGuild(fullGuild);
+      await this.voiceManager.scanGuild(fullGuild);
       // send in 1 second
       setTimeout(() => {
         // for each server the client is in, fire a connected event
@@ -393,6 +393,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         }
       }, 1000);
     }
+
+    this.client.emit("voiceManagerReady");
   }
 }
 
