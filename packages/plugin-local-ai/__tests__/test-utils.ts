@@ -12,6 +12,7 @@ import { vi } from 'vitest';
 import { MODEL_SPECS } from '../src/types';
 import fs from 'node:fs';
 import { logger } from '@elizaos/core';
+import { Readable } from 'node:stream';
 
 // Get the workspace root by going up from the current file location
 const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
@@ -67,7 +68,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   ensureRoomExists: async () => {},
   composeState: async () => ({} as State),
   updateRecentMessageState: async (state) => state,
-  useModel: async <T>(modelClass: ModelClass, params: T): Promise<string> => {
+  useModel: async <T>(modelClass: ModelClass, params: T): Promise<string | Readable> => {
     // Check if there are any pending mock rejections
     const mockCalls = downloadModelMock.mock.calls;
     if (mockCalls.length > 0 && downloadModelMock.mock.results[mockCalls.length - 1].type === 'throw') {
@@ -187,6 +188,51 @@ export const createMockRuntime = (): IAgentRuntime => ({
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           imageUrl
+        });
+        throw error;
+      }
+    }
+    if (modelClass === ModelClass.TEXT_TO_SPEECH) {
+      // For TTS, we expect a string as the parameter
+      const text = params as unknown as string;
+      if (typeof text !== 'string') {
+        throw new Error('invalid input: expected string');
+      }
+      if (text.length === 0) {
+        throw new Error('empty text input');
+      }
+
+      try {
+        logger.info("Processing TTS request:", { textLength: text.length });
+
+        // Get the mock implementation to check for errors
+        const { getLlama } = await import('node-llama-cpp');
+        const llamaMock = vi.mocked(getLlama);
+        
+        // Call getLlama to trigger any mock rejections
+        // We don't need to pass actual arguments since we're just testing error handling
+        await llamaMock("lastBuild");
+
+        // Create a mock audio stream
+        const mockAudioStream = new Readable({
+          read() {
+            // Push some mock audio data
+            this.push(Buffer.from([
+              0x52, 0x49, 0x46, 0x46, // "RIFF"
+              0x24, 0x00, 0x00, 0x00, // Chunk size
+              0x57, 0x41, 0x56, 0x45, // "WAVE"
+              0x66, 0x6D, 0x74, 0x20  // "fmt "
+            ]));
+            this.push(null); // End of stream
+          }
+        });
+
+        logger.success("TTS generation successful");
+        return mockAudioStream;
+      } catch (error) {
+        logger.error("TTS generation failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          textLength: text.length
         });
         throw error;
       }
