@@ -100,9 +100,9 @@ export class MessageManager {
       try {
         // Check if cancelled before starting expensive operation
         if (isCancelled) return;
-        
+
         const result = await task();
-        
+
         // Check if cancelled after generation but before resolving
         if (!isCancelled) {
           resolve(result);
@@ -127,8 +127,8 @@ export class MessageManager {
   async handleMessage(message: DiscordMessage) {
     if (
       this.runtime.character.settings?.discord?.allowedChannelIds &&
-      !this.runtime.character.settings.discord.allowedChannelIds.includes(
-        message.channelId
+      !this.runtime.character.settings.discord.allowedChannelIds.some(
+        (id: string) => id == message.channel.id
       )
     ) {
       return;
@@ -144,7 +144,7 @@ export class MessageManager {
     }
 
     if (
-      this.runtime.character.settings?.discord?.BotMessages &&
+      this.runtime.character.settings?.discord?.shouldIgnoreBotMessages &&
       message.author?.bot
     ) {
       return;
@@ -269,7 +269,9 @@ export class MessageManager {
       if (
         agentUserState === "MUTED" &&
         !message.mentions.has(this.client.user.id) &&
-        !message.content.toLowerCase().includes(this.runtime.character.name.toLowerCase()) &&
+        !message.content
+          .toLowerCase()
+          .includes(this.runtime.character.name.toLowerCase()) &&
         !hasInterest
       ) {
         console.log("Ignoring muted room");
@@ -321,7 +323,9 @@ export class MessageManager {
             ) => {
               // Check if this task is still the current one before sending
               if (!this.pendingMessageTasks.has(roomId.toString())) {
-                console.log("Message generation was cancelled, not sending response");
+                console.log(
+                  "Message generation was cancelled, not sending response"
+                );
                 return [];
               }
 
@@ -430,17 +434,20 @@ export class MessageManager {
   ): Promise<{ processedContent: string; attachments: Media[] }> {
     let processedContent = message.content;
     let attachments: Media[] = [];
-  
+
     // Format user mentions
     const mentionRegex = /<@!?(\d+)>/g;
-    processedContent = processedContent.replace(mentionRegex, (match, userId) => {
-      const user = message.mentions.users.get(userId);
-      if (user) {
-        return `${user.username} (@${userId})`;
+    processedContent = processedContent.replace(
+      mentionRegex,
+      (match, userId) => {
+        const user = message.mentions.users.get(userId);
+        if (user) {
+          return `${user.username} (@${userId})`;
+        }
+        return match;
       }
-      return match;
-    });
-  
+    );
+
     // Rest of the existing code for processing code blocks
     const codeBlockRegex = /```([\s\S]*?)```/g;
     let match;
@@ -465,16 +472,16 @@ export class MessageManager {
         `Code Block (${attachmentId})`
       );
     }
-  
+
     if (message.attachments.size > 0) {
       attachments = await this.attachmentManager.processAttachments(
         message.attachments
       );
     }
-  
+
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const urls = processedContent.match(urlRegex) || [];
-  
+
     for (const url of urls) {
       if (
         this.runtime
@@ -488,7 +495,7 @@ export class MessageManager {
           throw new Error("Video service not found");
         }
         const videoInfo = await videoService.processVideo(url, this.runtime);
-  
+
         attachments.push({
           id: `youtube-${Date.now()}`,
           url: url,
@@ -504,10 +511,10 @@ export class MessageManager {
         if (!browserService) {
           throw new Error("Browser service not found");
         }
-  
+
         const { title, description: summary } =
           await browserService.getPageContent(url, this.runtime);
-  
+
         attachments.push({
           id: `webpage-${Date.now()}`,
           url: url,
@@ -518,7 +525,7 @@ export class MessageManager {
         });
       }
     }
-  
+
     return { processedContent, attachments };
   }
 
