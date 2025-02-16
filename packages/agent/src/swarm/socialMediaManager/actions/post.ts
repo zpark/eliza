@@ -90,7 +90,7 @@ async function validateTwitterConfig(runtime: IAgentRuntime, serverId: string): 
 async function ensureTwitterClient(
     runtime: IAgentRuntime,
     serverId: string,
-    onboardingState: OnboardingState
+    onboardingState: { [key: string]: string | boolean | number | null }
 ) {
     const manager = runtime.getClient("twitter");
     if (!manager) {
@@ -130,16 +130,6 @@ const twitterPostAction: Action = {
     
         const serverId = discordMessage.guild.id;
     
-        // Check if there are any pending Twitter posts awaiting confirmation
-        const pendingTasks = runtime.getTasks({
-            roomId: message.roomId,
-            tags: ["AWAITING_CONFIRMATION", "TWITTER_POST"],
-        });
-    
-        if (pendingTasks && pendingTasks.length > 0) {
-            return false;
-        }
-    
         // Validate Twitter configuration
         const validation = await validateTwitterConfig(runtime, serverId);
         if (!validation.isValid) {
@@ -174,9 +164,6 @@ const twitterPostAction: Action = {
                 throw new Error("Twitter not configured for this server");
             }
 
-            // Initialize/get Twitter client
-            const client = await ensureTwitterClient(runtime, serverId, onboardingState);
-
             // Generate tweet content
             const context = composeContext({
                 state,
@@ -206,6 +193,19 @@ const twitterPostAction: Action = {
                 return;
             }
 
+
+            // Check if there are any pending Twitter posts awaiting confirmation
+            const pendingTasks = runtime.getTasks({
+                roomId: message.roomId,
+                tags: ["AWAITING_CONFIRMATION", "TWITTER_POST"],
+            });
+        
+            if (pendingTasks && pendingTasks.length > 0) {
+                for (const task of pendingTasks) {
+                    await runtime.deleteTask(task.id);
+                }
+            }
+
             // Prepare response content
             const responseContent: Content = {
                 text: `I'll tweet this:\n\n${cleanTweet}`,
@@ -213,90 +213,56 @@ const twitterPostAction: Action = {
                 source: message.content.source,
             };
 
-                // Register approval task
-                runtime.registerTask({
-                    roomId: message.roomId,
-                    name: "Confirm Twitter Post",
-                    description: "Confirm the tweet to be posted.",
-                    tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
-                    handler: async (runtime: IAgentRuntime) => {
-                        // const response = await fetch(
-                        //     'https://twitter.com/i/api/graphql/a1p9RWpkYKBjWv_I3WzS-A/CreateTweet',
-                        //     {
-                        //       headers,
-                        //       body: JSON.stringify({
-                        //         variables,
-                        //         features: {
-                        //           interactive_text_enabled: true,
-                        //           longform_notetweets_inline_media_enabled: false,
-                        //           responsive_web_text_conversations_enabled: false,
-                        //           tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled:
-                        //             false,
-                        //           vibe_api_enabled: false,
-                        //           rweb_lists_timeline_redesign_enabled: true,
-                        //           responsive_web_graphql_exclude_directive_enabled: true,
-                        //           verified_phone_label_enabled: false,
-                        //           creator_subscriptions_tweet_preview_api_enabled: true,
-                        //           responsive_web_graphql_timeline_navigation_enabled: true,
-                        //           responsive_web_graphql_skip_user_profile_image_extensions_enabled:
-                        //             false,
-                        //           tweetypie_unmention_optimization_enabled: true,
-                        //           responsive_web_edit_tweet_api_enabled: true,
-                        //           graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
-                        //           view_counts_everywhere_api_enabled: true,
-                        //           longform_notetweets_consumption_enabled: true,
-                        //           tweet_awards_web_tipping_enabled: false,
-                        //           freedom_of_speech_not_reach_fetch_enabled: true,
-                        //           standardized_nudges_misinfo: true,
-                        //           longform_notetweets_rich_text_read_enabled: true,
-                        //           responsive_web_enhance_cards_enabled: false,
-                        //           subscriptions_verification_info_enabled: true,
-                        //           subscriptions_verification_info_reason_enabled: true,
-                        //           subscriptions_verification_info_verified_since_enabled: true,
-                        //           super_follow_badge_privacy_enabled: false,
-                        //           super_follow_exclusive_tweet_notifications_enabled: false,
-                        //           super_follow_tweet_api_enabled: false,
-                        //           super_follow_user_api_enabled: false,
-                        //           android_graphql_skip_api_media_color_palette: false,
-                        //           creator_subscriptions_subscription_count_enabled: false,
-                        //           blue_business_profile_image_shape_enabled: false,
-                        //           unified_cards_ad_metadata_container_dynamic_card_content_query_enabled:
-                        //             false,
-                        //           rweb_video_timestamps_enabled: false,
-                        //           c9s_tweet_anatomy_moderator_badge_enabled: false,
-                        //           responsive_web_twitter_article_tweet_consumption_enabled: false,
-                        //         },
-                        //         fieldToggles: {},
-                        //       }),
-                        //       method: 'POST',
-                        //     },
-                        //   );
+            // Register approval task
+            runtime.registerTask({
+                roomId: message.roomId,
+                name: "Confirm Twitter Post",
+                description: "Confirm the tweet to be posted.",
+                tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
+                handler: async (runtime: IAgentRuntime) => {
+                    console.log("*** onboardingState", onboardingState);
 
-
-                        const result = await client.client.twitterClient.sendTweet(cleanTweet);
-                        // result is a response object, get the data from it-- body is a readable stream
-                        const data = await result.json();
-                        
-                        const tweetId = data?.data?.create_tweet?.tweet_results?.result?.rest_id;
-
-                        const tweetUrl = `https://twitter.com/${onboardingState.TWITTER_USERNAME.value}/status/${tweetId}`;
-                        
-                        await callback({
-                            ...responseContent,
-                            text: `Tweet posted!\n${tweetUrl}`,
-                            url: tweetUrl,
-                            tweetId
-                        });
-                    },
-                    validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
-                        return userRole === "OWNER" || userRole === "ADMIN";
+                    const vals = {
+                        TWITTER_USERNAME: onboardingState.TWITTER_USERNAME.value,
+                        TWITTER_EMAIL: onboardingState.TWITTER_EMAIL.value,
+                        TWITTER_PASSWORD: onboardingState.TWITTER_PASSWORD.value,
+                        TWITTER_2FA_SECRET: onboardingState.TWITTER_2FA_SECRET.value ?? undefined,
                     }
-                });
 
-                responseContent.text += "\nWaiting for approval from ";
-                responseContent.text += userRole === "OWNER" ? "an admin" : "an admin or boss";
+                    // Initialize/get Twitter client
+                    const client = await ensureTwitterClient(runtime, serverId, vals);
+        
+                    const result = await client.client.twitterClient.sendTweet(cleanTweet);
+                    // result is a response object, get the data from it-- body is a readable stream
+                    const data = await result.json();
+                    
+                    const tweetId = data?.data?.create_tweet?.tweet_results?.result?.rest_id;
 
-            await callback({...responseContent, action: "TWITTER_POST_WAITING_FOR_CONFIRM"});
+                    const tweetUrl = `https://twitter.com/${vals.value}/status/${tweetId}`;
+                    
+                    await callback({
+                        ...responseContent,
+                        text: `${tweetUrl}`,
+                        url: tweetUrl,
+                        tweetId
+                    });
+                },
+                validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+
+
+                    const userRole = await getUserServerRole(runtime, message.userId, serverId);
+                    if(!userRole) {
+                        return false;
+                    }
+
+                    return userRole === "OWNER" || userRole === "ADMIN";
+                }
+            });
+
+            responseContent.text += "\nWaiting for approval from ";
+            responseContent.text += userRole === "OWNER" ? "an admin" : "an admin or boss";
+
+            await callback({...responseContent, action: "TWITTER_POST_TASK_NEEDS_CONFIRM"});
             return responseContent;
 
         } catch (error) {

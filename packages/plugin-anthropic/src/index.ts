@@ -68,10 +68,12 @@ export const anthropicPlugin: Plugin = {
       runtime,
       {
       context,
+      maxTokens = 8192,
       stopSequences = [],
+      temperature = 0.7,
+      frequencyPenalty = 0.7,
+      presencePenalty = 0.7,
     }: GenerateTextParams) => {
-      const temperature = 0.7;
-      const maxTokens = 8192;
       const largeModel = runtime.getSetting("ANTHROPIC_LARGE_MODEL") ?? "claude-3-5-sonnet-latest";
 
       const { text } = await generateText({
@@ -81,6 +83,8 @@ export const anthropicPlugin: Plugin = {
         temperature,
         maxTokens,
         stopSequences,
+        frequencyPenalty,
+        presencePenalty,
       });
       return text;
     },

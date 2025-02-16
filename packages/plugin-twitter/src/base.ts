@@ -231,10 +231,13 @@ export class ClientBase extends EventEmitter {
     return t;
   }
 
-  constructor(runtime: IAgentRuntime) {
+  state: any;
+
+  constructor(runtime: IAgentRuntime, state: any) {
     super();
     this.runtime = runtime;
-    const username = this.runtime.getSetting("TWITTER_USERNAME") as string;
+    this.state = state;
+    const username = state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME") as string;
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
@@ -254,10 +257,10 @@ export class ClientBase extends EventEmitter {
   }
 
   async init() {
-    const username = this.runtime.getSetting("TWITTER_USERNAME");
-    const password = this.runtime.getSetting("TWITTER_PASSWORD");
-    const email = this.runtime.getSetting("TWITTER_EMAIL");
-    const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET");
+    const username = this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME");
+    const password = this.state?.TWITTER_PASSWORD || this.runtime.getSetting("TWITTER_PASSWORD");
+    const email = this.state?.TWITTER_EMAIL || this.runtime.getSetting("TWITTER_EMAIL");
+    const twitter2faSecret = this.state?.TWITTER_2FA_SECRET || this.runtime.getSetting("TWITTER_2FA_SECRET");
     
     // Validate required credentials
     if (!username || !password || !email) {
@@ -268,15 +271,15 @@ export class ClientBase extends EventEmitter {
         throw new Error(`Missing required Twitter credentials: ${missing.join(", ")}`);
     }
 
-    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number ?? 3;
+    let retries = (this.state?.TWITTER_RETRY_LIMIT || this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number) ?? 3;
 
     if (!username) {
         throw new Error("Twitter username not configured");
     }
 
-    const authToken = this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
-    const ct0 = this.runtime.getSetting("TWITTER_COOKIES_CT0");
-    const guestId = this.runtime.getSetting("TWITTER_COOKIES_GUEST_ID");
+    const authToken = this.state?.TWITTER_COOKIES_AUTH_TOKEN || this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
+    const ct0 = this.state?.TWITTER_COOKIES_CT0 || this.runtime.getSetting("TWITTER_COOKIES_CT0");
+    const guestId = this.state?.TWITTER_COOKIES_GUEST_ID || this.runtime.getSetting("TWITTER_COOKIES_GUEST_ID");
 
     const createTwitterCookies = (
       authToken: string,

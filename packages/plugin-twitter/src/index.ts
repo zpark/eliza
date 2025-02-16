@@ -23,15 +23,15 @@ export class TwitterClient implements ITwitterClient {
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
 
-    constructor(runtime: IAgentRuntime) {
+    constructor(runtime: IAgentRuntime, state: any) {
         // Pass twitterConfig to the base client
-        this.client = new ClientBase(runtime);
+        this.client = new ClientBase(runtime, state);
 
         // Posting logic
-        this.post = new TwitterPostClient(this.client, runtime);
+        this.post = new TwitterPostClient(this.client, runtime, state);
 
         // Mentions and interactions
-        this.interaction = new TwitterInteractionClient(this.client, runtime);
+        this.interaction = new TwitterInteractionClient(this.client, runtime, state);
 
         // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
         if (runtime.getSetting("TWITTER_SPACES_ENABLE") === true) {
@@ -55,7 +55,7 @@ export class TwitterClientManager {
         return TwitterClientManager.instance;
     }
 
-    async createClient(runtime: IAgentRuntime, clientId: string): Promise<TwitterClient> {
+    async createClient(runtime: IAgentRuntime, clientId: string, state: any): Promise<TwitterClient> {
         console.log("Creating client", clientId);
         if (runtime.getSetting("TWITTER_2FA_SECRET") === null) {
             runtime.setSetting("TWITTER_2FA_SECRET", undefined, false);
@@ -69,7 +69,7 @@ export class TwitterClientManager {
             }
 
             // Create new client instance
-            const client = new TwitterClient(runtime);
+            const client = new TwitterClient(runtime, state);
 
             // Initialize the client
             await client.client.init();
@@ -137,6 +137,8 @@ const TwitterClientInterface: Client = {
             TWITTER_2FA_SECRET: (runtime.getSetting("TWITTER_2FA_SECRET") as string) || runtime.character.settings?.TWITTER_2FA_SECRET || runtime.character.secrets?.TWITTER_2FA_SECRET,
         };
 
+        console.log("*** twitterConfig", twitterConfig);
+
         // Filter out undefined values
         const config = Object.fromEntries(
             Object.entries(twitterConfig).filter(([_, v]) => v !== undefined)
@@ -153,7 +155,7 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                await manager.createClient(runtime, stringToUuid("default"));
+                await manager.createClient(runtime, stringToUuid("default"), config);
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);

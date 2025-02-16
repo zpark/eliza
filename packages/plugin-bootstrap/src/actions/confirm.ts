@@ -43,7 +43,7 @@ export const confirmTaskAction: Action = {
       // Get pending tasks for this room
       const pendingTasks = runtime.getTasks({
         roomId: message.roomId,
-        tags: ["AWAITING_CONFIRMATION", "TWITTER_POST"],
+        tags: ["AWAITING_CONFIRMATION"],
       });
 
       if (!pendingTasks || pendingTasks.length === 0) {
@@ -63,17 +63,11 @@ export const confirmTaskAction: Action = {
 
           // Delete the task after successful execution
           runtime.deleteTask(task.id);
-
-          await callback({
-            text: "Task confirmed and executed successfully!",
-            action: "CONFIRM_TASK",
-            source: message.content.source,
-          });
         } catch (error) {
           logger.error("Error executing task:", error);
           await callback({
             text: "There was an error executing the task.",
-            action: "CONFIRM_TASK",
+            action: "CONFIRM_TASK_ERROR",
             source: message.content.source,
           });
         }
@@ -82,7 +76,7 @@ export const confirmTaskAction: Action = {
       logger.error("Error in confirm task handler:", error);
       await callback({
         text: "There was an error processing the task confirmation.",
-        action: "CONFIRM_TASK",
+        action: "CONFIRM_TASK_ERROR",
         source: message.content.source,
       });
     }

@@ -93,10 +93,12 @@ export class TwitterInteractionClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     private isDryRun: boolean;
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
+    private state: any;
+    constructor(client: ClientBase, runtime: IAgentRuntime, state: any) {
         this.client = client;
         this.runtime = runtime;
-        this.isDryRun = this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
+        this.state = state;
+        this.isDryRun = this.state?.TWITTER_DRY_RUN || this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
     }
 
     async start() {
@@ -105,7 +107,7 @@ export class TwitterInteractionClient {
             setTimeout(
                 handleTwitterInteractionsLoop,
                 // Defaults to 2 minutes
-                (this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number) * 1000
+                (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number) * 1000
             );
         };
         handleTwitterInteractionsLoop();
@@ -131,9 +133,9 @@ export class TwitterInteractionClient {
             );
             let uniqueTweetCandidates = [...mentionCandidates];
             // Only process target users if configured
-            if ((this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).length) {
+            if ((this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).length) {
                 const TARGET_USERS =
-                    this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
+                    this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
 
                 logger.log("Processing target users:", TARGET_USERS);
 
@@ -313,7 +315,7 @@ export class TwitterInteractionClient {
     }) {
         // Only skip if tweet is from self AND not from a target user
         if (tweet.userId === this.client.profile.id &&
-            !(this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).includes(tweet.username)) {
+            !(this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).includes(tweet.username)) {
             return;
         }
 
@@ -357,7 +359,7 @@ export class TwitterInteractionClient {
 
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
-            twitterUserName: this.runtime.getSetting("TWITTER_USERNAME"),
+            twitterUserName: this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME"),
             currentPost,
             formattedConversation,
             imageDescriptions: imageDescriptionsArray.length > 0
@@ -399,7 +401,7 @@ export class TwitterInteractionClient {
 
         // get usernames into str
         const validTargetUsersStr =
-            (this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).join(",");
+            (this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).join(",");
 
         const shouldRespondContext = composeContext({
             state,
@@ -479,7 +481,7 @@ export class TwitterInteractionClient {
                             this.client,
                             response,
                             message.roomId,
-                            this.runtime.getSetting("TWITTER_USERNAME") as string,
+                            this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME") as string,
                             tweetId || tweet.id
                         );
                         return memories;

@@ -60,19 +60,8 @@ export const cancelTaskAction: Action = {
       for (const task of pendingTasks) {
         runtime.deleteTask(task.id);
       }
-
-      await callback({
-        text: "Task cancelled successfully.",
-        action: "CANCEL_TASK",
-        source: message.content.source,
-      });
     } catch (error) {
       logger.error("Error in cancel task handler:", error);
-      await callback({
-        text: "There was an error cancelling the task.",
-        action: "CANCEL_TASK",
-        source: message.content.source,
-      });
     }
   },
 
