@@ -11,6 +11,7 @@ import { factsProvider } from "./providers/facts.ts";
 import { timeProvider } from "./providers/time.ts";
 import { cancelTaskAction } from "./actions/cancel.ts";
 import { confirmTaskAction } from "./actions/confirm.ts";
+import { confirmationTasksProvider } from "./providers/confirmation.ts";
 
 export * as actions from "./actions";
 export * as evaluators from "./evaluators";
@@ -30,6 +31,6 @@ export const bootstrapPlugin: Plugin = {
         confirmTaskAction,
     ],
     evaluators: [factEvaluator, goalEvaluator],
-    providers: [timeProvider, factsProvider],
+    providers: [timeProvider, factsProvider, confirmationTasksProvider],
 };
 export default bootstrapPlugin;

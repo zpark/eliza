@@ -325,6 +325,8 @@ export class MessageManager {
                 return [];
               }
 
+              stopTyping();
+
               try {
                 if (message.id && !content.inReplyTo) {
                   content.inReplyTo = stringToUuid(
@@ -385,6 +387,7 @@ export class MessageManager {
             ];
 
             state = await this.runtime.updateRecentMessageState(state);
+
             stopTyping();
 
             await this.runtime.processActions(
@@ -393,7 +396,6 @@ export class MessageManager {
               state,
               callback
             );
-
             return responseMessages;
           } catch (error) {
             stopTyping();

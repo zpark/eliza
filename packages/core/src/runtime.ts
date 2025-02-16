@@ -1202,10 +1202,7 @@ Text: ${attachment.text}
                 evaluatorsData.length > 0
                     ? formatEvaluatorExamples(evaluatorsData)
                     : "",
-            providers: addHeader(
-                `# Additional Information About ${this.character.name} and The World`,
-                providers,
-            ),
+            providers,
         };
 
         return { ...initialState, ...actionState } as State;

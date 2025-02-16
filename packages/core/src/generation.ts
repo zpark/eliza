@@ -114,17 +114,11 @@ export async function generateText({
   stopSequences?: string[];
   customSystemPrompt?: string;
 }): Promise<string> {
-  console.log("Generating text");
-  console.log(context);
-
   const text = await runtime.useModel(modelClass, {
     runtime,
     context,
     stopSequences,
   });
-
-  console.log("Generated text");
-  console.log(text);
 
   return text;
 }
@@ -173,9 +167,6 @@ export const generateObject = async ({
     throw new Error(errorMessage);
   }
 
-  console.log("Generating object");
-  console.log(context);
-
   // Special handling for enum output type
   if (output === "enum" && enumValues) {
     const response = await runtime.useModel(modelClass, {
@@ -183,10 +174,9 @@ export const generateObject = async ({
       context,
       modelClass,
       stopSequences,
+      maxTokens: 8,
       object: true,
     });
-
-    console.log("Generated enum response", response);
 
     // Clean up the response to extract just the enum value
     const cleanedResponse = response.trim();
@@ -218,9 +208,6 @@ export const generateObject = async ({
     stopSequences,
     object: true,
   });
-
-  console.log("Generated object");
-  console.log(response);
 
   let jsonString = response;
 
@@ -302,14 +289,12 @@ async function generateEnum<T extends string>({
   context,
   modelClass = ModelClass.TEXT_SMALL,
   enumValues,
-  functionName,
-  stopSequences,
+  stopSequences = ["\\n"],
 }: {
   runtime: IAgentRuntime;
   context: string;
   modelClass: ModelClass;
   enumValues: Array<T>;
-  functionName: string;
   stopSequences?: string[];
 }): Promise<T | null> {
   const enumResult = await withRetry(async () => {
@@ -394,7 +379,6 @@ export async function generateShouldRespond({
     context,
     modelClass,
     enumValues: RESPONSE_VALUES,
-    functionName: "generateShouldRespond",
     stopSequences,
   });
 
@@ -412,8 +396,6 @@ export async function generateMessageResponse({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<Content> {
-  console.log("Context:", context);
-
   return await withRetry(async () => {
     const text = await runtime.useModel(modelClass, {
       runtime,
@@ -421,10 +403,7 @@ export async function generateMessageResponse({
       stop: stopSequences,
     });
 
-    console.log("Text:", text);
-
     const parsedContent = parseJSONObjectFromText(text) as Content;
-    console.log("Parsed content:", parsedContent);
 
     if (!parsedContent) {
       throw new Error("Failed to parse content");

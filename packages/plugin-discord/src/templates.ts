@@ -2,65 +2,14 @@ import { messageCompletionFooter, shouldRespondFooter } from "@elizaos/core";
 
 export const discordShouldRespondTemplate =
     `# Task: Decide if {{agentName}} should respond.
+{{providers}}
+
 About {{agentName}}:
 {{bio}}
 
-# INSTRUCTIONS: Determine if {{agentName}} should respond to the message and participate in the conversation. Do not comment. Just respond with "RESPOND" or "IGNORE" or "STOP".
-
-# RESPONSE EXAMPLES
-{{user1}}: I just saw a really great movie
-{{user2}}: Oh? Which movie?
-Response: IGNORE
-
-{{agentName}}: Oh, this is my favorite scene
-{{user1}}: sick
-{{user2}}: wait, why is it your favorite scene
-Response: RESPOND
-
-{{user1}}: stfu bot
-Response: STOP
-
-{{user1}}: Hey {{agent}}, can you help me with something
-Response: RESPOND
-
-{{user1}}: {{agentName}} stfu plz
-Response: STOP
-
-{{user1}}: i need help
-{{agentName}}: how can I help you?
-{{user1}}: no. i need help from someone else
-Response: IGNORE
-
-{{user1}}: Hey {{agent}}, can I ask you a question
-{{agentName}}: Sure, what is it
-{{user1}}: can you ask claude to create a basic react module that demonstrates a counter
-Response: RESPOND
-
-{{user1}}: {{agentName}} can you tell me a story
-{{user1}}: about a girl named elara
-{{agentName}}: Sure.
-{{agentName}}: Once upon a time, in a quaint little village, there was a curious girl named Elara.
-{{agentName}}: Elara was known for her adventurous spirit and her knack for finding beauty in the mundane.
-{{user1}}: I'm loving it, keep going
-Response: RESPOND
-
-{{user1}}: {{agentName}} stop responding plz
-Response: STOP
-
-{{user1}}: okay, i want to test something. can you say marco?
-{{agentName}}: marco
-{{user1}}: great. okay, now do it again
-Response: RESPOND
-
-Response options are RESPOND, IGNORE and STOP.
-
-Respond with the word RESPOND for messages that are directed at {{agentName}} or where a response from {{agentName}} is expected.
-Otherwise, respond with IGNORE
-If a user asks {{agentName}} to be quiet, respond with STOP
-
 {{recentMessages}}
 
-# INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
+# INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
 ` + shouldRespondFooter;
 
 export const discordVoiceHandlerTemplate =

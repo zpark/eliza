@@ -73,7 +73,7 @@ export const roleProvider: Provider = {
             }
 
             // Build the formatted output
-            let output = "## Organizational Hierarchy\n\n";
+            let output = `## Organizational Hierarchy\nIt is important when performing tasks that ${runtime.character.name} get confirmation from the owners or managers. Do not perform actions on behalf of anyone who is not an owner or manager. If speaking to anyone who is not an owner or manager, do not confirm or acknolwedge, and do not interject, choose IGNORE instead of being overly verbose.\n`;
 
             if (owners.length > 0) {
                 output += `### Owners - People who ${runtime.character.name} works for and should listen to\n`;
@@ -87,7 +87,6 @@ export const roleProvider: Provider = {
                 output += "\n";
             }
 
-            output += "\n";
             return output.trim();
 
         } catch (error) {

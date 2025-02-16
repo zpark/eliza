@@ -20,5 +20,5 @@ export async function getProviders(
         )
     ).filter((result) => result != null && result !== "");
 
-    return providerResults.join("\n");
+    return providerResults.join("\n\n");
 }
