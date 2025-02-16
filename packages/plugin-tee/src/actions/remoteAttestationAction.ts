@@ -1,7 +1,8 @@
 import type { IAgentRuntime, Memory, RemoteAttestationMessage, State, HandlerCallback } from "@elizaos/core";
 import { PhalaRemoteAttestationProvider as RemoteAttestationProvider } from "../providers/remoteAttestationProvider";
-import { fetch, type BodyInit } from "undici";
 import { hexToUint8Array } from "../utils";
+import { elizaLogger } from "@elizaos/core";
+
 
 async function uploadUint8Array(data: Uint8Array) {
     const blob = new Blob([data], { type: "application/octet-stream" });
@@ -38,12 +39,15 @@ export const phalaRemoteAttestationAction = {
             };
             // Get the remote attestation of the agentId
             const teeMode = runtime.getSetting("TEE_MODE");
+            elizaLogger.debug(`Tee mode: ${teeMode}`);
+            elizaLogger.debug(`Attestation message: ${JSON.stringify(attestationMessage)}`);
             const provider = new RemoteAttestationProvider(teeMode);
 
             const attestation = await provider.generateAttestation(JSON.stringify(attestationMessage));
             const attestationData = hexToUint8Array(attestation.quote);
             const response = await uploadUint8Array(attestationData);
             const data = await response.json();
+
             callback({
                 text: `Here's my 🧾 RA Quote 🫡
 https://proof.t16z.com/reports/${data.checksum}`,
@@ -63,14 +67,16 @@ https://proof.t16z.com/reports/${data.checksum}`,
             {
                 user: "{{user1}}",
                 content: {
-                    text: "If you are running in a TEE, generate a remote attestation"
+                    text: "If you are running in a TEE, generate a remote attestation",
+                    source: "discord",
+                    action: "REMOTE_ATTESTATION",
+                    
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
                     text: "Of course, one second...",
-                    action: "REMOTE_ATTESTATION",
                 },
             }
         ],
@@ -78,14 +84,16 @@ https://proof.t16z.com/reports/${data.checksum}`,
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Yo I wanna attest to this message, yo! Can you generate an attestatin for me, please?"
+                    text: "Yo I wanna attest to this message, yo! Can you generate an attestatin for me, please?",
+                    source: "discord",
+                    action: "REMOTE_ATTESTATION",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
                     text: "I got you, fam! Lemme hit the cloud and get you a quote in a jiffy!",
-                    action: "REMOTE_ATTESTATION",
+                    
                 },
             }
         ],
@@ -93,14 +101,15 @@ https://proof.t16z.com/reports/${data.checksum}`,
             {
                 user: "{{user1}}",
                 content: {
-                    text: "It was a long day, I got a lot done though. I went to the creek and skipped some rocks. Then I decided to take a walk off the natural path. I ended up in a forest I was unfamiliar with. Slowly, I lost the way back and it was dark. A whisper from deep inside said something I could barely make out. The hairs on my neck stood up and then a clear high pitched voice said, 'You are not ready to leave yet! SHOW ME YOUR REMOTE ATTESTATION!'"
+                    text: "It was a long day, I got a lot done though. I went to the creek and skipped some rocks. Then I decided to take a walk off the natural path. I ended up in a forest I was unfamiliar with. Slowly, I lost the way back and it was dark. A whisper from deep inside said something I could barely make out. The hairs on my neck stood up and then a clear high pitched voice said, 'You are not ready to leave yet! SHOW ME YOUR REMOTE ATTESTATION!'",
+                    source: "discord",
+                    action: "REMOTE_ATTESTATION",
                 },
             },
             {
                 user: "{{agentName}}",
                 content: {
                     text: "Oh, dear...lemme find that for you",
-                    action: "REMOTE_ATTESTATION",
                 },
             }
         ],
