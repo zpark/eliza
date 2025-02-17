@@ -116,9 +116,20 @@ class LocalAIManager {
       this.initializeVision().catch(error => {
         logger.warn("Vision initialization failed:", error);
         return null; // Prevent Promise.all from failing completely
+      }),
+      // Add transcription initialization with better error handling
+      this.initializeTranscription().catch(error => {
+        logger.warn("Transcription initialization failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return null; // Prevent Promise.all from failing completely
       })
     ]).catch(error => {
-      logger.warn("Models initialization failed:", error);
+      logger.warn("Models initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     });
   }
 
@@ -129,7 +140,75 @@ class LocalAIManager {
     return LocalAIManager.instance;
   }
 
+  private async initializeTranscription(): Promise<void> {
+    try {
+      logger.info("Initializing transcription model...");
+      
+      // First ensure FFmpeg is available
+      const ffmpegAvailable = await this.transcribeManager.ensureFFmpeg();
+      if (!ffmpegAvailable) {
+        throw new Error("Cannot initialize transcription without FFmpeg. Please install FFmpeg and try again.");
+      }
 
+      logger.info("FFmpeg initialized successfully:", {
+        version: this.transcribeManager.getFFmpegVersion(),
+        available: this.transcribeManager.isFFmpegAvailable(),
+        timestamp: new Date().toISOString()
+      });
+      
+      // Define sample file path and AWS URL
+      const samplePath = path.join(this.cacheDir, 'sample1.wav');
+      const awsSampleUrl = 'https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-15311/sample1.wav?_=1';
+      
+      // Download sample file if it doesn't exist
+      if (!fs.existsSync(samplePath)) {
+        logger.info("Sample WAV file not found in cache, downloading from AWS...");
+        try {
+          await this.downloadManager.downloadFromUrl(awsSampleUrl, samplePath);
+          logger.success("Sample WAV file downloaded successfully");
+        } catch (downloadError) {
+          logger.error("Failed to download sample WAV file:", {
+            error: downloadError instanceof Error ? downloadError.message : String(downloadError),
+            url: awsSampleUrl,
+            destination: samplePath,
+            timestamp: new Date().toISOString()
+          });
+          throw downloadError;
+        }
+      } else {
+        logger.info("Sample WAV file already exists in cache");
+      }
+
+      // Verify file exists and load it
+      if (!fs.existsSync(samplePath)) {
+        throw new Error(`Sample audio file not found at: ${samplePath} after download attempt`);
+      }
+
+      const testAudioBuffer = fs.readFileSync(samplePath);
+      logger.info("Sample audio file loaded:", {
+        size: testAudioBuffer.length,
+        path: samplePath,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Use our existing transcribeAudio method which uses transcribeManager
+      const result = await this.transcribeAudio(testAudioBuffer);
+      logger.info("Test transcription result:", { 
+        text: result,
+        timestamp: new Date().toISOString()
+      });
+      
+      logger.success("Transcription model initialization complete");
+    } catch (error) {
+      logger.error("Transcription initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+  
   // Update initializeVision to use the same code path as ModelClass.IMAGE_DESCRIPTION
   private async initializeVision(): Promise<void> {
     try {
@@ -260,6 +339,8 @@ class LocalAIManager {
       throw error;
     }
   }
+
+
 
   async generateText(params: GenerateTextParams): Promise<string> {
     try {
