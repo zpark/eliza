@@ -40,9 +40,6 @@ export class TwitterPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     twitterUsername: string;
-    private isProcessing = false;
-    private lastProcessTime = 0;
-    private stopProcessingActions = false;
     private isDryRun: boolean;
     private state: any;
 
@@ -289,6 +286,7 @@ export class TwitterPostClient {
                     mediaData
                 );
             }
+            
             const tweet = this.createTweetObject(
                 result,
                 client,
@@ -303,7 +301,8 @@ export class TwitterPostClient {
                 rawTweetContent
             );
         } catch (error) {
-            logger.error("Error sending tweet:", error);
+            logger.error("Error sending tweet:");
+            throw error;
         }
     }
 
@@ -317,14 +316,17 @@ export class TwitterPostClient {
             const roomId = stringToUuid(
                 "twitter_generate_room-" + this.client.profile.username
             );
+            
             await this.runtime.ensureUserExists(
                 this.runtime.agentId,
                 this.client.profile.username,
                 this.runtime.character.name,
                 "twitter"
             );
+            
 
-            const topics = this.runtime.character.topics.join(", ");
+            const topics = this.runtime.character.topics?.join(", ");
+            
             const state = await this.runtime.composeState(
                 {
                     userId: this.runtime.agentId,
@@ -339,11 +341,12 @@ export class TwitterPostClient {
                     twitterUserName: this.client.profile.username
                 }
             );
+            
 
             const context = composeContext({
                 state,
                 template:
-                    this.runtime.character.templates?.twitterPostTemplate ||
+                    this.runtime.character?.templates?.twitterPostTemplate ||
                     twitterPostTemplate,
             });
 
@@ -441,6 +444,6 @@ export class TwitterPostClient {
     }
 
     async stop() {
-        this.stopProcessingActions = true;
+        
     }
 }
