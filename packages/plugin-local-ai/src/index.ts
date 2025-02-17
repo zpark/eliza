@@ -209,25 +209,46 @@ class LocalAIManager {
     }
   }
   
-  // Update initializeVision to use the same code path as ModelClass.IMAGE_DESCRIPTION
   private async initializeVision(): Promise<void> {
     try {
       logger.info("Initializing vision model...");
       
-      // Use a simple 1x1 transparent GIF as test image
-      const testImageUrl = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-      
-      // Use the same code path as ModelClass.IMAGE_DESCRIPTION
-      const response = await fetch(testImageUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch test image: ${response.statusText}`);
+      // AWS test image URL
+      const awsImageUrl = "https://d1.awsstatic.com/product-marketing/Rekognition/Image%20for%20facial%20analysis.3fcc22e8451b4a238540128cb5510b8cbe22da51.jpg";
+      const imagePath = path.join(this.cacheDir, 'test_image.jpg');
+
+      // Download the test image if it doesn't exist
+      if (!fs.existsSync(imagePath)) {
+        logger.info("Downloading test image from AWS...");
+        try {
+          await this.downloadManager.downloadFromUrl(awsImageUrl, imagePath);
+          logger.success("Test image downloaded successfully");
+        } catch (downloadError) {
+          logger.error("Failed to download test image:", {
+            error: downloadError instanceof Error ? downloadError.message : String(downloadError),
+            url: awsImageUrl,
+            destination: imagePath
+          });
+          throw downloadError;
+        }
+      } else {
+        logger.info("Test image already exists in cache");
       }
-      
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const mimeType = response.headers.get('content-type') || 'image/gif';
-      
-      // Use our existing describeImage method which in turn uses visionManager
-      await this.describeImage(buffer, mimeType);
+
+      // Verify file exists and load it
+      if (!fs.existsSync(imagePath)) {
+        throw new Error(`Test image not found at: ${imagePath} after download attempt`);
+      }
+
+      const imageBuffer = fs.readFileSync(imagePath);
+      logger.info("Test image loaded:", {
+        size: imageBuffer.length,
+        path: imagePath
+      });
+
+      // Process the test image
+      const result = await this.describeImage(imageBuffer, 'image/jpeg');
+      logger.info("Test image description:", result);
       
       logger.success("Vision model initialization complete");
     } catch (error) {
