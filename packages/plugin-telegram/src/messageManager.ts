@@ -529,6 +529,7 @@ export class MessageManager {
         } catch (error) {
             logger.error("❌ Error handling message:", error);
             logger.error("Error sending message:", error);
+            throw error;
         }
     }
 }

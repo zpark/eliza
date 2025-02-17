@@ -1,4 +1,9 @@
-import { logger, type TestSuite, type IAgentRuntime, ModelClass } from "@elizaos/core";
+import {
+  logger,
+  type TestSuite,
+  type IAgentRuntime,
+  ModelClass,
+} from "@elizaos/core";
 import { Telegraf } from "telegraf";
 import { MessageManager } from "./messageManager";
 import { Context } from "telegraf";
@@ -42,7 +47,7 @@ export class TelegramTestSuite implements TestSuite {
   async testSendingTextMessage(runtime: IAgentRuntime) {
     try {
       if (!this.bot) throw new Error("Bot not initialized.");
-      
+
       const chatId = "-4697450961";
       await this.bot.telegram.sendMessage(chatId, "Testing Telegram message!");
       logger.success("Message sent successfully.");
@@ -57,15 +62,18 @@ export class TelegramTestSuite implements TestSuite {
         chat: { id: "-4697450961", type: "private" } as any,
         from: { id: "mock-user-id", username: "TestUser" } as any,
         message: {
-          message_id: 7,
+          message_id: undefined,
           text: `@${this.bot.botInfo?.username}! Hello!`,
           date: Math.floor(Date.now() / 1000),
         } as any,
-        telegram: this.bot.telegram
+        telegram: this.bot.telegram,
       };
 
-      const test = await this.messageManager.handleMessage(mockContext as Context);
-      console.log("Message handled successfully.", test);
+      try {
+        await this.messageManager.handleMessage(mockContext as Context);
+      } catch (error) {
+        throw new Error(`Error handling Telegram message: ${error}`);
+      }
     } catch (error) {
       throw new Error(`Error handling Telegram message: ${error}`);
     }
@@ -73,29 +81,26 @@ export class TelegramTestSuite implements TestSuite {
 
   async testProcessingImages(runtime: IAgentRuntime) {
     try {
-        const fileId = await this.getFileId(
-            "-4697450961", 
-            "https://framerusercontent.com/images/mDAWprGNvWKmeBK2cEi97gPWI.png"
-        );
-        const mockContext: Partial<Context> = {
-            chat: { id: "-4697450961", type: "private" } as any,
-            from: { id: "mock-user-id", username: "TestUser" } as any,
-            message: {
-              message_id: undefined,
-              date: Math.floor(Date.now() / 1000),
-              photo: [
-                {"file_id": fileId}
-                ],
-              text: `@${this.bot.botInfo?.username}!`,
-            } as any,
-            telegram: this.bot.telegram
-          };
-    
+      const fileId = await this.getFileId(
+        "-4697450961",
+        "https://framerusercontent.com/images/mDAWprGNvWKmeBK2cEi97gPWI.png"
+      );
 
-        const {description} = await this.messageManager.processImage(mockContext.message as any);
-        if (!description) {
-            throw new Error("Error processing Telegram image");
-        }
+      const mockMessage = {
+        message_id: undefined,
+        date: Math.floor(Date.now() / 1000),
+        photo: [{ file_id: fileId }],
+        text: `@${this.bot.botInfo?.username}!`,
+      };
+
+      const { description } = await this.messageManager.processImage(
+        mockMessage as any
+      );
+      if (!description) {
+        throw new Error("Error processing Telegram image");
+      } else {
+        logger.log(`Processing Telegram image successfully: ${description}`);
+      }
     } catch (error) {
       throw new Error(`Error processing Telegram image: ${error}`);
     }
