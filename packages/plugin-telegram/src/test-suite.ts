@@ -4,7 +4,7 @@ import { MessageManager } from "./messageManager";
 import { Context } from "telegraf";
 import { TelegramClient } from "./telegramClient";
 
-const IMAGE_TESTING_URL =
+const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
 const TESTING_CHAT_ID = "-4697450961";
 
@@ -74,7 +74,7 @@ export class TelegramTestSuite implements TestSuite {
         text: "Here is an image attachment:",
         attachments: [
           {
-            url: IMAGE_TESTING_URL,
+            url: TEST_IMAGE_URL,
             contentType: "image/png",
             description: "Sample Image",
           },
@@ -119,7 +119,7 @@ export class TelegramTestSuite implements TestSuite {
 
   async testProcessingImages(runtime: IAgentRuntime) {
     try {
-      const fileId = await this.getFileId(TESTING_CHAT_ID, IMAGE_TESTING_URL);
+      const fileId = await this.getFileId(TESTING_CHAT_ID, TEST_IMAGE_URL);
 
       const mockMessage = {
         message_id: undefined,
