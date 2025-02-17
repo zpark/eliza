@@ -19,30 +19,13 @@ vi.mock("@elizaos/core", async () => {
       info: vi.fn(),
       error: vi.fn(),
       debug: vi.fn(),
+      warn: vi.fn(),
     },
-    stringToUuid: (str: string) => str,
-    messageCompletionFooter:
-      "# INSTRUCTIONS: Choose the best response for the agent.",
-    shouldRespondFooter: "# INSTRUCTIONS: Choose if the agent should respond.",
-    generateMessageResponse: vi.fn(),
     generateText: vi
       .fn()
       .mockResolvedValue("{text: mock text, action: mock-action}"),
-    generateShouldRespond: vi.fn().mockResolvedValue("IGNORE"), // Prevent API calls by always returning "IGNORE"
-    composeContext: vi.fn(),
-    ModelClass: {
-      TEXT_SMALL: "TEXT_SMALL",
-    },
-    ServiceType: {
-      VIDEO: "VIDEO",
-      BROWSER: "BROWSER",
-    },
   };
 });
-
-vi.mock("./utils.ts", () => ({
-  fetchMediaData: vi.fn(),
-}));
 
 describe("Twitter Post Client", () => {
   let mockRuntime: IAgentRuntime;
@@ -199,7 +182,7 @@ describe("Twitter Post Client", () => {
       expect.stringContaining("Error sending tweet:")
     );
   });
-  
+
   it("should process a tweet and cache it", async () => {
     const tweetData = {
       rest_id: "mock-tweet-id",
