@@ -52,8 +52,9 @@
 
 > **Note for Windows Users:** [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install-manual) is required.
 
-### Use the Starter (Recommended)
+### Use the Starter (Recommended for Agent Creation)
 
+Full steps and documentation can be found in the [Eliza Starter Repository](https://github.com/elizaOS/eliza-starter).
 ```bash
 git clone https://github.com/elizaos/eliza-starter.git
 cd eliza-starter
@@ -61,7 +62,7 @@ cp .env.example .env
 pnpm i && pnpm build && pnpm start
 ```
 
-### Manually Start Eliza (Only recommended if you know what you are doing)
+### Manually Start Eliza (Only recommended for plugin or platform development)
 
 #### Checkout the latest release
 
@@ -73,6 +74,12 @@ git clone https://github.com/elizaos/eliza.git
 git checkout $(git describe --tags --abbrev=0)
 # If the above doesn't checkout the latest release, this should work:
 # git checkout $(git describe --tags `git rev-list --tags --max-count=1`)
+```
+
+If you would like the sample character files too, then run this:
+```bash
+# Download characters submodule from the character repos
+git submodule update --init
 ```
 
 #### Edit the .env file
@@ -136,6 +143,12 @@ For detailed instructions on using the start script, including character managem
 
 ---
 
+### Add more plugins
+
+1. run `npx elizaos plugins list` to get a list of available plugins or visit https://elizaos.github.io/registry/
+
+2. run `npx elizaos plugins add @elizaos-plugins/plugin-NAME` to install the plugin into your instance
+
 #### Additional Requirements
 
 You may need to install Sharp. If you see an error when starting up, try installing it with the following command:
@@ -152,7 +165,7 @@ pnpm install --include=optional sharp
 
 ---
 
-### Deploy Eliza in one click 
+### Deploy Eliza in one click
 
 Use [Fleek](https://fleek.xyz/eliza/) to deploy Eliza in one click. This opens Eliza to non-developers and provides the following options to build your agent:
 1. Start with a template
@@ -166,7 +179,8 @@ Click [here](https://fleek.xyz/eliza/) to get started!
 ### Community & contact
 
 - [GitHub Issues](https://github.com/elizaos/eliza/issues). Best for: bugs you encounter using Eliza, and feature proposals.
-- [Discord](https://discord.gg/ai16z). Best for: sharing your applications and hanging out with the community.
+- [elizaOS Discord](https://discord.gg/elizaos). Best for: hanging out with the elizaOS technical community
+- [DAO Discord](https://discord.gg/ai16z). Best for: hanging out with the larger non-technical community
 
 ## Citation
 
