@@ -70,8 +70,8 @@ describe("Twitter Post Client", () => {
         templates: {
           twitterPostTemplate: "Mock template",
         },
+        topics: [],
       },
-      topics: [],
     } as unknown as IAgentRuntime;
 
     mockConfig = {
