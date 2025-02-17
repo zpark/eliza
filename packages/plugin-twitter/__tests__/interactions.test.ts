@@ -172,7 +172,7 @@ describe("TwitterInteractionClient", () => {
     expect(mockRuntime.messageManager.createMemory).not.toHaveBeenCalled();
   });
 
-  it("should skip responding to tweet from self if not a target user", async () => {
+  it("should skip responding to tweet from self", async () => {
     // Setup: tweet is from same user as agent
     const myTweet = createMockTweet({
       userId: mockProfile.id,
