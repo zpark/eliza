@@ -23,7 +23,7 @@ vi.mock("@elizaos/core", async () => {
     },
     generateText: vi
       .fn()
-      .mockResolvedValue("{text: mock text, action: mock-action}"),
+      .mockResolvedValue(`{"text": "mock text", "action": "mock-action"}`),
   };
 });
 
