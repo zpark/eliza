@@ -6,7 +6,6 @@ import { TelegramClient } from "./telegramClient";
 
 const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
-const TESTING_CHAT_ID = "-4697450961";
 
 export class TelegramTestSuite implements TestSuite {
   name = "telegram";
@@ -18,26 +17,44 @@ export class TelegramTestSuite implements TestSuite {
   constructor() {
     this.tests = [
       {
-        name: "Initialize Telegram Bot",
+        name: "Initialize and Validate Telegram Bot Connection",
         fn: this.testCreatingTelegramBot.bind(this),
       },
       {
-        name: "Send Message",
+        name: "Send Basic Text Message to Telegram Chat",
         fn: this.testSendingTextMessage.bind(this),
       },
       {
-        name: "Send Message with Image Attachment",
+        name: "Send Text Message with an Image Attachment",
         fn: this.testSendingMessageWithAttachment.bind(this),
       },
       {
-        name: "Handle Incoming Messages",
+        name: "Handle and Process Incoming Telegram Messages",
         fn: this.testHandlingMessage.bind(this),
       },
       {
-        name: "Process Image Attachments",
+        name: "Process and Validate Image Attachments in Incoming Messages",
         fn: this.testProcessingImages.bind(this),
       },
     ];
+  }
+
+  /**
+   * Retrieves the Telegram test chat ID from environment variables.
+   *
+   * Reference on getting the Telegram chat ID:
+   * https://stackoverflow.com/a/32572159
+   */
+  validateChatId(runtime: IAgentRuntime) {
+    const testChatId =
+      runtime.getSetting("TELEGRAM_TEST_CHAT_ID") ||
+      process.env.TELEGRAM_TEST_CHAT_ID;
+    if (!testChatId) {
+      throw new Error(
+        "TELEGRAM_TEST_CHAT_ID is not set. Please provide a valid chat ID in the environment variables."
+      );
+    }
+    return testChatId;
   }
 
   async testCreatingTelegramBot(runtime: IAgentRuntime) {
@@ -51,7 +68,7 @@ export class TelegramTestSuite implements TestSuite {
     try {
       if (!this.bot) throw new Error("Bot not initialized.");
 
-      const chatId = TESTING_CHAT_ID;
+      const chatId = this.validateChatId(runtime);
       await this.bot.telegram.sendMessage(chatId, "Testing Telegram message!");
       logger.success("Message sent successfully.");
     } catch (error) {
@@ -64,8 +81,9 @@ export class TelegramTestSuite implements TestSuite {
       if (!this.messageManager)
         throw new Error("MessageManager not initialized.");
 
+      const chatId = this.validateChatId(runtime);
       const mockContext: Partial<Context> = {
-        chat: { id: TESTING_CHAT_ID, type: "private" } as any,
+        chat: { id: chatId, type: "private" } as any,
         from: { id: "mock-user-id", username: "TestUser" } as any,
         telegram: this.bot.telegram,
       };
@@ -96,8 +114,9 @@ export class TelegramTestSuite implements TestSuite {
 
   async testHandlingMessage(runtime: IAgentRuntime) {
     try {
+      const chatId = this.validateChatId(runtime);
       const mockContext: Partial<Context> = {
-        chat: { id: TESTING_CHAT_ID, type: "private" } as any,
+        chat: { id: chatId, type: "private" } as any,
         from: { id: "mock-user-id", username: "TestUser" } as any,
         message: {
           message_id: undefined,
@@ -119,7 +138,8 @@ export class TelegramTestSuite implements TestSuite {
 
   async testProcessingImages(runtime: IAgentRuntime) {
     try {
-      const fileId = await this.getFileId(TESTING_CHAT_ID, TEST_IMAGE_URL);
+      const chatId = this.validateChatId(runtime);
+      const fileId = await this.getFileId(chatId, TEST_IMAGE_URL);
 
       const mockMessage = {
         message_id: undefined,
@@ -146,7 +166,7 @@ export class TelegramTestSuite implements TestSuite {
       const message = await this.bot.telegram.sendPhoto(chatId, imageUrl);
       return message.photo[message.photo.length - 1].file_id;
     } catch (error) {
-      console.error("Error sending image:", error);
+      logger.error("Error sending image:", error);
     }
   }
 }

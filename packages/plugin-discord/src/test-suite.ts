@@ -181,7 +181,7 @@ export class DiscordTestSuite implements TestSuite {
   async getTextChannel(): Promise<TextChannel | null> {
     try {
       let channel: TextChannel | null = null;
-      const channelId = process.env.DISCORD_TEXT_CHANNEL_ID || null;
+      const channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
 
       if (!channelId) {
         const guilds = await this.discordClient.client.guilds.fetch();
