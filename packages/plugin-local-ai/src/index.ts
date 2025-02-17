@@ -97,6 +97,29 @@ class LocalAIManager {
     this.visionManager = VisionManager.getInstance(this.cacheDir);
     this.transcribeManager = TranscribeManager.getInstance(this.cacheDir);
     this.ttsManager = TTSManager.getInstance(this.cacheDir);
+
+    // Add platform capabilities check in constructor
+    this.checkPlatformCapabilities().catch(error => {
+      logger.warn("Platform capabilities check failed:", error);
+    });
+
+    // Add embedding initialization
+    this.initializeEmbedding().catch(error => {
+      logger.warn("Embedding initialization failed:", error);
+    });
+
+    // Initialize models in parallel
+    Promise.all([
+      this.initialize(ModelClass.TEXT_SMALL),
+      this.initialize(ModelClass.TEXT_LARGE),
+      // Add vision initialization using a public method
+      this.initializeVision().catch(error => {
+        logger.warn("Vision initialization failed:", error);
+        return null; // Prevent Promise.all from failing completely
+      })
+    ]).catch(error => {
+      logger.warn("Models initialization failed:", error);
+    });
   }
 
   public static getInstance(): LocalAIManager {
@@ -104,6 +127,34 @@ class LocalAIManager {
       LocalAIManager.instance = new LocalAIManager();
     }
     return LocalAIManager.instance;
+  }
+
+
+  // Update initializeVision to use the same code path as ModelClass.IMAGE_DESCRIPTION
+  private async initializeVision(): Promise<void> {
+    try {
+      logger.info("Initializing vision model...");
+      
+      // Use a simple 1x1 transparent GIF as test image
+      const testImageUrl = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+      
+      // Use the same code path as ModelClass.IMAGE_DESCRIPTION
+      const response = await fetch(testImageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch test image: ${response.statusText}`);
+      }
+      
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const mimeType = response.headers.get('content-type') || 'image/gif';
+      
+      // Use our existing describeImage method which in turn uses visionManager
+      await this.describeImage(buffer, mimeType);
+      
+      logger.success("Vision model initialization complete");
+    } catch (error) {
+      logger.error("Vision initialization failed:", error);
+      throw error;
+    }
   }
 
   private async downloadModel(): Promise<void> {
@@ -248,15 +299,12 @@ class LocalAIManager {
       // Only use valid options for LlamaChatSession
       this.chatSession = new LlamaChatSession({
         contextSequence: this.sequence,
-        // Remove conversationHistory as it's not a valid option
       });
 
       if (!this.chatSession) {
         throw new Error("Failed to create chat session");
       }
-
       logger.info("Created new chat session for model:", params.modelClass);
-
       // Log incoming context for debugging
       logger.info("Incoming context structure:", {
         contextLength: params.context.length,
@@ -410,23 +458,6 @@ export const localAIPlugin: Plugin = {
           logger.debug(`Set ${key}=${value}`);
         }
       }
-
-      const manager = LocalAIManager.getInstance();
-
-      // Initialize each component in sequence
-      logger.info("Starting platform capabilities check...");
-      await manager.checkPlatformCapabilities();
-      logger.success("Platform capabilities check complete");
-
-      logger.info("Starting LLaMA initialization...");
-      await manager.initialize();
-      logger.success("LLaMA initialization complete");
-
-      logger.info("Starting embedding model initialization...");
-      await manager.initializeEmbedding();
-      logger.success("Embedding model initialization complete");
-
-      logger.success("local-ai plugin initialization complete");
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(

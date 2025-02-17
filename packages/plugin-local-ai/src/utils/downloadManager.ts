@@ -146,6 +146,10 @@ export class DownloadManager {
     return this.cacheDir;
   }
 
+  public async downloadFromUrl(url: string, destPath: string): Promise<void> {
+    return this.downloadFile(url, destPath);
+  }
+
   public ensureDirectoryExists(dirPath: string): void {
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
