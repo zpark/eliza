@@ -1301,6 +1301,7 @@ export async function generateText({
                     frequencyPenalty: frequency_penalty,
                     presencePenalty: presence_penalty,
                     experimental_telemetry: experimental_telemetry,
+                    prompt: context
                 });
 
                 response = bedrockResponse;
