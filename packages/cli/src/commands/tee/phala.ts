@@ -124,7 +124,6 @@ const imagesCommand = new Command()
 const upgradeCommand = new Command()
     .command("upgrade")
     .description("Upgrade the TEE CLI")
-    .option("-t, --type <type>", "Specify the TEE vendor type", "phala")
     .option(
         "-m, --mode <mode>",
         "Specify the deployment mode (e.g., agent docker file or other local testing deployments)",
