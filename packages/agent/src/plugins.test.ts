@@ -25,8 +25,7 @@ const elizaOpenAIFirst: Character = {
     ...defaultCharacter,
     name: "ElizaOpenAIFirst",
     plugins: [
-        "@elizaos/plugin-openai",  // OpenAI first = 1536 embedding
-        "@elizaos/plugin-anthropic",
+        "@elizaos/plugin-openai",  // OpenAI first, embedding size = 1536
         "@elizaos/plugin-elevenlabs",
     ]
 };
@@ -35,8 +34,8 @@ const elizaAnthropicFirst: Character = {
     ...defaultCharacter,
     name: "ElizaAnthropicFirst",
     plugins: [
-        "@elizaos/plugin-anthropic", // Anthropic first = 384 embedding
-        "@elizaos/plugin-openai",
+        "@elizaos/plugin-anthropic", // No embedding from this plugin
+        "@elizaos/plugin-openai", // embedding size = 1536
         "@elizaos/plugin-elevenlabs",
     ]
 };
