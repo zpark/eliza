@@ -166,7 +166,8 @@ export class TelegramTestSuite implements TestSuite {
       const message = await this.bot.telegram.sendPhoto(chatId, imageUrl);
       return message.photo[message.photo.length - 1].file_id;
     } catch (error) {
-      logger.error("Error sending image:", error);
+      logger.error(`Error sending image: ${error}`);
+      throw error;
     }
   }
 }
