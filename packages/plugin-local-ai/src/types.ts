@@ -76,9 +76,9 @@ export const MODEL_SPECS: ModelSpecs = {
   },
   vision: {
     name: "Florence-2-base-ft",
-    repo: "microsoft/Florence-2-base-ft",
+    repo: "onnx-community/Florence-2-base-ft",
     size: "0.23B",
-    modelId: "microsoft/Florence-2-base-ft",
+    modelId: "onnx-community/Florence-2-base-ft",
     contextSize: 1024,
     maxTokens: 256,
     tasks: [
