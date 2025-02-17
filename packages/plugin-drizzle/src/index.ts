@@ -11,9 +11,9 @@ import {
     type Relationship,
     type UUID,
     type Character,
-    Plugin,
-    IAgentRuntime,
-    Adapter,
+    type Plugin,
+    type IAgentRuntime,
+    type Adapter,
 } from "@elizaos/core";
 import {
     and,
