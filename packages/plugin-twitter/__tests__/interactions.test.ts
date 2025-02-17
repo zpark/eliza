@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { TwitterInteractionClient } from "../src/interactions";
 import { ClientBase } from "../src/base";
-import type { IAgentRuntime, Memory } from "@elizaos/core";
+import type { IAgentRuntime } from "@elizaos/core";
 import type { TwitterConfig } from "../src/environment";
 import type { Tweet } from "../src/client";
 import { SearchMode } from "../src/client/index";
-import { generateMessageResponse, generateShouldRespond, logger } from "@elizaos/core";
-
+import {
+  generateMessageResponse,
+  generateShouldRespond,
+  logger,
+} from "@elizaos/core";
 
 const mockProfile = {
   screenName: "Mock Screen Name",
@@ -46,7 +49,7 @@ describe("TwitterInteractionClient", () => {
       const actual = await vi.importActual<typeof import("@elizaos/core")>(
         "@elizaos/core"
       );
-    
+
       return {
         ...actual,
         logger: {
@@ -56,11 +59,12 @@ describe("TwitterInteractionClient", () => {
           debug: vi.fn(),
           warn: vi.fn(),
         },
-        generateShouldRespond: vi.fn(() => 'RESPOND'),
+        generateShouldRespond: vi.fn(() => "RESPOND"),
         generateMessageResponse: vi.fn(() => {
           return {
-            text: "mock text", action: "mock-action"
-          }
+            text: "mock text",
+            action: "mock-action",
+          };
         }),
       };
     });
@@ -209,7 +213,6 @@ describe("TwitterInteractionClient", () => {
 
     await interactionClient.handleTwitterInteractions();
 
-    
     expect(mockRuntime.messageManager.createMemory).toHaveBeenCalledTimes(1);
     expect(generateMessageResponse).not.toHaveBeenCalled();
 
@@ -326,8 +329,4 @@ describe("TwitterInteractionClient", () => {
     // Also check that lastCheckedTweetId is updated to "101"
     expect(baseClient.lastCheckedTweetId?.toString()).toBe("101");
   });
-
-  
-
-  
 });
