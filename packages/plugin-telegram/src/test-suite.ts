@@ -1,13 +1,12 @@
-import {
-  logger,
-  type TestSuite,
-  type IAgentRuntime,
-  ModelClass,
-} from "@elizaos/core";
+import { logger, type TestSuite, type IAgentRuntime } from "@elizaos/core";
 import { Telegraf } from "telegraf";
 import { MessageManager } from "./messageManager";
 import { Context } from "telegraf";
 import { TelegramClient } from "./telegramClient";
+
+const IMAGE_TESTING_URL =
+  "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
+const TESTING_CHAT_ID = "-4697450961";
 
 export class TelegramTestSuite implements TestSuite {
   name = "telegram";
@@ -25,6 +24,10 @@ export class TelegramTestSuite implements TestSuite {
       {
         name: "Send Message",
         fn: this.testSendingTextMessage.bind(this),
+      },
+      {
+        name: "Send Message with Image Attachment",
+        fn: this.testSendingMessageWithAttachment.bind(this),
       },
       {
         name: "Handle Incoming Messages",
@@ -48,7 +51,7 @@ export class TelegramTestSuite implements TestSuite {
     try {
       if (!this.bot) throw new Error("Bot not initialized.");
 
-      const chatId = "-4697450961";
+      const chatId = TESTING_CHAT_ID;
       await this.bot.telegram.sendMessage(chatId, "Testing Telegram message!");
       logger.success("Message sent successfully.");
     } catch (error) {
@@ -56,10 +59,45 @@ export class TelegramTestSuite implements TestSuite {
     }
   }
 
+  async testSendingMessageWithAttachment(runtime: IAgentRuntime) {
+    try {
+      if (!this.messageManager)
+        throw new Error("MessageManager not initialized.");
+
+      const mockContext: Partial<Context> = {
+        chat: { id: TESTING_CHAT_ID, type: "private" } as any,
+        from: { id: "mock-user-id", username: "TestUser" } as any,
+        telegram: this.bot.telegram,
+      };
+
+      const messageContent = {
+        text: "Here is an image attachment:",
+        attachments: [
+          {
+            url: IMAGE_TESTING_URL,
+            contentType: "image/png",
+            description: "Sample Image",
+          },
+        ],
+      };
+
+      await this.messageManager.sendMessageInChunks(
+        mockContext as Context,
+        messageContent
+      );
+
+      logger.success("Message with image attachment sent successfully.");
+    } catch (error) {
+      throw new Error(
+        `Error sending Telegram message with attachment: ${error}`
+      );
+    }
+  }
+
   async testHandlingMessage(runtime: IAgentRuntime) {
     try {
       const mockContext: Partial<Context> = {
-        chat: { id: "-4697450961", type: "private" } as any,
+        chat: { id: TESTING_CHAT_ID, type: "private" } as any,
         from: { id: "mock-user-id", username: "TestUser" } as any,
         message: {
           message_id: undefined,
@@ -81,10 +119,7 @@ export class TelegramTestSuite implements TestSuite {
 
   async testProcessingImages(runtime: IAgentRuntime) {
     try {
-      const fileId = await this.getFileId(
-        "-4697450961",
-        "https://framerusercontent.com/images/mDAWprGNvWKmeBK2cEi97gPWI.png"
-      );
+      const fileId = await this.getFileId(TESTING_CHAT_ID, IMAGE_TESTING_URL);
 
       const mockMessage = {
         message_id: undefined,
