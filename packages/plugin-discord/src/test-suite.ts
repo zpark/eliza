@@ -16,6 +16,9 @@ import {
   entersState,
 } from "@discordjs/voice";
 
+const TEST_IMAGE_URL =
+  "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
+
 export class DiscordTestSuite implements TestSuite {
   name = "discord";
   private discordClient: DiscordClient | null = null;
@@ -141,7 +144,7 @@ export class DiscordTestSuite implements TestSuite {
       if (!channel) return;
 
       await this.sendMessageToChannel(channel, "Testing Message", [
-        "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg",
+        TEST_IMAGE_URL,
       ]);
     } catch (error) {
       throw new Error(`Error in sending text message: ${error}`);
@@ -178,7 +181,7 @@ export class DiscordTestSuite implements TestSuite {
   async getTextChannel(): Promise<TextChannel | null> {
     try {
       let channel: TextChannel | null = null;
-      const channelId = process.env.DISCORD_TEXT_CHANNEL_ID || null;
+      const channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
 
       if (!channelId) {
         const guilds = await this.discordClient.client.guilds.fetch();
@@ -227,7 +230,9 @@ export class DiscordTestSuite implements TestSuite {
   ) {
     try {
       if (!channel || !channel.isTextBased()) {
-        throw new Error("Channel is not a text-based channel or does not exist.");
+        throw new Error(
+          "Channel is not a text-based channel or does not exist."
+        );
       }
 
       await sendMessageInChunks(

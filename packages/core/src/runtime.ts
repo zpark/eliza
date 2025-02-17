@@ -602,6 +602,7 @@ export class AgentRuntime implements IAgentRuntime {
                 await action.handler(this, message, state, {}, callback, responses);
             } catch (error) {
                 logger.error(error);
+                throw error;
             }
         }
     }
