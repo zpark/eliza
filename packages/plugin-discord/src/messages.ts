@@ -51,8 +51,8 @@ export type InterestChannels = {
   };
 };
 
-// Type for pending message tasks
 type PendingMessageTask = {
+  id: string;
   cancel: () => void;
   promise: Promise<any>;
 };
@@ -65,7 +65,6 @@ export class MessageManager {
   private voiceManager: VoiceManager;
   private lastChannelActivity: { [channelId: string]: number } = {};
   private autoPostInterval: NodeJS.Timeout;
-  // Map to track pending message tasks by room
   private pendingMessageTasks: Map<string, PendingMessageTask> = new Map();
 
   constructor(discordClient: any, voiceManager: VoiceManager) {
@@ -73,6 +72,11 @@ export class MessageManager {
     this.voiceManager = voiceManager;
     this.runtime = discordClient.runtime;
     this.attachmentManager = new AttachmentManager(this.runtime);
+  }
+
+  private isCurrentTask(roomId: string, taskId: string): boolean {
+    const currentTask = this.pendingMessageTasks.get(roomId);
+    return currentTask?.id === taskId;
   }
 
   private async cancelPendingTask(roomId: string) {
@@ -85,42 +89,62 @@ export class MessageManager {
 
   private async queueMessageTask(
     roomId: string,
-    task: () => Promise<any>
+    task: (isCurrent: () => boolean) => Promise<any>
   ): Promise<any> {
     // Cancel any existing task for this room
     await this.cancelPendingTask(roomId);
-
-    // Create a cancellable task
+  
+    // Generate unique ID for this task
+    const taskId = `${roomId}-${Date.now()}-${Math.random()}`;
     let isCancelled = false;
+    
     const cancel = () => {
       isCancelled = true;
+      // Only delete from map if this is still the current task
+      if (this.isCurrentTask(roomId, taskId)) {
+        this.pendingMessageTasks.delete(roomId);
+      }
     };
-
+  
+    // Create task structure before starting promise
+    const pendingTask: PendingMessageTask = {
+      id: taskId,
+      cancel,
+      promise: null as any // Will be set after promise creation
+    };
+  
+    // Store the task BEFORE creating the promise
+    this.pendingMessageTasks.set(roomId, pendingTask);
+  
+    const isCurrent = () => {
+      return !isCancelled && this.isCurrentTask(roomId, taskId);
+    };
+  
     const promise = new Promise(async (resolve, reject) => {
       try {
-        // Check if cancelled before starting expensive operation
-        if (isCancelled) return;
+        // Double-check task is still current before starting work
+        if (!isCurrent()) {
+          console.log(`Task ${taskId} was cancelled before starting`);
+          return;
+        }
+  
+        const result = await task(isCurrent);
         
-        const result = await task();
-        
-        // Check if cancelled after generation but before resolving
-        if (!isCancelled) {
+        if (isCurrent()) {
           resolve(result);
+        } else {
+          console.log(`Task ${taskId} was cancelled after completion`);
         }
       } catch (error) {
-        if (!isCancelled) {
+        if (isCurrent()) {
           reject(error);
-        }
-      } finally {
-        if (!isCancelled) {
-          this.pendingMessageTasks.delete(roomId);
         }
       }
     });
-
-    // Store the new task
-    this.pendingMessageTasks.set(roomId, { cancel, promise });
-
+  
+    // Set the promise on the task object
+    pendingTask.promise = promise;
+  
     return promise;
   }
 
@@ -135,8 +159,6 @@ export class MessageManager {
     }
 
     this.runtime.emitEvent("DISCORD_MESSAGE_RECEIVED", { message });
-
-    // Update last activity time for the channel
     this.lastChannelActivity[message.channelId] = Date.now();
 
     if (message.interaction || message.author.id === this.client.user?.id) {
@@ -164,7 +186,6 @@ export class MessageManager {
     const hasInterest = this._checkInterest(message.channelId);
     const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
 
-    // Cancel any existing message tasks for this channel immediately
     await this.cancelPendingTask(roomId.toString());
 
     try {
@@ -286,7 +307,7 @@ export class MessageManager {
       }
 
       if (shouldRespond) {
-        await this.queueMessageTask(roomId.toString(), async () => {
+        await this.queueMessageTask(roomId.toString(), async (isCurrent) => {
           const context = composeContext({
             state,
             template:
@@ -294,14 +315,21 @@ export class MessageManager {
               discordMessageHandlerTemplate,
           });
 
-          const stopTyping = this.simulateTyping(message);
-
           try {
+            if(!isCurrent()) {
+              return;
+            }            
             const responseContent = await generateMessageResponse({
               runtime: this.runtime,
               context,
               modelClass: ModelClass.TEXT_LARGE,
             });
+
+            if (!isCurrent()) {
+              return;
+            }
+
+            // await (message.channel as TextChannel).sendTyping();
 
             await this.runtime.databaseAdapter.log({
               body: { message, context, response: responseContent },
@@ -319,13 +347,10 @@ export class MessageManager {
               content: Content,
               files: any[]
             ) => {
-              // Check if this task is still the current one before sending
-              if (!this.pendingMessageTasks.has(roomId.toString())) {
+              if (!isCurrent()) {
                 console.log("Message generation was cancelled, not sending response");
                 return [];
               }
-
-              stopTyping();
 
               try {
                 if (message.id && !content.inReplyTo) {
@@ -339,6 +364,10 @@ export class MessageManager {
                   message.id,
                   files
                 );
+
+                if (!isCurrent()) {
+                  return [];
+                }
 
                 const memories: Memory[] = [];
                 for (const m of messages) {
@@ -365,6 +394,7 @@ export class MessageManager {
                   };
                   memories.push(memory);
                 }
+
                 for (const m of memories) {
                   await this.runtime.messageManager.createMemory(m);
                 }
@@ -388,8 +418,6 @@ export class MessageManager {
 
             state = await this.runtime.updateRecentMessageState(state);
 
-            stopTyping();
-
             await this.runtime.processActions(
               memory,
               responseMessages,
@@ -398,7 +426,6 @@ export class MessageManager {
             );
             return responseMessages;
           } catch (error) {
-            stopTyping();
             throw error;
           }
         });
@@ -433,7 +460,6 @@ export class MessageManager {
     let processedContent = message.content;
     let attachments: Media[] = [];
   
-    // Format user mentions
     const mentionRegex = /<@!?(\d+)>/g;
     processedContent = processedContent.replace(mentionRegex, (match, userId) => {
       const user = message.mentions.users.get(userId);
@@ -443,7 +469,6 @@ export class MessageManager {
       return match;
     });
   
-    // Rest of the existing code for processing code blocks
     const codeBlockRegex = /```([\s\S]*?)```/g;
     let match;
     while ((match = codeBlockRegex.exec(processedContent))) {
@@ -621,22 +646,5 @@ export class MessageManager {
 
     const data = await response.json();
     return (data as { username: string }).username;
-  }
-
-  private simulateTyping(message: DiscordMessage) {
-    let typing = true;
-
-    const typingLoop = async () => {
-      while (typing) {
-        await (message.channel as TextChannel).sendTyping();
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    };
-
-    typingLoop();
-
-    return function stopTyping() {
-      typing = false;
-    };
   }
 }
