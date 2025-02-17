@@ -16,7 +16,6 @@ const mockProfile = {
   nicknames: ["MockNickname"],
 };
 
-// We can use a helper to easily create test tweets
 function createMockTweet(overrides: Partial<Tweet> = {}): Tweet {
   return {
     id: "1234567890",
@@ -34,11 +33,6 @@ function createMockTweet(overrides: Partial<Tweet> = {}): Tweet {
     ...overrides,
   } as Tweet;
 }
-
-
-// ----------------------
-// MAIN TESTS
-// ----------------------
 
 describe("TwitterInteractionClient", () => {
   let mockRuntime: IAgentRuntime;
