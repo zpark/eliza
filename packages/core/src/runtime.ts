@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, v4 } from "uuid";
 import {
     composeActionExamples,
     formatActionNames,
@@ -399,6 +399,8 @@ export class AgentRuntime implements IAgentRuntime {
                         }
                     }
 
+                    logger.info("runtime initialize() plugin:", plugin);
+
                     if (plugin.actions) {
                         for (const action of plugin.actions) {
                             this.registerAction(action);
@@ -450,6 +452,8 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.name,
         );
         await this.ensureParticipantExists(this.agentId, this.agentId);
+        await this.ensureCharacterExists(this.character);
+        await this.ensureEmbeddingDimension();
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {
             // Non-RAG mode: only process string knowledge
@@ -1367,6 +1371,18 @@ Text: ${attachment.text}
                 handler(params);
             }
         }
+    }
+
+    async ensureCharacterExists(character: Character) {
+        const characterExists = await this.databaseAdapter.getCharacter(character.name);
+        if (!characterExists) {
+            await this.databaseAdapter.createCharacter(character);
+        }
+    }
+
+    async ensureEmbeddingDimension() {
+        const embedding = await this.useModel(ModelClass.TEXT_EMBEDDING, null);
+        this.databaseAdapter.ensureEmbeddingDimension(embedding.length, this.agentId);
     }
 
     registerTask(task: Task): UUID {

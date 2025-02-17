@@ -333,7 +333,7 @@ export class MessageManager {
 
             await this.runtime.databaseAdapter.log({
               body: { message, context, response: responseContent },
-              userId: userId,
+              userId: this.runtime.agentId,
               roomId,
               type: "response",
             });

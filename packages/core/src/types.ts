@@ -547,7 +547,7 @@ export type Client = {
 
 export type Adapter = {
   /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
+  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter & IDatabaseCacheAdapter>;
 };
 
 export type Route = {
@@ -839,6 +839,18 @@ export interface IDatabaseAdapter {
   }): Promise<Relationship | null>;
 
   getRelationships(params: { userId: UUID }): Promise<Relationship[]>;
+
+  createCharacter(character: Character): Promise<void>;
+
+  listCharacters(): Promise<Character[]>;
+
+  getCharacter(name: string): Promise<Character | null>;
+
+  updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+  
+  removeCharacter(name: string): Promise<void>;
+
+  ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
 }
 
 export interface IDatabaseCacheAdapter {
