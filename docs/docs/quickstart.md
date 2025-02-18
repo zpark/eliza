@@ -21,7 +21,7 @@ Before getting started with Eliza, ensure you have:
 Using https://github.com/elizaOS/eliza-starter
 
 ```bash
-git clone https://github.com/elizaos/eliza-starter.git
+git clone git@github.com:elizaos/eliza-starter.git
 cd eliza-starter
 cp .env.example .env
 pnpm i && pnpm build && pnpm start
@@ -32,7 +32,7 @@ pnpm i && pnpm build && pnpm start
 After installing the prerequisites, clone the repository and enter the directory
 
 ```bash
-git clone https://github.com/elizaOS/eliza.git
+git clone git@github.com:elizaOS/eliza.git
 cd eliza
 ```
 
@@ -323,14 +323,14 @@ scripts: {
 
 ## FAQ
 
+### How do I install and set up ElizaOS?
+Clone the repository, run `pnpm install --no-frozen-lockfile`, then `pnpm build`. Requires Node.js version 23.3.0.
+
 ### Which Node.js version should I use?
-Use Node.js v23.3.0 with pnpm v9.x for optimal compatibility.
+Use Node.js version 23+ (specifically 23.3.0 is recommended) and pnpm v9.x for optimal compatibility. You can use nvm to manage Node versions with `nvm install 23` and `nvm use 23`.
 
 ### How do I run multiple agents?
 Create separate projects with unique character files and run in separate terminals, or use `pnpm start --characters="characters/agent1.json,characters/agent2.json"`.
-
-### How do I install and set up ElizaOS?
-Clone the repository, run `pnpm install --no-frozen-lockfile`, then `pnpm build`. Requires Node.js version 23.3.0.
 
 ### What's the difference between eliza and eliza-starter?
 Eliza-starter is a lightweight version for simpler setups, while the main eliza repository includes all advanced features and plugins.
@@ -340,9 +340,6 @@ Use Node v23.3.0, run `pnpm clean`, then `pnpm install --no-frozen-lockfile`, fo
 
 ### What are the minimum system requirements?
 8GB RAM recommended for build process. For deployment, a t2.large instance on AWS with 20GB storage running Ubuntu is the minimum tested configuration.
-
-### Which Node.js version should I use?
-Use Node.js version 23+ (specifically 23.3.0 is recommended). You can use nvm to manage Node versions with `nvm install 23` and `nvm use 23`.
 
 ### How do I fix "Exit Status 1" errors?
 If you see `triggerUncaughtException` errors, try:

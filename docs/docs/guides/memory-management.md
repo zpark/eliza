@@ -262,7 +262,7 @@ async function checkMemoryHealth(runtime: AgentRuntime) {
 ## FAQ
 
 ### How do I fix embedding/vector dimension mismatch errors?
-Set USE_OPENAI_EMBEDDING=TRUE in .env file or ensure consistent embedding models across your setup.
+Set `USE_OPENAI_EMBEDDING=TRUE` in .env file or ensure consistent embedding models across your setup.
 
 ### How do I reset my agent's memory?
 Delete db.sqlite in the agent/data directory and restart the agent. For a complete reset, run `pnpm clean` followed by `pnpm install`.
@@ -274,7 +274,7 @@ SQLite for simple deployments, PostgreSQL/Supabase for complex needs. MongoDB al
 Static knowledge goes in character.json's knowledge section. Dynamic memory uses database storage through memory system.
 
 ### How do I enable RAG (Retrieval Augmented Generation)?
-Set "ragKnowledge": true in character file. Use folder2knowledge to convert documents into knowledge, then knowledge2character to create character files.
+Set `"ragKnowledge": true` in character file. Use folder2knowledge to convert documents into knowledge, then knowledge2character to create character files.
 
 ### Do I need different memory setup for production?
 Yes - PostgreSQL is recommended over SQLite for production deployments.
