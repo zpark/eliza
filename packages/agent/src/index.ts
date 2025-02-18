@@ -25,6 +25,8 @@ import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { defaultCharacter } from "./single-agent/character.ts";
 import { CharacterServer } from "./server/index.ts";
+import { startScenario } from "./swarm/scenario.ts";
+
 import swarm from "./swarm/index";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -47,6 +49,7 @@ export function parseArguments(): {
   character?: string;
   characters?: string;
   swarm?: boolean;
+  scenario?: boolean;
 } {
   try {
     return yargs(process.argv.slice(2))
@@ -61,6 +64,15 @@ export function parseArguments(): {
       .option("swarm", {
         type: "boolean",
         description: "Load characters from swarm",
+      })
+      .option("scenario", {
+        type: "boolean",
+        description: "Run scenario tests",
+      })
+      // scenario filter
+      .option("scenario-filter", {
+        type: "string",
+        description: "Filter scenario tests (only tests which contain this string)",
       })
       .parseSync();
   } catch (error) {
@@ -429,17 +441,20 @@ const startAgents = async () => {
   let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
   const args = parseArguments();
   const charactersArg = args.characters || args.character;
-  let characters = [];
 
   if (args.swarm) {
     try {
+        let members = [];
       for (const swarmMember of swarm) {
-        await startAgent(
+        const runtime = await startAgent(
           swarmMember.character,
           characterServer,
           swarmMember.init
         );
-        characters.push(swarmMember.character);
+        members.push(runtime);
+      }
+      if (args.scenario) {
+        startScenario(members);
       }
       logger.info("Loaded characters from swarm configuration");
     } catch (error) {
@@ -447,6 +462,7 @@ const startAgents = async () => {
       process.exit(1);
     }
   } else {
+    let characters = [];
     if (charactersArg || hasValidRemoteUrls()) {
       characters = await loadCharacters(charactersArg);
     } else {

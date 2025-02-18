@@ -9,6 +9,8 @@ import {
     type Participant,
     type Relationship,
     type UUID,
+    ChannelType,
+    RoomData,
 } from "../src/types.ts";
 
 class MockDatabaseAdapter extends DatabaseAdapter {
@@ -78,10 +80,10 @@ class MockDatabaseAdapter extends DatabaseAdapter {
     removeAllGoals(_roomId: UUID): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    getRoom(_roomId: UUID): Promise<UUID | null> {
+    getRoom(_roomId: UUID): Promise<RoomData | null> {
         throw new Error("Method not implemented.");
     }
-    createRoom(_roomId?: UUID): Promise<UUID> {
+    createRoom(_roomId: UUID, _source: string, _type: ChannelType): Promise<UUID> {
         throw new Error("Method not implemented.");
     }
     removeRoom(_roomId: UUID): Promise<void> {

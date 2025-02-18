@@ -261,13 +261,13 @@ export class TwitterInteractionClient {
                             ? this.runtime.agentId
                             : stringToUuid(tweet.userId!);
 
-                    await this.runtime.ensureConnection(
-                        userIdUUID,
+                    await this.runtime.ensureConnection({
+                        userId: userIdUUID,
                         roomId,
-                        tweet.username,
-                        tweet.name,
-                        "twitter"
-                    );
+                        userName: tweet.username,
+                        userScreenName: tweet.name,
+                        source: "twitter",
+                    });
 
                     const thread = await buildConversationThread(
                         tweet,
@@ -575,13 +575,13 @@ export class TwitterInteractionClient {
                 );
                 const userId = stringToUuid(currentTweet.userId);
 
-                await this.runtime.ensureConnection(
+                await this.runtime.ensureConnection({
                     userId,
                     roomId,
-                    currentTweet.username,
-                    currentTweet.name,
-                    "twitter"
-                );
+                    userName: currentTweet.username,
+                    userScreenName: currentTweet.name,
+                    source: "twitter",
+                });
 
                 this.runtime.messageManager.createMemory({
                     id: stringToUuid(

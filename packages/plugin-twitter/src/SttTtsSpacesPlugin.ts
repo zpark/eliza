@@ -11,7 +11,8 @@ import {
     generateMessageResponse,
     generateShouldRespond,
     ModelClass,
-    stringToUuid
+    stringToUuid,
+    ChannelType
 } from "@elizaos/core";
 import type {
     AudioDataWithUser,
@@ -403,7 +404,7 @@ export class SttTtsPlugin implements Plugin {
         );
 
         // Ensure room exists and user is in it
-        await this.runtime.ensureRoomExists(roomId);
+        await this.runtime.ensureRoomExists(roomId, "twitter", ChannelType.VOICE_GROUP);
         await this.runtime.ensureParticipantInRoom(userUuid, roomId);
 
         let state = await this.runtime.composeState(
@@ -497,13 +498,6 @@ export class SttTtsPlugin implements Plugin {
             );
             return;
         }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId: userId,
-            roomId,
-            type: "response",
-        });
 
         return response;
     }

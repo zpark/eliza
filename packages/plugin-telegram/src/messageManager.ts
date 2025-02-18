@@ -1,24 +1,16 @@
 import {
-    ModelClass,
-    composeContext,
     type Content,
-    generateMessageResponse,
-    generateShouldRespond,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
     type Media,
     type Memory,
-    type State,
+    ModelClass,
     stringToUuid,
-    type UUID,
+    type UUID
 } from "@elizaos/core";
-import type { Message } from "@telegraf/types";
-import type { Context, Telegraf } from "telegraf";
-import {
-    telegramMessageHandlerTemplate,
-    telegramShouldRespondTemplate
-} from "./templates";
+import type { Message, ReactionType, Update } from "@telegraf/types";
+import type { Context, NarrowedContext, Telegraf } from "telegraf";
 import { escapeMarkdown } from "./utils";
 
 import fs from "fs";
@@ -97,57 +89,6 @@ export class MessageManager {
         }
 
         return null;
-    }
-
-    // Decide if the bot should respond to the message
-    private async _shouldRespond(
-        message: Message,
-        state: State
-    ): Promise<boolean> {
-        // Respond if bot is mentioned
-        if (
-            "text" in message &&
-            message.text?.includes(`@${this.bot.botInfo?.username}`)
-        ) {
-            logger.info(`Bot mentioned`);
-            return true;
-        }
-
-        // Respond to private chats
-        if (message.chat.type === "private") {
-            return true;
-        }
-
-        // Don't respond to images in group chats
-        if (
-            "photo" in message ||
-            ("document" in message &&
-                message.document?.mime_type?.startsWith("image/"))
-        ) {
-            return false;
-        }
-
-        // Use AI to decide for text or captions
-        if ("text" in message || ("caption" in message && message.caption)) {
-            const shouldRespondContext = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates
-                        ?.telegramShouldRespondTemplate ||
-                    this.runtime.character?.templates?.shouldRespondTemplate ||
-                    telegramShouldRespondTemplate,
-            });
-
-            const response = await generateShouldRespond({
-                runtime: this.runtime,
-                context: shouldRespondContext,
-                modelClass: ModelClass.TEXT_SMALL,
-            });
-
-            return response.includes("RESPOND");
-        }
-
-        return false;
     }
 
     // Send long messages in chunks
@@ -294,239 +235,165 @@ export class MessageManager {
         return chunks;
     }
 
-    // Generate a response using AI
-    private async _generateResponse(
-        message: Memory,
-        _state: State,
-        context: string
-    ): Promise<Content> {
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
-            runtime: this.runtime,
-            context,
-            modelClass: ModelClass.TEXT_LARGE,
-        });
-
-        if (!response) {
-            console.error("❌ No response from generateMessageResponse");
-            return null;
-        }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId,
-            roomId,
-            type: "response",
-        });
-
-        return response;
-    }
-
     // Main handler for incoming messages
     public async handleMessage(ctx: Context): Promise<void> {
-        if (!ctx.message || !ctx.from) {
-            return; // Exit if no message or sender info
-        }
+        // Type guard to ensure message exists
+        if (!ctx.message || !ctx.from) return;
 
-        this.lastChannelActivity[ctx.chat.id.toString()] = Date.now();
-
-        if (
-            this.runtime.character.settings?.telegram
-                ?.shouldIgnoreBotMessages &&
-            ctx.from.is_bot
-        ) {
-            return;
-        }
-        if (
-            this.runtime.character.settings?.telegram
-                ?.shouldIgnoreDirectMessages &&
-            ctx.chat?.type === "private"
-        ) {
-            return;
-        }
-
-        const message = ctx.message;
-
-        console.log("message", message);
+        const message = ctx.message as Message.TextMessage;
 
         try {
             // Convert IDs to UUIDs
             const userId = stringToUuid(ctx.from.id.toString()) as UUID;
-
-            // Get user name
-            const userName =
-                ctx.from.username || ctx.from.first_name || "Unknown User";
-
-            // Get chat ID
-            const chatId = stringToUuid(
-                ctx.chat?.id.toString() + "-" + this.runtime.agentId
-            ) as UUID;
-
-            // Get agent ID
-            const agentId = this.runtime.agentId;
-
-            // Get room ID
+            const userName = ctx.from.username || ctx.from.first_name || "Unknown User";
+            const chatId = stringToUuid(ctx.chat?.id.toString() + "-" + this.runtime.agentId) as UUID;
             const roomId = chatId;
+            const messageId = stringToUuid(roomId + "-" + message.message_id.toString()) as UUID;
 
-            // Ensure connection
-            await this.runtime.ensureConnection(
-                userId,
-                roomId,
-                userName,
-                userName,
-                "telegram"
-            );
-
-            // Get message ID
-            const messageId = stringToUuid(
-                roomId + "-" + message.message_id.toString()
-            ) as UUID;
-
-            // Handle images
+            // Process images if present
             const imageInfo = await this.processImage(message);
-
-            // Get text or caption
+            
+            // Get message text - use type guards for safety
             let messageText = "";
-            if ("text" in message) {
+            if ("text" in message && message.text) {
                 messageText = message.text;
             } else if ("caption" in message && message.caption) {
-                messageText = message.caption;
+                messageText = message.caption as string;
             }
 
             // Combine text and image description
-            const fullText = imageInfo
-                ? `${messageText} ${imageInfo.description}`
-                : messageText;
+            const fullText = imageInfo ? `${messageText} ${imageInfo.description}` : messageText;
+            if (!fullText) return;
 
-            if (!fullText) {
-                return; // Skip if no content
-            }
-
-            // Create content
-            const content: Content = {
-                text: fullText,
-                source: "telegram",
-                inReplyTo:
-                    "reply_to_message" in message && message.reply_to_message
-                        ? stringToUuid(
-                              message.reply_to_message.message_id.toString() +
-                                  "-" +
-                                  this.runtime.agentId
-                          )
-                        : undefined,
-            };
-
-            // Create memory for the message
+            // Create the memory object
             const memory: Memory = {
                 id: messageId,
-                agentId,
                 userId,
+                agentId: this.runtime.agentId,
                 roomId,
-                content,
-                createdAt: message.date * 1000,
+                content: {
+                    text: fullText,
+                    source: "telegram",
+                    name: userName,
+                    userName: userName,
+                    // Safely access reply_to_message with type guard
+                    inReplyTo: 'reply_to_message' in message && message.reply_to_message ? 
+                        stringToUuid(message.reply_to_message.message_id.toString() + "-" + this.runtime.agentId) : 
+                        undefined
+                },
+                createdAt: message.date * 1000
             };
 
-            // Create memory
-            await this.runtime.messageManager.createMemory(memory);
+            // Create callback for handling responses
+            const callback: HandlerCallback = async (content: Content, files?: string[]) => {
+                try {
+                    const sentMessages = await this.sendMessageInChunks(ctx, content, message.message_id);
+                    
+                    if (!sentMessages) return [];
 
-            // Update state with the new memory
-            let state = await this.runtime.composeState(memory);
-            state = await this.runtime.updateRecentMessageState(state);
-
-            // Decide whether to respond
-            const shouldRespond = await this._shouldRespond(message, state);
-
-            // Send response in chunks
-            const callback: HandlerCallback = async (content: Content) => {
-                const sentMessages = await this.sendMessageInChunks(
-                    ctx,
-                    content,
-                    message.message_id
-                );
-                if (sentMessages) {
                     const memories: Memory[] = [];
-
-                    // Create memories for each sent message
                     for (let i = 0; i < sentMessages.length; i++) {
                         const sentMessage = sentMessages[i];
                         const isLastMessage = i === sentMessages.length - 1;
 
-                        const memory: Memory = {
-                            id: stringToUuid(
-                                roomId + "-" + sentMessage.message_id.toString()
-                            ),
-                            agentId,
-                            userId: agentId,
+                        const responseMemory: Memory = {
+                            id: stringToUuid(roomId + "-" + sentMessage.message_id.toString()),
+                            userId: this.runtime.agentId,
+                            agentId: this.runtime.agentId,
                             roomId,
                             content: {
                                 ...content,
                                 text: sentMessage.text,
                                 inReplyTo: messageId,
+                                action: !isLastMessage ? "CONTINUE" : content.action
                             },
-                            createdAt: sentMessage.date * 1000,
+                            createdAt: sentMessage.date * 1000
                         };
 
-                        // Set action to CONTINUE for all messages except the last one
-                        // For the last message, use the original action from the response content
-                        memory.content.action = !isLastMessage
-                            ? "CONTINUE"
-                            : content.action;
-
-                        await this.runtime.messageManager.createMemory(memory);
-                        memories.push(memory);
+                        await this.runtime.messageManager.createMemory(responseMemory);
+                        memories.push(responseMemory);
                     }
 
                     return memories;
+                } catch (error) {
+                    logger.error("Error in message callback:", error);
+                    return [];
                 }
             };
 
-            if (shouldRespond) {
-                // Generate response
-                const context = composeContext({
-                    state,
-                    template:
-                        this.runtime.character.templates
-                            ?.telegramMessageHandlerTemplate ||
-                        this.runtime.character?.templates
-                            ?.messageHandlerTemplate ||
-                        telegramMessageHandlerTemplate,
-                });
+            // Let the bootstrap plugin handle the message
+            this.runtime.emitEvent(["TELEGRAM_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
+                runtime: this.runtime,
+                message: memory,
+                callback
+            });
 
-                const responseContent = await this._generateResponse(
-                    memory,
-                    state,
-                    context
-                );
-
-                if (!responseContent || !responseContent.text) return;
-                const responseMessages = [
-                    {
-                        id: stringToUuid(messageId + "-" + this.runtime.agentId),
-                        userId: this.runtime.agentId,
-                        agentId: this.runtime.agentId,
-                        content: responseContent,
-                        roomId,
-                        createdAt: Date.now(),
-                    }
-                ]
-
-                // Update state after response
-                state = await this.runtime.updateRecentMessageState(state);
-
-                // Handle any resulting actions
-                await this.runtime.processActions(
-                    memory,
-                    responseMessages,
-                    state,
-                    callback
-                );
-            }
-
-            await this.runtime.evaluate(memory, state, shouldRespond, callback);
         } catch (error) {
-            logger.error("❌ Error handling message:", error);
-            logger.error("Error sending message:", error);
+            logger.error("Error handling message:", error);
         }
     }
+
+    public async handleReaction(ctx: NarrowedContext<Context<Update>, Update.MessageReactionUpdate>): Promise<void> {
+        // Ensure we have the necessary data
+        if (!ctx.update.message_reaction || !ctx.from) return;
+
+        const reaction = ctx.update.message_reaction;
+        const reactionType = reaction.new_reaction[0].type;
+        const reactionEmoji = (reaction.new_reaction[0] as ReactionType).type;
+
+        try {
+            const userId = stringToUuid(ctx.from.id.toString());
+            const roomId = stringToUuid(ctx.chat.id.toString() + "-" + this.runtime.agentId);
+            const reactionId = stringToUuid(`${reaction.message_id}-${ctx.from.id}-${Date.now()}-${this.runtime.agentId}`);
+            
+            // Create reaction memory
+            const memory: Memory = {
+                id: reactionId,
+                userId,
+                agentId: this.runtime.agentId,
+                roomId,
+                content: {
+                    text: `Reacted with: ${reactionType === 'emoji' ? reactionEmoji : reactionType}`,
+                    source: "telegram",
+                    name: ctx.from.first_name,
+                    userName: ctx.from.username,
+                    inReplyTo: stringToUuid(reaction.message_id.toString() + "-" + this.runtime.agentId)
+                },
+                createdAt: Date.now()
+            };
+
+            // Create callback for handling reaction responses
+            const callback: HandlerCallback = async (content: Content) => {
+                try {
+                    const sentMessage = await ctx.reply(content.text);
+                    const responseMemory: Memory = {
+                        id: stringToUuid(roomId + "-" + sentMessage.message_id.toString()),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        roomId,
+                        content: {
+                            ...content,
+                            inReplyTo: reactionId
+                        },
+                        createdAt: sentMessage.date * 1000
+                    };
+                    return [responseMemory];
+                } catch (error) {
+                    logger.error("Error in reaction callback:", error);
+                    return [];
+                }
+            };
+
+            // Let the bootstrap plugin handle the reaction
+            this.runtime.emitEvent(["TELEGRAM_REACTION_RECEIVED", "REACTION_RECEIVED"], {
+                runtime: this.runtime,
+                message: memory,
+                callback
+            });
+
+        } catch (error) {
+            logger.error("Error handling reaction:", error);
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ import type {
     Account,
     Actor,
     Adapter,
+    ChannelType,
     Character,
     Goal,
     GoalStatus,
@@ -17,6 +18,7 @@ import type {
     Plugin,
     Relationship,
     UUID,
+    RoomData,
 } from "@elizaos/core";
 import {
     DatabaseAdapter,
@@ -34,12 +36,18 @@ export class SqliteDatabaseAdapter
     extends DatabaseAdapter<BetterSqlite3Database>
     implements IDatabaseCacheAdapter
 {
-    async getRoom(roomId: UUID): Promise<UUID | null> {
-        const sql = "SELECT id FROM rooms WHERE id = ?";
+    async getRoom(roomId: UUID): Promise<RoomData | null> {
+        const sql = "SELECT id, type, channelId, serverId FROM rooms WHERE id = ?";
         const room = this.db.prepare(sql).get(roomId) as
-            | { id: string }
+            | { id: string, type: ChannelType, source: string, channelId?: string, serverId?: string }
             | undefined;
-        return room ? (room.id as UUID) : null;
+        return room ? {
+            id: room.id as UUID,
+            type: room.type,
+            source: room.source,
+            channelId: room.channelId,
+            serverId: room.serverId,
+        } : null;
     }
 
     async getParticipantsForAccount(userId: UUID): Promise<Participant[]> {
@@ -565,11 +573,11 @@ export class SqliteDatabaseAdapter
         this.db.prepare(sql).run(roomId);
     }
 
-    async createRoom(roomId?: UUID): Promise<UUID> {
+    async createRoom(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<UUID> {
         roomId = roomId || (v4() as UUID);
         try {
-            const sql = "INSERT INTO rooms (id) VALUES (?)";
-            this.db.prepare(sql).run(roomId ?? (v4() as UUID));
+            const sql = "INSERT INTO rooms (id, source, type, channelId, serverId) VALUES (?, ?, ?, ?, ?)";
+            this.db.prepare(sql).run(roomId ?? (v4() as UUID), source, type, channelId ?? "", serverId ?? "");
         } catch (error) {
             console.log("Error creating room", error);
         }

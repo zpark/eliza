@@ -492,21 +492,21 @@ export class ClientBase extends EventEmitter {
               : stringToUuid(tweet.userId);
 
           if (tweet.userId === this.profile.id) {
-            await this.runtime.ensureConnection(
-              this.runtime.agentId,
+            await this.runtime.ensureConnection({
+              userId: this.runtime.agentId,
               roomId,
-              this.profile.username,
-              this.profile.screenName,
-              "twitter"
-            );
+              userName: this.profile.username,
+              userScreenName: this.profile.screenName,
+              source: "twitter",
+            });
           } else {
-            await this.runtime.ensureConnection(
+            await this.runtime.ensureConnection({
               userId,
               roomId,
-              tweet.username,
-              tweet.name,
-              "twitter"
-            );
+              userName: tweet.username,
+              userScreenName: tweet.name,
+              source: "twitter",
+            });
           }
 
           const content = {
@@ -619,21 +619,21 @@ export class ClientBase extends EventEmitter {
           : stringToUuid(tweet.userId);
 
       if (tweet.userId === this.profile.id) {
-        await this.runtime.ensureConnection(
-          this.runtime.agentId,
+        await this.runtime.ensureConnection({
+          userId: this.runtime.agentId,
           roomId,
-          this.profile.username,
-          this.profile.screenName,
-          "twitter"
-        );
+          userName: this.profile.username,
+          userScreenName: this.profile.screenName,
+          source: "twitter",
+        });
       } else {
-        await this.runtime.ensureConnection(
+        await this.runtime.ensureConnection({
           userId,
           roomId,
-          tweet.username,
-          tweet.name,
-          "twitter"
-        );
+          userName: tweet.username,
+          userScreenName: tweet.name,
+          source: "twitter",
+        });
       }
 
       const content = {

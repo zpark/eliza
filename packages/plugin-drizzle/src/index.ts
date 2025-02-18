@@ -10,6 +10,8 @@ import {
     type Memory,
     type Relationship,
     type UUID,
+    type ChannelType,
+    type RoomData,
 } from "@elizaos/core";
 import {
     and,
@@ -990,26 +992,34 @@ export class DrizzleDatabaseAdapter
         }, "removeAllGoals");
     }
 
-    async getRoom(roomId: UUID): Promise<UUID | null> {
+    async getRoom(roomId: UUID): Promise<RoomData | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
-                    id: roomTable.id,
+                    id: roomTable.id as any,
+                    channelId: roomTable.channelId as any,
+                    serverId: roomTable.serverId as any,
+                    type: roomTable.type as any,
+                    source: roomTable.source as any,
                 })
                 .from(roomTable)
                 .where(eq(roomTable.id, roomId))
                 .limit(1);
 
-            return (result[0]?.id as UUID) ?? null;
+            return result[0]
         }, "getRoom");
     }
 
-    async createRoom(roomId?: UUID): Promise<UUID> {
+    async createRoom(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<UUID> {
         return this.withDatabase(async () => {
             const newRoomId = roomId || v4();
             await this.db.insert(roomTable).values([
                 {
                     id: newRoomId,
+                    source,
+                    type,
+                    channelId,
+                    serverId,
                 },
             ]);
             return newRoomId as UUID;

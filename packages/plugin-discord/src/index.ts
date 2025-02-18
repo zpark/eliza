@@ -1,10 +1,14 @@
 import {
+  ChannelType,
+  HandlerCallback,
   logger,
+  Memory,
   stringToUuid,
+  UUID,
   type Character,
   type Client as ElizaClient,
   type IAgentRuntime,
-  type Plugin
+  type Plugin,
 } from "@elizaos/core";
 import {
   Client,
@@ -12,9 +16,11 @@ import {
   GatewayIntentBits,
   Partials,
   PermissionsBitField,
+  TextChannel,
   type Guild,
   type MessageReaction,
   type User,
+  ChannelType as DiscordChannelType,
 } from "discord.js";
 import { EventEmitter } from "events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
@@ -32,6 +38,17 @@ import { DiscordTestSuite } from "./test-suite.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
+interface RoomData {
+  channelId: string;
+  serverId: string;
+}
+
+interface AuthorData {
+  userId: string;
+  userName: string;
+  displayName: string;
+}
+
 export class DiscordClient extends EventEmitter implements IDiscordClient {
   apiToken: string;
   client: Client;
@@ -39,6 +56,49 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   character: Character;
   messageManager: MessageManager;
   voiceManager: VoiceManager;
+
+  channelMap: Map<string, RoomData> = new Map();
+  authorMap: Map<UUID, AuthorData> = new Map();
+
+  storeAuthorData: (userId: UUID, authorData: AuthorData) => void = (
+    userId,
+    authorData
+  ) => {
+    this.authorMap.set(userId, authorData);
+  };
+
+  storeChannelData: (roomId: UUID, channelData: RoomData) => void = (
+    roomId,
+    channelData
+  ) => {
+    this.channelMap.set(roomId, channelData);
+  };
+
+  getChannelData: (roomId: UUID) => Promise<ChannelType> = async (roomId) => {
+    const channelData = this.channelMap.get(roomId);
+    const channelId = channelData?.channelId;
+    if (!channelId) {
+      return null;
+    }
+    const channel = await this.client.channels.fetch(channelId);
+    switch (channel.type) {
+      case DiscordChannelType.DM:
+        return ChannelType.DM;
+      case DiscordChannelType.GuildText:
+        return ChannelType.GROUP;
+      case DiscordChannelType.GuildVoice:
+        return ChannelType.VOICE_GROUP;
+    }
+  };
+
+  getAuthorData (userId: UUID): AuthorData | null {
+    // get from the author map
+    const author = this.authorMap.get(userId);
+    if (!author) {
+      return null;
+    }
+    return author;
+  };
 
   constructor(runtime: IAgentRuntime) {
     super();
@@ -69,7 +129,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     this.runtime = runtime;
     this.voiceManager = new VoiceManager(this);
-    this.messageManager = new MessageManager(this, this.voiceManager);
+    this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
     this.client.login(this.apiToken);
@@ -232,30 +292,32 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       // Process message content
       const messageContent = reaction.message.content || "";
       const truncatedContent =
-        messageContent.length > 100
-          ? `${messageContent.substring(0, 100)}...`
+        messageContent.length > 50
+          ? `${messageContent.substring(0, 50)}...`
           : messageContent;
-      const reactionMessage = `*<${emoji}>: "${truncatedContent}"*`;
+      const reactionMessage = `*Added <${emoji}> to: "${truncatedContent}"*`;
 
       // Get user info
       const userName = reaction.message.author?.username || "unknown";
       const name = reaction.message.author?.displayName || userName;
 
-      // Ensure connection
-      await this.runtime.ensureConnection(
-        userIdUUID,
+      await this.runtime.ensureConnection({
+        userId: userIdUUID,
         roomId,
         userName,
-        name,
-        "discord"
-      );
+        userScreenName: name,
+        source: "discord",
+        channelId: reaction.message.channel.id,
+        serverId: reaction.message.guild?.id,
+      });
 
-      // Create memory with retry logic
-      const memory = {
+      const memory: Memory = {
         id: reactionUUID,
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
+          name,
+          userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo: stringToUuid(
@@ -266,94 +328,113 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         createdAt: timestamp,
       };
 
-      try {
-        await this.runtime.messageManager.createMemory(memory);
-        logger.debug("Reaction memory created", {
-          reactionId: reactionUUID,
-          emoji,
-          userId: user.id,
-        });
-      } catch (error) {
-        if (error.code === "23505") {
-          // Duplicate key error
-          logger.warn("Duplicate reaction memory, skipping", {
-            reactionId: reactionUUID,
-          });
+      const callback: HandlerCallback = async (content) => {
+        if (!reaction.message.channel) {
+          logger.error("No channel found for reaction message");
           return;
         }
-        throw error; // Re-throw other errors
-      }
+        await (reaction.message.channel as TextChannel).send(content.text);
+        return [];
+      };
+
+      this.runtime.emitEvent(
+        ["DISCORD_REACTION_RECEIVED", "REACTION_RECEIVED"],
+        {
+          runtime: this.runtime,
+          message: memory,
+          callback,
+        }
+      );
     } catch (error) {
       logger.error("Error handling reaction:", error);
     }
   }
 
   async handleReactionRemove(reaction: MessageReaction, user: User) {
-    logger.log("Reaction removed");
-    // if (user.bot) return;
-
-    let emoji = reaction.emoji.name;
-    if (!emoji && reaction.emoji.id) {
-      emoji = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    }
-
-    // Fetch the full message if it's a partial
-    if (reaction.partial) {
-      try {
-        await reaction.fetch();
-      } catch (error) {
-        console.error("Something went wrong when fetching the message:", error);
-        return;
-      }
-    }
-
-    const messageContent = reaction.message.content;
-    const truncatedContent =
-      messageContent.length > 50
-        ? messageContent.substring(0, 50) + "..."
-        : messageContent;
-
-    const reactionMessage = `*Removed <${emoji} emoji> from: "${truncatedContent}"*`;
-
-    const roomId = stringToUuid(
-      reaction.message.channel.id + "-" + this.runtime.agentId
-    );
-    const userIdUUID = stringToUuid(user.id);
-
-    // Generate a unique UUID for the reaction removal
-    const reactionUUID = stringToUuid(
-      `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
-    );
-
-    const userName = reaction.message.author.username;
-    const name = reaction.message.author.displayName;
-
-    await this.runtime.ensureConnection(
-      userIdUUID,
-      roomId,
-      userName,
-      name,
-      "discord"
-    );
-
     try {
-      // Save the reaction removal as a message
-      await this.runtime.messageManager.createMemory({
-        id: reactionUUID, // This is the ID of the reaction removal message
+      logger.log("Reaction removed");
+
+      let emoji = reaction.emoji.name;
+      if (!emoji && reaction.emoji.id) {
+        emoji = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
+      }
+
+      // Fetch the full message if it's a partial
+      if (reaction.partial) {
+        try {
+          await reaction.fetch();
+        } catch (error) {
+          logger.error(
+            "Something went wrong when fetching the message:",
+            error
+          );
+          return;
+        }
+      }
+
+      const messageContent = reaction.message.content || "";
+      const truncatedContent =
+        messageContent.length > 50
+          ? messageContent.substring(0, 50) + "..."
+          : messageContent;
+
+      const reactionMessage = `*Removed <${emoji}> from: "${truncatedContent}"*`;
+
+      const roomId = stringToUuid(
+        reaction.message.channel.id + "-" + this.runtime.agentId
+      );
+      const userIdUUID = stringToUuid(user.id);
+      const reactionUUID = stringToUuid(
+        `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
+      );
+
+      const userName = reaction.message.author?.username || "unknown";
+      const name = reaction.message.author?.displayName || userName;
+
+
+      await this.runtime.ensureConnection({
+        userId: userIdUUID,
+        roomId,
+        userName,
+        userScreenName: name,
+        source: "discord",
+        channelId: reaction.message.channel.id,
+        serverId: reaction.message.guild?.id,
+      });
+
+      const memory: Memory = {
+        id: reactionUUID,
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
+          name,
+          userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo: stringToUuid(
-            reaction.message.id + "-" + this.runtime.agentId
-          ), // This is the ID of the original message
+            `${reaction.message.id}-${this.runtime.agentId}`
+          ),
         },
         roomId,
         createdAt: Date.now(),
+      };
+
+      const callback: HandlerCallback = async (content) => {
+        if (!reaction.message.channel) {
+          logger.error("No channel found for reaction message");
+          return;
+        }
+        await (reaction.message.channel as TextChannel).send(content.text);
+        return [];
+      };
+
+      this.runtime.emitEvent(["DISCORD_REACTION_EVENT", "REACTION_RECEIVED"], {
+        runtime: this.runtime,
+        message: memory,
+        callback,
       });
     } catch (error) {
-      console.error("Error creating reaction removal message:", error);
+      logger.error("Error handling reaction removal:", error);
     }
   }
 

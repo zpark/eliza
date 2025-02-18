@@ -76,6 +76,10 @@ export const memoryTable = pgTable("memories", {
 
 export const roomTable = pgTable("rooms", {
     id: uuid("id").primaryKey().notNull(),
+    source: text("source").notNull(),
+    type: text("type").notNull(),
+    serverId: text("serverId"),
+    channelId: text("channelId"),
     createdAt: numberTimestamp("createdAt")
         .default(sql`now()`)
         .notNull(),
