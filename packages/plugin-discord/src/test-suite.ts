@@ -3,7 +3,6 @@ import {
   type TestSuite,
   type IAgentRuntime,
   ModelClass,
-  UUID,
 } from "@elizaos/core";
 import { DiscordClient } from "./index.ts";
 import { sendMessageInChunks } from "./utils.ts";
@@ -78,7 +77,6 @@ export class DiscordTestSuite implements TestSuite {
     try {
       await this.waitForVoiceManagerReady(this.discordClient);
   
-      // Fetch the test channel
       const channel = await this.getTestChannel(runtime);
       if (!channel || !channel.isTextBased()) {
         throw new Error("Invalid test channel for slash command test.");
@@ -110,7 +108,6 @@ export class DiscordTestSuite implements TestSuite {
     try {
       await this.waitForVoiceManagerReady(this.discordClient);
   
-      // Fetch the test channel
       const channel = await this.getTestChannel(runtime);
       if (!channel || !channel.isTextBased()) {
         throw new Error("Invalid test channel for slash command test.");
@@ -217,9 +214,10 @@ export class DiscordTestSuite implements TestSuite {
     }
   }
 
-
-
-  // utiles
+  // #############################
+  //     Utility Functions      
+  // #############################
+  
   async getTestChannel(runtime: IAgentRuntime) {
     const channelId = this.validateChannelId(runtime);
     const channel = await this.discordClient.client.channels.fetch(
