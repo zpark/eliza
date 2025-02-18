@@ -581,19 +581,20 @@ export class MessageManager {
 
     if (message.mentions.has(this.client.user?.id as string)) return true;
 
+    const lowerMessage = message.content.toLowerCase();
+    const botName = this.client.user.username.toLowerCase();
+    const characterName = this.runtime.character.name.toLowerCase();
     const guild = message.guild;
     const member = guild?.members.cache.get(this.client.user?.id as string);
     const nickname = member?.nickname;
 
     if (
-      message.content
-        .toLowerCase()
-        .includes(this.client.user?.username.toLowerCase() as string) ||
-      message.content
-        .toLowerCase()
-        .includes(this.client.user?.tag.toLowerCase() as string) ||
-      (nickname &&
-        message.content.toLowerCase().includes(nickname.toLowerCase()))
+      lowerMessage.includes(botName as string) ||
+      lowerMessage.includes(characterName) ||
+      lowerMessage.includes(
+          this.client.user?.tag.toLowerCase() as string
+      ) ||
+      (nickname && lowerMessage.includes(nickname.toLowerCase()))
     ) {
       return true;
     }
