@@ -40,15 +40,15 @@ import {
 } from "./schema/index";
 import {
     characterToInsert,
-    StoredTemplate,
+    type StoredTemplate,
     storedToTemplate,
     templateToStored,
 } from "./schema/character";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { v4 } from "uuid";
 import { runMigrations } from "./migrations";
-import pg, { ConnectionConfig, PoolConfig } from "pg";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "./schema/embedding";
+import pg, { type ConnectionConfig, type PoolConfig } from "pg";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 type Pool = pg.Pool;
 
 export class DrizzleDatabaseAdapter
