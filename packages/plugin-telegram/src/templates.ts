@@ -141,36 +141,3 @@ Examples of {{agentName}}'s dialog and actions:
 
 # Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as the only valid action for auto-posts is "NONE".
 ` + messageCompletionFooter;
-
-export const telegramPinnedMessageTemplate =
-    `# Task: Generate pinned message highlight as {{agentName}}.
-{{system}}
-
-NONE: Respond but perform no additional action. This is the default if the agent is speaking and not doing anything additional.
-
-About {{agentName}}:
-{{bio}}
-
-Examples of {{agentName}}'s dialog and actions:
-{{characterMessageExamples}}
-
-{{messageDirections}}
-
-# Pinned Content:
-{{pinnedMessageContent}}
-
-# Instructions: Write an exciting message to bring attention to the pinned message. Requirements:
-- Reference the message that was pinned from the pinned content
-- Create genuine excitement if needed based on the pinned content, or create genuice urgency depending on the content
-- Encourage community participation
-- If there are links like Twitter/X posts, encourage users to like/retweet/comment to spread awarenress, but directly say that, wrap that into the post so its natural.
-- Stay within announced facts only
-- No additional promises or assumptions
-- No team member mentions
-- Start the message differently each time. Don't start with the same word like "hey", "hey hey", etc. be dynamic
-- Address everyone, not as a direct reply to whoever pinned the message or wrote it, but you can reference them
-- Maximum 3-7 lines formatted nicely if needed, based on the context of the announcement
-- Use 1-2 emojis maximum
-
-# Instructions: Write the next message for {{agentName}}. Include an action, if appropriate. The only valid action for pinned message highlights is "NONE".
-` + messageCompletionFooter;
