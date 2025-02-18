@@ -13,15 +13,15 @@ const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
 
 const TEST_IMAGE = {
-  id: "mock -image-id",
+  id: "mock-image-id",
   text: "mock image",
   description: "mock image descirption",
   source: "mock image source",
   url: TEST_IMAGE_URL,
   title: "mock image",
   contentType: "image/jpeg",
-  alt_text: "mock image"
-}
+  alt_text: "mock image",
+};
 
 export class TwitterTestSuite implements TestSuite {
   name = "twitter";
