@@ -17,7 +17,7 @@ Response: RESPOND
 {{user1}}: stfu bot
 Response: STOP
 
-{{user1}}: Hey {{agent}}, can you help me with something
+{{user1}}: Hey {{agentName}}, can you help me with something
 Response: RESPOND
 
 {{user1}}: {{agentName}} stfu plz
@@ -28,7 +28,7 @@ Response: STOP
 {{user1}}: no. i need help from someone else
 Response: IGNORE
 
-{{user1}}: Hey {{agent}}, can I ask you a question
+{{user1}}: Hey {{agentName}}, can I ask you a question
 {{agentName}}: Sure, what is it
 {{user1}}: can you ask claude to create a basic react module that demonstrates a counter
 Response: RESPOND
@@ -68,10 +68,6 @@ The goal is to decide whether {{agentName}} should respond to the last message.
 
 {{recentMessages}}
 
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
-
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
 ` + shouldRespondFooter;
 
@@ -105,12 +101,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 {{recentMessages}}
 
-# Task: Create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
-Current Post:
-{{currentPost}}
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
+# Task: Generate a reply in the voice, style and perspective of {{agentName}} while using the thread above as additional context.
 ` + messageCompletionFooter;
 
 export const telegramAutoPostTemplate =
