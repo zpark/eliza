@@ -87,8 +87,7 @@ export class DiscordTestSuite implements TestSuite {
 
       const channel = await this.getTestChannel(runtime);
       if (!channel || channel.type !== ChannelType.GuildVoice) {
-        logger.error("Invalid voice channel.");
-        return;
+        throw new Error("Invalid voice channel.");
       }
 
       await this.discordClient.voiceManager.joinChannel(channel);
