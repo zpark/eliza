@@ -60,7 +60,7 @@ const getDateRange = async (
             context,
             modelClass: ModelClass.TEXT_SMALL,
         });
-        // console.log("response", response);
+        console.log("response", response);
         // try parsing to a json object
         const parsedResponse = parseJSONObjectFromText(response) as {
             objective: string;

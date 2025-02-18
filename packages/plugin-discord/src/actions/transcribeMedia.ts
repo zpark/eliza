@@ -49,7 +49,7 @@ const getMediaAttachmentId = async (
             context,
             modelClass: ModelClass.TEXT_SMALL,
         });
-        // console.log("response", response);
+        console.log("response", response);
 
         const parsedResponse = parseJSONObjectFromText(response) as {
             attachmentId: string;
