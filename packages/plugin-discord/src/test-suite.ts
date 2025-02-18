@@ -45,6 +45,18 @@ export class DiscordTestSuite implements TestSuite {
     ];
   }
 
+  validateChannelId(runtime: IAgentRuntime) {
+    const testChannelId =
+      runtime.getSetting("DISCORD_TEST_CHANNEL_ID") ||
+      process.env.DISCORD_TEST_CHANNEL_ID;
+    if (!testChannelId) {
+      throw new Error(
+        "DISCORD_TEST_CHANNEL_ID is not set. Please provide a valid channel ID in the environment variables."
+      );
+    }
+    return testChannelId;
+  }
+
   async testCreatingDiscordClient(runtime: IAgentRuntime) {
     try {
       this.discordClient = runtime.getClient("discord") as DiscordClient;
@@ -72,6 +84,14 @@ export class DiscordTestSuite implements TestSuite {
           this.discordClient.voiceManager.once("error", reject);
         });
       }
+
+      const channel = await this.getTestChannel(runtime);
+      if (!channel || channel.type !== ChannelType.GuildVoice) {
+        logger.error("Invalid voice channel.");
+        return;
+      }
+
+      await this.discordClient.voiceManager.joinChannel(channel);
 
       const guilds = await this.discordClient.client.guilds.fetch();
       const fullGuilds = await Promise.all(
@@ -140,10 +160,9 @@ export class DiscordTestSuite implements TestSuite {
 
   async testSendingTextMessage(runtime: IAgentRuntime) {
     try {
-      const channel = await this.getTextChannel();
-      if (!channel) return;
+      const channel = await this.getTestChannel(runtime);
 
-      await this.sendMessageToChannel(channel, "Testing Message", [
+      await this.sendMessageToChannel(channel as TextChannel, "Testing Message", [
         TEST_IMAGE_URL,
       ]);
     } catch (error) {
@@ -153,8 +172,7 @@ export class DiscordTestSuite implements TestSuite {
 
   async testHandlingMessage(runtime: IAgentRuntime) {
     try {
-      const channel = await this.getTextChannel();
-      if (!channel) return;
+      const channel = await this.getTestChannel(runtime);
 
       const fakeMessage = {
         content: `Hello, ${runtime.character.name}! How are you?`,
@@ -178,49 +196,15 @@ export class DiscordTestSuite implements TestSuite {
     }
   }
 
-  async getTextChannel(): Promise<TextChannel | null> {
-    try {
-      let channel: TextChannel | null = null;
-      const channelId = process.env.DISCORD_VOICE_CHANNEL_ID || null;
+  async getTestChannel(runtime: IAgentRuntime) {
+    const channelId = this.validateChannelId(runtime);
+    const channel = await this.discordClient.client.channels.fetch(
+      channelId
+    );
 
-      if (!channelId) {
-        const guilds = await this.discordClient.client.guilds.fetch();
-        for (const [, guild] of guilds) {
-          const fullGuild = await guild.fetch();
-          const textChannels = fullGuild.channels.cache
-            .filter((c) => c.type === ChannelType.GuildText)
-            .values();
-          channel = textChannels.next().value as TextChannel;
-          if (channel) break; // Stop if we found a valid channel
-        }
+    if (!channel) throw new Error("no test channel found!");
 
-        if (!channel) {
-          logger.warn("No suitable text channel found.");
-          return null;
-        }
-      } else {
-        const fetchedChannel = await this.discordClient.client.channels.fetch(
-          channelId
-        );
-        if (fetchedChannel && fetchedChannel.isTextBased()) {
-          channel = fetchedChannel as TextChannel;
-        } else {
-          logger.warn(
-            `Provided channel ID (${channelId}) is invalid or not a text channel.`
-          );
-          return null;
-        }
-      }
-
-      if (!channel) {
-        logger.warn("Failed to determine a valid text channel.");
-        return null;
-      }
-
-      return channel;
-    } catch (error) {
-      throw new Error(`Error fetching text channel: ${error}`);
-    }
+    return channel
   }
 
   async sendMessageToChannel(

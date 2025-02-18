@@ -43,7 +43,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   constructor(runtime: IAgentRuntime) {
     super();
 
-    console.log("Discord client constructor was engaged");
+    logger.log("Discord client constructor was engaged");
 
     this.apiToken = runtime.getSetting("DISCORD_API_TOKEN") as string;
     this.client = new Client({
@@ -358,7 +358,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 
   private handleGuildCreate(guild: Guild) {
-    console.log(`Joined guild ${guild.name}`);
+    logger.log(`Joined guild ${guild.name}`);
     this.voiceManager.scanGuild(guild);
     this.runtime.emitEvent("DISCORD_JOIN_SERVER", {
       guild,
@@ -379,7 +379,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 
   private async onReady() {
-    console.log("DISCORD ON READY");
+    logger.log("DISCORD ON READY");
     const guilds = await this.client.guilds.fetch();
     for (const [, guild] of guilds) {
       const fullGuild = await guild.fetch();
@@ -388,7 +388,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       setTimeout(() => {
         // for each server the client is in, fire a connected event
         for (const [, guild] of guilds) {
-          console.log("DISCORD SERVER CONNECTED", guild);
+          logger.log("DISCORD SERVER CONNECTED", guild);
           this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { guild });
         }
       }, 1000);
