@@ -953,7 +953,7 @@ export async function generateText({
                         experimental_telemetry: experimental_telemetry,
                     });
 
-                    response = ollamaResponse;
+                    response = ollamaResponse.replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
                 }
                 elizaLogger.debug("Received response from Ollama model.");
                 break;
