@@ -55,8 +55,9 @@ const dmAction: Action = {
         const discordMessage = state.discordMessage as Message;
         
         try {
+            const discordClient = runtime.getClient("discord");
             // Get mentioned user
-            const mentionedUser = discordMessage?.mentions?.users?.first();
+            const mentionedUser = discordMessage?.mentions?.users?.filter(user => user.id !== discordClient.client.user.id)?.first();
             if (!mentionedUser) {
                 await callback({
                     text: "Please mention the user you want me to DM.",
