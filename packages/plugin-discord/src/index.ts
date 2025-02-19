@@ -24,6 +24,7 @@ import leaveVoice from "./actions/leaveVoice.ts";
 import reply from "./actions/reply.ts";
 import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
+import dmAction from "./actions/dm.ts";
 import { DISCORD_CLIENT_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
@@ -415,6 +416,7 @@ const discordPlugin: Plugin = {
     leaveVoice,
     summarize,
     transcribe_media,
+    dmAction
   ],
   providers: [channelStateProvider, voiceStateProvider],
   tests: [new DiscordTestSuite()],

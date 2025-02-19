@@ -83,20 +83,32 @@ const dmAction: Action = {
                 
                 try {
                     // Send message to DM channel
-                    await dmChannel.send(content);
+                    const dmMessage = await dmChannel.send(content);
 
-                    // Create memory of the DM
-                    await runtime.messageManager.createMemory({
+                    const dmRoomId = stringToUuid(dmChannel.id + "-" + runtime.agentId)
+                    const userIdUUID = stringToUuid(runtime.agentId);
+                    await runtime.ensureConnection(
+                        userIdUUID,
+                        dmRoomId,
+                        mentionedUser.username,
+                        mentionedUser.username,
+                        "discord-dm"
+                    );
+                    const memory: Memory = {
+                        id: stringToUuid(dmMessage.id + "-" + runtime.agentId),
                         userId: runtime.agentId,
                         agentId: runtime.agentId,
-                        roomId: stringToUuid(dmChannel.id),
+                        roomId: dmRoomId,
                         content: {
                             text: content,
                             action: "DM",
                             source: "discord"
                         },
-                        createdAt: Date.now()
-                    });
+                        createdAt: Date.now(),
+                    };
+
+                    // Create memory of the DM
+                    await runtime.messageManager.createMemory(memory);
 
                     // Send confirmation in original channel
                     await callback({
