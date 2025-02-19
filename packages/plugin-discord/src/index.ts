@@ -19,8 +19,8 @@ import {
 import { EventEmitter } from "events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
 import downloadMedia from "./actions/downloadMedia.ts";
-import joinVoice from "./actions/joinVoice.ts";
-import leaveVoice from "./actions/leaveVoice.ts";
+import joinVoice from "./actions/joinvoice.ts";
+import leaveVoice from "./actions/leavevoice.ts";
 import reply from "./actions/reply.ts";
 import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
