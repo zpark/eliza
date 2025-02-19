@@ -17,7 +17,7 @@ Response: RESPOND
 {{user1}}: stfu bot
 Response: STOP
 
-{{user1}}: Hey {{agent}}, can you help me with something
+{{user1}}: Hey {{agentName}}, can you help me with something
 Response: RESPOND
 
 {{user1}}: {{agentName}} stfu plz
@@ -28,7 +28,7 @@ Response: STOP
 {{user1}}: no. i need help from someone else
 Response: IGNORE
 
-{{user1}}: Hey {{agent}}, can I ask you a question
+{{user1}}: Hey {{agentName}}, can I ask you a question
 {{agentName}}: Sure, what is it
 {{user1}}: can you ask claude to create a basic react module that demonstrates a counter
 Response: RESPOND
@@ -68,10 +68,6 @@ The goal is to decide whether {{agentName}} should respond to the last message.
 
 {{recentMessages}}
 
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
-
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
 ` + shouldRespondFooter;
 
@@ -105,12 +101,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 {{recentMessages}}
 
-# Task: Create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
-Current Post:
-{{currentPost}}
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
+# Task: Generate a reply in the voice, style and perspective of {{agentName}} while using the thread above as additional context.
 ` + messageCompletionFooter;
 
 export const telegramAutoPostTemplate =
@@ -149,37 +140,4 @@ Examples of {{agentName}}'s dialog and actions:
 - DO NOT REPEAT THE SAME thing that you just said from your recent chat history, start the message different each time, and be organic, non reptitive.
 
 # Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as the only valid action for auto-posts is "NONE".
-` + messageCompletionFooter;
-
-export const telegramPinnedMessageTemplate =
-    `# Task: Generate pinned message highlight as {{agentName}}.
-{{system}}
-
-NONE: Respond but perform no additional action. This is the default if the agent is speaking and not doing anything additional.
-
-About {{agentName}}:
-{{bio}}
-
-Examples of {{agentName}}'s dialog and actions:
-{{characterMessageExamples}}
-
-{{messageDirections}}
-
-# Pinned Content:
-{{pinnedMessageContent}}
-
-# Instructions: Write an exciting message to bring attention to the pinned message. Requirements:
-- Reference the message that was pinned from the pinned content
-- Create genuine excitement if needed based on the pinned content, or create genuice urgency depending on the content
-- Encourage community participation
-- If there are links like Twitter/X posts, encourage users to like/retweet/comment to spread awarenress, but directly say that, wrap that into the post so its natural.
-- Stay within announced facts only
-- No additional promises or assumptions
-- No team member mentions
-- Start the message differently each time. Don't start with the same word like "hey", "hey hey", etc. be dynamic
-- Address everyone, not as a direct reply to whoever pinned the message or wrote it, but you can reference them
-- Maximum 3-7 lines formatted nicely if needed, based on the context of the announcement
-- Use 1-2 emojis maximum
-
-# Instructions: Write the next message for {{agentName}}. Include an action, if appropriate. The only valid action for pinned message highlights is "NONE".
 ` + messageCompletionFooter;

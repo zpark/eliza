@@ -24,10 +24,7 @@ import {
 } from "discord.js";
 import { AttachmentManager } from "./attachments";
 import {
-  IGNORE_RESPONSE_WORDS,
-  LOSE_INTEREST_WORDS,
   MESSAGE_CONSTANTS,
-  MESSAGE_LENGTH_THRESHOLDS,
 } from "./constants";
 import {
   discordMessageHandlerTemplate,
@@ -64,7 +61,6 @@ export class MessageManager {
   private interestChannels: InterestChannels = {};
   private voiceManager: VoiceManager;
   private lastChannelActivity: { [channelId: string]: number } = {};
-  private autoPostInterval: NodeJS.Timeout;
   private pendingMessageTasks: Map<string, PendingMessageTask> = new Map();
 
   constructor(discordClient: any, voiceManager: VoiceManager) {

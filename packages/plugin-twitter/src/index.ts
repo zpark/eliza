@@ -1,4 +1,4 @@
-import { ClientInstance, logger, stringToUuid, type UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { logger, stringToUuid, type UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { TWITTER_CLIENT_NAME } from "./constants.ts";

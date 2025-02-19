@@ -98,33 +98,3 @@ Examples of {{agentName}}'s dialog and actions:
 
 # Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as the only valid action currently is "NONE".
 ` + messageCompletionFooter;
-
-export const discordAnnouncementHypeTemplate =
-    `# Task: Generate announcement hype message as {{agentName}}.
-About {{agentName}}:
-{{bio}}
-
-Examples of {{agentName}}'s dialog and actions:
-{{characterMessageExamples}}
-
-{{messageDirections}}
-
-# Announcement Content:
-{{announcementContent}}
-
-# Instructions: Write an exciting message to bring attention to the announcement. Requirements:
-- Reference the announcement channel using <#{{announcementChannelId}}>
-- Reference the announcement content to get information about the announcement to use where appropriate to make the message dynamic vs a static post
-- Create genuine excitement
-- Encourage community participation
-- If there are links like Twitter/X posts, encourage users to like/retweet/comment to spread awarenress, but directly say that, wrap that into the post so its natural.
-- Stay within announced facts only
-- No additional promises or assumptions
-- No team member mentions
-- Start the message differently each time. Don't start with the same word like "hey", "hey hey", etc. be dynamic
-- Address everyone, not as a direct reply to whoever made the announcement or wrote it, but you can reference them
-- Maximum 3-7 lines formatted nicely if needed, based on the context of the announcement
-- Use 1-2 emojis maximum
-
-# Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as no other actions are appropriate for announcement hype.
-` + messageCompletionFooter;
