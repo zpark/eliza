@@ -1144,7 +1144,9 @@ export async function generateText({
             case ModelProviderName.VENICE: {
                 elizaLogger.debug("Initializing Venice model.");
                 
-                const bypass = process.env.BYPASS_VENICE_SYSTEM_PROMPT
+                const bypass = parseBooleanFromText(
+                    runtime.getSetting("BYPASS_VENICE_SYSTEM_PROMPT")
+                )
                     ? async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
                         const options: RequestInit = { ...init };
                         if (options?.body) {
