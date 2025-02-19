@@ -17,13 +17,15 @@ import {
   type User,
 } from "discord.js";
 import { EventEmitter } from "events";
-import chatWithAttachments from "./actions/chatWithAttachments.ts";
-import downloadMedia from "./actions/downloadMedia.ts";
-import joinVoice from "./actions/voice_join.ts";
-import leaveVoice from "./actions/voice_leave.ts";
+
+import chatWithAttachments from "./actions/chat-w-attach.ts";
+import downloadMedia from "./actions/media-download.ts";
+import joinVoice from "./actions/voice-join.ts";
+import leaveVoice from "./actions/voice-leave.ts";
 import reply from "./actions/reply.ts";
-import summarize from "./actions/summarizeConversation.ts";
-import transcribe_media from "./actions/transcribeMedia.ts";
+import summarize from "./actions/conv-summarize.ts";
+import transcribe_media from "./actions/media-transcribe.ts";
+
 import { DISCORD_CLIENT_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
