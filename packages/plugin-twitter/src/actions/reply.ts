@@ -22,11 +22,6 @@ const twitterReplyAction = {
             return false;
         }
         
-        // Make sure we have the Twitter client available
-        if (!state.twitterClient) {
-            return false;
-        }
-        
         return true;
     },
     handler: async (
