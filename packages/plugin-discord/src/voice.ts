@@ -17,11 +17,7 @@ import {
     type IAgentRuntime,
     type Memory,
     ModelClass,
-    type State,
     type UUID,
-    composeContext,
-    generateMessageResponse,
-    generateShouldRespond,
     logger,
     stringToUuid
 } from "@elizaos/core";
@@ -38,10 +34,6 @@ import EventEmitter from "events";
 import prism from "prism-media";
 import { type Readable, pipeline } from "stream";
 import type { DiscordClient } from "./index.ts";
-import {
-    discordShouldRespondTemplate,
-    discordVoiceHandlerTemplate,
-} from "./templates.ts";
 import { getWavHeader } from "./utils.ts";
 
 // These values are chosen for compatibility with picovoice components
@@ -615,7 +607,7 @@ export class VoiceManager extends EventEmitter {
                 this.cleanupAudioPlayer(this.activeAudioPlayer);
                 const finalText = state.transcriptionText;
                 state.transcriptionText = "";
-                await this.handleUserMessage(
+                await this.handleMessage(
                     finalText,
                     userId,
                     channelId,
@@ -632,7 +624,7 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private async handleUserMessage(
+    private async handleMessage(
         message: string,
         userId: UUID,
         channelId: string,
@@ -641,150 +633,79 @@ export class VoiceManager extends EventEmitter {
         userName: string
     ) {
         try {
+            if (!message || message.trim() === "" || message.length < 3) {
+                return { text: "", action: "IGNORE" };
+            }
+
             const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
             const userIdUUID = stringToUuid(userId);
 
-            await this.runtime.ensureConnection(
-                userIdUUID,
+            await this.runtime.ensureConnection({
+                userId: userIdUUID,
                 roomId,
                 userName,
-                name,
-                "discord"
-            );
+                userScreenName: name,
+                source: "discord",
+                channelId,
+                serverId: channel.guild.id,
+            });
 
-            let state = await this.runtime.composeState(
-                {
-                    agentId: this.runtime.agentId,
-                    content: { text: message, source: "Discord" },
-                    userId: userIdUUID,
-                    roomId,
-                },
-                {
-                    discordChannel: channel,
-                    discordClient: this.client,
-                    agentName: this.runtime.character.name,
-                }
-            );
-
-            if (message && message.startsWith("/")) {
-                return null;
-            }
-
-            const memory = {
+            const memory: Memory = {
                 id: stringToUuid(channelId + "-voice-message-" + Date.now()),
                 agentId: this.runtime.agentId,
+                userId: userIdUUID,
+                roomId,
                 content: {
                     text: message,
                     source: "discord",
                     url: channel.url,
+                    name: name,
+                    userName: userName,
+                    isVoiceMessage: true
                 },
-                userId: userIdUUID,
-                roomId,
                 createdAt: Date.now(),
             };
 
-            if (!memory.content.text) {
-                return { text: "", action: "IGNORE" };
-            }
+            const callback: HandlerCallback = async (content: Content, files: any[] = []) => {
+                try {
+                    const responseMemory: Memory = {
+                        id: stringToUuid(memory.id + "-voice-response-" + Date.now()),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: {
+                            ...content,
+                            user: this.runtime.character.name,
+                            inReplyTo: memory.id,
+                            isVoiceMessage: true
+                        },
+                        roomId,
+                        createdAt: Date.now(),
+                    };
 
-            await this.runtime.messageManager.createMemory(memory);
+                    if (responseMemory.content.text?.trim()) {
+                        await this.runtime.messageManager.createMemory(responseMemory);
 
-            state = await this.runtime.updateRecentMessageState(state);
-
-            const shouldIgnore = await this._shouldIgnore(memory);
-
-            if (shouldIgnore) {
-                return { text: "", action: "IGNORE" };
-            }
-
-            const shouldRespond = await this._shouldRespond(
-                message,
-                userId,
-                channel,
-                state
-            );
-
-            if (!shouldRespond) {
-                return;
-            }
-
-            const context = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates
-                        ?.discordVoiceHandlerTemplate ||
-                    this.runtime.character.templates?.messageHandlerTemplate ||
-                    discordVoiceHandlerTemplate,
-            });
-
-            const responseContent = await this._generateResponse(
-                memory,
-                state,
-                context
-            );
-
-            const callback: HandlerCallback = async (content: Content) => {
-                console.log("callback content: ", content);
-                const { roomId } = memory;
-
-                const responseMemory: Memory = {
-                    id: stringToUuid(
-                        memory.id + "-voice-response-" + Date.now()
-                    ),
-                    agentId: this.runtime.agentId,
-                    userId: this.runtime.agentId,
-                    content: {
-                        ...content,
-                        user: this.runtime.character.name,
-                        inReplyTo: memory.id,
-                    },
-                    roomId,
-                };
-
-                if (responseMemory.content.text?.trim()) {
-                    await this.runtime.messageManager.createMemory(
-                        responseMemory
-                    );
-                    state = await this.runtime.updateRecentMessageState(state);
-
-                    const responseStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, content.text)
-
-                    if (responseStream) {
-                        await this.playAudioStream(
-                            userId,
-                            responseStream as Readable
-                        );
+                        const responseStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, content.text);
+                        if (responseStream) {
+                            await this.playAudioStream(userId, responseStream as Readable);
+                        }
                     }
 
-                    await this.runtime.evaluate(memory, state);
-                } else {
-                    console.warn("Empty response, skipping");
+                    return [responseMemory];
+                } catch (error) {
+                    console.error("Error in voice message callback:", error);
+                    return [];
                 }
-                return [responseMemory];
             };
 
-            const responseMemories = await callback(responseContent);
-
-            const response = responseContent;
-
-            const content = (response.responseMessage ||
-                response.content ||
-                response.message) as string;
-
-            if (!content) {
-                return null;
-            }
-
-            console.log("responseMemories: ", responseMemories);
-
-            await this.runtime.processActions(
-                memory,
-                responseMemories,
-                state,
-                callback
-            );
+            // Emit voice-specific events
+            this.runtime.emitEvent(["DISCORD_VOICE_MESSAGE_RECEIVED", "VOICE_MESSAGE_RECEIVED"], {
+                runtime: this.runtime,
+                message: memory,
+                callback,
+            });
         } catch (error) {
-            console.error("Error processing transcribed text:", error);
+            console.error("Error processing voice message:", error);
         }
     }
 
@@ -804,150 +725,6 @@ export class VoiceManager extends EventEmitter {
             console.error("Error converting PCM to WAV:", error);
             throw error;
         }
-    }
-
-    private async _shouldRespond(
-        message: string,
-        userId: UUID,
-        channel: BaseGuildVoiceChannel,
-        state: State
-    ): Promise<boolean> {
-        if (userId === this.client.user?.id) return false;
-        const lowerMessage = message.toLowerCase();
-        const botName = this.client.user.username.toLowerCase();
-        const characterName = this.runtime.character.name.toLowerCase();
-        const guild = channel.guild;
-        const member = guild?.members.cache.get(this.client.user?.id as string);
-        const nickname = member?.nickname;
-
-        if (
-            lowerMessage.includes(botName as string) ||
-            lowerMessage.includes(characterName) ||
-            lowerMessage.includes(
-                this.client.user?.tag.toLowerCase() as string
-            ) ||
-            (nickname && lowerMessage.includes(nickname.toLowerCase()))
-        ) {
-            return true;
-        }
-
-        if (!channel.guild) {
-            return true;
-        }
-
-        // If none of the above conditions are met, use the generateText to decide
-        const shouldRespondContext = composeContext({
-            state,
-            template:
-                this.runtime.character.templates
-                    ?.discordShouldRespondTemplate ||
-                this.runtime.character.templates?.shouldRespondTemplate ||
-                discordShouldRespondTemplate,
-        });
-
-        const response = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondContext,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-
-        switch (true) {
-            case response.includes("RESPOND"):
-                return true;
-            case response.includes("IGNORE"):
-            case response.includes("STOP"):
-                return false;
-            default:
-                console.error(
-                    "Invalid response from response generateText:",
-                    response
-                );
-                return false;
-        }
-        
-    }
-
-    private async _generateResponse(
-        message: Memory,
-        state: State,
-        context: string
-    ): Promise<Content> {
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
-            runtime: this.runtime,
-            context,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-
-        response.source = "discord";
-
-        if (!response) {
-            console.error("No response from generateMessageResponse");
-            return;
-        }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId,
-            roomId,
-            type: "response",
-        });
-
-        return response;
-    }
-
-    private async _shouldIgnore(message: Memory): Promise<boolean> {
-        // console.log("message: ", message);
-        logger.debug("message.content: ", message.content);
-        // if the message is 3 characters or less, ignore it
-        if ((message.content as Content).text.length < 3) {
-            return true;
-        }
-
-        const loseInterestWords = [
-            // telling the bot to stop talking
-            "shut up",
-            "stop",
-            "dont talk",
-            "silence",
-            "stop talking",
-            "be quiet",
-            "hush",
-            "stfu",
-            "stupid bot",
-            "dumb bot",
-
-            // offensive words
-            "fuck",
-            "shit",
-            "damn",
-            "suck",
-            "dick",
-            "cock",
-            "sex",
-            "sexy",
-        ];
-        if (
-            (message.content as Content).text.length < 50 &&
-            loseInterestWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word)
-            )
-        ) {
-            return true;
-        }
-
-        const ignoreWords = ["k", "ok", "bye", "lol", "nm", "uh"];
-        if (
-            (message.content as Content).text?.length < 8 &&
-            ignoreWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word)
-            )
-        ) {
-            return true;
-        }
-
-        return false;
     }
 
     async scanGuild(guild: Guild) {

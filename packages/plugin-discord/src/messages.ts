@@ -1,8 +1,5 @@
 import {
-  composeContext,
   type Content,
-  generateMessageResponse,
-  generateShouldRespond,
   type HandlerCallback,
   type IAgentRuntime,
   type IBrowserService,
@@ -10,11 +7,9 @@ import {
   logger,
   type Media,
   type Memory,
-  ModelClass,
   ServiceType,
-  type State,
   stringToUuid,
-  type UUID,
+  type UUID
 } from "@elizaos/core";
 import {
   ChannelType,
@@ -23,129 +18,16 @@ import {
   type TextChannel,
 } from "discord.js";
 import { AttachmentManager } from "./attachments";
-import {
-  IGNORE_RESPONSE_WORDS,
-  LOSE_INTEREST_WORDS,
-  MESSAGE_CONSTANTS,
-  MESSAGE_LENGTH_THRESHOLDS,
-} from "./constants";
-import {
-  discordMessageHandlerTemplate,
-  discordShouldRespondTemplate,
-} from "./templates";
 import { canSendMessage, sendMessageInChunks } from "./utils";
-import type { VoiceManager } from "./voice";
-
-interface MessageContext {
-  content: string;
-  timestamp: number;
-}
-
-export type InterestChannels = {
-  [key: string]: {
-    currentHandler: string | undefined;
-    lastMessageSent: number;
-    messages: { userId: UUID; userName: string; content: Content }[];
-    previousContext?: MessageContext;
-    contextSimilarityThreshold?: number;
-  };
-};
-
-type PendingMessageTask = {
-  id: string;
-  cancel: () => void;
-  promise: Promise<any>;
-};
 
 export class MessageManager {
   private client: Client;
   private runtime: IAgentRuntime;
   private attachmentManager: AttachmentManager;
-  private interestChannels: InterestChannels = {};
-  private voiceManager: VoiceManager;
-  private lastChannelActivity: { [channelId: string]: number } = {};
-  private autoPostInterval: NodeJS.Timeout;
-  private pendingMessageTasks: Map<string, PendingMessageTask> = new Map();
-
-  constructor(discordClient: any, voiceManager: VoiceManager) {
+  constructor(discordClient: any) {
     this.client = discordClient.client;
-    this.voiceManager = voiceManager;
     this.runtime = discordClient.runtime;
     this.attachmentManager = new AttachmentManager(this.runtime);
-  }
-
-  private isCurrentTask(roomId: string, taskId: string): boolean {
-    const currentTask = this.pendingMessageTasks.get(roomId);
-    return currentTask?.id === taskId;
-  }
-
-  private async cancelPendingTask(roomId: string) {
-    const pendingTask = this.pendingMessageTasks.get(roomId);
-    if (pendingTask) {
-      pendingTask.cancel();
-      this.pendingMessageTasks.delete(roomId);
-    }
-  }
-
-  private async queueMessageTask(
-    roomId: string,
-    task: (isCurrent: () => boolean) => Promise<any>
-  ): Promise<any> {
-    // Cancel any existing task for this room
-    await this.cancelPendingTask(roomId);
-  
-    // Generate unique ID for this task
-    const taskId = `${roomId}-${Date.now()}-${Math.random()}`;
-    let isCancelled = false;
-    
-    const cancel = () => {
-      isCancelled = true;
-      // Only delete from map if this is still the current task
-      if (this.isCurrentTask(roomId, taskId)) {
-        this.pendingMessageTasks.delete(roomId);
-      }
-    };
-  
-    // Create task structure before starting promise
-    const pendingTask: PendingMessageTask = {
-      id: taskId,
-      cancel,
-      promise: null as any // Will be set after promise creation
-    };
-  
-    // Store the task BEFORE creating the promise
-    this.pendingMessageTasks.set(roomId, pendingTask);
-  
-    const isCurrent = () => {
-      return !isCancelled && this.isCurrentTask(roomId, taskId);
-    };
-  
-    const promise = new Promise(async (resolve, reject) => {
-      try {
-        // Double-check task is still current before starting work
-        if (!isCurrent()) {
-          console.log(`Task ${taskId} was cancelled before starting`);
-          return;
-        }
-  
-        const result = await task(isCurrent);
-        
-        if (isCurrent()) {
-          resolve(result);
-        } else {
-          console.log(`Task ${taskId} was cancelled after completion`);
-        }
-      } catch (error) {
-        if (isCurrent()) {
-          reject(error);
-        }
-      }
-    });
-  
-    // Set the promise on the task object
-    pendingTask.promise = promise;
-  
-    return promise;
   }
 
   async handleMessage(message: DiscordMessage) {
@@ -157,9 +39,6 @@ export class MessageManager {
     ) {
       return;
     }
-
-    this.runtime.emitEvent("DISCORD_MESSAGE_RECEIVED", { message });
-    this.lastChannelActivity[message.channelId] = Date.now();
 
     if (message.interaction || message.author.id === this.client.user?.id) {
       return;
@@ -180,99 +59,23 @@ export class MessageManager {
     }
 
     const userId = message.author.id as UUID;
+    const userIdUUID = stringToUuid(userId);
     const userName = message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
-    const hasInterest = this._checkInterest(message.channelId);
     const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
 
-    await this.cancelPendingTask(roomId.toString());
+    await this.runtime.ensureConnection({
+      userId: userIdUUID,
+      roomId,
+      userName,
+      userScreenName: name,
+      source: "discord",
+      channelId: message.channel.id,
+      serverId: message.guild?.id,
+    });
 
     try {
-      const { processedContent, attachments } = await this.processMessageMedia(
-        message
-      );
-
-      const audioAttachments = message.attachments.filter((attachment) =>
-        attachment.contentType?.startsWith("audio/")
-      );
-      if (audioAttachments.size > 0) {
-        const processedAudioAttachments =
-          await this.attachmentManager.processAttachments(audioAttachments);
-        attachments.push(...processedAudioAttachments);
-      }
-
-      const userIdUUID = stringToUuid(userId);
-
-      await this.runtime.ensureConnection(
-        userIdUUID,
-        roomId,
-        userName,
-        name,
-        "discord"
-      );
-
-      const messageId = stringToUuid(message.id + "-" + this.runtime.agentId);
-      let shouldRespond = true;
-
-      const content: Content = {
-        text: processedContent,
-        attachments: attachments,
-        source: "discord",
-        url: message.url,
-        inReplyTo: message.reference?.messageId
-          ? stringToUuid(
-              message.reference.messageId + "-" + this.runtime.agentId
-            )
-          : undefined,
-      };
-
-      const userMessage = {
-        content,
-        userId: userIdUUID,
-        agentId: this.runtime.agentId,
-        roomId,
-      };
-
-      const memory: Memory = {
-        id: stringToUuid(message.id + "-" + this.runtime.agentId),
-        ...userMessage,
-        userId: userIdUUID,
-        agentId: this.runtime.agentId,
-        roomId,
-        content,
-        createdAt: message.createdTimestamp,
-      };
-
-      if (content.text) {
-        await this.runtime.messageManager.addEmbeddingToMemory(memory);
-        await this.runtime.messageManager.createMemory(memory);
-
-        if (this.interestChannels[message.channelId]) {
-          this.interestChannels[message.channelId].messages.push({
-            userId: userIdUUID,
-            userName: userName,
-            content: content,
-          });
-
-          if (
-            this.interestChannels[message.channelId].messages.length >
-            MESSAGE_CONSTANTS.MAX_MESSAGES
-          ) {
-            this.interestChannels[message.channelId].messages =
-              this.interestChannels[message.channelId].messages.slice(
-                -MESSAGE_CONSTANTS.MAX_MESSAGES
-              );
-          }
-        }
-      }
-
-      let state = await this.runtime.composeState(userMessage, {
-        discordClient: this.client,
-        discordMessage: message,
-        agentName: this.runtime.character.name || this.client.user?.displayName,
-      });
-
       const canSendResult = canSendMessage(message.channel);
       if (!canSendResult.canSend) {
         return logger.warn(
@@ -281,169 +84,99 @@ export class MessageManager {
         );
       }
 
-      const agentUserState =
-        await this.runtime.databaseAdapter.getParticipantUserState(
-          roomId,
-          this.runtime.agentId
-        );
+      const { processedContent, attachments } = await this.processMessage(
+        message
+      );
 
-      if (
-        agentUserState === "MUTED" &&
-        !message.mentions.has(this.client.user.id) &&
-        !message.content.toLowerCase().includes(this.runtime.character.name.toLowerCase()) &&
-        !hasInterest
-      ) {
-        console.log("Ignoring muted room");
-        return;
+      const audioAttachments = message.attachments.filter((attachment) =>
+        attachment.contentType?.startsWith("audio/")
+      );
+
+      if (audioAttachments.size > 0) {
+        const processedAudioAttachments =
+          await this.attachmentManager.processAttachments(audioAttachments);
+        attachments.push(...processedAudioAttachments);
       }
 
-      if (agentUserState === "FOLLOWED") {
-        shouldRespond = true;
-      } else if (
-        (!shouldRespond && hasInterest) ||
-        (shouldRespond && !hasInterest)
-      ) {
-        shouldRespond = await this._shouldRespond(message, state);
-      }
+      const userIdUUID = stringToUuid(userId);
+      const messageId = stringToUuid(message.id + "-" + this.runtime.agentId);
 
-      if (shouldRespond) {
-        await this.queueMessageTask(roomId.toString(), async (isCurrent) => {
-          const context = composeContext({
-            state,
-            template:
-              this.runtime.character.templates?.discordMessageHandlerTemplate ||
-              discordMessageHandlerTemplate,
-          });
+      const newMessage: Memory = {
+        id: messageId,
+        userId: userIdUUID,
+        agentId: this.runtime.agentId,
+        roomId: roomId,
+        content: {
+          name: name,
+          userName: userName,
+          text: processedContent,
+          attachments: attachments,
+          source: "discord",
+          url: message.url,
+          inReplyTo: message.reference?.messageId
+            ? stringToUuid(message.reference.messageId)
+            : undefined,
+        },
+        createdAt: message.createdTimestamp,
+      };
 
-          try {
-            if(!isCurrent()) {
-              return;
-            }            
-            const responseContent = await generateMessageResponse({
-              runtime: this.runtime,
-              context,
-              modelClass: ModelClass.TEXT_LARGE,
-            });
-
-            if (!isCurrent()) {
-              return;
-            }
-
-            // await (message.channel as TextChannel).sendTyping();
-
-            await this.runtime.databaseAdapter.log({
-              body: { message, context, response: responseContent },
-              userId: this.runtime.agentId,
-              roomId,
-              type: "response",
-            });
-
-            responseContent.text = responseContent.text?.trim();
-            responseContent.inReplyTo = stringToUuid(
+      const callback: HandlerCallback = async (
+        content: Content,
+        files: any[]
+      ) => {
+        try {
+          if (message.id && !content.inReplyTo) {
+            content.inReplyTo = stringToUuid(
               message.id + "-" + this.runtime.agentId
             );
-
-            const callback: HandlerCallback = async (
-              content: Content,
-              files: any[]
-            ) => {
-              if (!isCurrent()) {
-                console.log("Message generation was cancelled, not sending response");
-                return [];
-              }
-
-              try {
-                if (message.id && !content.inReplyTo) {
-                  content.inReplyTo = stringToUuid(
-                    message.id + "-" + this.runtime.agentId
-                  );
-                }
-                const messages = await sendMessageInChunks(
-                  message.channel as TextChannel,
-                  content.text,
-                  message.id,
-                  files
-                );
-
-                if (!isCurrent()) {
-                  return [];
-                }
-
-                const memories: Memory[] = [];
-                for (const m of messages) {
-                  let action = content.action;
-                  if (
-                    messages.length > 1 &&
-                    m !== messages[messages.length - 1]
-                  ) {
-                    action = "CONTINUE";
-                  }
-
-                  const memory: Memory = {
-                    id: stringToUuid(m.id + "-" + this.runtime.agentId),
-                    userId: this.runtime.agentId,
-                    agentId: this.runtime.agentId,
-                    content: {
-                      ...content,
-                      action,
-                      inReplyTo: messageId,
-                      url: m.url,
-                    },
-                    roomId,
-                    createdAt: m.createdTimestamp,
-                  };
-                  memories.push(memory);
-                }
-
-                for (const m of memories) {
-                  await this.runtime.messageManager.createMemory(m);
-                }
-                return memories;
-              } catch (error) {
-                console.error("Error sending message:", error);
-                return [];
-              }
-            };
-
-            const responseMessages: Memory[] = [
-              {
-                id: stringToUuid(messageId + "-" + this.runtime.agentId),
-                userId: this.runtime.agentId,
-                agentId: this.runtime.agentId,
-                content: responseContent,
-                roomId,
-                createdAt: Date.now(),
-              },
-            ];
-
-            state = await this.runtime.updateRecentMessageState(state);
-
-            await this.runtime.processActions(
-              memory,
-              responseMessages,
-              state,
-              callback
-            );
-            return responseMessages;
-          } catch (error) {
-            throw error;
           }
-        });
-      }
+          const messages = await sendMessageInChunks(
+            message.channel as TextChannel,
+            content.text,
+            message.id,
+            files
+          );
 
-      await this.runtime.evaluate(memory, state, shouldRespond);
+          const memories: Memory[] = [];
+          for (const m of messages) {
+            let action = content.action;
+            if (messages.length > 1 && m !== messages[messages.length - 1]) {
+              action = "CONTINUE";
+            }
+
+            const memory: Memory = {
+              id: stringToUuid(m.id + "-" + this.runtime.agentId),
+              userId: this.runtime.agentId,
+              agentId: this.runtime.agentId,
+              content: {
+                ...content,
+                action,
+                inReplyTo: messageId,
+                url: m.url,
+              },
+              roomId,
+              createdAt: m.createdTimestamp,
+            };
+            memories.push(memory);
+          }
+
+          for (const m of memories) {
+            await this.runtime.messageManager.createMemory(m);
+          }
+          return memories;
+        } catch (error) {
+          console.error("Error sending message:", error);
+          return [];
+        }
+      };
+
+      this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
+        runtime: this.runtime,
+        message: newMessage,
+        callback,
+      });
     } catch (error) {
       console.error("Error handling message:", error);
-      if (message.channel.type === ChannelType.GuildVoice) {
-        const errorMessage = "Sorry, I had a glitch. What was that?";
-        const audioStream = await this.runtime.useModel(
-          ModelClass.TEXT_TO_SPEECH,
-          errorMessage
-        );
-        await this.voiceManager.playAudioStream(userId, audioStream);
-      } else {
-        console.error("Error sending message:", error);
-      }
     }
   }
 
@@ -454,21 +187,24 @@ export class MessageManager {
     }
   }
 
-  async processMessageMedia(
+  async processMessage(
     message: DiscordMessage
   ): Promise<{ processedContent: string; attachments: Media[] }> {
     let processedContent = message.content;
     let attachments: Media[] = [];
-  
+
     const mentionRegex = /<@!?(\d+)>/g;
-    processedContent = processedContent.replace(mentionRegex, (match, userId) => {
-      const user = message.mentions.users.get(userId);
-      if (user) {
-        return `${user.username} (@${userId})`;
+    processedContent = processedContent.replace(
+      mentionRegex,
+      (match, userId) => {
+        const user = message.mentions.users.get(userId);
+        if (user) {
+          return `${user.username} (@${userId})`;
+        }
+        return match;
       }
-      return match;
-    });
-  
+    );
+
     const codeBlockRegex = /```([\s\S]*?)```/g;
     let match;
     while ((match = codeBlockRegex.exec(processedContent))) {
@@ -492,16 +228,16 @@ export class MessageManager {
         `Code Block (${attachmentId})`
       );
     }
-  
+
     if (message.attachments.size > 0) {
       attachments = await this.attachmentManager.processAttachments(
         message.attachments
       );
     }
-  
+
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const urls = processedContent.match(urlRegex) || [];
-  
+
     for (const url of urls) {
       if (
         this.runtime
@@ -515,7 +251,7 @@ export class MessageManager {
           throw new Error("Video service not found");
         }
         const videoInfo = await videoService.processVideo(url, this.runtime);
-  
+
         attachments.push({
           id: `youtube-${Date.now()}`,
           url: url,
@@ -531,10 +267,10 @@ export class MessageManager {
         if (!browserService) {
           throw new Error("Browser service not found");
         }
-  
+
         const { title, description: summary } =
           await browserService.getPageContent(url, this.runtime);
-  
+
         attachments.push({
           id: `webpage-${Date.now()}`,
           url: url,
@@ -545,91 +281,8 @@ export class MessageManager {
         });
       }
     }
-  
+
     return { processedContent, attachments };
-  }
-
-  private _checkInterest(channelId: string): boolean {
-    const channelState = this.interestChannels[channelId];
-    if (!channelState) return false;
-
-    if (channelState.messages.length > 0) {
-      const recentMessages = channelState.messages.slice(
-        -MESSAGE_CONSTANTS.RECENT_MESSAGE_COUNT
-      );
-      const differentUsers = new Set(recentMessages.map((m) => m.userId)).size;
-
-      if (
-        differentUsers > 1 &&
-        !recentMessages.some((m) => m.userId === this.client.user?.id)
-      ) {
-        delete this.interestChannels[channelId];
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private async _shouldRespond(
-    message: DiscordMessage,
-    state: State
-  ): Promise<boolean> {
-    if (message.author.id === this.client.user?.id) return false;
-
-    const channelState = this.interestChannels[message.channelId];
-
-    if (message.mentions.has(this.client.user?.id as string)) return true;
-
-    const lowerMessage = message.content.toLowerCase();
-    const botName = this.client.user.username.toLowerCase();
-    const characterName = this.runtime.character.name.toLowerCase();
-    const guild = message.guild;
-    const member = guild?.members.cache.get(this.client.user?.id as string);
-    const nickname = member?.nickname;
-
-    if (
-      lowerMessage.includes(botName as string) ||
-      lowerMessage.includes(characterName) ||
-      lowerMessage.includes(
-          this.client.user?.tag.toLowerCase() as string
-      ) ||
-      (nickname && lowerMessage.includes(nickname.toLowerCase()))
-    ) {
-      return true;
-    }
-
-    const shouldRespondContext = composeContext({
-      state,
-      template:
-        this.runtime.character.templates?.discordShouldRespondTemplate ||
-        this.runtime.character.templates?.shouldRespondTemplate ||
-        discordShouldRespondTemplate,
-    });
-
-    const response = await generateShouldRespond({
-      runtime: this.runtime,
-      context: shouldRespondContext,
-      modelClass: ModelClass.TEXT_SMALL,
-    });
-
-    if (response.includes("RESPOND")) {
-      if (channelState) {
-        channelState.previousContext = {
-          content: message.content,
-          timestamp: Date.now(),
-        };
-      }
-      return true;
-    } else if (response.includes("IGNORE")) {
-      return false;
-    } else if (response.includes("STOP")) {
-      delete this.interestChannels[message.channelId];
-      return false;
-    } else {
-      console.error("Invalid response from response generateText:", response);
-      return false;
-    }
   }
 
   async fetchBotName(botToken: string) {

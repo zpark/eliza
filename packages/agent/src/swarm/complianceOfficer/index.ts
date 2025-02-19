@@ -10,6 +10,7 @@ import type { Message, Client } from "discord.js";
 const character: Character = {
   name: "Gary",
   plugins: [
+    "@elizaos/plugin-sql",
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",

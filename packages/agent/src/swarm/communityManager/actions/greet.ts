@@ -134,14 +134,6 @@ export const greetAction: Action = {
             // Send greeting
             await callback(content);
 
-            // Log greeting
-            await runtime.databaseAdapter.log({
-                body: { greeting, userId },
-                userId: runtime.agentId,
-                roomId: message.roomId,
-                type: "greeting",
-            });
-
         } catch (error) {
             logger.error("Error in greet handler:", error);
         }

@@ -72,7 +72,6 @@ export async function registerServerOwner(
 // In onboarding/ownership.ts, modify findServerForOwner:
 export async function findServerForOwner(
     runtime: IAgentRuntime,
-    ownerId: string,
     state?: State
 ): Promise<ServerOwnership | null> {
     try {
@@ -111,7 +110,7 @@ export async function validateOnboardingAccess(
 ): Promise<{ serverId: string, onboardingState: OnboardingState } | null> {
     try {
         // Find server where user is owner
-        const serverOwnership = await findServerForOwner(runtime, userId);
+        const serverOwnership = await findServerForOwner(runtime);
         
         if (!serverOwnership) {
             return null;

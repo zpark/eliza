@@ -1,6 +1,7 @@
 import type {
     Account,
     Actor,
+    ChannelType,
     Character,
     Goal,
     GoalStatus,
@@ -8,6 +9,7 @@ import type {
     Memory,
     Participant,
     Relationship,
+    RoomData,
     UUID,
 } from "./types.ts";
 
@@ -238,14 +240,14 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room to retrieve.
      * @returns A Promise that resolves to the room ID or null if not found.
      */
-    abstract getRoom(roomId: UUID): Promise<UUID | null>;
+    abstract getRoom(roomId: UUID): Promise<RoomData | null>;
 
     /**
      * Creates a new room with an optional specified ID.
      * @param roomId Optional UUID to assign to the new room.
      * @returns A Promise that resolves to the UUID of the created room.
      */
-    abstract createRoom(roomId?: UUID): Promise<UUID>;
+    abstract createRoom(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<UUID>;
 
     /**
      * Removes a specific room from the database.

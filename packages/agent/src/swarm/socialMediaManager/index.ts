@@ -10,6 +10,7 @@ dotenv.config({ path: '../../.env' });
 const character: Character = {
   name: "Laura",
   plugins: [
+    "@elizaos/plugin-sql",
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",

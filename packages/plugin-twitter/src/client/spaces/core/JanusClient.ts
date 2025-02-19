@@ -104,6 +104,7 @@ export class JanusClient extends EventEmitter {
     // Start polling for Janus events
     this.pollActive = true;
     this.startPolling();
+    
 
     // Create a new Janus room (only for the host scenario)
     await this.createRoom();

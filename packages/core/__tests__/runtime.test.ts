@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 import { AgentRuntime } from "../src/runtime";
-import type {
-    Action,
-    IDatabaseAdapter,
-    IMemoryManager,
-    Memory,
-    UUID
+import {
+    ChannelType,
+    type Action,
+    type IDatabaseAdapter,
+    type IMemoryManager,
+    type Memory,
+    type UUID
 } from "../src/types";
 
 // Mock dependencies with minimal implementations

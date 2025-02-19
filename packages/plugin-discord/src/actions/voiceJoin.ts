@@ -41,31 +41,10 @@ export default {
             return false;
         }
 
-        if (!state.discordClient) {
-            return;
-        }
+        const client = runtime.getClient("discord");
 
-        // did they say something about joining a voice channel? if not, don't validate
-        const keywords = [
-            "join",
-            "come to",
-            "come on",
-            "enter",
-            "voice",
-            "chat",
-            "talk",
-            "call",
-            "hop on",
-            "get on",
-            "vc",
-            "meeting",
-            "discussion",
-        ];
-        if (
-            !keywords.some((keyword) =>
-                message.content.text.toLowerCase().includes(keyword)
-            )
-        ) {
+        if (!client) {
+            logger.error("Discord client not found");
             return false;
         }
 
@@ -92,19 +71,22 @@ export default {
         const discordMessage = (state.discordChannel ||
             state.discordMessage) as DiscordMessage;
 
-        if (!discordMessage.content) {
-            discordMessage.content = message.content.text;
-        }
+        const messageContent = message.content.text;
 
         const id = (discordMessage as DiscordMessage).guild?.id as string;
-        const client = state.discordClient as Client;
+
+        const client = runtime.getClient("discord");
+
+        if (!client) {
+            logger.error("Discord client not found");
+            return false;
+        }
+
         const voiceChannels = (
-            client.guilds.cache.get(id) as Guild
+            client.client.guilds.cache.get(id) as Guild
         ).channels.cache.filter(
             (channel: Channel) => channel.type === ChannelType.GuildVoice
         );
-
-        const messageContent = discordMessage.content;
 
         const targetChannel = voiceChannels.find((channel) => {
             const name = (channel as { name: string }).name.toLowerCase();
@@ -178,13 +160,6 @@ You should only respond with the name of the voice channel or none, no commentar
                 runtime,
                 context,
                 modelClass: ModelClass.TEXT_SMALL,
-            });
-
-            runtime.databaseAdapter.log({
-                body: { message, context, response: responseContent },
-                userId: stringToUuid(message.userId),
-                roomId: message.roomId,
-                type: "joinVoice",
             });
 
             if (responseContent && responseContent.trim().length > 0) {

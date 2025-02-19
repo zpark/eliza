@@ -246,20 +246,6 @@ const updateOrgRoleAction: Action = {
                   role: assignment.newRole
               };
 
-              // Log role update
-              await runtime.databaseAdapter.log({
-                  body: {
-                      type: "role_update",
-                      targetUser: assignment.userId,
-                      oldRole: currentRole,
-                      newRole: assignment.newRole,
-                      updatedBy: requesterId
-                  },
-                  userId: runtime.agentId,
-                  roomId: message.roomId,
-                  type: "role_management"
-              });
-
               await callback({
                   text: `Updated ${targetUser.user.username}'s role to ${assignment.newRole}.`,
                   action: "SET_ORG_RELATIONSHIP",
