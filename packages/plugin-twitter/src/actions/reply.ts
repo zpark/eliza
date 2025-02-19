@@ -47,7 +47,7 @@ const twitterReplyAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "@agentName What do you think about the latest AI developments?",
+                    text: "{{user2}} What do you think about the latest AI developments?",
                 },
             },
             {
@@ -62,7 +62,7 @@ const twitterReplyAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "Hey @agentName, can you explain quantum computing?",
+                    text: "Hey {{user2}}, can you explain quantum computing?",
                 },
             },
             {
@@ -77,7 +77,7 @@ const twitterReplyAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "@agentName What's your favorite programming language?",
+                    text: "{{user2}} What's your favorite programming language?",
                 },
             },
             {
@@ -92,7 +92,7 @@ const twitterReplyAction = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "@agentName Have you seen the latest research on transformer models?",
+                    text: "{{user2}} Have you seen the latest research on transformer models?",
                 },
             },
             {

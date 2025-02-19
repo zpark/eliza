@@ -20,7 +20,7 @@ Response: RESPOND
 {{user1}}: stfu bot
 Response: STOP
 
-{{user1}}: Hey {{agent}}, can you help me with something
+{{user1}}: Hey {{agentName}}, can you help me with something
 Response: RESPOND
 
 {{user1}}: {{agentName}} stfu plz
@@ -31,7 +31,7 @@ Response: STOP
 {{user1}}: no. i need help from someone else
 Response: IGNORE
 
-{{user1}}: Hey {{agent}}, can I ask you a question
+{{user1}}: Hey {{agentName}}, can I ask you a question
 {{agentName}}: Sure, what is it
 {{user1}}: can you ask claude to create a basic react module that demonstrates a counter
 Response: RESPOND

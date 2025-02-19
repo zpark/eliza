@@ -514,7 +514,7 @@ character.command("create")
         postExamples: formData.postExamples,
         messageExamples: (formData.messageExamples || []).map(conversation => 
           conversation.map(msg => ({
-            user: msg.user || "unknown",  // Ensure user is never undefined
+            user: msg.user || "{{user1}}",  // Ensure user is never undefined
             content: msg.content
           }))
         ),
@@ -529,7 +529,7 @@ character.command("create")
 
       if (await reviewCharacter(charData)) {
         await adapter.createCharacter(charData);
-        logger.success(`Created character ${formData.name}`);
+        logger.success(`Created character ${charData.name}`);
       } else {
         logger.info("Creation cancelled");
       }
@@ -538,12 +538,12 @@ character.command("create")
 
 character.command("edit")
   .description("edit a character")
-  .argument("<character-name>", "character name")
-  .action(async (characterName) => {
+  .requiredOption("-c, --character <name>", "character name")
+  .action(async (opts) => {
     await withConnection(async () => {
-      const existing = await adapter.getCharacter(characterName);
+      const existing = await adapter.getCharacter(opts.character);
       if (!existing) {
-        logger.error(`Character ${characterName} not found`);
+        logger.error(`Character ${opts.character} not found`);
         return;
       }
 
@@ -596,7 +596,7 @@ character.command("edit")
       } as Character;  // Cast the entire object to Character type
 
       if (await reviewCharacter(updated)) {
-        await adapter.updateCharacter(characterName, updated);
+        await adapter.updateCharacter(opts.character, updated);
         logger.success(`Updated character ${formData.name} successfully`);
       } else {
         logger.info("Update cancelled");
@@ -606,11 +606,11 @@ character.command("edit")
 
 character.command("import")
   .description("import a character from file")
-  .argument("<file>", "JSON file path")
-  .action(async (fileArg) => {
+  .requiredOption("-f, --file <file>", "JSON file path")
+  .action(async (opts) => {
     await withConnection(async () => {
       try {
-        const filePath = fileArg || (await promptWithNav("Path to JSON file:"));
+        const filePath = opts.file || (await promptWithNav("Path to JSON file:"));
         if (!filePath || filePath === NAV_NEXT) {
           logger.info("Import cancelled");
           return;
@@ -640,13 +640,13 @@ character.command("import")
 
 character.command("export")
   .description("export a character to file")
-  .argument("<character-name>", "character name")
+  .requiredOption("-c, --character <name>", "character name")
   .option("-o, --output <file>", "output file path")
-  .action(async (characterName, opts) => {
+  .action(async (opts) => {
     await withConnection(async () => {
-      const characterData = await adapter.getCharacter(characterName);
+      const characterData = await adapter.getCharacter(opts.character);
       if (!characterData) {
-        logger.error(`Character ${characterName} not found`);
+        logger.error(`Character ${opts.character} not found`);
         return;
       }
       const outputPath = opts.output || `${characterData.name}.json`;
@@ -657,16 +657,16 @@ character.command("export")
 
 character.command("remove")
   .description("remove a character")
-  .argument("<character-name>", "character name")
-  .action(async (characterName) => {
+  .requiredOption("<character-name>", "character name")
+  .action(async (opts) => {
     await withConnection(async () => {
-      const exists = await adapter.getCharacter(characterName);
+      const exists = await adapter.getCharacter(opts.character);
       if (!exists) {
-        logger.error(`Character ${characterName} not found`);
+        logger.error(`Character ${opts.character} not found`);
         return;
       }
-      await adapter.removeCharacter(characterName);
-      logger.success(`Removed character ${characterName}`);
+      await adapter.removeCharacter(opts.character);
+      logger.success(`Removed character ${opts.character}`);
     });
   });
 
