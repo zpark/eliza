@@ -1,15 +1,58 @@
 // src/commands/character.ts
-import type { Character, MessageExample, UUID } from "@elizaos/core";
+import type { Character, MessageExample } from "@elizaos/core";
 import { MessageExampleSchema } from "@elizaos/core";
 import { Command } from "commander";
 import fs from "node:fs";
 import prompts from "prompts";
-import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import { adapter } from "../database";
+import { availablePlugins } from "../plugins";
 import { handleError } from "../utils/handle-error";
 import { logger } from "../utils/logger";
-import { availablePlugins } from "../plugins";
+
+let isShuttingDown = false;
+
+const cleanup = async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    logger.info("\nOperation cancelled by user. Cleaning up...");
+    try {
+        await adapter.close();
+        logger.info("Database connection closed successfully.");
+        process.exit(0); // Exit successfully after cleanup
+    } catch (error) {
+        logger.error("Error while closing database connection:", error);
+        process.exit(1); // Exit with error if cleanup fails
+    }
+};
+
+process.on("SIGINT", cleanup);
+process.on("SIGTERM", cleanup);
+
+async function withConnection(action: () => Promise<void>) {
+    let initialized = false;
+    try {
+        adapter.init();
+        initialized = true;
+        await action();
+        process.exit(0);
+    } catch (error) {
+        if (!isShuttingDown) {
+            logger.error("Error during command execution:", error);
+        }
+        throw error;
+    } finally {
+        if (initialized && !isShuttingDown) {
+            try {
+                await adapter.close();
+            } catch (error) {
+                logger.error("Error while closing database connection:", error);
+            }
+        }
+    }
+}
+
 
 const characterSchema = z.object({
   id: z.string().uuid().optional(),
@@ -99,10 +142,10 @@ async function collectSingleConversation(characterName: string, initial?: Messag
   logger.info("\nEnter conversation messages (alternating user/character)");
   if (initial?.length) {
     logger.info("\nExisting conversation:");
-    initial.forEach(msg => {
+    for (const msg of initial) {
       const user = msg.user === "{{user1}}" ? "User" : msg.user;
       logger.info(`${user}: ${msg.content.text}`);
-    });
+    }
     logger.info("\nContinue the conversation or press Enter to keep as is:");
   } else {
     logger.info("Press Enter with empty input or type 'next' when done with the conversation");
@@ -443,148 +486,156 @@ async function reviewCharacter(data: Partial<Character>): Promise<boolean> {
 character.command("list")
   .description("list all characters")
   .action(async () => {
-    const chars = await adapter.listCharacters();
-    if (chars.length === 0) logger.info("No characters found");
-    else {
-      logger.info("\nCharacters:");
-      console.table(chars.map(c => ({ name: c.name, bio: c.bio[0] })));
-    }
+    await withConnection(async () => {
+      const chars = await adapter.listCharacters();
+      if (chars.length === 0) logger.info("No characters found");
+      else {
+        logger.info("\nCharacters:");
+        console.table(chars.map(c => ({ name: c.name, bio: c.bio[0] })));
+      }
+    });
   });
 
 character.command("create")
   .description("create a new character")
   .action(async () => {
-    const formData = await collectCharacterData();
-    if (!formData) {
-      logger.info("Creation cancelled");
-      return;
-    }
-    const charData = {
-      ...getDefaultCharacterFields(),  // Default field values first in case of missing data
-      name: formData.name,
-      username: formData.username,
-      bio: formData.bio,
-      adjectives: formData.adjectives,
-      postExamples: formData.postExamples,
-      messageExamples: (formData.messageExamples || []).map(conversation => 
-        conversation.map(msg => ({
-          user: msg.user || "unknown",  // Ensure user is never undefined
-          content: msg.content
-        }))
-      ),
-      topics: formData.topics || [],
-      plugins: formData.plugins || [],
-      style: {
-        all: formData.style?.all || [],
-        chat: formData.style?.chat || [],
-        post: formData.style?.post || []
+    await withConnection(async () => {
+      const formData = await collectCharacterData();
+      if (!formData) {
+        logger.info("Creation cancelled");
+        return;
       }
-    } as Character;  // Cast the entire object to Character type
+      const charData = {
+        ...getDefaultCharacterFields(),  // Default field values first in case of missing data
+        name: formData.name,
+        username: formData.username,
+        bio: formData.bio,
+        adjectives: formData.adjectives,
+        postExamples: formData.postExamples,
+        messageExamples: (formData.messageExamples || []).map(conversation => 
+          conversation.map(msg => ({
+            user: msg.user || "unknown",  // Ensure user is never undefined
+            content: msg.content
+          }))
+        ),
+        topics: formData.topics || [],
+        plugins: formData.plugins || [],
+        style: {
+          all: formData.style?.all || [],
+          chat: formData.style?.chat || [],
+          post: formData.style?.post || []
+        }
+      } as Character;  // Cast the entire object to Character type
 
-    if (await reviewCharacter(charData)) {
-      await adapter.createCharacter(charData);
-      logger.success(`Created character ${formData.name}`);
-    } else {
-      logger.info("Creation cancelled");
-    }
+      if (await reviewCharacter(charData)) {
+        await adapter.createCharacter(charData);
+        logger.success(`Created character ${formData.name}`);
+      } else {
+        logger.info("Creation cancelled");
+      }
+    });
   });
 
 character.command("edit")
   .description("edit a character")
   .argument("<character-name>", "character name")
   .action(async (characterName) => {
-    const existing = await adapter.getCharacter(characterName);
-    if (!existing) {
-      logger.error(`Character ${characterName} not found`);
-      return;
-    }
-
-    // Show current values before editing
-    displayCharacter(existing, "Current Character Values");
-    
-    logger.info("\n=== Starting Edit Mode ===");
-    logger.info("Press Enter to keep existing values, or type new ones");
-    logger.info("Type 'back' to go to previous field, 'next' to skip to next field");
-    logger.info("Type 'cancel' to abort at any time\n");
-    
-    const formData = await collectCharacterData({
-      name: existing.name,
-      username: existing.username,
-      bio: Array.isArray(existing.bio) ? existing.bio : [existing.bio],
-      adjectives: existing.adjectives || [],
-      postExamples: existing.postExamples || [],
-      messageExamples: existing.messageExamples || [],
-      topics: existing.topics || [],
-      plugins: existing.plugins || [],
-      style: {
-        all: existing.style?.all || [],
-        chat: existing.style?.chat || [],
-        post: existing.style?.post || []
-      },
-    });
-    if (!formData) {
-      logger.info("Editing cancelled");
-      return;
-    }
-    const updated = {
-      ...getDefaultCharacterFields(existing),  // Include existing data in defaults
-      name: formData.name,
-      bio: formData.bio || [],
-      adjectives: formData.adjectives || [],
-      postExamples: formData.postExamples || [],
-      messageExamples: (formData.messageExamples || []).map(conversation => 
-        conversation.map(msg => ({
-          user: msg.user || "unknown",  // Ensure user is never undefined
-          content: msg.content
-        }))
-      ),
-      topics: formData.topics || [],
-      plugins: formData.plugins || [],
-      style: {
-        all: formData.style?.all || [],
-        chat: formData.style?.chat || [],
-        post: formData.style?.post || []
+    await withConnection(async () => {
+      const existing = await adapter.getCharacter(characterName);
+      if (!existing) {
+        logger.error(`Character ${characterName} not found`);
+        return;
       }
-    } as Character;  // Cast the entire object to Character type
 
-    if (await reviewCharacter(updated)) {
-      await adapter.updateCharacter(characterName, updated);
-      logger.success(`Updated character ${formData.name} successfully`);
-    } else {
-      logger.info("Update cancelled");
-    }
+      // Show current values before editing
+      displayCharacter(existing, "Current Character Values");
+      
+      logger.info("\n=== Starting Edit Mode ===");
+      logger.info("Press Enter to keep existing values, or type new ones");
+      logger.info("Type 'back' to go to previous field, 'next' to skip to next field");
+      logger.info("Type 'cancel' to abort at any time\n");
+      
+      const formData = await collectCharacterData({
+        name: existing.name,
+        username: existing.username,
+        bio: Array.isArray(existing.bio) ? existing.bio : [existing.bio],
+        adjectives: existing.adjectives || [],
+        postExamples: existing.postExamples || [],
+        messageExamples: existing.messageExamples || [],
+        topics: existing.topics || [],
+        plugins: existing.plugins || [],
+        style: {
+          all: existing.style?.all || [],
+          chat: existing.style?.chat || [],
+          post: existing.style?.post || []
+        },
+      });
+      if (!formData) {
+        logger.info("Editing cancelled");
+        return;
+      }
+      const updated = {
+        ...getDefaultCharacterFields(existing),  // Include existing data in defaults
+        name: formData.name,
+        bio: formData.bio || [],
+        adjectives: formData.adjectives || [],
+        postExamples: formData.postExamples || [],
+        messageExamples: (formData.messageExamples || []).map(conversation => 
+          conversation.map(msg => ({
+            user: msg.user || "unknown",  // Ensure user is never undefined
+            content: msg.content
+          }))
+        ),
+        topics: formData.topics || [],
+        plugins: formData.plugins || [],
+        style: {
+          all: formData.style?.all || [],
+          chat: formData.style?.chat || [],
+          post: formData.style?.post || []
+        }
+      } as Character;  // Cast the entire object to Character type
+
+      if (await reviewCharacter(updated)) {
+        await adapter.updateCharacter(characterName, updated);
+        logger.success(`Updated character ${formData.name} successfully`);
+      } else {
+        logger.info("Update cancelled");
+      }
+    });
   });
 
 character.command("import")
   .description("import a character from file")
   .argument("<file>", "JSON file path")
   .action(async (fileArg) => {
-    try {
-      const filePath = fileArg || (await promptWithNav("Path to JSON file:"));
-      if (!filePath || filePath === NAV_NEXT) {
-        logger.info("Import cancelled");
-        return;
+    await withConnection(async () => {
+      try {
+        const filePath = fileArg || (await promptWithNav("Path to JSON file:"));
+        if (!filePath || filePath === NAV_NEXT) {
+          logger.info("Import cancelled");
+          return;
+        }
+        const raw = await fs.promises.readFile(filePath, "utf8");
+        const parsed = characterSchema.parse(JSON.parse(raw));
+        await adapter.createCharacter({
+          name: parsed.name,
+          bio: parsed.bio || [],
+          adjectives: parsed.adjectives || [],
+          postExamples: parsed.postExamples || [],
+          messageExamples: parsed.messageExamples as MessageExample[][],
+          topics: parsed.topics || [],
+          style: {
+            all: parsed.style?.all || [],
+            chat: parsed.style?.chat || [],
+            post: parsed.style?.post || [],
+          },
+          plugins: parsed.plugins || [],
+        });
+        logger.success(`Imported character ${parsed.name}`);
+      } catch (error) {
+        handleError(error);
       }
-      const raw = await fs.promises.readFile(filePath, "utf8");
-      const parsed = characterSchema.parse(JSON.parse(raw));
-      await adapter.createCharacter({
-        name: parsed.name,
-        bio: parsed.bio || [],
-        adjectives: parsed.adjectives || [],
-        postExamples: parsed.postExamples || [],
-        messageExamples: parsed.messageExamples as MessageExample[][],
-        topics: parsed.topics || [],
-        style: {
-          all: parsed.style?.all || [],
-          chat: parsed.style?.chat || [],
-          post: parsed.style?.post || [],
-        },
-        plugins: parsed.plugins || [],
-      });
-      logger.success(`Imported character ${parsed.name}`);
-    } catch (error) {
-      handleError(error);
-    }
+    });
   });
 
 character.command("export")
@@ -592,26 +643,30 @@ character.command("export")
   .argument("<character-name>", "character name")
   .option("-o, --output <file>", "output file path")
   .action(async (characterName, opts) => {
-    const characterData = await adapter.getCharacter(characterName);
-    if (!characterData) {
-      logger.error(`Character ${characterName} not found`);
-      return;
-    }
-    const outputPath = opts.output || `${characterData.name}.json`;
-    await fs.promises.writeFile(outputPath, JSON.stringify(characterData, null, 2));
-    logger.success(`Exported character to ${outputPath}`);
+    await withConnection(async () => {
+      const characterData = await adapter.getCharacter(characterName);
+      if (!characterData) {
+        logger.error(`Character ${characterName} not found`);
+        return;
+      }
+      const outputPath = opts.output || `${characterData.name}.json`;
+      await fs.promises.writeFile(outputPath, JSON.stringify(characterData, null, 2));
+      logger.success(`Exported character to ${outputPath}`);
+    });
   });
 
 character.command("remove")
   .description("remove a character")
   .argument("<character-name>", "character name")
   .action(async (characterName) => {
-    const exists = await adapter.getCharacter(characterName);
-    if (!exists) {
-      logger.error(`Character ${characterName} not found`);
-      return;
-    }
-    await adapter.removeCharacter(characterName);
-    logger.success(`Removed character ${characterName}`);
+    await withConnection(async () => {
+      const exists = await adapter.getCharacter(characterName);
+      if (!exists) {
+        logger.error(`Character ${characterName} not found`);
+        return;
+      }
+      await adapter.removeCharacter(characterName);
+      logger.success(`Removed character ${characterName}`);
+    });
   });
 
