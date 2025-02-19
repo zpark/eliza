@@ -12,7 +12,7 @@ import type {
     State,
 } from "@elizaos/core";
 
-import { DiscordClient } from "..";
+import { DiscordClient } from "../index.ts";
 
 export default {
     name: "LEAVE_VOICE",

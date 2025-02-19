@@ -20,7 +20,7 @@ import {
     type GuildMember,
 } from "discord.js";
 
-import { DiscordClient } from "..";
+import { DiscordClient } from "../index.ts";
 
 export default {
     name: "JOIN_VOICE",
