@@ -325,7 +325,7 @@ export class MessageManager {
               return;
             }
 
-            // await (message.channel as TextChannel).sendTyping();
+            await (message.channel as TextChannel).sendTyping();
 
             await this.runtime.databaseAdapter.log({
               body: { message, context, response: responseContent },
@@ -626,22 +626,5 @@ export class MessageManager {
       console.error("Invalid response from response generateText:", response);
       return false;
     }
-  }
-
-  async fetchBotName(botToken: string) {
-    const url = "https://discord.com/api/v10/users/@me";
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bot ${botToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Error fetching bot details: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return (data as { username: string }).username;
   }
 }
