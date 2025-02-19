@@ -14,7 +14,6 @@ import {
   type Tweet,
 } from "./client/index.ts";
 import { EventEmitter } from "events";
-import type { TwitterConfig } from "./environment.ts";
 
 export function extractAnswer(text: string): string {
   const startIndex = text.indexOf("Answer: ") + 8;
