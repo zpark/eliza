@@ -147,7 +147,7 @@ export class TwitterInteractionClient {
                     for (const username of TARGET_USERS) {
                         try {
                             const userTweets = (
-                                await this.client.twitterClient.fetchSearchTweets(
+                                await this.client.fetchSearchTweets(
                                     `from:${username}`,
                                     3,
                                     SearchMode.Latest
@@ -304,7 +304,7 @@ export class TwitterInteractionClient {
         }
     }
 
-    private async handleTweet({
+    async handleTweet({
         tweet,
         message,
         thread,

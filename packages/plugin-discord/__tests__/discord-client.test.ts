@@ -5,6 +5,7 @@ import { DiscordClient } from '../src';
 // Mock @elizaos/core
 vi.mock('@elizaos/core', () => ({
   logger: {
+    log: vi.fn(),
     info: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),

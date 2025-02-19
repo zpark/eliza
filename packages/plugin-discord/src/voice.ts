@@ -264,7 +264,7 @@ export class VoiceManager extends EventEmitter {
                     } catch (e) {
                         // Seems to be a real disconnect, destroy and cleanup
                         logger.log(
-                            "Disconnection confirmed - cleaning up..." + e
+                            `Disconnection confirmed - cleaning up...${e}`
                         );
                         connection.destroy();
                         this.connections.delete(channel.id);

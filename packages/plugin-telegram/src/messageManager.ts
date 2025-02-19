@@ -43,11 +43,6 @@ export type InterestChats = {
 export class MessageManager {
     public bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
-    private interestChats: InterestChats = {};
-    private teamMemberUsernames: Map<string, string> = new Map();
-
-    private lastChannelActivity: { [channelId: string]: number } = {};
-    private autoPostInterval: NodeJS.Timeout;
 
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;
@@ -248,9 +243,13 @@ export class MessageManager {
             const userName = ctx.from.username || ctx.from.first_name || "Unknown User";
             const chatId = stringToUuid(ctx.chat?.id.toString() + "-" + this.runtime.agentId) as UUID;
             const roomId = chatId;
-            const messageId = stringToUuid(roomId + "-" + message.message_id.toString()) as UUID;
 
-            // Process images if present
+            // Get message ID
+            const messageId = stringToUuid(
+                roomId + "-" + message?.message_id?.toString()
+            ) as UUID;
+
+            // Handle images
             const imageInfo = await this.processImage(message);
             
             // Get message text - use type guards for safety
@@ -329,7 +328,9 @@ export class MessageManager {
             });
 
         } catch (error) {
-            logger.error("Error handling message:", error);
+            logger.error("❌ Error handling message:", error);
+            logger.error("Error sending message:", error);
+            throw error;
         }
     }
 

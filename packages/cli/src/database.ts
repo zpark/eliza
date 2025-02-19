@@ -1,6 +1,6 @@
-import Database from "better-sqlite3"
-import { SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite"
-  
-  // Initialize database
-  export const adapter = new SqliteDatabaseAdapter(new Database("./eliza.db"))
-  
+import { DrizzleDatabaseAdapter } from "@elizaos/plugin-drizzle";
+
+// Initialize database adapter
+export const adapter = new DrizzleDatabaseAdapter({
+  connectionString: process.env.POSTGRES_URL,
+});

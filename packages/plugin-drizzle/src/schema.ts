@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { getEmbeddingConfig } from "@elizaos/core";
 import { sql } from "drizzle-orm";
+import { roomTable } from "./schema/room";
 
 // Const.
 const DIMENSIONS = getEmbeddingConfig().dimensions;
@@ -72,17 +73,6 @@ export const memoryTable = pgTable("memories", {
         .references(() => roomTable.id)
         .references(() => roomTable.id),
     unique: boolean("unique").default(true).notNull(),
-});
-
-export const roomTable = pgTable("rooms", {
-    id: uuid("id").primaryKey().notNull(),
-    source: text("source").notNull(),
-    type: text("type").notNull(),
-    serverId: text("serverId"),
-    channelId: text("channelId"),
-    createdAt: numberTimestamp("createdAt")
-        .default(sql`now()`)
-        .notNull(),
 });
 
 export const goalTable = pgTable("goals", {

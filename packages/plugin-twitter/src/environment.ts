@@ -61,8 +61,8 @@ export const twitterEnvSchema = z.object({
         .default(''),
     */
     TWITTER_ENABLE_POST_GENERATION: z.boolean(),
-    POST_INTERVAL_MIN: z.number().int(),
-    POST_INTERVAL_MAX: z.number().int(),
+    TWITTER_POST_INTERVAL_MIN: z.number().int(),
+    TWITTER_POST_INTERVAL_MAX: z.number().int(),
     TWITTER_POST_IMMEDIATELY: z.boolean(),
     TWITTER_SPACES_ENABLE: z.boolean().default(false),
 });
@@ -159,16 +159,16 @@ export async function validateTwitterConfig(
 
 
             // int in minutes
-            POST_INTERVAL_MIN: safeParseInt(
-                runtime.getSetting("POST_INTERVAL_MIN") ||
-                    process.env.POST_INTERVAL_MIN,
+            TWITTER_POST_INTERVAL_MIN: safeParseInt(
+                runtime.getSetting("TWITTER_POST_INTERVAL_MIN") ||
+                    process.env.TWITTER_POST_INTERVAL_MIN,
                 90 // 1.5 hours
             ),
 
             // int in minutes
-            POST_INTERVAL_MAX: safeParseInt(
-                runtime.getSetting("POST_INTERVAL_MAX") ||
-                    process.env.POST_INTERVAL_MAX,
+            TWITTER_POST_INTERVAL_MAX: safeParseInt(
+                runtime.getSetting("TWITTER_POST_INTERVAL_MAX") ||
+                    process.env.TWITTER_POST_INTERVAL_MAX,
                 180 // 3 hours
             ),
 

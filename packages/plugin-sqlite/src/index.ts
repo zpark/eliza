@@ -733,15 +733,15 @@ export class SqliteDatabaseAdapter
         );
     }
 
-    async updateCharacter(character: Character): Promise<void> {
+    async updateCharacter(name: string, updates: Partial<Character>): Promise<void> {
         const sql = "UPDATE characters SET name = ?, bio = ?, json = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?";
         await this.db
         .prepare(sql)
         .run(
-            character.name,
-            character.bio,
-            JSON.stringify(character),
-            character.id
+            updates.name,
+            updates.bio,
+            JSON.stringify(updates),
+            name
         );
 
     }
@@ -766,10 +766,11 @@ export class SqliteDatabaseAdapter
         return this.db.prepare(sql).get(id) as Character;
     }
 
+    async ensureEmbeddingDimension(dimension: number, agentId: UUID): Promise<void> {}
 }
 
 const sqliteDatabaseAdapter: Adapter = {
-    init: (runtime: IAgentRuntime) => {
+    init: async (runtime: IAgentRuntime) => {
         const dataDir = path.join(process.cwd(), "data");
 
         if (!fs.existsSync(dataDir)) {
@@ -780,16 +781,13 @@ const sqliteDatabaseAdapter: Adapter = {
         logger.info(`Initializing SQLite database at ${filePath}...`);
         const db = new SqliteDatabaseAdapter(new Database(filePath));
 
-        // Test the connection
-        db.init()
-            .then(() => {
-                logger.success(
-                    "Successfully connected to SQLite database"
-                );
-            })
-            .catch((error) => {
-                logger.error("Failed to connect to SQLite:", error);
-            });
+        try { 
+            await db.init();
+            logger.success("Successfully connected to SQLite database");
+        } catch (error) {
+            logger.error("Failed to connect to SQLite:", error);
+            throw error;
+        }
 
         return db;
     },

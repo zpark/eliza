@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, v4 } from "uuid";
 import {
     composeActionExamples,
     formatActionNames,
@@ -400,6 +400,8 @@ export class AgentRuntime implements IAgentRuntime {
                         }
                     }
 
+                    logger.info("runtime initialize() plugin:", plugin);
+
                     if (plugin.actions) {
                         for (const action of plugin.actions) {
                             this.registerAction(action);
@@ -422,6 +424,7 @@ export class AgentRuntime implements IAgentRuntime {
                         for (const [modelClass, handler] of Object.entries(plugin.models)) {
                             this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                         }
+                        await this.ensureEmbeddingDimension();
                     }
                     if (plugin.services) {
                         for(const service of plugin.services){
@@ -451,6 +454,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.name,
         );
         await this.ensureParticipantInRoom(this.agentId, this.agentId);
+        await this.ensureCharacterExists(this.character);
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {
             // Non-RAG mode: only process string knowledge
@@ -603,6 +607,7 @@ export class AgentRuntime implements IAgentRuntime {
                 await action.handler(this, message, state, {}, callback, responses);
             } catch (error) {
                 logger.error(error);
+                throw error;
             }
         }
     }
@@ -1389,6 +1394,44 @@ Text: ${attachment.text}
             }
         }
     }
+
+    async ensureCharacterExists(character: Character) {
+        const characterExists = await this.databaseAdapter.getCharacter(character.name);
+        if (!characterExists) {
+            await this.databaseAdapter.createCharacter(character);
+        }
+    }
+
+    async ensureEmbeddingDimension() {
+        console.log(`[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`);
+        
+        if (!this.databaseAdapter) {
+            throw new Error(`[AgentRuntime][${this.character.name}] Database adapter not initialized before ensureEmbeddingDimension`);
+        }
+
+        try {
+            const model = this.getModel(ModelClass.TEXT_EMBEDDING);
+            if (!model) {
+                throw new Error(`[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered`);
+            }
+
+            console.log(`[AgentRuntime][${this.character.name}] Getting embedding dimensions`);
+            const embedding = await this.useModel(ModelClass.TEXT_EMBEDDING, null);
+            
+            if (!embedding || !embedding.length) {
+                throw new Error(`[AgentRuntime][${this.character.name}] Invalid embedding received`);
+            }
+
+            console.log(`[AgentRuntime][${this.character.name}] Setting embedding dimension: ${embedding.length}`);
+            await this.databaseAdapter.ensureEmbeddingDimension(embedding.length, this.agentId);
+            console.log(`[AgentRuntime][${this.character.name}] Successfully set embedding dimension`);
+        } catch (error) {
+            console.log(`[AgentRuntime][${this.character.name}] Error in ensureEmbeddingDimension:`, error);
+            throw error;
+        }
+    }
+
+
 
     registerTask(task: Task): UUID {
         // if task doesn't have an id, generate one
