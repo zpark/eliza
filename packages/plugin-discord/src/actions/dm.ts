@@ -24,7 +24,7 @@ const dmAction: Action = {
         state: State
     ): Promise<boolean> => {
         const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id) {
+        if (!discordMessage?.guildId) {
             return false;
         }
 
