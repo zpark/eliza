@@ -400,7 +400,10 @@ export function getTokenForProvider(
         case ModelProviderName.LMSTUDIO:
             return "";
         case ModelProviderName.GAIANET:
-            return "";
+            return (
+                character.settings?.secrets?.GAIA_API_KEY ||
+                settings.GAIA_API_KEY
+            );
         case ModelProviderName.BEDROCK:
             return "";
         case ModelProviderName.OPENAI:
