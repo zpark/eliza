@@ -126,11 +126,11 @@ export class MemoryManager implements IMemoryManager {
 
     /**
      * Searches for memories similar to a given embedding vector.
-     * @param embedding The embedding vector to search with.
-     * @param opts Options including match threshold, count, user IDs, and uniqueness.
+     * @param opts Options for the memory search
      * @param opts.match_threshold The similarity threshold for matching memories.
      * @param opts.count The maximum number of memories to retrieve.
      * @param opts.roomId The room ID to retrieve memories for.
+     * @param opts.agentId The agent ID to retrieve memories for.
      * @param opts.unique Whether to retrieve unique memories only.
      * @returns A Promise resolving to an array of Memory objects that match the embedding.
      */

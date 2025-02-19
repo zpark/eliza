@@ -71,12 +71,12 @@ export const addHeader = (header: string, body: string) => {
 /**
  * Generates a string with random user names populated in a template.
  *
- * This function generates a specified number of random user names and populates placeholders
+ * This function generates random user names and populates placeholders
  * in the provided template with these names. Placeholders in the template should follow the format `{{userX}}`
  * where `X` is the position of the user (e.g., `{{user1}}`, `{{user2}}`).
  *
- * @param {string} params.template - The template string containing placeholders for random user names.
- * @param {number} params.length - The number of random user names to generate.
+ * @param {string} template - The template string containing placeholders for random user names.
+ * @param {number} length - The number of random user names to generate.
  * @returns {string} The template string with placeholders replaced by random user names.
  *
  * @example
@@ -86,7 +86,7 @@ export const addHeader = (header: string, body: string) => {
  *
  * // Composing the random user string will result in:
  * // "Hello, John! Meet Alice and Bob."
- * const result = composeRandomUser({ template, length });
+ * const result = composeRandomUser(template, length);
  */
 export const composeRandomUser = (template: string, length: number) => {
     const exampleNames = Array.from({ length }, () =>

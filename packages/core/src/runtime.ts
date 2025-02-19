@@ -532,7 +532,9 @@ export class AgentRuntime implements IAgentRuntime {
     /**
      * Process the actions of a message.
      * @param message The message to process.
-     * @param content The content of the message to process actions from.
+     * @param responses The array of response memories to process actions from.
+     * @param state Optional state object for the action processing.
+     * @param callback Optional callback handler for action results.
      */
     async processActions(
         message: Memory,
@@ -770,10 +772,8 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     /**
-     * Ensure the existence of a room between the agent and a user. If no room exists, a new room is created and the user
-     * and agent are added as participants. The room ID is returned.
-     * @param userId - The user ID to create a room with.
-     * @returns The room ID of the room between the agent and the user.
+     * Ensure the existence of a room. If no room exists, a new room is created.
+     * @param roomId The room ID to ensure exists.
      * @throws An error if the room cannot be created.
      */
     async ensureRoomExists(roomId: UUID) {
