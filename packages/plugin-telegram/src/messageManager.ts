@@ -33,29 +33,10 @@ export enum MediaType {
 
 const MAX_MESSAGE_LENGTH = 4096; // Telegram's max message length
 
-interface MessageContext {
-    content: string;
-    timestamp: number;
-}
-
-export type InterestChats = {
-    [key: string]: {
-        currentHandler: string | undefined;
-        lastMessageSent: number;
-        messages: { userId: UUID; userName: string; content: Content }[];
-        previousContext?: MessageContext;
-        contextSimilarityThreshold?: number;
-    };
-};
-
 export class MessageManager {
     public bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
-    private interestChats: InterestChats = {};
-    private teamMemberUsernames: Map<string, string> = new Map();
-
     private lastChannelActivity: { [channelId: string]: number } = {};
-    private autoPostInterval: NodeJS.Timeout;
 
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;
