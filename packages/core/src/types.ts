@@ -1523,6 +1523,7 @@ export enum ServiceType {
     GOPLUS_SECURITY = "goplus_security",
     WEB_SEARCH = "web_search",
     EMAIL_AUTOMATION = "email_automation",
+    NKN_CLIENT_SERVICE = "nkn_client_service",
 }
 
 export enum LoggingLevel {
