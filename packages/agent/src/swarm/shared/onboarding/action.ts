@@ -11,9 +11,9 @@ import {
     generateObjectArray,
     logger,
     messageCompletionFooter,
-    stringToUuid
+    stringToUuid,
+    ChannelType
 } from "@elizaos/core";
-import { ChannelType, type Message } from "discord.js";
 import { findServerForOwner } from "./ownership";
 import type { OnboardingState } from "./types";
 
@@ -105,12 +105,13 @@ const onboardingAction: Action = {
         message: Memory,
         state: State
     ): Promise<boolean> => {
-        if(!state?.discordMessage) {
-            return false;
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
-        const discordMessage = state.discordMessage as Message;
         
-        if (discordMessage.channel.type !== ChannelType.DM) {
+        const type = room.type;
+        if(type !== ChannelType.DM) {
             return false;
         }
     

@@ -51,16 +51,7 @@ import {
     ChannelType
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-
-// Utility functions
-function isDirectoryItem(item: any): item is DirectoryItem {
-    return (
-        typeof item === "object" &&
-        item !== null &&
-        "directory" in item &&
-        typeof item.directory === "string"
-    );
-}
+import { messageEvents } from "./messages.ts";
 
 function formatKnowledge(knowledge: KnowledgeItem[]): string {
     return knowledge
@@ -254,6 +245,7 @@ export class AgentRuntime implements IAgentRuntime {
         databaseAdapter?: IDatabaseAdapter;
         cacheManager?: ICacheManager;
         adapters?: Adapter[];
+        events?: { [key: string]: ((params: any) => void)[] };
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -296,6 +288,14 @@ export class AgentRuntime implements IAgentRuntime {
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
         const plugins = opts?.plugins ?? [];
 
+        const events = opts?.events ?? messageEvents;
+
+        for (const [eventName, eventHandlers] of Object.entries(events)) {
+            for (const eventHandler of eventHandlers) {
+                this.registerEvent(eventName, eventHandler);
+            }
+        }
+
         for (const plugin of plugins) {
             for (const action of (plugin.actions ?? [])) {
                 this.registerAction(action);
@@ -321,6 +321,13 @@ export class AgentRuntime implements IAgentRuntime {
                 this.routes.push(route);
             }
 
+            // plugin.events is an object with keys as event names and values as event handlers
+            for(const [eventName, eventHandlers] of Object.entries(plugin.events)){
+                for(const eventHandler of eventHandlers){
+                    this.registerEvent(eventName, eventHandler);
+                }
+            }
+
             for(const client of plugin.clients){
                 client.start(this).then((startedClient) => {
                     logger.debug(
@@ -335,8 +342,16 @@ export class AgentRuntime implements IAgentRuntime {
 
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
-    }
 
+        for (const plugin of plugins) {
+            if (plugin.adapters) {
+                for (const adapter of plugin.adapters) {
+                    this.adapters.push(adapter);
+                }
+            }
+        }
+    }
+    
     registerClient(clientName: string, client: ClientInstance): void {
         if (this.clients.has(clientName)) {
             logger.warn(
@@ -424,7 +439,6 @@ export class AgentRuntime implements IAgentRuntime {
                         for (const [modelClass, handler] of Object.entries(plugin.models)) {
                             this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                         }
-                        await this.ensureEmbeddingDimension();
                     }
                     if (plugin.services) {
                         for(const service of plugin.services){
@@ -436,6 +450,15 @@ export class AgentRuntime implements IAgentRuntime {
                             this.routes.push(route);
                         }
                     }
+
+                    if (plugin.events) {
+                        for(const [eventName, eventHandlers] of Object.entries(plugin.events)){
+                            for(const eventHandler of eventHandlers){
+                                this.registerEvent(eventName, eventHandler);
+                            }
+                        }
+                    }
+                    
                     this.plugins.push(plugin);
                 }
             }
@@ -446,6 +469,8 @@ export class AgentRuntime implements IAgentRuntime {
                 await service.initialize(this);
             }
         }
+
+        await this.ensureEmbeddingDimension();
         
         await this.ensureRoomExists(this.agentId, "self", ChannelType.SELF);
         await this.ensureUserExists(

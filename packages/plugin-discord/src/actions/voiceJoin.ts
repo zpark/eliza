@@ -32,7 +32,7 @@ export default {
         "JOIN_CALL",
     ],
     validate: async (
-        _runtime: IAgentRuntime,
+        runtime: IAgentRuntime,
         message: Memory,
         state: State
     ) => {
@@ -41,7 +41,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord");
+        const client = runtime.getClient("discord").client;
 
         if (!client) {
             logger.error("Discord client not found");
@@ -67,15 +67,18 @@ export default {
             await callback(response.content);
         }
 
-        // We normalize data in from voice channels
-        const discordMessage = (state.discordChannel ||
-            state.discordMessage) as DiscordMessage;
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
+        }
 
-        const messageContent = message.content.text;
+        const serverId = room.serverId;
 
-        const id = (discordMessage as DiscordMessage).guild?.id as string;
+        if (!serverId) {
+            throw new Error("No server ID found");
+        }
 
-        const client = runtime.getClient("discord");
+        const client = runtime.getClient("discord").client;
 
         if (!client) {
             logger.error("Discord client not found");
@@ -83,7 +86,7 @@ export default {
         }
 
         const voiceChannels = (
-            client.client.guilds.cache.get(id) as Guild
+            client.client.guilds.cache.get(serverId) as Guild
         ).channels.cache.filter(
             (channel: Channel) => channel.type === ChannelType.GuildVoice
         );
@@ -105,7 +108,7 @@ export default {
         if (targetChannel) {
             joinVoiceChannel({
                 channelId: targetChannel.id,
-                guildId: (discordMessage as DiscordMessage).guild?.id as string,
+                guildId: serverId as string,
                 adapterCreator: (client.guilds.cache.get(id) as Guild)
                     .voiceAdapterCreator,
                 selfDeaf: false,
@@ -119,8 +122,7 @@ export default {
             if (member?.voice?.channel) {
                 joinVoiceChannel({
                     channelId: member.voice.channel.id,
-                    guildId: (discordMessage as DiscordMessage).guild
-                        ?.id as string,
+                    guildId: serverId,
                     adapterCreator: (client.guilds.cache.get(id) as Guild)
                         .voiceAdapterCreator,
                     selfDeaf: false,
@@ -185,8 +187,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 if (targetChannel) {
                     joinVoiceChannel({
                         channelId: targetChannel.id,
-                        guildId: (discordMessage as DiscordMessage).guild
-                            ?.id as string,
+                        guildId: serverId,
                         adapterCreator: (client.guilds.cache.get(id) as Guild)
                             .voiceAdapterCreator,
                         selfDeaf: false,
@@ -197,9 +198,10 @@ You should only respond with the name of the voice channel or none, no commentar
                 }
             }
 
-            await (discordMessage as DiscordMessage).reply(
-                "I couldn't figure out which channel you wanted me to join."
-            );
+            await callback({
+                text: "I couldn't figure out which channel you wanted me to join.",
+                source: "discord",
+            });
             return false;
         }
     },

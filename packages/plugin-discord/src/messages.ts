@@ -58,6 +58,8 @@ export class MessageManager {
       return;
     }
 
+    console.log("*** HANDLE RESPONSE ***", message);
+
     const userId = message.author.id as UUID;
     const userIdUUID = stringToUuid(userId);
     const userName = message.author.username;
@@ -100,6 +102,8 @@ export class MessageManager {
 
       const userIdUUID = stringToUuid(userId);
       const messageId = stringToUuid(message.id + "-" + this.runtime.agentId);
+
+      console.log("*** NEW MESSAGE ***", messageId, userIdUUID, this.runtime.agentId, roomId);
 
       const newMessage: Memory = {
         id: messageId,
@@ -170,6 +174,8 @@ export class MessageManager {
         }
       };
 
+      console.log("*** EMIT EVENT ***");
+
       this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
         runtime: this.runtime,
         message: newMessage,
@@ -177,13 +183,6 @@ export class MessageManager {
       });
     } catch (error) {
       console.error("Error handling message:", error);
-    }
-  }
-
-  async cacheMessages(channel: TextChannel, count = 20) {
-    const messages = await channel.messages.fetch({ limit: count });
-    for (const [_, message] of messages) {
-      await this.handleMessage(message);
     }
   }
 

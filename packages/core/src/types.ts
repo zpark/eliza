@@ -973,6 +973,8 @@ export interface IAgentRuntime {
   evaluators: Evaluator[];
   plugins: Plugin[];
 
+  events: Map<string, ((params: any) => void)[]>;
+
   fetch?: typeof fetch | null;
   routes: Route[];
   messageManager: IMemoryManager;
@@ -1058,6 +1060,8 @@ export interface IAgentRuntime {
   getUserProfile(userId: UUID): Promise<Account | null>;
 
   ensureRoomExists(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<void>;
+
+  getRoom(roomId: UUID): Promise<RoomData | null>;
 
   composeState(
     message: Memory,

@@ -1,26 +1,24 @@
 import {
-    Content,
-    logger,
-    stringToUuid,
-    type UUID,
-    type IAgentRuntime,
-  } from "@elizaos/core";
-  import type { Client } from "discord.js";
-  import {
-    ROLE_CACHE_KEYS,
-    RoleName,
-    type ServerRoleState,
-    type UserRole,
-  } from "../role/types";
-  import type {
-    OnboardingSetting,
-    OnboardingConfig,
-    OnboardingState,
-  } from "./types";
-  import onboardingAction from "./action";
-  import { createOnboardingProvider } from "./provider";
-  import { registerServerOwner } from "./ownership";
-  import type { Guild } from "discord.js";
+  ChannelType,
+  logger,
+  stringToUuid,
+  type IAgentRuntime,
+  type UUID
+} from "@elizaos/core";
+import type { Client, Guild } from "discord.js";
+import {
+  ROLE_CACHE_KEYS,
+  RoleName,
+  type ServerRoleState
+} from "../role/types";
+import onboardingAction from "./action";
+import { registerServerOwner } from "./ownership";
+import { createOnboardingProvider } from "./provider";
+import type {
+  OnboardingConfig,
+  OnboardingSetting,
+  OnboardingState,
+} from "./types";
   
   function createSettingFromConfig(
     configSetting: Omit<OnboardingSetting, "value">
@@ -145,10 +143,14 @@ import {
         const msg = await owner.send(randomMessage);
         const roomId = stringToUuid(msg.channelId + "-" + runtime.agentId);
   
+        await runtime.ensureRoomExists(roomId, "discord", ChannelType.DM, msg.channelId, serverId);
+        await runtime.ensureUserExists(runtime.agentId, runtime.character.name, runtime.character.name, "discord");
+
+        
         // Create memory of the initial message
         await runtime.messageManager.createMemory({
           agentId: runtime.agentId as UUID,
-          userId: stringToUuid(owner.id) as UUID,
+          userId: runtime.agentId as UUID,
           roomId: roomId,
           content: {
             text: randomMessage,

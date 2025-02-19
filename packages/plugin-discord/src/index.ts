@@ -135,6 +135,26 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     this.client.login(this.apiToken);
 
     this.setupEventListeners();
+
+    // give it to the 
+    const ensureAllServersExist = async (runtime: IAgentRuntime) => {
+      const guilds = await this.client.guilds.fetch();
+      for (const [, guild] of guilds) {
+        const guildChannels = await guild.fetch();
+        // for channel in channels
+        for (const [, channel] of guildChannels.channels.cache) {
+          const roomId = stringToUuid(channel.id + "-" + runtime.agentId);
+          const room = await runtime.getRoom(roomId);
+          // if the room already exists, skip
+          if (room) {
+            continue;
+          }
+          await runtime.ensureRoomExists(roomId, "discord", ChannelType.GROUP, channel.id, guild.id);
+        }
+      }
+    }
+
+    ensureAllServersExist(this.runtime);
   }
 
   private setupEventListeners() {
@@ -442,6 +462,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     logger.log(`Joined guild ${guild.name}`);
     this.voiceManager.scanGuild(guild);
     this.runtime.emitEvent("DISCORD_JOIN_SERVER", {
+      runtime: this.runtime,
       guild,
     });
   }
@@ -470,7 +491,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         // for each server the client is in, fire a connected event
         for (const [, guild] of guilds) {
           logger.log("DISCORD SERVER CONNECTED", guild);
-          this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { guild });
+          this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { runtime: this.runtime, guild });
         }
       }, 1000);
     }

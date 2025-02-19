@@ -5,8 +5,7 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import type { Message } from "discord.js";
-import { ServerRoleState, RoleName, ROLE_CACHE_KEYS } from "../role/types";
+import { ROLE_CACHE_KEYS, RoleName, ServerRoleState } from "../role/types";
 
 export const roleProvider: Provider = {
     get: async (
@@ -14,18 +13,18 @@ export const roleProvider: Provider = {
         message: Memory,
         state?: State
     ): Promise<string> => {
-        if(!state?.discordMessage) {
-            return "Error: No discord message in state";
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
-        const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild) {
-            return "Error: No guild found";
+
+        const serverId = room.serverId;
+
+        if (!serverId) {
+            throw new Error("No server ID found");
         }
 
         try {
-            // Fetch fresh guild data
-            const guild = await discordMessage.guild.fetch();
-            const serverId = guild.id;
             logger.info(`Using server ID: ${serverId}`);
 
             const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
@@ -43,6 +42,9 @@ export const roleProvider: Provider = {
             // Group users by role
             const owners: string[] = [];
             const managers: string[] = [];
+
+            const discordClient = runtime.getClient("discord").client;
+            const guild = await discordClient.guilds.fetch(serverId);
 
             // Fetch all members to get usernames
             const members = await guild.members.fetch();

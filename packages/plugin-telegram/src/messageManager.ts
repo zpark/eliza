@@ -347,6 +347,7 @@ export class MessageManager {
                 },
                 createdAt: Date.now()
             };
+            await this.runtime.messageManager.createMemory(memory);
 
             // Create callback for handling reaction responses
             const callback: HandlerCallback = async (content: Content) => {

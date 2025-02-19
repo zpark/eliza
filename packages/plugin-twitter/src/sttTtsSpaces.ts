@@ -404,7 +404,7 @@ export class SttTtsPlugin implements Plugin {
         );
 
         // Ensure room exists and user is in it
-        await this.runtime.ensureRoomExists(roomId, "twitter", ChannelType.VOICE_GROUP);
+        await this.runtime.ensureRoomExists(roomId, "twitter", ChannelType.VOICE_GROUP, null, this.spaceId);
         await this.runtime.ensureParticipantInRoom(userUuid, roomId);
 
         let state = await this.runtime.composeState(

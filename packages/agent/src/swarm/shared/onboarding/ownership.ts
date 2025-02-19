@@ -1,6 +1,5 @@
-import { type IAgentRuntime, logger, type State } from "@elizaos/core";
+import { type IAgentRuntime, logger, type State, stringToUuid } from "@elizaos/core";
 import type { OnboardingState } from "./types";
-import type { Message } from "discord.js";
 
 export interface ServerOwnership {
     ownerId: string;
@@ -80,20 +79,9 @@ export async function findServerForOwner(
             return null;
         }
 
-        // Get the Discord message from passed state
-        if (!state?.discordMessage) {
-            return null;
-        }
-        const discordMessage = state.discordMessage as Message;
-        const discordUserId = discordMessage?.author?.id;
-
-        if (!discordUserId) {
-            return null;
-        }
-
         // Find server where this user is owner using the Discord ID
         const serverOwnership = Object.values(ownershipState.servers).find(server => 
-            server.ownerId === discordUserId
+            stringToUuid(server.ownerId) === runtime.agentId
         );
 
         return serverOwnership || null;

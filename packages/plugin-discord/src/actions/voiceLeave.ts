@@ -32,7 +32,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord");
+        const client = runtime.getClient("discord").client;
 
         if (!client) {
             logger.error("Discord client not found");
@@ -57,14 +57,18 @@ export default {
             await callback(response.content);
         }
 
-        const discordMessage = (state.discordMessage ||
-            state.discordChannel) as DiscordMessage;
-
-        if (!discordMessage) {
-            throw new Error("Discord message is not available in the state.");
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
 
-        const client = runtime.getClient("discord");
+        const serverId = room.serverId;
+
+        if (!serverId) {
+            throw new Error("No server ID found");
+        }
+
+        const client = runtime.getClient("discord").client;
 
         if (!client) {
             logger.error("Discord client not found");
@@ -72,14 +76,14 @@ export default {
         }
 
         const voiceChannels = client.client.guilds.cache
-            .get((discordMessage as DiscordMessage).guild?.id as string)
+            .get(serverId)
             ?.channels.cache.filter(
                 (channel: Channel) => channel.type === ChannelType.GuildVoice
             );
 
         voiceChannels?.forEach((_channel: Channel) => {
             const connection = getVoiceConnection(
-                (discordMessage as DiscordMessage).guild?.id as string
+                serverId
             );
             if (connection) {
                 connection.destroy();

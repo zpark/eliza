@@ -10,7 +10,6 @@ import { initializeRole } from "../shared/role/initialize";
 const character: Character = {
   name: "Ruby",
   plugins: [
-    "@elizaos/plugin-sql",
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",

@@ -874,6 +874,8 @@ export class DrizzleDatabaseAdapter
             contentLength: memory.content?.text?.length,
         });
 
+        console.log("*** MEMORY ***", memory);
+
         let isUnique = true;
         if (memory.embedding && Array.isArray(memory.embedding)) {
             logger.info("Searching for similar memories:");

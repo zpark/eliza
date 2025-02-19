@@ -1,18 +1,18 @@
 import {
-    composeContext,
-    generateMessageResponse,
-    generateShouldRespond,
-    HandlerCallback,
-    logger,
-    Memory,
-    messageCompletionFooter,
-    ModelClass,
-    shouldRespondFooter,
-    State,
-    stringToUuid,
-    type IAgentRuntime,
-    type Plugin,
-    type UUID
+  composeContext,
+  generateMessageResponse,
+  generateShouldRespond,
+  HandlerCallback,
+  logger,
+  Memory,
+  messageCompletionFooter,
+  ModelClass,
+  shouldRespondFooter,
+  State,
+  stringToUuid,
+  type IAgentRuntime,
+  type Plugin,
+  type UUID,
 } from "@elizaos/core";
 import { v4 } from "uuid";
 import { cancelTaskAction } from "./actions/cancel.ts";
@@ -131,14 +131,18 @@ const checkShouldRespond = async (
   });
 
   if (response.includes("RESPOND")) {
-    if (response.includes("IGNORE")) {
-      return false;
-    } else if (response.includes("STOP")) {
-      return false;
-    } else {
-      console.error("Invalid response from response generateText:", response);
-      return false;
-    }
+    return true;
+  }
+
+  if (response.includes("IGNORE")) {
+    return false;
+  }
+
+  if (response.includes("STOP")) {
+    return false;
+  } else {
+    console.error("Invalid response from response generateText:", response);
+    return false;
   }
 };
 
@@ -155,68 +159,42 @@ const messageReceivedHandler = async ({
   await runtime.messageManager.createMemory(message);
 
   if (shouldRespond) {
-    const taskId = v4() as UUID;
-    await runtime.registerTask({
-      id: taskId,
-      name: "message-response",
-      description: "Generate a response to the message",
-      roomId: message.roomId,
-      tags: ["message-response"],
-      handler: async (runtime: IAgentRuntime) => {
-        async function isCurrent() {
-          // check if the task is still registered and not cancelled
-          return runtime.getTask(taskId);
-        }
-        const context = composeContext({
-          state,
-          template:
-            runtime.character.templates?.messageHandlerTemplate ||
-            messageHandlerTemplate,
-        });
-
-        try {
-          if (!isCurrent()) {
-            return;
-          }
-          const responseContent = await generateMessageResponse({
-            runtime: runtime,
-            context,
-            modelClass: ModelClass.TEXT_LARGE,
-          });
-
-          if (!isCurrent()) {
-            return;
-          }
-
-          responseContent.text = responseContent.text?.trim();
-          responseContent.inReplyTo = stringToUuid(
-            message.id + "-" + runtime.agentId
-          );
-
-          const responseMessages: Memory[] = [
-            {
-              id: v4() as UUID,
-              userId: runtime.agentId,
-              agentId: runtime.agentId,
-              content: responseContent,
-              roomId: message.roomId,
-              createdAt: Date.now(),
-            },
-          ];
-
-          state = await runtime.updateRecentMessageState(state);
-
-          await runtime.processActions(
-            message,
-            responseMessages,
-            state,
-            callback
-          );
-        } catch (error) {
-          throw error;
-        }
-      },
+    const context = composeContext({
+      state,
+      template:
+        runtime.character.templates?.messageHandlerTemplate ||
+        messageHandlerTemplate,
     });
+
+    try {
+      const responseContent = await generateMessageResponse({
+        runtime: runtime,
+        context,
+        modelClass: ModelClass.TEXT_LARGE,
+      });
+
+      responseContent.text = responseContent.text?.trim();
+      responseContent.inReplyTo = stringToUuid(
+        message.id + "-" + runtime.agentId
+      );
+
+      const responseMessages: Memory[] = [
+        {
+          id: v4() as UUID,
+          userId: runtime.agentId,
+          agentId: runtime.agentId,
+          content: responseContent,
+          roomId: message.roomId,
+          createdAt: Date.now(),
+        },
+      ];
+
+      state = await runtime.updateRecentMessageState(state);
+
+      await runtime.processActions(message, responseMessages, state, callback);
+    } catch (error) {
+      throw error;
+    }
   }
 
   await runtime.evaluate(message, state, shouldRespond);
@@ -255,26 +233,6 @@ export const bootstrapPlugin: Plugin = {
   ],
   evaluators: [factEvaluator, goalEvaluator],
   providers: [timeProvider, factsProvider, confirmationTasksProvider],
-  events: {
-    MESSAGE_RECEIVED: [
-      async ({ runtime, message, callback }: MessageReceivedHandlerParams) => {
-        await messageReceivedHandler({
-          runtime,
-          message,
-          callback,
-        });
-      },
-    ],
-    VOICE_MESSAGE_RECEIVED: [
-      async ({ runtime, message, callback }: MessageReceivedHandlerParams) => {
-        await messageReceivedHandler({
-          runtime,
-          message,
-          callback,
-        });
-      },
-    ],
-    REACTION_RECEIVED: [reactionReceivedHandler],
-  },
 };
+
 export default bootstrapPlugin;
