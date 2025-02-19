@@ -52,7 +52,7 @@ export const storedToTemplate = (stored: StoredTemplate): TemplateType => {
     if (stored.type === 'string') {
         return stored.value;
     }
-    return eval(`(${stored.value})`);
+    return JSON.parse(stored.value);
 };
 
 export const characterToInsert = (
