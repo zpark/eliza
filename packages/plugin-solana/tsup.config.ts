@@ -23,7 +23,6 @@ export default defineConfig({
         "stream",
         "buffer",
         "querystring",
-        "amqplib",
         // Add other modules you want to externalize
     ],
 });

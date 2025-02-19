@@ -16,7 +16,7 @@ import {
     IdleMonitorPlugin,
     type SpeakerRequest,
 } from "./client/index.ts";
-import { SttTtsPlugin } from "./stt_tts_spaces_plugin.ts";
+import { SttTtsPlugin } from "./sttTtsSpaces.ts";
 
 interface CurrentSpeakerState {
     userId: string;

@@ -14,7 +14,7 @@ export const defaultCharacter: Character = {
     // "@elizaos/plugin-elevenlabs",
     // "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-postgres",
+    "@elizaos/plugin-sql",
     // "@elizaos/plugin-telegram",
     "@elizaos/plugin-twitter",
     // "@elizaos/plugin-evm",

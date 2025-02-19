@@ -1,5 +1,5 @@
 {
-  "name": "@elizaos/plugin-drizzle",
+  "name": "@elizaos/plugin-sql",
   "version": "1.0.0-alpha.0",
   "type": "module",
   "main": "dist/index.js",
