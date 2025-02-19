@@ -82,8 +82,9 @@ const dmAction: Action = {
                 const content = response.content.text;
                 
                 try {
-                    // Send message to DM channel
-                    const dmMessage = await dmChannel.send(content);
+                    const discordClient = runtime.getClient("discord");
+                    // Get mentioned user
+                    const mentionedUser = discordMessage?.mentions?.users?.filter(user => user.id !== discordClient.client.user.id)?.first();
 
                     const dmRoomId = stringToUuid(dmChannel.id + "-" + runtime.agentId)
                     const userIdUUID = stringToUuid(runtime.agentId);
