@@ -20,6 +20,8 @@ import {
     type GuildMember,
 } from "discord.js";
 
+import { DiscordClient } from "..";
+
 export default {
     name: "JOIN_VOICE",
     similes: [
@@ -81,6 +83,7 @@ export default {
     ): Promise<boolean> => {
         if (!state) {
             console.error("State is not available.");
+            return false;
         }
 
         for (const response of responses) {
@@ -98,6 +101,7 @@ export default {
         const voiceManager = discordClient?.voiceManager;
         if (!voiceManager) {
             console.error("voiceManager is not available.");
+            return false;
         }
         const id = (discordMessage as DiscordMessage).guild?.id as string;
         const client = state.discordClient as Client;
