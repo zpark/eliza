@@ -1,10 +1,7 @@
 // src/actions/leaveVoice
-import { getVoiceConnection } from "@discordjs/voice";
 import {
-    type Channel,
-    ChannelType,
     type Client,
-    type Message as DiscordMessage,
+    BaseGuildVoiceChannel,
 } from "discord.js";
 import type {
     Action,
@@ -14,6 +11,8 @@ import type {
     Memory,
     State,
 } from "@elizaos/core";
+
+import { DiscordClient } from "..";
 
 export default {
     name: "LEAVE_VOICE",
@@ -86,26 +85,36 @@ export default {
             await callback(response.content);
         }
 
-        const discordMessage = (state.discordMessage ||
-            state.discordChannel) as DiscordMessage;
-
-        if (!discordMessage) {
-            throw new Error("Discord message is not available in the state.");
+        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const voiceManager = discordClient?.voiceManager;
+        if (!voiceManager) {
+            console.error("voiceManager is not available.");
+            return false;
         }
-        const voiceChannels = (state.discordClient as Client)?.guilds.cache
-            .get((discordMessage as DiscordMessage).guild?.id as string)
-            ?.channels.cache.filter(
-                (channel: Channel) => channel.type === ChannelType.GuildVoice
-            );
 
-        voiceChannels?.forEach((_channel: Channel) => {
-            const connection = getVoiceConnection(
-                (discordMessage as DiscordMessage).guild?.id as string
-            );
-            if (connection) {
-                connection.destroy();
-            }
-        });
+        const guild = state.discordClient.guilds.cache.find(
+            (g) => g.members.me?.voice.channelId
+        );
+
+        if (!guild) {
+            console.warn("Bot is not in any voice channel.");
+            return false;
+        }
+
+        const voiceChannel = guild.members.me?.voice.channel;
+        if (!voiceChannel || !(voiceChannel instanceof BaseGuildVoiceChannel)) {
+            console.warn("Could not retrieve the voice channel.");
+            return false;
+        }
+
+        const connection = voiceManager.getVoiceConnection(guild.id);
+        if (!connection) {
+            console.warn("No active voice connection found for the bot.");
+            return false;
+        }
+
+        voiceManager.leaveChannel(voiceChannel);
+
         return true;
     },
     examples: [
