@@ -19,7 +19,6 @@ import {
     type Guild,
     type GuildMember,
 } from "discord.js";
-import { joinVoiceChannel } from "@discordjs/voice";
 
 export default {
     name: "JOIN_VOICE",
@@ -95,7 +94,11 @@ export default {
         if (!discordMessage.content) {
             discordMessage.content = message.content.text;
         }
-
+        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const voiceManager = discordClient?.voiceManager;
+        if (!voiceManager) {
+            console.error("voiceManager is not available.");
+        }
         const id = (discordMessage as DiscordMessage).guild?.id as string;
         const client = state.discordClient as Client;
         const voiceChannels = (
@@ -103,7 +106,7 @@ export default {
         ).channels.cache.filter(
             (channel: Channel) => channel.type === ChannelType.GuildVoice
         );
-
+        
         const messageContent = discordMessage.content;
 
         const targetChannel = voiceChannels.find((channel) => {
@@ -121,30 +124,13 @@ export default {
         });
 
         if (targetChannel) {
-            joinVoiceChannel({
-                channelId: targetChannel.id,
-                guildId: (discordMessage as DiscordMessage).guild?.id as string,
-                adapterCreator: (client.guilds.cache.get(id) as Guild)
-                    .voiceAdapterCreator,
-                selfDeaf: false,
-                selfMute: false,
-                group: client.user.id,
-            });
+            await voiceManager.joinChannel(targetChannel);
             return true;
         } else {
             const member = (discordMessage as DiscordMessage)
                 .member as GuildMember;
             if (member?.voice?.channel) {
-                joinVoiceChannel({
-                    channelId: member.voice.channel.id,
-                    guildId: (discordMessage as DiscordMessage).guild
-                        ?.id as string,
-                    adapterCreator: (client.guilds.cache.get(id) as Guild)
-                        .voiceAdapterCreator,
-                    selfDeaf: false,
-                    selfMute: false,
-                    group: client.user.id,
-                });
+                await voiceManager.joinChannel(member?.voice?.channel);
                 return true;
             }
 
@@ -172,20 +158,21 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const _datestr = new Date().toUTCString().replace(/:/g, "-");
-
             const responseContent = await generateText({
                 runtime,
                 context,
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            runtime.databaseAdapter.log({
-                body: { message, context, response: responseContent },
-                userId: stringToUuid(message.userId),
-                roomId: message.roomId,
-                type: "joinVoice",
-            });
+            // FIXME: App crashes due to a missing import for `stringToUuid`. 
+            // However, even after importing it, the crash still occurs. 
+            // Temporarily commenting out this logging code until the root cause is investigated.
+            // runtime.databaseAdapter.log({
+            //     body: { message, context, response: responseContent },
+            //     userId: stringToUuid(message.userId),
+            //     roomId: message.roomId,
+            //     type: "joinVoice",
+            // });
 
             if (responseContent && responseContent.trim().length > 0) {
                 // join the voice channel
@@ -208,16 +195,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 });
 
                 if (targetChannel) {
-                    joinVoiceChannel({
-                        channelId: targetChannel.id,
-                        guildId: (discordMessage as DiscordMessage).guild
-                            ?.id as string,
-                        adapterCreator: (client.guilds.cache.get(id) as Guild)
-                            .voiceAdapterCreator,
-                        selfDeaf: false,
-                        selfMute: false,
-                        group: client.user.id,
-                    });
+                    await voiceManager.joinChannel(targetChannel);
                     return true;
                 }
             }
