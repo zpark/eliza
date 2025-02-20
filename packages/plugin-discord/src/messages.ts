@@ -518,16 +518,19 @@ export class MessageManager {
         if (!videoService) {
           throw new Error("Video service not found");
         }
-        const videoInfo = await videoService.processVideo(url, this.runtime);
-  
-        attachments.push({
-          id: `youtube-${Date.now()}`,
-          url: url,
-          title: videoInfo.title,
-          source: "YouTube",
-          description: videoInfo.description,
-          text: videoInfo.text,
-        });
+        try {
+          const videoInfo = await videoService.processVideo(url, this.runtime);
+          attachments.push({
+            id: `youtube-${Date.now()}`,
+            url: url,
+            title: videoInfo.title,
+            source: "YouTube",
+            description: videoInfo.description,
+            text: videoInfo.text,
+          });
+        } catch(error) {
+          logger.error(`Failed to processVideo ${error.message || error}`);
+        }
       } else {
         const browserService = this.runtime.getService<IBrowserService>(
           ServiceType.BROWSER
