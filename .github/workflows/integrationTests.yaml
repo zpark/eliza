@@ -24,12 +24,17 @@ jobs:
         with:
           node-version: "23"
 
-      - name: Output all sysinfo
+      - name: Install required packages
         run: |
-          echo "System architecture: $(uname -a)"
+          sudo apt update
+          sudo apt -y install build-essential pkg-config libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 
       - name: Install dependencies
         run: bun install
+
+      - name: Trust all package managers
+        run: |
+          bun pm trust --all
 
       - name: Build packages
         run: bun run build
