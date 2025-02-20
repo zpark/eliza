@@ -90,8 +90,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                 logger.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
-                    await new Promise(resolve => setTimeout(resolve, PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i)));
-                    continue;
+                    await new Promise(resolve => setTimeout(resolve, PROVIDER_CONFIG.RETRY_DELAY * 2 ** i));
                 }
             }
         }

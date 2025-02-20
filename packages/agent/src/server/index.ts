@@ -1,4 +1,5 @@
 import {
+    ChannelType,
     composeContext,
     generateMessageResponse,
     generateObject,
@@ -21,9 +22,6 @@ import { z } from "zod";
 import { createApiRouter } from "./api.ts";
 import { hyperfiHandlerTemplate, messageHandlerTemplate, upload } from "./helper.ts";
 import replyAction from "./reply.ts";
-
-
-
 
 export class CharacterServer {
     public app: express.Application;
@@ -122,13 +120,14 @@ export class CharacterServer {
                     return;
                 }
 
-                await runtime.ensureConnection(
+                await runtime.ensureConnection({
                     userId,
                     roomId,
-                    req.body.userName,
-                    req.body.name,
-                    "direct"
-                );
+                    userName: req.body.userName,
+                    userScreenName: req.body.name,
+                    source: "direct",
+                    type: ChannelType.API,
+                });
 
                 const text = req.body.text;
                 // if empty text, directly return
@@ -237,7 +236,7 @@ export class CharacterServer {
         );
 
         this.app.post(
-            "/agents/:agentIdOrName/hyperfi/v1",
+            "/agents/:agentIdOrName/hyperfy/v1",
             async (req: express.Request, res: express.Response) => {
                 // get runtime
                 const agentId = req.params.agentIdOrName;
@@ -255,14 +254,14 @@ export class CharacterServer {
                     return;
                 }
 
-                // can we be in more than one hyperfi world at once
+                // can we be in more than one hyperfy world at once
                 // but you may want the same context is multiple worlds
                 // this is more like an instanceId
-                const roomId = stringToUuid(req.body.roomId ?? "hyperfi");
+                const roomId = stringToUuid(req.body.roomId ?? "hyperfy");
 
                 const body = req.body;
 
-                // hyperfi specific parameters
+                // hyperfy specific parameters
                 let nearby = [];
                 let availableEmotes = [];
 
@@ -275,17 +274,18 @@ export class CharacterServer {
                     for (const msg of body.messages) {
                         const parts = msg.split(/:\s*/);
                         const mUserId = stringToUuid(parts[0]);
-                        await runtime.ensureConnection(
-                            mUserId,
+                        await runtime.ensureConnection({
+                            userId: mUserId,
                             roomId, // where
-                            parts[0], // username
-                            parts[0], // userScreeName?
-                            "hyperfi"
-                        );
+                            userName: parts[0], // username
+                            userScreenName: parts[0], // userScreeName?
+                            source: "hyperfy",
+                            type: ChannelType.WORLD,
+                        });
                         const content: Content = {
                             text: parts[1] || "",
                             attachments: [],
-                            source: "hyperfi",
+                            source: "hyperfy",
                             inReplyTo: undefined,
                         };
                         const memory: Memory = {
@@ -306,11 +306,11 @@ export class CharacterServer {
                     // we need to compose who's near and what emotes are available
                     text: JSON.stringify(req.body),
                     attachments: [],
-                    source: "hyperfi",
+                    source: "hyperfy",
                     inReplyTo: undefined,
                 };
 
-                const userId = stringToUuid("hyperfi");
+                const userId = stringToUuid("hyperfy");
                 const userMessage = {
                     content,
                     userId,
@@ -425,7 +425,7 @@ export class CharacterServer {
                             }
                         }
                         if (hfOut.emote !== null) {
-                            contentObj.text = "emoted " + hfOut.emote;
+                            contentObj.text = `emoted ${hfOut.emote}`;
                         }
                     }
 
@@ -532,6 +532,7 @@ export class CharacterServer {
                 }
             }
         );
+
         this.app.get(
             "/fine-tune/:assetId",
             async (req: express.Request, res: express.Response) => {
@@ -612,7 +613,7 @@ export class CharacterServer {
         this.app.post("/:agentId/speak", async (req, res) => {
             const agentId = req.params.agentId;
             const roomId = stringToUuid(
-                req.body.roomId ?? "default-room-" + agentId
+                req.body.roomId ?? `default-room-${agentId}`
             );
             const userId = stringToUuid(req.body.userId ?? "user");
             const text = req.body.text;
@@ -639,13 +640,14 @@ export class CharacterServer {
 
             try {
                 // Process message through agent (same as /message endpoint)
-                await runtime.ensureConnection(
+                await runtime.ensureConnection({
                     userId,
                     roomId,
-                    req.body.userName,
-                    req.body.name,
-                    "direct"
-                );
+                    userName: req.body.userName,
+                    userScreenName: req.body.name,
+                    source: "direct",
+                    type: ChannelType.API,
+                });
 
                 const messageId = stringToUuid(Date.now().toString());
 

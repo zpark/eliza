@@ -54,16 +54,16 @@ describe('Twitter Client Base', () => {
         const client = new ClientBase(mockRuntime, mockConfig);
         expect(client).toBeDefined();
         expect(mockRuntime.getSetting("TWITTER_USERNAME")).toBe('testuser');
-        expect(client.state["TWITTER_USERNAME"]).toBe('testuser');
+        expect(client.state.TWITTER_USERNAME).toBe('testuser');
         expect(mockRuntime.getSetting("TWITTER_DRY_RUN")).toBe('true');
-        expect(client.state["TWITTER_DRY_RUN"]).toBe(true);
+        expect(client.state.TWITTER_DRY_RUN).toBe(true);
     });
 
     it('should initialize with correct post intervals', () => {
         const client = new ClientBase(mockRuntime, mockConfig);
         expect(mockRuntime.getSetting("TWITTER_POST_INTERVAL_MIN")).toBe('90');
-        expect(client.state["TWITTER_POST_INTERVAL_MIN"]).toBe(90);
+        expect(client.state.TWITTER_POST_INTERVAL_MIN).toBe(90);
         expect(mockRuntime.getSetting("TWITTER_POST_INTERVAL_MAX")).toBe('180');
-        expect(client.state["TWITTER_POST_INTERVAL_MAX"]).toBe(180);
+        expect(client.state.TWITTER_POST_INTERVAL_MAX).toBe(180);
     });
 });

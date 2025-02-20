@@ -49,7 +49,7 @@ test('scraper can get partial private profile', async () => {
       'https://pbs.twimg.com/profile_images/1612213936082030594/_HEsjv7Q.jpg',
     banner:
       'https://pbs.twimg.com/profile_banners/1221221876849995777/1673110776',
-    biography: `t h e h e r m i t`,
+    biography: "t h e h e r m i t",
     isPrivate: true,
     isVerified: false,
     joined: new Date(Date.UTC(2020, 0, 26, 0, 3, 5, 0)),

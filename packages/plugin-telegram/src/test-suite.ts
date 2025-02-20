@@ -1,8 +1,8 @@
 import { logger, type TestSuite, type IAgentRuntime } from "@elizaos/core";
-import { Telegraf } from "telegraf";
-import { MessageManager } from "./messageManager";
-import { Context } from "telegraf";
-import { TelegramClient } from "./telegramClient";
+import type { Telegraf } from "telegraf";
+import type { MessageManager } from "./messageManager";
+import type { Context } from "telegraf";
+import type { TelegramClient } from "./telegramClient";
 
 const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
@@ -153,9 +153,8 @@ export class TelegramTestSuite implements TestSuite {
       );
       if (!description) {
         throw new Error("Error processing Telegram image");
-      } else {
-        logger.log(`Processing Telegram image successfully: ${description}`);
       }
+        logger.log(`Processing Telegram image successfully: ${description}`);
     } catch (error) {
       throw new Error(`Error processing Telegram image: ${error}`);
     }

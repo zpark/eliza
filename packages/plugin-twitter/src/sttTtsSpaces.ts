@@ -11,14 +11,15 @@ import {
     generateMessageResponse,
     generateShouldRespond,
     ModelClass,
-    stringToUuid
+    stringToUuid,
+    ChannelType
 } from "@elizaos/core";
 import type {
     AudioDataWithUser,
     JanusClient,
     Space,
 } from "./client";
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
 import type { ClientBase } from "./base";
 import {
     twitterShouldRespondTemplate,
@@ -403,7 +404,7 @@ export class SttTtsPlugin implements Plugin {
         );
 
         // Ensure room exists and user is in it
-        await this.runtime.ensureRoomExists(roomId);
+        await this.runtime.ensureRoomExists({id: roomId, name: "Twitter Space", source: "twitter", type: ChannelType.VOICE_GROUP, channelId: null, serverId: this.spaceId});
         await this.runtime.ensureParticipantInRoom(userUuid, roomId);
 
         let state = await this.runtime.composeState(
@@ -497,13 +498,6 @@ export class SttTtsPlugin implements Plugin {
             );
             return;
         }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId: userId,
-            roomId,
-            type: "response",
-        });
 
         return response;
     }

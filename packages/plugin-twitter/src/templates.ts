@@ -66,7 +66,7 @@ If {{agentName}} is conversing with a user and they have not asked to stop, it i
 {{recentMessages}}
 
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
-` + shouldRespondFooter;
+${shouldRespondFooter}`;
 
 export const twitterVoiceHandlerTemplate =
     `# Task: Generate conversational voice dialog for {{agentName}}.
@@ -86,7 +86,7 @@ export const twitterVoiceHandlerTemplate =
     {{recentMessages}}
 
     # Instructions: Write the next message for {{agentName}}. Include an optional action if appropriate. {{actionNames}}
-    ` + messageCompletionFooter;
+    ${messageCompletionFooter}`;
 
 
 export const twitterPostTemplate = `# Task: Create a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.

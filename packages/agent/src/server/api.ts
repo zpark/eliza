@@ -355,7 +355,7 @@ export function createApiRouter(
         }
     });
 
-    router.get("/tee/agents", async (req, res) => {
+    router.get("/tee/agents", async (_req, res) => {
         try {
             const allAgents = [];
 

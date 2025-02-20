@@ -1,6 +1,6 @@
 import { type IAgentRuntime, type Memory, type Provider, type State, logger } from '@elizaos/core';
 import { Keypair } from '@solana/web3.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { type DeriveKeyResponse, TappdClient } from '@phala/dstack-sdk';
 import { privateKeyToAccount } from 'viem/accounts';
 import { type PrivateKeyAccount, keccak256 } from 'viem';

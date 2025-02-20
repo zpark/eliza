@@ -138,7 +138,7 @@ export const Accordion: React.FC<AccordionProps> = ({
                                                 borderRadius: "50%",
                                                 backgroundColor: entry.bullet,
                                             }}
-                                        ></div>
+                                        />
                                     )}
                                     <div>{entry.title}</div>
                                 </div>

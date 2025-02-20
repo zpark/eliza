@@ -33,40 +33,19 @@ export default {
         "JOIN_CALL",
     ],
     validate: async (
-        _runtime: IAgentRuntime,
+        runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ) => {
         if (message.content.source !== "discord") {
             // not a discord message
             return false;
         }
 
-        if (!state.discordClient) {
-            return;
-        }
+        const client = runtime.getClient("discord").client;
 
-        // did they say something about joining a voice channel? if not, don't validate
-        const keywords = [
-            "join",
-            "come to",
-            "come on",
-            "enter",
-            "voice",
-            "chat",
-            "talk",
-            "call",
-            "hop on",
-            "get on",
-            "vc",
-            "meeting",
-            "discussion",
-        ];
-        if (
-            !keywords.some((keyword) =>
-                message.content.text.toLowerCase().includes(keyword)
-            )
-        ) {
+        if (!client) {
+            logger.error("Discord client not found");
             return false;
         }
 
@@ -77,7 +56,7 @@ export default {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<boolean> => {
@@ -90,28 +69,35 @@ export default {
             await callback(response.content);
         }
 
-        // We normalize data in from voice channels
-        const discordMessage = (state.discordChannel ||
-            state.discordMessage) as DiscordMessage;
-
-        if (!discordMessage.content) {
-            discordMessage.content = message.content.text;
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
-        const discordClient = runtime.getClient("discord") as DiscordClient;
-        const voiceManager = discordClient?.voiceManager;
-        if (!voiceManager) {
-            console.error("voiceManager is not available.");
+
+        if (room.type !== ChannelType.GROUP) {
+            // only handle in a group scenario for now
             return false;
         }
-        const id = (discordMessage as DiscordMessage).guild?.id as string;
-        const client = state.discordClient as Client;
+
+        console.log("Running handler on provider", room.name);
+
+        const serverId = room.serverId;
+
+        if (!serverId) {
+            throw new Error("No server ID found 8");
+        }
+
+        const client = runtime.getClient("discord").client;
+
+        if (!client) {
+            logger.error("Discord client not found");
+            return false;
+        }
         const voiceChannels = (
-            client.guilds.cache.get(id) as Guild
+            client.client.guilds.cache.get(serverId) as Guild
         ).channels.cache.filter(
             (channel: Channel) => channel.type === ChannelType.GuildVoice
         );
-        
-        const messageContent = discordMessage.content;
 
         const targetChannel = voiceChannels.find((channel) => {
             const name = (channel as { name: string }).name.toLowerCase();
@@ -128,13 +114,29 @@ export default {
         });
 
         if (targetChannel) {
-            await voiceManager.joinChannel(targetChannel);
+            joinVoiceChannel({
+                channelId: targetChannel.id,
+                guildId: serverId as string,
+                adapterCreator: (client.guilds.cache.get(id) as Guild)
+                    .voiceAdapterCreator,
+                selfDeaf: false,
+                selfMute: false,
+                group: client.user.id,
+            });
             return true;
-        } else {
+        }
             const member = (discordMessage as DiscordMessage)
                 .member as GuildMember;
             if (member?.voice?.channel) {
-                await voiceManager.joinChannel(member?.voice?.channel);
+                joinVoiceChannel({
+                    channelId: member.voice.channel.id,
+                    guildId: serverId,
+                    adapterCreator: (client.guilds.cache.get(id) as Guild)
+                        .voiceAdapterCreator,
+                    selfDeaf: false,
+                    selfMute: false,
+                    group: client.user.id,
+                });
                 return true;
             }
 
@@ -168,16 +170,6 @@ You should only respond with the name of the voice channel or none, no commentar
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            // FIXME: App crashes due to a missing import for `stringToUuid`. 
-            // However, even after importing it, the crash still occurs. 
-            // Temporarily commenting out this logging code until the root cause is investigated.
-            // runtime.databaseAdapter.log({
-            //     body: { message, context, response: responseContent },
-            //     userId: stringToUuid(message.userId),
-            //     roomId: message.roomId,
-            //     type: "joinVoice",
-            // });
-
             if (responseContent && responseContent.trim().length > 0) {
                 // join the voice channel
                 const channelName = responseContent.toLowerCase();
@@ -199,16 +191,24 @@ You should only respond with the name of the voice channel or none, no commentar
                 });
 
                 if (targetChannel) {
-                    await voiceManager.joinChannel(targetChannel);
+                    joinVoiceChannel({
+                        channelId: targetChannel.id,
+                        guildId: serverId,
+                        adapterCreator: (client.guilds.cache.get(id) as Guild)
+                            .voiceAdapterCreator,
+                        selfDeaf: false,
+                        selfMute: false,
+                        group: client.user.id,
+                    });
                     return true;
                 }
             }
 
-            await (discordMessage as DiscordMessage).reply(
-                "I couldn't figure out which channel you wanted me to join."
-            );
+            await callback({
+                text: "I couldn't figure out which channel you wanted me to join.",
+                source: "discord",
+            });
             return false;
-        }
     },
     examples: [
         [

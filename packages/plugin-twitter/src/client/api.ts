@@ -87,7 +87,7 @@ export async function requestApi<T>(
       */
       const xRateLimitRemaining = res.headers.get('x-rate-limit-remaining');
       const xRateLimitReset = res.headers.get('x-rate-limit-reset');
-      if (xRateLimitRemaining == '0' && xRateLimitReset) {
+      if (xRateLimitRemaining === '0' && xRateLimitReset) {
         const currentTime = new Date().valueOf() / 1000;
         const timeDeltaMs = 1000 * (Number.parseInt(xRateLimitReset) - currentTime);
 
@@ -115,11 +115,11 @@ export async function requestApi<T>(
         try {
           const value = JSON.parse(text);
           return { success: true, value };
-        } catch (e) {
+        } catch (_e) {
           // Return if just a normal string
           return { success: true, value: { text } as any };
         }
-      } catch (e) {
+      } catch (_e) {
         return {
           success: false,
           err: new Error('No readable stream available and cant parse'),
@@ -145,7 +145,7 @@ export async function requestApi<T>(
       // console.log('attempting to parse chunks', chunks);
       const value = JSON.parse(chunks);
       return { success: true, value };
-    } catch (e) {
+    } catch (_e) {
       // console.log('parsing chunks failed, sending as raw text');
       // If we can't parse as JSON, return the raw text
       return { success: true, value: { text: chunks } as any };
@@ -154,9 +154,9 @@ export async function requestApi<T>(
 
   // Handle non-streaming responses as before
   const contentType = res.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
+  if (contentType?.includes('application/json')) {
     const value: T = await res.json();
-    if (res.headers.get('x-rate-limit-incoming') == '0') {
+    if (res.headers.get('x-rate-limit-incoming') === '0') {
       auth.deleteToken();
     }
     return { success: true, value };

@@ -1,59 +1,43 @@
-import {
-    ChannelType,
-    type Message as DiscordMessage,
-    type TextChannel,
-} from "discord.js";
+import { ChannelType } from "@elizaos/core";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
+import type {
+    TextChannel
+} from "discord.js";
 
 const channelStateProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        const discordMessage =
-            (state?.discordMessage as DiscordMessage) ||
-            (state?.discordChannel as DiscordMessage);
-        if (!discordMessage) {
-            return "";
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
 
-        const guild = discordMessage?.guild;
         const agentName = state?.agentName || "The agent";
         const senderName = state?.senderName || "someone";
 
-        if (!guild) {
+        if (room.type === ChannelType.DM) {
             return (
                 `${agentName} is currently in a direct message conversation with ${senderName}. ${agentName} should engage in conversation, should respond to messages that are addressed to them and only ignore messages that seem to not require a response.`
             );
         }
 
-        const serverName = guild.name; // The name of the server
-        const guildId = guild.id; // The ID of the guild
-        const channel = discordMessage.channel;
+        const serverId = room.serverId;
 
-        if (!channel) {
-            console.log("channel is null");
-            return "";
+        if (!serverId) {
+            console.error("No server ID found");
+            // only handle in a group scenario for now
+            return false;
         }
+
+        const channelId = room.channelId;
+
+        const guild = runtime.getClient("discord").client.guilds.cache.get(serverId);
+
+        const serverName = guild.name;
 
         let response =
-            agentName +
-            " is currently having a conversation in the channel `@" +
-            channel.id +
-            " in the server `" +
-            serverName +
-            "` (@" +
-            guildId +
-            ")";
+            `${agentName} is currently having a conversation in the channel \`@${channelId} in the server \`${serverName}\` (@${serverId})`;
 
         response += `\n${agentName} is in a room with other users and should be self-conscious and only participate when directly addressed or when the conversation is relevant to them.`;
-
-        if (
-            channel.type === ChannelType.GuildText &&
-            (channel as TextChannel).topic
-        ) {
-            // Check if the channel is a text channel
-            response +=
-                "\nThe topic of the channel is: " +
-                (channel as TextChannel).topic;
-        }
         return response;
     },
 };

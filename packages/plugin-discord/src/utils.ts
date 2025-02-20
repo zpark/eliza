@@ -87,7 +87,7 @@ export async function generateSummary(
 export async function sendMessageInChunks(
     channel: TextChannel,
     content: string,
-    inReplyTo: string,
+    _inReplyTo: string,
     files: any[]
 ): Promise<DiscordMessage[]> {
     const sentMessages: DiscordMessage[] = [];
@@ -147,7 +147,7 @@ function splitMessage(content: string): string[] {
             messages.push(currentMessage.trim());
             currentMessage = "";
         }
-        currentMessage += line + "\n";
+        currentMessage += `${line}\n`;
     }
 
     if (currentMessage.trim().length > 0) {

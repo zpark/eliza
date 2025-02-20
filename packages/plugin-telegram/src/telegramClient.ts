@@ -1,6 +1,6 @@
 import { type Context, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
-import { type IAgentRuntime, logger, type ClientInstance } from "@elizaos/core";
+import { type IAgentRuntime, logger, type ClientInstance, stringToUuid, Memory, HandlerCallback, Content } from "@elizaos/core";
 import { MessageManager } from "./messageManager.ts";
 
 export class TelegramClient implements ClientInstance {
@@ -36,7 +36,7 @@ export class TelegramClient implements ClientInstance {
     }
 
     private async initializeBot(): Promise<void> {
-        this.bot.launch({ dropPendingUpdates: true });
+        this.bot.launch({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
         logger.log(
             "✨ Telegram bot successfully launched and is running!"
         );
@@ -79,65 +79,24 @@ export class TelegramClient implements ClientInstance {
     }
 
     private setupMessageHandlers(): void {
-        logger.log("Setting up message handler...");
-
-        this.bot.on(message("new_chat_members"), async (ctx) => {
-            try {
-                const newMembers = ctx.message.new_chat_members;
-                const isBotAdded = newMembers.some(
-                    (member) => member.id === ctx.botInfo.id
-                );
-
-                if (isBotAdded && !(await this.isGroupAuthorized(ctx))) {
-                    return;
-                }
-            } catch (error) {
-                logger.error("Error handling new chat members:", error);
-            }
-        });
-
+        // Regular message handler
         this.bot.on("message", async (ctx) => {
             try {
-                // Check group authorization first
-                if (!(await this.isGroupAuthorized(ctx))) {
-                    return;
-                }
+                if (!(await this.isGroupAuthorized(ctx))) return;
                 await this.messageManager.handleMessage(ctx);
             } catch (error) {
-                logger.error("❌ Error handling message:", error);
-                // Don't try to reply if we've left the group or been kicked
-                if (error?.response?.error_code !== 403) {
-                    try {
-                        await ctx.reply(
-                            "An error occurred while processing your message."
-                        );
-                    } catch (replyError) {
-                        logger.error(
-                            "Failed to send error message:",
-                            replyError
-                        );
-                    }
-                }
+                logger.error("Error handling message:", error);
             }
         });
 
-        this.bot.on("photo", (ctx) => {
-            logger.log(
-                "📸 Received photo message with caption:",
-                ctx.message.caption
-            );
-        });
-
-        this.bot.on("document", (ctx) => {
-            logger.log(
-                "📎 Received document message:",
-                ctx.message.document.file_name
-            );
-        });
-
-        this.bot.catch((err, ctx) => {
-            logger.error(`❌ Telegram Error for ${ctx.updateType}:`, err);
-            ctx.reply("An unexpected error occurred. Please try again later.");
+        // Reaction handler
+        this.bot.on("message_reaction", async (ctx) => {
+            try {
+                if (!(await this.isGroupAuthorized(ctx))) return;
+                await this.messageManager.handleReaction(ctx);
+            } catch (error) {
+                logger.error("Error handling reaction:", error);
+            }
         });
     }
 

@@ -14,8 +14,7 @@
         "noExplicitAny": "error"
       },
       "style": {
-        "useConst": "error",
-        "useImportType": "off"
+        "useConst": "error"
       }
     }
   },
@@ -27,8 +26,7 @@
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "es5"
+      "quoteStyle": "single"
     }
   },
   "files": {

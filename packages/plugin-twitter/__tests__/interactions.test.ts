@@ -157,7 +157,7 @@ describe("TwitterInteractionClient", () => {
 
   it("should instantiate client and set isDryRun to true", () => {
     expect(interactionClient).toBeDefined();
-    expect(interactionClient["isDryRun"]).toBe(true);
+    expect(interactionClient.isDryRun).toBe(true);
   });
 
   it("should call fetchSearchTweets with correct parameters in handleTwitterInteractions (no tweets found)", async () => {

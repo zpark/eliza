@@ -1,4 +1,4 @@
-import { composeContext, HandlerCallback } from "@elizaos/core";
+import { composeContext, type HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -22,7 +22,7 @@ Respond with YES if:
 - {{agentName}} has unique insights to contribute and the users seem receptive
 
 Otherwise, respond with NO.
-` + booleanFooter;
+${booleanFooter}`;
 
 export const followRoomAction: Action = {
     name: "FOLLOW_ROOM",
@@ -57,7 +57,7 @@ export const followRoomAction: Action = {
         );
         return userState !== "FOLLOWED" && userState !== "MUTED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldFollow(state: State): Promise<boolean> {
             const shouldFollowContext = composeContext({
                 state,

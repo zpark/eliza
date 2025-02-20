@@ -13,27 +13,22 @@ const twitterReplyAction = {
     similes: ["REPLY_TO_TWEET", "SEND_REPLY", "RESPOND", "ANSWER_TWEET"],
     description: "Replies to the current tweet with the text from the generated message. Default if the agent is responding with a message and no other action.",
     validate: async (
-        runtime: IAgentRuntime,
+        _runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ) => {
         // Only validate for Twitter messages
         if (message.content.source !== "twitter") {
             return false;
         }
         
-        // Make sure we have the Twitter client available
-        if (!state.twitterClient) {
-            return false;
-        }
-        
         return true;
     },
     handler: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State,
-        options: any,
+        _runtime: IAgentRuntime,
+        _message: Memory,
+        _state: State,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ) => {

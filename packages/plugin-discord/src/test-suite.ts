@@ -4,7 +4,7 @@ import {
   type IAgentRuntime,
   ModelClass,
 } from "@elizaos/core";
-import { DiscordClient } from "./index.ts";
+import type { DiscordClient } from "./index.ts";
 import { sendMessageInChunks } from "./utils.ts";
 import { ChannelType, Events, type TextChannel } from "discord.js";
 import {
@@ -14,7 +14,7 @@ import {
   AudioPlayerStatus,
   VoiceConnectionStatus,
   entersState,
-  VoiceConnection,
+  type VoiceConnection,
 } from "@discordjs/voice";
 
 const TEST_IMAGE_URL =
@@ -161,7 +161,7 @@ export class DiscordTestSuite implements TestSuite {
           ModelClass.TEXT_TO_SPEECH,
           `Hi! I'm ${runtime.character.name}! How are you doing today?`
         );
-      } catch (error) {
+      } catch (_error) {
         throw new Error("No text to speech service found");
       }
 

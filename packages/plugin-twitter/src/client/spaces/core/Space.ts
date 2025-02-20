@@ -1,6 +1,6 @@
 // src/core/Space.ts
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import { ChatClient } from './ChatClient';
 import { JanusClient } from './JanusClient';
 import {

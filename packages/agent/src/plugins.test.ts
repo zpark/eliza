@@ -54,7 +54,7 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
     let adapter;
     
     if (adapters.length === 0) {
-        const drizzleAdapter = await import('@elizaos/plugin-drizzle');
+        const drizzleAdapter = await import('@elizaos/plugin-sql');
         adapter = drizzleAdapter.default.adapters[0];
         if (!adapter) {
             throw new Error("No database adapter found in default drizzle plugin");

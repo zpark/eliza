@@ -5,7 +5,8 @@ CREATE TABLE "accounts" (
 	"username" text NOT NULL,
 	"email" text NOT NULL,
 	"avatarUrl" text,
-	"details" jsonb DEFAULT '{}'::jsonb
+	"details" jsonb DEFAULT '{}'::jsonb,
+	"metadata" jsonb DEFAULT '{}'::jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "cache" (
@@ -98,9 +99,26 @@ CREATE TABLE "relationships" (
 	"userId" uuid NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "worlds" (
+	"id" uuid PRIMARY KEY NOT NULL,
+	"agentId" uuid NOT NULL,
+	"name" text NOT NULL,
+	"metadata" jsonb,
+	"serverId" text NOT NULL,
+	"createdAt" timestamptz DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "rooms" (
 	"id" uuid PRIMARY KEY NOT NULL,
-	"createdAt" timestamptz DEFAULT now() NOT NULL
+	"createdAt" timestamptz DEFAULT now() NOT NULL,
+	"source" text NOT NULL,
+	"type" text NOT NULL,
+	"serverId" text,
+	"channelId" text,
+	"agentId" uuid NOT NULL,
+	"worldId" uuid,
+	"name" text,
+	"metadata" jsonb
 );
 --> statement-breakpoint
 ALTER TABLE "embeddings" ADD CONSTRAINT "embeddings_memory_id_memories_id_fk" FOREIGN KEY ("memory_id") REFERENCES "public"."memories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -129,6 +147,8 @@ ALTER TABLE "relationships" ADD CONSTRAINT "relationships_userId_accounts_id_fk"
 ALTER TABLE "relationships" ADD CONSTRAINT "fk_user_a" FOREIGN KEY ("userA") REFERENCES "public"."accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "relationships" ADD CONSTRAINT "fk_user_b" FOREIGN KEY ("userB") REFERENCES "public"."accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "relationships" ADD CONSTRAINT "fk_user" FOREIGN KEY ("userId") REFERENCES "public"."accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "rooms" ADD CONSTRAINT "rooms_agentId_accounts_id_fk" FOREIGN KEY ("agentId") REFERENCES "public"."accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "rooms" ADD CONSTRAINT "rooms_worldId_worlds_id_fk" FOREIGN KEY ("worldId") REFERENCES "public"."worlds"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_embedding_memory" ON "embeddings" USING btree ("memory_id");--> statement-breakpoint
 CREATE INDEX "idx_memories_type_room" ON "memories" USING btree ("type","roomId");--> statement-breakpoint
 CREATE INDEX "idx_participants_user" ON "participants" USING btree ("userId");--> statement-breakpoint

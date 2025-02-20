@@ -13,6 +13,7 @@ import {
     type State,
     stringToUuid,
     logger,
+    ChannelType,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
@@ -55,7 +56,7 @@ Thread of Tweets You Are Replying To:
 Here is the current post text again. Remember to include an action if the current post text includes a prompt that asks for one of the available actions mentioned above (does not need to be exact)
 {{currentPost}}
 {{imageDescriptions}}
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const twitterShouldRespondTemplate = (targetUsersStr: string) =>
     `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
@@ -87,7 +88,7 @@ Thread of Tweets You Are Replying To:
 {{formattedConversation}}
 
 # INSTRUCTIONS: Respond with RESPOND if {{agentName}} should respond, or IGNORE if {{agentName}} should not respond to the last message and STOP if {{agentName}} should stop participating in the conversation.
-` + shouldRespondFooter;
+${shouldRespondFooter}`;
 
 export class TwitterInteractionClient {
     client: ClientBase;
@@ -190,7 +191,6 @@ export class TwitterInteractionClient {
                                 `Error fetching tweets for ${username}:`,
                                 error
                             );
-                            continue;
                         }
                     }
 
@@ -235,7 +235,7 @@ export class TwitterInteractionClient {
                 ) {
                     // Generate the tweetId UUID the same way it's done in handleTweet
                     const tweetId = stringToUuid(
-                        tweet.id + "-" + this.runtime.agentId
+                        `${tweet.id}-${this.runtime.agentId}`
                     );
 
                     // Check if we've already processed this tweet
@@ -253,7 +253,7 @@ export class TwitterInteractionClient {
                     logger.log("New Tweet found", tweet.permanentUrl);
 
                     const roomId = stringToUuid(
-                        tweet.conversationId + "-" + this.runtime.agentId
+                        `${tweet.conversationId}-${this.runtime.agentId}`
                     );
 
                     const userIdUUID =
@@ -261,13 +261,14 @@ export class TwitterInteractionClient {
                             ? this.runtime.agentId
                             : stringToUuid(tweet.userId!);
 
-                    await this.runtime.ensureConnection(
-                        userIdUUID,
+                    await this.runtime.ensureConnection({
+                        userId: userIdUUID,
                         roomId,
-                        tweet.username,
-                        tweet.name,
-                        "twitter"
-                    );
+                        userName: tweet.username,
+                        userScreenName: tweet.name,
+                        source: "twitter",
+                        type: ChannelType.GROUP
+                    });
 
                     const thread = await buildConversationThread(
                         tweet,
@@ -368,7 +369,7 @@ export class TwitterInteractionClient {
         });
 
         // check if the tweet exists, save if it doesn't
-        const tweetId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
+        const tweetId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
         const tweetExists =
             await this.runtime.messageManager.getMemoryById(tweetId);
 
@@ -386,9 +387,7 @@ export class TwitterInteractionClient {
                     imageUrls: tweet.photos?.map(photo => photo.url) || [],
                     inReplyTo: tweet.inReplyToStatusId
                         ? stringToUuid(
-                              tweet.inReplyToStatusId +
-                                  "-" +
-                                  this.runtime.agentId
+                              `${tweet.inReplyToStatusId}-${this.runtime.agentId}`
                           )
                         : undefined,
                 },
@@ -460,7 +459,7 @@ export class TwitterInteractionClient {
         const removeQuotes = (str: string) =>
             str.replace(/^['"](.*)['"]$/, "$1");
 
-        const stringId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
+        const stringId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
 
         response.inReplyTo = stringId;
 
@@ -488,7 +487,7 @@ export class TwitterInteractionClient {
                     };
                     
                     const responseMessages = [{
-                            id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+                            id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
                             userId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
                             content: response,
@@ -539,5 +538,123 @@ export class TwitterInteractionClient {
                 }
             }
         }
+    }
+
+    async buildConversationThread(
+        tweet: Tweet,
+        maxReplies = 10
+    ): Promise<Tweet[]> {
+        const thread: Tweet[] = [];
+        const visited: Set<string> = new Set();
+
+        async function processThread(currentTweet: Tweet, depth = 0) {
+            logger.log("Processing tweet:", {
+                id: currentTweet.id,
+                inReplyToStatusId: currentTweet.inReplyToStatusId,
+                depth: depth,
+            });
+
+            if (!currentTweet) {
+                logger.log("No current tweet found for thread building");
+                return;
+            }
+
+            if (depth >= maxReplies) {
+                logger.log("Reached maximum reply depth", depth);
+                return;
+            }
+
+            // Handle memory storage
+            const memory = await this.runtime.messageManager.getMemoryById(
+                stringToUuid(`${currentTweet.id}-${this.runtime.agentId}`)
+            );
+            if (!memory) {
+                const roomId = stringToUuid(
+                    `${currentTweet.conversationId}-${this.runtime.agentId}`
+                );
+                const userId = stringToUuid(currentTweet.userId);
+
+                await this.runtime.ensureConnection({
+                    userId,
+                    roomId,
+                    userName: currentTweet.username,
+                    userScreenName: currentTweet.name,
+                    source: "twitter",
+                    type: ChannelType.GROUP
+                });
+
+                this.runtime.messageManager.createMemory({
+                    id: stringToUuid(
+                        `${currentTweet.id}-${this.runtime.agentId}`
+                    ),
+                    agentId: this.runtime.agentId,
+                    content: {
+                        text: currentTweet.text,
+                        source: "twitter",
+                        url: currentTweet.permanentUrl,
+                        imageUrls: currentTweet.photos?.map(photo => photo.url) || [],
+                        inReplyTo: currentTweet.inReplyToStatusId
+                            ? stringToUuid(
+                                  `${currentTweet.inReplyToStatusId}-${this.runtime.agentId}`
+                              )
+                            : undefined,
+                    },
+                    createdAt: currentTweet.timestamp * 1000,
+                    roomId,
+                    userId:
+                        currentTweet.userId === this.twitterUserId
+                            ? this.runtime.agentId
+                            : stringToUuid(currentTweet.userId),
+                });
+            }
+
+            if (visited.has(currentTweet.id)) {
+                logger.log("Already visited tweet:", currentTweet.id);
+                return;
+            }
+
+            visited.add(currentTweet.id);
+            thread.unshift(currentTweet);
+
+            if (currentTweet.inReplyToStatusId) {
+                logger.log(
+                    "Fetching parent tweet:",
+                    currentTweet.inReplyToStatusId
+                );
+                try {
+                    const parentTweet = await this.twitterClient.getTweet(
+                        currentTweet.inReplyToStatusId
+                    );
+
+                    if (parentTweet) {
+                        logger.log("Found parent tweet:", {
+                            id: parentTweet.id,
+                            text: parentTweet.text?.slice(0, 50),
+                        });
+                        await processThread(parentTweet, depth + 1);
+                    } else {
+                        logger.log(
+                            "No parent tweet found for:",
+                            currentTweet.inReplyToStatusId
+                        );
+                    }
+                } catch (error) {
+                    logger.log("Error fetching parent tweet:", {
+                        tweetId: currentTweet.inReplyToStatusId,
+                        error,
+                    });
+                }
+            } else {
+                logger.log(
+                    "Reached end of reply chain at:",
+                    currentTweet.id
+                );
+            }
+        }
+
+        // Need to bind this context for the inner function
+        await processThread.bind(this)(tweet, 0);
+
+        return thread;
     }
 }

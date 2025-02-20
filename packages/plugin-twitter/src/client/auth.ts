@@ -174,8 +174,8 @@ export class TwitterGuestAuth implements TwitterAuth {
   }
 
   deleteToken() {
-    delete this.guestToken;
-    delete this.guestCreatedAt;
+    this.guestToken = undefined;
+    this.guestCreatedAt = undefined;
   }
 
   hasToken(): boolean {
@@ -263,11 +263,11 @@ export class TwitterGuestAuth implements TwitterAuth {
     }
 
     const o = await res.json();
-    if (o == null || o['guest_token'] == null) {
+    if (o == null || o.guest_token == null) {
       throw new Error('guest_token not found.');
     }
 
-    const newGuestToken = o['guest_token'];
+    const newGuestToken = o.guest_token;
     if (typeof newGuestToken !== 'string') {
       throw new Error('guest_token was not a string.');
     }

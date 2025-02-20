@@ -236,7 +236,7 @@ const Contributions = ({
                             width: "8px",
                             marginRight: "1px",
                         }}
-                    ></span>
+                    />
                     <span>back</span>
                 </span>
             </div>

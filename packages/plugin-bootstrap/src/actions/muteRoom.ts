@@ -1,4 +1,4 @@
-import { composeContext, HandlerCallback } from "@elizaos/core";
+import { composeContext, type HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -23,7 +23,7 @@ Respond with YES if:
 - {{agentName}}'s responses are not well-received or are annoying the user(s)
 
 Otherwise, respond with NO.
-` + booleanFooter;
+${booleanFooter}`;
 
 export const muteRoomAction: Action = {
     name: "MUTE_ROOM",
@@ -44,7 +44,7 @@ export const muteRoomAction: Action = {
         );
         return userState !== "MUTED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldMute(state: State): Promise<boolean> {
             const shouldMuteContext = composeContext({
                 state,

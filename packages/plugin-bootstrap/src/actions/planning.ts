@@ -33,9 +33,9 @@ const planAction: Action = {
     description: "Plans and executes a sequence of actions",
 
     validate: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State
+        _runtime: IAgentRuntime,
+        _message: Memory,
+        _state: State
     ): Promise<boolean> => {
         // Plan validation is complex - needs to validate multiple potential actions
         // We'll validate specific plans during handling instead
@@ -46,9 +46,9 @@ const planAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
-        responses: Memory[]
+        _responses: Memory[]
     ): Promise<void> => {
         try {
             // First, determine what actions are available based on current context
@@ -130,10 +130,10 @@ async function getValidActions(
 
 async function createActionPlan(
     message: Memory,
-    availableActions: Action[],
-    state: State
+    _availableActions: Action[],
+    _state: State
 ): Promise<ActionPlan | null> {
-    const intent = message.content.text.toLowerCase();
+    const _intent = message.content.text.toLowerCase();
     const plan: ActionPlan = {
         steps: [],
         context: message.content.text

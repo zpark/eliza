@@ -991,7 +991,7 @@ export const localAIPlugin: Plugin = {
     {
       path: "/health",
       type: "GET",
-      handler: async (req: any, res: any) => {
+      handler: async (_req: any, res: any) => {
         res.json({
           status: "healthy",
           models: {

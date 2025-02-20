@@ -13,7 +13,7 @@ import {
     ModelClass,
     type State,
 } from "@elizaos/core";
-import * as fs from "fs";
+import * as fs from "node:fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
 
@@ -140,7 +140,7 @@ const summarizeAction = {
     ],
     description: "Summarizes the conversation and attachments.",
     validate: async (
-        runtime: IAgentRuntime,
+        _runtime: IAgentRuntime,
         message: Memory,
         _state: State
     ) => {
@@ -193,7 +193,7 @@ const summarizeAction = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ) => {
@@ -283,7 +283,7 @@ const summarizeAction = {
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            currentSummary = currentSummary + "\n" + summary;
+            currentSummary = `${currentSummary}\n${summary}`;
         }
 
         if (!currentSummary) {

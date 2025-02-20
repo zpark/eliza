@@ -169,8 +169,8 @@ export class FullDocumentationGenerator {
             this.configuration.absolutePath,
             "src/index.ts"
         );
-        const mainExport = "plugin";
-        let exportName = packageJson.name.split("/").pop() + "Plugin";
+        const _mainExport = "plugin";
+        let exportName = `${packageJson.name.split("/").pop()}Plugin`;
 
         try {
             const indexContent = await fs.readFile(indexPath, {
@@ -278,7 +278,7 @@ export class FullDocumentationGenerator {
 
     private async generateUsage(
         docs: OrganizedDocs,
-        packageJson: any
+        _packageJson: any
     ): Promise<string> {
         const fileGroups = this.documentOrganizer.groupDocsByFile(docs);
         // write fileGroups to a json file
@@ -417,14 +417,13 @@ export class FullDocumentationGenerator {
 
                 const actionDocumentation = await this.aiService.generateComment(prompt);
                 if (actionDocumentation.trim()) {
-                    documentation += actionDocumentation + "\n\n";
+                    documentation += `${actionDocumentation}\n\n`;
                 }
             } catch (error) {
                 console.warn(
                     `Warning: Could not process action file ${filePath}:`,
                     error
                 );
-                continue;
             }
         }
 
@@ -458,14 +457,13 @@ export class FullDocumentationGenerator {
                 const providerDocumentation =
                     await this.generateProviderDoc(provider);
                 if (providerDocumentation.trim()) {
-                    documentation += providerDocumentation + "\n\n";
+                    documentation += `${providerDocumentation}\n\n`;
                 }
             } catch (error) {
                 console.warn(
                     `Warning: Could not read provider file ${filePath}:`,
                     error
                 );
-                continue;
             }
         }
 
@@ -507,7 +505,6 @@ export class FullDocumentationGenerator {
                     `Warning: Could not read evaluator file ${filePath}:`,
                     error
                 );
-                continue;
             }
         }
 

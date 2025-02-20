@@ -158,7 +158,7 @@ Respond with a JSON markdown block containing only the extracted values. Use nul
 export const executeSwap: Action = {
     name: "SWAP_SOLANA",
     similes: ["SWAP_SOL", "SWAP_TOKENS_SOLANA", "TOKEN_SWAP_SOLANA", "TRADE_TOKENS_SOLANA", "EXCHANGE_TOKENS_SOLANA"],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (runtime: IAgentRuntime, _message: Memory) => {
         const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME);
         return !!solanaClient;
     },

@@ -5,7 +5,7 @@ import {
     type Memory,
     ModelClass, parseJSONObjectFromText, type State, trimTokens
 } from "@elizaos/core";
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
@@ -128,7 +128,7 @@ const summarizeAction = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
     ) => {
         state = (await runtime.composeState(message)) as State;
@@ -200,7 +200,7 @@ const summarizeAction = {
             modelClass: ModelClass.TEXT_SMALL,
         });
 
-        currentSummary = currentSummary + "\n" + summary;
+        currentSummary = `${currentSummary}\n${summary}`;
 
         if (!currentSummary) {
             console.error("No summary found, that's not good!");

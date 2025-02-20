@@ -1,18 +1,21 @@
 // src/actions/leaveVoice
 import {
-    type Client,
-    BaseGuildVoiceChannel,
-} from "discord.js";
-import type {
-    Action,
-    ActionExample,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    State,
+    ChannelType,
+    logger,
+    type Action,
+    type ActionExample,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
+    type State,
 } from "@elizaos/core";
+import {
+    ChannelType as DiscordChannelType,
+    type Channel
+} from "discord.js";
 
 import { DiscordClient } from "../index.ts";
+import { getVoiceConnection } from "@discordjs/voice";
 
 export default {
     name: "LEAVE_VOICE",
@@ -24,44 +27,18 @@ export default {
         "LEAVE_MEETING",
         "LEAVE_CALL",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    validate: async (runtime: IAgentRuntime, message: Memory, _state: State) => {
         if (message.content.source !== "discord") {
             // not a discord message
             return false;
         }
 
-        if (!state.discordClient) {
+        const client = runtime.getClient("discord").client;
+
+        if (!client) {
+            logger.error("Discord client not found");
             return false;
         }
-
-        const keywords = [
-            "leave",
-            "exit",
-            "stop",
-            "quit",
-            "get off",
-            "get out",
-            "bye",
-            "cya",
-            "see you",
-            "hop off",
-            "get off",
-            "voice",
-            "vc",
-            "chat",
-            "call",
-            "meeting",
-            "discussion",
-        ];
-        if (
-            !keywords.some((keyword) =>
-                message.content.text.toLowerCase().includes(keyword)
-            )
-        ) {
-            return false;
-        }
-
-        const client = state.discordClient as Client;
 
         // Check if the client is connected to any voice channel
         const isConnectedToVoice = client.voice.adapters.size > 0;
@@ -72,49 +49,52 @@ export default {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        options: any,
+        _state: State,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<boolean> => {
-        if (!state.discordClient) {
-            return;
-        }
-
         for (const response of responses) {
             await callback(response.content);
         }
 
-        const discordClient = runtime.getClient("discord") as DiscordClient;
-        const voiceManager = discordClient?.voiceManager;
-        if (!voiceManager) {
-            console.error("voiceManager is not available.");
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
+        }
+
+        if (room.type !== ChannelType.GROUP) {
+            // only handle in a group scenario for now
             return false;
         }
 
-        const guild = state.discordClient.guilds.cache.find(
-            (g) => g.members.me?.voice.channelId
-        );
+        const serverId = room.serverId;
 
-        if (!guild) {
-            console.warn("Bot is not in any voice channel.");
+        if (!serverId) {
+            throw new Error("No server ID found 9");
+        }
+
+        const client = runtime.getClient("discord").client;
+
+        if (!client) {
+            logger.error("Discord client not found");
             return false;
         }
 
-        const voiceChannel = guild.members.me?.voice.channel;
-        if (!voiceChannel || !(voiceChannel instanceof BaseGuildVoiceChannel)) {
-            console.warn("Could not retrieve the voice channel.");
-            return false;
-        }
+        const voiceChannels = client.client.guilds.cache
+            .get(serverId)
+            ?.channels.cache.filter(
+                (channel: Channel) => channel.type === DiscordChannelType.GuildVoice
+            );
 
-        const connection = voiceManager.getVoiceConnection(guild.id);
-        if (!connection) {
-            console.warn("No active voice connection found for the bot.");
-            return false;
-        }
-
-        voiceManager.leaveChannel(voiceChannel);
-
+        voiceChannels?.forEach((_channel: Channel) => {
+            const connection = getVoiceConnection(
+                serverId
+            );
+            if (connection) {
+                connection.destroy();
+            }
+        });
         return true;
     },
     examples: [

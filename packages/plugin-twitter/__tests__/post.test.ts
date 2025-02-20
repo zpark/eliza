@@ -105,7 +105,7 @@ describe("Twitter Post Client", () => {
   it("should create post client instance", () => {
     expect(postClient).toBeDefined();
     expect(postClient.twitterUsername).toBe("testuser");
-    expect(postClient["isDryRun"]).toBe(true);
+    expect(postClient.isDryRun).toBe(true);
   });
 
   it("should keep tweets under max length when already valid", () => {
@@ -143,7 +143,7 @@ describe("Twitter Post Client", () => {
   });
 
   it("should call postTweet when dry run mode is disabled", async () => {
-    postClient["isDryRun"] = false;
+    postClient.isDryRun = false;
     const postTweetSpy = vi
       .spyOn(postClient, "postTweet")
       .mockResolvedValue(undefined);

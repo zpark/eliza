@@ -7,9 +7,8 @@ dotenv.config({ path: "../../.env" });
 
 import type { Character, IAgentRuntime } from "@elizaos/core";
 import type { Guild } from "discord.js";
-import { initializeOnboarding } from "../shared/onboarding/initialize";
+import { initializeAllSystems } from "../shared/onboarding/initialize";
 import type { OnboardingConfig } from "../shared/onboarding/types";
-import { initializeRole } from "../shared/role/initialize";
 
 const character: Character = {
   name: "Kelsey",
@@ -366,16 +365,14 @@ const config: OnboardingConfig = {
 export default {
   character,
   init: async (runtime: IAgentRuntime) => {
-    await initializeRole(runtime);
 
     // Register runtime events
     runtime.registerEvent(
       "DISCORD_JOIN_SERVER",
       async (params: { guild: Guild }) => {
         console.log("Community manager joined server");
-        console.log(params);
         // TODO: Save onboarding config to runtime
-        await initializeOnboarding(runtime, params.guild.id, config);
+        await initializeAllSystems(runtime, [params.guild], config);
       }
     );
 
@@ -384,7 +381,7 @@ export default {
       "DISCORD_SERVER_CONNECTED",
       async (params: { guild: Guild }) => {
         console.log("Community manager connected to server");
-        await initializeOnboarding(runtime, params.guild.id, config);
+        await initializeAllSystems(runtime, [params.guild], config);
       }
     );
   },

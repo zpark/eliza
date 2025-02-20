@@ -55,7 +55,7 @@ export function getPublicSettings(settings: OnboardingState): OnboardingState {
 }
 
 // Format settings list for display
-export function formatSettingsList(settings: OnboardingState, isOnboarding: boolean = false): string {
+export function formatSettingsList(settings: OnboardingState, isOnboarding = false): string {
     // If not in onboarding mode, only show public settings
     const displaySettings = isOnboarding ? settings : getPublicSettings(settings);
     const { configured, requiredUnconfigured, optionalUnconfigured } = categorizeSettings(displaySettings);
@@ -89,7 +89,7 @@ export function formatSettingsList(settings: OnboardingState, isOnboarding: bool
 }
 
 // Helper to categorize settings
-function categorizeSettings(onboardingState: OnboardingState) {
+export function categorizeSettings(onboardingState: OnboardingState) {
     const configured = [];
     const requiredUnconfigured = [];
     const optionalUnconfigured = [];
@@ -106,3 +106,18 @@ function categorizeSettings(onboardingState: OnboardingState) {
 
     return { configured, requiredUnconfigured, optionalUnconfigured };
 }
+
+export const ONBOARDING_CACHE_KEY = {
+    SERVER_STATE: (serverId: string) => `server_${serverId}_onboarding_state`,
+} as const;
+
+export function getOnboardingCacheKey(serverId: string): string {
+    if (!serverId) {
+      throw new Error('Server ID is required to construct onboarding cache key');
+    }
+    return `server_${serverId}_onboarding_state`;
+  }
+
+export const OWNERSHIP_CACHE_KEY = {
+    SERVER_OWNERSHIP_STATE: 'server_ownership_state',
+} as const;
