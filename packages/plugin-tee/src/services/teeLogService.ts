@@ -63,7 +63,8 @@ export class TeeLogService extends Service implements ITeeLogService {
 
         if (useSgxGramine && useTdxDstack) {
             throw new Error('Cannot configure both SGX and TDX at the same time.');
-        }if (useSgxGramine) {
+        }
+        if (useSgxGramine) {
             this.teeType = TeeType.SGX_GRAMINE;
         } else if (useTdxDstack) {
             this.teeType = TeeType.TDX_DSTACK;

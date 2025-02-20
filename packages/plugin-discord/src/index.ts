@@ -24,7 +24,6 @@ import {
 } from "discord.js";
 import { EventEmitter } from "node:events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
-import dmAction from "./actions/dm.ts";
 import reply from "./actions/reply.ts";
 import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
@@ -499,7 +498,6 @@ const discordPlugin: Plugin = {
     leaveVoice,
     summarize,
     transcribe_media,
-    dmAction
   ],
   providers: [channelStateProvider, voiceStateProvider],
   tests: [new DiscordTestSuite()],

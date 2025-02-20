@@ -112,11 +112,12 @@ export class TeeLogManager {
             const sgxAttestationProvider = new SgxAttestationProvider();
             const sgxAttestation = await sgxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(sgxAttestation);
-        }if (this.teeType === TeeType.TDX_DSTACK) {
+        }
+        if (this.teeType === TeeType.TDX_DSTACK) {
             const tdxAttestationProvider = new TdxAttestationProvider(this.teeMode);
             const tdxAttestation = await tdxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(tdxAttestation);
         }
-            throw new Error('Invalid TEE type');
+        throw new Error('Invalid TEE type');
     }
 }
