@@ -106,7 +106,7 @@ async function initializeRuntime(character: Character): Promise<RuntimeConfig> {
 // Initialize the runtimes
 beforeAll(async () => {
     const characters = [defaultCharacterTest, elizaOpenAIFirst, elizaAnthropicFirst];
-
+    
     for (const character of characters) {
         const config = await initializeRuntime(character);
         runtimeConfigs.set(character.name, config);
@@ -169,6 +169,11 @@ interface TestResult {
     error?: Error;
 }
 
+enum TestStatus {
+    Passed = "passed",
+    Failed = "failed",
+}
+
 class TestRunner {
     private runtime: IAgentRuntime;
     private stats: TestStats;
@@ -191,16 +196,16 @@ class TestRunner {
             this.stats.passed++;
             const duration = performance.now() - startTime;
             logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
-            this.addTestResult(file, suite, test.name, "passed");
+            this.addTestResult(file, suite, test.name, TestStatus.Passed);
         } catch (error) {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
-            this.addTestResult(file, suite, test.name, "failed", error);
+            this.addTestResult(file, suite, test.name, TestStatus.Failed, error);
         }
     }
 
-    private addTestResult(file: string, suite: string, name: string, status: "passed" | "failed", error?: Error) {
+    private addTestResult(file: string, suite: string, name: string, status: TestStatus, error?: Error) {
         if (!this.testResults.has(file)) {
             this.testResults.set(file, []);
         }
@@ -258,50 +263,58 @@ class TestRunner {
             bold: "\x1b[1m",
             underline: "\x1b[4m",
         };
-        
-        function colorize(text: string, color: keyof typeof COLORS, bold = false): string {
+    
+        const colorize = (text: string, color: keyof typeof COLORS, bold = false): string => {
             return `${bold ? COLORS.bold : ""}${COLORS[color]}${text}${COLORS.reset}`;
-        }
-        
-        
-        console.log(colorize(`\n${"⎯".repeat(25)}  Test Suites ${"⎯".repeat(25)} \n`, "cyan", true));
-
-        let failedTestSuites = 0;
-        this.testResults.forEach((tests, file) => {
-            const failed = tests.filter(t => t.status === "failed").length;
-            const total = tests.length;
-
-            if (failed > 0) {
-                failedTestSuites++;
-                console.log(` ${colorize("❯", "yellow")} ${file} (${total})`);
-            } else {
-                console.log(` ${colorize("✓", "green")} ${file} (${total})`);
-            }
-
-            const groupedBySuite = new Map<string, TestResult[]>();
-            tests.forEach(t => {
-                if (!groupedBySuite.has(t.suite)) {
-                    groupedBySuite.set(t.suite, []);
-                }
-                groupedBySuite.get(t.suite)!.push(t);
-            });
-
-            groupedBySuite.forEach((suiteTests, suite) => {
-                const failed = suiteTests.filter(t => t.status === "failed").length;
+        };
+    
+        const printSectionHeader = (title: string, color: keyof typeof COLORS) => {
+            console.log(colorize(`\n${"⎯".repeat(25)}  ${title} ${"⎯".repeat(25)}\n`, color, true));
+        };
+    
+        const printTestSuiteSummary = () => {
+            printSectionHeader("Test Suites", "cyan");
+    
+            let failedTestSuites = 0;
+            this.testResults.forEach((tests, file) => {
+                const failed = tests.filter(t => t.status === "failed").length;
+                const total = tests.length;
+    
                 if (failed > 0) {
-                    console.log(`   ${colorize("❯", "yellow")} ${suite} (${suiteTests.length})`);
-                    suiteTests.forEach(test => {
-                        const symbol = test.status === "passed" ? colorize("✓", "green") : colorize("×", "red");
-                        console.log(`     ${symbol} ${test.name}`);
-                    });
+                    failedTestSuites++;
+                    console.log(` ${colorize("❯", "yellow")} ${file} (${total})`);
                 } else {
-                    console.log(`   ${colorize("✓", "green")} ${suite} (${suiteTests.length})`);
+                    console.log(` ${colorize("✓", "green")} ${file} (${total})`);
                 }
+    
+                const groupedBySuite = new Map<string, TestResult[]>();
+                tests.forEach(t => {
+                    if (!groupedBySuite.has(t.suite)) {
+                        groupedBySuite.set(t.suite, []);
+                    }
+                    groupedBySuite.get(t.suite)!.push(t);
+                });
+    
+                groupedBySuite.forEach((suiteTests, suite) => {
+                    const failed = suiteTests.filter(t => t.status === "failed").length;
+                    if (failed > 0) {
+                        console.log(`   ${colorize("❯", "yellow")} ${suite} (${suiteTests.length})`);
+                        suiteTests.forEach(test => {
+                            const symbol = test.status === "passed" ? colorize("✓", "green") : colorize("×", "red");
+                            console.log(`     ${symbol} ${test.name}`);
+                        });
+                    } else {
+                        console.log(`   ${colorize("✓", "green")} ${suite} (${suiteTests.length})`);
+                    }
+                });
             });
-        });
-
-        if (this.stats.failed > 0) {
-            console.log(colorize(`\n${"⎯".repeat(25)}  Failed Tests ${"⎯".repeat(25)} \n`, "red", true));
+    
+            return failedTestSuites;
+        };
+    
+        const printFailedTests = () => {
+            printSectionHeader("Failed Tests", "red");
+    
             this.testResults.forEach(tests => {
                 tests.forEach(test => {
                     if (test.status === "failed") {
@@ -311,10 +324,19 @@ class TestRunner {
                     }
                 });
             });
+        };
+    
+        const printTestSummary = (failedTestSuites: number) => {
+            printSectionHeader("Test Summary", "cyan");
+    
+            console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(failedTestSuites + " failed | ", "red") : ""}${colorize((this.testResults.size - failedTestSuites) + " passed", "green")} (${this.testResults.size})`);
+            console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
+        };
+    
+        const failedTestSuites = printTestSuiteSummary();
+        if (this.stats.failed > 0) {
+            printFailedTests();
         }
-
-        console.log(colorize(`\n${"⎯".repeat(25)}  Test Summary ${"⎯".repeat(25)} \n`, "cyan", true));
-        console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(failedTestSuites + " failed | ", "red") : ""}${colorize((this.testResults.size - failedTestSuites) + " passed", "green")} (${this.testResults.size})`);
-        console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
-}
+        printTestSummary(failedTestSuites);
+    }
 }
