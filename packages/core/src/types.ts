@@ -312,6 +312,9 @@ export interface Memory {
 
   /** Embedding similarity score */
   similarity?: number;
+
+  /** Metadata for the knowledge */
+  metadata?: KnowledgeMetadata;
 }
 
 /**
@@ -1304,4 +1307,12 @@ export interface Task {
   tags: string[];
   handler: (runtime: IAgentRuntime) => Promise<void>;
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
+}
+
+export interface KnowledgeMetadata {
+    source?: string;          // Source of the knowledge (e.g., "user", "file", "web")
+    sourceId?: UUID;          // ID of the source (e.g., file ID, message ID)
+    scope?: string;           // Scope of the knowledge (e.g., "public", "private", "room")
+    timestamp?: number;       // When the knowledge was created/updated
+    tags?: string[];         // Optional tags for categorization
 }

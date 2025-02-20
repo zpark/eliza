@@ -5,6 +5,7 @@ import {
     type IMemoryManager,
     type Memory,
     type UUID,
+    type KnowledgeMetadata,
 } from "./types.ts";
 
 const defaultMatchThreshold = 0.1;
@@ -33,6 +34,28 @@ export class MemoryManager implements IMemoryManager {
     constructor(opts: { tableName: string; runtime: IAgentRuntime }) {
         this.runtime = opts.runtime;
         this.tableName = opts.tableName;
+    }
+
+    private validateMetadata(metadata: KnowledgeMetadata): void {
+        // Validate source if present
+        if (metadata.source && typeof metadata.source !== 'string') {
+            throw new Error('Metadata source must be a string');
+        }
+
+        // Validate sourceId if present
+        if (metadata.sourceId && typeof metadata.sourceId !== 'string') {
+            throw new Error('Metadata sourceId must be a UUID string');
+        }
+
+        // Validate scope if present
+        if (metadata.scope && !['shared', 'private', 'room'].includes(metadata.scope)) {
+            throw new Error('Metadata scope must be "shared", "private", or "room"');
+        }
+
+        // Validate tags if present
+        if (metadata.tags && !Array.isArray(metadata.tags)) {
+            throw new Error('Metadata tags must be an array of strings');
+        }
     }
 
     /**
@@ -84,14 +107,7 @@ export class MemoryManager implements IMemoryManager {
      * @param opts.unique Whether to retrieve unique memories only.
      * @returns A Promise resolving to an array of Memory objects.
      */
-    async getMemories({
-        roomId,
-        count = 10,
-        unique = true,
-        start,
-        end,
-        agentId,
-    }: {
+    async getMemories(opts: {
         roomId: UUID;
         count?: number;
         unique?: boolean;
@@ -100,13 +116,13 @@ export class MemoryManager implements IMemoryManager {
         agentId?: UUID;
     }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemories({
-            roomId,
-            count,
-            unique,
+            roomId: opts.roomId,
+            count: opts.count,
+            unique: opts.unique,
             tableName: this.tableName,
-            agentId,
-            start,
-            end,
+            agentId: opts.agentId,
+            start: opts.start,
+            end: opts.end,
         });
     }
 
@@ -173,21 +189,47 @@ export class MemoryManager implements IMemoryManager {
      * @returns A Promise that resolves when the operation completes.
      */
     async createMemory(memory: Memory, unique = false): Promise<void> {
-        // TODO: check memory.agentId == this.runtime.agentId
-
-        const existingMessage =
-            await this.runtime.databaseAdapter.getMemoryById(memory.id);
+        const existingMessage = await this.runtime.databaseAdapter.getMemoryById(memory.id);
 
         if (existingMessage) {
             logger.debug("Memory already exists, skipping");
             return;
         }
 
+        // Initialize metadata if not present for knowledge table
+        if (this.tableName === 'knowledge' && !memory.metadata) {
+            memory.metadata = {
+                source: 'knowledge',
+                scope: 'private',
+                timestamp: Date.now()
+            };
+        }
+
+        // Handle metadata if present
+        if (memory.metadata) {
+            // Validate metadata
+            this.validateMetadata(memory.metadata);
+
+            // Ensure timestamp
+            if (!memory.metadata.timestamp) {
+                memory.metadata.timestamp = Date.now();
+            }
+
+            // Set default scope if not present
+            if (!memory.metadata.scope) {
+                memory.metadata.scope = memory.agentId ? 'private' : 'shared';
+            }
+
+            // Set source if not present
+            if (!memory.metadata.source) {
+                memory.metadata.source = this.tableName;
+            }
+        }
+
         logger.log("Creating Memory", memory.id, memory.content.text);
 
-        if(!memory.embedding){
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
-            memory.embedding = embedding;
+        if (!memory.embedding) {
+            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
         }
 
         await this.runtime.databaseAdapter.createMemory(
