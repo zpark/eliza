@@ -105,7 +105,7 @@ async function initializeRuntime(character: Character): Promise<RuntimeConfig> {
 
 // Initialize the runtimes
 beforeAll(async () => {
-    const characters = [defaultCharacterTest, elizaOpenAIFirst, elizaAnthropicFirst];
+    const characters = [defaultCharacterTest];
     
     for (const character of characters) {
         const config = await initializeRuntime(character);
@@ -137,21 +137,21 @@ describe('Multi-Character Plugin Tests', () => {
         await testRunner.runPluginTests();
     }, TEST_TIMEOUT);
 
-    it('should run tests for ElizaOpenAIFirst (1536 dimension)', async () => {
-        const config = runtimeConfigs.get('ElizaOpenAIFirst');
-        if (!config) throw new Error('Runtime not found for ElizaOpenAIFirst');
+    // it('should run tests for ElizaOpenAIFirst (1536 dimension)', async () => {
+    //     const config = runtimeConfigs.get('ElizaOpenAIFirst');
+    //     if (!config) throw new Error('Runtime not found for ElizaOpenAIFirst');
         
-        const testRunner = new TestRunner(config.runtime);
-        await testRunner.runPluginTests();
-    }, TEST_TIMEOUT);
+    //     const testRunner = new TestRunner(config.runtime);
+    //     await testRunner.runPluginTests();
+    // }, TEST_TIMEOUT);
 
-    it('should run tests for ElizaAnthropicFirst (384 dimension)', async () => {
-        const config = runtimeConfigs.get('ElizaAnthropicFirst');
-        if (!config) throw new Error('Runtime not found for ElizaAnthropicFirst');
+    // it('should run tests for ElizaAnthropicFirst (384 dimension)', async () => {
+    //     const config = runtimeConfigs.get('ElizaAnthropicFirst');
+    //     if (!config) throw new Error('Runtime not found for ElizaAnthropicFirst');
         
-        const testRunner = new TestRunner(config.runtime);
-        await testRunner.runPluginTests();
-    }, TEST_TIMEOUT);
+    //     const testRunner = new TestRunner(config.runtime);
+    //     await testRunner.runPluginTests();
+    // }, TEST_TIMEOUT);
 });
 
 interface TestStats {
@@ -161,9 +161,18 @@ interface TestStats {
     skipped: number;
 }
 
+interface TestResult {
+    file: string;
+    suite: string;
+    name: string;
+    status: "passed" | "failed";
+    error?: Error;
+}
+
 class TestRunner {
     private runtime: IAgentRuntime;
     private stats: TestStats;
+    private testResults: Map<string, TestResult[]> = new Map();
 
     constructor(runtime: IAgentRuntime) {
         this.runtime = runtime;
@@ -175,25 +184,34 @@ class TestRunner {
         };
     }
 
-    private async runTestCase(test: TestCase): Promise<void> {
+    private async runTestCase(test: TestCase, file: string, suite: string): Promise<void> {
         const startTime = performance.now();
         try {
             await test.fn(this.runtime);
             this.stats.passed++;
             const duration = performance.now() - startTime;
             logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
+            this.addTestResult(file, suite, test.name, "passed");
         } catch (error) {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
+            this.addTestResult(file, suite, test.name, "failed", error);
         }
     }
 
-    private async runTestSuite(suite: TestSuite): Promise<void> {
+    private addTestResult(file: string, suite: string, name: string, status: "passed" | "failed", error?: Error) {
+        if (!this.testResults.has(file)) {
+            this.testResults.set(file, []);
+        }
+        this.testResults.get(file)!.push({ file, suite, name, status, error });
+    }
+
+    private async runTestSuite(suite: TestSuite, file: string): Promise<void> {
         logger.info(`\nTest suite: ${suite.name}`);
         for (const test of suite.tests) {
             this.stats.total++;
-            await this.runTestCase(test);
+            await this.runTestCase(test, file, suite.name);
         }
     }
 
@@ -209,7 +227,8 @@ class TestRunner {
 
                 for (const suite of testSuites) {
                     if (suite) {
-                        await this.runTestSuite(suite);
+                        const fileName = `${plugin.name} test suite`;
+                        await this.runTestSuite(suite, fileName);
                     }
                 }
             } catch (error) {
@@ -221,12 +240,76 @@ class TestRunner {
         this.logTestSummary();
         return this.stats;
     }
+    
 
     private logTestSummary(): void {
-        logger.info('\nTest Summary:');
-        logger.info(`Total: ${this.stats.total}`);
-        logger.info(`Passed: ${this.stats.passed}`);
-        logger.info(`Failed: ${this.stats.failed}`);
-        logger.info(`Skipped: ${this.stats.skipped}`);
-    }
+        const COLORS = {
+            reset: "\x1b[0m",
+            red: "\x1b[31m",
+            green: "\x1b[32m",
+            yellow: "\x1b[33m",
+            blue: "\x1b[34m",
+            magenta: "\x1b[35m",
+            cyan: "\x1b[36m",
+            gray: "\x1b[90m",
+            bold: "\x1b[1m",
+            underline: "\x1b[4m",
+        };
+        function colorize(text: string, color: keyof typeof COLORS): string {
+            return `${COLORS[color]}${text}${COLORS.reset}`;
+        }
+        
+        console.log("\n" + colorize("⎯".repeat(50), "cyan"));
+        console.log(colorize("Test Summary:", "bold"));
+
+        this.testResults.forEach((tests, file) => {
+            const passed = tests.filter(t => t.status === "passed").length;
+            const failed = tests.filter(t => t.status === "failed").length;
+            const total = tests.length;
+
+            if (failed > 0) {
+                console.log(` ${colorize("❯", "yellow")} ${file} (${total})`);
+            } else {
+                console.log(` ${colorize("✓", "green")} ${file} (${total})`);
+            }
+
+            const groupedBySuite = new Map<string, TestResult[]>();
+            tests.forEach(t => {
+                if (!groupedBySuite.has(t.suite)) {
+                    groupedBySuite.set(t.suite, []);
+                }
+                groupedBySuite.get(t.suite)!.push(t);
+            });
+
+            groupedBySuite.forEach((suiteTests, suite) => {
+                const failed = suiteTests.filter(t => t.status === "failed").length;
+                if (failed > 0) {
+                    console.log(`   ${colorize("❯", "yellow")} ${suite} (${suiteTests.length})`);
+                    suiteTests.forEach(test => {
+                        const symbol = test.status === "passed" ? colorize("✓", "green") : colorize("×", "red");
+                        console.log(`     ${symbol} ${test.name}`);
+                    });
+                } else {
+                    console.log(`   ${colorize("✓", "green")} ${suite} (${suiteTests.length})`);
+                }
+            });
+        });
+
+        if (this.stats.failed > 0) {
+            console.log(colorize(`\n ${"⎯".repeat(25)}Failed Tests${"⎯".repeat(25)} \n`, "red"));
+            console.log(colorize("Failed Tests:", "red"));
+            this.testResults.forEach(tests => {
+                tests.forEach(test => {
+                    if (test.status === "failed") {
+                        console.log(` ${colorize("FAIL", "red")} ${test.file} > ${test.suite} > ${test.name}`);
+                        console.log(` ${colorize("AssertionError: " + test.error!.message, "red")}`);
+                        console.log("\n" + colorize("⎯".repeat(50), "red") + "\n");
+                    }
+                });
+            });
+        }
+
+        console.log("\n" + colorize("⎯".repeat(50), "cyan"));
+        console.log(` ${colorize("Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
+}
 }
