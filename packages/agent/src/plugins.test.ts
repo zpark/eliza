@@ -306,7 +306,7 @@ class TestRunner {
                     if (test.status === "failed") {
                         console.log(` ${colorize("FAIL", "red")} ${test.file} > ${test.suite} > ${test.name}`);
                         console.log(` ${colorize("AssertionError: " + test.error!.message, "red")}`);
-                        console.log("\n" + colorize("⎯".repeat(50), "red") + "\n");
+                        console.log("\n" + colorize("⎯".repeat(66), "red") + "\n");
                     }
                 });
             });
