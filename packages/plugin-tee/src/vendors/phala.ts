@@ -8,15 +8,10 @@ export class PhalaVendor implements TeeVendor {
     type = TeeVendors.PHALA;
 
     getActions() {
-        return [
-            remoteAttestationAction,
-        ];
+        return [remoteAttestationAction];
     }
     getProviders() {
-        return [
-            deriveKeyProvider,
-            remoteAttestationProvider
-        ];
+        return [deriveKeyProvider, remoteAttestationProvider];
     }
 
     getName() {
@@ -26,4 +21,4 @@ export class PhalaVendor implements TeeVendor {
     getDescription() {
         return 'Phala TEE Cloud to Host Eliza Agents';
     }
-} 
+}

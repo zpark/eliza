@@ -7,7 +7,7 @@ import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
 import type { ITwitterClient } from "./types.ts";
-import { TwitterTestSuite } from "./test-suite.ts";
+import { TwitterTestSuite } from "./tests.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:

@@ -1,29 +1,30 @@
 import {
   ChannelType,
-  type HandlerCallback,
-  logger,
-  type Memory,
-  stringToUuid,
   type Character,
   type Client as ElizaClient,
+  type HandlerCallback,
   type IAgentRuntime,
-  type Plugin
+  logger,
+  type Memory,
+  type Plugin,
+  stringToUuid
 } from "@elizaos/core";
 import {
   Client,
   ChannelType as DiscordChannelType,
   Events,
   GatewayIntentBits,
+  type Guild,
+  type MessageReaction,
   type OAuth2Guild,
   Partials,
   PermissionsBitField,
   type TextChannel,
-  type Guild,
-  type MessageReaction,
   type User,
 } from "discord.js";
 import { EventEmitter } from "node:events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
+import downloadMedia from "./actions/downloadMedia.ts";
 import reply from "./actions/reply.ts";
 import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
@@ -33,20 +34,9 @@ import { DISCORD_CLIENT_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
-import { DiscordTestSuite } from "./test-suite.ts";
+import { DiscordTestSuite } from "./tests.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
-
-interface RoomData {
-  channelId: string;
-  serverId: string;
-}
-
-interface AuthorData {
-  userId: string;
-  userName: string;
-  displayName: string;
-}
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
   apiToken: string;
@@ -493,7 +483,7 @@ const discordPlugin: Plugin = {
   actions: [
     reply,
     chatWithAttachments,
-    // downloadMedia,
+    downloadMedia,
     joinVoice,
     leaveVoice,
     summarize,

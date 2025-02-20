@@ -20,4 +20,4 @@ export const getVendor = (type: TeeVendors): TeeVendor => {
     return vendor;
 };
 
-export * from './types'; 
+export * from './types';

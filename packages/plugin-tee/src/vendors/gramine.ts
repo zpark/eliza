@@ -11,9 +11,7 @@ export class GramineVendor implements TeeVendor {
     }
 
     getProviders() {
-        return [
-            sgxAttestationProvider
-        ];
+        return [sgxAttestationProvider];
     }
 
     getName() {
@@ -23,4 +21,4 @@ export class GramineVendor implements TeeVendor {
     getDescription() {
         return 'SGX Gramine TEE to Host Eliza Agents';
     }
-} 
+}

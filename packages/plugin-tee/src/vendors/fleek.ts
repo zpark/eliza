@@ -1,5 +1,5 @@
-import { TeeVendors } from "@elizaos/core";
-import { TeeVendor } from "./types";
+import { TeeVendors } from '@elizaos/core';
+import { TeeVendor } from './types';
 
 export class FleekVendor implements TeeVendor {
     type = TeeVendors.FLEEK;

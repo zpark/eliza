@@ -10,7 +10,7 @@ export type { TeeVendorConfig };
 export const teePlugin = (config?: TeePluginConfig): Plugin => {
     const vendorType = config?.vendor || TeeVendors.PHALA;
     const vendor = getVendor(vendorType);
-    
+
     return {
         name: vendor.getName(),
         description: vendor.getDescription(),

@@ -10,32 +10,29 @@ import {
     ModelClass,
     settings,
     type State,
-} from "@elizaos/core";
-import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
-import BigNumber from "bignumber.js";
-import { getWalletKey } from "../keypairUtils";
-import type { ISolanaClient, Item } from "../types";
-import { SOLANA_CLIENT_NAME } from "../constants";
+} from '@elizaos/core';
+import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import BigNumber from 'bignumber.js';
+import { getWalletKey } from '../keypairUtils';
+import type { ISolanaClient, Item } from '../types';
+import { SOLANA_CLIENT_NAME } from '../constants';
 
-async function getTokenDecimals(
-    connection: Connection,
-    mintAddress: string
-): Promise<number> {
+async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
     const tokenAccountInfo = await connection.getParsedAccountInfo(mintPublicKey);
 
     if (
         tokenAccountInfo.value &&
-        typeof tokenAccountInfo.value.data === "object" &&
-        "parsed" in tokenAccountInfo.value.data
+        typeof tokenAccountInfo.value.data === 'object' &&
+        'parsed' in tokenAccountInfo.value.data
     ) {
         const parsedInfo = tokenAccountInfo.value.data.parsed?.info;
-        if (parsedInfo && typeof parsedInfo.decimals === "number") {
+        if (parsedInfo && typeof parsedInfo.decimals === 'number') {
             return parsedInfo.decimals;
         }
     }
 
-    throw new Error("Unable to fetch token decimals");
+    throw new Error('Unable to fetch token decimals');
 }
 
 async function swapToken(
@@ -43,7 +40,7 @@ async function swapToken(
     walletPublicKey: PublicKey,
     inputTokenCA: string,
     outputTokenCA: string,
-    amount: number
+    amount: number,
 ): Promise<any> {
     try {
         const decimals =
@@ -51,25 +48,25 @@ async function swapToken(
                 ? new BigNumber(9)
                 : new BigNumber(await getTokenDecimals(connection, inputTokenCA));
 
-        elizaLogger.log("Decimals:", decimals.toString());
+        elizaLogger.log('Decimals:', decimals.toString());
 
         const amountBN = new BigNumber(amount);
         const adjustedAmount = amountBN.multipliedBy(new BigNumber(10).pow(decimals));
 
-        elizaLogger.log("Fetching quote with params:", {
+        elizaLogger.log('Fetching quote with params:', {
             inputMint: inputTokenCA,
             outputMint: outputTokenCA,
             amount: adjustedAmount,
         });
 
         const quoteResponse = await fetch(
-            `https://quote-api.jup.ag/v6/quote?inputMint=${inputTokenCA}&outputMint=${outputTokenCA}&amount=${adjustedAmount}&dynamicSlippage=true&maxAccounts=64`
+            `https://quote-api.jup.ag/v6/quote?inputMint=${inputTokenCA}&outputMint=${outputTokenCA}&amount=${adjustedAmount}&dynamicSlippage=true&maxAccounts=64`,
         );
         const quoteData = await quoteResponse.json();
 
         if (!quoteData || quoteData.error) {
-            elizaLogger.error("Quote error:", quoteData);
-            throw new Error(`Failed to get quote: ${quoteData?.error || "Unknown error"}`);
+            elizaLogger.error('Quote error:', quoteData);
+            throw new Error(`Failed to get quote: ${quoteData?.error || 'Unknown error'}`);
         }
 
         const swapRequestBody = {
@@ -79,32 +76,39 @@ async function swapToken(
             dynamicSlippage: true,
             priorityLevelWithMaxLamports: {
                 maxLamports: 4000000,
-                priorityLevel: "veryHigh",
+                priorityLevel: 'veryHigh',
             },
         };
 
-        const swapResponse = await fetch("https://quote-api.jup.ag/v6/swap", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(swapRequestBody),
         });
 
         const swapData = await swapResponse.json();
 
         if (!swapData || !swapData.swapTransaction) {
-            elizaLogger.error("Swap error:", swapData);
-            throw new Error(`Failed to get swap transaction: ${swapData?.error || "No swap transaction returned"}`);
+            elizaLogger.error('Swap error:', swapData);
+            throw new Error(
+                `Failed to get swap transaction: ${
+                    swapData?.error || 'No swap transaction returned'
+                }`,
+            );
         }
 
         return swapData;
     } catch (error) {
-        elizaLogger.error("Error in swapToken:", error);
+        elizaLogger.error('Error in swapToken:', error);
         throw error;
     }
 }
 
 // Get token from wallet data using SolanaClient
-async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string): Promise<string | null> {
+async function getTokenFromWallet(
+    runtime: IAgentRuntime,
+    tokenSymbol: string,
+): Promise<string | null> {
     try {
         const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
         if (!solanaClient) {
@@ -116,13 +120,13 @@ async function getTokenFromWallet(runtime: IAgentRuntime, tokenSymbol: string): 
             return null;
         }
 
-        const token = walletData.items.find((item: Item) => 
-            item.symbol.toLowerCase() === tokenSymbol.toLowerCase()
+        const token = walletData.items.find(
+            (item: Item) => item.symbol.toLowerCase() === tokenSymbol.toLowerCase(),
         );
 
         return token ? token.address : null;
     } catch (error) {
-        elizaLogger.error("Error checking token in wallet:", error);
+        elizaLogger.error('Error checking token in wallet:', error);
         return null;
     }
 }
@@ -156,19 +160,26 @@ Extract the following information about the requested token swap:
 Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.`;
 
 export const executeSwap: Action = {
-    name: "SWAP_SOLANA",
-    similes: ["SWAP_SOL", "SWAP_TOKENS_SOLANA", "TOKEN_SWAP_SOLANA", "TRADE_TOKENS_SOLANA", "EXCHANGE_TOKENS_SOLANA"],
+    name: 'SWAP_SOLANA',
+    similes: [
+        'SWAP_SOL',
+        'SWAP_TOKENS_SOLANA',
+        'TOKEN_SWAP_SOLANA',
+        'TRADE_TOKENS_SOLANA',
+        'EXCHANGE_TOKENS_SOLANA',
+    ],
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
         const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME);
         return !!solanaClient;
     },
-    description: "Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.",
+    description:
+        'Perform a token swap from one token to another on Solana. Works with SOL and SPL tokens.',
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
         _options: { [key: string]: unknown },
-        callback?: HandlerCallback
+        callback?: HandlerCallback,
     ): Promise<boolean> => {
         try {
             if (!state) {
@@ -197,36 +208,44 @@ export const executeSwap: Action = {
             });
 
             // Handle SOL addresses
-            if (response.inputTokenSymbol?.toUpperCase() === "SOL") {
+            if (response.inputTokenSymbol?.toUpperCase() === 'SOL') {
                 response.inputTokenCA = settings.SOL_ADDRESS;
             }
-            if (response.outputTokenSymbol?.toUpperCase() === "SOL") {
+            if (response.outputTokenSymbol?.toUpperCase() === 'SOL') {
                 response.outputTokenCA = settings.SOL_ADDRESS;
             }
 
             // Resolve token addresses if needed
             if (!response.inputTokenCA && response.inputTokenSymbol) {
-                response.inputTokenCA = await getTokenFromWallet(runtime, response.inputTokenSymbol);
+                response.inputTokenCA = await getTokenFromWallet(
+                    runtime,
+                    response.inputTokenSymbol,
+                );
                 if (!response.inputTokenCA) {
-                    callback?.({ text: "Could not find the input token in your wallet" });
+                    callback?.({ text: 'Could not find the input token in your wallet' });
                     return false;
                 }
             }
 
             if (!response.outputTokenCA && response.outputTokenSymbol) {
-                response.outputTokenCA = await getTokenFromWallet(runtime, response.outputTokenSymbol);
+                response.outputTokenCA = await getTokenFromWallet(
+                    runtime,
+                    response.outputTokenSymbol,
+                );
                 if (!response.outputTokenCA) {
-                    callback?.({ text: "Could not find the output token in your wallet" });
+                    callback?.({ text: 'Could not find the output token in your wallet' });
                     return false;
                 }
             }
 
             if (!response.amount) {
-                callback?.({ text: "Please specify the amount you want to swap" });
+                callback?.({ text: 'Please specify the amount you want to swap' });
                 return false;
             }
 
-            const connection = new Connection(runtime.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com");
+            const connection = new Connection(
+                runtime.getSetting('SOLANA_RPC_URL') || 'https://api.mainnet-beta.solana.com',
+            );
             const { publicKey: walletPublicKey } = await getWalletKey(runtime, false);
 
             const swapResult = await swapToken(
@@ -234,10 +253,10 @@ export const executeSwap: Action = {
                 walletPublicKey,
                 response.inputTokenCA as string,
                 response.outputTokenCA as string,
-                response.amount as number
+                response.amount as number,
             );
 
-            const transactionBuf = Buffer.from(swapResult.swapTransaction, "base64");
+            const transactionBuf = Buffer.from(swapResult.swapTransaction, 'base64');
             const transaction = VersionedTransaction.deserialize(transactionBuf);
 
             const { keypair } = await getWalletKey(runtime, true);
@@ -251,14 +270,17 @@ export const executeSwap: Action = {
             const txid = await connection.sendTransaction(transaction, {
                 skipPreflight: false,
                 maxRetries: 3,
-                preflightCommitment: "confirmed",
+                preflightCommitment: 'confirmed',
             });
 
-            const confirmation = await connection.confirmTransaction({
-                signature: txid,
-                blockhash: latestBlockhash.blockhash,
-                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-            }, "confirmed");
+            const confirmation = await connection.confirmTransaction(
+                {
+                    signature: txid,
+                    blockhash: latestBlockhash.blockhash,
+                    lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+                },
+                'confirmed',
+            );
 
             if (confirmation.value.err) {
                 throw new Error(`Transaction failed: ${confirmation.value.err}`);
@@ -266,15 +288,15 @@ export const executeSwap: Action = {
 
             callback?.({
                 text: `Swap completed successfully! Transaction ID: ${txid}`,
-                content: { success: true, txid }
+                content: { success: true, txid },
             });
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error during token swap:", error);
-            callback?.({ 
+            elizaLogger.error('Error during token swap:', error);
+            callback?.({
                 text: `Swap failed: ${error.message}`,
-                content: { error: error.message }
+                content: { error: error.message },
             });
             return false;
         }
@@ -282,18 +304,18 @@ export const executeSwap: Action = {
     examples: [
         [
             {
-                user: "{{user1}}",
+                user: '{{user1}}',
                 content: {
-                    text: "Swap 0.1 SOL for USDC"
+                    text: 'Swap 0.1 SOL for USDC',
                 },
             },
             {
-                user: "{{user2}}",
+                user: '{{user2}}',
                 content: {
                     text: "I'll help you swap 0.1 SOL for USDC",
-                    action: "SWAP_SOLANA",
+                    action: 'SWAP_SOLANA',
                 },
-            }
-        ]
+            },
+        ],
     ] as ActionExample[][],
 };

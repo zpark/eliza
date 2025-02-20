@@ -6,7 +6,6 @@ import { promises as fs } from 'node:fs'; // Fix: Use node: protocol
 import { calculateSHA256 } from '../utils';
 import { RemoteAttestationProvider } from './base';
 
-
 /**
  * Phala TEE Cloud Provider
  * @example
@@ -109,7 +108,7 @@ const phalaRemoteAttestationProvider: Provider = {
 };
 
 /**
- * Marlin TEE Provider  
+ * Marlin TEE Provider
  * @example
  * ```ts
  * const provider = new MarlinRemoteAttestationProvider();
@@ -241,9 +240,13 @@ const sgxAttestationProvider: Provider = {
     },
 };
 
-export { 
-    phalaRemoteAttestationProvider, PhalaRemoteAttestationProvider, 
-    marlinRemoteAttestationProvider, MarlinRemoteAttestationProvider,
-    fleekRemoteAttestationProvider, FleekRemoteAttestationProvider,
-    sgxAttestationProvider, SgxAttestationProvider 
+export {
+    phalaRemoteAttestationProvider,
+    PhalaRemoteAttestationProvider,
+    marlinRemoteAttestationProvider,
+    MarlinRemoteAttestationProvider,
+    fleekRemoteAttestationProvider,
+    FleekRemoteAttestationProvider,
+    sgxAttestationProvider,
+    SgxAttestationProvider,
 };

@@ -8,7 +8,6 @@ import { PhalaRemoteAttestationProvider as RemoteAttestationProvider } from './r
 import { TEEMode, type RemoteAttestationQuote, type DeriveKeyAttestationData } from '@elizaos/core';
 import { DeriveKeyProvider } from './base';
 
-
 /**
  * Phala TEE Cloud Provider
  * @example
@@ -213,7 +212,7 @@ const phalaDeriveKeyProvider: Provider = {
 class MarlinDeriveKeyProvider extends DeriveKeyProvider {
     constructor() {
         super();
-    }  
+    }
 }
 
 const marlinDeriveKeyProvider: Provider = {
@@ -221,8 +220,6 @@ const marlinDeriveKeyProvider: Provider = {
         return 'Marlin Derive Key Provider';
     },
 };
-
-
 
 /**
  * Fleek TEE Provider
@@ -234,7 +231,7 @@ const marlinDeriveKeyProvider: Provider = {
 class FleekDeriveKeyProvider extends DeriveKeyProvider {
     constructor() {
         super();
-    }  
+    }
 }
 
 const fleekDeriveKeyProvider: Provider = {
@@ -260,11 +257,15 @@ const sgxGramineDeriveKeyProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'SGX Gramine Derive Key Provider';
     },
-};  
+};
 
-export { 
-    phalaDeriveKeyProvider, PhalaDeriveKeyProvider,
-    marlinDeriveKeyProvider, MarlinDeriveKeyProvider,
-    fleekDeriveKeyProvider, FleekDeriveKeyProvider,
-    sgxGramineDeriveKeyProvider, SgxGramineDeriveKeyProvider,
+export {
+    phalaDeriveKeyProvider,
+    PhalaDeriveKeyProvider,
+    marlinDeriveKeyProvider,
+    MarlinDeriveKeyProvider,
+    fleekDeriveKeyProvider,
+    FleekDeriveKeyProvider,
+    sgxGramineDeriveKeyProvider,
+    SgxGramineDeriveKeyProvider,
 };

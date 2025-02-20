@@ -8,46 +8,46 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass, settings, type State
-} from "@elizaos/core";
+    ModelClass,
+    settings,
+    type State,
+} from '@elizaos/core';
 import {
     createAssociatedTokenAccountInstruction,
     createTransferInstruction,
     getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
+} from '@solana/spl-token';
 import {
     Connection,
     PublicKey,
     SystemProgram,
     TransactionMessage,
     VersionedTransaction,
-} from "@solana/web3.js";
-import { getWalletKey } from "../keypairUtils";
+} from '@solana/web3.js';
+import { getWalletKey } from '../keypairUtils';
 
 interface TransferContent extends Content {
-    tokenAddress: string | null;  // null for SOL transfers
+    tokenAddress: string | null; // null for SOL transfers
     recipient: string;
     amount: string | number;
 }
 
-function isTransferContent(
-    content: any
-): content is TransferContent {
-    elizaLogger.log("Content for transfer", content);
-    
+function isTransferContent(content: any): content is TransferContent {
+    elizaLogger.log('Content for transfer', content);
+
     // Base validation
-    if (!content.recipient || typeof content.recipient !== "string") {
+    if (!content.recipient || typeof content.recipient !== 'string') {
         return false;
     }
 
     // SOL transfer validation
     if (content.tokenAddress === null) {
-        return typeof content.amount === "number";
+        return typeof content.amount === 'number';
     }
-    
+
     // SPL token transfer validation
-    if (typeof content.tokenAddress === "string") {
-        return typeof content.amount === "string" || typeof content.amount === "number";
+    if (typeof content.tokenAddress === 'string') {
+        return typeof content.amount === 'string' || typeof content.amount === 'number';
     }
 
     return false;
@@ -83,26 +83,34 @@ Extract the following information about the requested transfer:
 `;
 
 export default {
-    name: "TRANSFER_SOLANA",
+    name: 'TRANSFER_SOLANA',
     similes: [
-        "TRANSFER_SOL",
-        "SEND_TOKEN_SOLANA", "TRANSFER_TOKEN_SOLANA", "SEND_TOKENS_SOLANA", "TRANSFER_TOKENS_SOLANA",
-        "SEND_SOL", "SEND_TOKEN_SOL", "PAY_SOL", "PAY_TOKEN_SOL", "PAY_TOKENS_SOL", "PAY_TOKENS_SOLANA",
-        "PAY_SOLANA"
+        'TRANSFER_SOL',
+        'SEND_TOKEN_SOLANA',
+        'TRANSFER_TOKEN_SOLANA',
+        'SEND_TOKENS_SOLANA',
+        'TRANSFER_TOKENS_SOLANA',
+        'SEND_SOL',
+        'SEND_TOKEN_SOL',
+        'PAY_SOL',
+        'PAY_TOKEN_SOL',
+        'PAY_TOKENS_SOL',
+        'PAY_TOKENS_SOLANA',
+        'PAY_SOLANA',
     ],
     validate: async (_runtime: IAgentRuntime, message: Memory) => {
-        elizaLogger.log("Validating transfer from user:", message.userId);
+        elizaLogger.log('Validating transfer from user:', message.userId);
         return true;
     },
-    description: "Transfer SOL or SPL tokens to another address on Solana.",
+    description: 'Transfer SOL or SPL tokens to another address on Solana.',
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
         _options: { [key: string]: unknown },
-        callback?: HandlerCallback
+        callback?: HandlerCallback,
     ): Promise<boolean> => {
-        elizaLogger.log("Starting TRANSFER handler...");
+        elizaLogger.log('Starting TRANSFER handler...');
 
         if (!state) {
             state = (await runtime.composeState(message)) as State;
@@ -115,20 +123,19 @@ export default {
             template: transferTemplate,
         });
 
-
         const content = await generateObject({
             runtime,
             context: transferContext,
             modelClass: ModelClass.LARGE,
         });
 
-        console.log("Content:", content);
+        console.log('Content:', content);
 
         if (!isTransferContent(content)) {
             if (callback) {
                 callback({
-                    text: "Need a valid recipient address and amount to transfer.",
-                    content: { error: "Invalid transfer content" },
+                    text: 'Need a valid recipient address and amount to transfer.',
+                    content: { error: 'Invalid transfer content' },
                 });
             }
             return false;
@@ -136,15 +143,17 @@ export default {
 
         try {
             const { keypair: senderKeypair } = await getWalletKey(runtime, true);
-            const connection = new Connection(runtime.getSetting("SOLANA_RPC_URL") || "https://api.mainnet-beta.solana.com");
+            const connection = new Connection(
+                runtime.getSetting('SOLANA_RPC_URL') || 'https://api.mainnet-beta.solana.com',
+            );
             const recipientPubkey = new PublicKey(content.recipient);
 
             let signature: string;
-            
+
             // Handle SOL transfer
             if (content.tokenAddress === null) {
                 const lamports = Number(content.amount) * 1e9;
-                
+
                 const instruction = SystemProgram.transfer({
                     fromPubkey: senderKeypair.publicKey,
                     toPubkey: recipientPubkey,
@@ -173,7 +182,7 @@ export default {
                         },
                     });
                 }
-            } 
+            }
             // Handle SPL token transfer
             else {
                 const mintPubkey = new PublicKey(content.tokenAddress);
@@ -181,7 +190,10 @@ export default {
                 const decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals ?? 9;
                 const adjustedAmount = BigInt(Number(content.amount) * 10 ** decimals);
 
-                const senderATA = getAssociatedTokenAddressSync(mintPubkey, senderKeypair.publicKey);
+                const senderATA = getAssociatedTokenAddressSync(
+                    mintPubkey,
+                    senderKeypair.publicKey,
+                );
                 const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);
 
                 const instructions = [];
@@ -193,8 +205,8 @@ export default {
                             senderKeypair.publicKey,
                             recipientATA,
                             recipientPubkey,
-                            mintPubkey
-                        )
+                            mintPubkey,
+                        ),
                     );
                 }
 
@@ -203,8 +215,8 @@ export default {
                         senderATA,
                         recipientATA,
                         senderKeypair.publicKey,
-                        adjustedAmount
-                    )
+                        adjustedAmount,
+                    ),
                 );
 
                 const messageV0 = new TransactionMessage({
@@ -233,7 +245,7 @@ export default {
 
             return true;
         } catch (error) {
-            elizaLogger.error("Error during transfer:", error);
+            elizaLogger.error('Error during transfer:', error);
             if (callback) {
                 callback({
                     text: `Transfer failed: ${error.message}`,
@@ -247,31 +259,31 @@ export default {
     examples: [
         [
             {
-                user: "{{user1}}",
+                user: '{{user1}}',
                 content: {
-                    text: "Send 1.5 SOL to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa",
+                    text: 'Send 1.5 SOL to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: "{{user2}}",
+                user: '{{user2}}',
                 content: {
-                    text: "Sending SOL now...",
-                    action: "TRANSFER_SOLANA",
+                    text: 'Sending SOL now...',
+                    action: 'TRANSFER_SOLANA',
                 },
             },
         ],
         [
             {
-                user: "{{user1}}",
+                user: '{{user1}}',
                 content: {
-                    text: "Send 69 $DEGENAI BieefG47jAHCGZBxi2q87RDuHyGZyYC3vAzxpyu8pump to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa",
+                    text: 'Send 69 $DEGENAI BieefG47jAHCGZBxi2q87RDuHyGZyYC3vAzxpyu8pump to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: "{{user2}}",
+                user: '{{user2}}',
                 content: {
-                    text: "Sending the tokens now...",
-                    action: "TRANSFER_SOLANA",
+                    text: 'Sending the tokens now...',
+                    action: 'TRANSFER_SOLANA',
                 },
             },
         ],
