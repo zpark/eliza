@@ -1,17 +1,17 @@
 import { DirectClient } from "@elizaos/client-direct";
 import {
+    type Adapter,
     AgentRuntime,
     CacheManager,
     CacheStore,
     type Character,
+    type ClientInstance,
     DbCacheAdapter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
-    type ClientInstance,
-    type Adapter,
     ModelProviderName,
     parseBooleanFromText,
     settings,
@@ -802,10 +802,8 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    // XXX TODO: is this still used?
+    // This is used in client-direct/api.ts at "/agents/:agentId/set" route to restart an agent
     directClient.startAgent = async (character) => {
-        throw new Error('not implemented');
-
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
 
@@ -838,12 +836,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", function (err) {
+    process.on("unhandledRejection", (err) => {
         console.error("unhandledRejection", err);
     });
 }
