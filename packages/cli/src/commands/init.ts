@@ -5,6 +5,8 @@ import { handleError } from "@/src/utils/handle-error"
 import { logger } from "@/src/utils/logger"
 import { getAvailableDatabases, getRegistryIndex, listPluginsByType } from "@/src/utils/registry"
 import { createDatabaseTemplate, createPluginsTemplate, createEnvTemplate } from "@/src/utils/templates"
+import { runBunCommand } from "@/src/utils/run-bun"
+import { installPlugin } from "@/src/utils/install-plugin"
 import chalk from "chalk"
 import { Command } from "commander"
 import { execa } from "execa"
@@ -18,7 +20,7 @@ const initOptionsSchema = z.object({
 
 async function cloneStarterRepo(targetDir: string) {
   logger.info("Setting up project structure...")
-  await execa("git", ["clone", "-b", process.env.ELIZA_BRANCH ?? "v2-develop", "https://github.com/elizaos/eliza", "."], {
+  await execa("git", ["clone", "-b", process.env.ELIZA_BRANCH || "v2-develop", "https://github.com/elizaos/eliza", "."], {
     cwd: targetDir,
     stdio: "inherit",
   })
@@ -74,21 +76,14 @@ async function installDependencies(targetDir: string, database: string, selected
   })
 
   // Use bun for installation
-  await execa("bun", ["install", "--no-frozen-lockfile"], { 
-    cwd: targetDir, 
-    stdio: "inherit" 
-  })
-
-  await execa("bun", ["add", `@elizaos/adapter-${database}`, "--workspace-root"], {
-    cwd: targetDir,
-    stdio: "inherit"
-  })
+  await runBunCommand(["install", "--no-frozen-lockfile"], targetDir);
+  await runBunCommand(["add", `@elizaos/adapter-${database}`, "--workspace-root"], targetDir);
 
   if (selectedPlugins.length > 0) {
-    await execa("bun", ["add", ...selectedPlugins, "--workspace-root"], {
-      cwd: targetDir,
-      stdio: "inherit"
-    })
+    console.log(selectedPlugins)
+    for (const plugin of selectedPlugins) {
+      await installPlugin(plugin, targetDir)
+    }
   }
 }
 
