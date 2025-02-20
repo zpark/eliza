@@ -333,8 +333,12 @@ export class MessageManager {
               return;
             }
 
-            await (message.channel as TextChannel).sendTyping();
-
+            try {
+              await (message.channel as TextChannel).sendTyping();
+            } catch(error) {
+              logger.warn(`failed to send typing: ${error}`);
+            }
+            
             await this.runtime.databaseAdapter.log({
               body: { message, context, response: responseContent },
               userId: this.runtime.agentId,
