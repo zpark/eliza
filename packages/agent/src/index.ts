@@ -16,8 +16,12 @@ import {
   parseBooleanFromText,
   settings,
   stringToUuid,
+  TeeVendors,
   validateCharacterConfig,
+  type Plugin,
+  elizaLogger,
 } from "@elizaos/core";
+import { teePlugin } from "@elizaos/plugin-tee";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
@@ -335,6 +339,46 @@ function initializeCache(
   }
 }
 
+async function initializeTEE(runtime: IAgentRuntime) {
+  if (runtime.getSetting("TEE_VENDOR")) {
+    const vendor = runtime.getSetting("TEE_VENDOR");
+    elizaLogger.info(`Initializing TEE with vendor: ${vendor}`);
+    let plugin: Plugin;
+    switch (vendor) {
+      case "phala":
+        plugin = teePlugin({
+          vendor: TeeVendors.PHALA,
+          vendorConfig: {
+            apiKey: runtime.getSetting("TEE_API_KEY"),
+          },
+        });
+        break;
+      case "marlin":
+        plugin = teePlugin({
+            vendor: TeeVendors.MARLIN,
+          }
+        );
+        break;
+      case "fleek":
+        plugin = teePlugin({
+            vendor: TeeVendors.FLEEK,
+          }
+        );
+        break;
+      case "sgx-gramine":
+        plugin = teePlugin({
+            vendor: TeeVendors.SGX_GRAMINE,
+          }
+        );
+        break;
+      default:
+        throw new Error(`Invalid TEE vendor: ${vendor}`);
+    }
+    elizaLogger.info(`Pushing plugin: ${plugin.name}`);
+    runtime.plugins.push(plugin);
+  }
+}
+
 async function findDatabaseAdapter(runtime: IAgentRuntime) {
   const { adapters } = runtime;
   let adapter: Adapter | undefined;
@@ -385,7 +429,10 @@ async function startAgent(
     ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
     runtime.cacheManager = cache;
 
-    // start services/plugins/process knowledge
+    // initialize TEE, if specified
+    await initializeTEE(runtime);
+
+    // start services/plugins/process knowledge    
     await runtime.initialize();
 
     // add to container

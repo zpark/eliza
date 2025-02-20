@@ -1,5 +1,5 @@
-import { SgxAttestationProvider } from '../providers/sgxAttestationProvider';
-import { RemoteAttestationProvider as TdxAttestationProvider } from '../providers/remoteAttestationProvider';
+import { SgxAttestationProvider } from '../providers/remoteAttestationProvider';
+import { PhalaRemoteAttestationProvider as TdxAttestationProvider } from '../providers/remoteAttestationProvider';
 import {
     type TEEMode,
     TeeType,

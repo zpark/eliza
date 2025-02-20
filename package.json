@@ -56,9 +56,13 @@
   },
   "packageManager": "bun@1.2.2",
   "workspaces": [
-    "packages/*",
-    "projects/*"
+    "packages/*"
   ],
   "module": "index.ts",
-  "type": "module"
+  "type": "module",
+  "resolutions": {
+    "@nrwl/devkit": "19.8.13",
+    "@nrwl/tao": "19.8.13",
+    "zod": "3.24.1"
+  }
 }

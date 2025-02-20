@@ -18,7 +18,7 @@ const initOptionsSchema = z.object({
 
 async function cloneStarterRepo(targetDir: string) {
   logger.info("Setting up project structure...")
-  await execa("git", ["clone", "-b", "develop", "https://github.com/elizaos/eliza", "."], {
+  await execa("git", ["clone", "-b", process.env.ELIZA_BRANCH ?? "v2-develop", "https://github.com/elizaos/eliza", "."], {
     cwd: targetDir,
     stdio: "inherit",
   })
