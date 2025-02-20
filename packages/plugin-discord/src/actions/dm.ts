@@ -24,7 +24,7 @@ const dmAction: Action = {
         state: State
     ): Promise<boolean> => {
         const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id) {
+        if (!discordMessage?.guild?.id && !discordMessage?.guildId) {
             return false;
         }
 
@@ -55,8 +55,9 @@ const dmAction: Action = {
         const discordMessage = state.discordMessage as Message;
         
         try {
+            const discordClient = runtime.getClient("discord");
             // Get mentioned user
-            const mentionedUser = discordMessage?.mentions?.users?.first();
+            const mentionedUser = discordMessage?.mentions?.users?.filter(user => user.id !== discordClient.client.user.id)?.first();
             if (!mentionedUser) {
                 await callback({
                     text: "Please mention the user you want me to DM.",
@@ -84,19 +85,31 @@ const dmAction: Action = {
                 try {
                     // Send message to DM channel
                     await dmChannel.send(content);
-
-                    // Create memory of the DM
-                    await runtime.messageManager.createMemory({
+                    
+                    const dmRoomId = stringToUuid(dmChannel.id + "-" + runtime.agentId)
+                    const userIdUUID = stringToUuid(runtime.agentId);
+                    await runtime.ensureConnection(
+                        userIdUUID,
+                        dmRoomId,
+                        mentionedUser.username,
+                        mentionedUser.username,
+                        "discord-dm"
+                    );
+                    const memory: Memory = {
+                        id: stringToUuid(dmMessage.id + "-" + runtime.agentId),
                         userId: runtime.agentId,
                         agentId: runtime.agentId,
-                        roomId: stringToUuid(dmChannel.id),
+                        roomId: dmRoomId,
                         content: {
                             text: content,
                             action: "DM",
                             source: "discord"
                         },
-                        createdAt: Date.now()
-                    });
+                        createdAt: Date.now(),
+                    };
+
+                    // Create memory of the DM
+                    await runtime.messageManager.createMemory(memory);
 
                     // Send confirmation in original channel
                     await callback({
