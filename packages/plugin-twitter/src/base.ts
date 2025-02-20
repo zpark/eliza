@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   type Content,
   type IAgentRuntime,
   type Memory,
@@ -486,6 +487,7 @@ export class ClientBase extends EventEmitter {
               userName: this.profile.username,
               userScreenName: this.profile.screenName,
               source: "twitter",
+              type: ChannelType.FEED
             });
           } else {
             await this.runtime.ensureConnection({
@@ -494,6 +496,7 @@ export class ClientBase extends EventEmitter {
               userName: tweet.username,
               userScreenName: tweet.name,
               source: "twitter",
+              type: ChannelType.FEED
             });
           }
 
@@ -613,6 +616,7 @@ export class ClientBase extends EventEmitter {
           userName: this.profile.username,
           userScreenName: this.profile.screenName,
           source: "twitter",
+          type: ChannelType.FEED
         });
       } else {
         await this.runtime.ensureConnection({
@@ -621,6 +625,7 @@ export class ClientBase extends EventEmitter {
           userName: tweet.username,
           userScreenName: tweet.name,
           source: "twitter",
+          type: ChannelType.FEED
         });
       }
 

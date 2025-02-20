@@ -36,7 +36,7 @@ export const greetAction: Action = {
         const serverId = room.serverId;
 
         if (!serverId) {
-            throw new Error("No server ID found");
+            throw new Error("No server ID found 1");
         }
 
         try {
@@ -82,7 +82,7 @@ export const greetAction: Action = {
         const serverId = room.serverId;
 
         if (!serverId) {
-            throw new Error("No server ID found");
+            throw new Error("No server ID found 2");
         }
 
         try {

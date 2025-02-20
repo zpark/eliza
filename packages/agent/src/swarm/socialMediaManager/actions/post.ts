@@ -1,5 +1,6 @@
 import {
     type Action,
+    ChannelType,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -10,7 +11,7 @@ import {
     generateText,
     logger,
 } from "@elizaos/core";
-import type { OnboardingState } from "../../shared/onboarding/types";
+import { ONBOARDING_CACHE_KEY, type OnboardingState } from "../../shared/onboarding/types";
 import { getUserServerRole } from "../../shared/role/types";
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
@@ -57,8 +58,10 @@ async function validateTwitterConfig(
   serverId: string
 ): Promise<{ isValid: boolean; error?: string }> {
   try {
+    const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
+
     const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-      `server_${serverId}_onboarding_state`
+      onboardingCacheKey
     );
 
     if (!onboardingState) {
@@ -129,10 +132,15 @@ const twitterPostAction: Action = {
       throw new Error("No room found");
     }
 
+    if (room.type !== ChannelType.GROUP) {
+      // only handle in a group scenario for now
+      return false;
+    }
+
     const serverId = room.serverId;
 
     if (!serverId) {
-      throw new Error("No server ID found");
+      throw new Error("No server ID found 5");
     }
 
     // Validate Twitter configuration
@@ -158,15 +166,22 @@ const twitterPostAction: Action = {
         throw new Error("No room found");
       }
 
+      if (room.type !== ChannelType.GROUP) {
+        // only handle in a group scenario for now
+        return false;
+      }
+
       const serverId = room.serverId;
 
       if (!serverId) {
-        throw new Error("No server ID found");
+        throw new Error("No server ID found 6");
       }
+
+      const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
 
       // Get onboarding state
       const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-        `server_${serverId}_onboarding_state`
+        onboardingCacheKey
       );
       if (!onboardingState) {
         throw new Error("Twitter not configured for this server");
@@ -231,8 +246,6 @@ const twitterPostAction: Action = {
         description: "Confirm the tweet to be posted.",
         tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
         handler: async (runtime: IAgentRuntime) => {
-          console.log("*** onboardingState", onboardingState);
-
           const vals = {
             TWITTER_USERNAME: onboardingState.TWITTER_USERNAME.value,
             TWITTER_EMAIL: onboardingState.TWITTER_EMAIL.value,

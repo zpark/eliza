@@ -734,6 +734,8 @@ export interface IDatabaseAdapter {
   /** Create new account */
   createAccount(account: Account): Promise<boolean>;
 
+  updateAccount(account: Account): Promise<void>;
+
   /** Get memories matching criteria */
   getMemories(params: {
     roomId: UUID;
@@ -818,11 +820,33 @@ export interface IDatabaseAdapter {
 
   removeAllGoals(roomId: UUID): Promise<void>;
 
-  getRoom(roomId: UUID): Promise<RoomData | null>;
+  createWorld({
+    id,
+    name,
+    agentId,
+    serverId,
+  }: WorldData): Promise<UUID>;
 
-  createRoom(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<UUID>;
+  getWorld(id: UUID): Promise<WorldData | null>;
+
+  updateWorld(world: WorldData): Promise<void>;
+
+  getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+
+  createRoom({
+    id,
+    name,
+    agentId,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData): Promise<UUID>;
 
   removeRoom(roomId: UUID): Promise<void>;
+
+  updateRoom(room: RoomData): Promise<void>;
 
   getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
 
@@ -1045,6 +1069,7 @@ export interface IAgentRuntime {
     source,
     channelId,
     serverId,
+    type,
   }: {
     userId: UUID;
     roomId: UUID;
@@ -1053,13 +1078,28 @@ export interface IAgentRuntime {
     source?: string;
     channelId?: string;
     serverId?: string;
+    type: ChannelType;
   }): Promise<void>;
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
   getUserProfile(userId: UUID): Promise<Account | null>;
 
-  ensureRoomExists(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<void>;
+  ensureWorldExists({
+    id,
+    name,
+    serverId,
+  }: WorldData): Promise<void>;
+
+  ensureRoomExists({
+    id,
+    name,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData): Promise<void>;
 
   getRoom(roomId: UUID): Promise<RoomData | null>;
 
@@ -1336,10 +1376,22 @@ export interface Task {
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
+export type WorldData = {
+  id: UUID;
+  name: string;
+  agentId: UUID;
+  serverId: string;
+  metadata?: Record<string, unknown>;
+}
+
 export type RoomData = {
   id: UUID;
+  name?: string;
+  agentId?: UUID;
   source: string;
   type: ChannelType;
   channelId?: string;
   serverId?: string;
+  worldId?: UUID;
+  metadata?: Record<string, unknown>;
 }

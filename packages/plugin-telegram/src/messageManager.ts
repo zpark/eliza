@@ -1,4 +1,5 @@
 import {
+    ChannelType,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -9,7 +10,7 @@ import {
     stringToUuid,
     type UUID
 } from "@elizaos/core";
-import type { Message, ReactionType, Update } from "@telegraf/types";
+import type { Chat, Message, ReactionType, Update } from "@telegraf/types";
 import type { Context, NarrowedContext, Telegraf } from "telegraf";
 import { escapeMarkdown } from "./utils";
 
@@ -267,6 +268,57 @@ export class MessageManager {
                 },
                 createdAt: message.date * 1000
             };
+
+
+            // if its a telegram group of multiple chats, we need to get the name of the group chat
+            const chat = message.chat as Chat;
+            
+            // Get world name from supergroup/channel title, or use chat title as fallback
+            const worldName = chat.type === 'supergroup' ? 
+                (chat as Chat.SupergroupChat).title :
+                chat.type === 'channel' ?
+                    (chat as Chat.ChannelChat).title :
+                    undefined;
+
+            // Get room name from chat title/first name
+            const roomName = chat.type === 'private' ?
+                (chat as Chat.PrivateChat).first_name :
+                chat.type === 'supergroup' ?
+                    (chat as Chat.SupergroupChat).title :
+                    chat.type === 'channel' ?
+                        (chat as Chat.ChannelChat).title :
+                        chat.type === 'group' ?
+                            (chat as Chat.GroupChat).title :
+                            "Unknown Group";
+
+            const getChannelType = (chat: Chat): ChannelType => {
+                if (chat.type === 'private') return ChannelType.DM;
+                if (chat.type === 'supergroup') return ChannelType.GROUP;
+                if (chat.type === 'channel') return ChannelType.GROUP;
+                if (chat.type === 'group') return ChannelType.GROUP;
+            }
+
+            await this.runtime.ensureConnection({
+                userId,
+                roomId,
+                userName,
+                userScreenName: userName,
+                source: "telegram",
+                channelId: ctx.chat.id.toString(),
+                serverId: chat.id.toString(),
+                type: getChannelType(chat),
+              });
+
+            const channelType = getChannelType(chat);
+            const worldId = stringToUuid(chat.id.toString() + "-" + this.runtime.agentId) as UUID;
+            const room = {id: roomId, name: roomName, source: "telegram", type: channelType, channelId: ctx.chat.id.toString(), serverId: ctx.chat.id.toString(), worldId: worldId};
+            if (channelType === ChannelType.GROUP) {
+                // if the type is a group, we need to get the world id from the supergroup/channel id
+                await this.runtime.ensureWorldExists({id: worldId, name: worldName, serverId: chat.id.toString(), agentId: this.runtime.agentId});
+                room.worldId = worldId;
+            }
+
+            await this.runtime.ensureRoomExists(room);
 
             // Create callback for handling responses
             const callback: HandlerCallback = async (content: Content, files?: string[]) => {

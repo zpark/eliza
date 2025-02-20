@@ -12,4 +12,5 @@ export const accountTable = pgTable("accounts", {
     email: text("email").notNull(),
     avatarUrl: text("avatarUrl"),
     details: jsonb("details").default(sql`'{}'::jsonb`),
+    metadata: jsonb("metadata").default(sql`'{}'::jsonb`),
 });

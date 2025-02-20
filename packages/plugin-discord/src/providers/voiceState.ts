@@ -1,7 +1,7 @@
 import { getVoiceConnection } from "@discordjs/voice";
-import { ChannelType, type Message as DiscordMessage } from "discord.js";
+import { type Message as DiscordMessage, ChannelType as DiscordChannelType } from "discord.js";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
-
+import { ChannelType } from "@elizaos/core";
 const voiceStateProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         // Voice doesn't get a discord message, so we need to use the channel for guild data
@@ -10,10 +10,15 @@ const voiceStateProvider: Provider = {
             throw new Error("No room found");
         }
 
+        if (room.type !== ChannelType.GROUP) {
+            // only handle in a group scenario for now
+            return false;
+          }
+
         const serverId = room.serverId;
 
         if (!serverId) {
-            throw new Error("No server ID found");
+            throw new Error("No server ID found 10");
         }
 
         const connection = getVoiceConnection(serverId);
@@ -28,7 +33,7 @@ const voiceStateProvider: Provider = {
             connection.joinConfig.channelId as string
         );
 
-        if (!channel || channel.type !== ChannelType.GuildVoice) {
+        if (!channel || channel.type !== DiscordChannelType.GuildVoice) {
             return agentName + " is in an invalid voice channel";
         }
 

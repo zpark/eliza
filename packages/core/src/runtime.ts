@@ -48,7 +48,9 @@ import {
     type Service,
     type Route,
     type Task,
-    ChannelType
+    ChannelType,
+    RoomData,
+    WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { messageEvents } from "./messages.ts";
@@ -472,12 +474,12 @@ export class AgentRuntime implements IAgentRuntime {
 
         await this.ensureEmbeddingDimension();
         
-        await this.ensureRoomExists(this.agentId, "self", ChannelType.SELF);
         await this.ensureUserExists(
             this.agentId,
             this.character.username || this.character.name,
             this.character.name,
         );
+        await this.ensureRoomExists({id: this.agentId, name: this.character.name, source: "self", type: ChannelType.SELF});
         await this.ensureParticipantInRoom(this.agentId, this.agentId);
         await this.ensureCharacterExists(this.character);
 
@@ -793,7 +795,7 @@ export class AgentRuntime implements IAgentRuntime {
                 userScreenName ?? `User${userId}`,
                 source,
             ),
-            this.ensureRoomExists(roomId, source, type, channelId, serverId),
+            this.ensureRoomExists({id: roomId, source, type, channelId, serverId}),
         ]);
 
         await Promise.all([
@@ -803,17 +805,31 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     /**
+     * Ensure the existence of a world.
+     * @param worldId - The world ID to ensure the existence of.
+     * @param name - The name of the world.
+     * @param serverId - The server ID of the world.
+     */
+    async ensureWorldExists({id, name, serverId}: WorldData) {
+        const world = await this.databaseAdapter.getWorld(id);
+        if (!world) {
+            await this.databaseAdapter.createWorld({id, name, agentId: this.agentId, serverId});
+            logger.log(`World ${id} created successfully.`);
+        }
+    }
+
+    /**
      * Ensure the existence of a room between the agent and a user. If no room exists, a new room is created and the user
      * and agent are added as participants. The room ID is returned.
      * @param userId - The user ID to create a room with.
      * @returns The room ID of the room between the agent and the user.
      * @throws An error if the room cannot be created.
      */
-    async ensureRoomExists(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string) {
-        const room = await this.databaseAdapter.getRoom(roomId);
+    async ensureRoomExists({id, name, source, type, channelId, serverId, worldId}: RoomData) {
+        const room = await this.databaseAdapter.getRoom(id, this.agentId);
         if (!room) {
-            await this.databaseAdapter.createRoom(roomId, source, type, channelId, serverId);
-            logger.log(`Room ${roomId} created successfully.`);
+            await this.databaseAdapter.createRoom({id, name, agentId: this.agentId, source, type, channelId, serverId, worldId});
+            logger.log(`Room ${id} created successfully.`);
         }
     }
 
@@ -823,7 +839,7 @@ export class AgentRuntime implements IAgentRuntime {
      * @returns The room ID of the room between the agent and the user.
      */
     async getRoom(userId: UUID) {
-        return await this.databaseAdapter.getRoom(userId);
+        return await this.databaseAdapter.getRoom(userId, this.agentId);
     }
 
     /**

@@ -1,4 +1,5 @@
 import {
+    ChannelType,
     composeContext,
     generateMessageResponse,
     generateObject,
@@ -125,6 +126,7 @@ export class CharacterServer {
                     userName: req.body.userName,
                     userScreenName: req.body.name,
                     source: "direct",
+                    type: ChannelType.API,
                 });
 
                 const text = req.body.text;
@@ -278,6 +280,7 @@ export class CharacterServer {
                             userName: parts[0], // username
                             userScreenName: parts[0], // userScreeName?
                             source: "hyperfy",
+                            type: ChannelType.WORLD,
                         });
                         const content: Content = {
                             text: parts[1] || "",
@@ -643,6 +646,7 @@ export class CharacterServer {
                     userName: req.body.userName,
                     userScreenName: req.body.name,
                     source: "direct",
+                    type: ChannelType.API,
                 });
 
                 const messageId = stringToUuid(Date.now().toString());

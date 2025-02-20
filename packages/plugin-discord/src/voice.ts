@@ -19,11 +19,12 @@ import {
     ModelClass,
     type UUID,
     logger,
-    stringToUuid
+    stringToUuid,
+    ChannelType
 } from "@elizaos/core";
 import {
     type BaseGuildVoiceChannel,
-    ChannelType,
+    ChannelType as DiscordChannelType,
     type Client,
     type Guild,
     type GuildMember,
@@ -147,11 +148,13 @@ export class VoiceManager extends EventEmitter {
         { channel: BaseGuildVoiceChannel; monitor: AudioMonitor }
     > = new Map();
     private ready: boolean;
+    private getChannelType: (channelId: string) => Promise<ChannelType>;
 
     constructor(client: DiscordClient) {
         super();
         this.client = client.client;
         this.runtime = client.runtime;
+        this.getChannelType = client.getChannelType;
 
         this.client.on("voiceManagerReady", () => {
             this.setReady(true);
@@ -639,6 +642,8 @@ export class VoiceManager extends EventEmitter {
 
             const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
             const userIdUUID = stringToUuid(userId);
+            const guild = await channel.guild.fetch();
+            const type = await this.getChannelType(guild.id);
 
             await this.runtime.ensureConnection({
                 userId: userIdUUID,
@@ -648,6 +653,7 @@ export class VoiceManager extends EventEmitter {
                 source: "discord",
                 channelId,
                 serverId: channel.guild.id,
+                type,
             });
 
             const memory: Memory = {
@@ -743,7 +749,7 @@ export class VoiceManager extends EventEmitter {
 
             if (!chosenChannel) {
                 const channels = (await guild.channels.fetch()).filter(
-                    (channel) => channel?.type == ChannelType.GuildVoice
+                    (channel) => channel?.type == DiscordChannelType.GuildVoice
                 );
                 for (const [, channel] of channels) {
                     const voiceChannel = channel as BaseGuildVoiceChannel;
@@ -841,7 +847,7 @@ export class VoiceManager extends EventEmitter {
             const voiceChannel = interaction.guild.channels.cache.find(
                 (channel: VoiceChannel) =>
                     channel.id === channelId &&
-                    channel.type === ChannelType.GuildVoice
+                    channel.type === DiscordChannelType.GuildVoice
             );
 
             if (!voiceChannel) {

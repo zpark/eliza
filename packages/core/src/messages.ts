@@ -231,12 +231,15 @@ const messageReceivedHandler = async ({
   message,
   callback,
 }: MessageReceivedHandlerParams) => {
+
+  // First, save the incoming message
+  await runtime.messageManager.addEmbeddingToMemory(message);
+  await runtime.messageManager.createMemory(message);
+
+  // Then, compose the state, which includes the incoming message in the recent messages
   let state = await runtime.composeState(message);
 
   const shouldRespond = await checkShouldRespond(runtime, message, state);
-
-  await runtime.messageManager.addEmbeddingToMemory(message);
-  await runtime.messageManager.createMemory(message);
 
   if (shouldRespond) {
     const context = composeContext({

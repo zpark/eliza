@@ -159,7 +159,7 @@ export class TwitterPostClient {
         logger.log(`Tweet posted:\n ${tweet.permanentUrl}`);
 
         // Ensure the room and participant exist
-        await runtime.ensureRoomExists(roomId, "twitter", ChannelType.FEED);
+        await runtime.ensureRoomExists({id: roomId, name: "Twitter Feed", source: "twitter", type: ChannelType.FEED});
         await runtime.ensureParticipantInRoom(runtime.agentId, roomId);
 
         // Create a memory for the tweet

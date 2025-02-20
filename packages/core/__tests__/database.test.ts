@@ -80,10 +80,10 @@ class MockDatabaseAdapter extends DatabaseAdapter {
     removeAllGoals(_roomId: UUID): Promise<void> {
         throw new Error("Method not implemented.");
     }
-    getRoom(_roomId: UUID): Promise<RoomData | null> {
+    getRoom(_roomId: UUID, _agentId: UUID): Promise<RoomData | null> {
         throw new Error("Method not implemented.");
     }
-    createRoom(_roomId: UUID, _source: string, _type: ChannelType): Promise<UUID> {
+    createRoom(params: {id: UUID, agentId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string, worldId?: UUID}): Promise<UUID> {
         throw new Error("Method not implemented.");
     }
     removeRoom(_roomId: UUID): Promise<void> {

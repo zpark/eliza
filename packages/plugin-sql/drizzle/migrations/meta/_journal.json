@@ -22,13 +22,6 @@
       "when": 1739671033588,
       "tag": "20250216015713_create_hnsw_vector_indices",
       "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1739936817329,
-      "tag": "20250219034657_overconfident_devos",
-      "breakpoints": true
     }
   ]
 }

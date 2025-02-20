@@ -1,12 +1,7 @@
 // src/actions/leaveVoice
 import { getVoiceConnection } from "@discordjs/voice";
 import {
-    type Channel,
     ChannelType,
-    type Client,
-    type Message as DiscordMessage,
-} from "discord.js";
-import {
     logger,
     type Action,
     type ActionExample,
@@ -15,6 +10,10 @@ import {
     type Memory,
     type State,
 } from "@elizaos/core";
+import {
+    ChannelType as DiscordChannelType,
+    type Channel
+} from "discord.js";
 
 export default {
     name: "LEAVE_VOICE",
@@ -62,10 +61,15 @@ export default {
             throw new Error("No room found");
         }
 
+        if (room.type !== ChannelType.GROUP) {
+            // only handle in a group scenario for now
+            return false;
+        }
+
         const serverId = room.serverId;
 
         if (!serverId) {
-            throw new Error("No server ID found");
+            throw new Error("No server ID found 9");
         }
 
         const client = runtime.getClient("discord").client;
@@ -78,7 +82,7 @@ export default {
         const voiceChannels = client.client.guilds.cache
             .get(serverId)
             ?.channels.cache.filter(
-                (channel: Channel) => channel.type === ChannelType.GuildVoice
+                (channel: Channel) => channel.type === DiscordChannelType.GuildVoice
             );
 
         voiceChannels?.forEach((_channel: Channel) => {

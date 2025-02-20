@@ -13,6 +13,7 @@ import {
     type State,
     stringToUuid,
     logger,
+    ChannelType,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
@@ -267,6 +268,7 @@ export class TwitterInteractionClient {
                         userName: tweet.username,
                         userScreenName: tweet.name,
                         source: "twitter",
+                        type: ChannelType.GROUP
                     });
 
                     const thread = await buildConversationThread(
@@ -581,6 +583,7 @@ export class TwitterInteractionClient {
                     userName: currentTweet.username,
                     userScreenName: currentTweet.name,
                     source: "twitter",
+                    type: ChannelType.GROUP
                 });
 
                 this.runtime.messageManager.createMemory({

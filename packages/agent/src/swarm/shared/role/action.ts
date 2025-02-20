@@ -1,18 +1,22 @@
 import {
-    type Action,
-    type ActionExample,
-    type HandlerCallback,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-    composeContext,
-    generateObjectArray,
-    logger,
-    ModelClass
+  type Action,
+  type ActionExample,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  ChannelType,
+  composeContext,
+  generateObjectArray,
+  logger,
+  ModelClass,
+  stringToUuid
 } from "@elizaos/core";
 import type { User } from "discord.js";
+import { initializeRoleState } from "../onboarding/initialize";
+import { OWNERSHIP_CACHE_KEY } from "../onboarding/types";
 import type { ServerRoleState } from "./types";
-import { RoleName } from "./types";
+import { ROLE_CACHE_KEYS, RoleName } from "./types";
 
 // Role modification validation helper
 const canModifyRole = (
@@ -82,69 +86,102 @@ const updateOrgRoleAction: Action = {
   description:
     "Updates organizational roles based on commands from authorized users.",
 
-  validate: async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State
-  ): Promise<boolean> => {
-    logger.info("Starting role update validation");
-
-    // Validate message source
-    if (message.content.source !== "discord") {
-      logger.info("Validation failed: Not a discord message");
-      return false;
-    }
-
-    const room = await runtime.getRoom(message.roomId);
-    if (!room) {
-      throw new Error("No room found");
-    }
-
-    const serverId = room.serverId;
-    if (!serverId) {
-      throw new Error("No server ID found");
-    }
-
-    try {
-      const requesterId = message.userId;
-
-      const cacheKey = `server_${serverId}_user_roles`;
-      logger.info(
-        `Checking role cache with key: ${cacheKey} for user ${requesterId}`
-      );
-
-      const roleCache = await runtime.cacheManager.get<ServerRoleState>(
-        cacheKey
-      );
-
-      if (!roleCache?.roles) {
-        logger.info(`No role cache found for server ${serverId}`);
+    validate: async (
+      runtime: IAgentRuntime,
+      message: Memory,
+      state: State
+    ): Promise<boolean> => {
+      logger.info("Starting role update validation");
+    
+      // Validate message source
+      if (message.content.source !== "discord") {
+        logger.info("Validation failed: Not a discord message");
         return false;
       }
-
-      const requesterRole = roleCache.roles[requesterId]?.role;
-      logger.info(`Requester ${requesterId} role:`, requesterRole);
-
-      if (!requesterRole) {
-        logger.info("Validation failed: No requester role found");
+    
+      const room = await runtime.getRoom(message.roomId);
+      if (!room) {
+        throw new Error("No room found");
+      }
+    
+      // if room type is DM, return
+      if (room.type !== ChannelType.GROUP) {
+        // only handle in a group scenario for now
         return false;
       }
-
-      if (
-        ![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole as RoleName)
-      ) {
-        logger.info(
-          `Validation failed: Role ${requesterRole} insufficient for role management`
+    
+      const serverId = room.serverId;
+      if (!serverId) {
+        throw new Error("No server ID found");
+      }
+    
+      try {
+        // First check if ownership state exists
+        const ownershipState = await runtime.cacheManager.get<{ servers: { [key: string]: { ownerId: string } } }>(
+          OWNERSHIP_CACHE_KEY.SERVER_OWNERSHIP_STATE
         );
+    
+        if (!ownershipState?.servers) {
+          logger.error(`No ownership state found for server ${serverId}`);
+          
+          // Try to recover by initializing from Discord if possible
+          const discordClient = runtime.getClient("discord").client;
+          try {
+            const guild = await discordClient.guilds.fetch(serverId);
+            if (guild?.ownerId) {
+              // Create temporary ownership state
+              await runtime.cacheManager.set(
+                OWNERSHIP_CACHE_KEY.SERVER_OWNERSHIP_STATE,
+                { servers: { [serverId]: { ownerId: guild.ownerId } } }
+              );
+              
+              // Also initialize role state
+              await initializeRoleState(runtime, serverId, guild.ownerId);
+              logger.info(`Recovered ownership and role state for server ${serverId}`);
+            } else {
+              return false;
+            }
+          } catch (error) {
+            logger.error(`Failed to recover: ${error}`);
+            return false;
+          }
+        }
+    
+        // Get requester ID and convert to UUID for consistent lookup
+        const requesterId = message.userId;
+        const requesterUuid = stringToUuid(requesterId);
+        logger.info(`Requester UUID: ${requesterUuid}`);
+    
+        const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
+        logger.info(`Checking role cache with key: ${cacheKey}`);
+    
+        const roleCache = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
+    
+        if (!roleCache?.roles) {
+          logger.info(`No role cache found for server ${serverId}`);
+          return false;
+        }
+    
+        // Lookup using UUID for consistency
+        const requesterRole = roleCache.roles[requesterUuid]?.role as RoleName;
+        logger.info(`Requester ${requesterUuid} role:`, requesterRole);
+    
+        if (!requesterRole) {
+          logger.info("Validation failed: No requester role found");
+          return false;
+        }
+    
+        if (![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole)) {
+          logger.info(`Validation failed: Role ${requesterRole} insufficient for role management`);
+          return false;
+        }
+    
+        return true;
+      } catch (error) {
+        logger.error("Error validating updateOrgRole action:", error);
         return false;
       }
-
-      return true;
-    } catch (error) {
-      logger.error("Error validating updateOrgRole action:", error);
-      return false;
-    }
-  },
+    },
 
   handler: async (
     runtime: IAgentRuntime,
@@ -168,16 +205,15 @@ const updateOrgRoleAction: Action = {
     const serverId = room.serverId;
 
     const requesterId = message.userId;
-
+    const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
     // Get roles cache
     let roleCache = await runtime.cacheManager.get<ServerRoleState>(
-      `server_${serverId}_user_roles`
+      cacheKey
     );
 
     if (!roleCache) {
       roleCache = {
         roles: {},
-        lastUpdated: Date.now(),
       };
     }
 
@@ -210,8 +246,6 @@ const updateOrgRoleAction: Action = {
       modelClass: ModelClass.SMALL,
     })) as RoleAssignment[];
 
-    console.log("result", result);
-
     if (!result?.length) {
       console.log("No valid role assignments found in the request.");
       await callback({
@@ -222,11 +256,8 @@ const updateOrgRoleAction: Action = {
       return;
     }
 
-    console.log("result.roleAssignments", result);
-
     // Process each role assignment
     for (const assignment of result) {
-      console.log("assignment", assignment);
       const targetUser = members.get(assignment.userId);
       if (!targetUser) continue;
 
@@ -256,9 +287,7 @@ const updateOrgRoleAction: Action = {
       });
     }
 
-    // Save updated roles
-    roleCache.lastUpdated = Date.now();
-    await runtime.cacheManager.set(`server_${serverId}_user_roles`, roleCache);
+    await runtime.cacheManager.set(cacheKey, roleCache);
   },
 
   examples: [

@@ -1,4 +1,4 @@
-import { IAgentRuntime, stringToUuid, UUID } from "@elizaos/core";
+import { ChannelType, IAgentRuntime, stringToUuid, UUID } from "@elizaos/core";
 import { v4 as uuidv4 } from 'uuid';
 
 // 
@@ -16,6 +16,7 @@ const scenarios = [
             userName: participant1.character.name,
             userScreenName: participant1.character.name,
             source: "scenario",
+            type: ChannelType.GROUP,
         });
 
         await participant2.ensureConnection({
@@ -24,6 +25,7 @@ const scenarios = [
             userName: participant2.character.name,
             userScreenName: participant2.character.name,
             source: "scenario",
+            type: ChannelType.GROUP,
         });
     },
 ];

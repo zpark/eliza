@@ -1,6 +1,6 @@
 import type { Tweet } from "./client";
 import type { Content, IAgentRuntime, Memory, ModelClass, UUID } from "@elizaos/core";
-import { generateText, stringToUuid } from "@elizaos/core";
+import { ChannelType, generateText, stringToUuid } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import { logger } from "@elizaos/core";
 import type { Media } from "@elizaos/core";
@@ -71,6 +71,7 @@ export async function buildConversationThread(
                 userName: currentTweet.username,
                 userScreenName: currentTweet.name,
                 source: "twitter",
+                type: ChannelType.GROUP
             });
 
             await client.runtime.messageManager.createMemory({

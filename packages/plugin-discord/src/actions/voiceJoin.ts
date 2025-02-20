@@ -72,10 +72,17 @@ export default {
             throw new Error("No room found");
         }
 
+        if (room.type !== ChannelType.GROUP) {
+            // only handle in a group scenario for now
+            return false;
+        }
+
+        console.log("Running handler on provider", room.name);
+
         const serverId = room.serverId;
 
         if (!serverId) {
-            throw new Error("No server ID found");
+            throw new Error("No server ID found 8");
         }
 
         const client = runtime.getClient("discord").client;

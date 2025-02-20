@@ -11,12 +11,6 @@ const channelStateProvider: Provider = {
             throw new Error("No room found");
         }
 
-        const serverId = room.serverId;
-
-        if (!serverId) {
-            throw new Error("No server ID found");
-        }
-
         const agentName = state?.agentName || "The agent";
         const senderName = state?.senderName || "someone";
 
@@ -24,6 +18,14 @@ const channelStateProvider: Provider = {
             return (
                 `${agentName} is currently in a direct message conversation with ${senderName}. ${agentName} should engage in conversation, should respond to messages that are addressed to them and only ignore messages that seem to not require a response.`
             );
+        }
+
+        const serverId = room.serverId;
+
+        if (!serverId) {
+            console.error("No server ID found");
+            // only handle in a group scenario for now
+            return false;
         }
 
         const channelId = room.channelId;

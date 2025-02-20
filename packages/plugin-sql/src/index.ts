@@ -3,22 +3,24 @@ import {
     logger,
     type Account,
     type Actor,
+    type Adapter,
+    type Character,
     type Goal,
-    type GoalStatus,
+    type IAgentRuntime,
     type IDatabaseCacheAdapter,
     type Memory,
     type Participant,
+    type Plugin,
     type Relationship,
-    type UUID,
     type ChannelType,
     type RoomData,
-    type Character,
-    type Plugin,
-    type IAgentRuntime,
-    type Adapter,
+    type UUID,
+    GoalStatus,
+    WorldData
 } from "@elizaos/core";
 import {
     and,
+    cosineDistance,
     desc,
     eq,
     gte,
@@ -26,11 +28,22 @@ import {
     lte,
     or,
     sql,
-    cosineDistance,
 } from "drizzle-orm";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import pg, { type ConnectionConfig, type PoolConfig } from "pg";
+import { v4 } from "uuid";
+import { runMigrations } from "./migrations";
+import {
+    characterToInsert,
+    storedToTemplate,
+    templateToStored,
+    type StoredTemplate,
+} from "./schema/character";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     accountTable,
     cacheTable,
+    characterTable,
     embeddingTable,
     goalTable,
     logTable,
@@ -38,19 +51,8 @@ import {
     participantTable,
     relationshipTable,
     roomTable,
-    characterTable,
 } from "./schema/index";
-import {
-    characterToInsert,
-    type StoredTemplate,
-    storedToTemplate,
-    templateToStored,
-} from "./schema/character";
-import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import { v4 } from "uuid";
-import { runMigrations } from "./migrations";
-import pg, { type ConnectionConfig, type PoolConfig } from "pg";
-import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
+import { worldTable } from "./schema/worldTable";
 type Pool = pg.Pool;
 
 export class DrizzleDatabaseAdapter
@@ -874,10 +876,8 @@ export class DrizzleDatabaseAdapter
             contentLength: memory.content?.text?.length,
         });
 
-        console.log("*** MEMORY ***", memory);
-
         let isUnique = true;
-        if (memory.embedding && Array.isArray(memory.embedding)) {
+        if (memory.embedding && Array.isArray(memory.embedding) && !memory.embedding.every(n => n === 0)) {
             logger.info("Searching for similar memories:");
             const similarMemories = await this.searchMemoriesByEmbedding(
                 memory.embedding,
@@ -1137,7 +1137,7 @@ export class DrizzleDatabaseAdapter
         });
     }
 
-    async getRoom(roomId: UUID): Promise<RoomData | null> {
+    async getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
@@ -1148,25 +1148,69 @@ export class DrizzleDatabaseAdapter
                     source: roomTable.source as any,
                 })
                 .from(roomTable)
-                .where(eq(roomTable.id, roomId))
+                .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, agentId)))
                 .limit(1);
 
             return result[0]
         });
     }
 
-    async createRoom(roomId: UUID, source: string, type: ChannelType, channelId?: string, serverId?: string): Promise<UUID> {
+    async createWorld(world: WorldData): Promise<UUID> {
         return this.withDatabase(async () => {
-            const newRoomId = roomId || v4();
-            await this.db.insert(roomTable).values([
-                {
-                    id: newRoomId,
-                    source,
-                    type,
-                    channelId,
-                    serverId,
-                },
-            ]);
+            const newWorldId = world.id || v4();
+            await this.db.insert(worldTable).values({
+                ...world,
+                id: newWorldId,
+            });
+            return newWorldId;
+        });
+    }
+    
+    async getWorld(id: UUID): Promise<WorldData | null> {
+        return this.withDatabase(async () => {
+            const result = await this.db.select().from(worldTable).where(eq(worldTable.id, id));
+            return result[0] as WorldData | null;
+        });
+    }
+
+    async updateWorld(world: WorldData): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.update(worldTable).set(world).where(eq(worldTable.id, world.id));
+        });
+    }
+
+    async removeWorld(id: UUID): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.delete(worldTable).where(eq(worldTable.id, id));
+        });
+    }
+
+    async updateAccount(account: Account): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.update(accountTable).set(account).where(eq(accountTable.id, account.id));
+        });
+    }
+    
+
+    async updateRoom(room: RoomData): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.update(roomTable).set(room).where(eq(roomTable.id, room.id));
+        });
+    }
+
+    async createRoom({id, name, agentId, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID> {
+        return this.withDatabase(async () => {
+            const newRoomId = id || v4();
+            await this.db.insert(roomTable).values({
+                id: newRoomId,
+                name,
+                agentId: agentId as UUID,
+                source,
+                type,
+                channelId,
+                serverId,
+                worldId,
+            });
             return newRoomId as UUID;
         });
     }

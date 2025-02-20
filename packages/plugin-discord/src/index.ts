@@ -21,6 +21,7 @@ import {
   type MessageReaction,
   type User,
   ChannelType as DiscordChannelType,
+  OAuth2Guild,
 } from "discord.js";
 import { EventEmitter } from "events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
@@ -56,49 +57,6 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   character: Character;
   messageManager: MessageManager;
   voiceManager: VoiceManager;
-
-  channelMap: Map<string, RoomData> = new Map();
-  authorMap: Map<UUID, AuthorData> = new Map();
-
-  storeAuthorData: (userId: UUID, authorData: AuthorData) => void = (
-    userId,
-    authorData
-  ) => {
-    this.authorMap.set(userId, authorData);
-  };
-
-  storeChannelData: (roomId: UUID, channelData: RoomData) => void = (
-    roomId,
-    channelData
-  ) => {
-    this.channelMap.set(roomId, channelData);
-  };
-
-  getChannelData: (roomId: UUID) => Promise<ChannelType> = async (roomId) => {
-    const channelData = this.channelMap.get(roomId);
-    const channelId = channelData?.channelId;
-    if (!channelId) {
-      return null;
-    }
-    const channel = await this.client.channels.fetch(channelId);
-    switch (channel.type) {
-      case DiscordChannelType.DM:
-        return ChannelType.DM;
-      case DiscordChannelType.GuildText:
-        return ChannelType.GROUP;
-      case DiscordChannelType.GuildVoice:
-        return ChannelType.VOICE_GROUP;
-    }
-  };
-
-  getAuthorData (userId: UUID): AuthorData | null {
-    // get from the author map
-    const author = this.authorMap.get(userId);
-    if (!author) {
-      return null;
-    }
-    return author;
-  };
 
   constructor(runtime: IAgentRuntime) {
     super();
@@ -140,21 +98,27 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     const ensureAllServersExist = async (runtime: IAgentRuntime) => {
       const guilds = await this.client.guilds.fetch();
       for (const [, guild] of guilds) {
-        const guildChannels = await guild.fetch();
-        // for channel in channels
-        for (const [, channel] of guildChannels.channels.cache) {
-          const roomId = stringToUuid(channel.id + "-" + runtime.agentId);
-          const room = await runtime.getRoom(roomId);
-          // if the room already exists, skip
-          if (room) {
-            continue;
-          }
-          await runtime.ensureRoomExists(roomId, "discord", ChannelType.GROUP, channel.id, guild.id);
-        }
+        await this.ensureAllChannelsExist(runtime, guild);
       }
     }
 
     ensureAllServersExist(this.runtime);
+  }
+
+  async ensureAllChannelsExist(runtime: IAgentRuntime, guild: OAuth2Guild) {
+    const guildChannels = await guild.fetch();
+    // for channel in channels
+    for (const [, channel] of guildChannels.channels.cache) {
+      const roomId = stringToUuid(channel.id + "-" + runtime.agentId);
+      const room = await runtime.getRoom(roomId);
+      // if the room already exists, skip
+      if (room) {
+        continue;
+      }
+      const worldId = stringToUuid(guild.id + "-" + runtime.agentId)
+      await runtime.ensureWorldExists({id: worldId, name: guild.name, serverId: guild.id, agentId: runtime.agentId});
+      await runtime.ensureRoomExists({id: roomId, name: channel.name, source: "discord", type: ChannelType.GROUP, channelId: channel.id, serverId: guild.id, worldId});
+    }
   }
 
   private setupEventListeners() {
@@ -264,6 +228,18 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     await this.onReady();
   }
 
+  async getChannelType(channelId: string): Promise<ChannelType> {
+    const channel = await this.client.channels.fetch(channelId);
+    switch (channel.type) {
+      case DiscordChannelType.DM:
+        return ChannelType.DM;
+      case DiscordChannelType.GuildText:
+        return ChannelType.GROUP;
+      case DiscordChannelType.GuildVoice:
+        return ChannelType.VOICE_GROUP;
+    }
+  }
+
   async handleReactionAdd(reaction: MessageReaction, user: User) {
     try {
       logger.log("Reaction added");
@@ -321,6 +297,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       const userName = reaction.message.author?.username || "unknown";
       const name = reaction.message.author?.displayName || userName;
 
+      // TODO: Get the type of the channel
+
       await this.runtime.ensureConnection({
         userId: userIdUUID,
         roomId,
@@ -329,6 +307,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
+        type: await this.getChannelType(reaction.message.channel.id),
       });
 
       const memory: Memory = {
@@ -420,6 +399,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
+        type: await this.getChannelType(reaction.message.channel.id),
       });
 
       const memory: Memory = {
@@ -458,12 +438,13 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     }
   }
 
-  private handleGuildCreate(guild: Guild) {
+  private async handleGuildCreate(guild: Guild) {
     logger.log(`Joined guild ${guild.name}`);
+    const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
     this.runtime.emitEvent("DISCORD_JOIN_SERVER", {
       runtime: this.runtime,
-      guild,
+      guild: fullGuild,
     });
   }
 
@@ -487,11 +468,13 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       const fullGuild = await guild.fetch();
       await this.voiceManager.scanGuild(fullGuild);
       // send in 1 second
-      setTimeout(() => {
+      setTimeout(async () => {
         // for each server the client is in, fire a connected event
         for (const [, guild] of guilds) {
-          logger.log("DISCORD SERVER CONNECTED", guild);
-          this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { runtime: this.runtime, guild });
+          const fullGuild = await guild.fetch();
+
+          logger.log("DISCORD SERVER CONNECTED", fullGuild);
+          this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { runtime: this.runtime, guild: fullGuild });
         }
       }, 1000);
     }

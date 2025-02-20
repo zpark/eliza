@@ -3,9 +3,9 @@ dotenv.config({ path: "../../.env" });
 
 import type { Character, IAgentRuntime } from "@elizaos/core";
 import { type Guild } from "discord.js";
-import { initializeOnboarding } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
-import { initializeRole } from "../shared/role/initialize";
+import { initializeAllSystems } from "../shared/onboarding/initialize";
+import { type OnboardingConfig } from "../shared/onboarding/types";
+import { getOrCreateOwnershipState } from "../shared/ownership/core";
 const character: Character = {
   name: "Gary",
   plugins: [
@@ -357,28 +357,45 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-  init: async (runtime: IAgentRuntime) => {
-    await initializeRole(runtime);
+// Add this to each agent's init function (complianceOfficer, communityManager, etc.)
 
-    // Register runtime events
-    // Register runtime events
-    runtime.registerEvent(
-      "DISCORD_JOIN_SERVER",
-      async (params: { guild: Guild }) => {
-        console.log("Compliance officer joined server");
-        console.log(params);
-        // TODO: Save onboarding config to runtime
-        await initializeOnboarding(runtime, params.guild.id, config);
+init: async (runtime: IAgentRuntime) => {
+  // Register runtime events with improved error handling
+  runtime.registerEvent(
+    "DISCORD_JOIN_SERVER",
+    async (params: { guild: Guild }) => {
+      try {
+        console.log(`${runtime.character.name} joined server ${params.guild.id}`);
+        
+        // Ensure ownership state exists before proceeding
+        await getOrCreateOwnershipState(runtime);
+        
+        // Proceed with initialization
+        await initializeAllSystems(runtime, [params.guild], config);
+      } catch (error) {
+        console.error(`Error during server join initialization: ${error}`);
       }
-    );
+    }
+  );
 
-    // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent(
-      "DISCORD_SERVER_CONNECTED",
-      async (params: { guild: Guild }) => {
-        console.log("Compliance officer connected to server");
-        await initializeOnboarding(runtime, params.guild.id, config);
+  runtime.registerEvent(
+    "DISCORD_SERVER_CONNECTED",
+    async (params: { guild: Guild }) => {
+      try {
+        console.log(`${runtime.character.name} connected to server ${params.guild.id}`);
+        
+        // Ensure ownership state exists before proceeding
+        await getOrCreateOwnershipState(runtime);
+        
+        // Proceed with initialization
+        await initializeAllSystems(runtime, [params.guild], config);
+      } catch (error) {
+        console.error(`Error during server connection initialization: ${error}`);
       }
-    );
-  },
+    }
+  );
+  
+  // Register actions if needed
+  // runtime.registerAction(yourAction);
+}
 };

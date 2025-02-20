@@ -9,10 +9,11 @@ import {
   type Memory,
   ServiceType,
   stringToUuid,
-  type UUID
+  type UUID,
+  ChannelType
 } from "@elizaos/core";
 import {
-  ChannelType,
+  ChannelType as DiscordChannelType,
   type Client,
   type Message as DiscordMessage,
   type TextChannel,
@@ -24,10 +25,12 @@ export class MessageManager {
   private client: Client;
   private runtime: IAgentRuntime;
   private attachmentManager: AttachmentManager;
+  private getChannelType: (channelId: string) => Promise<ChannelType>;
   constructor(discordClient: any) {
     this.client = discordClient.client;
     this.runtime = discordClient.runtime;
     this.attachmentManager = new AttachmentManager(this.runtime);
+    this.getChannelType = discordClient.getChannelType;
   }
 
   async handleMessage(message: DiscordMessage) {
@@ -53,12 +56,10 @@ export class MessageManager {
 
     if (
       this.runtime.character.settings?.discord?.shouldIgnoreDirectMessages &&
-      message.channel.type === ChannelType.DM
+      message.channel.type === DiscordChannelType.DM
     ) {
       return;
     }
-
-    console.log("*** HANDLE RESPONSE ***", message);
 
     const userId = message.author.id as UUID;
     const userIdUUID = stringToUuid(userId);
@@ -67,6 +68,18 @@ export class MessageManager {
     const channelId = message.channel.id;
     const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
 
+    let type: ChannelType;
+    let serverId: string | undefined;
+
+    if (message.guild) {
+      const guild = await message.guild.fetch();
+      type = await this.getChannelType(message.channel.id);
+      serverId = guild.id;
+    } else {
+      type = ChannelType.DM;
+      serverId = undefined;
+    }
+
     await this.runtime.ensureConnection({
       userId: userIdUUID,
       roomId,
@@ -74,7 +87,8 @@ export class MessageManager {
       userScreenName: name,
       source: "discord",
       channelId: message.channel.id,
-      serverId: message.guild?.id,
+      serverId,
+      type,
     });
 
     try {
@@ -173,8 +187,6 @@ export class MessageManager {
           return [];
         }
       };
-
-      console.log("*** EMIT EVENT ***");
 
       this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
         runtime: this.runtime,
