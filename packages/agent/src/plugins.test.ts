@@ -106,7 +106,7 @@ async function initializeRuntime(character: Character): Promise<RuntimeConfig> {
 // Initialize the runtimes
 beforeAll(async () => {
     const characters = [defaultCharacterTest, elizaOpenAIFirst, elizaAnthropicFirst];
-    
+
     for (const character of characters) {
         const config = await initializeRuntime(character);
         runtimeConfigs.set(character.name, config);
@@ -264,14 +264,15 @@ class TestRunner {
         }
         
         
-        console.log(colorize(`\n ${"⎯".repeat(25)}  Test Suites ${"⎯".repeat(25)} \n`, "cyan", true));
+        console.log(colorize(`\n${"⎯".repeat(25)}  Test Suites ${"⎯".repeat(25)} \n`, "cyan", true));
 
+        let failedTestSuites = 0;
         this.testResults.forEach((tests, file) => {
-            const passed = tests.filter(t => t.status === "passed").length;
             const failed = tests.filter(t => t.status === "failed").length;
             const total = tests.length;
 
             if (failed > 0) {
+                failedTestSuites++;
                 console.log(` ${colorize("❯", "yellow")} ${file} (${total})`);
             } else {
                 console.log(` ${colorize("✓", "green")} ${file} (${total})`);
@@ -300,7 +301,7 @@ class TestRunner {
         });
 
         if (this.stats.failed > 0) {
-            console.log(colorize(`\n ${"⎯".repeat(25)}  Failed Tests ${"⎯".repeat(25)} \n`, "red", true));
+            console.log(colorize(`\n${"⎯".repeat(25)}  Failed Tests ${"⎯".repeat(25)} \n`, "red", true));
             this.testResults.forEach(tests => {
                 tests.forEach(test => {
                     if (test.status === "failed") {
@@ -312,7 +313,8 @@ class TestRunner {
             });
         }
 
-        console.log(colorize(`\n ${"⎯".repeat(25)}  Test Summary ${"⎯".repeat(25)} \n`, "cyan", true));
-        console.log(` ${colorize("Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
+        console.log(colorize(`\n${"⎯".repeat(25)}  Test Summary ${"⎯".repeat(25)} \n`, "cyan", true));
+        console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(failedTestSuites + " failed | ", "red") : ""}${colorize((this.testResults.size - failedTestSuites) + " passed", "green")} (${this.testResults.size})`);
+        console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
 }
 }
