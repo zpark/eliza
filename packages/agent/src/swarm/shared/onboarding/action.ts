@@ -1,6 +1,3 @@
-// File: /swarm/shared/onboarding/action.ts
-// Enhanced onboarding action with improved error handling and logging
-
 import {
     type Action,
     type ActionExample,
@@ -18,74 +15,12 @@ import {
 } from "@elizaos/core";
 import { normalizeUserId } from "../ownership/core";
 import { findServerForOwner } from "./ownership";
-import { ONBOARDING_CACHE_KEY, type OnboardingState } from "./types";
+import { categorizeSettings, formatSettingsList, getOnboardingCacheKey, ONBOARDING_CACHE_KEY, type OnboardingState } from "./types";
 
 interface SettingUpdate {
     key: string;
-    value: string;
+    value: string | boolean;
 }
-
-/**
- * Helper function to ensure consistent cache key construction
- */
-function getOnboardingCacheKey(serverId: string): string {
-    if (!serverId) {
-        throw new Error('Server ID is required for onboarding cache key');
-    }
-    return `server_${serverId}_onboarding_state`;
-}
-
-/**
- * Categorizes settings based on configuration status
- */
-const categorizeSettings = (onboardingState: OnboardingState) => {
-    const configured = [];
-    const requiredUnconfigured = [];
-    const optionalUnconfigured = [];
-
-    for (const [key, setting] of Object.entries(onboardingState)) {
-        if (setting.value !== null) {
-            configured.push({ key, ...setting });
-        } else if (setting.required) {
-            requiredUnconfigured.push({ key, ...setting });
-        } else {
-            optionalUnconfigured.push({ key, ...setting });
-        }
-    }
-
-    return { configured, requiredUnconfigured, optionalUnconfigured };
-};
-
-/**
- * Formats the settings list for display
- */
-const formatSettingsList = (settings: OnboardingState) => {
-    const { configured, requiredUnconfigured, optionalUnconfigured } = categorizeSettings(settings);
-    let list = "Current Settings Status:\n";
-
-    if (configured.length > 0) {
-        list += "\nConfigured Settings:\n";
-        configured.forEach(setting => {
-            list += `- ${setting.name}: ${setting.value}\n`;
-        });
-    }
-
-    if (requiredUnconfigured.length > 0) {
-        list += "\nRequired Settings (Not Yet Configured):\n";
-        requiredUnconfigured.forEach(setting => {
-            list += `- ${setting.name}: ${setting.description}\n`;
-        });
-    }
-
-    if (optionalUnconfigured.length > 0) {
-        list += "\nOptional Settings (Not Yet Configured):\n";
-        optionalUnconfigured.forEach(setting => {
-            list += `- ${setting.name}: ${setting.description}\n`;
-        });
-    }
-
-    return list;
-};
 
 // Template for generating contextual responses
 const responseTemplate = `# Task: Generate a response about the onboarding settings status
@@ -113,6 +48,302 @@ Details: {{outcomeDetails}}
 Write a message that {{agentName}} would send about the onboarding status. Include the appropriate action.
 Available actions: SAVE_SETTING_FAILED, SAVE_SETTING_COMPLETE
 ${messageCompletionFooter}`;
+
+// Enhanced extraction template that explicitly handles multiple settings
+const extractionTemplate = `# Task: Extract setting values from the conversation
+
+# Available Settings:
+{{#each settings}}
+{{key}}:
+  Name: {{name}}
+  Description: {{description}}
+  Current Value: {{value}}
+  Required: {{required}}
+  Validation Rules: {{#if validation}}Present{{else}}None{{/if}}
+{{/each}}
+
+# Current Settings Status:
+{{settingsStatus}}
+
+# Recent Conversation:
+{{recentMessages}}
+
+# Instructions:
+1. Review the ENTIRE conversation and identify ALL values provided for settings
+2. For each setting mentioned, extract:
+   - The setting key (must exactly match one of the available settings above)
+   - The provided value that matches the setting's description and purpose
+3. Return an array of ALL setting updates found, even if mentioned earlier in the conversation
+
+Return ONLY a JSON array of objects with 'key' and 'value' properties. Format:
+[
+  { "key": "SETTING_NAME", "value": "extracted value" },
+  { "key": "ANOTHER_SETTING", "value": "another value" }
+]
+
+IMPORTANT: Only include settings from the Available Settings list above. Ignore any other potential settings.`;
+
+/**
+ * Extracts setting values from user message with improved handling of multiple settings
+ */
+async function extractSettingValues(
+    runtime: IAgentRuntime,
+    message: Memory,
+    state: State,
+    onboardingState: OnboardingState
+): Promise<SettingUpdate[]> {
+    try {
+        // Create context with current settings status for better extraction
+        const context = composeContext({
+            state: {
+                ...state,
+                settings: Object.entries(onboardingState).map(([key, setting]) => ({
+                    key,
+                    ...setting
+                })),
+                settingsStatus: formatSettingsList(onboardingState),
+            },
+            template: extractionTemplate
+        });
+
+        // Generate extractions using larger model for better comprehension
+        const extractions = await generateObjectArray({
+            runtime,
+            context,
+            modelClass: ModelClass.TEXT_LARGE,
+        }) as SettingUpdate[];
+
+        logger.info(`Extracted ${extractions.length} potential setting updates`);
+
+        // Validate each extraction against setting definitions
+        const validExtractions = extractions.filter(update => {
+            const setting = onboardingState[update.key];
+            if (!setting) {
+                logger.info(`Ignored extraction for unknown setting: ${update.key}`);
+                return false;
+            }
+
+            // Validate value if validation function exists
+            if (setting.validation && !setting.validation(update.value)) {
+                logger.info(`Validation failed for setting ${update.key}`);
+                return false;
+            }
+
+            return true;
+        });
+
+        logger.info(`Validated ${validExtractions.length} setting updates`);
+        return validExtractions;
+    } catch (error) {
+        logger.error('Error extracting setting values:', error);
+        return [];
+    }
+}
+
+/**
+ * Processes multiple setting updates atomically
+ */
+async function processSettingUpdates(
+    runtime: IAgentRuntime,
+    serverId: string,
+    onboardingState: OnboardingState,
+    updates: SettingUpdate[]
+): Promise<{ updatedAny: boolean; messages: string[] }> {
+    if (!updates.length) {
+        return { updatedAny: false, messages: [] };
+    }
+
+    const messages: string[] = [];
+    let updatedAny = false;
+
+    try {
+        // Create a copy of the state for atomic updates
+        const updatedState = { ...onboardingState };
+
+        // Process all updates
+        for (const update of updates) {
+            const setting = updatedState[update.key];
+            if (!setting) continue;
+
+            // Check dependencies if they exist
+            if (setting.dependsOn?.length) {
+                const dependenciesMet = setting.dependsOn.every(dep => 
+                    updatedState[dep]?.value !== null
+                );
+                if (!dependenciesMet) {
+                    messages.push(`Cannot update ${setting.name} - dependencies not met`);
+                    continue;
+                }
+            }
+
+            // Update the setting
+            updatedState[update.key] = {
+                ...setting,
+                value: update.value
+            };
+
+            messages.push(`Updated ${setting.name} successfully`);
+            updatedAny = true;
+
+            // Execute onSetAction if defined
+            if (setting.onSetAction) {
+                const actionMessage = setting.onSetAction(update.value);
+                if (actionMessage) {
+                    messages.push(actionMessage);
+                }
+            }
+        }
+
+        // If any updates were made, save the entire state
+        if (updatedAny) {
+            const cacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
+            await runtime.cacheManager.set(cacheKey, updatedState);
+            
+            // Verify save
+            const savedState = await runtime.cacheManager.get<OnboardingState>(cacheKey);
+            if (!savedState) {
+                throw new Error('Failed to verify state save');
+            }
+        }
+
+        return { updatedAny, messages };
+    } catch (error) {
+        logger.error('Error processing setting updates:', error);
+        return { 
+            updatedAny: false, 
+            messages: ['Error occurred while updating settings'] 
+        };
+    }
+}
+
+
+/**
+ * Handles successful completion of all required settings
+ */
+async function handleOnboardingComplete(
+    runtime: IAgentRuntime,
+    onboardingState: OnboardingState,
+    state: State,
+    callback: HandlerCallback
+): Promise<void> {
+    const responseContext = composeContext({
+        state: {
+            ...state,
+            settingsStatus: formatSettingsList(onboardingState),
+            outcomeStatus: "COMPLETE",
+            outcomeDetails: "All required settings have been configured successfully."
+        },
+        template: responseTemplate,
+    });
+    
+    const response = await generateMessageResponse({
+        runtime,
+        context: responseContext,
+        modelClass: ModelClass.TEXT_LARGE
+    });
+    
+    await callback({
+        ...response,
+        action: "SAVE_SETTING_COMPLETE",
+        source: "discord"
+    });
+}
+
+/**
+ * Generates success response after successful setting updates
+ */
+async function generateSuccessResponse(
+    runtime: IAgentRuntime,
+    onboardingState: OnboardingState,
+    state: State,
+    updateResults: string[],
+    callback: HandlerCallback
+): Promise<void> {
+    const responseContext = composeContext({
+        state: {
+            ...state,
+            settingsStatus: formatSettingsList(onboardingState),
+            outcomeStatus: "SUCCESS",
+            outcomeDetails: updateResults.join("\n")
+        },
+        template: responseTemplate,
+    });
+    
+    const response = await generateMessageResponse({
+        runtime,
+        context: responseContext,
+        modelClass: ModelClass.TEXT_LARGE
+    });
+    
+    await callback({
+        ...response,
+        action: "SAVE_SETTING_SUCCESS",
+        source: "discord"
+    });
+}
+
+/**
+ * Generates failure response when no settings could be extracted
+ */
+async function generateFailureResponse(
+    runtime: IAgentRuntime,
+    onboardingState: OnboardingState,
+    state: State,
+    callback: HandlerCallback
+): Promise<void> {
+    const responseContext = composeContext({
+        state: {
+            ...state,
+            settingsStatus: formatSettingsList(onboardingState),
+            outcomeStatus: "FAILED",
+            outcomeDetails: "Could not extract any valid settings from your message."
+        },
+        template: responseTemplate,
+    });
+    
+    const response = await generateMessageResponse({
+        runtime,
+        context: responseContext,
+        modelClass: ModelClass.TEXT_LARGE
+    });
+    
+    await callback({
+        ...response,
+        action: "SAVE_SETTING_FAILED",
+        source: "discord"
+    });
+}
+
+/**
+ * Generates error response when an exception occurs
+ */
+async function generateErrorResponse(
+    runtime: IAgentRuntime,
+    state: State,
+    callback: HandlerCallback
+): Promise<void> {
+    const responseContext = composeContext({
+        state: {
+            ...state,
+            settingsStatus: "Error retrieving settings",
+            outcomeStatus: "ERROR",
+            outcomeDetails: "An error occurred while saving settings."
+        },
+        template: responseTemplate,
+    });
+    
+    const response = await generateMessageResponse({
+        runtime,
+        context: responseContext,
+        modelClass: ModelClass.TEXT_LARGE
+    });
+    
+    await callback({
+        ...response,
+        action: "SAVE_SETTING_FAILED",
+        source: "discord"
+    });
+}
 
 /**
  * Enhanced onboarding action with improved state management and logging
@@ -280,229 +511,5 @@ const onboardingAction: Action = {
         ]
     ] as ActionExample[][]
 };
-
-/**
- * Extracts setting values from user message
- */
-async function extractSettingValues(
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State,
-    onboardingState: OnboardingState
-): Promise<SettingUpdate[]> {
-    const extractionPrompt = `Extract setting values from the following message. Return an array of objects with 'key' and 'value' properties.
-
-${formatSettingsList(onboardingState)}
-
-Available Settings:
-${Object.entries(onboardingState).map(([key, setting]) => `
-${key}:
-  Name: ${setting.name}
-  Description: ${setting.description}
-  Required: ${setting.required}
-  Current Value: ${setting.value !== null ? setting.value : 'undefined'}
-`).join('\n')}
-
-{{recentMessages}}
-
-Message from {{senderName}}: \`${message.content.text}\`
-
-Extract setting values from the following message. Return an array of objects with 'key' and 'value' properties. Only set values that are present, ignore values that are not present.
-
-Don't include any other text in your response. Only return the array of objects. Response should be an array of objects like:
-[
-  { "key": "SETTING_KEY", "value": "extracted value" }
-]`;
-
-    const context = composeContext({ state, template: extractionPrompt });
-    return await generateObjectArray({
-        runtime: runtime,
-        modelClass: ModelClass.TEXT_LARGE,
-        context: context,
-    }) as SettingUpdate[];
-}
-
-/**
- * Processes setting updates and saves valid ones
- */
-async function processSettingUpdates(
-    runtime: IAgentRuntime,
-    serverId: string,
-    onboardingState: OnboardingState,
-    extractedSettings: SettingUpdate[]
-): Promise<{ updatedAny: boolean, messages: string[] }> {
-    let updatedAny = false;
-    const updateResults: string[] = [];
-    
-    for (const update of extractedSettings) {
-        const setting = onboardingState[update.key];
-        if (!setting) {
-            logger.info(`Setting key not found: ${update.key}`);
-            continue;
-        }
-        
-        if (setting.validation && !setting.validation(update.value)) {
-            updateResults.push(`Failed to update ${setting.name}: Invalid value "${update.value}"`);
-            continue;
-        }
-        
-        onboardingState[update.key].value = update.value;
-        updateResults.push(`Successfully updated ${setting.name} to "${update.value}"`);
-        updatedAny = true;
-    }
-    
-    if (updatedAny) {
-        // Use consistent cache key format
-        const onboardingCacheKey = getOnboardingCacheKey(serverId);
-        logger.info(`Saving updated onboarding state with key: ${onboardingCacheKey}`);
-        
-        await runtime.cacheManager.set(onboardingCacheKey, onboardingState);
-        
-        // Verify the save was successful
-        const verifyState = await runtime.cacheManager.get<OnboardingState>(onboardingCacheKey);
-        if (!verifyState) {
-            logger.error("Failed to verify onboarding state was saved");
-        } else {
-            logger.info("Verified onboarding state was saved successfully");
-            
-            // Also update using the original cache key format for backwards compatibility
-            const originalCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
-            if (originalCacheKey !== onboardingCacheKey) {
-                await runtime.cacheManager.set(originalCacheKey, onboardingState);
-                logger.info(`Also saved to original cache key format: ${originalCacheKey}`);
-            }
-        }
-    }
-    
-    return { updatedAny, messages: updateResults };
-}
-
-/**
- * Handles successful completion of all required settings
- */
-async function handleOnboardingComplete(
-    runtime: IAgentRuntime,
-    onboardingState: OnboardingState,
-    state: State,
-    callback: HandlerCallback
-): Promise<void> {
-    const responseContext = composeContext({
-        state: {
-            ...state,
-            settingsStatus: formatSettingsList(onboardingState),
-            outcomeStatus: "COMPLETE",
-            outcomeDetails: "All required settings have been configured successfully."
-        },
-        template: responseTemplate,
-    });
-    
-    const response = await generateMessageResponse({
-        runtime,
-        context: responseContext,
-        modelClass: ModelClass.TEXT_LARGE
-    });
-    
-    await callback({
-        ...response,
-        action: "SAVE_SETTING_COMPLETE",
-        source: "discord"
-    });
-}
-
-/**
- * Generates success response after successful setting updates
- */
-async function generateSuccessResponse(
-    runtime: IAgentRuntime,
-    onboardingState: OnboardingState,
-    state: State,
-    updateResults: string[],
-    callback: HandlerCallback
-): Promise<void> {
-    const responseContext = composeContext({
-        state: {
-            ...state,
-            settingsStatus: formatSettingsList(onboardingState),
-            outcomeStatus: "SUCCESS",
-            outcomeDetails: updateResults.join("\n")
-        },
-        template: responseTemplate,
-    });
-    
-    const response = await generateMessageResponse({
-        runtime,
-        context: responseContext,
-        modelClass: ModelClass.TEXT_LARGE
-    });
-    
-    await callback({
-        ...response,
-        action: "SAVE_SETTING_SUCCESS",
-        source: "discord"
-    });
-}
-
-/**
- * Generates failure response when no settings could be extracted
- */
-async function generateFailureResponse(
-    runtime: IAgentRuntime,
-    onboardingState: OnboardingState,
-    state: State,
-    callback: HandlerCallback
-): Promise<void> {
-    const responseContext = composeContext({
-        state: {
-            ...state,
-            settingsStatus: formatSettingsList(onboardingState),
-            outcomeStatus: "FAILED",
-            outcomeDetails: "Could not extract any valid settings from your message."
-        },
-        template: responseTemplate,
-    });
-    
-    const response = await generateMessageResponse({
-        runtime,
-        context: responseContext,
-        modelClass: ModelClass.TEXT_LARGE
-    });
-    
-    await callback({
-        ...response,
-        action: "SAVE_SETTING_FAILED",
-        source: "discord"
-    });
-}
-
-/**
- * Generates error response when an exception occurs
- */
-async function generateErrorResponse(
-    runtime: IAgentRuntime,
-    state: State,
-    callback: HandlerCallback
-): Promise<void> {
-    const responseContext = composeContext({
-        state: {
-            ...state,
-            settingsStatus: "Error retrieving settings",
-            outcomeStatus: "ERROR",
-            outcomeDetails: "An error occurred while saving settings."
-        },
-        template: responseTemplate,
-    });
-    
-    const response = await generateMessageResponse({
-        runtime,
-        context: responseContext,
-        modelClass: ModelClass.TEXT_LARGE
-    });
-    
-    await callback({
-        ...response,
-        action: "SAVE_SETTING_FAILED",
-        source: "discord"
-    });
-}
 
 export default onboardingAction;

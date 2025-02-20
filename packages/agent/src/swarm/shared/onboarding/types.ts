@@ -89,7 +89,7 @@ export function formatSettingsList(settings: OnboardingState, isOnboarding = fal
 }
 
 // Helper to categorize settings
-function categorizeSettings(onboardingState: OnboardingState) {
+export function categorizeSettings(onboardingState: OnboardingState) {
     const configured = [];
     const requiredUnconfigured = [];
     const optionalUnconfigured = [];
