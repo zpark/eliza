@@ -8,7 +8,7 @@
         "swarm": "LOG_LEVEL=debug node --loader ts-node/esm src/index.ts --swarm",
         "dev": "node --loader ts-node/esm src/index.ts",
         "check-types": "tsc --noEmit",
-        "test": "vitest"
+        "test": "vitest --run"
     },
     "nodemonConfig": {
         "watch": [
