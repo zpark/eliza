@@ -207,7 +207,7 @@ export async function initializeOnboarding(
     
     // Check if onboarding state already exists
     let onboardingState = await runtime.cacheManager.get<OnboardingState>(onboardingCacheKey);
-    console.log("*** ONBOARDING STATE ***", onboardingState);
+
     if (!onboardingState) {
       // Initialize state with config settings
       onboardingState = {};
@@ -216,7 +216,6 @@ export async function initializeOnboarding(
       }
 
       logger.info(`Created new onboarding state for server ${serverId}`);
-      console.log("*** CREATED ONBOARDING STATE ***", onboardingState);
 
       // Save with explicit cache key and verify it was saved
       await runtime.cacheManager.set(onboardingCacheKey, onboardingState);

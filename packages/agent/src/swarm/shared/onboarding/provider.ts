@@ -75,7 +75,7 @@ export const createOnboardingProvider = (_config: OnboardingConfig): Provider =>
             }
             
             const serverId = serverOwnership.serverId;
-            console.log("*** SERVER ID ***", serverId);
+
             const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
             
             // Get current onboarding state
@@ -88,12 +88,7 @@ export const createOnboardingProvider = (_config: OnboardingConfig): Provider =>
                     : "Configuration has not been completed yet.";
             }
             
-            // Generate appropriate status message based on context
-            const status = generateStatusMessage(runtime, onboardingState, isOnboarding, state);
-
-            console.log("*** STATUS ***", status);
-
-            return status;
+            return generateStatusMessage(runtime, onboardingState, isOnboarding, state);
         } catch (error) {
             logger.error(`Critical error in onboarding provider: ${error}`);
             return "Error retrieving configuration information. Please try again later.";

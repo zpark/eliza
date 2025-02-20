@@ -420,8 +420,6 @@ export class AgentRuntime implements IAgentRuntime {
                         }
                     }
 
-                    logger.info("runtime initialize() plugin:", plugin);
-
                     if (plugin.actions) {
                         for (const action of plugin.actions) {
                             this.registerAction(action);

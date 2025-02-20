@@ -138,8 +138,6 @@ const TwitterClientInterface: Client = {
             TWITTER_2FA_SECRET: (runtime.getSetting("TWITTER_2FA_SECRET") as string) || runtime.character.settings?.TWITTER_2FA_SECRET || runtime.character.secrets?.TWITTER_2FA_SECRET,
         };
 
-        console.log("*** twitterConfig", twitterConfig);
-
         // Filter out undefined values
         const config = Object.fromEntries(
             Object.entries(twitterConfig).filter(([_, v]) => v !== undefined)

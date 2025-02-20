@@ -80,9 +80,6 @@ export class CacheManager<CacheAdapter extends ICacheAdapter = ICacheAdapter>
             const value = parsed.value;
             const expires = parsed.expires;
 
-            console.log("*** GETTING CACHE ***", { value });
-            console.log("data is", data);
-
             if (!expires || expires > Date.now()) {
                 return value;
             }
@@ -94,7 +91,7 @@ export class CacheManager<CacheAdapter extends ICacheAdapter = ICacheAdapter>
     }
 
     async set<T>(key: string, value: T, opts?: CacheOptions): Promise<void> {
-        console.log("*** SETTING CACHE ***", { value });
+
         return this.adapter.set(
             key,
             JSON.stringify({ ...(opts || {}), value })

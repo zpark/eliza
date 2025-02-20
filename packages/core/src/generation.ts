@@ -120,8 +120,6 @@ export async function generateText({
     stopSequences,
   });
 
-  console.log("*** TEXT ***", text);
-
   return text;
 }
 
@@ -168,8 +166,6 @@ export const generateObject = async ({
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
-
-  console.log("*** GENERATE OBJECT ***", context);
 
   // Special handling for enum output type
   if (output === "enum" && enumValues) {
@@ -406,9 +402,6 @@ export async function generateMessageResponse({
       context,
       stop: stopSequences,
     });
-
-    console.log("*** GENERATE MESSAGE ***", text);
-    console.log("*** PARSED CONTENT ***", parseJSONObjectFromText(text));
 
     const parsedContent = parseJSONObjectFromText(text) as Content;
 
