@@ -54,8 +54,7 @@ async function fetchSpeech(runtime: IAgentRuntime, text: string) {
     }
     return Readable.fromWeb(response.body);
   } catch (error) {
-    logger.error(error);
-    return new Readable({ read() {} });
+    throw new Error(error)
   }
 }
 
