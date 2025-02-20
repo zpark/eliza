@@ -185,7 +185,7 @@ export class MessageManager {
     await this.cancelPendingTask(roomId.toString());
 
     try {
-      const { processedContent, attachments } = await this.processMessageMedia(
+      let { processedContent, attachments } = await this.processMessageMedia(
         message
       );
 
@@ -196,6 +196,14 @@ export class MessageManager {
         const processedAudioAttachments =
           await this.attachmentManager.processAttachments(audioAttachments);
         attachments.push(...processedAudioAttachments);
+      }
+
+      if (!processedContent && attachments?.length) {
+        // This is a message containing only attachments with no text content.
+        // Even if the text message is empty, we still save the attachment in memory,
+        // allowing the agent to process it later, such as transcribing an audio file
+        // or extracting information from an image.
+        processedContent = "ATTACHMENTS";
       }
 
       const userIdUUID = stringToUuid(userId);
