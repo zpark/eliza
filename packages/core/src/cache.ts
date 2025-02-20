@@ -81,7 +81,7 @@ export class CacheManager<CacheAdapter extends ICacheAdapter = ICacheAdapter>
     async set<T>(key: string, value: T, opts?: CacheOptions): Promise<void> {
         return this.adapter.set(
             key,
-            JSON.stringify({ value, expires: opts?.expires ?? 0 })
+            JSON.stringify({ value })
         );
     }
 

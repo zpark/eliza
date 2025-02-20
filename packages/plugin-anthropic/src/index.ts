@@ -67,10 +67,12 @@ export const anthropicPlugin: Plugin = {
       runtime,
       {
       context,
+      maxTokens = 8192,
       stopSequences = [],
+      temperature = 0.7,
+      frequencyPenalty = 0.7,
+      presencePenalty = 0.7,
     }: GenerateTextParams) => {
-      const temperature = 0.7;
-      const maxTokens = 8192;
       const largeModel = runtime.getSetting("ANTHROPIC_LARGE_MODEL") ?? "claude-3-5-sonnet-latest";
 
       const { text } = await generateText({
@@ -80,10 +82,56 @@ export const anthropicPlugin: Plugin = {
         temperature,
         maxTokens,
         stopSequences,
+        frequencyPenalty,
+        presencePenalty,
       });
       return text;
-    }
+    },
   },
+  tests: [
+    {
+      name: "anthropic_plugin_tests",
+      tests: [
+        {
+          name: 'anthropic_test_text_small',  
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_small:", text);
+            } catch (error) {
+              console.error("Error in test_text_small:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'anthropic_test_text_large',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_large:", text);
+            } catch (error) {
+              console.error("Error in test_text_large:", error);
+              throw error;
+            }
+          }
+        }
+      ]
+    }
+  ]
+
 };
 
 export default anthropicPlugin;

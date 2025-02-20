@@ -84,7 +84,7 @@ export class SttTtsPlugin implements Plugin {
     private isSpeaking = false;
     private isProcessingAudio = false;
 
-    private userSpeakingTimer: NodeJS.Timeout | null = null;
+    private userSpeakingTimer: NodeJS.Timer | null = null;
     private volumeBuffers: Map<string, number[]>;
     private ttsAbortController: AbortController | null = null;
 

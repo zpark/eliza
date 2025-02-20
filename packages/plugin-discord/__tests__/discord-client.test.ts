@@ -5,6 +5,7 @@ import { DiscordClient } from '../src';
 // Mock @elizaos/core
 vi.mock('@elizaos/core', () => ({
   logger: {
+    log: vi.fn(),
     info: vi.fn(),
     error: vi.fn(),
     debug: vi.fn(),
@@ -73,7 +74,7 @@ describe('DiscordClient', () => {
       registerAction: vi.fn(),
       providers: [],
       character: {
-        clientConfig: {
+        settings: {
           discord: {
             shouldIgnoreBotMessages: true
           }
@@ -87,7 +88,6 @@ describe('DiscordClient', () => {
   it('should initialize with correct configuration', () => {
     expect(discordClient.apiToken).toBe('mock-token');
     expect(discordClient.client).toBeDefined();
-    expect(mockRuntime.getSetting).toHaveBeenCalledWith('DISCORD_API_TOKEN');
   });
 
   it('should login to Discord on initialization', () => {

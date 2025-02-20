@@ -23,7 +23,7 @@ import { escapeMarkdown } from "./utils";
 
 import fs from "fs";
 
-enum MediaType {
+export enum MediaType {
     PHOTO = "photo",
     VIDEO = "video",
     DOCUMENT = "document",
@@ -33,29 +33,10 @@ enum MediaType {
 
 const MAX_MESSAGE_LENGTH = 4096; // Telegram's max message length
 
-interface MessageContext {
-    content: string;
-    timestamp: number;
-}
-
-export type InterestChats = {
-    [key: string]: {
-        currentHandler: string | undefined;
-        lastMessageSent: number;
-        messages: { userId: UUID; userName: string; content: Content }[];
-        previousContext?: MessageContext;
-        contextSimilarityThreshold?: number;
-    };
-};
-
 export class MessageManager {
     public bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
-    private interestChats: InterestChats = {};
-    private teamMemberUsernames: Map<string, string> = new Map();
-
     private lastChannelActivity: { [channelId: string]: number } = {};
-    private autoPostInterval: NodeJS.Timeout;
 
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;
@@ -106,8 +87,10 @@ export class MessageManager {
     ): Promise<boolean> {
         // Respond if bot is mentioned
         if (
-            "text" in message &&
-            message.text?.includes(`@${this.bot.botInfo?.username}`)
+            ("text" in message &&
+            message.text?.includes(`@${this.bot.botInfo?.username}`)) || 
+            ("caption" in message &&
+            message.caption?.includes(`@${this.bot.botInfo?.username}`))
         ) {
             logger.info(`Bot mentioned`);
             return true;
@@ -144,7 +127,7 @@ export class MessageManager {
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            return response === "RESPOND";
+            return response.includes("RESPOND");
         }
 
         return false;
@@ -332,14 +315,14 @@ export class MessageManager {
         this.lastChannelActivity[ctx.chat.id.toString()] = Date.now();
 
         if (
-            this.runtime.character.clientConfig?.telegram
+            this.runtime.character.settings?.telegram
                 ?.shouldIgnoreBotMessages &&
             ctx.from.is_bot
         ) {
             return;
         }
         if (
-            this.runtime.character.clientConfig?.telegram
+            this.runtime.character.settings?.telegram
                 ?.shouldIgnoreDirectMessages &&
             ctx.chat?.type === "private"
         ) {
@@ -380,7 +363,7 @@ export class MessageManager {
 
             // Get message ID
             const messageId = stringToUuid(
-                roomId + "-" + message.message_id.toString()
+                roomId + "-" + message?.message_id?.toString()
             ) as UUID;
 
             // Handle images
@@ -527,6 +510,7 @@ export class MessageManager {
         } catch (error) {
             logger.error("❌ Error handling message:", error);
             logger.error("Error sending message:", error);
+            throw error;
         }
     }
 }

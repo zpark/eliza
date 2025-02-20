@@ -5,7 +5,7 @@ import { walletProvider } from "./providers/wallet.ts";
 import { SolanaClientInterface } from "./client.ts";
 
 export const solanaPlugin: Plugin = {
-    name: "solana",
+    name: "SolanaPlugin",
     description: "Solana Plugin for Eliza",
     actions: [
         transferToken,

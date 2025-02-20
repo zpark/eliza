@@ -154,11 +154,26 @@ export class VoiceManager extends EventEmitter {
         string,
         { channel: BaseGuildVoiceChannel; monitor: AudioMonitor }
     > = new Map();
+    private ready: boolean;
 
     constructor(client: DiscordClient) {
         super();
         this.client = client.client;
         this.runtime = client.runtime;
+
+        this.client.on("voiceManagerReady", () => {
+            this.setReady(true);
+        });
+    }
+
+    private setReady(status: boolean) {
+        this.ready = status;
+        this.emit("ready");
+        logger.success(`VoiceManager is now ready: ${this.ready}`);
+    }
+
+    isReady() {
+        return this.ready;
     }
 
     async handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
@@ -257,7 +272,7 @@ export class VoiceManager extends EventEmitter {
                     } catch (e) {
                         // Seems to be a real disconnect, destroy and cleanup
                         logger.log(
-                            "Disconnection confirmed - cleaning up..." + e
+                            `Disconnection confirmed - cleaning up...${e}`
                         );
                         connection.destroy();
                         this.connections.delete(channel.id);
@@ -327,7 +342,7 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private getVoiceConnection(guildId: string) {
+    getVoiceConnection(guildId: string) {
         const connections = getVoiceConnections(this.client.user.id);
         if (!connections) {
             return;
@@ -509,7 +524,7 @@ export class VoiceManager extends EventEmitter {
             } finally {
                 this.processingVoice = false;
             }
-        }, DEBOUNCE_TRANSCRIPTION_THRESHOLD);
+        }, DEBOUNCE_TRANSCRIPTION_THRESHOLD) as unknown as NodeJS.Timeout;
     }
 
     async handleUserStream(
@@ -836,19 +851,20 @@ export class VoiceManager extends EventEmitter {
             modelClass: ModelClass.TEXT_SMALL,
         });
 
-        if (response === "RESPOND") {
-            return true;
-        } else if (response === "IGNORE") {
-            return false;
-        } else if (response === "STOP") {
-            return false;
-        } else {
-            console.error(
-                "Invalid response from response generateText:",
-                response
-            );
-            return false;
+        switch (true) {
+            case response.includes("RESPOND"):
+                return true;
+            case response.includes("IGNORE"):
+            case response.includes("STOP"):
+                return false;
+            default:
+                console.error(
+                    "Invalid response from response generateText:",
+                    response
+                );
+                return false;
         }
+        
     }
 
     private async _generateResponse(
@@ -873,7 +889,7 @@ export class VoiceManager extends EventEmitter {
 
         await this.runtime.databaseAdapter.log({
             body: { message, context, response },
-            userId: userId,
+            userId,
             roomId,
             type: "response",
         });

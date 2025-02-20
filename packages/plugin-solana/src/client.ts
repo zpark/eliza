@@ -1,8 +1,9 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
+import { type ClientInstance, logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
 import { getWalletKey } from "./keypairUtils";
 import BigNumber from "bignumber.js";
 import type { Item, WalletPortfolio, Prices, ISolanaClient } from "./types";
+import { SOLANA_CLIENT_NAME } from "./constants";
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
@@ -16,9 +17,9 @@ const PROVIDER_CONFIG = {
     },
 };
 
-class SolanaClient implements ISolanaClient {
+class SolanaClient implements ISolanaClient, ClientInstance {
     private updateInterval: NodeJS.Timer | null = null;
-    private lastUpdate: number = 0;
+    private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
     private readonly CACHE_KEY = 'solana/walletData';
     private connection: Connection;
@@ -56,8 +57,7 @@ class SolanaClient implements ISolanaClient {
             this.updateInterval = null;
         }
 
-        const client = runtime.clients.find(client => client.name === 'SolanaClient');
-        runtime.clients = runtime.clients.filter(c => c !== client);
+        runtime.unregisterClient(SOLANA_CLIENT_NAME);
 
         return Promise.resolve();
     }
@@ -149,7 +149,7 @@ class SolanaClient implements ISolanaClient {
         }
     }
 
-    private async updateWalletData(force: boolean = false): Promise<WalletPortfolio> {
+    private async updateWalletData(force = false): Promise<WalletPortfolio> {
         const now = Date.now();
         
         // Don't update if less than interval has passed, unless forced
@@ -243,7 +243,7 @@ class SolanaClient implements ISolanaClient {
 }
 
 export const SolanaClientInterface: Client = {
-    name: 'SolanaClient',
+    name: 'solana',
     start: async (runtime: IAgentRuntime) => {
         logger.log('initSolanaClient');
         

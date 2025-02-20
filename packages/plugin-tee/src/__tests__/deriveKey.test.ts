@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DeriveKeyProvider } from '../src/providers/deriveKeyProvider';
+import { DeriveKeyProvider } from '../providers/deriveKeyProvider';
 import { TappdClient } from '@phala/dstack-sdk';
-import { TEEMode } from '../src/types/tee';
+import { TEEMode } from '@elizaos/core';
 
 // Mock dependencies
 vi.mock('@phala/dstack-sdk', () => ({
@@ -101,7 +101,7 @@ describe('DeriveKeyProvider', () => {
         it('should derive Ed25519 keypair successfully', async () => {
             const path = 'test-path';
             const subject = 'test-subject';
-            const result = await provider.deriveEd25519Keypair(path, subject);
+            const result = await provider.deriveEd25519Keypair(path, subject, 'test-agent-id');
 
             const client = TappdClient.mock.results[0].value;
             expect(client.deriveKey).toHaveBeenCalledWith(path, subject);

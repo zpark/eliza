@@ -11,10 +11,7 @@ export const messageCompletionFooter = `\nResponse format should be formatted in
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
 `;
 
-export const shouldRespondFooter = `The available options are [RESPOND], [IGNORE], or [STOP]. Choose the most appropriate option.
-If {{agentName}} is talking too much, you can choose [IGNORE]
-
-Your response must include one of the options.`;
+export const shouldRespondFooter = `The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.`;
 
 export const parseShouldRespondFromText = (
     text: string
@@ -99,8 +96,7 @@ export function parseJsonArrayFromText(text: string) {
             );
             jsonData = JSON.parse(normalizedJson);
         } catch (e) {
-            console.error("Error parsing JSON:", e);
-            console.error("Failed parsing text:", jsonBlockMatch[1]);
+            logger.warn("Could not parse text as JSON, will try pattern matching");
         }
     }
 
@@ -118,8 +114,7 @@ export function parseJsonArrayFromText(text: string) {
                 );
                 jsonData = JSON.parse(normalizedJson);
             } catch (e) {
-                console.error("Error parsing JSON:", e);
-                console.error("Failed parsing text:", arrayMatch[0]);
+                logger.warn("Could not parse text as JSON, returning null");
             }
         }
     }
@@ -156,7 +151,7 @@ export function parseJSONObjectFromText(
             jsonData = JSON.parse(text.trim());
         }
     } catch (e) {
-        console.error("Error parsing JSON:", e);
+        logger.warn("Could not parse text as JSON, returning null");
         return null;
     }
 
@@ -164,6 +159,8 @@ export function parseJSONObjectFromText(
     if (jsonData && typeof jsonData === "object" && !Array.isArray(jsonData)) {
         return jsonData;
     }
+
+    logger.warn("Could not parse text as JSON, returning null");
 
     return null;
 }

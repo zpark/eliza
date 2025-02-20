@@ -76,7 +76,6 @@ describe("AgentRuntime", () => {
                 name: "Test Character",
                 username: "test",
                 bio: ["Test bio"],
-                lore: ["Test lore"],
                 messageExamples: [],
                 postExamples: [],
                 topics: [],
@@ -96,7 +95,6 @@ describe("AgentRuntime", () => {
         it("should provide access to different memory managers", () => {
             expect(runtime.messageManager).toBeDefined();
             expect(runtime.descriptionManager).toBeDefined();
-            expect(runtime.loreManager).toBeDefined();
             expect(runtime.documentsManager).toBeDefined();
             expect(runtime.knowledgeManager).toBeDefined();
         });
@@ -177,7 +175,6 @@ describe("MemoryManagerService", () => {
 
         expect(runtime.messageManager).toBeDefined();
         expect(runtime.descriptionManager).toBeDefined();
-        expect(runtime.loreManager).toBeDefined();
         expect(runtime.documentsManager).toBeDefined();
         expect(runtime.knowledgeManager).toBeDefined();
     });

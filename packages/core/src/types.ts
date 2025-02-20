@@ -207,11 +207,11 @@ export interface State {
   /** ID of agent in conversation */
   agentId?: UUID;
 
+  /** System prompt */
+  system?: string;
+
   /** Agent's biography */
   bio: string;
-
-  /** Agent's background lore */
-  lore: string;
 
   /** Message handling directions */
   messageDirections: string;
@@ -334,7 +334,7 @@ export type Handler = (
   state?: State,
   options?: { [key: string]: unknown },
   callback?: HandlerCallback,
-  responses?: Memory[],
+  responses?: Memory[]
 ) => Promise<unknown>;
 
 /**
@@ -526,9 +526,7 @@ export type Media = {
  * Client instance
  */
 export type ClientInstance = {
-  /** Client name */
-  name?: string;
-
+  [key: string]: any;
   /** Stop client connection */
   stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
@@ -549,7 +547,7 @@ export type Client = {
 
 export type Adapter = {
   /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
+  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter & IDatabaseCacheAdapter>;
 };
 
 export type Route = {
@@ -602,7 +600,7 @@ export type Plugin = {
 
   /** Optional events */
   events?: {
-    [key: string]: ((params: any) => Promise<any>)[]
+    [key: string]: ((params: any) => Promise<any>)[];
   };
 
   /** Optional tests */
@@ -646,28 +644,20 @@ export type Character = {
     [key: string]: TemplateType;
   };
 
-  /** Optional client configuration */
-  clientConfig?: {
-    [key: string]: any;
-  };
-
   /** Character biography */
   bio: string | string[];
 
-  /** Character background lore */
-  lore: string[];
-
   /** Example messages */
-  messageExamples: MessageExample[][];
+  messageExamples?: MessageExample[][];
 
   /** Example posts */
-  postExamples: string[];
+  postExamples?: string[];
 
   /** Known topics */
-  topics: string[];
+  topics?: string[];
 
   /** Character traits */
-  adjectives: string[];
+  adjectives?: string[];
 
   /** Optional knowledge base */
   knowledge?: (string | { path: string; shared?: boolean })[];
@@ -677,19 +667,20 @@ export type Character = {
 
   /** Optional configuration */
   settings?: {
-    secrets?: { [key: string]: string };
-    [key: string]: any;
+    [key: string]: any | string | boolean | number;
+  };
+
+  /** Optional secrets */
+  secrets?: {
+    [key: string]: string | boolean | number;
   };
 
   /** Writing style guides */
-  style: {
-    all: string[];
-    chat: string[];
-    post: string[];
+  style?: {
+    all?: string[];
+    chat?: string[];
+    post?: string[];
   };
-
-  /**Optinal Parent characters to inherit information from */
-  extends?: string[];
 };
 
 export interface TwitterSpaceDecisionOptions {
@@ -769,17 +760,15 @@ export interface IDatabaseAdapter {
 
   updateGoalStatus(params: { goalId: UUID; status: GoalStatus }): Promise<void>;
 
-  searchMemories(
-    params: {
-      embedding: number[],
-      match_threshold?: number;
-      count?: number;
-      roomId?: UUID;
-      agentId?: UUID;
-      unique?: boolean;
-      tableName: string;
-    }
-  ): Promise<Memory[]>;
+  searchMemories(params: {
+    embedding: number[];
+    match_threshold?: number;
+    count?: number;
+    roomId?: UUID;
+    agentId?: UUID;
+    unique?: boolean;
+    tableName: string;
+  }): Promise<Memory[]>;
 
   createMemory(
     memory: Memory,
@@ -850,6 +839,18 @@ export interface IDatabaseAdapter {
   }): Promise<Relationship | null>;
 
   getRelationships(params: { userId: UUID }): Promise<Relationship[]>;
+
+  createCharacter(character: Character): Promise<void>;
+
+  listCharacters(): Promise<Character[]>;
+
+  getCharacter(name: string): Promise<Character | null>;
+
+  updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+  
+  removeCharacter(name: string): Promise<void>;
+
+  ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
 }
 
 export interface IDatabaseCacheAdapter {
@@ -927,18 +928,18 @@ export abstract class Service {
   private static instance: Service | null = null;
 
   static get serviceType(): ServiceType {
-      throw new Error("Service must implement static serviceType getter");
+    throw new Error("Service must implement static serviceType getter");
   }
 
   public static getInstance<T extends Service>(): T {
-      if (!Service.instance) {
-          Service.instance = new (this as any)();
-      }
-      return Service.instance as T;
+    if (!Service.instance) {
+      Service.instance = new (this as any)();
+    }
+    return Service.instance as T;
   }
 
   get serviceType(): ServiceType {
-      return (this.constructor as typeof Service).serviceType;
+    return (this.constructor as typeof Service).serviceType;
   }
 
   // Add abstract initialize method that must be implemented by derived classes
@@ -962,11 +963,15 @@ export interface IAgentRuntime {
   descriptionManager: IMemoryManager;
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
-  loreManager: IMemoryManager;
 
   cacheManager: ICacheManager;
 
-  clients: ClientInstance[];
+  getClient(name: string): ClientInstance | null;
+  getAllClients(): Map<string, ClientInstance>;
+
+  registerClient(name: string, client: ClientInstance): void;
+
+  unregisterClient(name: string): void;
 
   initialize(): Promise<void>;
 
@@ -978,7 +983,13 @@ export interface IAgentRuntime {
 
   registerService(service: Service): void;
 
-  getSetting(key: string): string | null;
+  setSetting(
+    key: string,
+    value: string | boolean | null | any,
+    secret: boolean
+  ): void;
+
+  getSetting(key: string): string | boolean | null | any;
 
   // Methods
   getConversationLength(): number;
@@ -1006,6 +1017,8 @@ export interface IAgentRuntime {
     source: string | null
   ): Promise<void>;
 
+  registerProvider(provider: Provider): void;
+
   registerAction(action: Action): void;
 
   ensureConnection(
@@ -1028,10 +1041,35 @@ export interface IAgentRuntime {
   updateRecentMessageState(state: State): Promise<State>;
 
   useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
-  registerModel(modelClass: ModelClass, handler: (params: any) => Promise<any>): void;
-  getModel(modelClass: ModelClass): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
+  registerModel(
+    modelClass: ModelClass,
+    handler: (params: any) => Promise<any>
+  ): void;
+  getModel(
+    modelClass: ModelClass
+  ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
+
+  registerEvent(event: string, handler: (params: any) => void): void;
+  getEvent(event: string): ((params: any) => void)[] | undefined;
+  emitEvent(event: string, params: any): void;
+
+  registerTask(task: Task): UUID;
+  getTasks({
+    roomId,
+    tags,
+  }: {
+    roomId?: UUID;
+    tags?: string[];
+  }): Task[] | undefined;
+  getTask(id: UUID): Task | undefined;
+  updateTask(id: UUID, task: Task): void;
+  deleteTask(id: UUID): void;
 
   stop(): Promise<void>;
+
+  ensureEmbeddingDimension(): Promise<void>;
+
+  ensureCharacterExists(character: Character): Promise<void>;
 }
 
 export enum LoggingLevel {
@@ -1068,6 +1106,10 @@ export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
   modelClass: ModelClass;
+  maxTokens?: number;
+  temperature?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
   stopSequences?: string[];
 };
 
@@ -1091,8 +1133,8 @@ export interface IVideoService extends Service {
 export interface IBrowserService extends Service {
   closeBrowser(): Promise<void>;
   getPageContent(
-      url: string,
-      runtime: IAgentRuntime,
+    url: string,
+    runtime: IAgentRuntime
   ): Promise<{ title: string; description: string; bodyContent: string }>;
 }
 
@@ -1103,14 +1145,14 @@ export interface IPdfService extends Service {
 
 export interface IFileService extends Service {
   uploadFile(
-      imagePath: string,
-      subDirectory: string,
-      useSignedUrl: boolean,
-      expiresIn: number,
+    imagePath: string,
+    subDirectory: string,
+    useSignedUrl: boolean,
+    expiresIn: number
   ): Promise<{
-      success: boolean;
-      url?: string;
-      error?: string;
+    success: boolean;
+    url?: string;
+    error?: string;
   }>;
   generateSignedUrl(fileName: string, expiresIn: number): Promise<string>;
 }
@@ -1118,18 +1160,24 @@ export interface IFileService extends Service {
 export interface ITeeLogService extends Service {
   getInstance(): ITeeLogService;
   log(
-      agentId: string,
-      roomId: string,
-      userId: string,
-      type: string,
-      content: string,
+    agentId: string,
+    roomId: string,
+    userId: string,
+    type: string,
+    content: string
   ): Promise<boolean>;
-  
-  generateAttestation<T>(reportData: string, hashAlgorithm?: T | any): Promise<string>;
+
+  generateAttestation<T>(
+    reportData: string,
+    hashAlgorithm?: T | any
+  ): Promise<string>;
   getAllAgents(): Promise<TeeAgent[]>;
   getAgent(agentId: string): Promise<TeeAgent | null>;
-  getLogs(query: TeeLogQuery, page: number, pageSize: number): Promise<TeePageQuery<TeeLog[]>>;
-
+  getLogs(
+    query: TeeLogQuery,
+    page: number,
+    pageSize: number
+  ): Promise<TeePageQuery<TeeLog[]>>;
 }
 
 export interface TestCase {
@@ -1192,9 +1240,9 @@ export abstract class TeeLogDAO<DB = any> {
   abstract addLog(log: TeeLog): Promise<boolean>;
 
   abstract getPagedLogs(
-      query: TeeLogQuery,
-      page: number,
-      pageSize: number
+    query: TeeLogQuery,
+    page: number,
+    pageSize: number
   ): Promise<TeePageQuery<TeeLog[]>>;
 
   abstract addAgent(agent: TeeAgent): Promise<boolean>;
@@ -1226,10 +1274,10 @@ export interface RemoteAttestationMessage {
   agentId: string;
   timestamp: number;
   message: {
-      userId: string;
-      roomId: string;
-      content: string;
-  }
+    userId: string;
+    roomId: string;
+    content: string;
+  };
 }
 
 export interface SgxAttestation {
@@ -1238,6 +1286,22 @@ export interface SgxAttestation {
 }
 
 export enum TeeType {
-    SGX_GRAMINE = "sgx_gramine",
-    TDX_DSTACK = "tdx_dstack",
+  SGX_GRAMINE = "sgx_gramine",
+  TDX_DSTACK = "tdx_dstack",
+}
+
+export const CACHE_KEYS = {
+  SERVER_SETTINGS: (serverId: string) => `server_${serverId}_settings`,
+  SERVER_ROLES: (serverId: string) => `server_${serverId}_roles`,
+  // etc
+} as const;
+
+export interface Task {
+  id?: UUID;
+  name: string;
+  description: string;
+  roomId: UUID;
+  tags: string[];
+  handler: (runtime: IAgentRuntime) => Promise<void>;
+  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }

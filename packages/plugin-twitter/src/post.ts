@@ -13,44 +13,24 @@ import {
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import type { Tweet } from "./client/index.ts";
-import { DEFAULT_MAX_TWEET_LENGTH } from "./environment.ts";
 import type { MediaData } from "./types.ts";
 import { fetchMediaData } from "./utils.ts";
+import { twitterPostTemplate } from "./templates.ts";
 
-const twitterPostTemplate = `
-# Areas of Expertise
-{{knowledge}}
-
-# About {{agentName}} (@{{twitterUserName}}):
-{{bio}}
-{{lore}}
-{{topics}}
-
-{{providers}}
-
-{{characterPostExamples}}
-
-{{postDirections}}
-
-# Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
-Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-Your response should be 1, 2, or 3 sentences (choose the length at random).
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than {{maxTweetLength}}. No emojis. Use \\n\\n (double spaces) between statements if there are multiple statements in your response.`;
 
 export class TwitterPostClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     twitterUsername: string;
-    private isProcessing = false;
-    private lastProcessTime = 0;
-    private stopProcessingActions = false;
     private isDryRun: boolean;
+    private state: any;
 
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
+    constructor(client: ClientBase, runtime: IAgentRuntime, state: any) {
         this.client = client;
+        this.state = state;
         this.runtime = runtime;
-        this.twitterUsername = this.client.twitterConfig.TWITTER_USERNAME;
-        this.isDryRun = this.client.twitterConfig.TWITTER_DRY_RUN;
+        this.twitterUsername = state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME") as string;
+        this.isDryRun = this.state?.TWITTER_DRY_RUN || this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
 
         // Log configuration on initialization
         logger.log("Twitter Client Configuration:");
@@ -60,24 +40,21 @@ export class TwitterPostClient {
         );
 
         logger.log(
-            `- Disable Post: ${this.client.twitterConfig.ENABLE_TWITTER_POST_GENERATION ? "disabled" : "enabled"}`
+            `- Disable Post: ${this.state?.TWITTER_ENABLE_POST_GENERATION || this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION") ? "disabled" : "enabled"}`
         );
 
         logger.log(
-            `- Post Interval: ${this.client.twitterConfig.POST_INTERVAL_MIN}-${this.client.twitterConfig.POST_INTERVAL_MAX} minutes`
-        );
-        logger.log(
-            `- Action Interval: ${this.client.twitterConfig.ACTION_INTERVAL} minutes`
+            `- Post Interval: ${this.state?.TWITTER_POST_INTERVAL_MIN || this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN")}-${this.state?.TWITTER_POST_INTERVAL_MAX || this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX")} minutes`
         );
         logger.log(
             `- Post Immediately: ${
-                this.client.twitterConfig.POST_IMMEDIATELY
+                this.state?.TWITTER_POST_IMMEDIATELY || this.runtime.getSetting("TWITTER_POST_IMMEDIATELY")
                     ? "enabled"
                     : "disabled"
             }`
         );
 
-        const targetUsers = this.client.twitterConfig.TWITTER_TARGET_USERS;
+        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
         if (targetUsers) {
             logger.log(`- Target Users: ${targetUsers}`);
         }
@@ -87,6 +64,8 @@ export class TwitterPostClient {
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"
             );
         }
+
+        this.start();
     }
 
     async start() {
@@ -100,8 +79,8 @@ export class TwitterPostClient {
             }>("twitter/" + this.twitterUsername + "/lastPost");
 
             const lastPostTimestamp = lastPost?.timestamp ?? 0;
-            const minMinutes = this.client.twitterConfig.POST_INTERVAL_MIN;
-            const maxMinutes = this.client.twitterConfig.POST_INTERVAL_MAX;
+            const minMinutes = (this.state?.TWITTER_POST_INTERVAL_MIN || this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN") as number) ?? 90;
+            const maxMinutes = (this.state?.TWITTER_POST_INTERVAL_MAX || this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX") as number) ?? 180;
             const randomMinutes =
                 Math.floor(Math.random() * (maxMinutes - minMinutes + 1)) +
                 minMinutes;
@@ -118,11 +97,14 @@ export class TwitterPostClient {
             logger.log(`Next tweet scheduled in ${randomMinutes} minutes`);
         };
 
-        if (this.client.twitterConfig.POST_IMMEDIATELY) {
-            await this.generateNewTweet();
-        }
-
-        if (this.client.twitterConfig.ENABLE_TWITTER_POST_GENERATION) {
+        if (this.state?.TWITTER_ENABLE_POST_GENERATION || this.runtime.getSetting("TWITTER_ENABLE_POST_GENERATION")) {
+            if (this.state?.TWITTER_POST_IMMEDIATELY || this.runtime.getSetting("TWITTER_POST_IMMEDIATELY")) {
+                // generate in 5 seconds
+                setTimeout(() => {
+                    this.generateNewTweet();
+                }, 5000);
+            }
+            
             generateNewTweetLoop();
             logger.log("Tweet generation loop started");
         }
@@ -214,7 +196,7 @@ export class TwitterPostClient {
                 // Note Tweet failed due to authorization. Falling back to standard Tweet.
                 const truncateContent = truncateToCompleteSentence(
                     content,
-                    this.client.twitterConfig.MAX_TWEET_LENGTH
+                    280 - 1
                 );
                 return await this.sendStandardTweet(
                     client,
@@ -271,7 +253,7 @@ export class TwitterPostClient {
 
             let result;
 
-            if (tweetTextForPosting.length > DEFAULT_MAX_TWEET_LENGTH) {
+            if (tweetTextForPosting.length > 280 - 1) {
                 result = await this.handleNoteTweet(
                     client,
                     tweetTextForPosting,
@@ -286,7 +268,6 @@ export class TwitterPostClient {
                     mediaData
                 );
             }
-
             const tweet = this.createTweetObject(
                 result,
                 client,
@@ -301,7 +282,8 @@ export class TwitterPostClient {
                 rawTweetContent
             );
         } catch (error) {
-            logger.error("Error sending tweet:", error);
+            logger.error("Error sending tweet:");
+            throw error;
         }
     }
 
@@ -323,7 +305,6 @@ export class TwitterPostClient {
             );
 
             const topics = this.runtime.character.topics.join(", ");
-            const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH;
             const state = await this.runtime.composeState(
                 {
                     userId: this.runtime.agentId,
@@ -335,8 +316,7 @@ export class TwitterPostClient {
                     },
                 },
                 {
-                    twitterUserName: this.client.profile.username,
-                    maxTweetLength,
+                    twitterUserName: this.client.profile.username
                 }
             );
 
@@ -363,7 +343,6 @@ export class TwitterPostClient {
 
             // Try parsing as JSON first
             const parsedResponse = parseJSONObjectFromText(rawTweetContent);
-
             if (parsedResponse?.text) {
                 tweetTextForPosting = parsedResponse.text;
             } else {
@@ -386,7 +365,7 @@ export class TwitterPostClient {
                 if (parsingText) {
                     tweetTextForPosting = truncateToCompleteSentence(
                         extractAttributes(rawTweetContent, ["text"]).text,
-                        this.client.twitterConfig.MAX_TWEET_LENGTH
+                        280 - 1
                     );
                 }
             }
@@ -397,12 +376,10 @@ export class TwitterPostClient {
             }
 
             // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
-            if (maxTweetLength) {
                 tweetTextForPosting = truncateToCompleteSentence(
                     tweetTextForPosting,
-                    maxTweetLength
+                    280 - 1
                 );
-            }
 
             const removeQuotes = (str: string) =>
                 str.replace(/^['"](.*)['"]$/, "$1");
@@ -425,6 +402,7 @@ export class TwitterPostClient {
                 logger.log(
                     `Posting new tweet:\n ${tweetTextForPosting}`
                 );
+
                 this.postTweet(
                     this.runtime,
                     this.client,
@@ -443,6 +421,6 @@ export class TwitterPostClient {
     }
 
     async stop() {
-        this.stopProcessingActions = true;
+        
     }
 }

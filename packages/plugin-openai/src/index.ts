@@ -167,12 +167,11 @@ export const openaiPlugin: Plugin = {
       {
       context,
       stopSequences = [],
+      maxTokens = 8192,
+      temperature = 0.7,
+      frequencyPenalty = 0.7,
+      presencePenalty = 0.7,
     }: GenerateTextParams) => {
-      const temperature = 0.7;
-      const frequency_penalty = 0.7;
-      const presence_penalty = 0.7;
-      const max_response_length = 8192;
-
       const baseURL =
         runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
 
@@ -189,9 +188,9 @@ export const openaiPlugin: Plugin = {
         prompt: context,
         system: runtime.character.system ?? undefined,
         temperature: temperature,
-        maxTokens: max_response_length,
-        frequencyPenalty: frequency_penalty,
-        presencePenalty: presence_penalty,
+        maxTokens: maxTokens,
+        frequencyPenalty: frequencyPenalty,
+        presencePenalty: presencePenalty,
         stopSequences: stopSequences,
       });
 
@@ -284,6 +283,8 @@ export const openaiPlugin: Plugin = {
         },
         body: formData,
       });
+
+      console.log("response", response)
       if (!response.ok) {
         throw new Error(`Failed to transcribe audio: ${response.statusText}`);
       }
@@ -291,6 +292,146 @@ export const openaiPlugin: Plugin = {
       return data.text;
     },
   },
+  tests: [
+    {
+      name: "openai_plugin_tests",
+      tests: [
+        {
+          name: 'openai_test_url_and_api_key_validation',
+          fn: async (runtime) => {
+            const baseURL =
+              runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
+            const response = await fetch(`${baseURL}/models`, {
+              headers: { Authorization: `Bearer ${runtime.getSetting("OPENAI_API_KEY")}` },
+            });
+            const data = await response.json();
+            console.log("Models Available:", (data as any)?.data.length);
+            if (!response.ok) {
+              throw new Error(`Failed to validate OpenAI API key: ${response.statusText}`);
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_embedding',
+          fn: async (runtime) => {
+            try {
+              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Hello, world!");
+              console.log("embedding", embedding);
+            } catch (error) {
+              console.error("Error in test_text_embedding:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_large',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_large:", text);
+            } catch (error) {
+              console.error("Error in test_text_large:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_small',
+          fn: async (runtime) => {
+            try {
+              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+                context: "Debug Mode:",
+                prompt: "What is the nature of reality in 10 words?",
+              });
+              if (text.length === 0) {
+                throw new Error("Failed to generate text");
+              }
+              console.log("generated with test_text_small:", text);
+            } catch (error) {
+              console.error("Error in test_text_small:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_image_generation',
+          fn: async (runtime) => {
+            console.log("openai_test_image_generation");
+            try {
+              const image = await runtime.useModel(ModelClass.IMAGE, {
+                prompt: "A beautiful sunset over a calm ocean",
+                n: 1,
+                size: "1024x1024"
+              });
+              console.log("generated with test_image_generation:", image);
+            } catch (error) {
+              console.error("Error in test_image_generation:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_image_description',
+          fn: async (runtime) => {
+            console.log("openai_test_image_description");
+            try {
+              const {title, description} = await runtime.useModel(ModelClass.IMAGE_DESCRIPTION, "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg");
+              console.log("generated with test_image_description:", title, description);
+            } catch (error) {
+              console.error("Error in test_image_description:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_transcription',
+          fn: async (runtime) => {
+            console.log("openai_test_transcription");
+            try {
+              const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, 
+                Buffer.from(await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg")
+                  .then(res => res.arrayBuffer())));
+              console.log("generated with test_transcription:", transcription);
+            } catch (error) {
+              console.error("Error in test_transcription:", error);
+              throw error;
+            }
+          }
+        },
+        {
+          name: 'openai_test_text_tokenizer_encode',
+          fn: async (runtime) => {
+            const context = "Hello tokenizer encode!";
+            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            if (!Array.isArray(tokens) || tokens.length === 0) {
+              throw new Error("Failed to tokenize text: expected non-empty array of tokens");
+            }
+            console.log("Tokenized output:", tokens);
+          }
+        },
+        {
+          name: 'openai_test_text_tokenizer_decode',
+          fn: async (runtime) => {
+            const context = "Hello tokenizer decode!";
+            // Encode the string into tokens first
+            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            // Now decode tokens back into text
+            const decodedText = await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens });
+            if (decodedText !== context) {
+              throw new Error(`Decoded text does not match original. Expected "${context}", got "${decodedText}"`);
+            }
+            console.log("Decoded text:", decodedText);
+          }
+        }
+      ]
+    }
+  ],
   routes: [
     {
       path: "/helloworld",

@@ -125,53 +125,6 @@ export const mockRuntime: IAgentRuntime = {
             throw new Error("Function not implemented.");
         },
     },
-    loreManager: {
-        addEmbeddingToMemory: (_memory: Memory): Promise<Memory> => {
-            throw new Error("Function not implemented.");
-        },
-        getMemories: (_opts: {
-            roomId: UUID;
-            count?: number;
-            unique?: boolean;
-            agentId?: UUID;
-            start?: number;
-            end?: number;
-        }): Promise<Memory[]> => {
-            throw new Error("Function not implemented.");
-        },
-        getCachedEmbeddings: (
-            _content: string
-        ): Promise<{ embedding: number[]; levenshtein_score: number }[]> => {
-            throw new Error("Function not implemented.");
-        },
-        getMemoryById: (_id: UUID): Promise<Memory | null> => {
-            throw new Error("Function not implemented.");
-        },
-        getMemoriesByRoomIds: (_params: {
-            roomIds: UUID[];
-            agentId?: UUID;
-        }): Promise<Memory[]> => {
-            throw new Error("Function not implemented.");
-        },
-        createMemory: (
-            _memory: Memory,
-            _unique?: boolean
-        ): Promise<void> => {
-            throw new Error("Function not implemented.");
-        },
-        removeMemory: (_memoryId: UUID): Promise<void> => {
-            throw new Error("Function not implemented.");
-        },
-        removeAllMemories: (_roomId: UUID): Promise<void> => {
-            throw new Error("Function not implemented.");
-        },
-        countMemories: (
-            _roomId: UUID,
-            _unique?: boolean
-        ): Promise<number> => {
-            throw new Error("Function not implemented.");
-        },
-    },
     ensureRoomExists: (_roomId: UUID): Promise<void> => {
         throw new Error("Function not implemented.");
     },

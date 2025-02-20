@@ -3,7 +3,7 @@ import { stringToUuid } from '@elizaos/core';
 import type { Database } from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SqliteDatabaseAdapter } from '../src';
-import { load } from '../src/sqlite_vec';
+import { load } from '../src/sqliteVec';
 
 // Mock the logger
 vi.mock('@elizaos/core', async () => {
@@ -16,8 +16,8 @@ vi.mock('@elizaos/core', async () => {
     };
 });
 
-// Mock sqlite_vec
-vi.mock('../src/sqlite_vec', () => ({
+// Mock sqliteVec
+vi.mock('../src/sqliteVec', () => ({
     load: vi.fn()
 }));
 
@@ -290,11 +290,10 @@ describe('SqliteDatabaseAdapter', () => {
     });
 
     describe('Character operations', () => {
-        const mockCharacter: Required<Pick<Character, 'id' | 'name' | 'bio' | 'lore' | 'messageExamples' | 'postExamples' | 'topics' | 'adjectives' | 'style'>> = {
+        const mockCharacter: Required<Pick<Character, 'id' | 'name' | 'bio' | 'messageExamples' | 'postExamples' | 'topics' | 'adjectives' | 'style'>> = {
             id: testUuid,
             name: 'Test Character',
             bio: 'Test Bio',
-            lore: ['Test lore'],
             messageExamples: [[]],
             postExamples: ['Test post'],
             topics: ['Test topic'],
@@ -332,7 +331,6 @@ describe('SqliteDatabaseAdapter', () => {
             const characterWithoutId: Omit<typeof mockCharacter, 'id'> = {
                 name: mockCharacter.name,
                 bio: mockCharacter.bio,
-                lore: mockCharacter.lore,
                 messageExamples: mockCharacter.messageExamples,
                 postExamples: mockCharacter.postExamples,
                 topics: mockCharacter.topics,

@@ -1,18 +1,13 @@
-import { defineConfig } from "drizzle-kit";
-
-// TODO: read URL from env.
+import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
-  dialect: "postgresql",
-  schema: "./src/schema.ts",
-  out: "./drizzle/migrations",
-  dbCredentials: {
-    url: "postgres://postgres:postgres@localhost:5432/eliza",
-  },
+  dialect: 'postgresql',
+  schema: './src/schema/index.ts',
+  out: './drizzle/migrations',
   migrations: {
-    table: "__drizzle_migrations",
-    schema: "public",
-    prefix: "timestamp",
+    table: '__drizzle_migrations',
+    schema: 'public',
+    prefix: 'timestamp',
   },
   breakpoints: true,
 });

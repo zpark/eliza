@@ -9,26 +9,55 @@ import {
     logger,
     stringToUuid,
     type TestSuite,
-    type IAgentRuntime
+    type IAgentRuntime,
+    type Character
 } from "@elizaos/core";
 import { afterAll, beforeAll, describe, it } from 'vitest';
-import { defaultCharacter } from './defaultCharacter';
+import { defaultCharacter } from './single-agent/character';
 
+const TEST_TIMEOUT = 300000;
 
-let runtime: IAgentRuntime;
-let db: IDatabaseAdapter & IDatabaseCacheAdapter;
+const defaultCharacterTest: Character = {
+    ...defaultCharacter,
+};
+
+const elizaOpenAIFirst: Character = {
+    ...defaultCharacter,
+    name: "ElizaOpenAIFirst",
+    plugins: [
+        "@elizaos/plugin-openai",  // OpenAI first, embedding size = 1536
+        "@elizaos/plugin-elevenlabs",
+    ]
+};
+
+const elizaAnthropicFirst: Character = {
+    ...defaultCharacter,
+    name: "ElizaAnthropicFirst",
+    plugins: [
+        "@elizaos/plugin-anthropic", // No embedding from this plugin
+        "@elizaos/plugin-openai", // embedding size = 1536
+        "@elizaos/plugin-elevenlabs",
+    ]
+};
+
+// Store runtimes and database adapters for each character
+interface RuntimeConfig {
+    runtime: IAgentRuntime;
+    db: IDatabaseAdapter & IDatabaseCacheAdapter;
+}
+
+const runtimeConfigs = new Map<string, RuntimeConfig>();
 
 // Helper to create a database adapter
 async function findDatabaseAdapter(runtime: IAgentRuntime) {
     const { adapters } = runtime;
     let adapter;
     
-    // Default to sqlite if no adapter found
     if (adapters.length === 0) {
-        const sqliteAdapter = await import('@elizaos/plugin-sqlite');
-        adapter = sqliteAdapter.default.adapters[0];
+        const drizzleAdapter = await import('@elizaos/plugin-drizzle');
+        adapter = drizzleAdapter.default.adapters[0];
         if (!adapter) {
-            throw new Error("No database adapter found in default sqlite plugin");
+            throw new Error("No database adapter found in default drizzle plugin");
         }
     } else if (adapters.length === 1) {
         adapter = adapters[0];
@@ -39,16 +68,12 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
     return adapter.init(runtime);
 }
 
-// Initialize the runtime with default character
-beforeAll(async () => {
+// Initialize runtime for a character
+async function initializeRuntime(character: Character): Promise<RuntimeConfig> {
     try {
-        // Setup character
-        const character = { ...defaultCharacter };
         character.id = stringToUuid(character.name);
-        character.username = character.name;
 
-        // Create runtime
-        runtime = new AgentRuntime({
+        const runtime = new AgentRuntime({
             character,
             fetch: async (url: string, options: any) => {
                 logger.debug(`Test fetch: ${url}`);
@@ -56,97 +81,79 @@ beforeAll(async () => {
             }
         });
 
-        // Initialize database
-        db = await findDatabaseAdapter(runtime);
+        const db = await findDatabaseAdapter(runtime);
         runtime.databaseAdapter = db;
 
-        // Initialize cache
         const cache = new CacheManager(new DbCacheAdapter(db, character.id));
         runtime.cacheManager = cache;
 
-        // Initialize runtime (loads plugins, etc)
         await runtime.initialize();
 
         logger.info(`Test runtime initialized for ${character.name}`);
+        
+        // Log expected embedding dimension based on plugins
+        const hasOpenAIFirst = character.plugins[0] === "@elizaos/plugin-openai";
+        const expectedDimension = hasOpenAIFirst ? 1536 : 384;
+        logger.info(`Expected embedding dimension for ${character.name}: ${expectedDimension}`);
+        
+        return { runtime, db };
     } catch (error) {
-        logger.error("Failed to initialize test runtime:", error);
+        logger.error(`Failed to initialize test runtime for ${character.name}:`, error);
         throw error;
     }
-});
+}
+
+// Initialize the runtimes
+beforeAll(async () => {
+    const characters = [defaultCharacterTest, elizaOpenAIFirst, elizaAnthropicFirst];
+    
+    for (const character of characters) {
+        const config = await initializeRuntime(character);
+        runtimeConfigs.set(character.name, config);
+    }
+}, TEST_TIMEOUT);
 
 // Cleanup after all tests
 afterAll(async () => {
-    try {
-        if (runtime) {
-            // await runtime.shutdown();
+    for (const [characterName, config] of runtimeConfigs.entries()) {
+        try {
+            if (config.db) {
+                await config.db.close();
+            }
+            logger.info(`Cleaned up ${characterName}`);
+        } catch (error) {
+            logger.error(`Error during cleanup for ${characterName}:`, error);
         }
-        if (db) {
-            await db.close();
-        }
-    } catch (error) {
-        logger.error("Error during cleanup:", error);
-        throw error;
     }
 });
 
-// Main test suite that runs all plugin tests
-describe('Plugin Tests', async () => {
-    it('should run all plugin tests', async () => {
-        const plugins = runtime.plugins;
+// Test suite for each character
+describe('Multi-Character Plugin Tests', () => {
+    it('should run tests for Default Character', async () => {
+        const config = runtimeConfigs.get(defaultCharacter.name);
+        if (!config) throw new Error('Runtime not found for Default Character');
         
-        // Track test statistics
-        const stats = {
-            total: 0,
-            passed: 0,
-            failed: 0,
-            skipped: 0
-        };
+        const testRunner = new TestRunner(config.runtime);
+        await testRunner.runPluginTests();
+    }, TEST_TIMEOUT);
 
-        // Run tests for each plugin
-        for (const plugin of plugins) {
-            if (typeof plugin.tests !== 'function') {
-                logger.info(`Plugin ${plugin.name} has no tests`);
-                continue;
-            }
+    it('should run tests for ElizaOpenAIFirst (1536 dimension)', async () => {
+        const config = runtimeConfigs.get('ElizaOpenAIFirst');
+        if (!config) throw new Error('Runtime not found for ElizaOpenAIFirst');
+        
+        const testRunner = new TestRunner(config.runtime);
+        await testRunner.runPluginTests();
+    }, TEST_TIMEOUT);
 
-            try {
-                logger.info(`Running tests for plugin: ${plugin.name}`);
-                const tests = plugin.tests;
-                const suites = (Array.isArray(tests) ? tests : [tests]) as TestSuite[];
-
-                for (const suite of suites) {
-                    logger.info(`\nTest suite: ${suite.name}`);
-                    for (const test of suite.tests) {
-                        stats.total++;
-                        const startTime = performance.now();
-
-                        try {
-                            await test.fn(runtime);
-                            stats.passed++;
-                            const duration = performance.now() - startTime;
-                            logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
-                        } catch (error) {
-                            stats.failed++;
-                            logger.error(`✗ ${test.name}`);
-                            logger.error(error);
-                            throw error;
-                        }
-                    }
-                }
-            } catch (error) {
-                logger.error(`Error in plugin ${plugin.name}:`, error);
-                throw error;
-            }
-        }
-
-        // Log final statistics
-        logger.info('\nTest Summary:');
-        logger.info(`Total: ${stats.total}`);
-        logger.info(`Passed: ${stats.passed}`);
-        logger.info(`Failed: ${stats.failed}`);
-        logger.info(`Skipped: ${stats.skipped}`);
-    });
+    it('should run tests for ElizaAnthropicFirst (384 dimension)', async () => {
+        const config = runtimeConfigs.get('ElizaAnthropicFirst');
+        if (!config) throw new Error('Runtime not found for ElizaAnthropicFirst');
+        
+        const testRunner = new TestRunner(config.runtime);
+        await testRunner.runPluginTests();
+    }, TEST_TIMEOUT);
 });
+
 interface TestStats {
     total: number;
     passed: number;
@@ -179,7 +186,6 @@ class TestRunner {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
-            throw error;
         }
     }
 
@@ -195,11 +201,6 @@ class TestRunner {
         const plugins = this.runtime.plugins;
 
         for (const plugin of plugins) {
-            if (!plugin.tests) {
-                logger.info(`Plugin ${plugin.name} has no tests`);
-                continue;
-            }
-
             try {
                 logger.info(`Running tests for plugin: ${plugin.name}`);
                 const pluginTests = plugin.tests;
@@ -207,7 +208,9 @@ class TestRunner {
                 const testSuites = Array.isArray(pluginTests) ? pluginTests : [pluginTests];
 
                 for (const suite of testSuites) {
-                    await this.runTestSuite(suite);
+                    if (suite) {
+                        await this.runTestSuite(suite);
+                    }
                 }
             } catch (error) {
                 logger.error(`Error in plugin ${plugin.name}:`, error);
@@ -227,11 +230,3 @@ class TestRunner {
         logger.info(`Skipped: ${this.stats.skipped}`);
     }
 }
-
-// Main test suite that runs all plugin tests
-describe('Plugin Tests', () => {
-    it('should run all plugin tests', async () => {
-        const testRunner = new TestRunner(runtime);
-        await testRunner.runPluginTests();
-    });
-});

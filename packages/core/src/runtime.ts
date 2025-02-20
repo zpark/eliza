@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, v4 } from "uuid";
 import {
     composeActionExamples,
     formatActionNames,
@@ -46,7 +46,8 @@ import {
     type UUID,
     type ServiceType,
     type Service,
-    Route
+    type Route,
+    type Task
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -147,12 +148,6 @@ class MemoryManagerService {
             tableName: "descriptions",
         }));
 
-        // Lore manager for static information
-        this.registerMemoryManager(new MemoryManager({
-            runtime: this.runtime,
-            tableName: "lore",
-        }));
-
         // Documents manager for large documents
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
@@ -207,10 +202,6 @@ class MemoryManagerService {
         return this.getRequiredMemoryManager("descriptions", "Description");
     }
 
-    getLoreManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("lore", "Lore");
-    }
-
     getDocumentsManager(): IMemoryManager {
         return this.getRequiredMemoryManager("documents", "Documents");
     }
@@ -237,11 +228,12 @@ export class AgentRuntime implements IAgentRuntime {
     readonly evaluators: Evaluator[] = [];
     readonly providers: Provider[] = [];
     readonly plugins: Plugin[] = [];
-    events: Map<string, ((params: any) => Promise<any>)[]> = new Map();
+    events: Map<string, ((params: any) => void)[]> = new Map();
+    tasks = new Map<UUID, Task>();
 
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
-    public clients: ClientInstance[] = [];
+    private clients: Map<string, ClientInstance> = new Map();
     services: Map<ServiceType, Service> = new Map();
 
     public adapters: Adapter[];
@@ -333,7 +325,7 @@ export class AgentRuntime implements IAgentRuntime {
                     logger.debug(
                         `Initializing client: ${client.name}`
                     );
-                    this.clients.push(startedClient);
+                    this.registerClient(client.name, startedClient);
                 });
             }
         }
@@ -342,6 +334,50 @@ export class AgentRuntime implements IAgentRuntime {
 
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
+    }
+
+    registerClient(clientName: string, client: ClientInstance): void {
+        if (this.clients.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+            );
+            return;
+        }
+        this.clients.set(clientName, client);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`);
+    }
+
+    unregisterClient(clientName: string): void {
+        if (!this.clients.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is not registered. Skipping unregistration.`
+            );
+            return;
+        }
+        this.clients.delete(clientName);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} unregistered successfully`);
+    }
+
+    getClient(clientName: string): ClientInstance | null {
+        const client = this.clients.get(clientName);
+        if (!client) {
+            logger.error(`Client ${clientName} not found`);
+            return null;
+        }
+        return client;
+    }
+
+    getAllClients(): Map<string, ClientInstance> {
+        return this.clients;
+    }
+
+    async stop() {
+        logger.debug("runtime::stop - character", this.character.name);
+        // Stop all registered clients
+        for (const [clientName, client] of this.clients) {
+            logger.log(`runtime::stop - requesting client stop for ${clientName}`);
+            await client.stop(this);
+        }
     }
 
     async initialize() {
@@ -359,9 +395,11 @@ export class AgentRuntime implements IAgentRuntime {
                             logger.debug(
                                 `Initializing client: ${client.name}`
                             );
-                            this.clients.push(startedClient);
+                            this.registerClient(client.name, startedClient);
                         }
                     }
+
+                    logger.info("runtime initialize() plugin:", plugin);
 
                     if (plugin.actions) {
                         for (const action of plugin.actions) {
@@ -385,6 +423,7 @@ export class AgentRuntime implements IAgentRuntime {
                         for (const [modelClass, handler] of Object.entries(plugin.models)) {
                             this.registerModel(modelClass as ModelClass, handler as (params: any) => Promise<any>);
                         }
+                        await this.ensureEmbeddingDimension();
                     }
                     if (plugin.services) {
                         for(const service of plugin.services){
@@ -414,6 +453,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.name,
         );
         await this.ensureParticipantExists(this.agentId, this.agentId);
+        await this.ensureCharacterExists(this.character);
 
         if (this.character?.knowledge && this.character.knowledge.length > 0) {
             // Non-RAG mode: only process string knowledge
@@ -424,38 +464,28 @@ export class AgentRuntime implements IAgentRuntime {
         }
     }
 
-    async stop() {
-        logger.debug("runtime::stop - character", this.character.name);
-        // Loop over the array of clients directly.
-        for (const client of this.clients) {
-            logger.log("runtime::stop - requesting client stop for", this.character.name);
-            client.stop(this);
-        }
-        // we don't need to unregister with directClient
-        // don't need to worry about knowledge
-    }
-
     private async processCharacterKnowledge(items: string[]) {
         const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
         await knowledgeManager.processCharacterKnowledge(items);
     }
 
-    getSetting(key: string) {
-        // check if the key is in the character.settings.secrets object
-        if (this.character.settings?.secrets?.[key]) {
-            return this.character.settings.secrets[key];
+    setSetting(key: string, value: string | boolean | null | any, secret = false) {
+        if(secret) {
+            this.character.secrets[key] = value;
+        } else {
+            this.character.settings[key] = value;
         }
-        // if not, check if it's in the settings object
-        if (this.character.settings?.[key]) {
-            return this.character.settings[key];
-        }
+    }
 
-        // if not, check if it's in the settings object
-        if (settings[key]) {
-            return settings[key];
-        }
+    getSetting(key: string): string | boolean | null | any {
+        const value = this.character.secrets?.[key] || 
+                     this.character.settings?.[key] ||
+                     this.character.settings?.secrets?.[key] ||
+                     settings[key];
 
-        return null;
+        if (value === "true") return true;
+        if (value === "false") return false;
+        return value || null;
     }
 
     /**
@@ -464,6 +494,14 @@ export class AgentRuntime implements IAgentRuntime {
      */
     getConversationLength() {
         return this.#conversationLength;
+    }
+
+    /**
+     * Register a provider for the agent to use.
+     * @param provider The provider to register.
+     */
+    registerProvider(provider: Provider) {
+        this.providers.push(provider);
     }
 
     /**
@@ -568,6 +606,7 @@ export class AgentRuntime implements IAgentRuntime {
                 await action.handler(this, message, state, {}, callback, responses);
             } catch (error) {
                 logger.error(error);
+                throw error;
             }
         }
     }
@@ -792,8 +831,6 @@ export class AgentRuntime implements IAgentRuntime {
             conversationHeader: false,
         });
 
-        // const lore = formatLore(loreData);
-
         const senderName = actorsData?.find(
             (actor: Actor) => actor.id === userId,
         )?.name;
@@ -845,18 +882,7 @@ Text: ${attachment.text}
             )
             .join("\n");
 
-        // randomly get 3 bits of lore and join them into a paragraph, divided by \n
-        let lore = "";
-        // Assuming this.lore is an array of lore bits
-        if (this.character.lore && this.character.lore.length > 0) {
-            const shuffledLore = [...this.character.lore].sort(
-                () => Math.random() - 0.5,
-            );
-            const selectedLore = shuffledLore.slice(0, 10);
-            lore = selectedLore.join("\n");
-        }
-
-        const formattedCharacterPostExamples = this.character.postExamples
+        const formattedCharacterPostExamples = !this.character.postExamples ? "" : this.character.postExamples
             .sort(() => 0.5 - Math.random())
             .map((post) => {
                 const messageString = `${post}`;
@@ -865,7 +891,7 @@ Text: ${attachment.text}
             .slice(0, 50)
             .join("\n");
 
-        const formattedCharacterMessageExamples = this.character.messageExamples
+        const formattedCharacterMessageExamples = !this.character.messageExamples ? "" : this.character.messageExamples
             .sort(() => 0.5 - Math.random())
             .slice(0, 5)
             .map((example) => {
@@ -974,11 +1000,13 @@ Text: ${attachment.text}
 
         formattedKnowledge = formatKnowledge(knowledgeData);
 
+        const system = this.character.system ?? "";
+
         const initialState = {
             agentId: this.agentId,
             agentName,
+            system,
             bio,
-            lore,
             adjective:
                 this.character.adjectives &&
                     this.character.adjectives.length > 0
@@ -1054,7 +1082,7 @@ Text: ${attachment.text}
 
             postDirections:
                 this.character?.style?.all?.length > 0 ||
-                    this.character?.style?.post.length > 0
+                    this.character?.style?.post?.length > 0
                     ? addHeader(
                         `# Post Directions for ${this.character.name}`,
                         (() => {
@@ -1179,10 +1207,7 @@ Text: ${attachment.text}
                 evaluatorsData.length > 0
                     ? formatEvaluatorExamples(evaluatorsData)
                     : "",
-            providers: addHeader(
-                `# Additional Information About ${this.character.name} and The World`,
-                providers,
-            ),
+            providers,
         };
 
         return { ...initialState, ...actionState } as State;
@@ -1296,10 +1321,6 @@ Text: ${attachment.text}
         return this.memoryManagerService.getDescriptionManager();
     }
 
-    get loreManager(): IMemoryManager {
-        return this.memoryManagerService.getLoreManager();
-    }
-
     get documentsManager(): IMemoryManager {
         return this.memoryManagerService.getDocumentsManager();
     }
@@ -1331,26 +1352,99 @@ Text: ${attachment.text}
         return await model(this, params);
     }
 
-    registerEvent(event: string, handler: (params: any) => Promise<any>) {
+    registerEvent(event: string, handler: (params: any) => void) {
         if (!this.events.has(event)) {
             this.events.set(event, []);
         }
         this.events.get(event)?.push(handler);
     }
 
-    getEvent(event: string): ((params: any) => Promise<any>)[] | undefined {
+    getEvent(event: string): ((params: any) => void)[] | undefined {
         return this.events.get(event);
     }
 
-    async onEvent(event: string, params: any) {
+    emitEvent(event: string, params: any) {
         // call the events associated with the event
         const eventHandlers = this.events.get(event);
         if (eventHandlers) {
             for (const handler of eventHandlers) {
-                await handler(params);
+                handler(params);
             }
         }
     }
 
-    
+    async ensureCharacterExists(character: Character) {
+        const characterExists = await this.databaseAdapter.getCharacter(character.name);
+        if (!characterExists) {
+            await this.databaseAdapter.createCharacter(character);
+        }
+    }
+
+    async ensureEmbeddingDimension() {
+        console.log(`[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`);
+        
+        if (!this.databaseAdapter) {
+            throw new Error(`[AgentRuntime][${this.character.name}] Database adapter not initialized before ensureEmbeddingDimension`);
+        }
+
+        try {
+            const model = this.getModel(ModelClass.TEXT_EMBEDDING);
+            if (!model) {
+                throw new Error(`[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered`);
+            }
+
+            console.log(`[AgentRuntime][${this.character.name}] Getting embedding dimensions`);
+            const embedding = await this.useModel(ModelClass.TEXT_EMBEDDING, null);
+            
+            if (!embedding || !embedding.length) {
+                throw new Error(`[AgentRuntime][${this.character.name}] Invalid embedding received`);
+            }
+
+            console.log(`[AgentRuntime][${this.character.name}] Setting embedding dimension: ${embedding.length}`);
+            await this.databaseAdapter.ensureEmbeddingDimension(embedding.length, this.agentId);
+            console.log(`[AgentRuntime][${this.character.name}] Successfully set embedding dimension`);
+        } catch (error) {
+            console.log(`[AgentRuntime][${this.character.name}] Error in ensureEmbeddingDimension:`, error);
+            throw error;
+        }
+    }
+
+
+
+    registerTask(task: Task): UUID {
+        // if task doesn't have an id, generate one
+        if (!task.id) {
+            task.id = uuidv4() as UUID;
+        }
+        this.tasks.set(task.id, task);
+        return task.id;
+    }
+
+    getTasks({
+        roomId,
+        tags
+    }: {roomId?: UUID, tags?: string[]}): Task[] | undefined {
+        // filter tasks by roomId, type, or both
+        const tasks = this.tasks;
+        if (!tasks) {
+            return undefined;
+        }
+        const values = Array.from(tasks.values());
+        return values.filter(task => 
+            (!roomId || task.roomId === roomId) && 
+            (!tags || task.tags.some(tag => tags.includes(tag)))
+        );
+    }
+
+    getTask(id: UUID): Task | undefined {
+        return this.tasks.get(id);
+    }
+
+    updateTask(id: UUID, task: Task) {
+        this.tasks.set(id, task);
+    }
+
+    deleteTask(id: UUID) {
+        this.tasks.delete(id);
+    }
 }

@@ -1,9 +1,10 @@
 import { type Context, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
-import { type IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger, type ClientInstance } from "@elizaos/core";
 import { MessageManager } from "./messageManager.ts";
 
-export class TelegramClient {
+export class TelegramClient implements ClientInstance {
+    name = "telegram";
     private bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
     public messageManager: MessageManager;
@@ -48,7 +49,7 @@ export class TelegramClient {
     }
 
     private async isGroupAuthorized(ctx: Context): Promise<boolean> {
-        const config = this.runtime.character.clientConfig?.telegram;
+        const config = this.runtime.character.settings?.telegram;
         if (ctx.from?.id === ctx.botInfo?.id) {
             return false;
         }

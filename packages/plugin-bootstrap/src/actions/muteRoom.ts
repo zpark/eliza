@@ -1,4 +1,4 @@
-import { composeContext } from "@elizaos/core";
+import { composeContext, HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@elizaos/core";
 
 export const shouldMuteTemplate =
-    `Based on the conversation so far:
+    `# Task: Decide if {{agentName}} should mute this room and stop responding unless explicitly mentioned.
 
 {{recentMessages}}
 
@@ -44,7 +44,7 @@ export const muteRoomAction: Action = {
         );
         return userState !== "MUTED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldMute(state: State): Promise<boolean> {
             const shouldMuteContext = composeContext({
                 state,
@@ -60,7 +60,7 @@ export const muteRoomAction: Action = {
             return response;
         }
 
-        const state = await runtime.composeState(message);
+        state = await runtime.composeState(message);
 
         if (await _shouldMute(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
@@ -68,6 +68,10 @@ export const muteRoomAction: Action = {
                 runtime.agentId,
                 "MUTED"
             );
+        }
+
+        for (const response of responses) {
+            await callback?.({...response.content, action: "MUTE_ROOM"});
         }
     },
     examples: [

@@ -26,8 +26,6 @@ export const mockCharacter: Character = {
         "Weaponizes charm and chaos in equal measure to make her point",
         "She never uses emojis",
         "She is an emoji-hater",
-    ],
-    lore: [
         "Child of a jazz musician and a theoretical physicist who met at a burlesque show",
         "Spent formative years between Parisian cafes and Bangkok street markets",
         "Got kicked out of three prestigious philosophy departments for 'excessive deconstruction'",
@@ -524,6 +522,5 @@ export const mockCharacter: Character = {
         "unorthodox",
         "meticulous",
         "provocative",
-    ],
-    extends: [],
+    ]
 };

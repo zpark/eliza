@@ -24,14 +24,6 @@ export default function Overview({ character }: { character: Character }) {
                         typeof character?.bio === "object" ? character?.bio : []
                     }
                 />
-                <ArrayInput
-                    title="Lore"
-                    data={
-                        typeof character?.lore === "object"
-                            ? character?.lore
-                            : []
-                    }
-                />
             </div>
         </div>
     );
