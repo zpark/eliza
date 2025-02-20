@@ -560,7 +560,9 @@ export class AgentRuntime implements IAgentRuntime {
     /**
      * Process the actions of a message.
      * @param message The message to process.
-     * @param content The content of the message to process actions from.
+     * @param responses The array of response memories to process actions from.
+     * @param state Optional state object for the action processing.
+     * @param callback Optional callback handler for action results.
      */
     async processActions(
         message: Memory,
@@ -806,9 +808,6 @@ export class AgentRuntime implements IAgentRuntime {
 
     /**
      * Ensure the existence of a world.
-     * @param worldId - The world ID to ensure the existence of.
-     * @param name - The name of the world.
-     * @param serverId - The server ID of the world.
      */
     async ensureWorldExists({id, name, serverId}: WorldData) {
         const world = await this.databaseAdapter.getWorld(id);

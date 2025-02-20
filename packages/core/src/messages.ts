@@ -53,6 +53,13 @@ export function formatActors({ actors }: { actors: Actor[] }) {
   return finalActorStrings;
 }
 
+/**
+ * Format messages into a string
+ * @param {Object} params - The formatting parameters
+ * @param {Memory[]} params.messages - List of messages to format
+ * @param {Actor[]} params.actors - List of actors for name resolution
+ * @returns {string} Formatted message string with timestamps and user information
+ */
 export const formatMessages = ({
   messages,
   actors,
