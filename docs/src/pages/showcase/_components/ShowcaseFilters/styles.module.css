@@ -1,0 +1,60 @@
+.filterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.filterTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.operatorButton {
+  background-color: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+  border: none;
+  border-radius: 15px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 200ms ease-out;
+}
+
+.operatorButton:hover {
+  background-color: var(--ifm-color-primary-dark);
+}
+
+.tagList {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tagListItem {
+  user-select: none;
+  white-space: nowrap;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 15px;
+  border: 2px solid var(--ifm-color-secondary-darkest);
+  opacity: 0.8;
+  transition: opacity 200ms ease-out;
+}
+
+.checkboxLabel:hover {
+  opacity: 1;
+  box-shadow: 0 0 2px 1px var(--ifm-color-secondary-darkest);
+}
+
+input:checked + .checkboxLabel {
+  background-color: var(--ifm-color-primary-lighter);
+  border-color: var(--ifm-color-primary-darkest);
+}
