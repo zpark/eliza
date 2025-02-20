@@ -13,6 +13,7 @@ import {
     ModelClass,
     type State,
 } from "@elizaos/core";
+import * as fs from "fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
 
@@ -303,8 +304,16 @@ ${currentSummary.trim()}
 `;
             await callback(callbackData);
         } else if (currentSummary.trim()) {
-            const summaryFilename = `content/conversation_summary_${Date.now()}`;
+            const summaryDir = "content";
+            const summaryFilename = `${summaryDir}/conversation_summary_${Date.now()}`;
             await runtime.cacheManager.set(summaryFilename, currentSummary);
+            await fs.promises.mkdir(summaryDir, { recursive: true });
+
+            await fs.promises.writeFile(
+                summaryFilename,
+                currentSummary,
+                "utf8"
+            );
             // save the summary to a file
             await callback(
                 {
