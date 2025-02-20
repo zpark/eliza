@@ -402,10 +402,16 @@ importers:
       sqlite-vec:
         specifier: 0.1.6
         version: 0.1.6
+      uuid:
+        specifier: 11.0.5
+        version: 11.0.5
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
     devDependencies:
+      '@types/uuid':
+        specifier: 10.0.0
+        version: 10.0.0
       '@vitest/coverage-v8':
         specifier: ^3.0.2
         version: 3.0.5(vitest@3.0.5(@types/debug@4.1.12)(@types/node@22.13.4)(jiti@1.21.7)(terser@5.39.0)(yaml@2.7.0))
@@ -506,6 +512,9 @@ importers:
       anthropic-vertex-ai:
         specifier: 1.0.2
         version: 1.0.2(encoding@0.1.13)(zod@3.24.1)
+      bignumber.js:
+        specifier: 9.1.2
+        version: 9.1.2
       dotenv:
         specifier: 16.4.5
         version: 16.4.5
@@ -659,6 +668,10 @@ importers:
       whatwg-url:
         specifier: 7.1.0
         version: 7.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.13.4
 
 packages:
 
@@ -12762,6 +12775,10 @@ packages:
 
   uuid@11.0.3:
     resolution: {integrity: sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==}
+    hasBin: true
+
+  uuid@11.0.5:
+    resolution: {integrity: sha512-508e6IcKLrhxKdBbcA2b4KQZlLVp2+J5UwQ6F7Drckkc5N9ZJwFa4TgWtsww9UG8fGHbm6gbV19TdM5pQ4GaIA==}
     hasBin: true
 
   uuid@8.3.2:
@@ -29041,6 +29058,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@11.0.3: {}
+
+  uuid@11.0.5: {}
 
   uuid@8.3.2: {}
 
