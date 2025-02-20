@@ -18,7 +18,7 @@ import {
 } from "discord.js";
 import { EventEmitter } from "events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
-import downloadMedia from "./actions/downloadMedia.ts";
+// import downloadMedia from "./actions/downloadMedia.ts";
 import joinVoice from "./actions/joinVoice.ts";
 import leaveVoice from "./actions/leaveVoice.ts";
 import reply from "./actions/reply.ts";
@@ -411,7 +411,7 @@ const discordPlugin: Plugin = {
   actions: [
     reply,
     chatWithAttachments,
-    downloadMedia,
+    // downloadMedia,
     joinVoice,
     leaveVoice,
     summarize,
