@@ -238,6 +238,9 @@ class TestRunner {
         }
 
         this.logTestSummary();
+        if (this.stats.failed > 0) {
+            throw new Error("An error occurred during plugin tests.")
+        }
         return this.stats;
     }
     
@@ -255,12 +258,13 @@ class TestRunner {
             bold: "\x1b[1m",
             underline: "\x1b[4m",
         };
-        function colorize(text: string, color: keyof typeof COLORS): string {
-            return `${COLORS[color]}${text}${COLORS.reset}`;
+        
+        function colorize(text: string, color: keyof typeof COLORS, bold = false): string {
+            return `${bold ? COLORS.bold : ""}${COLORS[color]}${text}${COLORS.reset}`;
         }
         
-        console.log("\n" + colorize("⎯".repeat(50), "cyan"));
-        console.log(colorize("Test Summary:", "bold"));
+        
+        console.log(colorize(`\n ${"⎯".repeat(25)}  Test Suites ${"⎯".repeat(25)} \n`, "cyan", true));
 
         this.testResults.forEach((tests, file) => {
             const passed = tests.filter(t => t.status === "passed").length;
@@ -296,8 +300,7 @@ class TestRunner {
         });
 
         if (this.stats.failed > 0) {
-            console.log(colorize(`\n ${"⎯".repeat(25)}Failed Tests${"⎯".repeat(25)} \n`, "red"));
-            console.log(colorize("Failed Tests:", "red"));
+            console.log(colorize(`\n ${"⎯".repeat(25)}  Failed Tests ${"⎯".repeat(25)} \n`, "red", true));
             this.testResults.forEach(tests => {
                 tests.forEach(test => {
                     if (test.status === "failed") {
@@ -309,7 +312,7 @@ class TestRunner {
             });
         }
 
-        console.log("\n" + colorize("⎯".repeat(50), "cyan"));
+        console.log(colorize(`\n ${"⎯".repeat(25)}  Test Summary ${"⎯".repeat(25)} \n`, "cyan", true));
         console.log(` ${colorize("Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
 }
 }
