@@ -37,7 +37,7 @@ export class MessageManager {
     if (
       this.runtime.character.settings?.discord?.allowedChannelIds &&
       !this.runtime.character.settings.discord.allowedChannelIds.some(
-        (id: string) => id == message.channel.id
+        (id: string) => id === message.channel.id
       )
     ) {
       return;
@@ -66,7 +66,7 @@ export class MessageManager {
     const userName = message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
-    const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
+    const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
 
     let type: ChannelType;
     let serverId: string | undefined;
@@ -115,7 +115,7 @@ export class MessageManager {
       }
 
       const userIdUUID = stringToUuid(userId);
-      const messageId = stringToUuid(message.id + "-" + this.runtime.agentId);
+      const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
       console.log("*** NEW MESSAGE ***", messageId, userIdUUID, this.runtime.agentId, roomId);
 
@@ -145,7 +145,7 @@ export class MessageManager {
         try {
           if (message.id && !content.inReplyTo) {
             content.inReplyTo = stringToUuid(
-              message.id + "-" + this.runtime.agentId
+              `${message.id}-${this.runtime.agentId}`
             );
           }
           const messages = await sendMessageInChunks(
@@ -163,7 +163,7 @@ export class MessageManager {
             }
 
             const memory: Memory = {
-              id: stringToUuid(m.id + "-" + this.runtime.agentId),
+              id: stringToUuid(`${m.id}-${this.runtime.agentId}`),
               userId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: {

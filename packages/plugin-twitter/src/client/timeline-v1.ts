@@ -383,7 +383,7 @@ function parseTimelineTweet(
   }
 
   const views = Number.parseInt(tweet.ext_views?.count ?? '');
-  if (!isNaN(views)) {
+  if (!Number.isNaN(views)) {
     tw.views = views;
   }
 

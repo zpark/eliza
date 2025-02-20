@@ -973,7 +973,7 @@ export abstract class Service {
 
   public static getInstance<T extends Service>(): T {
     if (!Service.instance) {
-      Service.instance = new (this as any)();
+      Service.instance = new (Service as any)();
     }
     return Service.instance as T;
   }

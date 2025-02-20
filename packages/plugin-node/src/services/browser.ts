@@ -214,7 +214,7 @@ export class BrowserService extends Service implements IBrowserService {
             );
             const { title: parsedTitle, description } = await generateSummary(
                 runtime,
-                documentTitle + "\n" + bodyContent
+                `${documentTitle}\n${bodyContent}`
             );
             const content = { title: parsedTitle, description, bodyContent };
             await runtime.cacheManager.set(`${this.cacheKey}/${cacheKey}`, {

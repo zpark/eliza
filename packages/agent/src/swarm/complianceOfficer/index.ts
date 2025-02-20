@@ -2,9 +2,9 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
 import type { Character, IAgentRuntime } from "@elizaos/core";
-import { type Guild } from "discord.js";
+import type { Guild } from "discord.js";
 import { initializeAllSystems } from "../shared/onboarding/initialize";
-import { type OnboardingConfig } from "../shared/onboarding/types";
+import type { OnboardingConfig } from "../shared/onboarding/types";
 import { getOrCreateOwnershipState } from "../shared/ownership/core";
 const character: Character = {
   name: "Gary",

@@ -1,4 +1,4 @@
-import { ChannelType, IAgentRuntime, stringToUuid, UUID } from "@elizaos/core";
+import { ChannelType, type IAgentRuntime, stringToUuid, type UUID } from "@elizaos/core";
 import { v4 as uuidv4 } from 'uuid';
 
 // 

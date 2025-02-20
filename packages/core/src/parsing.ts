@@ -11,7 +11,7 @@ export const messageCompletionFooter = `\nResponse format should be formatted in
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
 `;
 
-export const shouldRespondFooter = `The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.`;
+export const shouldRespondFooter = "The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.";
 
 export const parseShouldRespondFromText = (
     text: string
@@ -34,7 +34,7 @@ export const parseShouldRespondFromText = (
         : null;
 };
 
-export const booleanFooter = `Respond with only a YES or a NO.`;
+export const booleanFooter = "Respond with only a YES or a NO.";
 
 /**
  * Parses a string to determine its boolean equivalent.
@@ -95,7 +95,7 @@ export function parseJsonArrayFromText(text: string) {
                 '"$1"'
             );
             jsonData = JSON.parse(normalizedJson);
-        } catch (e) {
+        } catch (_e) {
             logger.warn("Could not parse text as JSON, will try pattern matching");
         }
     }
@@ -113,7 +113,7 @@ export function parseJsonArrayFromText(text: string) {
                     '"$1"'
                 );
                 jsonData = JSON.parse(normalizedJson);
-            } catch (e) {
+            } catch (_e) {
                 logger.warn("Could not parse text as JSON, returning null");
             }
         }
@@ -150,7 +150,7 @@ export function parseJSONObjectFromText(
             // Try to parse the text directly if it's not in a code block
             jsonData = JSON.parse(text.trim());
         }
-    } catch (e) {
+    } catch (_e) {
         logger.warn("Could not parse text as JSON, returning null");
         return null;
     }

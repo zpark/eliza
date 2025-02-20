@@ -73,7 +73,7 @@ Response format should be formatted in a JSON block like this:
 
 
 export const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (_req, _file, cb) => {
         const uploadDir = path.join(process.cwd(), "data", "uploads");
         // Create the directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
@@ -81,7 +81,7 @@ export const storage = multer.diskStorage({
         }
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: (_req, file, cb) => {
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
         cb(null, `${uniqueSuffix}-${file.originalname}`);
     },

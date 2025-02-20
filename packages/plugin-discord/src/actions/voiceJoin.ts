@@ -19,7 +19,8 @@ import {
     type Guild,
     type GuildMember,
 } from "discord.js";
-import { joinVoiceChannel } from "@discordjs/voice";
+
+import { DiscordClient } from "../index.ts";
 
 export default {
     name: "JOIN_VOICE",
@@ -34,7 +35,7 @@ export default {
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ) => {
         if (message.content.source !== "discord") {
             // not a discord message
@@ -55,12 +56,13 @@ export default {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<boolean> => {
         if (!state) {
             console.error("State is not available.");
+            return false;
         }
 
         for (const response of responses) {
@@ -91,7 +93,6 @@ export default {
             logger.error("Discord client not found");
             return false;
         }
-
         const voiceChannels = (
             client.client.guilds.cache.get(serverId) as Guild
         ).channels.cache.filter(
@@ -123,7 +124,7 @@ export default {
                 group: client.user.id,
             });
             return true;
-        } else {
+        }
             const member = (discordMessage as DiscordMessage)
                 .member as GuildMember;
             if (member?.voice?.channel) {
@@ -162,8 +163,6 @@ You should only respond with the name of the voice channel or none, no commentar
                 template: messageTemplate,
                 state: guessState as unknown as State,
             });
-
-            const _datestr = new Date().toUTCString().replace(/:/g, "-");
 
             const responseContent = await generateText({
                 runtime,
@@ -210,7 +209,6 @@ You should only respond with the name of the voice channel or none, no commentar
                 source: "discord",
             });
             return false;
-        }
     },
     examples: [
         [

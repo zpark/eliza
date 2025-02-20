@@ -425,7 +425,7 @@ export class CharacterServer {
                             }
                         }
                         if (hfOut.emote !== null) {
-                            contentObj.text = "emoted " + hfOut.emote;
+                            contentObj.text = `emoted ${hfOut.emote}`;
                         }
                     }
 
@@ -613,7 +613,7 @@ export class CharacterServer {
         this.app.post("/:agentId/speak", async (req, res) => {
             const agentId = req.params.agentId;
             const roomId = stringToUuid(
-                req.body.roomId ?? "default-room-" + agentId
+                req.body.roomId ?? `default-room-${agentId}`
             );
             const userId = stringToUuid(req.body.userId ?? "user");
             const text = req.body.text;

@@ -90,7 +90,7 @@ export default {
         "SEND_SOL", "SEND_TOKEN_SOL", "PAY_SOL", "PAY_TOKEN_SOL", "PAY_TOKENS_SOL", "PAY_TOKENS_SOLANA",
         "PAY_SOLANA"
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
+    validate: async (_runtime: IAgentRuntime, message: Memory) => {
         elizaLogger.log("Validating transfer from user:", message.userId);
         return true;
     },
@@ -179,7 +179,7 @@ export default {
                 const mintPubkey = new PublicKey(content.tokenAddress);
                 const mintInfo = await connection.getParsedAccountInfo(mintPubkey);
                 const decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals ?? 9;
-                const adjustedAmount = BigInt(Number(content.amount) * Math.pow(10, decimals));
+                const adjustedAmount = BigInt(Number(content.amount) * 10 ** decimals);
 
                 const senderATA = getAssociatedTokenAddressSync(mintPubkey, senderKeypair.publicKey);
                 const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey);

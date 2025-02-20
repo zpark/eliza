@@ -1,6 +1,6 @@
 import { getScraper } from './test-utils';
 
-const testLogin = process.env['TWITTER_PASSWORD'] ? test : test.skip;
+const testLogin = process.env.TWITTER_PASSWORD ? test : test.skip;
 
 testLogin(
   'scraper can log in',

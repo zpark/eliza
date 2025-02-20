@@ -116,8 +116,8 @@ async function getSearchTimeline(
     withArticleRichContentState: false,
   };
 
-  if (cursor != null && cursor != '') {
-    variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    variables.cursor = cursor;
   }
 
   switch (searchMode) {

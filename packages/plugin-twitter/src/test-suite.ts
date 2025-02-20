@@ -5,7 +5,7 @@ import {
   ModelClass,
   stringToUuid,
 } from "@elizaos/core";
-import { TwitterClient } from "./index.ts";
+import type { TwitterClient } from "./index.ts";
 import { SearchMode } from "./client/index.ts";
 import { fetchMediaData } from "./utils.ts";
 
@@ -82,7 +82,7 @@ export class TwitterTestSuite implements TestSuite {
     }
   }
 
-  async testFetchSearchTweets(runtime: IAgentRuntime) {
+  async testFetchSearchTweets(_runtime: IAgentRuntime) {
     try {
       const tweets = await this.twitterClient.client.fetchSearchTweets(
         `@${this.twitterClient.client.profile?.username}`,
@@ -98,7 +98,7 @@ export class TwitterTestSuite implements TestSuite {
     }
   }
 
-  async testFetchHomeTimeline(runtime: IAgentRuntime) {
+  async testFetchHomeTimeline(_runtime: IAgentRuntime) {
     try {
       const timeline = await this.twitterClient.client.fetchHomeTimeline(5);
       if (!timeline || timeline.length === 0) {
@@ -112,7 +112,7 @@ export class TwitterTestSuite implements TestSuite {
     }
   }
 
-  async testFetchOwnPosts(runtime: IAgentRuntime) {
+  async testFetchOwnPosts(_runtime: IAgentRuntime) {
     try {
       const posts = await this.twitterClient.client.fetchOwnPosts(5);
       if (!posts || posts.length === 0) {
@@ -127,7 +127,7 @@ export class TwitterTestSuite implements TestSuite {
   async testPostTweet(runtime: IAgentRuntime) {
     try {
       const roomId = stringToUuid(
-        "twitter_mock_room-" + this.twitterClient.client.profile.username
+        `twitter_mock_room-${this.twitterClient.client.profile.username}`
       );
       const postClient = this.twitterClient.post;
       const tweetText = await this.generateRandomTweetContent(runtime);
@@ -148,7 +148,7 @@ export class TwitterTestSuite implements TestSuite {
   async testPostImageTweet(runtime: IAgentRuntime) {
     try {
       const roomId = stringToUuid(
-        "twitter_mock_room-" + this.twitterClient.client.profile.username
+        `twitter_mock_room-${this.twitterClient.client.profile.username}`
       );
       const postClient = this.twitterClient.post;
       const tweetText = await this.generateRandomTweetContent(
@@ -171,7 +171,7 @@ export class TwitterTestSuite implements TestSuite {
     }
   }
 
-  async testGenerateNewTweet(runtime: IAgentRuntime) {
+  async testGenerateNewTweet(_runtime: IAgentRuntime) {
     try {
       const postClient = this.twitterClient.post;
       await postClient.generateNewTweet();

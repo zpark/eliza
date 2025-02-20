@@ -1,6 +1,6 @@
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { fileURLToPath } from 'url';
-import path from "path";
+import { fileURLToPath } from 'node:url';
+import path from "node:path";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Pool } from "pg";
 import { logger } from "@elizaos/core";

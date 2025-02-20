@@ -5,7 +5,7 @@ import { composeContext, generateObjectArray, MemoryManager } from '@elizaos/cor
 vi.mock('@elizaos/core', () => ({
     composeContext: vi.fn(),
     generateObjectArray: vi.fn(),
-    MemoryManager: vi.fn().mockImplementation((config: any) => ({
+    MemoryManager: vi.fn().mockImplementation((_config: any) => ({
         getMemoriesByEvaluator: vi.fn().mockResolvedValue([]),
         addMemory: vi.fn().mockResolvedValue(true),
         addEmbeddingToMemory: vi.fn().mockResolvedValue({

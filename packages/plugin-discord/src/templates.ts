@@ -10,7 +10,7 @@ About {{agentName}}:
 {{recentMessages}}
 
 # INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
-` + shouldRespondFooter;
+${shouldRespondFooter}`;
 
 export const discordVoiceHandlerTemplate =
     `# Task: Generate conversational voice dialog for {{agentName}}.
@@ -30,7 +30,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 {{recentMessages}}
 
 # Instructions: Write the next message for {{agentName}}. Include an optional action if appropriate. {{actionNames}}
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const discordMessageHandlerTemplate =
     // {{goals}}
@@ -63,7 +63,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 {{recentMessages}}
 
 # Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const discordAutoPostTemplate =
     `# Task: Generate an engaging community message as {{agentName}}.
@@ -97,4 +97,4 @@ Examples of {{agentName}}'s dialog and actions:
 - DO NOT REPEAT THE SAME thing that you just said from your recent chat history, start the message different each time, and be organic, non reptitive.
 
 # Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as the only valid action currently is "NONE".
-` + messageCompletionFooter;
+${messageCompletionFooter}`;

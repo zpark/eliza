@@ -3,8 +3,8 @@ import { deploy, type DeployOptions, images, teepods, upgrade, type UpgradeOptio
 import { writeApiKey } from "@/src/tee/phala/credential";
 import { DockerOperations } from "@/src/tee/phala/docker";
 import { TEE_SIMULATOR } from "@/src/tee/phala/constants";
-import fs from "fs";
-import os from "os";
+import fs from "node:fs";
+import os from "node:os";
 
 const parseEnv = (envs: string[], envFile: string): Env[] => {
     // Process environment variables

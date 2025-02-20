@@ -163,7 +163,7 @@ describe("Discord MessageManager", () => {
     async (content) => {
       mockMessage.content = content;
 
-      const result = await messageManager["_shouldRespond"](
+      const result = await messageManager._shouldRespond(
         mockMessage,
         {} as any
       );

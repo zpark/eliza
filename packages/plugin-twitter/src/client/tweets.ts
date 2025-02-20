@@ -232,8 +232,8 @@ export async function fetchTweets(
   userTweetsRequest.variables.count = maxTweets;
   userTweetsRequest.variables.includePromotedContent = false; // true on the website
 
-  if (cursor != null && cursor != '') {
-    userTweetsRequest.variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    userTweetsRequest.variables.cursor = cursor;
   }
 
   const res = await requestApi<TimelineV2>(
@@ -264,8 +264,8 @@ export async function fetchTweetsAndReplies(
   userTweetsRequest.variables.count = maxTweets;
   userTweetsRequest.variables.includePromotedContent = false; // true on the website
 
-  if (cursor != null && cursor != '') {
-    userTweetsRequest.variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    userTweetsRequest.variables.cursor = cursor;
   }
 
   const res = await requestApi<TimelineV2>(
@@ -487,7 +487,7 @@ export async function createCreateTweetRequest(
   };
 
   if (hideLinkPreview) {
-    variables["card_uri"] = "tombstone://card"
+    variables.card_uri = "tombstone://card"
   }
 
   if (mediaData && mediaData.length > 0) {
@@ -706,8 +706,8 @@ export async function fetchListTweets(
   listTweetsRequest.variables.listId = listId;
   listTweetsRequest.variables.count = maxTweets;
 
-  if (cursor != null && cursor != '') {
-    listTweetsRequest.variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    listTweetsRequest.variables.cursor = cursor;
   }
 
   const res = await requestApi<ListTimeline>(
@@ -797,8 +797,8 @@ export async function fetchLikedTweets(
   userTweetsRequest.variables.count = maxTweets;
   userTweetsRequest.variables.includePromotedContent = false; // true on the website
 
-  if (cursor != null && cursor != '') {
-    userTweetsRequest.variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    userTweetsRequest.variables.cursor = cursor;
   }
 
   const res = await requestApi<TimelineV2>(
@@ -861,7 +861,7 @@ export async function getLatestTweet(
   includeRetweets: boolean,
   max: number,
   auth: TwitterAuth,
-): Promise<Tweet | null | void> {
+): Promise<Tweet | null | undefined> {
   const timeline = getTweets(user, max, auth);
 
   // No point looping if max is 1, just use first entry.
@@ -1047,7 +1047,7 @@ async function uploadMedia(
     // Handle video upload using chunked media upload
     const mediaId = await uploadVideoInChunks(mediaData, mediaType);
     return mediaId;
-  } else {
+  }
     // Handle image upload
     const form = new FormData();
     form.append('media', new Blob([mediaData]));
@@ -1066,7 +1066,6 @@ async function uploadMedia(
 
     const data: MediaUploadResponse = await response.json();
     return data.media_id_string;
-  }
 
   // Function to upload video in chunks
   async function uploadVideoInChunks(

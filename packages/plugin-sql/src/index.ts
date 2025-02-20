@@ -15,8 +15,8 @@ import {
     type ChannelType,
     type RoomData,
     type UUID,
-    GoalStatus,
-    WorldData
+    type GoalStatus,
+    type WorldData
 } from "@elizaos/core";
 import {
     and,

@@ -13,6 +13,7 @@ import {
     ModelClass,
     type State,
 } from "@elizaos/core";
+import * as fs from "node:fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
 {{currentSummary}}
 
@@ -139,7 +140,7 @@ const summarizeAction = {
     ],
     description: "Summarizes the conversation and attachments.",
     validate: async (
-        runtime: IAgentRuntime,
+        _runtime: IAgentRuntime,
         message: Memory,
         _state: State
     ) => {
@@ -192,7 +193,7 @@ const summarizeAction = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ) => {
@@ -282,7 +283,7 @@ const summarizeAction = {
                 modelClass: ModelClass.TEXT_SMALL,
             });
 
-            currentSummary = currentSummary + "\n" + summary;
+            currentSummary = `${currentSummary}\n${summary}`;
         }
 
         if (!currentSummary) {
@@ -303,8 +304,16 @@ ${currentSummary.trim()}
 `;
             await callback(callbackData);
         } else if (currentSummary.trim()) {
-            const summaryFilename = `content/conversation_summary_${Date.now()}`;
+            const summaryDir = "content";
+            const summaryFilename = `${summaryDir}/conversation_summary_${Date.now()}`;
             await runtime.cacheManager.set(summaryFilename, currentSummary);
+            await fs.promises.mkdir(summaryDir, { recursive: true });
+
+            await fs.promises.writeFile(
+                summaryFilename,
+                currentSummary,
+                "utf8"
+            );
             // save the summary to a file
             await callback(
                 {

@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import type { AudioDataWithUser, Plugin } from '../types';
 import type { Space } from '../core/Space';
 import type { SpaceParticipant } from '../core/SpaceParticipant';

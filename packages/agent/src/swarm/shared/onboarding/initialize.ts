@@ -52,7 +52,7 @@ export async function initializeAllSystems(
 ): Promise<void> {
   try {
     // Ensure we always have valid guilds
-    const validGuilds = guilds.filter(guild => guild && guild.id && guild.ownerId);
+    const validGuilds = guilds.filter(guild => guild?.id && guild.ownerId);
     
     if (validGuilds.length === 0) {
       logger.warn('No valid guilds provided for initialization');
@@ -252,7 +252,7 @@ export async function initializeOnboarding(
 async function startOnboardingDM(
   runtime: IAgentRuntime,
   guild: Guild,
-  onboardingState: OnboardingState
+  _onboardingState: OnboardingState
 ): Promise<void> {
   try {
     const owner = await guild.members.fetch(guild.ownerId);
@@ -269,11 +269,11 @@ async function startOnboardingDM(
     
     const randomMessage = onboardingMessages[Math.floor(Math.random() * onboardingMessages.length)];
     const msg = await owner.send(randomMessage);
-    const roomId = stringToUuid(msg.channel.id + "-" + runtime.agentId);
+    const roomId = stringToUuid(`${msg.channel.id}-${runtime.agentId}`);
     
     await runtime.ensureRoomExists({
       id: roomId, 
-      name: "Chat with " + owner.user.username, 
+      name: `Chat with ${owner.user.username}`, 
       source: "discord", 
       type: ChannelType.DM, 
       channelId: msg.channelId, 

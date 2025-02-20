@@ -1,4 +1,4 @@
-import { existsSync, promises as fs } from "fs"
+import { existsSync, promises as fs } from "node:fs"
 import path from "node:path"
 import { getConfig, rawConfigSchema } from "@/src/utils/get-config"
 import { handleError } from "@/src/utils/handle-error"

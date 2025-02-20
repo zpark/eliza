@@ -19,7 +19,7 @@ import type {
     JanusClient,
     Space,
 } from "./client";
-import { spawn } from "child_process";
+import { spawn } from "node:child_process";
 import type { ClientBase } from "./base";
 import {
     twitterShouldRespondTemplate,

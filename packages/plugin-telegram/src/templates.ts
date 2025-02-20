@@ -69,7 +69,7 @@ The goal is to decide whether {{agentName}} should respond to the last message.
 {{recentMessages}}
 
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
-` + shouldRespondFooter;
+${shouldRespondFooter}`;
 
 export const telegramMessageHandlerTemplate =
     // {{goals}}
@@ -102,7 +102,7 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 {{recentMessages}}
 
 # Task: Generate a reply in the voice, style and perspective of {{agentName}} while using the thread above as additional context.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const telegramAutoPostTemplate =
     `# Task: Generate an engaging community message as {{agentName}}.
@@ -140,4 +140,4 @@ Examples of {{agentName}}'s dialog and actions:
 - DO NOT REPEAT THE SAME thing that you just said from your recent chat history, start the message different each time, and be organic, non reptitive.
 
 # Instructions: Write the next message for {{agentName}}. Include the "NONE" action only, as the only valid action for auto-posts is "NONE".
-` + messageCompletionFooter;
+${messageCompletionFooter}`;

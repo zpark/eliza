@@ -1,7 +1,7 @@
 import { ChannelType } from "@elizaos/core";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
-import {
-    type TextChannel
+import type {
+    TextChannel
 } from "discord.js";
 
 const channelStateProvider: Provider = {
@@ -35,14 +35,7 @@ const channelStateProvider: Provider = {
         const serverName = guild.name;
 
         let response =
-            agentName +
-            " is currently having a conversation in the channel `@" +
-            channelId +
-            " in the server `" +
-            serverName +
-            "` (@" +
-            serverId +
-            ")";
+            `${agentName} is currently having a conversation in the channel \`@${channelId} in the server \`${serverName}\` (@${serverId})`;
 
         response += `\n${agentName} is in a room with other users and should be self-conscious and only participate when directly addressed or when the conversation is relevant to them.`;
         return response;

@@ -14,7 +14,7 @@ import type { Chat, Message, ReactionType, Update } from "@telegraf/types";
 import type { Context, NarrowedContext, Telegraf } from "telegraf";
 import { escapeMarkdown } from "./utils";
 
-import fs from "fs";
+import fs from "node:fs";
 
 export enum MediaType {
     PHOTO = "photo",
@@ -227,12 +227,12 @@ export class MessageManager {
             // Convert IDs to UUIDs
             const userId = stringToUuid(ctx.from.id.toString()) as UUID;
             const userName = ctx.from.username || ctx.from.first_name || "Unknown User";
-            const chatId = stringToUuid(ctx.chat?.id.toString() + "-" + this.runtime.agentId) as UUID;
+            const chatId = stringToUuid(`${ctx.chat?.id.toString()}-${this.runtime.agentId}`) as UUID;
             const roomId = chatId;
 
             // Get message ID
             const messageId = stringToUuid(
-                roomId + "-" + message?.message_id?.toString()
+                `${roomId}-${message?.message_id?.toString()}`
             ) as UUID;
 
             // Handle images
@@ -263,7 +263,7 @@ export class MessageManager {
                     userName: userName,
                     // Safely access reply_to_message with type guard
                     inReplyTo: 'reply_to_message' in message && message.reply_to_message ? 
-                        stringToUuid(message.reply_to_message.message_id.toString() + "-" + this.runtime.agentId) : 
+                        stringToUuid(`${message.reply_to_message.message_id.toString()}-${this.runtime.agentId}`) : 
                         undefined
                 },
                 createdAt: message.date * 1000
@@ -310,7 +310,7 @@ export class MessageManager {
               });
 
             const channelType = getChannelType(chat);
-            const worldId = stringToUuid(chat.id.toString() + "-" + this.runtime.agentId) as UUID;
+            const worldId = stringToUuid(`${chat.id.toString()}-${this.runtime.agentId}`) as UUID;
             const room = {id: roomId, name: roomName, source: "telegram", type: channelType, channelId: ctx.chat.id.toString(), serverId: ctx.chat.id.toString(), worldId: worldId};
             if (channelType === ChannelType.GROUP) {
                 // if the type is a group, we need to get the world id from the supergroup/channel id
@@ -321,7 +321,7 @@ export class MessageManager {
             await this.runtime.ensureRoomExists(room);
 
             // Create callback for handling responses
-            const callback: HandlerCallback = async (content: Content, files?: string[]) => {
+            const callback: HandlerCallback = async (content: Content, _files?: string[]) => {
                 try {
                     const sentMessages = await this.sendMessageInChunks(ctx, content, message.message_id);
                     
@@ -333,7 +333,7 @@ export class MessageManager {
                         const isLastMessage = i === sentMessages.length - 1;
 
                         const responseMemory: Memory = {
-                            id: stringToUuid(roomId + "-" + sentMessage.message_id.toString()),
+                            id: stringToUuid(`${roomId}-${sentMessage.message_id.toString()}`),
                             userId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
                             roomId,
@@ -381,7 +381,7 @@ export class MessageManager {
 
         try {
             const userId = stringToUuid(ctx.from.id.toString());
-            const roomId = stringToUuid(ctx.chat.id.toString() + "-" + this.runtime.agentId);
+            const roomId = stringToUuid(`${ctx.chat.id.toString()}-${this.runtime.agentId}`);
             const reactionId = stringToUuid(`${reaction.message_id}-${ctx.from.id}-${Date.now()}-${this.runtime.agentId}`);
             
             // Create reaction memory
@@ -395,7 +395,7 @@ export class MessageManager {
                     source: "telegram",
                     name: ctx.from.first_name,
                     userName: ctx.from.username,
-                    inReplyTo: stringToUuid(reaction.message_id.toString() + "-" + this.runtime.agentId)
+                    inReplyTo: stringToUuid(`${reaction.message_id.toString()}-${this.runtime.agentId}`)
                 },
                 createdAt: Date.now()
             };
@@ -406,7 +406,7 @@ export class MessageManager {
                 try {
                     const sentMessage = await ctx.reply(content.text);
                     const responseMemory: Memory = {
-                        id: stringToUuid(roomId + "-" + sentMessage.message_id.toString()),
+                        id: stringToUuid(`${roomId}-${sentMessage.message_id.toString()}`),
                         userId: this.runtime.agentId,
                         agentId: this.runtime.agentId,
                         roomId,

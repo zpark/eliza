@@ -112,7 +112,7 @@ Details: {{outcomeDetails}}
 
 Write a message that {{agentName}} would send about the onboarding status. Include the appropriate action.
 Available actions: SAVE_SETTING_FAILED, SAVE_SETTING_COMPLETE
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 /**
  * Enhanced onboarding action with improved state management and logging
@@ -125,7 +125,7 @@ const onboardingAction: Action = {
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ): Promise<boolean> => {
         try {
             if (!message.userId) {
@@ -174,11 +174,11 @@ const onboardingAction: Action = {
                     logger.info(`Trying fallback key: ${fallbackKey}`);
                     const fallbackState = await runtime.cacheManager.get<OnboardingState>(fallbackKey);
                     if (fallbackState) {
-                        logger.info(`Found onboarding state using fallback key`);
+                        logger.info("Found onboarding state using fallback key");
                         
                         // Copy state to the consistent key format
                         await runtime.cacheManager.set(onboardingCacheKey, fallbackState);
-                        logger.info(`Copied onboarding state to consistent key format`);
+                        logger.info("Copied onboarding state to consistent key format");
                         return true;
                     }
                 }
@@ -198,7 +198,7 @@ const onboardingAction: Action = {
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
-        options: any,
+        _options: any,
         callback: HandlerCallback
     ): Promise<void> => {
         if (!message.content.source || message.content.source !== "discord") {
@@ -234,7 +234,7 @@ const onboardingAction: Action = {
             // Check if all required settings are already configured
             const { requiredUnconfigured } = categorizeSettings(onboardingState);
             if (requiredUnconfigured.length === 0) {
-                logger.info(`All required settings configured, completing onboarding`);
+                logger.info("All required settings configured, completing onboarding");
                 await handleOnboardingComplete(runtime, onboardingState, state, callback);
                 return;
             }
@@ -252,7 +252,7 @@ const onboardingAction: Action = {
                 logger.info(`Successfully updated settings: ${updateResults.messages.join(', ')}`);
                 await generateSuccessResponse(runtime, onboardingState, state, updateResults.messages, callback);
             } else {
-                logger.info(`No settings were updated`);
+                logger.info("No settings were updated");
                 await generateFailureResponse(runtime, onboardingState, state, callback);
             }
         } catch (error) {
@@ -361,9 +361,9 @@ async function processSettingUpdates(
         // Verify the save was successful
         const verifyState = await runtime.cacheManager.get<OnboardingState>(onboardingCacheKey);
         if (!verifyState) {
-            logger.error(`Failed to verify onboarding state was saved`);
+            logger.error("Failed to verify onboarding state was saved");
         } else {
-            logger.info(`Verified onboarding state was saved successfully`);
+            logger.info("Verified onboarding state was saved successfully");
             
             // Also update using the original cache key format for backwards compatibility
             const originalCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);

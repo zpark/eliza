@@ -6,14 +6,14 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import { ROLE_CACHE_KEYS, ServerRoleState } from "../role/types";
+import { ROLE_CACHE_KEYS, type ServerRoleState } from "../role/types";
 import { OWNERSHIP_CACHE_KEY } from "../onboarding/types";
 
 export const roleProvider: Provider = {
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state?: State
+        _state?: State
     ): Promise<string> => {
         const room = await runtime.getRoom(message.roomId);
         if(!room) {
@@ -57,8 +57,8 @@ export const roleProvider: Provider = {
             
             // Rest of your existing code...
             // Group users by role
-            const owners: string[] = [];
-            const managers: string[] = [];
+            const _owners: string[] = [];
+            const _managers: string[] = [];
             
             // ...
         } catch (error) {

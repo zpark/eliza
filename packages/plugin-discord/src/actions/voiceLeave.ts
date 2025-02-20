@@ -1,5 +1,4 @@
 // src/actions/leaveVoice
-import { getVoiceConnection } from "@discordjs/voice";
 import {
     ChannelType,
     logger,
@@ -15,6 +14,9 @@ import {
     type Channel
 } from "discord.js";
 
+import { DiscordClient } from "../index.ts";
+import { getVoiceConnection } from "@discordjs/voice";
+
 export default {
     name: "LEAVE_VOICE",
     similes: [
@@ -25,7 +27,7 @@ export default {
         "LEAVE_MEETING",
         "LEAVE_CALL",
     ],
-    validate: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    validate: async (runtime: IAgentRuntime, message: Memory, _state: State) => {
         if (message.content.source !== "discord") {
             // not a discord message
             return false;
@@ -47,8 +49,8 @@ export default {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        options: any,
+        _state: State,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<boolean> => {

@@ -34,7 +34,7 @@ plugins
   .command("add")
   .description("add a plugin")
   .argument("<plugin>", "plugin name")
-  .action(async (plugin, opts) => {
+  .action(async (plugin, _opts) => {
     try {
       const cwd = process.cwd()
       
@@ -74,7 +74,7 @@ plugins
   .command("remove") 
   .description("remove a plugin")
   .argument("<plugin>", "plugin name")
-  .action(async (plugin, opts) => {
+  .action(async (plugin, _opts) => {
     try {
       const cwd = process.cwd()
       
@@ -115,7 +115,7 @@ plugins
         process.exit(1)
       }
 
-      const registry = await getRegistryIndex()
+      const _registry = await getRegistryIndex()
       const plugins = opts.plugin 
         ? [opts.plugin]
         : config.plugins.installed

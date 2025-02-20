@@ -26,7 +26,7 @@ export const greetAction: Action = {
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ): Promise<boolean> => {
         const room = await runtime.getRoom(message.roomId);
         if(!room) {
@@ -64,8 +64,8 @@ export const greetAction: Action = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        options: any,
+        _state: State,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<void> => {

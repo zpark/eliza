@@ -20,7 +20,7 @@ import {
     type UUID,
     logger,
     stringToUuid,
-    ChannelType
+    type ChannelType
 } from "@elizaos/core";
 import {
     type BaseGuildVoiceChannel,
@@ -31,9 +31,9 @@ import {
     type VoiceChannel,
     type VoiceState,
 } from "discord.js";
-import EventEmitter from "events";
+import EventEmitter from "node:events";
 import prism from "prism-media";
-import { type Readable, pipeline } from "stream";
+import { type Readable, pipeline } from "node:stream";
 import type { DiscordClient } from "./index.ts";
 import { getWavHeader } from "./utils.ts";
 
@@ -543,7 +543,7 @@ export class VoiceManager extends EventEmitter {
 
         const processBuffer = async (buffer: Buffer) => {
             try {
-                state!.buffers.push(buffer);
+                state?.buffers.push(buffer);
                 state!.totalLength += buffer.length;
                 state!.lastActive = Date.now();
                 this.debouncedProcessTranscription(
@@ -640,7 +640,7 @@ export class VoiceManager extends EventEmitter {
                 return { text: "", action: "IGNORE" };
             }
 
-            const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
+            const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
             const userIdUUID = stringToUuid(userId);
             const guild = await channel.guild.fetch();
             const type = await this.getChannelType(guild.id);
@@ -657,7 +657,7 @@ export class VoiceManager extends EventEmitter {
             });
 
             const memory: Memory = {
-                id: stringToUuid(channelId + "-voice-message-" + Date.now()),
+                id: stringToUuid(`${channelId}-voice-message-${Date.now()}`),
                 agentId: this.runtime.agentId,
                 userId: userIdUUID,
                 roomId,
@@ -672,10 +672,10 @@ export class VoiceManager extends EventEmitter {
                 createdAt: Date.now(),
             };
 
-            const callback: HandlerCallback = async (content: Content, files: any[] = []) => {
+            const callback: HandlerCallback = async (content: Content, _files: any[] = []) => {
                 try {
                     const responseMemory: Memory = {
-                        id: stringToUuid(memory.id + "-voice-response-" + Date.now()),
+                        id: stringToUuid(`${memory.id}-voice-response-${Date.now()}`),
                         userId: this.runtime.agentId,
                         agentId: this.runtime.agentId,
                         content: {
@@ -749,7 +749,7 @@ export class VoiceManager extends EventEmitter {
 
             if (!chosenChannel) {
                 const channels = (await guild.channels.fetch()).filter(
-                    (channel) => channel?.type == DiscordChannelType.GuildVoice
+                    (channel) => channel?.type === DiscordChannelType.GuildVoice
                 );
                 for (const [, channel] of channels) {
                     const voiceChannel = channel as BaseGuildVoiceChannel;
@@ -804,7 +804,7 @@ export class VoiceManager extends EventEmitter {
         audioPlayer.on(
             "stateChange",
             (_oldState: any, newState: { status: string }) => {
-                if (newState.status == "idle") {
+                if (newState.status === "idle") {
                     const idleTime = Date.now();
                     console.log(
                         `Audio playback took: ${idleTime - audioStartTime}ms`

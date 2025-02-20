@@ -1,4 +1,4 @@
-import { composeContext, HandlerCallback } from "@elizaos/core";
+import { composeContext, type HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -22,7 +22,7 @@ Respond with YES if:
 - The tone of the conversation has improved and {{agentName}}'s input would be welcome
 
 Otherwise, respond with NO.
-` + booleanFooter;
+${booleanFooter}`;
 
 export const unmuteRoomAction: Action = {
     name: "UNMUTE_ROOM",
@@ -42,7 +42,7 @@ export const unmuteRoomAction: Action = {
         );
         return userState === "MUTED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldUnmute(state: State): Promise<boolean> {
             const shouldUnmuteContext = composeContext({
                 state,

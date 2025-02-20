@@ -61,7 +61,7 @@ agent
   .action(async (agentIdOrIndex, opts) => {
     try {
       // If input is a number, get agent ID from index
-      if (!isNaN(Number(agentIdOrIndex))) {
+      if (!Number.isNaN(Number(agentIdOrIndex))) {
         agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
@@ -121,7 +121,7 @@ agent
   .argument("<agentId>", "agent id, name, or index number from list")
   .action(async (agentIdOrIndex) => {
     try {
-      if (!isNaN(Number(agentIdOrIndex))) {
+      if (!Number.isNaN(Number(agentIdOrIndex))) {
         agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
@@ -145,7 +145,7 @@ agent
   .argument("<agentId>", "agent id, name, or index number from list")
   .action(async (agentIdOrIndex) => {
     try {
-      if (!isNaN(Number(agentIdOrIndex))) {
+      if (!Number.isNaN(Number(agentIdOrIndex))) {
         agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 
@@ -170,7 +170,7 @@ agent
   .argument("<configPath>", "path to configuration JSON file")
   .action(async (agentIdOrIndex, configPath) => {
     try {
-      if (!isNaN(Number(agentIdOrIndex))) {
+      if (!Number.isNaN(Number(agentIdOrIndex))) {
         agentIdOrIndex = await getAgentIdFromIndex(Number.parseInt(agentIdOrIndex))
       }
 

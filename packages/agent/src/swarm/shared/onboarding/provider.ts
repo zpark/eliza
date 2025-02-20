@@ -32,7 +32,7 @@ const getSettingDescription = (setting: OnboardingSetting, isOnboarding: boolean
  * Creates an onboarding provider with the given configuration
  * Improved error handling and state recovery
  */
-export const createOnboardingProvider = (config: OnboardingConfig): Provider => ({
+export const createOnboardingProvider = (_config: OnboardingConfig): Provider => ({
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -115,7 +115,7 @@ async function generateStatusMessage(
         
         if (isOnboarding) {
             // Private channel (DM) display - more detailed
-            statusMessage += `# Onboarding Configuration\n`;
+            statusMessage += "# Onboarding Configuration\n";
             statusMessage += `Hello! I'm ${state?.agentName || runtime.character.name}, and I'm here to help get everything set up.\n\n`;
             statusMessage += "## Settings Status\n";
             
@@ -195,7 +195,7 @@ async function generateStatusMessage(
             // Only show configured public settings
             let hasPublicSettings = false;
             
-            for (const [key, setting] of Object.entries(onboardingState) as [string, OnboardingSetting][]) {
+            for (const [_key, setting] of Object.entries(onboardingState) as [string, OnboardingSetting][]) {
                 // Skip if not public or not configured
                 if (!setting.public || setting.value === null) continue;
                 

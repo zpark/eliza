@@ -77,8 +77,8 @@ export class CacheManager<CacheAdapter extends ICacheAdapter = ICacheAdapter>
                 }
             }
 
-            const value = parsed['value'];
-            const expires = parsed['expires'];
+            const value = parsed.value;
+            const expires = parsed.expires;
 
             console.log("*** GETTING CACHE ***", { value });
             console.log("data is", data);

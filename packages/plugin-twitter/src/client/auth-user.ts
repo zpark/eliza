@@ -56,10 +56,6 @@ type FlowTokenResult = FlowTokenResultSuccess | { status: 'error'; err: Error };
 export class TwitterUserAuth extends TwitterGuestAuth {
   private userProfile: Profile | undefined;
 
-  constructor(bearerToken: string, options?: Partial<TwitterAuthOptions>) {
-    super(bearerToken, options);
-  }
-
   async isLoggedIn(): Promise<boolean> {
     const res = await requestApi<TwitterUserAuthVerifyCredentials>(
       'https://api.twitter.com/1.1/account/verify_credentials.json',

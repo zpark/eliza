@@ -1,6 +1,6 @@
 // src/core/JanusClient.ts
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import wrtc from '@roamhq/wrtc';
 const { RTCPeerConnection, MediaStream } = wrtc;
 import { JanusAudioSink, JanusAudioSource } from './JanusAudio';

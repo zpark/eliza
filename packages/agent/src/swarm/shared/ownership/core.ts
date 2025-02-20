@@ -58,7 +58,7 @@ import {
         OWNERSHIP_CACHE_KEY.SERVER_OWNERSHIP_STATE
       );
       
-      if (ownershipState && ownershipState.servers) {
+      if (ownershipState?.servers) {
         logger.info(`Retrieved existing ownership state with ${Object.keys(ownershipState.servers).length} servers`);
         cachedOwnershipState = ownershipState;
         return ownershipState;
@@ -115,7 +115,7 @@ import {
           throw new Error(`Failed to update ownership state: ${error.message}`);
         }
         // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempts)));
+        await new Promise(resolve => setTimeout(resolve, 100 * 2 ** attempts));
       }
     }
     

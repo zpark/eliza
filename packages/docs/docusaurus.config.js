@@ -42,16 +42,16 @@ const config = {
                             if (item.type === "category") {
                                 switch (item.label.toLowerCase()) {
                                     case "streams":
-                                        item.label = "📺 " + item.label;
+                                        item.label = `📺 ${item.label}`;
                                         break;
                                     case "development":
-                                        item.label = "💻 " + item.label;
+                                        item.label = `💻 ${item.label}`;
                                         break;
                                     case "the_arena":
-                                        item.label = "🏟️ " + item.label;
+                                        item.label = `🏟️ ${item.label}`;
                                         break;
                                     default:
-                                        item.label = "📄 " + item.label;
+                                        item.label = `📄 ${item.label}`;
                                 }
                             }
                             return item;

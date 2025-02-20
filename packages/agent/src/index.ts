@@ -84,7 +84,7 @@ export function parseArguments(): {
 export function tryLoadFile(filePath: string): string | null {
   try {
     return fs.readFileSync(filePath, "utf8");
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -138,7 +138,7 @@ async function loadCharactersFromUrl(url: string): Promise<Character[]> {
 }
 
 async function jsonToCharacter(
-  filePath: string,
+  _filePath: string,
   character: any
 ): Promise<Character> {
   validateCharacterConfig(character);
@@ -315,7 +315,7 @@ function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
 function initializeCache(
   cacheStore: string,
   character: Character,
-  baseDir?: string,
+  _baseDir?: string,
   db?: IDatabaseCacheAdapter
 ) {
   switch (cacheStore) {
@@ -440,7 +440,7 @@ const startAgents = async () => {
 
   if (args.swarm) {
     try {
-        let members = [];
+        const members = [];
       for (const swarmMember of swarm) {
         const runtime = await startAgent(
           swarmMember.character,

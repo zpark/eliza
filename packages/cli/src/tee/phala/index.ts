@@ -1,5 +1,5 @@
-import * as crypto from "crypto";
-import fs from "fs";
+import * as crypto from "node:crypto";
+import fs from "node:fs";
 import { getApiKey } from "./credential";
 import { CLOUD_API_URL, CLOUD_URL } from "./constants";
 import {

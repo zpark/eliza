@@ -44,7 +44,7 @@ const REQUIRED_TWITTER_FIELDS = [
 ];
 
 // Optional Twitter configuration fields
-const OPTIONAL_TWITTER_FIELDS = [
+const _OPTIONAL_TWITTER_FIELDS = [
   "TWITTER_2FA_SECRET",
   "POST_APPROVAL_REQUIRED",
   "POST_APPROVAL_ROLE",
@@ -125,7 +125,7 @@ const twitterPostAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State
+    _state: State
   ): Promise<boolean> => {
     const room = await runtime.getRoom(message.roomId);
     if (!room) {
@@ -156,9 +156,9 @@ const twitterPostAction: Action = {
     runtime: IAgentRuntime,
     message: Memory,
     state: State,
-    options: any,
+    _options: any,
     callback: HandlerCallback,
-    responses: Memory[]
+    _responses: Memory[]
   ) => {
     try {
       const room = await runtime.getRoom(message.roomId);
@@ -278,7 +278,7 @@ const twitterPostAction: Action = {
         validate: async (
           runtime: IAgentRuntime,
           message: Memory,
-          state: State
+          _state: State
         ) => {
           const userRole = await getUserServerRole(
             runtime,

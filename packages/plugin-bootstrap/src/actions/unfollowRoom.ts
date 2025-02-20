@@ -1,4 +1,4 @@
-import { composeContext, HandlerCallback } from "@elizaos/core";
+import { composeContext, type HandlerCallback } from "@elizaos/core";
 import { generateTrueOrFalse } from "@elizaos/core";
 import { booleanFooter } from "@elizaos/core";
 import {
@@ -22,7 +22,7 @@ Respond with YES if:
 - The conversation has shifted to a topic where {{agentName}} has less to add
 
 Otherwise, respond with NO.
-` + booleanFooter;
+${booleanFooter}`;
 
 export const unfollowRoomAction: Action = {
     name: "UNFOLLOW_ROOM",
@@ -42,7 +42,7 @@ export const unfollowRoomAction: Action = {
         );
         return userState === "FOLLOWED";
     },
-    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
+    handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldUnfollow(state: State): Promise<boolean> {
             const shouldUnfollowContext = composeContext({
                 state,

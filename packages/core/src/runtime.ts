@@ -49,8 +49,8 @@ import {
     type Route,
     type Task,
     ChannelType,
-    RoomData,
-    WorldData
+    type RoomData,
+    type WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { messageEvents } from "./messages.ts";
@@ -129,7 +129,7 @@ class MemoryManagerService {
         this.initializeDefaultManagers(knowledgeRoot);
     }
 
-    private initializeDefaultManagers(knowledgeRoot: string) {
+    private initializeDefaultManagers(_knowledgeRoot: string) {
         // Message manager for storing messages
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
