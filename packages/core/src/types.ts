@@ -293,7 +293,7 @@ export interface Memory {
   userId: UUID;
 
   /** Associated agent ID */
-  agentId: UUID;
+  agentId?: UUID;
 
   /** Optional creation timestamp */
   createdAt?: number;

@@ -90,19 +90,21 @@ export class MemoryManager implements IMemoryManager {
         unique = true,
         start,
         end,
+        agentId,
     }: {
         roomId: UUID;
         count?: number;
         unique?: boolean;
         start?: number;
         end?: number;
+        agentId?: UUID;
     }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemories({
             roomId,
             count,
             unique,
             tableName: this.tableName,
-            agentId: this.runtime.agentId,
+            agentId,
             start,
             end,
         });
@@ -140,7 +142,7 @@ export class MemoryManager implements IMemoryManager {
             match_threshold?: number;
             count?: number;
             roomId: UUID;
-            agentId: UUID;
+            agentId?: UUID;
             unique?: boolean;
         }
     ): Promise<Memory[]> {
@@ -149,20 +151,19 @@ export class MemoryManager implements IMemoryManager {
             embedding,
             count = defaultMatchCount,
             roomId,
-            unique,
+            agentId,
+            unique = true,
         } = opts;
 
-        const result = await this.runtime.databaseAdapter.searchMemories({
+        return await this.runtime.databaseAdapter.searchMemories({
             tableName: this.tableName,
             roomId,
-            agentId: this.runtime.agentId,
-            embedding: embedding,
-            match_threshold: match_threshold,
+            agentId,
+            embedding,
+            match_threshold,
             count,
-            unique: !!unique,
+            unique,
         });
-
-        return result;
     }
 
     /**
@@ -196,10 +197,10 @@ export class MemoryManager implements IMemoryManager {
         );
     }
 
-    async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; }): Promise<Memory[]> {
+    async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; agentId?: UUID }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemoriesByRoomIds({
             tableName: this.tableName,
-            agentId: this.runtime.agentId,
+            agentId: params.agentId,
             roomIds: params.roomIds,
             limit: params.limit
         });
