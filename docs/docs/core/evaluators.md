@@ -7,7 +7,7 @@ sidebar_position: 5
 [Evaluators](/api/interfaces/evaluator) are core components that assess and extract information from conversations. Agents use evaluators to automatically process conversations after they happen to help build up their knowledge and understanding over time.
 
 
-They integrate with the [`AgentRuntime`](api/classes/AgentRuntime.md) evaluation system to enable reflection, fact-gathering, and behavioral adaptation and run after each agent action to help maintain contextural awareness. Enabling agents to reflect on their actions and world state is crucial for improving coherence and problem-solving abilities. For example, by reflecting on its performance, an agent can refine its strategies and improve its interactions over time.
+They integrate with the [`AgentRuntime`](/api/classes/AgentRuntime) evaluation system to enable reflection, fact-gathering, and behavioral adaptation and run after each agent action to help maintain contextural awareness. Enabling agents to reflect on their actions and world state is crucial for improving coherence and problem-solving abilities. For example, by reflecting on its performance, an agent can refine its strategies and improve its interactions over time.
 
 ---
 
@@ -72,7 +72,7 @@ interface Evaluator {
 }
 ```
 
-For full type definitions, see the [`Evaluator`](api/interfaces/Evaluator.md) interface documentation.
+For full type definitions, see the [`Evaluator`](/api/interfaces/Evaluator) interface documentation.
 
 ### Validation Function
 
@@ -90,7 +90,7 @@ The handler function contains the evaluator's code. It is where the logic for an
 ```typescript
 handler: async (runtime: IAgentRuntime, message: Memory) => any
 ```
-Contains main evaluation logic and runs when validate() returns true. Can access [`runtime`](api/interfaces/IAgentRuntime.md) services and [`memory`](api/interfaces/Memory.md).
+Contains main evaluation logic and runs when validate() returns true. Can access [`runtime`](/api/interfaces/IAgentRuntime) services and [`memory`](/api/interfaces/Memory).
 
 
 :::tip
@@ -808,7 +808,7 @@ Source: https://github.com/elizaOS/eliza/blob/main/packages/plugin-bootstrap/src
 ## FAQ
 
 ### How do evaluators differ from providers?
-While [providers](api/interfaces/Provider.md) supply data to the agent before responses, evaluators analyze conversations after responses. Providers inform decisions, evaluators learn from outcomes.
+While [providers](/api/interfaces/Provider) supply data to the agent before responses, evaluators analyze conversations after responses. Providers inform decisions, evaluators learn from outcomes.
 
 ### Can evaluators modify agent behavior?
 Evaluators can influence future behavior by storing insights in memory, but cannot directly modify agent responses or interrupt ongoing actions.
@@ -820,7 +820,7 @@ There's no hard limit, but each evaluator adds processing overhead. Focus on ess
 Evaluators don't directly communicate but can share data through the memory system. One evaluator can read insights stored by another.
 
 ### How are evaluation results persisted?
-Results are stored using the runtime's memory managers with embeddings for efficient retrieval. See the [`IMemoryManager`](api/interfaces/IMemoryManager.md) interface for details.
+Results are stored using the runtime's memory managers with embeddings for efficient retrieval. See the [`IMemoryManager`](/api/interfaces/IMemoryManager) interface for details.
 
 ### What's the difference between similes and examples in evaluators?
 Similes provide alternative descriptions of the evaluator's purpose, while examples show concrete scenarios with inputs and expected outcomes. Examples help verify correct implementation.

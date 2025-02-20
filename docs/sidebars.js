@@ -17,11 +17,6 @@ const sidebars = {
                 },
                 {
                     type: "doc",
-                    id: "guides/start-script",
-                    label: "Start Script",
-                },
-                {
-                    type: "doc",
                     id: "faq",
                     label: "❓ FAQ",
                 },
@@ -94,8 +89,13 @@ const sidebars = {
                 },
                 {
                     type: "doc",
+                    id: "core/clients",
+                    label: "Clients",
+                },
+                {
+                    type: "doc",
                     id: "core/agents",
-                    label: "Agents",
+                    label: "Agent Runtime",
                 },
                 {
                     type: "doc",
@@ -111,6 +111,11 @@ const sidebars = {
                     type: "doc",
                     id: "core/evaluators",
                     label: "Evaluators",
+                },
+                {
+                    type: "doc",
+                    id: "core/database",
+                    label: "Database Adapters",
                 },
             ],
         },
@@ -203,26 +208,6 @@ const sidebars = {
             label: "📦 Packages",
             collapsed: false,
             items: [
-                {
-                    type: "doc",
-                    id: "packages/core",
-                    label: "Core Package",
-                },
-                {
-                    type: "doc",
-                    id: "packages/adapters",
-                    label: "Database Adapters",
-                },
-                {
-                    type: "doc",
-                    id: "packages/clients",
-                    label: "Client Packages",
-                },
-                {
-                    type: "doc",
-                    id: "packages/agent",
-                    label: "Agent Package",
-                },
                 {
                     type: "doc",
                     id: "packages/plugins",

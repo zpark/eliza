@@ -366,4 +366,3 @@ Actions can be defined in character files, plugins, or directly in agent configu
 
 - [characterfile](./characterfile.md)
 - [providers](./providers.md)
-- [Advanced Actions](../advanced/advanced-actions.md)

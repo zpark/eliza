@@ -1,4 +1,4 @@
-[@elizaos/core v0.1.7](../index.md) / Plugin
+[@elizaos/core v0.25.7](../index.md) / Plugin
 
 # Type Alias: Plugin
 
@@ -13,6 +13,16 @@ Plugin for extending agent functionality
 > **name**: `string`
 
 Plugin name
+
+### config?
+
+> `optional` **config**: `object`
+
+Plugin configuration
+
+#### Index Signature
+
+ \[`key`: `string`\]: `any`
 
 ### description
 
@@ -50,6 +60,12 @@ Optional services
 
 Optional clients
 
+### adapters?
+
+> `optional` **adapters**: [`Adapter`](Adapter.md)[]
+
+Optional adapters
+
 ## Defined in
 
-[packages/core/src/types.ts:593](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L593)
+[packages/core/src/types.ts:643](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L643)

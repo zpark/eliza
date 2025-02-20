@@ -18,7 +18,68 @@ Before getting started with Eliza, ensure you have:
 
 ## Automated Installation
 
-Using https://github.com/elizaOS/eliza-starter
+1. Use the [start script](https://howieduhzit.best/start-sh/)
+    - 🔍 Auto OS Detection | 🛠️ Zero Config | 🎭 Character Management | 🔄 One-click Updates | ⚙️ Guided Setup
+
+```bash
+# Linux/macOS
+./scripts/start.sh
+```
+
+<details>
+<summary>Troubleshooting</summary>
+```bash
+# On Windows? Setup WSL2 first
+wsl --install -d Ubuntu                                                                                                                                       
+# Open Ubuntu, set up user, update:                                                                                                                           
+sudo apt update && sudo apt upgrade -y
+```
+
+### Usage
+```
+start.sh [-v|--verbose] [--skip-nvm]
+```
+
+### Common Error
+- "characters not found": Check working directory
+- `./scripts/start.sh -v` Run with logging
+- Check console output
+- [Open an issue](https://github.com/elizaOS/eliza/issues)
+
+### Permission Issues
+```
+sudo chmod +x scripts/start.sh  # Linux/macOS
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser  # Windows
+```
+
+### Package Issues
+> Note: Always verify scripts before running it
+```
+## Linux
+sudo apt update 
+
+## MacOS
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew update
+
+## Windows
+# Run as admin
+```
+
+### Node.js Issues
+- Required: Node.js 22+
+- Use `--skip-nvm` for system Node
+- Check PATH configuration
+
+**Notes**
+- Temporary files: `/tmp/eliza_*`
+- Config location: `./config`
+- Characters: `./characters/*.json`
+
+</details>
+
+
+2. Using https://github.com/elizaOS/eliza-starter
 
 ```bash
 git clone git@github.com:elizaos/eliza-starter.git

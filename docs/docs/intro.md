@@ -82,7 +82,7 @@ cd eliza
 sh scripts/start.sh
 ```
 
-For detailed instructions on using the start script, including character management and troubleshooting, see our [Start Script Guide](./docs/docs/guides/start-script.md).
+For detailed instructions on using the start script, including character management and troubleshooting, see our [Quickstart Guide](./quickstart).
 
 > **Note**: The start script handles all dependencies, environment setup, and character management automatically.
 

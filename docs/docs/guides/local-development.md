@@ -500,8 +500,7 @@ Yes, you can run multiple agents simultaneously:
 
 ## Further Resources
 
-- [Configuration Guide](./configuration.md) for setup details
-- [Advanced Usage](./advanced.md) for complex features
-- [API Documentation](../../api/index.md) for complete API reference
-- [Contributing Guide](../contributing.md) for contribution guidelines
+- [Configuration Guide](./configuration) for setup details
+- [Advanced Usage](./advanced) for complex features
+- [Contributing Guide](../contributing) for contribution guidelines
 

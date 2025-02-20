@@ -4,7 +4,18 @@ sidebar_position: 1
 
 # Overview
 
-Eliza is a framework for creating AI agents that can interact across multiple platforms. Let's break down how it all works, starting with the core components:
+Eliza is a framework for creating AI agents that can interact across multiple platforms.
+
+ **Features**
+- **Modular Design**: Plugins and services allow for flexible customization.
+- **Scalable Knowledge**: Supports both RAG-based and direct knowledge processing.
+- **Stateful Interactions**: Maintains context across conversations.
+- **Multi-Agent Support**: Supports running multiple agents with distinct configurations.
+- **Multi-Platform Support**: Integrates with various clients (e.g., Discord, Telegram).
+
+This document provides a high-level overview of the system architecture and how components work together.
+
+---
 
 ## [Agent Runtime](./agents.md)
 
@@ -18,11 +29,11 @@ The Runtime (`src/runtime.ts`) acts as the control tower for your AI agents. Thi
   - Handles integration with AI models
   - Orchestrates plugins and services
 
-## [Character System](./characterfile.md)
+## [Character Files](./characterfile.md)
 
 **The Personality**
 
-Character files (`src/types.ts`) define agent personalities and capabilities including biographical information, interaction styles, plugin configurations, and platform integrations.
+[Character Files](./characterfile.md) (`src/types.ts`) define agent **personalities** and **capabilities** including biographical information, interaction styles, plugin configurations, and platform integrations.
 
 The character file defines who your agent is - like a script for an actor. It includes:
 
@@ -32,6 +43,17 @@ The character file defines who your agent is - like a script for an actor. It in
 - Which AI models to use
 - Which plugins to load
 - Which platforms to connect to
+
+
+## Client System
+
+**The Interface**
+
+Clients connect your agent to different platforms (Discord, Twitter, Slack, Farcaster, etc.) while maintaining consistent behavior across all interfaces. Each client can handle different types of interactions:
+- Chat messages
+- Social media posts
+- Voice conversations
+- Platform-specific features
 
 
 ## [Actions](./actions.md)
@@ -52,21 +74,6 @@ Evaluators (`src/evaluators.ts`) act like referees, making sure the agent follow
 
 Providers (`src/providers.ts`) are the agent's eyes and ears, like a newsroom keeping them informed about the world. They supply real-time information to agents by integrating external APIs, managing temporal awareness, and providing system status updates to help agents make better decisions.
 
-## Character System
-
-The [Character Files](./characterfile.md) (`src/types.ts`) define agent **personalities** and **capabilities** including biographical information, interaction styles, plugin configurations, and platform integrations.
-
-```typescript
-const character: Character = {
-    name: "Helper Bot",
-    bio: "A friendly AI assistant",
-    topics: ["technology", "science"],
-    style: {
-        chat: ["friendly", "helpful", "concise"],
-        post: ["professional", "engaging"]
-    }
-};
-```
 
 ## Memory & Knowledge Systems
 
@@ -101,31 +108,7 @@ The database (`src/database.ts`) acts as a filing cabinet, storing:
 - Embedded knowledge
 - Agent state
 
-Here's an example of storing and retrieving memories:
-```typescript
-await messageManager.createMemory({
-    content: { text: "User prefers technical explanations" },
-    userId: userId,
-    roomId: roomId
-});
-
-const context = await messageManager.getMemories({
-    roomId: roomId,
-    count: 5
-});
-```
-
 See also: [Memory Management](../guides/memory-management.md)
-
-## Client System
-
-**The Interface**
-
-Clients connect your agent to different platforms (Discord, Twitter, Slack, Farcaster, etc.) while maintaining consistent behavior across all interfaces. Each client can handle different types of interactions:
-- Chat messages
-- Social media posts
-- Voice conversations
-- Platform-specific features
 
 ## Cache System
 
@@ -134,7 +117,7 @@ Clients connect your agent to different platforms (Discord, Twitter, Slack, Farc
 The Cache System (`src/cache.ts`) creates shortcuts for frequently accessed information, making agents respond faster and more efficiently.
 
 
-## Putting It All Together
+## System Flow
 
 When someone interacts with your agent, the Client receives the message and forwards it to the Runtime which processes it with the characterfile configuration. The Runtime loads relevant memories and knowledge, uses actions and evaluators to determine how to response, gets additional context through providers. Then the Runtime generates a response using the AI model, stores new memories, and sends the response back through the client.
 
