@@ -83,7 +83,6 @@ const dmAction: Action = {
                 const content = response.content.text;
                 
                 try {
-                    const discordClient = runtime.getClient("discord");
                     // Get mentioned user
                     const mentionedUser = discordMessage?.mentions?.users?.filter(user => user.id !== discordClient.client.user.id)?.first();
 
