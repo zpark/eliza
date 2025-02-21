@@ -1151,6 +1151,41 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.NEARAI]: {
+        endpoint: settings.NEARAI_API_URL || "https://api.near.ai/v1",
+        model: {
+            [ModelClass.SMALL]: {
+                name:
+                    settings.SMALL_NEARAI_MODEL ||
+                    settings.NEARAI_MODEL ||
+                    "fireworks::accounts/fireworks/models/llama-v3p2-3b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.MEDIUM]: {
+                name:
+                    settings.MEDIUM_NEARAI_MODEL ||
+                    settings.NEARAI_MODEL ||
+                    "fireworks::accounts/fireworks/models/llama-v3p1-70b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.LARGE]: {
+                name:
+                    settings.LARGE_NEARAI_MODEL ||
+                    settings.NEARAI_MODEL ||
+                    "fireworks::accounts/fireworks/models/llama-v3p1-405b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+        },
+    },
 };
 
 export function getModelSettings(
