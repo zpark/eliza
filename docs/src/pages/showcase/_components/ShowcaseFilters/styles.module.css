@@ -8,16 +8,17 @@
 .filterTitle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .operatorButton {
   background-color: var(--ifm-color-primary);
   color: var(--ifm-color-white);
   border: none;
-  border-radius: 15px;
+  border-radius: 20px;
   padding: 4px 12px;
   font-size: 0.8rem;
+  margin-left: 12px;
   cursor: pointer;
   transition: background-color 200ms ease-out;
 }
@@ -30,7 +31,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .tagListItem {
@@ -38,23 +39,19 @@
   white-space: nowrap;
 }
 
-.checkboxLabel {
-  display: flex;
+.tagButton {
+  display: inline-flex;
   align-items: center;
+  padding: 6px 16px;
+  border: 2px solid;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
   cursor: pointer;
-  padding: 4px 12px;
-  border-radius: 15px;
-  border: 2px solid var(--ifm-color-secondary-darkest);
+  transition: all 200ms ease-out;
+}
+
+.tagButton:hover {
   opacity: 0.8;
-  transition: opacity 200ms ease-out;
-}
-
-.checkboxLabel:hover {
-  opacity: 1;
-  box-shadow: 0 0 2px 1px var(--ifm-color-secondary-darkest);
-}
-
-input:checked + .checkboxLabel {
-  background-color: var(--ifm-color-primary-lighter);
-  border-color: var(--ifm-color-primary-darkest);
 }

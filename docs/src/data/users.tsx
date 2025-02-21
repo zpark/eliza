@@ -4,10 +4,6 @@ import {registryUsers} from './registry-users';
 export type TagType =
   | 'favorite' 
   | 'opensource'
-  | 'product'
-  | 'design'
-  | 'large'
-  | 'personal'
   | 'adapter'
   | 'client'
   | 'plugin';
@@ -37,26 +33,6 @@ export const Tags: {[type in TagType]: Tag} = {
     label: 'Open Source',
     description: 'Open source projects can be useful for inspiration!',
     color: '#39ca30',
-  },
-  product: {
-    label: 'Product',
-    description: 'Projects related to commercial products!',
-    color: '#dfd545',
-  },
-  design: {
-    label: 'Design',
-    description: 'Beautiful sites with custom designs!',
-    color: '#a44fb7',
-  },
-  large: {
-    label: 'Large',
-    description: 'Large sites with lots of content!',
-    color: '#8c2f00',
-  },
-  personal: {
-    label: 'Personal',
-    description: 'Personal websites and portfolios',
-    color: '#14cfc3',
   },
   adapter: {
     label: 'Adapter',

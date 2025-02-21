@@ -9,10 +9,11 @@ function TagIcon({label, color}: {label: string; color: string}) {
     <span
       style={{
         backgroundColor: color,
-        width: 10,
-        height: 10,
+        width: 7,
+        height: 7,
         borderRadius: '50%',
-        marginLeft: 8,
+        marginLeft: 6,
+        marginRight: 6,
       }}
     />
   );
@@ -25,8 +26,8 @@ function ShowcaseCardTag({tags}: {tags: TagType[]}) {
         const {label, color} = Tags[tag];
         return (
           <li key={tag} className={styles.tag} title={label}>
-            <span className={styles.textLabel}>{label.toLowerCase()}</span>
             <TagIcon label={label} color={color} />
+            <span className={styles.textLabel}>{label.toLowerCase()}</span>
           </li>
         );
       })}
@@ -41,7 +42,8 @@ export default function ShowcaseCard({user}: {user: User}) {
         {user.preview && (
           <img 
             src={user.preview} 
-            alt={user.title} 
+            alt={user.title}
+            loading="lazy"
             className={styles.cardImage} 
           />
         )}
@@ -53,11 +55,21 @@ export default function ShowcaseCard({user}: {user: User}) {
               {user.title}
             </Link>
           </h4>
+          {user.source && (
+            <Link
+              href={user.source}
+              className={clsx(
+                'button button--secondary button--sm',
+                styles.showcaseCardSrcBtn,
+              )}>
+              source
+            </Link>
+          )}
         </div>
         <p className={styles.showcaseCardBody}>{user.description}</p>
       </div>
       <ul className={clsx('card__footer', styles.cardFooter)}>
-        <ShowcaseCardTag tags={user.tags} />
+        <ShowcaseCardTag tags={user.tags.filter(tag => tag !== 'opensource')} />
       </ul>
     </li>
   );
