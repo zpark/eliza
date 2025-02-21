@@ -216,7 +216,7 @@ export function extractAttributes(
         });
     }
 
-    return attributes;
+    return Object.entries(attributes).length > 0 ? attributes : null;
 }
 
 /**
