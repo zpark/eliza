@@ -7,6 +7,7 @@
     "check": "biome check --write .",
     "preinstall": "npx only-allow bun",
     "swarm": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
+    "swarm:scenario": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm --scenario \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
     "build": "turbo run build --filter=./packages/core && turbo run build --filter=./packages/*",
     "build:core": "turbo run build --filter=./packages/core",
     "build:cli": "turbo run build --filter=./packages/cli && cd packages/cli && bun link",
