@@ -808,6 +808,15 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     /**
+     * Get a world by ID.
+     * @param worldId - The ID of the world to get.
+     * @returns The world.
+     */
+    async getWorld(worldId: UUID) {
+        return await this.databaseAdapter.getWorld(worldId);
+    }
+
+    /**
      * Ensure the existence of a world.
      */
     async ensureWorldExists({id, name, serverId}: WorldData) {

@@ -304,7 +304,10 @@ export class TwitterPostClient {
                 "twitter"
             );
 
-            const topics = this.runtime.character.topics.join(", ");
+            const topics = this.runtime.character.topics
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 10)
+                .join(", ")
             const state = await this.runtime.composeState(
                 {
                     userId: this.runtime.agentId,

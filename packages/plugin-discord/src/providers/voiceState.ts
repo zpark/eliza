@@ -1,5 +1,4 @@
 import { getVoiceConnection } from "@discordjs/voice";
-import { type Message as DiscordMessage, ChannelType as DiscordChannelType } from "discord.js";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { ChannelType } from "@elizaos/core";
 const voiceStateProvider: Provider = {
@@ -27,17 +26,28 @@ const voiceStateProvider: Provider = {
             return `${agentName} is not currently in a voice channel`;
         }
 
-        const channel = (
-            state?.discordMessage as DiscordMessage
-        )?.guild?.channels?.cache?.get(
-            connection.joinConfig.channelId as string
-        );
+        const worldId = room.worldId;
 
-        if (!channel || channel.type !== DiscordChannelType.GuildVoice) {
+        // get the world from the runtime.getWorld
+        const world = await runtime.getWorld(worldId);
+
+        if (!world) {
+            throw new Error("No world found");
+        }
+
+        const worldName = world.name;
+
+        const roomType = room.type;
+
+        const channelId = room.channelId
+
+        const channelName = room.name;
+
+        if (!channelId) {
             return `${agentName} is in an invalid voice channel`;
         }
 
-        return `${agentName} is currently in the voice channel: ${channel.name} (ID: ${channel.id})`;
+        return `${agentName} is currently in the voice channel: ${channelName} (ID: ${channelId})`;
     },
 };
 
