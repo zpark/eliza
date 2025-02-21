@@ -7,7 +7,7 @@
         "docusaurus": "docusaurus",
         "start": "docusaurus start --no-open",
         "dev": "docusaurus start --port 3002 --no-open",
-	"update-registry": "node scripts/update-registry.js",
+        "update-registry": "node scripts/update-registry.js",
         "build": "docusaurus build",
         "swizzle": "docusaurus swizzle",
         "deploy": "docusaurus deploy",
