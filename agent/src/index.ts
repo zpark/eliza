@@ -1,17 +1,17 @@
 import { DirectClient } from "@elizaos/client-direct";
 import {
+    type Adapter,
     AgentRuntime,
     CacheManager,
     CacheStore,
     type Character,
+    type ClientInstance,
     DbCacheAdapter,
     elizaLogger,
     FsCacheAdapter,
     type IAgentRuntime,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
-    type ClientInstance,
-    type Adapter,
     ModelProviderName,
     parseBooleanFromText,
     settings,
@@ -24,6 +24,7 @@ import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
 import fs from "fs";
 import net from "net";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
@@ -367,6 +368,7 @@ async function handlePluginImporting(plugins: string[]) {
                     const functionName =
                         plugin
                             .replace("@elizaos/plugin-", "")
+                            .replace("@elizaos-plugins/plugin-", "")
                             .replace(/-./g, (x) => x[1].toUpperCase()) +
                         "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
                     return (
@@ -400,7 +402,10 @@ export function getTokenForProvider(
         case ModelProviderName.LMSTUDIO:
             return "";
         case ModelProviderName.GAIANET:
-            return "";
+            return (
+                character.settings?.secrets?.GAIA_API_KEY ||
+                settings.GAIA_API_KEY
+            );
         case ModelProviderName.BEDROCK:
             return "";
         case ModelProviderName.OPENAI:
@@ -541,6 +546,23 @@ export function getTokenForProvider(
                 character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
                 settings.LIVEPEER_GATEWAY_URL
             );
+        case ModelProviderName.SECRETAI:
+            return (
+                character.settings?.secrets?.SECRET_AI_API_KEY ||
+                settings.SECRET_AI_API_KEY
+            );
+        case ModelProviderName.NEARAI:
+            try {
+                const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.nearai/config.json'), 'utf8'));
+                return JSON.stringify(config?.auth);
+            } catch (e) {
+                elizaLogger.warn(`Error loading NEAR AI config: ${e}`);
+            }
+            return (
+                character.settings?.secrets?.NEARAI_API_KEY ||
+                settings.NEARAI_API_KEY
+            );
+
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -798,10 +820,8 @@ const startAgents = async () => {
     }
 
     // upload some agent functionality into directClient
-    // XXX TODO: is this still used?
+    // This is used in client-direct/api.ts at "/agents/:agentId/set" route to restart an agent
     directClient.startAgent = async (character) => {
-        throw new Error('not implemented');
-
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
 
@@ -834,12 +854,12 @@ if (
     parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
 ) {
     // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", function (err) {
+    process.on("uncaughtException", (err) => {
         console.error("uncaughtException", err);
     });
 
     // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", function (err) {
+    process.on("unhandledRejection", (err) => {
         console.error("unhandledRejection", err);
     });
 }

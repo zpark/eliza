@@ -233,6 +233,8 @@ export type Models = {
     [ModelProviderName.INFERA]: Model;
     [ModelProviderName.BEDROCK]: Model;
     [ModelProviderName.ATOMA]: Model;
+    [ModelProviderName.SECRETAI]: Model;
+    [ModelProviderName.NEARAI]: Model;
 };
 
 /**
@@ -272,6 +274,8 @@ export enum ModelProviderName {
     INFERA = "infera",
     BEDROCK = "bedrock",
     ATOMA = "atoma",
+    SECRETAI = "secret_ai",
+    NEARAI = "nearai",
 }
 
 /**
@@ -1523,6 +1527,7 @@ export enum ServiceType {
     GOPLUS_SECURITY = "goplus_security",
     WEB_SEARCH = "web_search",
     EMAIL_AUTOMATION = "email_automation",
+    NKN_CLIENT_SERVICE = "nkn_client_service",
 }
 
 export enum LoggingLevel {
@@ -1568,69 +1573,6 @@ export interface ActionResponse {
 export interface ISlackService extends Service {
     client: any;
 }
-
-// /**
-//  * Available verifiable inference providers
-//  */
-// export enum VerifiableInferenceProvider {
-//     RECLAIM = "reclaim",
-//     OPACITY = "opacity",
-//     PRIMUS = "primus",
-// }
-
-// /**
-//  * Options for verifiable inference
-//  */
-// export interface VerifiableInferenceOptions {
-//     /** Custom endpoint URL */
-//     endpoint?: string;
-//     /** Custom headers */
-//     headers?: Record<string, string>;
-//     /** Provider-specific options */
-//     providerOptions?: Record<string, unknown>;
-// }
-
-// /**
-//  * Result of a verifiable inference request
-//  */
-// export interface VerifiableInferenceResult {
-//     /** Generated text */
-//     text: string;
-//     /** Proof */
-//     proof: any;
-//     /** Proof id */
-//     id?: string;
-//     /** Provider information */
-//     provider: VerifiableInferenceProvider;
-//     /** Timestamp */
-//     timestamp: number;
-// }
-
-// /**
-//  * Interface for verifiable inference adapters
-//  */
-// export interface IVerifiableInferenceAdapter {
-//     options: any;
-//     /**
-//      * Generate text with verifiable proof
-//      * @param context The input text/prompt
-//      * @param modelClass The model class/name to use
-//      * @param options Additional provider-specific options
-//      * @returns Promise containing the generated text and proof data
-//      */
-//     generateText(
-//         context: string,
-//         modelClass: string,
-//         options?: VerifiableInferenceOptions,
-//     ): Promise<VerifiableInferenceResult>;
-
-//     /**
-//      * Verify the proof of a generated response
-//      * @param result The result containing response and proof to verify
-//      * @returns Promise indicating if the proof is valid
-//      */
-//     verifyProof(result: VerifiableInferenceResult): Promise<boolean>;
-// }
 
 export enum TokenizerType {
     Auto = "auto",

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 13
 ---
+
 # Deploying ElizaOS to Production
 
 A guide to deploying and maintaining an [ElizaOS](https://github.com/elizaOS/eliza) agent in a production environment.
@@ -247,3 +248,11 @@ sudo systemctl status eliza
 # View service logs with journald
 sudo journalctl -u eliza -f
 ```
+
+## FAQ
+
+### How do I run multiple agents?
+Create separate characterfiles or Docker containers for each agent with unique configurations and credentials.
+
+### What are the resource requirements?
+Minimum >=4GB recommended and 20G disk space is recommended. CUDA optional unless using local LLMs.

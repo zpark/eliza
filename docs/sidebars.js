@@ -20,9 +20,9 @@ const sidebars = {
                     id: "faq",
                     label: "❓ FAQ",
                 },
-				{
-					type: "category",
-					label: "Tutorials",
+		{
+		    type: "category",
+		    label: "Tutorials",
                     items: [
                         {
                             type: "category",
@@ -61,6 +61,11 @@ const sidebars = {
                             id: "tutorials/nader_tutorial_15min",
                             label: "Build Social Agents in 15min",
                         },                        
+                        {
+                            type: "doc",
+                            id: "tutorials/nader_tutorial_35min",
+                            label: "Build a Plugin in 35min",
+                        },                        
                     ],
                     collapsed: true, // Expand by default
                 },
@@ -74,13 +79,23 @@ const sidebars = {
             items: [
                 {
                     type: "doc",
+                    id: "core/overview",
+                    label: "Overview",
+                },
+                {
+                    type: "doc",
                     id: "core/characterfile",
                     label: "Character Files",
                 },
                 {
                     type: "doc",
+                    id: "core/clients",
+                    label: "Clients",
+                },
+                {
+                    type: "doc",
                     id: "core/agents",
-                    label: "Agents",
+                    label: "Agent Runtime",
                 },
                 {
                     type: "doc",
@@ -97,6 +112,11 @@ const sidebars = {
                     id: "core/evaluators",
                     label: "Evaluators",
                 },
+                {
+                    type: "doc",
+                    id: "core/database",
+                    label: "Database Adapters",
+                },
             ],
         },
         {
@@ -108,6 +128,21 @@ const sidebars = {
                     type: "doc",
                     id: "guides/configuration",
                     label: "Configuration",
+                },
+                {
+                    type: "doc",
+                    id: "guides/docker-setup",
+                    label: "Docker Setup",
+                },
+                {
+                    type: "doc",
+                    id: "guides/remote-deployment",
+                    label: "Deployment",
+                },
+                {
+                    type: "doc",
+                    id: "guides/fine-tuning",
+                    label: "Fine-tuning",
                 },
                 {
                     type: "doc",
@@ -143,11 +178,6 @@ const sidebars = {
             items: [
                 {
                     type: "doc",
-                    id: "advanced/fine-tuning",
-                    label: "Fine-tuning",
-                },
-                {
-                    type: "doc",
                     id: "advanced/infrastructure",
                     label: "Infrastructure",
                 },
@@ -178,31 +208,6 @@ const sidebars = {
             label: "📦 Packages",
             collapsed: false,
             items: [
-                {
-                    type: "doc",
-                    id: "packages/packages",
-                    label: "Overview",
-                },
-                {
-                    type: "doc",
-                    id: "packages/core",
-                    label: "Core Package",
-                },
-                {
-                    type: "doc",
-                    id: "packages/adapters",
-                    label: "Database Adapters",
-                },
-                {
-                    type: "doc",
-                    id: "packages/clients",
-                    label: "Client Packages",
-                },
-                {
-                    type: "doc",
-                    id: "packages/agent",
-                    label: "Agent Package",
-                },
                 {
                     type: "doc",
                     id: "packages/plugins",

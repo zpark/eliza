@@ -4,9 +4,27 @@
 
 ElizaOS implements a sophisticated memory management system powered by Retrieval-Augmented Generation (RAG). This system enables agents to maintain contextual awareness and knowledge persistence across interactions while optimizing for both performance and accuracy.
 
-## Memory System Architecture
+The Eliza framework uses multiple types of memory to support an agent's long-term engagement, contextual understanding, and adaptive responses. Each type of memory serves a specific purpose:
 
-### Memory Types
+- **Message History**: Stores recent conversations to provide continuity within a session. This helps the agent maintain conversational context and avoid repetitive responses within short-term exchanges.
+
+- **Factual Memory**: Holds specific, context-based facts about the user or environment, such as user preferences, recent activities, or specific details mentioned in previous interactions. This type of memory enables the agent to recall user-specific information across sessions.
+
+- **Knowledge Base**: Contains general knowledge the agent might need to respond to broader queries or provide informative answers. This memory is more static, helping the agent retrieve pre-defined data, common responses, or static character lore.
+
+- **Relationship Tracking**: Manages the agent’s understanding of its relationship with users, including details like user-agent interaction frequency, sentiment, and connection history. It is particularly useful for building rapport and providing a more personalized interaction experience over time.
+
+- **RAG Integration**: Uses a vector search to perform contextual recall based on similarity matching. This enables the agent to retrieve relevant memory snippets or knowledge based on the content and intent of the current conversation, making its responses more contextually relevant.
+
+## Memory Types
+
+1. **Memory Managers**:
+   - `messageManager`: Manages conversation history.
+   - `descriptionManager`: Stores user descriptions.
+   - `loreManager`: Handles character lore and background.
+   - `documentsManager`: Manages large documents.
+   - `knowledgeManager`: Stores searchable document fragments.
+   - `ragKnowledgeManager`: Handles RAG-based knowledge retrieval.
 
 1. **Short-term Memory (Message Context)**
    - Stores recent conversation history
@@ -37,6 +55,41 @@ ElizaOS implements a sophisticated memory management system powered by Retrieval
    - Optimized for semantic retrieval
    - Managed by `ragKnowledgeManager`
    - Supports dynamic knowledge integration
+   
+---
+
+
+
+---
+
+## Memory Systems
+
+The Eliza framework uses multiple specialized memory managers to support different aspects of agent functionality:
+
+```typescript
+// Example memory manager usage
+const memoryManager = runtime.getMemoryManager("messages");
+await memoryManager.createMemory({
+    id: messageId,
+    content: { text: "Message content" },
+    userId: userId,
+    roomId: roomId
+});
+```
+
+Memory managers support operations like:
+- `messageManager`: Manages conversation history.
+- `descriptionManager`: Stores user descriptions.
+- `loreManager`: Handles character lore and background.
+- `documentsManager`: Manages large documents.
+- `knowledgeManager`: Stores searchable document fragments.
+- `ragKnowledgeManager`: Handles RAG-based knowledge retrieval.
+
+- Embedding generation and storage
+- Memory search and retrieval
+- Memory creation and deletion
+- Memory counting and filtering
+
 
 ## Basic Configuration
 
@@ -82,6 +135,8 @@ const prodConfig = {
 ```
 
 ### Memory Operations
+
+
 
 #### Creating Memories
 ```typescript
@@ -262,7 +317,7 @@ async function checkMemoryHealth(runtime: AgentRuntime) {
 ## FAQ
 
 ### How do I fix embedding/vector dimension mismatch errors?
-Set USE_OPENAI_EMBEDDING=TRUE in .env file or ensure consistent embedding models across your setup.
+Set `USE_OPENAI_EMBEDDING=TRUE` in .env file or ensure consistent embedding models across your setup.
 
 ### How do I reset my agent's memory?
 Delete db.sqlite in the agent/data directory and restart the agent. For a complete reset, run `pnpm clean` followed by `pnpm install`.
@@ -274,7 +329,7 @@ SQLite for simple deployments, PostgreSQL/Supabase for complex needs. MongoDB al
 Static knowledge goes in character.json's knowledge section. Dynamic memory uses database storage through memory system.
 
 ### How do I enable RAG (Retrieval Augmented Generation)?
-Set "ragKnowledge": true in character file. Use folder2knowledge to convert documents into knowledge, then knowledge2character to create character files.
+Set `"ragKnowledge": true` in character file. Use folder2knowledge to convert documents into knowledge, then knowledge2character to create character files.
 
 ### Do I need different memory setup for production?
 Yes - PostgreSQL is recommended over SQLite for production deployments.

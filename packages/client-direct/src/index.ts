@@ -1,33 +1,33 @@
+import {
+    composeContext,
+    elizaLogger,
+    generateCaption,
+    generateImage,
+    generateMessageResponse,
+    generateObject,
+    getEmbeddingZeroVector,
+    messageCompletionFooter,
+    ModelClass,
+    settings,
+    stringToUuid,
+    type AgentRuntime,
+    type Client,
+    type Content,
+    type IAgentRuntime,
+    type Media,
+    type Memory,
+    type Plugin,
+} from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { type Request as ExpressRequest } from "express";
-import multer from "multer";
-import { z } from "zod";
-import {
-    type AgentRuntime,
-    elizaLogger,
-    messageCompletionFooter,
-    generateCaption,
-    generateImage,
-    type Media,
-    getEmbeddingZeroVector,
-    composeContext,
-    generateMessageResponse,
-    generateObject,
-    type Content,
-    type Memory,
-    ModelClass,
-    type Client,
-    stringToUuid,
-    settings,
-    type IAgentRuntime,
-    type Plugin,
-} from "@elizaos/core";
-import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
-import * as path from "path";
-import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
+import multer from "multer";
 import OpenAI from "openai";
+import * as path from "path";
+import { z } from "zod";
+import { createApiRouter } from "./api.ts";
+import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -700,7 +700,7 @@ export class DirectClient {
                     const filePath = path.join(downloadDir, fileName);
                     elizaLogger.log("Full file path:", filePath);
 
-                    await fs.promises.writeFile(filePath, buffer);
+                    await fs.promises.writeFile(filePath, new Uint8Array(buffer));
 
                     // Verify file was written
                     const stats = await fs.promises.stat(filePath);

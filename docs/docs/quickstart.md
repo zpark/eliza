@@ -18,10 +18,71 @@ Before getting started with Eliza, ensure you have:
 
 ## Automated Installation
 
-Using https://github.com/elizaOS/eliza-starter
+1. Use the [start script](https://howieduhzit.best/start-sh/)
+    - 🔍 Auto OS Detection | 🛠️ Zero Config | 🎭 Character Management | 🔄 One-click Updates | ⚙️ Guided Setup
 
 ```bash
-git clone https://github.com/elizaos/eliza-starter.git
+# Linux/macOS
+./scripts/start.sh
+```
+
+<details>
+<summary>Troubleshooting</summary>
+```bash
+# On Windows? Setup WSL2 first
+wsl --install -d Ubuntu                                                                                                                                       
+# Open Ubuntu, set up user, update:                                                                                                                           
+sudo apt update && sudo apt upgrade -y
+```
+
+### Usage
+```
+start.sh [-v|--verbose] [--skip-nvm]
+```
+
+### Common Error
+- "characters not found": Check working directory
+- `./scripts/start.sh -v` Run with logging
+- Check console output
+- [Open an issue](https://github.com/elizaOS/eliza/issues)
+
+### Permission Issues
+```
+sudo chmod +x scripts/start.sh  # Linux/macOS
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser  # Windows
+```
+
+### Package Issues
+> Note: Always verify scripts before running it
+```
+## Linux
+sudo apt update 
+
+## MacOS
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew update
+
+## Windows
+# Run as admin
+```
+
+### Node.js Issues
+- Required: Node.js 22+
+- Use `--skip-nvm` for system Node
+- Check PATH configuration
+
+**Notes**
+- Temporary files: `/tmp/eliza_*`
+- Config location: `./config`
+- Characters: `./characters/*.json`
+
+</details>
+
+
+2. Using https://github.com/elizaOS/eliza-starter
+
+```bash
+git clone git@github.com:elizaos/eliza-starter.git
 cd eliza-starter
 cp .env.example .env
 pnpm i && pnpm build && pnpm start
@@ -32,7 +93,7 @@ pnpm i && pnpm build && pnpm start
 After installing the prerequisites, clone the repository and enter the directory
 
 ```bash
-git clone https://github.com/elizaOS/eliza.git
+git clone git@github.com:elizaOS/eliza.git
 cd eliza
 ```
 
@@ -286,6 +347,14 @@ NODE_MODULE_VERSION 131. This version of Node.js requires
 NODE_MODULE_VERSION 127. Please try re-compiling or re-installing
 ```
 
+or 
+
+```
+Error: Could not locate the bindings file. Tried:
+.../better_sqlite3.node
+...
+```
+
 You can try this, which will attempt to rebuild better-sqlite3.
 
 ```bash
@@ -304,19 +373,25 @@ Then reinstall the requirements
 pnpm i
 ```
 
+You can also add a postinstall script in your `package.json` if you want to automate this:
+```json
+scripts: {
+    "postinstall": "npm rebuild better-sqlite3"
+}
+```
 
 ---
 
 ## FAQ
 
+### How do I install and set up ElizaOS?
+Clone the repository, run `pnpm install --no-frozen-lockfile`, then `pnpm build`. Requires Node.js version 23.3.0.
+
 ### Which Node.js version should I use?
-Use Node.js v23.3.0 with pnpm v9.x for optimal compatibility.
+Use Node.js version 23+ (specifically 23.3.0 is recommended) and pnpm v9.x for optimal compatibility. You can use nvm to manage Node versions with `nvm install 23` and `nvm use 23`.
 
 ### How do I run multiple agents?
 Create separate projects with unique character files and run in separate terminals, or use `pnpm start --characters="characters/agent1.json,characters/agent2.json"`.
-
-### How do I install and set up ElizaOS?
-Clone the repository, run `pnpm install --no-frozen-lockfile`, then `pnpm build`. Requires Node.js version 23.3.0.
 
 ### What's the difference between eliza and eliza-starter?
 Eliza-starter is a lightweight version for simpler setups, while the main eliza repository includes all advanced features and plugins.
@@ -327,16 +402,11 @@ Use Node v23.3.0, run `pnpm clean`, then `pnpm install --no-frozen-lockfile`, fo
 ### What are the minimum system requirements?
 8GB RAM recommended for build process. For deployment, a t2.large instance on AWS with 20GB storage running Ubuntu is the minimum tested configuration.
 
-### Which Node.js version should I use?
-Use Node.js version 23+ (specifically 23.3.0 is recommended). You can use nvm to manage Node versions with `nvm install 23` and `nvm use 23`.
-
 ### How do I fix "Exit Status 1" errors?
 If you see `triggerUncaughtException` errors, try:
 1. Add dependencies to workspace root
 2. Add dependencies to specific packages
 3. Clean and rebuild
-
----
 
 ## Next Steps
 
