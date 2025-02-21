@@ -1,32 +1,33 @@
+import {
+    composeContext,
+    elizaLogger,
+    generateCaption,
+    generateImage,
+    generateMessageResponse,
+    generateObject,
+    getEmbeddingZeroVector,
+    messageCompletionFooter,
+    ModelClass,
+    settings,
+    stringToUuid,
+    type AgentRuntime,
+    type Client,
+    type Content,
+    type IAgentRuntime,
+    type Media,
+    type Memory,
+    type Plugin,
+} from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { type Request as ExpressRequest } from "express";
-import multer from "multer";
-import { z } from "zod";
-import {
-    type AgentRuntime,
-    elizaLogger,
-    messageCompletionFooter,
-    generateCaption,
-    generateImage,
-    type Media,
-    getEmbeddingZeroVector,
-    composeContext,
-    generateMessageResponse,
-    generateObject,
-    type Content,
-    type Memory,
-    ModelClass,
-    type Client,
-    stringToUuid,
-    settings,
-    type IAgentRuntime,
-} from "@elizaos/core";
-import { createApiRouter } from "./api.ts";
 import * as fs from "fs";
-import * as path from "path";
-import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
+import multer from "multer";
 import OpenAI from "openai";
+import * as path from "path";
+import { z } from "zod";
+import { createApiRouter } from "./api.ts";
+import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -699,7 +700,7 @@ export class DirectClient {
                     const filePath = path.join(downloadDir, fileName);
                     elizaLogger.log("Full file path:", filePath);
 
-                    await fs.promises.writeFile(filePath, buffer);
+                    await fs.promises.writeFile(filePath, new Uint8Array(buffer));
 
                     // Verify file was written
                     const stats = await fs.promises.stat(filePath);
@@ -1017,7 +1018,7 @@ export class DirectClient {
         process.on("SIGINT", gracefulShutdown);
     }
 
-    public stop() {
+    public async stop() {
         if (this.server) {
             this.server.close(() => {
                 elizaLogger.success("Server stopped");
@@ -1027,6 +1028,8 @@ export class DirectClient {
 }
 
 export const DirectClientInterface: Client = {
+    name: 'direct',
+    config: {},
     start: async (_runtime: IAgentRuntime) => {
         elizaLogger.log("DirectClientInterface start");
         const client = new DirectClient();
@@ -1034,11 +1037,16 @@ export const DirectClientInterface: Client = {
         client.start(serverPort);
         return client;
     },
-    stop: async (_runtime: IAgentRuntime, client?: Client) => {
-        if (client instanceof DirectClient) {
-            client.stop();
-        }
-    },
+    // stop: async (_runtime: IAgentRuntime, client?: Client) => {
+    //     if (client instanceof DirectClient) {
+    //         client.stop();
+    //     }
+    // },
 };
 
-export default DirectClientInterface;
+const directPlugin: Plugin = {
+    name: "direct",
+    description: "Direct client",
+    clients: [DirectClientInterface],
+};
+export default directPlugin;
