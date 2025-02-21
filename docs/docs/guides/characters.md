@@ -376,6 +376,6 @@ npx knowledge2character <character-file> <knowledge-file>
 
 ## Further Reading
 
-- [Agents Documentation](./agents.md)
-- [Model Providers](../../advanced/fine-tuning)
-- [Client Integration](../../packages/clients)
+- [Agents Documentation](../core/agents)
+- [Model Providers](./fine-tuning)
+- [Client Integration](../core/clients)

@@ -198,6 +198,11 @@ const config = {
                     docId: "index",
                 },
                 {
+                  to: 'showcase',
+                  label: 'Showcase',
+                  position: 'left'
+                },
+                {
                     href: "https://github.com/elizaos/eliza",
                     label: "GitHub",
                     position: "right",
