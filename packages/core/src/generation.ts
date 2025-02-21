@@ -3,21 +3,22 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createMistral } from "@ai-sdk/mistral";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
+import { bedrock } from "@ai-sdk/amazon-bedrock";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
-    CoreTool,
-    GenerateObjectResult,
-    StepResult as AIStepResult,
+    type CoreTool,
+    type GenerateObjectResult,
+    type StepResult as AIStepResult,
 } from "ai";
 import { Buffer } from "buffer";
 import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
-import { encodingForModel, TiktokenModel } from "js-tiktoken";
-import { AutoTokenizer } from "@huggingface/transformers";
+import { encodingForModel, type TiktokenModel } from "js-tiktoken";
+// import { AutoTokenizer } from "@huggingface/transformers";
 import Together from "together-ai";
-import { ZodSchema } from "zod";
+import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import {
     models,
@@ -34,19 +35,19 @@ import {
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
-    Content,
-    IAgentRuntime,
-    IImageDescriptionService,
-    ITextGenerationService,
+    type Content,
+    type IAgentRuntime,
+    type IImageDescriptionService,
+    type ITextGenerationService,
     ModelClass,
     ModelProviderName,
     ServiceType,
-    ActionResponse,
-    IVerifiableInferenceAdapter,
-    VerifiableInferenceOptions,
-    VerifiableInferenceResult,
+    type ActionResponse,
+    // type IVerifiableInferenceAdapter,
+    // type VerifiableInferenceOptions,
+    // type VerifiableInferenceResult,
     //VerifiableInferenceProvider,
-    TelemetrySettings,
+    type TelemetrySettings,
     TokenizerType,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
@@ -95,9 +96,9 @@ export async function trimTokens(
     }
 
     // Choose the truncation method based on tokenizer type
-    if (tokenizerType === TokenizerType.Auto) {
-        return truncateAuto(tokenizerModel, context, maxTokens);
-    }
+    // if (tokenizerType === TokenizerType.Auto) {
+    //     return truncateAuto(tokenizerModel, context, maxTokens);
+    // }
 
     if (tokenizerType === TokenizerType.TikToken) {
         return truncateTiktoken(
@@ -111,31 +112,31 @@ export async function trimTokens(
     return truncateTiktoken("gpt-4o", context, maxTokens);
 }
 
-async function truncateAuto(
-    modelPath: string,
-    context: string,
-    maxTokens: number
-) {
-    try {
-        const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
-        const tokens = tokenizer.encode(context);
+// async function truncateAuto(
+//     modelPath: string,
+//     context: string,
+//     maxTokens: number
+// ) {
+//     try {
+//         const tokenizer = await AutoTokenizer.from_pretrained(modelPath);
+//         const tokens = tokenizer.encode(context);
 
-        // If already within limits, return unchanged
-        if (tokens.length <= maxTokens) {
-            return context;
-        }
+//         // If already within limits, return unchanged
+//         if (tokens.length <= maxTokens) {
+//             return context;
+//         }
 
-        // Keep the most recent tokens by slicing from the end
-        const truncatedTokens = tokens.slice(-maxTokens);
+//         // Keep the most recent tokens by slicing from the end
+//         const truncatedTokens = tokens.slice(-maxTokens);
 
-        // Decode back to text - js-tiktoken decode() returns a string directly
-        return tokenizer.decode(truncatedTokens);
-    } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
-        // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
-    }
-}
+//         // Decode back to text - js-tiktoken decode() returns a string directly
+//         return tokenizer.decode(truncatedTokens);
+//     } catch (error) {
+//         elizaLogger.error("Error in trimTokens:", error);
+//         // Return truncated string if tokenization fails
+//         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+//     }
+// }
 
 async function truncateTiktoken(
     model: TiktokenModel,
@@ -346,8 +347,8 @@ export async function generateText({
     maxSteps = 1,
     stop,
     customSystemPrompt,
-    verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
-    verifiableInferenceOptions,
+    // verifiableInference = process.env.VERIFIABLE_INFERENCE_ENABLED === "true",
+    // verifiableInferenceOptions,
 }: {
     runtime: IAgentRuntime;
     context: string;
@@ -357,9 +358,9 @@ export async function generateText({
     maxSteps?: number;
     stop?: string[];
     customSystemPrompt?: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }): Promise<string> {
     if (!context) {
         console.error("generateText context is empty");
@@ -371,36 +372,36 @@ export async function generateText({
     elizaLogger.info("Generating text with options:", {
         modelProvider: runtime.modelProvider,
         model: modelClass,
-        verifiableInference,
+        // verifiableInference,
     });
     elizaLogger.log("Using provider:", runtime.modelProvider);
     // If verifiable inference is requested and adapter is provided, use it
-    if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        elizaLogger.log(
-            "Using verifiable inference adapter:",
-            runtime.verifiableInferenceAdapter
-        );
-        try {
-            const result: VerifiableInferenceResult =
-                await runtime.verifiableInferenceAdapter.generateText(
-                    context,
-                    modelClass,
-                    verifiableInferenceOptions
-                );
-            elizaLogger.log("Verifiable inference result:", result);
-            // Verify the proof
-            const isValid =
-                await runtime.verifiableInferenceAdapter.verifyProof(result);
-            if (!isValid) {
-                throw new Error("Failed to verify inference proof");
-            }
+    // if (verifiableInference && runtime.verifiableInferenceAdapter) {
+    //     elizaLogger.log(
+    //         "Using verifiable inference adapter:",
+    //         runtime.verifiableInferenceAdapter
+    //     );
+    //     try {
+    //         const result: VerifiableInferenceResult =
+    //             await runtime.verifiableInferenceAdapter.generateText(
+    //                 context,
+    //                 modelClass,
+    //                 verifiableInferenceOptions
+    //             );
+    //         elizaLogger.log("Verifiable inference result:", result);
+    //         // Verify the proof
+    //         const isValid =
+    //             await runtime.verifiableInferenceAdapter.verifyProof(result);
+    //         if (!isValid) {
+    //             throw new Error("Failed to verify inference proof");
+    //         }
 
-            return result.text;
-        } catch (error) {
-            elizaLogger.error("Error in verifiable inference:", error);
-            throw error;
-        }
-    }
+    //         return result.text;
+    //     } catch (error) {
+    //         elizaLogger.error("Error in verifiable inference:", error);
+    //         throw error;
+    //     }
+    // }
 
     const provider = runtime.modelProvider;
     elizaLogger.debug("Provider settings:", {
@@ -501,7 +502,7 @@ export async function generateText({
     const max_context_length =
         modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
     const max_response_length =
-        modelConfiguration?.max_response_length ||
+        modelConfiguration?.maxOutputTokens ||
         modelSettings.maxOutputTokens;
     const experimental_telemetry =
         modelConfiguration?.experimental_telemetry ||
@@ -533,7 +534,8 @@ export async function generateText({
             case ModelProviderName.HYPERBOLIC:
             case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
-            case ModelProviderName.AKASH_CHAT_API: {
+            case ModelProviderName.AKASH_CHAT_API:
+            case ModelProviderName.LMSTUDIO: {
                 elizaLogger.debug(
                     "Initializing OpenAI model with Cloudflare check"
                 );
@@ -574,8 +576,14 @@ export async function generateText({
                 const openai = createOpenAI({
                     apiKey,
                     baseURL: endpoint,
-                    fetch: async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-                        const url = typeof input === 'string' ? input : input.toString();
+                    fetch: async (
+                        input: RequestInfo | URL,
+                        init?: RequestInit
+                    ): Promise<Response> => {
+                        const url =
+                            typeof input === "string"
+                                ? input
+                                : input.toString();
                         const chain_id =
                             runtime.getSetting("ETERNALAI_CHAIN_ID") || "45762";
 
@@ -588,9 +596,11 @@ export async function generateText({
 
                         const fetching = await runtime.fetch(url, options);
 
-                        if (parseBooleanFromText(
-                            runtime.getSetting("ETERNALAI_LOG")
-                        )) {
+                        if (
+                            parseBooleanFromText(
+                                runtime.getSetting("ETERNALAI_LOG")
+                            )
+                        ) {
                             elizaLogger.info(
                                 "Request data: ",
                                 JSON.stringify(options, null, 2)
@@ -943,7 +953,7 @@ export async function generateText({
                         experimental_telemetry: experimental_telemetry,
                     });
 
-                    response = ollamaResponse;
+                    response = ollamaResponse.replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
                 }
                 elizaLogger.debug("Received response from Ollama model.");
                 break;
@@ -1152,8 +1162,41 @@ export async function generateText({
                     maxTokens: max_response_length,
                 });
 
-                response = veniceResponse;
+                // console.warn("veniceResponse:")
+                // console.warn(veniceResponse)
+                //rferrari: remove all text from <think> to </think>\n\n
+                response = veniceResponse
+                    .replace(/<think>[\s\S]*?<\/think>\s*\n*/g, '');
+                // console.warn(response)
+
+                // response = veniceResponse;
                 elizaLogger.debug("Received response from Venice model.");
+                break;
+            }
+
+            case ModelProviderName.NVIDIA: {
+                elizaLogger.debug("Initializing NVIDIA model.");
+                const nvidia = createOpenAI({
+                    apiKey: apiKey,
+                    baseURL: endpoint,
+                });
+
+                const { text: nvidiaResponse } = await aiGenerateText({
+                    model: nvidia.languageModel(model),
+                    prompt: context,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
+                    tools: tools,
+                    onStepFinish: onStepFinish,
+                    temperature: temperature,
+                    maxSteps: maxSteps,
+                    maxTokens: max_response_length,
+                });
+
+                response = nvidiaResponse;
+                elizaLogger.debug("Received response from NVIDIA model.");
                 break;
             }
 
@@ -1200,30 +1243,35 @@ export async function generateText({
                     messages: [
                         {
                             role: "system",
-                            content: runtime.character.system ?? settings.SYSTEM_PROMPT ?? "You are a helpful assistant"
+                            content:
+                                runtime.character.system ??
+                                settings.SYSTEM_PROMPT ??
+                                "You are a helpful assistant",
                         },
                         {
                             role: "user",
-                            content: context
-                        }
+                            content: context,
+                        },
                     ],
                     max_tokens: max_response_length,
-                    stream: false
+                    stream: false,
                 };
 
-                const fetchResponse = await runtime.fetch(endpoint+'/llm', {
+                const fetchResponse = await runtime.fetch(endpoint + "/llm", {
                     method: "POST",
                     headers: {
-                        "accept": "text/event-stream",
+                        accept: "text/event-stream",
                         "Content-Type": "application/json",
-                        "Authorization": "Bearer eliza-app-llm"
+                        Authorization: "Bearer eliza-app-llm",
                     },
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify(requestBody),
                 });
 
                 if (!fetchResponse.ok) {
                     const errorText = await fetchResponse.text();
-                    throw new Error(`Livepeer request failed (${fetchResponse.status}): ${errorText}`);
+                    throw new Error(
+                        `Livepeer request failed (${fetchResponse.status}): ${errorText}`
+                    );
                 }
 
                 const json = await fetchResponse.json();
@@ -1232,8 +1280,32 @@ export async function generateText({
                     throw new Error("Invalid response format from Livepeer");
                 }
 
-                response = json.choices[0].message.content.replace(/<\|start_header_id\|>assistant<\|end_header_id\|>\n\n/, '');
-                elizaLogger.debug("Successfully received response from Livepeer model");
+                response = json.choices[0].message.content.replace(
+                    /<\|start_header_id\|>assistant<\|end_header_id\|>\n\n/,
+                    ""
+                );
+                elizaLogger.debug(
+                    "Successfully received response from Livepeer model"
+                );
+                break;
+            }
+
+            case ModelProviderName.BEDROCK: {
+                elizaLogger.debug("Initializing Bedrock model.");
+
+                const { text: bedrockResponse } = await aiGenerateText({
+                    model: bedrock(model),
+                    maxSteps: maxSteps,
+                    temperature: temperature,
+                    maxTokens: max_response_length,
+                    frequencyPenalty: frequency_penalty,
+                    presencePenalty: presence_penalty,
+                    experimental_telemetry: experimental_telemetry,
+                    prompt: context
+                });
+
+                response = bedrockResponse;
+                elizaLogger.debug("Received response from Bedrock model.");
                 break;
             }
 
@@ -1322,8 +1394,8 @@ export async function generateShouldRespond({
  */
 export async function splitChunks(
     content: string,
-    chunkSize: number = 512,
-    bleed: number = 20
+    chunkSize = 1500,
+    bleed = 100
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
@@ -1596,6 +1668,10 @@ export const generateImage = async (
     error?: any;
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
+    if (!modelSettings) {
+        elizaLogger.warn("No model settings found for the image model provider.");
+        return { success: false, error: "No model settings available" };
+    }
     const model = modelSettings.name;
     elizaLogger.info("Generating image with options:", {
         imageModelProvider: model,
@@ -1993,9 +2069,9 @@ export interface GenerationOptions {
     stop?: string[];
     mode?: "auto" | "json" | "tool";
     experimental_providerMetadata?: Record<string, unknown>;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
 /**
@@ -2027,9 +2103,9 @@ export const generateObject = async ({
     schemaDescription,
     stop,
     mode = "json",
-    verifiableInference = false,
-    verifiableInferenceAdapter,
-    verifiableInferenceOptions,
+    // verifiableInference = false,
+    // verifiableInferenceAdapter,
+    // verifiableInferenceOptions,
 }: GenerationOptions): Promise<GenerateObjectResult<unknown>> => {
     if (!context) {
         const errorMessage = "generateObject context is empty";
@@ -2073,9 +2149,9 @@ export const generateObject = async ({
             runtime,
             context,
             modelClass,
-            verifiableInference,
-            verifiableInferenceAdapter,
-            verifiableInferenceOptions,
+            // verifiableInference,
+            // verifiableInferenceAdapter,
+            // verifiableInferenceOptions,
         });
 
         return response;
@@ -2101,9 +2177,9 @@ interface ProviderOptions {
     modelOptions: ModelSettings;
     modelClass: ModelClass;
     context: string;
-    verifiableInference?: boolean;
-    verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
-    verifiableInferenceOptions?: VerifiableInferenceOptions;
+    // verifiableInference?: boolean;
+    // verifiableInferenceAdapter?: IVerifiableInferenceAdapter;
+    // verifiableInferenceOptions?: VerifiableInferenceOptions;
 }
 
 /**
@@ -2133,6 +2209,7 @@ export async function handleProvider(
         case ModelProviderName.TOGETHER:
         case ModelProviderName.NANOGPT:
         case ModelProviderName.AKASH_CHAT_API:
+        case ModelProviderName.LMSTUDIO:
             return await handleOpenAI(options);
         case ModelProviderName.ANTHROPIC:
         case ModelProviderName.CLAUDE_VERTEX:
@@ -2182,12 +2259,13 @@ async function handleOpenAI({
     schemaDescription,
     mode = "json",
     modelOptions,
-    provider: _provider,
+    provider,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    const endpoint =
+        runtime.character.modelEndpointOverride || getEndpoint(provider);
     const baseURL =
-        getCloudflareGatewayBaseURL(runtime, "openai") ||
-        models.openai.endpoint;
+        getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -2211,11 +2289,15 @@ async function handleAnthropic({
     schema,
     schemaName,
     schemaDescription,
-    mode = "json",
+    mode = "auto",
     modelOptions,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Anthropic request with Cloudflare check");
+    if (mode === "json") {
+        elizaLogger.warn("Anthropic mode is set to json, changing to auto");
+        mode = "auto";
+    }
     const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
@@ -2295,14 +2377,14 @@ async function handleGroq({
  */
 async function handleGoogle({
     model,
-    apiKey: _apiKey,
+    apiKey,
     schema,
     schemaName,
     schemaDescription,
     mode = "json",
     modelOptions,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const google = createGoogleGenerativeAI();
+    const google = createGoogleGenerativeAI({apiKey});
     return await aiGenerateObject({
         model: google(model),
         schema,
@@ -2448,6 +2530,31 @@ async function handleDeepSeek({
     });
 }
 
+/**
+ * Handles object generation for Amazon Bedrock models.
+ *
+ * @param {ProviderOptions} options - Options specific to Amazon Bedrock.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleBedrock({
+    model,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode,
+    modelOptions,
+    provider,
+}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    return await aiGenerateObject({
+        model: bedrock(model),
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+}
+
 async function handleLivepeer({
     model,
     apiKey,
@@ -2459,12 +2566,14 @@ async function handleLivepeer({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     console.log("Livepeer provider api key:", apiKey);
     if (!apiKey) {
-        throw new Error("Livepeer provider requires LIVEPEER_GATEWAY_URL to be configured");
+        throw new Error(
+            "Livepeer provider requires LIVEPEER_GATEWAY_URL to be configured"
+        );
     }
 
     const livepeerClient = createOpenAI({
         apiKey,
-        baseURL: apiKey // Use the apiKey as the baseURL since it contains the gateway URL
+        baseURL: apiKey, // Use the apiKey as the baseURL since it contains the gateway URL
     });
 
     return await aiGenerateObject({
@@ -2476,7 +2585,6 @@ async function handleLivepeer({
         ...modelOptions,
     });
 }
-
 
 // Add type definition for Together AI response
 interface TogetherAIImageResponse {
@@ -2504,13 +2612,13 @@ export async function generateTweetActions({
                 context,
                 modelClass,
             });
-            console.debug(
+            elizaLogger.debug(
                 "Received response from generateText for tweet actions:",
                 response
             );
             const { actions } = parseActionResponseFromText(response.trim());
             if (actions) {
-                console.debug("Parsed tweet actions:", actions);
+                elizaLogger.debug("Parsed tweet actions:", actions);
                 return actions;
             } else {
                 elizaLogger.debug("generateTweetActions no valid response");
