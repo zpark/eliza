@@ -1151,6 +1151,38 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.SECRETAI]: {
+        endpoint: settings.SECRET_AI_URL || "https://ai1.scrtlabs.com:21434",
+        model: {
+            [ModelClass.SMALL]: {
+                name:
+                    settings.SMALL_SECRET_AI_MODEL ||
+                    "deepseek-r1:70b",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.7,
+            },
+            [ModelClass.MEDIUM]: {
+                name:
+                    settings.MEDIUM_SECRET_AI_MODEL ||
+                    "deepseek-r1:70b",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.7,
+            },
+            [ModelClass.LARGE]: {
+                name:
+                    settings.LARGE_SECRET_AI_MODEL ||
+                    "deepseek-r1:70b",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.7,
+            },
+        },
+    },
     [ModelProviderName.NEARAI]: {
         endpoint: settings.NEARAI_API_URL || "https://api.near.ai/v1",
         model: {

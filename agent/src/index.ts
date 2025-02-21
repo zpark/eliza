@@ -546,6 +546,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
                 settings.LIVEPEER_GATEWAY_URL
             );
+        case ModelProviderName.SECRETAI:
+            return (
+                character.settings?.secrets?.SECRET_AI_API_KEY ||
+                settings.SECRET_AI_API_KEY
+            );
         case ModelProviderName.NEARAI:
             try {
                 const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.nearai/config.json'), 'utf8'));
