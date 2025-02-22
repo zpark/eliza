@@ -788,7 +788,7 @@ export class AgentRuntime implements IAgentRuntime {
         if(userId === this.agentId) {
             throw new Error("Agent should not connect to itself");
         }
-
+        
         await Promise.all([
             this.ensureUserExists(
                 this.agentId,
