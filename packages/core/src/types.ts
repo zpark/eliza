@@ -619,6 +619,14 @@ export type Client = {
 };
 
 /**
+ * Database adapter initialization
+ */
+export type Adapter = {
+    /** Initialize the adapter */
+    init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
+};
+
+/**
  * Plugin for extending agent functionality
  */
 export type Plugin = {
@@ -642,6 +650,9 @@ export type Plugin = {
 
     /** Optional clients */
     clients?: Client[];
+
+    /** Optional adapters */
+    adapters?: Adapter[];
 };
 
 /**
