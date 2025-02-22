@@ -839,7 +839,8 @@ export class AgentRuntime implements IAgentRuntime {
      * @throws An error if the room cannot be created.
      */
     async ensureRoomExists({id, name, source, type, channelId, serverId, worldId}: RoomData) {
-        const room = await this.databaseAdapter.getRoom(id, this.agentId);
+        const room = await this.databaseAdapter.getRoom(id);
+        console.log("*** room", room);
         if (!room) {
             await this.databaseAdapter.createRoom({id, name, agentId: this.agentId, source, type, channelId, serverId, worldId});
             logger.log(`Room ${id} created successfully.`);
@@ -852,7 +853,7 @@ export class AgentRuntime implements IAgentRuntime {
      * @returns The room ID of the room between the agent and the user.
      */
     async getRoom(userId: UUID) {
-        return await this.databaseAdapter.getRoom(userId, this.agentId);
+        return await this.databaseAdapter.getRoom(userId);
     }
 
     /**

@@ -276,7 +276,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room to retrieve.
      * @returns A Promise that resolves to the room ID or null if not found.
      */
-    abstract getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+    abstract getRoom(roomId: UUID): Promise<RoomData | null>;
 
     /**
      * Creates a new room with an optional specified ID.

@@ -1137,7 +1137,7 @@ export class DrizzleDatabaseAdapter
         });
     }
 
-    async getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null> {
+    async getRoom(roomId: UUID): Promise<RoomData | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
@@ -1148,7 +1148,7 @@ export class DrizzleDatabaseAdapter
                     source: roomTable.source as any,
                 })
                 .from(roomTable)
-                .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, agentId)))
+                .where(eq(roomTable.id, roomId))
                 .limit(1);
 
             return result[0]
