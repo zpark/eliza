@@ -4,7 +4,6 @@ import { createMistral } from "@ai-sdk/mistral";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { bedrock } from "@ai-sdk/amazon-bedrock";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
     generateObject as aiGenerateObject,
     generateText as aiGenerateText,
@@ -1380,18 +1379,27 @@ export async function splitChunks(
 ): Promise<string[]> {
     elizaLogger.debug(`[splitChunks] Starting text split`);
 
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: Number(chunkSize),
-        chunkOverlap: Number(bleed),
-    });
+    const chunks = splitText(content, chunkSize, bleed);
 
-    const chunks = await textSplitter.splitText(content);
     elizaLogger.debug(`[splitChunks] Split complete:`, {
         numberOfChunks: chunks.length,
         averageChunkSize:
             chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
             chunks.length,
     });
+
+    return chunks;
+}
+
+export function splitText(content: string, chunkSize: number, bleed: number): string[] {
+    const chunks: string[] = [];
+    let start = 0;
+
+    while (start < content.length) {
+        const end = Math.min(start + chunkSize, content.length);
+        chunks.push(content.substring(start, end));
+        start = end - bleed; // Apply overlap
+    }
 
     return chunks;
 }
