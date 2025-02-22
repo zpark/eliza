@@ -50,7 +50,8 @@ import {
     type Task,
     ChannelType,
     type RoomData,
-    type WorldData
+    type WorldData,
+    type Client
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 import { messageEvents } from "./messages.ts";
@@ -402,7 +403,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async initialize() {
-        const clientsToStart: { client: Plugin["clients"][number] }[] = [];
+        const clientsToStart: Client[] = [];
 
         // load the character plugins dymamically from string
         if(this.character.plugins){
@@ -456,7 +457,7 @@ export class AgentRuntime implements IAgentRuntime {
                     }
 
                     if (plugin.clients) {
-                        plugin.clients.forEach(client => clientsToStart.push({ client }));
+                        plugin.clients.forEach(client => clientsToStart.push(client));
                     }
                     this.plugins.push(plugin);
                 }
@@ -472,7 +473,7 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         await Promise.all(
-            clientsToStart.map(async ({ client }) => {
+            clientsToStart.map(async (client) => {
                 const startedClient = await client.start(this);
                 logger.debug(`Initializing client: ${client.name}`);
                 this.registerClient(client.name, startedClient);
