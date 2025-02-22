@@ -402,7 +402,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async initialize() {
-        const clientsToStart: { client: Plugin["clients"][number]; pluginName: string }[] = [];
+        const clientsToStart: { client: Plugin["clients"][number] }[] = [];
 
         // load the character plugins dymamically from string
         if(this.character.plugins){
@@ -456,7 +456,7 @@ export class AgentRuntime implements IAgentRuntime {
                     }
 
                     if (plugin.clients) {
-                        plugin.clients.forEach(client => clientsToStart.push({ client, pluginName: plugin.name }));
+                        plugin.clients.forEach(client => clientsToStart.push({ client }));
                     }
                     this.plugins.push(plugin);
                 }
@@ -472,9 +472,9 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         await Promise.all(
-            clientsToStart.map(async ({ client, pluginName }) => {
+            clientsToStart.map(async ({ client }) => {
                 const startedClient = await client.start(this);
-                logger.debug(`Initializing client: ${client.name} from plugin ${pluginName}`);
+                logger.debug(`Initializing client: ${client.name}`);
                 this.registerClient(client.name, startedClient);
             })
         );
