@@ -6,52 +6,19 @@ import fs from "node:fs";
 import prompts from "prompts";
 import { z } from "zod";
 import { adapter } from "../database";
-import { availablePlugins } from "../plugins";
 import { handleError } from "../utils/handle-error";
+import { displayCharacter, formatMessageExamples } from "../utils/helpers";
 import { logger } from "../utils/logger";
+import { getRegistryIndex } from "../utils/registry";
+import { 
+  promptWithNav, 
+  promptForMultipleItems, 
+  confirmAction,
+  NAV_BACK,
+  NAV_NEXT,
+} from "../utils/cli-prompts";
 
-let isShuttingDown = false;
-
-const cleanup = async () => {
-    if (isShuttingDown) return;
-    isShuttingDown = true;
-
-    logger.info("\nOperation cancelled by user. Cleaning up...");
-    try {
-        await adapter.close();
-        logger.info("Database connection closed successfully.");
-        process.exit(0); // Exit successfully after cleanup
-    } catch (error) {
-        logger.error("Error while closing database connection:", error);
-        process.exit(1); // Exit with error if cleanup fails
-    }
-};
-
-process.on("SIGINT", cleanup);
-process.on("SIGTERM", cleanup);
-
-async function withConnection(action: () => Promise<void>) {
-    let initialized = false;
-    try {
-        adapter.init();
-        initialized = true;
-        await action();
-        process.exit(0);
-    } catch (error) {
-        if (!isShuttingDown) {
-            logger.error("Error during command execution:", error);
-        }
-        throw error;
-    } finally {
-        if (initialized && !isShuttingDown) {
-            try {
-                await adapter.close();
-            } catch (error) {
-                logger.error("Error while closing database connection:", error);
-            }
-        }
-    }
-}
+import { withConnection } from "../utils/with-connection";
 
 
 const characterSchema = z.object({
@@ -78,66 +45,13 @@ export const character = new Command()
   .name("character")
   .description("manage characters");
 
-const NAV_BACK = "__back__";
-const NAV_NEXT = "__next__";
-
-/**
- * Prompt helper with navigation.
- * Short instructions: type "back", "next" or "cancel".
- */
-async function promptWithNav(
-  label: string,
-  initial = "",
-  validate?: (val: string) => true | string
-): Promise<string> {
-  const msg = `${label}${initial ? ` (current: ${initial})` : ""}`;
-  const res = await prompts({
-    type: "text",
-    name: "value",
-    message: msg,
-    initial,
-    validate,
-  });
-  const input = (res.value !== undefined ? res.value.trim() : "");
-  if (input.toLowerCase() === "cancel") return "cancel";
-  if (input.toLowerCase() === "back") return NAV_BACK;
-  if (input === "" && initial) return initial; // Return initial value if empty input
-  if (input === "" || input.toLowerCase() === "next") return NAV_NEXT;
-  return input;
-}
-
-/**
- * Prompt for multiple items (one by one).
- */
-async function promptForMultipleItems(fieldName: string, initial: string[] = []): Promise<string[]> {
-  const items = [...initial];
-  logger.info(`\n${fieldName}`);
-  if (initial.length > 0) {
-    logger.info("Current values:");
-    initial.forEach((item, i) => logger.info(`  ${i + 1}. ${item}`));
-    logger.info("\nPress Enter to keep existing values, or start typing new ones:");
-  }
-  
-  while (true) {
-    const val = await promptWithNav(`> ${fieldName}:`);
-    if (val === NAV_NEXT) break;
-    if (val === NAV_BACK) {
-      if (items.length === initial.length) return initial; // Return original values if no changes
-      break;
-    }
-    if (val === "cancel") return initial;
-    items.push(val);
-  }
-  return items;
-}
-
 /**
  * Collects a conversation example.
  * Messages alternate starting with the user.
  */
 async function collectSingleConversation(characterName: string, initial?: MessageExample[]): Promise<MessageExample[] | null> {
   const msgs: MessageExample[] = [...(initial || [])];
-  let role: "user" | "character" = initial?.length ? (initial[initial.length - 1].user === characterName ? "user" : "character") : "user";
+  let role: "user" | "character" = initial?.length ? (initial[initial.length - 1].user === "{{user1}}" ? "user" : "character") : "user";
   
   logger.info("\nEnter conversation messages (alternating user/character)");
   if (initial?.length) {
@@ -156,13 +70,7 @@ async function collectSingleConversation(characterName: string, initial?: Messag
     const label = role === "user" ? "User Message" : `${characterName} Response`;
     const input = await promptWithNav(label, "", (val) => role === "user" || val ? true : "Enter a message");
     if (input === "cancel") return initial || null;
-    if (input === NAV_NEXT) {
-      if (msgs.length === 0) {
-        logger.info("At least one message is required. Type 'cancel' to skip message examples entirely.");
-        continue;
-      }
-      break;
-    }
+    if (input === NAV_NEXT) break;
     if (input === NAV_BACK) continue;
     msgs.push({
       user: role === "user" ? "{{user1}}" : characterName,
@@ -215,6 +123,16 @@ async function collectMessageExamples(characterName: string, initial: MessageExa
  */
 async function collectCharacterData(initialData?: Partial<CharacterFormData>): Promise<CharacterFormData | null> {
   const data: Partial<CharacterFormData> = { ...initialData };
+  
+  // Fetch plugin registry in advance
+  let pluginRegistry: Record<string, string>;
+  try {
+    pluginRegistry = await getRegistryIndex();
+  } catch (error) {
+    logger.error("Error fetching plugins from registry:", error);
+    pluginRegistry = {};
+  }
+
   logger.info("\n=== Create Your Character ===");
   logger.info("Navigation Instructions:");
   logger.info("- Press Enter or type 'next' to move forward");
@@ -241,11 +159,25 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
       }
     },
     { key: "adjectives", prompt: async () => {
-        const items = await promptForMultipleItems("Adjectives", data.adjectives || []);
-        if (items.length < 3) {
-          logger.error("Require at least 3 adjectives.");
-          return await fields[2].prompt();
+        // Start with any existing adjectives from data
+        let items = [...(data.adjectives || [])];
+
+        // This helper will prompt for multiple items and append them:
+        async function promptAdjectives() {
+          const newItems = await promptForMultipleItems("Adjectives", items);
+          // If the user typed "cancel", promptForMultipleItems might just return the original array
+          items = newItems;
         }
+
+        // Prompt the user once:
+        await promptAdjectives();
+        // If under 3 adjectives, prompt again in a loop until the user provides at least 3 (or cancels):
+        while (items.length < 3) {
+          logger.error(`Require at least 3 adjectives, but you only provided ${items.length}. Please enter additional adjectives.`);
+          await promptAdjectives();
+        }
+
+        // Now that we have 3 or more, save them:
         data.adjectives = items;
         return "success";
       }
@@ -257,10 +189,12 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
       }
     },
     { key: "plugins", prompt: async () => {
-        const pluginChoices = Object.keys(availablePlugins).map(plugin => ({
+        // Use pre-fetched plugin registry
+        const pluginChoices = Object.keys(pluginRegistry).map(plugin => ({
           title: plugin,
           value: plugin,
-          selected: data.plugins?.includes(plugin) || false
+          selected: data.plugins?.includes(plugin) || false,
+          description: pluginRegistry[plugin]
         }));
 
         if (pluginChoices.length === 0) {
@@ -270,7 +204,6 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
         }
 
         logger.info("\nSelect plugins for your character:");
-        logger.info("Use space to select/deselect, arrow keys to move, enter to confirm");
         
         const { selectedPlugins } = await prompts({
           type: 'multiselect',
@@ -373,95 +306,8 @@ function getDefaultCharacterFields(existing?: Partial<Character>) {
   };
 }
 
-/**
- * Format message examples into readable conversation format
- */
-function formatMessageExamples(examples: MessageExample[][]): string {
-  if (!examples || examples.length === 0) return "No message examples";
-  
-  return examples.map((conversation, i) => {
-    const messages = conversation.map(msg => {
-      const user = msg.user === "{{user1}}" ? "User" : msg.user;
-      return `  ${user}: ${msg.content.text}`;
-    }).join("\n");
-    return `\nConversation ${i + 1}:\n${messages}`;
-  }).join("\n");
-}
 
-/**
- * Display character data
- */
-function displayCharacter(data: Partial<Character>, title = "Character Review"): void {
-  logger.info(`\n=== ${title} ===`);
-  
-  // Display basic info
-  logger.info(`Name: ${data.name}`);
-  logger.info(`Username: ${data.username || data.name?.toLowerCase().replace(/\s+/g, "_")}`);
-  
-  // Display bio
-  logger.info("\nBio:");
-  for (const line of (Array.isArray(data.bio) ? data.bio : [data.bio])) {
-    logger.info(`  ${line}`);
-  }
-  
-  // Display adjectives
-  logger.info("\nAdjectives:");
-  for (const adj of (data.adjectives || [])) {
-    logger.info(`  ${adj}`);
-  }
-  
-  // Display topics
-  if (data.topics && data.topics.length > 0) {
-    logger.info("\nTopics:");
-    for (const topic of data.topics) {
-      logger.info(`  ${topic}`);
-    }
-  }
-  
-  // Display plugins
-  if (data.plugins && data.plugins.length > 0) {
-    logger.info("\nPlugins:");
-    for (const plugin of data.plugins) {
-      logger.info(`  ${plugin}`);
-    }
-  }
-  
-  // Display style
-  if (data.style) {
-    if (data.style.all && data.style.all.length > 0) {
-      logger.info("\nGeneral Style:");
-      for (const style of data.style.all) {
-        logger.info(`  ${style}`);
-      }
-    }
-    if (data.style.chat && data.style.chat.length > 0) {
-      logger.info("\nChat Style:");
-      for (const style of data.style.chat) {
-        logger.info(`  ${style}`);
-      }
-    }
-    if (data.style.post && data.style.post.length > 0) {
-      logger.info("\nPost Style:");
-      for (const style of data.style.post) {
-        logger.info(`  ${style}`);
-      }
-    }
-  }
-  
-  // Display post examples
-  if (data.postExamples && data.postExamples.length > 0) {
-    logger.info("\nPost Examples:");
-    for (const post of data.postExamples) {
-      logger.info(`  ${post}`);
-    }
-  }
-  
-  // Display message examples
-  if (data.messageExamples && data.messageExamples.length > 0) {
-    logger.info("\nMessage Examples:");
-    logger.info(formatMessageExamples(data.messageExamples));
-  }
-}
+
 
 /**
  * Display character data for review and get confirmation
@@ -484,12 +330,17 @@ async function reviewCharacter(data: Partial<Character>): Promise<boolean> {
 //
 
 character.command("list")
+  .alias("ls")
   .description("list all characters")
-  .action(async () => {
+  .option("-j, --json", "output as JSON")
+  .action(async (opts) => {
     await withConnection(async () => {
       const chars = await adapter.listCharacters();
-      if (chars.length === 0) logger.info("No characters found");
-      else {
+      if (chars.length === 0) {
+        logger.info("No characters found");
+      } else if (opts.json) {
+        logger.info(JSON.stringify(chars, null, 2));
+      } else {
         logger.info("\nCharacters:");
         console.table(chars.map(c => ({ name: c.name, bio: c.bio[0] })));
       }
@@ -497,16 +348,33 @@ character.command("list")
   });
 
 character.command("create")
+  .alias("new")
   .description("create a new character")
-  .action(async () => {
+  .option("-i, --import <file>", "import from JSON file")
+  .option("-y, --yes", "skip confirmation")
+  .action(async (opts) => {
     await withConnection(async () => {
-      const formData = await collectCharacterData();
+      let formData: CharacterFormData | null = null;
+      
+      if (opts.import) {
+        try {
+          const raw = await fs.promises.readFile(opts.import, "utf8");
+          formData = characterSchema.parse(JSON.parse(raw));
+        } catch (error) {
+          logger.error(`Failed to import file: ${error.message}`);
+          return;
+        }
+      } else {
+        formData = await collectCharacterData();
+      }
+
       if (!formData) {
         logger.info("Creation cancelled");
         return;
       }
+
       const charData = {
-        ...getDefaultCharacterFields(),  // Default field values first in case of missing data
+        ...getDefaultCharacterFields(),
         name: formData.name,
         username: formData.username,
         bio: formData.bio,
@@ -514,7 +382,7 @@ character.command("create")
         postExamples: formData.postExamples,
         messageExamples: (formData.messageExamples || []).map(conversation => 
           conversation.map(msg => ({
-            user: msg.user || "{{user1}}",  // Ensure user is never undefined
+            user: msg.user || "{{user1}}",
             content: msg.content
           }))
         ),
@@ -525,9 +393,9 @@ character.command("create")
           chat: formData.style?.chat || [],
           post: formData.style?.post || []
         }
-      } as Character;  // Cast the entire object to Character type
+      } as Character;
 
-      if (await reviewCharacter(charData)) {
+      if (opts.yes || await reviewCharacter(charData)) {
         await adapter.createCharacter(charData);
         logger.success(`Created character ${charData.name}`);
       } else {
@@ -537,13 +405,16 @@ character.command("create")
   });
 
 character.command("edit")
+  .alias("e")
   .description("edit a character")
-  .requiredOption("-c, --character <name>", "character name")
+  .requiredOption("-n, --name <name>", "character name")
+  .option("-y, --yes", "skip confirmation")
+  .option("-f, --field <field>", "edit specific field (bio, adjectives, topics, style, plugins, examples)")
   .action(async (opts) => {
     await withConnection(async () => {
-      const existing = await adapter.getCharacter(opts.character);
+      const existing = await adapter.getCharacter(opts.name);
       if (!existing) {
-        logger.error(`Character ${opts.character} not found`);
+        logger.error(`Character ${opts.name} not found`);
         return;
       }
 
@@ -570,19 +441,21 @@ character.command("edit")
           post: existing.style?.post || []
         },
       });
+
       if (!formData) {
         logger.info("Editing cancelled");
         return;
       }
+
       const updated = {
-        ...getDefaultCharacterFields(existing),  // Include existing data in defaults
+        ...getDefaultCharacterFields(existing),
         name: formData.name,
         bio: formData.bio || [],
         adjectives: formData.adjectives || [],
         postExamples: formData.postExamples || [],
         messageExamples: (formData.messageExamples || []).map(conversation => 
           conversation.map(msg => ({
-            user: msg.user || "unknown",  // Ensure user is never undefined
+            user: msg.user || "unknown",
             content: msg.content
           }))
         ),
@@ -593,10 +466,10 @@ character.command("edit")
           chat: formData.style?.chat || [],
           post: formData.style?.post || []
         }
-      } as Character;  // Cast the entire object to Character type
+      } as Character;
 
-      if (await reviewCharacter(updated)) {
-        await adapter.updateCharacter(opts.character, updated);
+      if (opts.yes || await reviewCharacter(updated)) {
+        await adapter.updateCharacter(opts.name, updated);
         logger.success(`Updated character ${formData.name} successfully`);
       } else {
         logger.info("Update cancelled");
@@ -605,19 +478,16 @@ character.command("edit")
   });
 
 character.command("import")
+  .alias("i")
   .description("import a character from file")
-  .requiredOption("-f, --file <file>", "JSON file path")
-  .action(async (opts) => {
+  .argument("<file>", "JSON file path")
+  .option("-y, --yes", "skip confirmation")
+  .action(async (file, opts) => {
     await withConnection(async () => {
       try {
-        const filePath = opts.file || (await promptWithNav("Path to JSON file:"));
-        if (!filePath || filePath === NAV_NEXT) {
-          logger.info("Import cancelled");
-          return;
-        }
-        const raw = await fs.promises.readFile(filePath, "utf8");
+        const raw = await fs.promises.readFile(file, "utf8");
         const parsed = characterSchema.parse(JSON.parse(raw));
-        await adapter.createCharacter({
+        const charData = {
           name: parsed.name,
           bio: parsed.bio || [],
           adjectives: parsed.adjectives || [],
@@ -630,8 +500,38 @@ character.command("import")
             post: parsed.style?.post || [],
           },
           plugins: parsed.plugins || [],
-        });
-        logger.success(`Imported character ${parsed.name}`);
+        };
+
+        // Check if a character with the same name already exists.
+        const existing = await adapter.getCharacter(parsed.name);
+        if (existing) {
+          logger.warn(`Character "${parsed.name}" already exists.`);
+          let proceed: boolean;
+          if (opts.yes) {
+            proceed = true;
+          } else {
+            proceed = await confirmAction(`Do you want to replace the existing character "${parsed.name}"?`);
+          }
+          if (!proceed) {
+            logger.info("Import cancelled");
+            return;
+          }
+
+          // Optionally review the character before replacing if not skipping confirmation.
+          if (!(opts.yes || await reviewCharacter(charData))) {
+            logger.info("Replacement cancelled");
+            return;
+          }
+          await adapter.updateCharacter(parsed.name, charData);
+          logger.success(`Replaced character "${parsed.name}" successfully`);
+        } else {
+          if (opts.yes || await reviewCharacter(charData)) {
+            await adapter.createCharacter(charData);
+            logger.success(`Imported character "${parsed.name}" successfully`);
+          } else {
+            logger.info("Import cancelled");
+          }
+        }
       } catch (error) {
         handleError(error);
       }
@@ -639,34 +539,46 @@ character.command("import")
   });
 
 character.command("export")
+  .alias("x")
   .description("export a character to file")
-  .requiredOption("-c, --character <name>", "character name")
+  .requiredOption("-n, --name <name>", "character name")
   .option("-o, --output <file>", "output file path")
+  .option("-p, --pretty", "pretty print JSON")
   .action(async (opts) => {
     await withConnection(async () => {
-      const characterData = await adapter.getCharacter(opts.character);
+      const characterData = await adapter.getCharacter(opts.name);
       if (!characterData) {
-        logger.error(`Character ${opts.character} not found`);
+        logger.error(`Character ${opts.name} not found`);
         return;
       }
       const outputPath = opts.output || `${characterData.name}.json`;
-      await fs.promises.writeFile(outputPath, JSON.stringify(characterData, null, 2));
+      await fs.promises.writeFile(
+        outputPath, 
+        JSON.stringify(characterData, null, opts.pretty ? 2 : undefined)
+      );
       logger.success(`Exported character to ${outputPath}`);
     });
   });
 
 character.command("remove")
+  .alias("rm")
   .description("remove a character")
-  .requiredOption("<character-name>", "character name")
+  .requiredOption("-n, --name <name>", "character name")
+  .option("-f, --force", "skip confirmation")
   .action(async (opts) => {
     await withConnection(async () => {
-      const exists = await adapter.getCharacter(opts.character);
+      const exists = await adapter.getCharacter(opts.name);
       if (!exists) {
-        logger.error(`Character ${opts.character} not found`);
+        logger.error(`Character ${opts.name} not found`);
         return;
       }
-      await adapter.removeCharacter(opts.character);
-      logger.success(`Removed character ${opts.character}`);
+
+      if (opts.force || await confirmAction(`Are you sure you want to remove character "${opts.name}"?`)) {
+        await adapter.removeCharacter(opts.name);
+        logger.success(`Removed character ${opts.name}`);
+      } else {
+        logger.info("Removal cancelled");
+      }
     });
   });
 

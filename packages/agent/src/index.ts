@@ -1,4 +1,3 @@
-// dotenv
 import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
@@ -24,17 +23,19 @@ import {
 import { teePlugin } from "@elizaos/plugin-tee";
 import fs from "node:fs";
 import net from "node:net";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import yargs from "yargs";
+import { AgentServer } from "./server/index.ts";
+import {
+  hasValidRemoteUrls,
+  loadCharacters,
+  loadCharacterTryPath,
+  jsonToCharacter
+} from "./server/loader.ts";
 import { defaultCharacter } from "./single-agent/character.ts";
-import { CharacterServer } from "./server/index.ts";
 import { startScenario } from "./swarm/scenario.ts";
 
 import swarm from "./swarm/index";
 
-const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-const __dirname = path.dirname(__filename); // get the name of the directory
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
   const waitTime =
@@ -42,7 +43,7 @@ export const wait = (minTime = 1000, maxTime = 3000) => {
   return new Promise((resolve) => setTimeout(resolve, waitTime));
 };
 
-export const logFetch = async (url: string, options: any) => {
+export const logFetch = async (url: string, options: RequestInit) => {
   logger.debug(`Fetching ${url}`);
   // Disabled to avoid disclosure of sensitive information such as API keys
   // logger.debug(JSON.stringify(options, null, 2));
@@ -85,216 +86,7 @@ export function parseArguments(): {
   }
 }
 
-export function tryLoadFile(filePath: string): string | null {
-  try {
-    return fs.readFileSync(filePath, "utf8");
-  } catch (_e) {
-    return null;
-  }
-}
 
-export function mergeCharacters(base: Character, child: Character): Character {
-  const mergeObjects = (baseObj: any, childObj: any) => {
-    const result: any = {};
-    const keys = new Set([
-      ...Object.keys(baseObj || {}),
-      ...Object.keys(childObj || {}),
-    ]);
-    for (const key of keys) {
-      if (
-        typeof baseObj[key] === "object" &&
-        typeof childObj[key] === "object" &&
-        !Array.isArray(baseObj[key]) &&
-        !Array.isArray(childObj[key])
-      ) {
-        result[key] = mergeObjects(baseObj[key], childObj[key]);
-      } else if (Array.isArray(baseObj[key]) || Array.isArray(childObj[key])) {
-        result[key] = [...(baseObj[key] || []), ...(childObj[key] || [])];
-      } else {
-        result[key] =
-          childObj[key] !== undefined ? childObj[key] : baseObj[key];
-      }
-    }
-    return result;
-  };
-  return mergeObjects(base, child);
-}
-
-async function loadCharactersFromUrl(url: string): Promise<Character[]> {
-  try {
-    const response = await fetch(url);
-    const responseJson = await response.json();
-
-    let characters: Character[] = [];
-    if (Array.isArray(responseJson)) {
-      characters = await Promise.all(
-        responseJson.map((character) => jsonToCharacter(url, character))
-      );
-    } else {
-      const character = await jsonToCharacter(url, responseJson);
-      characters.push(character);
-    }
-    return characters;
-  } catch (e) {
-    logger.error(`Error loading character(s) from ${url}: ${e}`);
-    process.exit(1);
-  }
-}
-
-async function jsonToCharacter(
-  _filePath: string,
-  character: any
-): Promise<Character> {
-  validateCharacterConfig(character);
-
-  // .id isn't really valid
-  const characterId = character.id || character.name;
-  const characterPrefix = `CHARACTER.${characterId
-    .toUpperCase()
-    .replace(/ /g, "_")}.`;
-  const characterSettings = Object.entries(process.env)
-    .filter(([key]) => key.startsWith(characterPrefix))
-    .reduce((settings, [key, value]) => {
-      const settingKey = key.slice(characterPrefix.length);
-      return { ...settings, [settingKey]: value };
-    }, {});
-  if (Object.keys(characterSettings).length > 0) {
-    character.settings = character.settings || {};
-    character.secrets = {
-      ...characterSettings,
-      ...(character.secrets || {}),
-      ...(character.settings?.secrets || {}),
-    };
-  }
-
-  return character;
-}
-
-async function loadCharacter(filePath: string): Promise<Character> {
-  const content = tryLoadFile(filePath);
-  if (!content) {
-    throw new Error(`Character file not found: ${filePath}`);
-  }
-  const character = JSON.parse(content);
-  return jsonToCharacter(filePath, character);
-}
-
-async function loadCharacterTryPath(characterPath: string): Promise<Character> {
-  let content: string | null = null;
-  let resolvedPath = "";
-
-  // Try different path resolutions in order
-  const pathsToTry = [
-    characterPath, // exact path as specified
-    path.resolve(process.cwd(), "..", "..", characterPath), // relative to root directory
-    path.resolve(process.cwd(), characterPath), // relative to cwd
-    path.resolve(process.cwd(), "agent", characterPath), // Add this
-    path.resolve(__dirname, characterPath), // relative to current script
-    path.resolve(__dirname, "characters", path.basename(characterPath)), // relative to agent/characters
-    path.resolve(__dirname, "../characters", path.basename(characterPath)), // relative to characters dir from agent
-    path.resolve(__dirname, "../../characters", path.basename(characterPath)), // relative to project root characters dir
-  ];
-
-  logger.info(
-    "Trying paths:",
-    pathsToTry.map((p) => ({
-      path: p,
-      exists: fs.existsSync(p),
-    }))
-  );
-
-  for (const tryPath of pathsToTry) {
-    content = tryLoadFile(tryPath);
-    if (content !== null) {
-      resolvedPath = tryPath;
-      break;
-    }
-  }
-
-  if (content === null) {
-    logger.error(
-      `Error loading character from ${characterPath}: File not found in any of the expected locations`
-    );
-    logger.error("Tried the following paths:");
-    for (const p of pathsToTry) {
-      logger.error(` - ${p}`);
-    }
-    throw new Error(
-      `Error loading character from ${characterPath}: File not found in any of the expected locations`
-    );
-  }
-  try {
-    const character: Character = await loadCharacter(resolvedPath);
-    logger.info(`Successfully loaded character from: ${resolvedPath}`);
-    return character;
-  } catch (e) {
-    logger.error(`Error parsing character from ${resolvedPath}: ${e}`);
-    throw new Error(`Error parsing character from ${resolvedPath}: ${e}`);
-  }
-}
-
-function commaSeparatedStringToArray(commaSeparated: string): string[] {
-  return commaSeparated?.split(",").map((value) => value.trim());
-}
-
-async function readCharactersFromStorage(
-  characterPaths: string[]
-): Promise<string[]> {
-  try {
-    const uploadDir = path.join(process.cwd(), "data", "characters");
-    await fs.promises.mkdir(uploadDir, { recursive: true });
-    const fileNames = await fs.promises.readdir(uploadDir);
-    for (const fileName of fileNames) {
-      characterPaths.push(path.join(uploadDir, fileName));
-    }
-  } catch (err) {
-    logger.error(`Error reading directory: ${err.message}`);
-  }
-
-  return characterPaths;
-}
-
-export async function loadCharacters(
-  charactersArg: string
-): Promise<Character[]> {
-  let characterPaths = commaSeparatedStringToArray(charactersArg);
-
-  if (process.env.USE_CHARACTER_STORAGE === "true") {
-    characterPaths = await readCharactersFromStorage(characterPaths);
-  }
-
-  const loadedCharacters: Character[] = [];
-
-  if (characterPaths?.length > 0) {
-    for (const characterPath of characterPaths) {
-      try {
-        const character: Character = await loadCharacterTryPath(characterPath);
-        loadedCharacters.push(character);
-      } catch (e) {
-        logger.error(`Error loading character from ${characterPath}: ${e}`);
-        process.exit(1);
-      }
-    }
-  }
-
-  if (hasValidRemoteUrls()) {
-    logger.info("Loading characters from remote URLs");
-    const characterUrls = commaSeparatedStringToArray(
-      process.env.REMOTE_CHARACTER_URLS
-    );
-    for (const characterUrl of characterUrls) {
-      const characters = await loadCharactersFromUrl(characterUrl);
-      loadedCharacters.push(...characters);
-    }
-  }
-
-  if (loadedCharacters.length === 0) {
-    logger.info("No characters found, using default character");
-    loadedCharacters.push(defaultCharacter);
-  }
-
-  return loadedCharacters;
-}
 
 export async function createAgent(
   character: Character
@@ -401,7 +193,7 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
 
 async function startAgent(
   character: Character,
-  characterServer: CharacterServer,
+  server: AgentServer,
   init?: (runtime: IAgentRuntime) => Promise<void>
 ): Promise<IAgentRuntime> {
   let db: IDatabaseAdapter & IDatabaseCacheAdapter;
@@ -420,6 +212,12 @@ async function startAgent(
     db = await findDatabaseAdapter(runtime);
     runtime.databaseAdapter = db;
 
+    // Make sure character exists in database
+    await runtime.ensureCharacterExists(character);
+
+    // Make sure agent points to character in database
+    // TODO
+
     // initialize cache
     const cache = initializeCache(
       runtime.getSetting("CACHE_STORE") ?? CacheStore.DATABASE,
@@ -436,7 +234,7 @@ async function startAgent(
     await runtime.initialize();
 
     // add to container
-    characterServer.registerAgent(runtime);
+    server.registerAgent(runtime);
 
     // report to console
     logger.debug(`Started ${character.name} as ${runtime.agentId}`);
@@ -458,7 +256,6 @@ async function startAgent(
 const checkPortAvailable = (port: number): Promise<boolean> => {
   return new Promise((resolve) => {
     const server = net.createServer();
-
     server.once("error", (err: NodeJS.ErrnoException) => {
       if (err.code === "EADDRINUSE") {
         resolve(false);
@@ -474,16 +271,16 @@ const checkPortAvailable = (port: number): Promise<boolean> => {
   });
 };
 
-const hasValidRemoteUrls = () =>
-  process.env.REMOTE_CHARACTER_URLS &&
-  process.env.REMOTE_CHARACTER_URLS !== "" &&
-  process.env.REMOTE_CHARACTER_URLS.startsWith("http");
-
 const startAgents = async () => {
-  const characterServer = new CharacterServer();
+  const server = new AgentServer();
   let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
   const args = parseArguments();
   const charactersArg = args.characters || args.character;
+  let characters = [];
+
+  // Assign the character loading functions
+  server.loadCharacterTryPath = loadCharacterTryPath;
+  server.jsonToCharacter = jsonToCharacter;
 
   if (args.swarm) {
     try {
@@ -491,7 +288,7 @@ const startAgents = async () => {
       for (const swarmMember of swarm) {
         const runtime = await startAgent(
           swarmMember.character,
-          characterServer,
+          server,
           swarmMember.init
         );
         members.push(runtime);
@@ -514,7 +311,7 @@ const startAgents = async () => {
 
     try {
       for (const character of characters) {
-        await startAgent(character, characterServer);
+          await startAgent(character, server);
       }
     } catch (error) {
       logger.error("Error starting agents:", error);
@@ -527,15 +324,13 @@ const startAgents = async () => {
     serverPort++;
   }
 
-  characterServer.startAgent = async (character) => {
+  server.startAgent = async (character) => {
     logger.info(`Starting agent for character ${character.name}`);
-    return startAgent(character, characterServer);
+    return startAgent(character, server);
   };
 
-  characterServer.loadCharacterTryPath = loadCharacterTryPath;
-  characterServer.jsonToCharacter = jsonToCharacter;
 
-  characterServer.start(serverPort);
+  server.start(serverPort);
 
   if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
     logger.log(`Server started on alternate port ${serverPort}`);
