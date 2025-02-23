@@ -14,7 +14,7 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      TURBO_CACHE=remote:rw
+      TURBO_CACHE: remote:rw
     steps:
       - uses: actions/checkout@v4
         with:
