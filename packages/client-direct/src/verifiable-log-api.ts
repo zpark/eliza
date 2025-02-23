@@ -10,7 +10,7 @@ import type {
 } from "@elizaos/plugin-tee-verifiable-log";
 
 export function createVerifiableLogApiRouter(
-    agents: Map<string, AgentRuntime>
+    agents: Map<string, IAgentRuntime>
 ):Router {
     const router = express.Router();
     router.use(cors());
