@@ -1,6 +1,6 @@
-import { DrizzleDatabaseAdapter } from "@elizaos/plugin-sql";
+import { createDatabaseAdapter } from "@elizaos/plugin-sql";
 
-// Initialize database adapter
-export const adapter = new DrizzleDatabaseAdapter({
-  connectionString: process.env.POSTGRES_URL,
+export const adapter = createDatabaseAdapter({
+  dataDir: process.env.PGLITE_DATA_DIR,
+  postgresUrl: process.env.POSTGRES_URL,
 });
