@@ -656,12 +656,16 @@ export class DirectClient {
             "/fine-tune/:assetId",
             async (req: express.Request, res: express.Response) => {
                 const assetId = req.params.assetId;
-                const downloadDir = path.join(
-                    process.cwd(),
-                    "downloads",
-                    assetId
-                );
 
+                const ROOT_DIR = path.join(process.cwd(), "downloads");
+                const downloadDir = path.resolve(ROOT_DIR, assetId);
+
+                if (!downloadDir.startsWith(ROOT_DIR)) {
+                    res.status(403).json({
+                        error: "Invalid assetId. Access denied.",
+                    });
+                    return;
+                }
                 elizaLogger.log("Download directory:", downloadDir);
 
                 try {
