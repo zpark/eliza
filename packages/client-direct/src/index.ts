@@ -111,7 +111,7 @@ Response format should be formatted in a JSON block like this:
 
 export class DirectClient {
     public app: express.Application;
-    private agents: Map<string, AgentRuntime>; // container management
+    private agents: Map<string, IAgentRuntime>; // container management
     private server: any; // Store server instance
     public startAgent: Function; // Store startAgent functor
     public loadCharacterTryPath: Function; // Store loadCharacterTryPath functor
@@ -979,13 +979,13 @@ export class DirectClient {
     }
 
     // agent/src/index.ts:startAgent calls this
-    public registerAgent(runtime: AgentRuntime) {
+    public registerAgent(runtime: IAgentRuntime) {
         // register any plugin endpoints?
         // but once and only once
         this.agents.set(runtime.agentId, runtime);
     }
 
-    public unregisterAgent(runtime: AgentRuntime) {
+    public unregisterAgent(runtime: IAgentRuntime) {
         this.agents.delete(runtime.agentId);
     }
 
