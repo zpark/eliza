@@ -53,6 +53,9 @@ import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import { createPublicClient, http } from "viem";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
@@ -1734,6 +1737,15 @@ export const generateImage = async (
                           return runtime.getSetting("LIVEPEER_GATEWAY_URL");
                       case ModelProviderName.SECRETAI:
                           return runtime.getSetting("SECRET_AI_API_KEY");
+                      case ModelProviderName.NEARAI:
+                          try {
+                            // Read auth config from ~/.nearai/config.json if it exists
+                            const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.nearai/config.json'), 'utf8'));
+                            return JSON.stringify(config?.auth);
+                          } catch (e) {
+                            elizaLogger.warn(`Error loading NEAR AI config. The environment variable NEARAI_API_KEY will be used. ${e}`);
+                          }
+                          return runtime.getSetting("NEARAI_API_KEY");
                       default:
                           // If no specific match, try the fallback chain
                           return (
@@ -2279,6 +2291,8 @@ export async function handleProvider(
             return await handleLivepeer(options);
         case ModelProviderName.SECRETAI:
             return await handleSecretAi(options);
+        case ModelProviderName.NEARAI:
+            return await handleNearAi(options);
         default: {
             const errorMessage = `Unsupported provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -2653,6 +2667,34 @@ async function handleSecretAi({
     const secretAi = secretAiProvider(model);
     return await aiGenerateObject({
         model: secretAi,
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+}
+
+/**
+ * Handles object generation for NEAR AI models.
+ *
+ * @param {ProviderOptions} options - Options specific to NEAR AI.
+ * @returns {Promise<GenerateObjectResult<unknown>>} - A promise that resolves to generated objects.
+ */
+async function handleNearAi({
+    model,
+    apiKey,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode = "json",
+    modelOptions,
+}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    const nearai = createOpenAI({ apiKey, baseURL: models.nearai.endpoint });
+    // Require structured output if schema is provided
+    const settings = schema ? { structuredOutputs: true } : undefined;
+    return await aiGenerateObject({
+        model: nearai.languageModel(model, settings),
         schema,
         schemaName,
         schemaDescription,
