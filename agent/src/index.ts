@@ -24,6 +24,7 @@ import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
 
 import fs from "fs";
 import net from "net";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
@@ -545,6 +546,23 @@ export function getTokenForProvider(
                 character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
                 settings.LIVEPEER_GATEWAY_URL
             );
+        case ModelProviderName.SECRETAI:
+            return (
+                character.settings?.secrets?.SECRET_AI_API_KEY ||
+                settings.SECRET_AI_API_KEY
+            );
+        case ModelProviderName.NEARAI:
+            try {
+                const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.nearai/config.json'), 'utf8'));
+                return JSON.stringify(config?.auth);
+            } catch (e) {
+                elizaLogger.warn(`Error loading NEAR AI config: ${e}`);
+            }
+            return (
+                character.settings?.secrets?.NEARAI_API_KEY ||
+                settings.NEARAI_API_KEY
+            );
+
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);

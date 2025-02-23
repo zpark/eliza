@@ -120,6 +120,10 @@ Model configurations by provider
 
 > **livepeer**: [`Model`](Model.md)
 
+### nearai
+
+> **nearai**: [`Model`](Model.md)
+
 ### deepseek
 
 > **deepseek**: [`Model`](Model.md)
