@@ -14,12 +14,20 @@
             "outputs": ["dist/**"],
             "dependsOn": ["^@elizaos/core#build"]
         },
+        "@elizaos/client-direct#build": {
+            "outputs": ["dist/**"],
+            "dependsOn": [
+                "@elizaos/plugin-image-generation#build",
+                "@elizaos/plugin-tee-log#build",
+                "@elizaos/plugin-tee-verifiable-log#build"
+            ]
+        },
         "eliza-docs#build": {
             "outputs": ["build/**"]
         },
         "dev": {
             "persistent": true,
-            "cache": false
+            "cache": true
         }
     }
 }
