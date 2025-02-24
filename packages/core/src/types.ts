@@ -1086,6 +1086,8 @@ export interface IAgentRuntime {
 
   getUserProfile(userId: UUID): Promise<Account | null>;
 
+  getWorld(worldId: UUID): Promise<WorldData | null>;
+  
   ensureWorldExists({
     id,
     name,
