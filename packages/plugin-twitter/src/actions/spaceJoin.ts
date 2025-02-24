@@ -8,6 +8,7 @@ import {
     HandlerCallback
 } from "@elizaos/core";
 import { Tweet } from "../client";
+import { SpaceActivity } from "../spaces";
 
 export default {
     name: "JOIN_TWITTER_SPACE",
@@ -64,60 +65,69 @@ export default {
             return false;
         }
 
+        if (spaceManager.spaceStatus !== SpaceActivity.IDLE) {
+            console.warn("currently hosting/participating a space");
+            return false;
+        }
+
         const tweet = message.content.tweet as Tweet;
         if (!tweet) {
             console.error("space action - no tweet found in message")
             return false;
         }
 
+        async function joinSpaceByUrls(tweet: Tweet): Promise<boolean> {
+            if (!tweet.urls) return false;
 
-        async function joinSpaceByUrls(tweet: any): Promise<boolean> {
-            if (tweet.urls) {
-                for (const url of tweet.urls) {
-                    const match = url.match(/https:\/\/x\.com\/i\/spaces\/([a-zA-Z0-9]+)/);
-                    if (match) {
-                        const spaceId = match[1];
-                        const space = await client.twitterClient.getAudioSpaceById(spaceId);
-                        if (space?.metadata?.state === 'Running') {
-                            
-                            try {
-                                const space = await spaceManager.joinSpace(spaceId);
-                                return !!space;
-                            } catch(error) {
-                                console.error(error)
-                            }
+            for (const url of tweet.urls) {
+                const match = url.match(/https:\/\/x\.com\/i\/spaces\/([a-zA-Z0-9]+)/);
+                if (match) {
+                    const spaceId = match[1];
+                    try {
+                        const spaceInfo = await client.twitterClient.getAudioSpaceById(spaceId);
+                        if (spaceInfo?.metadata?.state === "Running") {
+                            const spaceJoined = await spaceManager.joinSpace(spaceId);
+                            return !!spaceJoined;
                         }
+                    } catch (error) {
+                        console.error("Error joining Twitter Space:", error);
                     }
                 }
             }
             return false;
         }
-        
-        async function joinSpaceByUserName(userName: string) {
-          const tweetGenerator = client.twitterClient.getTweets(userName);
 
-          for await (const tweet of tweetGenerator) {
-            const space = await joinSpaceByUrls(tweet);
-            if (space) {
-                return true;
+        async function joinSpaceByUserName(userName: string): Promise<boolean> {
+            try {
+                const tweetGenerator = client.twitterClient.getTweets(userName);
+                for await (const userTweet of tweetGenerator) {
+                    if (await joinSpaceByUrls(userTweet)) {
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error(`Error fetching tweets for ${userName}:`, error);
             }
-          }
+            return false;
         }
 
-        // Attempt to join a Twitter Space from URLs found in the tweet
-        await joinSpaceByUrls(tweet);
-        
+        // Attempt to join a Twitter Space from URLs in the tweet
+        const spaceJoined = await joinSpaceByUrls(tweet);
+        if (spaceJoined) return true;
+
         // If no Space was found in the URLs, check if the tweet author has an active Space
-        await joinSpaceByUserName(tweet.username);
+        const authorJoined = await joinSpaceByUserName(tweet.username);
+        if (authorJoined) return true;
+
 
         // If the tweet author isn't hosting a Space, check if any mentioned users are currently hosting one
         const agentName = client.state["TWITTER_USERNAME"];
-        tweet.mentions.forEach(async (mention) => {
+        for (const mention of tweet.mentions) {
             if (mention.username !== agentName) {
-                await joinSpaceByUserName(mention.username)
+                const mentionJoined = await joinSpaceByUserName(mention.username);
+                if (mentionJoined) return true;
             }
-        })
-
+        }
         await callback({
             text: "I couldn't determine which Twitter Space to join.",
             source: "twitter",
