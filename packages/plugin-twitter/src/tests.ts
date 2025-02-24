@@ -56,8 +56,13 @@ export class TwitterTestSuite implements TestSuite {
 
   async testInitializingClient(runtime: IAgentRuntime) {
     try {
-      this.twitterClient = runtime.getClient("twitter").clients.values().next()
-        .value as TwitterClient;
+      const manager = runtime.getClient("twitter");
+      if (!manager) {
+        throw new Error("Twitter client manager not found");
+      }
+
+      const clientId = stringToUuid("default");
+      this.twitterClient = manager.clients.get(manager.getClientKey(clientId, runtime.agentId));
 
       if (this.twitterClient) {
         logger.success("TwitterClient initialized successfully.");
