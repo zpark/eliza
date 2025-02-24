@@ -676,10 +676,6 @@ export type Plugin = {
     adapters?: Adapter[];
 };
 
-    /** Optional adapters */
-    adapters?: Adapter[];
-};
-
 export interface IAgentConfig {
     [key: string]: string;
 }
