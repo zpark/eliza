@@ -73,33 +73,60 @@ export default {
             console.error("space action - no tweet found in message")
             return false;
         }
-        if (tweet.urls) {
-            for (const url of tweet.urls) {
-                const match = url.match(/https:\/\/x\.com\/i\/spaces\/([a-zA-Z0-9]+)/);
-                if (match) {
-                    const spaceId = match[1];
-                    console.log("space idddddd", spaceId);
-                    const space = await client.twitterClient.getAudioSpaceById(spaceId);
-                    console.log("spaceeee status", space);
-                    if (space && space.metadata.state === 'Running') {
-                        // return spaceId;
-                        try {
-                            const space = await spaceManager.joinSpace(spaceId);
 
-                            console.log("join space", space);
 
-                        } catch(error) {
-                            console.error(error)
+        async function joinSpaceByUrls(tweet: any): Promise<string | null> {
+            if (tweet.urls) {
+                for (const url of tweet.urls) {
+                    const match = url.match(/https:\/\/x\.com\/i\/spaces\/([a-zA-Z0-9]+)/);
+                    if (match) {
+                        const spaceId = match[1];
+                        const space = await client.twitterClient.getAudioSpaceById(spaceId);
+                        if (space?.metadata?.state === 'Running') {
+                            
+                            try {
+                                const space = await spaceManager.joinSpace(spaceId);
+                                return !!space;
+                            } catch(error) {
+                                console.error(error)
+                            }
                         }
                     }
                 }
             }
+            return false;
         }
+        
+        async function joinSpaceByUserName(userName: string) {
+          const tweetGenerator = client.twitterClient.getTweets(userName);
+
+          for await (const tweet of tweetGenerator) {
+            const space = await joinSpaceByUrls(tweet);
+            if (space) {
+                return true;
+            }
+          }
+        }
+
+        // Attempt to join a Twitter Space from URLs found in the tweet
+        await joinSpaceByUrls(tweet);
+        
+        // If no Space was found in the URLs, check if the tweet author has an active Space
+        await joinSpaceByUserName(tweet.username);
+
+        // If the tweet author isn't hosting a Space, check if any mentioned users are currently hosting one
+        const agentName = client.state["TWITTER_USERNAME"];
+        tweet.mentions.forEach(async (mention) => {
+            if (mention.username !== agentName) {
+                await joinSpaceByUserName(mention.username)
+            }
+        })
 
         await callback({
             text: "I couldn't determine which Twitter Space to join.",
             source: "twitter",
         });
+
         return false;
     },
     examples: [
