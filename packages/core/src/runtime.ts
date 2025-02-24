@@ -229,6 +229,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
     private clients: Map<string, ClientInstance> = new Map();
+    private clientInterfaces: Map<string, Client> = new Map();
     services: Map<ServiceType, Service> = new Map();
 
     public adapters: Adapter[];
@@ -335,12 +336,7 @@ export class AgentRuntime implements IAgentRuntime {
             }
 
             for(const client of plugin.clients){
-                client.start(this).then((startedClient) => {
-                    logger.debug(
-                        `Initializing client: ${client.name}`
-                    );
-                    this.registerClient(client.name, startedClient);
-                });
+                this.registerClientInterface(client.name, client);
             }
         }
 
@@ -356,6 +352,17 @@ export class AgentRuntime implements IAgentRuntime {
                 }
             }
         }
+    }
+
+    registerClientInterface(clientName: string, client: Client): void {
+        if (this.clientInterfaces.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+            );
+            return;
+        }
+        this.clientInterfaces.set(clientName, client);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`);
     }
     
     registerClient(clientName: string, client: ClientInstance): void {
@@ -403,8 +410,6 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async initialize() {
-        const clientsToStart: Client[] = [];
-
         // load the character plugins dymamically from string
         if(this.character.plugins){
             const plugins = await handlePluginImporting(this.character.plugins) as Plugin[];
@@ -412,6 +417,11 @@ export class AgentRuntime implements IAgentRuntime {
                 for (const plugin of plugins) {
                     if(!plugin) {
                         continue;
+                    }
+                    if (plugin.clients) {
+                        for (const client of plugin.clients) {
+                            this.registerClientInterface(client.name, client);
+                        }
                     }
 
                     if (plugin.actions) {
@@ -456,9 +466,6 @@ export class AgentRuntime implements IAgentRuntime {
                         }
                     }
 
-                    if (plugin.clients) {
-                        plugin.clients.forEach(client => clientsToStart.push(client));
-                    }
                     this.plugins.push(plugin);
                 }
             }
@@ -473,10 +480,9 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         await Promise.all(
-            clientsToStart.map(async (client) => {
-                const startedClient = await client.start(this);
-                logger.debug(`Initializing client: ${client.name}`);
-                this.registerClient(client.name, startedClient);
+            Array.from(this.clientInterfaces.values()).map(async (clientInterface) => {
+                const startedClient = await clientInterface.start(this);
+                this.registerClient(clientInterface.name, startedClient);
             })
         );
         
