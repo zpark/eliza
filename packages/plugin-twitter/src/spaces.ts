@@ -493,11 +493,84 @@ export class TwitterSpaceClient {
             try {
                 await this.spaceParticipant.joinAsListener(spaceId);
                 this.spaceStatus = SpaceActivity.JOINING;
+
+                const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
+                console.log('[TestParticipant] Requested speaker =>', sessionUUID);
+                try {
+                    await this.waitForApproval(this.spaceParticipant, sessionUUID, 15000);
+                    console.log(
+                      '[TestParticipant] Speaker approval sequence completed (ok or timed out).',
+                    );
+                    const sttTts = new SttTtsPlugin();
+                    this.sttTtsPlugin = sttTts;
+                    this.spaceParticipant.use(sttTts as any, {
+                        runtime: this.runtime,
+                        spaceId: this.spaceId,
+                    });
+                  } catch (err) {
+                    console.error('[TestParticipant] Approval error or timeout =>', err);
+                    // Optionally cancel the request if we timed out or got an error
+                    try {
+                      await this.spaceParticipant.cancelSpeakerRequest();
+                      console.log(
+                        '[TestParticipant] Speaker request canceled after timeout or error.',
+                      );
+                    } catch (cancelErr) {
+                      console.error(
+                        '[TestParticipant] Could not cancel the request =>',
+                        cancelErr,
+                      );
+                    }
+                  }
+
                 return spaceId;
             } catch(error) {
                 logger.error(`failed to join space ${error}`);
                 return null;
             }
         }
+    }
+
+    /**
+     * waitForApproval waits until "newSpeakerAccepted" matches our sessionUUID,
+     * then calls becomeSpeaker() or rejects after a given timeout.
+     */
+    async waitForApproval(
+        participant: SpaceParticipant,
+        sessionUUID: string,
+        timeoutMs = 10000,
+    ): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+        let resolved = false;
+    
+        const handler = async (evt: { sessionUUID: string }) => {
+            if (evt.sessionUUID === sessionUUID) {
+            resolved = true;
+            participant.off('newSpeakerAccepted', handler);
+            try {
+                await participant.becomeSpeaker();
+                console.log('[TestParticipant] Successfully became speaker!');
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
+            }
+        };
+    
+        // Listen to "newSpeakerAccepted" from participant
+        participant.on('newSpeakerAccepted', handler);
+    
+        // Timeout to reject if not approved in time
+        setTimeout(() => {
+            if (!resolved) {
+            participant.off('newSpeakerAccepted', handler);
+            reject(
+                new Error(
+                `[TestParticipant] Timed out waiting for speaker approval after ${timeoutMs}ms.`,
+                ),
+            );
+            }
+        }, timeoutMs);
+        });
     }
 }
