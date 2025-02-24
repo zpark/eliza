@@ -35,7 +35,7 @@ interface CurrentSpeakerState {
 
 export enum SpaceActivity {
     HOSTING = "hosting",
-    JOINING = "joining",
+    PARTICIPATING = "participating",
     IDLE = "idle"
 }
 
@@ -115,6 +115,8 @@ export class TwitterSpaceClient {
                     if (this.spaceStatus === SpaceActivity.HOSTING) {
                         // Space is running => manage it more frequently
                         await this.manageCurrentSpace();
+                    } else if (this.spaceStatus === SpaceActivity.PARTICIPATING) {
+                        
                     }
                     
                     // Plan next iteration with a faster pace
@@ -480,7 +482,7 @@ export class TwitterSpaceClient {
 
     async joinSpace(spaceId: string) {
         if (this.spaceStatus !== SpaceActivity.IDLE) {
-            logger.warn("currently hosting/joining a space");
+            logger.warn("currently hosting/participating a space");
             return null;
         }
 
@@ -492,7 +494,7 @@ export class TwitterSpaceClient {
         if (this.spaceParticipant) {
             try {
                 await this.spaceParticipant.joinAsListener(spaceId);
-                this.spaceStatus = SpaceActivity.JOINING;
+                this.spaceStatus = SpaceActivity.PARTICIPATING;
 
                 const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
                 console.log('[TestParticipant] Requested speaker =>', sessionUUID);
