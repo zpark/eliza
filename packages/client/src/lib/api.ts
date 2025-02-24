@@ -9,7 +9,7 @@ const fetcher = async ({
     headers,
 }: {
     url: string;
-    method?: "GET" | "POST";
+    method?: "GET" | "POST" | "DELETE";
     body?: object | FormData;
     headers?: HeadersInit;
 }) => {
@@ -107,4 +107,30 @@ export const apiClient = {
             body: formData,
         });
     },
+    deleteAgent: (agentId: string): Promise<{ success: boolean }> =>
+        fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
+    updateAgent: (agentId: string, character: Character) =>
+        fetcher({
+            url: `/agents/${agentId}/set`,
+            method: "POST",
+            body: character,
+        }),
+    startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
+        fetcher({
+            url: "/agent/start",
+            method: "POST",
+            body: params,
+        }),
+    startAgentByName: (characterName: string) =>
+        fetcher({
+            url: `/agent/start/${characterName}`,
+            method: "POST",
+        }),
+    stopAgent: (agentId: string) =>
+        fetcher({
+            url: `/agents/${agentId}/stop`,
+            method: "POST",
+        }),
+    getMemories: (agentId: string, roomId: string) =>
+        fetcher({ url: `/agents/${agentId}/${roomId}/memories` }),
 };
