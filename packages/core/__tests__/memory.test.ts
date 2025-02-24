@@ -1,6 +1,6 @@
+import { describe, expect, it, mock, beforeEach } from "bun:test";
 import { MemoryManager } from "../src/memory";
 import { CacheManager, MemoryCacheAdapter } from "../src/cache";
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { IAgentRuntime, Memory, UUID, ModelClass, KnowledgeMetadata } from "../src/types";
 
 describe("MemoryManager", () => {
@@ -15,22 +15,22 @@ describe("MemoryManager", () => {
 
     beforeEach(() => {
         mockDatabaseAdapter = {
-            getMemories: vi.fn(),
-            createMemory: vi.fn(),
-            removeMemory: vi.fn(),
-            removeAllMemories: vi.fn(),
-            countMemories: vi.fn(),
-            getCachedEmbeddings: vi.fn(),
-            searchMemories: vi.fn(),
-            getMemoriesByRoomIds: vi.fn(),
-            getMemoryById: vi.fn(),
+            getMemories: mock(),
+            createMemory: mock(),
+            removeMemory: mock(),
+            removeAllMemories: mock(),
+            countMemories: mock(),
+            getCachedEmbeddings: mock(),
+            searchMemories: mock(),
+            getMemoriesByRoomIds: mock(),
+            getMemoryById: mock(),
         };
 
         mockRuntime = {
             databaseAdapter: mockDatabaseAdapter,
             cacheManager: new CacheManager(new MemoryCacheAdapter()),
             agentId: AGENT_UUID,
-            useModel: vi.fn().mockResolvedValue([]),
+            useModel: mock(() => Promise.resolve([])),
         } as unknown as IAgentRuntime;
 
         memoryManager = new MemoryManager({
