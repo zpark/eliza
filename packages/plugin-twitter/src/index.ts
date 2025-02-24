@@ -80,6 +80,10 @@ export class TwitterClientManager {
                 client.space.startPeriodicSpaceCheck();
             }
 
+            if (client.interaction) {
+                client.interaction.start();
+            }
+
             // Store the client instance
             this.clients.set(this.getClientKey(clientId, runtime.agentId), client);
 
