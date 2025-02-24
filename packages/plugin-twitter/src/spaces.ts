@@ -13,7 +13,7 @@ import {
     SpaceParticipant,
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
-import { generateTopicsIfEmpty, speakFiller } from "./utils.ts";
+import { isAgentInSpace, generateTopicsIfEmpty, speakFiller } from "./utils.ts";
 
 export interface TwitterSpaceDecisionOptions {
     maxSpeakers?: number;
@@ -529,18 +529,9 @@ export class TwitterSpaceClient {
             return;
         }
     
-        const space = await this.client.twitterClient.getAudioSpaceById(this.spaceId);
-        const agentName = this.client.state["TWITTER_USERNAME"];
-    
-        const hasListener = space.participants.listeners.some(
-            (participant) => participant.twitter_screen_name === agentName
-        );
-    
-        const hasSpeaker = space.participants.speakers.some(
-            (participant) => participant.twitter_screen_name === agentName
-        );
+        const isParticipant = await isAgentInSpace(this.client, this.spaceId);
 
-        if (!hasListener && !hasSpeaker) {
+        if (!isParticipant) {
             this.stopParticipant();
         }
     }

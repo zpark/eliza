@@ -624,3 +624,14 @@ Example:
         return ["Random Tech Chat", "AI Thoughts"];
     }
 }
+
+export async function isAgentInSpace(client: ClientBase, spaceId: string): Promise<boolean> {
+    const space = await client.twitterClient.getAudioSpaceById(spaceId);
+    const agentName = client.state["TWITTER_USERNAME"];
+
+    return space.participants.listeners.some(
+        (participant) => participant.twitter_screen_name === agentName
+    ) || space.participants.speakers.some(
+        (participant) => participant.twitter_screen_name === agentName
+    );
+}
