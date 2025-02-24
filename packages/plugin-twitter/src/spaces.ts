@@ -4,7 +4,6 @@ import {
     composeContext,
     generateText,
     ModelClass,
-    type TwitterSpaceDecisionOptions,
     type State,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
@@ -18,11 +17,34 @@ import {
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
 
+export interface TwitterSpaceDecisionOptions {
+    maxSpeakers?: number;
+    topics?: string[];
+    typicalDurationMinutes?: number;
+    idleKickTimeoutMs?: number;
+    minIntervalBetweenSpacesMinutes?: number;
+    businessHoursOnly?: boolean;
+    randomChance?: number;
+    enableIdleMonitor?: boolean;
+    enableSttTts?: boolean;
+    enableSpaceHosting: boolean;
+    enableRecording?: boolean;
+    voiceId?: string;
+    sttLanguage?: string;
+    speakerMaxDurationMs?: number;
+}
+
 interface CurrentSpeakerState {
     userId: string;
     sessionUUID: string;
     username: string;
     startTime: number;
+}
+
+export enum SpaceActivity {
+    HOSTING = "hosting",
+    JOINING = "joining",
+    IDLE = "idle"
 }
 
 /**
@@ -119,13 +141,13 @@ export class TwitterSpaceClient {
     private runtime: IAgentRuntime;
     private client: ClientBase;
     private scraper: Scraper;
-    private isSpaceRunning = false;
     private currentSpace?: Space;
     private spaceId?: string;
     private startedAt?: number;
     private checkInterval?: NodeJS.Timeout;
     private lastSpaceEndedAt?: number;
     private sttTtsPlugin?: SttTtsPlugin;
+    public spaceStatus: SpaceActivity = SpaceActivity.IDLE;
 
     /**
      * We now store an array of active speakers, not just 1
@@ -142,7 +164,7 @@ export class TwitterSpaceClient {
 
         // TODO: Spaces should be added to and removed from cache probably, and it should be possible to join or leave a space from an action, etc
         const charSpaces = runtime.character.settings?.twitter?.spaces || {};
-
+        console.log("charSpaces: ", charSpaces)
         this.decisionOptions = {
             maxSpeakers: charSpaces.maxSpeakers ?? 1,
             topics: charSpaces.topics ?? [],
@@ -155,6 +177,7 @@ export class TwitterSpaceClient {
             enableIdleMonitor: charSpaces.enableIdleMonitor !== false,
             enableSttTts: charSpaces.enableSttTts !== false,
             enableRecording: charSpaces.enableRecording !== false,
+            enableSpaceHosting: charSpaces.enableSpaceHosting || false,
             voiceId:
                 charSpaces.voiceId ||
                 runtime.character.settings.voice.model ||
@@ -176,23 +199,28 @@ export class TwitterSpaceClient {
 
         const routine = async () => {
             try {
-                if (!this.isSpaceRunning) {
-                    // Space not running => check if we should launch
-                    const launch = await this.shouldLaunchSpace();
-                    if (launch) {
-                        const config = await this.generateSpaceConfig();
-                        await this.startSpace(config);
+                if (this.spaceStatus === SpaceActivity.IDLE) {
+                    if (this.decisionOptions.enableSpaceHosting) {
+                        // Space not running => check if we should launch
+                        const launch = await this.shouldLaunchSpace();
+                        if (launch) {
+                            const config = await this.generateSpaceConfig();
+                            await this.startSpace(config);
+                        }
                     }
                     // Plan next iteration with a slower pace
                     this.checkInterval = setTimeout(
                         routine,
-                        this.isSpaceRunning
+                        this.spaceStatus !== SpaceActivity.IDLE
                             ? intervalMsWhenRunning
                             : intervalMsWhenIdle
                     ) as any;
                 } else {
-                    // Space is running => manage it more frequently
-                    await this.manageCurrentSpace();
+                    if (this.spaceStatus === SpaceActivity.HOSTING) {
+                        // Space is running => manage it more frequently
+                        await this.manageCurrentSpace();
+                    }
+                    
                     // Plan next iteration with a faster pace
                     this.checkInterval = setTimeout(
                         routine,
@@ -283,7 +311,7 @@ export class TwitterSpaceClient {
 
         try {
             this.currentSpace = new Space(this.scraper);
-            this.isSpaceRunning = false;
+            this.spaceStatus = SpaceActivity.IDLE;
             this.spaceId = undefined;
             this.startedAt = Date.now();
 
@@ -327,8 +355,7 @@ export class TwitterSpaceClient {
                     )
                 );
             }
-
-            this.isSpaceRunning = true;
+            this.spaceStatus = SpaceActivity.HOSTING;
             await this.scraper.sendTweet(
                 broadcastInfo.share_url.replace("broadcasts", "spaces")
             );
@@ -387,7 +414,7 @@ export class TwitterSpaceClient {
             });
         } catch (error) {
             logger.error("[Space] Error launching Space =>", error);
-            this.isSpaceRunning = false;
+            this.spaceStatus = SpaceActivity.IDLE;
             throw error;
         }
     }
@@ -568,14 +595,14 @@ export class TwitterSpaceClient {
     }
 
     public async stopSpace() {
-        if (!this.currentSpace || !this.isSpaceRunning) return;
+        if (!this.currentSpace || this.spaceStatus === SpaceActivity.IDLE) return;
         try {
             logger.log("[Space] Stopping the current Space...");
             await this.currentSpace.stop();
         } catch (err) {
             logger.error("[Space] Error stopping Space =>", err);
         } finally {
-            this.isSpaceRunning = false;
+            this.spaceStatus = SpaceActivity.IDLE;
             this.spaceId = undefined;
             this.currentSpace = undefined;
             this.startedAt = undefined;
