@@ -318,7 +318,7 @@ export class VisionManager {
 
   private async fetchImage(url: string): Promise<{ buffer: Buffer; mimeType: string }> {
     try {
-      logger.info("Fetching image from URL:", { url });
+      // logger.info("Fetching image from URL:", { url });
       
       // Handle data URLs differently
       if (url.startsWith('data:')) {

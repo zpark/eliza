@@ -124,6 +124,14 @@ class LocalAIManager {
           stack: error instanceof Error ? error.stack : undefined
         });
         return null; // Prevent Promise.all from failing completely
+      }),
+      // Add TTS initialization
+      this.initializeTTS().catch(error => {
+        logger.warn("TTS initialization failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return null; // Prevent Promise.all from failing completely
       })
     ]).catch(error => {
       logger.warn("Models initialization failed:", {
@@ -241,10 +249,10 @@ class LocalAIManager {
       }
 
       const imageBuffer = fs.readFileSync(imagePath);
-      logger.info("Test image loaded:", {
-        size: imageBuffer.length,
-        path: imagePath
-      });
+      // logger.info("Test image loaded:", {
+      //   size: imageBuffer.length,
+      //   path: imagePath
+      // });
 
       // Process the test image
       const result = await this.describeImage(imageBuffer, 'image/jpeg');
@@ -253,6 +261,56 @@ class LocalAIManager {
       logger.success("Vision model initialization complete");
     } catch (error) {
       logger.error("Vision initialization failed:", error);
+      throw error;
+    }
+  }
+
+  private async initializeTTS(): Promise<void> {
+    try {
+      logger.info("Initializing TTS model...");
+      
+      // Test text for TTS
+      const testText = "ElizaOS is yours";
+      
+      // Generate speech from test text
+      logger.info("Testing TTS with sample text:", { text: testText });
+      const audioStream = await this.ttsManager.generateSpeech(testText);
+      
+      // Verify the stream is readable
+      if (!(audioStream instanceof Readable)) {
+        throw new Error("TTS did not return a valid audio stream");
+      }
+
+      // Test stream readability
+      let dataReceived = false;
+      await new Promise<void>((resolve, reject) => {
+        audioStream.on('data', () => {
+          if (!dataReceived) {
+            dataReceived = true;
+            logger.info("TTS audio stream is producing data");
+          }
+        });
+
+        audioStream.on('end', () => {
+          if (!dataReceived) {
+            reject(new Error("No audio data received from TTS stream"));
+          } else {
+            resolve();
+          }
+        });
+
+        audioStream.on('error', (err) => {
+          reject(err);
+        });
+      });
+      
+      logger.success("TTS model initialization complete");
+    } catch (error) {
+      logger.error("TTS initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }

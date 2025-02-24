@@ -112,7 +112,7 @@ export const MODEL_SPECS: ModelSpecs = {
   },
   tts: {
     base: {
-      name: "OuteTTS-0.2-500M.gguf",
+      name: "OuteTTS-0.2-500M-Q8_0.gguf",
       repo: "OuteAI/OuteTTS-0.2-500M-GGUF",
       size: "500M",
       quantization: "Q8_0",
