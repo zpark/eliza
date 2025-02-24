@@ -1,4 +1,5 @@
 import express from "express";
+import { Router } from 'express';
 import bodyParser from "body-parser";
 import cors from "cors";
 
@@ -9,8 +10,8 @@ import type {
 } from "@elizaos/plugin-tee-verifiable-log";
 
 export function createVerifiableLogApiRouter(
-    agents: Map<string, AgentRuntime>
-) {
+    agents: Map<string, IAgentRuntime>
+):Router {
     const router = express.Router();
     router.use(cors());
     router.use(bodyParser.json());

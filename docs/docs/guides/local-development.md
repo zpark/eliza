@@ -132,6 +132,16 @@ NOTE: If you are using devcontainer, add --host argument to client:
 pnpm start:client --host
 ```
 
+NOTE: If you have run the server locally, but using a different port number:
+```shell
+SERVER_PORT="4567" pnpm start:client
+```
+
+NOTE: If you have hosted the server on a different computer/ domain, specify its base URL:
+```shell
+SERVER_BASE_URL="https://foobar.my.custom.domain:80" pnpm start:client
+```
+
 Look for the message:
 `  ➜  Local:   http://localhost:5173/`
 Click on that link or open a browser window to that location. Once you do that you should see the chat interface connect with the system and you can start interacting with your character.
@@ -469,9 +479,28 @@ npx knowledge2character <character-file> <knowledge-file>
 ./scripts/clean.sh
 ```
 
+---
+
+## FAQ
+
+### Can I run multiple agents on one machine?
+Yes, you can run multiple agents simultaneously:
+- Use different character files and configurations
+- Each agent needs unique credentials
+- Start with `pnpm start --characters="characters/agent1.json,characters/agent2.json"`
+- Configure different ports if needed
+
+### How do I customize a client/plugin package?
+1. Copy the plugin into your eliza-start packages folder
+2. Modify root package.json dependencies
+3. Build the plugin
+4. Follow standard plugin integration steps
+
+---
+
 ## Further Resources
 
-- [Configuration Guide](./configuration.md) for setup details
-- [Advanced Usage](./advanced.md) for complex features
-- [API Documentation](../../api/index.md) for complete API reference
-- [Contributing Guide](../contributing.md) for contribution guidelines
+- [Configuration Guide](./configuration) for setup details
+- [Advanced Usage](./advanced) for complex features
+- [Contributing Guide](../contributing) for contribution guidelines
+
