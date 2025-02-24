@@ -143,6 +143,22 @@ const config = {
         ],
     ],
     themeConfig: {
+        mermaid: {
+            theme: {
+                light: 'default',
+                dark: 'dark'
+            },
+            options: {
+                fontSize: 16,
+                flowchart: {
+                    htmlLabels: true,
+                    padding: 20,
+                    nodeSpacing: 50,
+                    rankSpacing: 50,
+                    curve: 'cardinal'
+                }
+            }
+        },
         colorMode: {
             defaultMode: "dark",
             disableSwitch: false,
@@ -180,6 +196,11 @@ const config = {
                     position: "left",
                     label: "Community",
                     docId: "index",
+                },
+                {
+                  to: 'showcase',
+                  label: 'Showcase',
+                  position: 'left'
                 },
                 {
                     href: "https://github.com/elizaos/eliza",
