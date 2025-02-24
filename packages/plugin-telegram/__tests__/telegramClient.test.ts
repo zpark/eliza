@@ -52,7 +52,7 @@ describe('TelegramClient', () => {
 
             await client.start();
 
-            expect(launchSpy).toHaveBeenCalledWith({ dropPendingUpdates: true });
+            expect(launchSpy).toHaveBeenCalledWith({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
             expect(getMeSpy).toHaveBeenCalled();
         });
 

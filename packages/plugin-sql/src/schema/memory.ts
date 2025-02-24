@@ -12,9 +12,10 @@ import { relations, sql } from "drizzle-orm";
 import {
     numberTimestamp,
 } from "./types";
-import { accountTable } from "./account";
+import { entityTable } from "./entity";
 import { roomTable } from "./room";
 import { embeddingTable } from "./embedding";
+import { agentTable } from "./agent";
 
 export const memoryTable = pgTable(
     "memories",
@@ -25,8 +26,8 @@ export const memoryTable = pgTable(
             .default(sql`now()`)
             .notNull(),
         content: jsonb("content").notNull(),
-        userId: uuid("userId").references(() => accountTable.id),
-        agentId: uuid("agentId").references(() => accountTable.id),
+        userId: uuid("userId").references(() => entityTable.id),
+        agentId: uuid("agentId").references(() => agentTable.id),
         roomId: uuid("roomId").references(() => roomTable.id),
         unique: boolean("unique").default(true).notNull(),
     },
@@ -40,12 +41,12 @@ export const memoryTable = pgTable(
         foreignKey({
             name: "fk_user",
             columns: [table.userId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
         foreignKey({
             name: "fk_agent",
             columns: [table.agentId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]
 );

@@ -92,7 +92,8 @@ const checkShouldRespond = async (
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
-    runtime.agentId
+    runtime.agentId,
+    runtime.agentId,
   );
 
   if (

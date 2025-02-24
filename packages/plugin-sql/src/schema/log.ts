@@ -7,7 +7,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
-import { accountTable } from "./account";
+import { entityTable } from "./entity";
 import { roomTable } from "./room";
 
 export const logTable = pgTable(
@@ -19,7 +19,7 @@ export const logTable = pgTable(
             .notNull(),
         userId: uuid("userId")
             .notNull()
-            .references(() => accountTable.id),
+            .references(() => entityTable.id),
         body: jsonb("body").notNull(),
         type: text("type").notNull(),
         roomId: uuid("roomId")
@@ -35,7 +35,7 @@ export const logTable = pgTable(
         foreignKey({
             name: "fk_user",
             columns: [table.userId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]
 );

@@ -1,5 +1,5 @@
 import type {
-    Account,
+    Entity,
     Actor,
     ChannelType,
     Character,
@@ -12,11 +12,12 @@ import type {
     RoomData,
     UUID,
     WorldData,
+    Agent
 } from "./types.ts";
 
 /**
  * An abstract class representing a database adapter for managing various entities
- * like accounts, memories, actors, goals, and rooms.
+ * like entities, memories, actors, goals, and rooms.
  */
 export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     /**
@@ -39,23 +40,29 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     /**
      * Retrieves an account by its ID.
      * @param userId The UUID of the user account to retrieve.
-     * @returns A Promise that resolves to the Account object or null if not found.
+     * @returns A Promise that resolves to the Entity object or null if not found.
      */
-    abstract getAccountById(userId: UUID): Promise<Account | null>;
+    abstract getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
+
+    abstract getAgent(agentId: UUID): Promise<Agent | null>;
+
+    abstract createAgent(agent: Agent): Promise<boolean>;
+
+    abstract updateAgent(agent: Agent): Promise<boolean>;
 
     /**
      * Creates a new account in the database.
      * @param account The account object to create.
      * @returns A Promise that resolves when the account creation is complete.
      */
-    abstract createAccount(account: Account): Promise<boolean>;
+    abstract createEntity(entity: Entity): Promise<boolean>;
 
     /**
      * Updates an existing account in the database.
      * @param account The account object with updated properties.
      * @returns A Promise that resolves when the account update is complete.
      */
-    abstract updateAccount(account: Account): Promise<void>;
+    abstract updateEntity(entity: Entity): Promise<void>;
 
     /**
      * Retrieves memories based on the specified parameters.
@@ -133,7 +140,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param params An object containing the roomId to search for actors.
      * @returns A Promise that resolves to an array of Actor objects.
      */
-    abstract getActorDetails(params: { roomId: UUID }): Promise<Actor[]>;
+    abstract getActorDetails(params: { roomId: UUID, agentId: UUID }): Promise<Actor[]>;
 
     /**
      * Searches for memories based on embeddings and other specified parameters.
@@ -248,7 +255,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param id The UUID of the world to retrieve.
      * @returns A Promise that resolves to the WorldData object or null if not found.
      */
-    abstract getWorld(id: UUID): Promise<WorldData | null>;
+    abstract getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
     /**
      * Creates a new world in the database.
@@ -262,21 +269,21 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param world The world object with updated properties.
      * @returns A Promise that resolves when the world has been updated.
      */
-    abstract updateWorld(world: WorldData): Promise<void>;
+    abstract updateWorld(world: WorldData, agentId: UUID): Promise<void>;
 
     /**
      * Removes a specific world from the database.
      * @param id The UUID of the world to remove.
      * @returns A Promise that resolves when the world has been removed.
      */
-    abstract removeWorld(id: UUID): Promise<void>;
+    abstract removeWorld(id: UUID, agentId: UUID): Promise<void>;
 
     /**
      * Retrieves the room ID for a given room, if it exists.
      * @param roomId The UUID of the room to retrieve.
      * @returns A Promise that resolves to the room ID or null if not found.
      */
-    abstract getRoom(roomId: UUID): Promise<RoomData | null>;
+    abstract getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
 
     /**
      * Creates a new room with an optional specified ID.
@@ -311,7 +318,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param userIds An array of UUIDs of the users.
      * @returns A Promise that resolves to an array of room IDs.
      */
-    abstract getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
+    abstract getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
 
     /**
      * Adds a user as a participant to a specific room.
@@ -319,7 +326,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room to which the user will be added.
      * @returns A Promise that resolves to a boolean indicating success or failure.
      */
-    abstract addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+    abstract addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
 
     /**
      * Removes a user as a participant from a specific room.
@@ -327,37 +334,32 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room from which the user will be removed.
      * @returns A Promise that resolves to a boolean indicating success or failure.
      */
-    abstract removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+    abstract removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
 
     /**
      * Retrieves participants associated with a specific account.
      * @param userId The UUID of the account.
      * @returns A Promise that resolves to an array of Participant objects.
      */
-    abstract getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
-
-    /**
-     * Retrieves participants associated with a specific account.
-     * @param userId The UUID of the account.
-     * @returns A Promise that resolves to an array of Participant objects.
-     */
-    abstract getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
+    abstract getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
 
     /**
      * Retrieves participants for a specific room.
      * @param roomId The UUID of the room for which to retrieve participants.
      * @returns A Promise that resolves to an array of UUIDs representing the participants.
      */
-    abstract getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
+    abstract getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
 
     abstract getParticipantUserState(
         roomId: UUID,
-        userId: UUID
+        userId: UUID,
+        agentId: UUID
     ): Promise<"FOLLOWED" | "MUTED" | null>;
 
     abstract setParticipantUserState(
         roomId: UUID,
         userId: UUID,
+        agentId: UUID,
         state: "FOLLOWED" | "MUTED" | null
     ): Promise<void>;
 
@@ -396,7 +398,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param character The Character object to create.
      * @returns A Promise that resolves when the character creation is complete.
      */
-    abstract createCharacter(character: Character): Promise<void>;
+    abstract createCharacter(character: Character): Promise<UUID | void>;
 
     /**
      * Retrieves all characters from the database.

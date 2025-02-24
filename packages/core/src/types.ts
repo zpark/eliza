@@ -454,24 +454,15 @@ export interface Relationship {
 /**
  * Represents a user account
  */
-export interface Account {
-  /** Unique identifier */
-  id: UUID;
+export interface Entity {
+  /** Unique identifier, optional on creation */
+  id?: UUID;
 
-  /** Display name */
-  name: string;
+  /** Optional additional metadata */
+  metadata?: { [key: string]: any };
 
-  /** Username */
-  username: string;
-
-  /** Optional additional details */
-  details?: { [key: string]: any };
-
-  /** Optional email */
-  email?: string;
-
-  /** Optional avatar URL */
-  avatarUrl?: string;
+  /** Agent ID this account is related to, for agents should be themselves */
+  agentId: UUID;
 }
 
 /**
@@ -482,7 +473,7 @@ export interface Participant {
   id: UUID;
 
   /** Associated account */
-  account: Account;
+  entity: Entity;
 }
 
 /**
@@ -649,9 +640,6 @@ export type Character = {
   /** Optional username */
   username?: string;
 
-  /** Optional email */
-  email?: string;
-
   /** Optional system prompt */
   system?: string;
 
@@ -715,6 +703,12 @@ export interface TwitterSpaceDecisionOptions {
   speakerMaxDurationMs?: number;
 }
 
+export interface Agent {
+  id: UUID;
+  characterId: UUID;
+  enabled: boolean;
+}
+
 /**
  * Interface for database operations
  */
@@ -728,13 +722,19 @@ export interface IDatabaseAdapter {
   /** Close database connection */
   close(): Promise<void>;
 
+  getAgent(agentId: UUID): Promise<Agent | null>;
+
+  createAgent(agent: Agent): Promise<boolean>;
+
+  updateAgent(agent: Agent): Promise<boolean>;
+
   /** Get account by ID */
-  getAccountById(userId: UUID): Promise<Account | null>;
+  getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
   /** Create new account */
-  createAccount(account: Account): Promise<boolean>;
+  createEntity(entity: Entity): Promise<boolean>;
 
-  updateAccount(account: Account): Promise<void>;
+  updateEntity(entity: Entity): Promise<void>;
 
   /** Get memories matching criteria */
   getMemories(params: {
@@ -827,11 +827,11 @@ export interface IDatabaseAdapter {
     serverId,
   }: WorldData): Promise<UUID>;
 
-  getWorld(id: UUID): Promise<WorldData | null>;
+  getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
-  updateWorld(world: WorldData): Promise<void>;
+  updateWorld(world: WorldData, agentId: UUID): Promise<void>;
 
-  getRoom(roomId: UUID): Promise<RoomData | null>;
+  getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
 
   createRoom({
     id,
@@ -844,43 +844,46 @@ export interface IDatabaseAdapter {
     worldId,
   }: RoomData): Promise<UUID>;
 
-  removeRoom(roomId: UUID): Promise<void>;
+  removeRoom(roomId: UUID, agentId: UUID): Promise<void>;
 
-  updateRoom(room: RoomData): Promise<void>;
+  updateRoom(room: RoomData, agentId: UUID): Promise<void>;
 
-  getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
+  getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
 
-  getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
+  getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
 
-  addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
 
-  removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
 
-  getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
+  getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
 
-  getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
+  getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
 
   getParticipantUserState(
     roomId: UUID,
-    userId: UUID
+    userId: UUID,
+    agentId: UUID
   ): Promise<"FOLLOWED" | "MUTED" | null>;
 
   setParticipantUserState(
     roomId: UUID,
     userId: UUID,
+    agentId: UUID,
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
-  createRelationship(params: { userA: UUID; userB: UUID }): Promise<boolean>;
+  createRelationship(params: { userA: UUID; userB: UUID; agentId: UUID }): Promise<boolean>;
 
   getRelationship(params: {
     userA: UUID;
     userB: UUID;
+    agentId: UUID;
   }): Promise<Relationship | null>;
 
-  getRelationships(params: { userId: UUID }): Promise<Relationship[]>;
+  getRelationships(params: { userId: UUID; agentId: UUID }): Promise<Relationship[]>;
 
-  createCharacter(character: Character): Promise<void>;
+  createCharacter(character: Character): Promise<UUID | void>;
 
   listCharacters(): Promise<Character[]>;
 
@@ -1011,6 +1014,7 @@ export interface IAgentRuntime {
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
 
+  registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
 
   unregisterClient(name: string): void;
@@ -1083,8 +1087,6 @@ export interface IAgentRuntime {
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
-  getUserProfile(userId: UUID): Promise<Account | null>;
-
   getWorld(worldId: UUID): Promise<WorldData | null>;
 
   ensureWorldExists({
@@ -1138,6 +1140,8 @@ export interface IAgentRuntime {
   deleteTask(id: UUID): void;
 
   stop(): Promise<void>;
+
+  ensureAgentExists(): Promise<void>;
 
   ensureEmbeddingDimension(): Promise<void>;
 

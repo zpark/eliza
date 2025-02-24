@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { names, uniqueNamesGenerator } from "unique-names-generator";
-import { v4 as uuidv4, v4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 import {
     composeActionExamples,
     formatActionNames,
@@ -18,7 +18,7 @@ import { formatGoalsAsString, getGoals } from "./goals.ts";
 import { elizaLogger, handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
-import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
+import { formatActors, formatMessages, getActorDetails, messageEvents } from "./messages.ts";
 import { parseJsonArrayFromText } from "./parsing.ts";
 import { formatPosts } from "./posts.ts";
 import { getProviders } from "./providers.ts";
@@ -27,9 +27,10 @@ import {
     type Action,
     type Actor,
     type Adapter,
+    ChannelType,
     type Character,
+    type Client,
     type ClientInstance,
-    type DirectoryItem,
     type Evaluator,
     type Goal,
     type HandlerCallback,
@@ -42,18 +43,16 @@ import {
     ModelClass,
     type Plugin,
     type Provider,
-    type State,
-    type UUID,
-    type ServiceType,
-    type Service,
-    type Route,
-    type Task,
-    ChannelType,
     type RoomData,
+    type Route,
+    type Service,
+    type ServiceType,
+    type State,
+    type Task,
+    type UUID,
     type WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-import { messageEvents } from "./messages.ts";
 
 function formatKnowledge(knowledge: KnowledgeItem[]): string {
     return knowledge
@@ -228,6 +227,7 @@ export class AgentRuntime implements IAgentRuntime {
     readonly fetch = fetch;
     public cacheManager!: ICacheManager;
     private clients: Map<string, ClientInstance> = new Map();
+    private clientInterfaces: Map<string, Client> = new Map();
     services: Map<ServiceType, Service> = new Map();
 
     public adapters: Adapter[];
@@ -334,12 +334,7 @@ export class AgentRuntime implements IAgentRuntime {
             }
 
             for(const client of plugin.clients){
-                client.start(this).then((startedClient) => {
-                    logger.debug(
-                        `Initializing client: ${client.name}`
-                    );
-                    this.registerClient(client.name, startedClient);
-                });
+                this.registerClientInterface(client.name, client);
             }
         }
 
@@ -355,6 +350,17 @@ export class AgentRuntime implements IAgentRuntime {
                 }
             }
         }
+    }
+
+    registerClientInterface(clientName: string, client: Client): void {
+        if (this.clientInterfaces.has(clientName)) {
+            logger.warn(
+                `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+            );
+            return;
+        }
+        this.clientInterfaces.set(clientName, client);
+        logger.success(`${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`);
     }
     
     registerClient(clientName: string, client: ClientInstance): void {
@@ -402,6 +408,8 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async initialize() {
+        await this.ensureAgentExists();
+
         // load the character plugins dymamically from string
         if(this.character.plugins){
             const plugins = await handlePluginImporting(this.character.plugins) as Plugin[];
@@ -412,11 +420,7 @@ export class AgentRuntime implements IAgentRuntime {
                     }
                     if (plugin.clients) {
                         for (const client of plugin.clients) {
-                            const startedClient = await client.start(this);
-                            logger.debug(
-                                `Initializing client: ${client.name}`
-                            );
-                            this.registerClient(client.name, startedClient);
+                            this.registerClientInterface(client.name, client);
                         }
                     }
 
@@ -461,11 +465,13 @@ export class AgentRuntime implements IAgentRuntime {
                             }
                         }
                     }
-                    
+
                     this.plugins.push(plugin);
                 }
             }
         }
+
+        await this.ensureEmbeddingDimension();
 
         if (this.services) {
             for(const [_, service] of this.services.entries()) {
@@ -473,7 +479,12 @@ export class AgentRuntime implements IAgentRuntime {
             }
         }
 
-        await this.ensureEmbeddingDimension();
+        await Promise.all(
+            Array.from(this.clientInterfaces.values()).map(async (clientInterface) => {
+                const startedClient = await clientInterface.start(this);
+                this.registerClient(clientInterface.name, startedClient);
+            })
+        );
         
         await this.ensureUserExists(
             this.agentId,
@@ -490,6 +501,25 @@ export class AgentRuntime implements IAgentRuntime {
                 (item): item is string => typeof item === "string",
             );
             await this.processCharacterKnowledge(stringKnowledge);
+        }
+    }
+    async ensureAgentExists() {
+        const agent = await this.databaseAdapter.getAgent(this.agentId);
+        if (!agent) {
+            // find a character that has the same name as the agent id
+            const character = await this.databaseAdapter.getCharacter(this.character.name);
+            let characterId = character?.id;
+            if(character && !characterId) {
+                characterId = uuidv4() as UUID;
+                // save the character with the new id
+                await this.databaseAdapter.updateCharacter(character.name, {...character, id: characterId});
+            } else if(!character) {
+                characterId = await this.databaseAdapter.createCharacter(this.character) as UUID;
+            }
+            
+            const out = {id: this.agentId, characterId, enabled: true}
+
+            await this.databaseAdapter.createAgent(out);
         }
     }
 
@@ -725,35 +755,29 @@ export class AgentRuntime implements IAgentRuntime {
         userId: UUID,
         userName: string | null,
         name: string | null,
-        email?: string | null,
     ) {
-        const account = await this.databaseAdapter.getAccountById(userId);
+        const account = await this.databaseAdapter.getEntityById(userId, this.agentId);
         if (!account) {
-            await this.databaseAdapter.createAccount({
+            await this.databaseAdapter.createEntity({
                 id: userId,
-                name: name || this.character.name || "Unknown User",
-                username: userName || this.character.username || "Unknown",
-                email: email || this.character.email || userId,
+                agentId: this.agentId,
+                metadata: {
+                    names: [
+                        name, userName
+                    ].filter(Boolean) as string[],
+                    name: name || "Unknown User",
+                    username: userName || "Unknown",
+                }
             });
             logger.success(`User ${userName} created successfully.`);
         }
     }
 
-    /**
-     * Get the profile of a user.
-     * @param userId - The user ID to get the profile of.
-     * @returns The profile of the user.
-     */
-    async getUserProfile(userId: UUID) {
-        const account = await this.databaseAdapter.getAccountById(userId);
-        return account;
-    }
-
     async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
         const participants =
-            await this.databaseAdapter.getParticipantsForRoom(roomId);
+            await this.databaseAdapter.getParticipantsForRoom(roomId, this.agentId);
         if (!participants.includes(userId)) {
-            await this.databaseAdapter.addParticipant(userId, roomId);
+            await this.databaseAdapter.addParticipant(userId, roomId, this.agentId);
             if (userId === this.agentId) {
                 logger.log(
                     `Agent ${this.character.name} linked to room ${roomId} successfully.`,
@@ -794,13 +818,11 @@ export class AgentRuntime implements IAgentRuntime {
                 this.agentId,
                 this.character.username ?? "Agent",
                 this.character.name ?? "Agent",
-                source,
             ),
             this.ensureUserExists(
                 userId,
                 userName ?? `User${userId}`,
                 userScreenName ?? `User${userId}`,
-                source,
             ),
             this.ensureRoomExists({id: roomId, source, type, channelId, serverId}),
         ]);
@@ -817,14 +839,14 @@ export class AgentRuntime implements IAgentRuntime {
      * @returns The world.
      */
     async getWorld(worldId: UUID) {
-        return await this.databaseAdapter.getWorld(worldId);
+        return await this.databaseAdapter.getWorld(worldId, this.agentId);
     }
 
     /**
      * Ensure the existence of a world.
      */
     async ensureWorldExists({id, name, serverId}: WorldData) {
-        const world = await this.databaseAdapter.getWorld(id);
+        const world = await this.databaseAdapter.getWorld(id, this.agentId);
         if (!world) {
             await this.databaseAdapter.createWorld({id, name, agentId: this.agentId, serverId});
             logger.log(`World ${id} created successfully.`);
@@ -839,7 +861,7 @@ export class AgentRuntime implements IAgentRuntime {
      * @throws An error if the room cannot be created.
      */
     async ensureRoomExists({id, name, source, type, channelId, serverId, worldId}: RoomData) {
-        const room = await this.databaseAdapter.getRoom(id);
+        const room = await this.databaseAdapter.getRoom(id, this.agentId);
         if (!room) {
             await this.databaseAdapter.createRoom({id, name, agentId: this.agentId, source, type, channelId, serverId, worldId});
             logger.log(`Room ${id} created successfully.`);
@@ -852,7 +874,7 @@ export class AgentRuntime implements IAgentRuntime {
      * @returns The room ID of the room between the agent and the user.
      */
     async getRoom(userId: UUID) {
-        return await this.databaseAdapter.getRoom(userId);
+        return await this.databaseAdapter.getRoom(userId, this.agentId);
     }
 
     /**
@@ -994,7 +1016,7 @@ Text: ${attachment.text}
             const rooms = await this.databaseAdapter.getRoomsForParticipants([
                 userA,
                 userB,
-            ]);
+            ], this.agentId);
 
             // Check the existing memories in the database
             return this.messageManager.getMemoriesByRoomIds({
@@ -1021,10 +1043,11 @@ Text: ${attachment.text}
                         sender = this.character.name;
                     } else {
                         const accountId =
-                            await this.databaseAdapter.getAccountById(
+                            await this.databaseAdapter.getEntityById(
                                 message.userId,
+                                this.agentId,
                             );
-                        sender = accountId?.username || "unknown";
+                        sender = accountId?.metadata?.username || "unknown";
                     }
                     return `${sender}: ${message.content.text}`;
                 }),
@@ -1449,15 +1472,12 @@ Text: ${attachment.text}
         }
     }
 
-    async ensureCharacterExists(character: Character) {
+    async ensureCharacterExists(character: Character): Promise<void> {
         const characterExists = await this.databaseAdapter.getCharacter(character.name);
         if (!characterExists) {
             logger.log(`[AgentRuntime][${this.character.name}] Creating character`);
-            return await this.databaseAdapter.createCharacter(character);
+            await this.databaseAdapter.createCharacter(character);
         }
-        logger.log(`[AgentRuntime][${this.character.name}] Updating character`);
-        // update the character with the latest character provided
-        await this.databaseAdapter.updateCharacter(character.name, character);
     }
 
     async ensureEmbeddingDimension() {

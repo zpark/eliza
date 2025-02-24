@@ -323,7 +323,7 @@ export async function generateTrueOrFalse({
   runtime,
   context = "",
   modelClass = ModelClass.TEXT_SMALL,
-  stopSequences,
+  stopSequences = [],
 }: {
   runtime: IAgentRuntime;
   context: string;

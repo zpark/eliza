@@ -1,4 +1,5 @@
-export { accountTable } from "./account";
+export { entityTable } from "./entity";
+export { agentTable } from "./agent";
 export { cacheTable } from "./cache";
 export { characterTable } from "./character";
 export { embeddingTable } from "./embedding";

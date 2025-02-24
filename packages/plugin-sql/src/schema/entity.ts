@@ -2,15 +2,12 @@ import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
 
-export const accountTable = pgTable("accounts", {
-    id: uuid("id").primaryKey().notNull(),
+export const entityTable = pgTable("entities", {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    agentId: uuid("agentId").notNull(),
     createdAt: numberTimestamp("createdAt")
         .default(sql`now()`)
         .notNull(),
-    name: text("name"),
-    username: text("username").notNull(),
-    email: text("email").notNull(),
-    avatarUrl: text("avatarUrl"),
-    details: jsonb("details").default(sql`'{}'::jsonb`),
+    names: text("names").array().default(sql`'{}'::text[]`),
     metadata: jsonb("metadata").default(sql`'{}'::jsonb`),
 });

@@ -8,8 +8,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
-import { accountTable } from "./account";
+import { entityTable } from "./entity";
 import { roomTable } from "./room";
+import { agentTable } from "./agent";
 
 export const participantTable = pgTable(
     "participants",
@@ -18,13 +19,13 @@ export const participantTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-        userId: uuid("userId").references(() => accountTable.id),
+        userId: uuid("userId").references(() => entityTable.id),
         roomId: uuid("roomId").references(() => roomTable.id),
-        userState: text("userState"),
-        lastMessageRead: text("last_message_read"),
+        agentId: uuid("agentId").references(() => agentTable.id),
+        roomState: text("roomState"),
     },
     (table) => [
-        unique("participants_user_room_unique").on(table.userId, table.roomId),
+        unique("participants_user_room_agent_unique").on(table.userId, table.roomId, table.agentId),
         index("idx_participants_user").on(table.userId),
         index("idx_participants_room").on(table.roomId),
         foreignKey({
@@ -35,7 +36,7 @@ export const participantTable = pgTable(
         foreignKey({
             name: "fk_user",
             columns: [table.userId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]
 );

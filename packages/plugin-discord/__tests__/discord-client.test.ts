@@ -20,11 +20,15 @@ vi.mock('@elizaos/core', () => ({
 
 // Mock discord.js Client
 vi.mock('discord.js', () => {
+  const mockGuilds = {
+    fetch: vi.fn().mockResolvedValue(new Map()),
+  };
   const mockClient = {
     login: vi.fn().mockResolvedValue('token'),
     on: vi.fn(),
     once: vi.fn(),
     destroy: vi.fn().mockResolvedValue(undefined),
+    guilds: mockGuilds,
   };
   
   return {
