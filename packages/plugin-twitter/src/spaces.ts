@@ -475,6 +475,7 @@ export class TwitterSpaceClient {
         }
 
         this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
+            spaceId,
             debug: false,
         });
         
@@ -483,7 +484,7 @@ export class TwitterSpaceClient {
             this.spaceStatus = SpaceActivity.PARTICIPATING;
 
             try {
-                await this.spaceParticipant.joinAsListener(spaceId);
+                await this.spaceParticipant.joinAsListener();
                 
                 const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
                 console.log('[SpaceParticipant] Requested speaker =>', sessionUUID);
