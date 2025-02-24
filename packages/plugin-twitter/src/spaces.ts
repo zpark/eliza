@@ -1,37 +1,28 @@
 import {
     logger,
     type IAgentRuntime,
-    composeContext,
-    generateText,
     ModelClass,
-    type State,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import {
     type Scraper,
     Space,
     type SpaceConfig,
-    RecordToDiskPlugin,
     IdleMonitorPlugin,
     type SpeakerRequest,
     SpaceParticipant,
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
+import { generateTopicsIfEmpty, speakFiller } from "./utils.ts";
 
 export interface TwitterSpaceDecisionOptions {
     maxSpeakers?: number;
-    topics?: string[];
     typicalDurationMinutes?: number;
     idleKickTimeoutMs?: number;
     minIntervalBetweenSpacesMinutes?: number;
-    businessHoursOnly?: boolean;
-    randomChance?: number;
     enableIdleMonitor?: boolean;
-    enableSttTts?: boolean;
     enableSpaceHosting: boolean;
     enableRecording?: boolean;
-    voiceId?: string;
-    sttLanguage?: string;
     speakerMaxDurationMs?: number;
 }
 
@@ -46,93 +37,6 @@ export enum SpaceActivity {
     HOSTING = "hosting",
     JOINING = "joining",
     IDLE = "idle"
-}
-
-/**
- * Generate short filler text via GPT
- */
-async function generateFiller(
-    runtime: IAgentRuntime,
-    fillerType: string
-): Promise<string> {
-    try {
-        const context = composeContext({
-            state: { fillerType } as any as State,
-            template: `
-# INSTRUCTIONS:
-You are generating a short filler message for a Twitter Space. The filler type is "{{fillerType}}".
-Keep it brief, friendly, and relevant. No more than two sentences.
-Only return the text, no additional formatting.
-
----
-`,
-        });
-        const output = await generateText({
-            runtime,
-            context,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-        return output.trim();
-    } catch (err) {
-        logger.error("[generateFiller] Error generating filler:", err);
-        return "";
-    }
-}
-
-/**
- * Speak a filler message if STT/TTS plugin is available. Sleep a bit after TTS to avoid cutoff.
- */
-async function speakFiller(
-    runtime: IAgentRuntime,
-    sttTtsPlugin: SttTtsPlugin | undefined,
-    fillerType: string,
-    sleepAfterMs = 3000
-): Promise<void> {
-    if (!sttTtsPlugin) return;
-    const text = await generateFiller(runtime, fillerType);
-    if (!text) return;
-
-    logger.log(`[Space] Filler (${fillerType}) => ${text}`);
-    await sttTtsPlugin.speakText(text);
-
-    if (sleepAfterMs > 0) {
-        await new Promise((res) => setTimeout(res, sleepAfterMs));
-    }
-}
-
-/**
- * Generate topic suggestions via GPT if no topics are configured
- */
-async function generateTopicsIfEmpty(
-    runtime: IAgentRuntime
-): Promise<string[]> {
-    try {
-        const context = composeContext({
-            state: {} as any,
-            template: `
-# INSTRUCTIONS:
-Please generate 5 short topic ideas for a Twitter Space about technology or random interesting subjects.
-Return them as a comma-separated list, no additional formatting or numbering.
-
-Example:
-"AI Advances, Futuristic Gadgets, Space Exploration, Quantum Computing, Digital Ethics"
----
-`,
-        });
-        const response = await generateText({
-            runtime,
-            context,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-        const topics = response
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean);
-        return topics.length ? topics : ["Random Tech Chat", "AI Thoughts"];
-    } catch (err) {
-        logger.error("[generateTopicsIfEmpty] GPT error =>", err);
-        return ["Random Tech Chat", "AI Thoughts"];
-    }
 }
 
 /**
@@ -166,25 +70,15 @@ export class TwitterSpaceClient {
 
         // TODO: Spaces should be added to and removed from cache probably, and it should be possible to join or leave a space from an action, etc
         const charSpaces = runtime.character.settings?.twitter?.spaces || {};
-        console.log("charSpaces: ", charSpaces)
         this.decisionOptions = {
             maxSpeakers: charSpaces.maxSpeakers ?? 1,
-            topics: charSpaces.topics ?? [],
             typicalDurationMinutes: charSpaces.typicalDurationMinutes ?? 30,
             idleKickTimeoutMs: charSpaces.idleKickTimeoutMs ?? 5 * 60_000,
             minIntervalBetweenSpacesMinutes:
                 charSpaces.minIntervalBetweenSpacesMinutes ?? 60,
-            businessHoursOnly: charSpaces.businessHoursOnly ?? false,
-            randomChance: charSpaces.randomChance ?? 0.3,
             enableIdleMonitor: charSpaces.enableIdleMonitor !== false,
-            enableSttTts: charSpaces.enableSttTts !== false,
             enableRecording: charSpaces.enableRecording !== false,
             enableSpaceHosting: charSpaces.enableSpaceHosting || false,
-            voiceId:
-                charSpaces.voiceId ||
-                runtime.character.settings.voice.model ||
-                "Xb7hH8MSUJpSbSDYk0k2",
-            sttLanguage: charSpaces.sttLanguage || "en",
             speakerMaxDurationMs: charSpaces.speakerMaxDurationMs ?? 4 * 60_000,
         };
     }
@@ -246,43 +140,7 @@ export class TwitterSpaceClient {
         }
     }
 
-    private async joinSpace(spaceId: string) {
-        if (this.spaceStatus !== SpaceActivity.IDLE) {
-            logger.warn("currently hosting/joining a space");
-            return null;
-        }
-
-        if (!this.spaceParticipant) {
-            this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
-                debug: false,
-            });
-        }
-        if (this.spaceParticipant) {
-            try {
-                await this.spaceParticipant.joinAsListener(spaceId);
-                return spaceId;
-            } catch(error) {
-                logger.error(`failed to join space ${error}`);
-                return null;
-            }
-        }
-    }
-
     private async shouldLaunchSpace(): Promise<boolean> {
-        // Random chance
-        const r = Math.random();
-        if (r > (this.decisionOptions.randomChance ?? 0.3)) {
-            logger.log("[Space] Random check => skip launching");
-            return false;
-        }
-        // Business hours
-        if (this.decisionOptions.businessHoursOnly) {
-            const hour = new Date().getUTCHours();
-            if (hour < 9 || hour >= 17) {
-                logger.log("[Space] Out of business hours => skip");
-                return false;
-            }
-        }
         // Interval
         const now = Date.now();
         if (this.lastSpaceEndedAt) {
@@ -300,26 +158,20 @@ export class TwitterSpaceClient {
     }
 
     private async generateSpaceConfig(): Promise<SpaceConfig> {
-        if (
-            !this.decisionOptions.topics ||
-            this.decisionOptions.topics.length === 0
-        ) {
+        let chosenTopic = "Random Tech Chat";
+        let topics = this.runtime.character.topics || [];
+        if (!topics.length) {
             const newTopics = await generateTopicsIfEmpty(this.client.runtime);
-            this.decisionOptions.topics = newTopics;
+            topics = newTopics;
         }
 
-        let chosenTopic = "Random Tech Chat";
-        if (
-            this.decisionOptions.topics &&
-            this.decisionOptions.topics.length > 0
-        ) {
-            chosenTopic =
-                this.decisionOptions.topics[
-                    Math.floor(
-                        Math.random() * this.decisionOptions.topics.length
-                    )
-                ];
-        }
+        chosenTopic =
+            topics[
+                Math.floor(
+                    Math.random() * topics.length
+                )
+            ];
+        
 
         return {
             record: this.decisionOptions.enableRecording,
@@ -343,30 +195,20 @@ export class TwitterSpaceClient {
             this.activeSpeakers = [];
             this.speakerQueue = [];
 
-            // Retrieve keys
-            const elevenLabsKey =
-                this.runtime.getSetting("ELEVENLABS_XI_API_KEY") || "";
-
             const broadcastInfo = await this.currentSpace.initialize(config);
             this.spaceId = broadcastInfo.room_id;
-            // Plugins
-            if (this.decisionOptions.enableRecording) {
-                logger.log("[Space] Using RecordToDiskPlugin");
-                this.currentSpace.use(new RecordToDiskPlugin());
-            }
 
-            if (this.decisionOptions.enableSttTts) {
+            if (
+                this.runtime.getModel(ModelClass.TEXT_TO_SPEECH) && 
+                this.runtime.getModel(ModelClass.TRANSCRIPTION)
+            ) {
                 logger.log("[Space] Using SttTtsPlugin");
                 const sttTts = new SttTtsPlugin();
                 this.sttTtsPlugin = sttTts;
                 // TODO: There is an error here, onAttach is incompatible
                 this.currentSpace.use(sttTts as any, {
                     runtime: this.runtime,
-                    client: this.client,
                     spaceId: this.spaceId,
-                    elevenLabsApiKey: elevenLabsKey,
-                    voiceId: this.decisionOptions.voiceId,
-                    sttLanguage: this.decisionOptions.sttLanguage,
                 });
             }
 
@@ -633,6 +475,29 @@ export class TwitterSpaceClient {
             this.lastSpaceEndedAt = Date.now();
             this.activeSpeakers = [];
             this.speakerQueue = [];
+        }
+    }
+
+    async joinSpace(spaceId: string) {
+        if (this.spaceStatus !== SpaceActivity.IDLE) {
+            logger.warn("currently hosting/joining a space");
+            return null;
+        }
+
+        if (!this.spaceParticipant) {
+            this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
+                debug: false,
+            });
+        }
+        if (this.spaceParticipant) {
+            try {
+                await this.spaceParticipant.joinAsListener(spaceId);
+                this.spaceStatus = SpaceActivity.JOINING;
+                return spaceId;
+            } catch(error) {
+                logger.error(`failed to join space ${error}`);
+                return null;
+            }
         }
     }
 }
