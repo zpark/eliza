@@ -249,7 +249,7 @@ export class TwitterSpaceClient {
     private async joinSpace(spaceId: string) {
         if (this.spaceStatus !== SpaceActivity.IDLE) {
             logger.warn("currently hosting/joining a space");
-            return false;
+            return null;
         }
 
         if (!this.spaceParticipant) {
@@ -260,10 +260,10 @@ export class TwitterSpaceClient {
         if (this.spaceParticipant) {
             try {
                 await this.spaceParticipant.joinAsListener(spaceId);
-                return true;
+                return spaceId;
             } catch(error) {
                 logger.error(`failed to join space ${error}`);
-                return false;
+                return null;
             }
         }
     }
