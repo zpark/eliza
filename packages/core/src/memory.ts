@@ -37,6 +37,10 @@ export class MemoryManager implements IMemoryManager {
     }
 
     private validateMetadata(metadata: KnowledgeMetadata): void {
+        if (!metadata.type) {
+            throw new Error('Metadata type is required');
+        }
+
         // Validate source if present
         if (metadata.source && typeof metadata.source !== 'string') {
             throw new Error('Metadata source must be a string');
@@ -196,11 +200,11 @@ export class MemoryManager implements IMemoryManager {
             return;
         }
 
-        // Initialize metadata if not present for knowledge table
-        if (this.tableName === 'knowledge' && !memory.metadata) {
+        // Initialize default metadata
+        if (!memory.metadata) {
             memory.metadata = {
-                source: 'knowledge',
-                scope: 'private',
+                type: this.tableName,  // Use table name as default type
+                scope: memory.agentId ? 'private' : 'shared',
                 timestamp: Date.now()
             };
         }
@@ -218,11 +222,6 @@ export class MemoryManager implements IMemoryManager {
             // Set default scope if not present
             if (!memory.metadata.scope) {
                 memory.metadata.scope = memory.agentId ? 'private' : 'shared';
-            }
-
-            // Set source if not present
-            if (!memory.metadata.source) {
-                memory.metadata.source = this.tableName;
             }
         }
 

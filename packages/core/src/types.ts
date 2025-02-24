@@ -1309,10 +1309,24 @@ export interface Task {
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
-export interface KnowledgeMetadata {
-    source?: string;          // Source of the knowledge (e.g., "user", "file", "web")
-    sourceId?: UUID;          // ID of the source (e.g., file ID, message ID)
-    scope?: string;           // Scope of the knowledge (e.g., "public", "private", "room")
-    timestamp?: number;       // When the knowledge was created/updated
-    tags?: string[];         // Optional tags for categorization
+export interface BaseMetadata {
+    type: string;          // Type of memory (e.g., "knowledge", "document", "fragment")
+    source?: string;       // Source of the memory (e.g., "user", "file", "web")
+    sourceId?: UUID;       // ID of the source (e.g., file ID, message ID)
+    scope?: string;        // Scope of the memory (e.g., "public", "private", "room")
+    timestamp?: number;    // When the memory was created/updated
+    tags?: string[];       // Optional tags for categorization
 }
+
+export interface DocumentMetadata extends BaseMetadata {
+    type: 'document';
+}
+
+export interface FragmentMetadata extends BaseMetadata {
+    type: 'fragment';
+    documentId: UUID;      // Reference to parent document
+    position: number;      // Position in original document
+}
+
+// Update existing KnowledgeMetadata to use the new base
+export type KnowledgeMetadata = BaseMetadata | DocumentMetadata | FragmentMetadata;

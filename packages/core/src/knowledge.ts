@@ -63,42 +63,41 @@ async function get(
         .map((memory) => ({ id: memory.id, content: memory.content }));
 }
 
-async function set(
-    runtime: AgentRuntime,
-    item: KnowledgeItem,
-    chunkSize = 512,
-    bleed = 20
-) {
-    const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
-    await runtime.documentsManager.createMemory({
+async function set(runtime: AgentRuntime, item: KnowledgeItem) {
+    // First store the document
+    const documentMemory: Memory = {
         id: item.id,
         agentId: runtime.agentId,
         roomId: runtime.agentId,
         userId: runtime.agentId,
-        createdAt: Date.now(),
         content: item.content,
-        embedding: embedding,
-    });
+        metadata: {
+            type: 'document',
+            timestamp: Date.now()
+        }
+    };
+    
+    await runtime.documentsManager.createMemory(documentMemory);
 
-    const preprocessed = preprocess(item.content.text);
-    const fragments = await splitChunks(preprocessed, chunkSize, bleed);
-
-    for (const fragment of fragments) {
-        const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, fragment);
-        await runtime.knowledgeManager.createMemory({
-            // We namespace the knowledge base uuid to avoid id
-            // collision with the document above.
-            id: stringToUuid(item.id + fragment),
-            roomId: runtime.agentId,
+    // Then create fragments
+    const fragments = await splitChunks(item.content.text);
+    
+    for (let i = 0; i < fragments.length; i++) {
+        const fragmentMemory: Memory = {
+            id: stringToUuid(`${item.id}-fragment-${i}`),
             agentId: runtime.agentId,
+            roomId: runtime.agentId,
             userId: runtime.agentId,
-            createdAt: Date.now(),
-            content: {
-                source: item.id,
-                text: fragment,
-            },
-            embedding,
-        });
+            content: { text: fragments[i] },
+            metadata: {
+                type: 'fragment',
+                documentId: item.id,
+                position: i,
+                timestamp: Date.now()
+            }
+        };
+        
+        await runtime.knowledgeManager.createMemory(fragmentMemory);
     }
 }
 

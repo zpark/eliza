@@ -1,7 +1,7 @@
 import { describe, expect, it, mock, beforeEach } from "bun:test";
 import { MemoryManager } from "../src/memory";
 import { CacheManager, MemoryCacheAdapter } from "../src/cache";
-import type { IAgentRuntime, Memory, UUID, ModelClass, KnowledgeMetadata } from "../src/types";
+import type { IAgentRuntime, Memory, UUID, ModelClass, KnowledgeMetadata, BaseMetadata } from "../src/types";
 
 describe("MemoryManager", () => {
     const TEST_UUID_1 = "123e4567-e89b-12d3-a456-426614174000" as UUID;
@@ -193,81 +193,52 @@ describe("MemoryManager", () => {
     });
 
     describe("Metadata Handling", () => {
-        it("should add default metadata for knowledge table", async () => {
-            const manager = new MemoryManager({
-                tableName: "knowledge",
-                runtime: mockRuntime,
-            });
-
+        it("should require type in metadata", async () => {
             const memory: Memory = {
                 id: TEST_UUID_1,
                 userId: TEST_UUID_2,
                 roomId: ROOM_UUID,
                 content: { text: "test" },
-            };
-
-            await manager.createMemory(memory);
-
-            expect(mockRuntime.databaseAdapter.createMemory).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    metadata: {
-                        source: "knowledge",
-                        scope: "private",
-                        timestamp: expect.any(Number),
-                    },
-                }),
-                "knowledge",
-                false
-            );
-        });
-
-        it("should validate metadata fields", async () => {
-            const invalidMetadata: KnowledgeMetadata = {
-                scope: "invalid" as any,
-            };
-
-            const memory: Memory = {
-                id: TEST_UUID_1,
-                userId: TEST_UUID_2,
-                roomId: ROOM_UUID,
-                content: { text: "test" },
-                metadata: invalidMetadata,
+                metadata: {
+                    scope: "private"
+                } as BaseMetadata // Force invalid metadata
             };
 
             await expect(memoryManager.createMemory(memory)).rejects.toThrow(
-                'Metadata scope must be "shared", "private", or "room"'
+                'Metadata type is required'
             );
         });
 
-        it("should set default scope based on agentId", async () => {
+        it("should set default metadata with table name as type", async () => {
             const memory: Memory = {
                 id: TEST_UUID_1,
                 userId: TEST_UUID_2,
                 roomId: ROOM_UUID,
-                agentId: AGENT_UUID,
-                content: { text: "test" },
-                metadata: {},
+                content: { text: "test" }
             };
 
             await memoryManager.createMemory(memory);
 
-            expect(mockRuntime.databaseAdapter.createMemory).toHaveBeenCalledWith(
+            expect(mockDatabaseAdapter.createMemory).toHaveBeenCalledWith(
                 expect.objectContaining({
                     metadata: expect.objectContaining({
-                        scope: "private",
-                    }),
+                        type: "test",
+                        scope: "shared",
+                        timestamp: expect.any(Number)
+                    })
                 }),
                 "test",
                 false
             );
         });
 
-        it("should preserve existing metadata values", async () => {
-            const existingMetadata: KnowledgeMetadata = {
+        it("should preserve existing valid metadata", async () => {
+            const existingMetadata: BaseMetadata = {
+                type: "document",
                 source: "user",
                 scope: "shared",
                 tags: ["important"],
-                timestamp: 123456789,
+                timestamp: 123456789
             };
 
             const memory: Memory = {
@@ -275,14 +246,14 @@ describe("MemoryManager", () => {
                 userId: TEST_UUID_2,
                 roomId: ROOM_UUID,
                 content: { text: "test" },
-                metadata: existingMetadata,
+                metadata: existingMetadata
             };
 
             await memoryManager.createMemory(memory);
 
-            expect(mockRuntime.databaseAdapter.createMemory).toHaveBeenCalledWith(
+            expect(mockDatabaseAdapter.createMemory).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    metadata: existingMetadata,
+                    metadata: existingMetadata
                 }),
                 "test",
                 false
