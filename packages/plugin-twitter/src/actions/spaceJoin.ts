@@ -86,7 +86,7 @@ export default {
                     try {
                         const spaceInfo = await client.twitterClient.getAudioSpaceById(spaceId);
                         if (spaceInfo?.metadata?.state === "Running") {
-                            const spaceJoined = await spaceManager.joinSpace(spaceId);
+                            const spaceJoined = await spaceManager.startParticipant(spaceId);
                             return !!spaceJoined;
                         }
                     } catch (error) {

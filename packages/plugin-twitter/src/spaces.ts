@@ -89,9 +89,7 @@ export class TwitterSpaceClient {
     public async startPeriodicSpaceCheck() {
         logger.log("[Space] Starting periodic check routine...");
 
-        // For instance:
-        const intervalMsWhenIdle = 5 * 60_000; // 5 minutes if no Space is running
-        const intervalMsWhenRunning = 5_000; // 5 seconds if a Space IS running
+        const interval = 20_000;
 
         const routine = async () => {
             try {
@@ -104,31 +102,21 @@ export class TwitterSpaceClient {
                             await this.startSpace(config);
                         }
                     }
-                    // Plan next iteration with a slower pace
-                    this.checkInterval = setTimeout(
-                        routine,
-                        this.spaceStatus !== SpaceActivity.IDLE
-                            ? intervalMsWhenRunning
-                            : intervalMsWhenIdle
-                    ) as any;
                 } else {
                     if (this.spaceStatus === SpaceActivity.HOSTING) {
-                        // Space is running => manage it more frequently
                         await this.manageCurrentSpace();
                     } else if (this.spaceStatus === SpaceActivity.PARTICIPATING) {
-                        
+                        await this.manageParticipant();
                     }
-                    
-                    // Plan next iteration with a faster pace
-                    this.checkInterval = setTimeout(
-                        routine,
-                        intervalMsWhenRunning
-                    ) as any;
                 }
+                this.checkInterval = setTimeout(
+                    routine,
+                    interval
+                ) as any;
             } catch (error) {
                 logger.error("[Space] Error in routine =>", error);
                 // In case of error, still schedule next iteration
-                this.checkInterval = setTimeout(routine, intervalMsWhenIdle) as any;
+                this.checkInterval = setTimeout(routine, interval) as any;
             }
         };
 
@@ -480,7 +468,7 @@ export class TwitterSpaceClient {
         }
     }
 
-    async joinSpace(spaceId: string) {
+    async startParticipant(spaceId: string) {
         if (this.spaceStatus !== SpaceActivity.IDLE) {
             logger.warn("currently hosting/participating a space");
             return null;
@@ -532,6 +520,29 @@ export class TwitterSpaceClient {
             }
         }
     }
+
+    async manageParticipant() {
+        if (!this.spaceParticipant || !this.spaceParticipant.spaceId) {
+            this.spaceStatus = SpaceActivity.IDLE;
+            return;
+        }
+    
+        const space = await this.client.twitterClient.getAudioSpaceById(this.spaceParticipant.spaceId);
+        const agentName = this.client.state["TWITTER_USERNAME"];
+    
+        const hasListener = space.participants.listeners.some(
+            (participant) => participant.twitter_screen_name === agentName
+        );
+    
+        const hasSpeaker = space.participants.speakers.some(
+            (participant) => participant.twitter_screen_name === agentName
+        );
+
+        if (!hasListener && !hasSpeaker) {
+            this.spaceStatus = SpaceActivity.IDLE;
+        }
+    }
+    
 
     /**
      * waitForApproval waits until "newSpeakerAccepted" matches our sessionUUID,

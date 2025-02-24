@@ -34,7 +34,7 @@ interface SpaceParticipantConfig {
  * and optionally becoming a speaker via WebRTC (Janus).
  */
 export class SpaceParticipant extends EventEmitter {
-  private spaceId: string;
+  spaceId: string;
   private readonly debug: boolean;
   private readonly logger: Logger;
 
