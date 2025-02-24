@@ -50,7 +50,7 @@ export class CharacterServer {
     character: string | never
   ) => Promise<Character>; // Store jsonToCharacter function
 
-  constructor(options: ServerOptions) {
+  constructor(options?: ServerOptions) {
     logger.log("DirectClient constructor");
     this.app = express();
     this.app.use(cors());
@@ -59,7 +59,7 @@ export class CharacterServer {
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
 
-    if (options.middlewares) {
+    if (options?.middlewares) {
       for (const middleware of options.middlewares) {
         this.app.use(middleware);
       }
