@@ -35,8 +35,41 @@ export function createApiRouter(
 
     // Mount sub-routers
     router.use('/agents', agentRouter(agents, directClient));
-    router.use('/characters', characterRouter(agents));
+    router.use('/characters', characterRouter());
     router.use('/tee', teeRouter(agents));
+
+    // Health check endpoints
+    router.get('/health', (_req, res) => {
+        const healthcheck = {
+            status: 'OK',
+            version: process.env.APP_VERSION || 'unknown',
+            timestamp: new Date().toISOString(),
+            dependencies: {
+                agents: agents.size > 0 ? 'healthy' : 'no_agents'
+            }
+        };
+        
+        const statusCode = healthcheck.dependencies.agents === 'healthy' ? 200 : 503;
+        res.status(statusCode).json(healthcheck);
+    });
+
+    // Status endpoint
+    router.get('/status', (_req, res) => {
+        res.json({
+            status: 'operational',
+            version: process.env.APP_VERSION || 'unknown',
+            uptime: process.uptime(),
+            timestamp: new Date().toISOString(),
+            system: {
+                platform: process.platform,
+                memory: process.memoryUsage(),
+                env: process.env.NODE_ENV
+            },
+            dependencies: {
+                totalAgents: agents.size,
+            }
+        });
+    });
 
     return router;
 }
