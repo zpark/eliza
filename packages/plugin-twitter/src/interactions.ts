@@ -378,6 +378,15 @@ export class TwitterInteractionClient {
             const userIdUUID = stringToUuid(tweet.userId as string);
             const roomId = stringToUuid(tweet.conversationId);
 
+            await this.runtime.ensureConnection({
+                userId: userIdUUID,
+                roomId,
+                userName: tweet.username,
+                userScreenName: tweet.name,
+                source: "twitter",
+                type: ChannelType.GROUP
+            });
+
             const message = {
                 id: tweetId,
                 agentId: this.runtime.agentId,
@@ -399,8 +408,12 @@ export class TwitterInteractionClient {
         }
 
         // get usernames into str
-        const validTargetUsersStr =
-            (this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).join(",");
+        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS");
+        const validTargetUsersStr = Array.isArray(targetUsers)
+            ? targetUsers.join(",")
+            : typeof targetUsers === 'string'
+                ? targetUsers
+                : "";
 
         const shouldRespondContext = composeContext({
             state,

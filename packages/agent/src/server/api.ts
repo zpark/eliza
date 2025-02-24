@@ -13,9 +13,7 @@ import {
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
-import fs from "node:fs";
-import path from "node:path";
-import type { CharacterServer } from ".";
+import type { AgentServer } from ".";
 
 interface UUIDParams {
     agentId: UUID;
@@ -50,7 +48,7 @@ function validateUUIDParams(
 
 export function createApiRouter(
     agents: Map<string, IAgentRuntime>,
-    directClient: CharacterServer
+    directClient: AgentServer
 ): express.Router {
     const router = express.Router();
 
@@ -75,19 +73,9 @@ export function createApiRouter(
         const agentsList = Array.from(agents.values()).map((agent) => ({
             id: agent.agentId,
             name: agent.character.name,
-            clients: agent.getAllClients().keys(),
+            clients: Array.from(agent.getAllClients().keys())
         }));
         res.json({ agents: agentsList });
-    });
-
-    router.get('/storage', async (_req, res) => {
-        try {
-            const uploadDir = path.join(process.cwd(), "data", "characters");
-            const files = await fs.promises.readdir(uploadDir);
-            res.json({ files });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
     });
 
     router.get("/agents/:agentId", (req, res) => {
@@ -147,11 +135,7 @@ export function createApiRouter(
             // stop agent
             agent.stop();
             directClient.unregisterAgent(agent);
-            // if it has a different name, the agentId will change
         }
-
-        // stores the json data before it is modified with added data
-        const characterJson = { ...req.body };
 
         // load character from body
         const character = req.body;
@@ -169,6 +153,8 @@ export function createApiRouter(
         // start it up (and register it)
         try {
             agent = await directClient.startAgent(character);
+            // Ensure character exists in database
+            await agent.ensureCharacterExists(character);
             logger.log(`${character.name} started`);
         } catch (e) {
             logger.error(`Error starting agent: ${e}`);
@@ -177,34 +163,6 @@ export function createApiRouter(
                 message: e.message,
             });
             return;
-        }
-
-        if (agent.getSetting("USE_CHARACTER_STORAGE") as boolean) {
-            try {
-                const filename = `${agent.agentId}.json`;
-                const uploadDir = path.join(
-                    process.cwd(),
-                    "data",
-                    "characters"
-                );
-                const filepath = path.join(uploadDir, filename);
-                await fs.promises.mkdir(uploadDir, { recursive: true });
-                await fs.promises.writeFile(
-                    filepath,
-                    JSON.stringify(
-                        { ...characterJson, id: agent.agentId },
-                        null,
-                        2
-                    )
-                );
-                logger.info(
-                    `Character stored successfully at ${filepath}`
-                );
-            } catch (error) {
-                logger.error(
-                    `Failed to store character: ${error.message}`
-                );
-            }
         }
 
         res.json({
@@ -314,7 +272,6 @@ export function createApiRouter(
             let character: Character;
             if (characterJson) {
                 character = await directClient.jsonToCharacter(
-                    characterPath,
                     characterJson
                 );
             } else if (characterPath) {
@@ -334,6 +291,56 @@ export function createApiRouter(
             logger.error(`Error parsing character: ${e}`);
             res.status(400).json({
                 error: e.message,
+            });
+            return;
+        }
+    });
+
+    router.post("/agent/start/:characterName", async (req, res) => {
+        const characterName = req.params.characterName;
+        try {
+            let character: Character;
+
+            // First try to find character in database using adapter from any running agent
+            const anyAgent = Array.from(agents.values())[0];
+            if (anyAgent?.databaseAdapter) {
+                character = await anyAgent.databaseAdapter.getCharacter(characterName);
+            }
+
+            // If not in database, try filesystem
+            if (!character) {
+                try {
+                    character = await directClient.loadCharacterTryPath(characterName);
+                } catch (e) {
+                    // If not in filesystem, check running agents
+                    const existingAgent = Array.from(agents.values()).find(
+                        (a) => a.character.name.toLowerCase() === characterName.toLowerCase()
+                    );
+
+                    if (!existingAgent) {
+                        res.status(404).json({
+                            error: `Character '${characterName}' not found in database, filesystem, or running agents`
+                        });
+                        return;
+                    }
+
+                    // Use the existing agent's character
+                    character = existingAgent.character;
+                }
+            }
+
+            // Start the agent with this character
+            await directClient.startAgent(character);
+            logger.log(`${character.name} started`);
+
+            res.json({
+                id: character.id,
+                character: character,
+            });
+        } catch (e) {
+            logger.error(`Error starting character by name: ${e}`);
+            res.status(400).json({
+                error: `Failed to start character '${characterName}': ${e.message}`,
             });
             return;
         }

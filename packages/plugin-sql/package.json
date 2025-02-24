@@ -16,11 +16,10 @@
     }
   },
   "files": [
-    "dist",
-    "schema.sql",
-    "seed.sql"
+    "dist"
   ],
   "dependencies": {
+    "@electric-sql/pglite": "^0.2.17",
     "@elizaos/core": "workspace:*",
     "@types/pg": "8.11.10",
     "drizzle-kit": "^0.30.4",

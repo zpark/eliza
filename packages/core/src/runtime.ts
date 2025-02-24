@@ -1452,12 +1452,16 @@ Text: ${attachment.text}
     async ensureCharacterExists(character: Character) {
         const characterExists = await this.databaseAdapter.getCharacter(character.name);
         if (!characterExists) {
-            await this.databaseAdapter.createCharacter(character);
+            logger.log(`[AgentRuntime][${this.character.name}] Creating character`);
+            return await this.databaseAdapter.createCharacter(character);
         }
+        logger.log(`[AgentRuntime][${this.character.name}] Updating character`);
+        // update the character with the latest character provided
+        await this.databaseAdapter.updateCharacter(character.name, character);
     }
 
     async ensureEmbeddingDimension() {
-        console.log(`[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`);
+        logger.log(`[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`);
         
         if (!this.databaseAdapter) {
             throw new Error(`[AgentRuntime][${this.character.name}] Database adapter not initialized before ensureEmbeddingDimension`);

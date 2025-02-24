@@ -1,9 +1,4 @@
 import { messageCompletionFooter } from "@elizaos/core";
-import path from "node:path";
-import multer from "multer";
-import fs from "node:fs";
-
-
 
 export const messageHandlerTemplate =
     // {{goals}}
@@ -68,24 +63,3 @@ Response format should be formatted in a JSON block like this:
 { "lookAt": "{{nearby}}" or null, "emote": "{{emotes}}" or null, "say": "string" or null, "actions": (array of strings) or null }
 \`\`\`
 `;
-
-
-
-
-export const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-        const uploadDir = path.join(process.cwd(), "data", "uploads");
-        // Create the directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (_req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`);
-    },
-});
-
-// some people have more memory than disk.io
-export const upload = multer({ storage /*: multer.memoryStorage() */ });

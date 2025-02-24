@@ -20,12 +20,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { z } from "zod";
 import { createApiRouter } from "./api.ts";
-import {
-  hyperfiHandlerTemplate,
-  messageHandlerTemplate,
-  upload,
-} from "./helper.ts";
+import { hyperfiHandlerTemplate, messageHandlerTemplate } from "./helper.ts";
 import replyAction from "./reply.ts";
+import { upload } from "./loader.ts";
 
 export interface ServerMiddleware {
   (
@@ -39,31 +36,38 @@ export interface ServerOptions {
   middlewares?: ServerMiddleware[];
 }
 
-export class CharacterServer {
-  public app: express.Application;
-  private agents: Map<string, IAgentRuntime>; // container management
-  private server: any; // Store server instance
-  public startAgent: (character: Character) => Promise<IAgentRuntime>; // Store startAgent function
-  public loadCharacterTryPath: (characterPath: string) => Promise<Character>; // Store loadCharacterTryPath function
-  public jsonToCharacter: (
-    filePath: string,
-    character: string | never
-  ) => Promise<Character>; // Store jsonToCharacter function
+export class AgentServer {
+    public app: express.Application;
+    private agents: Map<string, IAgentRuntime>; // container management
+    private server: any; // Store server instance
+    public startAgent: (character: Character) => Promise<IAgentRuntime>; // Store startAgent function
+    public loadCharacterTryPath: (characterPath: string) => Promise<Character>; // Store loadCharacterTryPath function
+    public jsonToCharacter: (character: string | never) => Promise<Character>; // Store jsonToCharacter function
 
-  constructor(options?: ServerOptions) {
-    logger.log("DirectClient constructor");
-    this.app = express();
-    this.app.use(cors());
-    this.agents = new Map();
+    constructor() {
+        logger.log("DirectClient constructor");
+        this.app = express();
+        this.app.use(cors());
+        this.agents = new Map();
 
-    this.app.use(bodyParser.json());
-    this.app.use(bodyParser.urlencoded({ extended: true }));
+        this.app.use(bodyParser.json());
+        this.app.use(bodyParser.urlencoded({ extended: true }));
+      
+        if (options?.middlewares) {
+          for (const middleware of options.middlewares) {
+            this.app.use(middleware);
+          }
+        }
 
-    if (options?.middlewares) {
-      for (const middleware of options.middlewares) {
-        this.app.use(middleware);
-      }
-    }
+        // Serve both uploads and generated images
+        this.app.use(
+            "/media/uploads",
+            express.static(path.join(process.cwd(), "/data/uploads"))
+        );
+        this.app.use(
+            "/media/generated",
+            express.static(path.join(process.cwd(), "/generatedImages"))
+        );
 
     // Serve both uploads and generated images
     this.app.use(
