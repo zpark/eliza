@@ -9,7 +9,7 @@ const fetcher = async ({
     headers,
 }: {
     url: string;
-    method?: "GET" | "POST" | "DELETE";
+    method?: "GET" | "POST" | "DELETE" | "PUT";
     body?: object | FormData;
     headers?: HeadersInit;
 }) => {
@@ -117,13 +117,13 @@ export const apiClient = {
         }),
     startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
         fetcher({
-            url: "/agent/start",
+            url: "/agents/start",
             method: "POST",
             body: params,
         }),
     startAgentByName: (characterName: string) =>
         fetcher({
-            url: `/agent/start/${characterName}`,
+            url: `/agents/start/${characterName}`,
             method: "POST",
         }),
     stopAgent: (agentId: string) =>
@@ -133,4 +133,44 @@ export const apiClient = {
         }),
     getMemories: (agentId: string, roomId: string) =>
         fetcher({ url: `/agents/${agentId}/${roomId}/memories` }),
+    
+    // Character-related routes
+    getCharacters: () => 
+        fetcher({ url: "/characters" }),
+    
+    getCharacter: (characterName: string): Promise<Character> =>
+        fetcher({ url: `/characters/${characterName}` }),
+    
+    createCharacter: (character: Character) =>
+        fetcher({
+            url: "/characters",
+            method: "POST",
+            body: character,
+        }),
+    
+    updateCharacter: (characterName: string, character: Character) =>
+        fetcher({
+            url: `/characters/${characterName}`,
+            method: "PUT",
+            body: character,
+        }),
+    
+    deleteCharacter: (characterName: string): Promise<{ success: boolean }> =>
+        fetcher({
+            url: `/characters/${characterName}`,
+            method: "DELETE",
+        }),
+    
+    importCharacter: (characterFile: File) => {
+        const formData = new FormData();
+        formData.append("file", characterFile);
+        return fetcher({
+            url: "/characters/import",
+            method: "POST",
+            body: formData,
+        });
+    },
+    
+    exportCharacter: (characterName: string) =>
+        fetcher({ url: `/characters/${characterName}/export` }),
 };
