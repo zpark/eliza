@@ -278,7 +278,7 @@ export class MessageManager {
                 (chat as Chat.SupergroupChat).title :
                 chat.type === 'channel' ?
                     (chat as Chat.ChannelChat).title :
-                    undefined;
+                    "undefined";
 
             // Get room name from chat title/first name
             const roomName = chat.type === 'private' ?

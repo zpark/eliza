@@ -1011,6 +1011,7 @@ export interface IAgentRuntime {
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
 
+  registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
 
   unregisterClient(name: string): void;
