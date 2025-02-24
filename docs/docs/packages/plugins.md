@@ -742,11 +742,11 @@ cargo run --ip-addr <ip>:<port>
 docker run --init -p 127.0.0.1:1350:1350 marlinorg/attestation-server-custom-mock
 ```
 
-### 12. Allora Plugin (`@elizaos/allora-plugin`)
+#### 12. Allora Plugin (`@elizaos/allora-plugin`)
 
 The [Allora Network](https://allora.network) plugin seamlessly empowers Eliza agents with real-time, advanced, self-improving AI inferences, delivering high-performance insights without introducing any additional complexity.
 
-#### Setup and Configuration
+**Setup and Configuration**
 
 1. Add the plugin to your character's configuration
 
@@ -761,7 +761,7 @@ The [Allora Network](https://allora.network) plugin seamlessly empowers Eliza ag
 2. Set the following environment variables:
     - `ALLORA_API_KEY`: Create an API key by [creating an account](https://developer.upshot.xyz/signup).
 
-#### Actions
+**Actions**
 
 - `GET_INFERENCE`: Retrieves predictions for a specific topic.
 
@@ -775,7 +775,7 @@ Agent: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 1
 
 For detailed information and additional implementation examples, please refer to the [Allora-Eliza integration docs](https://docs.allora.network/marketplace/integrations/eliza-os/implementation).
 
-### 13. Form Plugin (`@elizaos/plugin-form`)
+#### 13. Form Plugin (`@elizaos/plugin-form`)
 
 The Form chain plugin enables interaction with Form blockchain's unique SocialFi token economics including but not limited to the Bonding Curves tokens. It provides functionality for buying, selling, withdrawing, depositing, and managing curves tokens.
 
