@@ -14,6 +14,7 @@ import {
     RecordToDiskPlugin,
     IdleMonitorPlugin,
     type SpeakerRequest,
+    SpaceParticipant,
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
 
@@ -148,6 +149,7 @@ export class TwitterSpaceClient {
     private lastSpaceEndedAt?: number;
     private sttTtsPlugin?: SttTtsPlugin;
     public spaceStatus: SpaceActivity = SpaceActivity.IDLE;
+    private spaceParticipant: SpaceParticipant | null = null;
 
     /**
      * We now store an array of active speakers, not just 1
@@ -241,6 +243,22 @@ export class TwitterSpaceClient {
         if (this.checkInterval) {
             clearTimeout(this.checkInterval);
             this.checkInterval = undefined;
+        }
+    }
+
+    private joinSpace(spaceId: string) {
+        if (this.spaceStatus !== SpaceActivity.IDLE) {
+            logger.warn("currently hosting/joining a space");
+            return false;
+        }
+
+        if (!this.spaceParticipant) {
+            this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
+                debug: false,
+            });
+        }
+        if (this.spaceParticipant) {
+            this.spaceParticipant.joinAsListener(spaceId)
         }
     }
 

@@ -26,7 +26,6 @@ import {
 } from '../utils';
 
 interface SpaceParticipantConfig {
-  spaceId: string;
   debug?: boolean;
 }
 
@@ -35,7 +34,7 @@ interface SpaceParticipantConfig {
  * and optionally becoming a speaker via WebRTC (Janus).
  */
 export class SpaceParticipant extends EventEmitter {
-  private readonly spaceId: string;
+  private spaceId: string;
   private readonly debug: boolean;
   private readonly logger: Logger;
 
@@ -69,7 +68,6 @@ export class SpaceParticipant extends EventEmitter {
     config: SpaceParticipantConfig,
   ) {
     super();
-    this.spaceId = config.spaceId;
     this.debug = config.debug ?? false;
     this.logger = new Logger(this.debug);
   }
@@ -96,7 +94,8 @@ export class SpaceParticipant extends EventEmitter {
   /**
    * Joins the Space as a listener: obtains HLS, chat token, etc.
    */
-  public async joinAsListener(): Promise<void> {
+  public async joinAsListener(spaceId: string): Promise<void> {
+    this.spaceId = spaceId;
     this.logger.info(
       '[SpaceParticipant] Joining space as listener =>',
       this.spaceId,
@@ -309,6 +308,7 @@ export class SpaceParticipant extends EventEmitter {
     }
 
     this.logger.info('[SpaceParticipant] Left space =>', this.spaceId);
+    this.spaceId = null;
   }
 
   /**
