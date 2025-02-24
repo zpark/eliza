@@ -246,7 +246,7 @@ export class TwitterSpaceClient {
         }
     }
 
-    private joinSpace(spaceId: string) {
+    private async joinSpace(spaceId: string) {
         if (this.spaceStatus !== SpaceActivity.IDLE) {
             logger.warn("currently hosting/joining a space");
             return false;
@@ -258,7 +258,13 @@ export class TwitterSpaceClient {
             });
         }
         if (this.spaceParticipant) {
-            this.spaceParticipant.joinAsListener(spaceId)
+            try {
+                await this.spaceParticipant.joinAsListener(spaceId);
+                return true;
+            } catch(error) {
+                logger.error(`failed to join space ${error}`);
+                return false;
+            }
         }
     }
 
