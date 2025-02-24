@@ -1,17 +1,13 @@
-// eslint-disable-next-line
-// @ts-nocheck
-// src/actions/joinTwitterSpace
 import {
     type Action,
     type ActionExample,
-    composeContext,
     type IAgentRuntime,
     type Memory,
     type State,
-    generateText,
-    ModelClass,
-    stringToUuid
+    stringToUuid,
+    HandlerCallback
 } from "@elizaos/core";
+import { Tweet } from "../client";
 
 export default {
     name: "JOIN_TWITTER_SPACE",
@@ -68,14 +64,14 @@ export default {
             return false;
         }
 
-        const tweet = message.content.tweet;
+        const tweet = message.content.tweet as Tweet;
         if (!tweet) {
             console.error("space action - no tweet found in message")
             return false;
         }
 
 
-        async function joinSpaceByUrls(tweet: any): Promise<string | null> {
+        async function joinSpaceByUrls(tweet: any): Promise<boolean> {
             if (tweet.urls) {
                 for (const url of tweet.urls) {
                     const match = url.match(/https:\/\/x\.com\/i\/spaces\/([a-zA-Z0-9]+)/);
