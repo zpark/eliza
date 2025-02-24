@@ -439,7 +439,7 @@ export class AgentServer {
               }
             }
             if (hfOut.emote !== null) {
-              contentObj.text = `emoted ${hfOut.emote}`;
+              contentObj.text += `emoted ${hfOut.emote}`;
             }
           }
 
