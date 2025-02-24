@@ -282,6 +282,46 @@ export interface State {
   [key: string]: unknown;
 }
 
+export enum MemoryType {
+    DOCUMENT = "document",
+    FRAGMENT = "fragment",
+    MESSAGE = "message",
+    DESCRIPTION = "description"
+}
+
+export interface BaseMetadata {
+    type: MemoryType;          
+    source?: string;           
+    sourceId?: UUID;           
+    scope?: string;            
+    timestamp?: number;        
+    tags?: string[];          
+}
+
+export interface DocumentMetadata extends BaseMetadata {
+    type: MemoryType.DOCUMENT;
+}
+
+export interface FragmentMetadata extends BaseMetadata {
+    type: MemoryType.FRAGMENT;
+    documentId: UUID;      
+    position: number;      
+}
+
+export interface MessageMetadata extends BaseMetadata {
+    type: MemoryType.MESSAGE;
+}
+
+export interface DescriptionMetadata extends BaseMetadata {
+    type: MemoryType.DESCRIPTION;
+}
+
+export type KnowledgeMetadata = 
+    | DocumentMetadata 
+    | FragmentMetadata 
+    | MessageMetadata 
+    | DescriptionMetadata;
+
 /**
  * Represents a stored memory/message
  */
@@ -626,7 +666,7 @@ export type TemplateType = string | ((options: { state: State }) => string);
 /**
  * Configuration for an agent character
  */
-export type Character = {
+export interface Character {
   /** Optional unique identifier */
   id?: UUID;
 
@@ -684,7 +724,7 @@ export type Character = {
     chat?: string[];
     post?: string[];
   };
-};
+}
 
 export interface TwitterSpaceDecisionOptions {
   maxSpeakers?: number;
@@ -870,7 +910,7 @@ export interface IDatabaseCacheAdapter {
 
 export interface IMemoryManager {
   runtime: IAgentRuntime;
-  tableName: string;
+  tableName: TableType;
   constructor: Function;
 
   addEmbeddingToMemory(memory: Memory): Promise<Memory>;
@@ -890,6 +930,7 @@ export interface IMemoryManager {
     roomId?: UUID;
     agentId?: UUID;
     unique?: boolean;
+    metadata?: KnowledgeMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(
@@ -980,7 +1021,7 @@ export interface IAgentRuntime {
 
   registerMemoryManager(manager: IMemoryManager): void;
 
-  getMemoryManager(name: string): IMemoryManager | null;
+  getMemoryManager(tableName: TableType): IMemoryManager | null;
 
   getService<T extends Service>(service: ServiceType): T | null;
 
@@ -1309,24 +1350,9 @@ export interface Task {
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
-export interface BaseMetadata {
-    type: string;          // Type of memory (e.g., "knowledge", "document", "fragment")
-    source?: string;       // Source of the memory (e.g., "user", "file", "web")
-    sourceId?: UUID;       // ID of the source (e.g., file ID, message ID)
-    scope?: string;        // Scope of the memory (e.g., "public", "private", "room")
-    timestamp?: number;    // When the memory was created/updated
-    tags?: string[];       // Optional tags for categorization
+export enum TableType {
+    MESSAGES = "messages",
+    DESCRIPTIONS = "descriptions",
+    DOCUMENTS = "documents",
+    FRAGMENTS = "fragments"
 }
-
-export interface DocumentMetadata extends BaseMetadata {
-    type: 'document';
-}
-
-export interface FragmentMetadata extends BaseMetadata {
-    type: 'fragment';
-    documentId: UUID;      // Reference to parent document
-    position: number;      // Position in original document
-}
-
-// Update existing KnowledgeMetadata to use the new base
-export type KnowledgeMetadata = BaseMetadata | DocumentMetadata | FragmentMetadata;

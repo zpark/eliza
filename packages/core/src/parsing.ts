@@ -333,6 +333,11 @@ export function truncateToCompleteSentence(
     return `${hardTruncated}...`;
 }
 
+// Assuming ~4 tokens per character on average
+const TOKENS_PER_CHAR = 4;
+const TARGET_TOKENS = 3000;
+const TARGET_CHARS = Math.floor(TARGET_TOKENS / TOKENS_PER_CHAR); // ~750 chars
+
 export async function splitChunks(
     content: string,
     chunkSize = 512,

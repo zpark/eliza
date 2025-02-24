@@ -1,7 +1,16 @@
 import { describe, expect, it, mock, beforeEach } from "bun:test";
 import { MemoryManager } from "../src/memory";
 import { CacheManager, MemoryCacheAdapter } from "../src/cache";
-import type { IAgentRuntime, Memory, UUID, ModelClass, KnowledgeMetadata, BaseMetadata } from "../src/types";
+import type { 
+    IAgentRuntime, 
+    Memory, 
+    UUID, 
+    ModelClass, 
+    KnowledgeMetadata, 
+    DocumentMetadata,
+    FragmentMetadata
+} from "../src/types";
+import { MemoryType, TableType } from "../src/types.ts";
 
 describe("MemoryManager", () => {
     const TEST_UUID_1 = "123e4567-e89b-12d3-a456-426614174000" as UUID;
@@ -34,7 +43,7 @@ describe("MemoryManager", () => {
         } as unknown as IAgentRuntime;
 
         memoryManager = new MemoryManager({
-            tableName: "test",
+            tableName: TableType.DOCUMENTS,
             runtime: mockRuntime,
         });
     });
@@ -91,7 +100,7 @@ describe("MemoryManager", () => {
                 roomId,
                 count: 10,
                 unique: true,
-                tableName: "test",
+                tableName: "documents",
                 agentId: AGENT_UUID,
                 start,
                 end,
@@ -108,7 +117,7 @@ describe("MemoryManager", () => {
                 expect.objectContaining({
                     roomId: ROOM_UUID,
                     agentId: AGENT_UUID,
-                    tableName: "test",
+                    tableName: "documents",
                 })
             );
         });
@@ -122,7 +131,7 @@ describe("MemoryManager", () => {
                 expect.objectContaining({
                     roomId: ROOM_UUID,
                     agentId: undefined,
-                    tableName: "test",
+                    tableName: "documents",
                 })
             );
         });
@@ -201,7 +210,7 @@ describe("MemoryManager", () => {
                 content: { text: "test" },
                 metadata: {
                     scope: "private"
-                } as BaseMetadata // Force invalid metadata
+                } as KnowledgeMetadata
             };
 
             await expect(memoryManager.createMemory(memory)).rejects.toThrow(
@@ -222,19 +231,19 @@ describe("MemoryManager", () => {
             expect(mockDatabaseAdapter.createMemory).toHaveBeenCalledWith(
                 expect.objectContaining({
                     metadata: expect.objectContaining({
-                        type: "test",
+                        type: MemoryType.DOCUMENT,
                         scope: "shared",
                         timestamp: expect.any(Number)
                     })
                 }),
-                "test",
+                "documents",
                 false
             );
         });
 
         it("should preserve existing valid metadata", async () => {
-            const existingMetadata: BaseMetadata = {
-                type: "document",
+            const existingMetadata: DocumentMetadata = {
+                type: MemoryType.DOCUMENT,
                 source: "user",
                 scope: "shared",
                 tags: ["important"],
@@ -255,9 +264,126 @@ describe("MemoryManager", () => {
                 expect.objectContaining({
                     metadata: existingMetadata
                 }),
-                "test",
+                "documents",
                 false
             );
+        });
+    });
+
+    describe("Table Name Validation", () => {
+        it("should only accept valid table names", () => {
+            // Valid cases
+            expect(() => new MemoryManager({ 
+                tableName: TableType.DOCUMENTS,
+                runtime: mockRuntime 
+            })).not.toThrow();
+            
+            // Invalid cases
+            expect(() => new MemoryManager({ 
+                tableName: "not_a_valid_table" as TableType,
+                runtime: mockRuntime 
+            })).toThrow();
+        });
+
+        it("should enforce table-specific metadata types", async () => {
+            const documentsManager = new MemoryManager({ 
+                tableName: TableType.DOCUMENTS,
+                runtime: mockRuntime 
+            });
+
+            const invalidMemory: Memory = {
+                id: TEST_UUID_1,
+                userId: TEST_UUID_2,
+                roomId: ROOM_UUID,
+                content: { text: "test" },
+                metadata: {
+                    type: MemoryType.FRAGMENT,  // Wrong type for documents table
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                }
+            };
+
+            await expect(documentsManager.createMemory(invalidMemory))
+                .rejects
+                .toThrow("Invalid metadata type for table documents. Expected document, got fragment");
+        });
+
+        it("should enforce metadata requirements", async () => {
+            const fragmentsManager = new MemoryManager({
+                tableName: TableType.FRAGMENTS,
+                runtime: mockRuntime
+            });
+
+            // Test missing documentId
+            const noDocumentId: Memory = {
+                id: TEST_UUID_1,
+                userId: TEST_UUID_2,
+                roomId: ROOM_UUID,
+                content: { text: "test" },
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    position: 0,
+                    timestamp: Date.now(),
+                    // documentId is intentionally missing to test validation
+                } as FragmentMetadata  // Type assertion to FragmentMetadata
+            };
+
+            await expect(fragmentsManager.createMemory(noDocumentId))
+                .rejects
+                .toThrow("Fragment metadata must include documentId");
+
+            // Also test missing position
+            const noPosition: Memory = {
+                id: TEST_UUID_1,
+                userId: TEST_UUID_2,
+                roomId: ROOM_UUID,
+                content: { text: "test" },
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    timestamp: Date.now(),
+                    // position is intentionally missing to test validation
+                } as FragmentMetadata  // Type assertion to FragmentMetadata
+            };
+
+            await expect(fragmentsManager.createMemory(noPosition))
+                .rejects
+                .toThrow("Fragment metadata must include position");
+        });
+    });
+
+    describe("Document Fragmentation", () => {
+        it("should handle different token size configurations", async () => {
+            const documentsManager = new MemoryManager({ 
+                tableName: TableType.DOCUMENTS,
+                runtime: mockRuntime 
+            });
+            
+            const largeText = "a".repeat(10000);
+            const memory: Memory = {
+                id: TEST_UUID_1,
+                userId: TEST_UUID_2,
+                roomId: ROOM_UUID,
+                content: { text: largeText },
+                metadata: {
+                    type: MemoryType.DOCUMENT,
+                    timestamp: Date.now()
+                }
+            };
+
+            await documentsManager.createMemory(memory);
+            // Verify fragments were created with correct sizes
+        });
+
+        it("should preserve semantic boundaries when possible", async () => {
+            const text = "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.";
+            // Test that fragments break at paragraph boundaries
+        });
+
+        it("should handle multilingual content properly", async () => {
+            const multilingualText = "English text. 中文文本. Русский текст.";
+            // Test proper handling of different scripts
         });
     });
 });

@@ -47,7 +47,8 @@ import {
     type ServiceType,
     type Service,
     type Route,
-    type Task
+    type Task,
+    TableType,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -125,7 +126,7 @@ class KnowledgeManager {
  */
 class MemoryManagerService {
     private runtime: IAgentRuntime;
-    private memoryManagers: Map<string, IMemoryManager>;
+    private memoryManagers: Map<TableType, IMemoryManager>;
 
     constructor(runtime: IAgentRuntime, knowledgeRoot: string) {
         this.runtime = runtime;
@@ -139,25 +140,25 @@ class MemoryManagerService {
         // Message manager for storing messages
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "messages",
+            tableName: TableType.MESSAGES,
         }));
 
         // Description manager for storing user descriptions
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "descriptions",
+            tableName: TableType.DESCRIPTIONS,
         }));
 
         // Documents manager for large documents
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "documents",
+            tableName: TableType.DOCUMENTS,
         }));
 
         // Knowledge manager for searchable fragments
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "fragments",
+            tableName: TableType.FRAGMENTS,
         }));
     }
 
@@ -176,7 +177,7 @@ class MemoryManagerService {
         this.memoryManagers.set(manager.tableName, manager);
     }
 
-    getMemoryManager(tableName: string): IMemoryManager | null {
+    getMemoryManager(tableName: TableType): IMemoryManager | null {
         const manager = this.memoryManagers.get(tableName);
         if (!manager) {
             logger.error(`Memory manager ${tableName} not found`);
@@ -185,7 +186,7 @@ class MemoryManagerService {
         return manager;
     }
 
-    private getRequiredMemoryManager(tableName: string, managerType: string): IMemoryManager {
+    private getRequiredMemoryManager(tableName: TableType, managerType: string): IMemoryManager {
         const manager = this.getMemoryManager(tableName);
         if (!manager) {
             logger.error(`${managerType} manager not found`);
@@ -195,22 +196,22 @@ class MemoryManagerService {
     }
 
     getMessageManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("messages", "Message");
+        return this.getRequiredMemoryManager(TableType.MESSAGES, "Message");
     }
 
     getDescriptionManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("descriptions", "Description");
+        return this.getRequiredMemoryManager(TableType.DESCRIPTIONS, "Description");
     }
 
     getDocumentsManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("documents", "Documents");
+        return this.getRequiredMemoryManager(TableType.DOCUMENTS, "Documents");
     }
 
     getKnowledgeManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("fragments", "Knowledge");
+        return this.getRequiredMemoryManager(TableType.FRAGMENTS, "Knowledge");
     }
 
-    getAllManagers(): Map<string, IMemoryManager> {
+    getAllManagers(): Map<TableType, IMemoryManager> {
         return this.memoryManagers;
     }
 }
@@ -1283,7 +1284,7 @@ Text: ${attachment.text}
         this.memoryManagerService.registerMemoryManager(manager);
     }
 
-    getMemoryManager(tableName: string): IMemoryManager | null {
+    getMemoryManager(tableName: TableType): IMemoryManager | null {
         return this.memoryManagerService.getMemoryManager(tableName);
     }
 

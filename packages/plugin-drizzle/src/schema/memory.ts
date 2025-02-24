@@ -7,6 +7,7 @@ import {
     index,
     boolean,
     foreignKey,
+    check,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
@@ -29,6 +30,7 @@ export const memoryTable = pgTable(
         agentId: uuid("agentId").references(() => accountTable.id),
         roomId: uuid("roomId").references(() => roomTable.id),
         unique: boolean("unique").default(true).notNull(),
+        metadata: jsonb("metadata").notNull(),
     },
     (table) => [
         index("idx_memories_type_room").on(table.type, table.roomId),
@@ -47,6 +49,31 @@ export const memoryTable = pgTable(
             columns: [table.agentId],
             foreignColumns: [accountTable.id],
         }).onDelete("cascade"),
+        check("metadata_type_check", sql`
+            metadata ? 'type' AND 
+            metadata->>'type' IN ('document', 'fragment', 'message', 'description')
+        `),
+        index("idx_memories_metadata_type").on(sql`((metadata->>'type'))`),
+        index("idx_memories_document_id").on(sql`((metadata->>'documentId'))`),
+        index("idx_fragments_order").on(
+            sql`((metadata->>'documentId'))`,
+            sql`((metadata->>'position'))`
+        ),
+        check("fragment_metadata_check", sql`
+            CASE 
+                WHEN metadata->>'type' = 'fragment' THEN
+                    metadata ? 'documentId' AND 
+                    metadata ? 'position'
+                ELSE true
+            END
+        `),
+        check("document_metadata_check", sql`
+            CASE 
+                WHEN metadata->>'type' = 'document' THEN
+                    metadata ? 'timestamp'
+                ELSE true
+            END
+        `)
     ]
 );
 

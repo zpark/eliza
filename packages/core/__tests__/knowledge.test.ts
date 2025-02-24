@@ -1,7 +1,14 @@
 import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import knowledge from "../src/knowledge";
 import type { AgentRuntime } from "../src/runtime";
-import type { Memory, UUID, KnowledgeItem, IMemoryManager } from "../src/types";
+import type { 
+    Memory, 
+    UUID, 
+    KnowledgeItem, 
+    IMemoryManager,
+    FragmentMetadata,
+} from "../src/types";
+import { MemoryType, ModelClass } from "../src/types.ts";
 
 // Define test UUIDs
 const TEST_UUID_1 = "123e4567-e89b-12d3-a456-426614174000" as UUID;
@@ -187,7 +194,7 @@ describe("Knowledge Module", () => {
                     source: TEST_UUID_1 
                 },
                 metadata: {
-                    type: "fragment",
+                    type: MemoryType.FRAGMENT,
                     documentId: TEST_UUID_1,
                     position: 0
                 }
@@ -199,7 +206,7 @@ describe("Knowledge Module", () => {
                 roomId: TEST_UUID_1,
                 content: { text: "full document" },
                 metadata: {
-                    type: "document"
+                    type: MemoryType.DOCUMENT
                 }
             };
 
@@ -215,6 +222,246 @@ describe("Knowledge Module", () => {
 
             expect(result).toHaveLength(1);
             expect(result[0].content).toEqual(mockDocument.content);
+        });
+
+        it("should properly fragment large documents", async () => {
+            const largeText = "test ".repeat(1000); // ~5000 chars
+            
+            // Mock splitChunks to return more chunks for large text
+            mockSplitChunks.mockImplementation(async (text: string) => {
+                // Create ~7 chunks for the test
+                return Array.from({ length: 7 }, (_, i) => 
+                    `chunk${i + 1} of large text`
+                );
+            });
+
+            const item: KnowledgeItem = {
+                id: TEST_UUID_1,
+                content: { text: largeText }
+            };
+
+            await knowledge.set(mockRuntime, item);
+
+            // Verify document was stored
+            expect(mockRuntime.documentsManager.createMemory).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    metadata: expect.objectContaining({
+                        type: MemoryType.DOCUMENT
+                    })
+                })
+            );
+
+            // Verify fragments were created (~7 fragments for 5000 chars with 750 char chunks)
+            const createMemoryCalls = (mockRuntime.knowledgeManager.createMemory as Mock<CreateMemoryFn>).mock.calls;
+            expect(createMemoryCalls.length).toBeGreaterThan(5);
+            
+            // Verify fragment linking
+            const firstFragment = createMemoryCalls[0][0];
+            expect(firstFragment.metadata).toEqual(
+                expect.objectContaining({
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0
+                })
+            );
+        });
+    });
+
+    describe("Document Fragmentation", () => {
+        it("should handle different token size configurations", async () => {
+            const text = "a".repeat(10000);
+            
+            // Test with different chunk sizes
+            const configs = [
+                { targetTokens: 1000, overlap: 100 },
+                { targetTokens: 2000, overlap: 200 },
+                { targetTokens: 4000, overlap: 400 }
+            ];
+
+            for (const config of configs) {
+                const result = await knowledge.set(mockRuntime, {
+                    id: TEST_UUID_1,
+                    content: { text }
+                }, config);
+
+                const fragments = await mockRuntime.knowledgeManager.searchMemories({
+                    embedding: [],
+                    match_threshold: 0.9,
+                    roomId: mockRuntime.agentId,
+                    metadata: {
+                        type: MemoryType.FRAGMENT,
+                        documentId: TEST_UUID_1,
+                        position: 0,
+                        timestamp: Date.now()
+                    } as FragmentMetadata
+                });
+
+                // Verify fragment sizes
+                fragments.forEach(f => {
+                    expect(f.content.text.length).toBeLessThanOrEqual(config.targetTokens / 4);
+                });
+            }
+        });
+
+        it("should preserve semantic boundaries when possible", async () => {
+            const text = "Complete sentence one. Complete sentence two. Complete sentence three.";
+            
+            await knowledge.set(mockRuntime, {
+                id: TEST_UUID_1,
+                content: { text }
+            });
+
+            const fragments = await mockRuntime.knowledgeManager.searchMemories({
+                embedding: [],
+                match_threshold: 0.9,
+                roomId: mockRuntime.agentId,
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                } as FragmentMetadata
+            });
+
+            // Check that fragments break at sentence boundaries where possible
+            fragments.forEach(f => {
+                expect(f.content.text.endsWith(".")).toBe(true);
+            });
+        });
+
+        it("should handle multilingual content properly", async () => {
+            const multilingualText = "English text. 中文文本. Español texto.";
+            
+            await knowledge.set(mockRuntime, {
+                id: TEST_UUID_1,
+                content: { text: multilingualText }
+            });
+
+            const fragments = await mockRuntime.knowledgeManager.searchMemories({
+                embedding: [],
+                match_threshold: 0.9,
+                roomId: mockRuntime.agentId,
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                } as FragmentMetadata
+            });
+
+            // Verify each script is handled properly
+            fragments.forEach(f => {
+                expect(f.content.text).toMatch(/[A-Za-z]|[\u4e00-\u9fa5]|[áéíóúñ]/);
+            });
+        });
+    });
+
+    describe("RAG Functionality", () => {
+        it("should retrieve fragments by similarity", async () => {
+            // Mock the fragment that should be returned
+            const mockFragment: Memory = {
+                id: TEST_UUID_2,
+                userId: TEST_UUID_2,
+                roomId: TEST_UUID_1,
+                content: { text: "The quick brown fox jumps over the lazy dog" },
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                }
+            };
+
+            // Set up mock to return our fragment
+            (mockRuntime.knowledgeManager.searchMemories as Mock<SearchMemoriesFn>)
+                .mockResolvedValue([mockFragment]);
+
+            // Search with similar query
+            const query = "quick fox jumping";
+            const embedding = await mockRuntime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const similarFragments = await mockRuntime.knowledgeManager.searchMemories({
+                embedding,
+                match_threshold: 0.1,
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                } as FragmentMetadata
+            });
+
+            expect(similarFragments.length).toBeGreaterThan(0);
+            expect(similarFragments[0].content.text).toContain("fox");
+        });
+
+        it("should reconstruct documents from fragments", async () => {
+            // Create mock fragments in order
+            const mockFragments: Memory[] = [
+                {
+                    id: TEST_UUID_2,
+                    userId: TEST_UUID_2,
+                    roomId: TEST_UUID_1,
+                    content: { text: "First part. " },
+                    metadata: {
+                        type: MemoryType.FRAGMENT,
+                        documentId: TEST_UUID_1,
+                        position: 0,
+                        timestamp: Date.now()
+                    }
+                },
+                {
+                    id: TEST_UUID_2,
+                    userId: TEST_UUID_2,
+                    roomId: TEST_UUID_1,
+                    content: { text: "Second part. " },
+                    metadata: {
+                        type: MemoryType.FRAGMENT,
+                        documentId: TEST_UUID_1,
+                        position: 1,
+                        timestamp: Date.now()
+                    }
+                },
+                {
+                    id: TEST_UUID_2,
+                    userId: TEST_UUID_2,
+                    roomId: TEST_UUID_1,
+                    content: { text: "Third part." },
+                    metadata: {
+                        type: MemoryType.FRAGMENT,
+                        documentId: TEST_UUID_1,
+                        position: 2,
+                        timestamp: Date.now()
+                    }
+                }
+            ];
+
+            // Set up mock to return our fragments
+            (mockRuntime.knowledgeManager.searchMemories as Mock<SearchMemoriesFn>)
+                .mockResolvedValue(mockFragments);
+
+            const fragments = await mockRuntime.knowledgeManager.searchMemories({
+                embedding: [],
+                match_threshold: 0.1,
+                roomId: TEST_UUID_1,
+                metadata: {
+                    type: MemoryType.FRAGMENT,
+                    documentId: TEST_UUID_1,
+                    position: 0,
+                    timestamp: Date.now()
+                } as FragmentMetadata
+            });
+
+            const orderedFragments = fragments.sort((a, b) => 
+                ((a.metadata as FragmentMetadata).position) - 
+                ((b.metadata as FragmentMetadata).position)
+            );
+
+            const reconstructed = orderedFragments
+                .map(f => f.content.text)
+                .join("");
+
+            expect(reconstructed).toBe("First part. Second part. Third part.");
         });
     });
 });

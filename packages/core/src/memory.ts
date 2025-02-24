@@ -6,6 +6,8 @@ import {
     type Memory,
     type UUID,
     type KnowledgeMetadata,
+    MemoryType,
+    TableType,
 } from "./types.ts";
 
 const defaultMatchThreshold = 0.1;
@@ -23,7 +25,7 @@ export class MemoryManager implements IMemoryManager {
     /**
      * The name of the database table this manager operates on.
      */
-    tableName: string;
+    tableName: TableType;
 
     /**
      * Constructs a new MemoryManager instance.
@@ -31,34 +33,42 @@ export class MemoryManager implements IMemoryManager {
      * @param opts.tableName The name of the table this manager will operate on.
      * @param opts.runtime The AgentRuntime instance associated with this manager.
      */
-    constructor(opts: { tableName: string; runtime: IAgentRuntime }) {
+    constructor(opts: { tableName: TableType; runtime: IAgentRuntime }) {
         this.runtime = opts.runtime;
         this.tableName = opts.tableName;
+        this.getTypeFromTableName(this.tableName); // This will throw if invalid
     }
 
     private validateMetadata(metadata: KnowledgeMetadata): void {
+        // Check type first before any other validation
         if (!metadata.type) {
             throw new Error('Metadata type is required');
         }
 
-        // Validate source if present
+        // Then validate type matches table
+        this.validateMetadataForTable(metadata);
+
+        // Then validate other fields
         if (metadata.source && typeof metadata.source !== 'string') {
             throw new Error('Metadata source must be a string');
         }
 
-        // Validate sourceId if present
         if (metadata.sourceId && typeof metadata.sourceId !== 'string') {
             throw new Error('Metadata sourceId must be a UUID string');
         }
 
-        // Validate scope if present
         if (metadata.scope && !['shared', 'private', 'room'].includes(metadata.scope)) {
             throw new Error('Metadata scope must be "shared", "private", or "room"');
         }
 
-        // Validate tags if present
         if (metadata.tags && !Array.isArray(metadata.tags)) {
             throw new Error('Metadata tags must be an array of strings');
+        }
+    }
+
+    private validateMetadataTransition(oldMetadata: KnowledgeMetadata | undefined, newMetadata: KnowledgeMetadata) {
+        if (oldMetadata?.type && oldMetadata.type !== newMetadata.type) {
+            throw new Error(`Cannot change memory type from ${oldMetadata.type} to ${newMetadata.type}`);
         }
     }
 
@@ -193,6 +203,10 @@ export class MemoryManager implements IMemoryManager {
      * @returns A Promise that resolves when the operation completes.
      */
     async createMemory(memory: Memory, unique = false): Promise<void> {
+        if (memory.metadata) {
+            this.validateMetadata(memory.metadata);  // This will check type first
+            this.validateMetadataRequirements(memory.metadata);
+        }
         const existingMessage = await this.runtime.databaseAdapter.getMemoryById(memory.id);
 
         if (existingMessage) {
@@ -200,13 +214,13 @@ export class MemoryManager implements IMemoryManager {
             return;
         }
 
-        // Initialize default metadata
         if (!memory.metadata) {
+            const type = this.getTypeFromTableName(this.tableName);
             memory.metadata = {
-                type: this.tableName,  // Use table name as default type
+                type,
                 scope: memory.agentId ? 'private' : 'shared',
                 timestamp: Date.now()
-            };
+            } as KnowledgeMetadata;
         }
 
         // Handle metadata if present
@@ -236,6 +250,21 @@ export class MemoryManager implements IMemoryManager {
             this.tableName,
             unique
         );
+    }
+
+    private getTypeFromTableName(tableName: TableType): MemoryType {
+        const validTables = {
+            [TableType.DOCUMENTS]: MemoryType.DOCUMENT,
+            [TableType.FRAGMENTS]: MemoryType.FRAGMENT,
+            [TableType.MESSAGES]: MemoryType.MESSAGE,
+            [TableType.DESCRIPTIONS]: MemoryType.DESCRIPTION
+        };
+
+        if (!(tableName in validTables)) {
+            throw new Error(`Invalid table name: ${tableName}. Must be one of: ${Object.keys(validTables).join(', ')}`);
+        }
+
+        return validTables[tableName];
     }
 
     async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; agentId?: UUID }): Promise<Memory[]> {
@@ -289,5 +318,31 @@ export class MemoryManager implements IMemoryManager {
             unique,
             this.tableName
         );
+    }
+
+    async updateMemory(memory: Memory): Promise<void> {
+        const existing = await this.getMemoryById(memory.id);
+        if (existing && memory.metadata) {
+            this.validateMetadataTransition(existing.metadata, memory.metadata);
+        }
+        // ... update logic
+    }
+
+    private validateMetadataForTable(metadata: KnowledgeMetadata) {
+        const expectedType = this.getTypeFromTableName(this.tableName);
+        if (metadata.type !== expectedType) {
+            throw new Error(`Invalid metadata type for table ${this.tableName}. Expected ${expectedType}, got ${metadata.type}`);
+        }
+    }
+
+    private validateMetadataRequirements(metadata: KnowledgeMetadata) {
+        if (metadata.type === MemoryType.FRAGMENT) {
+            if (!metadata.documentId) {
+                throw new Error("Fragment metadata must include documentId");
+            }
+            if (typeof metadata.position !== 'number') {
+                throw new Error("Fragment metadata must include position");
+            }
+        }
     }
 }

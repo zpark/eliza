@@ -1,7 +1,7 @@
 import { splitChunks } from "./parsing.ts";
 import logger from "./logger.ts";
 import type { AgentRuntime } from "./runtime.ts";
-import { type KnowledgeItem, type Memory, ModelClass, type UUID } from "./types.ts";
+import { type KnowledgeItem, type Memory, ModelClass, type UUID, MemoryType } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
 async function get(
@@ -63,7 +63,23 @@ async function get(
         .map((memory) => ({ id: memory.id, content: memory.content }));
 }
 
-async function set(runtime: AgentRuntime, item: KnowledgeItem) {
+export interface FragmentationOptions {
+    targetTokens?: number;
+    overlap?: number;
+    modelContextSize?: number;
+}
+
+const DEFAULT_OPTIONS: FragmentationOptions = {
+    targetTokens: 3000,
+    overlap: 200,
+    modelContextSize: 4096
+};
+
+async function set(
+    runtime: AgentRuntime, 
+    item: KnowledgeItem,
+    options: FragmentationOptions = DEFAULT_OPTIONS
+) {
     // First store the document
     const documentMemory: Memory = {
         id: item.id,
@@ -72,16 +88,21 @@ async function set(runtime: AgentRuntime, item: KnowledgeItem) {
         userId: runtime.agentId,
         content: item.content,
         metadata: {
-            type: 'document',
+            type: MemoryType.DOCUMENT,
             timestamp: Date.now()
         }
     };
     
     await runtime.documentsManager.createMemory(documentMemory);
 
-    // Then create fragments
-    const fragments = await splitChunks(item.content.text);
+    // Create fragments using splitChunks
+    const fragments = await splitChunks(
+        item.content.text,
+        options.targetTokens,
+        options.overlap
+    );
     
+    // Store each fragment with link to source document
     for (let i = 0; i < fragments.length; i++) {
         const fragmentMemory: Memory = {
             id: stringToUuid(`${item.id}-fragment-${i}`),
@@ -90,9 +111,9 @@ async function set(runtime: AgentRuntime, item: KnowledgeItem) {
             userId: runtime.agentId,
             content: { text: fragments[i] },
             metadata: {
-                type: 'fragment',
-                documentId: item.id,
-                position: i,
+                type: MemoryType.FRAGMENT,
+                documentId: item.id,  // Link to source document
+                position: i,          // Keep track of order
                 timestamp: Date.now()
             }
         };
