@@ -451,7 +451,7 @@ export class TwitterSpaceClient {
     }
 
     public async stopSpace() {
-        if (!this.currentSpace || this.spaceStatus === SpaceActivity.IDLE) return;
+        if (!this.currentSpace || this.spaceStatus !== SpaceActivity.HOSTING) return;
         try {
             logger.log("[Space] Stopping the current Space...");
             await this.currentSpace.stop();
@@ -474,22 +474,23 @@ export class TwitterSpaceClient {
             return null;
         }
 
-        if (!this.spaceParticipant) {
-            this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
-                debug: false,
-            });
-        }
+        this.spaceParticipant = new SpaceParticipant(this.client.twitterClient, {
+            debug: false,
+        });
+        
         if (this.spaceParticipant) {
+            this.spaceId = spaceId;
+            this.spaceStatus = SpaceActivity.PARTICIPATING;
+
             try {
                 await this.spaceParticipant.joinAsListener(spaceId);
-                this.spaceStatus = SpaceActivity.PARTICIPATING;
-
+                
                 const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
-                console.log('[TestParticipant] Requested speaker =>', sessionUUID);
+                console.log('[SpaceParticipant] Requested speaker =>', sessionUUID);
                 try {
                     await this.waitForApproval(this.spaceParticipant, sessionUUID, 15000);
                     console.log(
-                      '[TestParticipant] Speaker approval sequence completed (ok or timed out).',
+                      '[SpaceParticipant] Speaker approval sequence completed (ok or timed out).',
                     );
                     const sttTts = new SttTtsPlugin();
                     this.sttTtsPlugin = sttTts;
@@ -498,16 +499,16 @@ export class TwitterSpaceClient {
                         spaceId: this.spaceId,
                     });
                   } catch (err) {
-                    console.error('[TestParticipant] Approval error or timeout =>', err);
+                    console.error('[SpaceParticipant] Approval error or timeout =>', err);
                     // Optionally cancel the request if we timed out or got an error
                     try {
                       await this.spaceParticipant.cancelSpeakerRequest();
                       console.log(
-                        '[TestParticipant] Speaker request canceled after timeout or error.',
+                        '[SpaceParticipant] Speaker request canceled after timeout or error.',
                       );
                     } catch (cancelErr) {
                       console.error(
-                        '[TestParticipant] Could not cancel the request =>',
+                        '[SpaceParticipant] Could not cancel the request =>',
                         cancelErr,
                       );
                     }
@@ -522,12 +523,12 @@ export class TwitterSpaceClient {
     }
 
     async manageParticipant() {
-        if (!this.spaceParticipant || !this.spaceParticipant.spaceId) {
-            this.spaceStatus = SpaceActivity.IDLE;
+        if (!this.spaceParticipant || !this.spaceId) {
+            this.stopParticipant();
             return;
         }
     
-        const space = await this.client.twitterClient.getAudioSpaceById(this.spaceParticipant.spaceId);
+        const space = await this.client.twitterClient.getAudioSpaceById(this.spaceId);
         const agentName = this.client.state["TWITTER_USERNAME"];
     
         const hasListener = space.participants.listeners.some(
@@ -539,7 +540,21 @@ export class TwitterSpaceClient {
         );
 
         if (!hasListener && !hasSpeaker) {
+            this.stopParticipant();
+        }
+    }
+
+    public async stopParticipant() {
+        if (!this.spaceParticipant || this.spaceStatus !== SpaceActivity.PARTICIPATING) return;
+        try {
+            logger.log("[SpaceParticipant] Stopping the current space participant...");
+            await this.spaceParticipant.leaveSpace();
+        } catch (err) {
+            logger.error("[SpaceParticipant] Error stopping space participant =>", err);
+        } finally {
             this.spaceStatus = SpaceActivity.IDLE;
+            this.spaceId = undefined;
+            this.spaceParticipant = undefined;
         }
     }
     
@@ -562,7 +577,7 @@ export class TwitterSpaceClient {
             participant.off('newSpeakerAccepted', handler);
             try {
                 await participant.becomeSpeaker();
-                console.log('[TestParticipant] Successfully became speaker!');
+                console.log('[SpaceParticipant] Successfully became speaker!');
                 resolve();
             } catch (err) {
                 reject(err);
@@ -579,7 +594,7 @@ export class TwitterSpaceClient {
             participant.off('newSpeakerAccepted', handler);
             reject(
                 new Error(
-                `[TestParticipant] Timed out waiting for speaker approval after ${timeoutMs}ms.`,
+                `[SpaceParticipant] Timed out waiting for speaker approval after ${timeoutMs}ms.`,
                 ),
             );
             }
