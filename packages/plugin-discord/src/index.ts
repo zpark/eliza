@@ -184,7 +184,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           },
           serverId: guild.id,
           channelId: channelId,
-          channelType: channel.type,
+          channelType: ChannelType.GROUP,
           source: "discord"
         });
       }
