@@ -105,12 +105,12 @@ export class TwitterInteractionClient {
     async start() {
         const handleTwitterInteractionsLoop = () => {
             // Defaults to 2 minutes
-            const InteractionInterval = (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number || 120) * 1000;
+            const interactionInterval = (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number || 120) * 1000;
         
             this.handleTwitterInteractions();
             setTimeout(
                 handleTwitterInteractionsLoop,
-                InteractionInterval
+                interactionInterval
             );
         };
         handleTwitterInteractionsLoop();
