@@ -17,7 +17,6 @@ const character: Character = {
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-bootstrap",
   ],
   secrets: {
     DISCORD_APPLICATION_ID:
@@ -368,20 +367,20 @@ export default {
 
     // Register runtime events
     runtime.registerEvent(
-      "DISCORD_JOIN_SERVER",
-      async (params: { guild: Guild }) => {
+      "DISCORD_SERVER_JOINED",
+      async (params: { server: Guild }) => {
         console.log("Community manager joined server");
         // TODO: Save onboarding config to runtime
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       }
     );
 
     // when booting up into a server we're in, fire a connected event
     runtime.registerEvent(
       "DISCORD_SERVER_CONNECTED",
-      async (params: { guild: Guild }) => {
+      async (params: { server: Guild }) => {
         console.log("Community manager connected to server");
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       }
     );
   },

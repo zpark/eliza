@@ -23,9 +23,6 @@
     },
     "include": [
         "src/**/*",
-        "../plugin-bootstrap/src/relationships.ts",
-        "../plugin-bootstrap/src/goals.ts",
-        "../plugin-bootstrap/src/knowledge.ts"
     ],
     "exclude": ["node_modules", "dist", "src/**/*.d.ts", "types/**/*.test.ts"]
 }

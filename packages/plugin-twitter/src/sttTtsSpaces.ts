@@ -491,7 +491,6 @@ export class SttTtsPlugin implements Plugin {
         sampleRate: number,
         signal: AbortSignal
     ): Promise<void> {
-        const FRAME_SIZE = Math.floor(sampleRate * 0.01); // 10ms frames (480 samples @ 48kHz)
         const chunks: Buffer[] = [];
     
         return new Promise((resolve, reject) => {

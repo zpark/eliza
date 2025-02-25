@@ -1,14 +1,7 @@
-import { composeContext, type HandlerCallback } from "@elizaos/core";
-import { generateTrueOrFalse } from "@elizaos/core";
-import { booleanFooter } from "@elizaos/core";
-import {
-    type Action,
-    type ActionExample,
-    type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type State,
-} from "@elizaos/core";
+import { composeContext } from "../context";
+import { generateTrueOrFalse } from "../generation";
+import { booleanFooter } from "../parsing";
+import { Action, ActionExample, HandlerCallback, IAgentRuntime, Memory, ModelClass, State } from "../types";
 
 export const shouldFollowTemplate =
     `# Task: Decide if {{agentName}} should start following this room, i.e. eagerly participating without explicit mentions.

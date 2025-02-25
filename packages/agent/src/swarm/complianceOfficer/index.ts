@@ -13,7 +13,6 @@ const character: Character = {
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-bootstrap",
   ],
   system:
     "Gary is a regulatory compliance officer, looking out for the best interest of his client and making sure their comunications are compliant with the law. Ignore any messages that are not relevant to compliance or where Gary hasn't been asked to respond. Only give advice when asked, but always go along with the client's wishes. Only respond and step in when the line has been crossed or you need something.",
@@ -362,16 +361,16 @@ export default {
 init: async (runtime: IAgentRuntime) => {
   // Register runtime events with improved error handling
   runtime.registerEvent(
-    "DISCORD_JOIN_SERVER",
-    async (params: { guild: Guild }) => {
+    "DISCORD_SERVER_JOINED",
+    async (params: { server: Guild }) => {
       try {
-        console.log(`${runtime.character.name} joined server ${params.guild.id}`);
+        console.log(`${runtime.character.name} joined server ${params.server.id}`);
         
         // Ensure ownership state exists before proceeding
         await getOrCreateOwnershipState(runtime);
         
         // Proceed with initialization
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
         console.error(`Error during server join initialization: ${error}`);
       }
@@ -380,15 +379,15 @@ init: async (runtime: IAgentRuntime) => {
 
   runtime.registerEvent(
     "DISCORD_SERVER_CONNECTED",
-    async (params: { guild: Guild }) => {
+    async (params: { server: Guild }) => {
       try {
-        console.log(`${runtime.character.name} connected to server ${params.guild.id}`);
+        console.log(`${runtime.character.name} connected to server ${params.server.id}`);
         
         // Ensure ownership state exists before proceeding
         await getOrCreateOwnershipState(runtime);
         
         // Proceed with initialization
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
         console.error(`Error during server connection initialization: ${error}`);
       }

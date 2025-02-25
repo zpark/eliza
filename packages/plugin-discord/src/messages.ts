@@ -186,6 +186,7 @@ export class MessageManager {
         }
       };
 
+      logger.info("**** DISCORD_MESSAGE_RECEIVED, EMITTING");
       this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
         runtime: this.runtime,
         message: newMessage,

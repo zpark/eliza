@@ -524,4 +524,9 @@ export function setupCommonChatEvents(
     logger.debug('[ChatEvents] newSpeakerAccepted =>', info);
     emitter.emit('newSpeakerAccepted', info);
   });
+
+  chatClient.on('newSpeakerRemoved', (info) => {
+    logger.debug('[ChatEvents] newSpeakerRemoved =>', info);
+    emitter.emit('newSpeakerRemoved', info);
+  });
 }
