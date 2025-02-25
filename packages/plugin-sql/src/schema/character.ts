@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { 
     Character,
@@ -17,9 +17,9 @@ export type StoredTemplates = {
 };
 
 export const characterTable = pgTable("characters", {
-    name: text("name").primaryKey(),
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
     username: text("username"),
-    email: text("email"),
     system: text("system"),
     templates: jsonb("templates").$type<StoredTemplates>().default(sql`'{}'::jsonb`),
     bio: jsonb("bio").$type<string | string[]>().notNull(),
@@ -61,7 +61,6 @@ export const characterToInsert = (
     return {
         username: character.username || "",
         name: character.name,
-        email: character.email,
         system: character.system,
         templates: character.templates 
             ? Object.fromEntries(

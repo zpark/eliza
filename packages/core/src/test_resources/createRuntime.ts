@@ -41,7 +41,6 @@ export async function createRuntime({
 
     const user: User = {
         id: zeroUuid,
-        email: "test@example.com",
     };
     const session = { user };
 

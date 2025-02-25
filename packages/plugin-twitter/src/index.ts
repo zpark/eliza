@@ -8,6 +8,7 @@ import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
 import type { ITwitterClient } from "./types.ts";
 import { TwitterTestSuite } from "./tests.ts";
+import spaceJoin from "./actions/spaceJoin.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -74,6 +75,18 @@ export class TwitterClientManager {
 
             // Initialize the client
             await client.client.init();
+
+            if (client.space) {
+                client.space.startPeriodicSpaceCheck();
+            }
+
+            if (client.post) {
+                client.post.start();
+            }
+
+            if (client.interaction) {
+                client.interaction.start();
+            }
 
             // Store the client instance
             this.clients.set(this.getClientKey(clientId, runtime.agentId), client);
@@ -168,7 +181,7 @@ const twitterPlugin: Plugin = {
     name: "twitter",
     description: "Twitter client with per-server instance management",
     clients: [TwitterClientInterface],
-    actions: [reply],
+    actions: [reply, spaceJoin],
     tests: [new TwitterTestSuite()]
 };
 

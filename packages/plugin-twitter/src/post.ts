@@ -65,8 +65,6 @@ export class TwitterPostClient {
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"
             );
         }
-
-        this.start();
     }
 
     async start() {
@@ -297,7 +295,7 @@ export class TwitterPostClient {
             const roomId = stringToUuid(
                 `twitter_generate_room-${this.client.profile.username}`
             );
-            await this.runtime.ensureUserExists(
+            await this.runtime.getOrCreateUser(
                 this.runtime.agentId,
                 this.client.profile.username,
                 this.runtime.character.name,

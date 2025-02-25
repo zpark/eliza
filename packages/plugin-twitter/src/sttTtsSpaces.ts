@@ -5,14 +5,11 @@ import {
     type IAgentRuntime,
     type Memory,
     type Plugin,
-    type State,
-    composeContext,
     logger,
-    generateMessageResponse,
-    generateShouldRespond,
     ModelClass,
     stringToUuid,
-    ChannelType
+    ChannelType,
+    HandlerCallback
 } from "@elizaos/core";
 import type {
     AudioDataWithUser,
@@ -21,24 +18,12 @@ import type {
 } from "./client";
 import { spawn } from "node:child_process";
 import type { ClientBase } from "./base";
-import {
-    twitterShouldRespondTemplate,
-    twitterVoiceHandlerTemplate,
-} from "./templates";
+import { Readable } from "node:stream";
 
 interface PluginConfig {
     runtime: IAgentRuntime;
     client: ClientBase;
     spaceId: string;
-    elevenLabsApiKey?: string; // for TTS
-    sttLanguage?: string; // e.g. "en" for Whisper
-    silenceThreshold?: number; // amplitude threshold for ignoring silence
-    voiceId?: string; // specify which ElevenLabs voice to use
-    elevenLabsModel?: string; // e.g. "eleven_monolingual_v1"
-    chatContext?: Array<{
-        role: "system" | "user" | "assistant";
-        content: string;
-    }>;
 }
 
 const VOLUME_WINDOW_SIZE = 100;
@@ -55,30 +40,15 @@ export class SttTtsPlugin implements Plugin {
     name = "SttTtsPlugin";
     description = "Speech-to-text (OpenAI) + conversation + TTS (ElevenLabs)";
     private runtime: IAgentRuntime;
-    private client: ClientBase;
     private spaceId: string;
 
     private space?: Space;
     private janus?: JanusClient;
 
-    private elevenLabsApiKey?: string;
-
-    private voiceId = "21m00Tcm4TlvDq8ikWAM";
-    private elevenLabsModel = "eleven_monolingual_v1";
-    private chatContext: Array<{
-        role: "system" | "user" | "assistant";
-        content: string;
-    }> = [];
-
     /**
      * userId => arrayOfChunks (PCM Int16)
      */
     private pcmBuffers = new Map<string, Int16Array[]>();
-
-    /**
-     * For ignoring near-silence frames (if amplitude < threshold)
-     */
-    private silenceThreshold = 50;
 
     // TTS queue for sequentially speaking
     private ttsQueue: string[] = [];
@@ -105,22 +75,8 @@ export class SttTtsPlugin implements Plugin {
 
         const config = params.pluginConfig as PluginConfig;
         this.runtime = config?.runtime;
-        this.client = config?.client;
         this.spaceId = config?.spaceId;
-        this.elevenLabsApiKey = config?.elevenLabsApiKey;
-        if (typeof config?.silenceThreshold === "number") {
-            this.silenceThreshold = config.silenceThreshold;
-        }
-        if (config?.voiceId) {
-            this.voiceId = config.voiceId;
-        }
-        if (config?.elevenLabsModel) {
-            this.elevenLabsModel = config.elevenLabsModel;
-        }
-        if (config?.chatContext) {
-            this.chatContext = config.chatContext;
-        }
-
+        
         this.volumeBuffers = new Map<string, number[]>();
     }
 
@@ -131,12 +87,16 @@ export class SttTtsPlugin implements Plugin {
         if (this.isProcessingAudio) {
             return;
         }
+        /**
+         * For ignoring near-silence frames (if amplitude < threshold)
+         */
+        const silenceThreshold = 50;
         let maxVal = 0;
         for (let i = 0; i < data.samples.length; i++) {
             const val = Math.abs(data.samples[i]);
             if (val > maxVal) maxVal = val;
         }
-        if (maxVal < this.silenceThreshold) {
+        if (maxVal < silenceThreshold) {
             return;
         }
 
@@ -306,21 +266,7 @@ export class SttTtsPlugin implements Plugin {
             );
 
             // Get response
-            const replyText = await this.handleUserMessage(sttText, userId);
-            if (!replyText || !replyText.length || !replyText.trim()) {
-                logger.warn(
-                    "[SttTtsPlugin] No replyText for user =>",
-                    userId,
-                );
-                return;
-            }
-            logger.log(
-                `[SttTtsPlugin] user=${userId}, reply="${replyText}"`,
-            );
-            this.isProcessingAudio = false;
-            this.volumeBuffers.clear();
-            // Use the standard speak method with queue
-            await this.speakText(replyText);
+           await this.handleUserMessage(sttText, userId);
         } catch (error) {
             logger.error("[SttTtsPlugin] processAudio error =>", error);
         } finally {
@@ -356,15 +302,20 @@ export class SttTtsPlugin implements Plugin {
             const { signal } = this.ttsAbortController;
 
             try {
-                const ttsAudio = await this.elevenLabsTts(text);
-                const pcm = await this.convertMp3ToPcm(ttsAudio, 48000);
-                if (signal.aborted) {
-                    logger.log(
-                        "[SttTtsPlugin] TTS interrupted before streaming",
-                    );
-                    return;
+                const responseStream = await this.runtime.useModel(
+                    ModelClass.TEXT_TO_SPEECH,
+                    text
+                );
+                if (!responseStream) {
+                    logger.error("[SttTtsPlugin] TTS responseStream is null");
+                    continue;
                 }
-                await this.streamToJanus(pcm, 48000);
+    
+                logger.log("[SttTtsPlugin] Received ElevenLabs TTS stream");
+    
+                // Convert the Readable Stream to PCM and stream to Janus
+                await this.streamTtsStreamToJanus(responseStream, 48000, signal);
+    
                 if (signal.aborted) {
                     logger.log(
                         "[SttTtsPlugin] TTS interrupted after streaming",
@@ -388,6 +339,10 @@ export class SttTtsPlugin implements Plugin {
         userText: string,
         userId: string, // This is the raw Twitter user ID like 'tw-1865462035586142208'
     ): Promise<string> {
+        if (!userText || userText.trim() === "") {
+            return null;
+        }
+
         // Extract the numeric ID part
         const numericId = userId.replace("tw-", "");
         const roomId = stringToUuid(`twitter_generate_room-${this.spaceId}`);
@@ -396,7 +351,7 @@ export class SttTtsPlugin implements Plugin {
         const userUuid = stringToUuid(`twitter-user-${numericId}`);
 
         // Ensure the user exists in the accounts table
-        await this.runtime.ensureUserExists(
+        await this.runtime.getOrCreateUser(
             userUuid,
             userId, // Use full Twitter ID as username
             `Twitter User ${numericId}`,
@@ -406,19 +361,6 @@ export class SttTtsPlugin implements Plugin {
         // Ensure room exists and user is in it
         await this.runtime.ensureRoomExists({id: roomId, name: "Twitter Space", source: "twitter", type: ChannelType.VOICE_GROUP, channelId: null, serverId: this.spaceId});
         await this.runtime.ensureParticipantInRoom(userUuid, roomId);
-
-        let state = await this.runtime.composeState(
-            {
-                agentId: this.runtime.agentId,
-                content: { text: userText, source: "twitter" },
-                userId: userUuid,
-                roomId,
-            },
-            {
-                twitterUserName: this.client.profile.username,
-                agentName: this.runtime.character.name,
-            },
-        );
 
         const memory = {
             id: stringToUuid(`${roomId}-voice-message-${Date.now()}`),
@@ -432,198 +374,42 @@ export class SttTtsPlugin implements Plugin {
             createdAt: Date.now(),
         };
 
-        await this.runtime.messageManager.createMemory(memory);
+        const callback: HandlerCallback = async (content: Content, _files: any[] = []) => {
+            try {
+                const responseMemory: Memory = {
+                    id: stringToUuid(`${memory.id}-voice-response-${Date.now()}`),
+                    userId: this.runtime.agentId,
+                    agentId: this.runtime.agentId,
+                    content: {
+                        ...content,
+                        user: this.runtime.character.name,
+                        inReplyTo: memory.id,
+                        isVoiceMessage: true
+                    },
+                    roomId,
+                    createdAt: Date.now(),
+                };
 
-        state = await this.runtime.updateRecentMessageState(state);
+                if (responseMemory.content.text?.trim()) {
+                    await this.runtime.messageManager.createMemory(responseMemory);
+                    this.isProcessingAudio = false;
+                    this.volumeBuffers.clear();
+                    await this.speakText(content.text);
+                }
 
-        const shouldIgnore = await this._shouldIgnore(memory);
-
-        if (shouldIgnore) {
-            return "";
-        }
-
-        const shouldRespond = await this._shouldRespond(userText, state);
-
-        if (!shouldRespond) {
-            return "";
-        }
-
-        const context = composeContext({
-            state,
-            template:
-                this.runtime.character.templates?.twitterVoiceHandlerTemplate ||
-                this.runtime.character.templates?.messageHandlerTemplate ||
-                twitterVoiceHandlerTemplate,
-        });
-
-        const responseContent = await this._generateResponse(memory, context);
-
-        const responseMemory: Memory = {
-            id: stringToUuid(`${memory.id}-voice-response-${Date.now()}`),
-            agentId: this.runtime.agentId,
-            userId: this.runtime.agentId,
-            content: {
-                ...responseContent,
-                user: this.runtime.character.name,
-                inReplyTo: memory.id,
-            },
-            roomId,
+                return [responseMemory];
+            } catch (error) {
+                console.error("Error in voice message callback:", error);
+                return [];
+            }
         };
 
-        const reply = responseMemory.content.text?.trim();
-        if (reply) {
-            await this.runtime.messageManager.createMemory(responseMemory);
-        }
-
-        return reply;
-    }
-
-    private async _generateResponse(
-        message: Memory,
-        context: string,
-    ): Promise<Content> {
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
+        // Emit voice-specific events
+        this.runtime.emitEvent(["VOICE_MESSAGE_RECEIVED"], {
             runtime: this.runtime,
-            context,
-            modelClass: ModelClass.TEXT_SMALL,
+            message: memory,
+            callback,
         });
-
-        response.source = "discord";
-
-        if (!response) {
-            logger.error(
-                "[SttTtsPlugin] No response from generateMessageResponse",
-            );
-            return;
-        }
-
-        return response;
-    }
-
-    private async _shouldIgnore(message: Memory): Promise<boolean> {
-        logger.debug("message.content: ", message.content);
-        // if the message is 3 characters or less, ignore it
-        if ((message.content as Content).text.length < 3) {
-            return true;
-        }
-
-        const loseInterestWords = [
-            // telling the bot to stop talking
-            "shut up",
-            "stop",
-            "dont talk",
-            "silence",
-            "stop talking",
-            "be quiet",
-            "hush",
-            "stfu",
-            "stupid bot",
-            "dumb bot",
-
-            // offensive words
-            "fuck",
-            "shit",
-            "damn",
-            "suck",
-            "dick",
-            "cock",
-            "sex",
-            "sexy",
-        ];
-        if (
-            (message.content as Content).text.length < 50 &&
-            loseInterestWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word),
-            )
-        ) {
-            return true;
-        }
-
-        const ignoreWords = ["k", "ok", "bye", "lol", "nm", "uh"];
-        if (
-            (message.content as Content).text?.length < 8 &&
-            ignoreWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word),
-            )
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private async _shouldRespond(
-        message: string,
-        state: State,
-    ): Promise<boolean> {
-        const lowerMessage = message.toLowerCase();
-        const characterName = this.runtime.character.name.toLowerCase();
-
-        if (lowerMessage.includes(characterName)) {
-            return true;
-        }
-
-        // If none of the above conditions are met, use the generateText to decide
-        const shouldRespondContext = composeContext({
-            state,
-            template:
-                this.runtime.character.templates
-                    ?.twitterShouldRespondTemplate ||
-                this.runtime.character.templates?.shouldRespondTemplate ||
-                twitterShouldRespondTemplate,
-        });
-
-        const response = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondContext,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-
-        if (response === "RESPOND") {
-            return true;
-        }
-
-        if (response === "IGNORE" || response === "STOP") {
-            return false;
-        }
-
-        logger.error(
-            "Invalid response from response generateText:",
-            response,
-        );
-        return false;
-    }
-
-    /**
-     * ElevenLabs TTS => returns MP3 Buffer
-     */
-    private async elevenLabsTts(text: string): Promise<Buffer> {
-        if (!this.elevenLabsApiKey) {
-            throw new Error("[SttTtsPlugin] No ElevenLabs API key");
-        }
-        const url = `https://api.elevenlabs.io/v1/text-to-speech/${this.voiceId}`;
-        const resp = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "xi-api-key": this.elevenLabsApiKey,
-            },
-            body: JSON.stringify({
-                text,
-                model_id: this.elevenLabsModel,
-                voice_settings: { stability: 0.4, similarity_boost: 0.8 },
-            }),
-        });
-        if (!resp.ok) {
-            const errText = await resp.text();
-            throw new Error(
-                `[SttTtsPlugin] ElevenLabs TTS error => ${resp.status} ${errText}`,
-            );
-        }
-        const arrayBuf = await resp.arrayBuffer();
-        return Buffer.from(arrayBuf);
     }
 
     /**
@@ -700,24 +486,52 @@ export class SttTtsPlugin implements Plugin {
         }
     }
 
-    /**
-     * Add a message (system, user or assistant) to the chat context.
-     * E.g. to store conversation history or inject a persona.
-     */
-    public addMessage(role: "system" | "user" | "assistant", content: string) {
-        this.chatContext.push({ role, content });
-        logger.log(
-            `[SttTtsPlugin] addMessage => role=${role}, content=${content}`,
-        );
+    private async streamTtsStreamToJanus(
+        stream: Readable,
+        sampleRate: number,
+        signal: AbortSignal
+    ): Promise<void> {
+        const FRAME_SIZE = Math.floor(sampleRate * 0.01); // 10ms frames (480 samples @ 48kHz)
+        const chunks: Buffer[] = [];
+    
+        return new Promise((resolve, reject) => {
+            stream.on("data", (chunk: Buffer) => {
+                if (signal.aborted) {
+                    logger.log("[SttTtsPlugin] Stream aborted, stopping playback");
+                    stream.destroy();
+                    reject(new Error("TTS streaming aborted"));
+                    return;
+                }
+                chunks.push(chunk);
+            });
+    
+            stream.on("end", async () => {
+                if (signal.aborted) {
+                    logger.log("[SttTtsPlugin] Stream ended but was aborted");
+                    return reject(new Error("TTS streaming aborted"));
+                }
+    
+                const mp3Buffer = Buffer.concat(chunks);
+    
+                try {
+                    // Convert MP3 to PCM
+                    const pcmSamples = await this.convertMp3ToPcm(mp3Buffer, sampleRate);
+    
+                    // Stream PCM to Janus
+                    await this.streamToJanus(pcmSamples, sampleRate);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+    
+            stream.on("error", (error) => {
+                logger.error("[SttTtsPlugin] Error in TTS stream", error);
+                reject(error);
+            });
+        });
     }
-
-    /**
-     * Clear the chat context if needed.
-     */
-    public clearChatContext() {
-        this.chatContext = [];
-        logger.log("[SttTtsPlugin] clearChatContext => done");
-    }
+    
 
     cleanup(): void {
         logger.log("[SttTtsPlugin] cleanup => releasing resources");

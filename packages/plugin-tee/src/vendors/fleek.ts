@@ -1,8 +1,8 @@
-import { TeeVendors } from '@elizaos/core';
-import { TeeVendor } from './types';
+import { TeeVendorNames } from './types';
+import type { TeeVendor } from './types';
 
 export class FleekVendor implements TeeVendor {
-    type = TeeVendors.FLEEK;
+    type = TeeVendorNames.FLEEK;
 
     getActions() {
         return [];

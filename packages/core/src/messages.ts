@@ -20,16 +20,17 @@ export async function getActorDetails({
   roomId: UUID;
 }) {
   const participantIds = await runtime.databaseAdapter.getParticipantsForRoom(
-    roomId
+    roomId,
+    runtime.agentId
   );
   const actors = await Promise.all(
     participantIds.map(async (userId) => {
-      const account = await runtime.databaseAdapter.getAccountById(userId);
+      const account = await runtime.databaseAdapter.getEntityById(userId, runtime.agentId);
       if (account) {
         return {
           id: account.id,
-          name: account.name,
-          username: account.username,
+          name: account.metadata.name,
+          username: account.metadata.username,
         };
       }
       return null;
@@ -178,7 +179,8 @@ const checkShouldRespond = async (
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
-    runtime.agentId
+    message.agentId,
+    runtime.agentId,
   );
 
   if (
