@@ -39,6 +39,12 @@ export enum SpaceActivity {
     IDLE = "idle"
 }
 
+export enum ParticipantActivity {
+    LISTENER = "listener",
+    SPEAKER = "speaker",
+    PENDING = "pending"
+}
+
 /**
  * Main class: manage a Twitter Space with N speakers max, speaker queue, filler messages, etc.
  */
@@ -54,6 +60,7 @@ export class TwitterSpaceClient {
     private sttTtsPlugin?: SttTtsPlugin;
     public spaceStatus: SpaceActivity = SpaceActivity.IDLE;
     private spaceParticipant: SpaceParticipant | null = null;
+    public participantStatus: ParticipantActivity = ParticipantActivity.LISTENER;
 
     /**
      * We now store an array of active speakers, not just 1
@@ -67,6 +74,8 @@ export class TwitterSpaceClient {
         this.client = client;
         this.scraper = client.twitterClient;
         this.runtime = runtime;
+
+        this.sttTtsPlugin = new SttTtsPlugin();
 
         // TODO: Spaces should be added to and removed from cache probably, and it should be possible to join or leave a space from an action, etc
         const charSpaces = runtime.character.settings?.twitter?.spaces || {};
@@ -193,10 +202,8 @@ export class TwitterSpaceClient {
                 this.runtime.getModel(ModelClass.TRANSCRIPTION)
             ) {
                 logger.log("[Space] Using SttTtsPlugin");
-                const sttTts = new SttTtsPlugin();
-                this.sttTtsPlugin = sttTts;
                 // TODO: There is an error here, onAttach is incompatible
-                this.currentSpace.use(sttTts as any, {
+                this.currentSpace.use(this.sttTtsPlugin as any, {
                     runtime: this.runtime,
                     spaceId: this.spaceId,
                 });
@@ -480,40 +487,11 @@ export class TwitterSpaceClient {
         });
         
         if (this.spaceParticipant) {
-            this.spaceId = spaceId;
-            this.spaceStatus = SpaceActivity.PARTICIPATING;
-
             try {
                 await this.spaceParticipant.joinAsListener();
-                
-                const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
-                console.log('[SpaceParticipant] Requested speaker =>', sessionUUID);
-                try {
-                    await this.waitForApproval(this.spaceParticipant, sessionUUID, 15000);
-                    console.log(
-                      '[SpaceParticipant] Speaker approval sequence completed (ok or timed out).',
-                    );
-                    const sttTts = new SttTtsPlugin();
-                    this.sttTtsPlugin = sttTts;
-                    this.spaceParticipant.use(sttTts as any, {
-                        runtime: this.runtime,
-                        spaceId: this.spaceId,
-                    });
-                  } catch (err) {
-                    console.error('[SpaceParticipant] Approval error or timeout =>', err);
-                    // Optionally cancel the request if we timed out or got an error
-                    try {
-                      await this.spaceParticipant.cancelSpeakerRequest();
-                      console.log(
-                        '[SpaceParticipant] Speaker request canceled after timeout or error.',
-                      );
-                    } catch (cancelErr) {
-                      console.error(
-                        '[SpaceParticipant] Could not cancel the request =>',
-                        cancelErr,
-                      );
-                    }
-                  }
+
+                this.spaceId = spaceId;
+                this.spaceStatus = SpaceActivity.PARTICIPATING;
 
                 return spaceId;
             } catch(error) {
@@ -528,11 +506,63 @@ export class TwitterSpaceClient {
             this.stopParticipant();
             return;
         }
-    
+
         const isParticipant = await isAgentInSpace(this.client, this.spaceId);
 
         if (!isParticipant) {
             this.stopParticipant();
+            return;
+        }
+
+        // Check if we should request to speak
+        if (this.participantStatus === ParticipantActivity.LISTENER) {
+            logger.log("[SpaceParticipant] Checking if we should request to speak...");
+
+            this.participantStatus = ParticipantActivity.PENDING;
+
+            const { sessionUUID } = await this.spaceParticipant.requestSpeaker();
+
+            const handleSpeakerRemove = async (evt: { sessionUUID: string }) => {
+                if (evt.sessionUUID === sessionUUID) {
+                    console.log("[SpaceParticipant] Speaker removed:", evt);
+                    try {
+                        await this.spaceParticipant.removeFromSpeaker();
+                    } catch (err) {
+                        console.error("[SpaceParticipant] Failed to become speaker:", err);
+                    }
+                    this.participantStatus = ParticipantActivity.LISTENER;
+                    this.spaceParticipant?.off("newSpeakerRemoved", handleSpeakerRemove);
+                }
+            };
+    
+            // Attach listener for speaker removal
+            this.spaceParticipant.on("newSpeakerRemoved", handleSpeakerRemove);
+    
+            this.waitForApproval(this.spaceParticipant, sessionUUID, 15000)
+                .then(() => {
+                    this.participantStatus = ParticipantActivity.SPEAKER;
+                    this.spaceParticipant.use(this.sttTtsPlugin as any, {
+                        runtime: this.runtime,
+                        spaceId: this.spaceId,
+                    });
+                })
+                .catch(async (err) => {
+                    console.error("[SpaceParticipant] Approval error or timeout =>", err);
+    
+                    this.participantStatus = ParticipantActivity.LISTENER;
+    
+                    try {
+                        await this.spaceParticipant.cancelSpeakerRequest();
+                        console.log(
+                            "[SpaceParticipant] Speaker request canceled after timeout or error."
+                        );
+                    } catch (cancelErr) {
+                        console.error(
+                            "[SpaceParticipant] Could not cancel the request =>",
+                            cancelErr
+                        );
+                    }
+                });
         }
     }
 
@@ -545,11 +575,11 @@ export class TwitterSpaceClient {
             logger.error("[SpaceParticipant] Error stopping space participant =>", err);
         } finally {
             this.spaceStatus = SpaceActivity.IDLE;
+            this.participantStatus = ParticipantActivity.LISTENER;
             this.spaceId = undefined;
             this.spaceParticipant = undefined;
         }
     }
-    
 
     /**
      * waitForApproval waits until "newSpeakerAccepted" matches our sessionUUID,
@@ -592,5 +622,5 @@ export class TwitterSpaceClient {
             }
         }, timeoutMs);
         });
-    }
+    }  
 }

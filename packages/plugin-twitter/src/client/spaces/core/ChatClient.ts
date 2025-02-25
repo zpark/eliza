@@ -226,7 +226,16 @@ export class ChatClient extends EventEmitter {
       });
     }
 
-    // 5) Reaction => body.type=2
+    // 5) "guestBroadcastingEvent=10" => host removed a speaker
+    if (body.guestBroadcastingEvent === 10) {
+      this.emit('newSpeakerRemoved', {
+        userId: body.guestRemoteID,
+        username: body.guestUsername,
+        sessionUUID: body.sessionUUID,
+      });
+    }
+
+    // 6) Reaction => body.type=2
     if (body?.type === 2) {
       this.logger.debug('[ChatClient] Emitting guestReaction =>', body);
       this.emit('guestReaction', {
