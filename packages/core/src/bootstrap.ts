@@ -482,7 +482,7 @@ const syncSingleUser = async (
   user: any,
   serverId: string,
   channelId: string,
-  type: any,
+  type: ChannelType,
   source: string
 ) => {
   logger.info(`Syncing user: ${user.username || user.id}`);
@@ -519,7 +519,7 @@ const syncMultipleUsers = async (
   users: any[],
   serverId: string,
   channelId: string,
-  type: any,
+  type: ChannelType,
   source: string
 ) => {
   logger.info(`Syncing ${users.length} users for channel ${channelId}`);
