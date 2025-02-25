@@ -104,11 +104,13 @@ export class TwitterInteractionClient {
 
     async start() {
         const handleTwitterInteractionsLoop = () => {
+            // Defaults to 2 minutes
+            const interactionInterval = (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number || 120) * 1000;
+        
             this.handleTwitterInteractions();
             setTimeout(
                 handleTwitterInteractionsLoop,
-                // Defaults to 2 minutes
-                (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number) * 1000
+                interactionInterval
             );
         };
         handleTwitterInteractionsLoop();
@@ -278,7 +280,9 @@ export class TwitterInteractionClient {
                     const message = {
                         content: { 
                             text: tweet.text,
-                            imageUrls: tweet.photos?.map(photo => photo.url) || []
+                            imageUrls: tweet.photos?.map(photo => photo.url) || [],
+                            tweet: tweet,
+                            source: "twitter"
                         },
                         agentId: this.runtime.agentId,
                         userId: userIdUUID,

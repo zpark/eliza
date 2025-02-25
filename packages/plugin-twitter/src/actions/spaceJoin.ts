@@ -5,7 +5,8 @@ import {
     type Memory,
     type State,
     stringToUuid,
-    HandlerCallback
+    HandlerCallback,
+    logger
 } from "@elizaos/core";
 import { Tweet } from "../client";
 import { SpaceActivity } from "../spaces";
@@ -24,7 +25,11 @@ export default {
         message: Memory,
         _state: State
     ) => {
-        if (message.content.source !== "twitter") {
+        if (message?.content?.source !== "twitter") {
+            return false;
+        }
+
+        if (!message?.content?.tweet) {
             return false;
         }
 
@@ -41,7 +46,7 @@ export default {
         responses: Memory[]
     ): Promise<boolean> => {
         if (!state) {
-            console.error("State is not available.");
+            logger.error("State is not available.");
             return false;
         }
 
@@ -61,18 +66,18 @@ export default {
         const spaceManager = manager.clients.get(clientKey).space;
 
         if (!spaceManager) {
-            console.error("space action - no space manager found")
+            logger.error("space action - no space manager found")
             return false;
         }
 
         if (spaceManager.spaceStatus !== SpaceActivity.IDLE) {
-            console.warn("currently hosting/participating a space");
+            logger.warn("currently hosting/participating a space");
             return false;
         }
 
         const tweet = message.content.tweet as Tweet;
         if (!tweet) {
-            console.error("space action - no tweet found in message")
+            logger.warn("space action - no tweet found in message")
             return false;
         }
 
@@ -90,7 +95,7 @@ export default {
                             return !!spaceJoined;
                         }
                     } catch (error) {
-                        console.error("Error joining Twitter Space:", error);
+                        logger.error("Error joining Twitter Space:", error);
                     }
                 }
             }
@@ -106,7 +111,7 @@ export default {
                     }
                 }
             } catch (error) {
-                console.error(`Error fetching tweets for ${userName}:`, error);
+                logger.error(`Error fetching tweets for ${userName}:`, error);
             }
             return false;
         }
