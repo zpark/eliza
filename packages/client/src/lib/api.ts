@@ -69,25 +69,35 @@ export const apiClient = {
         message: string,
         selectedFile?: File | null
     ) => {
-        const formData = new FormData();
-        formData.append("text", message);
-        formData.append("user", "user");
-
         if (selectedFile) {
+            // Use FormData only when there's a file
+            const formData = new FormData();
+            formData.append("text", message);
+            formData.append("user", "user");
             formData.append("file", selectedFile);
+            
+            return fetcher({
+                url: `/agents/${agentId}/message`,
+                method: "POST",
+                body: formData,
+            });
         }
-        return fetcher({
-            url: `/${agentId}/message`,
-            method: "POST",
-            body: formData,
-        });
+            // Use JSON when there's no file
+            return fetcher({
+                url: `/agents/${agentId}/message`,
+                method: "POST",
+                body: {
+                    text: message,
+                    user: "user"
+                },
+            });
     },
     getAgents: () => fetcher({ url: "/agents" }),
     getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>
         fetcher({
-            url: `/${agentId}/tts`,
+            url: `/agents/${agentId}/tts`,
             method: "POST",
             body: {
                 text,
@@ -102,7 +112,7 @@ export const apiClient = {
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
         return fetcher({
-            url: `/${agentId}/whisper`,
+            url: `/agents/${agentId}/whisper`,
             method: "POST",
             body: formData,
         });

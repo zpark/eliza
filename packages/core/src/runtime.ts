@@ -548,6 +548,15 @@ export class AgentRuntime implements IAgentRuntime {
           );
           await this.processCharacterKnowledge(stringKnowledge);
         }
+
+        // Check if TEXT_EMBEDDING model is registered
+        const embeddingModel = this.getModel(ModelClass.TEXT_EMBEDDING);
+        if (!embeddingModel) {
+          logger.warn(`[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered. Skipping embedding dimension setup.`);
+        } else {
+          // Only run ensureEmbeddingDimension if we have an embedding model
+          await this.ensureEmbeddingDimension();
+        }
         
         // Initialize services
         if (this.services) {
@@ -563,15 +572,6 @@ export class AgentRuntime implements IAgentRuntime {
             this.registerClient(clientInterface.name, startedClient);
           })
         );
-        
-        // Check if TEXT_EMBEDDING model is registered
-        const embeddingModel = this.getModel(ModelClass.TEXT_EMBEDDING);
-        if (!embeddingModel) {
-          logger.warn(`[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered. Skipping embedding dimension setup.`);
-        } else {
-          // Only run ensureEmbeddingDimension if we have an embedding model
-          await this.ensureEmbeddingDimension();
-        }
       }
 
     async ensureAgentExists() {

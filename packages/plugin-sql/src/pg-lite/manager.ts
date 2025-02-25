@@ -95,8 +95,22 @@ export class PGliteClientManager implements IDatabaseClientManager<PGlite> {
         return this.shuttingDown;
     }
 
+    private async ensureExtensions(): Promise<void> {
+        try {
+            // Execute each extension creation separately without semicolons
+            await this.client.query('CREATE EXTENSION IF NOT EXISTS vector');
+            await this.client.query('CREATE EXTENSION IF NOT EXISTS fuzzystrmatch');
+            
+            logger.info("Required PGLite extensions verified");
+        } catch (error) {
+            logger.error("Failed to create required extensions:", error);
+            throw new Error(`Failed to create required extensions: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
     async runMigrations(): Promise<void> {
         try {
+            await this.ensureExtensions();
             const db = drizzle(this.client);
             await migrate(db, {
                 migrationsFolder: path.resolve(__dirname, "../drizzle/migrations"),

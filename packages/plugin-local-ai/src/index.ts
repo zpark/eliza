@@ -1,9 +1,6 @@
-import { type IAgentRuntime, logger, ModelClass, type Plugin } from "@elizaos/core";
 import type { GenerateTextParams } from "@elizaos/core";
-import { exec } from "node:child_process";
-import * as Echogarden from "echogarden";
+import { type IAgentRuntime, logger, ModelClass, type Plugin } from "@elizaos/core";
 import { EmbeddingModel, FlagEmbedding } from "fastembed";
-import fs from "node:fs";
 import {
   getLlama,
   type Llama,
@@ -12,31 +9,30 @@ import {
   type LlamaContextSequence,
   type LlamaModel
 } from "node-llama-cpp";
-// import { nodewhisper } from "nodejs-whisper";
-// import os from "node:os";
+import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-// import { promisify } from "node:util";
-import { z } from "zod";
-// import https from "node:https";
-import { getPlatformManager } from "./utils/platform";
-import { TokenizerManager } from './utils/tokenizerManager';
+import { validateConfig } from "./environment";
 import { MODEL_SPECS, type ModelSpec } from './types';
 import { DownloadManager } from './utils/downloadManager';
-import { VisionManager } from './utils/visionManager';
+import { OllamaManager } from './utils/ollamaManager';
+import { getPlatformManager } from "./utils/platform";
+import { StudioLMManager } from './utils/studiolmManager';
+import { TokenizerManager } from './utils/tokenizerManager';
 import { TranscribeManager } from './utils/transcribeManager';
 import { TTSManager } from './utils/ttsManager';
+import { VisionManager } from './utils/visionManager';
 
 // const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration schema
-const configSchema = z.object({
-  LLAMALOCAL_PATH: z.string().optional(),
-  CACHE_DIR: z.string().optional().default("./cache"),
-});
+// const configSchema = z.object({
+//   LLAMALOCAL_PATH: z.string().optional(),
+//   CACHE_DIR: z.string().optional().default("./cache"),
+// });
 
 // Words to punish in LLM responses
 const wordsToPunish = [
@@ -49,6 +45,13 @@ const wordsToPunish = [
   " algorithm", " Indeed", " Furthermore", " However", " Notably", " Therefore"
 ];
 
+// Add type definitions for model source selection
+type TextModelSource = 'local' | 'studiolm' | 'ollama';
+
+interface TextModelConfig {
+    source: TextModelSource;
+    modelClass: ModelClass;
+}
 
 class LocalAIManager {
   private static instance: LocalAIManager | null = null;
@@ -68,6 +71,10 @@ class LocalAIManager {
   private activeModelConfig: ModelSpec;
   private transcribeManager: TranscribeManager;
   private ttsManager: TTSManager;
+  private studioLMManager: StudioLMManager;
+  private ollamaManager: OllamaManager;
+  private ollamaInitialized = false;
+  private studioLMInitialized = false;
 
   private constructor() {
     // Ensure we have a valid models directory
@@ -97,6 +104,14 @@ class LocalAIManager {
     this.visionManager = VisionManager.getInstance(this.cacheDir);
     this.transcribeManager = TranscribeManager.getInstance(this.cacheDir);
     this.ttsManager = TTSManager.getInstance(this.cacheDir);
+    this.studioLMManager = StudioLMManager.getInstance();
+    this.ollamaManager = OllamaManager.getInstance();
+
+    // Initialize environment
+    this.initializeEnvironment().catch(error => {
+      logger.error("Environment initialization failed:", error);
+      throw error;
+    });
 
     // Add platform capabilities check in constructor
     this.checkPlatformCapabilities().catch(error => {
@@ -124,7 +139,35 @@ class LocalAIManager {
           stack: error instanceof Error ? error.stack : undefined
         });
         return null; // Prevent Promise.all from failing completely
-      })
+      }),
+      // Add TTS initialization
+      this.initializeTTS().catch(error => {
+        logger.warn("TTS initialization failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return null; // Prevent Promise.all from failing completely
+      }),
+      // Add StudioLM initialization
+      this.initializeStudioLM().then(() => {
+        this.studioLMInitialized = true;
+      }).catch(error => {
+        logger.warn("StudioLM initialization failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return null; // Prevent Promise.all from failing completely
+      }),
+      // Add Ollama initialization
+      this.initializeOllama().then(() => {
+        this.ollamaInitialized = true;
+      }).catch(error => {
+        logger.warn("Ollama initialization failed:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        return null; // Prevent Promise.all from failing completely
+      }),
     ]).catch(error => {
       logger.warn("Models initialization failed:", {
         error: error instanceof Error ? error.message : String(error),
@@ -138,6 +181,80 @@ class LocalAIManager {
       LocalAIManager.instance = new LocalAIManager();
     }
     return LocalAIManager.instance;
+  }
+
+  private async initializeEnvironment(): Promise<void> {
+    try {
+      logger.info("Validating environment configuration...");
+      
+      // Create initial config from current env vars
+      const config = {
+        USE_LOCAL_AI: process.env.USE_LOCAL_AI,
+        USE_STUDIOLM_TEXT_MODELS: process.env.USE_STUDIOLM_TEXT_MODELS,
+        USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS
+      };
+
+      // Validate configuration
+      const validatedConfig = await validateConfig(config);
+      
+      // Log the validated configuration
+      logger.info("Environment configuration validated:", validatedConfig);
+
+      
+      logger.success("Environment initialization complete");
+    } catch (error) {
+      logger.error("Environment validation failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw error;
+    }
+  }
+
+  private async initializeOllama(): Promise<void> {
+    try {
+      logger.info("Initializing Ollama models...");
+      this.ollamaManager = OllamaManager.getInstance();
+      
+      // Initialize and test models
+      await this.ollamaManager.initialize();
+
+      if (!this.ollamaManager.isInitialized()) {
+        throw new Error("Ollama initialization failed - models not properly loaded");
+      }
+
+      logger.success("Ollama initialization complete");
+    } catch (error) {
+      logger.error("Ollama initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
+  }
+
+  private async initializeStudioLM(): Promise<void> {
+    try {
+      logger.info("Initializing StudioLM models...");
+      
+      // Initialize and test models
+      await this.studioLMManager.initialize();
+
+      if (!this.studioLMManager.isInitialized()) {
+        throw new Error("StudioLM initialization failed - models not properly loaded");
+      }
+
+      this.studioLMInitialized = true;
+      logger.success("StudioLM initialization complete");
+    } catch (error) {
+      logger.error("StudioLM initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
+    }
   }
 
   private async initializeTranscription(): Promise<void> {
@@ -241,10 +358,6 @@ class LocalAIManager {
       }
 
       const imageBuffer = fs.readFileSync(imagePath);
-      logger.info("Test image loaded:", {
-        size: imageBuffer.length,
-        path: imagePath
-      });
 
       // Process the test image
       const result = await this.describeImage(imageBuffer, 'image/jpeg');
@@ -253,6 +366,56 @@ class LocalAIManager {
       logger.success("Vision model initialization complete");
     } catch (error) {
       logger.error("Vision initialization failed:", error);
+      throw error;
+    }
+  }
+
+  private async initializeTTS(): Promise<void> {
+    try {
+      logger.info("Initializing TTS model...");
+      
+      // Test text for TTS
+      const testText = "ElizaOS is yours";
+      
+      // Generate speech from test text
+      logger.info("Testing TTS with sample text:", { text: testText });
+      const audioStream = await this.ttsManager.generateSpeech(testText);
+      
+      // Verify the stream is readable
+      if (!(audioStream instanceof Readable)) {
+        throw new Error("TTS did not return a valid audio stream");
+      }
+
+      // Test stream readability
+      let dataReceived = false;
+      await new Promise<void>((resolve, reject) => {
+        audioStream.on('data', () => {
+          if (!dataReceived) {
+            dataReceived = true;
+            logger.info("TTS audio stream is producing data");
+          }
+        });
+
+        audioStream.on('end', () => {
+          if (!dataReceived) {
+            reject(new Error("No audio data received from TTS stream"));
+          } else {
+            resolve();
+          }
+        });
+
+        audioStream.on('error', (err) => {
+          reject(err);
+        });
+      });
+      
+      logger.success("TTS model initialization complete");
+    } catch (error) {
+      logger.error("TTS initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      });
       throw error;
     }
   }
@@ -361,7 +524,47 @@ class LocalAIManager {
     }
   }
 
-
+  async generateTextOllamaStudio(params: GenerateTextParams): Promise<string> {
+    try {
+      const modelConfig = this.getTextModelSource();
+      logger.info("generateTextOllamaStudio called with:", {
+        modelSource: modelConfig.source,
+        modelClass: params.modelClass,
+        studioLMInitialized: this.studioLMInitialized,
+        studioLMManagerInitialized: this.studioLMManager.isInitialized()
+      });
+        
+      if (modelConfig.source === 'studiolm') {
+        // Only initialize if not already initialized
+        if (!this.studioLMInitialized) {
+          logger.info("StudioLM not initialized, initializing now...");
+          await this.initializeStudioLM();
+        }
+        
+        // Pass initialization flag to generateText
+        return await this.studioLMManager.generateText(params, this.studioLMInitialized);
+      }
+      
+      if (modelConfig.source === 'ollama') {
+        // Only initialize if not already initialized
+        if (!this.ollamaInitialized && !this.ollamaManager.isInitialized()) {
+          logger.info("Initializing Ollama in generateTextOllamaStudio");
+          await this.ollamaManager.initialize();
+          this.ollamaInitialized = true;
+        }
+        
+        // Pass initialization flag to generateText
+        return await this.ollamaManager.generateText(params, this.ollamaInitialized);
+      }
+      
+      // Fallback to local models if something goes wrong
+      return this.generateText(params);
+    } catch (error) {
+      logger.error("Text generation with Ollama/StudioLM failed:", error);
+      // Fallback to local models
+      return this.generateText(params);
+    }
+  }
 
   async generateText(params: GenerateTextParams): Promise<string> {
     try {
@@ -539,6 +742,30 @@ class LocalAIManager {
   public getActiveModelConfig(): ModelSpec {
     return this.activeModelConfig;
   }
+
+  public getTextModelSource(): TextModelConfig {
+    try {
+        // Default configuration
+        const config: TextModelConfig = {
+            source: 'local',
+            modelClass: ModelClass.TEXT_SMALL
+        };
+
+        // Check environment configuration
+        if (process.env.USE_STUDIOLM_TEXT_MODELS === 'true') {
+            config.source = 'studiolm';
+        } else if (process.env.USE_OLLAMA_TEXT_MODELS === 'true') {
+            config.source = 'ollama';
+        }
+
+        logger.info("Selected text model source:", config);
+        return config;
+    } catch (error) {
+        logger.error("Error determining text model source:", error);
+        // Fallback to local models
+        return { source: 'local', modelClass: ModelClass.TEXT_SMALL };
+    }
+  }
 }
 
 // Create manager instance
@@ -551,22 +778,20 @@ export const localAIPlugin: Plugin = {
   async init(config: Record<string, string>) {
     try {
       logger.info("Initializing local-ai plugin...");
-      const validatedConfig = await configSchema.parseAsync(config);
+      const validatedConfig = await validateConfig(config);
 
       // Set environment variables
       for (const [key, value] of Object.entries(validatedConfig)) {
-        if (value) {
-          process.env[key] = value;
-          logger.debug(`Set ${key}=${value}`);
-        }
+        process.env[key] = String(value); // Convert boolean to string
+        logger.debug(`Set ${key}=${value}`);
       }
+
+      logger.success("Local AI plugin configuration validated and initialized");
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Invalid plugin configuration: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
-      logger.error("Plugin initialization failed:", error);
+      logger.error("Plugin initialization failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   },
@@ -574,6 +799,17 @@ export const localAIPlugin: Plugin = {
   models: {
     [ModelClass.TEXT_SMALL]: async (runtime: IAgentRuntime, { context, stopSequences = [] }: GenerateTextParams) => {
       try {
+        const modelConfig = localAIManager.getTextModelSource();
+        
+        if (modelConfig.source !== 'local') {
+          return await localAIManager.generateTextOllamaStudio({ 
+            context, 
+            stopSequences,
+            runtime,
+            modelClass: ModelClass.TEXT_SMALL
+          });
+        }
+        
         return await localAIManager.generateText({ 
           context, 
           stopSequences,
@@ -588,6 +824,17 @@ export const localAIPlugin: Plugin = {
 
     [ModelClass.TEXT_LARGE]: async (runtime: IAgentRuntime, { context, stopSequences = [] }: GenerateTextParams) => {
       try {
+        const modelConfig = localAIManager.getTextModelSource();
+        
+        if (modelConfig.source !== 'local') {
+          return await localAIManager.generateTextOllamaStudio({ 
+            context, 
+            stopSequences,
+            runtime,
+            modelClass: ModelClass.TEXT_LARGE
+          });
+        }
+        
         return await localAIManager.generateText({ 
           context, 
           stopSequences,
@@ -987,24 +1234,6 @@ export const localAIPlugin: Plugin = {
       ]
     }
   ],
-  routes: [
-    {
-      path: "/health",
-      type: "GET",
-      handler: async (_req: any, res: any) => {
-        res.json({
-          status: "healthy",
-          models: {
-            small: true,
-            large: true,
-            vision: true,
-            transcription: true,
-            tts: true
-          }
-        });
-      }
-    }
-  ]
 };
 
 export default localAIPlugin;

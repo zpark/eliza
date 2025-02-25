@@ -28,8 +28,9 @@ import {
 import { defaultCharacter } from "./single-agent/character.ts";
 import { startScenario } from "./swarm/scenario.ts";
 
+import * as fs from "node:fs";
+import * as path from "node:path";
 import swarm from "./swarm/index";
-
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
   const waitTime =
@@ -79,8 +80,6 @@ export function parseArguments(): {
     return {};
   }
 }
-
-
 
 export async function createAgent(
   character: Character
@@ -224,14 +223,27 @@ const checkPortAvailable = (port: number): Promise<boolean> => {
 
 const startAgents = async () => {
   const server = new AgentServer();
+  
+  // Assign the required functions first
+  server.startAgent = async (character) => {
+    logger.info(`Starting agent for character ${character.name}`);
+    return startAgent(character, server);
+  };
+  server.loadCharacterTryPath = loadCharacterTryPath;
+  server.jsonToCharacter = jsonToCharacter;
+
   let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
   const args = parseArguments();
   const charactersArg = args.characters || args.character;
-  let characters = [];
-
-  // Assign the character loading functions
-  server.loadCharacterTryPath = loadCharacterTryPath;
-  server.jsonToCharacter = jsonToCharacter;
+  
+  // Add this before creating the AgentServer
+  const dataDir = path.join(process.cwd(), "data");
+  try {
+    fs.accessSync(dataDir, fs.constants.W_OK);
+    logger.debug(`Data directory ${dataDir} is writable`);
+  } catch (error) {
+    logger.error(`Data directory ${dataDir} is not writable:`, error);
+  }
 
   if (args.swarm) {
     try {
@@ -275,12 +287,6 @@ const startAgents = async () => {
     serverPort++;
   }
 
-  server.startAgent = async (character) => {
-    logger.info(`Starting agent for character ${character.name}`);
-    return startAgent(character, server);
-  };
-
-
   server.start(serverPort);
 
   if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
@@ -293,7 +299,7 @@ const startAgents = async () => {
 };
 
 startAgents().catch((error) => {
-  logger.error("Unhandled error in startAgents:", error);
+  logger.error("Unhandled error in startAgents:", error.message);
   process.exit(1);
 });
 
