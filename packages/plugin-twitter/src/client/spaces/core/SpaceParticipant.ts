@@ -283,6 +283,31 @@ export class SpaceParticipant extends EventEmitter {
   }
 
   /**
+   * Removes self from the speaker role and transitions back to a listener.
+   */
+  public async removeFromSpeaker(): Promise<void> {
+    if (!this.sessionUUID) {
+      throw new Error(
+        '[SpaceParticipant] No sessionUUID; cannot remove from speaker role.',
+      );
+    }
+    if (!this.authToken || !this.chatToken) {
+      throw new Error('[SpaceParticipant] Missing authToken or chatToken.');
+    }
+
+    this.logger.info('[SpaceParticipant] Removing from speaker role...');
+
+    // Stop the Janus session
+    if (this.janusClient) {
+      await this.janusClient.stop();
+      this.janusClient = undefined;
+    }
+
+    this.logger.info('[SpaceParticipant] Successfully removed from speaker role.');
+  }
+
+
+  /**
    * Leaves the Space gracefully:
    * - Stop Janus if we were a speaker
    * - Stop watching as a viewer
