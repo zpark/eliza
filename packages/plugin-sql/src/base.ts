@@ -237,11 +237,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.update(entityTable).set({
-                id: entity.id,
-                agentId: entity.agentId,
-                metadata: entity.metadata,
-            }).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
+            await this.db.update(entityTable).set(entity).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
         });
     }
 
@@ -977,7 +973,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async createRoom({id, name, agentId, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID> {
-        console.log("createRoom", {id, name, agentId, source, type, channelId, serverId, worldId});
         return this.withDatabase(async () => {
             const newRoomId = id || v4();
             await this.db.insert(roomTable).values({
@@ -989,7 +984,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 channelId,
                 serverId,
                 worldId,
-            });
+            })
+            .onConflictDoNothing({ target: roomTable.id });
             return newRoomId as UUID;
         });
     }
@@ -1123,7 +1119,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     )
                 );
 
-            return result.map((row) => row.userId as UUID);
+            return result.map((row) => row.id as UUID);
         });
     }
 

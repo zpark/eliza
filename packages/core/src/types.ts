@@ -1017,6 +1017,8 @@ export interface IAgentRuntime {
   registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
 
+  transformUserId(userId: UUID): UUID;
+
   unregisterClient(name: string): void;
 
   initialize(): Promise<void>;
@@ -1054,12 +1056,12 @@ export interface IAgentRuntime {
     callback?: HandlerCallback
   ): Promise<string[] | null>;
 
-  ensureUserExists(
+  getOrCreateUser(
     userId: UUID,
     userName: string | null,
     name: string | null,
     source: string | null
-  ): Promise<void>;
+  ): Promise<UUID>;
 
   registerProvider(provider: Provider): void;
 

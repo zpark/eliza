@@ -59,7 +59,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   getConversationLength: () => 0,
   processActions: async () => {},
   evaluate: async () => null,
-  ensureUserExists: async () => {},
+  getOrCreateUser: async () => {},
   registerProvider: () => {},
   registerAction: () => {},
   ensureConnection: async () => {},

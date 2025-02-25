@@ -25,7 +25,7 @@ export const participantTable = pgTable(
         roomState: text("roomState"),
     },
     (table) => [
-        unique("participants_user_room_agent_unique").on(table.userId, table.roomId, table.agentId),
+        // unique("participants_user_room_agent_unique").on(table.userId, table.roomId, table.agentId),
         index("idx_participants_user").on(table.userId),
         index("idx_participants_room").on(table.roomId),
         foreignKey({

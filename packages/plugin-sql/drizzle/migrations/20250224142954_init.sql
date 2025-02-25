@@ -46,11 +46,12 @@ CREATE TABLE "embeddings" (
 );
 --> statement-breakpoint
 CREATE TABLE "entities" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"agentId" uuid NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
 	"names" text[] DEFAULT '{}'::text[],
-	"metadata" jsonb DEFAULT '{}'::jsonb
+	"metadata" jsonb DEFAULT '{}'::jsonb,
+	CONSTRAINT "id_agent_id_unique" UNIQUE("id","agentId")
 );
 --> statement-breakpoint
 CREATE TABLE "goals" (
@@ -91,8 +92,7 @@ CREATE TABLE "participants" (
 	"userId" uuid,
 	"roomId" uuid,
 	"agentId" uuid,
-	"roomState" text,
-	CONSTRAINT "participants_user_room_agent_unique" UNIQUE("userId","roomId","agentId")
+	"roomState" text
 );
 --> statement-breakpoint
 CREATE TABLE "relationships" (
@@ -126,29 +126,6 @@ CREATE TABLE "worlds" (
 	"serverId" text NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL
 );
---> statement-breakpoint
-
-CREATE EXTENSION IF NOT EXISTS vector;
---> statement-breakpoint
-
-CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
---> statement-breakpoint
-
--- Custom SQL migration file, put your code below! --
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim384 ON embeddings USING hnsw ("dim_384" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim512 ON embeddings USING hnsw ("dim_512" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim768 ON embeddings USING hnsw ("dim_768" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim1024 ON embeddings USING hnsw ("dim_1024" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim1536 ON embeddings USING hnsw ("dim_1536" vector_cosine_ops);
-
 --> statement-breakpoint
 ALTER TABLE "agents" ADD CONSTRAINT "agents_characterId_characters_id_fk" FOREIGN KEY ("characterId") REFERENCES "public"."characters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "embeddings" ADD CONSTRAINT "embeddings_memory_id_memories_id_fk" FOREIGN KEY ("memory_id") REFERENCES "public"."memories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -187,3 +164,25 @@ CREATE INDEX "idx_memories_type_room" ON "memories" USING btree ("type","roomId"
 CREATE INDEX "idx_participants_user" ON "participants" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "idx_participants_room" ON "participants" USING btree ("roomId");--> statement-breakpoint
 CREATE INDEX "idx_relationships_users" ON "relationships" USING btree ("userA","userB");
+
+
+CREATE EXTENSION IF NOT EXISTS vector;
+--> statement-breakpoint
+
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+--> statement-breakpoint
+
+-- Custom SQL migration file, put your code below! --
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim384 ON embeddings USING hnsw ("dim_384" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim512 ON embeddings USING hnsw ("dim_512" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim768 ON embeddings USING hnsw ("dim_768" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim1024 ON embeddings USING hnsw ("dim_1024" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim1536 ON embeddings USING hnsw ("dim_1536" vector_cosine_ops);

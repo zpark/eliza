@@ -7,6 +7,7 @@ import {
     index,
     boolean,
     foreignKey,
+    unique,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
@@ -47,7 +48,7 @@ export const memoryTable = pgTable(
             name: "fk_agent",
             columns: [table.agentId],
             foreignColumns: [entityTable.id],
-        }).onDelete("cascade"),
+        }).onDelete("cascade")
     ]
 );
 
