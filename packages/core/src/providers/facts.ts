@@ -1,11 +1,8 @@
-import type { Memory, Provider, State } from "@elizaos/core";
-import {
-    formatMessages,
-    type IAgentRuntime,
-    MemoryManager,
-    ModelClass
-} from "@elizaos/core";
+
 import { formatFacts } from "../evaluators/fact.ts";
+import { MemoryManager } from "../memory.ts";
+import { formatMessages } from "../messages.ts";
+import { IAgentRuntime, Memory, ModelClass, Provider, State } from "../types.ts";
 
 const factsProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {

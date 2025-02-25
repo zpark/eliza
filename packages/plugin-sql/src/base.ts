@@ -682,6 +682,86 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getActorDetails(params: { roomId: string }): Promise<Actor[]> {
+        if (!params.roomId) {
+            throw new Error("roomId is required");
+        }
+
+        return this.withDatabase(async () => {
+            try {
+                const result = await this.db
+                    .select({
+                        id: accountTable.id,
+                        name: accountTable.name,
+                        username: accountTable.username,
+                        details: accountTable.details,
+                    })
+                    .from(participantTable)
+                    .leftJoin(
+                        accountTable,
+                        eq(participantTable.userId, accountTable.id)
+                    )
+                    .where(eq(participantTable.roomId, params.roomId))
+                    .orderBy(accountTable.name);
+
+                logger.debug("Retrieved actor details:", {
+                    roomId: params.roomId,
+                    actorCount: result.length,
+                });
+
+                return result.map((row) => {
+                    try {
+                        const details =
+                            typeof row.details === "string"
+                                ? JSON.parse(row.details)
+                                : row.details || {};
+
+                        return {
+                            id: row.id as UUID,
+                            name: row.name ?? "",
+                            username: row.username ?? "",
+                            details: {
+                                tagline: details.tagline ?? "",
+                                summary: details.summary ?? "",
+                                quote: details.quote ?? "",
+                            },
+                        };
+                    } catch (error) {
+                        logger.warn("Failed to parse actor details:", {
+                            actorId: row.id,
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error),
+                        });
+
+                        return {
+                            id: row.id as UUID,
+                            name: row.name ?? "",
+                            username: row.username ?? "",
+                            details: {
+                                tagline: "",
+                                summary: "",
+                                quote: "",
+                            },
+                        };
+                    }
+                });
+            } catch (error) {
+                logger.error("Failed to fetch actor details:", {
+                    roomId: params.roomId,
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                });
+                throw new Error(
+                    `Failed to fetch actor details: ${
+                        error instanceof Error ? error.message : String(error)
+                    }`
+                );
+            }
+        });
+    }
+
     async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<void> {
         logger.debug("DrizzleAdapter createMemory:", {
             memoryId: memory.id,

@@ -1,7 +1,8 @@
-import {
-    composeContext, generateObjectArray, MemoryManager, ModelClass, type ActionExample, type Evaluator, type IAgentRuntime,
-    type Memory
-} from "@elizaos/core";
+import { generateObjectArray } from "../generation";
+import { composeContext } from "../context";
+import { MemoryManager } from "../memory";
+import { ActionExample, Evaluator, IAgentRuntime, Memory, ModelClass } from "../types";
+
 import { z } from "zod";
 
 export const formatFacts = (facts: Memory[]) => {
