@@ -166,6 +166,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       },
       serverId: guild.id,
       channelId: null, // No specific channel for server joins
+      channelType: "undefined",
       source: "discord"
     });
     
@@ -183,6 +184,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           },
           serverId: guild.id,
           channelId: channelId,
+          channelType: channel.type,
           source: "discord"
         });
       }

@@ -48,6 +48,7 @@ type UserJoinedParams = {
   user: any;
   serverId: string;
   channelId: string;
+  channelType: any,
   source: string;
 };
 
@@ -326,6 +327,7 @@ const syncLargeServerUsers = async (
             Array.from(activeUsers),
             guild.id,
             channelId,
+            channel.type,
             source
           );
         }
@@ -354,7 +356,7 @@ const syncLargeServerUsers = async (
           }));
           
           // Sync this batch to the general server (not channel-specific)
-          await syncMultipleUsers(runtime, users, guild.id, null, source);
+          await syncMultipleUsers(runtime, users, guild.id, null, "undefined", source);
           
           // Add a delay between batches to avoid rate limits
           if (i + batchSize < onlineMembersArray.length) {
@@ -458,7 +460,7 @@ const syncRegularServerUsers = async (
       }));
       
       // Note: null channelId means this sync is server-wide
-      await syncMultipleUsers(runtime, users, guild.id, null, source);
+      await syncMultipleUsers(runtime, users, guild.id, null, "undefined", source);
       
       // Add a small delay between batches
       if (i + batchSize < membersArray.length) {
@@ -480,6 +482,7 @@ const syncSingleUser = async (
   user: any,
   serverId: string,
   channelId: string,
+  type: any,
   source: string
 ) => {
   logger.info(`Syncing user: ${user.username || user.id}`);
@@ -487,6 +490,7 @@ const syncSingleUser = async (
   try {
     const userId = stringToUuid(`${user.id}-${runtime.agentId}`);
     const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
+    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
     
     // Ensure user exists
     await runtime.getOrCreateUser(
@@ -495,6 +499,8 @@ const syncSingleUser = async (
       user.displayName || user.username || `User${user.id}`,
       source
     );
+
+    await runtime.ensureRoomExists({id: roomId, source, type, channelId, serverId, worldId});
     
     // Add user to the channel's room
     await runtime.ensureParticipantInRoom(userId, roomId);
@@ -513,13 +519,14 @@ const syncMultipleUsers = async (
   users: any[],
   serverId: string,
   channelId: string,
+  type: any,
   source: string
 ) => {
   logger.info(`Syncing ${users.length} users for channel ${channelId}`);
   
   try {
     const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
-    
+    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
     // Process users in batches to avoid overwhelming the system
     const batchSize = 10;
     for (let i = 0; i < users.length; i += batchSize) {
@@ -538,6 +545,7 @@ const syncMultipleUsers = async (
               source
             );
             
+            await runtime.ensureRoomExists({id: roomId, source, type, channelId, serverId, worldId});
             // Add user to the room
             await runtime.ensureParticipantInRoom(userId, roomId);
           } catch (err) {
@@ -588,8 +596,8 @@ const events = {
     }
   ],
   USER_JOINED: [
-    async ({ runtime, user, serverId, channelId, source }: UserJoinedParams) => {
-      await syncSingleUser(runtime, user, serverId, channelId, source);
+    async ({ runtime, user, serverId, channelId, channelType, source }: UserJoinedParams) => {
+      await syncSingleUser(runtime, user, serverId, channelId, channelType, source);
     }
   ],
 };
