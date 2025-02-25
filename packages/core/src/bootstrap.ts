@@ -356,7 +356,7 @@ const syncLargeServerUsers = async (
           }));
           
           // Sync this batch to the general server (not channel-specific)
-          await syncMultipleUsers(runtime, users, guild.id, null, "undefined", source);
+          await syncMultipleUsers(runtime, users, guild.id, null, ChannelType.WORLD, source);
           
           // Add a delay between batches to avoid rate limits
           if (i + batchSize < onlineMembersArray.length) {
@@ -460,7 +460,7 @@ const syncRegularServerUsers = async (
       }));
       
       // Note: null channelId means this sync is server-wide
-      await syncMultipleUsers(runtime, users, guild.id, null, "undefined", source);
+      await syncMultipleUsers(runtime, users, guild.id, null, ChannelType.WORLD, source);
       
       // Add a small delay between batches
       if (i + batchSize < membersArray.length) {

@@ -166,7 +166,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       },
       serverId: guild.id,
       channelId: null, // No specific channel for server joins
-      channelType: "undefined",
+      channelType: ChannelType.WORLD,
       source: "discord"
     });
     
