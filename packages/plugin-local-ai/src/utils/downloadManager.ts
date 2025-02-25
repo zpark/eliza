@@ -124,8 +124,22 @@ export class DownloadManager {
       }
 
       if (!fs.existsSync(modelPath)) {
-        const downloadUrl = `https://huggingface.co/${modelSpec.repo}/resolve/main/${modelSpec.name}`;
-        logger.info("Download URL:", downloadUrl);
+        // For GGUF models, we need to adjust the repo path
+        const repoPath = modelSpec.repo.replace('-GGUF', '');
+        const downloadUrl = `https://huggingface.co/${repoPath}/resolve/main/${modelSpec.name}`;
+        logger.info("Model download details:", {
+          originalRepo: modelSpec.repo,
+          adjustedRepo: repoPath,
+          modelName: modelSpec.name,
+          downloadUrl,
+          alternativeUrls: {
+            withGGUF: `https://huggingface.co/${modelSpec.repo}/resolve/main/${modelSpec.name}`,
+            rawUrl: `https://huggingface.co/${modelSpec.repo}/blob/main/${modelSpec.name}`,
+            lfsUrl: `https://huggingface.co/${modelSpec.repo}/resolve/main/${modelSpec.name}?download=true`
+          },
+          modelPath: modelPath,
+          timestamp: new Date().toISOString()
+        });
         
         await this.downloadFile(downloadUrl, modelPath);
         logger.success(`Model download complete: ${modelSpec.name}`);

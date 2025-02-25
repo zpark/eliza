@@ -29,6 +29,11 @@ export class TTSManager {
       : path.join(process.cwd(), "models");
     this.downloadManager = DownloadManager.getInstance(this.cacheDir);
     this.ensureCacheDirectory();
+    logger.info("TTSManager initialized with configuration:", {
+      cacheDir: this.cacheDir,
+      modelsDir: this.modelsDir,
+      timestamp: new Date().toISOString()
+    });
   }
 
   public static getInstance(cacheDir: string): TTSManager {
@@ -53,27 +58,96 @@ export class TTSManager {
 
       logger.info("Initializing TTS with GGUF backend...");
       
-      // Download the model if needed
-      const modelPath = path.join(this.modelsDir, MODEL_SPECS.tts.base.name);
-      await this.downloadManager.downloadModel(MODEL_SPECS.tts.base, modelPath);
+      const modelSpec = MODEL_SPECS.tts.base;
+      const modelPath = path.join(this.modelsDir, modelSpec.name);
       
+      // Log detailed model configuration and paths
+      logger.info("TTS model configuration:", {
+        name: modelSpec.name,
+        repo: modelSpec.repo,
+        modelPath,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!fs.existsSync(modelPath)) {
+        // Try different URL patterns in sequence
+        const attempts = [
+          {
+            spec: { ...modelSpec },
+            description: "Standard URL with GGUF",
+            url: `https://huggingface.co/${modelSpec.repo}/resolve/main/${modelSpec.name}?download=true`
+          },
+          {
+            spec: { ...modelSpec, repo: modelSpec.repo.replace('-GGUF', '') },
+            description: "URL without GGUF suffix",
+            url: `https://huggingface.co/${modelSpec.repo.replace('-GGUF', '')}/resolve/main/${modelSpec.name}?download=true`
+          },
+          {
+            spec: { ...modelSpec, name: modelSpec.name.replace('-Q8_0', '') },
+            description: "URL without quantization suffix",
+            url: `https://huggingface.co/${modelSpec.repo}/resolve/main/${modelSpec.name.replace('-Q8_0', '')}.gguf?download=true`
+          }
+        ];
+
+        let lastError = null;
+        for (const attempt of attempts) {
+          try {
+            logger.info("Attempting TTS model download:", {
+              description: attempt.description,
+              repo: attempt.spec.repo,
+              name: attempt.spec.name,
+              url: attempt.url,
+              timestamp: new Date().toISOString()
+            });
+
+            const barLength = 20;
+            const progressBar = '█'.repeat(barLength);
+            logger.info(`TTS model download: ${progressBar} Starting...`);
+            
+            await this.downloadManager.downloadFromUrl(attempt.url, modelPath);
+            
+            logger.info(`TTS model download: ${progressBar} 100%`);
+            logger.success("TTS model download successful with:", attempt.description);
+            break;
+          } catch (error) {
+            lastError = error;
+            logger.warn("TTS model download attempt failed:", {
+              description: attempt.description,
+              error: error instanceof Error ? error.message : String(error),
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+
+        if (!fs.existsSync(modelPath)) {
+          throw lastError || new Error("All download attempts failed");
+        }
+      }
+
+      logger.info("Loading TTS model...");
       const llama = await getLlama();
       this.model = await llama.loadModel({
-        modelPath
+        modelPath,
+        gpuLayers: 0  // Force CPU for now until we add GPU support
       });
 
       this.ctx = await this.model.createContext({
-        contextSize: MODEL_SPECS.tts.base.contextSize
+        contextSize: modelSpec.contextSize
       });
 
       this.sequence = this.ctx.getSequence();
       
-      logger.success("TTS initialization complete");
+      logger.success("TTS initialization complete", {
+        modelPath,
+        contextSize: modelSpec.contextSize,
+        timestamp: new Date().toISOString()
+      });
       this.initialized = true;
     } catch (error) {
       logger.error("TTS initialization failed:", {
         error: error instanceof Error ? error.message : String(error),
-        model: MODEL_SPECS.tts.base.name
+        model: MODEL_SPECS.tts.base.name,
+        timestamp: new Date().toISOString()
       });
       throw error;
     }
@@ -87,48 +161,84 @@ export class TTSManager {
         throw new Error("TTS model not initialized");
       }
       
-      logger.info("Generating speech for text:", { length: text.length });
+      logger.info("Starting speech generation for text:", { text });
 
       // Format prompt for TTS generation
-      const prompt = `[SPEAKER=male_1][LANGUAGE=en]${text}`;
+      const prompt = `[SPEAKER=female_1][LANGUAGE=en]${text}`;
+      logger.info("Formatted prompt:", { prompt });
       
-      // Tokenize the input text
+      // Tokenize input
+      logger.info("Tokenizing input...");
       const inputTokens = this.model.tokenize(prompt);
-      
-      // Generate audio tokens
+      logger.info("Input tokenized:", { tokenCount: inputTokens.length });
+
+      // Generate audio tokens with optimized limit (2x input)
+      const maxTokens = inputTokens.length * 2;
+      logger.info("Starting token generation with optimized limit:", { maxTokens });
       const responseTokens: Token[] = [];
-      for await (const token of this.sequence.evaluate(inputTokens, {
-        temperature: 0.1,
-        repeatPenalty: {
-          punishTokens: () => [],
-          penalty: 1.0,
-          frequencyPenalty: 0.0,
-          presencePenalty: 0.0
+      const startTime = Date.now();
+
+      try {
+        for await (const token of this.sequence.evaluate(inputTokens, {
+          temperature: 0.1,
+          
+        })) {
+          responseTokens.push(token);
+          
+          // Update progress bar
+          const progress = Math.round((responseTokens.length / maxTokens) * 100);
+          const barLength = 20;
+          const filledLength = Math.floor((progress / 100) * barLength);
+          const bar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
+          logger.info(`Token generation: ${bar} ${progress}% (${responseTokens.length}/${maxTokens})`);
+
+          // Stop if we hit our token limit
+          if (responseTokens.length >= maxTokens) {
+            logger.info("Token generation complete");
+            break;
+          }
         }
-      })) {
-        responseTokens.push(token);
+      } catch (error) {
+        logger.error("Token generation error:", error);
+        throw error;
+      }
+
+      logger.info("Token generation stats:", { 
+        inputTokens: inputTokens.length,
+        outputTokens: responseTokens.length,
+        timeMs: Date.now() - startTime 
+      });
+
+      if (responseTokens.length === 0) {
+        throw new Error("No audio tokens generated");
       }
 
       // Convert tokens to audio data
-      if (!this.model) {
-        throw new Error("Model not initialized");
-      }
+      logger.info("Converting tokens to audio data...");
       const audioData = this.processAudioResponse({
         tokens: responseTokens.map(t => Number.parseInt(this.model.detokenize([t]), 10))
       });
       
-      // Create WAV format with proper headers
-      return prependWavHeader(
+      logger.info("Audio data generated:", {
+        byteLength: audioData.length,
+        sampleRate: MODEL_SPECS.tts.base.sampleRate
+      });
+
+      // Create WAV format
+      const audioStream = prependWavHeader(
         Readable.from(audioData),
         audioData.length,
         MODEL_SPECS.tts.base.sampleRate,
-        1, // mono channel
-        16 // 16-bit PCM
+        1,
+        16
       );
+
+      logger.success("Speech generation complete");
+      return audioStream;
     } catch (error) {
       logger.error("Speech generation failed:", {
         error: error instanceof Error ? error.message : String(error),
-        textLength: text.length
+        text
       });
       throw error;
     }
