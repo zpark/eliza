@@ -1,4 +1,5 @@
 import {
+    Actor,
     Agent,
     DatabaseAdapter,
     logger,
@@ -691,18 +692,16 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             try {
                 const result = await this.db
                     .select({
-                        id: accountTable.id,
-                        name: accountTable.name,
-                        username: accountTable.username,
-                        details: accountTable.details,
+                        id: entityTable.id,
+                        metadata: entityTable.metadata,
                     })
                     .from(participantTable)
                     .leftJoin(
-                        accountTable,
-                        eq(participantTable.userId, accountTable.id)
+                        entityTable,
+                        eq(participantTable.userId, entityTable.id)
                     )
                     .where(eq(participantTable.roomId, params.roomId))
-                    .orderBy(accountTable.name);
+                    .orderBy(entityTable.metadata?.name ?? entityTable.id);
 
                 logger.debug("Retrieved actor details:", {
                     roomId: params.roomId,
