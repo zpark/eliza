@@ -6,6 +6,7 @@ import {
     formatActionNames,
     formatActions,
 } from "./actions.ts";
+import { bootstrapPlugin } from "./bootstrap.ts";
 import { addHeader, composeContext } from "./context.ts";
 import {
     evaluationTemplate,
@@ -14,12 +15,10 @@ import {
     formatEvaluators,
 } from "./evaluators.ts";
 import { generateText } from "./generation.ts";
-import { formatGoalsAsString, getGoals } from "./goals.ts";
 import { handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
 import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
-import { bootstrapPlugin } from "./bootstrap.ts";
 import { parseJsonArrayFromText } from "./parsing.ts";
 import { formatPosts } from "./posts.ts";
 import { getProviders } from "./providers.ts";
@@ -301,21 +300,12 @@ export class AgentRuntime implements IAgentRuntime {
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
         const plugins = opts?.plugins ?? [];
 
-        if(opts?.events) {
-            const events = opts?.events;
-            
-            for (const [eventName, eventHandlers] of Object.entries(events)) {
-                for (const eventHandler of eventHandlers) {
-                    this.registerEvent(eventName, eventHandler);
-                }
-            }
+        if(!opts?.ignoreBootstrap){
+            plugins.push(bootstrapPlugin);
         }
             
         for (const plugin of plugins) {
-            logger.info(`Initializing plugin: ${plugin.name}`);
-            logger.info(`Plugin actions: ${plugin.actions}`);
             for (const action of (plugin.actions ?? [])) {
-                logger.info(`Registering action: ${action.name}`);
                 this.registerAction(action);
             }
 
@@ -331,11 +321,11 @@ export class AgentRuntime implements IAgentRuntime {
                 this.registerMemoryManager(manager)
             }
 
-            for(const service of plugin.services){
+            for(const service of (plugin.services ?? [])){
                 this.registerService(service);
             }
 
-            for(const route of plugin.routes){
+            for(const route of (plugin.routes ?? [])){
                 this.routes.push(route);
             }
 
@@ -346,7 +336,7 @@ export class AgentRuntime implements IAgentRuntime {
                 }
             }
 
-            for(const client of plugin.clients){
+            for(const client of (plugin.clients ?? [])){
                 this.registerClientInterface(client.name, client);
             }
         }
@@ -356,11 +346,7 @@ export class AgentRuntime implements IAgentRuntime {
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
 
-        if(!(opts?.ignoreBootstrap)){
-            this.plugins.push(bootstrapPlugin);
-        }
-
-        for (const plugin of this.plugins) {
+        for (const plugin of plugins) {
             if (plugin.adapters) {
                 for (const adapter of plugin.adapters) {
                     this.adapters.push(adapter);
@@ -463,6 +449,7 @@ export class AgentRuntime implements IAgentRuntime {
                     if(!plugin) {
                         continue;
                     }
+
                     if (plugin.clients) {
                         for (const client of plugin.clients) {
                             this.registerClientInterface(client.name, client);
@@ -1060,23 +1047,15 @@ export class AgentRuntime implements IAgentRuntime {
     
         const conversationLength = this.getConversationLength();
     
-        const [actorsData, recentMessagesData, goalsData] = await Promise.all([
+        const [actorsData, recentMessagesData] = await Promise.all([
             getActorDetails({ runtime: this, roomId }),
             this.messageManager.getMemories({
                 roomId,
                 count: conversationLength,
                 unique: false,
             }),
-            getGoals({
-                runtime: this,
-                count: 10,
-                onlyInProgress: false,
-                roomId,
-            }),
         ]);
-    
-        const goals = formatGoalsAsString({ goals: goalsData });
-    
+        
         const actors = formatActors({ actors: actorsData ?? [] });
     
         const recentMessages = formatMessages({
@@ -1367,14 +1346,6 @@ export class AgentRuntime implements IAgentRuntime {
                     : "",
             actorsData,
             roomId,
-            goals:
-                goals && goals.length > 0
-                    ? addHeader(
-                        "# Goals\n{{agentName}} should prioritize accomplishing the objectives that are in progress.",
-                        goals,
-                    )
-                    : "",
-            goalsData,
             recentMessages:
                 recentMessages && recentMessages.length > 0
                     ? addHeader("# Conversation Messages", recentMessages)
@@ -1612,10 +1583,11 @@ export class AgentRuntime implements IAgentRuntime {
     emitEvent(event: string | string[], params: any) {
         // Handle both single event string and array of event strings
         const events = Array.isArray(event) ? event : [event];
-        
+
         // Call handlers for each event
         for (const eventName of events) {
             const eventHandlers = this.events.get(eventName);
+
             if (eventHandlers) {
                 for (const handler of eventHandlers) {
                     handler(params);

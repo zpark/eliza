@@ -255,14 +255,14 @@ export default {
     runtime.registerAction(twitterPostAction);
 
     // Register runtime events
-    runtime.registerEvent("DISCORD_JOIN_SERVER", async (params: { guild: Guild }) => {
+    runtime.registerEvent("DISCORD_SERVER_JOINED", async (params: { server: Guild }) => {
       // TODO: Save onboarding config to runtime
-      await initializeAllSystems(runtime, [params.guild], socialMediaManagerConfig);
+      await initializeAllSystems(runtime, [params.server], socialMediaManagerConfig);
     });
 
     // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { guild: Guild }) => {
-      await initializeAllSystems(runtime, [params.guild], socialMediaManagerConfig);
+    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { server: Guild }) => {
+      await initializeAllSystems(runtime, [params.server], socialMediaManagerConfig);
     });
   }
 };

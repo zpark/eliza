@@ -361,16 +361,16 @@ export default {
 init: async (runtime: IAgentRuntime) => {
   // Register runtime events with improved error handling
   runtime.registerEvent(
-    "DISCORD_JOIN_SERVER",
-    async (params: { guild: Guild }) => {
+    "DISCORD_SERVER_JOINED",
+    async (params: { server: Guild }) => {
       try {
-        console.log(`${runtime.character.name} joined server ${params.guild.id}`);
+        console.log(`${runtime.character.name} joined server ${params.server.id}`);
         
         // Ensure ownership state exists before proceeding
         await getOrCreateOwnershipState(runtime);
         
         // Proceed with initialization
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
         console.error(`Error during server join initialization: ${error}`);
       }
@@ -379,15 +379,15 @@ init: async (runtime: IAgentRuntime) => {
 
   runtime.registerEvent(
     "DISCORD_SERVER_CONNECTED",
-    async (params: { guild: Guild }) => {
+    async (params: { server: Guild }) => {
       try {
-        console.log(`${runtime.character.name} connected to server ${params.guild.id}`);
+        console.log(`${runtime.character.name} connected to server ${params.server.id}`);
         
         // Ensure ownership state exists before proceeding
         await getOrCreateOwnershipState(runtime);
         
         // Proceed with initialization
-        await initializeAllSystems(runtime, [params.guild], config);
+        await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
         console.error(`Error during server connection initialization: ${error}`);
       }

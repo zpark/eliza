@@ -37,15 +37,23 @@ export class TelegramClient implements ClientInstance {
 
     private async initializeBot(): Promise<void> {
         this.bot.launch({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
-        logger.log(
-            "✨ Telegram bot successfully launched and is running!"
-        );
+        logger.log("✨ Telegram bot successfully launched and is running!");
 
         const botInfo = await this.bot.telegram.getMe();
         this.bot.botInfo = botInfo;
         logger.success(`Bot username: @${botInfo.username}`);
 
         this.messageManager.bot = this.bot;
+        
+        // Emit standardized event that we've connected
+        this.runtime.emitEvent("SERVER_CONNECTED", {
+            runtime: this.runtime,
+            server: {
+                id: "telegram-main",
+                name: "Telegram"
+            },
+            source: "telegram"
+        });
     }
 
     private async isGroupAuthorized(ctx: Context): Promise<boolean> {
