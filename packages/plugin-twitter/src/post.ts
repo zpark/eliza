@@ -65,8 +65,6 @@ export class TwitterPostClient {
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"
             );
         }
-
-        this.start();
     }
 
     async start() {
