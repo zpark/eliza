@@ -1,5 +1,5 @@
 {
-  "id": "c498abdd-fa6b-4ec9-bad1-1d21471e9117",
+  "id": "1265cc44-23ec-4e51-9ea3-8ea569f783d8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -690,6 +690,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
         }
       },
       "indexes": {
@@ -706,6 +713,57 @@
               "expression": "roomId",
               "isExpression": false,
               "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_memories_metadata_type": {
+          "name": "idx_memories_metadata_type",
+          "columns": [
+            {
+              "expression": "((metadata->>'type'))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_memories_document_id": {
+          "name": "idx_memories_document_id",
+          "columns": [
+            {
+              "expression": "((metadata->>'documentId'))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_fragments_order": {
+          "name": "idx_fragments_order",
+          "columns": [
+            {
+              "expression": "((metadata->>'documentId'))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "((metadata->>'position'))",
+              "asc": true,
+              "isExpression": true,
               "nulls": "last"
             }
           ],
@@ -796,8 +854,18 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "fragment_metadata_check": {
+          "name": "fragment_metadata_check",
+          "value": "\n            CASE \n                WHEN metadata->>'type' = 'fragment' THEN\n                    metadata ? 'documentId' AND \n                    metadata ? 'position'\n                ELSE true\n            END\n        "
+        },
+        "document_metadata_check": {
+          "name": "document_metadata_check",
+          "value": "\n            CASE \n                WHEN metadata->>'type' = 'document' THEN\n                    metadata ? 'timestamp'\n                ELSE true\n            END\n        "
+        }
+      },
       "isRLSEnabled": false
     },
     "public.participants": {

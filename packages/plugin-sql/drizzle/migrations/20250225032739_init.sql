@@ -83,7 +83,23 @@ CREATE TABLE "memories" (
 	"userId" uuid,
 	"agentId" uuid,
 	"roomId" uuid,
-	"unique" boolean DEFAULT true NOT NULL
+	"unique" boolean DEFAULT true NOT NULL,
+	"metadata" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	CONSTRAINT "fragment_metadata_check" CHECK (
+            CASE 
+                WHEN metadata->>'type' = 'fragment' THEN
+                    metadata ? 'documentId' AND 
+                    metadata ? 'position'
+                ELSE true
+            END
+        ),
+	CONSTRAINT "document_metadata_check" CHECK (
+            CASE 
+                WHEN metadata->>'type' = 'document' THEN
+                    metadata ? 'timestamp'
+                ELSE true
+            END
+        )
 );
 --> statement-breakpoint
 CREATE TABLE "participants" (
@@ -161,10 +177,12 @@ ALTER TABLE "rooms" ADD CONSTRAINT "rooms_agentId_agents_id_fk" FOREIGN KEY ("ag
 ALTER TABLE "rooms" ADD CONSTRAINT "rooms_worldId_worlds_id_fk" FOREIGN KEY ("worldId") REFERENCES "public"."worlds"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "idx_embedding_memory" ON "embeddings" USING btree ("memory_id");--> statement-breakpoint
 CREATE INDEX "idx_memories_type_room" ON "memories" USING btree ("type","roomId");--> statement-breakpoint
+CREATE INDEX "idx_memories_metadata_type" ON "memories" USING btree (((metadata->>'type')));--> statement-breakpoint
+CREATE INDEX "idx_memories_document_id" ON "memories" USING btree (((metadata->>'documentId')));--> statement-breakpoint
+CREATE INDEX "idx_fragments_order" ON "memories" USING btree (((metadata->>'documentId')),((metadata->>'position')));--> statement-breakpoint
 CREATE INDEX "idx_participants_user" ON "participants" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "idx_participants_room" ON "participants" USING btree ("roomId");--> statement-breakpoint
 CREATE INDEX "idx_relationships_users" ON "relationships" USING btree ("userA","userB");
-
 
 CREATE EXTENSION IF NOT EXISTS vector;
 --> statement-breakpoint

@@ -282,6 +282,46 @@ export interface State {
   [key: string]: unknown;
 }
 
+export enum MemoryType {
+    DOCUMENT = "document",
+    FRAGMENT = "fragment",
+    MESSAGE = "message",
+    DESCRIPTION = "description"
+}
+
+export interface BaseMetadata {
+    type: MemoryType;          
+    source?: string;           
+    sourceId?: UUID;           
+    scope?: string;            
+    timestamp?: number;        
+    tags?: string[];          
+}
+
+export interface DocumentMetadata extends BaseMetadata {
+    type: MemoryType.DOCUMENT;
+}
+
+export interface FragmentMetadata extends BaseMetadata {
+    type: MemoryType.FRAGMENT;
+    documentId: UUID;      
+    position: number;      
+}
+
+export interface MessageMetadata extends BaseMetadata {
+    type: MemoryType.MESSAGE;
+}
+
+export interface DescriptionMetadata extends BaseMetadata {
+    type: MemoryType.DESCRIPTION;
+}
+
+export type KnowledgeMetadata = 
+    | DocumentMetadata 
+    | FragmentMetadata 
+    | MessageMetadata 
+    | DescriptionMetadata;
+
 /**
  * Represents a stored memory/message
  */
@@ -293,7 +333,7 @@ export interface Memory {
   userId: UUID;
 
   /** Associated agent ID */
-  agentId: UUID;
+  agentId?: UUID;
 
   /** Optional creation timestamp */
   createdAt?: number;
@@ -312,6 +352,9 @@ export interface Memory {
 
   /** Embedding similarity score */
   similarity?: number;
+
+  /** Metadata for the knowledge */
+  metadata?: KnowledgeMetadata;
 }
 
 /**
@@ -630,7 +673,7 @@ export type TemplateType = string | ((options: { state: State }) => string);
 /**
  * Configuration for an agent character
  */
-export type Character = {
+export interface Character {
   /** Optional unique identifier */
   id?: UUID;
 
@@ -685,7 +728,7 @@ export type Character = {
     chat?: string[];
     post?: string[];
   };
-};
+}
 
 export interface TwitterSpaceDecisionOptions {
   maxSpeakers?: number;
@@ -930,6 +973,7 @@ export interface IMemoryManager {
     roomId?: UUID;
     agentId?: UUID;
     unique?: boolean;
+    metadata?: KnowledgeMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(
@@ -1025,7 +1069,7 @@ export interface IAgentRuntime {
 
   registerMemoryManager(manager: IMemoryManager): void;
 
-  getMemoryManager(name: string): IMemoryManager | null;
+  getMemoryManager(tableName: string): IMemoryManager | null;
 
   getService<T extends Service>(service: ServiceType): T | null;
 
@@ -1385,12 +1429,6 @@ export interface TeePluginConfig {
   vendorConfig?: TeeVendorConfig;
 }
 
-export const CACHE_KEYS = {
-  SERVER_SETTINGS: (serverId: string) => `server_${serverId}_settings`,
-  SERVER_ROLES: (serverId: string) => `server_${serverId}_roles`,
-  // etc
-} as const;
-
 export interface Task {
   id?: UUID;
   name: string;
@@ -1419,4 +1457,11 @@ export type RoomData = {
   serverId?: string;
   worldId?: UUID;
   metadata?: Record<string, unknown>;
+}
+
+export const TableType = {
+    MESSAGES: "messages",
+    DESCRIPTIONS: "descriptions",
+    DOCUMENTS: "documents",
+    FRAGMENTS: "fragments"
 }

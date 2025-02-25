@@ -47,6 +47,7 @@ import {
     type Service,
     type ServiceType,
     type State,
+    TableType,
     type Task,
     type UUID,
     type WorldData
@@ -147,25 +148,25 @@ class MemoryManagerService {
         // Message manager for storing messages
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "messages",
+            tableName: TableType.MESSAGES,
         }));
 
         // Description manager for storing user descriptions
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "descriptions",
+            tableName: TableType.DESCRIPTIONS,
         }));
 
         // Documents manager for large documents
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "documents",
+            tableName: TableType.DOCUMENTS,
         }));
 
         // Knowledge manager for searchable fragments
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: "fragments",
+            tableName: TableType.FRAGMENTS,
         }));
     }
 
@@ -203,19 +204,19 @@ class MemoryManagerService {
     }
 
     getMessageManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("messages", "Message");
+        return this.getRequiredMemoryManager(TableType.MESSAGES, "Message");
     }
 
     getDescriptionManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("descriptions", "Description");
+        return this.getRequiredMemoryManager(TableType.DESCRIPTIONS, "Description");
     }
 
     getDocumentsManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("documents", "Documents");
+        return this.getRequiredMemoryManager(TableType.DOCUMENTS, "Documents");
     }
 
     getKnowledgeManager(): IMemoryManager {
-        return this.getRequiredMemoryManager("fragments", "Knowledge");
+        return this.getRequiredMemoryManager(TableType.FRAGMENTS, "Knowledge");
     }
 
     getAllManagers(): Map<string, IMemoryManager> {

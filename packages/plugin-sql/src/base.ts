@@ -14,6 +14,19 @@ import {
     type UUID,
     type WorldData
 } from "@elizaos/core";
+
+// Define the metadata type inline since we can't import it
+type KnowledgeMetadata = {
+    type: string;
+    source?: string;
+    sourceId?: UUID;
+    scope?: string;
+    timestamp?: number;
+    tags?: string[];
+    documentId?: UUID;
+    position?: number;
+};
+
 import {
     and,
     cosineDistance,
@@ -669,7 +682,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async createMemory(memory: Memory, tableName: string): Promise<void> {
+    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<void> {
         logger.debug("DrizzleAdapter createMemory:", {
             memoryId: memory.id,
             embeddingLength: memory.embedding?.length,
@@ -699,18 +712,17 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         const memoryId = memory.id ?? v4();
 
         await this.db.transaction(async (tx) => {
-            await tx.insert(memoryTable).values([
-                {
-                    id: memoryId,
-                    type: tableName,
-                    content: sql`${contentToInsert}::jsonb`,
-                    userId: memory.userId,
-                    roomId: memory.roomId,
-                    agentId: memory.agentId,
-                    unique: memory.unique ?? isUnique,
-                    createdAt: memory.createdAt,
-                },
-            ]);
+            await tx.insert(memoryTable).values([{
+                id: memoryId,
+                type: tableName,
+                content: sql`${contentToInsert}::jsonb`,
+                metadata: sql`${memory.metadata || {}}::jsonb`,
+                userId: memory.userId,
+                roomId: memory.roomId,
+                agentId: memory.agentId,
+                unique: memory.unique ?? isUnique,
+                createdAt: memory.createdAt,
+            }]);
 
             if (memory.embedding && Array.isArray(memory.embedding)) {
                 const embeddingValues: Record<string, unknown> = {
