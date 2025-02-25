@@ -80,12 +80,10 @@ function formatKnowledge(knowledge: KnowledgeItem[]): string {
  * Manages knowledge-related operations for the agent runtime
  */
 class KnowledgeManager {
-    private knowledgeRoot: string;
     private runtime: AgentRuntime;
 
     constructor(runtime: AgentRuntime, knowledgeRoot: string) {
         this.runtime = runtime;
-        this.knowledgeRoot = knowledgeRoot;
     }
 
     private async handleProcessingError(error: any, context: string) {
@@ -277,13 +275,9 @@ export class AgentRuntime implements IAgentRuntime {
             `[AgentRuntime] Process working directory: ${process.cwd()}`,
         );
 
-        // Define the root path once
-        this.knowledgeRoot = join(
-            process.cwd(),
-            "..",
-            "characters",
-            "knowledge",
-        );
+        this.knowledgeRoot = typeof process !== 'undefined' && process.cwd
+            ? join(process.cwd(), "..", "characters", "knowledge")
+            : "./characters/knowledge";
 
         logger.debug(
             `[AgentRuntime] Process knowledgeRoot: ${this.knowledgeRoot}`,
