@@ -51,11 +51,12 @@ export const followRoomAction: Action = {
             return false;
         }
         const roomId = message.roomId;
-        const userState = await runtime.databaseAdapter.getParticipantUserState(
+        const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
-            runtime.agentId
+            runtime.agentId,
+            runtime.agentId,
         );
-        return userState !== "FOLLOWED" && userState !== "MUTED";
+        return roomState !== "FOLLOWED" && roomState !== "MUTED";
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldFollow(state: State): Promise<boolean> {
@@ -78,6 +79,7 @@ export const followRoomAction: Action = {
         if (await _shouldFollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
+                runtime.agentId,
                 runtime.agentId,
                 "FOLLOWED"
             );

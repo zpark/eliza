@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1739579603447,
-      "tag": "20250215003323_create_extensions",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1739671030071,
-      "tag": "20250216015710_create_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1739671033588,
-      "tag": "20250216015713_create_hnsw_vector_indices",
+      "when": 1740407394770,
+      "tag": "20250224142954_init",
       "breakpoints": true
     }
   ]

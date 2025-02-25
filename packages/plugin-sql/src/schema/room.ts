@@ -1,12 +1,12 @@
-import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { agentTable } from "./agent";
 import { numberTimestamp } from "./types";
 import { worldTable } from "./worldTable";
-import { accountTable } from "./account";
 
 export const roomTable = pgTable("rooms", {
   id: uuid("id").primaryKey().notNull(),
-  agentId: uuid("agentId").references(() => accountTable.id),
+  agentId: uuid("agentId").references(() => agentTable.id),
   source: text("source").notNull(),
   type: text("type").notNull(),
   serverId: text("serverId"),

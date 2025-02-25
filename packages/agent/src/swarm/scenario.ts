@@ -1,81 +1,207 @@
-import { ChannelType, type IAgentRuntime, Memory, stringToUuid, type UUID } from "@elizaos/core";
-import { v4 as uuidv4 } from 'uuid';
+import {
+  ChannelType,
+  Client,
+  HandlerCallback,
+  IAgentRuntime,
+  Memory,
+  UUID,
+  stringToUuid,
+} from "@elizaos/core";
+import { v4 as uuidv4 } from "uuid";
 
-async function sayMessage(participant: IAgentRuntime, roomMap, participants: IAgentRuntime[], message: string) {
-    const participantId = participant.agentId;
+export class ScenarioClient implements Client {
+  name = "scenario";
+  runtime: IAgentRuntime;
+  private messageHandlers: Map<UUID, HandlerCallback[]> = new Map();
+  private rooms: Map<string, { roomId: UUID }> = new Map();
 
-    // for each participant, create the memory
-    for (const participant of [participants[0]]) {
-        console.log("participant");
-        console.log(participant.agentId, participantId);
-        if(participant.agentId === participantId) {
-            continue;
-        }
+  async start(runtime: IAgentRuntime) {
+    this.runtime = runtime;
+    return this;
+  }
 
-        const roomId = roomMap.get(participant.agentId);
-        await participant.ensureConnection({
-            userId: participantId,
-            roomId,
-            userName: participant.character.name,
-            userScreenName: participant.character.name,
-            source: "scenario",
-            type: ChannelType.GROUP,
+  async stop() {
+    this.messageHandlers.clear();
+    this.rooms.clear();
+  }
+
+  // Create a room for an agent
+  async createRoom(agentId: string, name?: string) {
+    const roomId = uuidv4();
+
+    await this.runtime.ensureRoomExists({
+      id: roomId as UUID,
+      name: name || `Room for ${agentId}`,
+      source: "scenario",
+      type: ChannelType.GROUP,
+      channelId: roomId,
+      serverId: null,
+    });
+
+    this.rooms.set(agentId, { roomId: roomId as UUID });
+  }
+
+  // Save a message in all agents' memory without emitting events
+  async saveMessage(
+    sender: IAgentRuntime,
+    receivers: IAgentRuntime[],
+    text: string
+  ) {
+    
+    for (const receiver of receivers) {
+      const participantId = stringToUuid(sender.agentId + "-" + receiver.agentId);
+      const roomData = this.rooms.get(receiver.agentId);
+      if (!roomData) continue;
+
+        // Ensure connection exists
+        await receiver.ensureConnection({
+          userId: participantId,
+          roomId: roomData.roomId,
+          userName: sender.character.name,
+          userScreenName: sender.character.name,
+          source: "scenario",
+          type: ChannelType.GROUP,
         });
-        const memoryManager = participant.messageManager;
-        const memory: Memory = {
-            userId: participantId,
-            agentId: participant.agentId,
-            roomId,
-            content: {
-                text: message,
-            }
-        }
-        await memoryManager.createMemory(memory);
 
-        // participant.emitEvent("MESSAGE_RECEIVED", {
-        //     runtime: participant,
-        //     message: memory,
-        //     roomId: roomId,
-        //     userId: participantId,
-        //     serverId: roomId,
-        //     channelId: roomId,
-        //     source: "scenario",
-        //     type: ChannelType.GROUP,
-        // });
+      const memory: Memory = {
+        userId: participantId,
+        agentId: receiver.agentId,
+        roomId: roomData.roomId,
+        content: {
+          text,
+          source: "scenario",
+          name: sender.character.name,
+          userName: sender.character.name,
+        },
+      };
+
+      await receiver.messageManager.createMemory(memory);
     }
+  }
+
+  // Send a live message that triggers handlers
+  async sendMessage(
+    sender: IAgentRuntime,
+    receivers: IAgentRuntime[],
+    text: string
+  ) {
+    
+    for (const receiver of receivers) {
+      const participantId = stringToUuid(sender.agentId + "-" + receiver.agentId);
+      const roomData = this.rooms.get(receiver.agentId);
+      if (!roomData) continue;
+
+      if (receiver.agentId !== sender.agentId) {
+        // Ensure connection exists
+        await receiver.ensureConnection({
+          userId: participantId,
+          roomId: roomData.roomId,
+          userName: sender.character.name,
+          userScreenName: sender.character.name,
+          source: "scenario",
+          type: ChannelType.GROUP,
+        });
+      } else {
+        await receiver.ensureConnection({
+          userId: sender.agentId,
+          roomId: roomData.roomId,
+          userName: sender.character.name,
+          userScreenName: sender.character.name,
+          source: "scenario",
+          type: ChannelType.GROUP,
+        });
+      }
+
+      const memory: Memory = {
+        userId: receiver.agentId !== sender.agentId ? participantId : sender.agentId,
+        agentId: receiver.agentId,
+        roomId: roomData.roomId,
+        content: {
+          text,
+          source: "scenario",
+          name: sender.character.name,
+          userName: sender.character.name,
+        },
+      };
+
+      receiver.emitEvent("MESSAGE_RECEIVED", {
+        runtime: receiver,
+        message: memory,
+        roomId: roomData.roomId,
+        userId: receiver.agentId !== sender.agentId ? participantId : sender.agentId,
+        source: "scenario",
+        type: ChannelType.GROUP,
+      });
+    }
+  }
+
+  // Get conversation history for all participants
+  async getConversations(participants: IAgentRuntime[]) {
+    const conversations = await Promise.all(
+      participants.map(async (member) => {
+        const roomData = this.rooms.get(member.agentId);
+        if (!roomData) return [];
+        return member.messageManager.getMemories({
+          roomId: roomData.roomId,
+        });
+      })
+    );
+
+    console.log("\nConversation logs per agent:");
+    conversations.forEach((convo, i) => {
+      console.log(`\n${participants[i].character.name}'s perspective:`);
+      convo.forEach((msg) =>
+        console.log(`${msg.content.name}: ${msg.content.text}`)
+      );
+    });
+
+    return conversations;
+  }
 }
 
+// Updated scenario implementation using the new client
 const scenarios = [
-    async function scenario1(members: IAgentRuntime[]) {
-        // create a map of member agentId to room UUID
-        const roomMap = new Map<string, UUID>();
-        for (const member of members) {
-            const roomId = uuidv4() as UUID;
-            roomMap.set(member.agentId, roomId);
-        }
+  async function scenario1(members: IAgentRuntime[]) {
+    // Create and register test client
+    const client = new ScenarioClient();
+    await client.start(members[0]);
+    members[0].registerClient("scenario", client);
 
-        await sayMessage(members[0], roomMap, members, "Hello bob!");
-        await sayMessage(members[1], roomMap, members, "Hello alice!");
-        await sayMessage(members[0], roomMap, members, "Hello bob again!");
-        await sayMessage(members[1], roomMap, members, "Hello alice again!");
-        await sayMessage(members[2], roomMap, members, "I'm charlie!");
-        await sayMessage(members[0], roomMap, members, "Hello bob, how are you?");
-        await sayMessage(members[1], roomMap, members, "Hello alice, I'm good!");
-        await sayMessage(members[2], roomMap, members, "I'm good too!");
+    // Create rooms for all members
+    for (const member of members) {
+      await client.createRoom(
+        member.agentId,
+        `Test Room for ${member.character.name}`
+      );
+    }
 
-        const conversations = await Promise.all(members.map(async (member) => {
-            return member.messageManager.getMemories({
-                roomId: roomMap.get(member.agentId),
-            });
-        }));
-        console.log(conversations);
-    },
+    // Set up conversation history
+    await client.saveMessage(
+      members[0],
+      members,
+      "Earlier message from conversation..."
+    );
+    // await client.saveMessage(
+    //   members[1],
+    //   members,
+    //   "Previous reply in history..."
+    // );
+
+    // // Send live message that triggers handlers
+    // await client.sendMessage(members[0], members, "Hello everyone!");
+
+    // // Get and display conversation logs
+    // // wait 5 seconds
+    // await new Promise((resolve) => setTimeout(resolve, 5000));
+    // await client.getConversations(members);
+
+    // Send a message to all members
+    //   await client.sendMessage(members[0], members, "Hello everyone!");
+  },
 ];
 
 export async function startScenario(members: IAgentRuntime[]) {
-    // TODO: Connect to mock messaging protocol
-    for (const scenario of scenarios) {
-        await scenario(members);
-    }
-
+  for (const scenario of scenarios) {
+    await scenario(members);
+  }
 }

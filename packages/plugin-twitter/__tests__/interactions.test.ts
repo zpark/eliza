@@ -96,7 +96,7 @@ describe("TwitterInteractionClient", () => {
       composeState: vi.fn().mockResolvedValue({}),
       composeContext: vi.fn(),
       ensureRoomExists: vi.fn().mockResolvedValue(true),
-      ensureUserExists: vi.fn().mockResolvedValue(true),
+      getOrCreateUser: vi.fn().mockResolvedValue(true),
       ensureParticipantInRoom: vi.fn().mockResolvedValue(true),
       ensureConnection: vi.fn().mockResolvedValue(true),
       updateRecentMessageState: vi.fn().mockResolvedValue({}),

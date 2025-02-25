@@ -396,7 +396,7 @@ export class SttTtsPlugin implements Plugin {
         const userUuid = stringToUuid(`twitter-user-${numericId}`);
 
         // Ensure the user exists in the accounts table
-        await this.runtime.ensureUserExists(
+        await this.runtime.getOrCreateUser(
             userUuid,
             userId, // Use full Twitter ID as username
             `Twitter User ${numericId}`,

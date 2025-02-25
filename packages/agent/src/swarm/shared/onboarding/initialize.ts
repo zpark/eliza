@@ -279,7 +279,7 @@ async function startOnboardingDM(
       serverId: guild.id
     });
     
-    await runtime.ensureUserExists(
+    await runtime.getOrCreateUser(
       runtime.agentId, 
       runtime.character.name, 
       runtime.character.name, 

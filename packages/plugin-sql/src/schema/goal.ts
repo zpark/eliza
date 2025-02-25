@@ -1,8 +1,9 @@
 import { pgTable, uuid, text, jsonb, foreignKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
-import { accountTable } from "./account";
+import { entityTable } from "./entity";
 import { roomTable } from "./room";
+import { agentTable } from "./agent";
 
 export const goalTable = pgTable(
     "goals",
@@ -11,7 +12,8 @@ export const goalTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-        userId: uuid("userId").references(() => accountTable.id),
+        userId: uuid("userId").references(() => entityTable.id),
+        agentId: uuid("agentId").references(() => agentTable.id),
         name: text("name"),
         status: text("status"),
         description: text("description"),
@@ -27,7 +29,7 @@ export const goalTable = pgTable(
         foreignKey({
             name: "fk_user",
             columns: [table.userId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]
 );

@@ -18,7 +18,7 @@ describe("Messages Library", () => {
             databaseAdapter: {
                 // Using vi.fn() instead of jest.fn()
                 getParticipantsForRoom: vi.fn(),
-                getAccountById: vi.fn(),
+                getEntityById: vi.fn(),
             },
         } as unknown as IAgentRuntime;
 
@@ -40,7 +40,7 @@ describe("Messages Library", () => {
         vi.mocked(
             runtime.databaseAdapter.getParticipantsForRoom
         ).mockResolvedValue([userId]);
-        vi.mocked(runtime.databaseAdapter.getAccountById).mockResolvedValue({
+        vi.mocked(runtime.databaseAdapter.getEntityById).mockResolvedValue({
             id: userId,
             name: "Test User",
             username: "testuser",
@@ -191,7 +191,7 @@ describe("Messages", () => {
                             mockActors[0].id,
                             mockActors[1].id,
                         ]),
-                    getAccountById: vi.fn().mockImplementation((id) => {
+                    getEntityById: vi.fn().mockImplementation((id) => {
                         const actor = mockActors.find((a) => a.id === id);
                         return Promise.resolve(actor);
                     }),
@@ -218,7 +218,7 @@ describe("Messages", () => {
                     getParticipantsForRoom: vi
                         .fn()
                         .mockResolvedValue([mockActors[0].id, invalidId]),
-                    getAccountById: vi.fn().mockImplementation((id) => {
+                    getEntityById: vi.fn().mockImplementation((id) => {
                         const actor = mockActors.find((a) => a.id === id);
                         return Promise.resolve(actor || null);
                     }),

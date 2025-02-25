@@ -35,6 +35,13 @@ export class MemoryManager implements IMemoryManager {
         this.tableName = opts.tableName;
     }
 
+    private transformUserIdIfNeeded(memory: Memory): Memory {
+        return {
+          ...memory,
+          userId: this.runtime.transformUserId(memory.userId)
+        };
+      }
+
     /**
      * Adds an embedding vector to a memory object. If the memory already has an embedding, it is returned as is.
      * @param memory The memory object to add an embedding to.
@@ -173,24 +180,25 @@ export class MemoryManager implements IMemoryManager {
      */
     async createMemory(memory: Memory, unique = false): Promise<void> {
         // TODO: check memory.agentId == this.runtime.agentId
+        const transformedMemory = this.transformUserIdIfNeeded(memory);
 
         const existingMessage =
-            await this.runtime.databaseAdapter.getMemoryById(memory.id);
+            await this.runtime.databaseAdapter.getMemoryById(transformedMemory.id);
 
         if (existingMessage) {
             logger.debug("Memory already exists, skipping");
             return;
         }
 
-        logger.log("Creating Memory", memory.id, memory.content.text);
+        logger.log("Creating Memory", transformedMemory.id, transformedMemory.content.text);
 
-        if(!memory.embedding){
+        if(!transformedMemory.embedding){
             const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
-            memory.embedding = embedding;
+            transformedMemory.embedding = embedding;
         }
 
         await this.runtime.databaseAdapter.createMemory(
-            memory,
+            transformedMemory,
             this.tableName,
             unique
         );

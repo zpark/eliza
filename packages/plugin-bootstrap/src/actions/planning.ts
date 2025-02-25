@@ -115,15 +115,19 @@ async function getValidActions(
 ): Promise<Action[]> {
     const validActions: Action[] = [];
 
-    for (const action of runtime.actions) {
+    const validationResults = await Promise.all(
+      runtime.actions.map(async (action) => {
         try {
-            if (await action.validate(runtime, message, state)) {
-                validActions.push(action);
-            }
+          const isValid = await action.validate(runtime, message, state);
+          return isValid ? action : null;
         } catch (error) {
-            logger.error(`Error validating action ${action.name}:`, error);
+          logger.error(`Error validating action ${action.name}:`, error);
+          return null;
         }
-    }
+      })
+    );
+
+    validActions.push(...validationResults.filter((action): action is Action => action !== null));
 
     return validActions;
 }
