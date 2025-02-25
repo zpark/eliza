@@ -7,6 +7,21 @@ export const configSchema = z.object({
     USE_LOCAL_AI: z.boolean().default(true),
     USE_STUDIOLM_TEXT_MODELS: z.boolean().default(false),
     USE_OLLAMA_TEXT_MODELS: z.boolean().default(false),
+    
+    // Ollama Configuration
+    OLLAMA_SERVER_URL: z.string().default("http://localhost:11434"),
+    OLLAMA_MODEL: z.string().default("deepseek-r1-distill-qwen-7b"),
+    USE_OLLAMA_EMBEDDING: z.boolean().default(false),
+    OLLAMA_EMBEDDING_MODEL: z.string().default(""),
+    SMALL_OLLAMA_MODEL: z.string().default("deepseek-r1:1.5b"),
+    MEDIUM_OLLAMA_MODEL: z.string().default("deepseek-r1:7b"),
+    LARGE_OLLAMA_MODEL: z.string().default("deepseek-r1:7b"),
+    
+    // StudioLM Configuration
+    STUDIOLM_SERVER_URL: z.string().default("http://localhost:1234"),
+    STUDIOLM_SMALL_MODEL: z.string().default("lmstudio-community/deepseek-r1-distill-qwen-1.5b"),
+    STUDIOLM_MEDIUM_MODEL: z.string().default("deepseek-r1-distill-qwen-7b"),
+    STUDIOLM_EMBEDDING_MODEL: z.union([z.boolean(), z.string()]).default(false),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -41,7 +56,9 @@ export async function validateConfig(
         logger.info("Raw environment variables:", {
             USE_LOCAL_AI: process.env.USE_LOCAL_AI,
             USE_STUDIOLM_TEXT_MODELS: process.env.USE_STUDIOLM_TEXT_MODELS,
-            USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS
+            USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS,
+            OLLAMA_SERVER_URL: process.env.OLLAMA_SERVER_URL,
+            STUDIOLM_SERVER_URL: process.env.STUDIOLM_SERVER_URL
         });
 
         // Parse environment variables with proper boolean conversion
@@ -49,6 +66,7 @@ export async function validateConfig(
             USE_LOCAL_AI: true, // Always true
             USE_STUDIOLM_TEXT_MODELS: config.USE_STUDIOLM_TEXT_MODELS === 'true',
             USE_OLLAMA_TEXT_MODELS: config.USE_OLLAMA_TEXT_MODELS === 'true',
+            USE_OLLAMA_EMBEDDING: config.USE_OLLAMA_EMBEDDING === 'true',
         };
 
         logger.info("Parsed boolean configuration:", booleanConfig);
@@ -56,7 +74,22 @@ export async function validateConfig(
         // Validate text model source configuration
         validateModelConfig(booleanConfig);
 
-        const validatedConfig = configSchema.parse(booleanConfig);
+        // Create full config with all values
+        const fullConfig = {
+            ...booleanConfig,
+            OLLAMA_SERVER_URL: config.OLLAMA_SERVER_URL || "http://localhost:11434",
+            OLLAMA_MODEL: config.OLLAMA_MODEL || "deepseek-r1-distill-qwen-7b",
+            OLLAMA_EMBEDDING_MODEL: config.OLLAMA_EMBEDDING_MODEL || "",
+            SMALL_OLLAMA_MODEL: config.SMALL_OLLAMA_MODEL || "deepseek-r1:1.5b",
+            MEDIUM_OLLAMA_MODEL: config.MEDIUM_OLLAMA_MODEL || "deepseek-r1:7b",
+            LARGE_OLLAMA_MODEL: config.LARGE_OLLAMA_MODEL || "deepseek-r1:7b",
+            STUDIOLM_SERVER_URL: config.STUDIOLM_SERVER_URL || "http://localhost:1234",
+            STUDIOLM_SMALL_MODEL: config.STUDIOLM_SMALL_MODEL || "lmstudio-community/deepseek-r1-distill-qwen-1.5b",
+            STUDIOLM_MEDIUM_MODEL: config.STUDIOLM_MEDIUM_MODEL || "deepseek-r1-distill-qwen-7b",
+            STUDIOLM_EMBEDDING_MODEL: config.STUDIOLM_EMBEDDING_MODEL || false,
+        };
+
+        const validatedConfig = configSchema.parse(fullConfig);
         
         logger.info("Final validated configuration:", validatedConfig);
         

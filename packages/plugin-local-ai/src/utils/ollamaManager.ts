@@ -1,4 +1,5 @@
 import { logger, ModelClass, type GenerateTextParams } from "@elizaos/core";
+
 import fetch from "node-fetch";
 
 interface OllamaModel {
@@ -25,8 +26,8 @@ export class OllamaManager {
   private initialized = false;
   private availableModels: OllamaModel[] = [];
   private configuredModels = {
-    small: "deepseek-r1:1.5b",
-    medium: "deepseek-r1:7b"
+    small: process.env.SMALL_OLLAMA_MODEL || "deepseek-r1:1.5b",
+    medium: process.env.MEDIUM_OLLAMA_MODEL || "deepseek-r1:7b"
   };
 
   private constructor() {

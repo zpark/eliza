@@ -39,8 +39,8 @@ export class StudioLMManager {
   private initialized = false;
   private availableModels: StudioLMModel[] = [];
   private configuredModels = {
-    small: "lmstudio-community/deepseek-r1-distill-qwen-1.5b",
-    medium: "deepseek-r1-distill-qwen-7b"
+    small: process.env.STUDIOLM_SMALL_MODEL || "lmstudio-community/deepseek-r1-distill-qwen-1.5b",
+    medium: process.env.STUDIOLM_MEDIUM_MODEL || "deepseek-r1-distill-qwen-7b"
   };
 
   private constructor() {
