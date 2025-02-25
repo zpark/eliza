@@ -183,24 +183,3 @@ CREATE INDEX "idx_fragments_order" ON "memories" USING btree (((metadata->>'docu
 CREATE INDEX "idx_participants_user" ON "participants" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "idx_participants_room" ON "participants" USING btree ("roomId");--> statement-breakpoint
 CREATE INDEX "idx_relationships_users" ON "relationships" USING btree ("userA","userB");
-
-CREATE EXTENSION IF NOT EXISTS vector;
---> statement-breakpoint
-
-CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
---> statement-breakpoint
-
--- Custom SQL migration file, put your code below! --
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim384 ON embeddings USING hnsw ("dim_384" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim512 ON embeddings USING hnsw ("dim_512" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim768 ON embeddings USING hnsw ("dim_768" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim1024 ON embeddings USING hnsw ("dim_1024" vector_cosine_ops);
---> statement-breakpoint
-
-CREATE INDEX IF NOT EXISTS idx_embeddings_dim1536 ON embeddings USING hnsw ("dim_1536" vector_cosine_ops);
