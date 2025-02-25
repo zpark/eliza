@@ -63,7 +63,7 @@ describe("Twitter Post Client", () => {
       },
       composeState: vi.fn(),
       composeContext: vi.fn(),
-      ensureUserExists: vi.fn().mockResolvedValue(true),
+      getOrCreateUser: vi.fn().mockResolvedValue(true),
       ensureRoomExists: vi.fn().mockResolvedValue(true),
       ensureParticipantInRoom: vi.fn().mockResolvedValue(true),
       character: {

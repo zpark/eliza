@@ -589,7 +589,7 @@ export class ClientBase extends EventEmitter {
       processingTweets: tweetsToSave.map((tweet) => tweet.id).join(","),
     });
 
-    await this.runtime.ensureUserExists(
+    await this.runtime.getOrCreateUser(
       this.runtime.agentId,
       this.profile.username,
       this.runtime.character.name,

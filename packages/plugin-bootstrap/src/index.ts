@@ -92,7 +92,8 @@ const checkShouldRespond = async (
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
-    runtime.agentId
+    runtime.agentId,
+    runtime.agentId,
   );
 
   if (
@@ -143,73 +144,6 @@ const checkShouldRespond = async (
   }
     console.error("Invalid response from response generateText:", response);
     return false;
-};
-
-const _messageReceivedHandler = async ({
-  runtime,
-  message,
-  callback,
-}: MessageReceivedHandlerParams) => {
-  let state = await runtime.composeState(message);
-
-  const shouldRespond = await checkShouldRespond(runtime, message, state);
-
-  await runtime.messageManager.addEmbeddingToMemory(message);
-  await runtime.messageManager.createMemory(message);
-
-  if (shouldRespond) {
-    const context = composeContext({
-      state,
-      template:
-        runtime.character.templates?.messageHandlerTemplate ||
-        messageHandlerTemplate,
-    });
-      const responseContent = await generateMessageResponse({
-        runtime: runtime,
-        context,
-        modelClass: ModelClass.TEXT_LARGE,
-      });
-
-      responseContent.text = responseContent.text?.trim();
-      responseContent.inReplyTo = stringToUuid(
-        `${message.id}-${runtime.agentId}`
-      );
-
-      const responseMessages: Memory[] = [
-        {
-          id: v4() as UUID,
-          userId: runtime.agentId,
-          agentId: runtime.agentId,
-          content: responseContent,
-          roomId: message.roomId,
-          createdAt: Date.now(),
-        },
-      ];
-
-      state = await runtime.updateRecentMessageState(state);
-
-      await runtime.processActions(message, responseMessages, state, callback);
-  }
-
-  await runtime.evaluate(message, state, shouldRespond);
-};
-
-const _reactionReceivedHandler = async ({
-  runtime,
-  message,
-}: {
-  runtime: IAgentRuntime;
-  message: Memory;
-}) => {
-  try {
-    await runtime.messageManager.createMemory(message);
-  } catch (error) {
-    if (error.code === "23505") {
-      logger.warn("Duplicate reaction memory, skipping");
-      return;
-    }
-    logger.error("Error in reaction handler:", error);
-  }
 };
 
 export const bootstrapPlugin: Plugin = {

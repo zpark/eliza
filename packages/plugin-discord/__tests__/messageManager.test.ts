@@ -28,7 +28,7 @@ describe("Discord MessageManager", () => {
       evaluate: vi.fn(),
       composeState: vi.fn(),
       ensureConnection: vi.fn(),
-      ensureUserExists: vi.fn(),
+      getOrCreateUser: vi.fn(),
       messageManager: {
         createMemory: vi.fn(),
         addEmbeddingToMemory: vi.fn(),

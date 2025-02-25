@@ -11,6 +11,11 @@ const channelStateProvider: Provider = {
             throw new Error("No room found");
         }
 
+        // if message source is not discord, return
+        if(message.content.source !== "discord") {
+            return false;
+        }
+
         const agentName = state?.agentName || "The agent";
         const senderName = state?.senderName || "someone";
 
@@ -30,7 +35,13 @@ const channelStateProvider: Provider = {
 
         const channelId = room.channelId;
 
-        const guild = runtime.getClient("discord").client.guilds.cache.get(serverId);
+        const discordClient = runtime.getClient("discord");
+        if(!discordClient) {
+            console.warn("No discord client found");
+            return false;
+        }
+
+        const guild = discordClient.client.guilds.cache.get(serverId);
 
         const serverName = guild.name;
 

@@ -3,7 +3,7 @@ import {
     type ActionExample,
     composeContext,
     type Content,
-    elizaLogger,
+    logger,
     generateObject,
     type HandlerCallback,
     type IAgentRuntime,
@@ -33,7 +33,7 @@ interface TransferContent extends Content {
 }
 
 function isTransferContent(content: any): content is TransferContent {
-    elizaLogger.log('Content for transfer', content);
+    logger.log('Content for transfer', content);
 
     // Base validation
     if (!content.recipient || typeof content.recipient !== 'string') {
@@ -99,7 +99,7 @@ export default {
         'PAY_SOLANA',
     ],
     validate: async (_runtime: IAgentRuntime, message: Memory) => {
-        elizaLogger.log('Validating transfer from user:', message.userId);
+        logger.log('Validating transfer from user:', message.userId);
         return true;
     },
     description: 'Transfer SOL or SPL tokens to another address on Solana.',
@@ -110,7 +110,7 @@ export default {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
-        elizaLogger.log('Starting TRANSFER handler...');
+        logger.log('Starting TRANSFER handler...');
 
         if (!state) {
             state = (await runtime.composeState(message)) as State;
@@ -245,7 +245,7 @@ export default {
 
             return true;
         } catch (error) {
-            elizaLogger.error('Error during transfer:', error);
+            logger.error('Error during transfer:', error);
             if (callback) {
                 callback({
                     text: `Transfer failed: ${error.message}`,

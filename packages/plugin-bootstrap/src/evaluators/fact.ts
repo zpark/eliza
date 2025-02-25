@@ -1,14 +1,8 @@
-import { composeContext } from "@elizaos/core";
-import { generateObjectArray } from "@elizaos/core";
-import { MemoryManager } from "@elizaos/core";
-import { z } from "zod";
 import {
-    type ActionExample,
-    type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type Evaluator,
+    composeContext, generateObjectArray, MemoryManager, ModelClass, type ActionExample, type Evaluator, type IAgentRuntime,
+    type Memory
 } from "@elizaos/core";
+import { z } from "zod";
 
 export const formatFacts = (facts: Memory[]) => {
     const messageStrings = facts

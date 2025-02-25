@@ -45,6 +45,14 @@ const configSchema = z.object({
 export const openaiPlugin: Plugin = {
   name: "openai",
   description: "OpenAI plugin",
+  config: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL,
+    OPENAI_SMALL_MODEL: process.env.OPENAI_SMALL_MODEL,
+    OPENAI_LARGE_MODEL: process.env.OPENAI_LARGE_MODEL,
+    SMALL_MODEL: process.env.SMALL_MODEL,
+    LARGE_MODEL: process.env.LARGE_MODEL,
+  },
   async init(config: Record<string, string>) {
     try {
       const validatedConfig = await configSchema.parseAsync(config);

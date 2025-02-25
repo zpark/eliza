@@ -2,7 +2,7 @@ import {
     type Action,
     type ActionExample,
     composeContext,
-    elizaLogger,
+    logger,
     generateObject,
     type HandlerCallback,
     type IAgentRuntime,
@@ -48,12 +48,12 @@ async function swapToken(
                 ? new BigNumber(9)
                 : new BigNumber(await getTokenDecimals(connection, inputTokenCA));
 
-        elizaLogger.log('Decimals:', decimals.toString());
+        logger.log('Decimals:', decimals.toString());
 
         const amountBN = new BigNumber(amount);
         const adjustedAmount = amountBN.multipliedBy(new BigNumber(10).pow(decimals));
 
-        elizaLogger.log('Fetching quote with params:', {
+        logger.log('Fetching quote with params:', {
             inputMint: inputTokenCA,
             outputMint: outputTokenCA,
             amount: adjustedAmount,
@@ -65,7 +65,7 @@ async function swapToken(
         const quoteData = await quoteResponse.json();
 
         if (!quoteData || quoteData.error) {
-            elizaLogger.error('Quote error:', quoteData);
+            logger.error('Quote error:', quoteData);
             throw new Error(`Failed to get quote: ${quoteData?.error || 'Unknown error'}`);
         }
 
@@ -89,7 +89,7 @@ async function swapToken(
         const swapData = await swapResponse.json();
 
         if (!swapData || !swapData.swapTransaction) {
-            elizaLogger.error('Swap error:', swapData);
+            logger.error('Swap error:', swapData);
             throw new Error(
                 `Failed to get swap transaction: ${
                     swapData?.error || 'No swap transaction returned'
@@ -99,7 +99,7 @@ async function swapToken(
 
         return swapData;
     } catch (error) {
-        elizaLogger.error('Error in swapToken:', error);
+        logger.error('Error in swapToken:', error);
         throw error;
     }
 }
@@ -126,7 +126,7 @@ async function getTokenFromWallet(
 
         return token ? token.address : null;
     } catch (error) {
-        elizaLogger.error('Error checking token in wallet:', error);
+        logger.error('Error checking token in wallet:', error);
         return null;
     }
 }
@@ -293,7 +293,7 @@ export const executeSwap: Action = {
 
             return true;
         } catch (error) {
-            elizaLogger.error('Error during token swap:', error);
+            logger.error('Error during token swap:', error);
             callback?.({
                 text: `Swap failed: ${error.message}`,
                 content: { error: error.message },

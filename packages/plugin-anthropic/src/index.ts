@@ -17,6 +17,11 @@ const configSchema = z.object({
 export const anthropicPlugin: Plugin = {
   name: "anthropic",
   description: "Anthropic plugin (supports text generation only)",
+  config: {
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_SMALL_MODEL: process.env.ANTHROPIC_SMALL_MODEL,
+    ANTHROPIC_LARGE_MODEL: process.env.ANTHROPIC_LARGE_MODEL,
+  },
   async init(config: Record<string, string>) {
     try {
       const validatedConfig = await configSchema.parseAsync(config);

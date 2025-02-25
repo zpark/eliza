@@ -7,7 +7,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
-import { accountTable } from "./account";
+import { entityTable } from "./entity";
+import { agentTable } from "./agent";
 
 export const relationshipTable = pgTable(
     "relationships",
@@ -18,31 +19,34 @@ export const relationshipTable = pgTable(
             .notNull(),
         userA: uuid("userA")
             .notNull()
-            .references(() => accountTable.id),
+            .references(() => entityTable.id),
         userB: uuid("userB")
             .notNull()
-            .references(() => accountTable.id),
+            .references(() => entityTable.id),
+        agentId: uuid("agentId")
+            .notNull()
+            .references(() => agentTable.id),
         status: text("status"),
         userId: uuid("userId")
             .notNull()
-            .references(() => accountTable.id),
+            .references(() => entityTable.id),
     },
     (table) => [
         index("idx_relationships_users").on(table.userA, table.userB),
         foreignKey({
             name: "fk_user_a",
             columns: [table.userA],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
         foreignKey({
             name: "fk_user_b",
             columns: [table.userB],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
         foreignKey({
             name: "fk_user",
             columns: [table.userId],
-            foreignColumns: [accountTable.id],
+            foreignColumns: [entityTable.id],
         }).onDelete("cascade"),
     ]
 );
