@@ -26,7 +26,7 @@ program
   .description('elizaOS CLI - Manage your plugins')
   .version(version);
 
-const plugins = new Command()
+const pluginsCmd = new Command()
   .name('plugins')
   .description('manage elizaOS plugins')
 
@@ -37,7 +37,7 @@ async function getPlugins() {
 
 
 
-plugins
+pluginsCmd
   .command('list')
   .alias('l')
   .alias('ls')
@@ -60,7 +60,7 @@ plugins
     }
   })
 
-plugins
+pluginsCmd
   .command('add')
   .alias('install')
   .description('add a plugin')
@@ -75,7 +75,7 @@ plugins
       return
     }
 
-    
+    const plugins = await getPlugins()
     const repoData = plugins[plugin]?.split(':')
     if (!repoData) {
       console.error('Plugin', plugin, 'not found')
@@ -129,7 +129,7 @@ plugins
     console.log('Remember to add it to your character file\'s plugin field: ["' + plugin + '"]')
   })
 
-plugins
+pluginsCmd
   .command('remove')
   .alias('delete')
   .alias('del')
@@ -172,6 +172,6 @@ plugins
   })
 
 
-program.addCommand(plugins)
+program.addCommand(pluginsCmd)
 
 program.parse(process.argv)
