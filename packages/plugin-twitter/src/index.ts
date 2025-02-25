@@ -80,6 +80,10 @@ export class TwitterClientManager {
                 client.space.startPeriodicSpaceCheck();
             }
 
+            if (client.post) {
+                client.post.start();
+            }
+
             if (client.interaction) {
                 client.interaction.start();
             }
