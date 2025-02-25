@@ -1,16 +1,16 @@
 import {
     logger,
-    type IAgentRuntime,
     ModelClass,
+    type IAgentRuntime,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import {
-    type Scraper,
-    Space,
-    type SpaceConfig,
     IdleMonitorPlugin,
-    type SpeakerRequest,
+    Space,
     SpaceParticipant,
+    type Scraper,
+    type SpaceConfig,
+    type SpeakerRequest,
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
 import { isAgentInSpace, generateTopicsIfEmpty, speakFiller } from "./utils.ts";
@@ -98,7 +98,7 @@ export class TwitterSpaceClient {
     public async startPeriodicSpaceCheck() {
         logger.log("[Space] Starting periodic check routine...");
 
-        const interval = 10_000;
+        const interval = 20_000;
 
         const routine = async () => {
             try {
