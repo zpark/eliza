@@ -1,13 +1,11 @@
 import {
   logger,
   type Character,
-  type IAgentRuntime,
-  type Provider,
-  type Route
+  type IAgentRuntime
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
-import express, { type Server } from "express";
+import express from "express";
 
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -27,8 +25,8 @@ export interface ServerOptions {
 export class AgentServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>;
-    private server: any; // Change back to any since Server type isn't exported
-    public startAgent!: (character: Character) => Promise<IAgentRuntime>; // Add ! to indicate it will be assigned later
+    private server: any; 
+    public startAgent!: (character: Character) => Promise<IAgentRuntime>; 
     public loadCharacterTryPath!: (characterPath: string) => Promise<Character>;
     public jsonToCharacter!: (character: unknown) => Promise<Character>;
 
@@ -208,6 +206,7 @@ export class AgentServer {
         }
     }
 
+    
     public async stop() {
         if (this.server) {
             this.server.close(() => {
