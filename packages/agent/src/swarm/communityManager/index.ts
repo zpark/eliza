@@ -17,7 +17,6 @@ const character: Character = {
     "@elizaos/plugin-openai",
     "@elizaos/plugin-discord",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-bootstrap",
   ],
   secrets: {
     DISCORD_APPLICATION_ID:

@@ -1,14 +1,7 @@
-import { composeContext, type HandlerCallback } from "@elizaos/core";
-import { generateTrueOrFalse } from "@elizaos/core";
-import { booleanFooter } from "@elizaos/core";
-import {
-    type Action,
-    type ActionExample,
-    type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type State,
-} from "@elizaos/core";
+import { generateTrueOrFalse } from "..";
+import { composeContext } from "../context";
+import { booleanFooter } from "../parsing";
+import { Action, ActionExample, HandlerCallback, IAgentRuntime, Memory, ModelClass, State } from "../types";
 
 const shouldUnfollowTemplate =
     `# Task: Decide if {{agentName}} should stop closely following this previously followed room and only respond when mentioned.

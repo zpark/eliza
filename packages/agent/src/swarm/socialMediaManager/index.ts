@@ -14,7 +14,6 @@ const character: Character = {
     "@elizaos/plugin-discord",
     "@elizaos/plugin-twitter",
     "@elizaos/plugin-node",
-    "@elizaos/plugin-bootstrap",
   ],
   secrets: {
     "DISCORD_APPLICATION_ID": process.env.SOCIAL_MEDIA_MANAGER_DISCORD_APPLICATION_ID,

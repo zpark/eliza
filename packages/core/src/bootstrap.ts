@@ -1,19 +1,4 @@
-import {
-  composeContext,
-  generateMessageResponse,
-  generateShouldRespond,
-  type HandlerCallback,
-  logger,
-  type Memory,
-  messageCompletionFooter,
-  ModelClass,
-  shouldRespondFooter,
-  type State,
-  stringToUuid,
-  type IAgentRuntime,
-  type Plugin,
-  type UUID,
-} from "@elizaos/core";
+import { UUID } from "crypto";
 import { v4 } from "uuid";
 import { cancelTaskAction } from "./actions/cancel.ts";
 import { confirmTaskAction } from "./actions/confirm.ts";
@@ -23,14 +8,20 @@ import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
+import { composeContext } from "./context.ts";
 import { factEvaluator } from "./evaluators/fact.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
+import { generateMessageResponse, generateShouldRespond } from "./index.ts";
+import { logger } from "./logger.ts";
+import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
 import { confirmationTasksProvider } from "./providers/confirmation.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { timeProvider } from "./providers/time.ts";
-export * as actions from "./actions";
-export * as evaluators from "./evaluators";
-export * as providers from "./providers";
+import { HandlerCallback, IAgentRuntime, Memory, ModelClass, Plugin, State } from "./types.ts";
+import { stringToUuid } from "./uuid.ts";
+export * as actions from "./actions/index.ts";
+export * as evaluators from "./evaluators/index.ts";
+export * as providers from "./providers/index.ts";
 
 export const shouldRespondTemplate =
   `# Task: Decide if {{agentName}} should respond.
@@ -92,7 +83,7 @@ const checkShouldRespond = async (
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
-    runtime.agentId,
+    message.agentId,
     runtime.agentId,
   );
 
@@ -146,6 +137,99 @@ const checkShouldRespond = async (
     return false;
 };
 
+const messageReceivedHandler = async ({
+  runtime,
+  message,
+  callback,
+}: MessageReceivedHandlerParams) => {
+
+  // First, save the incoming message
+  await runtime.messageManager.addEmbeddingToMemory(message);
+  await runtime.messageManager.createMemory(message);
+
+  // Then, compose the state, which includes the incoming message in the recent messages
+  let state = await runtime.composeState(message);
+
+  const shouldRespond = await checkShouldRespond(runtime, message, state);
+
+  if (shouldRespond) {
+    const context = composeContext({
+      state,
+      template:
+        runtime.character.templates?.messageHandlerTemplate ||
+        messageHandlerTemplate,
+    });
+      const responseContent = await generateMessageResponse({
+        runtime: runtime,
+        context,
+        modelClass: ModelClass.TEXT_LARGE,
+      });
+
+      responseContent.text = responseContent.text?.trim();
+      responseContent.inReplyTo = stringToUuid(
+        `${message.id}-${runtime.agentId}`
+      );
+
+      const responseMessages: Memory[] = [
+        {
+          id: v4() as UUID,
+          userId: runtime.agentId,
+          agentId: runtime.agentId,
+          content: responseContent,
+          roomId: message.roomId,
+          createdAt: Date.now(),
+        },
+      ];
+
+      state = await runtime.updateRecentMessageState(state);
+
+      await runtime.processActions(message, responseMessages, state, callback);
+  }
+
+  await runtime.evaluate(message, state, shouldRespond);
+};
+
+const reactionReceivedHandler = async ({
+  runtime,
+  message,
+}: {
+  runtime: IAgentRuntime;
+  message: Memory;
+}) => {
+  try {
+    await runtime.messageManager.createMemory(message);
+  } catch (error) {
+    if (error.code === "23505") {
+      logger.warn("Duplicate reaction memory, skipping");
+      return;
+    }
+    logger.error("Error in reaction handler:", error);
+  }
+};
+
+const messageEvents = {
+  MESSAGE_RECEIVED: [
+    async ({ runtime, message, callback }: MessageReceivedHandlerParams) => {
+      await messageReceivedHandler({
+        runtime,
+        message,
+        callback,
+      });
+    },
+  ],
+  VOICE_MESSAGE_RECEIVED: [
+    async ({ runtime, message, callback }: MessageReceivedHandlerParams) => {
+      await messageReceivedHandler({
+        runtime,
+        message,
+        callback,
+      });
+    },
+  ],
+  REACTION_RECEIVED: [reactionReceivedHandler],
+};
+
+
 export const bootstrapPlugin: Plugin = {
   name: "bootstrap",
   description: "Agent bootstrap with basic actions and evaluators",
@@ -159,6 +243,7 @@ export const bootstrapPlugin: Plugin = {
     cancelTaskAction,
     confirmTaskAction,
   ],
+  events: messageEvents,
   evaluators: [factEvaluator, goalEvaluator],
   providers: [timeProvider, factsProvider, confirmationTasksProvider],
 };

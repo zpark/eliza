@@ -18,7 +18,8 @@ import { formatGoalsAsString, getGoals } from "./goals.ts";
 import { handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
-import { formatActors, formatMessages, getActorDetails, messageEvents } from "./messages.ts";
+import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
+import { bootstrapPlugin } from "./bootstrap.ts";
 import { parseJsonArrayFromText } from "./parsing.ts";
 import { formatPosts } from "./posts.ts";
 import { getProviders } from "./providers.ts";
@@ -263,6 +264,7 @@ export class AgentRuntime implements IAgentRuntime {
         cacheManager?: ICacheManager;
         adapters?: Adapter[];
         events?: { [key: string]: ((params: any) => void)[] };
+        ignoreBootstrap?: boolean;
     }) {
         // use the character id if it exists, otherwise use the agentId if it is passed in, otherwise use the character name
         this.agentId =
@@ -305,14 +307,16 @@ export class AgentRuntime implements IAgentRuntime {
         this.memoryManagerService = new MemoryManagerService(this, this.knowledgeRoot);
         const plugins = opts?.plugins ?? [];
 
-        const events = opts?.events ?? messageEvents;
-
-        for (const [eventName, eventHandlers] of Object.entries(events)) {
-            for (const eventHandler of eventHandlers) {
-                this.registerEvent(eventName, eventHandler);
+        if(opts?.events) {
+            const events = opts?.events;
+            
+            for (const [eventName, eventHandlers] of Object.entries(events)) {
+                for (const eventHandler of eventHandlers) {
+                    this.registerEvent(eventName, eventHandler);
+                }
             }
         }
-
+            
         for (const plugin of plugins) {
             logger.info(`Initializing plugin: ${plugin.name}`);
             logger.info(`Plugin actions: ${plugin.actions}`);
@@ -358,7 +362,11 @@ export class AgentRuntime implements IAgentRuntime {
         // Initialize adapters from options or empty array if not provided
         this.adapters = opts.adapters ?? [];
 
-        for (const plugin of plugins) {
+        if(!(opts?.ignoreBootstrap)){
+            this.plugins.push(bootstrapPlugin);
+        }
+
+        for (const plugin of this.plugins) {
             if (plugin.adapters) {
                 for (const adapter of plugin.adapters) {
                     this.adapters.push(adapter);

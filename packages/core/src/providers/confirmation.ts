@@ -1,10 +1,5 @@
-import {
-    type IAgentRuntime,
-    type Memory,
-    type Provider,
-    type State,
-    logger,
-} from "@elizaos/core";
+import { logger } from "../logger";
+import { IAgentRuntime, Memory, Provider, State } from "../types";
 
 export const confirmationTasksProvider: Provider = {
     get: async (

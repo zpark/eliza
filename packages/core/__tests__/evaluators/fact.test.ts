@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { composeContext, generateObjectArray } from '@elizaos/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { factEvaluator } from '../../src/evaluators/fact';
-import { composeContext, generateObjectArray, MemoryManager } from '@elizaos/core';
 
 vi.mock('@elizaos/core', () => ({
     composeContext: vi.fn(),
