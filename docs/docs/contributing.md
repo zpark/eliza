@@ -63,7 +63,7 @@ By contributing to elizaOS, you agree that your contributions will be licensed u
 This section lists the title prefix we use to help us track and manage pull requests. These prefixes must be lower case
 
 - `fix` - Issues that fixes bugs.
-- `feat` - New feature, updates or improvemnts.
+- `feat` - New feature, updates or improvements.
 - `docs` - Issues or pull requests related to documentation.
 - `chore` - General repo maintenance
 

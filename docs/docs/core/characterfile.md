@@ -7,7 +7,7 @@ Character files are JSON-formatted configurations that define AI agent personas,
 
 ```json
 {
-    "name": "character_name",           // Character's display name for identifcation and in conversations
+    "name": "character_name",           // Character's display name for identification and in conversations
     "modelProvider": "openai",          // AI model provider (e.g., anthropic, openai, groq, mistral, google)
     "clients": ["discord", "direct"],   // Supported client types
     "plugins": [],                      // Array of plugins to use
