@@ -1,19 +1,18 @@
 import {
-    logger,
-    type IAgentRuntime,
     composeContext,
     generateText,
+    logger,
     ModelClass,
-    type TwitterSpaceDecisionOptions,
+    type IAgentRuntime,
     type State,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import {
-    type Scraper,
-    Space,
-    type SpaceConfig,
-    RecordToDiskPlugin,
     IdleMonitorPlugin,
+    RecordToDiskPlugin,
+    Space,
+    type Scraper,
+    type SpaceConfig,
     type SpeakerRequest,
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
@@ -111,6 +110,22 @@ Example:
         return ["Random Tech Chat", "AI Thoughts"];
     }
 }
+
+export interface TwitterSpaceDecisionOptions {
+    maxSpeakers?: number;
+    topics?: string[];
+    typicalDurationMinutes?: number;
+    idleKickTimeoutMs?: number;
+    minIntervalBetweenSpacesMinutes?: number;
+    businessHoursOnly?: boolean;
+    randomChance?: number;
+    enableIdleMonitor?: boolean;
+    enableSttTts?: boolean;
+    enableRecording?: boolean;
+    voiceId?: string;
+    sttLanguage?: string;
+    speakerMaxDurationMs?: number;
+  }
 
 /**
  * Main class: manage a Twitter Space with N speakers max, speaker queue, filler messages, etc.
