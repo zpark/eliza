@@ -48,7 +48,7 @@ type UserJoinedParams = {
   user: any;
   serverId: string;
   channelId: string;
-  channelType: any,
+  channelType: ChannelType,
   source: string;
 };
 
@@ -327,7 +327,7 @@ const syncLargeServerUsers = async (
             Array.from(activeUsers),
             guild.id,
             channelId,
-            channel.type,
+            ChannelType.GROUP,
             source
           );
         }
