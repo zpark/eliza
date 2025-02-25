@@ -25,12 +25,11 @@ export default {
         message: Memory,
         _state: State
     ) => {
-        if (message.content.source !== "twitter") {
+        if (message?.content?.source !== "twitter") {
             return false;
         }
 
-        const tweet = message.content.tweet as Tweet;
-        if (!tweet) {
+        if (!message?.content?.tweet) {
             return false;
         }
 
