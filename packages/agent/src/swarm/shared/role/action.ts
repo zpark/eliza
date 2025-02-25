@@ -1,17 +1,3 @@
-// Update the role of the user in the organization
-// This should be done by the boss only
-// Only enable this action if the user who is asking has the boss role
-// recall and store the role of the user who is asking
-// roles are OWNER, ADMIN, MEMBER, NONE, IGNORE
-// if the user is not a boss, do not validate this action
-// if the user is a boss, update the org role of the user the boss is requesting
-// if the boss provided a discord username, or the agent has clarified and the boss has confirmed, update the cache with the discord username and the org role
-// if they provided a nickname, try to identify the user in the conversation the boss is talking about and confirm their username
-// if cannot identify the user, try to identify any user who the agent and boss have both been in a room with and had a chat with and confirm their username
-// Bosses cannot change the role of admins or other bosses, only colleagues, none and ignore
-// Only admins can add or remove bosses and can change the role of bosses to colleague, none or ignore
-// Bosses cannot change the role of admins or other bosses, only colleagues, none and ignore
-
 import {
   type Action,
   type ActionExample,
@@ -19,33 +5,34 @@ import {
   type IAgentRuntime,
   type Memory,
   type State,
+  ChannelType,
+  composeContext,
+  generateObjectArray,
   logger,
+  ModelClass,
+  stringToUuid
 } from "@elizaos/core";
-import { type Message } from "discord.js";
-import { ServerRoleState } from "./types";
+import type { User } from "discord.js";
+import { initializeRoleState } from "../onboarding/initialize";
+import { OWNERSHIP_CACHE_KEY } from "../onboarding/types";
+import type { ServerRoleState } from "./types";
+import { ROLE_CACHE_KEYS, RoleName } from "./types";
 
-export enum RoleName {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  MEMBER = "MEMBER",
-  NONE = "NONE",
-  IGNORE = "IGNORE",
-}
-
+// Role modification validation helper
 const canModifyRole = (
   currentRole: RoleName,
-  targetRole: RoleName,
+  targetRole: RoleName | null,
   newRole: RoleName
 ): boolean => {
-  // Admins can modify any role except other admins
+  // Owners can modify any role except other owners
   if (currentRole === RoleName.OWNER) {
     return targetRole !== RoleName.OWNER;
   }
 
-  // Bosses can only modify MEMBER, NONE, and IGNORE roles
+  // Admins can only modify NONE roles and can't promote to OWNER or ADMIN
   if (currentRole === RoleName.ADMIN) {
     return (
-      ![RoleName.OWNER, RoleName.ADMIN].includes(targetRole) &&
+      (!targetRole || targetRole === RoleName.NONE) &&
       ![RoleName.OWNER, RoleName.ADMIN].includes(newRole)
     );
   }
@@ -53,75 +40,154 @@ const canModifyRole = (
   return false;
 };
 
+const extractionTemplate = `# Task: Extract role assignments from the conversation
+
+# Current Server Members:
+{{serverMembers}}
+
+# Available Roles:
+- OWNER: Full control over the organization
+- ADMIN: Administrative privileges
+- NONE: Standard member access
+
+# Recent Conversation:
+{{recentMessages}}
+
+# Current speaker role: {{speakerRole}}
+
+# Instructions: Analyze the conversation and extract any role assignments being made by the speaker.
+Only extract role assignments if:
+1. The speaker has appropriate permissions to make the change
+2. The role assignment is clearly stated
+3. The target user is a valid server member
+4. The new role is one of: OWNER, ADMIN, or NONE
+
+Return the results in this JSON format:
+{
+"roleAssignments": [
+  {
+    "userId": "discord_id",
+    "newRole": "ROLE_NAME"
+  }
+]
+}
+
+If no valid role assignments are found, return an empty array.
+`;
+
+interface RoleAssignment {
+  userId: string;
+  newRole: RoleName;
+}
+
 const updateOrgRoleAction: Action = {
-  name: "UPDATE_ORG_ROLE",
+  name: "SET_ORG_RELATIONSHIP",
   similes: ["CHANGE_ROLE", "SET_ROLE", "MODIFY_ROLE"],
-  description: "Updates the organizational role of a user",
+  description:
+    "Updates organizational roles based on commands from authorized users.",
 
-  validate: async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State
-  ): Promise<boolean> => {
-    const discordMessage = state.discordMessage as Message;
-    if (!discordMessage.guild?.id) {
-      return;
-    }
-
-    if (!discordMessage?.guild?.id) {
-      return false;
-    }
-
-    const serverId = discordMessage.guild.id;
-    const requesterId = discordMessage.author.id;
-
-    try {
-      // Get roles cache
-      const roleCache = await runtime.cacheManager.get<ServerRoleState>(
-        `server_${serverId}_user_roles`
-      );
-
-      if (!roleCache) {
+    validate: async (
+      runtime: IAgentRuntime,
+      message: Memory,
+      _state: State
+    ): Promise<boolean> => {
+      logger.info("Starting role update validation");
+    
+      // Validate message source
+      if (message.content.source !== "discord") {
+        logger.info("Validation failed: Not a discord message");
         return false;
       }
-
-      // Check requester's role
-      const requesterRole = roleCache.roles[requesterId]?.role;
-
-      if (
-        !requesterRole ||
-        ![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole as RoleName)
-      ) {
+    
+      const room = await runtime.getRoom(message.roomId);
+      if (!room) {
+        throw new Error("No room found");
+      }
+    
+      // if room type is DM, return
+      if (room.type !== ChannelType.GROUP) {
+        // only handle in a group scenario for now
         return false;
       }
-
-      // Check if message contains role update keywords
-      const roleKeywords = [
-        "make",
-        "set",
-        "change",
-        "update",
-        "give",
-        "assign",
-        "promote",
-        "demote",
-        "role",
-      ];
-
-      return roleKeywords.some((keyword) =>
-        message.content.text.toLowerCase().includes(keyword)
-      );
-    } catch (error) {
-      logger.error("Error validating updateOrgRole action:", error);
-      return false;
-    }
-  },
+    
+      const serverId = room.serverId;
+      if (!serverId) {
+        throw new Error("No server ID found");
+      }
+    
+      try {
+        // First check if ownership state exists
+        const ownershipState = await runtime.cacheManager.get<{ servers: { [key: string]: { ownerId: string } } }>(
+          OWNERSHIP_CACHE_KEY.SERVER_OWNERSHIP_STATE
+        );
+    
+        if (!ownershipState?.servers) {
+          logger.error(`No ownership state found for server ${serverId}`);
+          
+          // Try to recover by initializing from Discord if possible
+          const discordClient = runtime.getClient("discord").client;
+          try {
+            const guild = await discordClient.guilds.fetch(serverId);
+            if (guild?.ownerId) {
+              // Create temporary ownership state
+              await runtime.cacheManager.set(
+                OWNERSHIP_CACHE_KEY.SERVER_OWNERSHIP_STATE,
+                { servers: { [serverId]: { ownerId: guild.ownerId } } }
+              );
+              
+              // Also initialize role state
+              await initializeRoleState(runtime, serverId, guild.ownerId);
+              logger.info(`Recovered ownership and role state for server ${serverId}`);
+            } else {
+              return false;
+            }
+          } catch (error) {
+            logger.error(`Failed to recover: ${error}`);
+            return false;
+          }
+        }
+    
+        // Get requester ID and convert to UUID for consistent lookup
+        const requesterId = message.userId;
+        const requesterUuid = stringToUuid(requesterId);
+        logger.info(`Requester UUID: ${requesterUuid}`);
+    
+        const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
+        logger.info(`Checking role cache with key: ${cacheKey}`);
+    
+        const roleCache = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
+    
+        if (!roleCache?.roles) {
+          logger.info(`No role cache found for server ${serverId}`);
+          return false;
+        }
+    
+        // Lookup using UUID for consistency
+        const requesterRole = roleCache.roles[requesterUuid]?.role as RoleName;
+        logger.info(`Requester ${requesterUuid} role:`, requesterRole);
+    
+        if (!requesterRole) {
+          logger.info("Validation failed: No requester role found");
+          return false;
+        }
+    
+        if (![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole)) {
+          logger.info(`Validation failed: Role ${requesterRole} insufficient for role management`);
+          return false;
+        }
+    
+        return true;
+      } catch (error) {
+        logger.error("Error validating updateOrgRole action:", error);
+        return false;
+      }
+    },
 
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
     state: State,
-    options: any,
+    _options: any,
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
@@ -130,123 +196,98 @@ const updateOrgRoleAction: Action = {
       await callback(response.content);
     }
 
-    const discordMessage = state.discordMessage as Message;
-    if (!discordMessage.guild?.id) {
+    const room = await runtime.getRoom(message.roomId);
+
+    if (!room) {
+      throw new Error("No room found");
+    }
+
+    const serverId = room.serverId;
+
+    const requesterId = message.userId;
+    const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
+    // Get roles cache
+    let roleCache = await runtime.cacheManager.get<ServerRoleState>(
+      cacheKey
+    );
+
+    if (!roleCache) {
+      roleCache = {
+        roles: {},
+      };
+    }
+
+    // Get requester's role
+    const requesterRole = roleCache.roles[requesterId]?.role as RoleName;
+
+    const discordClient = runtime.getClient("discord").client;
+    const guild = await discordClient.guilds.fetch(serverId);
+
+    // Build server members context
+    const members = await guild.members.fetch();
+    const serverMembersContext = Array.from(members.values())
+      .map((member: User) => `${member.username} (${member.id})`)
+      .join("\n");
+
+    // Create extraction context
+    const extractionContext = composeContext({
+      state: {
+        ...state,
+        serverMembers: serverMembersContext,
+        speakerRole: requesterRole,
+      },
+      template: extractionTemplate,
+    });
+
+    // Extract role assignments
+    const result = (await generateObjectArray({
+      runtime,
+      context: extractionContext,
+      modelClass: ModelClass.SMALL,
+    })) as RoleAssignment[];
+
+    if (!result?.length) {
+      console.log("No valid role assignments found in the request.");
+      await callback({
+        text: "No valid role assignments found in the request.",
+        action: "SET_ORG_RELATIONSHIP",
+        source: "discord",
+      });
       return;
     }
 
-    if (!discordMessage?.guild?.id) {
-      return;
-    }
+    // Process each role assignment
+    for (const assignment of result) {
+      const targetUser = members.get(assignment.userId);
+      if (!targetUser) continue;
 
-    const serverId = discordMessage.guild.id;
-    const requesterId = discordMessage.author.id;
+      const currentRole = roleCache.roles[assignment.userId]?.role;
 
-    try {
-      // Get roles cache
-      let roleCache = await runtime.cacheManager.get<ServerRoleState>(
-        `server_${serverId}_user_roles`
-      );
-
-      if (!roleCache) {
-        roleCache = {
-          roles: {},
-          lastUpdated: Date.now(),
-        };
-      }
-
-      // Get requester's role
-      const requesterRole = roleCache.roles[requesterId]?.role as RoleName;
-
-      // Get mentioned user
-      const mentionedUser = discordMessage?.mentions?.users?.first();
-      if (!mentionedUser) {
+      // Validate role modification permissions
+      if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
         await callback({
-          text: "Please mention the user whose role you want to update.",
-          action: "UPDATE_ORG_ROLE",
+          text: `You don't have permission to change ${targetUser.user.username}'s role to ${assignment.newRole}.`,
+          action: "SET_ORG_RELATIONSHIP",
           source: "discord",
         });
-        return;
-      }
-
-      // Parse desired role from message
-      const roleWords = message.content.text.toLowerCase().split(" ");
-      let newRole: RoleName | null = null;
-
-      for (const role of Object.values(RoleName)) {
-        if (roleWords.includes(role.toLowerCase())) {
-          newRole = role;
-          break;
-        }
-      }
-
-      if (!newRole) {
-        await callback({
-          text: `Please specify a valid role (${Object.values(RoleName).join(
-            ", "
-          )}).`,
-          action: "UPDATE_ORG_ROLE",
-          source: "discord",
-        });
-        return;
-      }
-
-      // Check if requester can modify the target's role
-      const targetRole =
-        (roleCache.roles[mentionedUser.id]?.role as RoleName) ?? RoleName.NONE;
-
-      if (!canModifyRole(requesterRole, targetRole, newRole)) {
-        await callback({
-          text: "You don't have permission to make this role change.",
-          action: "UPDATE_ORG_ROLE",
-          source: "discord",
-        });
-        return;
+        continue;
       }
 
       // Update role
-      roleCache.roles[mentionedUser.id] = {
-        userId: mentionedUser.id,
+      roleCache.roles[assignment.userId] = {
+        userId: assignment.userId,
         serverId,
-        role: newRole,
+        role: assignment.newRole,
       };
 
-      roleCache.lastUpdated = Date.now();
-
-      // Save updated roles
-      await runtime.cacheManager.set(
-        `server_${serverId}_user_roles`,
-        roleCache
-      );
-
-      // Send confirmation
       await callback({
-        text: `Updated ${mentionedUser.username}'s role to ${newRole}.`,
-        action: "UPDATE_ORG_ROLE",
-        source: "discord",
-      });
-
-      // Log role update
-      await runtime.databaseAdapter.log({
-        body: {
-          type: "role_update",
-          targetUser: mentionedUser.id,
-          oldRole: targetRole,
-          newRole: newRole,
-          updatedBy: requesterId,
-        },
-        userId: runtime.agentId,
-        roomId: message.roomId,
-        type: "role_management",
-      });
-    } catch (error) {
-      logger.error("Error in updateOrgRole handler:", error);
-      await callback({
-        text: "There was an error updating the role.",
-        action: "UPDATE_ORG_ROLE",
+        text: `Updated ${targetUser.user.username}'s role to ${assignment.newRole}.`,
+        action: "SET_ORG_RELATIONSHIP",
         source: "discord",
       });
     }
+
+    await runtime.cacheManager.set(cacheKey, roleCache);
   },
 
   examples: [
@@ -254,15 +295,15 @@ const updateOrgRoleAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Make {{user2}} a MEMBER",
+          text: "Make {{user2}} an ADMIN",
           source: "discord",
         },
       },
       {
         user: "{{user3}}",
         content: {
-          text: "Updated {{user2}}'s role to MEMBER.",
-          action: "UPDATE_ORG_ROLE",
+          text: "Updated {{user2}}'s role to ADMIN.",
+          action: "SET_ORG_RELATIONSHIP",
         },
       },
     ],
@@ -270,15 +311,15 @@ const updateOrgRoleAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Change {{user2}}'s role to ADMIN",
+          text: "Set @alice and @bob as admins",
           source: "discord",
         },
       },
       {
         user: "{{user3}}",
         content: {
-          text: "You don't have permission to make this role change.",
-          action: "UPDATE_ORG_ROLE",
+          text: "Updated alice's role to ADMIN.\nUpdated bob's role to ADMIN.",
+          action: "SET_ORG_RELATIONSHIP",
         },
       },
     ],

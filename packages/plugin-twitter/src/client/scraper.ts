@@ -357,7 +357,7 @@ export class Scraper {
     };
 
     if (cursor) {
-      variables['cursor'] = cursor;
+      variables.cursor = cursor;
     }
 
     const features = {
@@ -633,7 +633,7 @@ export class Scraper {
     user: string,
     includeRetweets = false,
     max = 200,
-  ): Promise<Tweet | null | void> {
+  ): Promise<Tweet | null | undefined> {
     return getLatestTweet(user, includeRetweets, max, this.auth);
   }
 
@@ -645,9 +645,8 @@ export class Scraper {
   public getTweet(id: string): Promise<Tweet | null> {
     if (this.auth instanceof TwitterUserAuth) {
       return getTweet(id, this.auth);
-    } else {
-      return getTweetAnonymous(id, this.auth);
     }
+      return getTweetAnonymous(id, this.auth);
   }
 
   /**

@@ -3,8 +3,8 @@ import { deploy, type DeployOptions, images, teepods, upgrade, type UpgradeOptio
 import { writeApiKey } from "@/src/tee/phala/credential";
 import { DockerOperations } from "@/src/tee/phala/docker";
 import { TEE_SIMULATOR } from "@/src/tee/phala/constants";
-import fs from "fs";
-import os from "os";
+import fs from "node:fs";
+import os from "node:os";
 
 const parseEnv = (envs: string[], envFile: string): Env[] => {
     // Process environment variables
@@ -124,7 +124,6 @@ const imagesCommand = new Command()
 const upgradeCommand = new Command()
     .command("upgrade")
     .description("Upgrade the TEE CLI")
-    .option("-t, --type <type>", "Specify the TEE vendor type", "phala")
     .option(
         "-m, --mode <mode>",
         "Specify the deployment mode (e.g., agent docker file or other local testing deployments)",
@@ -181,7 +180,7 @@ const buildComposeCommand = new Command()
     .requiredOption('-i, --image <name>', 'Docker image name')
     .requiredOption('-u, --username <name>', 'Docker Hub username')
     .requiredOption('-t, --tag <tag>', 'Tag for the Docker image')
-    .requiredOption('-c, --character <path>', 'Path to the character file')
+    .option('-c, --character <path>', 'Path to the character file')
     .requiredOption('-e, --env-file <path>', 'Path to environment file')
     .option('-v, --version <version>', 'Version of Eliza to run (v1 or v2)', 'v2')
     .action(async (options) => {

@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   type Content,
   type IAgentRuntime,
   type Memory,
@@ -13,8 +14,7 @@ import {
   SearchMode,
   type Tweet,
 } from "./client/index.ts";
-import { EventEmitter } from "events";
-import type { TwitterConfig } from "./environment.ts";
+import { EventEmitter } from "node:events";
 
 export function extractAnswer(text: string): string {
   const startIndex = text.indexOf("Answer: ") + 8;
@@ -84,8 +84,6 @@ export class ClientBase extends EventEmitter {
   static _twitterClients: { [accountIdentifier: string]: Scraper } = {};
   twitterClient: Scraper;
   runtime: IAgentRuntime;
-  twitterConfig: TwitterConfig;
-  directions: string;
   lastCheckedTweetId: bigint | null = null;
   temperature = 0.5;
 
@@ -232,43 +230,45 @@ export class ClientBase extends EventEmitter {
     return t;
   }
 
-  constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
+  state: any;
+
+  constructor(runtime: IAgentRuntime, state: any) {
     super();
     this.runtime = runtime;
-    this.twitterConfig = twitterConfig;
-    const username = twitterConfig.TWITTER_USERNAME as string;
+    this.state = state;
+    const username = state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME") as string;
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
       this.twitterClient = new Scraper();
       ClientBase._twitterClients[username] = this.twitterClient;
     }
-
-    this.directions =
-      "- " +
-      (this.runtime.character.style?.all
-        ? this.runtime.character.style?.all?.join("\n- ")
-        : "") +
-      "- " +
-      (this.runtime.character.style?.post
-        ? this.runtime.character.style?.post?.join()
-        : "");
   }
 
   async init() {
-    const username = this.runtime.getSetting("TWITTER_USERNAME") || this.twitterConfig.TWITTER_USERNAME as string;
-    const password = this.runtime.getSetting("TWITTER_PASSWORD") || this.twitterConfig.TWITTER_PASSWORD as string;
-    const email = this.runtime.getSetting("TWITTER_EMAIL") || this.twitterConfig.TWITTER_EMAIL as string;
-    let retries = this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number || this.twitterConfig.TWITTER_RETRY_LIMIT as number;
-    const twitter2faSecret = this.runtime.getSetting("TWITTER_2FA_SECRET") || this.twitterConfig.TWITTER_2FA_SECRET as string;
-
-    if (!username) {
-      throw new Error("Twitter username not configured");
+    const username = this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME");
+    const password = this.state?.TWITTER_PASSWORD || this.runtime.getSetting("TWITTER_PASSWORD");
+    const email = this.state?.TWITTER_EMAIL || this.runtime.getSetting("TWITTER_EMAIL");
+    const twitter2faSecret = this.state?.TWITTER_2FA_SECRET || this.runtime.getSetting("TWITTER_2FA_SECRET");
+    
+    // Validate required credentials
+    if (!username || !password || !email) {
+        const missing = [];
+        if (!username) missing.push("TWITTER_USERNAME");
+        if (!password) missing.push("TWITTER_PASSWORD");
+        if (!email) missing.push("TWITTER_EMAIL");
+        throw new Error(`Missing required Twitter credentials: ${missing.join(", ")}`);
     }
 
-    const authToken = this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
-    const ct0 = this.runtime.getSetting("TWITTER_COOKIES_CT0");
-    const guestId = this.runtime.getSetting("TWITTER_COOKIES_GUEST_ID");
+    let retries = (this.state?.TWITTER_RETRY_LIMIT || this.runtime.getSetting("TWITTER_RETRY_LIMIT") as unknown as number) ?? 3;
+
+    if (!username) {
+        throw new Error("Twitter username not configured");
+    }
+
+    const authToken = this.state?.TWITTER_COOKIES_AUTH_TOKEN || this.runtime.getSetting("TWITTER_COOKIES_AUTH_TOKEN");
+    const ct0 = this.state?.TWITTER_COOKIES_CT0 || this.runtime.getSetting("TWITTER_COOKIES_CT0");
+    const guestId = this.state?.TWITTER_COOKIES_GUEST_ID || this.runtime.getSetting("TWITTER_COOKIES_GUEST_ID");
 
     const createTwitterCookies = (
       authToken: string,
@@ -299,7 +299,7 @@ export class ClientBase extends EventEmitter {
           // cookies are valid, no login required
           logger.info("Successfully logged in.");
           break;
-        } else {
+        }
           await this.twitterClient.login(
             username,
             password,
@@ -316,7 +316,6 @@ export class ClientBase extends EventEmitter {
             );
             break;
           }
-        }
       } catch (error) {
         logger.error(`Login attempt failed: ${error.message}`);
       }
@@ -436,7 +435,7 @@ export class ClientBase extends EventEmitter {
       const existingMemories =
         await this.runtime.messageManager.getMemoriesByRoomIds({
           roomIds: cachedTimeline.map((tweet) =>
-            stringToUuid(tweet.conversationId + "-" + this.runtime.agentId)
+            stringToUuid(`${tweet.conversationId}-${this.runtime.agentId}`)
           ),
         });
 
@@ -450,7 +449,7 @@ export class ClientBase extends EventEmitter {
       // Check if any of the cached tweets exist in the existing memories
       const someCachedTweetsExist = cachedTimeline.some((tweet) =>
         existingMemoryIds.has(
-          stringToUuid(tweet.id + "-" + this.runtime.agentId)
+          stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
         )
       );
 
@@ -459,7 +458,7 @@ export class ClientBase extends EventEmitter {
         const tweetsToSave = cachedTimeline.filter(
           (tweet) =>
             !existingMemoryIds.has(
-              stringToUuid(tweet.id + "-" + this.runtime.agentId)
+              stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
             )
         );
 
@@ -472,7 +471,7 @@ export class ClientBase extends EventEmitter {
           logger.log("Saving Tweet", tweet.id);
 
           const roomId = stringToUuid(
-            tweet.conversationId + "-" + this.runtime.agentId
+            `${tweet.conversationId}-${this.runtime.agentId}`
           );
 
           const userId =
@@ -481,21 +480,23 @@ export class ClientBase extends EventEmitter {
               : stringToUuid(tweet.userId);
 
           if (tweet.userId === this.profile.id) {
-            await this.runtime.ensureConnection(
-              this.runtime.agentId,
+            await this.runtime.ensureConnection({
+              userId: this.runtime.agentId,
               roomId,
-              this.profile.username,
-              this.profile.screenName,
-              "twitter"
-            );
+              userName: this.profile.username,
+              userScreenName: this.profile.screenName,
+              source: "twitter",
+              type: ChannelType.FEED
+            });
           } else {
-            await this.runtime.ensureConnection(
+            await this.runtime.ensureConnection({
               userId,
               roomId,
-              tweet.username,
-              tweet.name,
-              "twitter"
-            );
+              userName: tweet.username,
+              userScreenName: tweet.name,
+              source: "twitter",
+              type: ChannelType.FEED
+            });
           }
 
           const content = {
@@ -504,7 +505,7 @@ export class ClientBase extends EventEmitter {
             source: "twitter",
             inReplyTo: tweet.inReplyToStatusId
               ? stringToUuid(
-                  tweet.inReplyToStatusId + "-" + this.runtime.agentId
+                  `${tweet.inReplyToStatusId}-${this.runtime.agentId}`
                 )
               : undefined,
           } as Content;
@@ -513,7 +514,7 @@ export class ClientBase extends EventEmitter {
 
           // check if it already exists
           const memory = await this.runtime.messageManager.getMemoryById(
-            stringToUuid(tweet.id + "-" + this.runtime.agentId)
+            stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
           );
 
           if (memory) {
@@ -522,7 +523,7 @@ export class ClientBase extends EventEmitter {
           }
 
           await this.runtime.messageManager.createMemory({
-            id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+            id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
             userId,
             content: content,
             agentId: this.runtime.agentId,
@@ -541,7 +542,7 @@ export class ClientBase extends EventEmitter {
     }
 
     const timeline = await this.fetchHomeTimeline(cachedTimeline ? 10 : 50);
-    const username = this.twitterConfig.TWITTER_USERNAME;
+    const username = this.runtime.getSetting("TWITTER_USERNAME");
 
     // Get the most recent 20 mentions and interactions
     const mentionsAndInteractions = await this.fetchSearchTweets(
@@ -561,7 +562,7 @@ export class ClientBase extends EventEmitter {
     for (const tweet of allTweets) {
       tweetIdsToCheck.add(tweet.id);
       roomIds.add(
-        stringToUuid(tweet.conversationId + "-" + this.runtime.agentId)
+        stringToUuid(`${tweet.conversationId}-${this.runtime.agentId}`)
       );
     }
 
@@ -580,7 +581,7 @@ export class ClientBase extends EventEmitter {
     const tweetsToSave = allTweets.filter(
       (tweet) =>
         !existingMemoryIds.has(
-          stringToUuid(tweet.id + "-" + this.runtime.agentId)
+          stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
         )
     );
 
@@ -588,7 +589,7 @@ export class ClientBase extends EventEmitter {
       processingTweets: tweetsToSave.map((tweet) => tweet.id).join(","),
     });
 
-    await this.runtime.ensureUserExists(
+    await this.runtime.getOrCreateUser(
       this.runtime.agentId,
       this.profile.username,
       this.runtime.character.name,
@@ -600,7 +601,7 @@ export class ClientBase extends EventEmitter {
       logger.log("Saving Tweet", tweet.id);
 
       const roomId = stringToUuid(
-        tweet.conversationId + "-" + this.runtime.agentId
+        `${tweet.conversationId}-${this.runtime.agentId}`
       );
       const userId =
         tweet.userId === this.profile.id
@@ -608,21 +609,23 @@ export class ClientBase extends EventEmitter {
           : stringToUuid(tweet.userId);
 
       if (tweet.userId === this.profile.id) {
-        await this.runtime.ensureConnection(
-          this.runtime.agentId,
+        await this.runtime.ensureConnection({
+          userId: this.runtime.agentId,
           roomId,
-          this.profile.username,
-          this.profile.screenName,
-          "twitter"
-        );
+          userName: this.profile.username,
+          userScreenName: this.profile.screenName,
+          source: "twitter",
+          type: ChannelType.FEED
+        });
       } else {
-        await this.runtime.ensureConnection(
+        await this.runtime.ensureConnection({
           userId,
           roomId,
-          tweet.username,
-          tweet.name,
-          "twitter"
-        );
+          userName: tweet.username,
+          userScreenName: tweet.name,
+          source: "twitter",
+          type: ChannelType.FEED
+        });
       }
 
       const content = {
@@ -635,7 +638,7 @@ export class ClientBase extends EventEmitter {
       } as Content;
 
       await this.runtime.messageManager.createMemory({
-        id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+        id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
         userId,
         content: content,
         agentId: this.runtime.agentId,

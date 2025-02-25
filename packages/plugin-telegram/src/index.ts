@@ -6,6 +6,8 @@ import {
 } from "@elizaos/core";
 import { TelegramClient } from "./telegramClient.ts";
 import { validateTelegramConfig } from "./environment.ts";
+import { TelegramTestSuite } from "./tests.ts";
+import replyAction from "./actions/reply.ts";
 
 
 const TelegramClientInterface: Client = {
@@ -30,5 +32,7 @@ const telegramPlugin: Plugin = {
     name: "telegram",
     description: "Telegram client plugin",
     clients: [TelegramClientInterface],
+    actions: [replyAction],
+    tests: [new TelegramTestSuite()]
 };
 export default telegramPlugin;

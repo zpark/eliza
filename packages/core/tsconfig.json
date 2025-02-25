@@ -5,7 +5,7 @@
         "lib": ["ESNext", "dom"],
         "moduleResolution": "Bundler",
         "outDir": "./dist",
-        "rootDir": "./src",
+        "rootDir": "..",
         "strict": false,
         "esModuleInterop": true,
         "skipLibCheck": true,
@@ -21,6 +21,8 @@
         "moduleDetection": "force",
         "allowArbitraryExtensions": true
     },
-    "include": ["src/**/*", "../plugin-bootstrap/src/relationships.ts", "../plugin-bootstrap/src/goals.ts", "../plugin-bootstrap/src/knowledge.ts"],
+    "include": [
+        "src/**/*",
+    ],
     "exclude": ["node_modules", "dist", "src/**/*.d.ts", "types/**/*.test.ts"]
 }

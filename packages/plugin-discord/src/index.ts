@@ -1,56 +1,63 @@
 import {
-  logger,
-  stringToUuid,
+  ChannelType,
   type Character,
   type Client as ElizaClient,
+  type HandlerCallback,
   type IAgentRuntime,
+  logger,
+  type Memory,
   type Plugin,
-  type TestSuite,
+  stringToUuid
 } from "@elizaos/core";
 import {
   Client,
+  ChannelType as DiscordChannelType,
   Events,
   GatewayIntentBits,
+  type Guild,
+  GuildMember,
+  type MessageReaction,
+  type OAuth2Guild,
   Partials,
   PermissionsBitField,
-  type Guild,
-  type MessageReaction,
+  type TextChannel,
   type User,
 } from "discord.js";
-import { EventEmitter } from "events";
-import chat_with_attachments from "./actions/chat_with_attachments.ts";
-import download_media from "./actions/download_media.ts";
-import joinvoice from "./actions/joinvoice.ts";
-import leavevoice from "./actions/leavevoice.ts";
+import { EventEmitter } from "node:events";
+import chatWithAttachments from "./actions/chatWithAttachments.ts";
+import downloadMedia from "./actions/downloadMedia.ts";
 import reply from "./actions/reply.ts";
-import summarize from "./actions/summarize_conversation.ts";
-import transcribe_media from "./actions/transcribe_media.ts";
+import summarize from "./actions/summarizeConversation.ts";
+import transcribe_media from "./actions/transcribeMedia.ts";
+import joinVoice from "./actions/voiceJoin.ts";
+import leaveVoice from "./actions/voiceLeave.ts";
 import { DISCORD_CLIENT_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
+import { DiscordTestSuite } from "./tests.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
-import { validateDiscordConfig, DiscordConfig } from "./environment.ts";
-import { DiscordTestSuite } from "./test-suite.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient {
   apiToken: string;
   client: Client;
   runtime: IAgentRuntime;
   character: Character;
-  private messageManager: MessageManager;
-  private voiceManager: VoiceManager;
+  messageManager: MessageManager;
+  voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime) {
     super();
 
-    console.log("Discord client constructor was engaged");
+    logger.log("Discord client constructor was engaged");
 
     this.apiToken = runtime.getSetting("DISCORD_API_TOKEN") as string;
     this.client = new Client({
       intents: [
         GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildPresences,
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.MessageContent,
@@ -69,15 +76,38 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     this.runtime = runtime;
     this.voiceManager = new VoiceManager(this);
-    this.messageManager = new MessageManager(this, this.voiceManager);
+    this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
     this.client.login(this.apiToken);
 
     this.setupEventListeners();
 
-    // fire a connected event
-    this.runtime.emitEvent("DISCORD_CLIENT_STARTED", { client: this.client });
+    // give it to the 
+    const ensureAllServersExist = async (runtime: IAgentRuntime) => {
+      const guilds = await this.client.guilds.fetch();
+      for (const [, guild] of guilds) {
+        await this.ensureAllChannelsExist(runtime, guild);
+      }
+    }
+
+    ensureAllServersExist(this.runtime);
+  }
+
+  async ensureAllChannelsExist(runtime: IAgentRuntime, guild: OAuth2Guild) {
+    const guildChannels = await guild.fetch();
+    // for channel in channels
+    for (const [, channel] of guildChannels.channels.cache) {
+      const roomId = stringToUuid(`${channel.id}-${runtime.agentId}`);
+      const room = await runtime.getRoom(roomId);
+      // if the room already exists, skip
+      if (room) {
+        continue;
+      }
+      const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`)
+      await runtime.ensureWorldExists({id: worldId, name: guild.name, serverId: guild.id, agentId: runtime.agentId});
+      await runtime.ensureRoomExists({id: roomId, name: channel.name, source: "discord", type: ChannelType.GROUP, channelId: channel.id, serverId: guild.id, worldId});
+    }
   }
 
   private setupEventListeners() {
@@ -91,6 +121,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     this.client.on(
       Events.MessageReactionRemove,
       this.handleReactionRemove.bind(this)
+    );
+
+    this.client.on(
+      Events.GuildMemberAdd,
+      this.handleGuildMemberAdd.bind(this)
     );
 
     // Handle voice events with the voice manager
@@ -114,6 +149,44 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       Events.InteractionCreate,
       this.handleInteractionCreate.bind(this)
     );
+  }
+
+  private async handleGuildMemberAdd(member: GuildMember) {
+    logger.log(`New member joined: ${member.user.username}`);
+    
+    const guild = member.guild;
+    
+    // Emit standardized USER_JOINED event
+    this.runtime.emitEvent(["DISCORD_USER_JOINED", "USER_JOINED"], {
+      runtime: this.runtime,
+      user: {
+        id: member.id,
+        username: member.user.username,
+        displayName: member.displayName || member.user.username
+      },
+      serverId: guild.id,
+      channelId: null, // No specific channel for server joins
+      source: "discord"
+    });
+    
+    // Optionally sync this user to all channels they have access to
+    for (const [channelId, channel] of guild.channels.cache) {
+      // Check if the user has access to this channel (text channels only)
+      if (channel.type === DiscordChannelType.GuildText && 
+          channel.permissionsFor(member)?.has(PermissionsBitField.Flags.ViewChannel)) {
+        this.runtime.emitEvent(["DISCORD_USER_JOINED_CHANNEL", "USER_JOINED"], {
+          runtime: this.runtime,
+          user: {
+            id: member.id,
+            username: member.user.username,
+            displayName: member.displayName || member.user.username
+          },
+          serverId: guild.id,
+          channelId: channelId,
+          source: "discord"
+        });
+      }
+    }
   }
 
   async stop() {
@@ -187,6 +260,18 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     await this.onReady();
   }
 
+  async getChannelType(channelId: string): Promise<ChannelType> {
+    const channel = await this.client.channels.fetch(channelId);
+    switch (channel.type) {
+      case DiscordChannelType.DM:
+        return ChannelType.DM;
+      case DiscordChannelType.GuildText:
+        return ChannelType.GROUP;
+      case DiscordChannelType.GuildVoice:
+        return ChannelType.VOICE_GROUP;
+    }
+  }
+
   async handleReactionAdd(reaction: MessageReaction, user: User) {
     try {
       logger.log("Reaction added");
@@ -235,30 +320,35 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       // Process message content
       const messageContent = reaction.message.content || "";
       const truncatedContent =
-        messageContent.length > 100
-          ? `${messageContent.substring(0, 100)}...`
+        messageContent.length > 50
+          ? `${messageContent.substring(0, 50)}...`
           : messageContent;
-      const reactionMessage = `*<${emoji}>: "${truncatedContent}"*`;
+      const reactionMessage = `*Added <${emoji}> to: "${truncatedContent}"*`;
 
       // Get user info
       const userName = reaction.message.author?.username || "unknown";
       const name = reaction.message.author?.displayName || userName;
 
-      // Ensure connection
-      await this.runtime.ensureConnection(
-        userIdUUID,
+      // TODO: Get the type of the channel
+
+      await this.runtime.ensureConnection({
+        userId: userIdUUID,
         roomId,
         userName,
-        name,
-        "discord"
-      );
+        userScreenName: name,
+        source: "discord",
+        channelId: reaction.message.channel.id,
+        serverId: reaction.message.guild?.id,
+        type: await this.getChannelType(reaction.message.channel.id),
+      });
 
-      // Create memory with retry logic
-      const memory = {
+      const memory: Memory = {
         id: reactionUUID,
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
+          name,
+          userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo: stringToUuid(
@@ -269,102 +359,127 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         createdAt: timestamp,
       };
 
-      try {
-        await this.runtime.messageManager.createMemory(memory);
-        logger.debug("Reaction memory created", {
-          reactionId: reactionUUID,
-          emoji,
-          userId: user.id,
-        });
-      } catch (error) {
-        if (error.code === "23505") {
-          // Duplicate key error
-          logger.warn("Duplicate reaction memory, skipping", {
-            reactionId: reactionUUID,
-          });
+      const callback: HandlerCallback = async (content) => {
+        if (!reaction.message.channel) {
+          logger.error("No channel found for reaction message");
           return;
         }
-        throw error; // Re-throw other errors
-      }
+        await (reaction.message.channel as TextChannel).send(content.text);
+        return [];
+      };
+
+      this.runtime.emitEvent(
+        ["DISCORD_REACTION_RECEIVED", "REACTION_RECEIVED"],
+        {
+          runtime: this.runtime,
+          message: memory,
+          callback,
+        }
+      );
     } catch (error) {
       logger.error("Error handling reaction:", error);
     }
   }
 
   async handleReactionRemove(reaction: MessageReaction, user: User) {
-    logger.log("Reaction removed");
-    // if (user.bot) return;
-
-    let emoji = reaction.emoji.name;
-    if (!emoji && reaction.emoji.id) {
-      emoji = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    }
-
-    // Fetch the full message if it's a partial
-    if (reaction.partial) {
-      try {
-        await reaction.fetch();
-      } catch (error) {
-        console.error("Something went wrong when fetching the message:", error);
-        return;
-      }
-    }
-
-    const messageContent = reaction.message.content;
-    const truncatedContent =
-      messageContent.length > 50
-        ? messageContent.substring(0, 50) + "..."
-        : messageContent;
-
-    const reactionMessage = `*Removed <${emoji} emoji> from: "${truncatedContent}"*`;
-
-    const roomId = stringToUuid(
-      reaction.message.channel.id + "-" + this.runtime.agentId
-    );
-    const userIdUUID = stringToUuid(user.id);
-
-    // Generate a unique UUID for the reaction removal
-    const reactionUUID = stringToUuid(
-      `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
-    );
-
-    const userName = reaction.message.author.username;
-    const name = reaction.message.author.displayName;
-
-    await this.runtime.ensureConnection(
-      userIdUUID,
-      roomId,
-      userName,
-      name,
-      "discord"
-    );
-
     try {
-      // Save the reaction removal as a message
-      await this.runtime.messageManager.createMemory({
-        id: reactionUUID, // This is the ID of the reaction removal message
+      logger.log("Reaction removed");
+
+      let emoji = reaction.emoji.name;
+      if (!emoji && reaction.emoji.id) {
+        emoji = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
+      }
+
+      // Fetch the full message if it's a partial
+      if (reaction.partial) {
+        try {
+          await reaction.fetch();
+        } catch (error) {
+          logger.error(
+            "Something went wrong when fetching the message:",
+            error
+          );
+          return;
+        }
+      }
+
+      const messageContent = reaction.message.content || "";
+      const truncatedContent =
+        messageContent.length > 50
+          ? `${messageContent.substring(0, 50)}...`
+          : messageContent;
+
+      const reactionMessage = `*Removed <${emoji}> from: "${truncatedContent}"*`;
+
+      const roomId = stringToUuid(
+        `${reaction.message.channel.id}-${this.runtime.agentId}`
+      );
+      const userIdUUID = stringToUuid(user.id);
+      const reactionUUID = stringToUuid(
+        `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
+      );
+
+      const userName = reaction.message.author?.username || "unknown";
+      const name = reaction.message.author?.displayName || userName;
+
+
+      await this.runtime.ensureConnection({
+        userId: userIdUUID,
+        roomId,
+        userName,
+        userScreenName: name,
+        source: "discord",
+        channelId: reaction.message.channel.id,
+        serverId: reaction.message.guild?.id,
+        type: await this.getChannelType(reaction.message.channel.id),
+      });
+
+      const memory: Memory = {
+        id: reactionUUID,
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
+          name,
+          userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo: stringToUuid(
-            reaction.message.id + "-" + this.runtime.agentId
-          ), // This is the ID of the original message
+            `${reaction.message.id}-${this.runtime.agentId}`
+          ),
         },
         roomId,
         createdAt: Date.now(),
+      };
+
+      const callback: HandlerCallback = async (content) => {
+        if (!reaction.message.channel) {
+          logger.error("No channel found for reaction message");
+          return;
+        }
+        await (reaction.message.channel as TextChannel).send(content.text);
+        return [];
+      };
+
+      this.runtime.emitEvent(["DISCORD_REACTION_EVENT", "REACTION_RECEIVED"], {
+        runtime: this.runtime,
+        message: memory,
+        callback,
       });
     } catch (error) {
-      console.error("Error creating reaction removal message:", error);
+      logger.error("Error handling reaction removal:", error);
     }
   }
 
-  private handleGuildCreate(guild: Guild) {
-    console.log(`Joined guild ${guild.name}`);
+  private async handleGuildCreate(guild: Guild) {
+    logger.log(`Joined guild ${guild.name}`);
+    const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
-    this.runtime.emitEvent("DISCORD_JOIN_SERVER", {
-      guild,
+    
+    // Emit both Discord-specific and standardized events
+    this.runtime.emitEvent(["DISCORD_SERVER_JOINED", "SERVER_JOINED"], {
+      runtime: this.runtime,
+      server: fullGuild,
+      source: "discord"
     });
   }
 
@@ -382,20 +497,28 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 
   private async onReady() {
-    console.log("DISCORD ON READY");
+    logger.log("DISCORD ON READY");
     const guilds = await this.client.guilds.fetch();
     for (const [, guild] of guilds) {
       const fullGuild = await guild.fetch();
-      this.voiceManager.scanGuild(fullGuild);
-      // send in 1 second
-      setTimeout(() => {
-        // for each server the client is in, fire a connected event
-        for (const guild of guilds) {
-          console.log("DISCORD SERVER CONNECTED", guild);
-          this.runtime.emitEvent("DISCORD_SERVER_CONNECTED", { guild });
-        }
+      await this.voiceManager.scanGuild(fullGuild);
+      
+      // Send after a brief delay
+      setTimeout(async () => {
+        // For each server the client is in, fire a connected event
+        const fullGuild = await guild.fetch();
+        logger.log("DISCORD SERVER CONNECTED", fullGuild);
+        
+        // Emit both Discord-specific and standardized events
+        this.runtime.emitEvent(["DISCORD_SERVER_CONNECTED", "SERVER_CONNECTED"], { 
+          runtime: this.runtime, 
+          server: fullGuild,
+          source: "discord"
+        });
       }, 1000);
     }
+
+    this.client.emit("voiceManagerReady");
   }
 }
 
@@ -410,10 +533,10 @@ const discordPlugin: Plugin = {
   clients: [DiscordClientInterface],
   actions: [
     reply,
-    chat_with_attachments,
-    download_media,
-    joinvoice,
-    leavevoice,
+    chatWithAttachments,
+    downloadMedia,
+    joinVoice,
+    leaveVoice,
     summarize,
     transcribe_media,
   ],

@@ -1,12 +1,14 @@
-import { ClientInstance, logger, UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { logger, stringToUuid, type UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import { ClientBase } from "./base.ts";
 import { TWITTER_CLIENT_NAME } from "./constants.ts";
-import { validateTwitterConfig, type TwitterConfig } from "./environment.ts";
+import type { TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
-import { ITwitterClient } from "./types.ts";
+import type { ITwitterClient } from "./types.ts";
+import { TwitterTestSuite } from "./tests.ts";
+import spaceJoin from "./actions/spaceJoin.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -17,24 +19,24 @@ import { ITwitterClient } from "./types.ts";
  * - space: launching and managing Twitter Spaces (optional)
  */
 export class TwitterClient implements ITwitterClient {
-    name: string = "twitter";
+    name = "twitter";
     client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
 
-    constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
+    constructor(runtime: IAgentRuntime, state: any) {
         // Pass twitterConfig to the base client
-        this.client = new ClientBase(runtime, twitterConfig);
+        this.client = new ClientBase(runtime, state);
 
         // Posting logic
-        this.post = new TwitterPostClient(this.client, runtime);
+        this.post = new TwitterPostClient(this.client, runtime, state);
 
         // Mentions and interactions
-        this.interaction = new TwitterInteractionClient(this.client, runtime);
+        this.interaction = new TwitterInteractionClient(this.client, runtime, state);
 
         // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
-        if (twitterConfig.TWITTER_SPACES_ENABLE) {
+        if (runtime.getSetting("TWITTER_SPACES_ENABLE") === true) {
             this.space = new TwitterSpaceClient(this.client, runtime);
         }
     }
@@ -47,8 +49,6 @@ export class TwitterClient implements ITwitterClient {
 export class TwitterClientManager {
     private static instance: TwitterClientManager;
     private clients: Map<string, TwitterClient> = new Map();
-    
-    private constructor() {}
 
     static getInstance(): TwitterClientManager {
         if (!TwitterClientManager.instance) {
@@ -57,11 +57,10 @@ export class TwitterClientManager {
         return TwitterClientManager.instance;
     }
 
-    async createClient(runtime: IAgentRuntime, clientId: string, config: TwitterConfig): Promise<TwitterClient> {
-        console.log("Creating client", clientId, config);
-        // if TWITTER_2FA_SECRET === null, delete it
-        if (config.TWITTER_2FA_SECRET === null) {
-            delete config.TWITTER_2FA_SECRET;
+    async createClient(runtime: IAgentRuntime, clientId: string, state: any): Promise<TwitterClient> {
+        console.log("Creating client", clientId);
+        if (runtime.getSetting("TWITTER_2FA_SECRET") === null) {
+            runtime.setSetting("TWITTER_2FA_SECRET", undefined, false);
         }
         try {
             // Check if client already exists
@@ -71,14 +70,23 @@ export class TwitterClientManager {
                 return existingClient;
             }
 
-            // Validate the configuration
-            const validatedConfig = await validateTwitterConfig(runtime, config);
-
             // Create new client instance
-            const client = new TwitterClient(runtime, validatedConfig);
-            
+            const client = new TwitterClient(runtime, state);
+
             // Initialize the client
             await client.client.init();
+
+            if (client.space) {
+                client.space.startPeriodicSpaceCheck();
+            }
+
+            if (client.post) {
+                client.post.start();
+            }
+
+            if (client.interaction) {
+                client.interaction.start();
+            }
 
             // Store the client instance
             this.clients.set(this.getClientKey(clientId, runtime.agentId), client);
@@ -110,6 +118,10 @@ export class TwitterClientManager {
         }
     }
 
+    async stop(): Promise<void> {
+        await this.stopAllClients();
+    }
+
     async stopAllClients(): Promise<void> {
         for (const [key, client] of this.clients.entries()) {
             try {
@@ -133,10 +145,10 @@ const TwitterClientInterface: Client = {
         
         // Check for character-level Twitter credentials
         const twitterConfig: Partial<TwitterConfig> = {
-            TWITTER_USERNAME: runtime.getSetting("TWITTER_USERNAME") as string,
-            TWITTER_PASSWORD: runtime.getSetting("TWITTER_PASSWORD") as string,
-            TWITTER_EMAIL: runtime.getSetting("TWITTER_EMAIL") as string,
-            TWITTER_2FA_SECRET: runtime.getSetting("TWITTER_2FA_SECRET") as string,
+            TWITTER_USERNAME: (runtime.getSetting("TWITTER_USERNAME") as string) || runtime.character.settings?.TWITTER_USERNAME || runtime.character.secrets?.TWITTER_USERNAME,
+            TWITTER_PASSWORD: (runtime.getSetting("TWITTER_PASSWORD") as string) || runtime.character.settings?.TWITTER_PASSWORD || runtime.character.secrets?.TWITTER_PASSWORD,
+            TWITTER_EMAIL: (runtime.getSetting("TWITTER_EMAIL") as string) || runtime.character.settings?.TWITTER_EMAIL || runtime.character.secrets?.TWITTER_EMAIL,
+            TWITTER_2FA_SECRET: (runtime.getSetting("TWITTER_2FA_SECRET") as string) || runtime.character.settings?.TWITTER_2FA_SECRET || runtime.character.secrets?.TWITTER_2FA_SECRET,
         };
 
         // Filter out undefined values
@@ -155,18 +167,13 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                await manager.createClient(runtime, "default", config);
+                await manager.createClient(runtime, stringToUuid("default"), config);
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);
         }
 
-        const clientInstance: ClientInstance = {
-            async stop() {
-                await manager.stopAllClients();
-            }
-        };
-        return clientInstance;
+        return manager;
     }
 };
 
@@ -174,7 +181,8 @@ const twitterPlugin: Plugin = {
     name: "twitter",
     description: "Twitter client with per-server instance management",
     clients: [TwitterClientInterface],
-    actions: [reply]
+    actions: [reply, spaceJoin],
+    tests: [new TwitterTestSuite()]
 };
 
 export default twitterPlugin;

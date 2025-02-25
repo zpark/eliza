@@ -4,6 +4,7 @@ import { logger } from "@/src/utils/logger"
 import { getPluginRepository, getRegistryIndex } from "@/src/utils/registry"
 import { Command } from "commander"
 import { execa } from "execa"
+import { installPlugin } from "@/src/utils/install-plugin"
 
 export const plugins = new Command()
   .name("plugins")
@@ -34,7 +35,7 @@ plugins
   .command("add")
   .description("add a plugin")
   .argument("<plugin>", "plugin name")
-  .action(async (plugin, opts) => {
+  .action(async (plugin, _opts) => {
     try {
       const cwd = process.cwd()
       
@@ -58,10 +59,7 @@ plugins
 
       // Install from GitHub
       logger.info(`Installing ${plugin}...`)
-      await execa("bun", ["add", repo], {
-        cwd,
-        stdio: "inherit"
-      })
+      await installPlugin(repo, cwd)
 
       logger.success(`Successfully installed ${plugin}`)
 
@@ -74,7 +72,7 @@ plugins
   .command("remove") 
   .description("remove a plugin")
   .argument("<plugin>", "plugin name")
-  .action(async (plugin, opts) => {
+  .action(async (plugin, _opts) => {
     try {
       const cwd = process.cwd()
       
@@ -115,7 +113,7 @@ plugins
         process.exit(1)
       }
 
-      const registry = await getRegistryIndex()
+      const _registry = await getRegistryIndex()
       const plugins = opts.plugin 
         ? [opts.plugin]
         : config.plugins.installed

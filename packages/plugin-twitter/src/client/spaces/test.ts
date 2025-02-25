@@ -100,7 +100,7 @@ async function main() {
   setTimeout(async () => {
     console.log('[Test] Asking GPT for an introduction...');
     try {
-      const response = await sttTtsPlugin['askChatGPT']('Introduce yourself');
+      const response = await sttTtsPlugin.askChatGPT('Introduce yourself');
       console.log('[Test] ChatGPT introduction =>', response);
 
       // Then speak it
@@ -134,7 +134,7 @@ async function main() {
   });
 
   // When a user reacts, send back an emoji to test the flow
-  space.on('guestReaction', (evt) => {
+  space.on('guestReaction', (_evt) => {
     // Pick a random emoji from the list
     const emojis = ['💯', '✨', '🙏', '🎮'];
     const emoji = emojis[Math.floor(Math.random() * emojis.length)];

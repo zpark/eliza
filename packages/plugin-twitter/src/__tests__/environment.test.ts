@@ -13,8 +13,7 @@ describe("Twitter Environment Configuration", () => {
                 TWITTER_POLL_INTERVAL: 120,
                 POST_INTERVAL_MIN: 90,
                 POST_INTERVAL_MAX: 180,
-                ACTION_INTERVAL: 5,
-                POST_IMMEDIATELY: false,
+                TWITTER_POST_IMMEDIATELY: false,
                 TWITTER_TARGET_USERS: [username],
             });
         };
@@ -54,8 +53,7 @@ describe("Twitter Environment Configuration", () => {
                 TWITTER_POLL_INTERVAL: 120,
                 POST_INTERVAL_MIN: 90,
                 POST_INTERVAL_MAX: 180,
-                ACTION_INTERVAL: 5,
-                POST_IMMEDIATELY: false,
+                TWITTER_POST_IMMEDIATELY: false,
                 TWITTER_TARGET_USERS: ["normal_user", "123digit", "*"],
             };
 

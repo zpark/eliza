@@ -445,5 +445,5 @@ bun run analyze
 
 - [Configuration Guide](./configuration.md) for setup details
 - [Advanced Usage](./advanced.md) for complex features
-- [API Documentation](../../api/index.md) for complete API reference
+- [API Documentation](../api/index.md) for complete API reference
 - [Contributing Guide](../contributing.md) for contribution guidelines

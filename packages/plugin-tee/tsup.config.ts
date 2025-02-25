@@ -4,7 +4,6 @@ export default defineConfig({
     entry: ["src/index.ts"],
     outDir: "dist",
     sourcemap: true,
-    clean: true,
     format: ["esm"], // Ensure you're targeting CommonJS
     external: [
         "dotenv", // Externalize dotenv to prevent bundling
@@ -16,6 +15,14 @@ export default defineConfig({
         "http",
         "agentkeepalive",
         "safe-buffer",
+        "base-x",
+        "bs58",
+        "borsh",
+        "@solana/buffer-layout",
+        "stream",
+        "buffer",
         // Add other modules you want to externalize
+        "@phala/dstack-sdk",
+        "undici",
     ],
 });

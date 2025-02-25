@@ -1,6 +1,6 @@
-import Database from "better-sqlite3"
-import { SqliteDatabaseAdapter } from "@elizaos/plugin-sqlite"
-  
-  // Initialize database
-  export const adapter = new SqliteDatabaseAdapter(new Database("./eliza.db"))
-  
+import { createDatabaseAdapter } from "@elizaos/plugin-sql";
+
+export const adapter = createDatabaseAdapter({
+  dataDir: process.env.PGLITE_DATA_DIR,
+  postgresUrl: process.env.POSTGRES_URL,
+});

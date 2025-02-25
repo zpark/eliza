@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { Plugin, OccupancyUpdate } from '../types';
 import type { Space } from '../core/Space';
 import { Logger } from '../logger';
@@ -155,11 +155,10 @@ export class HlsRecordPlugin implements Plugin {
             `[HlsRecordPlugin] HLS is ready (attempt #${attempt + 1})`,
           );
           return true;
-        } else {
+        }
           this.logger?.debug(
             `[HlsRecordPlugin] HLS status=${resp.status}, retrying...`,
           );
-        }
       } catch (error) {
         this.logger?.debug(
           '[HlsRecordPlugin] HLS fetch error =>',

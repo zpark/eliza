@@ -1,25 +1,31 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { ClientInstance, logger, type Client, type IAgentRuntime, type ICacheManager } from '@elizaos/core';
-import { getWalletKey } from "./keypairUtils";
-import BigNumber from "bignumber.js";
-import type { Item, WalletPortfolio, Prices, ISolanaClient } from "./types";
-import { SOLANA_CLIENT_NAME } from "./constants";
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import {
+    type ClientInstance,
+    logger,
+    type Client,
+    type IAgentRuntime,
+    type ICacheManager,
+} from '@elizaos/core';
+import { getWalletKey } from './keypairUtils';
+import BigNumber from 'bignumber.js';
+import type { Item, WalletPortfolio, Prices, ISolanaClient } from './types';
+import { SOLANA_CLIENT_NAME } from './constants';
 
 const PROVIDER_CONFIG = {
-    BIRDEYE_API: "https://public-api.birdeye.so",
+    BIRDEYE_API: 'https://public-api.birdeye.so',
     MAX_RETRIES: 3,
     RETRY_DELAY: 2000,
-    DEFAULT_RPC: "https://api.mainnet-beta.solana.com",
+    DEFAULT_RPC: 'https://api.mainnet-beta.solana.com',
     TOKEN_ADDRESSES: {
-        SOL: "So11111111111111111111111111111111111111112",
-        BTC: "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
-        ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
+        SOL: 'So11111111111111111111111111111111111111112',
+        BTC: '3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh',
+        ETH: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs',
     },
 };
 
 class SolanaClient implements ISolanaClient, ClientInstance {
     private updateInterval: NodeJS.Timer | null = null;
-    private lastUpdate: number = 0;
+    private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
     private readonly CACHE_KEY = 'solana/walletData';
     private connection: Connection;
@@ -29,7 +35,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
         private runtime: IAgentRuntime,
         private cacheManager: ICacheManager,
         connection: Connection,
-        publicKey: PublicKey
+        publicKey: PublicKey,
     ) {
         this.connection = connection;
         this.publicKey = publicKey;
@@ -62,10 +68,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
         return Promise.resolve();
     }
 
-    private async fetchWithRetry(
-        url: string,
-        options: RequestInit = {}
-    ): Promise<any> {
+    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<any> {
         let lastError: Error;
 
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
@@ -73,16 +76,18 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                 const response = await fetch(url, {
                     ...options,
                     headers: {
-                        Accept: "application/json",
-                        "x-chain": "solana",
-                        "X-API-KEY": this.runtime.getSetting("BIRDEYE_API_KEY"),
+                        Accept: 'application/json',
+                        'x-chain': 'solana',
+                        'X-API-KEY': this.runtime.getSetting('BIRDEYE_API_KEY'),
                         ...options.headers,
                     },
                 });
 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                    throw new Error(
+                        `HTTP error! status: ${response.status}, message: ${errorText}`,
+                    );
                 }
 
                 return await response.json();
@@ -90,8 +95,9 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                 logger.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
-                    await new Promise(resolve => setTimeout(resolve, PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i)));
-                    continue;
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, PROVIDER_CONFIG.RETRY_DELAY * 2 ** i),
+                    );
                 }
             }
         }
@@ -100,33 +106,32 @@ class SolanaClient implements ISolanaClient, ClientInstance {
     }
 
     private async fetchPrices(): Promise<Prices> {
-        const cacheKey = "prices";
+        const cacheKey = 'prices';
         const cachedValue = await this.cacheManager.get<Prices>(cacheKey);
 
         if (cachedValue) {
-            logger.log("Cache hit for fetchPrices");
+            logger.log('Cache hit for fetchPrices');
             return cachedValue;
         }
 
-        logger.log("Cache miss for fetchPrices");
+        logger.log('Cache miss for fetchPrices');
         const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
         const tokens = [SOL, BTC, ETH];
         const prices: Prices = {
-            solana: { usd: "0" },
-            bitcoin: { usd: "0" },
-            ethereum: { usd: "0" },
+            solana: { usd: '0' },
+            bitcoin: { usd: '0' },
+            ethereum: { usd: '0' },
         };
 
         for (const token of tokens) {
             const response = await this.fetchWithRetry(
-                `${PROVIDER_CONFIG.BIRDEYE_API}/defi/price?address=${token}`
+                `${PROVIDER_CONFIG.BIRDEYE_API}/defi/price?address=${token}`,
             );
 
             if (response?.data?.value) {
                 const price = response.data.value.toString();
-                prices[
-                    token === SOL ? "solana" : token === BTC ? "bitcoin" : "ethereum"
-                ].usd = price;
+                prices[token === SOL ? 'solana' : token === BTC ? 'bitcoin' : 'ethereum'].usd =
+                    price;
             }
         }
 
@@ -136,22 +141,19 @@ class SolanaClient implements ISolanaClient, ClientInstance {
 
     private async getTokenAccounts() {
         try {
-            const accounts = await this.connection.getParsedTokenAccountsByOwner(
-                this.publicKey,
-                {
-                    programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
-                }
-            );
+            const accounts = await this.connection.getParsedTokenAccountsByOwner(this.publicKey, {
+                programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+            });
             return accounts.value;
         } catch (error) {
-            logger.error("Error fetching token accounts:", error);
+            logger.error('Error fetching token accounts:', error);
             return [];
         }
     }
 
-    private async updateWalletData(force: boolean = false): Promise<WalletPortfolio> {
+    private async updateWalletData(force = false): Promise<WalletPortfolio> {
         const now = Date.now();
-        
+
         // Don't update if less than interval has passed, unless forced
         if (!force && now - this.lastUpdate < this.UPDATE_INTERVAL) {
             const cached = await this.getCachedData();
@@ -160,10 +162,12 @@ class SolanaClient implements ISolanaClient, ClientInstance {
 
         try {
             // Try Birdeye API first
-            const birdeyeApiKey = this.runtime.getSetting("BIRDEYE_API_KEY");
+            const birdeyeApiKey = this.runtime.getSetting('BIRDEYE_API_KEY');
             if (birdeyeApiKey) {
                 const walletData = await this.fetchWithRetry(
-                    `${PROVIDER_CONFIG.BIRDEYE_API}/v1/wallet/token_list?wallet=${this.publicKey.toBase58()}`
+                    `${
+                        PROVIDER_CONFIG.BIRDEYE_API
+                    }/v1/wallet/token_list?wallet=${this.publicKey.toBase58()}`,
                 );
 
                 if (walletData?.success && walletData?.data) {
@@ -182,10 +186,10 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                             valueSol: new BigNumber(item.valueUsd || 0)
                                 .div(solPriceInUSD)
                                 .toFixed(6),
-                            name: item.name || "Unknown",
-                            symbol: item.symbol || "Unknown",
-                            priceUsd: item.priceUsd || "0",
-                            valueUsd: item.valueUsd || "0",
+                            name: item.name || 'Unknown',
+                            symbol: item.symbol || 'Unknown',
+                            priceUsd: item.priceUsd || '0',
+                            valueUsd: item.valueUsd || '0',
                         })),
                     };
 
@@ -198,29 +202,28 @@ class SolanaClient implements ISolanaClient, ClientInstance {
             // Fallback to basic token account info
             const accounts = await this.getTokenAccounts();
             const items: Item[] = accounts.map((acc) => ({
-                name: "Unknown",
+                name: 'Unknown',
                 address: acc.account.data.parsed.info.mint,
-                symbol: "Unknown",
+                symbol: 'Unknown',
                 decimals: acc.account.data.parsed.info.tokenAmount.decimals,
                 balance: acc.account.data.parsed.info.tokenAmount.amount,
                 uiAmount: acc.account.data.parsed.info.tokenAmount.uiAmount.toString(),
-                priceUsd: "0",
-                valueUsd: "0",
-                valueSol: "0",
+                priceUsd: '0',
+                valueUsd: '0',
+                valueSol: '0',
             }));
 
             const portfolio: WalletPortfolio = {
-                totalUsd: "0",
-                totalSol: "0",
+                totalUsd: '0',
+                totalSol: '0',
                 items,
             };
 
             await this.cacheManager.set(this.CACHE_KEY, portfolio);
             this.lastUpdate = now;
             return portfolio;
-
         } catch (error) {
-            logger.error("Error updating wallet data:", error);
+            logger.error('Error updating wallet data:', error);
             throw error;
         }
     }
@@ -246,13 +249,13 @@ export const SolanaClientInterface: Client = {
     name: 'solana',
     start: async (runtime: IAgentRuntime) => {
         logger.log('initSolanaClient');
-        
+
         const connection = new Connection(
-            runtime.getSetting("SOLANA_RPC_URL") || PROVIDER_CONFIG.DEFAULT_RPC
+            runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
         );
 
         const { publicKey } = await getWalletKey(runtime, false);
 
         return new SolanaClient(runtime, runtime.cacheManager, connection, publicKey);
-    }
+    },
 };

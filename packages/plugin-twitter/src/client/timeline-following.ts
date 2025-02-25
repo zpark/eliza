@@ -1,4 +1,4 @@
-import { requestApi } from './api';
+import { requestApi, type RequestApiResult } from './api';
 import type { TwitterAuth } from './auth';
 import { ApiError } from './errors';
 import type { TimelineInstruction } from './timeline-v2';
@@ -60,13 +60,15 @@ export async function fetchFollowingTimeline(
     )}&features=${encodeURIComponent(JSON.stringify(features))}`,
     auth,
     'GET',
-  );
+  ) as RequestApiResult<HomeLatestTimelineResponse>;
+
+  console.log('res', res);
 
   if (!res.success) {
-    if (res.err instanceof ApiError) {
-      console.error('Error details:', res.err.data);
+    if ((res as any).err instanceof ApiError) {
+      console.error('Error details:', (res as any).err.data);
     }
-    throw res.err;
+    throw (res as any).err;
   }
 
   const home = res.value?.data?.home.home_timeline_urt?.instructions;

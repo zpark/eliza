@@ -25,7 +25,7 @@ async function main() {
         let prFiles: string[] = [];
         if (
             typeof configuration.repository.pullNumber === "number" &&
-            !isNaN(configuration.repository.pullNumber)
+            !Number.isNaN(configuration.repository.pullNumber)
         ) {
             console.log(
                 "Pull Request Number: ",

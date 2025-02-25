@@ -1,11 +1,9 @@
-import { IAgentRuntime, logger, UUID } from "@elizaos/core";
+import { type IAgentRuntime, logger, stringToUuid, UUID } from "@elizaos/core";
 
 export enum RoleName {
     OWNER = "OWNER",
     ADMIN = "ADMIN",
-    MEMBER = "MEMBER",
-    NONE = "NONE",
-    IGNORE = "IGNORE"
+    NONE = "NONE"
 }
 
 export interface UserRole {
@@ -18,7 +16,6 @@ export interface ServerRoleState {
     roles: {
         [userId: string]: UserRole;
     };
-    lastUpdated: number;
 }
 
 // Cache key helpers
@@ -41,22 +38,36 @@ export function canModifyRole(modifierRole: RoleName, targetRole: RoleName, newR
     return false; // Other roles can't modify roles
 }
 
-// Role access helpers
 export async function getUserServerRole(
-    runtime: IAgentRuntime,
-    userId: string,
-    serverId: string
+  runtime: IAgentRuntime,
+  userId: string,
+  serverId: string
 ): Promise<RoleName> {
-    try {
-        const roleState = await runtime.cacheManager.get<ServerRoleState>(
-            ROLE_CACHE_KEYS.SERVER_ROLES(serverId)
-        );
+  try {
+    const cacheKey = ROLE_CACHE_KEYS.SERVER_ROLES(serverId);
+    logger.info(`Looking up roles with cache key: ${cacheKey}`);
 
-        console.log("*** runtime.cacheManager roleState", roleState);
-        
-        return roleState?.roles[userId]?.role || RoleName.NONE;
-    } catch (error) {
-        logger.error("Error getting user role:", error);
-        return RoleName.NONE;
+    const roleState = await runtime.cacheManager.get<ServerRoleState>(cacheKey);
+    
+    if (!roleState?.roles) {
+      logger.info(`No roles found for server ${serverId}`);
+      return RoleName.NONE;
     }
+
+    // Always convert userId to UUID for consistent lookup
+    const userUuid = stringToUuid(userId);
+    logger.info(`Looking up role for UUID ${userUuid}`);
+    
+    if (roleState.roles[userUuid]?.role) {
+      const role = roleState.roles[userUuid].role;
+      logger.info(`Found role for user ${userId}: ${role}`);
+      return role;
+    }
+    
+    logger.info(`No role found for user ${userId} (UUID: ${userUuid})`);
+    return RoleName.NONE;
+  } catch (error) {
+    logger.error("Error getting user role:", error);
+    return RoleName.NONE;
+  }
 }

@@ -1,5 +1,5 @@
-import { IAgentRuntime } from "@elizaos/core";
-import { PublicKey } from "@solana/web3.js";
+import type { IAgentRuntime } from '@elizaos/core';
+import type { PublicKey } from '@solana/web3.js';
 
 export interface Item {
     name: string;

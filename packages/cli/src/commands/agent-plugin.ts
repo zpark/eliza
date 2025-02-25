@@ -11,7 +11,7 @@ agentPlugin
   .command("list")
   .description("list plugins for an agent")
   .argument("<agent-id>", "agent ID")
-  .action(async (agentId) => {
+  .action(async (_agentId) => {
     try {
       const cwd = process.cwd()
       const config = await getConfig(cwd)
@@ -33,7 +33,7 @@ agentPlugin
   .description("add plugin to an agent")
   .argument("<agent-id>", "agent ID")
   .argument("<plugin>", "plugin name")
-  .action(async (agentId, pluginName) => {
+  .action(async (_agentId, _pluginName) => {
     try {
       const cwd = process.cwd()
       const config = await getConfig(cwd)
@@ -54,7 +54,7 @@ agentPlugin
   .description("remove plugin from an agent")
   .argument("<agent-id>", "agent ID")
   .argument("<plugin>", "plugin name")
-  .action(async (agentId, pluginName) => {
+  .action(async (_agentId, _pluginName) => {
     try {
       const cwd = process.cwd()
       const config = await getConfig(cwd)

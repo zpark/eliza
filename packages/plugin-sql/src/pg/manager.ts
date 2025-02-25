@@ -1,0 +1,184 @@
+import pkg, { Pool as PgPool } from 'pg';
+import { IDatabaseClientManager } from "../types";
+import { logger } from "@elizaos/core";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { fileURLToPath } from 'url';
+import path from "path";
+import { drizzle } from "drizzle-orm/node-postgres";
+
+const { Pool } = pkg;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export class PostgresConnectionManager implements IDatabaseClientManager<PgPool> {
+    private pool: PgPool;
+    private isShuttingDown: boolean = false;
+    private readonly connectionTimeout: number = 5000;
+
+    constructor(
+        connectionString: string,
+    ) {
+        const defaultConfig = {
+            max: 20,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: this.connectionTimeout,
+        };
+
+        this.pool = new Pool({
+            ...defaultConfig,
+            connectionString,
+        });
+
+        this.pool.on("error", (err) => {
+            logger.error("Unexpected pool error", err);
+            this.handlePoolError(err);
+        });
+
+        this.setupPoolErrorHandling();
+        this.testConnection();
+    }
+
+    private async handlePoolError(error: Error) {
+        logger.error("Pool error occurred, attempting to reconnect", {
+            error: error.message,
+        });
+
+        try {
+            await this.pool.end();
+
+            this.pool = new Pool({
+                ...this.pool.options,
+                connectionTimeoutMillis: this.connectionTimeout,
+            });
+
+            await this.testConnection();
+            logger.success("Pool reconnection successful");
+        } catch (reconnectError) {
+            logger.error("Failed to reconnect pool", {
+                error:
+                    reconnectError instanceof Error
+                        ? reconnectError.message
+                        : String(reconnectError),
+            });
+            throw reconnectError;
+        }
+    }
+
+    async testConnection(): Promise<boolean> {
+        let client;
+        try {
+            client = await this.pool.connect();
+            const result = await client.query("SELECT NOW()");
+            logger.success(
+                "Database connection test successful:",
+                result.rows[0]
+            );
+            return true;
+        } catch (error) {
+            logger.error("Database connection test failed:", error);
+            throw new Error(
+                `Failed to connect to database: ${(error as Error).message}`
+            );
+        } finally {
+            if (client) client.release();
+        }
+    }
+
+    private setupPoolErrorHandling() {
+        process.on("SIGINT", async () => {
+            await this.cleanup();
+            process.exit(0);
+        });
+
+        process.on("SIGTERM", async () => {
+            await this.cleanup();
+            process.exit(0);
+        });
+
+        process.on("beforeExit", async () => {
+            await this.cleanup();
+        });
+    }
+
+    public getConnection(): PgPool {
+        if (this.isShuttingDown) {
+            throw new Error('Connection manager is shutting down');
+        }
+
+        try {
+            return this.pool;
+        } catch (error) {
+            logger.error('Failed to get connection from pool:', error);
+            throw error;
+        }
+    }
+
+    public async initialize(): Promise<void> {
+        try {
+            await this.testConnection();
+            logger.info('PostgreSQL connection manager initialized successfully');
+        } catch (error) {
+            logger.error('Failed to initialize connection manager:', error);
+            throw error;
+        }
+    }
+
+    public async close(): Promise<void> {
+        await this.cleanup();
+    }
+
+    async cleanup(): Promise<void> {
+        try {
+            await this.pool.end();
+            logger.info("Database pool closed");
+        } catch (error) {
+            logger.error("Error closing database pool:", error);
+        }
+    }
+
+    private async ensureExtensions(): Promise<void> {
+        const client = await this.pool.connect();
+        try {
+            // Check and create vector extension
+            await client.query(`
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_extension WHERE extname = 'vector'
+                    ) THEN
+                        CREATE EXTENSION IF NOT EXISTS vector;
+                    END IF;
+                    
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_extension WHERE extname = 'fuzzystrmatch'
+                    ) THEN
+                        CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+                    END IF;
+                END $$;
+            `);
+            logger.info("Required PostgreSQL extensions verified");
+        } catch (error) {
+            logger.error("Failed to create required extensions:", error);
+            throw new Error(`Failed to create required extensions: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            client.release();
+        }
+    }
+
+    async runMigrations(): Promise<void> {
+        try {
+            // Ensure extensions exist before running migrations
+            await this.ensureExtensions();
+            
+            const db = drizzle(this.pool);
+            await migrate(db, {
+                migrationsFolder: path.resolve(__dirname, "../drizzle/migrations"),
+            });
+            logger.info("Migrations completed successfully!");
+        } catch (error) {
+            logger.error("Failed to run database migrations:", error);
+            throw error;
+        }
+    }
+}

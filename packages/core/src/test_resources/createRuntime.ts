@@ -1,4 +1,4 @@
-import { SqliteDatabaseAdapter, loadVecExtensions } from "@elizaos/plugin-sqlite";
+import { SqliteDatabaseAdapter, loadVecExtensions } from "@elizaos/plugin-sql";
 import type { DatabaseAdapter } from "../database.ts";
 import { AgentRuntime } from "../runtime.ts";
 import type { Action, Evaluator, Provider } from "../types.ts";
@@ -41,7 +41,6 @@ export async function createRuntime({
 
     const user: User = {
         id: zeroUuid,
-        email: "test@example.com",
     };
     const session = { user };
 

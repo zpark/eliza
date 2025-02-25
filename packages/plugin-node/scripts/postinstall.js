@@ -1,6 +1,6 @@
-import os from "os";
-import fs from "fs";
-import { execSync } from "child_process";
+import os from "node:os";
+import fs from "node:fs";
+import { execSync } from "node:child_process";
 
 const platform = os.platform();
 const rel = os.release();
@@ -21,7 +21,7 @@ function getDistroName() {
                 info[key.toLowerCase()] = value.replace(/"/g, "").toLowerCase().trim();
             }
         }
-        return info["id"] || info["id_like"] || null;
+        return info.id || info.id_like || null;
     } catch (err) {
         console.error("Error reading /etc/os-release:", err.message);
     }

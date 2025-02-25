@@ -1,5 +1,5 @@
-import { SgxAttestationProvider } from '../providers/sgxAttestationProvider';
-import { RemoteAttestationProvider as TdxAttestationProvider } from '../providers/remoteAttestationProvider';
+import { SgxAttestationProvider } from '../providers/remoteAttestationProvider';
+import { PhalaRemoteAttestationProvider as TdxAttestationProvider } from '../providers/remoteAttestationProvider';
 import {
     type TEEMode,
     TeeType,
@@ -79,7 +79,7 @@ export class TeeLogManager {
         const messageToSign = `${agentId}|${roomId}|${userId}|${type}|${content}|${timestamp}`;
 
         // Sign the joined message
-        const signature = '0x' + keyPair.sign(messageToSign).toDER('hex');
+        const signature = `0x${keyPair.sign(messageToSign).toDER('hex')}`;
 
         return this.teeLogDAO.addLog({
             id: v4(),
@@ -112,12 +112,12 @@ export class TeeLogManager {
             const sgxAttestationProvider = new SgxAttestationProvider();
             const sgxAttestation = await sgxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(sgxAttestation);
-        } else if (this.teeType === TeeType.TDX_DSTACK) {
+        }
+        if (this.teeType === TeeType.TDX_DSTACK) {
             const tdxAttestationProvider = new TdxAttestationProvider(this.teeMode);
             const tdxAttestation = await tdxAttestationProvider.generateAttestation(userReport);
             return JSON.stringify(tdxAttestation);
-        } else {
-            throw new Error('Invalid TEE type');
         }
+        throw new Error('Invalid TEE type');
     }
 }

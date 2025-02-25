@@ -1,8 +1,8 @@
 import { getScraper } from './test-utils';
 import type { QueryTweetsResponse } from './timeline-v1';
 import { type Mention, type Tweet, getTweetAnonymous } from './tweets';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 let shouldSkipV2Tests = false;
 beforeAll(() => {
@@ -356,7 +356,7 @@ test('scraper can get user tweets', async () => {
 
 test('sendTweet successfully sends a tweet', async () => {
   const scraper = await getScraper();
-  const draftText = 'Core updated on ' + Date.now().toString();
+  const draftText = `Core updated on ${Date.now().toString()}`;
 
   const result = await scraper.sendTweet(draftText);
   console.log('Send tweet result:', result);
@@ -446,7 +446,7 @@ test('scraper can create a poll with sendTweetV2', async () => {
 
 test('scraper can send a tweet without media', async () => {
   const scraper = await getScraper();
-  const draftText = 'Test tweet without media ' + Date.now().toString();
+  const draftText = `Test tweet without media ${Date.now().toString()}`;
 
   // Send a tweet without any media attachments
   const result = await scraper.sendTweet(draftText);
@@ -458,7 +458,7 @@ test('scraper can send a tweet without media', async () => {
 
 test('scraper can send a tweet with image and video', async () => {
   const scraper = await getScraper();
-  const draftText = 'Test tweet with image and video ' + Date.now().toString();
+  const draftText = `Test tweet with image and video ${Date.now().toString()}`;
 
   // Read test image and video files from the test-assets directory
   const imageBuffer = fs.readFileSync(
@@ -549,7 +549,7 @@ test('scraper can quote tweet with media', async () => {
 
 test('sendTweetWithMedia successfully sends a tweet with media', async () => {
   const scraper = await getScraper();
-  const draftText = 'Test tweet with media ' + Date.now().toString();
+  const draftText = `Test tweet with media ${Date.now().toString()}`;
 
   // Read a test image file
   const imageBuffer = fs.readFileSync(

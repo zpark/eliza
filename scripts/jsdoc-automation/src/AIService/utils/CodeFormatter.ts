@@ -135,7 +135,7 @@ export class CodeFormatter {
         return relativePath;
     }
 
-    public formatJSDoc(jsDoc: string, code?: string): string {
+    public formatJSDoc(jsDoc: string, _code?: string): string {
         // Clean up the JSDoc
         let cleanDoc = jsDoc
             .replace(/^```\s*\n?/gm, "")
@@ -143,7 +143,7 @@ export class CodeFormatter {
         cleanDoc = cleanDoc.trim().replace(/\n{3,}/g, "\n\n");
 
         // Format JSDoc with typescript declaration
-        const docSection = "```typescript\n" + cleanDoc + "\n```";
+        const docSection = `\`\`\`typescript\n${cleanDoc}\n\`\`\``;
 
         // If we have the actual code, include it after the JSDoc
         // if (code) {
@@ -163,7 +163,7 @@ export class CodeFormatter {
 
         // If no code blocks found, truncate the text directly
         if (codeBlocks.length === 0) {
-            return code.slice(0, maxLength) + "... (truncated)";
+            return `${code.slice(0, maxLength)}... (truncated)`;
         }
 
         // Calculate maximum length per block to stay under total limit
@@ -220,8 +220,7 @@ export class CodeFormatter {
                     const lines = block.split("\n");
                     const maxLines = 10; // Keep only first few lines of each block
                     return (
-                        lines.slice(0, maxLines).join("\n") +
-                        "\n// ... remaining code truncated ...\n"
+                        `${lines.slice(0, maxLines).join("\n")}\n// ... remaining code truncated ...\n`
                     );
                 }
                 return block.slice(0, 500); // Limit non-code text

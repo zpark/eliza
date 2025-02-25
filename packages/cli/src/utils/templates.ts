@@ -36,7 +36,7 @@ export function createDatabaseTemplate(database: string) {
   
   export function createEnvTemplate(database: string) {
     if (database === "sqlite") {
-      return `# No configuration needed for SQLite`
+      return "# No configuration needed for SQLite"
     }
   
     return `# Database Configuration
@@ -47,5 +47,5 @@ export function createDatabaseTemplate(database: string) {
   }
   
   function getPluginName(plugin: string): string {
-    return plugin.split("/").pop()!.replace(/-/g, "")
+    return plugin.split("/").pop()?.replace(/-/g, "")
   }

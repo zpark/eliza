@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RemoteAttestationProvider } from '../src/providers/remoteAttestationProvider';
-import { DeriveKeyProvider } from '../src/providers/deriveKeyProvider';
-import { TEEMode } from '../src/types/tee';
+import { RemoteAttestationProvider } from '../providers/remoteAttestationProvider';
+import { DeriveKeyProvider } from '../providers/deriveKeyProvider';
+import { TEEMode } from '@elizaos/core';
 import { TappdClient } from '@phala/dstack-sdk';
 
 // Mock TappdClient

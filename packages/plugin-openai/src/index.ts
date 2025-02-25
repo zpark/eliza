@@ -45,6 +45,14 @@ const configSchema = z.object({
 export const openaiPlugin: Plugin = {
   name: "openai",
   description: "OpenAI plugin",
+  config: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL,
+    OPENAI_SMALL_MODEL: process.env.OPENAI_SMALL_MODEL,
+    OPENAI_LARGE_MODEL: process.env.OPENAI_LARGE_MODEL,
+    SMALL_MODEL: process.env.SMALL_MODEL,
+    LARGE_MODEL: process.env.LARGE_MODEL,
+  },
   async init(config: Record<string, string>) {
     try {
       const validatedConfig = await configSchema.parseAsync(config);
@@ -78,7 +86,7 @@ export const openaiPlugin: Plugin = {
     }
   },
   models: {
-    [ModelClass.TEXT_EMBEDDING]: async (runtime: IAgentRuntime, text: string | null) => {
+    [ModelClass.TEXT_EMBEDDING]: async (_runtime: IAgentRuntime, text: string | null) => {
       if (!text) {
         // Return zero vector of appropriate length for model
         return new Array(1536).fill(0);
@@ -107,7 +115,7 @@ export const openaiPlugin: Plugin = {
       return data.data[0].embedding;
     },
     [ModelClass.TEXT_TOKENIZER_ENCODE]: async (
-      runtime,
+      _runtime,
       {
       context,
       modelClass = ModelClass.TEXT_LARGE,
@@ -115,7 +123,7 @@ export const openaiPlugin: Plugin = {
       return await tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
     },
     [ModelClass.TEXT_TOKENIZER_DECODE]: async (
-      runtime,
+      _runtime,
       {
       tokens,
       modelClass = ModelClass.TEXT_LARGE,
@@ -167,12 +175,11 @@ export const openaiPlugin: Plugin = {
       {
       context,
       stopSequences = [],
+      maxTokens = 8192,
+      temperature = 0.7,
+      frequencyPenalty = 0.7,
+      presencePenalty = 0.7,
     }: GenerateTextParams) => {
-      const temperature = 0.7;
-      const frequency_penalty = 0.7;
-      const presence_penalty = 0.7;
-      const max_response_length = 8192;
-
       const baseURL =
         runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
 
@@ -189,9 +196,9 @@ export const openaiPlugin: Plugin = {
         prompt: context,
         system: runtime.character.system ?? undefined,
         temperature: temperature,
-        maxTokens: max_response_length,
-        frequencyPenalty: frequency_penalty,
-        presencePenalty: presence_penalty,
+        maxTokens: maxTokens,
+        frequencyPenalty: frequencyPenalty,
+        presencePenalty: presencePenalty,
         stopSequences: stopSequences,
       });
 
@@ -437,7 +444,7 @@ export const openaiPlugin: Plugin = {
     {
       path: "/helloworld",
       type: "GET",
-      handler: async (req: any, res: any) => {
+      handler: async (_req: any, res: any) => {
         // send a response
         res.json({
           message: "Hello World"

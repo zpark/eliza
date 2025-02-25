@@ -6,7 +6,6 @@ import {
 } from "@elizaos/core";
 import { generateText } from "ai";
 import { z } from "zod";
-import { EmbeddingModel, FlagEmbedding } from "fastembed";
 
 // Define a configuration schema for the Anthropics plugin.
 const configSchema = z.object({
@@ -18,6 +17,11 @@ const configSchema = z.object({
 export const anthropicPlugin: Plugin = {
   name: "anthropic",
   description: "Anthropic plugin (supports text generation only)",
+  config: {
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_SMALL_MODEL: process.env.ANTHROPIC_SMALL_MODEL,
+    ANTHROPIC_LARGE_MODEL: process.env.ANTHROPIC_LARGE_MODEL,
+  },
   async init(config: Record<string, string>) {
     try {
       const validatedConfig = await configSchema.parseAsync(config);
@@ -68,10 +72,12 @@ export const anthropicPlugin: Plugin = {
       runtime,
       {
       context,
+      maxTokens = 8192,
       stopSequences = [],
+      temperature = 0.7,
+      frequencyPenalty = 0.7,
+      presencePenalty = 0.7,
     }: GenerateTextParams) => {
-      const temperature = 0.7;
-      const maxTokens = 8192;
       const largeModel = runtime.getSetting("ANTHROPIC_LARGE_MODEL") ?? "claude-3-5-sonnet-latest";
 
       const { text } = await generateText({
@@ -81,49 +87,16 @@ export const anthropicPlugin: Plugin = {
         temperature,
         maxTokens,
         stopSequences,
+        frequencyPenalty,
+        presencePenalty,
       });
       return text;
     },
-    [ModelClass.TEXT_EMBEDDING]: async (runtime, text: string | null) => {
-      // TODO: check if other plugin provides TEXT_EMBEDDING model 
-      // Runtime will break if openai was used for TEXT_EMBEDDING before
-      const model = await FlagEmbedding.init({ 
-        model: EmbeddingModel.BGESmallENV15,
-        cacheDir: runtime.cacheDir,
-        maxLength: 512
-      });
-      const embedding = await model.queryEmbed(text);
-      
-      const finalEmbedding = Array.isArray(embedding) 
-        ? ArrayBuffer.isView(embedding[0]) 
-          ? Array.from(embedding[0] as never)
-          : embedding
-        : Array.from(embedding);
-        
-      if (!Array.isArray(finalEmbedding) || finalEmbedding[0] === undefined) {
-        throw new Error("Invalid embedding format");
-      }
-      
-      return finalEmbedding.map(Number);
-    }
   },
   tests: [
     {
       name: "anthropic_plugin_tests",
       tests: [
-        {
-          name: 'anthropic_test_text_embedding',
-          fn: async (runtime) => {
-            try {
-              console.log("testing embedding");
-              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Hello, world!");
-              console.log("embedding done", embedding);
-            } catch (error) {
-              console.error("Error in test_text_embedding:", error);
-              throw error;
-            }
-          }
-        },
         {
           name: 'anthropic_test_text_small',  
           fn: async (runtime) => {

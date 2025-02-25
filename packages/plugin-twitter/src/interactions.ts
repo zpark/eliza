@@ -13,12 +13,15 @@ import {
     type State,
     stringToUuid,
     logger,
+    ChannelType,
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 
 export const twitterMessageHandlerTemplate =
-    `
+    `# Task: Generate dialog and actions for {{agentName}}.
+{{system}}
+
 # Areas of Expertise
 {{knowledge}}
 
@@ -31,32 +34,29 @@ export const twitterMessageHandlerTemplate =
 
 {{characterPostExamples}}
 
-{{postDirections}}
-
 Recent interactions between {{agentName}} and other users:
 {{recentPostInteractions}}
-
 {{recentPosts}}
 
-# TASK: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
+(Above posts are recent posts between {{agentName}} and other users. Our goal is to create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context)
+
+{{postDirections}}
 
 Current Post:
 {{currentPost}}
-Here is the descriptions of images in the Current post.
-{{imageDescriptions}}
 
 Thread of Tweets You Are Replying To:
 {{formattedConversation}}
+{{imageDescriptions}}
 
-# INSTRUCTIONS: Generate a post in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}). You MUST include an action if the current post text includes a prompt that is similar to one of the available actions mentioned here:
+# INSTRUCTIONS: Create a post in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}). You MUST include an action if the current post text includes a prompt that is similar to one of the available actions mentioned here:
 {{actionNames}}
 {{actions}}
 
 Here is the current post text again. Remember to include an action if the current post text includes a prompt that asks for one of the available actions mentioned above (does not need to be exact)
 {{currentPost}}
-Here is the descriptions of images in the Current post.
 {{imageDescriptions}}
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 export const twitterShouldRespondTemplate = (targetUsersStr: string) =>
     `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
@@ -88,25 +88,29 @@ Thread of Tweets You Are Replying To:
 {{formattedConversation}}
 
 # INSTRUCTIONS: Respond with RESPOND if {{agentName}} should respond, or IGNORE if {{agentName}} should not respond to the last message and STOP if {{agentName}} should stop participating in the conversation.
-` + shouldRespondFooter;
+${shouldRespondFooter}`;
 
 export class TwitterInteractionClient {
     client: ClientBase;
     runtime: IAgentRuntime;
     private isDryRun: boolean;
-    constructor(client: ClientBase, runtime: IAgentRuntime) {
+    private state: any;
+    constructor(client: ClientBase, runtime: IAgentRuntime, state: any) {
         this.client = client;
         this.runtime = runtime;
-        this.isDryRun = (this.client.twitterConfig.TWITTER_DRY_RUN as boolean) || false;
+        this.state = state;
+        this.isDryRun = this.state?.TWITTER_DRY_RUN || this.runtime.getSetting("TWITTER_DRY_RUN") as unknown as boolean;
     }
 
     async start() {
         const handleTwitterInteractionsLoop = () => {
+            // Defaults to 2 minutes
+            const interactionInterval = (this.state?.TWITTER_POLL_INTERVAL || this.runtime.getSetting("TWITTER_POLL_INTERVAL") as unknown as number || 120) * 1000;
+        
             this.handleTwitterInteractions();
             setTimeout(
                 handleTwitterInteractionsLoop,
-                // Defaults to 2 minutes
-                (this.client.twitterConfig.TWITTER_POLL_INTERVAL as number) * 1000
+                interactionInterval
             );
         };
         handleTwitterInteractionsLoop();
@@ -132,9 +136,9 @@ export class TwitterInteractionClient {
             );
             let uniqueTweetCandidates = [...mentionCandidates];
             // Only process target users if configured
-            if ((this.client.twitterConfig.TWITTER_TARGET_USERS as string[]).length) {
+            if ((this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).length) {
                 const TARGET_USERS =
-                    this.client.twitterConfig.TWITTER_TARGET_USERS as string[];
+                    this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
 
                 logger.log("Processing target users:", TARGET_USERS);
 
@@ -146,7 +150,7 @@ export class TwitterInteractionClient {
                     for (const username of TARGET_USERS) {
                         try {
                             const userTweets = (
-                                await this.client.twitterClient.fetchSearchTweets(
+                                await this.client.fetchSearchTweets(
                                     `from:${username}`,
                                     3,
                                     SearchMode.Latest
@@ -189,7 +193,6 @@ export class TwitterInteractionClient {
                                 `Error fetching tweets for ${username}:`,
                                 error
                             );
-                            continue;
                         }
                     }
 
@@ -234,7 +237,7 @@ export class TwitterInteractionClient {
                 ) {
                     // Generate the tweetId UUID the same way it's done in handleTweet
                     const tweetId = stringToUuid(
-                        tweet.id + "-" + this.runtime.agentId
+                        `${tweet.id}-${this.runtime.agentId}`
                     );
 
                     // Check if we've already processed this tweet
@@ -252,7 +255,7 @@ export class TwitterInteractionClient {
                     logger.log("New Tweet found", tweet.permanentUrl);
 
                     const roomId = stringToUuid(
-                        tweet.conversationId + "-" + this.runtime.agentId
+                        `${tweet.conversationId}-${this.runtime.agentId}`
                     );
 
                     const userIdUUID =
@@ -260,13 +263,14 @@ export class TwitterInteractionClient {
                             ? this.runtime.agentId
                             : stringToUuid(tweet.userId!);
 
-                    await this.runtime.ensureConnection(
-                        userIdUUID,
+                    await this.runtime.ensureConnection({
+                        userId: userIdUUID,
                         roomId,
-                        tweet.username,
-                        tweet.name,
-                        "twitter"
-                    );
+                        userName: tweet.username,
+                        userScreenName: tweet.name,
+                        source: "twitter",
+                        type: ChannelType.GROUP
+                    });
 
                     const thread = await buildConversationThread(
                         tweet,
@@ -276,7 +280,9 @@ export class TwitterInteractionClient {
                     const message = {
                         content: { 
                             text: tweet.text,
-                            imageUrls: tweet.photos?.map(photo => photo.url) || []
+                            imageUrls: tweet.photos?.map(photo => photo.url) || [],
+                            tweet: tweet,
+                            source: "twitter"
                         },
                         agentId: this.runtime.agentId,
                         userId: userIdUUID,
@@ -303,7 +309,7 @@ export class TwitterInteractionClient {
         }
     }
 
-    private async handleTweet({
+    async handleTweet({
         tweet,
         message,
         thread,
@@ -314,7 +320,7 @@ export class TwitterInteractionClient {
     }) {
         // Only skip if tweet is from self AND not from a target user
         if (tweet.userId === this.client.profile.id &&
-            !(this.client.twitterConfig.TWITTER_TARGET_USERS as string[]).includes(tweet.username)) {
+            !(this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).includes(tweet.username)) {
             return;
         }
 
@@ -358,7 +364,7 @@ export class TwitterInteractionClient {
 
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
-            twitterUserName: this.client.twitterConfig.TWITTER_USERNAME,
+            twitterUserName: this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME"),
             currentPost,
             formattedConversation,
             imageDescriptions: imageDescriptionsArray.length > 0
@@ -367,7 +373,7 @@ export class TwitterInteractionClient {
         });
 
         // check if the tweet exists, save if it doesn't
-        const tweetId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
+        const tweetId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
         const tweetExists =
             await this.runtime.messageManager.getMemoryById(tweetId);
 
@@ -375,6 +381,15 @@ export class TwitterInteractionClient {
             logger.log("tweet does not exist, saving");
             const userIdUUID = stringToUuid(tweet.userId as string);
             const roomId = stringToUuid(tweet.conversationId);
+
+            await this.runtime.ensureConnection({
+                userId: userIdUUID,
+                roomId,
+                userName: tweet.username,
+                userScreenName: tweet.name,
+                source: "twitter",
+                type: ChannelType.GROUP
+            });
 
             const message = {
                 id: tweetId,
@@ -385,9 +400,7 @@ export class TwitterInteractionClient {
                     imageUrls: tweet.photos?.map(photo => photo.url) || [],
                     inReplyTo: tweet.inReplyToStatusId
                         ? stringToUuid(
-                              tweet.inReplyToStatusId +
-                                  "-" +
-                                  this.runtime.agentId
+                              `${tweet.inReplyToStatusId}-${this.runtime.agentId}`
                           )
                         : undefined,
                 },
@@ -399,8 +412,12 @@ export class TwitterInteractionClient {
         }
 
         // get usernames into str
-        const validTargetUsersStr =
-            (this.client.twitterConfig.TWITTER_TARGET_USERS as string[]).join(",");
+        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS");
+        const validTargetUsersStr = Array.isArray(targetUsers)
+            ? targetUsers.join(",")
+            : typeof targetUsers === 'string'
+                ? targetUsers
+                : "";
 
         const shouldRespondContext = composeContext({
             state,
@@ -459,7 +476,7 @@ export class TwitterInteractionClient {
         const removeQuotes = (str: string) =>
             str.replace(/^['"](.*)['"]$/, "$1");
 
-        const stringId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
+        const stringId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
 
         response.inReplyTo = stringId;
 
@@ -480,14 +497,14 @@ export class TwitterInteractionClient {
                             this.client,
                             response,
                             message.roomId,
-                            this.client.twitterConfig.TWITTER_USERNAME as string,
+                            this.state?.TWITTER_USERNAME || this.runtime.getSetting("TWITTER_USERNAME") as string,
                             tweetId || tweet.id
                         );
                         return memories;
                     };
                     
                     const responseMessages = [{
-                            id: stringToUuid(tweet.id + "-" + this.runtime.agentId),
+                            id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
                             userId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
                             content: response,
@@ -566,25 +583,26 @@ export class TwitterInteractionClient {
 
             // Handle memory storage
             const memory = await this.runtime.messageManager.getMemoryById(
-                stringToUuid(currentTweet.id + "-" + this.runtime.agentId)
+                stringToUuid(`${currentTweet.id}-${this.runtime.agentId}`)
             );
             if (!memory) {
                 const roomId = stringToUuid(
-                    currentTweet.conversationId + "-" + this.runtime.agentId
+                    `${currentTweet.conversationId}-${this.runtime.agentId}`
                 );
                 const userId = stringToUuid(currentTweet.userId);
 
-                await this.runtime.ensureConnection(
+                await this.runtime.ensureConnection({
                     userId,
                     roomId,
-                    currentTweet.username,
-                    currentTweet.name,
-                    "twitter"
-                );
+                    userName: currentTweet.username,
+                    userScreenName: currentTweet.name,
+                    source: "twitter",
+                    type: ChannelType.GROUP
+                });
 
                 this.runtime.messageManager.createMemory({
                     id: stringToUuid(
-                        currentTweet.id + "-" + this.runtime.agentId
+                        `${currentTweet.id}-${this.runtime.agentId}`
                     ),
                     agentId: this.runtime.agentId,
                     content: {
@@ -594,9 +612,7 @@ export class TwitterInteractionClient {
                         imageUrls: currentTweet.photos?.map(photo => photo.url) || [],
                         inReplyTo: currentTweet.inReplyToStatusId
                             ? stringToUuid(
-                                  currentTweet.inReplyToStatusId +
-                                      "-" +
-                                      this.runtime.agentId
+                                  `${currentTweet.inReplyToStatusId}-${this.runtime.agentId}`
                               )
                             : undefined,
                     },
