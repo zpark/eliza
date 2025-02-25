@@ -1,11 +1,25 @@
 #!/usr/bin/env node
+
 const { execSync } = require('child_process')
 const pathUtil = require('path')
 const fs = require('fs')
 const { Command } = require('commander')
-
 const program = new Command()
 const { version } = require('./package.json')
+
+
+const pluginPkgPath = (pluginRepo) => {
+  const parts = pluginRepo.split('/')
+  const elizaOSroot = pathUtil.resolve(__dirname, '../..')
+  const pkgPath = elizaOSroot + '/packages/' + parts[1]
+  return pkgPath
+}
+
+const isPluginInstalled = (pluginRepo) => {
+  const pkgPath = pluginPkgPath(pluginRepo)
+  const packageJsonPath = pkgPath + '/package.json'
+  return fs.existsSync(packageJsonPath)
+}
 
 program
   .name('elizaos')
@@ -20,6 +34,8 @@ async function getPlugins() {
   const resp = await fetch('https://raw.githubusercontent.com/elizaos-plugins/registry/refs/heads/main/index.json')
   return await resp.json();
 }
+
+
 
 plugins
   .command('list')
@@ -36,7 +52,7 @@ plugins
 
       console.info("\nAvailable plugins:")
       for (const plugin of pluginNames) {
-        console.info(`  ${plugin}`)
+        console.info(` ${isPluginInstalled(plugins[plugin]) ? '✅' : '  '}  ${plugin} `)
       }
       console.info("")
     } catch (error) {
@@ -59,7 +75,7 @@ plugins
       return
     }
 
-    const plugins = await getPlugins()
+    
     const repoData = plugins[plugin]?.split(':')
     if (!repoData) {
       console.error('Plugin', plugin, 'not found')
