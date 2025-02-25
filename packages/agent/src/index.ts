@@ -28,9 +28,9 @@ import {
 import { defaultCharacter } from "./single-agent/character.ts";
 import { startScenario } from "./swarm/scenario.ts";
 
-import swarm from "./swarm/index";
-import * as path from "node:path";
 import * as fs from "node:fs";
+import * as path from "node:path";
+import swarm from "./swarm/index";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
   const waitTime =
@@ -235,8 +235,7 @@ const startAgents = async () => {
   let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
   const args = parseArguments();
   const charactersArg = args.characters || args.character;
-  const characters: Character[] = [];
-
+  
   // Add this before creating the AgentServer
   const dataDir = path.join(process.cwd(), "data");
   try {

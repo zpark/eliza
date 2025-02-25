@@ -1,8 +1,21 @@
 import express from 'express';
+import type { Character, IAgentRuntime, Media } from '@elizaos/core';
+import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig } from '@elizaos/core';
+import fs from 'node:fs';
 import type { AgentServer } from '..';
-import type { Character, IAgentRuntime } from '@elizaos/core';
-import { logger, validateCharacterConfig } from '@elizaos/core';
 import { validateUUIDParams } from './api-utils';
+
+import type { Content, Memory } from '@elizaos/core';
+import path from 'node:path';
+import { messageHandlerTemplate } from '../helper';
+import { upload } from '../loader';
+
+interface CustomRequest extends express.Request {
+    file?: Express.Multer.File;
+    params: {
+        agentId: string;
+    };
+}
 
 export function agentRouter(
     agents: Map<string, IAgentRuntime>,
@@ -60,6 +73,168 @@ export function agentRouter(
             res.status(204).json({ success: true });
         } else {
             res.status(404).json({ error: 'Agent not found' });
+        }
+    });
+
+    router.post('/:agentId/message', async (req: CustomRequest, res) => {
+        logger.info("[MESSAGE ENDPOINT] **ROUTE HIT** - Entering /message endpoint");
+
+        const { agentId } = validateUUIDParams(req?.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
+        // Add logging to debug the request body
+        logger.info(`[MESSAGE ENDPOINT] Raw body: ${JSON.stringify(req.body)}`);
+        
+        const text = req.body?.text?.trim();
+        logger.info(`[MESSAGE ENDPOINT] Parsed text: ${text}`);
+
+        // Move the text validation check here, before other processing
+        if (!text) {
+            res.status(400).json({ error: "Text message is required" });
+            return;
+        }
+
+        const roomId = stringToUuid(req.body.roomId ?? `default-room-${agentId}`);
+        const userId = stringToUuid(req.body.userId ?? "user");
+
+        let runtime = agents.get(agentId);
+
+        // if runtime is null, look for runtime with the same name
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) =>
+                    a.character.name.toLowerCase() ===
+                    agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).json({ error: 'Agent not found' });
+            return;
+        }
+
+        logger.info(`[MESSAGE ENDPOINT] Runtime found: ${runtime?.character?.name}`);
+
+        try {
+            await runtime.ensureConnection({
+                userId,
+                roomId,
+                userName: req.body.userName,
+                userScreenName: req.body.name,
+                source: "direct",
+                type: ChannelType.API,
+            });
+
+            logger.info(`[MESSAGE ENDPOINT] req.body: ${JSON.stringify(req.body)}`);
+
+            const messageId = stringToUuid(Date.now().toString());
+
+            const attachments: Media[] = [];
+            if (req.file) {
+                const filePath = path.join(
+                    process.cwd(),
+                    "data",
+                    "uploads",
+                    req.file.filename
+                );
+                attachments.push({
+                    id: Date.now().toString(),
+                    url: filePath,
+                    title: req.file.originalname,
+                    source: "direct",
+                    description: `Uploaded file: ${req.file.originalname}`,
+                    text: "",
+                    contentType: req.file.mimetype,
+                });
+            }
+
+            const content: Content = {
+                text,
+                attachments,
+                source: "direct",
+                inReplyTo: undefined,
+            };
+
+            const userMessage = {
+                content,
+                userId,
+                roomId,
+                agentId: runtime.agentId,
+            };
+
+            const memory: Memory = {
+                id: stringToUuid(`${messageId}-${userId}`),
+                ...userMessage,
+                agentId: runtime.agentId,
+                userId,
+                roomId,
+                content,
+                createdAt: Date.now(),
+            };
+
+            await runtime.messageManager.addEmbeddingToMemory(memory);
+            await runtime.messageManager.createMemory(memory);
+
+            let state = await runtime.composeState(userMessage, {
+                agentName: runtime.character.name,
+            });
+
+            const context = composeContext({
+                state,
+                template: messageHandlerTemplate,
+            });
+
+            logger.info("[MESSAGE ENDPOINT] Before generateMessageResponse");
+
+            const response = await generateMessageResponse({
+                runtime: runtime,
+                context,
+                modelClass: ModelClass.TEXT_LARGE,
+            });
+
+            logger.info(`[MESSAGE ENDPOINT] After generateMessageResponse, response: ${response}`);
+
+            if (!response) {
+                res.status(500).json({
+                    error: "No response from generateMessageResponse"
+                });
+                return;
+            }
+
+            // save response to memory
+            const responseMessage: Memory = {
+                id: stringToUuid(`${messageId}-${runtime.agentId}`),
+                ...userMessage,
+                userId: runtime.agentId,
+                content: response,
+                createdAt: Date.now(),
+            };
+
+            await runtime.messageManager.createMemory(responseMessage);
+
+            state = await runtime.updateRecentMessageState(state);
+
+            const replyHandler = async (message: Content) => {
+                res.json([message]);
+                return [memory];
+            }
+
+            await runtime.processActions(
+                memory,
+                [responseMessage],
+                state,
+                replyHandler
+            );
+
+            await runtime.evaluate(memory, state);
+        } catch (error) {
+            logger.error("Error processing message:", error);
+            res.status(500).json({
+                error: "Error processing message",
+                details: error.message
+            });
         }
     });
 
@@ -256,5 +431,197 @@ export function agentRouter(
         }
     });
 
+    router.post('/:agentId/whisper', upload.single('file'), async (req: CustomRequest, res: express.Response) => {
+        const audioFile = req.file;
+        const agentId = req.params.agentId;
+
+        if (!audioFile) {
+            res.status(400).send("No audio file provided");
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).send("Agent not found");
+            return;
+        }
+
+        const audioBuffer = fs.readFileSync(audioFile.path);
+        const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+        
+        res.json({text: transcription});
+    });
+
+    router.post('/:agentId/speak', async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!agentId) return;
+
+        const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
+        const roomId = stringToUuid(rawRoomId ?? `default-room-${agentId}`);
+        const userId = stringToUuid(rawUserId ?? "user");
+
+        if (!text) {
+            res.status(400).send("No text provided");
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).send("Agent not found");
+            return;
+        }
+
+        try {
+            // Process message through agent
+            await runtime.ensureConnection({
+                userId,
+                roomId,
+                userName: req.body.userName,
+                userScreenName: req.body.name,
+                source: "direct",
+                type: ChannelType.API,
+            });
+
+            const messageId = stringToUuid(Date.now().toString());
+
+            const content: Content = {
+                text,
+                attachments: [],
+                source: "direct",
+                inReplyTo: undefined,
+            };
+
+            const userMessage = {
+                content,
+                userId,
+                roomId,
+                agentId: runtime.agentId,
+            };
+
+            const memory: Memory = {
+                id: messageId,
+                agentId: runtime.agentId,
+                userId,
+                roomId,
+                content,
+                createdAt: Date.now(),
+            };
+
+            await runtime.messageManager.createMemory(memory);
+
+            const state = await runtime.composeState(userMessage, {
+                agentName: runtime.character.name,
+            });
+
+            
+            const context = composeContext({
+                state,
+                template: messageHandlerTemplate,
+            });
+
+            const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+                messages: [{
+                    role: 'system',
+                    content: messageHandlerTemplate
+                }, {
+                    role: 'user', 
+                    content: context
+                }]
+            });
+
+            // save response to memory
+            const responseMessage = {
+                ...userMessage,
+                userId: runtime.agentId,
+                content: response,
+            };
+
+            await runtime.messageManager.createMemory(responseMessage);
+
+            if (!response) {
+                res.status(500).send(
+                    "No response from generateMessageResponse"
+                );
+                return;
+            }
+
+            await runtime.evaluate(memory, state);
+
+            const _result = await runtime.processActions(
+                memory,
+                [responseMessage],
+                state,
+                async () => {
+                    return [memory];
+                }
+            );
+
+            const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, response.text);
+            const audioBuffer = await speechResponse.arrayBuffer();
+
+            res.set({
+                "Content-Type": "audio/mpeg",
+                "Transfer-Encoding": "chunked",
+            });
+
+            res.send(Buffer.from(audioBuffer));
+        } catch (error) {
+            logger.error("Error processing message or generating speech:", error);
+            res.status(500).json({
+                error: "Error processing message or generating speech",
+                details: error.message,
+            });
+        }
+    });
+
+    router.post('/:agentId/tts', async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!agentId) return;
+
+        const { text } = req.body;
+        if (!text) {
+            res.status(400).send("No text provided");
+            return;
+        }
+
+        const runtime = agents.get(agentId);
+        if (!runtime) {
+            res.status(404).send("Agent not found");
+            return;
+        }
+
+        try {
+            const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, text);
+            const audioBuffer = await speechResponse.arrayBuffer();
+
+            res.set({
+                "Content-Type": "audio/mpeg",
+                "Transfer-Encoding": "chunked",
+            });
+
+            res.send(Buffer.from(audioBuffer));
+        } catch (error) {
+            logger.error("Error generating speech:", error);
+            res.status(500).json({
+                error: "Error generating speech",
+                details: error.message,
+            });
+        }
+    });
+
     return router;
 } 
+
