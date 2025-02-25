@@ -1,7 +1,7 @@
 import {
     logger,
     ModelClass,
-    type IAgentRuntime,
+    type IAgentRuntime
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import {
@@ -10,10 +10,10 @@ import {
     SpaceParticipant,
     type Scraper,
     type SpaceConfig,
-    type SpeakerRequest,
+    type SpeakerRequest
 } from "./client/index.ts";
 import { SttTtsPlugin } from "./sttTtsSpaces.ts";
-import { isAgentInSpace, generateTopicsIfEmpty, speakFiller } from "./utils.ts";
+import { generateTopicsIfEmpty, isAgentInSpace, speakFiller } from "./utils.ts";
 
 export interface TwitterSpaceDecisionOptions {
     maxSpeakers?: number;
