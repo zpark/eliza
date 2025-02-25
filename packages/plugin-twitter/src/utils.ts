@@ -1,12 +1,13 @@
 import type { Tweet } from "./client";
-import type { Content, IAgentRuntime, Memory, ModelClass, UUID } from "@elizaos/core";
+import { Content, IAgentRuntime, Memory, ModelClass, UUID, composeContext } from "@elizaos/core";
 import { ChannelType, generateText, stringToUuid } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import { logger } from "@elizaos/core";
-import type { Media } from "@elizaos/core";
+import type { Media, State } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
 import type { ActionResponse, MediaData } from "./types";
+import { SttTtsPlugin } from "./sttTtsSpaces";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -533,4 +534,104 @@ export async function generateTweetActions({
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
     }
+}
+
+
+
+/**
+ * Generate short filler text via GPT
+ */
+export async function generateFiller(
+    runtime: IAgentRuntime,
+    fillerType: string
+): Promise<string> {
+    try {
+        const context = composeContext({
+            state: { fillerType } as any as State,
+            template: `
+# INSTRUCTIONS:
+You are generating a short filler message for a Twitter Space. The filler type is "{{fillerType}}".
+Keep it brief, friendly, and relevant. No more than two sentences.
+Only return the text, no additional formatting.
+
+---
+`,
+        });
+        const output = await generateText({
+            runtime,
+            context,
+            modelClass: ModelClass.TEXT_SMALL,
+        });
+        return output.trim();
+    } catch (err) {
+        logger.error("[generateFiller] Error generating filler:", err);
+        return "";
+    }
+}
+
+/**
+ * Speak a filler message if STT/TTS plugin is available. Sleep a bit after TTS to avoid cutoff.
+ */
+export async function speakFiller(
+    runtime: IAgentRuntime,
+    sttTtsPlugin: SttTtsPlugin | undefined,
+    fillerType: string,
+    sleepAfterMs = 3000
+): Promise<void> {
+    if (!sttTtsPlugin) return;
+    const text = await generateFiller(runtime, fillerType);
+    if (!text) return;
+
+    logger.log(`[Space] Filler (${fillerType}) => ${text}`);
+    await sttTtsPlugin.speakText(text);
+
+    if (sleepAfterMs > 0) {
+        await new Promise((res) => setTimeout(res, sleepAfterMs));
+    }
+}
+
+/**
+ * Generate topic suggestions via GPT if no topics are configured
+ */
+export async function generateTopicsIfEmpty(
+    runtime: IAgentRuntime
+): Promise<string[]> {
+    try {
+        const context = composeContext({
+            state: {} as any,
+            template: `
+# INSTRUCTIONS:
+Please generate 5 short topic ideas for a Twitter Space about technology or random interesting subjects.
+Return them as a comma-separated list, no additional formatting or numbering.
+
+Example:
+"AI Advances, Futuristic Gadgets, Space Exploration, Quantum Computing, Digital Ethics"
+---
+`,
+        });
+        const response = await generateText({
+            runtime,
+            context,
+            modelClass: ModelClass.TEXT_SMALL,
+        });
+        const topics = response
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+        return topics.length ? topics : ["Random Tech Chat", "AI Thoughts"];
+    } catch (err) {
+        logger.error("[generateTopicsIfEmpty] GPT error =>", err);
+        return ["Random Tech Chat", "AI Thoughts"];
+    }
+}
+
+export async function isAgentInSpace(client: ClientBase, spaceId: string): Promise<boolean> {
+    const space = await client.twitterClient.getAudioSpaceById(spaceId);
+    const agentName = client.state["TWITTER_USERNAME"];
+
+    return space.participants.listeners.some(
+        (participant) => participant.twitter_screen_name === agentName
+    ) || space.participants.speakers.some(
+        (participant) => participant.twitter_screen_name === agentName
+    );
 }
