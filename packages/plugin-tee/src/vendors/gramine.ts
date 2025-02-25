@@ -1,10 +1,10 @@
 import { TeeType } from '../types';
 import type { TeeVendor } from './types';
 import { sgxAttestationProvider } from '../providers/remoteAttestationProvider';
-import { TeeVendors } from '@elizaos/core';
+import { TeeVendorNames } from './types';
 
 export class GramineVendor implements TeeVendor {
-    type = TeeVendors.SGX_GRAMINE;
+    type = TeeVendorNames.SGX_GRAMINE;
 
     getActions() {
         return [];

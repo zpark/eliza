@@ -1,33 +1,32 @@
-import { describe, expect, it, mock, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { CacheManager, MemoryCacheAdapter } from "../src/cache.ts";
 import {
-    getGoals,
-    formatGoalsAsString,
-    updateGoal,
     createGoal,
+    formatGoalsAsString,
+    getGoals,
+    updateGoal,
 } from "../src/goals.ts";
 import {
-    type Goal,
-    GoalStatus,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-    type UUID,
-    type Service,
-    type ServiceType,
-    type IMemoryManager,
-    type Character,
-    TableType,
     Action,
     ChannelType,
+    type Character,
     Client,
+    type Goal,
+    GoalStatus,
     HandlerCallback,
+    type IAgentRuntime,
+    type IMemoryManager,
+    type Memory,
     ModelClass,
     Provider,
     RoomData,
+    type Service,
+    type ServiceType,
+    type State,
     Task,
-    WorldData,
+    type UUID,
+    WorldData
 } from "../src/types.ts";
-import { CacheManager, MemoryCacheAdapter } from "../src/cache.ts";
 
 // Mock the database adapter
 export const mockDatabaseAdapter = {
@@ -41,7 +40,7 @@ const services = new Map<ServiceType, Service>();
 // Create memory managers first
 const messageManager: IMemoryManager = {
     runtime: undefined as any, // Will set after runtime creation
-    tableName: TableType.MESSAGES,
+    tableName: "messages",
     searchMemories: async () => [],
     addEmbeddingToMemory: async (m) => m,
     getMemories: async () => [],
@@ -56,7 +55,7 @@ const messageManager: IMemoryManager = {
 
 const descriptionManager: IMemoryManager = {
     runtime: undefined as any, // Will set after runtime creation
-    tableName: TableType.DESCRIPTIONS,
+    tableName: "descriptions",
     searchMemories: async () => [],
     addEmbeddingToMemory: async (m) => m,
     getMemories: async () => [],

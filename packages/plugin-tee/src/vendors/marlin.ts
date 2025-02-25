@@ -1,6 +1,6 @@
-import type { TeeVendor, TeeVendorConfig } from './types';
-import { marlinRemoteAttestationAction as remoteAttestationAction } from '../actions/remoteAttestationAction';
 import { TeeVendors } from '@elizaos/core';
+import { marlinRemoteAttestationAction as remoteAttestationAction } from '../actions/remoteAttestationAction';
+import type { TeeVendor } from './types';
 
 export class MarlinVendor implements TeeVendor {
     type = TeeVendors.MARLIN;

@@ -14,22 +14,16 @@ import {
   logger,
   parseBooleanFromText,
   settings,
-  stringToUuid,
-  TeeVendors,
-  validateCharacterConfig,
-  type Plugin,
-  elizaLogger,
+  stringToUuid
 } from "@elizaos/core";
-import { teePlugin } from "@elizaos/plugin-tee";
-import fs from "node:fs";
 import net from "node:net";
 import yargs from "yargs";
 import { AgentServer } from "./server/index.ts";
 import {
   hasValidRemoteUrls,
+  jsonToCharacter,
   loadCharacters,
-  loadCharacterTryPath,
-  jsonToCharacter
+  loadCharacterTryPath
 } from "./server/loader.ts";
 import { defaultCharacter } from "./single-agent/character.ts";
 import { startScenario } from "./swarm/scenario.ts";
@@ -131,46 +125,6 @@ function initializeCache(
   }
 }
 
-async function initializeTEE(runtime: IAgentRuntime) {
-  if (runtime.getSetting("TEE_VENDOR")) {
-    const vendor = runtime.getSetting("TEE_VENDOR");
-    elizaLogger.info(`Initializing TEE with vendor: ${vendor}`);
-    let plugin: Plugin;
-    switch (vendor) {
-      case "phala":
-        plugin = teePlugin({
-          vendor: TeeVendors.PHALA,
-          vendorConfig: {
-            apiKey: runtime.getSetting("TEE_API_KEY"),
-          },
-        });
-        break;
-      case "marlin":
-        plugin = teePlugin({
-            vendor: TeeVendors.MARLIN,
-          }
-        );
-        break;
-      case "fleek":
-        plugin = teePlugin({
-            vendor: TeeVendors.FLEEK,
-          }
-        );
-        break;
-      case "sgx-gramine":
-        plugin = teePlugin({
-            vendor: TeeVendors.SGX_GRAMINE,
-          }
-        );
-        break;
-      default:
-        throw new Error(`Invalid TEE vendor: ${vendor}`);
-    }
-    elizaLogger.info(`Pushing plugin: ${plugin.name}`);
-    runtime.plugins.push(plugin);
-  }
-}
-
 async function findDatabaseAdapter(runtime: IAgentRuntime) {
   const { adapters } = runtime;
   let adapter: Adapter | undefined;
@@ -226,9 +180,6 @@ async function startAgent(
       db
     ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
     runtime.cacheManager = cache;
-
-    // initialize TEE, if specified
-    await initializeTEE(runtime);
 
     // start services/plugins/process knowledge    
     await runtime.initialize();

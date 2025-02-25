@@ -15,7 +15,7 @@ import {
 } from "./evaluators.ts";
 import { generateText } from "./generation.ts";
 import { formatGoalsAsString, getGoals } from "./goals.ts";
-import { elizaLogger, handlePluginImporting, logger } from "./index.ts";
+import { handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
 import { formatActors, formatMessages, getActorDetails, messageEvents } from "./messages.ts";
@@ -47,7 +47,6 @@ import {
     type Service,
     type ServiceType,
     type State,
-    TableType,
     type Task,
     type UUID,
     type WorldData
@@ -148,25 +147,25 @@ class MemoryManagerService {
         // Message manager for storing messages
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: TableType.MESSAGES,
+            tableName: "messages",
         }));
 
         // Description manager for storing user descriptions
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: TableType.DESCRIPTIONS,
+            tableName: "descriptions",
         }));
 
         // Documents manager for large documents
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: TableType.DOCUMENTS,
+            tableName: "documents",
         }));
 
         // Knowledge manager for searchable fragments
         this.registerMemoryManager(new MemoryManager({
             runtime: this.runtime,
-            tableName: TableType.FRAGMENTS,
+            tableName: "fragments",
         }));
     }
 
@@ -204,19 +203,19 @@ class MemoryManagerService {
     }
 
     getMessageManager(): IMemoryManager {
-        return this.getRequiredMemoryManager(TableType.MESSAGES, "Message");
+        return this.getRequiredMemoryManager("messages", "Message");
     }
 
     getDescriptionManager(): IMemoryManager {
-        return this.getRequiredMemoryManager(TableType.DESCRIPTIONS, "Description");
+        return this.getRequiredMemoryManager("descriptions", "Description");
     }
 
     getDocumentsManager(): IMemoryManager {
-        return this.getRequiredMemoryManager(TableType.DOCUMENTS, "Documents");
+        return this.getRequiredMemoryManager("documents", "Documents");
     }
 
     getKnowledgeManager(): IMemoryManager {
-        return this.getRequiredMemoryManager(TableType.FRAGMENTS, "Knowledge");
+        return this.getRequiredMemoryManager("fragments", "Knowledge");
     }
 
     getAllManagers(): Map<string, IMemoryManager> {
@@ -315,10 +314,10 @@ export class AgentRuntime implements IAgentRuntime {
         }
 
         for (const plugin of plugins) {
-            elizaLogger.info(`Initializing plugin: ${plugin.name}`);
-            elizaLogger.info(`Plugin actions: ${plugin.actions}`);
+            logger.info(`Initializing plugin: ${plugin.name}`);
+            logger.info(`Plugin actions: ${plugin.actions}`);
             for (const action of (plugin.actions ?? [])) {
-                elizaLogger.info(`Registering action: ${action.name}`);
+                logger.info(`Registering action: ${action.name}`);
                 this.registerAction(action);
             }
 
@@ -512,6 +511,12 @@ export class AgentRuntime implements IAgentRuntime {
     
                     this.plugins.push(plugin);
                 }
+            }
+        }
+
+        for(const plugin of this.plugins){
+            if(plugin.init){
+                await plugin.init(plugin.config, this);
             }
         }
       

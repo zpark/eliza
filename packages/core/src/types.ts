@@ -614,7 +614,7 @@ export type Plugin = {
   name: string;
 
   /** Initialization function */
-  init?: (config: Record<string, string>) => Promise<void>;
+  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
 
   /** Plugin configuration */
   config?: { [key: string]: any };
@@ -1412,20 +1412,13 @@ export enum TeeType {
   TDX_DSTACK = "tdx_dstack",
 }
 
-export enum TeeVendors {
-  PHALA = "phala",
-  MARLIN = "marlin",
-  FLEEK = "fleek",
-  SGX_GRAMINE = "sgx_gramine",
-}
-
 export interface TeeVendorConfig {
   // Add vendor-specific configuration options here
   [key: string]: unknown;
 }
 
 export interface TeePluginConfig {
-  vendor?: TeeVendors;
+  vendor?: string;
   vendorConfig?: TeeVendorConfig;
 }
 
@@ -1457,11 +1450,4 @@ export type RoomData = {
   serverId?: string;
   worldId?: UUID;
   metadata?: Record<string, unknown>;
-}
-
-export const TableType = {
-    MESSAGES: "messages",
-    DESCRIPTIONS: "descriptions",
-    DOCUMENTS: "documents",
-    FRAGMENTS: "fragments"
 }

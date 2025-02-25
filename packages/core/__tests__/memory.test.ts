@@ -1,16 +1,15 @@
-import { describe, expect, it, mock, beforeEach } from "bun:test";
-import { MemoryManager } from "../src/memory";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { CacheManager, MemoryCacheAdapter } from "../src/cache";
-import type { 
-    IAgentRuntime, 
-    Memory, 
-    UUID, 
-    ModelClass, 
-    KnowledgeMetadata, 
+import { MemoryManager } from "../src/memory";
+import type {
     DocumentMetadata,
-    FragmentMetadata
+    FragmentMetadata,
+    IAgentRuntime,
+    KnowledgeMetadata,
+    Memory,
+    UUID
 } from "../src/types";
-import { MemoryType, TableType } from "../src/types.ts";
+import { MemoryType } from "../src/types.ts";
 
 describe("MemoryManager", () => {
     const TEST_UUID_1 = "123e4567-e89b-12d3-a456-426614174000" as UUID;
@@ -43,7 +42,7 @@ describe("MemoryManager", () => {
         } as unknown as IAgentRuntime;
 
         memoryManager = new MemoryManager({
-            tableName: TableType.DOCUMENTS,
+            tableName: "documents",
             runtime: mockRuntime,
         });
     });
@@ -274,20 +273,20 @@ describe("MemoryManager", () => {
         it("should only accept valid table names", () => {
             // Valid cases
             expect(() => new MemoryManager({ 
-                tableName: TableType.DOCUMENTS,
+                tableName: "documents",
                 runtime: mockRuntime 
             })).not.toThrow();
             
             // Invalid cases
             expect(() => new MemoryManager({ 
-                tableName: "not_a_valid_table" as TableType,
+                tableName: "not_a_valid_table" as string,
                 runtime: mockRuntime 
             })).toThrow();
         });
 
         it("should enforce table-specific metadata types", async () => {
             const documentsManager = new MemoryManager({ 
-                tableName: TableType.DOCUMENTS,
+                tableName: "documents",
                 runtime: mockRuntime 
             });
 
@@ -311,7 +310,7 @@ describe("MemoryManager", () => {
 
         it("should enforce metadata requirements", async () => {
             const fragmentsManager = new MemoryManager({
-                tableName: TableType.FRAGMENTS,
+                tableName: "fragments",
                 runtime: mockRuntime
             });
 
@@ -356,7 +355,7 @@ describe("MemoryManager", () => {
     describe("Document Fragmentation", () => {
         it("should handle different token size configurations", async () => {
             const documentsManager = new MemoryManager({ 
-                tableName: TableType.DOCUMENTS,
+                tableName: "documents",
                 runtime: mockRuntime 
             });
             

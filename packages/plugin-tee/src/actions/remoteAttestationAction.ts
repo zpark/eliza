@@ -7,7 +7,7 @@ import type {
 } from '@elizaos/core';
 import { PhalaRemoteAttestationProvider as RemoteAttestationProvider } from '../providers/remoteAttestationProvider';
 import { hexToUint8Array } from '../utils';
-import { elizaLogger } from '@elizaos/core';
+import { logger } from '@elizaos/core';
 
 async function uploadUint8Array(data: Uint8Array) {
     const blob = new Blob([data], { type: 'application/octet-stream' });
@@ -44,8 +44,8 @@ export const phalaRemoteAttestationAction = {
             };
             // Get the remote attestation of the agentId
             const teeMode = runtime.getSetting('TEE_MODE');
-            elizaLogger.debug(`Tee mode: ${teeMode}`);
-            elizaLogger.debug(`Attestation message: ${JSON.stringify(attestationMessage)}`);
+            logger.debug(`Tee mode: ${teeMode}`);
+            logger.debug(`Attestation message: ${JSON.stringify(attestationMessage)}`);
             const provider = new RemoteAttestationProvider(teeMode);
 
             const attestation = await provider.generateAttestation(
