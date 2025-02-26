@@ -36,7 +36,6 @@ function generateStatusMessage(
   state?: State
 ): string {
   try {
-    console.log("WORLD SETTINGS", worldSettings);
     // Format settings for display
     const formattedSettings = Object.entries(worldSettings)
       .map(([key, setting]) => {
@@ -66,8 +65,6 @@ function generateStatusMessage(
       (s) => s.required && !s.configured
     ).length;
 
-    console.log("FORMATTED SETTINGS", formattedSettings);
-
     // Generate appropriate message
     if (isOnboarding) {
       if (requiredUnconfigured > 0) {
@@ -78,7 +75,7 @@ function generateStatusMessage(
             .map((s) => `${s.name}: ${s.usageDescription}\nCurrent value: ${s.value}`)
             .join("\n\n") +
           "\n\n" +
-          `If the user gives any information related to the settings, ${state.agentName} should use the UPDATE_SETTINGS action to update the settings with this new information. ${agentName} can update any, some or all settings.`
+          `If the user gives any information related to the settings, ${state.agentName} should use the UPDATE_SETTINGS action to update the settings with this new information. ${state.agentName} can update any, some or all settings.`
         );
       } else {
         return (
@@ -112,7 +109,6 @@ export const settingsProvider: Provider = {
     state?: State
   ): Promise<string> => {
     try {
-      console.log("ONBOARDING PROVIDER GET CALLED");
       const room = await runtime.getRoom(message.roomId);
       if (!room) {
         logger.error("No room found for onboarding provider");
@@ -153,8 +149,6 @@ export const settingsProvider: Provider = {
         isOnboarding,
         state
       );
-
-      console.log("ONBOARDING PROVIDER OUTPUT\n", output);
 
       return output;
     } catch (error) {
