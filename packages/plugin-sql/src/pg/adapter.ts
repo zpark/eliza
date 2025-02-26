@@ -1,7 +1,7 @@
 import { logger } from "@elizaos/core";
-import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "../schema/embedding";
-import { PostgresConnectionManager } from "./manager";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "../schema/embedding";
+import type { PostgresConnectionManager } from "./manager";
 import { BaseDrizzleAdapter } from "../base";
 
 export class PgDatabaseAdapter extends BaseDrizzleAdapter<NodePgDatabase> {
