@@ -62,7 +62,7 @@ export class MessageManager {
     }
 
     const userId = message.author.id as UUID;
-    const userIdUUID = stringToUuid(userId);
+    const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
     const userName = message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
@@ -114,7 +114,7 @@ export class MessageManager {
         attachments.push(...processedAudioAttachments);
       }
 
-      const userIdUUID = stringToUuid(userId);
+      const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
       const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
       const newMessage: Memory = {

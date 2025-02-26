@@ -53,22 +53,6 @@ import {
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
-
-// Generate a deterministic tenant-specific user ID from base userId and agentId
-export function generateTenantSpecificUserId(baseUserId: UUID, agentId: UUID): UUID {
-    // If the base user ID is the agent ID, return it directly
-    if (baseUserId === agentId) {
-      return agentId;
-    }
-    
-    // Use a deterministic approach to generate a new UUID based on both IDs
-    // This creates a unique ID for each user+agent combination while still being deterministic
-    const combinedString = `${baseUserId}:${agentId}`;
-    
-    // Create a namespace UUID (version 5) from the combined string
-    return stringToUuid(combinedString);
-  }
-
 function formatKnowledge(knowledge: KnowledgeItem[]): string {
     return knowledge
         .map((knowledge) => `- ${knowledge.content.text}`)
@@ -330,7 +314,7 @@ export class AgentRuntime implements IAgentRuntime {
             }
 
             // plugin.events is an object with keys as event names and values as event handlers
-            for(const [eventName, eventHandlers] of Object.entries(plugin.events)){
+            for(const [eventName, eventHandlers] of Object.entries(plugin.events ?? {})){
                 for(const eventHandler of eventHandlers){
                     this.registerEvent(eventName, eventHandler);
                 }
@@ -419,8 +403,8 @@ export class AgentRuntime implements IAgentRuntime {
             const created = await this.databaseAdapter.createEntity({
               id: this.agentId,
               agentId: this.agentId,
+              names: Array.from(new Set([this.character.name, this.character.username].filter(Boolean))) as string[],
               metadata: {
-                names: [this.character.name, this.character.username].filter(Boolean) as string[],
                 name: this.character.name || "Agent",
                 username: this.character.username || this.character.name || "Agent",
                 originalUserId: this.agentId
@@ -512,7 +496,7 @@ export class AgentRuntime implements IAgentRuntime {
         // Create room for the agent
         try {
           await this.ensureRoomExists({
-            id: this.agentId, 
+            id: this.generateTenantUserId(this.agentId),
             name: this.character.name, 
             source: "self", 
             type: ChannelType.SELF
@@ -573,6 +557,20 @@ export class AgentRuntime implements IAgentRuntime {
           })
         );
       }
+
+    generateTenantUserId(baseUserId: UUID): UUID {
+        // If the base user ID is the agent ID, return it directly
+        if (baseUserId === this.agentId) {
+            return this.agentId;
+        }
+        
+        // Use a deterministic approach to generate a new UUID based on both IDs
+        // This creates a unique ID for each user+agent combination while still being deterministic
+        const combinedString = `${baseUserId}:${this.agentId}`;
+        
+        // Create a namespace UUID (version 5) from the combined string
+        return stringToUuid(combinedString);
+    }
 
     async ensureAgentExists() {
         const agent = await this.databaseAdapter.getAgent(this.agentId);
@@ -815,13 +813,6 @@ export class AgentRuntime implements IAgentRuntime {
         return evaluators;
     }
 
-    transformUserId(userId: UUID): UUID {
-        return userId === this.agentId 
-          ? userId 
-          : generateTenantSpecificUserId(userId, this.agentId);
-      }
-
-
     /**
      * Ensure the existence of a user in the database. If the user does not exist, they are added to the database.
      * @param userId - The user ID to ensure the existence of.
@@ -834,17 +825,17 @@ export class AgentRuntime implements IAgentRuntime {
         name: string | null,
       ) {
         // Generate tenant-specific user ID - apply the transformation
-        const tenantSpecificUserId = this.transformUserId(userId);
+        const tenantSpecificUserId = this.generateTenantUserId(userId);
         
         const account = await this.databaseAdapter.getEntityById(tenantSpecificUserId, this.agentId);
         if (!account) {
           const created = await this.databaseAdapter.createEntity({
             id: tenantSpecificUserId,
             agentId: this.agentId,
-            metadata: {
-              names: [
+            names: Array.from(new Set([
                 name, userName
-              ].filter(Boolean) as string[],
+            ].filter(Boolean))) as string[],
+            metadata: {
               name: name || "Unknown User",
               username: userName || "Unknown",
               originalUserId: userId // Store original ID for reference
@@ -864,7 +855,7 @@ export class AgentRuntime implements IAgentRuntime {
 
       async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
         // Always get the tenant-specific user ID using our helper method
-        const tenantSpecificUserId = this.transformUserId(userId);
+        const tenantSpecificUserId = this.generateTenantUserId(userId);
         
         // Make sure entity exists in database before adding as participant
         const entity = await this.databaseAdapter.getEntityById(tenantSpecificUserId, this.agentId);
@@ -1041,7 +1032,7 @@ export class AgentRuntime implements IAgentRuntime {
         // Convert user ID to tenant-specific ID if needed
         const tenantSpecificUserId = message.userId === this.agentId 
             ? message.userId 
-            : generateTenantSpecificUserId(message.userId, this.agentId);
+            : this.generateTenantUserId(message.userId);
             
         const { roomId } = message;
     
@@ -1160,7 +1151,7 @@ export class AgentRuntime implements IAgentRuntime {
             // Convert to tenant-specific ID if needed
             const tenantUserA = userA === this.agentId 
                 ? userA 
-                : generateTenantSpecificUserId(userA, this.agentId);
+                : this.generateTenantUserId(userA);
                 
             // Find all rooms where userA and userB are participants
             const rooms = await this.databaseAdapter.getRoomsForParticipants([

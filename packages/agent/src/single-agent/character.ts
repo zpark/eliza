@@ -8,9 +8,9 @@ export const defaultCharacter: Character = {
   name: "Eliza",
   username: "eliza",
   plugins: [
-    // "@elizaos/plugin-anthropic",
-    // "@elizaos/plugin-openai",
-    "@elizaos/plugin-local-ai",
+    "@elizaos/plugin-anthropic",
+    "@elizaos/plugin-openai",
+    // "@elizaos/plugin-local-ai",
     // "@elizaos/plugin-elevenlabs",
     // "@elizaos/plugin-discord",
     "@elizaos/plugin-node",

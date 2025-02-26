@@ -1,4 +1,4 @@
-import { pgTable, text, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, unique, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
 import { stringJsonb } from "./types";
@@ -6,6 +6,7 @@ import { stringJsonb } from "./types";
 export const cacheTable = pgTable(
     "cache",
     {
+        id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
         key: text("key").notNull(),
         agentId: text("agentId").notNull(),
         value: stringJsonb("value").default(sql`'{}'::jsonb`),

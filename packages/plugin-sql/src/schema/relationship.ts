@@ -13,7 +13,7 @@ import { agentTable } from "./agent";
 export const relationshipTable = pgTable(
     "relationships",
     {
-        id: uuid("id").notNull(),
+        id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),

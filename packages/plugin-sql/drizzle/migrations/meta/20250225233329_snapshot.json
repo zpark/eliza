@@ -1,5 +1,5 @@
 {
-  "id": "9c756016-9f8e-4607-99f0-4a5c3970389d",
+  "id": "fe6cf216-3ff6-4d2c-866e-9f132bc12f13",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -62,6 +62,13 @@
       "name": "cache",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
         "key": {
           "name": "key",
           "type": "text",
@@ -405,8 +412,9 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "createdAt": {
           "name": "createdAt",
@@ -875,8 +883,9 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "createdAt": {
           "name": "createdAt",
@@ -1022,8 +1031,9 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "createdAt": {
           "name": "createdAt",
@@ -1193,7 +1203,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "agentId": {
           "name": "agentId",
@@ -1294,7 +1305,8 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "agentId": {
           "name": "agentId",

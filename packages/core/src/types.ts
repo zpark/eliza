@@ -501,6 +501,9 @@ export interface Entity {
   /** Unique identifier, optional on creation */
   id?: UUID;
 
+  /** Names of the entity */
+  names: string[];
+
   /** Optional additional metadata */
   metadata?: { [key: string]: any };
 
@@ -1042,10 +1045,10 @@ export interface IAgentRuntime {
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
 
+  generateTenantUserId(userId: UUID): UUID;
+
   registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
-
-  transformUserId(userId: UUID): UUID;
 
   unregisterClient(name: string): void;
 
@@ -1104,6 +1107,7 @@ export interface IAgentRuntime {
     channelId,
     serverId,
     type,
+    worldId
   }: {
     userId: UUID;
     roomId: UUID;
@@ -1113,6 +1117,7 @@ export interface IAgentRuntime {
     channelId?: string;
     serverId?: string;
     type: ChannelType;
+    worldId?: UUID;
   }): Promise<void>;
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;

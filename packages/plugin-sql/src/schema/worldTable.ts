@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
 
 export const worldTable = pgTable("worlds", {
-  id: uuid("id").primaryKey().notNull(),
+  id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
   agentId: uuid("agentId").notNull(),
   name: text("name").notNull(),
   metadata: jsonb("metadata"),
