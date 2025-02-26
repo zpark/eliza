@@ -1,5 +1,5 @@
 import { logger } from "./logger";
-import { OnboardingSetting, IAgentRuntime, OnboardingState, OnboardingConfig, WorldData } from "./types";
+import { OnboardingSetting, IAgentRuntime, WorldSettings, OnboardingConfig, WorldData } from "./types";
 import { stringToUuid } from "./uuid";
 
 function createSettingFromConfig(
@@ -23,10 +23,10 @@ function createSettingFromConfig(
 /**
  * Updates onboarding state in world metadata
  */
-export async function updateOnboardingState(
+export async function updateWorldSettings(
   runtime: IAgentRuntime,
   serverId: string,
-  onboardingState: OnboardingState
+  worldSettings: WorldSettings
 ): Promise<boolean> {
   try {
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
@@ -43,7 +43,7 @@ export async function updateOnboardingState(
     }
 
     // Update onboarding state
-    world.metadata.onboarding = onboardingState;
+    world.metadata.onboarding = worldSettings;
 
     // Save updated world
     await runtime.updateWorld(world);
@@ -58,10 +58,10 @@ export async function updateOnboardingState(
 /**
  * Gets onboarding state from world metadata
  */
-export async function getOnboardingState(
+export async function getWorldSettings(
   runtime: IAgentRuntime,
   serverId: string
-): Promise<OnboardingState | null> {
+): Promise<WorldSettings | null> {
   try {
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
     const world = await runtime.getWorld(worldId);
@@ -70,7 +70,7 @@ export async function getOnboardingState(
       return null;
     }
 
-    return world.metadata.onboarding as OnboardingState;
+    return world.metadata.onboarding as WorldSettings;
   } catch (error) {
     logger.error(`Error getting onboarding state: ${error}`);
     return null;
@@ -84,21 +84,21 @@ export async function initializeOnboardingConfig(
   runtime: IAgentRuntime,
   world: WorldData,
   config: OnboardingConfig
-): Promise<OnboardingState | null> {
+): Promise<WorldSettings | null> {
   try {
     // Check if onboarding state already exists
     if (world.metadata?.onboarding) {
       logger.info(`Onboarding state already exists for server ${world.serverId}`);
-      return world.metadata.onboarding as OnboardingState;
+      return world.metadata.onboarding as WorldSettings;
     }
     
     // Create new onboarding state
-    const onboardingState: OnboardingState = {};
+    const worldSettings: WorldSettings = {};
     
     // Initialize settings from config
     if (config.settings) {
       for (const [key, configSetting] of Object.entries(config.settings)) {
-        onboardingState[key] = createSettingFromConfig(configSetting);
+        worldSettings[key] = createSettingFromConfig(configSetting);
       }
     }
     
@@ -107,12 +107,12 @@ export async function initializeOnboardingConfig(
       world.metadata = {};
     }
     
-    world.metadata.onboarding = onboardingState;
+    world.metadata.onboarding = worldSettings;
     
     await runtime.updateWorld(world);
     
     logger.info(`Initialized onboarding config for server ${world.serverId}`);
-    return onboardingState;
+    return worldSettings;
   } catch (error) {
     logger.error(`Error initializing onboarding config: ${error}`);
     return null;

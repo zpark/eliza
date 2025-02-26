@@ -109,13 +109,18 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         continue;
       }
       const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
+      
+      const ownerId = stringToUuid(
+        `${guildObj.ownerId}-${runtime.agentId}`
+      );
+      
       await runtime.ensureWorldExists({
         id: worldId,
         name: guild.name,
         serverId: guild.id,
         agentId: runtime.agentId,
         metadata: {
-          ownership: guildObj.ownerId ? { ownerId: guildObj.ownerId } : undefined,
+          ownership: guildObj.ownerId ? { ownerId } : undefined,
         },
       });
       await runtime.ensureRoomExists({
@@ -496,6 +501,10 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     logger.log(`Joined guild ${guild.name}`);
     const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
+
+    const ownerId = stringToUuid(
+      `${fullGuild.ownerId}-${this.runtime.agentId}`
+    );
   
     // Create standardized world data structure
     const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
@@ -510,7 +519,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         serverId: fullGuild.id,
         metadata: {
           ownership: fullGuild.ownerId
-            ? { ownerId: fullGuild.ownerId }
+            ? { ownerId }
             : undefined,
         },
       } as WorldData,
@@ -727,6 +736,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
         // Create platform-agnostic world data structure with simplified structure
         const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
+        
+        const ownerId = stringToUuid(
+          `${fullGuild.ownerId}-${this.runtime.agentId}`
+        );
+        
         const standardizedData = {
           runtime: this.runtime,
           rooms: await this.buildStandardizedRooms(fullGuild, worldId),
@@ -738,7 +752,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
             serverId: fullGuild.id,
             metadata: {
               ownership: fullGuild.ownerId
-                ? { ownerId: fullGuild.ownerId }
+                ? { ownerId }
                 : undefined,
             },
           } as WorldData,

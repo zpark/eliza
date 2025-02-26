@@ -254,11 +254,19 @@ const syncServerUsers = async (
   try {
     // Create/ensure the world exists for this server
     const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
+    
+    const ownerId = stringToUuid(
+      `${server.ownerId}-${runtime.agentId}`
+    );
+    
     await runtime.ensureWorldExists({
       id: worldId,
       name: server.name || `Server ${server.id}`,
       agentId: runtime.agentId,
       serverId: server.id,
+      metadata: {
+        ownership: server.ownerId ? { ownerId } : undefined,
+      },
     });
 
     // Always sync channels
@@ -573,6 +581,9 @@ const handleServerSync = async ({ runtime, world, rooms, users, source }: Server
       name: world.name,
       agentId: runtime.agentId,
       serverId: world.serverId,
+      metadata: {
+        ...world.metadata,
+      },
     });
 
     // First sync all rooms/channels

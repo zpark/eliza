@@ -314,7 +314,15 @@ export class MessageManager {
             const room = {id: roomId, name: roomName, source: "telegram", type: channelType, channelId: ctx.chat.id.toString(), serverId: ctx.chat.id.toString(), worldId: worldId};
             if (channelType === ChannelType.GROUP) {
                 // if the type is a group, we need to get the world id from the supergroup/channel id
-                await this.runtime.ensureWorldExists({id: worldId, name: worldName, serverId: chat.id.toString(), agentId: this.runtime.agentId});
+                await this.runtime.ensureWorldExists({
+                    id: worldId, 
+                    name: worldName, 
+                    serverId: chat.id.toString(), 
+                    agentId: this.runtime.agentId,
+                    metadata: {
+                        ownership: chat.type === 'supergroup' ? { ownerId: chat.id.toString() } : undefined,
+                    }
+                });
                 room.worldId = worldId;
             }
 

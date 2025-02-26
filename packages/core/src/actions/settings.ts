@@ -1,6 +1,7 @@
 import { composeContext } from "../context";
 import { generateMessageResponse, generateObjectArray } from "../generation";
 import { logger } from "../logger";
+import { messageCompletionFooter } from "../parsing";
 import { findServerForOwner, normalizeUserId } from "../roles";
 import {
     Action,
@@ -11,7 +12,7 @@ import {
     Memory,
     ModelClass,
     OnboardingSetting,
-    OnboardingState,
+    WorldSettings,
     State,
 } from "../types";
 import { stringToUuid } from "../uuid";
@@ -57,10 +58,10 @@ IMPORTANT: Only include settings from the Available Settings list above. Ignore 
 /**
  * Gets onboarding state from world metadata
  */
-export async function getOnboardingState(
+export async function getWorldSettings(
   runtime: IAgentRuntime,
   serverId: string
-): Promise<OnboardingState | null> {
+): Promise<WorldSettings | null> {
   try {
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
     const world = await runtime.getWorld(worldId);
@@ -69,7 +70,7 @@ export async function getOnboardingState(
       return null;
     }
 
-    return world.metadata.onboarding as OnboardingState;
+    return world.metadata.onboarding as WorldSettings;
   } catch (error) {
     logger.error(`Error getting onboarding state: ${error}`);
     return null;
@@ -79,10 +80,10 @@ export async function getOnboardingState(
 /**
  * Updates onboarding state in world metadata
  */
-export async function updateOnboardingState(
+export async function updateWorldSettings(
   runtime: IAgentRuntime,
   serverId: string,
-  onboardingState: OnboardingState
+  worldSettings: WorldSettings
 ): Promise<boolean> {
   try {
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
@@ -99,7 +100,7 @@ export async function updateOnboardingState(
     }
 
     // Update onboarding state
-    world.metadata.onboarding = onboardingState;
+    world.metadata.onboarding = worldSettings;
 
     // Save updated world
     await runtime.updateWorld(world);
@@ -114,8 +115,8 @@ export async function updateOnboardingState(
 /**
  * Formats a list of settings for display
  */
-function formatSettingsList(onboardingState: OnboardingState): string {
-  const settings = Object.entries(onboardingState)
+function formatSettingsList(worldSettings: WorldSettings): string {
+  const settings = Object.entries(worldSettings)
     .filter(([key]) => !key.startsWith("_")) // Skip internal settings
     .map(([key, setting]) => {
       const status = setting.value !== null ? "Configured" : "Not configured";
@@ -130,7 +131,7 @@ function formatSettingsList(onboardingState: OnboardingState): string {
 /**
  * Categorizes settings by their configuration status
  */
-function categorizeSettings(onboardingState: OnboardingState): {
+function categorizeSettings(worldSettings: WorldSettings): {
   configured: [string, OnboardingSetting][];
   requiredUnconfigured: [string, OnboardingSetting][];
   optionalUnconfigured: [string, OnboardingSetting][];
@@ -139,7 +140,7 @@ function categorizeSettings(onboardingState: OnboardingState): {
   const requiredUnconfigured: [string, OnboardingSetting][] = [];
   const optionalUnconfigured: [string, OnboardingSetting][] = [];
 
-  for (const [key, setting] of Object.entries(onboardingState) as [
+  for (const [key, setting] of Object.entries(worldSettings) as [
     string,
     OnboardingSetting
   ][]) {
@@ -165,20 +166,20 @@ async function extractSettingValues(
   runtime: IAgentRuntime,
   message: Memory,
   state: State,
-  onboardingState: OnboardingState
+  worldSettings: WorldSettings
 ): Promise<SettingUpdate[]> {
   try {
     // Create context with current settings status for better extraction
     const context = composeContext({
       state: {
         ...state,
-        settings: Object.entries(onboardingState)
+        settings: Object.entries(worldSettings)
           .filter(([key]) => !key.startsWith("_")) // Skip internal settings
           .map(([key, setting]) => ({
             key,
             ...setting,
           })),
-        settingsStatus: formatSettingsList(onboardingState),
+        settingsStatus: formatSettingsList(worldSettings),
       },
       template: extractionTemplate,
     });
@@ -194,7 +195,7 @@ async function extractSettingValues(
 
     // Validate each extraction against setting definitions
     const validExtractions = extractions.filter((update) => {
-      const setting = onboardingState[update.key];
+      const setting = worldSettings[update.key];
       if (!setting) {
         logger.info(`Ignored extraction for unknown setting: ${update.key}`);
         return false;
@@ -223,7 +224,7 @@ async function extractSettingValues(
 async function processSettingUpdates(
   runtime: IAgentRuntime,
   serverId: string,
-  onboardingState: OnboardingState,
+  worldSettings: WorldSettings,
   updates: SettingUpdate[]
 ): Promise<{ updatedAny: boolean; messages: string[] }> {
   if (!updates.length) {
@@ -235,7 +236,7 @@ async function processSettingUpdates(
 
   try {
     // Create a copy of the state for atomic updates
-    const updatedState = { ...onboardingState };
+    const updatedState = { ...worldSettings };
 
     // Process all updates
     for (const update of updates) {
@@ -274,7 +275,7 @@ async function processSettingUpdates(
     // If any updates were made, save the entire state to world metadata
     if (updatedAny) {
       // Save to world metadata
-      const saved = await updateOnboardingState(
+      const saved = await updateWorldSettings(
         runtime,
         serverId,
         updatedState
@@ -285,7 +286,7 @@ async function processSettingUpdates(
       }
 
       // Verify save by retrieving it again
-      const savedState = await getOnboardingState(runtime, serverId);
+      const savedState = await getWorldSettings(runtime, serverId);
       if (!savedState) {
         throw new Error("Failed to verify state save");
       }
@@ -327,7 +328,7 @@ const successTemplate = `# Task: Generate a response for successful setting upda
 
 Write a natural, conversational response that {{agentName}} would send about the successful update and next steps.
 Include the action "SETTING_UPDATED" in your response.
-`;
+` + messageCompletionFooter;
 
 // Template for failure responses when settings couldn't be updated
 const failureTemplate = `# Task: Generate a response for failed setting updates
@@ -356,7 +357,7 @@ const failureTemplate = `# Task: Generate a response for failed setting updates
 
 Write a natural, conversational response that {{agentName}} would send about the failed update and how to proceed.
 Include the action "SETTING_UPDATE_FAILED" in your response.
-`;
+` + messageCompletionFooter;
 
 // Template for error responses when unexpected errors occur
 const errorTemplate = `# Task: Generate a response for an error during setting updates
@@ -375,7 +376,7 @@ const errorTemplate = `# Task: Generate a response for an error during setting u
 
 Write a natural, conversational response that {{agentName}} would send about the error.
 Include the action "SETTING_UPDATE_ERROR" in your response.
-`;
+` + messageCompletionFooter;
 
 // Template for completion responses when all required settings are configured
 const completionTemplate = `# Task: Generate a response for onboarding completion
@@ -399,14 +400,14 @@ const completionTemplate = `# Task: Generate a response for onboarding completio
 
 Write a natural, conversational response that {{agentName}} would send about the successful completion of onboarding.
 Include the action "ONBOARDING_COMPLETE" in your response.
-`;
+` + messageCompletionFooter;
 
 /**
  * Handles the completion of onboarding when all required settings are configured
  */
 async function handleOnboardingComplete(
   runtime: IAgentRuntime,
-  onboardingState: OnboardingState,
+  worldSettings: WorldSettings,
   state: State,
   callback: HandlerCallback
 ): Promise<void> {
@@ -415,7 +416,7 @@ async function handleOnboardingComplete(
     const context = composeContext({
       state: {
         ...state,
-        settingsStatus: formatSettingsList(onboardingState),
+        settingsStatus: formatSettingsList(worldSettings),
       },
       template: completionTemplate,
     });
@@ -446,18 +447,18 @@ async function handleOnboardingComplete(
  */
 async function generateSuccessResponse(
   runtime: IAgentRuntime,
-  onboardingState: OnboardingState,
+  worldSettings: WorldSettings,
   state: State,
   messages: string[],
   callback: HandlerCallback
 ): Promise<void> {
   try {
     // Check if all required settings are now configured
-    const { requiredUnconfigured } = categorizeSettings(onboardingState);
+    const { requiredUnconfigured } = categorizeSettings(worldSettings);
 
     if (requiredUnconfigured.length === 0) {
       // All required settings are configured, complete onboarding
-      await handleOnboardingComplete(runtime, onboardingState, state, callback);
+      await handleOnboardingComplete(runtime, worldSettings, state, callback);
       return;
     }
 
@@ -498,17 +499,17 @@ async function generateSuccessResponse(
  */
 async function generateFailureResponse(
   runtime: IAgentRuntime,
-  onboardingState: OnboardingState,
+  worldSettings: WorldSettings,
   state: State,
   callback: HandlerCallback
 ): Promise<void> {
   try {
     // Get next required setting
-    const { requiredUnconfigured } = categorizeSettings(onboardingState);
+    const { requiredUnconfigured } = categorizeSettings(worldSettings);
 
     if (requiredUnconfigured.length === 0) {
       // All required settings are configured, complete onboarding
-      await handleOnboardingComplete(runtime, onboardingState, state, callback);
+      await handleOnboardingComplete(runtime, worldSettings, state, callback);
       return;
     }
 
@@ -631,12 +632,12 @@ const updateSettingsAction: Action = {
       );
 
       // Check if there's an active onboarding state in world metadata
-      const onboardingState = await getOnboardingState(
+      const worldSettings = await getWorldSettings(
         runtime,
         serverOwnership.serverId
       );
 
-      if (!onboardingState) {
+      if (!worldSettings) {
         logger.error(
           `No onboarding state found for server ${serverOwnership.serverId}`
         );
@@ -681,9 +682,9 @@ const updateSettingsAction: Action = {
       logger.info(`Using server ID: ${serverId}`);
 
       // Get onboarding state from world metadata
-      const onboardingState = await getOnboardingState(runtime, serverId);
+      const worldSettings = await getWorldSettings(runtime, serverId);
 
-      if (!onboardingState) {
+      if (!worldSettings) {
         logger.error(
           `No onboarding state found for server ${serverId} in handler`
         );
@@ -692,12 +693,12 @@ const updateSettingsAction: Action = {
       }
 
       // Check if all required settings are already configured
-      const { requiredUnconfigured } = categorizeSettings(onboardingState);
+      const { requiredUnconfigured } = categorizeSettings(worldSettings);
       if (requiredUnconfigured.length === 0) {
         logger.info("All required settings configured, completing onboarding");
         await handleOnboardingComplete(
           runtime,
-          onboardingState,
+          worldSettings,
           state,
           callback
         );
@@ -710,7 +711,7 @@ const updateSettingsAction: Action = {
         runtime,
         message,
         state,
-        onboardingState
+        worldSettings
       );
       logger.info(`Extracted ${extractedSettings.length} settings`);
 
@@ -718,7 +719,7 @@ const updateSettingsAction: Action = {
       const updateResults = await processSettingUpdates(
         runtime,
         serverId,
-        onboardingState,
+        worldSettings,
         extractedSettings
       );
 
@@ -729,11 +730,11 @@ const updateSettingsAction: Action = {
         );
 
         // Get updated onboarding state
-        const updatedOnboardingState = await getOnboardingState(
+        const updatedWorldSettings = await getWorldSettings(
           runtime,
           serverId
         );
-        if (!updatedOnboardingState) {
+        if (!updatedWorldSettings) {
           logger.error(`Failed to retrieve updated onboarding state`);
           await generateErrorResponse(runtime, state, callback);
           return;
@@ -741,7 +742,7 @@ const updateSettingsAction: Action = {
 
         await generateSuccessResponse(
           runtime,
-          updatedOnboardingState,
+          updatedWorldSettings,
           state,
           updateResults.messages,
           callback
@@ -750,7 +751,7 @@ const updateSettingsAction: Action = {
         logger.info("No settings were updated");
         await generateFailureResponse(
           runtime,
-          onboardingState,
+          worldSettings,
           state,
           callback
         );

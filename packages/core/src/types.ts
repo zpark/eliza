@@ -1491,7 +1491,7 @@ export interface OnboardingSetting {
   visibleIf?: (settings: { [key: string]: OnboardingSetting }) => boolean;
 }
 
-export interface OnboardingState {
+export interface WorldSettings {
   [key: string]: OnboardingSetting;
 }
 

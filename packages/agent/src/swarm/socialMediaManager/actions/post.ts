@@ -10,7 +10,7 @@ import {
   type State,
   composeContext,
   generateText,
-  getOnboardingState,
+  getWorldSettings,
   logger,
   normalizeUserId,
   stringToUuid
@@ -80,13 +80,6 @@ const REQUIRED_TWITTER_FIELDS = [
   "TWITTER_PASSWORD",
 ];
 
-// Optional Twitter configuration fields
-const _OPTIONAL_TWITTER_FIELDS = [
-  "TWITTER_2FA_SECRET",
-  "POST_APPROVAL_REQUIRED",
-  "POST_APPROVAL_ROLE",
-];
-
 /**
  * Validates that all required Twitter configuration fields are present and non-null
  */
@@ -95,9 +88,9 @@ async function validateTwitterConfig(
   serverId: string
 ): Promise<{ isValid: boolean; error?: string }> {
   try {
-    const onboardingState = await getOnboardingState(runtime, serverId);
+    const worldSettings = await getWorldSettings(runtime, serverId);
 
-    if (!onboardingState) {
+    if (!worldSettings) {
       return {
         isValid: false,
         error: "No onboarding state found for this server",
@@ -106,7 +99,7 @@ async function validateTwitterConfig(
 
     // Check required fields
     for (const field of REQUIRED_TWITTER_FIELDS) {
-      if (!onboardingState[field] || onboardingState[field].value === null) {
+      if (!worldSettings[field] || worldSettings[field].value === null) {
         return {
           isValid: false,
           error: `Missing required Twitter configuration: ${field}`,
@@ -130,7 +123,7 @@ async function validateTwitterConfig(
 async function ensureTwitterClient(
   runtime: IAgentRuntime,
   serverId: string,
-  onboardingState: { [key: string]: string | boolean | number | null }
+  worldSettings: { [key: string]: string | boolean | number | null }
 ) {
   const manager = runtime.getClient("twitter");
   if (!manager) {
@@ -141,7 +134,7 @@ async function ensureTwitterClient(
 
   if (!client) {
     logger.info("Creating new Twitter client for server", serverId);
-    client = await manager.createClient(runtime, serverId, onboardingState);
+    client = await manager.createClient(runtime, serverId, worldSettings);
     if (!client) {
       throw new Error("Failed to create Twitter client");
     }
@@ -211,8 +204,8 @@ const twitterPostAction: Action = {
       }
 
       // Get onboarding state from world metadata
-      const onboardingState = await getOnboardingState(runtime, serverId);
-      if (!onboardingState) {
+      const worldSettings = await getWorldSettings(runtime, serverId);
+      if (!worldSettings) {
         throw new Error("Twitter not configured for this server");
       }
 
@@ -276,11 +269,11 @@ const twitterPostAction: Action = {
         tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
         handler: async (runtime: IAgentRuntime) => {
           const vals = {
-            TWITTER_USERNAME: onboardingState.TWITTER_USERNAME.value,
-            TWITTER_EMAIL: onboardingState.TWITTER_EMAIL.value,
-            TWITTER_PASSWORD: onboardingState.TWITTER_PASSWORD.value,
+            TWITTER_USERNAME: worldSettings.TWITTER_USERNAME.value,
+            TWITTER_EMAIL: worldSettings.TWITTER_EMAIL.value,
+            TWITTER_PASSWORD: worldSettings.TWITTER_PASSWORD.value,
             TWITTER_2FA_SECRET:
-              onboardingState.TWITTER_2FA_SECRET.value ?? undefined,
+              worldSettings.TWITTER_2FA_SECRET.value ?? undefined,
           };
 
           // Initialize/get Twitter client

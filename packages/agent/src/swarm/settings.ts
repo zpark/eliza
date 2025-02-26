@@ -6,7 +6,7 @@ import {
   initializeOnboardingConfig,
   logger,
   type OnboardingConfig,
-  type OnboardingState,
+  type WorldSettings,
   Provider,
   stringToUuid,
   type UUID,
@@ -81,30 +81,36 @@ export async function initializeAllSystems(
     for (const server of servers) {
       const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
 
+      const ownerId = stringToUuid(
+        `${server.ownerId}-${runtime.agentId}`
+      );
+
       await runtime.ensureWorldExists({
         id: worldId,
         name: server.name,
         agentId: runtime.agentId,
         serverId: server.id,
-        metadata: {}
+        metadata: {
+          ownership: server.ownerId ? { ownerId } : undefined,
+        }
       });
 
       const world = await runtime.getWorld(worldId);      
 
       // Initialize onboarding configuration
-      const onboardingState = await initializeOnboardingConfig(
+      const worldSettings = await initializeOnboardingConfig(
         runtime,
         world,
         config
       );
 
-      if (!onboardingState) {
+      if (!worldSettings) {
         logger.error(`Failed to initialize onboarding for server ${server.id}`);
         continue;
       }
 
       // Start onboarding DM with server owner
-      await startOnboardingDM(runtime, server, onboardingState);
+      await startOnboardingDM(runtime, server, worldSettings);
     }
   } catch (error) {
     logger.error(`Error initializing systems: ${error}`);
@@ -117,7 +123,7 @@ export async function initializeAllSystems(
 export async function startOnboardingDM(
   runtime: IAgentRuntime,
   guild: Guild,
-  onboardingState: OnboardingState
+  worldSettings: WorldSettings
 ): Promise<void> {
   try {
     const owner = await guild.members.fetch(guild.ownerId);

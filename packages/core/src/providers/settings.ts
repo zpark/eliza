@@ -3,7 +3,7 @@
 
 import { logger } from "../logger";
 import { findServerForOwner } from "../roles";
-import { getOnboardingState } from "../settings";
+import { getWorldSettings } from "../settings";
 import {
     ChannelType,
     IAgentRuntime,
@@ -11,7 +11,7 @@ import {
     Provider,
     State,
     type OnboardingSetting,
-    type OnboardingState
+    type WorldSettings
 } from "../types";
 
 /**
@@ -31,27 +31,30 @@ const formatSettingValue = (
  */
 function generateStatusMessage(
   runtime: IAgentRuntime,
-  onboardingState: OnboardingState,
+  worldSettings: WorldSettings,
   isOnboarding: boolean,
   state?: State
 ): string {
   try {
+    console.log("WORLD SETTINGS", worldSettings);
     // Format settings for display
-    const formattedSettings = Object.entries(onboardingState)
+    const formattedSettings = Object.entries(worldSettings)
       .map(([key, setting]) => {
         if (typeof setting !== "object" || !setting.name) return null;
 
-        // Skip internal settings
-        if (key.startsWith("_")) return null;
+        const description = setting.description || "";
+        const usageDescription = setting.usageDescription || "";
 
         // Skip settings that should be hidden based on visibility function
-        if (setting.visibleIf && !setting.visibleIf(onboardingState)) {
+        if (setting.visibleIf && !setting.visibleIf(worldSettings)) {
           return null;
         }
 
         return {
           name: setting.name,
           value: formatSettingValue(setting, isOnboarding),
+          description,
+          usageDescription,
           required: setting.required,
           configured: setting.value !== null,
         };
@@ -63,15 +66,19 @@ function generateStatusMessage(
       (s) => s.required && !s.configured
     ).length;
 
+    console.log("FORMATTED SETTINGS", formattedSettings);
+
     // Generate appropriate message
     if (isOnboarding) {
       if (requiredUnconfigured > 0) {
         return (
-          `I still need to configure ${requiredUnconfigured} required settings:\n\n` +
+          `# PRIORITY TASK: Onboarding with ${state.senderName}\n${state.agentName} still needs to configure ${requiredUnconfigured} required settings:\n\n` +
           formattedSettings
             .filter((s) => s.required && !s.configured)
-            .map((s) => `- ${s.name}: ${s.value}`)
-            .join("\n")
+            .map((s) => `${s.name}: ${s.usageDescription}\nCurrent value: ${s.value}`)
+            .join("\n\n") +
+          "\n\n" +
+          `If the user gives any information related to the settings, ${state.agentName} should use the UPDATE_SETTINGS action to update the settings with this new information. ${agentName} can update any, some or all settings.`
         );
       } else {
         return (
@@ -105,6 +112,7 @@ export const settingsProvider: Provider = {
     state?: State
   ): Promise<string> => {
     try {
+      console.log("ONBOARDING PROVIDER GET CALLED");
       const room = await runtime.getRoom(message.roomId);
       if (!room) {
         logger.error("No room found for onboarding provider");
@@ -130,21 +138,25 @@ export const settingsProvider: Provider = {
       const serverId = serverOwnership.serverId;
 
       // Get current onboarding state from world metadata
-      const onboardingState = await getOnboardingState(runtime, serverId);
+      const worldSettings = await getWorldSettings(runtime, serverId);
 
-      if (!onboardingState) {
+      if (!worldSettings) {
         logger.info(`No onboarding state found for server ${serverId}`);
         return isOnboarding
           ? "I need to configure some settings for this server. Let's begin the setup process."
           : "Configuration has not been completed yet.";
       }
 
-      return generateStatusMessage(
+      const output = generateStatusMessage(
         runtime,
-        onboardingState,
+        worldSettings,
         isOnboarding,
         state
       );
+
+      console.log("ONBOARDING PROVIDER OUTPUT\n", output);
+
+      return output;
     } catch (error) {
       logger.error(`Critical error in onboarding provider: ${error}`);
       return "Error retrieving configuration information. Please try again later.";
