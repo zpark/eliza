@@ -5,12 +5,13 @@ import { Command } from "commander"
 import fs from "node:fs"
 import path from "node:path"
 
-const AGENT_RUNTIME_URL = process.env.AGENT_RUNTIME_URL || "http://localhost:3000"
+const AGENT_RUNTIME_URL = process.env.AGENT_RUNTIME_URL?.replace(/\/$/, '') || 'http://localhost:3000'
+const AGENTS_BASE_URL = `${AGENT_RUNTIME_URL}/agents`
 
 // Utility function to resolve agent ID from name, index, or direct ID
 async function resolveAgentId(nameOrIndex: string): Promise<string> {
   // First try to get all agents to find by name
-  const listResponse = await fetch(`${AGENT_RUNTIME_URL}/agents`);
+  const listResponse = await fetch(`${AGENTS_BASE_URL}`);
   const { agents } = await listResponse.json();
       
   // Try to find agent by name (case insensitive)
@@ -47,7 +48,7 @@ interface AgentStartResponse {
 }
 
 async function getAgentIdFromIndex(index: number): Promise<string> {
-  const listResponse = await fetch(`${AGENT_RUNTIME_URL}/agents`)
+  const listResponse = await fetch(`${AGENTS_BASE_URL}`)
   const { agents } = await listResponse.json()
   
   const sortedAgents = agents.sort((a, b) => a.name.localeCompare(b.name))
@@ -66,7 +67,7 @@ agent
   .option("-j, --json", "output as JSON")
   .action(async (opts) => {
     try {
-      const response = await fetch(`${AGENT_RUNTIME_URL}/agents`)
+      const response = await fetch(`${AGENTS_BASE_URL}`)
       const { agents } = await response.json()
 
       // Sort agents by name
@@ -105,14 +106,11 @@ agent
   .option("-o, --output <file>", "output to file (default: {name}.json)")
   .action(async (opts) => {
     try {
-      // If input is a number, get agent ID from index
-      const resolvedAgentId = !Number.isNaN(Number(opts.name))
-        ? await getAgentIdFromIndex(Number.parseInt(opts.name))
-        : opts.name;
+      const resolvedAgentId = await resolveAgentId(opts.name);
       
       logger.info(`Getting agent ${resolvedAgentId}`)
 
-      const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${resolvedAgentId}`)
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`)
       if (!response.ok) {
         throw new Error(`Failed to get agent: ${response.statusText}`)
       }
@@ -159,7 +157,7 @@ agent
         switch (startOption) {
           case 'json':
             payload.characterJson = JSON.parse(opts.json);
-            return await fetch(`${AGENT_RUNTIME_URL}/agent/start`, {
+            return await fetch(`${AGENTS_BASE_URL}/start`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -170,7 +168,7 @@ agent
               throw new Error('Remote URL must start with http:// or https://');
             }
             payload.characterPath = opts.remote;
-            return await fetch(`${AGENT_RUNTIME_URL}/agent/start`, {
+            return await fetch(`${AGENTS_BASE_URL}/start`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
@@ -180,7 +178,7 @@ agent
             try {
               const fileContent = fs.readFileSync(opts.path, 'utf8');
               payload.characterJson = JSON.parse(fileContent);
-              return await fetch(`${AGENT_RUNTIME_URL}/agent/start`, {
+              return await fetch(`${AGENTS_BASE_URL}/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -190,7 +188,7 @@ agent
             }
 
           case 'name':
-            return await fetch(`${AGENT_RUNTIME_URL}/agent/start/${encodeURIComponent(opts.name)}`, {
+            return await fetch(`${AGENTS_BASE_URL}/start/${encodeURIComponent(opts.name)}`, {
               method: 'POST'
             });
 
@@ -217,18 +215,22 @@ agent
   .description("stop an agent")
   .requiredOption("-n, --name <name>", "agent id, name, or index number from list")
   .action(async (opts) => {
-    const resolvedAgentId = await resolveAgentId(opts.name);
+    try {
+      const resolvedAgentId = await resolveAgentId(opts.name);
 
-    const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${resolvedAgentId}/stop`, {
-      method: 'POST'
-    });
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}/stop`, {
+        method: 'POST'
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Failed to stop agent: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to stop agent: ${response.statusText}`);
+      }
+
+      logger.success(`Successfully stopped agent ${opts.name}`);
+    } catch (error) {
+      handleError(error);
     }
-
-    logger.success(`Successfully stopped agent ${opts.name}`);
   });
 
 agent
@@ -237,18 +239,22 @@ agent
   .description("remove an agent")
   .requiredOption("-n, --name <name>", "agent id, name, or index number from list")
   .action(async (opts) => {
-    const resolvedAgentId = await resolveAgentId(opts.name);
+    try {
+      const resolvedAgentId = await resolveAgentId(opts.name);
 
-    const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${resolvedAgentId}`, {
-      method: 'DELETE'
-    });
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`, {
+        method: 'DELETE'
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Failed to remove agent: ${response.statusText}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to remove agent: ${response.statusText}`);
+      }
+
+      logger.success(`Successfully removed agent ${opts.name}`);
+    } catch (error) {
+      handleError(error);
     }
-
-    logger.success(`Successfully removed agent ${opts.name}`);
   });
 
 agent
@@ -258,28 +264,33 @@ agent
   .option("-c, --config <json>", "configuration as JSON string")
   .option("-f, --file <path>", "path to configuration JSON file")
   .action(async (opts) => {
-    const resolvedAgentId = await resolveAgentId(opts.name);
+    try {
+      const resolvedAgentId = await resolveAgentId(opts.name);
 
-    let config: Record<string, unknown>;
-    if (opts.config) {
-      config = JSON.parse(opts.config);
-    } else if (opts.file) {
-      config = JSON.parse(fs.readFileSync(opts.file, 'utf8'));
-    } else {
-      throw new Error("Please provide either a config JSON string (-c) or a config file path (-f)");
+      let config: Record<string, unknown>;
+      if (opts.config) {
+        config = JSON.parse(opts.config);
+      } else if (opts.file) {
+        config = JSON.parse(fs.readFileSync(opts.file, 'utf8'));
+      } else {
+        throw new Error("Please provide either a config JSON string (-c) or a config file path (-f)");
+      }
+
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}/set`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to update agent configuration: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      logger.success(`Successfully updated configuration for agent ${result.id}`);
+    } catch (error) {
+      handleError(error);
     }
-
-    const response = await fetch(`${AGENT_RUNTIME_URL}/agents/${resolvedAgentId}/set`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config)
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to update agent configuration: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-    logger.success(`Successfully updated configuration for agent ${result.id}`)
   });
 
