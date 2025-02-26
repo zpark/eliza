@@ -1480,11 +1480,11 @@ export interface WorldRoleState {
 export interface OnboardingSetting {
   name: string;
   description: string;         // Used in chat context when discussing the setting
-  usageDescription: string;    // Used during onboarding to guide users
+  usageDescription: string;    // Used during settings to guide users
   value: string | boolean | null;
   required: boolean;
   public?: boolean;           // If true, shown in public channels
-  secret?: boolean;           // If true, value is masked and only shown during onboarding
+  secret?: boolean;           // If true, value is masked and only shown during settings
   validation?: (value: any) => boolean;
   dependsOn?: string[];
   onSetAction?: (value: any) => string;

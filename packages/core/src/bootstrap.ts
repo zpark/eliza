@@ -574,6 +574,7 @@ const syncSingleUser = async (
  */
 const handleServerSync = async ({ runtime, world, rooms, users, source }: ServerConnectedParams) => {
   logger.info(`Handling server sync event for server: ${world.name}`);
+  console.log("handleServerSync - world", world);
   try {
     // Create/ensure the world exists for this server
     await runtime.ensureWorldExists({

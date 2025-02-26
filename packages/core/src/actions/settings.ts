@@ -2,7 +2,7 @@ import { composeContext } from "../context";
 import { generateMessageResponse, generateObjectArray } from "../generation";
 import { logger } from "../logger";
 import { messageCompletionFooter } from "../parsing";
-import { findServerForOwner, normalizeUserId } from "../roles";
+import { findWorldForOwner, normalizeUserId } from "../roles";
 import {
     Action,
     ActionExample,
@@ -56,7 +56,7 @@ Return ONLY a JSON array of objects with 'key' and 'value' properties. Format:
 IMPORTANT: Only include settings from the Available Settings list above. Ignore any other potential settings.`;
 
 /**
- * Gets onboarding state from world metadata
+ * Gets settings state from world metadata
  */
 export async function getWorldSettings(
   runtime: IAgentRuntime,
@@ -66,19 +66,19 @@ export async function getWorldSettings(
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
     const world = await runtime.getWorld(worldId);
 
-    if (!world || !world.metadata?.onboarding) {
+    if (!world || !world.metadata?.settings) {
       return null;
     }
 
-    return world.metadata.onboarding as WorldSettings;
+    return world.metadata.settings as WorldSettings;
   } catch (error) {
-    logger.error(`Error getting onboarding state: ${error}`);
+    logger.error(`Error getting settings state: ${error}`);
     return null;
   }
 }
 
 /**
- * Updates onboarding state in world metadata
+ * Updates settings state in world metadata
  */
 export async function updateWorldSettings(
   runtime: IAgentRuntime,
@@ -99,15 +99,15 @@ export async function updateWorldSettings(
       world.metadata = {};
     }
 
-    // Update onboarding state
-    world.metadata.onboarding = worldSettings;
+    // Update settings state
+    world.metadata.settings = worldSettings;
 
     // Save updated world
     await runtime.updateWorld(world);
 
     return true;
   } catch (error) {
-    logger.error(`Error updating onboarding state: ${error}`);
+    logger.error(`Error updating settings state: ${error}`);
     return false;
   }
 }
@@ -379,7 +379,7 @@ Include the action "SETTING_UPDATE_ERROR" in your response.
 ` + messageCompletionFooter;
 
 // Template for completion responses when all required settings are configured
-const completionTemplate = `# Task: Generate a response for onboarding completion
+const completionTemplate = `# Task: Generate a response for settings completion
 
 # About {{agentName}}:
 {{bio}}
@@ -391,19 +391,19 @@ const completionTemplate = `# Task: Generate a response for onboarding completio
 {{recentMessages}}
 
 # Instructions:
-1. Congratulate the user on completing the onboarding process
+1. Congratulate the user on completing the settings process
 2. Maintain {{agentName}}'s personality and tone
 3. Summarize the key settings that have been configured
 4. Explain what functionality is now available
 5. Provide guidance on what the user can do next
 6. Express enthusiasm about working together
 
-Write a natural, conversational response that {{agentName}} would send about the successful completion of onboarding.
+Write a natural, conversational response that {{agentName}} would send about the successful completion of settings.
 Include the action "ONBOARDING_COMPLETE" in your response.
 ` + messageCompletionFooter;
 
 /**
- * Handles the completion of onboarding when all required settings are configured
+ * Handles the completion of settings when all required settings are configured
  */
 async function handleOnboardingComplete(
   runtime: IAgentRuntime,
@@ -433,7 +433,7 @@ async function handleOnboardingComplete(
       source: "discord",
     });
   } catch (error) {
-    logger.error(`Error handling onboarding completion: ${error}`);
+    logger.error(`Error handling settings completion: ${error}`);
     await callback({
       text: "Great! All required settings have been configured. Your server is now fully set up and ready to use.",
       action: "ONBOARDING_COMPLETE",
@@ -457,7 +457,7 @@ async function generateSuccessResponse(
     const { requiredUnconfigured } = categorizeSettings(worldSettings);
 
     if (requiredUnconfigured.length === 0) {
-      // All required settings are configured, complete onboarding
+      // All required settings are configured, complete settings
       await handleOnboardingComplete(runtime, worldSettings, state, callback);
       return;
     }
@@ -508,7 +508,7 @@ async function generateFailureResponse(
     const { requiredUnconfigured } = categorizeSettings(worldSettings);
 
     if (requiredUnconfigured.length === 0) {
-      // All required settings are configured, complete onboarding
+      // All required settings are configured, complete settings
       await handleOnboardingComplete(runtime, worldSettings, state, callback);
       return;
     }
@@ -580,13 +580,13 @@ async function generateErrorResponse(
 }
 
 /**
- * Enhanced onboarding action with improved state management and logging
+ * Enhanced settings action with improved state management and logging
  * Updated to use world metadata instead of cache
  */
 const updateSettingsAction: Action = {
   name: "UPDATE_SETTINGS",
   similes: ["UPDATE_SETTING", "SAVE_SETTING", "SET_CONFIGURATION", "CONFIGURE"],
-  description: "Saves a setting during the onboarding process",
+  description: "Saves a setting during the settings process",
 
   validate: async (
     runtime: IAgentRuntime,
@@ -595,14 +595,14 @@ const updateSettingsAction: Action = {
   ): Promise<boolean> => {
     try {
       if (!message.userId) {
-        logger.error("No user ID in message for onboarding validation");
+        logger.error("No user ID in message for settings validation");
         return false;
       }
 
       // Log the user ID for debugging
       const normalizedUserId = normalizeUserId(message.userId);
       logger.info(
-        `Validating onboarding action for user ${message.userId} (normalized: ${normalizedUserId})`
+        `Validating settings action for user ${message.userId} (normalized: ${normalizedUserId})`
       );
 
       // Validate that we're in a DM channel
@@ -614,42 +614,37 @@ const updateSettingsAction: Action = {
 
       if (room.type !== ChannelType.DM) {
         logger.info(
-          `Skipping onboarding in non-DM channel (type: ${room.type})`
+          `Skipping settings in non-DM channel (type: ${room.type})`
         );
         return false;
       }
 
       // Find the server where this user is the owner
       logger.info(`Looking for server where user ${message.userId} is owner`);
-      const serverOwnership = await findServerForOwner(runtime, message.userId);
-      if (!serverOwnership) {
+      const world = await findWorldForOwner(runtime, message.userId);
+      if (!world) {
         logger.error(`No server ownership found for user ${message.userId}`);
         return false;
       }
 
       logger.info(
-        `Found server ${serverOwnership.serverId} owned by ${serverOwnership.ownerId}`
+        `Found server ${world.serverId} owned by ${world.metadata.ownership.ownerId}`
       );
 
-      // Check if there's an active onboarding state in world metadata
-      const worldSettings = await getWorldSettings(
-        runtime,
-        serverOwnership.serverId
-      );
+      // Check if there's an active settings state in world metadata
+      const worldSettings = world.metadata.settings;
 
       if (!worldSettings) {
-        logger.error(
-          `No onboarding state found for server ${serverOwnership.serverId}`
-        );
+        logger.error(`No settings state found for server ${world.serverId}`);
         return false;
       }
 
       logger.info(
-        `Found valid onboarding state for server ${serverOwnership.serverId}`
+        `Found valid settings state for server ${world.serverId}`
       );
       return true;
     } catch (error) {
-      logger.error(`Error validating onboarding action: ${error}`);
+      logger.error(`Error validating settings action: ${error}`);
       return false;
     }
   },
@@ -671,7 +666,7 @@ const updateSettingsAction: Action = {
     try {
       // Find the server where this user is the owner
       logger.info(`Handler looking for server for user ${message.userId}`);
-      const serverOwnership = await findServerForOwner(runtime, message.userId);
+      const serverOwnership = await findWorldForOwner(runtime, message.userId);
       if (!serverOwnership) {
         logger.error(`No server found for user ${message.userId} in handler`);
         await generateErrorResponse(runtime, state, callback);
@@ -681,12 +676,12 @@ const updateSettingsAction: Action = {
       const serverId = serverOwnership.serverId;
       logger.info(`Using server ID: ${serverId}`);
 
-      // Get onboarding state from world metadata
+      // Get settings state from world metadata
       const worldSettings = await getWorldSettings(runtime, serverId);
 
       if (!worldSettings) {
         logger.error(
-          `No onboarding state found for server ${serverId} in handler`
+          `No settings state found for server ${serverId} in handler`
         );
         await generateErrorResponse(runtime, state, callback);
         return;
@@ -695,7 +690,7 @@ const updateSettingsAction: Action = {
       // Check if all required settings are already configured
       const { requiredUnconfigured } = categorizeSettings(worldSettings);
       if (requiredUnconfigured.length === 0) {
-        logger.info("All required settings configured, completing onboarding");
+        logger.info("All required settings configured, completing settings");
         await handleOnboardingComplete(
           runtime,
           worldSettings,
@@ -729,13 +724,13 @@ const updateSettingsAction: Action = {
           `Successfully updated settings: ${updateResults.messages.join(", ")}`
         );
 
-        // Get updated onboarding state
+        // Get updated settings state
         const updatedWorldSettings = await getWorldSettings(
           runtime,
           serverId
         );
         if (!updatedWorldSettings) {
-          logger.error(`Failed to retrieve updated onboarding state`);
+          logger.error(`Failed to retrieve updated settings state`);
           await generateErrorResponse(runtime, state, callback);
           return;
         }
@@ -757,7 +752,7 @@ const updateSettingsAction: Action = {
         );
       }
     } catch (error) {
-      logger.error(`Error in onboarding handler: ${error}`);
+      logger.error(`Error in settings handler: ${error}`);
       await generateErrorResponse(runtime, state, callback);
     }
   },

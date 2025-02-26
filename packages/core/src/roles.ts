@@ -2,18 +2,12 @@
 // Updated to use world metadata instead of cache
 
 import { logger } from "./logger";
-import { IAgentRuntime } from "./types";
+import { IAgentRuntime, WorldData } from "./types";
 import { stringToUuid } from "./uuid";
-
-export interface ServerOwnership {
-  ownerId: string; // Always stored normalized
-  serverId: string;
-  agentId: string;
-}
 
 export interface ServerOwnershipState {
   servers: {
-    [serverId: string]: ServerOwnership;
+    [serverId: string]: WorldData;
   };
 }
 
@@ -30,58 +24,12 @@ export function normalizeUserId(id: string): string {
 }
 
 /**
- * Gets or creates ownership state from world metadata
- */
-export async function getOrCreateOwnershipState(
-  runtime: IAgentRuntime,
-  serverId: string
-): Promise<ServerOwnership | null> {
-  try {
-    if (!serverId) {
-      logger.error("Server ID is required for ownership state");
-      return null;
-    }
-
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
-    const world = await runtime.getWorld(worldId);
-
-    if (!world) {
-      logger.info(`No world found for server ${serverId}`);
-      return null;
-    }
-
-    // Initialize world metadata if doesn't exist
-    if (!world.metadata) {
-      world.metadata = {};
-    }
-
-    // If ownership doesn't exist in world metadata, return null
-    if (!world.metadata.ownership?.ownerId) {
-      logger.info(`No ownership data found for server ${serverId}`);
-      return null;
-    }
-
-    // Return ownership data from world metadata
-    return {
-      ownerId: world.metadata.ownership.ownerId,
-      serverId,
-      agentId: runtime.agentId,
-    };
-  } catch (error) {
-    logger.error(
-      `Error getting ownership state for server ${serverId}: ${error}`
-    );
-    return null;
-  }
-}
-
-/**
  * Finds a server where the given user is the owner
  */
-export async function findServerForOwner(
+export async function findWorldForOwner(
   runtime: IAgentRuntime,
   userId: string
-): Promise<ServerOwnership | null> {
+): Promise<WorldData | null> {
   try {
     if (!userId) {
       logger.error("User ID is required to find server");
@@ -107,11 +55,7 @@ export async function findServerForOwner(
         logger.info(
           `Found server ${world.serverId} for owner ${normalizedUserId}`
         );
-        return {
-          ownerId: normalizedUserId,
-          serverId: world.serverId,
-          agentId: runtime.agentId,
-        };
+        return world;
       }
 
       // Also check original ID format
@@ -119,11 +63,7 @@ export async function findServerForOwner(
         logger.info(
           `Found server ${world.serverId} for owner ${userId} using original ID`
         );
-        return {
-          ownerId: userId,
-          serverId: world.serverId,
-          agentId: runtime.agentId,
-        };
+        return world;
       }
     }
 

@@ -93,7 +93,7 @@ async function validateTwitterConfig(
     if (!worldSettings) {
       return {
         isValid: false,
-        error: "No onboarding state found for this server",
+        error: "No settings state found for this server",
       };
     }
 
@@ -203,7 +203,7 @@ const twitterPostAction: Action = {
         throw new Error("No server ID found");
       }
 
-      // Get onboarding state from world metadata
+      // Get settings state from world metadata
       const worldSettings = await getWorldSettings(runtime, serverId);
       if (!worldSettings) {
         throw new Error("Twitter not configured for this server");

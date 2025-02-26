@@ -117,9 +117,6 @@ export class MessageManager {
       const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
       const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
-      console.log("*** messageId", messageId);
-      console.log("message.id", message.id)
-
       const newMessage: Memory = {
         id: messageId,
         userId: userIdUUID,
@@ -189,7 +186,6 @@ export class MessageManager {
         }
       };
 
-      logger.info("**** DISCORD_MESSAGE_RECEIVED, EMITTING");
       this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
         runtime: this.runtime,
         message: newMessage,

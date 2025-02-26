@@ -980,7 +980,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     async updateWorld(world: WorldData) {
-        return await this.databaseAdapter.updateWorld(world, this.agentId);
+        await this.databaseAdapter.updateWorld(world, this.agentId);
     }
 
     /**
@@ -1014,11 +1014,14 @@ export class AgentRuntime implements IAgentRuntime {
      * @throws An error if the room cannot be created.
      */
     async ensureRoomExists({id, name, source, type, channelId, serverId, worldId}: RoomData) {
+        console.log("Ensure room exists")
+        console.trace()
         const room = await this.databaseAdapter.getRoom(id, this.agentId);
         if (!room) {
             await this.databaseAdapter.createRoom({id, name, agentId: this.agentId, source, type, channelId, serverId, worldId});
             logger.log(`Room ${id} created successfully.`);
         }
+        console.log("Ensure room exists, value of room is", room);
     }
 
     /**
@@ -1140,7 +1143,7 @@ export class AgentRuntime implements IAgentRuntime {
     
                 return example
                     .map((message) => {
-                        let messageString = `${message.user}: ${message.content.text}`;
+                        let messageString = `${message.user}: ${message.content.text}` + (message.content.action ? ` (action: ${message.content.action})` : "");
                         exampleNames.forEach((name, index) => {
                             const placeholder = `{{user${index + 1}}}`;
                             messageString = messageString.replaceAll(

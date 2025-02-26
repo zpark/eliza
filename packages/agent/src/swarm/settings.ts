@@ -6,10 +6,10 @@ import {
   initializeOnboardingConfig,
   logger,
   type OnboardingConfig,
-  type WorldSettings,
   Provider,
   stringToUuid,
   type UUID,
+  type WorldSettings,
 } from "@elizaos/core";
 import type { Guild } from "discord.js";
 
@@ -48,8 +48,7 @@ export const initCharacter = ({
   runtime.registerEvent(
     "DISCORD_SERVER_JOINED",
     async (params: { server: Guild }) => {
-      console.log("Community manager joined server");
-      // TODO: Save onboarding config to runtime
+      // TODO: Save settings config to runtime
       await initializeAllSystems(runtime, [params.server], config);
     }
   );
@@ -58,7 +57,6 @@ export const initCharacter = ({
   runtime.registerEvent(
     "DISCORD_SERVER_CONNECTED",
     async (params: { server: Guild }) => {
-      console.log("Community manager connected to server");
       await initializeAllSystems(runtime, [params.server], config);
     }
   );
@@ -95,9 +93,13 @@ export async function initializeAllSystems(
         }
       });
 
-      const world = await runtime.getWorld(worldId);      
+      const world = await runtime.getWorld(worldId);    
+      
+      if(world.metadata?.settings) {
+        continue;
+      }
 
-      // Initialize onboarding configuration
+      // Initialize settings configuration
       const worldSettings = await initializeOnboardingConfig(
         runtime,
         world,
@@ -105,12 +107,12 @@ export async function initializeAllSystems(
       );
 
       if (!worldSettings) {
-        logger.error(`Failed to initialize onboarding for server ${server.id}`);
+        logger.error(`Failed to initialize settings for server ${server.id}`);
         continue;
       }
 
-      // Start onboarding DM with server owner
-      await startOnboardingDM(runtime, server, worldSettings);
+      // Start settings DM with server owner
+      await startOnboardingDM(runtime, server, worldId);
     }
   } catch (error) {
     logger.error(`Error initializing systems: ${error}`);
@@ -118,13 +120,14 @@ export async function initializeAllSystems(
 }
 
 /**
- * Starts the onboarding DM with the server owner
+ * Starts the settings DM with the server owner
  */
 export async function startOnboardingDM(
   runtime: IAgentRuntime,
   guild: Guild,
-  worldSettings: WorldSettings
+  worldId: UUID
 ): Promise<void> {
+  console.log("startOnboardingDM - worldId", worldId);
   try {
     const owner = await guild.members.fetch(guild.ownerId);
     if (!owner) {
@@ -152,6 +155,7 @@ export async function startOnboardingDM(
       type: ChannelType.DM,
       channelId: msg.channelId,
       serverId: guild.id,
+      worldId: worldId,
     });
 
     await runtime.getOrCreateUser(
@@ -174,7 +178,7 @@ export async function startOnboardingDM(
     });
 
     logger.info(
-      `Started onboarding DM with owner ${owner.id} for server ${guild.id}`
+      `Started settings DM with owner ${owner.id} for server ${guild.id}`
     );
   } catch (error) {
     logger.error(`Error starting DM with owner: ${error}`);

@@ -819,11 +819,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await tx.insert(embeddingTable).values([embeddingValues]);
             }
         });
-
-        logger.info("Memory created successfully:", {
-            memoryId,
-            hasEmbedding: !!memory.embedding,
-        });
     }
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {
@@ -1046,6 +1041,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     channelId: roomTable.channelId as any,
                     agentId: roomTable.agentId as any,
                     serverId: roomTable.serverId as any,
+                    worldId: roomTable.worldId as any,
                     type: roomTable.type as any,
                     source: roomTable.source as any,
                 })
@@ -1210,7 +1206,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     )
                 );
 
-            return result.map((row) => row.id as UUID);
+            return result.map((row) => row.userId as UUID);
         });
     }
 
