@@ -125,7 +125,7 @@ export class MessageManager {
         content: {
           name: name,
           userName: userName,
-          text: processedContent,
+          text: processedContent || " ",
           attachments: attachments,
           source: "discord",
           url: message.url,
