@@ -258,6 +258,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
     /**
+     * Retrieves all worlds for an agent.
+     * @param agentId The UUID of the agent to retrieve worlds for.
+     * @returns A Promise that resolves to an array of WorldData objects.
+     */
+    abstract getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+
+    /**
      * Creates a new world in the database.
      * @param world The world object to create.
      * @returns A Promise that resolves to the UUID of the created world.

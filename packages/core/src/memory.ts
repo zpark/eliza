@@ -70,7 +70,7 @@ export class MemoryManager implements IMemoryManager {
     private transformUserIdIfNeeded(memory: Memory): Memory {
         return {
           ...memory,
-          userId: this.runtime.transformUserId(memory.userId)
+          userId: this.runtime.generateTenantUserId(memory.userId)
         };
       }
 

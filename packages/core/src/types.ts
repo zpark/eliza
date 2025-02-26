@@ -501,6 +501,9 @@ export interface Entity {
   /** Unique identifier, optional on creation */
   id?: UUID;
 
+  /** Names of the entity */
+  names: string[];
+
   /** Optional additional metadata */
   metadata?: { [key: string]: any };
 
@@ -852,9 +855,12 @@ export interface IDatabaseAdapter {
     name,
     agentId,
     serverId,
+    metadata
   }: WorldData): Promise<UUID>;
 
   getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
+
+  getAllWorlds(agentId: UUID): Promise<WorldData[]>;
 
   updateWorld(world: WorldData, agentId: UUID): Promise<void>;
 
@@ -1042,10 +1048,10 @@ export interface IAgentRuntime {
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
 
+  generateTenantUserId(userId: UUID): UUID;
+
   registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
-
-  transformUserId(userId: UUID): UUID;
 
   unregisterClient(name: string): void;
 
@@ -1095,6 +1101,8 @@ export interface IAgentRuntime {
 
   registerAction(action: Action): void;
 
+  registerEvaluator(evaluator: Evaluator): void;
+
   ensureConnection({
     userId,
     roomId,
@@ -1104,6 +1112,7 @@ export interface IAgentRuntime {
     channelId,
     serverId,
     type,
+    worldId
   }: {
     userId: UUID;
     roomId: UUID;
@@ -1113,16 +1122,22 @@ export interface IAgentRuntime {
     channelId?: string;
     serverId?: string;
     type: ChannelType;
+    worldId?: UUID;
   }): Promise<void>;
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
   getWorld(worldId: UUID): Promise<WorldData | null>;
 
+  getAllWorlds(): Promise<WorldData[]>;
+
+  updateWorld(world: WorldData): Promise<void>;
+
   ensureWorldExists({
     id,
     name,
     serverId,
+    metadata
   }: WorldData): Promise<void>;
 
   ensureRoomExists({
@@ -1421,7 +1436,15 @@ export type WorldData = {
   name: string;
   agentId: UUID;
   serverId: string;
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    ownership?: {
+      ownerId: string;
+    };
+    roles?: {
+      [userId: string]: EntityRole;
+    };
+    [key: string]: unknown;
+  };
 }
 
 export type RoomData = {
@@ -1434,4 +1457,46 @@ export type RoomData = {
   serverId?: string;
   worldId?: UUID;
   metadata?: Record<string, unknown>;
+}
+
+export enum RoleName {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  NONE = "NONE"
+}
+
+export interface EntityRole {
+  userId: string;
+  serverId: string;
+  role: RoleName;
+}
+  
+export interface WorldRoleState {
+  roles: {
+    [userId: string]: EntityRole;
+  };
+}
+
+export interface OnboardingSetting {
+  name: string;
+  description: string;         // Used in chat context when discussing the setting
+  usageDescription: string;    // Used during settings to guide users
+  value: string | boolean | null;
+  required: boolean;
+  public?: boolean;           // If true, shown in public channels
+  secret?: boolean;           // If true, value is masked and only shown during settings
+  validation?: (value: any) => boolean;
+  dependsOn?: string[];
+  onSetAction?: (value: any) => string;
+  visibleIf?: (settings: { [key: string]: OnboardingSetting }) => boolean;
+}
+
+export interface WorldSettings {
+  [key: string]: OnboardingSetting;
+}
+
+export interface OnboardingConfig {
+  settings: { 
+      [key: string]: Omit<OnboardingSetting, 'value'>; 
+  };
 }

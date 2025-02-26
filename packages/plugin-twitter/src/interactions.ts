@@ -379,8 +379,11 @@ export class TwitterInteractionClient {
 
         if (!tweetExists) {
             logger.log("tweet does not exist, saving");
-            const userIdUUID = stringToUuid(tweet.userId as string);
-            const roomId = stringToUuid(tweet.conversationId);
+            const userIdUUID = stringToUuid(`${tweet.userId}-${this.runtime.agentId}`);
+
+            const roomId = stringToUuid(
+                `${tweet.conversationId}-${this.runtime.agentId}`
+            );
 
             await this.runtime.ensureConnection({
                 userId: userIdUUID,

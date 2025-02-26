@@ -19,7 +19,7 @@ export class PgliteDatabaseAdapter extends BaseDrizzleAdapter<PgliteDatabase> {
             logger.warn("Database is shutting down");
             return null as unknown as T;
         }
-        return this.withRetry(operation);
+        return operation();
     }
 
     async init(): Promise<void> {

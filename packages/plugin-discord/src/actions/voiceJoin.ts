@@ -2,22 +2,22 @@
 import {
     type Action,
     type ActionExample,
-    composeContext,
     type IAgentRuntime,
     type Memory,
     type State,
-    generateText,
-    ModelClass,
     ChannelType,
-    stringToUuid,
-    logger,
+    composeContext,
+    generateText,
     HandlerCallback,
+    logger,
+    ModelClass,
+    stringToUuid,
 } from "@elizaos/core";
 import {
     type Channel,
-    ChannelType as DiscordChannelType,
     type Guild,
     BaseGuildVoiceChannel,
+    ChannelType as DiscordChannelType
 } from "discord.js";
 
 import { DiscordClient } from "../index.ts";
@@ -40,6 +40,14 @@ export default {
     ) => {
         if (message.content.source !== "discord") {
             // not a discord message
+            return false;
+        }
+
+        const roomId = message.roomId;
+
+        const room = await runtime.getRoom(roomId);
+
+        if(room?.type !== ChannelType.GROUP) {
             return false;
         }
 

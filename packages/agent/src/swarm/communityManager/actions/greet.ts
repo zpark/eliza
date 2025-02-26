@@ -1,5 +1,5 @@
 // If a user is new to the server, greet them in the general channel
-// Only available if the SHOULD_GREET_NEW_USERS setting is true, which should be loaded from the cache from onboarding
+// Only available if the SHOULD_GREET_NEW_USERS setting is true, which should be loaded from the cache from settings
 
 import {
     type Action,

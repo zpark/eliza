@@ -471,11 +471,6 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    async handleGuildCreate(guild: Guild) {
-        console.log(`Joined guild ${guild.name}`);
-        // this.scanGuild(guild);
-    }
-
     async debouncedProcessTranscription(
         userId: UUID,
         name: string,
@@ -641,7 +636,7 @@ export class VoiceManager extends EventEmitter {
             }
 
             const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
-            const userIdUUID = stringToUuid(userId);
+            const userIdUUID = stringToUuid(`${userId}-${this.runtime.agentId}`);
             const guild = await channel.guild.fetch();
             const type = await this.getChannelType(guild.id);
 

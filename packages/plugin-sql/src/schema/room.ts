@@ -5,7 +5,7 @@ import { numberTimestamp } from "./types";
 import { worldTable } from "./worldTable";
 
 export const roomTable = pgTable("rooms", {
-  id: uuid("id").primaryKey().notNull(),
+  id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
   agentId: uuid("agentId").references(() => agentTable.id),
   source: text("source").notNull(),
   type: text("type").notNull(),

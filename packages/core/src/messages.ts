@@ -23,6 +23,8 @@ export async function getActorDetails({
     roomId,
     runtime.agentId
   );
+  
+  // Fetch all actor details
   const actors = await Promise.all(
     participantIds.map(async (userId) => {
       const account = await runtime.databaseAdapter.getEntityById(userId, runtime.agentId);
@@ -37,7 +39,17 @@ export async function getActorDetails({
     })
   );
 
-  return actors.filter((actor): actor is Actor => actor !== null);
+  // Filter out nulls and ensure uniqueness by ID
+  const uniqueActors = new Map();
+  actors
+    .filter((actor): actor is Actor => actor !== null)
+    .forEach(actor => {
+      if (!uniqueActors.has(actor.id)) {
+        uniqueActors.set(actor.id, actor);
+      }
+    });
+
+  return Array.from(uniqueActors.values());
 }
 
 /**

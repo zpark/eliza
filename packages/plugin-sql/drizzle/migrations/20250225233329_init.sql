@@ -6,6 +6,7 @@ CREATE TABLE "agents" (
 );
 --> statement-breakpoint
 CREATE TABLE "cache" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"key" text NOT NULL,
 	"agentId" text NOT NULL,
 	"value" jsonb DEFAULT '{}'::jsonb,
@@ -55,7 +56,7 @@ CREATE TABLE "entities" (
 );
 --> statement-breakpoint
 CREATE TABLE "goals" (
-	"id" uuid NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
 	"userId" uuid,
 	"agentId" uuid,
@@ -103,7 +104,7 @@ CREATE TABLE "memories" (
 );
 --> statement-breakpoint
 CREATE TABLE "participants" (
-	"id" uuid NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
 	"userId" uuid,
 	"roomId" uuid,
@@ -112,7 +113,7 @@ CREATE TABLE "participants" (
 );
 --> statement-breakpoint
 CREATE TABLE "relationships" (
-	"id" uuid NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
 	"userA" uuid NOT NULL,
 	"userB" uuid NOT NULL,
@@ -122,7 +123,7 @@ CREATE TABLE "relationships" (
 );
 --> statement-breakpoint
 CREATE TABLE "rooms" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"agentId" uuid,
 	"source" text NOT NULL,
 	"type" text NOT NULL,
@@ -135,7 +136,7 @@ CREATE TABLE "rooms" (
 );
 --> statement-breakpoint
 CREATE TABLE "worlds" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"agentId" uuid NOT NULL,
 	"name" text NOT NULL,
 	"metadata" jsonb,
@@ -183,3 +184,24 @@ CREATE INDEX "idx_fragments_order" ON "memories" USING btree (((metadata->>'docu
 CREATE INDEX "idx_participants_user" ON "participants" USING btree ("userId");--> statement-breakpoint
 CREATE INDEX "idx_participants_room" ON "participants" USING btree ("roomId");--> statement-breakpoint
 CREATE INDEX "idx_relationships_users" ON "relationships" USING btree ("userA","userB");
+
+CREATE EXTENSION IF NOT EXISTS vector;
+--> statement-breakpoint
+
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+--> statement-breakpoint
+
+-- Custom SQL migration file, put your code below! --
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim384 ON embeddings USING hnsw ("dim_384" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim512 ON embeddings USING hnsw ("dim_512" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim768 ON embeddings USING hnsw ("dim_768" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim1024 ON embeddings USING hnsw ("dim_1024" vector_cosine_ops);
+--> statement-breakpoint
+
+CREATE INDEX IF NOT EXISTS idx_embeddings_dim1536 ON embeddings USING hnsw ("dim_1536" vector_cosine_ops);

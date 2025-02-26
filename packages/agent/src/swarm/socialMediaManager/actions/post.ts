@@ -1,18 +1,55 @@
 import {
-    type Action,
-    ChannelType,
-    type Content,
-    type HandlerCallback,
-    type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type State,
-    composeContext,
-    generateText,
-    logger,
+  type Action,
+  ChannelType,
+  type Content,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  ModelClass,
+  RoleName,
+  type State,
+  composeContext,
+  generateText,
+  getWorldSettings,
+  logger,
+  normalizeUserId,
+  stringToUuid
 } from "@elizaos/core";
-import { ONBOARDING_CACHE_KEY, type OnboardingState } from "../../shared/onboarding/types";
-import { getUserServerRole } from "../../shared/role/types";
+
+/**
+ * Gets a user's role from world metadata
+ */
+export async function getUserServerRole(
+  runtime: IAgentRuntime,
+  userId: string,
+  serverId: string
+): Promise<RoleName> {
+  try {
+    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const world = await runtime.getWorld(worldId);
+
+    if (!world || !world.metadata?.roles) {
+      return RoleName.NONE;
+    }
+
+    // Check both formats (UUID and original ID)
+    const normalizedUserId = normalizeUserId(userId);
+
+    if (world.metadata.roles[normalizedUserId]?.role) {
+      return world.metadata.roles[normalizedUserId].role as RoleName;
+    }
+
+    // Also check original ID format
+    if (world.metadata.roles[userId]?.role) {
+      return world.metadata.roles[userId].role as RoleName;
+    }
+
+    return RoleName.NONE;
+  } catch (error) {
+    logger.error(`Error getting user role: ${error}`);
+    return RoleName.NONE;
+  }
+}
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -43,13 +80,6 @@ const REQUIRED_TWITTER_FIELDS = [
   "TWITTER_PASSWORD",
 ];
 
-// Optional Twitter configuration fields
-const _OPTIONAL_TWITTER_FIELDS = [
-  "TWITTER_2FA_SECRET",
-  "POST_APPROVAL_REQUIRED",
-  "POST_APPROVAL_ROLE",
-];
-
 /**
  * Validates that all required Twitter configuration fields are present and non-null
  */
@@ -58,22 +88,18 @@ async function validateTwitterConfig(
   serverId: string
 ): Promise<{ isValid: boolean; error?: string }> {
   try {
-    const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
+    const worldSettings = await getWorldSettings(runtime, serverId);
 
-    const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-      onboardingCacheKey
-    );
-
-    if (!onboardingState) {
+    if (!worldSettings) {
       return {
         isValid: false,
-        error: "No onboarding state found for this server",
+        error: "No settings state found for this server",
       };
     }
 
     // Check required fields
     for (const field of REQUIRED_TWITTER_FIELDS) {
-      if (!onboardingState[field] || onboardingState[field].value === null) {
+      if (!worldSettings[field] || worldSettings[field].value === null) {
         return {
           isValid: false,
           error: `Missing required Twitter configuration: ${field}`,
@@ -97,7 +123,7 @@ async function validateTwitterConfig(
 async function ensureTwitterClient(
   runtime: IAgentRuntime,
   serverId: string,
-  onboardingState: { [key: string]: string | boolean | number | null }
+  worldSettings: { [key: string]: string | boolean | number | null }
 ) {
   const manager = runtime.getClient("twitter");
   if (!manager) {
@@ -108,7 +134,7 @@ async function ensureTwitterClient(
 
   if (!client) {
     logger.info("Creating new Twitter client for server", serverId);
-    client = await manager.createClient(runtime, serverId, onboardingState);
+    client = await manager.createClient(runtime, serverId, worldSettings);
     if (!client) {
       throw new Error("Failed to create Twitter client");
     }
@@ -140,7 +166,7 @@ const twitterPostAction: Action = {
     const serverId = room.serverId;
 
     if (!serverId) {
-      throw new Error("No server ID found 5");
+      throw new Error("No server ID found");
     }
 
     // Validate Twitter configuration
@@ -174,16 +200,12 @@ const twitterPostAction: Action = {
       const serverId = room.serverId;
 
       if (!serverId) {
-        throw new Error("No server ID found 6");
+        throw new Error("No server ID found");
       }
 
-      const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
-
-      // Get onboarding state
-      const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-        onboardingCacheKey
-      );
-      if (!onboardingState) {
+      // Get settings state from world metadata
+      const worldSettings = await getWorldSettings(runtime, serverId);
+      if (!worldSettings) {
         throw new Error("Twitter not configured for this server");
       }
 
@@ -247,11 +269,11 @@ const twitterPostAction: Action = {
         tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
         handler: async (runtime: IAgentRuntime) => {
           const vals = {
-            TWITTER_USERNAME: onboardingState.TWITTER_USERNAME.value,
-            TWITTER_EMAIL: onboardingState.TWITTER_EMAIL.value,
-            TWITTER_PASSWORD: onboardingState.TWITTER_PASSWORD.value,
+            TWITTER_USERNAME: worldSettings.TWITTER_USERNAME.value,
+            TWITTER_EMAIL: worldSettings.TWITTER_EMAIL.value,
+            TWITTER_PASSWORD: worldSettings.TWITTER_PASSWORD.value,
             TWITTER_2FA_SECRET:
-              onboardingState.TWITTER_2FA_SECRET.value ?? undefined,
+              worldSettings.TWITTER_2FA_SECRET.value ?? undefined,
           };
 
           // Initialize/get Twitter client
