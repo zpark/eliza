@@ -10,10 +10,11 @@ import {
     type State,
     generateText,
     ModelClass,
+    ChannelType,
 } from "@elizaos/core";
 import {
     type Channel,
-    ChannelType,
+    ChannelType as DiscordChannelType,
     type Client,
     type Message as DiscordMessage,
     type Guild,
@@ -39,6 +40,14 @@ export default {
     ) => {
         if (message.content.source !== "discord") {
             // not a discord message
+            return false;
+        }
+
+        const roomId = message.roomId;
+
+        const room = await runtime.getRoom(roomId);
+
+        if(room?.type !== ChannelType.GROUP) {
             return false;
         }
 
