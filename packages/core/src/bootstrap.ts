@@ -13,7 +13,7 @@ import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { composeContext } from "./context.ts";
 import { factEvaluator } from "./evaluators/fact.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
-import { generateMessageResponse, generateShouldRespond } from "./index.ts";
+import { formatActors, formatMessages, generateMessageResponse, generateShouldRespond, getActorDetails } from "./index.ts";
 import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
 import { confirmationTasksProvider } from "./providers/confirmation.ts";
@@ -59,8 +59,8 @@ type UserJoinedParams = {
   source: string;
 };
 
-export const shouldRespondTemplate = `# Task: Decide if {{agentName}} should respond.
-{{providers}}
+export const shouldRespondTemplate = `{{system}}
+# Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
 
 About {{agentName}}:
 {{bio}}
@@ -71,7 +71,6 @@ About {{agentName}}:
 ${shouldRespondFooter}`;
 
 const messageHandlerTemplate =
-  // {{goals}}
   `# Task: Generate dialog and actions for the character {{agentName}}.
 {{system}}
 
@@ -112,7 +111,6 @@ type MessageReceivedHandlerParams = {
 const checkShouldRespond = async (
   runtime: IAgentRuntime,
   message: Memory,
-  state: State
 ): Promise<boolean> => {
   if (message.userId === runtime.agentId) return false;
 
@@ -143,6 +141,27 @@ const checkShouldRespond = async (
   ) {
     return true;
   }
+
+  const [actorsData, recentMessagesData] = await Promise.all([
+      getActorDetails({ runtime: runtime, roomId: message.roomId }),
+      runtime.messageManager.getMemories({
+          roomId: message.roomId,
+          count: runtime.getConversationLength(),
+          unique: false,
+      }),
+  ]);
+
+  const recentMessages = formatMessages({
+      messages: recentMessagesData,
+      actors: actorsData,
+  });
+
+  const state = {
+    recentMessages,
+    agentName: runtime.character.name,
+    bio: runtime.character.bio,
+    system: runtime.character.system,
+  } as State;
 
   const shouldRespondContext = composeContext({
     state,
@@ -184,7 +203,7 @@ const messageReceivedHandler = async ({
   // Then, compose the state, which includes the incoming message in the recent messages
   let state = await runtime.composeState(message);
 
-  const shouldRespond = await checkShouldRespond(runtime, message, state);
+  const shouldRespond = await checkShouldRespond(runtime, message);
 
   if (shouldRespond) {
     const context = composeContext({
