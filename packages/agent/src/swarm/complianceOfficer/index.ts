@@ -1,11 +1,9 @@
+import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
+import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-dotenv.config({ path: "../../.env" });
+import { initializeAllSystems } from "../settings";
+dotenv.config({ path: '../../.env' });
 
-import type { Character, IAgentRuntime } from "@elizaos/core";
-import type { Guild } from "discord.js";
-import { initializeAllSystems } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
-import { getOrCreateOwnershipState } from "../shared/ownership/core";
 const character: Character = {
   name: "Gary",
   plugins: [
@@ -366,9 +364,6 @@ init: async (runtime: IAgentRuntime) => {
       try {
         console.log(`${runtime.character.name} joined server ${params.server.id}`);
         
-        // Ensure ownership state exists before proceeding
-        await getOrCreateOwnershipState(runtime);
-        
         // Proceed with initialization
         await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
@@ -383,9 +378,6 @@ init: async (runtime: IAgentRuntime) => {
       try {
         console.log(`${runtime.character.name} connected to server ${params.server.id}`);
         
-        // Ensure ownership state exists before proceeding
-        await getOrCreateOwnershipState(runtime);
-        
         // Proceed with initialization
         await initializeAllSystems(runtime, [params.server], config);
       } catch (error) {
@@ -393,8 +385,5 @@ init: async (runtime: IAgentRuntime) => {
       }
     }
   );
-  
-  // Register actions if needed
-  // runtime.registerAction(yourAction);
 }
 };

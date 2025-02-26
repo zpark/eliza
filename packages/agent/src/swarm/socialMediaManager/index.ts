@@ -1,9 +1,8 @@
-import type { Character, IAgentRuntime } from "@elizaos/core";
+import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-import { initializeAllSystems } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
 import twitterPostAction from "./actions/post";
+import { initializeAllSystems } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {

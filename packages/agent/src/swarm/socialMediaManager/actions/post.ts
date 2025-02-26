@@ -1,18 +1,55 @@
 import {
-    type Action,
-    ChannelType,
-    type Content,
-    type HandlerCallback,
-    type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type State,
-    composeContext,
-    generateText,
-    logger,
+  type Action,
+  ChannelType,
+  type Content,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  ModelClass,
+  RoleName,
+  type State,
+  composeContext,
+  generateText,
+  getOnboardingState,
+  logger,
+  normalizeUserId,
+  stringToUuid
 } from "@elizaos/core";
-import { ONBOARDING_CACHE_KEY, type OnboardingState } from "../../shared/onboarding/types";
-import { getUserServerRole } from "../../shared/role/types";
+
+/**
+ * Gets a user's role from world metadata
+ */
+export async function getUserServerRole(
+  runtime: IAgentRuntime,
+  userId: string,
+  serverId: string
+): Promise<RoleName> {
+  try {
+    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const world = await runtime.getWorld(worldId);
+
+    if (!world || !world.metadata?.roles) {
+      return RoleName.NONE;
+    }
+
+    // Check both formats (UUID and original ID)
+    const normalizedUserId = normalizeUserId(userId);
+
+    if (world.metadata.roles[normalizedUserId]?.role) {
+      return world.metadata.roles[normalizedUserId].role as RoleName;
+    }
+
+    // Also check original ID format
+    if (world.metadata.roles[userId]?.role) {
+      return world.metadata.roles[userId].role as RoleName;
+    }
+
+    return RoleName.NONE;
+  } catch (error) {
+    logger.error(`Error getting user role: ${error}`);
+    return RoleName.NONE;
+  }
+}
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -58,11 +95,7 @@ async function validateTwitterConfig(
   serverId: string
 ): Promise<{ isValid: boolean; error?: string }> {
   try {
-    const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
-
-    const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-      onboardingCacheKey
-    );
+    const onboardingState = await getOnboardingState(runtime, serverId);
 
     if (!onboardingState) {
       return {
@@ -140,7 +173,7 @@ const twitterPostAction: Action = {
     const serverId = room.serverId;
 
     if (!serverId) {
-      throw new Error("No server ID found 5");
+      throw new Error("No server ID found");
     }
 
     // Validate Twitter configuration
@@ -174,15 +207,11 @@ const twitterPostAction: Action = {
       const serverId = room.serverId;
 
       if (!serverId) {
-        throw new Error("No server ID found 6");
+        throw new Error("No server ID found");
       }
 
-      const onboardingCacheKey = ONBOARDING_CACHE_KEY.SERVER_STATE(serverId);
-
-      // Get onboarding state
-      const onboardingState = await runtime.cacheManager.get<OnboardingState>(
-        onboardingCacheKey
-      );
+      // Get onboarding state from world metadata
+      const onboardingState = await getOnboardingState(runtime, serverId);
       if (!onboardingState) {
         throw new Error("Twitter not configured for this server");
       }

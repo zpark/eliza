@@ -8,6 +8,7 @@ import {
 } from "./actions.ts";
 import { bootstrapPlugin } from "./bootstrap.ts";
 import { addHeader, composeContext } from "./context.ts";
+import { settings } from "./environment.ts";
 import {
     evaluationTemplate,
     formatEvaluatorExamples,
@@ -22,7 +23,6 @@ import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
 import { parseJsonArrayFromText } from "./parsing.ts";
 import { formatPosts } from "./posts.ts";
 import { getProviders } from "./providers.ts";
-import settings from "./settings.ts";
 import {
     type Action,
     type Actor,
@@ -977,7 +977,7 @@ export class AgentRuntime implements IAgentRuntime {
     /**
      * Ensure the existence of a world.
      */
-    async ensureWorldExists({id, name, serverId}: WorldData) {
+    async ensureWorldExists({id, name, serverId, metadata}: WorldData) {
         try {
           const world = await this.databaseAdapter.getWorld(id, this.agentId);
           if (!world) {
@@ -986,7 +986,8 @@ export class AgentRuntime implements IAgentRuntime {
               id, 
               name, 
               agentId: this.agentId, 
-              serverId: serverId || "default"
+              serverId: serverId || "default",
+              metadata
             });
             logger.log(`World ${id} created successfully.`);
           }

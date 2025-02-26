@@ -6,6 +6,8 @@ import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
+import updateRoleAction from "./actions/roles.ts";
+import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { composeContext } from "./context.ts";
@@ -16,20 +18,22 @@ import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
 import { confirmationTasksProvider } from "./providers/confirmation.ts";
 import { factsProvider } from "./providers/facts.ts";
+import { roleProvider } from "./providers/roles.ts";
+import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
 import {
   ChannelType,
+  Entity,
   HandlerCallback,
   IAgentRuntime,
   Memory,
   ModelClass,
   Plugin,
+  RoomData,
   State,
+  WorldData,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-export * as actions from "./actions/index.ts";
-export * as evaluators from "./evaluators/index.ts";
-export * as providers from "./providers/index.ts";
 
 type ServerJoinedParams = {
   runtime: IAgentRuntime;
@@ -40,26 +44,9 @@ type ServerJoinedParams = {
 // Add this to your types.ts file
 type ServerConnectedParams = {
   runtime: IAgentRuntime;
-  server: {
-    id: string;
-    name: string;
-  };
-  world: {
-    id: UUID;
-    name: string;
-    rooms: Array<{
-      id: UUID;
-      name: string;
-      type: ChannelType;
-      channelId: string;
-      participants: UUID[];
-    }>;
-    users: Array<{
-      id: UUID;
-      username: string;
-      displayName: string;
-    }>;
-  };
+  world: WorldData;
+  rooms: RoomData[];
+  users: Entity[];
   source: string;
 };
 
@@ -662,47 +649,49 @@ const events = {
     },
   ],
   SERVER_CONNECTED: [
-    async ({ runtime, server, world, source }: ServerConnectedParams) => {
-      logger.info(`Handling SERVER_CONNECTED event for server: ${server.name}`);
-
+    async ({ runtime, world, rooms, users, source }: ServerConnectedParams) => {
+      logger.info(`Handling SERVER_CONNECTED event for server: ${world.name}`);
+      console.log(world);
+      console.log(rooms);
+      console.log(users);
       try {
         // Create/ensure the world exists for this server
         await runtime.ensureWorldExists({
           id: world.id,
           name: world.name,
           agentId: runtime.agentId,
-          serverId: server.id,
+          serverId: world.serverId,
         });
 
         // First sync all rooms/channels
-        if (world.rooms && world.rooms.length > 0) {
-          for (const room of world.rooms) {
+        if (rooms && rooms.length > 0) {
+          for (const room of rooms) {
             await runtime.ensureRoomExists({
               id: room.id,
               name: room.name,
               source: source,
               type: room.type,
               channelId: room.channelId,
-              serverId: server.id,
+              serverId: world.serverId,
               worldId: world.id,
             });
           }
         }
 
         // Then sync all users
-        if (world.users && world.users.length > 0) {
+        if (users && users.length > 0) {
           // Process users in batches to avoid overwhelming the system
           const batchSize = 50;
-          for (let i = 0; i < world.users.length; i += batchSize) {
-            const userBatch = world.users.slice(i, i + batchSize);
+          for (let i = 0; i < users.length; i += batchSize) {
+            const userBatch = users.slice(i, i + batchSize);
 
             // Find a default text channel for these users if possible
             const defaultRoom =
-              world.rooms.find(
+              rooms.find(
                 (room) =>
                   room.type === ChannelType.GROUP &&
                   room.name.includes("general")
-              ) || world.rooms.find((room) => room.type === ChannelType.GROUP);
+              ) || rooms.find((room) => room.type === ChannelType.GROUP);
 
             if (defaultRoom) {
               // Process each user in the batch
@@ -713,30 +702,30 @@ const events = {
                     await runtime.ensureConnection({
                       userId: user.id,
                       roomId: defaultRoom.id,
-                      userName: user.username,
-                      userScreenName: user.displayName || user.username,
+                      userName: user.metadata.username,
+                      userScreenName: user.metadata.displayName || user.metadata.username,
                       source: source,
                       channelId: defaultRoom.channelId,
-                      serverId: server.id,
+                      serverId: world.serverId,
                       type: defaultRoom.type,
                       worldId: world.id,
                     });
                   } catch (err) {
-                    logger.warn(`Failed to sync user ${user.username}: ${err}`);
+                    logger.warn(`Failed to sync user ${user.metadata.username}: ${err}`);
                   }
                 })
               );
             }
 
             // Add a small delay between batches if not the last batch
-            if (i + batchSize < world.users.length) {
+            if (i + batchSize < users.length) {
               await new Promise((resolve) => setTimeout(resolve, 500));
             }
           }
         }
 
         logger.success(
-          `Successfully synced standardized world structure for ${server.name}`
+          `Successfully synced standardized world structure for ${world.name}`
         );
       } catch (error) {
         logger.error(
@@ -780,10 +769,12 @@ export const bootstrapPlugin: Plugin = {
     unmuteRoomAction,
     cancelTaskAction,
     confirmTaskAction,
+    updateRoleAction,
+    updateSettingsAction,
   ],
   events,
   evaluators: [factEvaluator, goalEvaluator],
-  providers: [timeProvider, factsProvider, confirmationTasksProvider],
+  providers: [timeProvider, factsProvider, confirmationTasksProvider, roleProvider, settingsProvider],
 };
 
 export default bootstrapPlugin;

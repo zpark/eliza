@@ -855,6 +855,7 @@ export interface IDatabaseAdapter {
     name,
     agentId,
     serverId,
+    metadata
   }: WorldData): Promise<UUID>;
 
   getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
@@ -1128,6 +1129,7 @@ export interface IAgentRuntime {
     id,
     name,
     serverId,
+    metadata
   }: WorldData): Promise<void>;
 
   ensureRoomExists({
@@ -1426,7 +1428,15 @@ export type WorldData = {
   name: string;
   agentId: UUID;
   serverId: string;
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    ownership?: {
+      ownerId: string;
+    };
+    roles?: {
+      [userId: string]: EntityRole;
+    };
+    [key: string]: unknown;
+  };
 }
 
 export type RoomData = {
@@ -1439,4 +1449,46 @@ export type RoomData = {
   serverId?: string;
   worldId?: UUID;
   metadata?: Record<string, unknown>;
+}
+
+export enum RoleName {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  NONE = "NONE"
+}
+
+export interface EntityRole {
+  userId: string;
+  serverId: string;
+  role: RoleName;
+}
+  
+export interface WorldRoleState {
+  roles: {
+    [userId: string]: EntityRole;
+  };
+}
+
+export interface OnboardingSetting {
+  name: string;
+  description: string;         // Used in chat context when discussing the setting
+  usageDescription: string;    // Used during onboarding to guide users
+  value: string | boolean | null;
+  required: boolean;
+  public?: boolean;           // If true, shown in public channels
+  secret?: boolean;           // If true, value is masked and only shown during onboarding
+  validation?: (value: any) => boolean;
+  dependsOn?: string[];
+  onSetAction?: (value: any) => string;
+  visibleIf?: (settings: { [key: string]: OnboardingSetting }) => boolean;
+}
+
+export interface OnboardingState {
+  [key: string]: OnboardingSetting;
+}
+
+export interface OnboardingConfig {
+  settings: { 
+      [key: string]: Omit<OnboardingSetting, 'value'>; 
+  };
 }

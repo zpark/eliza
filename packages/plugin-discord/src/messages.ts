@@ -117,6 +117,9 @@ export class MessageManager {
       const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
       const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
+      console.log("*** messageId", messageId);
+      console.log("message.id", message.id)
+
       const newMessage: Memory = {
         id: messageId,
         userId: userIdUUID,

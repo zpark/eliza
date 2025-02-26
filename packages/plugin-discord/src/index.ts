@@ -9,6 +9,7 @@ import {
   type Plugin,
   stringToUuid,
   UUID,
+  WorldData,
 } from "@elizaos/core";
 import {
   Client,
@@ -96,6 +97,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 
   async ensureAllChannelsExist(runtime: IAgentRuntime, guild: OAuth2Guild) {
+    // fetch the owning member from the OAuth2Guild object
+    const guildObj = await guild.fetch();
     const guildChannels = await guild.fetch();
     // for channel in channels
     for (const [, channel] of guildChannels.channels.cache) {
@@ -111,6 +114,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         name: guild.name,
         serverId: guild.id,
         agentId: runtime.agentId,
+        metadata: {
+          ownership: guildObj.ownerId ? { ownerId: guildObj.ownerId } : undefined,
+        },
       });
       await runtime.ensureRoomExists({
         id: roomId,
@@ -603,8 +609,13 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           if (member.id !== botId) {
             users.push({
               id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
-              username: member.user.username,
-              displayName: member.displayName || member.user.username,
+              names: Array.from(
+                new Set([member.user.username, member.displayName])
+              ),
+              metadata: {
+                username: member.user.username,
+                displayName: member.displayName || member.user.username,
+              },
             });
           }
         }
@@ -625,8 +636,13 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
               if (!users.some((u) => u.id === userId)) {
                 users.push({
                   id: userId,
-                  username: member.user.username,
-                  displayName: member.displayName || member.user.username,
+                  names: Array.from(
+                    new Set([member.user.username, member.displayName])
+                  ),
+                  metadata: {
+                    username: member.user.username,
+                    displayName: member.displayName || member.user.username,
+                  },
                 });
               }
             }
@@ -648,8 +664,13 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           if (member.id !== botId) {
             users.push({
               id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
-              username: member.user.username,
-              displayName: member.displayName || member.user.username,
+              names: Array.from(
+                new Set([member.user.username, member.displayName])
+              ),
+              metadata: {
+                username: member.user.username,
+                displayName: member.displayName || member.user.username,
+              },
             });
           }
         }
@@ -685,16 +706,19 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
         const standardizedData = {
           runtime: this.runtime,
-          server: {
-            id: fullGuild.id,
-            name: fullGuild.name,
-          },
+          rooms: await this.buildStandardizedRooms(fullGuild, worldId),
+          users: await this.buildStandardizedUsers(fullGuild),
           world: {
             id: worldId,
             name: fullGuild.name,
-            rooms: await this.buildStandardizedRooms(fullGuild, worldId),
-            users: await this.buildStandardizedUsers(fullGuild),
-          },
+            agentId: this.runtime.agentId,
+            serverId: fullGuild.id,
+            metadata: {
+              ownership: fullGuild.ownerId
+                ? { ownerId: fullGuild.ownerId }
+                : undefined,
+            },
+          } as WorldData,
           source: "discord",
         };
 
