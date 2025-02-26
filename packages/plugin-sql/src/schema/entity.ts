@@ -1,10 +1,11 @@
-import { jsonb, pgTable, serial, text, unique, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { jsonb, pgTable, text, unique, uuid } from "drizzle-orm/pg-core";
+import { agentTable } from "./agent";
 import { numberTimestamp } from "./types";
 
 export const entityTable = pgTable("entities", {
     id: uuid("id").notNull().primaryKey(),
-    agentId: uuid("agentId").notNull(),
+    agentId: uuid("agentId").notNull().references(() => agentTable.id),
     createdAt: numberTimestamp("createdAt")
         .default(sql`now()`)
         .notNull(),
