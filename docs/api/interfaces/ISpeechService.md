@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ISpeechService
+[@elizaos/core v0.25.8](../index.md) / ISpeechService
 
 # Interface: ISpeechService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1263)
+[packages/core/src/types.ts:1270](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1270)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1268)
+[packages/core/src/types.ts:1275](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1275)
 
 ***
 
@@ -62,7 +62,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1414](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1414)
+[packages/core/src/types.ts:1421](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1421)
 
 ***
 
@@ -82,4 +82,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1415](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1415)
+[packages/core/src/types.ts:1422](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1422)

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / MessageExample
+[@elizaos/core v0.25.8](../index.md) / MessageExample
 
 # Interface: MessageExample
 
@@ -14,7 +14,7 @@ Associated user
 
 #### Defined in
 
-[packages/core/src/types.ts:401](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L401)
+[packages/core/src/types.ts:405](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L405)
 
 ***
 
@@ -26,4 +26,4 @@ Message content
 
 #### Defined in
 
-[packages/core/src/types.ts:404](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L404)
+[packages/core/src/types.ts:408](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L408)

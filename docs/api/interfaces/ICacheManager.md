@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ICacheManager
+[@elizaos/core v0.25.8](../index.md) / ICacheManager
 
 # Interface: ICacheManager
 
@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1244](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1244)
+[packages/core/src/types.ts:1251](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1251)
 
 ***
 
@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1245](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1245)
+[packages/core/src/types.ts:1252](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1252)
 
 ***
 
@@ -66,4 +66,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1246](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1246)
+[packages/core/src/types.ts:1253](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1253)

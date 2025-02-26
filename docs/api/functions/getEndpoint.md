@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / getEndpoint
+[@elizaos/core v0.25.8](../index.md) / getEndpoint
 
 # Function: getEndpoint()
 
@@ -14,4 +14,4 @@
 
 ## Defined in
 
-[packages/core/src/models.ts:1179](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1179)
+[packages/core/src/models.ts:1249](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1249)

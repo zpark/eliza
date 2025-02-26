@@ -6,6 +6,15 @@ sidebar_position: 1
 
 In this tutorial, you'll learn how to quickly build your own social media AI agent that can autonomously post tweets, respond to interactions, and maintain its own unique personality. We'll be using the [Eliza framework](https://ai16z.github.io/eliza/) by a16z and TypeScript.
 
+<div className="responsive-iframe">
+  <iframe
+    src="https://www.youtube.com/embed/6PZVwNTl5hI?si=0zB3OvYU4KiRQTxI"
+    title="YouTube video player"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+  />
+</div>
+
 Video: https://youtu.be/6PZVwNTl5hI?si=0zB3OvYU4KiRQTxI
 
 ## Prerequisites

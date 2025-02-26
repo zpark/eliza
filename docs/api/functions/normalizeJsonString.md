@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / normalizeJsonString
+[@elizaos/core v0.25.8](../index.md) / normalizeJsonString
 
 # Function: normalizeJsonString()
 

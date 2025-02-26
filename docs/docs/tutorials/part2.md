@@ -13,6 +13,17 @@ In this second session of the AI Agent Dev School series, we take a deep dive in
 
 We explore each of these in detail, walking through code examples and common use cases. We also cover how to package up actions, providers and evaluators into reusable plugins.
 
+<div className="responsive-iframe">
+  <iframe
+    src="https://www.youtube.com/embed/XenGeAcPAQo"
+    title="YouTube video player"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+  />
+</div>
+
+---
+
 # Key Sections
 
 - [**00:03:33** - Shift in focus from characters (Dev School Part 1) to agent capabilities](https://www.youtube.com/watch?v=XenGeAcPAQo&t=213)

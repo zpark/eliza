@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Models
+[@elizaos/core v0.25.8](../index.md) / Models
 
 # Type Alias: Models
 
@@ -120,10 +120,6 @@ Model configurations by provider
 
 > **livepeer**: [`Model`](Model.md)
 
-### nearai
-
-> **nearai**: [`Model`](Model.md)
-
 ### deepseek
 
 > **deepseek**: [`Model`](Model.md)
@@ -139,6 +135,14 @@ Model configurations by provider
 ### atoma
 
 > **atoma**: [`Model`](Model.md)
+
+### secret\_ai
+
+> **secret\_ai**: [`Model`](Model.md)
+
+### nearai
+
+> **nearai**: [`Model`](Model.md)
 
 ## Defined in
 

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Relationship
+[@elizaos/core v0.25.8](../index.md) / Relationship
 
 # Interface: Relationship
 
@@ -14,7 +14,7 @@ Unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:518](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L518)
+[packages/core/src/types.ts:522](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L522)
 
 ***
 
@@ -26,7 +26,7 @@ First user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:521](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L521)
+[packages/core/src/types.ts:525](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L525)
 
 ***
 
@@ -38,7 +38,7 @@ Second user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:524](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L524)
+[packages/core/src/types.ts:528](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L528)
 
 ***
 
@@ -50,7 +50,7 @@ Primary user ID
 
 #### Defined in
 
-[packages/core/src/types.ts:527](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L527)
+[packages/core/src/types.ts:531](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L531)
 
 ***
 
@@ -62,7 +62,7 @@ Associated room ID
 
 #### Defined in
 
-[packages/core/src/types.ts:530](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L530)
+[packages/core/src/types.ts:534](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L534)
 
 ***
 
@@ -74,7 +74,7 @@ Relationship status
 
 #### Defined in
 
-[packages/core/src/types.ts:533](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L533)
+[packages/core/src/types.ts:537](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L537)
 
 ***
 
@@ -86,4 +86,4 @@ Optional creation timestamp
 
 #### Defined in
 
-[packages/core/src/types.ts:536](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L536)
+[packages/core/src/types.ts:540](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L540)

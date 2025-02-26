@@ -16,6 +16,16 @@ We explore:
 - Dynamic providers based on completion state
 - Q&A on advanced topics and use cases
 
+<div className="responsive-iframe">
+  <iframe
+    src="https://www.youtube.com/embed/Y1DiqSVy4aU"
+    title="YouTube video player"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowFullScreen
+  />
+</div>
+
+
 # Key Sections
 
 - [**00:00:00** - Intro & Housekeeping](https://www.youtube.com/watch?v=Y1DiqSVy4aU&t=0)

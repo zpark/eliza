@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / validateCharacterConfig
+[@elizaos/core v0.25.8](../index.md) / validateCharacterConfig
 
 # Function: validateCharacterConfig()
 

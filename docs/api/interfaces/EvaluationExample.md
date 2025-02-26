@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / EvaluationExample
+[@elizaos/core v0.25.8](../index.md) / EvaluationExample
 
 # Interface: EvaluationExample
 
@@ -14,7 +14,7 @@ Evaluation context
 
 #### Defined in
 
-[packages/core/src/types.ts:466](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L466)
+[packages/core/src/types.ts:470](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L470)
 
 ***
 
@@ -26,7 +26,7 @@ Example messages
 
 #### Defined in
 
-[packages/core/src/types.ts:469](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L469)
+[packages/core/src/types.ts:473](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L473)
 
 ***
 
@@ -38,4 +38,4 @@ Expected outcome
 
 #### Defined in
 
-[packages/core/src/types.ts:472](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L472)
+[packages/core/src/types.ts:476](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L476)

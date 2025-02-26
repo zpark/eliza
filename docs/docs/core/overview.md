@@ -45,7 +45,7 @@ The character file defines who your agent is - like a script for an actor. It in
 - Which platforms to connect to
 
 
-## Client System
+## [Clients](./clients.md)
 
 **The Interface**
 

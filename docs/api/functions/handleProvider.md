@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / handleProvider
+[@elizaos/core v0.25.8](../index.md) / handleProvider
 
 # Function: handleProvider()
 
@@ -20,4 +20,4 @@ Configuration options specific to the provider.
 
 ## Defined in
 
-[packages/core/src/generation.ts:2191](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2191)
+[packages/core/src/generation.ts:2242](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2242)

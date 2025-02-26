@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Room
+[@elizaos/core v0.25.8](../index.md) / Room
 
 # Interface: Room
 
@@ -14,7 +14,7 @@ Unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:578](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L578)
+[packages/core/src/types.ts:582](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L582)
 
 ***
 
@@ -26,4 +26,4 @@ Room participants
 
 #### Defined in
 
-[packages/core/src/types.ts:581](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L581)
+[packages/core/src/types.ts:585](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L585)

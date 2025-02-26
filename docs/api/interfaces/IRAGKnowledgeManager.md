@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / IRAGKnowledgeManager
+[@elizaos/core v0.25.8](../index.md) / IRAGKnowledgeManager
 
 # Interface: IRAGKnowledgeManager
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1203](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1203)
+[packages/core/src/types.ts:1210](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1210)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1204](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1204)
+[packages/core/src/types.ts:1211](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1211)
 
 ## Methods
 
@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1206](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1206)
+[packages/core/src/types.ts:1213](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1213)
 
 ***
 
@@ -66,7 +66,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1213](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1213)
+[packages/core/src/types.ts:1220](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1220)
 
 ***
 
@@ -84,7 +84,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1214](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1214)
+[packages/core/src/types.ts:1221](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1221)
 
 ***
 
@@ -112,7 +112,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1215](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1215)
+[packages/core/src/types.ts:1222](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1222)
 
 ***
 
@@ -130,7 +130,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1222](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1222)
+[packages/core/src/types.ts:1229](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1229)
 
 ***
 
@@ -156,7 +156,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1223](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1223)
+[packages/core/src/types.ts:1230](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1230)
 
 ***
 
@@ -170,7 +170,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1229](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1229)
+[packages/core/src/types.ts:1236](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1236)
 
 ***
 
@@ -190,4 +190,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1230](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1230)
+[packages/core/src/types.ts:1237](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1237)
