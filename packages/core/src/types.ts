@@ -808,7 +808,7 @@ export type Character = {
     adjectives: string[];
 
     /** Optional knowledge base */
-    knowledge?: (string | { path: string; shared?: boolean })[];
+    knowledge?: (string | { path: string; shared?: boolean } | { directory: string; shared?: boolean })[];
 
     /** Available plugins */
     plugins: Plugin[];
