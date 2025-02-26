@@ -667,13 +667,13 @@ const handleServerSync = async ({ runtime, world, rooms, users, source }: Server
         if (defaultRoom) {
           // Process each user in the batch
           await Promise.all(
-            userBatch.map(async (user) => {
+            userBatch.map(async (user: Entity) => {
               try {
                 await runtime.ensureConnection({
                   userId: user.id,
                   roomId: defaultRoom.id,
-                  userName: user.metadata.username,
-                  userScreenName: user.metadata.displayName || user.metadata.username,
+                  userName: user.metadata[source].username || user.metadata.default.username,
+                  userScreenName: user.metadata[source].name || user.metadata.default.name,
                   source: source,
                   channelId: defaultRoom.channelId,
                   serverId: world.serverId,

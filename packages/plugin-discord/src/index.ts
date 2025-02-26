@@ -178,12 +178,14 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     const guild = member.guild;
 
+    const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+
     // Emit standardized USER_JOINED event
-    this.runtime.emitEvent(["DISCORD_USER_JOINED", "USER_JOINED"], {
+    this.runtime.emitEvent("USER_JOINED", {
       runtime: this.runtime,
       user: {
         id: member.id,
-        username: member.user.username,
+        username: tag,
         displayName: member.displayName || member.user.username,
       },
       serverId: guild.id,
@@ -192,29 +194,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       source: "discord",
     });
 
-    // Optionally sync this user to all channels they have access to
-    for (const [channelId, channel] of guild.channels.cache) {
-      // Check if the user has access to this channel (text channels only)
-      if (
-        channel.type === DiscordChannelType.GuildText &&
-        channel
-          .permissionsFor(member)
-          ?.has(PermissionsBitField.Flags.ViewChannel)
-      ) {
-        this.runtime.emitEvent(["DISCORD_USER_JOINED_CHANNEL", "USER_JOINED"], {
-          runtime: this.runtime,
-          user: {
-            id: member.id,
-            username: member.user.username,
-            displayName: member.displayName || member.user.username,
-          },
-          serverId: guild.id,
-          channelId: channelId,
-          channelType: ChannelType.GROUP,
-          source: "discord",
-        });
-      }
-    }
+    this.runtime.emitEvent("DISCORD_USER_JOINED", {
+      runtime: this.runtime,
+      member,
+      guild,
+    });
   }
 
   async stop() {
@@ -637,7 +621,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       try {
         // Use cache first
         for (const [, member] of guild.members.cache) {
-          // Skip bots and our own bot user
+          const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+
           if (member.id !== botId) {
             users.push({
               id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
@@ -645,8 +630,14 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 new Set([member.user.username, member.displayName])
               ),
               metadata: {
-                username: member.user.username,
-                displayName: member.displayName || member.user.username,
+                default: {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                },
+                discord: {
+                  username: tag,
+                  displayName: member.displayName || member.user.username,
+                }
               },
             });
           }
@@ -659,21 +650,28 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           const onlineMembers = await guild.members.fetch({ limit: 100 });
 
           for (const [, member] of onlineMembers) {
-            // Skip bots and our own bot user
             if (member.id !== botId) {
               const userId = stringToUuid(
                 `${member.id}-${this.runtime.agentId}`
               );
               // Avoid duplicates
               if (!users.some((u) => u.id === userId)) {
+                const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+
                 users.push({
                   id: userId,
                   names: Array.from(
                     new Set([member.user.username, member.displayName])
                   ),
                   metadata: {
-                    username: member.user.username,
-                    displayName: member.displayName || member.user.username,
+                    discord: {
+                      username: tag,
+                      displayName: member.displayName || member.user.username,
+                    },
+                    default: {
+                      username: tag,
+                      name: member.displayName || member.user.username,
+                    }
                   },
                 });
               }
@@ -692,16 +690,23 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         }
 
         for (const [, member] of members) {
-          // Skip bots and our own bot user
           if (member.id !== botId) {
+            const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+
             users.push({
               id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
               names: Array.from(
                 new Set([member.user.username, member.displayName])
               ),
               metadata: {
-                username: member.user.username,
-                displayName: member.displayName || member.user.username,
+                default: {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                },
+                discord: {
+                  username: tag,
+                  displayName: member.displayName || member.user.username,
+                }
               },
             });
           }
