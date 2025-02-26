@@ -18,6 +18,8 @@ import {
     type Guild,
     BaseGuildVoiceChannel,
 } from "discord.js";
+
+import { DiscordClient } from "../index.ts";
 import { VoiceManager } from "../voice.ts";
 
 export default {
@@ -85,7 +87,7 @@ export default {
             throw new Error("No server ID found 8");
         }
 
-        const discordClient = runtime.getClient("discord");
+        const discordClient = runtime.getClient("discord") as DiscordClient;
         const client = discordClient.client;
         const voiceManager = discordClient.voiceManager as VoiceManager;
 
