@@ -1664,6 +1664,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getAllWorlds(agentId: UUID): Promise<WorldData[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db.select().from(worldTable).where(eq(worldTable.agentId, agentId));
+            return result as WorldData[];
+        });
+    }
+
     async updateWorld(world: WorldData): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(worldTable).set(world).where(eq(worldTable.id, world.id));

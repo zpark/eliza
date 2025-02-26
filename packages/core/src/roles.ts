@@ -94,7 +94,7 @@ export async function findServerForOwner(
     );
 
     // Get all worlds for this agent
-    const worlds = [] // await runtime.getAllWorlds(runtime.agentId);
+    const worlds = await runtime.getAllWorlds();
 
     if (!worlds || worlds.length === 0) {
       logger.info("No worlds found for this agent");

@@ -4,6 +4,7 @@ import { logger } from "../logger";
 import { findServerForOwner, normalizeUserId } from "../roles";
 import {
     Action,
+    ActionExample,
     ChannelType,
     HandlerCallback,
     IAgentRuntime,
@@ -101,7 +102,7 @@ export async function updateOnboardingState(
     world.metadata.onboarding = onboardingState;
 
     // Save updated world
-    await runtime.databaseAdapter.updateWorld(world, runtime.agentId);
+    await runtime.updateWorld(world);
 
     return true;
   } catch (error) {
@@ -582,8 +583,8 @@ async function generateErrorResponse(
  * Updated to use world metadata instead of cache
  */
 const updateSettingsAction: Action = {
-  name: "UPDATE_SETTING",
-  similes: ["SAVE_SETTING", "SET_CONFIGURATION", "CONFIGURE"],
+  name: "UPDATE_SETTINGS",
+  similes: ["UPDATE_SETTING", "SAVE_SETTING", "SET_CONFIGURATION", "CONFIGURE"],
   description: "Saves a setting during the onboarding process",
 
   validate: async (
@@ -759,6 +760,178 @@ const updateSettingsAction: Action = {
       await generateErrorResponse(runtime, state, callback);
     }
   },
+  examples: [
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "I want to set up the welcome channel to #general",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Perfect! I've updated your welcome channel to #general. Next, we should configure the automated greeting message that new members will receive.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Let's set the bot prefix to !",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Great choice! I've set the command prefix to '!'. Now you can use commands like !help, !info, etc.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Enable auto-moderation for bad language",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Auto-moderation for inappropriate language has been enabled. I'll now filter messages containing offensive content.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "For server logs, use the #server-logs channel",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "I've configured #server-logs as your logging channel. All server events like joins, leaves, and moderation actions will be recorded there.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "I'd like to have role self-assignment in the #roles channel",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Role self-assignment has been set up in the #roles channel. Members can now assign themselves roles by interacting with messages there.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Make music commands available in voice-text channels only",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "I've updated your music command settings - they'll now only work in voice-text channels. This helps keep other channels clear of music spam.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "For server timezone, set it to EST",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Server timezone has been set to Eastern Standard Time (EST). All scheduled events and timestamps will now display in this timezone.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Set verification level to email verified users only",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "I've updated the verification requirement to email verified accounts only. This adds an extra layer of security to your server.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "I want to turn off level-up notifications",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Level-up notifications have been disabled. Members will still earn experience and level up, but there won't be any automatic announcements. You can still view levels with the appropriate commands.",
+          action: "SETTING_UPDATED",
+          source: "discord",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "My server name is 'Gaming Lounge'",
+          source: "discord",
+        },
+      },
+      {
+        user: "{{user2}}",
+        content: {
+          text: "Great! I've saved 'Gaming Lounge' as your server name. This helps me personalize responses and know how to refer to your community. We've completed all the required settings! Your server is now fully configured and ready to use. You can always adjust these settings later if needed.",
+          action: "ONBOARDING_COMPLETE",
+          source: "discord",
+        },
+      },
+    ],
+  ] as ActionExample[][],
 };
 
 export default updateSettingsAction;

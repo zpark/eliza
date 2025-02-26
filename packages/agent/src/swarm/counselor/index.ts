@@ -1,7 +1,7 @@
 import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-import { initializeAllSystems } from "../settings";
+import { initCharacter, initializeAllSystems } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -246,21 +246,5 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-  init: async (runtime: IAgentRuntime) => {
-    runtime.registerEvent(
-      "DISCORD_SERVER_JOINED",
-      async (params: { server: Guild }) => {
-        console.log("Counselor joined server");
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-
-    runtime.registerEvent(
-      "DISCORD_SERVER_CONNECTED",
-      async (params: { server: Guild }) => {
-        console.log("Counselor connected to server");
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-  },
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config}),
 };

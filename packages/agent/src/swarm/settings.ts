@@ -1,14 +1,68 @@
 import {
+  Action,
   ChannelType,
+  Evaluator,
   type IAgentRuntime,
   initializeOnboardingConfig,
   logger,
   type OnboardingConfig,
   type OnboardingState,
+  Provider,
   stringToUuid,
   type UUID,
 } from "@elizaos/core";
 import type { Guild } from "discord.js";
+
+export const initCharacter = ({
+  runtime,
+  config,
+  actions,
+  providers,
+  evaluators
+}: {
+  runtime: IAgentRuntime,
+  config: OnboardingConfig,
+  actions?: Action[],
+  providers?: Provider[],
+  evaluators?: Evaluator[]
+}) => {
+  if (actions) {
+    for (const action of actions) {
+      runtime.registerAction(action);
+    }
+  }
+
+  if(providers) {
+    for (const provider of providers) {
+      runtime.registerProvider(provider);
+    }
+  }
+
+  if(evaluators) {
+    for (const evaluator of evaluators) {
+      runtime.registerEvaluator(evaluator);
+    }
+  }
+
+  // Register runtime events
+  runtime.registerEvent(
+    "DISCORD_SERVER_JOINED",
+    async (params: { server: Guild }) => {
+      console.log("Community manager joined server");
+      // TODO: Save onboarding config to runtime
+      await initializeAllSystems(runtime, [params.server], config);
+    }
+  );
+
+  // when booting up into a server we're in, fire a connected event
+  runtime.registerEvent(
+    "DISCORD_SERVER_CONNECTED",
+    async (params: { server: Guild }) => {
+      console.log("Community manager connected to server");
+      await initializeAllSystems(runtime, [params.server], config);
+    }
+  );
+}
 
 /**
  * Initializes all systems for a server
@@ -18,11 +72,24 @@ export async function initializeAllSystems(
   servers: Guild[],
   config: OnboardingConfig
 ): Promise<void> {
+
+  // TODO: Remove this
+  // wait 2 seconds
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
   try {
     for (const server of servers) {
       const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
 
-      const world = await runtime.getWorld(worldId);
+      await runtime.ensureWorldExists({
+        id: worldId,
+        name: server.name,
+        agentId: runtime.agentId,
+        serverId: server.id,
+        metadata: {}
+      });
+
+      const world = await runtime.getWorld(worldId);      
 
       // Initialize onboarding configuration
       const onboardingState = await initializeOnboardingConfig(

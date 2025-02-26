@@ -258,7 +258,7 @@ const updateRoleAction: Action = {
 
     // Save updated world metadata if any changes were made
     if (worldUpdated) {
-      await runtime.databaseAdapter.updateWorld(world, runtime.agentId);
+      await runtime.updateWorld(world);
       logger.info(`Updated roles in world metadata for server ${serverId}`);
     }
   },

@@ -10,9 +10,8 @@ import {
     Memory,
     Provider,
     State,
-    type OnboardingConfig,
     type OnboardingSetting,
-    type OnboardingState,
+    type OnboardingState
 } from "../types";
 
 /**

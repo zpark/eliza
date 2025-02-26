@@ -1,7 +1,7 @@
 import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-import { initializeAllSystems } from "../settings";
+import { initCharacter, initializeAllSystems } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -354,36 +354,5 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-// Add this to each agent's init function (complianceOfficer, communityManager, etc.)
-
-init: async (runtime: IAgentRuntime) => {
-  // Register runtime events with improved error handling
-  runtime.registerEvent(
-    "DISCORD_SERVER_JOINED",
-    async (params: { server: Guild }) => {
-      try {
-        console.log(`${runtime.character.name} joined server ${params.server.id}`);
-        
-        // Proceed with initialization
-        await initializeAllSystems(runtime, [params.server], config);
-      } catch (error) {
-        console.error(`Error during server join initialization: ${error}`);
-      }
-    }
-  );
-
-  runtime.registerEvent(
-    "DISCORD_SERVER_CONNECTED",
-    async (params: { server: Guild }) => {
-      try {
-        console.log(`${runtime.character.name} connected to server ${params.server.id}`);
-        
-        // Proceed with initialization
-        await initializeAllSystems(runtime, [params.server], config);
-      } catch (error) {
-        console.error(`Error during server connection initialization: ${error}`);
-      }
-    }
-  );
-}
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config}),
 };

@@ -1,7 +1,6 @@
 import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
-import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-import { initializeAllSystems } from "../settings";
+import { initCharacter } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -357,25 +356,5 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-  init: async (runtime: IAgentRuntime) => {
-
-    // Register runtime events
-    runtime.registerEvent(
-      "DISCORD_SERVER_JOINED",
-      async (params: { server: Guild }) => {
-        console.log("Community manager joined server");
-        // TODO: Save onboarding config to runtime
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-
-    // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent(
-      "DISCORD_SERVER_CONNECTED",
-      async (params: { server: Guild }) => {
-        console.log("Community manager connected to server");
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-  },
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config}),
 };

@@ -860,6 +860,8 @@ export interface IDatabaseAdapter {
 
   getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
+  getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+
   updateWorld(world: WorldData, agentId: UUID): Promise<void>;
 
   getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
@@ -1099,6 +1101,8 @@ export interface IAgentRuntime {
 
   registerAction(action: Action): void;
 
+  registerEvaluator(evaluator: Evaluator): void;
+
   ensureConnection({
     userId,
     roomId,
@@ -1124,6 +1128,10 @@ export interface IAgentRuntime {
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
   getWorld(worldId: UUID): Promise<WorldData | null>;
+
+  getAllWorlds(): Promise<WorldData[]>;
+
+  updateWorld(world: WorldData): Promise<void>;
 
   ensureWorldExists({
     id,

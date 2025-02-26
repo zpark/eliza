@@ -948,7 +948,8 @@ export class AgentRuntime implements IAgentRuntime {
             id: worldId,
             name: serverId ? `World for server ${serverId}` : `World for room ${roomId}`,
             agentId: this.agentId,
-            serverId: serverId || "default"
+            serverId: serverId || "default",
+            metadata: {}
           });
         }
         
@@ -974,6 +975,14 @@ export class AgentRuntime implements IAgentRuntime {
         return await this.databaseAdapter.getWorld(worldId, this.agentId);
     }
 
+    async getAllWorlds() {
+        return await this.databaseAdapter.getAllWorlds(this.agentId);
+    }
+
+    async updateWorld(world: WorldData) {
+        return await this.databaseAdapter.updateWorld(world, this.agentId);
+    }
+
     /**
      * Ensure the existence of a world.
      */
@@ -989,7 +998,7 @@ export class AgentRuntime implements IAgentRuntime {
               serverId: serverId || "default",
               metadata
             });
-            logger.log(`World ${id} created successfully.`);
+            logger.info(`World ${id} created successfully.`);
           }
         } catch (error) {
           logger.error(`Failed to ensure world exists: ${error instanceof Error ? error.message : String(error)}`);

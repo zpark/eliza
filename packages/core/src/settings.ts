@@ -46,7 +46,7 @@ export async function updateOnboardingState(
     world.metadata.onboarding = onboardingState;
 
     // Save updated world
-    await runtime.databaseAdapter.updateWorld(world, runtime.agentId);
+    await runtime.updateWorld(world);
 
     return true;
   } catch (error) {
@@ -109,7 +109,7 @@ export async function initializeOnboardingConfig(
     
     world.metadata.onboarding = onboardingState;
     
-    await runtime.databaseAdapter.updateWorld(world, runtime.agentId);
+    await runtime.updateWorld(world);
     
     logger.info(`Initialized onboarding config for server ${world.serverId}`);
     return onboardingState;

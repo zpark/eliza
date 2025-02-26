@@ -562,6 +562,92 @@ const syncSingleUser = async (
 };
 
 /**
+ * Handles standardized server data for both SERVER_JOINED and SERVER_CONNECTED events
+ */
+const handleServerSync = async ({ runtime, world, rooms, users, source }: ServerConnectedParams) => {
+  logger.info(`Handling server sync event for server: ${world.name}`);
+  try {
+    // Create/ensure the world exists for this server
+    await runtime.ensureWorldExists({
+      id: world.id,
+      name: world.name,
+      agentId: runtime.agentId,
+      serverId: world.serverId,
+    });
+
+    // First sync all rooms/channels
+    if (rooms && rooms.length > 0) {
+      for (const room of rooms) {
+        await runtime.ensureRoomExists({
+          id: room.id,
+          name: room.name,
+          source: source,
+          type: room.type,
+          channelId: room.channelId,
+          serverId: world.serverId,
+          worldId: world.id,
+        });
+      }
+    }
+
+    // Then sync all users
+    if (users && users.length > 0) {
+      // Process users in batches to avoid overwhelming the system
+      const batchSize = 50;
+      for (let i = 0; i < users.length; i += batchSize) {
+        const userBatch = users.slice(i, i + batchSize);
+
+        // Find a default text channel for these users if possible
+        const defaultRoom =
+          rooms.find(
+            (room) =>
+              room.type === ChannelType.GROUP &&
+              room.name.includes("general")
+          ) || rooms.find((room) => room.type === ChannelType.GROUP);
+
+        if (defaultRoom) {
+          // Process each user in the batch
+          await Promise.all(
+            userBatch.map(async (user) => {
+              try {
+                await runtime.ensureConnection({
+                  userId: user.id,
+                  roomId: defaultRoom.id,
+                  userName: user.metadata.username,
+                  userScreenName: user.metadata.displayName || user.metadata.username,
+                  source: source,
+                  channelId: defaultRoom.channelId,
+                  serverId: world.serverId,
+                  type: defaultRoom.type,
+                  worldId: world.id,
+                });
+              } catch (err) {
+                logger.warn(`Failed to sync user ${user.metadata.username}: ${err}`);
+              }
+            })
+          );
+        }
+
+        // Add a small delay between batches if not the last batch
+        if (i + batchSize < users.length) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    logger.success(
+      `Successfully synced standardized world structure for ${world.name}`
+    );
+  } catch (error) {
+    logger.error(
+      `Error processing standardized server data: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+};
+
+/**
  * Syncs multiple users into entities at once
  */
 const syncMultipleUsers = async (
@@ -642,100 +728,18 @@ const events = {
   ],
   REACTION_RECEIVED: [reactionReceivedHandler],
 
-  // New events for entity syncing
-  SERVER_JOINED: [
+  // Both events now use the same handler function
+  SERVER_JOINED: [handleServerSync],
+  SERVER_CONNECTED: [handleServerSync],
+  
+  // Keep the legacy handler for backward compatibility during transition
+  // This can be removed once all platform plugins are updated
+  SERVER_JOINED_LEGACY: [
     async ({ runtime, world, source }: ServerJoinedParams) => {
       await syncServerUsers(runtime, world, source);
     },
   ],
-  SERVER_CONNECTED: [
-    async ({ runtime, world, rooms, users, source }: ServerConnectedParams) => {
-      logger.info(`Handling SERVER_CONNECTED event for server: ${world.name}`);
-      console.log(world);
-      console.log(rooms);
-      console.log(users);
-      try {
-        // Create/ensure the world exists for this server
-        await runtime.ensureWorldExists({
-          id: world.id,
-          name: world.name,
-          agentId: runtime.agentId,
-          serverId: world.serverId,
-        });
-
-        // First sync all rooms/channels
-        if (rooms && rooms.length > 0) {
-          for (const room of rooms) {
-            await runtime.ensureRoomExists({
-              id: room.id,
-              name: room.name,
-              source: source,
-              type: room.type,
-              channelId: room.channelId,
-              serverId: world.serverId,
-              worldId: world.id,
-            });
-          }
-        }
-
-        // Then sync all users
-        if (users && users.length > 0) {
-          // Process users in batches to avoid overwhelming the system
-          const batchSize = 50;
-          for (let i = 0; i < users.length; i += batchSize) {
-            const userBatch = users.slice(i, i + batchSize);
-
-            // Find a default text channel for these users if possible
-            const defaultRoom =
-              rooms.find(
-                (room) =>
-                  room.type === ChannelType.GROUP &&
-                  room.name.includes("general")
-              ) || rooms.find((room) => room.type === ChannelType.GROUP);
-
-            if (defaultRoom) {
-              // Process each user in the batch
-              await Promise.all(
-                userBatch.map(async (user) => {
-                  console
-                  try {
-                    await runtime.ensureConnection({
-                      userId: user.id,
-                      roomId: defaultRoom.id,
-                      userName: user.metadata.username,
-                      userScreenName: user.metadata.displayName || user.metadata.username,
-                      source: source,
-                      channelId: defaultRoom.channelId,
-                      serverId: world.serverId,
-                      type: defaultRoom.type,
-                      worldId: world.id,
-                    });
-                  } catch (err) {
-                    logger.warn(`Failed to sync user ${user.metadata.username}: ${err}`);
-                  }
-                })
-              );
-            }
-
-            // Add a small delay between batches if not the last batch
-            if (i + batchSize < users.length) {
-              await new Promise((resolve) => setTimeout(resolve, 500));
-            }
-          }
-        }
-
-        logger.success(
-          `Successfully synced standardized world structure for ${world.name}`
-        );
-      } catch (error) {
-        logger.error(
-          `Error processing standardized server data: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
-    },
-  ],
+  
   USER_JOINED: [
     async ({
       runtime,

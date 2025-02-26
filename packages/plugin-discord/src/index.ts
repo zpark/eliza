@@ -496,13 +496,36 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     logger.log(`Joined guild ${guild.name}`);
     const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
-
-    // Emit both Discord-specific and standardized events
-    this.runtime.emitEvent(["DISCORD_SERVER_JOINED", "SERVER_JOINED"], {
+  
+    // Create standardized world data structure
+    const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
+    const standardizedData = {
+      runtime: this.runtime,
+      rooms: await this.buildStandardizedRooms(fullGuild, worldId),
+      users: await this.buildStandardizedUsers(fullGuild),
+      world: {
+        id: worldId,
+        name: fullGuild.name,
+        agentId: this.runtime.agentId,
+        serverId: fullGuild.id,
+        metadata: {
+          ownership: fullGuild.ownerId
+            ? { ownerId: fullGuild.ownerId }
+            : undefined,
+        },
+      } as WorldData,
+      source: "discord",
+    };
+  
+    // Emit both Discord-specific and standardized events with the same data structure
+    this.runtime.emitEvent(["DISCORD_SERVER_JOINED"], {
       runtime: this.runtime,
       server: fullGuild,
       source: "discord",
     });
+  
+    // Emit standardized event with the same structure as SERVER_CONNECTED
+    this.runtime.emitEvent(["SERVER_JOINED"], standardizedData);
   }
 
   private async handleInteractionCreate(interaction: any) {
