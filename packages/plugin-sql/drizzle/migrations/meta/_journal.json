@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1740511703191,
-      "tag": "20250225192823_init_schema",
+      "when": 1740535702568,
+      "tag": "20250226020822_create_extensions",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1740535744595,
+      "tag": "20250226020904_init_schema",
       "breakpoints": true
     }
   ]
