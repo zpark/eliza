@@ -10,7 +10,7 @@ import {
   ServiceType,
   stringToUuid,
   type UUID,
-  ChannelType
+  ChannelType,
 } from "@elizaos/core";
 import {
   ChannelType as DiscordChannelType,
@@ -61,9 +61,12 @@ export class MessageManager {
       return;
     }
 
-    const userId = message.author.id as UUID;
-    const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
-    const userName = message.author.username;
+    const userIdUUID = stringToUuid(
+      `${message.author.id}-${this.runtime.agentId}`
+    );
+    const userName = message.author.bot
+      ? `${message.author.username}#${message.author.discriminator}`
+      : message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
     const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
@@ -118,8 +121,10 @@ export class MessageManager {
         // Only process messages that are not empty
         return;
       }
-      
-      const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
+
+      const userIdUUID = stringToUuid(
+        `${message.author.id}-${this.runtime.agentId}`
+      );
 
       const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
@@ -314,6 +319,10 @@ export class MessageManager {
     }
 
     const data = await response.json();
-    return (data as { username: string }).username;
+    const discriminator = data.discriminator;
+    return (
+      (data as { username: string }).username +
+      (discriminator ? "#" + discriminator : "")
+    );
   }
 }

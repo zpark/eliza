@@ -1,7 +1,6 @@
 import { messageCompletionFooter } from "@elizaos/core";
 
 export const messageHandlerTemplate =
-    // {{goals}}
     `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
