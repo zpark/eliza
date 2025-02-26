@@ -457,6 +457,7 @@ export class ClientBase extends EventEmitter {
         // Filter out the cached tweets that already exist in the database
         const tweetsToSave = cachedTimeline.filter(
           (tweet) =>
+            tweet.userId !== this.profile.id &&
             !existingMemoryIds.has(
               stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
             )
@@ -480,14 +481,7 @@ export class ClientBase extends EventEmitter {
               : stringToUuid(tweet.userId);
 
           if (tweet.userId === this.profile.id) {
-            await this.runtime.ensureConnection({
-              userId: this.runtime.agentId,
-              roomId,
-              userName: this.profile.username,
-              userScreenName: this.profile.screenName,
-              source: "twitter",
-              type: ChannelType.FEED
-            });
+            continue;
           } else {
             await this.runtime.ensureConnection({
               userId,
@@ -580,6 +574,7 @@ export class ClientBase extends EventEmitter {
     // Filter out the tweets that already exist in the database
     const tweetsToSave = allTweets.filter(
       (tweet) =>
+        tweet.userId !== this.profile.id &&
         !existingMemoryIds.has(
           stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
         )
@@ -609,14 +604,7 @@ export class ClientBase extends EventEmitter {
           : stringToUuid(tweet.userId);
 
       if (tweet.userId === this.profile.id) {
-        await this.runtime.ensureConnection({
-          userId: this.runtime.agentId,
-          roomId,
-          userName: this.profile.username,
-          userScreenName: this.profile.screenName,
-          source: "twitter",
-          type: ChannelType.FEED
-        });
+        continue;
       } else {
         await this.runtime.ensureConnection({
           userId,
