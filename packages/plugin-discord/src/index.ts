@@ -109,11 +109,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         continue;
       }
       const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
-      
-      const ownerId = stringToUuid(
-        `${guildObj.ownerId}-${runtime.agentId}`
-      );
-      
+
+      const ownerId = stringToUuid(`${guildObj.ownerId}-${runtime.agentId}`);
+
       await runtime.ensureWorldExists({
         id: worldId,
         name: guild.name,
@@ -178,7 +176,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     const guild = member.guild;
 
-    const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+    const tag = member.user.bot
+      ? `${member.user.username}#${member.user.discriminator}`
+      : member.user.username;
 
     // Emit standardized USER_JOINED event
     this.runtime.emitEvent("USER_JOINED", {
@@ -489,7 +489,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     const ownerId = stringToUuid(
       `${fullGuild.ownerId}-${this.runtime.agentId}`
     );
-  
+
     // Create standardized world data structure
     const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
     const standardizedData = {
@@ -502,21 +502,19 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         agentId: this.runtime.agentId,
         serverId: fullGuild.id,
         metadata: {
-          ownership: fullGuild.ownerId
-            ? { ownerId }
-            : undefined,
+          ownership: fullGuild.ownerId ? { ownerId } : undefined,
         },
       } as WorldData,
       source: "discord",
     };
-  
+
     // Emit both Discord-specific and standardized events with the same data structure
     this.runtime.emitEvent(["DISCORD_SERVER_JOINED"], {
       runtime: this.runtime,
       server: fullGuild,
       source: "discord",
     });
-  
+
     // Emit standardized event with the same structure as SERVER_CONNECTED
     this.runtime.emitEvent(["SERVER_JOINED"], standardizedData);
   }
@@ -621,7 +619,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       try {
         // Use cache first
         for (const [, member] of guild.members.cache) {
-          const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+          const tag = member.user.bot
+            ? `${member.user.username}#${member.user.discriminator}`
+            : member.user.username;
 
           if (member.id !== botId) {
             users.push({
@@ -637,7 +637,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 discord: {
                   username: tag,
                   displayName: member.displayName || member.user.username,
-                }
+                },
               },
             });
           }
@@ -656,7 +656,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
               );
               // Avoid duplicates
               if (!users.some((u) => u.id === userId)) {
-                const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+                const tag = member.user.bot
+                  ? `${member.user.username}#${member.user.discriminator}`
+                  : member.user.username;
 
                 users.push({
                   id: userId,
@@ -671,7 +673,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                     default: {
                       username: tag,
                       name: member.displayName || member.user.username,
-                    }
+                    },
                   },
                 });
               }
@@ -691,7 +693,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
         for (const [, member] of members) {
           if (member.id !== botId) {
-            const tag = member.user.bot ? `${member.user.username}#${member.user.discriminator}` : member.user.username;
+            const tag = member.user.bot
+              ? `${member.user.username}#${member.user.discriminator}`
+              : member.user.username;
 
             users.push({
               id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
@@ -706,7 +710,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 discord: {
                   username: tag,
                   displayName: member.displayName || member.user.username,
-                }
+                },
               },
             });
           }
@@ -741,11 +745,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
         // Create platform-agnostic world data structure with simplified structure
         const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
-        
+
         const ownerId = stringToUuid(
           `${fullGuild.ownerId}-${this.runtime.agentId}`
         );
-        
+
         const standardizedData = {
           runtime: this.runtime,
           rooms: await this.buildStandardizedRooms(fullGuild, worldId),
@@ -756,9 +760,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
             agentId: this.runtime.agentId,
             serverId: fullGuild.id,
             metadata: {
-              ownership: fullGuild.ownerId
-                ? { ownerId }
-                : undefined,
+              ownership: fullGuild.ownerId ? { ownerId } : undefined,
             },
           } as WorldData,
           source: "discord",

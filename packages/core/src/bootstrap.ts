@@ -13,7 +13,13 @@ import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { composeContext } from "./context.ts";
 import { factEvaluator } from "./evaluators/fact.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
-import { formatActors, formatMessages, generateMessageResponse, generateShouldRespond, getActorDetails } from "./index.ts";
+import {
+  formatActors,
+  formatMessages,
+  generateMessageResponse,
+  generateShouldRespond,
+  getActorDetails,
+} from "./index.ts";
 import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
 import { confirmationTasksProvider } from "./providers/confirmation.ts";
@@ -70,8 +76,7 @@ About {{agentName}}:
 # INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
 ${shouldRespondFooter}`;
 
-const messageHandlerTemplate =
-  `# Task: Generate dialog and actions for the character {{agentName}}.
+const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
 {{system}}
 
 {{actionExamples}}
@@ -110,7 +115,7 @@ type MessageReceivedHandlerParams = {
 
 const checkShouldRespond = async (
   runtime: IAgentRuntime,
-  message: Memory,
+  message: Memory
 ): Promise<boolean> => {
   if (message.userId === runtime.agentId) return false;
 
@@ -143,19 +148,19 @@ const checkShouldRespond = async (
   }
 
   const [actorsData, recentMessagesData] = await Promise.all([
-      getActorDetails({ runtime: runtime, roomId: message.roomId }),
-      runtime.messageManager.getMemories({
-          roomId: message.roomId,
-          count: runtime.getConversationLength(),
-          unique: false,
-      }),
+    getActorDetails({ runtime: runtime, roomId: message.roomId }),
+    runtime.messageManager.getMemories({
+      roomId: message.roomId,
+      count: runtime.getConversationLength(),
+      unique: false,
+    }),
   ]);
 
   recentMessagesData.push(message);
 
   const recentMessages = formatMessages({
-      messages: recentMessagesData,
-      actors: actorsData,
+    messages: recentMessagesData,
+    actors: actorsData,
   });
 
   const state = {
@@ -171,7 +176,7 @@ const checkShouldRespond = async (
       runtime.character.templates?.shouldRespondTemplate ||
       shouldRespondTemplate,
   });
-  
+
   const response = await generateShouldRespond({
     runtime: runtime,
     context: shouldRespondContext,
@@ -200,28 +205,27 @@ const messageReceivedHandler = async ({
   message,
   callback,
 }: MessageReceivedHandlerParams) => {
-    // Generate a new response ID
-    const responseId = v4();
-    // Get or create the agent-specific map
-    if (!latestResponseIds.has(runtime.agentId)) {
-      latestResponseIds.set(runtime.agentId, new Map());
-    }
-    const agentResponses = latestResponseIds.get(runtime.agentId)!;
+  // Generate a new response ID
+  const responseId = v4();
+  // Get or create the agent-specific map
+  if (!latestResponseIds.has(runtime.agentId)) {
+    latestResponseIds.set(runtime.agentId, new Map());
+  }
+  const agentResponses = latestResponseIds.get(runtime.agentId)!;
 
-    // Set this as the latest response ID for this agent+room
-    agentResponses.set(message.roomId, responseId);
+  // Set this as the latest response ID for this agent+room
+  agentResponses.set(message.roomId, responseId);
 
   // First, save the incoming message
   await Promise.all([
     runtime.messageManager.addEmbeddingToMemory(message),
-    runtime.messageManager.createMemory(message)
+    runtime.messageManager.createMemory(message),
   ]);
-  
+
   const shouldRespond = await checkShouldRespond(runtime, message);
-  
+
   let state = await runtime.composeState(message);
   if (shouldRespond) {
-    
     const context = composeContext({
       state,
       template:
@@ -237,7 +241,9 @@ const messageReceivedHandler = async ({
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
     if (currentResponseId !== responseId) {
-      logger.info(`Response discarded - newer message being processed for agent: ${runtime.agentId}, room: ${message.roomId}`);
+      logger.info(
+        `Response discarded - newer message being processed for agent: ${runtime.agentId}, room: ${message.roomId}`
+      );
       return;
     }
 
@@ -302,11 +308,9 @@ const syncServerUsers = async (
   try {
     // Create/ensure the world exists for this server
     const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
-    
-    const ownerId = stringToUuid(
-      `${server.ownerId}-${runtime.agentId}`
-    );
-    
+
+    const ownerId = stringToUuid(`${server.ownerId}-${runtime.agentId}`);
+
     await runtime.ensureWorldExists({
       id: worldId,
       name: server.name || `Server ${server.id}`,
@@ -620,7 +624,13 @@ const syncSingleUser = async (
 /**
  * Handles standardized server data for both SERVER_JOINED and SERVER_CONNECTED events
  */
-const handleServerSync = async ({ runtime, world, rooms, users, source }: ServerConnectedParams) => {
+const handleServerSync = async ({
+  runtime,
+  world,
+  rooms,
+  users,
+  source,
+}: ServerConnectedParams) => {
   logger.info(`Handling server sync event for server: ${world.name}`);
   try {
     // Create/ensure the world exists for this server
@@ -660,8 +670,7 @@ const handleServerSync = async ({ runtime, world, rooms, users, source }: Server
         const defaultRoom =
           rooms.find(
             (room) =>
-              room.type === ChannelType.GROUP &&
-              room.name.includes("general")
+              room.type === ChannelType.GROUP && room.name.includes("general")
           ) || rooms.find((room) => room.type === ChannelType.GROUP);
 
         if (defaultRoom) {
@@ -672,8 +681,11 @@ const handleServerSync = async ({ runtime, world, rooms, users, source }: Server
                 await runtime.ensureConnection({
                   userId: user.id,
                   roomId: defaultRoom.id,
-                  userName: user.metadata[source].username || user.metadata.default.username,
-                  userScreenName: user.metadata[source].name || user.metadata.default.name,
+                  userName:
+                    user.metadata[source].username ||
+                    user.metadata.default.username,
+                  userScreenName:
+                    user.metadata[source].name || user.metadata.default.name,
                   source: source,
                   channelId: defaultRoom.channelId,
                   serverId: world.serverId,
@@ -681,7 +693,9 @@ const handleServerSync = async ({ runtime, world, rooms, users, source }: Server
                   worldId: world.id,
                 });
               } catch (err) {
-                logger.warn(`Failed to sync user ${user.metadata.username}: ${err}`);
+                logger.warn(
+                  `Failed to sync user ${user.metadata.username}: ${err}`
+                );
               }
             })
           );
@@ -790,7 +804,7 @@ const events = {
   // Both events now use the same handler function
   SERVER_JOINED: [handleServerSync],
   SERVER_CONNECTED: [handleServerSync],
-  
+
   // Keep the legacy handler for backward compatibility during transition
   // This can be removed once all platform plugins are updated
   SERVER_JOINED_LEGACY: [
@@ -798,7 +812,7 @@ const events = {
       await syncServerUsers(runtime, world, source);
     },
   ],
-  
+
   USER_JOINED: [
     async ({
       runtime,
@@ -837,7 +851,13 @@ export const bootstrapPlugin: Plugin = {
   ],
   events,
   evaluators: [factEvaluator, goalEvaluator],
-  providers: [timeProvider, factsProvider, confirmationTasksProvider, roleProvider, settingsProvider],
+  providers: [
+    timeProvider,
+    factsProvider,
+    confirmationTasksProvider,
+    roleProvider,
+    settingsProvider,
+  ],
 };
 
 export default bootstrapPlugin;
