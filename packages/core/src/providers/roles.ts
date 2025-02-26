@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { Provider, IAgentRuntime, Memory, State, ChannelType } from "../types";
+import { Provider, IAgentRuntime, Memory, State, ChannelType, UUID } from "../types";
 import { stringToUuid } from "../uuid";
 
 export const roleProvider: Provider = {
@@ -46,32 +46,35 @@ export const roleProvider: Provider = {
             logger.info(`Found ${Object.keys(roles).length} roles`);
             
             // Group users by role
-            const owners: string[] = [];
-            const admins: string[] = [];
-            const members: string[] = [];
+            const owners: { name: string, username: string }[] = [];
+            const admins: { name: string, username: string }[] = [];
+            const members: { name: string, username: string }[] = [];
             
             // Process roles
             for (const userId in roles) {
-                console.log('**** checking role for userId', userId);
-                console.log(roles[userId]);
-                const userRole = roles[userId].role;
-                const username = userId; // Use ID as fallback
+                const userRole = roles[userId];
+
+                // get the user from the database
+                const user = await runtime.getEntity(userId as UUID);
+
+                const name = user.metadata[message.content.source ?? room.source]?.name ?? user.metadata.default.name;
+                const username = user.metadata[message.content.source ?? room.source].username ?? user.metadata.default.username;
                 
                 // Skip duplicates (we store both UUID and original ID)
-                if (owners.includes(username) || admins.includes(username) || members.includes(username)) {
+                if (owners.some(owner => owner.username === username) || admins.some(admin => admin.username === username) || members.some(member => member.username === username)) {
                     continue;
                 }
                 
                 // Add to appropriate group
                 switch (userRole) {
                     case "OWNER":
-                        owners.push(username);
+                        owners.push({ name, username });
                         break;
                     case "ADMIN":
-                        admins.push(username);
+                        admins.push({ name, username });
                         break;
                     default:
-                        members.push(username);
+                        members.push({ name, username });
                         break;
                 }
             }
@@ -82,7 +85,7 @@ export const roleProvider: Provider = {
             if (owners.length > 0) {
                 response += "## Owners\n";
                 owners.forEach(owner => {
-                    response += `- ${owner}\n`;
+                    response += `${owner.name} (${owner.username})\n`;
                 });
                 response += "\n";
             }
@@ -90,7 +93,7 @@ export const roleProvider: Provider = {
             if (admins.length > 0) {
                 response += "## Administrators\n";
                 admins.forEach(admin => {
-                    response += `- ${admin}\n`;
+                    response += `${admin.name} (${admin.username})\n`;
                 });
                 response += "\n";
             }
@@ -98,7 +101,7 @@ export const roleProvider: Provider = {
             if (members.length > 0) {
                 response += "## Members\n";
                 members.forEach(member => {
-                    response += `- ${member}\n`;
+                    response += `${member.name} (${member.username})\n`;
                 });
             }
             

@@ -35,6 +35,7 @@ import {
   Memory,
   ModelClass,
   Plugin,
+  RoleName,
   RoomData,
   State,
   WorldData,
@@ -318,6 +319,9 @@ const syncServerUsers = async (
       serverId: server.id,
       metadata: {
         ownership: server.ownerId ? { ownerId } : undefined,
+        roles: {
+          [server.ownerId]: RoleName.OWNER,
+        },
       },
     });
 

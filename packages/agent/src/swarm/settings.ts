@@ -7,9 +7,9 @@ import {
   logger,
   type OnboardingConfig,
   Provider,
+  RoleName,
   stringToUuid,
-  type UUID,
-  type WorldSettings,
+  type UUID
 } from "@elizaos/core";
 import type { Guild } from "discord.js";
 
@@ -83,6 +83,8 @@ export async function initializeAllSystems(
         `${server.ownerId}-${runtime.agentId}`
       );
 
+      const tenantSpecificOwnerId = runtime.generateTenantUserId(ownerId);
+
       await runtime.ensureWorldExists({
         id: worldId,
         name: server.name,
@@ -90,6 +92,9 @@ export async function initializeAllSystems(
         serverId: server.id,
         metadata: {
           ownership: server.ownerId ? { ownerId } : undefined,
+          roles: {
+            [tenantSpecificOwnerId]: RoleName.OWNER,
+          },
         }
       });
 

@@ -879,6 +879,15 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   /**
+   * Get an entity by ID.
+   * @param userId - The ID of the entity to get.
+   * @returns The entity.
+   */
+  async getEntity(userId: UUID) {
+    return await this.databaseAdapter.getEntityById(userId, this.agentId);
+  }
+
+  /**
    * Ensure the existence of a user in the database. If the user does not exist, they are added to the database.
    * @param userId - The user ID to ensure the existence of.
    * @param userName - The user name to ensure the existence of.

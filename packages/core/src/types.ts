@@ -1140,6 +1140,8 @@ export interface IAgentRuntime {
     metadata
   }: WorldData): Promise<void>;
 
+  getEntity(userId: UUID): Promise<Entity | null>;
+
   ensureRoomExists({
     id,
     name,
@@ -1441,7 +1443,7 @@ export type WorldData = {
       ownerId: string;
     };
     roles?: {
-      [userId: string]: EntityRole;
+      [userId: UUID]: RoleName;
     };
     [key: string]: unknown;
   };
@@ -1463,18 +1465,6 @@ export enum RoleName {
   OWNER = "OWNER",
   ADMIN = "ADMIN",
   NONE = "NONE"
-}
-
-export interface EntityRole {
-  userId: string;
-  serverId: string;
-  role: RoleName;
-}
-  
-export interface WorldRoleState {
-  roles: {
-    [userId: string]: EntityRole;
-  };
 }
 
 export interface OnboardingSetting {

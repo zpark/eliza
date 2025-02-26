@@ -7,6 +7,7 @@ import {
   logger,
   type Memory,
   type Plugin,
+  RoleName,
   stringToUuid,
   UUID,
   WorldData,
@@ -111,7 +112,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
 
       const ownerId = stringToUuid(`${guildObj.ownerId}-${runtime.agentId}`);
-
+      const tenantSpecificOwnerId = runtime.generateTenantUserId(ownerId);
       await runtime.ensureWorldExists({
         id: worldId,
         name: guild.name,
@@ -119,6 +120,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         agentId: runtime.agentId,
         metadata: {
           ownership: guildObj.ownerId ? { ownerId } : undefined,
+          roles: {
+            [tenantSpecificOwnerId]: RoleName.OWNER,
+          },
         },
       });
       await runtime.ensureRoomExists({
@@ -492,6 +496,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     // Create standardized world data structure
     const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
+    const tenantSpecificOwnerId = this.runtime.generateTenantUserId(ownerId);
     const standardizedData = {
       runtime: this.runtime,
       rooms: await this.buildStandardizedRooms(fullGuild, worldId),
@@ -502,7 +507,10 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         agentId: this.runtime.agentId,
         serverId: fullGuild.id,
         metadata: {
-          ownership: fullGuild.ownerId ? { ownerId } : undefined,
+          ownership: fullGuild.ownerId ? { ownerId: tenantSpecificOwnerId } : undefined,
+          roles: {
+            [tenantSpecificOwnerId]: RoleName.OWNER,
+          },
         },
       } as WorldData,
       source: "discord",
@@ -749,6 +757,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         const ownerId = stringToUuid(
           `${fullGuild.ownerId}-${this.runtime.agentId}`
         );
+        const tenantSpecificOwnerId = this.runtime.generateTenantUserId(ownerId);
 
         const standardizedData = {
           runtime: this.runtime,
@@ -761,6 +770,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
             serverId: fullGuild.id,
             metadata: {
               ownership: fullGuild.ownerId ? { ownerId } : undefined,
+              roles: {
+                [tenantSpecificOwnerId]: RoleName.OWNER,
+              },
             },
           } as WorldData,
           source: "discord",

@@ -7,6 +7,7 @@ import {
     type Media,
     type Memory,
     ModelClass,
+    RoleName,
     stringToUuid,
     type UUID
 } from "@elizaos/core";
@@ -309,9 +310,12 @@ export class MessageManager {
                 type: getChannelType(chat),
               });
 
+            // TODO: chat.id is probably used incorrectly here and needs to be fixed
             const channelType = getChannelType(chat);
             const worldId = stringToUuid(`${chat.id.toString()}-${this.runtime.agentId}`) as UUID;
-            const room = {id: roomId, name: roomName, source: "telegram", type: channelType, channelId: ctx.chat.id.toString(), serverId: ctx.chat.id.toString(), worldId: worldId};
+            const room = {id: roomId, name: roomName, source: "telegram", type: channelType, channelId: ctx.chat.id.toString(), serverId: ctx.chat.id.toString(), worldId: worldId}
+            // TODO: chat.id is probably used incorrectly here and needs to be fixed
+            const tenantSpecificOwnerId = this.runtime.generateTenantUserId(stringToUuid(chat.id.toString()));
             if (channelType === ChannelType.GROUP) {
                 // if the type is a group, we need to get the world id from the supergroup/channel id
                 await this.runtime.ensureWorldExists({
@@ -321,6 +325,10 @@ export class MessageManager {
                     agentId: this.runtime.agentId,
                     metadata: {
                         ownership: chat.type === 'supergroup' ? { ownerId: chat.id.toString() } : undefined,
+                        roles: {
+                            // TODO: chat.id is probably wrong key for this
+                            [tenantSpecificOwnerId]: RoleName.OWNER,
+                        },
                     }
                 });
                 room.worldId = worldId;

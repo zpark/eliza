@@ -1,7 +1,7 @@
 import { generateObjectArray } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";
-import { Action, ActionExample, ChannelType, HandlerCallback, IAgentRuntime, Memory, ModelClass, RoleName, State } from "../types";
+import { Action, ActionExample, ChannelType, HandlerCallback, IAgentRuntime, Memory, ModelClass, RoleName, State, UUID } from "../types";
 import { stringToUuid } from "../uuid";
 
 // Role modification validation helper
@@ -62,7 +62,7 @@ If no valid role assignments are found, return an empty array.
 `;
 
 interface RoleAssignment {
-  userId: string;
+  userId: UUID;
   newRole: RoleName;
 }
 
@@ -108,7 +108,14 @@ const updateRoleAction: Action = {
       // Get requester ID and convert to UUID for consistent lookup
       const requesterId = message.userId;
       const requesterUuid = stringToUuid(requesterId);
-      logger.info(`Requester UUID: ${requesterUuid}`);
+      const requesterUuidCombined = stringToUuid(`${requesterId}-${runtime.agentId}`);
+      const tenantSpecificUserId = runtime.generateTenantUserId(requesterId);
+
+      console.log('requesterId', requesterId);
+      console.log('requesterUuid', requesterUuid);
+      console.log('requesterUuidCombined', requesterUuidCombined);
+      console.log('tenantSpecificUserId', tenantSpecificUserId);
+      console.log("world.metadata.roles", world.metadata.roles)
 
       // Get roles from world metadata
       if (!world.metadata?.roles) {
@@ -117,9 +124,9 @@ const updateRoleAction: Action = {
       }
 
       // Lookup using UUID for consistency
-      const requesterRole = world.metadata.roles[requesterUuid]
-        ?.role as RoleName;
-      logger.info(`Requester ${requesterUuid} role:`, requesterRole);
+      const requesterRole = world.metadata.roles[tenantSpecificUserId] as RoleName
+
+      logger.info(`Requester ${tenantSpecificUserId} role:`, requesterRole);
 
       if (!requesterRole) {
         logger.info("Validation failed: No requester role found");
@@ -161,6 +168,7 @@ const updateRoleAction: Action = {
 
     const serverId = room.serverId;
     const requesterId = message.userId;
+    const tenantSpecificRequesterId = runtime.generateTenantUserId(requesterId);
 
     // Get world data instead of role cache
     const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
@@ -183,7 +191,7 @@ const updateRoleAction: Action = {
 
     // Get requester's role from world metadata
     const requesterRole =
-      (world.metadata.roles[requesterId]?.role as RoleName) || RoleName.NONE;
+      (world.metadata.roles[tenantSpecificRequesterId] as RoleName) || RoleName.NONE;
 
     const discordClient = runtime.getClient("discord").client;
     const guild = await discordClient.guilds.fetch(serverId);
@@ -228,7 +236,8 @@ const updateRoleAction: Action = {
       const targetUser = members.get(assignment.userId);
       if (!targetUser) continue;
 
-      const currentRole = world.metadata.roles[assignment.userId]?.role;
+      const tenantSpecificTargetId = runtime.generateTenantUserId(assignment.userId);
+      const currentRole = world.metadata.roles[tenantSpecificTargetId];
 
       // Validate role modification permissions
       if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
@@ -241,11 +250,7 @@ const updateRoleAction: Action = {
       }
 
       // Update role in world metadata
-      world.metadata.roles[assignment.userId] = {
-        userId: assignment.userId,
-        serverId,
-        role: assignment.newRole,
-      };
+      world.metadata.roles[tenantSpecificTargetId] = assignment.newRole;
 
       worldUpdated = true;
 
