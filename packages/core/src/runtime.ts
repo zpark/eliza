@@ -1014,14 +1014,11 @@ export class AgentRuntime implements IAgentRuntime {
      * @throws An error if the room cannot be created.
      */
     async ensureRoomExists({id, name, source, type, channelId, serverId, worldId}: RoomData) {
-        console.log("Ensure room exists")
-        console.trace()
         const room = await this.databaseAdapter.getRoom(id, this.agentId);
         if (!room) {
             await this.databaseAdapter.createRoom({id, name, agentId: this.agentId, source, type, channelId, serverId, worldId});
             logger.log(`Room ${id} created successfully.`);
         }
-        console.log("Ensure room exists, value of room is", room);
     }
 
     /**
