@@ -114,7 +114,13 @@ export class MessageManager {
         attachments.push(...processedAudioAttachments);
       }
 
+      if (!processedContent && !attachments?.length) {
+        // Only process messages that are not empty
+        return;
+      }
+      
       const userIdUUID = stringToUuid(`${message.author.id}-${this.runtime.agentId}`);
+
       const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
 
       const newMessage: Memory = {
@@ -125,7 +131,7 @@ export class MessageManager {
         content: {
           name: name,
           userName: userName,
-          text: processedContent,
+          text: processedContent || " ",
           attachments: attachments,
           source: "discord",
           url: message.url,
