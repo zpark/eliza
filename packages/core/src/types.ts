@@ -674,6 +674,9 @@ export type Plugin = {
 
     /** Optional adapters */
     adapters?: Adapter[];
+
+    /** Optional post charactor processor handler */
+    handlePostCharacterLoaded?: (char: Character) => Promise<Character>;
 };
 
 export interface IAgentConfig {
@@ -812,6 +815,9 @@ export type Character = {
 
     /** Available plugins */
     plugins: Plugin[];
+
+    /** Character Processor Plugins */
+    postProcessors?: Pick<Plugin, 'name' | 'description' | 'handlePostCharacterLoaded'>[];
 
     /** Optional configuration */
     settings?: {
