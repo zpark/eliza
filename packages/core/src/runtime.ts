@@ -481,7 +481,7 @@ export class AgentRuntime implements IAgentRuntime {
                     }
                     if (plugin.services) {
                         for(const service of plugin.services){
-                            this.services.set(service.serviceType, service);
+                            this.registerService(service);
                         }
                     }
                     if (plugin.routes) {
