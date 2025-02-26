@@ -151,13 +151,15 @@ const checkShouldRespond = async (
       }),
   ]);
 
+  recentMessagesData.push(message);
+
   const recentMessages = formatMessages({
       messages: recentMessagesData,
       actors: actorsData,
   });
 
   const state = {
-    recentMessages,
+    recentMessages: recentMessages,
     agentName: runtime.character.name,
     bio: runtime.character.bio,
     system: runtime.character.system,
@@ -169,7 +171,7 @@ const checkShouldRespond = async (
       runtime.character.templates?.shouldRespondTemplate ||
       shouldRespondTemplate,
   });
-
+  
   const response = await generateShouldRespond({
     runtime: runtime,
     context: shouldRespondContext,
@@ -191,21 +193,35 @@ const checkShouldRespond = async (
   return false;
 };
 
+const latestResponseIds = new Map<string, Map<string, string>>();
+
 const messageReceivedHandler = async ({
   runtime,
   message,
   callback,
 }: MessageReceivedHandlerParams) => {
+    // Generate a new response ID
+    const responseId = v4();
+    // Get or create the agent-specific map
+    if (!latestResponseIds.has(runtime.agentId)) {
+      latestResponseIds.set(runtime.agentId, new Map());
+    }
+    const agentResponses = latestResponseIds.get(runtime.agentId)!;
+
+    // Set this as the latest response ID for this agent+room
+    agentResponses.set(message.roomId, responseId);
+
   // First, save the incoming message
-  await runtime.messageManager.addEmbeddingToMemory(message);
-  await runtime.messageManager.createMemory(message);
-
-  // Then, compose the state, which includes the incoming message in the recent messages
-  let state = await runtime.composeState(message);
-
+  await Promise.all([
+    runtime.messageManager.addEmbeddingToMemory(message),
+    runtime.messageManager.createMemory(message)
+  ]);
+  
   const shouldRespond = await checkShouldRespond(runtime, message);
-
+  
+  let state = await runtime.composeState(message);
   if (shouldRespond) {
+    
     const context = composeContext({
       state,
       template:
@@ -217,6 +233,13 @@ const messageReceivedHandler = async ({
       context,
       modelClass: ModelClass.TEXT_LARGE,
     });
+
+    // Check if this is still the latest response ID for this agent+room
+    const currentResponseId = agentResponses.get(message.roomId);
+    if (currentResponseId !== responseId) {
+      logger.info(`Response discarded - newer message being processed for agent: ${runtime.agentId}, room: ${message.roomId}`);
+      return;
+    }
 
     responseContent.text = responseContent.text?.trim();
     responseContent.inReplyTo = stringToUuid(
@@ -235,6 +258,12 @@ const messageReceivedHandler = async ({
     ];
 
     state = await runtime.updateRecentMessageState(state);
+
+    // Clean up the response ID
+    agentResponses.delete(message.roomId);
+    if (agentResponses.size === 0) {
+      latestResponseIds.delete(runtime.agentId);
+    }
 
     await runtime.processActions(message, responseMessages, state, callback);
   }
