@@ -225,12 +225,12 @@ export class TwitterInteractionClient {
             }
 
             // Sort tweet candidates by ID in ascending order
-            uniqueTweetCandidates
+            const tweetCandidates = uniqueTweetCandidates
                 .sort((a, b) => a.id.localeCompare(b.id))
                 .filter((tweet) => tweet.userId !== this.client.profile.id);
 
             // for each tweet candidate, handle the tweet
-            for (const tweet of uniqueTweetCandidates) {
+            for (const tweet of tweetCandidates) {
                 if (
                     !this.client.lastCheckedTweetId ||
                     BigInt(tweet.id) > this.client.lastCheckedTweetId
