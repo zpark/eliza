@@ -1,9 +1,9 @@
-import pkg, { Pool as PgPool } from 'pg';
-import { IDatabaseClientManager } from "../types";
+import pkg, { type Pool as PgPool } from 'pg';
+import type { IDatabaseClientManager } from "../types";
 import { logger } from "@elizaos/core";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { fileURLToPath } from 'url';
-import path from "path";
+import { fileURLToPath } from 'node:url';
+import path from "node:path";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 const { Pool } = pkg;
@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 export class PostgresConnectionManager implements IDatabaseClientManager<PgPool> {
     private pool: PgPool;
-    private isShuttingDown: boolean = false;
+    private isShuttingDown = false;
     private readonly connectionTimeout: number = 5000;
 
     constructor(

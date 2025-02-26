@@ -29,6 +29,7 @@ describe('TelegramClient', () => {
     beforeEach(() => {
         mockRuntime = {
             getSetting: vi.fn(),
+            emitEvent: vi.fn(),
         } as Partial<IAgentRuntime> as IAgentRuntime;
 
         client = new TelegramClient(mockRuntime, TEST_BOT_TOKEN);
