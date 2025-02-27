@@ -52,7 +52,7 @@ function validateUUIDParams(
 }
 
 export function createApiRouter(
-    agents: Map<string, AgentRuntime>,
+    agents: Map<string, IAgentRuntime>,
     directClient: DirectClient
 ):Router {
     const router = express.Router();

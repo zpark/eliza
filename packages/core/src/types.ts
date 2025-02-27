@@ -636,8 +636,11 @@ export type Client = {
     start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
 };
 
+/**
+ * Database adapter initialization
+ */
 export type Adapter = {
-    /** Initialize adapter */
+    /** Initialize the adapter */
     init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
 };
 
@@ -647,6 +650,9 @@ export type Adapter = {
 export type Plugin = {
     /** Plugin name */
     name: string;
+
+    /** Plugin npm name */
+    npmName?: string;
 
     /** Plugin configuration */
     config?: { [key: string]: any };
@@ -671,6 +677,9 @@ export type Plugin = {
 
     /** Optional adapters */
     adapters?: Adapter[];
+
+    /** Optional post charactor processor handler */
+    handlePostCharacterLoaded?: (char: Character) => Promise<Character>;
 };
 
 export interface IAgentConfig {
@@ -805,10 +814,13 @@ export type Character = {
     adjectives: string[];
 
     /** Optional knowledge base */
-    knowledge?: (string | { path: string; shared?: boolean })[];
+    knowledge?: (string | { path: string; shared?: boolean } | { directory: string; shared?: boolean })[];
 
     /** Available plugins */
     plugins: Plugin[];
+
+    /** Character Processor Plugins */
+    postProcessors?: Pick<Plugin, 'name' | 'description' | 'handlePostCharacterLoaded'>[];
 
     /** Optional configuration */
     settings?: {

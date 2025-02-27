@@ -14,12 +14,16 @@
             "outputs": ["dist/**"],
             "dependsOn": ["^@elizaos/core#build"]
         },
+        "@elizaos/client-direct#build": {
+            "outputs": ["dist/**"],
+            "dependsOn": []
+        },
         "eliza-docs#build": {
             "outputs": ["build/**"]
         },
         "dev": {
             "persistent": true,
-            "cache": false
+            "cache": true
         }
     }
 }

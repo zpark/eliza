@@ -1,18 +1,32 @@
 #!/usr/bin/env node
+
 const { execSync } = require('child_process')
 const pathUtil = require('path')
 const fs = require('fs')
 const { Command } = require('commander')
-
 const program = new Command()
 const { version } = require('./package.json')
+
+
+const pluginPkgPath = (pluginRepo) => {
+  const parts = pluginRepo.split('/')
+  const elizaOSroot = pathUtil.resolve(__dirname, '../..')
+  const pkgPath = elizaOSroot + '/packages/' + parts[1]
+  return pkgPath
+}
+
+const isPluginInstalled = (pluginRepo) => {
+  const pkgPath = pluginPkgPath(pluginRepo)
+  const packageJsonPath = pkgPath + '/package.json'
+  return fs.existsSync(packageJsonPath)
+}
 
 program
   .name('elizaos')
   .description('elizaOS CLI - Manage your plugins')
   .version(version);
 
-const plugins = new Command()
+const pluginsCmd = new Command()
   .name('plugins')
   .description('manage elizaOS plugins')
 
@@ -21,7 +35,9 @@ async function getPlugins() {
   return await resp.json();
 }
 
-plugins
+
+
+pluginsCmd
   .command('list')
   .alias('l')
   .alias('ls')
@@ -36,7 +52,7 @@ plugins
 
       console.info("\nAvailable plugins:")
       for (const plugin of pluginNames) {
-        console.info(`  ${plugin}`)
+        console.info(` ${isPluginInstalled(plugins[plugin]) ? '✅' : '  '}  ${plugin} `)
       }
       console.info("")
     } catch (error) {
@@ -44,7 +60,7 @@ plugins
     }
   })
 
-plugins
+pluginsCmd
   .command('add')
   .alias('install')
   .description('add a plugin')
@@ -60,7 +76,11 @@ plugins
     }
 
     const plugins = await getPlugins()
-    const repoData = plugins[plugin]?.split(':')
+
+    // ensure prefix
+    const pluginName = '@elizaos-plugins/' + plugin.replace(/^@elizaos-plugins\//, '')
+
+    const repoData = plugins[pluginName]?.split(':')
     if (!repoData) {
       console.error('Plugin', plugin, 'not found')
       return
@@ -78,7 +98,7 @@ plugins
     if (!fs.existsSync(pkgPath)) {
       // clone it
       console.log('cloning', parts[1], 'to', pkgPath)
-      const gitOutput = execSync('git clone https://github.com/' + repoData[1] + ' ' + pkgPath, { stdio: 'pipe' }).toString().trim();
+      const gitOutput = execSync('git clone https://github.com/' + repoData[1] + ' "' + pkgPath + '"', { stdio: 'pipe' }).toString().trim();
     }
 
     // add core to plugin
@@ -88,7 +108,7 @@ plugins
 
     // Read the current package.json
     const packageJsonPath = pkgPath + '/package.json'
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
 
     if (packageJson.name !== '@elizaos-plugins/' + parts[1]) {
       // Update the name field
@@ -100,20 +120,25 @@ plugins
     }
 
     // add to agent
-    console.log('Adding plugin', plugin, 'to agent/package.json')
-    try {
-      const pluginAddAgentOutput = execSync('pnpm add ' + plugin + '@workspace:* --filter ./agent', { cwd: elizaOSroot, stdio: 'pipe' }).toString().trim();
-      //console.log('pluginAddAgentOutput', pluginAddAgentOutput)
-    } catch (e) {
-      console.error('error', e)
+    const agentPackageJsonPath = elizaOSroot + '/agent/package.json'
+    const agentPackageJson = JSON.parse(fs.readFileSync(agentPackageJsonPath, 'utf-8'));
+    //console.log('agentPackageJson', agentPackageJson.dependencies[pluginName])
+    if (!agentPackageJson.dependencies[pluginName]) {
+      console.log('Adding plugin', plugin, 'to agent/package.json')
+      try {
+        const pluginAddAgentOutput = execSync('pnpm add ' + pluginName + '@workspace:* --filter ./agent', { cwd: elizaOSroot, stdio: 'pipe' }).toString().trim();
+        //console.log('pluginAddAgentOutput', pluginAddAgentOutput)
+      } catch (e) {
+        console.error('error', e)
+      }
     }
 
     console.log(plugin, 'attempted installation is complete')
     // can't add to char file because we don't know which character
-    console.log('Remember to add it to your character file\'s plugin field: ["' + plugin + '"]')
+    console.log('Remember to add it to your character file\'s plugin field: ["' + pluginName + '"]')
   })
 
-plugins
+pluginsCmd
   .command('remove')
   .alias('delete')
   .alias('del')
@@ -156,6 +181,6 @@ plugins
   })
 
 
-program.addCommand(plugins)
+program.addCommand(pluginsCmd)
 
 program.parse(process.argv)

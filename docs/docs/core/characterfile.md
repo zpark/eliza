@@ -2,12 +2,16 @@
 
 Character files are JSON-formatted configurations that define AI agent personas, combining personality traits, knowledge bases, and interaction patterns to create consistent and effective AI agents. For a full list of capabilities check the `character` type [API docs](/api/type-aliases/character). You can also view and contribute to open sourced example characterfiles here: https://github.com/elizaos/characters.
 
+> For making characters, check out the open source elizagen!: https://elizagen.howieduhzit.best/
+> [![](/img/elizagen.png)](/img/elizagen.png)
+
+---
 
 ## Required Fields
 
 ```json
 {
-    "name": "character_name",           // Character's display name for identifcation and in conversations
+    "name": "character_name",           // Character's display name for identification and in conversations
     "modelProvider": "openai",          // AI model provider (e.g., anthropic, openai, groq, mistral, google)
     "clients": ["discord", "direct"],   // Supported client types
     "plugins": [],                      // Array of plugins to use

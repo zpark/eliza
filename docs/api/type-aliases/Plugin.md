@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Plugin
+[@elizaos/core v0.25.8](../index.md) / Plugin
 
 # Type Alias: Plugin
 
@@ -68,4 +68,4 @@ Optional adapters
 
 ## Defined in
 
-[packages/core/src/types.ts:643](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L643)
+[packages/core/src/types.ts:650](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L650)

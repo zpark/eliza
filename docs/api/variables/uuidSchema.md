@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / uuidSchema
+[@elizaos/core v0.25.8](../index.md) / uuidSchema
 
 # Variable: uuidSchema
 

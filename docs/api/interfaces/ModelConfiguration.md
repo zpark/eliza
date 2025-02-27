@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ModelConfiguration
+[@elizaos/core v0.25.8](../index.md) / ModelConfiguration
 
 # Interface: ModelConfiguration
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:702](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L702)
+[packages/core/src/types.ts:709](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L709)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:703](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L703)
+[packages/core/src/types.ts:710](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L710)
 
 ***
 
@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:704](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L704)
+[packages/core/src/types.ts:711](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L711)
 
 ***
 
@@ -40,7 +40,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:705](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L705)
+[packages/core/src/types.ts:712](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L712)
 
 ***
 
@@ -50,7 +50,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:706](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L706)
+[packages/core/src/types.ts:713](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L713)
 
 ***
 
@@ -60,4 +60,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:707](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L707)
+[packages/core/src/types.ts:714](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L714)

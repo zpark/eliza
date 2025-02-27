@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / getEmbeddingModelSettings
+[@elizaos/core v0.25.8](../index.md) / getEmbeddingModelSettings
 
 # Function: getEmbeddingModelSettings()
 
@@ -14,4 +14,4 @@
 
 ## Defined in
 
-[packages/core/src/models.ts:1171](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1171)
+[packages/core/src/models.ts:1241](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1241)

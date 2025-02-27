@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Evaluator
+[@elizaos/core v0.25.8](../index.md) / Evaluator
 
 # Interface: Evaluator
 
@@ -14,7 +14,7 @@ Whether to always run
 
 #### Defined in
 
-[packages/core/src/types.ts:480](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L480)
+[packages/core/src/types.ts:484](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L484)
 
 ***
 
@@ -26,7 +26,7 @@ Detailed description
 
 #### Defined in
 
-[packages/core/src/types.ts:483](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L483)
+[packages/core/src/types.ts:487](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L487)
 
 ***
 
@@ -38,7 +38,7 @@ Similar evaluator descriptions
 
 #### Defined in
 
-[packages/core/src/types.ts:486](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L486)
+[packages/core/src/types.ts:490](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L490)
 
 ***
 
@@ -50,7 +50,7 @@ Example evaluations
 
 #### Defined in
 
-[packages/core/src/types.ts:489](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L489)
+[packages/core/src/types.ts:493](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L493)
 
 ***
 
@@ -62,7 +62,7 @@ Handler function
 
 #### Defined in
 
-[packages/core/src/types.ts:492](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L492)
+[packages/core/src/types.ts:496](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L496)
 
 ***
 
@@ -74,7 +74,7 @@ Evaluator name
 
 #### Defined in
 
-[packages/core/src/types.ts:495](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L495)
+[packages/core/src/types.ts:499](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L499)
 
 ***
 
@@ -86,4 +86,4 @@ Validation function
 
 #### Defined in
 
-[packages/core/src/types.ts:498](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L498)
+[packages/core/src/types.ts:502](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L502)
