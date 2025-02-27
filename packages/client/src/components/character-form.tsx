@@ -342,7 +342,10 @@ export default function CharacterForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={onReset}
+                onClick={() => {
+                  onReset();
+                  setCharacterValue(character)
+                }}
               >
                 Reset Changes
               </Button>

@@ -3,12 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import PageTitle from "@/components/page-title";
 import CharacterForm from "@/components/character-form";
 import type { Character, UUID } from "@elizaos/core";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { urlToCharacterName } from "@/lib/utils";
 
 // Define Agent type interface based on the API response
 interface Agent {
