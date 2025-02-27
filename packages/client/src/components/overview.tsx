@@ -1,15 +1,6 @@
 import ArrayInput from "@/components/array-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { usePlugins } from "@/hooks/use-plugins";
-import { useToast } from "@/hooks/use-toast";
-import type { Character } from "@elizaos/core";
-import { Component, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +8,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { usePlugins } from "@/hooks/use-plugins";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/lib/api";
+import type { Character } from "@elizaos/core";
+import { Component, useMemo, useState, type FormEvent, type ReactNode } from "react";
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -166,6 +167,8 @@ export default function Overview({ character }: { character: Character }) {
   const { toast } = useToast();
   const { data: plugins, error } = usePlugins();
 
+  const agentId = character.id;
+
   const [characterValue, setCharacterValue] = useState<Character>(character);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -246,15 +249,22 @@ export default function Overview({ character }: { character: Character }) {
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the API to update the agent's character
+      if (!agentId) {
+        throw new Error("Agent ID is missing");
+      }
+
+      // Send the character update request to the agent endpoint
+      await apiClient.updateAgent(agentId, characterValue);
+      
       toast({
         title: "Success",
-        description: "Character updated successfully",
+        description: "Agent updated and restarted successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update character",
+        description: error instanceof Error ? error.message : "Failed to update agent",
         variant: "destructive",
       });
     } finally {
