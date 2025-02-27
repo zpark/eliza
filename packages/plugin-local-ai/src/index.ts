@@ -12,19 +12,17 @@ import {
 import path from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-// import { promisify } from "node:util";
-import { z } from "zod";
+import fs from "node:fs";
 import { getPlatformManager } from "./utils/platform";
 import { TokenizerManager } from './utils/tokenizerManager';
 import { MODEL_SPECS, type ModelSpec } from './types';
 import { DownloadManager } from './utils/downloadManager';
 import { OllamaManager } from './utils/ollamaManager';
-import { getPlatformManager } from "./utils/platform";
 import { StudioLMManager } from './utils/studiolmManager';
-import { TokenizerManager } from './utils/tokenizerManager';
 import { TranscribeManager } from './utils/transcribeManager';
 import { TTSManager } from './utils/ttsManager';
 import { VisionManager } from './utils/visionManager';
+import { validateConfig } from "./environment";
 
 // const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -339,7 +337,6 @@ class LocalAIManager {
       // Define sample file path and AWS URL
       const samplePath = path.join(this.cacheDir, 'sample1.wav');
       const awsSampleUrl = 'https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-15311/sample1.wav?_=1';
-      
       // Download sample file if it doesn't exist
       if (!fs.existsSync(samplePath)) {
         logger.info("Sample WAV file not found in cache, downloading from AWS...");
@@ -1375,7 +1372,6 @@ export const localAIPlugin: Plugin = {
       ]
     }
   ],
-
 };
 
 export default localAIPlugin;
