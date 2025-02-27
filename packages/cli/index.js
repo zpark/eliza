@@ -76,7 +76,11 @@ pluginsCmd
     }
 
     const plugins = await getPlugins()
-    const repoData = plugins[plugin]?.split(':')
+
+    // ensure prefix
+    const pluginName = '@elizaos-plugins/' + plugin.replace(/^@elizaos-plugins\//, '')
+
+    const repoData = plugins[pluginName]?.split(':')
     if (!repoData) {
       console.error('Plugin', plugin, 'not found')
       return
@@ -104,7 +108,7 @@ pluginsCmd
 
     // Read the current package.json
     const packageJsonPath = pkgPath + '/package.json'
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
 
     if (packageJson.name !== '@elizaos-plugins/' + parts[1]) {
       // Update the name field
@@ -116,17 +120,22 @@ pluginsCmd
     }
 
     // add to agent
-    console.log('Adding plugin', plugin, 'to agent/package.json')
-    try {
-      const pluginAddAgentOutput = execSync('pnpm add ' + plugin + '@workspace:* --filter ./agent', { cwd: elizaOSroot, stdio: 'pipe' }).toString().trim();
-      //console.log('pluginAddAgentOutput', pluginAddAgentOutput)
-    } catch (e) {
-      console.error('error', e)
+    const agentPackageJsonPath = elizaOSroot + '/agent/package.json'
+    const agentPackageJson = JSON.parse(fs.readFileSync(agentPackageJsonPath, 'utf-8'));
+    //console.log('agentPackageJson', agentPackageJson.dependencies[pluginName])
+    if (!agentPackageJson.dependencies[pluginName]) {
+      console.log('Adding plugin', plugin, 'to agent/package.json')
+      try {
+        const pluginAddAgentOutput = execSync('pnpm add ' + pluginName + '@workspace:* --filter ./agent', { cwd: elizaOSroot, stdio: 'pipe' }).toString().trim();
+        //console.log('pluginAddAgentOutput', pluginAddAgentOutput)
+      } catch (e) {
+        console.error('error', e)
+      }
     }
 
     console.log(plugin, 'attempted installation is complete')
     // can't add to char file because we don't know which character
-    console.log('Remember to add it to your character file\'s plugin field: ["' + plugin + '"]')
+    console.log('Remember to add it to your character file\'s plugin field: ["' + pluginName + '"]')
   })
 
 pluginsCmd
