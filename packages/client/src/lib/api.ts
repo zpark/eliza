@@ -61,7 +61,12 @@ const fetcher = async ({
             throw new Error(errorMessage);
         }
             
-        return resp.json();
+        try {
+            return await resp.json();
+        } catch (error) {
+            console.error("JSON Parse Error:", error);
+            return null;
+        }
     });
 };
 
