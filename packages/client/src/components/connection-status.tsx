@@ -77,7 +77,7 @@ export default function ConnectionStatus() {
         return backoffTime; // Up to 1 minute maximum backoff
       }
       
-      // More frequent polling since we're not using SSE anymore
+      // More frequent polling 
       if (!isTabVisible) return 15000; // 15s when tab is not visible (reduced from 20s)
       return 3000; // 3s when tab is visible (reduced from 5s)
     };

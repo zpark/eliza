@@ -28,7 +28,7 @@ const queryClient = new QueryClient({
             retryDelay: attemptIndex => Math.min(1000 * (2 ** attemptIndex), 30000),
             // Refetch query on window focus
             refetchOnWindowFocus: true,
-            // Enable refetch on reconnect since we're not using SSE anymore
+            // Enable refetch on reconnect
             refetchOnReconnect: true,
             // Fail queries that take too long
         },
@@ -54,7 +54,7 @@ const prefetchInitialData = async () => {
     await queryClient.prefetchQuery({
       queryKey: ["agents"],
       queryFn: () => apiClient.getAgents(),
-      staleTime: STALE_TIMES.FREQUENT, // Use frequent stale time instead of relying on SSE
+      staleTime: STALE_TIMES.FREQUENT, 
     });
   } catch (error) {
     console.error("Error prefetching initial data:", error);
