@@ -29,7 +29,7 @@ export default function NewCharacter() {
         
         // Ensure all required fields are present
         if (!completedCharacter.name) throw new Error("name field is required");
-        if (!completedCharacter.bio) throw new Error("bio field is required");
+        if (!completedCharacter.bio) completedCharacter.bio = [];
         if (!completedCharacter.messageExamples) completedCharacter.messageExamples = [];
         if (!completedCharacter.postExamples) completedCharacter.postExamples = [];
         if (!completedCharacter.topics) completedCharacter.topics = [];
