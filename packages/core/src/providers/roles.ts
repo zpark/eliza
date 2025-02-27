@@ -57,8 +57,8 @@ export const roleProvider: Provider = {
                 // get the user from the database
                 const user = await runtime.getEntity(userId as UUID);
 
-                const name = user.metadata[message.content.source ?? room.source]?.name ?? user.metadata.default.name;
-                const username = user.metadata[message.content.source ?? room.source].username ?? user.metadata.default.username;
+                const name = user.metadata[room.source]?.name;
+                const username = user.metadata[room.source]?.username;
                 
                 // Skip duplicates (we store both UUID and original ID)
                 if (owners.some(owner => owner.username === username) || admins.some(admin => admin.username === username) || members.some(member => member.username === username)) {

@@ -44,6 +44,8 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
+    abstract getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]>;
+
     abstract getAgent(agentId: UUID): Promise<Agent | null>;
 
     abstract createAgent(agent: Agent): Promise<boolean>;

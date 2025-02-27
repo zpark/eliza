@@ -689,10 +689,9 @@ const handleServerSync = async ({
                   userId: user.id,
                   roomId: defaultRoom.id,
                   userName:
-                    user.metadata[source].username ||
-                    user.metadata.default.username,
+                    user.metadata[source].username,
                   userScreenName:
-                    user.metadata[source].name || user.metadata.default.name,
+                    user.metadata[source].name,
                   source: source,
                   channelId: defaultRoom.channelId,
                   serverId: world.serverId,

@@ -14,7 +14,7 @@ const optionExtractionTemplate = `# Task: Extract selected task and option from 
 
 # Available Tasks:
 {{#each tasks}}
-Task ${taskId}: ${name}
+Task {{taskId}}: {{name}}
 Available options:
 {{#each options}}
 - {{name}}: {{description}}

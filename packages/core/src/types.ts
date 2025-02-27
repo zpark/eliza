@@ -496,6 +496,15 @@ export interface Relationship {
   createdAt?: string;
 }
 
+export interface Component {
+  id: UUID;
+  entityId: UUID;
+  name: string;
+  data: {
+    [key: string]: any;
+  };
+}
+
 /**
  * Represents a user account
  */
@@ -760,12 +769,16 @@ export interface IDatabaseAdapter {
 
   updateAgent(agent: Agent): Promise<boolean>;
 
-  /** Get account by ID */
+  /** Get entity by ID */
   getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
-  /** Create new account */
+  /** Get entities for room */
+  getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]>;
+
+  /** Create new entity */
   createEntity(entity: Entity): Promise<boolean>;
 
+  /** Update entity */
   updateEntity(entity: Entity): Promise<void>;
 
   /** Get memories matching criteria */

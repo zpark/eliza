@@ -60,6 +60,7 @@ import {
     relationshipTable,
     roomTable,
     worldTable,
+    componentTable,
 } from "./schema/index";
 import { DrizzleOperations } from "./types";
 
@@ -215,6 +216,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             const result = await this.db
                 .select()
                 .from(entityTable)
+                .leftJoin(componentTable, eq(entityTable.id, componentTable.entityId))
                 .where(and(eq(entityTable.id, userId), eq(entityTable.agentId, agentId)))
                 .limit(1);
 
@@ -223,6 +225,26 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             const account = result[0];
 
             return account;
+        });
+    }
+
+    async getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select({
+                    entity: entityTable
+                })
+                .from(participantTable)
+                .leftJoin(
+                    entityTable,
+                    and(
+                        eq(participantTable.userId, entityTable.id),
+                        eq(entityTable.agentId, agentId)
+                    )
+                )
+                .where(eq(participantTable.roomId, roomId));
+
+            return result.map(row => row.entity).filter(Boolean);
         });
     }
 

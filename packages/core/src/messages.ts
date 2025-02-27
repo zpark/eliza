@@ -19,25 +19,12 @@ export async function getActorDetails({
   runtime: IAgentRuntime;
   roomId: UUID;
 }) {
-  const participantIds = await runtime.databaseAdapter.getParticipantsForRoom(
-    roomId,
-    runtime.agentId
-  );
-  
-  // Fetch all actor details
-  const actors = await Promise.all(
-    participantIds.map(async (userId) => {
-      const account = await runtime.databaseAdapter.getEntityById(userId, runtime.agentId);
-      if (account) {
-        return {
-          id: account.id,
-          name: account.metadata.default.name || account.names.join(" aka "),
-          names: account.names,
-        };
-      }
-      return null;
-    })
-  );
+  const room = await runtime.getRoom(roomId);
+  const actors = (await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId)).map(entity => ({
+    id: entity.id,
+    name: entity.metadata[room.source].name,
+    names: entity.names,
+  }));
 
   // Filter out nulls and ensure uniqueness by ID
   const uniqueActors = new Map();

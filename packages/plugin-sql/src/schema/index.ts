@@ -1,8 +1,9 @@
-export { entityTable } from "./entity";
 export { agentTable } from "./agent";
 export { cacheTable } from "./cache";
 export { characterTable } from "./character";
+export { componentTable } from "./component";
 export { embeddingTable } from "./embedding";
+export { entityTable } from "./entity";
 export { goalTable } from "./goal";
 export { logTable } from "./log";
 export { memoryTable } from "./memory";
