@@ -9,10 +9,11 @@ import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
+import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
 import type { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Send, X } from "lucide-react";
+import { Paperclip, Send, X, ChevronUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AIWriter from "react-aiwriter";
 import { AudioRecorder } from "./audio-recorder";
@@ -22,6 +23,7 @@ import { Badge } from "./ui/badge";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useMessages } from "@/hooks/use-query-hooks";
 
 type ExtraContentFields = {
     user: string;
@@ -95,16 +97,23 @@ function MessageContent({
     );
 }
 
-export default function Page({ agentId }: { agentId: UUID }) {
+export default function Page({ agentId, roomId }: { agentId: UUID, roomId: UUID }) {
     const { toast } = useToast();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [input, setInput] = useState("");
+    const [isLoadingOlder, setIsLoadingOlder] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
     const queryClient = useQueryClient();
+    const worldId = WorldManager.getWorldId();
+    
+    const { loadOlderMessages, hasOlderMessages } = useMessages(agentId, roomId);
+
+    console.log({hasOlderMessages})
+    
     const messages =
-        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
+        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId, roomId, worldId]) ||
         [];
 
     const getMessageVariant = (role: string) =>
@@ -116,11 +125,31 @@ export default function Page({ agentId }: { agentId: UUID }) {
    
     useEffect(() => {
         scrollToBottom();
-    }, [queryClient.getQueryData(["messages", agentId])]);
+    }, [queryClient.getQueryData(["messages", agentId, roomId, worldId])]);
 
     useEffect(() => {
         scrollToBottom();
     }, []);
+    
+    const handleLoadOlderMessages = async () => {
+        setIsLoadingOlder(true);
+        try {
+            const hasMore = await loadOlderMessages();
+            if (!hasMore) {
+                toast({
+                    description: "No more messages to load",
+                });
+            }
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error loading messages",
+                description: error instanceof Error ? error.message : "An unknown error occurred",
+            });
+        } finally {
+            setIsLoadingOlder(false);
+        }
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -150,23 +179,26 @@ export default function Page({ agentId }: { agentId: UUID }) {
                 user: "user",
                 createdAt: Date.now(),
                 attachments,
+                worldId,
             },
             {
                 text: input,
                 user: "system",
                 isLoading: true,
                 createdAt: Date.now(),
+                worldId,
             },
         ];
 
         queryClient.setQueryData(
-            ["messages", agentId],
+            ["messages", agentId, roomId, worldId],
             (old: ContentWithUser[] = []) => [...old, ...newMessages]
         );
 
         sendMessageMutation.mutate({
             message: input,
             selectedFile: selectedFile ? selectedFile : null,
+            roomId,
         });
 
         setSelectedFile(null);
@@ -181,17 +213,19 @@ export default function Page({ agentId }: { agentId: UUID }) {
     }, []);
 
     const sendMessageMutation = useMutation({
-        mutationKey: ["send_message", agentId],
+        mutationKey: ["send_message", agentId, roomId],
         mutationFn: ({
             message,
             selectedFile,
+            roomId,
         }: {
             message: string;
             selectedFile?: File | null;
-        }) => apiClient.sendMessage(agentId, message, selectedFile),
+            roomId: UUID;
+        }) => apiClient.sendMessage(agentId, message, selectedFile, roomId),
         onSuccess: (newMessages: ContentWithUser[]) => {
             queryClient.setQueryData(
-                ["messages", agentId],
+                ["messages", agentId, roomId, worldId],
                 (old: ContentWithUser[] = []) => [
                     ...old.filter((msg) => !msg.isLoading),
                     ...newMessages.map((msg) => ({
@@ -226,6 +260,26 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     scrollToBottom={scrollToBottom}
                     disableAutoScroll={disableAutoScroll}
                 >
+                    {hasOlderMessages && (
+                        <div className="flex justify-center my-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="flex items-center gap-1"
+                                onClick={handleLoadOlderMessages}
+                                disabled={isLoadingOlder}
+                            >
+                                {isLoadingOlder ? (
+                                    <>Loading...</>
+                                ) : (
+                                    <>
+                                        <ChevronUp className="h-4 w-4" />
+                                        Load older messages
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    )}
                     {messages.map((message: ContentWithUser) => {
                         return (
                             <div

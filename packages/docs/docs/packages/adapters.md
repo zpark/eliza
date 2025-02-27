@@ -342,8 +342,10 @@ await db.addParticipant(userId, roomId);
 // Get participants
 const participants = await db.getParticipantsForRoom(roomId);
 
-// Get rooms for participant
-const rooms = await db.getRoomsForParticipant(userId);
+// Fetch rooms for a user
+const userId = "user-123" as UUID;
+const agentId = "agent-456" as UUID;
+const rooms = await db.getRoomsForParticipant(userId, agentId);
 ```
 
 ---

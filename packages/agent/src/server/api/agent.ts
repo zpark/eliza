@@ -132,6 +132,7 @@ export function agentRouter(
 
         const roomId = stringToUuid(req.body.roomId ?? `default-room-${agentId}`);
         const userId = stringToUuid(req.body.userId ?? "user");
+        const worldId = req.body.worldId; // Extract worldId from request body
 
         let runtime = agents.get(agentId);
 
@@ -159,6 +160,7 @@ export function agentRouter(
                 userScreenName: req.body.name,
                 source: "direct",
                 type: ChannelType.API,
+                worldId, // Include worldId in the connection
             });
 
             logger.info(`[MESSAGE ENDPOINT] req.body: ${JSON.stringify(req.body)}`);
@@ -365,8 +367,14 @@ export function agentRouter(
 
         logger.debug(`[MEMORIES GET] Found agent: ${runtime.character.name}, fetching memories`);
         try {
+            const { limit, before } = req.query;
+            const limitValue = limit ? parseInt(limit as string, 10) : undefined;
+            const beforeValue = before ? parseInt(before as string, 10) : undefined;
+            
             const memories = await runtime.messageManager.getMemories({
                 roomId,
+                count: limitValue,
+                end: beforeValue,
             });
             
             logger.debug(`[MEMORIES GET] Retrieved ${memories.length} memories for room: ${roomId}`);
@@ -779,6 +787,145 @@ export function agentRouter(
                 error: "Error generating speech",
                 details: error.message,
             });
+        }
+    });
+
+    // Get rooms for an agent
+    router.get('/:agentId/rooms', async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!agentId) {
+            logger.warn("[ROOMS GET] Invalid agent ID format");
+            return;
+        }
+
+        logger.info(`[ROOMS GET] Retrieving rooms for agent: ${agentId}`);
+        let runtime = agents.get(agentId);
+
+        if (!runtime) {
+            logger.debug(`[ROOMS GET] Agent not found by ID, trying to find by name: ${agentId}`);
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            logger.error(`[ROOMS GET] Agent not found: ${agentId}`);
+            res.status(404).json({ message: `Agent not found: ${agentId}` });
+            return;
+        }
+
+        try {
+            // Extract worldId from query parameters or body
+            const worldId = req.body.worldId || req.query.worldId as string;
+            
+            // Get rooms where this agent is a participant
+            const rooms = await runtime.databaseAdapter.getRoomsForParticipant(agentId, runtime.agentId);
+            
+            // Get details for each room
+            const roomDetails = await Promise.all(
+                rooms.map(async (roomId) => {
+                    try {
+                        const roomData = await runtime.databaseAdapter.getRoom(roomId, runtime.agentId);
+                        if (!roomData) return null;
+                        
+                        // Filter by worldId if provided
+                        if (worldId && roomData.worldId !== worldId) {
+                            return null;
+                        }
+                        
+                        // Get the most recent message for this room
+                        const recentMemories = await runtime.databaseAdapter.getMemoriesByRoomIds({
+                            agentId: runtime.agentId,
+                            roomIds: [roomId],
+                            limit: 1
+                        });
+                        
+                        const lastMessage = recentMemories.length > 0 ? recentMemories[0].text : null;
+                        
+                        return {
+                            id: roomId,
+                            name: roomData.name || `Chat ${new Date(roomData.createdAt || Date.now()).toLocaleString()}`,
+                            createdAt: roomData.createdAt,
+                            source: roomData.source,
+                            worldId: roomData.worldId,
+                            lastMessage
+                        };
+                    } catch (error) {
+                        logger.error(`[ROOMS GET] Error getting details for room ${roomId}:`, error);
+                        return null;
+                    }
+                })
+            );
+            
+            // Filter out any null results and sort by most recent
+            const validRooms = roomDetails
+                .filter(room => room !== null)
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            
+            logger.debug(`[ROOMS GET] Retrieved ${validRooms.length} rooms for agent: ${agentId}`);
+            res.json(validRooms);
+        } catch (error) {
+            logger.error(`[ROOMS GET] Error retrieving rooms for agent ${agentId}:`, error);
+            res.status(500).json({ message: "Failed to retrieve rooms" });
+        }
+    });
+
+    // Create a new room for an agent
+    router.post('/:agentId/rooms', async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!agentId) {
+            logger.warn("[ROOM CREATE] Invalid agent ID format");
+            return;
+        }
+
+        logger.info(`[ROOM CREATE] Creating room for agent: ${agentId}`);
+        let runtime = agents.get(agentId);
+
+        if (!runtime) {
+            logger.debug(`[ROOM CREATE] Agent not found by ID, trying to find by name: ${agentId}`);
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            logger.error(`[ROOM CREATE] Agent not found: ${agentId}`);
+            res.status(404).json({ message: `Agent not found: ${agentId}` });
+            return;
+        }
+
+        try {
+            const { name, worldId } = req.body;
+            const roomName = name || `Chat ${new Date().toLocaleString()}`;
+            const roomId = crypto.randomUUID() as UUID;
+            
+            // Create the room
+            await runtime.ensureRoomExists({
+                id: roomId,
+                name: roomName,
+                source: "client",
+                type: 0, // Direct message
+                worldId, // Include the worldId from the request
+            });
+            
+            // Add the agent to the room
+            await runtime.ensureParticipantInRoom(runtime.agentId, roomId);
+            
+            // Add the default user to the room
+            const userId = "00000000-0000-0000-0000-000000000000" as UUID;
+            await runtime.ensureParticipantInRoom(userId, roomId);
+            
+            logger.debug(`[ROOM CREATE] Created room ${roomId} for agent: ${agentId} in world: ${worldId}`);
+            res.json({
+                id: roomId,
+                name: roomName,
+                createdAt: Date.now(),
+                source: "client",
+                worldId
+            });
+        } catch (error) {
+            logger.error(`[ROOM CREATE] Error creating room for agent ${agentId}:`, error);
+            res.status(500).json({ message: "Failed to create room" });
         }
     });
 

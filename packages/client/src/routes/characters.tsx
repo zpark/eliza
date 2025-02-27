@@ -41,7 +41,7 @@ export default function Characters() {
     const handleStartAgent = async (characterName: string) => {
         try {
             // Use the mutation hook which handles success/error states
-            const response = await startAgentMutation.mutateAsync(characterName);
+            const response = await apiClient.startAgentByName(characterName);
             
             // Navigate to the chat with the newly created agent on success
             if (response && response.id) {
