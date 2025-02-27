@@ -3,142 +3,121 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Character } from "@elizaos/core";
 import React, { useState, type FormEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
-// Error Boundary Component
-export class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-4 rounded-md bg-destructive/10 text-destructive">
-          <h4 className="font-medium mb-2">Something went wrong</h4>
-          <p className="text-sm">Please try refreshing the page.</p>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-type NestedObject = {
-  [key: string]: string | number | boolean | NestedObject;
-};
-
-type UpdateArrayPath = 
-  | "bio" 
-  | "topics" 
-  | "adjectives" 
-  | "plugins" 
-  | "style.all" 
-  | "style.chat" 
-  | "style.post";
+type FieldType = "text" | "textarea" | "number" | "checkbox" | "select";
 
 type InputField = {
   title: string;
   name: string;
   description?: string;
   getValue: (char: Character) => string;
+  fieldType: FieldType
 };
 
 type ArrayField = {
   title: string;
   description?: string;
-  path: UpdateArrayPath;
+  path: string;
   getData: (char: Character) => string[];
 };
 
-type CheckboxField = {
-  name: string;
-  label: string;
-  description?: string;
-  getValue: (char: Character) => boolean;
-};
+const CHARACTER_FORM_SCHEMA = [
+  {
+    sectionTitle: "Basic Info",
+    sectionValue: "basic",
+    sectionType: "input",
+    fields: [
+      {
+        title: "Name",
+        name: "name",
+        description: "The display name of your character",
+        fieldType: "text",
+        getValue: (char) => char.name || '',
+      },
+      {
+        title: "Username",
+        name: "username",
+        description: "Unique identifier for your character",
+        fieldType: "text",
+        getValue: (char) => char.username || '',
+      },
+      {
+        title: "System",
+        name: "system",
+        description: "System prompt for character behavior",
+        fieldType: "textarea",
+        getValue: (char) => char.system || '',
+      },
+      {
+        title: "Voice Model",
+        name: "settings.voice.model",
+        description: "Voice model used for speech synthesis",
+        fieldType: "text",
+        getValue: (char) => char.settings?.voice?.model || '',
+      },
+    ] as InputField[]
+  },
+  {
+    sectionTitle: "Content",
+    sectionValue: "content",
+    sectionType: "array",
+    fields: [
+      {
+        title: "Bio",
+        description: "Key information about your character",
+        path: "bio",
+        getData: (char) => Array.isArray(char.bio) ? char.bio : [],
+      },
+      {
+        title: "Topics",
+        description: "Topics your character is knowledgeable about",
+        path: "topics",
+        getData: (char) => char.topics || [],
+      },
+      {
+        title: "Adjectives",
+        description: "Words that describe your character's personality",
+        path: "adjectives",
+        getData: (char) => char.adjectives || [],
+      },
+    ] as ArrayField[]
+  },
+  {
+    sectionTitle: "Style",
+    sectionValue: "style",
+    sectionType: "array",
+    fields: [
+      {
+        title: "All",
+        description: "Style rules applied to all interactions",
+        path: "style.all",
+        getData: (char) => char.style?.all || [],
+      },
+      {
+        title: "Chat",
+        description: "Style rules for chat interactions",
+        path: "style.chat",
+        getData: (char) => char.style?.chat || [],
+      },
+      {
+        title: "Post",
+        description: "Style rules for social media posts",
+        path: "style.post",
+        getData: (char) => char.style?.post || [],
+      },
+    ] as ArrayField[]
+  }
+]
 
-const TEXT_FIELDS: InputField[] = [
-  {
-    title: "Name",
-    name: "name",
-    description: "The display name of your character",
-    getValue: (char) => char.name || '',
-  },
-  {
-    title: "Username",
-    name: "username",
-    description: "Unique identifier for your character",
-    getValue: (char) => char.username || '',
-  },
-  {
-    title: "System",
-    name: "system",
-    description: "System prompt for character behavior",
-    getValue: (char) => char.system || '',
-  },
-  {
-    title: "Voice Model",
-    name: "settings.voice.model",
-    description: "Voice model used for speech synthesis",
-    getValue: (char) => char.settings?.voice?.model || '',
-  },
-];
-
-const ARRAY_FIELDS: ArrayField[] = [
-  {
-    title: "Bio",
-    description: "Key information about your character",
-    path: "bio",
-    getData: (char) => Array.isArray(char.bio) ? char.bio : [],
-  },
-  {
-    title: "Topics",
-    description: "Topics your character is knowledgeable about",
-    path: "topics",
-    getData: (char) => char.topics || [],
-  },
-  {
-    title: "Adjectives",
-    description: "Words that describe your character's personality",
-    path: "adjectives",
-    getData: (char) => char.adjectives || [],
-  },
-];
-
-const STYLE_FIELDS: ArrayField[] = [
-  {
-    title: "All",
-    description: "Style rules applied to all interactions",
-    path: "style.all",
-    getData: (char) => char.style?.all || [],
-  },
-  {
-    title: "Chat",
-    description: "Style rules for chat interactions",
-    path: "style.chat",
-    getData: (char) => char.style?.chat || [],
-  },
-  {
-    title: "Post",
-    description: "Style rules for social media posts",
-    path: "style.post",
-    getData: (char) => char.style?.post || [],
-  },
-];
+type customComponent = {
+  name: string,
+  component: ReactNode
+}
 
 export type CharacterFormProps = {
   character: Character;
@@ -148,12 +127,10 @@ export type CharacterFormProps = {
   onDelete?: () => Promise<void>;
   onCancel?: () => void;
   onReset?: () => void;
-  showPlugins?: boolean;
-  showSettings?: boolean;
   submitButtonText?: string;
   deleteButtonText?: string;
   isAgent?: boolean;
-  settingsContent?: ReactNode;
+  customComponents?: customComponent[];
 };
 
 export default function CharacterForm({
@@ -164,16 +141,11 @@ export default function CharacterForm({
   onDelete,
   onCancel,
   onReset,
-  showPlugins = false,
-  showSettings = false,
   submitButtonText = "Save Changes",
   deleteButtonText = "Delete",
-  isAgent = false,
-  settingsContent,
+  customComponents = []
 }: CharacterFormProps) {
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const [characterValue, setCharacterValue] = useState<Character>(character);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -187,13 +159,13 @@ export default function CharacterForm({
       const parts = name.split('.');
       setCharacterValue(prev => {
         const newValue = { ...prev };
-        let current = newValue as unknown as NestedObject;
+        let current: Record<string, any> = newValue;
         
         for (let i = 0; i < parts.length - 1; i++) {
           if (!current[parts[i]]) {
             current[parts[i]] = {};
           }
-          current = current[parts[i]] as NestedObject;
+          current = current[parts[i]];
         }
         
         current[parts[parts.length - 1]] = type === 'checkbox' ? checked : value;
@@ -207,27 +179,27 @@ export default function CharacterForm({
     }
   };
 
-  const updateArray = (path: UpdateArrayPath, newData: string[]) => {
+  const updateArray = (path: string, newData: string[]) => {
     setCharacterValue(prev => {
       const newValue = { ...prev };
-      
-      if (path.includes('.')) {
-        const [parent, child] = path.split('.') as ["style", "all" | "chat" | "post"];
-        return {
-          ...newValue,
-          [parent]: {
-            ...(newValue[parent] || {}),
-            [child]: newData
-          }
-        };
+      const keys = path.split(".");
+      let current: any = newValue;
+  
+      for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+  
+        if (!current[key] || typeof current[key] !== "object") {
+          current[key] = {}; // Ensure path exists
+        }
+        current = current[key];
       }
-      
-      return {
-        ...newValue,
-        [path]: newData
-      } as Character;
+  
+      current[keys[keys.length - 1]] = newData; // Update array
+  
+      return newValue;
     });
   };
+  
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -264,6 +236,48 @@ export default function CharacterForm({
     }
   };
 
+
+  const renderInputField = (field: InputField) => (
+    <div key={field.name} className="space-y-2">
+      <Label htmlFor={field.name}>{field.title}</Label>
+      {field.description && <p className="text-sm text-muted-foreground">{field.description}</p>}
+      
+      {field.fieldType === "textarea" ? (
+        <Textarea
+          id={field.name}
+          name={field.name}
+          value={field.getValue(characterValue)}
+          onChange={handleChange}
+          className="min-h-[120px] resize-y"
+        />
+      ) : field.fieldType === "checkbox" ? (
+        <Input
+          id={field.name}
+          name={field.name}
+          type="checkbox"
+          checked={(characterValue as Record<string, any>)[field.name] === "true"}
+          onChange={handleChange}
+        />
+      ) : (
+        <Input
+          id={field.name}
+          name={field.name}
+          type={field.fieldType}
+          value={field.getValue(characterValue)}
+          onChange={handleChange}
+        />
+      )}
+    </div>
+  );
+  
+  const renderArrayField = (field: ArrayField) => (
+    <div key={field.path} className="space-y-2">
+      <Label htmlFor={field.path}>{field.title}</Label>
+      {field.description && <p className="text-sm text-muted-foreground">{field.description}</p>}
+      <ArrayInput data={field.getData(characterValue)} onChange={(newData) => updateArray(field.path, newData)} />
+    </div>
+  );
+
   return (
     <div className="container max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
@@ -275,85 +289,27 @@ export default function CharacterForm({
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className={`grid w-full ${showSettings ? 'grid-cols-4' : 'grid-cols-3'} mb-6`}>
-            <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="style">Style</TabsTrigger>
-            {showSettings && (
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            )}
+          <TabsList className={`grid w-full grid-cols-${customComponents.length + 3} mb-6`}>
+            {CHARACTER_FORM_SCHEMA.map((section) => (
+              <TabsTrigger value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
+            ))}
+            {customComponents.map((component, index) => (
+              <TabsTrigger key={`custom-${index}`} value={`custom-${index}`}>{component.name}</TabsTrigger>
+            ))}
           </TabsList>
           
           <Card>
             <CardContent className="p-6">
-              <TabsContent value="basic" className="space-y-6">
-                {TEXT_FIELDS.map((field) => (
-                  <div key={field.name} className="space-y-2">
-                    <Label htmlFor={field.name}>{field.title}</Label>
-                    {field.description && (
-                      <p className="text-sm text-muted-foreground">{field.description}</p>
-                    )}
-                    {field.name === 'system' ? (
-                      <Textarea
-                        id={field.name}
-                        name={field.name}
-                        value={field.getValue(characterValue)}
-                        onChange={handleChange}
-                        className="min-h-[120px] resize-y"
-                      />
-                    ) : (
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        value={field.getValue(characterValue)}
-                        onChange={handleChange}
-                      />
-                    )}
-                  </div>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="content" className="space-y-6">
-                {ARRAY_FIELDS.slice(0, 3).map((field) => (
-                  <div key={field.path} className="space-y-2">
-                    <Label htmlFor={field.path}>{field.title}</Label>
-                    {field.description && (
-                      <p className="text-sm text-muted-foreground">{field.description}</p>
-                    )}
-                    <ArrayInput
-                      data={field.getData(characterValue)}
-                      onChange={(newData) => updateArray(field.path, newData)}
-                    />
-                  </div>
-                ))}
-              </TabsContent>
-
-              <TabsContent value="style" className="space-y-6">
-                {STYLE_FIELDS.map((field) => (
-                  <div key={field.path} className="space-y-2">
-                    <Label htmlFor={field.path}>{field.title}</Label>
-                    {field.description && (
-                      <p className="text-sm text-muted-foreground">{field.description}</p>
-                    )}
-                    <ArrayInput
-                      data={field.getData(characterValue)}
-                      onChange={(newData) => updateArray(field.path, newData)}
-                    />
-                  </div>
-                ))}
-              </TabsContent>
-
-              {showSettings && (
-                <TabsContent value="settings" className="space-y-6">
-                  <ErrorBoundary>
-                    {settingsContent ? (
-                      settingsContent
-                    ) : (
-                      <p>Settings can be implemented based on specific requirements</p>
-                    )}
-                  </ErrorBoundary>
+              {CHARACTER_FORM_SCHEMA.map((section) => (
+                <TabsContent key={section.sectionValue} value={section.sectionValue} className="space-y-6">
+                  {section.sectionType === "input"
+                    ? (section.fields as InputField[]).map(renderInputField)
+                    : (section.fields as ArrayField[]).map(renderArrayField)}
                 </TabsContent>
-              )}
+              ))}
+              {customComponents.map((component, index) => (
+                <TabsContent key={`custom-${index}`} value={`custom-${index}`}>{component.component}</TabsContent>
+              ))}
             </CardContent>
           </Card>
         </Tabs>

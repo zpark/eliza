@@ -282,12 +282,16 @@ export default function Overview({ character }: { character: Character }) {
       description="Configure your AI character's behavior and capabilities"
       onSubmit={handleSubmit}
       onReset={() => setCharacterValue(character)}
-      showSettings={true}
       submitButtonText="Save Changes"
       deleteButtonText="Stop Agent"
       onDelete={handleStopAgent}
       isAgent={true}
-      settingsContent={<SettingsContent />}
+      customComponents={[
+        {
+          name: "Settings",
+          component: <SettingsContent />
+        }
+      ]}
     />
   );
 }
