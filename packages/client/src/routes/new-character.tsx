@@ -24,27 +24,17 @@ export default function NewCharacter() {
     const [character, setCharacter] = useState({...defaultCharacter});
 
     const ensureRequiredFields = (character: Character): Character => {
-        // Clone character to avoid mutating original
-        const completedCharacter = { ...character };
-        
-        // Ensure all required fields are present
-        if (!completedCharacter.name) throw new Error("name field is required");
-        if (!completedCharacter.bio) completedCharacter.bio = [];
-        if (!completedCharacter.messageExamples) completedCharacter.messageExamples = [];
-        if (!completedCharacter.postExamples) completedCharacter.postExamples = [];
-        if (!completedCharacter.topics) completedCharacter.topics = [];
-        if (!completedCharacter.adjectives) completedCharacter.adjectives = [];
-        if (!completedCharacter.plugins) completedCharacter.plugins = [];
-        
-        // Ensure style field exists
-        if (!completedCharacter.style) {
-          completedCharacter.style = { all: [], chat: [], post: [] };
-        }
-        
-        return completedCharacter;
-      };
-
-    
+        return {
+            ...character,
+            bio: character.bio ?? [],
+            messageExamples: character.messageExamples ?? [],
+            postExamples: character.postExamples ?? [],
+            topics: character.topics ?? [],
+            adjectives: character.adjectives ?? [],
+            plugins: character.plugins ?? [],
+            style: character.style ?? { all: [], chat: [], post: [] },
+        };
+    };    
 
     const handleSubmit = async (character: Character) => {
         setIsSubmitting(true);
