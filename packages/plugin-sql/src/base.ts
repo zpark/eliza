@@ -38,6 +38,7 @@ import {
     lte,
     or,
     sql,
+    count
 } from "drizzle-orm";
 import { v4 } from "uuid";
 import {
@@ -206,6 +207,46 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     agentId: agent.id
                 });
                 return false;
+            }
+        });
+    }
+
+    /**
+     * Count all agents in the database
+     * Used primarily for maintenance and cleanup operations
+     */
+    async countAgents(): Promise<number> {
+        return this.withDatabase(async () => {
+            try {
+                const result = await this.db
+                    .select({ count: count() })
+                    .from(agentTable);
+                
+                return result[0]?.count || 0;
+            } catch (error) {
+                logger.error("Error counting agents:", {
+                    error: error instanceof Error ? error.message : String(error)
+                });
+                return 0;
+            }
+        });
+    }
+
+    /**
+     * Clean up the agents table by removing all agents
+     * This is used during server startup to ensure no orphaned agents exist
+     * from previous crashes or improper shutdowns
+     */
+    async cleanupAgents(): Promise<void> {
+        return this.withDatabase(async () => {
+            try {
+                await this.db.delete(agentTable);
+                logger.success("Successfully cleaned up agent table");
+            } catch (error) {
+                logger.error("Error cleaning up agent table:", {
+                    error: error instanceof Error ? error.message : String(error)
+                });
+                throw error;
             }
         });
     }

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import info from "@/lib/info.json";
 import {
     Sidebar,
@@ -13,14 +13,18 @@ import {
     SidebarMenuItem,
     SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api";
 import { NavLink, useLocation } from "react-router";
+import { useCallback } from "react";
 import type { UUID } from "@elizaos/core";
-import { Book, Cog, User } from "lucide-react";
+import { Book, Cog, User, Users, RefreshCw } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
     const location = useLocation();
+    const queryClient = useQueryClient();
+    
     const query = useQuery({
         queryKey: ["agents"],
         queryFn: () => apiClient.getAgents(),
@@ -29,6 +33,11 @@ export function AppSidebar() {
     });
 
     const agents = query?.data?.agents;
+
+    // Function to refresh the agents list
+    const refreshAgents = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["agents"] });
+    }, [queryClient]);
 
     return (
         <Sidebar>
@@ -57,6 +66,23 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Library</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <NavLink to="/characters">
+                                    <SidebarMenuButton
+                                        isActive={location.pathname === "/characters"}
+                                    >
+                                        <Users />
+                                        <span>Characters</span>
+                                    </SidebarMenuButton>
+                                </NavLink>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
                 <SidebarGroup>
                     <SidebarGroupLabel>Agents</SidebarGroupLabel>
                     <SidebarGroupContent>

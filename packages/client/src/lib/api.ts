@@ -1,4 +1,5 @@
 import type { UUID, Character } from "@elizaos/core";
+import { characterNameToUrl, urlToCharacterName } from "./utils";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
 
@@ -136,11 +137,18 @@ export const apiClient = {
             url: `/agents/start/${characterName}`,
             method: "POST",
         }),
-    stopAgent: (agentId: string) =>
-        fetcher({
+    stopAgent: (agentId: string) => {
+        return fetcher({
             url: `/agents/${agentId}/stop`,
             method: "POST",
-        }),
+        });
+    },
+    removeAgent: (agentId: string) => {
+        return fetcher({
+            url: `/agents/${agentId}`,
+            method: "DELETE",
+        });
+    },
     getMemories: (agentId: string, roomId: string) =>
         fetcher({ url: `/agents/${agentId}/${roomId}/memories` }),
     
@@ -148,8 +156,11 @@ export const apiClient = {
     getCharacters: () => 
         fetcher({ url: "/characters" }),
     
-    getCharacter: (characterName: string): Promise<Character> =>
-        fetcher({ url: `/characters/${characterName}` }),
+    getCharacter: (characterName: string, isUrlEncoded: boolean = false): Promise<Character> => {
+        // Convert from URL format if needed
+        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
+        return fetcher({ url: `/characters/${actualName}` });
+    },
     
     createCharacter: (character: Character) =>
         fetcher({
@@ -158,18 +169,24 @@ export const apiClient = {
             body: character,
         }),
     
-    updateCharacter: (characterName: string, character: Character) =>
-        fetcher({
-            url: `/characters/${characterName}`,
+    updateCharacter: (characterName: string, character: Character, isUrlEncoded: boolean = false) => {
+        // Convert from URL format if needed
+        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
+        return fetcher({
+            url: `/characters/${actualName}`,
             method: "PUT",
             body: character,
-        }),
+        });
+    },
     
-    removeCharacter: (characterName: string): Promise<{ success: boolean }> =>
-        fetcher({
-            url: `/characters/${characterName}`,
+    removeCharacter: (characterName: string, isUrlEncoded: boolean = false): Promise<{ success: boolean }> => {
+        // Convert from URL format if needed
+        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
+        return fetcher({
+            url: `/characters/${actualName}`,
             method: "DELETE",
-        }),
+        });
+    },
     
     importCharacter: (characterFile: File) => {
         const formData = new FormData();
@@ -181,6 +198,9 @@ export const apiClient = {
         });
     },
     
-    exportCharacter: (characterName: string) =>
-        fetcher({ url: `/characters/${characterName}/export` }),
+    exportCharacter: (characterName: string, isUrlEncoded: boolean = false) => {
+        // Convert from URL format if needed
+        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
+        return fetcher({ url: `/characters/${actualName}/export` });
+    },
 };

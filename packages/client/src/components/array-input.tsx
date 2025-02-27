@@ -3,6 +3,7 @@ import { Label } from "./ui/label";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
 type TagProps = {
@@ -16,14 +17,16 @@ const Tag = ({ tag, onRemove }: TagProps) => (
         className="flex items-center gap-1.5 pr-1.5 text-sm py-1 px-2 transition-colors hover:bg-white hover:text-black dark:hover:text-black"
     >
         {tag}
-        <button
+        <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => onRemove(tag)}
-            className="hover:bg-muted/20 rounded-full p-0.5 transition-colors"
+            className="hover:bg-muted/20 rounded-full p-0.5 transition-colors h-auto w-auto min-w-0 min-h-0"
         >
             <X className="h-3 w-3" />
             <span className="sr-only">Remove {tag}</span>
-        </button>
+        </Button>
     </Badge>
 );
 

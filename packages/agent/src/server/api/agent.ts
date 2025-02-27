@@ -228,7 +228,7 @@ export function agentRouter(
                 modelClass: ModelClass.TEXT_LARGE,
             });
 
-            logger.info(`[MESSAGE ENDPOINT] After generateMessageResponse, response: ${response}`);
+            logger.info(`[MESSAGE ENDPOINT] After generateMessageResponse, response: ${JSON.stringify(response)}`);
 
             if (!response) {
                 res.status(500).json({

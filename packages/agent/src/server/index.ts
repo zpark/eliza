@@ -3,6 +3,7 @@ import {
   type Character,
   type IAgentRuntime
 } from "@elizaos/core";
+import { count } from "drizzle-orm";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
@@ -166,7 +167,7 @@ export class AgentServer {
 
     public unregisterAgent(runtime: IAgentRuntime) {
         if (!runtime || !runtime.agentId) {
-            logger.warn(`[AGENT UNREGISTER] Attempted to unregister undefined or invalid agent runtime`);
+            logger.warn("[AGENT UNREGISTER] Attempted to unregister undefined or invalid agent runtime");
             return;
         }
 
@@ -225,6 +226,8 @@ export class AgentServer {
         this.app.use(middleware);
     }
 
+    
+
     public start(port: number) {
         try {
             if (!port || typeof port !== 'number') {
@@ -234,7 +237,7 @@ export class AgentServer {
             logger.debug(`Starting server on port ${port}...`);
             logger.debug(`Current agents count: ${this.agents.size}`);
             logger.debug(`Environment: ${process.env.NODE_ENV}`);
-            
+                    
             this.server = this.app.listen(port, () => {
                 logger.success(
                     `REST API bound to 0.0.0.0:${port}. If running locally, access it at http://localhost:${port}.`
