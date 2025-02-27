@@ -42,6 +42,7 @@ export class VisionManager {
   private processor: Florence2Processor | null = null;
   private tokenizer: PreTrainedTokenizer | null = null;
   private modelsDir: string;
+  private cacheDir: string;
   private initialized = false;
   private downloadManager: DownloadManager;
   private modelDownloaded = false;
@@ -57,15 +58,16 @@ export class VisionManager {
 
   private constructor(cacheDir: string) {
     this.modelsDir = path.join(path.dirname(cacheDir), 'models', 'vision');
+    this.cacheDir = cacheDir;
     this.ensureModelsDirExists();
-    this.downloadManager = DownloadManager.getInstance(this.modelsDir);
+    this.downloadManager = DownloadManager.getInstance(this.cacheDir, this.modelsDir);
     this.platformConfig = this.getPlatformConfig();
-    
-    logger.info("VisionManager initialized with configuration:", {
-      modelsDir: this.modelsDir,
-      exists: existsSync(this.modelsDir),
-      platform: this.platformConfig
-    });
+    logger.info("VisionManager initialized");
+    // logger.info("VisionManager initialized with configuration:", {
+    //   modelsDir: this.modelsDir,
+    //   exists: existsSync(this.modelsDir),
+    //   platform: this.platformConfig
+    // });
   }
 
   private getPlatformConfig(): PlatformConfig {
@@ -189,13 +191,13 @@ export class VisionManager {
         env.backends.onnx.logLevel = "info";
       }
       
-      logger.info("Vision model configuration:", {
-        modelId: modelSpec.modelId,
-        modelsDir: this.modelsDir,
-        allowLocalModels: env.allowLocalModels,
-        allowRemoteModels: env.allowRemoteModels,
-        platform: this.platformConfig
-      });
+      // logger.info("Vision model configuration:", {
+      //   modelId: modelSpec.modelId,
+      //   modelsDir: this.modelsDir,
+      //   allowLocalModels: env.allowLocalModels,
+      //   allowRemoteModels: env.allowRemoteModels,
+      //   platform: this.platformConfig
+      // });
 
       // Initialize model with detailed logging
       logger.info("Loading Florence2 model...");
@@ -214,11 +216,10 @@ export class VisionManager {
             const currentProgress = Math.round(progress * 100);
             if (currentProgress > lastProgress + 9 || currentProgress === 100) {
               lastProgress = currentProgress;
-              const barLength = 20;
+              const barLength = 30;
               const filledLength = Math.floor((currentProgress / 100) * barLength);
-              const emptyLength = barLength - filledLength;
-              const progressBar = '█'.repeat(Math.max(0, filledLength)) + '░'.repeat(Math.max(0, emptyLength));
-              logger.info(`Model download: ${progressBar} ${currentProgress}%`);
+              const progressBar = '▰'.repeat(filledLength) + '▱'.repeat(barLength - filledLength);
+              logger.info(`Downloading vision model: ${progressBar} ${currentProgress}%`);
               if (currentProgress === 100) this.modelDownloaded = true;
             }
           }) as ProgressCallback
@@ -250,11 +251,10 @@ export class VisionManager {
             const currentProgress = Math.round(progress * 100);
             if (currentProgress !== tokenizerProgress) {
               tokenizerProgress = currentProgress;
-              const barLength = 20;
+              const barLength = 30;
               const filledLength = Math.floor((currentProgress / 100) * barLength);
-              const emptyLength = barLength - filledLength;
-              const progressBar = '█'.repeat(Math.max(0, filledLength)) + '░'.repeat(Math.max(0, emptyLength));
-              logger.info(`Tokenizer download: ${progressBar} ${currentProgress}%`);
+              const progressBar = '▰'.repeat(filledLength) + '▱'.repeat(barLength - filledLength);
+              logger.info(`Downloading vision tokenizer: ${progressBar} ${currentProgress}%`);
               if (currentProgress === 100) this.tokenizerDownloaded = true;
             }
           }) as ProgressCallback
@@ -285,11 +285,10 @@ export class VisionManager {
             const currentProgress = Math.round(progress * 100);
             if (currentProgress !== processorProgress) {
               processorProgress = currentProgress;
-              const barLength = 20;
+              const barLength = 30;
               const filledLength = Math.floor((currentProgress / 100) * barLength);
-              const emptyLength = barLength - filledLength;
-              const progressBar = '█'.repeat(Math.max(0, filledLength)) + '░'.repeat(Math.max(0, emptyLength));
-              logger.info(`Processor download: ${progressBar} ${currentProgress}%`);
+              const progressBar = '▰'.repeat(filledLength) + '▱'.repeat(barLength - filledLength);
+              logger.info(`Downloading vision processor: ${progressBar} ${currentProgress}%`);
               if (currentProgress === 100) this.processorDownloaded = true;
             }
           }) as ProgressCallback
@@ -326,10 +325,11 @@ export class VisionManager {
         const [header, base64Data] = url.split(',');
         const mimeType = header.split(';')[0].split(':')[1];
         const buffer = Buffer.from(base64Data, 'base64');
-        logger.info("Data URL processed successfully:", {
-          mimeType,
-          bufferSize: buffer.length
-        });
+        logger.info("Data URL processed successfully");
+        // logger.info("Data URL processed successfully:", {
+        //   mimeType,
+        //   bufferSize: buffer.length
+        // });
         return { buffer, mimeType };
       }
 

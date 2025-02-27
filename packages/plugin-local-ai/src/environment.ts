@@ -53,13 +53,13 @@ export async function validateConfig(
 ): Promise<Config> {
     try {
         // Log raw environment variables
-        logger.info("Raw environment variables:", {
-            USE_LOCAL_AI: process.env.USE_LOCAL_AI,
-            USE_STUDIOLM_TEXT_MODELS: process.env.USE_STUDIOLM_TEXT_MODELS,
-            USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS,
-            OLLAMA_SERVER_URL: process.env.OLLAMA_SERVER_URL,
-            STUDIOLM_SERVER_URL: process.env.STUDIOLM_SERVER_URL
-        });
+        // logger.info("Raw environment variables:", {
+        //     USE_LOCAL_AI: process.env.USE_LOCAL_AI,
+        //     USE_STUDIOLM_TEXT_MODELS: process.env.USE_STUDIOLM_TEXT_MODELS,
+        //     USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS,
+        //     OLLAMA_SERVER_URL: process.env.OLLAMA_SERVER_URL,
+        //     STUDIOLM_SERVER_URL: process.env.STUDIOLM_SERVER_URL
+        // });
 
         // Parse environment variables with proper boolean conversion
         const booleanConfig = {
@@ -69,7 +69,7 @@ export async function validateConfig(
             USE_OLLAMA_EMBEDDING: config.USE_OLLAMA_EMBEDDING === 'true',
         };
 
-        logger.info("Parsed boolean configuration:", booleanConfig);
+        // logger.info("Parsed boolean configuration:", booleanConfig);
 
         // Validate text model source configuration
         validateModelConfig(booleanConfig);
@@ -91,7 +91,7 @@ export async function validateConfig(
 
         const validatedConfig = configSchema.parse(fullConfig);
         
-        logger.info("Final validated configuration:", validatedConfig);
+        // logger.info("Final validated configuration:", validatedConfig);
         
         return validatedConfig;
     } catch (error) {
