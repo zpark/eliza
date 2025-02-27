@@ -90,8 +90,8 @@ async function getFollowingTimeline(
     responsive_web_media_download_video_enabled: false,
   });
 
-  if (cursor != null && cursor != '') {
-    variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    variables.cursor = cursor;
   }
 
   const params = new URLSearchParams();
@@ -138,8 +138,8 @@ async function getFollowersTimeline(
     responsive_web_media_download_video_enabled: false,
   });
 
-  if (cursor != null && cursor != '') {
-    variables['cursor'] = cursor;
+  if (cursor != null && cursor !== '') {
+    variables.cursor = cursor;
   }
 
   const params = new URLSearchParams();

@@ -1,9 +1,6 @@
-import { type IAgentRuntime, logger, ModelClass, type Plugin } from "@elizaos/core";
 import type { GenerateTextParams } from "@elizaos/core";
-import { exec } from "node:child_process";
-import * as Echogarden from "echogarden";
+import { type IAgentRuntime, logger, ModelClass, type Plugin } from "@elizaos/core";
 import { EmbeddingModel, FlagEmbedding } from "fastembed";
-import fs from "node:fs";
 import {
   getLlama,
   type Llama,
@@ -21,12 +18,13 @@ import { getPlatformManager } from "./utils/platform";
 import { TokenizerManager } from './utils/tokenizerManager';
 import { MODEL_SPECS, type ModelSpec } from './types';
 import { DownloadManager } from './utils/downloadManager';
-import { VisionManager } from './utils/visionManager';
+import { OllamaManager } from './utils/ollamaManager';
+import { getPlatformManager } from "./utils/platform";
+import { StudioLMManager } from './utils/studiolmManager';
+import { TokenizerManager } from './utils/tokenizerManager';
 import { TranscribeManager } from './utils/transcribeManager';
 import { TTSManager } from './utils/ttsManager';
-import { StudioLMManager } from './utils/studiolmManager';
-import { OllamaManager } from './utils/ollamaManager';
-import { validateConfig } from "./environment";
+import { VisionManager } from './utils/visionManager';
 
 // const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);

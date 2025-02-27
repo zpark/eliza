@@ -1,12 +1,13 @@
 import type { Tweet } from "./client";
-import type { Content, IAgentRuntime, Memory, ModelClass, UUID } from "@elizaos/core";
-import { generateText, stringToUuid } from "@elizaos/core";
+import { Content, IAgentRuntime, Memory, ModelClass, UUID, composeContext } from "@elizaos/core";
+import { ChannelType, generateText, stringToUuid } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import { logger } from "@elizaos/core";
-import type { Media } from "@elizaos/core";
-import fs from "fs";
-import path from "path";
+import type { Media, State } from "@elizaos/core";
+import fs from "node:fs";
+import path from "node:path";
 import type { ActionResponse, MediaData } from "./types";
+import { SttTtsPlugin } from "./sttTtsSpaces";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -57,25 +58,26 @@ export async function buildConversationThread(
 
         // Handle memory storage
         const memory = await client.runtime.messageManager.getMemoryById(
-            stringToUuid(currentTweet.id + "-" + client.runtime.agentId)
+            stringToUuid(`${currentTweet.id}-${client.runtime.agentId}`)
         );
         if (!memory) {
             const roomId = stringToUuid(
-                currentTweet.conversationId + "-" + client.runtime.agentId
+                `${currentTweet.conversationId}-${client.runtime.agentId}`
             );
             const userId = stringToUuid(currentTweet.userId);
 
-            await client.runtime.ensureConnection(
+            await client.runtime.ensureConnection({
                 userId,
                 roomId,
-                currentTweet.username,
-                currentTweet.name,
-                "twitter"
-            );
+                userName: currentTweet.username,
+                userScreenName: currentTweet.name,
+                source: "twitter",
+                type: ChannelType.GROUP
+            });
 
             await client.runtime.messageManager.createMemory({
                 id: stringToUuid(
-                    currentTweet.id + "-" + client.runtime.agentId
+                    `${currentTweet.id}-${client.runtime.agentId}`
                 ),
                 agentId: client.runtime.agentId,
                 content: {
@@ -85,9 +87,7 @@ export async function buildConversationThread(
                     imageUrls: currentTweet.photos.map((p) => p.url) || [],
                     inReplyTo: currentTweet.inReplyToStatusId
                         ? stringToUuid(
-                              currentTweet.inReplyToStatusId +
-                                  "-" +
-                                  client.runtime.agentId
+                              `${currentTweet.inReplyToStatusId}-${client.runtime.agentId}`
                           )
                         : undefined,
                 },
@@ -178,18 +178,17 @@ export async function fetchMediaData(
                 const mediaBuffer = Buffer.from(await response.arrayBuffer());
                 const mediaType = attachment.contentType;
                 return { data: mediaBuffer, mediaType };
-            } else if (fs.existsSync(attachment.url)) {
+            }if (fs.existsSync(attachment.url)) {
                 // Handle local file paths
                 const mediaBuffer = await fs.promises.readFile(
                     path.resolve(attachment.url)
                 );
                 const mediaType = attachment.contentType;
                 return { data: mediaBuffer, mediaType };
-            } else {
+            }
                 throw new Error(
                     `File not found: ${attachment.url}. Make sure the path is correct.`
                 );
-            }
         })
     );
 }
@@ -201,10 +200,9 @@ export async function sendTweet(
     twitterUsername: string,
     inReplyTo: string
 ): Promise<Memory[]> {
-    const maxTweetLength = client.twitterConfig.MAX_TWEET_LENGTH as number;
-    const isLongTweet = maxTweetLength > 280;
+    const isLongTweet = content.text.length > 280 - 1;
 
-    const tweetChunks = splitTweetContent(content.text, maxTweetLength);
+    const tweetChunks = splitTweetContent(content.text, 280 - 1);
     const sentTweets: Tweet[] = [];
     let previousTweetId = inReplyTo;
 
@@ -269,7 +267,7 @@ export async function sendTweet(
     }
 
     const memories: Memory[] = sentTweets.map((tweet) => ({
-        id: stringToUuid(tweet.id + "-" + client.runtime.agentId),
+        id: stringToUuid(`${tweet.id}-${client.runtime.agentId}`),
         agentId: client.runtime.agentId,
         userId: client.runtime.agentId,
         content: {
@@ -280,7 +278,7 @@ export async function sendTweet(
             imageUrls: tweet.photos.map((p) => p.url) || [],
             inReplyTo: tweet.inReplyToStatusId
                 ? stringToUuid(
-                      tweet.inReplyToStatusId + "-" + client.runtime.agentId
+                      `${tweet.inReplyToStatusId}-${client.runtime.agentId}`
                   )
                 : undefined,
         },
@@ -299,9 +297,9 @@ function splitTweetContent(content: string, maxLength: number): string[] {
     for (const paragraph of paragraphs) {
         if (!paragraph) continue;
 
-        if ((currentTweet + "\n\n" + paragraph).trim().length <= maxLength) {
+        if ((`${currentTweet}\n\n${paragraph}`).trim().length <= maxLength) {
             if (currentTweet) {
-                currentTweet += "\n\n" + paragraph;
+                currentTweet += `\n\n${paragraph}`;
             } else {
                 currentTweet = paragraph;
             }
@@ -356,9 +354,9 @@ function splitSentencesAndWords(text: string, maxLength: number): string[] {
     let currentChunk = "";
 
     for (const sentence of sentences) {
-        if ((currentChunk + " " + sentence).trim().length <= maxLength) {
+        if ((`${currentChunk} ${sentence}`).trim().length <= maxLength) {
             if (currentChunk) {
-                currentChunk += " " + sentence;
+                currentChunk += ` ${sentence}`;
             } else {
                 currentChunk = sentence;
             }
@@ -377,10 +375,10 @@ function splitSentencesAndWords(text: string, maxLength: number): string[] {
                 currentChunk = "";
                 for (const word of words) {
                     if (
-                        (currentChunk + " " + word).trim().length <= maxLength
+                        (`${currentChunk} ${word}`).trim().length <= maxLength
                     ) {
                         if (currentChunk) {
-                            currentChunk += " " + word;
+                            currentChunk += ` ${word}`;
                         } else {
                             currentChunk = word;
                         }
@@ -427,7 +425,7 @@ function deduplicateMentions(paragraph: string) {
   const endOfMentions = paragraph.indexOf(matches[0]) + matches[0].length;
 
   // Construct the result by combining unique mentions with the rest of the string
-  return uniqueMentionsString + ' ' + paragraph.slice(endOfMentions);
+  return `${uniqueMentionsString} ${paragraph.slice(endOfMentions)}`;
 }
 
 function restoreUrls(
@@ -519,9 +517,8 @@ export async function generateTweetActions({
             if (actions) {
                 logger.debug("Parsed tweet actions:", actions);
                 return actions;
-            } else {
-                logger.debug("generateTweetActions no valid response");
             }
+                logger.debug("generateTweetActions no valid response");
         } catch (error) {
             logger.error("Error in generateTweetActions:", error);
             if (
@@ -537,4 +534,104 @@ export async function generateTweetActions({
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         retryDelay *= 2;
     }
+}
+
+
+
+/**
+ * Generate short filler text via GPT
+ */
+export async function generateFiller(
+    runtime: IAgentRuntime,
+    fillerType: string
+): Promise<string> {
+    try {
+        const context = composeContext({
+            state: { fillerType } as any as State,
+            template: `
+# INSTRUCTIONS:
+You are generating a short filler message for a Twitter Space. The filler type is "{{fillerType}}".
+Keep it brief, friendly, and relevant. No more than two sentences.
+Only return the text, no additional formatting.
+
+---
+`,
+        });
+        const output = await generateText({
+            runtime,
+            context,
+            modelClass: ModelClass.TEXT_SMALL,
+        });
+        return output.trim();
+    } catch (err) {
+        logger.error("[generateFiller] Error generating filler:", err);
+        return "";
+    }
+}
+
+/**
+ * Speak a filler message if STT/TTS plugin is available. Sleep a bit after TTS to avoid cutoff.
+ */
+export async function speakFiller(
+    runtime: IAgentRuntime,
+    sttTtsPlugin: SttTtsPlugin | undefined,
+    fillerType: string,
+    sleepAfterMs = 3000
+): Promise<void> {
+    if (!sttTtsPlugin) return;
+    const text = await generateFiller(runtime, fillerType);
+    if (!text) return;
+
+    logger.log(`[Space] Filler (${fillerType}) => ${text}`);
+    await sttTtsPlugin.speakText(text);
+
+    if (sleepAfterMs > 0) {
+        await new Promise((res) => setTimeout(res, sleepAfterMs));
+    }
+}
+
+/**
+ * Generate topic suggestions via GPT if no topics are configured
+ */
+export async function generateTopicsIfEmpty(
+    runtime: IAgentRuntime
+): Promise<string[]> {
+    try {
+        const context = composeContext({
+            state: {} as any,
+            template: `
+# INSTRUCTIONS:
+Please generate 5 short topic ideas for a Twitter Space about technology or random interesting subjects.
+Return them as a comma-separated list, no additional formatting or numbering.
+
+Example:
+"AI Advances, Futuristic Gadgets, Space Exploration, Quantum Computing, Digital Ethics"
+---
+`,
+        });
+        const response = await generateText({
+            runtime,
+            context,
+            modelClass: ModelClass.TEXT_SMALL,
+        });
+        const topics = response
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+        return topics.length ? topics : ["Random Tech Chat", "AI Thoughts"];
+    } catch (err) {
+        logger.error("[generateTopicsIfEmpty] GPT error =>", err);
+        return ["Random Tech Chat", "AI Thoughts"];
+    }
+}
+
+export async function isAgentInSpace(client: ClientBase, spaceId: string): Promise<boolean> {
+    const space = await client.twitterClient.getAudioSpaceById(spaceId);
+    const agentName = client.state["TWITTER_USERNAME"];
+
+    return space.participants.listeners.some(
+        (participant) => participant.twitter_screen_name === agentName
+    ) || space.participants.speakers.some(
+        (participant) => participant.twitter_screen_name === agentName
+    );
 }

@@ -1,5 +1,5 @@
 // If a user is new to the server, greet them in the general channel
-// Only available if the SHOULD_GREET_NEW_USERS setting is true, which should be loaded from the cache from onboarding
+// Only available if the SHOULD_GREET_NEW_USERS setting is true, which should be loaded from the cache from settings
 
 import {
     type Action,
@@ -11,7 +11,6 @@ import {
     type State,
     logger,
 } from "@elizaos/core";
-import { type Message } from "discord.js";
 
 interface GreetingSettings {
     enabled: boolean;
@@ -27,25 +26,17 @@ export const greetAction: Action = {
     validate: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State
+        _state: State
     ): Promise<boolean> => {
-        // Only validate for Discord messages
-        if (message.content.source !== "discord") {
-            return false;
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
 
-        if(!state?.discordMessage) {
-            throw new Error("No discord message found");
-        }
-        const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id) {
-            return false;
-        }
+        const serverId = room.serverId;
 
-        // Get server ID from state
-        const serverId = discordMessage?.guild?.id;
         if (!serverId) {
-            return false;
+            throw new Error("No server ID found 1");
         }
 
         try {
@@ -73,8 +64,8 @@ export const greetAction: Action = {
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
-        state: State,
-        options: any,
+        _state: State,
+        _options: any,
         callback: HandlerCallback,
         responses: Memory[]
     ): Promise<void> => {
@@ -83,18 +74,15 @@ export const greetAction: Action = {
             await callback(response.content);
         }
 
-        if(!state?.discordMessage) {
-            throw new Error("No discord message found");
-        }
-        const discordMessage = state.discordMessage as Message;
-        if (!discordMessage.guild?.id) {
-            return;
+        const room = await runtime.getRoom(message.roomId);
+        if(!room) {
+            throw new Error("No room found");
         }
 
-        const serverId = discordMessage?.guild?.id;
+        const serverId = room.serverId;
+
         if (!serverId) {
-            logger.error("No server ID found in greet handler");
-            return;
+            throw new Error("No server ID found 2");
         }
 
         try {
@@ -108,13 +96,9 @@ export const greetAction: Action = {
                 return;
             }
 
-            // Get user info from the message
-            const username = discordMessage?.author?.username || "new member";
-            const userId = discordMessage?.author?.id;
-
             // Build greeting message
             const greeting = settings.message || 
-                           `Welcome ${username}! I'm ${runtime.character.name}, the community manager. Feel free to introduce yourself!`;
+                           `Welcome! I'm ${runtime.character.name}, the community manager. Feel free to introduce yourself!`;
 
             const content: Content = {
                 text: greeting,
@@ -133,14 +117,6 @@ export const greetAction: Action = {
 
             // Send greeting
             await callback(content);
-
-            // Log greeting
-            await runtime.databaseAdapter.log({
-                body: { greeting, userId },
-                userId: runtime.agentId,
-                roomId: message.roomId,
-                type: "greeting",
-            });
 
         } catch (error) {
             logger.error("Error in greet handler:", error);

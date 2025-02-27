@@ -1,7 +1,7 @@
 // src/core/ChatClient.ts
 
 import WebSocket from 'ws';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import type { SpeakerRequest, OccupancyUpdate } from '../types';
 import type { Logger } from '../logger';
 
@@ -80,24 +80,24 @@ export class ChatClient extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      this.ws!.on('open', () => {
+      this.ws?.on('open', () => {
         this.logger.info('[ChatClient] Connected');
         this.connected = true;
         this.sendAuthAndJoin();
         resolve();
       });
 
-      this.ws!.on('message', (data: { toString: () => string }) => {
+      this.ws?.on('message', (data: { toString: () => string }) => {
         this.handleMessage(data.toString());
       });
 
-      this.ws!.on('close', () => {
+      this.ws?.on('close', () => {
         this.logger.info('[ChatClient] Closed');
         this.connected = false;
         this.emit('disconnected');
       });
 
-      this.ws!.on('error', (err) => {
+      this.ws?.on('error', (err) => {
         this.logger.error('[ChatClient] Error =>', err);
         reject(err);
       });
@@ -226,7 +226,16 @@ export class ChatClient extends EventEmitter {
       });
     }
 
-    // 5) Reaction => body.type=2
+    // 5) "guestBroadcastingEvent=10" => host removed a speaker
+    if (body.guestBroadcastingEvent === 10) {
+      this.emit('newSpeakerRemoved', {
+        userId: body.guestRemoteID,
+        username: body.guestUsername,
+        sessionUUID: body.sessionUUID,
+      });
+    }
+
+    // 6) Reaction => body.type=2
     if (body?.type === 2) {
       this.logger.debug('[ChatClient] Emitting guestReaction =>', body);
       this.emit('guestReaction', {

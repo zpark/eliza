@@ -10,7 +10,7 @@ import {
 } from "@elizaos/core";
 import { type Attachment, Collection } from "discord.js";
 import ffmpeg from "fluent-ffmpeg";
-import fs from "fs";
+import fs from "node:fs";
 
 async function generateSummary(
     runtime: IAgentRuntime,
@@ -337,7 +337,7 @@ export class AttachmentManager {
                 description: videoInfo.description,
                 text: videoInfo.text,
             };
-        } else {
+        }
             return {
                 id: attachment.id,
                 url: attachment.url,
@@ -346,7 +346,6 @@ export class AttachmentManager {
                 description: "A video attachment",
                 text: "Video content not available",
             };
-        }
     }
 
     private async processGenericAttachment(

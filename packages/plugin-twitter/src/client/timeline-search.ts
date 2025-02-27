@@ -36,7 +36,7 @@ export function parseSearchTimelineTweets(
       if (instruction.entry?.content?.cursorType === 'Bottom') {
         bottomCursor = instruction.entry.content.value;
         continue;
-      } else if (instruction.entry?.content?.cursorType === 'Top') {
+      }if (instruction.entry?.content?.cursorType === 'Top') {
         topCursor = instruction.entry.content.value;
         continue;
       }
@@ -54,7 +54,7 @@ export function parseSearchTimelineTweets(
           if (tweetResult.success) {
             if (!tweetResult.tweet.views && tweetResultRaw?.views?.count) {
               const views = Number.parseInt(tweetResultRaw.views.count);
-              if (!isNaN(views)) {
+              if (!Number.isNaN(views)) {
                 tweetResult.tweet.views = views;
               }
             }
@@ -91,7 +91,7 @@ export function parseSearchTimelineUsers(
       if (instruction.entry?.content?.cursorType === 'Bottom') {
         bottomCursor = instruction.entry.content.value;
         continue;
-      } else if (instruction.entry?.content?.cursorType === 'Top') {
+      }if (instruction.entry?.content?.cursorType === 'Top') {
         topCursor = instruction.entry.content.value;
         continue;
       }

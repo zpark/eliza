@@ -345,7 +345,7 @@ export class DocumentationGenerator {
             const response = await fetch(contentsUrl);
             const data = await response.json();
             return Buffer.from(data.content, "base64").toString("utf-8");
-        } catch (error) {
+        } catch (_error) {
             console.error(
                 "Error fetching file content from GitHub API, ensure the PR has been merged"
             );

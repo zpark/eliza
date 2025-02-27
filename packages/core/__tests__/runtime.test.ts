@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 import { AgentRuntime } from "../src/runtime";
-import type {
-    Action,
-    IDatabaseAdapter,
-    IMemoryManager,
-    Memory,
-    UUID
+import {
+    ChannelType,
+    type Action,
+    type IDatabaseAdapter,
+    type IMemoryManager,
+    type Memory,
+    type UUID
 } from "../src/types";
 
 // Mock dependencies with minimal implementations
@@ -13,8 +14,8 @@ const mockDatabaseAdapter: IDatabaseAdapter = {
     db: {},
     init: vi.fn().mockResolvedValue(undefined),
     close: vi.fn().mockResolvedValue(undefined),
-    getAccountById: vi.fn().mockResolvedValue(null),
-    createAccount: vi.fn().mockResolvedValue(true),
+    getEntityById: vi.fn().mockResolvedValue(null),
+    createEntity: vi.fn().mockResolvedValue(true),
     getMemories: vi.fn().mockResolvedValue([]),
     getMemoryById: vi.fn().mockResolvedValue(null),
     getMemoriesByRoomIds: vi.fn().mockResolvedValue([]),

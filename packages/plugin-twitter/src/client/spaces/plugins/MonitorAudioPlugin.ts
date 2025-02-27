@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { Plugin, AudioDataWithUser } from '../types';
 import { Logger } from '../logger';
 

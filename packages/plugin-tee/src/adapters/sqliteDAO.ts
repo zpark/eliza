@@ -45,10 +45,8 @@ export class SqliteTeeLogDAO extends TeeLogDAO {
         page: number,
         pageSize: number,
     ): Promise<TeePageQuery<TeeLog[]>> {
-        if (page < 1) {
-            page = 1;
-        }
-        const offset = (page - 1) * pageSize;
+        const currentPage = page < 1 ? 1 : page;
+        const offset = (currentPage - 1) * pageSize;
         const limit = pageSize;
 
         const whereConditions = [];
@@ -98,7 +96,7 @@ export class SqliteTeeLogDAO extends TeeLogDAO {
             const logs = logs_stmt.all(...params, limit, offset);
 
             return {
-                page,
+                page: currentPage,
                 pageSize,
                 total,
                 data: logs,

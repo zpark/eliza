@@ -1,10 +1,12 @@
 import logger from "./logger.ts";
 import {
+    MemoryType,
     ModelClass,
     type IAgentRuntime,
     type IMemoryManager,
+    type KnowledgeMetadata,
     type Memory,
-    type UUID,
+    type UUID
 } from "./types.ts";
 
 const defaultMatchThreshold = 0.1;
@@ -34,6 +36,43 @@ export class MemoryManager implements IMemoryManager {
         this.runtime = opts.runtime;
         this.tableName = opts.tableName;
     }
+
+    private validateMetadata(metadata: KnowledgeMetadata): void {
+        // Check type first before any other validation
+        if (!metadata.type) {
+            throw new Error('Metadata type is required');
+        }
+
+        // Then validate other fields
+        if (metadata.source && typeof metadata.source !== 'string') {
+            throw new Error('Metadata source must be a string');
+        }
+
+        if (metadata.sourceId && typeof metadata.sourceId !== 'string') {
+            throw new Error('Metadata sourceId must be a UUID string');
+        }
+
+        if (metadata.scope && !['shared', 'private', 'room'].includes(metadata.scope)) {
+            throw new Error('Metadata scope must be "shared", "private", or "room"');
+        }
+
+        if (metadata.tags && !Array.isArray(metadata.tags)) {
+            throw new Error('Metadata tags must be an array of strings');
+        }
+    }
+
+    private validateMetadataTransition(oldMetadata: KnowledgeMetadata | undefined, newMetadata: KnowledgeMetadata) {
+        if (oldMetadata?.type && oldMetadata.type !== newMetadata.type) {
+            throw new Error(`Cannot change memory type from ${oldMetadata.type} to ${newMetadata.type}`);
+        }
+    }
+
+    private transformUserIdIfNeeded(memory: Memory): Memory {
+        return {
+          ...memory,
+          userId: this.runtime.generateTenantUserId(memory.userId)
+        };
+      }
 
     /**
      * Adds an embedding vector to a memory object. If the memory already has an embedding, it is returned as is.
@@ -84,27 +123,22 @@ export class MemoryManager implements IMemoryManager {
      * @param opts.unique Whether to retrieve unique memories only.
      * @returns A Promise resolving to an array of Memory objects.
      */
-    async getMemories({
-        roomId,
-        count = 10,
-        unique = true,
-        start,
-        end,
-    }: {
+    async getMemories(opts: {
         roomId: UUID;
         count?: number;
         unique?: boolean;
         start?: number;
         end?: number;
+        agentId?: UUID;
     }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemories({
-            roomId,
-            count,
-            unique,
+            roomId: opts.roomId,
+            count: opts.count,
+            unique: opts.unique,
             tableName: this.tableName,
-            agentId: this.runtime.agentId,
-            start,
-            end,
+            agentId: opts.agentId,
+            start: opts.start,
+            end: opts.end,
         });
     }
 
@@ -126,11 +160,11 @@ export class MemoryManager implements IMemoryManager {
 
     /**
      * Searches for memories similar to a given embedding vector.
-     * @param embedding The embedding vector to search with.
-     * @param opts Options including match threshold, count, user IDs, and uniqueness.
+     * @param opts Options for the memory search
      * @param opts.match_threshold The similarity threshold for matching memories.
      * @param opts.count The maximum number of memories to retrieve.
      * @param opts.roomId The room ID to retrieve memories for.
+     * @param opts.agentId The agent ID to retrieve memories for.
      * @param opts.unique Whether to retrieve unique memories only.
      * @returns A Promise resolving to an array of Memory objects that match the embedding.
      */
@@ -140,7 +174,7 @@ export class MemoryManager implements IMemoryManager {
             match_threshold?: number;
             count?: number;
             roomId: UUID;
-            agentId: UUID;
+            agentId?: UUID;
             unique?: boolean;
         }
     ): Promise<Memory[]> {
@@ -149,20 +183,19 @@ export class MemoryManager implements IMemoryManager {
             embedding,
             count = defaultMatchCount,
             roomId,
-            unique,
+            agentId,
+            unique = true,
         } = opts;
 
-        const result = await this.runtime.databaseAdapter.searchMemories({
+        return await this.runtime.databaseAdapter.searchMemories({
             tableName: this.tableName,
             roomId,
-            agentId: this.runtime.agentId,
-            embedding: embedding,
-            match_threshold: match_threshold,
+            agentId,
+            embedding,
+            match_threshold,
             count,
-            unique: !!unique,
+            unique,
         });
-
-        return result;
     }
 
     /**
@@ -172,21 +205,47 @@ export class MemoryManager implements IMemoryManager {
      * @returns A Promise that resolves when the operation completes.
      */
     async createMemory(memory: Memory, unique = false): Promise<void> {
-        // TODO: check memory.agentId == this.runtime.agentId
+        memory = this.transformUserIdIfNeeded(memory);
 
-        const existingMessage =
-            await this.runtime.databaseAdapter.getMemoryById(memory.id);
+        if (memory.metadata) {
+            this.validateMetadata(memory.metadata);  // This will check type first
+            this.validateMetadataRequirements(memory.metadata);
+        }
+        const existingMessage = await this.runtime.databaseAdapter.getMemoryById(memory.id);
 
         if (existingMessage) {
             logger.debug("Memory already exists, skipping");
             return;
         }
 
+        if (!memory.metadata) {
+            memory.metadata = {
+                type: this.tableName,
+                scope: memory.agentId ? 'private' : 'shared',
+                timestamp: Date.now()
+            } as KnowledgeMetadata;
+        }
+
+        // Handle metadata if present
+        if (memory.metadata) {
+            // Validate metadata
+            this.validateMetadata(memory.metadata);
+
+            // Ensure timestamp
+            if (!memory.metadata.timestamp) {
+                memory.metadata.timestamp = Date.now();
+            }
+
+            // Set default scope if not present
+            if (!memory.metadata.scope) {
+                memory.metadata.scope = memory.agentId ? 'private' : 'shared';
+            }
+        }
+
         logger.log("Creating Memory", memory.id, memory.content.text);
 
-        if(!memory.embedding){
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
-            memory.embedding = embedding;
+        if (!memory.embedding) {
+            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
         }
 
         await this.runtime.databaseAdapter.createMemory(
@@ -196,10 +255,10 @@ export class MemoryManager implements IMemoryManager {
         );
     }
 
-    async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; }): Promise<Memory[]> {
+    async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; agentId?: UUID }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemoriesByRoomIds({
             tableName: this.tableName,
-            agentId: this.runtime.agentId,
+            agentId: params.agentId,
             roomIds: params.roomIds,
             limit: params.limit
         });
@@ -247,5 +306,16 @@ export class MemoryManager implements IMemoryManager {
             unique,
             this.tableName
         );
+    }
+
+    private validateMetadataRequirements(metadata: KnowledgeMetadata) {
+        if (metadata.type === MemoryType.FRAGMENT) {
+            if (!metadata.documentId) {
+                throw new Error("Fragment metadata must include documentId");
+            }
+            if (typeof metadata.position !== 'number') {
+                throw new Error("Fragment metadata must include position");
+            }
+        }
     }
 }

@@ -92,5 +92,3 @@ packages/*/dist/*
 **/docs/build/**
 
 **lock**
-
-packages/agent/local_**

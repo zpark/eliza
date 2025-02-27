@@ -42,16 +42,16 @@ const config = {
                             if (item.type === "category") {
                                 switch (item.label.toLowerCase()) {
                                     case "streams":
-                                        item.label = "📺 " + item.label;
+                                        item.label = `📺 ${item.label}`;
                                         break;
                                     case "development":
-                                        item.label = "💻 " + item.label;
+                                        item.label = `💻 ${item.label}`;
                                         break;
                                     case "the_arena":
-                                        item.label = "🏟️ " + item.label;
+                                        item.label = `🏟️ ${item.label}`;
                                         break;
                                     default:
-                                        item.label = "📄 " + item.label;
+                                        item.label = `📄 ${item.label}`;
                                 }
                             }
                             return item;
@@ -88,25 +88,11 @@ const config = {
                 gitRevision: "main",
                 readme: "none",
                 commentStyle: "all",
-                preserveAnchorCasing: true,
+                preserveAnchorCasing: false,
                 hideBreadcrumbs: false,
-                preserveWatchOutput: true,
-                disableSources: false,
-                validation: {
-                    notExported: true,
-                    invalidLink: true,
-                    notDocumented: false,
-                },
-                exclude: [
-                    "**/_media/**",
-                    "**/node_modules/**",
-                    "**/dist/**",
-                    "**/*.test.ts",
-                    "**/*.spec.ts",
-                ],
-                watch: false,
-                treatWarningsAsErrors: true,
-                treatValidationWarningsAsErrors: true,
+                publicPath: "/api/",
+                treatWarningsAsErrors: false,
+                treatValidationWarningsAsErrors: false,
                 searchInComments: true,
                 navigationLinks: {
                     GitHub: "https://github.com/elizaos/eliza",

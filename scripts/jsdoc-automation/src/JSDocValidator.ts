@@ -41,11 +41,10 @@ export class JSDocValidator {
                 `✓ JSDoc comment in ${fileName} was fixed using regex patterns`
             );
             return fixedComment;
-        } else {
+        }
             console.log(
                 `❌JSDoc comment in ${fileName} regex patterns failed, making AI call for help`
             );
-        }
 
         // If still invalid, try regenerating with AI
         try {
@@ -83,7 +82,7 @@ export class JSDocValidator {
         try {
             parse(code, this.parserOptions);
             return true;
-        } catch (error) {
+        } catch (_error) {
             return false;
         }
     }

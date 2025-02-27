@@ -1,5 +1,5 @@
-import * as crypto from "crypto";
-import fs from "fs";
+import * as crypto from "node:crypto";
+import fs from "node:fs";
 import { getApiKey } from "./credential";
 import { CLOUD_API_URL, CLOUD_URL } from "./constants";
 import {
@@ -14,6 +14,7 @@ import {
 } from "./phala-cloud";
 import { x25519 } from "@noble/curves/ed25519";
 import { hexToUint8Array, uint8ArrayToHex } from "./lib";
+import prompts from "prompts";
 
 interface DeployOptions {
     debug?: boolean;
@@ -89,6 +90,51 @@ async function encryptSecrets(secrets: Env[], pubkey: string): Promise<string> {
 async function deploy(options: DeployOptions): Promise<void> {
     console.log("Deploying CVM ...");
 
+    const vcpus = [{name: "1 vCPU", value: 1}, {name: "2 vCPUs", value: 2}, {name: "4 vCPUs", value: 4}, {name: "8 vCPUs", value: 8}, {name: "16 vCPUs", value: 16}, {name: "32 vCPUs", value: 32}, {name: "64 vCPUs", value: 64}];
+    const memories = [{name: "1 GB", value: 1024}, {name: "2 GB", value: 2048}, {name: "4 GB", value: 4096}, {name: "8 GB", value: 8192}, {name: "16 GB", value: 16384}, {name: "32 GB", value: 32768}, {name: "64 GB", value: 65536}];
+    const diskSizes = [{name: "10 GB", value: 10}, {name: "20 GB", value: 20}, {name: "30 GB", value: 30}, {name: "40 GB", value: 40}, {name: "50 GB", value: 50}, {name: "60 GB", value: 60}, {name: "70 GB", value: 70}, {name: "80 GB", value: 80}, {name: "90 GB", value: 90}, {name: "100 GB", value: 100}];
+    const teepods = await queryTeepods();
+
+
+    const result = await prompts([
+        {
+          type: "select",
+          name: "teepods",
+          message: "Select a teepod",
+          choices: teepods.map(teepod => ({
+            title: `${teepod.name} [${teepod.status}]`,
+            value: teepod.id
+          }))
+        },
+        {
+          type: "select", 
+          name: "vcpu",
+          message: "Select a vcpu",
+          choices: vcpus.map(vcpu => ({
+            title: vcpu.name,
+            value: vcpu.value
+          }))
+        },
+        {
+          type: "select", 
+          name: "memory",
+          message: "Select a memory",
+          choices: memories.map(memory => ({
+            title: memory.name,
+            value: memory.value
+          }))
+        },
+        {
+          type: "select", 
+          name: "diskSize",
+          message: "Select a disk size",
+          choices: diskSizes.map(diskSize => ({
+            title: diskSize.name,
+            value: diskSize.value
+          }))
+        }
+      ])
+
     let composeString = "";
     if (options.compose) {
         composeString = fs.readFileSync(options.compose, "utf8");
@@ -96,12 +142,12 @@ async function deploy(options: DeployOptions): Promise<void> {
 
     // Prepare vm_config for the request
     const vm_config = {
-        teepod_id: 2, // TODO: get from /api/teepods
+        teepod_id: result.teepods, // TODO: get from /api/teepods
         name: options.name,
         image: "dstack-dev-0.3.4",
-        vcpu: options.vcpu || 1,
-        memory: options.memory || 2048,
-        disk_size: options.diskSize || 20,
+        vcpu: result.vcpu,
+        memory: result.memory,
+        disk_size: result.diskSize,
         compose_manifest: {
             docker_compose_file: composeString,
             docker_config: {

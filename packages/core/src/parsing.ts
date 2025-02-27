@@ -11,7 +11,7 @@ export const messageCompletionFooter = `\nResponse format should be formatted in
 The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
 `;
 
-export const shouldRespondFooter = `The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.`;
+export const shouldRespondFooter = "The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.";
 
 export const parseShouldRespondFromText = (
     text: string
@@ -34,33 +34,35 @@ export const parseShouldRespondFromText = (
         : null;
 };
 
-export const booleanFooter = `Respond with only a YES or a NO.`;
+export const booleanFooter = "Respond with only a YES or a NO.";
 
 /**
  * Parses a string to determine its boolean equivalent.
  *
- * Recognized affirmative values: "YES", "Y", "TRUE", "T", "1", "ON", "ENABLE".
- * Recognized negative values: "NO", "N", "FALSE", "F", "0", "OFF", "DISABLE".
+ * Recognized affirmative values: "YES", "Y", "TRUE", "T", "1", "ON", "ENABLE"
+ * Recognized negative values: "NO", "N", "FALSE", "F", "0", "OFF", "DISABLE"
  *
- * @param {string} text - The input text to parse.
- * @returns {boolean|null} - Returns `true` for affirmative inputs, `false` for negative inputs, and `null` for unrecognized inputs or null/undefined.
+ * @param {string | undefined | null} value - The input text to parse
+ * @returns {boolean} - Returns `true` for affirmative inputs, `false` for negative or unrecognized inputs
  */
-export const parseBooleanFromText = (text: string) => {
-    if (!text) return null; // Handle null or undefined input
+export function parseBooleanFromText(value: string | undefined | null): boolean {
+    if (!value) return false;
 
     const affirmative = ["YES", "Y", "TRUE", "T", "1", "ON", "ENABLE"];
     const negative = ["NO", "N", "FALSE", "F", "0", "OFF", "DISABLE"];
 
-    const normalizedText = text.trim().toUpperCase();
+    const normalizedText = value.trim().toUpperCase();
 
     if (affirmative.includes(normalizedText)) {
         return true;
-    }if (negative.includes(normalizedText)) {
+    }
+    if (negative.includes(normalizedText)) {
         return false;
     }
 
-    return null; // Return null for unrecognized inputs
-};
+    // For environment variables, we'll treat unrecognized values as false
+    return false;
+}
 
 export const stringArrayFooter = `Respond with a JSON array containing the values in a valid JSON block formatted for markdown with this structure:
 \`\`\`json
@@ -95,9 +97,8 @@ export function parseJsonArrayFromText(text: string) {
                 '"$1"'
             );
             jsonData = JSON.parse(normalizedJson);
-        } catch (e) {
-            console.error("Error parsing JSON:", e);
-            console.error("Failed parsing text:", jsonBlockMatch[1]);
+        } catch (_e) {
+            logger.warn("Could not parse text as JSON, will try pattern matching");
         }
     }
 
@@ -114,9 +115,8 @@ export function parseJsonArrayFromText(text: string) {
                     '"$1"'
                 );
                 jsonData = JSON.parse(normalizedJson);
-            } catch (e) {
-                console.error("Error parsing JSON:", e);
-                console.error("Failed parsing text:", arrayMatch[0]);
+            } catch (_e) {
+                logger.warn("Could not parse text as JSON, returning null");
             }
         }
     }
@@ -152,8 +152,8 @@ export function parseJSONObjectFromText(
             // Try to parse the text directly if it's not in a code block
             jsonData = JSON.parse(text.trim());
         }
-    } catch (e) {
-        console.error("Error parsing JSON:", e);
+    } catch (_e) {
+        logger.warn("Could not parse text as JSON, returning null");
         return null;
     }
 
@@ -161,6 +161,8 @@ export function parseJSONObjectFromText(
     if (jsonData && typeof jsonData === "object" && !Array.isArray(jsonData)) {
         return jsonData;
     }
+
+    logger.warn("Could not parse text as JSON, returning null");
 
     return null;
 }
@@ -330,6 +332,11 @@ export function truncateToCompleteSentence(
     const hardTruncated = text.slice(0, maxLength - 3).trim();
     return `${hardTruncated}...`;
 }
+
+// Assuming ~4 tokens per character on average
+const TOKENS_PER_CHAR = 4;
+const TARGET_TOKENS = 3000;
+const TARGET_CHARS = Math.floor(TARGET_TOKENS / TOKENS_PER_CHAR); // ~750 chars
 
 export async function splitChunks(
     content: string,

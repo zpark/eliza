@@ -28,29 +28,9 @@ describe('TelegramClient', () => {
 
     beforeEach(() => {
         mockRuntime = {
-            getSetting: vi.fn((key: string) => {
-                switch (key) {
-                    case 'BACKEND_URL':
-                        return 'http://localhost:3000';
-                    case 'BACKEND_TOKEN':
-                        return 'test_backend_token';
-                    case 'TG_TRADER':
-                        return 'false';
-                    default:
-                        return undefined;
-                }
-            }),
-            getCharacter: vi.fn(),
-            getFlow: vi.fn(),
-            getPlugin: vi.fn(),
-            getPlugins: vi.fn(),
-            getSafePlugins: vi.fn(),
-            hasPlugin: vi.fn(),
-            registerPlugin: vi.fn(),
-            removePlugin: vi.fn(),
-            setCharacter: vi.fn(),
-            setFlow: vi.fn()
-        };
+            getSetting: vi.fn(),
+            emitEvent: vi.fn(),
+        } as Partial<IAgentRuntime> as IAgentRuntime;
 
         client = new TelegramClient(mockRuntime, TEST_BOT_TOKEN);
     });
@@ -61,26 +41,24 @@ describe('TelegramClient', () => {
         });
 
         it('should initialize with correct settings from runtime', () => {
-            expect(mockRuntime.getSetting).toHaveBeenCalledWith('BACKEND_URL');
-            expect(mockRuntime.getSetting).toHaveBeenCalledWith('BACKEND_TOKEN');
-            expect(mockRuntime.getSetting).toHaveBeenCalledWith('TG_TRADER');
+            expect(mockRuntime.getSetting).toHaveBeenCalledWith('TELEGRAM_API_ROOT');
         });
     });
 
     describe('bot lifecycle', () => {
         it('should start the bot successfully', async () => {
-            const mockBot = client['bot'];
+            const mockBot = client.bot;
             const launchSpy = vi.spyOn(mockBot, 'launch');
             const getMeSpy = vi.spyOn(mockBot.telegram, 'getMe');
 
             await client.start();
 
-            expect(launchSpy).toHaveBeenCalledWith({ dropPendingUpdates: true });
+            expect(launchSpy).toHaveBeenCalledWith({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
             expect(getMeSpy).toHaveBeenCalled();
         });
 
         it('should get bot info after launch', async () => {
-            const mockBot = client['bot'];
+            const mockBot = client.bot;
             const getMeSpy = vi.spyOn(mockBot.telegram, 'getMe');
 
             await client.start();

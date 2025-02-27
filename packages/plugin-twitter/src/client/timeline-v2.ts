@@ -215,7 +215,7 @@ export function parseLegacyTweet(
   }
 
   const views = Number.parseInt(tweet.ext_views?.count ?? '');
-  if (!isNaN(views)) {
+  if (!Number.isNaN(views)) {
     tw.views = views;
   }
 
@@ -252,7 +252,7 @@ function parseResult(result?: TimelineResultRaw): ParseTweetResult {
 
   if (!tweetResult.tweet.views && result?.views?.count) {
     const views = Number.parseInt(result.views.count);
-    if (!isNaN(views)) {
+    if (!Number.isNaN(views)) {
       tweetResult.tweet.views = views;
     }
   }
@@ -293,7 +293,7 @@ export function parseTimelineTweetsV2(
       if (entryContent.cursorType === 'Bottom') {
         bottomCursor = entryContent.value;
         continue;
-      } else if (entryContent.cursorType === 'Top') {
+      }if (entryContent.cursorType === 'Top') {
         topCursor = entryContent.value;
         continue;
       }

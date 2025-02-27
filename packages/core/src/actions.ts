@@ -25,7 +25,7 @@ export const composeActionExamples = (actionsData: Action[], count: number) => {
             i--;
         }
 
-        if (examples.length == 0) {
+        if (examples.length === 0) {
             data.splice(actionId, 1);
             length--;
         }

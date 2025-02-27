@@ -14,7 +14,7 @@ import {
 import { SqliteTeeLogDAO } from '../adapters/sqliteDAO';
 import { TeeLogManager } from './teeLogManager';
 import Database from 'better-sqlite3';
-import path from 'path';
+import path from 'node:path';
 
 export class TeeLogService extends Service implements ITeeLogService {
     private dbPath: string;
@@ -42,7 +42,7 @@ export class TeeLogService extends Service implements ITeeLogService {
 
         const enableValues = ['true', '1', 'yes', 'enable', 'enabled', 'on'];
 
-        const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG');
+        const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG') as string;
         if (enableTeeLog === null) {
             throw new Error('ENABLE_TEE_LOG is not set.');
         }
@@ -52,8 +52,8 @@ export class TeeLogService extends Service implements ITeeLogService {
             return;
         }
 
-        const runInSgx = runtime.getSetting('SGX');
-        const teeMode = runtime.getSetting('TEE_MODE');
+        const runInSgx = runtime.getSetting('SGX') as string;
+        const teeMode = runtime.getSetting('TEE_MODE') as string;
         const walletSecretSalt = runtime.getSetting('WALLET_SECRET_SALT');
 
         this.teeMode = teeMode ? TEEMode[teeMode as keyof typeof TEEMode] : TEEMode.OFF;
@@ -63,7 +63,8 @@ export class TeeLogService extends Service implements ITeeLogService {
 
         if (useSgxGramine && useTdxDstack) {
             throw new Error('Cannot configure both SGX and TDX at the same time.');
-        } else if (useSgxGramine) {
+        }
+        if (useSgxGramine) {
             this.teeType = TeeType.SGX_GRAMINE;
         } else if (useTdxDstack) {
             this.teeType = TeeType.TDX_DSTACK;
@@ -71,7 +72,7 @@ export class TeeLogService extends Service implements ITeeLogService {
             throw new Error('Invalid TEE configuration.');
         }
 
-        const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH');
+        const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH') as string;
         this.dbPath = dbPathSetting || path.resolve('data/tee_log.sqlite');
 
         const db = new Database(this.dbPath);

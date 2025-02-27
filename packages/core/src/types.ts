@@ -207,6 +207,9 @@ export interface State {
   /** ID of agent in conversation */
   agentId?: UUID;
 
+  /** System prompt */
+  system?: string;
+
   /** Agent's biography */
   bio: string;
 
@@ -279,6 +282,46 @@ export interface State {
   [key: string]: unknown;
 }
 
+export enum MemoryType {
+    DOCUMENT = "document",
+    FRAGMENT = "fragment",
+    MESSAGE = "message",
+    DESCRIPTION = "description"
+}
+
+export interface BaseMetadata {
+    type: MemoryType;          
+    source?: string;           
+    sourceId?: UUID;           
+    scope?: string;            
+    timestamp?: number;        
+    tags?: string[];          
+}
+
+export interface DocumentMetadata extends BaseMetadata {
+    type: MemoryType.DOCUMENT;
+}
+
+export interface FragmentMetadata extends BaseMetadata {
+    type: MemoryType.FRAGMENT;
+    documentId: UUID;      
+    position: number;      
+}
+
+export interface MessageMetadata extends BaseMetadata {
+    type: MemoryType.MESSAGE;
+}
+
+export interface DescriptionMetadata extends BaseMetadata {
+    type: MemoryType.DESCRIPTION;
+}
+
+export type KnowledgeMetadata = 
+    | DocumentMetadata 
+    | FragmentMetadata 
+    | MessageMetadata 
+    | DescriptionMetadata;
+
 /**
  * Represents a stored memory/message
  */
@@ -290,7 +333,7 @@ export interface Memory {
   userId: UUID;
 
   /** Associated agent ID */
-  agentId: UUID;
+  agentId?: UUID;
 
   /** Optional creation timestamp */
   createdAt?: number;
@@ -309,6 +352,9 @@ export interface Memory {
 
   /** Embedding similarity score */
   similarity?: number;
+
+  /** Metadata for the knowledge */
+  metadata?: KnowledgeMetadata;
 }
 
 /**
@@ -451,24 +497,18 @@ export interface Relationship {
 /**
  * Represents a user account
  */
-export interface Account {
-  /** Unique identifier */
-  id: UUID;
+export interface Entity {
+  /** Unique identifier, optional on creation */
+  id?: UUID;
 
-  /** Display name */
-  name: string;
+  /** Names of the entity */
+  names: string[];
 
-  /** Username */
-  username: string;
+  /** Optional additional metadata */
+  metadata?: { [key: string]: any };
 
-  /** Optional additional details */
-  details?: { [key: string]: any };
-
-  /** Optional email */
-  email?: string;
-
-  /** Optional avatar URL */
-  avatarUrl?: string;
+  /** Agent ID this account is related to, for agents should be themselves */
+  agentId: UUID;
 }
 
 /**
@@ -479,7 +519,7 @@ export interface Participant {
   id: UUID;
 
   /** Associated account */
-  account: Account;
+  entity: Entity;
 }
 
 /**
@@ -519,10 +559,27 @@ export type Media = {
   contentType?: string;
 };
 
+export enum ChannelType {
+  SELF = "SELF",
+  DM = "DM",
+  GROUP = "GROUP",
+  VOICE_DM = "VOICE_DM",
+  VOICE_GROUP = "VOICE_GROUP",
+  FEED = "FEED",
+  WORLD = "WORLD",
+  API = "API",
+  FORUM = "FORUM",
+}
+
+export type PostClient = {
+  getPost: (roomId: UUID) => Promise<string | UUID | null>;
+};
+
 /**
  * Client instance
  */
 export type ClientInstance = {
+  [key: string]: any;
   /** Stop client connection */
   stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
@@ -543,7 +600,7 @@ export type Client = {
 
 export type Adapter = {
   /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => IDatabaseAdapter & IDatabaseCacheAdapter;
+  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter & IDatabaseCacheAdapter>;
 };
 
 export type Route = {
@@ -560,7 +617,7 @@ export type Plugin = {
   name: string;
 
   /** Initialization function */
-  init?: (config: Record<string, string>) => Promise<void>;
+  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
 
   /** Plugin configuration */
   config?: { [key: string]: any };
@@ -619,7 +676,7 @@ export type TemplateType = string | ((options: { state: State }) => string);
 /**
  * Configuration for an agent character
  */
-export type Character = {
+export interface Character {
   /** Optional unique identifier */
   id?: UUID;
 
@@ -628,9 +685,6 @@ export type Character = {
 
   /** Optional username */
   username?: string;
-
-  /** Optional email */
-  email?: string;
 
   /** Optional system prompt */
   system?: string;
@@ -666,6 +720,7 @@ export type Character = {
     [key: string]: any | string | boolean | number;
   };
 
+  /** Optional secrets */
   secrets?: {
     [key: string]: string | boolean | number;
   };
@@ -676,25 +731,12 @@ export type Character = {
     chat?: string[];
     post?: string[];
   };
+}
 
-  /**Optinal Parent characters to inherit information from */
-  extends?: string[];
-};
-
-export interface TwitterSpaceDecisionOptions {
-  maxSpeakers?: number;
-  topics?: string[];
-  typicalDurationMinutes?: number;
-  idleKickTimeoutMs?: number;
-  minIntervalBetweenSpacesMinutes?: number;
-  businessHoursOnly?: boolean;
-  randomChance?: number;
-  enableIdleMonitor?: boolean;
-  enableSttTts?: boolean;
-  enableRecording?: boolean;
-  voiceId?: string;
-  sttLanguage?: string;
-  speakerMaxDurationMs?: number;
+export interface Agent {
+  id: UUID;
+  characterId: UUID;
+  enabled: boolean;
 }
 
 /**
@@ -710,11 +752,19 @@ export interface IDatabaseAdapter {
   /** Close database connection */
   close(): Promise<void>;
 
+  getAgent(agentId: UUID): Promise<Agent | null>;
+
+  createAgent(agent: Agent): Promise<boolean>;
+
+  updateAgent(agent: Agent): Promise<boolean>;
+
   /** Get account by ID */
-  getAccountById(userId: UUID): Promise<Account | null>;
+  getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
   /** Create new account */
-  createAccount(account: Account): Promise<boolean>;
+  createEntity(entity: Entity): Promise<boolean>;
+
+  updateEntity(entity: Entity): Promise<void>;
 
   /** Get memories matching criteria */
   getMemories(params: {
@@ -800,43 +850,83 @@ export interface IDatabaseAdapter {
 
   removeAllGoals(roomId: UUID): Promise<void>;
 
-  getRoom(roomId: UUID): Promise<UUID | null>;
+  createWorld({
+    id,
+    name,
+    agentId,
+    serverId,
+    metadata
+  }: WorldData): Promise<UUID>;
 
-  createRoom(roomId?: UUID): Promise<UUID>;
+  getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
-  removeRoom(roomId: UUID): Promise<void>;
+  getAllWorlds(agentId: UUID): Promise<WorldData[]>;
 
-  getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
+  updateWorld(world: WorldData, agentId: UUID): Promise<void>;
 
-  getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
+  getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
 
-  addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  createRoom({
+    id,
+    name,
+    agentId,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData): Promise<UUID>;
 
-  removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
+  removeRoom(roomId: UUID, agentId: UUID): Promise<void>;
 
-  getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
+  updateRoom(room: RoomData, agentId: UUID): Promise<void>;
 
-  getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
+  getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
+
+  getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
+
+  addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+
+  removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+
+  getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
+
+  getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
 
   getParticipantUserState(
     roomId: UUID,
-    userId: UUID
+    userId: UUID,
+    agentId: UUID
   ): Promise<"FOLLOWED" | "MUTED" | null>;
 
   setParticipantUserState(
     roomId: UUID,
     userId: UUID,
+    agentId: UUID,
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
-  createRelationship(params: { userA: UUID; userB: UUID }): Promise<boolean>;
+  createRelationship(params: { userA: UUID; userB: UUID; agentId: UUID }): Promise<boolean>;
 
   getRelationship(params: {
     userA: UUID;
     userB: UUID;
+    agentId: UUID;
   }): Promise<Relationship | null>;
 
-  getRelationships(params: { userId: UUID }): Promise<Relationship[]>;
+  getRelationships(params: { userId: UUID; agentId: UUID }): Promise<Relationship[]>;
+
+  createCharacter(character: Character): Promise<UUID | void>;
+
+  listCharacters(): Promise<Character[]>;
+
+  getCharacter(name: string): Promise<Character | null>;
+
+  updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+  
+  removeCharacter(name: string): Promise<void>;
+
+  ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
 }
 
 export interface IDatabaseCacheAdapter {
@@ -873,6 +963,7 @@ export interface IMemoryManager {
     roomId?: UUID;
     agentId?: UUID;
     unique?: boolean;
+    metadata?: KnowledgeMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(
@@ -943,6 +1034,8 @@ export interface IAgentRuntime {
   evaluators: Evaluator[];
   plugins: Plugin[];
 
+  events: Map<string, ((params: any) => void)[]>;
+
   fetch?: typeof fetch | null;
   routes: Route[];
   messageManager: IMemoryManager;
@@ -955,6 +1048,9 @@ export interface IAgentRuntime {
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
 
+  generateTenantUserId(userId: UUID): UUID;
+
+  registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;
 
   unregisterClient(name: string): void;
@@ -963,7 +1059,7 @@ export interface IAgentRuntime {
 
   registerMemoryManager(manager: IMemoryManager): void;
 
-  getMemoryManager(name: string): IMemoryManager | null;
+  getMemoryManager(tableName: string): IMemoryManager | null;
 
   getService<T extends Service>(service: ServiceType): T | null;
 
@@ -971,11 +1067,11 @@ export interface IAgentRuntime {
 
   setSetting(
     key: string,
-    value: string | boolean | null,
+    value: string | boolean | null | any,
     secret: boolean
   ): void;
 
-  getSetting(key: string): string | null;
+  getSetting(key: string): string | boolean | null | any;
 
   // Methods
   getConversationLength(): number;
@@ -994,30 +1090,69 @@ export interface IAgentRuntime {
     callback?: HandlerCallback
   ): Promise<string[] | null>;
 
-  ensureParticipantExists(userId: UUID, roomId: UUID): Promise<void>;
-
-  ensureUserExists(
+  getOrCreateUser(
     userId: UUID,
     userName: string | null,
     name: string | null,
     source: string | null
-  ): Promise<void>;
-  
+  ): Promise<UUID>;
+
   registerProvider(provider: Provider): void;
 
   registerAction(action: Action): void;
 
-  ensureConnection(
-    userId: UUID,
-    roomId: UUID,
-    userName?: string,
-    userScreenName?: string,
-    source?: string
-  ): Promise<void>;
+  registerEvaluator(evaluator: Evaluator): void;
+
+  ensureConnection({
+    userId,
+    roomId,
+    userName,
+    userScreenName,
+    source,
+    channelId,
+    serverId,
+    type,
+    worldId
+  }: {
+    userId: UUID;
+    roomId: UUID;
+    userName?: string;
+    userScreenName?: string;
+    source?: string;
+    channelId?: string;
+    serverId?: string;
+    type: ChannelType;
+    worldId?: UUID;
+  }): Promise<void>;
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
-  ensureRoomExists(roomId: UUID): Promise<void>;
+  getWorld(worldId: UUID): Promise<WorldData | null>;
+
+  getAllWorlds(): Promise<WorldData[]>;
+
+  updateWorld(world: WorldData): Promise<void>;
+
+  ensureWorldExists({
+    id,
+    name,
+    serverId,
+    metadata
+  }: WorldData): Promise<void>;
+
+  getEntity(userId: UUID): Promise<Entity | null>;
+
+  ensureRoomExists({
+    id,
+    name,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData): Promise<void>;
+
+  getRoom(roomId: UUID): Promise<RoomData | null>;
 
   composeState(
     message: Memory,
@@ -1037,7 +1172,7 @@ export interface IAgentRuntime {
 
   registerEvent(event: string, handler: (params: any) => void): void;
   getEvent(event: string): ((params: any) => void)[] | undefined;
-  emitEvent(event: string, params: any): void;
+  emitEvent(event: string | string[], params: any): void;
 
   registerTask(task: Task): UUID;
   getTasks({
@@ -1052,6 +1187,12 @@ export interface IAgentRuntime {
   deleteTask(id: UUID): void;
 
   stop(): Promise<void>;
+
+  ensureAgentExists(): Promise<void>;
+
+  ensureEmbeddingDimension(): Promise<void>;
+
+  ensureCharacterExists(character: Character): Promise<void>;
 }
 
 export enum LoggingLevel {
@@ -1088,6 +1229,10 @@ export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
   modelClass: ModelClass;
+  maxTokens?: number;
+  temperature?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
   stopSequences?: string[];
 };
 
@@ -1268,11 +1413,15 @@ export enum TeeType {
   TDX_DSTACK = "tdx_dstack",
 }
 
-export const CACHE_KEYS = {
-  SERVER_SETTINGS: (serverId: string) => `server_${serverId}_settings`,
-  SERVER_ROLES: (serverId: string) => `server_${serverId}_roles`,
-  // etc
-} as const;
+export interface TeeVendorConfig {
+  // Add vendor-specific configuration options here
+  [key: string]: unknown;
+}
+
+export interface TeePluginConfig {
+  vendor?: string;
+  vendorConfig?: TeeVendorConfig;
+}
 
 export interface Task {
   id?: UUID;
@@ -1282,4 +1431,62 @@ export interface Task {
   tags: string[];
   handler: (runtime: IAgentRuntime) => Promise<void>;
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
+}
+
+export type WorldData = {
+  id: UUID;
+  name: string;
+  agentId: UUID;
+  serverId: string;
+  metadata?: {
+    ownership?: {
+      ownerId: string;
+    };
+    roles?: {
+      [userId: UUID]: RoleName;
+    };
+    [key: string]: unknown;
+  };
+}
+
+export type RoomData = {
+  id: UUID;
+  name?: string;
+  agentId?: UUID;
+  source: string;
+  type: ChannelType;
+  channelId?: string;
+  serverId?: string;
+  worldId?: UUID;
+  metadata?: Record<string, unknown>;
+}
+
+export enum RoleName {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  NONE = "NONE"
+}
+
+export interface OnboardingSetting {
+  name: string;
+  description: string;         // Used in chat context when discussing the setting
+  usageDescription: string;    // Used during settings to guide users
+  value: string | boolean | null;
+  required: boolean;
+  public?: boolean;           // If true, shown in public channels
+  secret?: boolean;           // If true, value is masked and only shown during settings
+  validation?: (value: any) => boolean;
+  dependsOn?: string[];
+  onSetAction?: (value: any) => string;
+  visibleIf?: (settings: { [key: string]: OnboardingSetting }) => boolean;
+}
+
+export interface WorldSettings {
+  [key: string]: OnboardingSetting;
+}
+
+export interface OnboardingConfig {
+  settings: { 
+      [key: string]: Omit<OnboardingSetting, 'value'>; 
+  };
 }

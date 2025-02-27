@@ -1,6 +1,6 @@
 import { ProxyAgent,setGlobalDispatcher } from 'undici';
 import { Scraper } from './scraper';
-import fs from 'fs';
+import fs from 'node:fs';
 
 export interface ScraperTestOptions {
   /**
@@ -16,15 +16,15 @@ export interface ScraperTestOptions {
 export async function getScraper(
   options: Partial<ScraperTestOptions> = { authMethod: 'cookies' },
 ) {
-  const username = process.env['TWITTER_USERNAME'];
-  const password = process.env['TWITTER_PASSWORD'];
-  const email = process.env['TWITTER_EMAIL'];
-  const twoFactorSecret = process.env['TWITTER_2FA_SECRET'];
+  const username = process.env.TWITTER_USERNAME;
+  const password = process.env.TWITTER_PASSWORD;
+  const email = process.env.TWITTER_EMAIL;
+  const twoFactorSecret = process.env.TWITTER_2FA_SECRET;
 
-  const apiKey = process.env['TWITTER_API_KEY'];
-  const apiSecretKey = process.env['TWITTER_API_SECRET_KEY'];
-  const accessToken = process.env['TWITTER_ACCESS_TOKEN'];
-  const accessTokenSecret = process.env['TWITTER_ACCESS_TOKEN_SECRET'];
+  const apiKey = process.env.TWITTER_API_KEY;
+  const apiSecretKey = process.env.TWITTER_API_SECRET_KEY;
+  const accessToken = process.env.TWITTER_ACCESS_TOKEN;
+  const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
 
   let cookiesArray: any = null;
 
@@ -52,7 +52,7 @@ export async function getScraper(
       }; SameSite=${cookie.sameSite || 'Lax'}`,
   );
 
-  const proxyUrl = process.env['PROXY_URL'];
+  const proxyUrl = process.env.PROXY_URL;
   let agent: any;
 
   if (

@@ -1,11 +1,11 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import axios from 'axios';
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
+import os from 'node:os';
+import fs from 'node:fs';
+import path from 'node:path';
 import Handlebars from 'handlebars';
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 import { DOCKER_COMPOSE_ELIZA_V1_TEMPLATE, DOCKER_COMPOSE_ELIZA_V2_TEMPLATE, COMPOSE_FILES_DIR } from './constants';
 
 const execAsync = promisify(exec);
@@ -159,11 +159,10 @@ export class DockerOperations {
         `https://hub.docker.com/v2/repositories/${this.dockerHubUsername}/${this.imageName}/tags`
       );
 
-      if (response.data && response.data.results) {
+      if (response.data?.results) {
         return response.data.results.map((tag: any) => tag.name);
-      } else {
-        return [];
       }
+        return [];
     } catch (error) {
       console.error('Error querying Docker Hub:', error);
       throw error;
@@ -220,9 +219,14 @@ export class DockerOperations {
       });
 
     // Get base name of character file without extension
-    const characterBaseName = path.basename(characterName, path.extname(characterName));
-    
-    const characterBase64Data = fs.readFileSync(characterName, 'base64');
+    let characterBaseName = '';
+    let characterBase64Data = '';
+    if (version === 'v1') {
+      characterBaseName = path.basename(characterName, path.extname(characterName));
+      characterBase64Data = fs.readFileSync(characterName, 'base64');
+    } else {
+      characterBaseName = characterName;
+    }
     
     // Select template based on version
     const template = version === 'v1' ? DOCKER_COMPOSE_ELIZA_V1_TEMPLATE : DOCKER_COMPOSE_ELIZA_V2_TEMPLATE;
@@ -237,12 +241,12 @@ export class DockerOperations {
       tag,
       characterName: characterBaseName,
       characterBase64Data: characterBase64Data,
-      envVars: envVars.map(env => env.replace(/=.*/, '=\${' + env.split('=')[0] + '}'))
+      envVars: envVars.map(env => env.replace(/=.*/, `=\${${env.split('=')[0]}}`))
     });
 
     // Write the docker-compose file with standardized name in the compose directory
     const composeFile = path.join(composePath, `${characterBaseName}-tee-compose.yaml`);
-    fs.writeFileSync(composeFile, composeContent);
+    fs.writeFileSync(composeFile, composeContent, { flag: 'w' });
     
     console.log(`Docker compose file created at: ${composeFile}`);
     return composeFile;

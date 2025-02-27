@@ -532,7 +532,7 @@ export class JsDocAnalyzer {
                         ast,
                         comment.loc.end.line
                     );
-                    if (nearestNode && nearestNode.loc) {
+                    if (nearestNode?.loc) {
                         // Find the containing function/class/block
                         const containingBlock =
                             this.findContainingBlock(nearestNode);
@@ -545,7 +545,7 @@ export class JsDocAnalyzer {
 
                         // Extract the full context (entire function/class/block)
                         const fullContext =
-                            containingBlock && containingBlock.loc
+                            containingBlock?.loc
                                 ? this.extractNodeCode(
                                       sourceCode,
                                       containingBlock
@@ -613,7 +613,7 @@ export class JsDocAnalyzer {
                 node.property.name === "env"
             ) {
                 // Get the parent statement/expression for context
-                const contextNode = this.findParentStatement(node);
+                const _contextNode = this.findParentStatement(node);
                 // Get the containing function/block for full context
                 const containingBlock = this.findContainingBlock(node);
 

@@ -17,31 +17,24 @@ import {
     type IAgentRuntime,
     type Memory,
     ModelClass,
-    type State,
     type UUID,
-    composeContext,
-    generateMessageResponse,
-    generateShouldRespond,
     logger,
-    stringToUuid
+    stringToUuid,
+    type ChannelType
 } from "@elizaos/core";
 import {
     type BaseGuildVoiceChannel,
-    ChannelType,
+    ChannelType as DiscordChannelType,
     type Client,
     type Guild,
     type GuildMember,
     type VoiceChannel,
     type VoiceState,
 } from "discord.js";
-import EventEmitter from "events";
+import EventEmitter from "node:events";
 import prism from "prism-media";
-import { type Readable, pipeline } from "stream";
+import { type Readable, pipeline } from "node:stream";
 import type { DiscordClient } from "./index.ts";
-import {
-    discordShouldRespondTemplate,
-    discordVoiceHandlerTemplate,
-} from "./templates.ts";
 import { getWavHeader } from "./utils.ts";
 
 // These values are chosen for compatibility with picovoice components
@@ -154,11 +147,28 @@ export class VoiceManager extends EventEmitter {
         string,
         { channel: BaseGuildVoiceChannel; monitor: AudioMonitor }
     > = new Map();
+    private ready: boolean;
+    private getChannelType: (channelId: string) => Promise<ChannelType>;
 
     constructor(client: DiscordClient) {
         super();
         this.client = client.client;
         this.runtime = client.runtime;
+        this.getChannelType = client.getChannelType;
+
+        this.client.on("voiceManagerReady", () => {
+            this.setReady(true);
+        });
+    }
+
+    private setReady(status: boolean) {
+        this.ready = status;
+        this.emit("ready");
+        logger.success(`VoiceManager is now ready: ${this.ready}`);
+    }
+
+    isReady() {
+        return this.ready;
     }
 
     async handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState) {
@@ -257,7 +267,7 @@ export class VoiceManager extends EventEmitter {
                     } catch (e) {
                         // Seems to be a real disconnect, destroy and cleanup
                         logger.log(
-                            "Disconnection confirmed - cleaning up..." + e
+                            `Disconnection confirmed - cleaning up...${e}`
                         );
                         connection.destroy();
                         this.connections.delete(channel.id);
@@ -461,11 +471,6 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    async handleGuildCreate(guild: Guild) {
-        console.log(`Joined guild ${guild.name}`);
-        // this.scanGuild(guild);
-    }
-
     async debouncedProcessTranscription(
         userId: UUID,
         name: string,
@@ -533,7 +538,7 @@ export class VoiceManager extends EventEmitter {
 
         const processBuffer = async (buffer: Buffer) => {
             try {
-                state!.buffers.push(buffer);
+                state?.buffers.push(buffer);
                 state!.totalLength += buffer.length;
                 state!.lastActive = Date.now();
                 this.debouncedProcessTranscription(
@@ -600,7 +605,7 @@ export class VoiceManager extends EventEmitter {
                 this.cleanupAudioPlayer(this.activeAudioPlayer);
                 const finalText = state.transcriptionText;
                 state.transcriptionText = "";
-                await this.handleUserMessage(
+                await this.handleMessage(
                     finalText,
                     userId,
                     channelId,
@@ -617,7 +622,7 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private async handleUserMessage(
+    private async handleMessage(
         message: string,
         userId: UUID,
         channelId: string,
@@ -626,150 +631,82 @@ export class VoiceManager extends EventEmitter {
         userName: string
     ) {
         try {
-            const roomId = stringToUuid(channelId + "-" + this.runtime.agentId);
-            const userIdUUID = stringToUuid(userId);
-
-            await this.runtime.ensureConnection(
-                userIdUUID,
-                roomId,
-                userName,
-                name,
-                "discord"
-            );
-
-            let state = await this.runtime.composeState(
-                {
-                    agentId: this.runtime.agentId,
-                    content: { text: message, source: "Discord" },
-                    userId: userIdUUID,
-                    roomId,
-                },
-                {
-                    discordChannel: channel,
-                    discordClient: this.client,
-                    agentName: this.runtime.character.name,
-                }
-            );
-
-            if (message && message.startsWith("/")) {
-                return null;
+            if (!message || message.trim() === "" || message.length < 3) {
+                return { text: "", action: "IGNORE" };
             }
 
-            const memory = {
-                id: stringToUuid(channelId + "-voice-message-" + Date.now()),
+            const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
+            const userIdUUID = stringToUuid(`${userId}-${this.runtime.agentId}`);
+            const guild = await channel.guild.fetch();
+            const type = await this.getChannelType(guild.id);
+
+            await this.runtime.ensureConnection({
+                userId: userIdUUID,
+                roomId,
+                userName,
+                userScreenName: name,
+                source: "discord",
+                channelId,
+                serverId: channel.guild.id,
+                type,
+            });
+
+            const memory: Memory = {
+                id: stringToUuid(`${channelId}-voice-message-${Date.now()}`),
                 agentId: this.runtime.agentId,
+                userId: userIdUUID,
+                roomId,
                 content: {
                     text: message,
                     source: "discord",
                     url: channel.url,
+                    name: name,
+                    userName: userName,
+                    isVoiceMessage: true
                 },
-                userId: userIdUUID,
-                roomId,
                 createdAt: Date.now(),
             };
 
-            if (!memory.content.text) {
-                return { text: "", action: "IGNORE" };
-            }
+            const callback: HandlerCallback = async (content: Content, _files: any[] = []) => {
+                try {
+                    const responseMemory: Memory = {
+                        id: stringToUuid(`${memory.id}-voice-response-${Date.now()}`),
+                        userId: this.runtime.agentId,
+                        agentId: this.runtime.agentId,
+                        content: {
+                            ...content,
+                            user: this.runtime.character.name,
+                            inReplyTo: memory.id,
+                            isVoiceMessage: true
+                        },
+                        roomId,
+                        createdAt: Date.now(),
+                    };
 
-            await this.runtime.messageManager.createMemory(memory);
+                    if (responseMemory.content.text?.trim()) {
+                        await this.runtime.messageManager.createMemory(responseMemory);
 
-            state = await this.runtime.updateRecentMessageState(state);
-
-            const shouldIgnore = await this._shouldIgnore(memory);
-
-            if (shouldIgnore) {
-                return { text: "", action: "IGNORE" };
-            }
-
-            const shouldRespond = await this._shouldRespond(
-                message,
-                userId,
-                channel,
-                state
-            );
-
-            if (!shouldRespond) {
-                return;
-            }
-
-            const context = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates
-                        ?.discordVoiceHandlerTemplate ||
-                    this.runtime.character.templates?.messageHandlerTemplate ||
-                    discordVoiceHandlerTemplate,
-            });
-
-            const responseContent = await this._generateResponse(
-                memory,
-                state,
-                context
-            );
-
-            const callback: HandlerCallback = async (content: Content) => {
-                console.log("callback content: ", content);
-                const { roomId } = memory;
-
-                const responseMemory: Memory = {
-                    id: stringToUuid(
-                        memory.id + "-voice-response-" + Date.now()
-                    ),
-                    agentId: this.runtime.agentId,
-                    userId: this.runtime.agentId,
-                    content: {
-                        ...content,
-                        user: this.runtime.character.name,
-                        inReplyTo: memory.id,
-                    },
-                    roomId,
-                };
-
-                if (responseMemory.content.text?.trim()) {
-                    await this.runtime.messageManager.createMemory(
-                        responseMemory
-                    );
-                    state = await this.runtime.updateRecentMessageState(state);
-
-                    const responseStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, content.text)
-
-                    if (responseStream) {
-                        await this.playAudioStream(
-                            userId,
-                            responseStream as Readable
-                        );
+                        const responseStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, content.text);
+                        if (responseStream) {
+                            await this.playAudioStream(userId, responseStream as Readable);
+                        }
                     }
 
-                    await this.runtime.evaluate(memory, state);
-                } else {
-                    console.warn("Empty response, skipping");
+                    return [responseMemory];
+                } catch (error) {
+                    console.error("Error in voice message callback:", error);
+                    return [];
                 }
-                return [responseMemory];
             };
 
-            const responseMemories = await callback(responseContent);
-
-            const response = responseContent;
-
-            const content = (response.responseMessage ||
-                response.content ||
-                response.message) as string;
-
-            if (!content) {
-                return null;
-            }
-
-            console.log("responseMemories: ", responseMemories);
-
-            await this.runtime.processActions(
-                memory,
-                responseMemories,
-                state,
-                callback
-            );
+            // Emit voice-specific events
+            this.runtime.emitEvent(["DISCORD_VOICE_MESSAGE_RECEIVED", "VOICE_MESSAGE_RECEIVED"], {
+                runtime: this.runtime,
+                message: memory,
+                callback,
+            });
         } catch (error) {
-            console.error("Error processing transcribed text:", error);
+            console.error("Error processing voice message:", error);
         }
     }
 
@@ -791,149 +728,6 @@ export class VoiceManager extends EventEmitter {
         }
     }
 
-    private async _shouldRespond(
-        message: string,
-        userId: UUID,
-        channel: BaseGuildVoiceChannel,
-        state: State
-    ): Promise<boolean> {
-        if (userId === this.client.user?.id) return false;
-        const lowerMessage = message.toLowerCase();
-        const botName = this.client.user.username.toLowerCase();
-        const characterName = this.runtime.character.name.toLowerCase();
-        const guild = channel.guild;
-        const member = guild?.members.cache.get(this.client.user?.id as string);
-        const nickname = member?.nickname;
-
-        if (
-            lowerMessage.includes(botName as string) ||
-            lowerMessage.includes(characterName) ||
-            lowerMessage.includes(
-                this.client.user?.tag.toLowerCase() as string
-            ) ||
-            (nickname && lowerMessage.includes(nickname.toLowerCase()))
-        ) {
-            return true;
-        }
-
-        if (!channel.guild) {
-            return true;
-        }
-
-        // If none of the above conditions are met, use the generateText to decide
-        const shouldRespondContext = composeContext({
-            state,
-            template:
-                this.runtime.character.templates
-                    ?.discordShouldRespondTemplate ||
-                this.runtime.character.templates?.shouldRespondTemplate ||
-                discordShouldRespondTemplate,
-        });
-
-        const response = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondContext,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-
-        if (response.includes("RESPOND")) {
-            return true;
-        } else if (response.includes("IGNORE")) {
-            return false;
-        } else if (response.includes("STOP")) {
-            return false;
-        } else {
-            console.error(
-                "Invalid response from response generateText:",
-                response
-            );
-            return false;
-        }
-    }
-
-    private async _generateResponse(
-        message: Memory,
-        state: State,
-        context: string
-    ): Promise<Content> {
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
-            runtime: this.runtime,
-            context,
-            modelClass: ModelClass.TEXT_SMALL,
-        });
-
-        response.source = "discord";
-
-        if (!response) {
-            console.error("No response from generateMessageResponse");
-            return;
-        }
-
-        await this.runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId: userId,
-            roomId,
-            type: "response",
-        });
-
-        return response;
-    }
-
-    private async _shouldIgnore(message: Memory): Promise<boolean> {
-        // console.log("message: ", message);
-        logger.debug("message.content: ", message.content);
-        // if the message is 3 characters or less, ignore it
-        if ((message.content as Content).text.length < 3) {
-            return true;
-        }
-
-        const loseInterestWords = [
-            // telling the bot to stop talking
-            "shut up",
-            "stop",
-            "dont talk",
-            "silence",
-            "stop talking",
-            "be quiet",
-            "hush",
-            "stfu",
-            "stupid bot",
-            "dumb bot",
-
-            // offensive words
-            "fuck",
-            "shit",
-            "damn",
-            "suck",
-            "dick",
-            "cock",
-            "sex",
-            "sexy",
-        ];
-        if (
-            (message.content as Content).text.length < 50 &&
-            loseInterestWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word)
-            )
-        ) {
-            return true;
-        }
-
-        const ignoreWords = ["k", "ok", "bye", "lol", "nm", "uh"];
-        if (
-            (message.content as Content).text?.length < 8 &&
-            ignoreWords.some((word) =>
-                (message.content as Content).text?.toLowerCase().includes(word)
-            )
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
     async scanGuild(guild: Guild) {
         let chosenChannel: BaseGuildVoiceChannel | null = null;
 
@@ -950,7 +744,7 @@ export class VoiceManager extends EventEmitter {
 
             if (!chosenChannel) {
                 const channels = (await guild.channels.fetch()).filter(
-                    (channel) => channel?.type == ChannelType.GuildVoice
+                    (channel) => channel?.type === DiscordChannelType.GuildVoice
                 );
                 for (const [, channel] of channels) {
                     const voiceChannel = channel as BaseGuildVoiceChannel;
@@ -1005,7 +799,7 @@ export class VoiceManager extends EventEmitter {
         audioPlayer.on(
             "stateChange",
             (_oldState: any, newState: { status: string }) => {
-                if (newState.status == "idle") {
+                if (newState.status === "idle") {
                     const idleTime = Date.now();
                     console.log(
                         `Audio playback took: ${idleTime - audioStartTime}ms`
@@ -1048,7 +842,7 @@ export class VoiceManager extends EventEmitter {
             const voiceChannel = interaction.guild.channels.cache.find(
                 (channel: VoiceChannel) =>
                     channel.id === channelId &&
-                    channel.type === ChannelType.GuildVoice
+                    channel.type === DiscordChannelType.GuildVoice
             );
 
             if (!voiceChannel) {

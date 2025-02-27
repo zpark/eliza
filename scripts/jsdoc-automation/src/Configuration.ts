@@ -112,7 +112,7 @@ export class Configuration implements Omit<ConfigurationData, "rootDirectory"> {
             generateReadme: this._generateReadme,
         });
 
-        let inputs;
+        let _inputs;
 
         console.log("Environment variables:", {
             rootDirectory: process.env.INPUT_ROOT_DIRECTORY,

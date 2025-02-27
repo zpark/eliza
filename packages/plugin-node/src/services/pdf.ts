@@ -10,10 +10,6 @@ import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/a
 export class PdfService extends Service implements IPdfService {
     static serviceType: ServiceType = ServiceType.PDF;
 
-    constructor() {
-        super();
-    }
-
     getInstance(): IPdfService {
         return PdfService.getInstance();
     }

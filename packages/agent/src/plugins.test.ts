@@ -9,26 +9,46 @@ import {
     logger,
     stringToUuid,
     type TestSuite,
-    type IAgentRuntime
+    type IAgentRuntime,
+    type Character
 } from "@elizaos/core";
 import { afterAll, beforeAll, describe, it } from 'vitest';
 import { defaultCharacter } from './single-agent/character';
 
+const TEST_TIMEOUT = 300000;
 
-let runtime: IAgentRuntime;
-let db: IDatabaseAdapter & IDatabaseCacheAdapter;
+const defaultCharacterTest: Character = {
+    ...defaultCharacter,
+};
+
+const elizaOpenAIFirst: Character = {
+    ...defaultCharacter,
+    name: "ElizaOpenAIFirst",
+    plugins: [
+        "@elizaos/plugin-openai",  // OpenAI first, embedding size = 1536
+        "@elizaos/plugin-elevenlabs",
+        "@elizaos/plugin-node",
+    ]
+};
+
+// Store runtimes and database adapters for each character
+interface RuntimeConfig {
+    runtime: IAgentRuntime;
+    db: IDatabaseAdapter & IDatabaseCacheAdapter;
+}
+
+const runtimeConfigs = new Map<string, RuntimeConfig>();
 
 // Helper to create a database adapter
 async function findDatabaseAdapter(runtime: IAgentRuntime) {
     const { adapters } = runtime;
     let adapter;
     
-    // Default to sqlite if no adapter found
     if (adapters.length === 0) {
-        const sqliteAdapter = await import('@elizaos/plugin-sqlite');
-        adapter = sqliteAdapter.default.adapters[0];
+        const drizzleAdapter = await import('@elizaos/plugin-sql');
+        adapter = drizzleAdapter.default.adapters[0];
         if (!adapter) {
-            throw new Error("No database adapter found in default sqlite plugin");
+            throw new Error("No database adapter found in default drizzle plugin");
         }
     } else if (adapters.length === 1) {
         adapter = adapters[0];
@@ -39,16 +59,12 @@ async function findDatabaseAdapter(runtime: IAgentRuntime) {
     return adapter.init(runtime);
 }
 
-// Initialize the runtime with default character
-beforeAll(async () => {
+// Initialize runtime for a character
+async function initializeRuntime(character: Character): Promise<RuntimeConfig> {
     try {
-        // Setup character
-        const character = { ...defaultCharacter };
         character.id = stringToUuid(character.name);
-        character.username = character.name;
 
-        // Create runtime
-        runtime = new AgentRuntime({
+        const runtime = new AgentRuntime({
             character,
             fetch: async (url: string, options: any) => {
                 logger.debug(`Test fetch: ${url}`);
@@ -56,97 +72,71 @@ beforeAll(async () => {
             }
         });
 
-        // Initialize database
-        db = await findDatabaseAdapter(runtime);
+        const db = await findDatabaseAdapter(runtime);
         runtime.databaseAdapter = db;
 
-        // Initialize cache
         const cache = new CacheManager(new DbCacheAdapter(db, character.id));
         runtime.cacheManager = cache;
 
-        // Initialize runtime (loads plugins, etc)
         await runtime.initialize();
 
         logger.info(`Test runtime initialized for ${character.name}`);
+        
+        // Log expected embedding dimension based on plugins
+        const hasOpenAIFirst = character.plugins[0] === "@elizaos/plugin-openai";
+        const expectedDimension = hasOpenAIFirst ? 1536 : 384;
+        logger.info(`Expected embedding dimension for ${character.name}: ${expectedDimension}`);
+        
+        return { runtime, db };
     } catch (error) {
-        logger.error("Failed to initialize test runtime:", error);
+        logger.error(`Failed to initialize test runtime for ${character.name}:`, error);
         throw error;
     }
-});
+}
+
+// Initialize the runtimes
+beforeAll(async () => {
+    const characters = [defaultCharacterTest, elizaOpenAIFirst];
+    
+    for (const character of characters) {
+        const config = await initializeRuntime(character);
+        runtimeConfigs.set(character.name, config);
+    }
+}, TEST_TIMEOUT);
 
 // Cleanup after all tests
 afterAll(async () => {
-    try {
-        if (runtime) {
-            // await runtime.shutdown();
+    for (const [characterName, config] of runtimeConfigs.entries()) {
+        try {
+            if (config.db) {
+                await config.db.close();
+            }
+            logger.info(`Cleaned up ${characterName}`);
+        } catch (error) {
+            logger.error(`Error during cleanup for ${characterName}:`, error);
         }
-        if (db) {
-            await db.close();
-        }
-    } catch (error) {
-        logger.error("Error during cleanup:", error);
-        throw error;
     }
 });
 
-// Main test suite that runs all plugin tests
-describe('Plugin Tests', async () => {
-    it('should run all plugin tests', async () => {
-        const plugins = runtime.plugins;
+// Test suite for each character
+describe('Multi-Character Plugin Tests', () => {
+    it('should run tests for Default Character', async () => {
+        const config = runtimeConfigs.get(defaultCharacter.name);
+        if (!config) throw new Error('Runtime not found for Default Character');
         
-        // Track test statistics
-        const stats = {
-            total: 0,
-            passed: 0,
-            failed: 0,
-            skipped: 0
-        };
+        const testRunner = new TestRunner(config.runtime);
+        await testRunner.runPluginTests();
+    }, TEST_TIMEOUT);
 
-        // Run tests for each plugin
-        for (const plugin of plugins) {
-            if (typeof plugin.tests !== 'function') {
-                logger.info(`Plugin ${plugin.name} has no tests`);
-                continue;
-            }
-
-            try {
-                logger.info(`Running tests for plugin: ${plugin.name}`);
-                const tests = plugin.tests;
-                const suites = (Array.isArray(tests) ? tests : [tests]) as TestSuite[];
-
-                for (const suite of suites) {
-                    logger.info(`\nTest suite: ${suite.name}`);
-                    for (const test of suite.tests) {
-                        stats.total++;
-                        const startTime = performance.now();
-
-                        try {
-                            await test.fn(runtime);
-                            stats.passed++;
-                            const duration = performance.now() - startTime;
-                            logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
-                        } catch (error) {
-                            stats.failed++;
-                            logger.error(`✗ ${test.name}`);
-                            logger.error(error);
-                            throw error;
-                        }
-                    }
-                }
-            } catch (error) {
-                logger.error(`Error in plugin ${plugin.name}:`, error);
-                throw error;
-            }
-        }
-
-        // Log final statistics
-        logger.info('\nTest Summary:');
-        logger.info(`Total: ${stats.total}`);
-        logger.info(`Passed: ${stats.passed}`);
-        logger.info(`Failed: ${stats.failed}`);
-        logger.info(`Skipped: ${stats.skipped}`);
-    });
+    it('should run tests for ElizaOpenAIFirst (1536 dimension)', async () => {
+        const config = runtimeConfigs.get('ElizaOpenAIFirst');
+        if (!config) throw new Error('Runtime not found for ElizaOpenAIFirst');
+        
+        const testRunner = new TestRunner(config.runtime);
+        await testRunner.runPluginTests();
+    }, TEST_TIMEOUT);
 });
+
 interface TestStats {
     total: number;
     passed: number;
@@ -154,9 +144,23 @@ interface TestStats {
     skipped: number;
 }
 
+interface TestResult {
+    file: string;
+    suite: string;
+    name: string;
+    status: "passed" | "failed";
+    error?: Error;
+}
+
+enum TestStatus {
+    Passed = "passed",
+    Failed = "failed",
+}
+
 class TestRunner {
     private runtime: IAgentRuntime;
     private stats: TestStats;
+    private testResults: Map<string, TestResult[]> = new Map();
 
     constructor(runtime: IAgentRuntime) {
         this.runtime = runtime;
@@ -168,25 +172,34 @@ class TestRunner {
         };
     }
 
-    private async runTestCase(test: TestCase): Promise<void> {
+    private async runTestCase(test: TestCase, file: string, suite: string): Promise<void> {
         const startTime = performance.now();
         try {
             await test.fn(this.runtime);
             this.stats.passed++;
             const duration = performance.now() - startTime;
             logger.info(`✓ ${test.name} (${Math.round(duration)}ms)`);
+            this.addTestResult(file, suite, test.name, TestStatus.Passed);
         } catch (error) {
             this.stats.failed++;
             logger.error(`✗ ${test.name}`);
             logger.error(error);
+            this.addTestResult(file, suite, test.name, TestStatus.Failed, error);
         }
     }
 
-    private async runTestSuite(suite: TestSuite): Promise<void> {
+    private addTestResult(file: string, suite: string, name: string, status: TestStatus, error?: Error) {
+        if (!this.testResults.has(file)) {
+            this.testResults.set(file, []);
+        }
+        this.testResults.get(file)!.push({ file, suite, name, status, error });
+    }
+
+    private async runTestSuite(suite: TestSuite, file: string): Promise<void> {
         logger.info(`\nTest suite: ${suite.name}`);
         for (const test of suite.tests) {
             this.stats.total++;
-            await this.runTestCase(test);
+            await this.runTestCase(test, file, suite.name);
         }
     }
 
@@ -202,7 +215,8 @@ class TestRunner {
 
                 for (const suite of testSuites) {
                     if (suite) {
-                        await this.runTestSuite(suite);
+                        const fileName = `${plugin.name} test suite`;
+                        await this.runTestSuite(suite, fileName);
                     }
                 }
             } catch (error) {
@@ -212,22 +226,100 @@ class TestRunner {
         }
 
         this.logTestSummary();
+        if (this.stats.failed > 0) {
+            throw new Error("An error occurred during plugin tests.")
+        }
         return this.stats;
     }
+    
 
     private logTestSummary(): void {
-        logger.info('\nTest Summary:');
-        logger.info(`Total: ${this.stats.total}`);
-        logger.info(`Passed: ${this.stats.passed}`);
-        logger.info(`Failed: ${this.stats.failed}`);
-        logger.info(`Skipped: ${this.stats.skipped}`);
+        const COLORS = {
+            reset: "\x1b[0m",
+            red: "\x1b[31m",
+            green: "\x1b[32m",
+            yellow: "\x1b[33m",
+            blue: "\x1b[34m",
+            magenta: "\x1b[35m",
+            cyan: "\x1b[36m",
+            gray: "\x1b[90m",
+            bold: "\x1b[1m",
+            underline: "\x1b[4m",
+        };
+    
+        const colorize = (text: string, color: keyof typeof COLORS, bold = false): string => {
+            return `${bold ? COLORS.bold : ""}${COLORS[color]}${text}${COLORS.reset}`;
+        };
+    
+        const printSectionHeader = (title: string, color: keyof typeof COLORS) => {
+            console.log(colorize(`\n${"⎯".repeat(25)}  ${title} ${"⎯".repeat(25)}\n`, color, true));
+        };
+    
+        const printTestSuiteSummary = () => {
+            printSectionHeader("Test Suites", "cyan");
+    
+            let failedTestSuites = 0;
+            this.testResults.forEach((tests, file) => {
+                const failed = tests.filter(t => t.status === "failed").length;
+                const total = tests.length;
+    
+                if (failed > 0) {
+                    failedTestSuites++;
+                    console.log(` ${colorize("❯", "yellow")} ${file} (${total})`);
+                } else {
+                    console.log(` ${colorize("✓", "green")} ${file} (${total})`);
+                }
+    
+                const groupedBySuite = new Map<string, TestResult[]>();
+                tests.forEach(t => {
+                    if (!groupedBySuite.has(t.suite)) {
+                        groupedBySuite.set(t.suite, []);
+                    }
+                    groupedBySuite.get(t.suite)!.push(t);
+                });
+    
+                groupedBySuite.forEach((suiteTests, suite) => {
+                    const failed = suiteTests.filter(t => t.status === "failed").length;
+                    if (failed > 0) {
+                        console.log(`   ${colorize("❯", "yellow")} ${suite} (${suiteTests.length})`);
+                        suiteTests.forEach(test => {
+                            const symbol = test.status === "passed" ? colorize("✓", "green") : colorize("×", "red");
+                            console.log(`     ${symbol} ${test.name}`);
+                        });
+                    } else {
+                        console.log(`   ${colorize("✓", "green")} ${suite} (${suiteTests.length})`);
+                    }
+                });
+            });
+    
+            return failedTestSuites;
+        };
+    
+        const printFailedTests = () => {
+            printSectionHeader("Failed Tests", "red");
+    
+            this.testResults.forEach(tests => {
+                tests.forEach(test => {
+                    if (test.status === "failed") {
+                        console.log(` ${colorize("FAIL", "red")} ${test.file} > ${test.suite} > ${test.name}`);
+                        console.log(` ${colorize("AssertionError: " + test.error!.message, "red")}`);
+                        console.log("\n" + colorize("⎯".repeat(66), "red") + "\n");
+                    }
+                });
+            });
+        };
+    
+        const printTestSummary = (failedTestSuites: number) => {
+            printSectionHeader("Test Summary", "cyan");
+    
+            console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(failedTestSuites + " failed | ", "red") : ""}${colorize((this.testResults.size - failedTestSuites) + " passed", "green")} (${this.testResults.size})`);
+            console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
+        };
+    
+        const failedTestSuites = printTestSuiteSummary();
+        if (this.stats.failed > 0) {
+            printFailedTests();
+        }
+        printTestSummary(failedTestSuites);
     }
 }
-
-// Main test suite that runs all plugin tests
-describe('Plugin Tests', () => {
-    it('should run all plugin tests', async () => {
-        const testRunner = new TestRunner(runtime);
-        await testRunner.runPluginTests();
-    });
-});

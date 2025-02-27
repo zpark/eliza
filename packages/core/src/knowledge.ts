@@ -1,7 +1,7 @@
 import { splitChunks } from "./parsing.ts";
 import logger from "./logger.ts";
 import type { AgentRuntime } from "./runtime.ts";
-import { type KnowledgeItem, type Memory, ModelClass, type UUID } from "./types.ts";
+import { type KnowledgeItem, type Memory, ModelClass, type UUID, MemoryType } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
 async function get(
@@ -63,42 +63,62 @@ async function get(
         .map((memory) => ({ id: memory.id, content: memory.content }));
 }
 
+export interface FragmentationOptions {
+    targetTokens?: number;
+    overlap?: number;
+    modelContextSize?: number;
+}
+
+const DEFAULT_OPTIONS: FragmentationOptions = {
+    targetTokens: 3000,
+    overlap: 200,
+    modelContextSize: 4096
+};
+
 async function set(
-    runtime: AgentRuntime,
+    runtime: AgentRuntime, 
     item: KnowledgeItem,
-    chunkSize = 512,
-    bleed = 20
+    options: FragmentationOptions = DEFAULT_OPTIONS
 ) {
-    const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
-    await runtime.documentsManager.createMemory({
+    // First store the document
+    const documentMemory: Memory = {
         id: item.id,
         agentId: runtime.agentId,
         roomId: runtime.agentId,
         userId: runtime.agentId,
-        createdAt: Date.now(),
         content: item.content,
-        embedding: embedding,
-    });
+        metadata: {
+            type: MemoryType.DOCUMENT,
+            timestamp: Date.now()
+        }
+    };
+    
+    await runtime.documentsManager.createMemory(documentMemory);
 
-    const preprocessed = preprocess(item.content.text);
-    const fragments = await splitChunks(preprocessed, chunkSize, bleed);
-
-    for (const fragment of fragments) {
-        const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, fragment);
-        await runtime.knowledgeManager.createMemory({
-            // We namespace the knowledge base uuid to avoid id
-            // collision with the document above.
-            id: stringToUuid(item.id + fragment),
-            roomId: runtime.agentId,
+    // Create fragments using splitChunks
+    const fragments = await splitChunks(
+        item.content.text,
+        options.targetTokens,
+        options.overlap
+    );
+    
+    // Store each fragment with link to source document
+    for (let i = 0; i < fragments.length; i++) {
+        const fragmentMemory: Memory = {
+            id: stringToUuid(`${item.id}-fragment-${i}`),
             agentId: runtime.agentId,
+            roomId: runtime.agentId,
             userId: runtime.agentId,
-            createdAt: Date.now(),
-            content: {
-                source: item.id,
-                text: fragment,
-            },
-            embedding,
-        });
+            content: { text: fragments[i] },
+            metadata: {
+                type: MemoryType.FRAGMENT,
+                documentId: item.id,  // Link to source document
+                position: i,          // Keep track of order
+                timestamp: Date.now()
+            }
+        };
+        
+        await runtime.knowledgeManager.createMemory(fragmentMemory);
     }
 }
 

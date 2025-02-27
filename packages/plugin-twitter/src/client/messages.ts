@@ -241,7 +241,7 @@ export async function getDirectMessageConversations(
   }
 
   const finalUrl = `${messageListUrl}${
-    params.toString() ? '?' + params.toString() : ''
+    params.toString() ? `?${params.toString()}` : ''
   }`;
   const cookies = await auth.cookieJar().getCookies(url);
   const xCsrfToken = cookies.find((cookie) => cookie.key === 'ct0');

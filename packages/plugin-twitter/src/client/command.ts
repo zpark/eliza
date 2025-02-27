@@ -1,9 +1,9 @@
 // Your existing imports
 import { Scraper } from './scraper';
 import type { Photo, Tweet } from './tweets';
-import fs from 'fs';
-import path from 'path';
-import readline from 'readline';
+import fs from 'node:fs';
+import path from 'node:path';
+import readline from 'node:readline';
 import dotenv from 'dotenv';  
 
 // Load environment variables from .env file
@@ -120,10 +120,9 @@ async function sendTweetCommand(
     if (tweetId) {
       console.log(`Tweet sent: "${text}" (ID: ${tweetId})`);
       return tweetId;
-    } else {
+    }
       console.error('Tweet ID not found in response.');
       return null;
-    }
   } catch (error) {
     console.error('Error sending tweet:', error);
     return null;
@@ -284,7 +283,7 @@ async function executeCommand(commandLine: string) {
       break;
     }
 
-    case 'get-tweets':
+    case 'get-tweets': {
       await ensureAuthenticated();
       const username = args[0];
       if (!username) {
@@ -305,6 +304,7 @@ async function executeCommand(commandLine: string) {
         }
       }
       break;
+    }
 
     case 'get-replies': {
       await ensureAuthenticated();
@@ -321,7 +321,7 @@ async function executeCommand(commandLine: string) {
       break;
     }
 
-    case 'reply-to-tweet':
+    case 'reply-to-tweet': {
       await ensureAuthenticated();
       const replyTweetId = args[0];
       const replyText = args.slice(1).join(' ');
@@ -331,6 +331,7 @@ async function executeCommand(commandLine: string) {
         await replyToTweet(replyTweetId, replyText);
       }
       break;
+    }
 
     case 'get-mentions':
       await ensureAuthenticated();
@@ -423,7 +424,7 @@ async function executeCommand(commandLine: string) {
       break;
     }
 
-    case 'like':
+    case 'like': {
       await ensureAuthenticated();
       const tweetId = args[0];
       if (!tweetId) {
@@ -438,8 +439,9 @@ async function executeCommand(commandLine: string) {
         }
       }
       break;
+    }
 
-    case 'retweet':
+    case 'retweet': {
       await ensureAuthenticated();
       const retweetId = args[0];
       if (!retweetId) {
@@ -454,8 +456,9 @@ async function executeCommand(commandLine: string) {
         }
       }
       break;
+    }
 
-    case 'follow':
+    case 'follow': {
       await ensureAuthenticated();
       const usernameToFollow = args[0];
       if (!usernameToFollow) {
@@ -470,6 +473,7 @@ async function executeCommand(commandLine: string) {
         }
       }
       break;
+    }
 
     default:
       console.log(`Unknown command: ${command}. Type 'help' to see available commands.`);
@@ -510,10 +514,9 @@ async function sendLongTweetCommand(
     if (tweetId) {
       console.log(`Long tweet sent: "${text.substring(0, 50)}..." (ID: ${tweetId})`);
       return tweetId;
-    } else {
+    }
       console.error('Tweet ID not found in response.');
       return null;
-    }
   } catch (error) {
     console.error('Error sending long tweet:', error);
     return null;

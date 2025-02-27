@@ -1,8 +1,8 @@
-import { ClientInstance } from "@elizaos/core";
-import { ClientBase } from "./base";
-import { TwitterInteractionClient } from "./interactions";
-import { TwitterPostClient } from "./post";
-import { TwitterSpaceClient } from "./spaces";
+import type { ClientInstance } from "@elizaos/core";
+import type { ClientBase } from "./base";
+import type { TwitterInteractionClient } from "./interactions";
+import type { TwitterPostClient } from "./post";
+import type { TwitterSpaceClient } from "./spaces";
 
 export type MediaData = {
     data: Buffer;
@@ -14,11 +14,6 @@ export interface ActionResponse {
     retweet: boolean;
     quote?: boolean;
     reply?: boolean;
-}
-
-export enum ActionTimelineType {
-    ForYou = "foryou",
-    Following = "following",
 }
 
 export interface ITwitterClient extends ClientInstance {
