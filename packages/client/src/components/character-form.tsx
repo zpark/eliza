@@ -26,11 +26,16 @@ type ArrayField = {
   getData: (char: Character) => string[];
 };
 
+enum SECTION_TYPE {
+  INPUT = "input",
+  ARRAY = "array"
+}
+
 const CHARACTER_FORM_SCHEMA = [
   {
     sectionTitle: "Basic Info",
     sectionValue: "basic",
-    sectionType: "input",
+    sectionType: SECTION_TYPE.INPUT,
     fields: [
       {
         title: "Name",
@@ -65,7 +70,7 @@ const CHARACTER_FORM_SCHEMA = [
   {
     sectionTitle: "Content",
     sectionValue: "content",
-    sectionType: "array",
+    sectionType: SECTION_TYPE.ARRAY,
     fields: [
       {
         title: "Bio",
@@ -90,7 +95,7 @@ const CHARACTER_FORM_SCHEMA = [
   {
     sectionTitle: "Style",
     sectionValue: "style",
-    sectionType: "array",
+    sectionType: SECTION_TYPE.ARRAY,
     fields: [
       {
         title: "All",
@@ -305,7 +310,7 @@ export default function CharacterForm({
             <CardContent className="p-6">
               {CHARACTER_FORM_SCHEMA.map((section) => (
                 <TabsContent key={section.sectionValue} value={section.sectionValue} className="space-y-6">
-                  {section.sectionType === "input"
+                  {section.sectionType === SECTION_TYPE.INPUT
                     ? (section.fields as InputField[]).map(renderInputField)
                     : (section.fields as ArrayField[]).map(renderArrayField)}
                 </TabsContent>
