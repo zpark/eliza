@@ -275,32 +275,12 @@ export default function CharacterForm({
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="flex w-full mb-4">
-            <TabsTrigger 
-              value="basic" 
-              className="data-[state=active]:bg-white data-[state=active]:text-black"
-            >
-              Basic Info
-            </TabsTrigger>
-            <TabsTrigger 
-              value="content" 
-              className="data-[state=active]:bg-white data-[state=active]:text-black"
-            >
-              Content
-            </TabsTrigger>
-            <TabsTrigger 
-              value="style" 
-              className="data-[state=active]:bg-white data-[state=active]:text-black"
-            >
-              Style
-            </TabsTrigger>
+          <TabsList className={`grid w-full ${showSettings ? 'grid-cols-4' : 'grid-cols-3'} mb-6`}>
+            <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Style</TabsTrigger>
             {showSettings && (
-              <TabsTrigger 
-                value="settings" 
-                className="data-[state=active]:bg-white data-[state=active]:text-black"
-              >
-                Settings
-              </TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
             )}
           </TabsList>
           

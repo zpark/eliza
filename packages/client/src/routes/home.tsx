@@ -1,46 +1,24 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { Cog, RefreshCw, Users } from "lucide-react";
 import PageTitle from "@/components/page-title";
-import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { apiClient } from "@/lib/api";
-import { NavLink } from "react-router";
-import type { UUID } from "@elizaos/core";
-import { formatAgentName } from "@/lib/utils";
-import { useAgents, useCharacters } from "@/hooks/use-query-hooks";
-import { CardActions } from "@/components/ui/card-actions";
 import { ActionCard } from "@/components/ui/action-card";
+import { Button } from "@/components/ui/button";
+import { useAgents, useCharacters } from "@/hooks/use-query-hooks";
+import type { UUID } from "@elizaos/core";
+import { Cog, Users } from "lucide-react";
+import { NavLink } from "react-router";
 
 export default function Home() {
-    const queryClient = useQueryClient();
-    
-    // Use our custom hooks for smarter data fetching
-    const { data: agentsData, isRefetching: isAgentsRefetching } = useAgents();
+
+    const { data: agentsData } = useAgents();
     const { data: charactersData } = useCharacters();
 
     const agents = agentsData?.agents || [];
     const characterCount = charactersData?.characters?.length || 0;
 
-    const refreshAgents = () => {
-        queryClient.invalidateQueries({ queryKey: ["agents"] });
-    };
-
     return (
         <div className="flex flex-col gap-4 h-full p-4">
             <div className="flex items-center justify-between">
                 <PageTitle title="Agents" />
-                <NavLink to="/characters">
-                    <Button variant="outline" size="sm">
-                        <Users className="h-4 w-4 mr-2" />
-                        Characters ({characterCount})
-                    </Button>
-                </NavLink>
+                
             </div>
             
             {agentsData?.isLoading && (

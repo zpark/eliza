@@ -1,5 +1,3 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import info from "@/lib/info.json";
 import {
     Sidebar,
     SidebarContent,
@@ -13,17 +11,18 @@ import {
     SidebarMenuItem,
     SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
+import { useCharacters } from "@/hooks/use-query-hooks";
 import { apiClient } from "@/lib/api";
-import { NavLink, useLocation } from "react-router";
-import { useCallback } from "react";
+import info from "@/lib/info.json";
 import type { UUID } from "@elizaos/core";
-import { Book, Cog, User, Users, RefreshCw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Book, Cog, User, Users } from "lucide-react";
+import { NavLink, useLocation } from "react-router";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
     const location = useLocation();
-    const queryClient = useQueryClient();
+
     
     const query = useQuery({
         queryKey: ["agents"],
@@ -32,12 +31,11 @@ export function AppSidebar() {
         staleTime: Number.POSITIVE_INFINITY, // Only refetch on explicit invalidation
     });
 
+    const { data: charactersData } = useCharacters();
+    const characterCount = charactersData?.characters?.length || 0;
+
     const agents = query?.data?.agents;
 
-    // Function to refresh the agents list
-    const refreshAgents = useCallback(() => {
-        queryClient.invalidateQueries({ queryKey: ["agents"] });
-    }, [queryClient]);
 
     return (
         <Sidebar>
@@ -67,7 +65,9 @@ export function AppSidebar() {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Library</SidebarGroupLabel>
+                    <SidebarGroupLabel>
+                        Library
+                    </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             <SidebarMenuItem>
@@ -76,7 +76,13 @@ export function AppSidebar() {
                                         isActive={location.pathname === "/characters"}
                                     >
                                         <Users />
-                                        <span>Characters</span>
+                                        <span>Characters
+                                        {characterCount > 0 && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                                ({characterCount})
+                            </span>
+                        )}
+                                        </span>
                                     </SidebarMenuButton>
                                 </NavLink>
                             </SidebarMenuItem>
