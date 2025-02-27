@@ -609,7 +609,7 @@ const syncSingleUser = async (
     await runtime.ensureConnection({
       userId: user.id,
       roomId,
-      userName: user.username || `User${user.id}`,
+      userName: user.username || user.displayName || `User${user.id}`,
       userScreenName: user.displayName || user.username || `User${user.id}`,
       source,
       channelId,

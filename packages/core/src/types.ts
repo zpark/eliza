@@ -1107,9 +1107,14 @@ export interface IAgentRuntime {
 
   getOrCreateUser(
     userId: UUID,
-    userName: string | null,
-    name: string | null,
-    source: string | null
+    names: string[],
+    metadata: {
+      [source: string]: {
+        name: string;
+        userName: string;
+        [key: string]: unknown;
+      };
+    }
   ): Promise<UUID>;
 
   registerProvider(provider: Provider): void;

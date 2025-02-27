@@ -644,12 +644,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 discord: member.user.globalName ? {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   globalName: member.user.globalName,
                   userId: member.id,
                 } : {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   userId: member.id,
                 },
               },
@@ -686,12 +686,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                     },
                     discord: member.user.globalName ? {
                       username: tag,
-                      displayName: member.displayName || member.user.username,
+                      name: member.displayName || member.user.username,
                       globalName: member.user.globalName,
                       userId: member.id,
                     } : {
                       username: tag,
-                      displayName: member.displayName || member.user.username,
+                      name: member.displayName || member.user.username,
                       userId: member.id,
                     },
                   },
@@ -729,12 +729,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 discord: member.user.globalName ? {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   globalName: member.user.globalName,
                   userId: member.id,
                 } : {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   userId: member.id,
                 },
               },

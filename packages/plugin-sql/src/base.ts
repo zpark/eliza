@@ -214,17 +214,31 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select()
+                .select({
+                    entity: entityTable,
+                    components: componentTable
+                })
                 .from(entityTable)
-                .leftJoin(componentTable, eq(entityTable.id, componentTable.entityId))
-                .where(and(eq(entityTable.id, userId), eq(entityTable.agentId, agentId)))
-                .limit(1);
+                .leftJoin(
+                    componentTable,
+                    eq(componentTable.entityId, entityTable.id)
+                )
+                .where(
+                    and(
+                        eq(entityTable.id, userId),
+                        eq(entityTable.agentId, agentId)
+                    )
+                );
 
             if (result.length === 0) return null;
 
-            const account = result[0];
+            // Group components by entity
+            const entity = result[0].entity;
+            entity.components = result
+                .filter(row => row.components)
+                .map(row => row.components);
 
-            return account;
+            return entity;
         });
     }
 

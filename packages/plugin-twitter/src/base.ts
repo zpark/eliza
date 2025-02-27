@@ -586,11 +586,15 @@ export class ClientBase extends EventEmitter {
 
     await this.runtime.getOrCreateUser(
       this.runtime.agentId,
-      this.profile.username,
-      this.runtime.character.name,
-      "twitter"
+      [this.runtime.character.name],
+      {
+        twitter: {
+          name: this.runtime.character.name,
+          userName: this.runtime.character.name,
+          originalUserId: this.runtime.agentId,
+        },
+      }
     );
-
     // Save the new tweets as memories
     for (const tweet of tweetsToSave) {
       logger.log("Saving Tweet", tweet.id);

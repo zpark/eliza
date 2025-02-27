@@ -1,10 +1,4 @@
-import { v4 } from "uuid";
-import { composeContext } from "./context.ts";
-import { generateMessageResponse, generateShouldRespond } from "./generation.ts";
-import { logger } from "./logger.ts";
-import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
-import { ModelClass, type Actor, type Content, type HandlerCallback, type IAgentRuntime, type Memory, type State, type UUID } from "./types.ts";
-import { stringToUuid } from "./uuid.ts";
+import { type Actor, type Content, type IAgentRuntime, type Memory, type UUID } from "./types.ts";
 export * as actions from "./actions";
 export * as evaluators from "./evaluators";
 export * as providers from "./providers";
@@ -20,9 +14,10 @@ export async function getActorDetails({
   roomId: UUID;
 }) {
   const room = await runtime.getRoom(roomId);
-  const actors = (await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId)).map(entity => ({
+  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId);
+  const actors = entities.map(entity => ({
     id: entity.id,
-    name: entity.metadata[room.source].name,
+    name: entity.metadata[room.source]?.name || entity.names[0],
     names: entity.names,
   }));
 

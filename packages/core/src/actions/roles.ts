@@ -107,15 +107,7 @@ const updateRoleAction: Action = {
 
       // Get requester ID and convert to UUID for consistent lookup
       const requesterId = message.userId;
-      const requesterUuid = stringToUuid(requesterId);
-      const requesterUuidCombined = stringToUuid(`${requesterId}-${runtime.agentId}`);
       const tenantSpecificUserId = runtime.generateTenantUserId(requesterId);
-
-      console.log('requesterId', requesterId);
-      console.log('requesterUuid', requesterUuid);
-      console.log('requesterUuidCombined', requesterUuidCombined);
-      console.log('tenantSpecificUserId', tenantSpecificUserId);
-      console.log("world.metadata.roles", world.metadata.roles)
 
       // Get roles from world metadata
       if (!world.metadata?.roles) {

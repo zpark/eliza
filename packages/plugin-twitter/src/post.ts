@@ -297,9 +297,14 @@ export class TwitterPostClient {
             );
             await this.runtime.getOrCreateUser(
                 this.runtime.agentId,
-                this.client.profile.username,
-                this.runtime.character.name,
-                "twitter"
+                [this.client.profile.username],
+                {
+                    twitter: {
+                        name: this.client.profile.username,
+                        userName: this.client.profile.username,
+                        originalUserId: this.runtime.agentId,
+                    },
+                }
             );
 
             const topics = this.runtime.character.topics

@@ -24,7 +24,6 @@ import { withConnection } from "../utils/with-connection";
 const characterSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string(),
-  username: z.string(),
   plugins: z.array(z.string()).optional(),
   secrets: z.record(z.string(), z.string()).optional(),
   bio: z.array(z.string()).optional(),
@@ -376,7 +375,6 @@ character.command("create")
       const charData = {
         ...getDefaultCharacterFields(),
         name: formData.name,
-        username: formData.username,
         bio: formData.bio,
         adjectives: formData.adjectives,
         postExamples: formData.postExamples,
@@ -428,7 +426,6 @@ character.command("edit")
       
       const formData = await collectCharacterData({
         name: existing.name,
-        username: existing.username,
         bio: Array.isArray(existing.bio) ? existing.bio : [existing.bio],
         adjectives: existing.adjectives || [],
         postExamples: existing.postExamples || [],

@@ -165,9 +165,14 @@ export async function startOnboardingDM(
 
     await runtime.getOrCreateUser(
       runtime.agentId,
-      runtime.character.name,
-      runtime.character.name,
-      "discord"
+      [runtime.character.name],
+      {
+        default: {
+          name: runtime.character.name,
+          userName: runtime.character.name,
+          originalUserId: runtime.agentId,
+        },
+      },
     );
 
     // Create memory of the initial message

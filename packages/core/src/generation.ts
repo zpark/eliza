@@ -397,15 +397,11 @@ export async function generateMessageResponse({
   stopSequences?: string[];
 }): Promise<Content> {
   return await withRetry(async () => {
-    console.log('**** GENERATE MESSAGE RESPONSE')
-    console.log(context)
     const text = await runtime.useModel(modelClass, {
       runtime,
       context,
       stop: stopSequences,
     });
-    console.log('**** GENERATE MESSAGE RESPONSE TEXT')
-    console.log(text)
 
     const parsedContent = parseJSONObjectFromText(text) as Content;
 

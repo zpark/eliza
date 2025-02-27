@@ -353,9 +353,13 @@ export class SttTtsPlugin implements Plugin {
         // Ensure the user exists in the accounts table
         await this.runtime.getOrCreateUser(
             userUuid,
-            userId, // Use full Twitter ID as username
-            `Twitter User ${numericId}`,
-            "twitter",
+            [userId],
+            {
+                twitter: {
+                    name: userId,
+                    userName: userId,
+                },
+            },
         );
 
         // Ensure room exists and user is in it
