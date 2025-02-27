@@ -40,8 +40,9 @@ export const formatPosts = ({
                 const actor = actors.find(
                     (actor: Actor) => actor.id === message.userId
                 );
+                // TODO: These are okay but not great
                 const userName = actor?.name || "Unknown User";
-                const displayName = actor?.username || "unknown";
+                const displayName = actor?.names[0] || "unknown";
 
                 return `Name: ${userName} (@${displayName})
 ID: ${message.id}${message.content.inReplyTo ? `\nIn reply to: ${message.content.inReplyTo}` : ""}

@@ -1042,14 +1042,14 @@
           "notNull": true,
           "default": "now()"
         },
-        "userA": {
-          "name": "userA",
+        "entityA": {
+          "name": "entityA",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "userB": {
-          "name": "userB",
+        "entityB": {
+          "name": "entityB",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1078,13 +1078,13 @@
           "name": "idx_relationships_users",
           "columns": [
             {
-              "expression": "userA",
+              "expression": "entityA",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "userB",
+              "expression": "entityB",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1102,7 +1102,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "userA"
+            "entityA"
           ],
           "columnsTo": [
             "id"
@@ -1115,7 +1115,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "userB"
+            "entityB"
           ],
           "columnsTo": [
             "id"
@@ -1154,7 +1154,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "userA"
+            "entityA"
           ],
           "columnsTo": [
             "id"
@@ -1167,7 +1167,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "userB"
+            "entityB"
           ],
           "columnsTo": [
             "id"

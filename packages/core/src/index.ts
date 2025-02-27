@@ -22,4 +22,5 @@ export * from "./relationships.ts";
 export * from "./roles.ts";
 export * from "./runtime.ts";
 export * from "./settings.ts";
+export * from "./bootstrap.ts";
 export * from "./uuid.ts";

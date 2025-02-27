@@ -2,32 +2,32 @@ import type { IAgentRuntime, Relationship, UUID } from "./types.ts";
 
 export async function createRelationship({
     runtime,
-    userA,
-    userB,
+    entityA,
+    entityB,
 }: {
     runtime: IAgentRuntime;
-    userA: UUID;
-    userB: UUID;
+    entityA: UUID;
+    entityB: UUID;
 }): Promise<boolean> {
     return runtime.databaseAdapter.createRelationship({
-        userA,
-        userB,
+        entityA,
+        entityB,
         agentId: runtime.agentId,
     });
 }
 
 export async function getRelationship({
     runtime,
-    userA,
-    userB,
+    entityA,
+    entityB,
 }: {
     runtime: IAgentRuntime;
-    userA: UUID;
-    userB: UUID;
+    entityA: UUID;
+    entityB: UUID;
 }) {
     return runtime.databaseAdapter.getRelationship({
-        userA,
-        userB,
+        entityA,
+        entityB,
         agentId: runtime.agentId,
     });
 }
@@ -53,13 +53,13 @@ export async function formatRelationships({
 
     const formattedRelationships = relationships.map(
         (relationship: Relationship) => {
-            const { userA, userB } = relationship;
+            const { entityA, entityB } = relationship;
 
-            if (userA === userId) {
-                return userB;
+            if (entityA === userId) {
+                return entityB;
             }
 
-            return userA;
+            return entityA;
         }
     );
 

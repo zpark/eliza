@@ -1,14 +1,11 @@
+import type { Character, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
+import { ChannelType, composeContext, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, stringToUuid, validateCharacterConfig } from '@elizaos/core';
 import express from 'express';
-import type { Character, IAgentRuntime, Media } from '@elizaos/core';
-import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig } from '@elizaos/core';
 import fs from 'node:fs';
-import type { AgentServer } from '..';
-import { validateUUIDParams } from './api-utils';
-
-import type { Content, Memory } from '@elizaos/core';
 import path from 'node:path';
-import { messageHandlerTemplate } from '../helper';
+import type { AgentServer } from '..';
 import { upload } from '../loader';
+import { validateUUIDParams } from './api-utils';
 
 interface CustomRequest extends express.Request {
     file?: Express.Multer.File;

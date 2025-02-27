@@ -31,8 +31,8 @@ export async function getActorDetails({
       if (account) {
         return {
           id: account.id,
-          name: account.metadata.name,
-          username: account.metadata.username,
+          name: account.metadata.default.name || account.names.join(" aka "),
+          names: account.names,
         };
       }
       return null;
@@ -59,7 +59,7 @@ export async function getActorDetails({
  */
 export function formatActors({ actors }: { actors: Actor[] }) {
   const actorStrings = actors.map((actor: Actor) => {
-    const header = `${actor.name}`;
+    const header = `${actor.name} (${actor.names.join(" aka ")})`;
     return header;
   });
   const finalActorStrings = actorStrings.join("\n");

@@ -372,22 +372,22 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
 
     /**
      * Creates a new relationship between two users.
-     * @param params An object containing the UUIDs of the two users (userA and userB).
+     * @param params An object containing the UUIDs of the two users (entityA and entityB).
      * @returns A Promise that resolves to a boolean indicating success or failure of the creation.
      */
     abstract createRelationship(params: {
-        userA: UUID;
-        userB: UUID;
+        entityA: UUID;
+        entityB: UUID;
     }): Promise<boolean>;
 
     /**
      * Retrieves a relationship between two users if it exists.
-     * @param params An object containing the UUIDs of the two users (userA and userB).
+     * @param params An object containing the UUIDs of the two users (entityA and entityB).
      * @returns A Promise that resolves to the Relationship object or null if not found.
      */
     abstract getRelationship(params: {
-        userA: UUID;
-        userB: UUID;
+        entityA: UUID;
+        entityB: UUID;
     }): Promise<Relationship | null>;
 
     /**

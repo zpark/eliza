@@ -69,6 +69,8 @@ type UserJoinedParams = {
 export const shouldRespondTemplate = `{{system}}
 # Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
 
+{{actors}}
+
 About {{agentName}}:
 {{bio}}
 
@@ -77,14 +79,15 @@ About {{agentName}}:
 # INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
 ${shouldRespondFooter}`;
 
-const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
+export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
 {{system}}
 
 {{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
-# Knowledge
 {{knowledge}}
+
+{{actors}}
 
 About {{agentName}}:
 {{bio}}

@@ -642,9 +642,15 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                   username: tag,
                   name: member.displayName || member.user.username,
                 },
-                discord: {
+                discord: member.user.globalName ? {
                   username: tag,
                   displayName: member.displayName || member.user.username,
+                  globalName: member.user.globalName,
+                  userId: member.id,
+                } : {
+                  username: tag,
+                  displayName: member.displayName || member.user.username,
+                  userId: member.id,
                 },
               },
             });
@@ -674,13 +680,19 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                     new Set([member.user.username, member.displayName])
                   ),
                   metadata: {
-                    discord: {
-                      username: tag,
-                      displayName: member.displayName || member.user.username,
-                    },
                     default: {
                       username: tag,
                       name: member.displayName || member.user.username,
+                    },
+                    discord: member.user.globalName ? {
+                      username: tag,
+                      displayName: member.displayName || member.user.username,
+                      globalName: member.user.globalName,
+                      userId: member.id,
+                    } : {
+                      username: tag,
+                      displayName: member.displayName || member.user.username,
+                      userId: member.id,
                     },
                   },
                 });
@@ -715,9 +727,15 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                   username: tag,
                   name: member.displayName || member.user.username,
                 },
-                discord: {
+                discord: member.user.globalName ? {
                   username: tag,
                   displayName: member.displayName || member.user.username,
+                  globalName: member.user.globalName,
+                  userId: member.id,
+                } : {
+                  username: tag,
+                  displayName: member.displayName || member.user.username,
+                  userId: member.id,
                 },
               },
             });
