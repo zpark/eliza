@@ -338,18 +338,16 @@ export default function CharacterForm({
           </div>
           
           <div className="flex gap-4">
-            {onReset && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  onReset();
-                  setCharacterValue(character)
-                }}
-              >
-                Reset Changes
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onReset && onReset();
+                setCharacterValue(character)
+              }}
+            >
+              Reset Changes
+            </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
