@@ -88,7 +88,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.ANTHROPIC]: {
-        endpoint: "https://api.anthropic.com/v1",
+        endpoint: settings.ANTHROPIC_API_URL || "https://api.anthropic.com/v1",
         model: {
             [ModelClass.SMALL]: {
                 name:
@@ -126,7 +126,7 @@ export const models: Models = {
         },
     },
     [ModelProviderName.CLAUDE_VERTEX]: {
-        endpoint: "https://api.anthropic.com/v1", // TODO: check
+        endpoint: settings.ANTHROPIC_API_URL || "https://api.anthropic.com/v1", // TODO: check
         model: {
             [ModelClass.SMALL]: {
                 name: "claude-3-5-sonnet-20241022",
