@@ -245,7 +245,7 @@ const twitterPostAction: Action = {
       // Check if there are any pending Twitter posts awaiting confirmation
       const pendingTasks = runtime.getTasks({
         roomId: message.roomId,
-        tags: ["AWAITING_CONFIRMATION", "TWITTER_POST"],
+        tags: ["TWITTER_POST"],
       });
 
       if (pendingTasks && pendingTasks.length > 0) {
@@ -266,8 +266,38 @@ const twitterPostAction: Action = {
         roomId: message.roomId,
         name: "Confirm Twitter Post",
         description: "Confirm the tweet to be posted.",
-        tags: ["TWITTER_POST", "AWAITING_CONFIRMATION"],
-        handler: async (runtime: IAgentRuntime) => {
+        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
+        metadata: {
+          options: [
+            {
+              name: "post",
+              description: "Post the tweet to Twitter",
+            },
+            {
+              name: "cancel",
+              description: "Cancel the tweet and don't post it",
+            },
+          ],
+        },
+        handler: async (runtime: IAgentRuntime, options: { option: string }) => {
+          if (options.option === "cancel") {
+            await callback({
+              ...responseContent,
+              text: "Tweet cancelled. I won't post it.",
+              action: "TWITTER_POST_CANCELLED"
+            });
+            return;
+          }
+
+          if(options.option !== "post") {
+            await callback({
+              ...responseContent,
+              text: "Invalid option. Should be 'post' or 'cancel'.",
+              action: "TWITTER_POST_INVALID_OPTION"
+            });
+            return;
+          }
+          
           const vals = {
             TWITTER_USERNAME: worldSettings.TWITTER_USERNAME.value,
             TWITTER_EMAIL: worldSettings.TWITTER_EMAIL.value,

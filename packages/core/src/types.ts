@@ -1428,10 +1428,16 @@ export interface TeePluginConfig {
 export interface Task {
   id?: UUID;
   name: string;
+  metadata?: {
+    options?: {
+      name: string;
+      description: string;
+    }[];
+  };
   description: string;
   roomId: UUID;
   tags: string[];
-  handler: (runtime: IAgentRuntime) => Promise<void>;
+  handler: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 

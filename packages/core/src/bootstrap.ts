@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
 import { cancelTaskAction } from "./actions/cancel.ts";
-import { confirmTaskAction } from "./actions/confirm.ts";
+import { selectOptionAction } from "./actions/options.ts";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
@@ -22,7 +22,7 @@ import {
 } from "./index.ts";
 import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
-import { confirmationTasksProvider } from "./providers/confirmation.ts";
+import { optionsProvider } from "./providers/options.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
@@ -852,7 +852,7 @@ export const bootstrapPlugin: Plugin = {
     muteRoomAction,
     unmuteRoomAction,
     cancelTaskAction,
-    confirmTaskAction,
+    selectOptionAction,
     updateRoleAction,
     updateSettingsAction,
   ],
@@ -861,7 +861,7 @@ export const bootstrapPlugin: Plugin = {
   providers: [
     timeProvider,
     factsProvider,
-    confirmationTasksProvider,
+    optionsProvider,
     roleProvider,
     settingsProvider,
   ],
