@@ -98,7 +98,7 @@ pluginsCmd
     if (!fs.existsSync(pkgPath)) {
       // clone it
       console.log('cloning', parts[1], 'to', pkgPath)
-      const gitOutput = execSync('git clone https://github.com/' + repoData[1] + ' ' + pkgPath, { stdio: 'pipe' }).toString().trim();
+      const gitOutput = execSync('git clone https://github.com/' + repoData[1] + ' "' + pkgPath + '"', { stdio: 'pipe' }).toString().trim();
     }
 
     // add core to plugin
