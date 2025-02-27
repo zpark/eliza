@@ -289,7 +289,10 @@ export default function CharacterForm({
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className={`grid w-full grid-cols-${customComponents.length + 3} mb-6`}>
+          <TabsList 
+            className={`grid w-full mb-6`}
+            style={{ gridTemplateColumns: `repeat(${customComponents.length + 3}, minmax(0, 1fr))` }}
+          >
             {CHARACTER_FORM_SCHEMA.map((section) => (
               <TabsTrigger value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
             ))}
