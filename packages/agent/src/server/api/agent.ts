@@ -321,16 +321,6 @@ export function agentRouter(
             agent = await directClient.startAgent(character);
             await agent.ensureCharacterExists(character);
             logger.success(`[AGENT UPDATE] Agent successfully updated and started: ${character.name} (${character.id})`);
-            
-            // Notify clients that agent has been updated
-            logger.debug(`[AGENT UPDATE] Sending SSE notification for agent update: ${character.name}`);
-            directClient.notifyClients('agent:updated', {
-                id: character.id,
-                name: character.name,
-                timestamp: Date.now(),
-                status: 'update_complete',
-                message: `Agent ${character.name} has been updated and restarted`
-            });
         } catch (e) {
             logger.error(`[AGENT UPDATE] Error starting updated agent:`, e);
             res.status(500).json({
@@ -453,16 +443,6 @@ export function agentRouter(
             const agent = await directClient.startAgent(character);
             logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
 
-            // Notify clients that agent has started
-            logger.debug(`[AGENT START] Sending SSE notification for agent: ${character.name}`);
-            directClient.notifyClients('agent:started', {
-                id: character.id,
-                name: character.name,
-                timestamp: Date.now(),
-                status: 'startup_complete',
-                message: `Agent ${character.name} has started successfully`
-            });
-
             res.json({
                 id: character.id,
                 character: character,
@@ -568,15 +548,6 @@ export function agentRouter(
             } catch (error) {
                 logger.error(`[AGENT SHUTDOWN] Error unregistering agent ${agentName}:`, error);
             }
-            
-            // Notify clients that agent has stopped with enhanced status information
-            logger.info(`[AGENT SHUTDOWN] Sending SSE notification for agent ${agentName} shutdown`);
-            directClient.notifyClients('agent:stopped', {
-                ...agentInfo,
-                timestamp: Date.now(),
-                status: 'shutdown_complete',
-                message: `Agent ${agentName} has been successfully stopped`
-            });
             
             res.json({ 
                 success: true,

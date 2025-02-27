@@ -27,7 +27,6 @@ export class AgentServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>;
     private server: any; 
-    private sseClients: express.Response[] = [];
     public startAgent!: (character: Character) => Promise<IAgentRuntime>; 
     public loadCharacterTryPath!: (characterPath: string) => Promise<Character>;
     public jsonToCharacter!: (character: unknown) => Promise<Character>;
@@ -62,29 +61,6 @@ export class AgentServer {
             // API Router setup
             const apiRouter = createApiRouter(this.agents, this);
             this.app.use(apiRouter);
-
-            // Setup SSE endpoint
-            this.app.get('/events', (req, res) => {
-                // Set headers for SSE
-                res.setHeader('Content-Type', 'text/event-stream');
-                res.setHeader('Cache-Control', 'no-cache');
-                res.setHeader('Connection', 'keep-alive');
-                res.setHeader('Access-Control-Allow-Origin', '*');
-                
-                // Send an initial connection established event
-                res.write(`data: ${JSON.stringify({ type: "connected" })}\n\n`);
-                
-                // Add client to the clients array
-                this.sseClients.push(res);
-                
-                // Remove client on connection close
-                req.on('close', () => {
-                    this.sseClients = this.sseClients.filter(client => client !== res);
-                    logger.debug(`SSE client disconnected. Active connections: ${this.sseClients.length}`);
-                });
-                
-                logger.debug(`New SSE client connected. Active connections: ${this.sseClients.length}`);
-            });
 
             logger.success("AgentServer initialization complete");
         } catch (error) {
@@ -183,50 +159,15 @@ export class AgentServer {
         } else {
             logger.warn(`[AGENT UNREGISTER] Agent ${agentName} (${agentId}) was not found in the registry`);
         }
-
-        // After unregistering, send updated agent list
-        this.sendAgentsListUpdate();
         
         logger.debug('Agent unregistered', {
             agent: runtime.agentId,
         });
     }
 
-    public notifyClients(event: string, data: any) {
-        // Log how many clients we're notifying
-        logger.debug(`Notifying ${this.sseClients.length} clients of ${event} event`);
-        
-        // Send to all clients
-        this.sseClients.forEach((client, index) => {
-            try {
-                client.write(`event: ${event}\n`);
-                client.write(`data: ${JSON.stringify(data)}\n\n`);
-            } catch (error) {
-                logger.error(`Error sending to client ${index}:`, error);
-            }
-        });
-    }
-
-    // New method to notify clients about the complete agent list
-    sendAgentsListUpdate() {
-        // Only send if we have connected clients
-        if (this.sseClients.length === 0) return;
-        
-        const agentsList = Array.from(this.agents.values()).map((agent) => ({
-            id: agent.agentId,
-            name: agent.character.name,
-            clients: Array.from(agent.getAllClients().keys())
-        }));
-        
-        this.notifyClients('agents:list', { agents: agentsList });
-        logger.debug(`Sent agents:list update with ${agentsList.length} agents`);
-    }
-
     public registerMiddleware(middleware: ServerMiddleware) {
         this.app.use(middleware);
     }
-
-    
 
     public start(port: number) {
         try {
@@ -286,7 +227,6 @@ export class AgentServer {
         }
     }
 
-    
     public async stop() {
         if (this.server) {
             this.server.close(() => {

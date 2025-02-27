@@ -11,7 +11,6 @@ import Home from "./routes/home";
 import Characters from "./routes/characters";
 import NewCharacter from "./routes/new-character";
 import useVersion from "./hooks/use-version";
-import AgentStatusListener from "./components/agent-status-listener";
 import { useEffect } from "react";
 import { apiClient } from "./lib/api";
 import { STALE_TIMES } from "./hooks/use-query-hooks";
@@ -29,8 +28,8 @@ const queryClient = new QueryClient({
             retryDelay: attemptIndex => Math.min(1000 * (2 ** attemptIndex), 30000),
             // Refetch query on window focus
             refetchOnWindowFocus: true,
-            // Don't refetch on reconnect since we use SSE
-            refetchOnReconnect: false,
+            // Enable refetch on reconnect since we're not using SSE anymore
+            refetchOnReconnect: true,
             // Fail queries that take too long
         },
         mutations: {
@@ -55,7 +54,7 @@ const prefetchInitialData = async () => {
     await queryClient.prefetchQuery({
       queryKey: ["agents"],
       queryFn: () => apiClient.getAgents(),
-      staleTime: STALE_TIMES.NEVER, // Rely on SSE for updates
+      staleTime: STALE_TIMES.FREQUENT, // Use frequent stale time instead of relying on SSE
     });
   } catch (error) {
     console.error("Error prefetching initial data:", error);
@@ -106,7 +105,6 @@ function App() {
                             </SidebarInset>
                         </SidebarProvider>
                         <Toaster />
-                        <AgentStatusListener />
                     </TooltipProvider>
                 </BrowserRouter>
             </div>

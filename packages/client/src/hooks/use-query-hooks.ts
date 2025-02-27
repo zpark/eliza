@@ -42,16 +42,16 @@ export function useAgents(options = {}) {
   return useQuery({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
-    staleTime: STALE_TIMES.NEVER, // Rely on SSE for updates
-    // Only poll when online, as a backup to SSE
+    staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
+    // Use more frequent polling for real-time updates
     refetchInterval: !network.isOffline 
-      ? STALE_TIMES.STANDARD 
+      ? STALE_TIMES.FREQUENT 
       : false,
     // Disable polling when the tab is not active
     refetchIntervalInBackground: false,
     // Configure based on network conditions
     ...(!network.isOffline && network.effectiveType === 'slow-2g' && {
-      refetchInterval: STALE_TIMES.RARE // Poll less frequently on slow connections
+      refetchInterval: STALE_TIMES.STANDARD // Poll less frequently on slow connections
     }),
     // Allow overriding any options
     ...options
@@ -65,13 +65,19 @@ export function useAgent(agentId: UUID | undefined | null, options = {}) {
   return useQuery({
     queryKey: ['agent', agentId],
     queryFn: () => apiClient.getAgent(agentId || ''),
-    staleTime: STALE_TIMES.NEVER, // Rely on SSE for updates
+    staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
     enabled: Boolean(agentId),
-    // Only poll when online, as a backup to SSE
-    refetchInterval: !network.isOffline 
-      ? STALE_TIMES.STANDARD 
+    // Use more frequent polling for real-time updates
+    refetchInterval: !network.isOffline && Boolean(agentId) 
+      ? STALE_TIMES.FREQUENT 
       : false,
+    // Disable polling when the tab is not active
     refetchIntervalInBackground: false,
+    // Configure based on network conditions
+    ...(!network.isOffline && network.effectiveType === 'slow-2g' && {
+      refetchInterval: STALE_TIMES.STANDARD // Poll less frequently on slow connections
+    }),
+    // Allow overriding any options
     ...options
   });
 }
@@ -119,18 +125,15 @@ export function useStartAgent() {
   return useMutation({
     mutationFn: (characterName: string) => apiClient.startAgentByName(characterName),
     onSuccess: (data) => {
-      // We don't immediately invalidate because SSE will update the data
-      // But we'll schedule a backup invalidation in case SSE fails
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['agents'] });
-        if (data?.id) {
-          queryClient.invalidateQueries({ queryKey: ['agent', data.id] });
-        }
-      }, 3000);
+      // Immediately invalidate the queries for fresh data
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: ['agent', data.id] });
+      }
       
       toast({
         title: 'Agent Started',
-        description: `Started agent with character: ${data?.character?.name || 'Unknown'}`,
+        description: `${data?.name || 'Agent'} is now running`,
       });
     },
     onError: (error) => {
@@ -163,11 +166,14 @@ export function useStopAgent() {
       }
     },
     onSuccess: (_, agentId) => {
-      // Schedule a backup invalidation in case SSE fails
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['agents'] });
-        queryClient.invalidateQueries({ queryKey: ['agent', agentId] });
-      }, 3000);
+      // Immediately invalidate the queries for fresh data
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['agent', agentId] });
+      
+      toast({
+        title: 'Agent Stopped',
+        description: 'The agent has been successfully stopped',
+      });
     },
     onError: (error, agentId) => {
       // Force invalidate on error
