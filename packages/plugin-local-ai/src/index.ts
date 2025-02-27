@@ -1377,24 +1377,7 @@ export const localAIPlugin: Plugin = {
       ]
     }
   ],
-  routes: [
-    {
-      path: "/local-ai",
-      type: "GET",
-      handler: async (_req: unknown, res: { json: (data: unknown) => void }) => {
-        res.json({
-          status: "healthy",
-          models: {
-            small: true,
-            large: true,
-            vision: true,
-            transcription: true,
-            tts: true
-          }
-        });
-      }
-    }
-  ]
+
 };
 
 export default localAIPlugin;

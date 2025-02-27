@@ -30,6 +30,7 @@ export class TTSManager {
     this.downloadManager = DownloadManager.getInstance(this.cacheDir, this.modelsDir);
     this.ensureCacheDirectory();
     logger.info("TTSManager initialized");
+    // Add a variable to deactivate the logging of the configuration
     // logger.info("TTSManager initialized with configuration:", {
     //   cacheDir: this.cacheDir,
     //   modelsDir: this.modelsDir,
