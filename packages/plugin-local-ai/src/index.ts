@@ -1379,7 +1379,7 @@ export const localAIPlugin: Plugin = {
   ],
   routes: [
     {
-      path: "/health",
+      path: "/local-ai",
       type: "GET",
       handler: async (_req: unknown, res: { json: (data: unknown) => void }) => {
         res.json({
