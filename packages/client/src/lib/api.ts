@@ -1,5 +1,6 @@
 import type { UUID, Character } from "@elizaos/core";
 import { characterNameToUrl, urlToCharacterName } from "./utils";
+import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
 
@@ -73,14 +74,23 @@ export const apiClient = {
     sendMessage: (
         agentId: string,
         message: string,
-        selectedFile?: File | null
+        selectedFile?: File | null,
+        roomId?: UUID
     ) => {
+        const worldId = WorldManager.getWorldId();
+        
         if (selectedFile) {
             // Use FormData only when there's a file
             const formData = new FormData();
             formData.append("text", message);
             formData.append("user", "user");
             formData.append("file", selectedFile);
+            // Add roomId if provided
+            if (roomId) {
+                formData.append("roomId", roomId);
+            }
+            // Add worldId
+            formData.append("worldId", worldId);
             
             return fetcher({
                 url: `/agents/${agentId}/message`,
@@ -94,7 +104,9 @@ export const apiClient = {
                 method: "POST",
                 body: {
                     text: message,
-                    user: "user"
+                    user: "user",
+                    roomId: roomId || undefined,
+                    worldId
                 },
             });
     },
@@ -154,8 +166,36 @@ export const apiClient = {
             method: "DELETE",
         });
     },
-    getMemories: (agentId: string, roomId: string) =>
-        fetcher({ url: `/agents/${agentId}/${roomId}/memories` }),
+    getMemories: (agentId: string, roomId: string, options?: { limit?: number; before?: number }) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({ 
+            url: `/agents/${agentId}/${roomId}/memories`,
+            method: "GET",
+            body: { worldId, ...options }
+        });
+    },
+    
+    // Room-related routes
+    getRooms: (agentId: string) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({ 
+            url: `/agents/${agentId}/rooms`,
+            method: "GET",
+            body: { worldId }
+        });
+    },
+    
+    createRoom: (agentId: string, roomName: string) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({
+            url: `/agents/${agentId}/rooms`,
+            method: "POST",
+            body: {
+                name: roomName,
+                worldId
+            }
+        });
+    },
     
     // Character-related routes
     getCharacters: () => 

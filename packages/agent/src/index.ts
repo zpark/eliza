@@ -186,10 +186,6 @@ async function startAgent(
     // add to container
     server.registerAgent(runtime);
     
-    // Send updated agent list to all connected clients via SSE
-    if (typeof server.sendAgentsListUpdate === 'function') {
-      server.sendAgentsListUpdate();
-    }
 
     // report to console
     logger.debug(`Started ${character.name} as ${runtime.agentId}`);

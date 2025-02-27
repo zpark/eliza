@@ -1127,12 +1127,18 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRoomsForParticipant(userId: UUID): Promise<UUID[]> {
+    async getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({ roomId: participantTable.roomId })
                 .from(participantTable)
-                .where(eq(participantTable.userId, userId));
+                .innerJoin(roomTable, eq(participantTable.roomId, roomTable.id))
+                .where(
+                    and(
+                        eq(participantTable.userId, userId),
+                        eq(roomTable.agentId, agentId)
+                    )
+                );
 
             return result.map((row) => row.roomId as UUID);
         });
