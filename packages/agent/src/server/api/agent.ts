@@ -24,11 +24,15 @@ export function agentRouter(
     const router = express.Router();
 
     router.get('/', (_req, res) => {
+        logger.debug("[AGENTS LIST] Retrieving list of all agents");
+        
         const agentsList = Array.from(agents.values()).map((agent) => ({
             id: agent.agentId,
             name: agent.character.name,
             clients: Array.from(agent.getAllClients().keys())
         }));
+        
+        logger.debug(`[AGENTS LIST] Found ${agentsList.length} active agents`);
         res.json({ agents: agentsList });
     });
 
@@ -36,42 +40,72 @@ export function agentRouter(
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
         };
-        if (!agentId) return;
+        if (!agentId) {
+            logger.warn("[AGENT GET] Invalid agent ID format");
+            return;
+        }
 
+        logger.info(`[AGENT GET] Retrieving information for agent: ${agentId}`);
         const agent = agents.get(agentId);
 
         if (!agent) {
+            logger.warn(`[AGENT GET] Agent not found: ${agentId}`);
             res.status(404).json({ error: 'Agent not found' });
             return;
         }
 
+        logger.debug(`[AGENT GET] Found agent: ${agent.character.name} (${agentId})`);
+        
+        // Sanitize sensitive data
         const character = agent?.character;
         if (character?.settings?.secrets) {
             character.settings.secrets = undefined;
+            logger.debug("[AGENT GET] Sanitized secrets from agent settings");
         }
         if (character?.secrets) {
             character.secrets = undefined;
+            logger.debug("[AGENT GET] Sanitized top-level secrets from agent");
         }
 
         res.json({
             id: agent.agentId,
             character: agent.character,
         });
+        
+        logger.debug(`[AGENT GET] Successfully returned agent data for: ${agent.character.name}`);
     });
 
     router.delete('/:agentId', async (req, res) => {
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
         };
-        if (!agentId) return;
+        if (!agentId) {
+            logger.warn("[AGENT DELETE] Invalid agent ID format");
+            return;
+        }
 
+        logger.info(`[AGENT DELETE] Request to delete agent: ${agentId}`);
         const agent: IAgentRuntime = agents.get(agentId);
 
         if (agent) {
-            agent.stop();
-            directClient.unregisterAgent(agent);
-            res.status(204).json({ success: true });
+            const agentName = agent.character.name;
+            logger.info(`[AGENT DELETE] Stopping agent: ${agentName} (${agentId})`);
+            
+            try {
+                agent.stop();
+                logger.success(`[AGENT DELETE] Agent stopped: ${agentName}`);
+                
+                directClient.unregisterAgent(agent);
+                logger.success(`[AGENT DELETE] Agent unregistered: ${agentName}`);
+                
+                res.status(204).json({ success: true });
+                logger.info(`[AGENT DELETE] Successfully deleted agent: ${agentName} (${agentId})`);
+            } catch (error) {
+                logger.error(`[AGENT DELETE] Error deleting agent: ${agentName}`, error);
+                res.status(500).json({ error: 'Error deleting agent', details: error.message });
+            }
         } else {
+            logger.warn(`[AGENT DELETE] Agent not found: ${agentId}`);
             res.status(404).json({ error: 'Agent not found' });
         }
     });
@@ -242,20 +276,39 @@ export function agentRouter(
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
         };
-        if (!agentId) return;
+        if (!agentId) {
+            logger.warn("[AGENT UPDATE] Invalid agent ID format");
+            return;
+        }
 
+        logger.info(`[AGENT UPDATE] Request to update agent: ${agentId}`);
         let agent: IAgentRuntime = agents.get(agentId);
 
+        // Stop and unregister existing agent if found
         if (agent) {
-            agent.stop();
-            directClient.unregisterAgent(agent);
+            const existingName = agent.character.name;
+            logger.info(`[AGENT UPDATE] Stopping existing agent: ${existingName} (${agentId})`);
+            
+            try {
+                agent.stop();
+                logger.success(`[AGENT UPDATE] Successfully stopped existing agent: ${existingName}`);
+                
+                directClient.unregisterAgent(agent);
+                logger.success(`[AGENT UPDATE] Successfully unregistered existing agent: ${existingName}`);
+            } catch (error) {
+                logger.error(`[AGENT UPDATE] Error stopping existing agent:`, error);
+            }
+        } else {
+            logger.info(`[AGENT UPDATE] No existing agent found with ID: ${agentId}, will create new one`);
         }
 
         const character = req.body;
+        logger.debug(`[AGENT UPDATE] Validating character configuration`);
         try {
             validateCharacterConfig(character);
+            logger.debug("[AGENT UPDATE] Character configuration valid for: " + character.name);
         } catch (e) {
-            logger.error(`Error parsing character: ${e}`);
+            logger.error(`[AGENT UPDATE] Error validating character configuration:`, e);
             res.status(400).json({
                 success: false,
                 message: e.message,
@@ -264,11 +317,22 @@ export function agentRouter(
         }
 
         try {
+            logger.info(`[AGENT UPDATE] Starting updated agent: ${character.name}`);
             agent = await directClient.startAgent(character);
             await agent.ensureCharacterExists(character);
-            logger.log(`${character.name} started`);
+            logger.success(`[AGENT UPDATE] Agent successfully updated and started: ${character.name} (${character.id})`);
+            
+            // Notify clients that agent has been updated
+            logger.debug(`[AGENT UPDATE] Sending SSE notification for agent update: ${character.name}`);
+            directClient.notifyClients('agent:updated', {
+                id: character.id,
+                name: character.name,
+                timestamp: Date.now(),
+                status: 'update_complete',
+                message: `Agent ${character.name} has been updated and restarted`
+            });
         } catch (e) {
-            logger.error(`Error starting agent: ${e}`);
+            logger.error(`[AGENT UPDATE] Error starting updated agent:`, e);
             res.status(500).json({
                 success: false,
                 message: e.message,
@@ -276,6 +340,7 @@ export function agentRouter(
             return;
         }
 
+        logger.debug("[AGENT UPDATE] Returning updated agent data for: " + character.name);
         res.json({
             id: character.id,
             character: character,
@@ -287,25 +352,35 @@ export function agentRouter(
             agentId: null,
             roomId: null,
         };
-        if (!agentId || !roomId) return;
+        if (!agentId || !roomId) {
+            logger.warn("[MEMORIES GET] Invalid agent ID or room ID format");
+            return;
+        }
 
+        logger.info(`[MEMORIES GET] Retrieving memories for agent: ${agentId}, room: ${roomId}`);
         let runtime = agents.get(agentId);
 
         if (!runtime) {
+            logger.debug(`[MEMORIES GET] Agent not found by ID, trying to find by name: ${agentId}`);
             runtime = Array.from(agents.values()).find(
                 (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
             );
         }
 
         if (!runtime) {
+            logger.warn(`[MEMORIES GET] Agent not found: ${agentId}`);
             res.status(404).send('Agent not found');
             return;
         }
 
+        logger.debug(`[MEMORIES GET] Found agent: ${runtime.character.name}, fetching memories`);
         try {
             const memories = await runtime.messageManager.getMemories({
                 roomId,
             });
+            
+            logger.debug(`[MEMORIES GET] Retrieved ${memories.length} memories for room: ${roomId}`);
+            
             const response = {
                 agentId,
                 roomId,
@@ -340,32 +415,61 @@ export function agentRouter(
             };
 
             res.json(response);
+            logger.debug(`[MEMORIES GET] Successfully returned ${memories.length} memories`);
         } catch (error) {
-            console.error('Error fetching memories:', error);
+            logger.error('[MEMORIES GET] Error fetching memories:', error);
             res.status(500).json({ error: 'Failed to fetch memories' });
         }
     });
 
     router.post('/start', async (req, res) => {
+        logger.info("[AGENT START] Received request to start a new agent");
         const { characterPath, characterJson } = req.body;
+        
+        // Log request details
+        if (characterPath) {
+            logger.debug(`[AGENT START] Using character path: ${characterPath}`);
+        } else if (characterJson) {
+            logger.debug("[AGENT START] Using provided character JSON");
+        } else {
+            logger.warn("[AGENT START] No character path or JSON provided");
+        }
+        
         try {
             let character: Character;
             if (characterJson) {
+                logger.debug("[AGENT START] Parsing character from JSON");
                 character = await directClient.jsonToCharacter(characterJson);
             } else if (characterPath) {
+                logger.debug(`[AGENT START] Loading character from path: ${characterPath}`);
                 character = await directClient.loadCharacterTryPath(characterPath);
             } else {
-                throw new Error('No character path or JSON provided');
+                const errorMessage = "No character path or JSON provided";
+                logger.error(`[AGENT START] ${errorMessage}`);
+                throw new Error(errorMessage);
             }
-            await directClient.startAgent(character);
-            logger.log(`${character.name} started`);
+            
+            logger.info(`[AGENT START] Starting agent for character: ${character.name}`);
+            const agent = await directClient.startAgent(character);
+            logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
+
+            // Notify clients that agent has started
+            logger.debug(`[AGENT START] Sending SSE notification for agent: ${character.name}`);
+            directClient.notifyClients('agent:started', {
+                id: character.id,
+                name: character.name,
+                timestamp: Date.now(),
+                status: 'startup_complete',
+                message: `Agent ${character.name} has started successfully`
+            });
 
             res.json({
                 id: character.id,
                 character: character,
             });
+            logger.debug(`[AGENT START] Successfully returned agent data for: ${character.name}`);
         } catch (e) {
-            logger.error(`Error parsing character: ${e}`);
+            logger.error(`[AGENT START] Error starting agent: ${e}`);
             res.status(400).json({
                 error: e.message,
             });
@@ -375,42 +479,58 @@ export function agentRouter(
 
     router.post('/start/:characterName', async (req, res) => {
         const characterName = req.params.characterName;
+        logger.info(`[AGENT START BY NAME] Request to start agent with character name: ${characterName}`);
+        
         try {
             let character: Character;
+            let source = "";
 
+            logger.debug(`[AGENT START BY NAME] Looking for character in database: ${characterName}`);
             const anyAgent = Array.from(agents.values())[0];
             if (anyAgent?.databaseAdapter) {
                 character = await anyAgent.databaseAdapter.getCharacter(characterName);
+                if (character) {
+                    source = "database";
+                    logger.debug(`[AGENT START BY NAME] Found character in database: ${characterName}`);
+                }
             }
 
             if (!character) {
                 try {
+                    logger.debug(`[AGENT START BY NAME] Trying to load character from filesystem: ${characterName}`);
                     character = await directClient.loadCharacterTryPath(characterName);
+                    source = "filesystem";
+                    logger.debug(`[AGENT START BY NAME] Found character in filesystem: ${characterName}`);
                 } catch (e) {
+                    logger.debug(`[AGENT START BY NAME] Character not found in filesystem, checking running agents: ${characterName}`);
                     const existingAgent = Array.from(agents.values()).find(
                         (a) => a.character.name.toLowerCase() === characterName.toLowerCase()
                     );
 
                     if (!existingAgent) {
-                        res.status(404).json({
-                            error: `Character '${characterName}' not found in database, filesystem, or running agents`
-                        });
+                        const errorMsg = `Character '${characterName}' not found in database, filesystem, or running agents`;
+                        logger.warn(`[AGENT START BY NAME] ${errorMsg}`);
+                        res.status(404).json({ error: errorMsg });
                         return;
                     }
 
                     character = existingAgent.character;
+                    source = "running agent";
+                    logger.debug(`[AGENT START BY NAME] Found character from running agent: ${characterName}`);
                 }
             }
 
+            logger.info(`[AGENT START BY NAME] Starting agent for character: ${character.name} (source: ${source})`);
             await directClient.startAgent(character);
-            logger.log(`${character.name} started`);
+            logger.success(`[AGENT START BY NAME] Agent started successfully: ${character.name} (${character.id})`);
 
             res.json({
                 id: character.id,
                 character: character,
             });
+            logger.debug(`[AGENT START BY NAME] Successfully returned agent data for: ${character.name}`);
         } catch (e) {
-            logger.error(`Error starting character by name: ${e}`);
+            logger.error(`[AGENT START BY NAME] Error starting character by name: ${e}`);
             res.status(400).json({
                 error: `Failed to start character '${characterName}': ${e.message}`,
             });
@@ -423,10 +543,48 @@ export function agentRouter(
         const agent: IAgentRuntime = agents.get(agentId);
 
         if (agent) {
-            agent.stop();
-            directClient.unregisterAgent(agent);
-            res.json({ success: true });
+            // Store the agent name before stopping
+            const agentName = agent.character.name;
+            const agentInfo = {
+                id: agentId,
+                name: agentName
+            };
+            
+            logger.info(`[AGENT SHUTDOWN] Starting shutdown process for agent ${agentName} (${agentId})`);
+            logger.info(`[AGENT SHUTDOWN] Agent has ${agent.getAllClients().size} active clients to disconnect`);
+            
+            try {
+                logger.info(`[AGENT SHUTDOWN] Stopping agent ${agentName} clients...`);
+                await agent.stop();
+                logger.success(`[AGENT SHUTDOWN] Agent ${agentName} clients successfully stopped`);
+            } catch (error) {
+                logger.error(`[AGENT SHUTDOWN] Error stopping agent ${agentName} clients:`, error);
+            }
+            
+            try {
+                logger.info(`[AGENT SHUTDOWN] Unregistering agent ${agentName} from server`);
+                directClient.unregisterAgent(agent);
+                logger.success(`[AGENT SHUTDOWN] Agent ${agentName} successfully unregistered from server`);
+            } catch (error) {
+                logger.error(`[AGENT SHUTDOWN] Error unregistering agent ${agentName}:`, error);
+            }
+            
+            // Notify clients that agent has stopped with enhanced status information
+            logger.info(`[AGENT SHUTDOWN] Sending SSE notification for agent ${agentName} shutdown`);
+            directClient.notifyClients('agent:stopped', {
+                ...agentInfo,
+                timestamp: Date.now(),
+                status: 'shutdown_complete',
+                message: `Agent ${agentName} has been successfully stopped`
+            });
+            
+            res.json({ 
+                success: true,
+                message: `Agent ${agentName} shutdown complete`,
+                timestamp: Date.now()
+            });
         } else {
+            logger.warn(`[AGENT SHUTDOWN] Agent with ID ${agentId} not found`);
             res.status(404).json({ error: 'Agent not found' });
         }
     });
@@ -461,31 +619,41 @@ export function agentRouter(
 
     router.post('/:agentId/speak', async (req, res) => {
         const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
-        if (!agentId) return;
+        if (!agentId) {
+            logger.warn("[SPEAK] Invalid agent ID format");
+            return;
+        }
 
+        logger.info(`[SPEAK] Request to process speech for agent: ${agentId}`);
         const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
         const roomId = stringToUuid(rawRoomId ?? `default-room-${agentId}`);
         const userId = stringToUuid(rawUserId ?? "user");
 
         if (!text) {
+            logger.warn("[SPEAK] No text provided in request");
             res.status(400).send("No text provided");
             return;
         }
 
+        logger.debug(`[SPEAK] Looking up agent: ${agentId} for text processing`);
         let runtime = agents.get(agentId);
         if (!runtime) {
+            logger.debug(`[SPEAK] Agent not found by ID, trying to find by name: ${agentId}`);
             runtime = Array.from(agents.values()).find(
                 (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
             );
         }
 
         if (!runtime) {
+            logger.warn(`[SPEAK] Agent not found: ${agentId}`);
             res.status(404).send("Agent not found");
             return;
         }
 
+        logger.debug(`[SPEAK] Found agent: ${runtime.character.name}, processing speech request`);
         try {
             // Process message through agent
+            logger.debug(`[SPEAK] Ensuring connection for user: ${userId} in room: ${roomId}`);
             await runtime.ensureConnection({
                 userId,
                 roomId,
@@ -496,6 +664,7 @@ export function agentRouter(
             });
 
             const messageId = stringToUuid(Date.now().toString());
+            logger.debug(`[SPEAK] Creating content object for message: ${messageId}`);
 
             const content: Content = {
                 text,
@@ -520,18 +689,21 @@ export function agentRouter(
                 createdAt: Date.now(),
             };
 
+            logger.debug(`[SPEAK] Creating memory for user message`);
             await runtime.messageManager.createMemory(memory);
 
+            logger.debug(`[SPEAK] Composing state for message processing`);
             const state = await runtime.composeState(userMessage, {
                 agentName: runtime.character.name,
             });
 
-            
+            logger.debug(`[SPEAK] Creating context for LLM processing`);
             const context = composeContext({
                 state,
                 template: messageHandlerTemplate,
             });
 
+            logger.info(`[SPEAK] Using LLM to generate response`);
             const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
                 messages: [{
                     role: 'system',
@@ -542,6 +714,15 @@ export function agentRouter(
                 }]
             });
 
+            if (!response) {
+                logger.error(`[SPEAK] No response received from LLM`);
+                res.status(500).send(
+                    "No response from generateMessageResponse"
+                );
+                return;
+            }
+
+            logger.debug(`[SPEAK] Creating memory for agent response`);
             // save response to memory
             const responseMessage = {
                 ...userMessage,
@@ -551,13 +732,7 @@ export function agentRouter(
 
             await runtime.messageManager.createMemory(responseMessage);
 
-            if (!response) {
-                res.status(500).send(
-                    "No response from generateMessageResponse"
-                );
-                return;
-            }
-
+            logger.debug(`[SPEAK] Evaluating and processing actions`);
             await runtime.evaluate(memory, state);
 
             const _result = await runtime.processActions(
@@ -569,17 +744,20 @@ export function agentRouter(
                 }
             );
 
+            logger.info(`[SPEAK] Generating speech from text response`);
             const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, response.text);
             const audioBuffer = await speechResponse.arrayBuffer();
 
+            logger.debug(`[SPEAK] Setting response headers and sending audio data`);
             res.set({
                 "Content-Type": "audio/mpeg",
                 "Transfer-Encoding": "chunked",
             });
 
             res.send(Buffer.from(audioBuffer));
+            logger.success(`[SPEAK] Successfully processed and sent speech response for: ${runtime.character.name}`);
         } catch (error) {
-            logger.error("Error processing message or generating speech:", error);
+            logger.error("[SPEAK] Error processing message or generating speech:", error);
             res.status(500).json({
                 error: "Error processing message or generating speech",
                 details: error.message,
@@ -589,32 +767,43 @@ export function agentRouter(
 
     router.post('/:agentId/tts', async (req, res) => {
         const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
-        if (!agentId) return;
+        if (!agentId) {
+            logger.warn("[TTS] Invalid agent ID format");
+            return;
+        }
 
+        logger.info(`[TTS] Request to convert text to speech for agent: ${agentId}`);
         const { text } = req.body;
         if (!text) {
+            logger.warn("[TTS] No text provided in request");
             res.status(400).send("No text provided");
             return;
         }
 
+        logger.debug(`[TTS] Looking up agent: ${agentId}`);
         const runtime = agents.get(agentId);
         if (!runtime) {
+            logger.warn(`[TTS] Agent not found: ${agentId}`);
             res.status(404).send("Agent not found");
             return;
         }
 
+        logger.debug(`[TTS] Found agent: ${runtime.character.name}, generating speech`);
         try {
+            logger.info(`[TTS] Using text-to-speech model to generate audio`);
             const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, text);
             const audioBuffer = await speechResponse.arrayBuffer();
 
+            logger.debug(`[TTS] Setting response headers and sending audio data`);
             res.set({
                 "Content-Type": "audio/mpeg",
                 "Transfer-Encoding": "chunked",
             });
 
             res.send(Buffer.from(audioBuffer));
+            logger.success(`[TTS] Successfully generated and sent speech for: ${runtime.character.name}`);
         } catch (error) {
-            logger.error("Error generating speech:", error);
+            logger.error("[TTS] Error generating speech:", error);
             res.status(500).json({
                 error: "Error generating speech",
                 details: error.message,

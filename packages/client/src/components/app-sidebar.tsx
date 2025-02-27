@@ -24,7 +24,8 @@ export function AppSidebar() {
     const query = useQuery({
         queryKey: ["agents"],
         queryFn: () => apiClient.getAgents(),
-        refetchInterval: 5_000,
+        // Remove polling since we now use SSE for real-time updates
+        staleTime: Number.POSITIVE_INFINITY, // Only refetch on explicit invalidation
     });
 
     const agents = query?.data?.agents;

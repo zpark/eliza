@@ -9,6 +9,7 @@ import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
 import useVersion from "./hooks/use-version";
+import AgentStatusListener from "./components/agent-status-listener";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -49,6 +50,7 @@ function App() {
                             </SidebarInset>
                         </SidebarProvider>
                         <Toaster />
+                        <AgentStatusListener />
                     </TooltipProvider>
                 </BrowserRouter>
             </div>

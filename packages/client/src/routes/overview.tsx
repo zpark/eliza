@@ -10,7 +10,8 @@ export default function AgentRoute() {
     const query = useQuery({
         queryKey: ["agent", agentId],
         queryFn: () => apiClient.getAgent(agentId ?? ""),
-        refetchInterval: 5_000,
+        // Remove polling since we now use SSE for real-time updates
+        staleTime: Number.POSITIVE_INFINITY, // Only refetch on explicit invalidation
         enabled: Boolean(agentId),
     });
 

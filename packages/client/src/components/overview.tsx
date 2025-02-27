@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import type { Character } from "@elizaos/core";
 import { Component, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -166,6 +168,8 @@ const TWITTER_CHECKBOXES: CheckboxField[] = [
 export default function Overview({ character }: { character: Character }) {
   const { toast } = useToast();
   const { data: plugins, error } = usePlugins();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const agentId = character.id;
 
@@ -256,6 +260,10 @@ export default function Overview({ character }: { character: Character }) {
 
       // Send the character update request to the agent endpoint
       await apiClient.updateAgent(agentId, characterValue);
+      
+      // Invalidate both the agent query and the agents list
+      queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
       
       toast({
         title: "Success",
@@ -477,20 +485,56 @@ export default function Overview({ character }: { character: Character }) {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4 mt-6">
+        <div className="flex justify-between gap-4 mt-6">
           <Button
             type="button"
-            variant="outline"
-            onClick={() => setCharacterValue(character)}
+            variant="destructive"
+            onClick={async () => {
+              try {
+                if (!agentId) {
+                  throw new Error("Agent ID is missing");
+                }
+                
+                await apiClient.stopAgent(agentId);
+                
+                // Invalidate queries before showing toast and navigating
+                queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+                queryClient.invalidateQueries({ queryKey: ["agents"] });
+                
+                toast({
+                  title: "Success",
+                  description: "Agent stopped successfully",
+                });
+                
+                // Navigate to home page after successfully stopping the agent
+                navigate('/');
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: error instanceof Error ? error.message : "Failed to stop agent",
+                  variant: "destructive",
+                });
+              }
+            }}
           >
-            Reset Changes
+            Stop Agent
           </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : 'Save Changes'}
-          </Button>
+          
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCharacterValue(character)}
+            >
+              Reset Changes
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
