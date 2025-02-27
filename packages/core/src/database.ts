@@ -12,7 +12,8 @@ import type {
     RoomData,
     UUID,
     WorldData,
-    Agent
+    Agent,
+    Component
 } from "./types.ts";
 
 /**
@@ -66,6 +67,46 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract updateEntity(entity: Entity): Promise<void>;
 
+    /**
+     * Retrieves a single component by entity ID and type.
+     * @param entityId The UUID of the entity the component belongs to
+     * @param type The type identifier for the component
+     * @param worldId Optional UUID of the world the component belongs to
+     * @param sourceEntityId Optional UUID of the source entity
+     * @returns Promise resolving to the Component if found, null otherwise
+     */
+    abstract getComponent(entityId: UUID, type: string, worldId?: UUID, sourceEntityId?: UUID): Promise<Component | null>;
+
+    /**
+     * Retrieves all components for an entity.
+     * @param entityId The UUID of the entity to get components for
+     * @param worldId Optional UUID of the world to filter components by
+     * @param sourceEntityId Optional UUID of the source entity to filter by
+     * @returns Promise resolving to array of Component objects
+     */
+    abstract getComponents(entityId: UUID, worldId?: UUID, sourceEntityId?: UUID): Promise<Component[]>;
+
+    /**
+     * Creates a new component in the database.
+     * @param component The component object to create
+     * @returns Promise resolving to true if creation was successful
+     */
+    abstract createComponent(component: Component): Promise<boolean>;
+
+    /**
+     * Updates an existing component in the database.
+     * @param component The component object with updated properties
+     * @returns Promise that resolves when the update is complete
+     */
+    abstract updateComponent(component: Component): Promise<void>;
+
+    /**
+     * Deletes a component from the database.
+     * @param componentId The UUID of the component to delete
+     * @returns Promise that resolves when the deletion is complete
+     */
+    abstract deleteComponent(componentId: UUID): Promise<void>;
+    
     /**
      * Retrieves memories based on the specified parameters.
      * @param params An object containing parameters for the memory retrieval.

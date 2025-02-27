@@ -499,7 +499,11 @@ export interface Relationship {
 export interface Component {
   id: UUID;
   entityId: UUID;
-  name: string;
+  agentId: UUID;
+  roomId: UUID;
+  worldId: UUID;
+  sourceEntityId: UUID;
+  type: string;
   data: {
     [key: string]: any;
   };
@@ -780,6 +784,21 @@ export interface IDatabaseAdapter {
 
   /** Update entity */
   updateEntity(entity: Entity): Promise<void>;
+
+  /** Get component by ID */
+  getComponent(entityId: UUID, type: string, worldId?: UUID, sourceEntityId?: UUID): Promise<Component | null>;
+
+  /** Get all components for an entity */
+  getComponents(entityId: UUID, worldId?: UUID, sourceEntityId?: UUID): Promise<Component[]>;
+
+  /** Create component */
+  createComponent(component: Component): Promise<boolean>;
+  
+  /** Update component */
+  updateComponent(component: Component): Promise<void>;
+
+  /** Delete component */
+  deleteComponent(componentId: UUID): Promise<void>;
 
   /** Get memories matching criteria */
   getMemories(params: {

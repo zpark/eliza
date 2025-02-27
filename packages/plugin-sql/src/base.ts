@@ -1,6 +1,7 @@
 import {
     Actor,
     Agent,
+    Component,
     DatabaseAdapter,
     logger,
     type Character,
@@ -288,6 +289,48 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(entityTable).set(entity).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
+        });
+    }
+
+    async getComponent(entityId: UUID, type: string, worldId?: UUID, sourceEntityId?: UUID): Promise<Component | null> {
+        return this.withDatabase(async () => {
+            const conditions = [
+                eq(componentTable.entityId, entityId),
+                eq(componentTable.type, type)
+            ];
+
+            if (worldId) {
+                conditions.push(eq(componentTable.worldId, worldId));
+            }
+
+            if (sourceEntityId) {
+                conditions.push(eq(componentTable.sourceEntityId, sourceEntityId));
+            }
+
+            const result = await this.db
+                .select()
+                .from(componentTable)
+                .where(and(...conditions));
+            return result.length > 0 ? result[0] : null;
+        });
+    }
+
+    async createComponent(component: Component): Promise<boolean> {
+        return this.withDatabase(async () => {
+            await this.db.insert(componentTable).values(component);
+            return true;
+        });
+    }
+
+    async updateComponent(component: Component): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.update(componentTable).set(component).where(eq(componentTable.id, component.id));
+        });
+    }
+
+    async deleteComponent(componentId: UUID): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.delete(componentTable).where(eq(componentTable.id, componentId));
         });
     }
 
