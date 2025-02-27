@@ -651,6 +651,9 @@ export type Plugin = {
     /** Plugin name */
     name: string;
 
+    /** Plugin npm name */
+    npmName?: string;
+
     /** Plugin configuration */
     config?: { [key: string]: any };
 

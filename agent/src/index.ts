@@ -4,6 +4,7 @@ import {
     AgentRuntime,
     CacheManager,
     CacheStore,
+    type Plugin,
     type Character,
     type ClientInstance,
     DbCacheAdapter,
@@ -21,6 +22,7 @@ import {
 import { defaultCharacter } from "./defaultCharacter.ts";
 
 import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
+import JSON5 from 'json5';
 
 import fs from "fs";
 import net from "net";
@@ -62,7 +64,7 @@ export function parseArguments(): {
             })
             .parseSync();
     } catch (error) {
-        elizaLogger.error("Error parsing arguments:", error);
+        console.error("Error parsing arguments:", error);
         return {};
     }
 }
@@ -116,7 +118,7 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
     if (!jsonText) return [];
     const loadedCharacters = [];
     try {
-        const character = JSON.parse(jsonText);
+        const character = JSON5.parse(jsonText);
         validateCharacterConfig(character);
 
         // .id isn't really valid
@@ -182,7 +184,7 @@ async function loadCharactersFromUrl(url: string): Promise<Character[]> {
         }
         return characters;
     } catch (e) {
-        elizaLogger.error(`Error loading character(s) from ${url}: ${e}`);
+        console.error(`Error loading character(s) from ${url}: `, e);
         process.exit(1);
     }
 }
@@ -213,9 +215,11 @@ async function jsonToCharacter(
     }
     // Handle plugins
     character.plugins = await handlePluginImporting(character.plugins);
+    elizaLogger.info(character.name, 'loaded plugins:', "[\n    " + character.plugins.map(p => `"${p.npmName}"`).join(", \n    ") + "\n]");
 
     // Handle Post Processors plugins
     if (character.postProcessors?.length > 0) {
+        elizaLogger.info(character.name, 'loading postProcessors', character.postProcessors);
         character.postProcessors = await handlePluginImporting(character.postProcessors);
     }
 
@@ -242,7 +246,7 @@ async function loadCharacter(filePath: string): Promise<Character> {
     if (!content) {
         throw new Error(`Character file not found: ${filePath}`);
     }
-    const character = JSON.parse(content);
+    const character = JSON5.parse(content);
     return jsonToCharacter(filePath, character);
 }
 
@@ -265,7 +269,7 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
         ), // relative to project root characters dir
     ];
 
-    elizaLogger.info(
+    elizaLogger.debug(
         "Trying paths:",
         pathsToTry.map((p) => ({
             path: p,
@@ -293,10 +297,10 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
     }
     try {
         const character: Character = await loadCharacter(resolvedPath);
-        elizaLogger.info(`Successfully loaded character from: ${resolvedPath}`);
+        elizaLogger.success(`Successfully loaded character from: ${resolvedPath}`);
         return character;
     } catch (e) {
-        elizaLogger.error(`Error parsing character from ${resolvedPath}: ${e}`);
+        console.error(`Error parsing character from ${resolvedPath}: `, e);
         throw new Error(`Error parsing character from ${resolvedPath}: ${e}`);
     }
 }
@@ -367,30 +371,35 @@ export async function loadCharacters(
 
 async function handlePluginImporting(plugins: string[]) {
     if (plugins.length > 0) {
-        elizaLogger.info("Plugins are: ", plugins);
+        // this logging should happen before calling, so we can include important context
+        //elizaLogger.info("Plugins are: ", plugins);
         const importedPlugins = await Promise.all(
             plugins.map(async (plugin) => {
                 try {
-                    const importedPlugin = await import(plugin);
+                    const importedPlugin:Plugin = await import(plugin);
                     const functionName =
                         plugin
                             .replace("@elizaos/plugin-", "")
                             .replace("@elizaos-plugins/plugin-", "")
                             .replace(/-./g, (x) => x[1].toUpperCase()) +
                         "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
-                    return (
+                    if (!importedPlugin[functionName] && !importedPlugin.default) {
+                      elizaLogger.warn(plugin, 'does not have an default export or', functionName)
+                    }
+                    return {...(
                         importedPlugin.default || importedPlugin[functionName]
-                    );
+                    ), npmName: plugin };
                 } catch (importError) {
-                    elizaLogger.error(
+                    console.error(
                         `Failed to import plugin: ${plugin}`,
                         importError
                     );
-                    return []; // Return null for failed imports
+                    return false; // Return null for failed imports
                 }
             })
-        );
-        return importedPlugins;
+        )
+        // remove plugins that failed to load, so agent can try to start
+        return importedPlugins.filter(p => !!p);
     } else {
         return [];
     }
@@ -852,9 +861,11 @@ const startAgents = async () => {
     directClient.startAgent = async (character) => {
         // Handle plugins
         character.plugins = await handlePluginImporting(character.plugins);
+        elizaLogger.info(character.name, 'loaded plugins:', '[' + character.plugins.map(p => `"${p.npmName}"`).join(', ') + ']');
 
         // Handle Post Processors plugins
         if (character.postProcessors?.length > 0) {
+            elizaLogger.info(character.name, 'loading postProcessors', character.postProcessors);
             character.postProcessors = await handlePluginImporting(character.postProcessors);
         }
         // character's post processing
@@ -870,7 +881,7 @@ const startAgents = async () => {
     directClient.start(serverPort);
 
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
-        elizaLogger.log(`Server started on alternate port ${serverPort}`);
+        elizaLogger.warn(`Server started on alternate port ${serverPort}`);
     }
 
     elizaLogger.info(
