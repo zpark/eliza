@@ -761,6 +761,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         const ownerId = createUniqueUuid(this.runtime, fullGuild.ownerId);
 
         const standardizedData = {
+          name: fullGuild.name,
           runtime: this.runtime,
           rooms: await this.buildStandardizedRooms(fullGuild, worldId),
           users: await this.buildStandardizedUsers(fullGuild),

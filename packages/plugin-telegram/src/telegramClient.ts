@@ -45,14 +45,15 @@ export class TelegramClient implements ClientInstance {
         this.messageManager.bot = this.bot;
         
         // Emit standardized event that we've connected
-        this.runtime.emitEvent("SERVER_CONNECTED", {
-            runtime: this.runtime,
-            server: {
-                id: "telegram-main",
-                name: "Telegram"
-            },
-            source: "telegram"
-        });
+        // this.runtime.emitEvent("SERVER_CONNECTED", {
+        //     name: "Telegram",
+        //     runtime: this.runtime,
+        //     server: {
+        //         id: "telegram-main",
+        //         name: "Telegram"
+        //     },
+        //     source: "telegram"
+        // });
     }
 
     private async isGroupAuthorized(ctx: Context): Promise<boolean> {

@@ -24,7 +24,7 @@ export async function getUserServerRole(
   serverId: string
 ): Promise<RoleName> {
   try {
-    const worldId = createUniqueUuid(this.runtime, serverId);
+    const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata?.roles) {

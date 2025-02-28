@@ -6,13 +6,17 @@ import type { Character, IAgentRuntime } from "@elizaos/core";
 import communityManager from "./communityManager";
 import complianceOfficer from "./complianceOfficer";
 import socialMediaManager from "./socialMediaManager";
-import counselor from "./counselor";
+import liaison from "./liaison";
+import projectManager from "./projectManager";
+import devSupport from "./devSupport";
 
-export const swarm: {character: Character, init: (runtime: IAgentRuntime) => Promise<void>}[] = [
+export const swarm: {character: Character, init: (runtime: IAgentRuntime) => void}[] = [
   complianceOfficer,
   communityManager,
   socialMediaManager,
-  counselor,
+  liaison,
+  projectManager,
+  devSupport,
 ];
 
 export default swarm;
