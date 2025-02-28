@@ -1,7 +1,6 @@
 import PageTitle from "@/components/page-title";
 import { ActionCard } from "@/components/ui/action-card";
 import { useAgents } from "@/hooks/use-query-hooks";
-import type { UUID } from "@elizaos/core";
 import { Cog } from "lucide-react";
 
 export default function Home() {
@@ -38,12 +37,12 @@ export default function Home() {
             )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {agents?.map((agent) => (
+                {agents?.sort((a, b) => Number(b?.enabled) - Number(a?.enabled)).map((agent) => (
                     <ActionCard
                         key={agent.id}
                         name={agent.character.name}
                         primaryText={agent.enabled ? "Chat" : "Start"}
-                        primaryVariant="default"
+                        primaryVariant={agent.enabled ? "default" : "secondary"}
                         primaryLink={`/chat/${agent.id}`}
                         secondaryIcon={<Cog className="h-4 w-4" />}
                         secondaryTitle="Agent settings"

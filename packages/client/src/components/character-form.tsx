@@ -134,6 +134,7 @@ export type CharacterFormProps = {
   onReset?: () => void;
   submitButtonText?: string;
   deleteButtonText?: string;
+  deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
 };
@@ -148,6 +149,7 @@ export default function CharacterForm({
   onReset,
   submitButtonText = "Save Changes",
   deleteButtonText = "Delete",
+  deleteButtonVariant = "destructive",
   customComponents = []
 }: CharacterFormProps) {
   const { toast } = useToast();
@@ -333,7 +335,7 @@ export default function CharacterForm({
             {onDelete && (
               <Button
                 type="button"
-                variant="destructive"
+                variant={deleteButtonVariant}
                 onClick={handleDelete}
                 disabled={isDeleting}
               >

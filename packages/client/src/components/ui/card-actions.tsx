@@ -14,7 +14,7 @@ export type CardActionProps = {
   /**
    * Primary action variant
    */
-  primaryVariant?: "default" | "outline";
+  primaryVariant?: "default" | "outline" | "ghost" | "secondary" ;
   /**
    * Primary action click handler
    */

@@ -30,7 +30,7 @@ export function agentRouter(
         res.json({ agents });
     });
     
-    router.get('/:agentId', (req, res) => {
+    router.get('/:agentId', async (req, res) => {
         if (!req.params.agentId) {
             logger.warn("[AGENT GET] Invalid agent ID format");
             return;
@@ -43,7 +43,7 @@ export function agentRouter(
         }
 
         logger.info(`[AGENT GET] Retrieving information for agent: ${agentId}`);
-        const agent = agents.get(agentId);
+        const agent = await server?.database.getAgent(agentId);
 
         if (!agent) {
             logger.warn(`[AGENT GET] Agent not found: ${agentId}`);
@@ -65,7 +65,8 @@ export function agentRouter(
         }
 
         res.json({
-            id: agent.agentId,
+            id: agentId,
+            enabled: agent.enabled,
             character: agent.character,
         });
         

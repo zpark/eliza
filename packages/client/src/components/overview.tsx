@@ -1,7 +1,7 @@
 import { usePlugins } from "@/hooks/use-plugins";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
-import type { Character } from "@elizaos/core";
+import type { Character, UUID } from "@elizaos/core";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { useAgent } from "@/hooks/use-query-hooks";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+// Define interface for agent data response that includes enabled property
+interface AgentResponse {
+  id: UUID;
+  character: Character;
+  enabled: boolean;
+}
 
 // Define Twitter checkboxes for agent-specific settings
 const TWITTER_CHECKBOXES = [
@@ -39,8 +47,11 @@ export default function Overview({ character }: { character: Character }) {
   const { data: plugins, error } = usePlugins();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: agentData } = useAgent(character.id);
 
   const agentId = character.id;
+  // The API actually returns an enabled property even though the type doesn't include it
+  const isAgentEnabled = Boolean((agentData as unknown as AgentResponse)?.enabled);
   const [characterValue, setCharacterValue] = useState<Character>(character);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -136,6 +147,32 @@ export default function Overview({ character }: { character: Character }) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to stop agent",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleStartAgent = async () => {
+    try {
+      if (!agentId) {
+        throw new Error("Agent ID is missing");
+      }
+      
+      await apiClient.startAgentByName(character.name);
+      
+      // Invalidate queries for fresh data
+      queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+      
+      toast({
+        title: "Success",
+        description: "Agent started successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to start agent",
         variant: "destructive",
       });
       throw error;
@@ -283,8 +320,9 @@ export default function Overview({ character }: { character: Character }) {
       onSubmit={handleSubmit}
       onReset={() => setCharacterValue(character)}
       submitButtonText="Save Changes"
-      deleteButtonText="Stop Agent"
-      onDelete={handleStopAgent}
+      deleteButtonText={isAgentEnabled ? "Stop Agent" : "Start Agent"}
+      deleteButtonVariant={isAgentEnabled ? "destructive" : "default"}
+      onDelete={isAgentEnabled ? handleStopAgent : handleStartAgent}
       isAgent={true}
       customComponents={[
         {

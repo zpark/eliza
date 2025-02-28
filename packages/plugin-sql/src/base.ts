@@ -155,16 +155,25 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         this.embeddingDimension = DIMENSION_MAP[dimension];
     }
 
-    async getAgent(agentId: UUID): Promise<Agent | null> {
+    async getAgent(agentId: UUID): Promise<Agent & { character: Character } | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select()
+                .select({
+                    agent: agentTable,
+                    character: characterTable
+                })
                 .from(agentTable)
+                .leftJoin(characterTable, eq(agentTable.characterId, characterTable.id))
                 .where(eq(agentTable.id, agentId))
                 .limit(1);
 
             if (result.length === 0) return null;
-            return result[0];
+            return {
+                ...result[0].agent,
+                character: {
+                    ...result[0].character,
+                }
+            };
         });
     }
 

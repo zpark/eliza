@@ -81,11 +81,21 @@ const useNetworkStatus = () => {
   };
 };
 
+// Add AgentData interface
+interface AgentData {
+  id: string;
+  character: { 
+    name: string;
+    // Include other character properties as needed
+  };
+  enabled: boolean;
+}
+
 // Hook for fetching agents with smart polling
 export function useAgents(options = {}) {
   const network = useNetworkStatus();
   
-  return useQuery({
+  return useQuery<{ agents: AgentData[] }>({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
     staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
