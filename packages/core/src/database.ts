@@ -13,7 +13,8 @@ import type {
     UUID,
     WorldData,
     Agent,
-    Component
+    Component,
+    Room
 } from "./types.ts";
 
 /**
@@ -327,6 +328,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @returns A Promise that resolves to the room ID or null if not found.
      */
     abstract getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+
+    /**
+     * Retrieves all rooms for a given world.
+     * @param worldId The UUID of the world to retrieve rooms for.
+     * @returns A Promise that resolves to an array of Room objects.
+     */
+    abstract getRooms(worldId: UUID): Promise<RoomData[]>;
 
     /**
      * Creates a new room with an optional specified ID.

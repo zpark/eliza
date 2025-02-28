@@ -1,6 +1,7 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
-import { cancelTaskAction } from "./actions/cancel.ts";
+import { updateEntityAction } from "./actions/updateEntity.ts";
+import { sendMessageAction } from "./actions/sendMessage.ts"
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
@@ -849,7 +850,8 @@ export const bootstrapPlugin: Plugin = {
     noneAction,
     muteRoomAction,
     unmuteRoomAction,
-    cancelTaskAction,
+    sendMessageAction,
+    updateEntityAction,
     selectOptionAction,
     updateRoleAction,
     updateSettingsAction,

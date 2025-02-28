@@ -550,6 +550,9 @@ export interface Room {
   /** Unique identifier */
   id: UUID;
 
+  /** Room name */
+  name: string;
+
   /** Room participants */
   participants: Participant[];
 }
@@ -923,6 +926,8 @@ export interface IDatabaseAdapter {
 
   getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
 
+  getRooms(worldId: UUID): Promise<RoomData[]>;
+  
   addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
 
   removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
@@ -1538,4 +1543,50 @@ export interface OnboardingConfig {
   settings: { 
       [key: string]: Omit<OnboardingSetting, 'value'>; 
   };
+}
+
+/**
+ * Send a direct message to a user
+ * @param runtime The agent runtime instance
+ * @param targetEntityId The ID of the user to send the message to
+ * @param source The platform/source to send on (e.g. telegram, discord)
+ * @param message The message content to send
+ * @param worldId The world ID context
+ */
+export async function sendDirectMessage(
+  runtime: IAgentRuntime,
+  targetEntityId: UUID,
+  source: string,
+  message: string,
+  worldId: UUID
+): Promise<void> {
+  const client = runtime.getClient(source);
+  if (!client) {
+    throw new Error(`No client found for source: ${source}`);
+  }
+  
+  await client.sendDirectMessage?.(targetEntityId, message, worldId);
+}
+
+/**
+ * Send a message to a room
+ * @param runtime The agent runtime instance
+ * @param roomId The ID of the room to send to
+ * @param source The platform/source to send on (e.g. telegram, discord)
+ * @param message The message content to send
+ * @param worldId The world ID context
+ */
+export async function sendRoomMessage(
+  runtime: IAgentRuntime,
+  roomId: UUID,
+  source: string,
+  message: string,
+  worldId: UUID
+): Promise<void> {
+  const client = runtime.getClient(source);
+  if (!client) {
+    throw new Error(`No client found for source: ${source}`);
+  }
+  
+  await client.sendRoomMessage?.(roomId, message, worldId);
 }

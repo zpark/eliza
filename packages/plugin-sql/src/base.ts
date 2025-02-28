@@ -1087,6 +1087,16 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getRooms(worldId: UUID): Promise<RoomData[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select()
+                .from(roomTable)
+                .where(eq(roomTable.worldId, worldId));
+            return result;
+        });
+    }
+
     async updateRoom(room: RoomData): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(roomTable).set(room).where(eq(roomTable.id, room.id));
