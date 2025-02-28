@@ -14,12 +14,32 @@ export async function getActorDetails({
   roomId: UUID;
 }) {
   const room = await runtime.getRoom(roomId);
-  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId);
-  const actors = entities.map(entity => ({
-    id: entity.id,
-    name: entity.metadata[room.source]?.name || entity.names[0],
-    names: entity.names,
-  }));
+  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId, true);
+  const actors = entities.map(entity => {
+    // join all fields of all component.data together
+    const allData = entity.components.reduce((acc, component) => {
+      return { ...acc, ...component.data };
+    }, {});
+
+    // combine arrays and merge the values of objects
+    const mergedData = Object.entries(allData).reduce((acc, [key, value]) => {
+      if (!acc[key]) {
+        acc[key] = value;
+      } else if (Array.isArray(acc[key]) && Array.isArray(value)) {
+        acc[key] = [...new Set([...acc[key], ...value])];
+      } else if (typeof acc[key] === 'object' && typeof value === 'object') {
+        acc[key] = { ...acc[key], ...value };
+      }
+      return acc;
+    }, {});
+
+    return {
+      id: entity.id,
+      name: entity.metadata[room.source]?.name || entity.names[0],
+      names: entity.names,
+      data: JSON.stringify(mergedData)
+    };
+  });
 
   // Filter out nulls and ensure uniqueness by ID
   const uniqueActors = new Map();
@@ -41,7 +61,7 @@ export async function getActorDetails({
  */
 export function formatActors({ actors }: { actors: Actor[] }) {
   const actorStrings = actors.map((actor: Actor) => {
-    const header = `${actor.name} (${actor.names.join(" aka ")})`;
+    const header = `${actor.name} (${actor.names.join(" aka ")})\nData: ${actor.data}`;
     return header;
   });
   const finalActorStrings = actorStrings.join("\n");

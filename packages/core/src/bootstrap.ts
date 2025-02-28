@@ -1,11 +1,11 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
 import { cancelTaskAction } from "./actions/cancel.ts";
-import { selectOptionAction } from "./actions/options.ts";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
+import { selectOptionAction } from "./actions/options.ts";
 import updateRoleAction from "./actions/roles.ts";
 import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
@@ -14,16 +14,15 @@ import { composeContext } from "./context.ts";
 import { factEvaluator } from "./evaluators/fact.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import {
-  formatActors,
   formatMessages,
   generateMessageResponse,
   generateShouldRespond,
-  getActorDetails,
+  getActorDetails
 } from "./index.ts";
 import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
-import { optionsProvider } from "./providers/options.ts";
 import { factsProvider } from "./providers/facts.ts";
+import { optionsProvider } from "./providers/options.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";

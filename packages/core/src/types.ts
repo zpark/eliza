@@ -63,6 +63,9 @@ export interface Actor {
 
   /** All names for the actor */
   names: string[];
+
+  /** Arbitrary data which can be displayed */
+  data: any;
 }
 
 /**
@@ -524,6 +527,9 @@ export interface Entity {
 
   /** Agent ID this account is related to, for agents should be themselves */
   agentId: UUID;
+
+  /** Optional array of components */
+  components?: Component[];
 }
 
 /**
@@ -777,7 +783,7 @@ export interface IDatabaseAdapter {
   getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
   /** Get entities for room */
-  getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]>;
+  getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
 
   /** Create new entity */
   createEntity(entity: Entity): Promise<boolean>;
@@ -837,8 +843,6 @@ export interface IDatabaseAdapter {
     roomId: UUID;
     type: string;
   }): Promise<void>;
-
-  getActorDetails(params: { roomId: UUID }): Promise<Actor[]>;
 
   updateGoalStatus(params: { goalId: UUID; status: GoalStatus }): Promise<void>;
 

@@ -45,7 +45,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
-    abstract getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]>;
+    abstract getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
 
     abstract getAgent(agentId: UUID): Promise<Agent | null>;
 
@@ -177,13 +177,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         roomId: UUID;
         type: string;
     }): Promise<void>;
-
-    /**
-     * Retrieves details of actors in a given room.
-     * @param params An object containing the roomId to search for actors.
-     * @returns A Promise that resolves to an array of Actor objects.
-     */
-    abstract getActorDetails(params: { roomId: UUID, agentId: UUID }): Promise<Actor[]>;
 
     /**
      * Searches for memories based on embeddings and other specified parameters.

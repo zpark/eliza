@@ -49,7 +49,7 @@ import {
   type State,
   type Task,
   type UUID,
-  type WorldData,
+  type WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 

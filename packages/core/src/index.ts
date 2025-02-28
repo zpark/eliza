@@ -7,6 +7,7 @@ export * from "./cache.ts";
 export * from "./context.ts";
 export * from "./database.ts";
 export * from "./environment.ts";
+export * from "./entities.ts";
 export * from "./evaluators.ts";
 export * from "./generation.ts";
 export * from "./goals.ts";

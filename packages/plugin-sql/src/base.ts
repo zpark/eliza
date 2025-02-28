@@ -243,11 +243,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getEntitiesForRoom(roomId: UUID, agentId: UUID): Promise<Entity[]> {
+    async getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]> {
         return this.withDatabase(async () => {
-            const result = await this.db
+            const query = this.db
                 .select({
-                    entity: entityTable
+                    entity: entityTable,
+                    ...(includeComponents && { components: componentTable })
                 })
                 .from(participantTable)
                 .leftJoin(
@@ -256,10 +257,42 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         eq(participantTable.userId, entityTable.id),
                         eq(entityTable.agentId, agentId)
                     )
-                )
-                .where(eq(participantTable.roomId, roomId));
+                );
 
-            return result.map(row => row.entity).filter(Boolean);
+            if (includeComponents) {
+                query.leftJoin(
+                    componentTable,
+                    eq(componentTable.entityId, entityTable.id)
+                );
+            }
+
+            const result = await query.where(eq(participantTable.roomId, roomId));
+
+            // Group components by entity if includeComponents is true
+            const entitiesByIdMap = new Map<UUID, Entity>();
+            
+            result.forEach(row => {
+                if (!row.entity) return;
+                
+                const entityId = row.entity.id as UUID;
+                if (!entitiesByIdMap.has(entityId)) {
+                    const entity: Entity = {
+                        ...row.entity,
+                        components: includeComponents ? [] : undefined
+                    };
+                    entitiesByIdMap.set(entityId, entity);
+                }
+
+                if (includeComponents && row.components) {
+                    const entity = entitiesByIdMap.get(entityId)!;
+                    if (!entity.components) {
+                        entity.components = [];
+                    }
+                    entity.components.push(row.components);
+                }
+            });
+
+            return Array.from(entitiesByIdMap.values());
         });
     }
 
@@ -759,84 +792,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 embedding: row.embedding ?? undefined,
                 similarity: row.similarity,
             }));
-        });
-    }
-
-    async getActorDetails(params: { roomId: string }): Promise<Actor[]> {
-        if (!params.roomId) {
-            throw new Error("roomId is required");
-        }
-
-        return this.withDatabase(async () => {
-            try {
-                const result = await this.db
-                    .select({
-                        id: entityTable.id,
-                        metadata: entityTable.metadata,
-                    })
-                    .from(participantTable)
-                    .leftJoin(
-                        entityTable,
-                        eq(participantTable.userId, entityTable.id)
-                    )
-                    .where(eq(participantTable.roomId, params.roomId))
-                    .orderBy(entityTable.metadata?.name ?? entityTable.id);
-
-                logger.debug("Retrieved actor details:", {
-                    roomId: params.roomId,
-                    actorCount: result.length,
-                });
-
-                return result.map((row) => {
-                    try {
-                        const details =
-                            typeof row.details === "string"
-                                ? JSON.parse(row.details)
-                                : row.details || {};
-
-                        return {
-                            id: row.id as UUID,
-                            name: row.name ?? "",
-                            username: row.username ?? "",
-                            details: {
-                                tagline: details.tagline ?? "",
-                                summary: details.summary ?? "",
-                                quote: details.quote ?? "",
-                            },
-                        };
-                    } catch (error) {
-                        logger.warn("Failed to parse actor details:", {
-                            actorId: row.id,
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
-                        });
-
-                        return {
-                            id: row.id as UUID,
-                            name: row.name ?? "",
-                            username: row.username ?? "",
-                            details: {
-                                tagline: "",
-                                summary: "",
-                                quote: "",
-                            },
-                        };
-                    }
-                });
-            } catch (error) {
-                logger.error("Failed to fetch actor details:", {
-                    roomId: params.roomId,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                });
-                throw new Error(
-                    `Failed to fetch actor details: ${
-                        error instanceof Error ? error.message : String(error)
-                    }`
-                );
-            }
         });
     }
 
