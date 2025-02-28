@@ -25,7 +25,7 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST") {
+    if (method === "POST" || method === "PUT") {
         if (body instanceof FormData) {
             if (options.headers && typeof options.headers === 'object') {
                 // Create new headers object without Content-Type
