@@ -61,11 +61,34 @@ export async function getActorDetails({
  */
 export function formatActors({ actors }: { actors: Actor[] }) {
   const actorStrings = actors.map((actor: Actor) => {
-    const header = `${actor.name} (${actor.names.join(" aka ")})\nData: ${actor.data}`;
+    const header = `${actor.name} (${actor.names.join(" aka ")})` + (actor.data && Object.entries(actor.data).length > 0) ? `\nData: ${actor.data}` : "";
     return header;
   });
   const finalActorStrings = actorStrings.join("\n");
   return finalActorStrings;
+}
+
+/**
+ * Resolve an actor name to their UUID
+ * @param name - Name to resolve
+ * @param actors - List of actors to search through
+ * @returns UUID if found, throws error if not found or if input is not a valid UUID
+ */
+export function resolveActorId(name: string, actors: Actor[]): UUID {
+  // If the name is already a valid UUID, return it
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) {
+    return name as UUID;
+  }
+
+  const actor = actors.find(a => 
+    a.names.some(n => n.toLowerCase() === name.toLowerCase())
+  );
+  
+  if (!actor) {
+    throw new Error(`Could not resolve name "${name}" to a valid UUID`);
+  }
+  
+  return actor.id;
 }
 
 /**

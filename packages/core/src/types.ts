@@ -479,18 +479,18 @@ export interface Relationship {
   id: UUID;
 
   /** First user ID */
-  entityA: UUID;
+  sourceEntityId: UUID;
 
   /** Second user ID */
-  entityB: UUID;
+  targetEntityId: UUID;
 
-  /** Primary user ID */
+  /** Agent ID */
   agentId: UUID;
 
-  /** Any tags (no structured ontology) */
+  /** Tags for filtering/categorizing relationships */
   tags: string[];
 
-  /** Any metadata you might want to add */
+  /** Additional metadata about the relationship */
   metadata: {
     [key: string]: any
   }
@@ -863,7 +863,7 @@ export interface IDatabaseAdapter {
     memory: Memory,
     tableName: string,
     unique?: boolean
-  ): Promise<void>;
+  ): Promise<UUID>;
 
   removeMemory(memoryId: UUID, tableName: string): Promise<void>;
 
@@ -949,15 +949,40 @@ export interface IDatabaseAdapter {
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
-  createRelationship(params: { entityA: UUID; entityB: UUID; agentId: UUID }): Promise<boolean>;
+  /**
+   * Creates a new relationship between two entities.
+   * @param params Object containing the relationship details
+   * @returns Promise resolving to boolean indicating success
+   */
+  createRelationship(params: {
+    sourceEntityId: UUID;
+    targetEntityId: UUID;
+    agentId: UUID;
+    tags?: string[];
+    metadata?: { [key: string]: any };
+  }): Promise<boolean>;
 
+  /**
+   * Retrieves a relationship between two entities if it exists.
+   * @param params Object containing the entity IDs and agent ID
+   * @returns Promise resolving to the Relationship object or null if not found
+   */
   getRelationship(params: {
-    entityA: UUID;
-    entityB: UUID;
+    sourceEntityId: UUID;
+    targetEntityId: UUID;
     agentId: UUID;
   }): Promise<Relationship | null>;
 
-  getRelationships(params: { userId: UUID; agentId: UUID }): Promise<Relationship[]>;
+  /**
+   * Retrieves all relationships for a specific entity.
+   * @param params Object containing the user ID, agent ID and optional tags to filter by
+   * @returns Promise resolving to an array of Relationship objects
+   */
+  getRelationships(params: {
+    userId: UUID;
+    agentId: UUID;
+    tags?: string[];
+  }): Promise<Relationship[]>;
 
   createCharacter(character: Character): Promise<UUID | void>;
 
@@ -1019,7 +1044,7 @@ export interface IMemoryManager {
     limit?: number;
   }): Promise<Memory[]>;
 
-  createMemory(memory: Memory, unique?: boolean): Promise<void>;
+  createMemory(memory: Memory, unique?: boolean): Promise<UUID>;
 
   removeMemory(memoryId: UUID): Promise<void>;
 

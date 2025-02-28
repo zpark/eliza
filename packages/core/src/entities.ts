@@ -7,7 +7,8 @@ import {
     type Memory,
     ModelClass,
     type State,
-    type UUID
+    type UUID,
+    type Relationship
 } from "./types.ts";
 
 const entityResolutionTemplate = `# Task: Resolve Entity Name
@@ -53,9 +54,7 @@ const entityResolutionTemplate = `# Task: Resolve Entity Name
      }]
    }
 
-Current Room: {{roomName}}
-Current World: {{worldName}}
-Message Sender: {{senderName}} (ID: {{userId}})
+Message Sender: {{senderName}} (ID: {{senderId}})
 Agent: {{agentName}} (ID: {{agentId}})
 
 # Entities in Room:
@@ -66,6 +65,11 @@ Agent: {{agentName}} (ID: {{agentId}})
 # Recent Messages:
 {{recentMessages}}
 
+# Recent Interactions:
+{{#if recentInteractions}}
+{{recentInteractions}}
+{{/if}}
+
 # Query:
 {{query}}
 
@@ -75,25 +79,76 @@ Agent: {{agentName}} (ID: {{agentId}})
 3. Look for usernames/handles in standard formats (e.g. @username, user#1234)
 4. Consider context from recent messages for pronouns and references
 5. If multiple matches exist, use context to disambiguate
+6. Consider recent interactions and relationship strength when resolving ambiguity
 
 Return a JSON object with:
 {
   "entityId": "exact-id-if-known-otherwise-null",
-  "type": "EXACT_MATCH | USERNAME_MATCH | NAME_MATCH | AMBIGUOUS | UNKNOWN",
+  "type": "EXACT_MATCH | USERNAME_MATCH | NAME_MATCH | RELATIONSHIP_MATCH | AMBIGUOUS | UNKNOWN",
   "matches": [{
     "name": "matched-name",
     "reason": "why this entity matches"
   }]
 }`;
 
+async function getRecentInteractions(
+  runtime: IAgentRuntime,
+  sourceEntityId: UUID,
+  candidateEntities: Entity[],
+  roomId: UUID,
+  relationships: Relationship[]
+): Promise<{ entity: Entity; interactions: Memory[]; count: number }[]> {
+  const results = [];
+
+  // Get recent messages from the room - just for context
+  const recentMessages = await runtime.messageManager.getMemories({
+    roomId,
+    count: 20 // Reduced from 100 since we only need context
+  });
+
+  for (const entity of candidateEntities) {
+    let interactions: Memory[] = [];
+    let interactionScore = 0;
+
+    // First get direct replies using inReplyTo
+    const directReplies = recentMessages.filter(msg => 
+      (msg.userId === sourceEntityId && msg.content.inReplyTo === entity.id) ||
+      (msg.userId === entity.id && msg.content.inReplyTo === sourceEntityId)
+    );
+    
+    interactions.push(...directReplies);
+
+    // Get relationship strength from metadata
+    const relationship = relationships.find(rel => 
+      (rel.sourceEntityId === sourceEntityId && rel.targetEntityId === entity.id) ||
+      (rel.targetEntityId === sourceEntityId && rel.sourceEntityId === entity.id)
+    );
+
+    if (relationship?.metadata?.interactionStrength) {
+      interactionScore = relationship.metadata.interactionStrength;
+    }
+
+    // Add bonus points for recent direct replies
+    interactionScore += directReplies.length;
+
+    // Keep last few messages for context
+    const uniqueInteractions = [...new Set(interactions)];
+    results.push({
+      entity,
+      interactions: uniqueInteractions.slice(-5), // Only keep last 5 messages for context
+      count: Math.round(interactionScore)
+    });
+  }
+
+  // Sort by interaction score descending
+  return results.sort((a, b) => b.count - a.count);
+}
+
 export async function findEntityByName(
   runtime: IAgentRuntime,
   query: string,
   message: Memory,
   state: State,
-  options: {
-    worldId?: UUID;
-  } = {}
 ): Promise<Entity | null> {
   try {
     const room = await runtime.getRoom(message.roomId);
@@ -107,13 +162,72 @@ export async function findEntityByName(
     // Get all entities in the room with their components
     const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(room.id, runtime.agentId, true);
 
+    // Filter components for each entity based on permissions
+    const filteredEntities = await Promise.all(entitiesInRoom.map(async entity => {
+      if (!entity.components) return entity;
+
+      // Get world roles if we have a world
+      const worldRoles = world?.metadata?.roles || {};
+
+      // Filter components based on permissions
+      entity.components = entity.components.filter(component => {
+        // 1. Pass if sourceEntityId matches the requesting entity
+        if (component.sourceEntityId === message.userId) return true;
+
+        // 2. Pass if sourceEntityId is an owner/admin of the current world
+        if (world && component.sourceEntityId) {
+          const sourceRole = worldRoles[component.sourceEntityId];
+          if (sourceRole === "OWNER" || sourceRole === "ADMIN") return true;
+        }
+
+        // 3. Pass if sourceEntityId is the agentId
+        if (component.sourceEntityId === runtime.agentId) return true;
+
+        // Filter out components that don't meet any criteria
+        return false;
+      });
+
+      return entity;
+    }));
+
+    // Get relationships for the message sender
+    const relationships = await runtime.databaseAdapter.getRelationships({
+      userId: message.userId,
+      agentId: runtime.agentId
+    });
+
+    // Get entities from relationships
+    const relationshipEntities = await Promise.all(
+      relationships.map(async rel => {
+        const entityId = rel.sourceEntityId === message.userId ? rel.targetEntityId : rel.sourceEntityId;
+        return runtime.databaseAdapter.getEntityById(entityId, runtime.agentId);
+      })
+    );
+
+    // Filter out nulls and combine with room entities
+    const allEntities = [...filteredEntities, ...relationshipEntities.filter((e): e is Entity => e !== null)];
+    
+    // Get interaction strength data for relationship entities
+    const interactionData = await getRecentInteractions(runtime, message.userId, allEntities, room.id, relationships);
+
+    // Format interaction data for LLM context
+    const recentInteractions = interactionData.map(data => ({
+      entityName: data.entity.names[0],
+      interactionStrength: data.count,
+      recentMessages: data.interactions.map(msg => ({
+        from: msg.userId === message.userId ? "sender" : "entity",
+        text: msg.content.text
+      }))
+    }));
+
     // Compose context for LLM
     const context = composeContext({
       state: {
         ...state,
         roomName: room.name || room.id,
         worldName: world?.name || "Unknown",
-        entitiesInRoom: JSON.stringify(entitiesInRoom, null, 2),
+        entitiesInRoom: JSON.stringify(filteredEntities, null, 2),
+        recentInteractions: JSON.stringify(recentInteractions, null, 2),
         userId: message.userId,
         query
       },
@@ -136,15 +250,30 @@ export async function findEntityByName(
     // If we got an exact entity ID match
     if (resolution.type === "EXACT_MATCH" && resolution.entityId) {
       const entity = await runtime.databaseAdapter.getEntityById(resolution.entityId as UUID, runtime.agentId);
-      if (entity) return entity;
+      if (entity) {
+        // Filter components again for the returned entity
+        if (entity.components) {
+          const worldRoles = world?.metadata?.roles || {};
+          entity.components = entity.components.filter(component => {
+            if (component.sourceEntityId === message.userId) return true;
+            if (world && component.sourceEntityId) {
+              const sourceRole = worldRoles[component.sourceEntityId];
+              if (sourceRole === "OWNER" || sourceRole === "ADMIN") return true;
+            }
+            if (component.sourceEntityId === runtime.agentId) return true;
+            return false;
+          });
+        }
+        return entity;
+      }
     }
 
-    // For username/name matches, search through formatted entities
+    // For username/name/relationship matches, search through all entities
     if (resolution.matches?.[0]?.name) {
       const matchName = resolution.matches[0].name.toLowerCase();
       
       // Find matching entity by username/handle in components or by name
-      const matchingEntity = entitiesInRoom.find(entity => {
+      const matchingEntity = allEntities.find(entity => {
         // Check names
         if (entity.names.some(n => n.toLowerCase() === matchName)) return true;
         
@@ -156,7 +285,15 @@ export async function findEntityByName(
       });
 
       if (matchingEntity) {
-        return matchingEntity;
+        // If this is a relationship match, sort by interaction strength
+        if (resolution.type === "RELATIONSHIP_MATCH") {
+          const interactionInfo = interactionData.find(d => d.entity.id === matchingEntity.id);
+          if (interactionInfo && interactionInfo.count > 0) {
+            return matchingEntity;
+          }
+        } else {
+          return matchingEntity;
+        }
       }
     }
 

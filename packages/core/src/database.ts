@@ -215,7 +215,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         memory: Memory,
         tableName: string,
         unique?: boolean
-    ): Promise<void>;
+    ): Promise<UUID>;
 
     /**
      * Removes a specific memory from the database.
@@ -416,33 +416,38 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
 
     /**
      * Creates a new relationship between two users.
-     * @param params An object containing the UUIDs of the two users (entityA and entityB).
+     * @param params Object containing the relationship details including entity IDs, agent ID, optional tags and metadata
      * @returns A Promise that resolves to a boolean indicating success or failure of the creation.
      */
     abstract createRelationship(params: {
-        entityA: UUID;
-        entityB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
     }): Promise<boolean>;
 
     /**
      * Retrieves a relationship between two users if it exists.
-     * @param params An object containing the UUIDs of the two users (entityA and entityB).
+     * @param params Object containing the entity IDs and agent ID
      * @returns A Promise that resolves to the Relationship object or null if not found.
      */
     abstract getRelationship(params: {
-        entityA: UUID;
-        entityB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
     }): Promise<Relationship | null>;
 
     /**
      * Retrieves all relationships for a specific user.
-     * @param params An object containing the UUID of the user.
+     * @param params Object containing the user ID, agent ID and optional tags to filter by
      * @returns A Promise that resolves to an array of Relationship objects.
      */
     abstract getRelationships(params: {
         userId: UUID;
+        agentId: UUID;
+        tags?: string[];
     }): Promise<Relationship[]>;
-
 
     /**
      * Creates a new character in the database.

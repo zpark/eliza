@@ -1282,16 +1282,16 @@ export class AgentRuntime implements IAgentRuntime {
           .join("\n\n");
 
     const getRecentInteractions = async (
-      entityA: UUID,
-      entityB: UUID
+      sourceEntityId: UUID,
+      targetEntityId: UUID
     ): Promise<Memory[]> => {
       // Convert to tenant-specific ID if needed
       const tenantUserA =
-        entityA === this.agentId ? entityA : this.generateTenantUserId(entityA);
+        sourceEntityId === this.agentId ? sourceEntityId : this.generateTenantUserId(sourceEntityId);
 
-      // Find all rooms where entityA and entityB are participants
+      // Find all rooms where sourceEntityId and targetEntityId are participants
       const rooms = await this.databaseAdapter.getRoomsForParticipants(
-        [tenantUserA, entityB],
+        [tenantUserA, targetEntityId],
         this.agentId
       );
 
@@ -1675,7 +1675,9 @@ export class AgentRuntime implements IAgentRuntime {
     if (!model) {
       throw new Error(`No handler found for delegate type: ${modelClass}`);
     }
-    return await model(this, params);
+
+    const response = await model(this, params);
+    return response;
   }
 
   registerEvent(event: string, handler: (params: any) => void) {

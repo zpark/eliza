@@ -1,8 +1,14 @@
 
-import { formatFacts } from "../evaluators/fact.ts";
 import { MemoryManager } from "../memory.ts";
 import { formatMessages } from "../messages.ts";
 import { IAgentRuntime, Memory, ModelClass, Provider, State } from "../types.ts";
+
+function formatFacts(facts: Memory[]) {
+    return facts
+        .reverse()
+        .map((fact: Memory) => fact.content.text)
+        .join("\n");
+}
 
 const factsProvider: Provider = {
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {

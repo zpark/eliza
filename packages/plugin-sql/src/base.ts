@@ -348,6 +348,36 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getComponents(entityId: UUID, worldId?: UUID, sourceEntityId?: UUID): Promise<Component[]> {
+        return this.withDatabase(async () => {
+            const conditions = [
+                eq(componentTable.entityId, entityId)
+            ];
+
+            if (worldId) {
+                conditions.push(eq(componentTable.worldId, worldId));
+            }
+
+            if (sourceEntityId) {
+                conditions.push(eq(componentTable.sourceEntityId, sourceEntityId));
+            }
+
+            const result = await this.db
+                .select({
+                    id: componentTable.id,
+                    entityId: componentTable.entityId,
+                    type: componentTable.type,
+                    data: componentTable.data,
+                    worldId: componentTable.worldId,
+                    sourceEntityId: componentTable.sourceEntityId,
+                    createdAt: componentTable.createdAt,
+                })
+                .from(componentTable)
+                .where(and(...conditions));
+            return result;
+        });
+    }
+
     async createComponent(component: Component): Promise<boolean> {
         return this.withDatabase(async () => {
             await this.db.insert(componentTable).values(component);
@@ -795,7 +825,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<void> {
+    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<UUID> {
         logger.debug("DrizzleAdapter createMemory:", {
             memoryId: memory.id,
             embeddingLength: memory.embedding?.length,
@@ -822,7 +852,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 ? JSON.parse(memory.content)
                 : memory.content;
 
-        const memoryId = memory.id ?? v4();
+        const memoryId = memory.id ?? v4() as UUID;
 
         await this.db.transaction(async (tx) => {
             await tx.insert(memoryTable).values([{
@@ -853,6 +883,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await tx.insert(embeddingTable).values([embeddingValues]);
             }
         });
+
+        return memoryId;
     }
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {
@@ -1311,135 +1343,118 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async createRelationship(params: {
-        entityA: UUID;
-        entityB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
     }): Promise<boolean> {
-        if (!params.entityA || !params.entityB) {
-            throw new Error("entityA and entityB are required");
-        }
-    
         return this.withDatabase(async () => {
             try {
-                return await this.db.transaction(async (tx) => {
-                    const relationshipId = v4();
-                    await tx.insert(relationshipTable).values({
-                        id: relationshipId,
-                        entityA: params.entityA,
-                        entityB: params.entityB,
-                        userId: params.entityA,
-                    });
-    
-                    logger.debug("Relationship created successfully:", {
-                        relationshipId,
-                        entityA: params.entityA,
-                        entityB: params.entityB,
-                    });
-    
-                    return true;
+                const id = v4();
+                await this.db.insert(relationshipTable).values({
+                    id,
+                    sourceEntityId: params.sourceEntityId,
+                    targetEntityId: params.targetEntityId,
+                    agentId: params.agentId,
+                    tags: params.tags || [],
+                    metadata: params.metadata || {},
                 });
+                return true;
             } catch (error) {
-                if ((error as { code?: string }).code === "23505") {
-                    logger.warn("Relationship already exists:", {
-                        entityA: params.entityA,
-                        entityB: params.entityB,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    });
-                } else {
-                    logger.error("Failed to create relationship:", {
-                        entityA: params.entityA,
-                        entityB: params.entityB,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    });
-                }
+                logger.error("Error creating relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
+                });
                 return false;
             }
         });
     }
 
     async getRelationship(params: {
-        entityA: UUID;
-        entityB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
     }): Promise<Relationship | null> {
-        if (!params.entityA || !params.entityB) {
-            throw new Error("entityA and entityB are required");
-        }
-
         return this.withDatabase(async () => {
             try {
                 const result = await this.db
                     .select()
                     .from(relationshipTable)
                     .where(
-                        or(
-                            and(
-                                eq(relationshipTable.entityA, params.entityA),
-                                eq(relationshipTable.entityB, params.entityB)
-                            ),
-                            and(
-                                eq(relationshipTable.entityA, params.entityB),
-                                eq(relationshipTable.entityB, params.entityA)
-                            )
+                        and(
+                            eq(relationshipTable.sourceEntityId, params.sourceEntityId),
+                            eq(relationshipTable.targetEntityId, params.targetEntityId),
+                            eq(relationshipTable.agentId, params.agentId)
                         )
                     )
                     .limit(1);
 
-                if (result.length > 0) {
-                    return result[0] as unknown as Relationship;
+                if (result.length === 0) {
+                    return null;
                 }
 
-                logger.debug("No relationship found between users:", {
-                    entityA: params.entityA,
-                    entityB: params.entityB,
+                return {
+                    id: result[0].id,
+                    sourceEntityId: result[0].sourceEntityId,
+                    targetEntityId: result[0].targetEntityId,
+                    agentId: result[0].agentId,
+                    tags: result[0].tags || [],
+                    metadata: result[0].metadata || {},
+                    createdAt: result[0].createdAt?.toString()
+                };
+            } catch (error) {
+                logger.error("Error getting relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
                 });
                 return null;
-            } catch (error) {
-                logger.error("Error fetching relationship:", {
-                    entityA: params.entityA,
-                    entityB: params.entityB,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                });
-                throw error;
             }
         });
     }
 
-    async getRelationships(params: { userId: UUID }): Promise<Relationship[]> {
-        if (!params.userId) {
-            throw new Error("userId is required");
-        }
+    async getRelationships(params: { 
+        userId: UUID;
+        agentId: UUID;
+        tags?: string[];
+    }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
             try {
-                const result = await this.db
+                let query = this.db
                     .select()
                     .from(relationshipTable)
                     .where(
-                        or(
-                            eq(relationshipTable.entityA, params.userId),
-                            eq(relationshipTable.entityB, params.userId)
+                        and(
+                            or(
+                                eq(relationshipTable.sourceEntityId, params.userId),
+                                eq(relationshipTable.targetEntityId, params.userId)
+                            ),
+                            eq(relationshipTable.agentId, params.agentId)
                         )
-                    )
-                    .orderBy(desc(relationshipTable.createdAt));
+                    );
 
-                logger.debug("Retrieved relationships:", {
-                    userId: params.userId,
-                    count: result.length,
-                });
+                // Filter by tags if provided
+                if (params.tags && params.tags.length > 0) {
+                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags)}]::text[]`);
+                }
 
-                return result as unknown as Relationship[];
+                const results = await query;
+
+                return results.map(result => ({
+                    id: result.id,
+                    sourceEntityId: result.sourceEntityId,
+                    targetEntityId: result.targetEntityId,
+                    agentId: result.agentId,
+                    tags: result.tags || [],
+                    metadata: result.metadata || {},
+                    createdAt: result.createdAt?.toString()
+                }));
             } catch (error) {
-                logger.error("Failed to fetch relationships:", {
-                    userId: params.userId,
-                    error:
-                        error instanceof Error ? error.message : String(error),
+                logger.error("Error getting relationships:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
                 });
-                throw error;
+                return [];
             }
         });
     }

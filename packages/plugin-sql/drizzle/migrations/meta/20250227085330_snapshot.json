@@ -1206,14 +1206,14 @@
           "notNull": true,
           "default": "now()"
         },
-        "entityA": {
-          "name": "entityA",
+        "sourceEntityId": {
+          "name": "sourceEntityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "entityB": {
-          "name": "entityB",
+        "targetEntityId": {
+          "name": "targetEntityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1242,13 +1242,13 @@
           "name": "idx_relationships_users",
           "columns": [
             {
-              "expression": "entityA",
+              "expression": "sourceEntityId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "entityB",
+              "expression": "targetEntityId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1261,12 +1261,12 @@
         }
       },
       "foreignKeys": {
-        "relationships_entityA_entities_id_fk": {
-          "name": "relationships_entityA_entities_id_fk",
+        "relationships_sourceEntityId_entities_id_fk": {
+          "name": "relationships_sourceEntityId_entities_id_fk",
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityA"
+            "sourceEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1274,12 +1274,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "relationships_entityB_entities_id_fk": {
-          "name": "relationships_entityB_entities_id_fk",
+        "relationships_targetEntityId_entities_id_fk": {
+          "name": "relationships_targetEntityId_entities_id_fk",
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityB"
+            "targetEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1305,7 +1305,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityA"
+            "sourceEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1318,7 +1318,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityB"
+            "targetEntityId"
           ],
           "columnsTo": [
             "id"

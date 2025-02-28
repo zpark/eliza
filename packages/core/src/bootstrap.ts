@@ -12,7 +12,7 @@ import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { composeContext } from "./context.ts";
-import { factEvaluator } from "./evaluators/fact.ts";
+import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import {
   formatMessages,
@@ -673,29 +673,24 @@ const handleServerSync = async ({
       for (let i = 0; i < users.length; i += batchSize) {
         const userBatch = users.slice(i, i + batchSize);
 
-        // Find a default text channel for these users if possible
-        const defaultRoom =
-          rooms.find(
-            (room) =>
-              room.type === ChannelType.GROUP && room.name.includes("general")
-          ) || rooms.find((room) => room.type === ChannelType.GROUP);
-
-        if (defaultRoom) {
-          // Process each user in the batch
-          await Promise.all(
-            userBatch.map(async (user: Entity) => {
+        // check if user is in any of these rooms in rooms
+        const firstRoomUserIsIn = rooms.length > 0 ? rooms[0] : null;
+        
+        // Process each user in the batch
+        await Promise.all(
+          userBatch.map(async (user: Entity) => {
               try {
                 await runtime.ensureConnection({
                   userId: user.id,
-                  roomId: defaultRoom.id,
+                  roomId: firstRoomUserIsIn.id,
                   userName:
                     user.metadata[source].username,
                   userScreenName:
                     user.metadata[source].name,
                   source: source,
-                  channelId: defaultRoom.channelId,
+                  channelId: firstRoomUserIsIn.channelId,
                   serverId: world.serverId,
-                  type: defaultRoom.type,
+                  type: firstRoomUserIsIn.type,
                   worldId: world.id,
                 });
               } catch (err) {
@@ -705,7 +700,6 @@ const handleServerSync = async ({
               }
             })
           );
-        }
 
         // Add a small delay between batches if not the last batch
         if (i + batchSize < users.length) {
@@ -857,7 +851,7 @@ export const bootstrapPlugin: Plugin = {
     updateSettingsAction,
   ],
   events,
-  evaluators: [factEvaluator, goalEvaluator],
+  evaluators: [reflectionEvaluator, goalEvaluator],
   providers: [
     timeProvider,
     factsProvider,
