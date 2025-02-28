@@ -49,11 +49,11 @@ export class PlatformManager {
     try {
       logger.info("Initializing platform detection...");
       this.capabilities = await this.detectSystemCapabilities();
-      logger.info("Platform detection completed", {
-        platform: this.capabilities.platform,
-        gpu: this.capabilities.gpu?.type || "none",
-        recommendedModel: this.capabilities.recommendedModelSize,
-      });
+      // logger.info("Platform detection completed", {
+      //   platform: this.capabilities.platform,
+      //   gpu: this.capabilities.gpu?.type || "none",
+      //   recommendedModel: this.capabilities.recommendedModelSize,
+      // });
     } catch (error) {
       logger.error("Platform detection failed", { error });
       throw error;

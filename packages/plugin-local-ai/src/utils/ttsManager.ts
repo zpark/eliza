@@ -27,13 +27,15 @@ export class TTSManager {
     this.modelsDir = process.env.LLAMALOCAL_PATH?.trim() 
       ? path.resolve(process.env.LLAMALOCAL_PATH.trim())
       : path.join(process.cwd(), "models");
-    this.downloadManager = DownloadManager.getInstance(this.cacheDir);
+    this.downloadManager = DownloadManager.getInstance(this.cacheDir, this.modelsDir);
     this.ensureCacheDirectory();
-    logger.info("TTSManager initialized with configuration:", {
-      cacheDir: this.cacheDir,
-      modelsDir: this.modelsDir,
-      timestamp: new Date().toISOString()
-    });
+    logger.info("TTSManager initialized");
+    // Add a variable to deactivate the logging of the configuration
+    // logger.info("TTSManager initialized with configuration:", {
+    //   cacheDir: this.cacheDir,
+    //   modelsDir: this.modelsDir,
+    //   timestamp: new Date().toISOString()
+    // });
   }
 
   public static getInstance(cacheDir: string): TTSManager {
@@ -62,12 +64,12 @@ export class TTSManager {
       const modelPath = path.join(this.modelsDir, modelSpec.name);
       
       // Log detailed model configuration and paths
-      logger.info("TTS model configuration:", {
-        name: modelSpec.name,
-        repo: modelSpec.repo,
-        modelPath,
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("TTS model configuration:", {
+      //   name: modelSpec.name,
+      //   repo: modelSpec.repo,
+      //   modelPath,
+      //   timestamp: new Date().toISOString()
+      // });
 
       if (!fs.existsSync(modelPath)) {
         // Try different URL patterns in sequence
@@ -100,13 +102,14 @@ export class TTSManager {
               timestamp: new Date().toISOString()
             });
 
-            const barLength = 20;
-            const progressBar = '█'.repeat(barLength);
-            logger.info(`TTS model download: ${progressBar} Starting...`);
+            const barLength = 30;
+            const emptyBar = '▱'.repeat(barLength);
+            logger.info(`Downloading TTS model: ${emptyBar} 0%`);
             
             await this.downloadManager.downloadFromUrl(attempt.url, modelPath);
             
-            logger.info(`TTS model download: ${progressBar} 100%`);
+            const completedBar = '▰'.repeat(barLength);
+            logger.info(`Downloading TTS model: ${completedBar} 100%`);
             logger.success("TTS model download successful with:", attempt.description);
             break;
           } catch (error) {
@@ -186,11 +189,11 @@ export class TTSManager {
           responseTokens.push(token);
           
           // Update progress bar
-          const progress = Math.round((responseTokens.length / maxTokens) * 100);
-          const barLength = 20;
-          const filledLength = Math.floor((progress / 100) * barLength);
-          const bar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
-          logger.info(`Token generation: ${bar} ${progress}% (${responseTokens.length}/${maxTokens})`);
+          const percent = Math.round((responseTokens.length / maxTokens) * 100);
+          const barLength = 30;
+          const filledLength = Math.floor((responseTokens.length / maxTokens) * barLength);
+          const progressBar = '▰'.repeat(filledLength) + '▱'.repeat(barLength - filledLength);
+          logger.info(`Token generation: ${progressBar} ${percent}% (${responseTokens.length}/${maxTokens})`);
 
           // Stop if we hit our token limit
           if (responseTokens.length >= maxTokens) {
@@ -203,11 +206,11 @@ export class TTSManager {
         throw error;
       }
 
-      logger.info("Token generation stats:", { 
-        inputTokens: inputTokens.length,
-        outputTokens: responseTokens.length,
-        timeMs: Date.now() - startTime 
-      });
+      // logger.info("Token generation stats:", { 
+      //   inputTokens: inputTokens.length,
+      //   outputTokens: responseTokens.length,
+      //   timeMs: Date.now() - startTime 
+      // });
 
       if (responseTokens.length === 0) {
         throw new Error("No audio tokens generated");

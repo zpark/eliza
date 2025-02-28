@@ -85,11 +85,11 @@ export class TranscribeManager {
         // Verify FFmpeg capabilities
         await this.verifyFFmpegCapabilities();
         
-        logger.success("FFmpeg initialized successfully", {
-          version: this.ffmpegVersion,
-          path: this.ffmpegPath,
-          timestamp: new Date().toISOString()
-        });
+        // logger.success("FFmpeg initialized successfully", {
+        //   version: this.ffmpegVersion,
+        //   path: this.ffmpegPath,
+        //   timestamp: new Date().toISOString()
+        // });
       } else {
         this.logFFmpegInstallInstructions();
       }
@@ -135,10 +135,10 @@ export class TranscribeManager {
         throw new Error("FFmpeg installation missing required codecs (pcm_s16le, wav)");
       }
       
-      logger.info("FFmpeg capabilities verified", {
-        hasRequiredCodecs,
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("FFmpeg capabilities verified", {
+      //   hasRequiredCodecs,
+      //   timestamp: new Date().toISOString()
+      // });
     } catch (error) {
       logger.error("FFmpeg capabilities verification failed:", {
         error: error instanceof Error ? error.message : String(error),
@@ -172,7 +172,7 @@ export class TranscribeManager {
   private ensureCacheDirectory(): void {
     if (!fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir, { recursive: true });
-      logger.info("Created whisper cache directory:", this.cacheDir);
+      // logger.info("Created whisper cache directory:", this.cacheDir);
     }
   }
 
@@ -220,20 +220,20 @@ export class TranscribeManager {
       const tempInputFile = path.join(this.cacheDir, `temp_input_${Date.now()}`);
       const tempWavFile = path.join(this.cacheDir, `temp_${Date.now()}.wav`);
       
-      logger.info("Creating temporary files", {
-        inputFile: tempInputFile,
-        wavFile: tempWavFile,
-        bufferSize: audioBuffer.length,
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("Creating temporary files", {
+      //   inputFile: tempInputFile,
+      //   wavFile: tempWavFile,
+      //   bufferSize: audioBuffer.length,
+      //   timestamp: new Date().toISOString()
+      // });
 
       // Write buffer to temporary file
       fs.writeFileSync(tempInputFile, audioBuffer);
-      logger.info("Temporary input file created", {
-        path: tempInputFile,
-        size: audioBuffer.length,
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("Temporary input file created", {
+      //   path: tempInputFile,
+      //   size: audioBuffer.length,
+      //   timestamp: new Date().toISOString()
+      // });
 
       // Convert to WAV format
       await this.convertToWav(tempInputFile, tempWavFile);
@@ -241,10 +241,10 @@ export class TranscribeManager {
       // Clean up the input file
       if (fs.existsSync(tempInputFile)) {
         fs.unlinkSync(tempInputFile);
-        logger.info("Temporary input file cleaned up", {
-          path: tempInputFile,
-          timestamp: new Date().toISOString()
-        });
+        // logger.info("Temporary input file cleaned up", {
+        //   path: tempInputFile,
+        //   timestamp: new Date().toISOString()
+        // });
       }
 
       return tempWavFile;
@@ -270,20 +270,41 @@ export class TranscribeManager {
       // Preprocess audio to WAV format
       const wavFile = await this.preprocessAudio(audioBuffer);
       
-      // Transcribe using whisper with minimal output
-      const output = await nodewhisper(wavFile, {
-        modelName: "base.en",
-        autoDownloadModelName: "base.en",
-        verbose: false,
-        whisperOptions: {
-          outputInText: true,
-          language: "en",
-        }
-      });
+      logger.info("Starting transcription with whisper...");
+      
+      // Save original stdout and stderr write functions
+      const originalStdoutWrite = process.stdout.write;
+      const originalStderrWrite = process.stderr.write;
+      
+      // Create a no-op function to suppress output
+      const noopWrite = () => true;
+      
+      // Redirect stdout and stderr to suppress whisper output
+      process.stdout.write = noopWrite;
+      process.stderr.write = noopWrite;
+      
+      let output: string;
+      try {
+        // Transcribe using whisper with output suppressed
+        output = await nodewhisper(wavFile, {
+          modelName: "base.en",
+          autoDownloadModelName: "base.en",
+          verbose: false,
+          whisperOptions: {
+            outputInText: true,
+            language: "en",
+          }
+        });
+      } finally {
+        // Restore original stdout and stderr
+        process.stdout.write = originalStdoutWrite;
+        process.stderr.write = originalStderrWrite;
+      }
 
       // Clean up temporary WAV file
       if (fs.existsSync(wavFile)) {
         fs.unlinkSync(wavFile);
+        logger.info("Temporary WAV file cleaned up");
       }
 
       // Extract just the text content without timestamps
@@ -296,6 +317,11 @@ export class TranscribeManager {
         })
         .filter(line => line) // Remove empty lines
         .join(' ');
+
+      logger.success("Transcription complete:", { 
+        textLength: cleanText.length,
+        timestamp: new Date().toISOString()
+      });
 
       return { text: cleanText };
     } catch (error) {

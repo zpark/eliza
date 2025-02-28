@@ -9,30 +9,25 @@ import {
   type LlamaContextSequence,
   type LlamaModel
 } from "node-llama-cpp";
-import fs from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { validateConfig } from "./environment";
+import fs from "node:fs";
+import { getPlatformManager } from "./utils/platform";
+import { TokenizerManager } from './utils/tokenizerManager';
 import { MODEL_SPECS, type ModelSpec } from './types';
 import { DownloadManager } from './utils/downloadManager';
 import { OllamaManager } from './utils/ollamaManager';
-import { getPlatformManager } from "./utils/platform";
 import { StudioLMManager } from './utils/studiolmManager';
-import { TokenizerManager } from './utils/tokenizerManager';
 import { TranscribeManager } from './utils/transcribeManager';
 import { TTSManager } from './utils/ttsManager';
 import { VisionManager } from './utils/visionManager';
+import { validateConfig } from "./environment";
 
 // const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration schema
-// const configSchema = z.object({
-//   LLAMALOCAL_PATH: z.string().optional(),
-//   CACHE_DIR: z.string().optional().default("./cache"),
-// });
 
 // Words to punish in LLM responses
 const wordsToPunish = [
@@ -75,37 +70,50 @@ class LocalAIManager {
   private ollamaManager: OllamaManager;
   private ollamaInitialized = false;
   private studioLMInitialized = false;
+  private modelsDir: string;
 
   private constructor() {
-    // Ensure we have a valid models directory
-    const modelsDir = process.env.LLAMALOCAL_PATH?.trim() 
-      ? path.resolve(process.env.LLAMALOCAL_PATH.trim())
-      : path.join(process.cwd(), "models");
+    // Set up models directory consistently, similar to cacheDir
+    const modelsDir = path.join(process.cwd(), "models");
     
-    logger.info("Models directory configuration:", {
-      envPath: process.env.LLAMALOCAL_PATH,
-      resolvedModelsDir: modelsDir,
-      cwd: process.cwd()
-    });
+    // logger.info("Models directory configuration:", {
+    //   resolvedModelsDir: modelsDir,
+    //   cwd: process.cwd()
+    // });
 
     this.activeModelConfig = MODEL_SPECS.small;
     this.modelPath = path.join(modelsDir, MODEL_SPECS.small.name);
     this.mediumModelPath = path.join(modelsDir, MODEL_SPECS.medium.name);
-    this.cacheDir = path.join(process.cwd(), process.env.CACHE_DIR || "./cache");
+    this.cacheDir = path.join(process.cwd(), "./cache");
+    this.modelsDir = modelsDir;
     
-    logger.info("Path configuration:", {
-      smallModelPath: this.modelPath,
-      mediumModelPath: this.mediumModelPath,
-      cacheDir: this.cacheDir
-    });
+    // logger.info("Path configuration:", {
+    //   smallModelPath: this.modelPath,
+    //   mediumModelPath: this.mediumModelPath,
+    //   cacheDir: this.cacheDir,
+    //   modelsDir: this.modelsDir
+    // });
 
-    this.downloadManager = DownloadManager.getInstance(this.cacheDir);
-    this.tokenizerManager = TokenizerManager.getInstance(this.cacheDir);
+    this.downloadManager = DownloadManager.getInstance(this.cacheDir, this.modelsDir);
+    this.tokenizerManager = TokenizerManager.getInstance(this.cacheDir, this.modelsDir);
     this.visionManager = VisionManager.getInstance(this.cacheDir);
     this.transcribeManager = TranscribeManager.getInstance(this.cacheDir);
     this.ttsManager = TTSManager.getInstance(this.cacheDir);
-    this.studioLMManager = StudioLMManager.getInstance();
-    this.ollamaManager = OllamaManager.getInstance();
+    
+    // Only create StudioLM and Ollama manager instances if enabled in environment
+    if (process.env.USE_STUDIOLM_TEXT_MODELS === 'true') {
+      logger.info("Creating StudioLM manager instance (enabled in environment)");
+      this.studioLMManager = StudioLMManager.getInstance();
+    } else {
+      logger.info("StudioLM manager instance not created (disabled in environment)");
+    }
+    
+    if (process.env.USE_OLLAMA_TEXT_MODELS === 'true') {
+      logger.info("Creating Ollama manager instance (enabled in environment)");
+      this.ollamaManager = OllamaManager.getInstance();
+    } else {
+      logger.info("Ollama manager instance not created (disabled in environment)");
+    }
 
     // Initialize environment
     this.initializeEnvironment().catch(error => {
@@ -123,10 +131,25 @@ class LocalAIManager {
       logger.warn("Embedding initialization failed:", error);
     });
 
-    // Initialize models in parallel
-    Promise.all([
-      this.initialize(ModelClass.TEXT_SMALL),
-      this.initialize(ModelClass.TEXT_LARGE),
+    // Initialize models sequentially to avoid conflicts
+    logger.info("Starting model initialization sequence");
+    
+    // First initialize the small model
+    this.initialize(ModelClass.TEXT_SMALL)
+      .then(() => {
+        logger.info("Small model initialization complete, starting large model initialization");
+        // Then initialize the large model only after small model is done
+        return this.initialize(ModelClass.TEXT_LARGE);
+      })
+      .catch(error => {
+        logger.warn("Models initialization failed:", {
+          stack: error instanceof Error ? error.stack : undefined,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      });
+
+    // Initialize other services in parallel
+    const servicePromises = [
       // Add vision initialization using a public method
       this.initializeVision().catch(error => {
         logger.warn("Vision initialization failed:", error);
@@ -148,27 +171,45 @@ class LocalAIManager {
         });
         return null; // Prevent Promise.all from failing completely
       }),
-      // Add StudioLM initialization
-      this.initializeStudioLM().then(() => {
-        this.studioLMInitialized = true;
-      }).catch(error => {
-        logger.warn("StudioLM initialization failed:", {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        return null; // Prevent Promise.all from failing completely
-      }),
-      // Add Ollama initialization
-      this.initializeOllama().then(() => {
-        this.ollamaInitialized = true;
-      }).catch(error => {
-        logger.warn("Ollama initialization failed:", {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        return null; // Prevent Promise.all from failing completely
-      }),
-    ]).catch(error => {
+    ];
+
+    // Only initialize StudioLM if enabled in environment and manager exists
+    if (process.env.USE_STUDIOLM_TEXT_MODELS === 'true' && this.studioLMManager) {
+      logger.info("StudioLM initialization enabled by environment configuration");
+      servicePromises.push(
+        this.initializeStudioLM().then(() => {
+          this.studioLMInitialized = true;
+        }).catch(error => {
+          logger.warn("StudioLM initialization failed:", {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          });
+          return null; // Prevent Promise.all from failing completely
+        })
+      );
+    } else {
+      logger.info("StudioLM initialization skipped (disabled in environment configuration or manager not created)");
+    }
+
+    // Only initialize Ollama if enabled in environment and manager exists
+    if (process.env.USE_OLLAMA_TEXT_MODELS === 'true' && this.ollamaManager) {
+      logger.info("Ollama initialization enabled by environment configuration");
+      servicePromises.push(
+        this.initializeOllama().then(() => {
+          this.ollamaInitialized = true;
+        }).catch(error => {
+          logger.warn("Ollama initialization failed:", {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          });
+          return null; // Prevent Promise.all from failing completely
+        })
+      );
+    } else {
+      logger.info("Ollama initialization skipped (disabled in environment configuration or manager not created)");
+    }
+
+    Promise.all(servicePromises).catch(error => {
       logger.warn("Models initialization failed:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
@@ -198,8 +239,19 @@ class LocalAIManager {
       const validatedConfig = await validateConfig(config);
       
       // Log the validated configuration
-      logger.info("Environment configuration validated:", validatedConfig);
+      // logger.info("Environment configuration validated:", validatedConfig);
+      logger.info("Environment configuration validated");
 
+      // Ensure environment variables are set with validated values
+      process.env.USE_LOCAL_AI = String(validatedConfig.USE_LOCAL_AI);
+      process.env.USE_STUDIOLM_TEXT_MODELS = String(validatedConfig.USE_STUDIOLM_TEXT_MODELS);
+      process.env.USE_OLLAMA_TEXT_MODELS = String(validatedConfig.USE_OLLAMA_TEXT_MODELS);
+      
+      // logger.info("Environment variables updated with validated values:", {
+      //   USE_LOCAL_AI: process.env.USE_LOCAL_AI,
+      //   USE_STUDIOLM_TEXT_MODELS: process.env.USE_STUDIOLM_TEXT_MODELS,
+      //   USE_OLLAMA_TEXT_MODELS: process.env.USE_OLLAMA_TEXT_MODELS
+      // });
       
       logger.success("Environment initialization complete");
     } catch (error) {
@@ -214,7 +266,11 @@ class LocalAIManager {
   private async initializeOllama(): Promise<void> {
     try {
       logger.info("Initializing Ollama models...");
-      this.ollamaManager = OllamaManager.getInstance();
+      
+      // Check if Ollama manager exists
+      if (!this.ollamaManager) {
+        throw new Error("Ollama manager not created - cannot initialize");
+      }
       
       // Initialize and test models
       await this.ollamaManager.initialize();
@@ -237,6 +293,11 @@ class LocalAIManager {
   private async initializeStudioLM(): Promise<void> {
     try {
       logger.info("Initializing StudioLM models...");
+      
+      // Check if StudioLM manager exists
+      if (!this.studioLMManager) {
+        throw new Error("StudioLM manager not created - cannot initialize");
+      }
       
       // Initialize and test models
       await this.studioLMManager.initialize();
@@ -267,16 +328,15 @@ class LocalAIManager {
         throw new Error("Cannot initialize transcription without FFmpeg. Please install FFmpeg and try again.");
       }
 
-      logger.info("FFmpeg initialized successfully:", {
-        version: this.transcribeManager.getFFmpegVersion(),
-        available: this.transcribeManager.isFFmpegAvailable(),
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("FFmpeg initialized successfully:", {
+      //   version: this.transcribeManager.getFFmpegVersion(),
+      //   available: this.transcribeManager.isFFmpegAvailable(),
+      //   timestamp: new Date().toISOString()
+      // });
       
       // Define sample file path and AWS URL
       const samplePath = path.join(this.cacheDir, 'sample1.wav');
       const awsSampleUrl = 'https://d2908q01vomqb2.cloudfront.net/artifacts/DBSBlogs/ML-15311/sample1.wav?_=1';
-      
       // Download sample file if it doesn't exist
       if (!fs.existsSync(samplePath)) {
         logger.info("Sample WAV file not found in cache, downloading from AWS...");
@@ -302,11 +362,11 @@ class LocalAIManager {
       }
 
       const testAudioBuffer = fs.readFileSync(samplePath);
-      logger.info("Sample audio file loaded:", {
-        size: testAudioBuffer.length,
-        path: samplePath,
-        timestamp: new Date().toISOString()
-      });
+      // logger.info("Sample audio file loaded:", {
+      //   size: testAudioBuffer.length,
+      //   path: samplePath,
+      //   timestamp: new Date().toISOString()
+      // });
       
       // Use our existing transcribeAudio method which uses transcribeManager
       const result = await this.transcribeAudio(testAudioBuffer);
@@ -420,12 +480,12 @@ class LocalAIManager {
     }
   }
 
-  private async downloadModel(): Promise<void> {
+  private async downloadModel(): Promise<boolean> {
     try {
       // Determine which model to download based on current modelPath
       const isLargeModel = this.modelPath === this.mediumModelPath;
       const modelSpec = isLargeModel ? MODEL_SPECS.medium : MODEL_SPECS.small;
-      await this.downloadManager.downloadModel(modelSpec, this.modelPath);
+      return await this.downloadManager.downloadModel(modelSpec, this.modelPath);
     } catch (error) {
       logger.error("Model download failed:", {
         error: error instanceof Error ? error.message : String(error),
@@ -456,23 +516,48 @@ class LocalAIManager {
     try {
       logger.info("Initializing LocalAI Manager for model class:", modelClass);
       
-      // Set the correct model path and download if needed
+      // Set the correct model path based on the model class
       if (modelClass === ModelClass.TEXT_LARGE) {
         this.modelPath = this.mediumModelPath;
+        logger.info("Using medium model path:", this.modelPath);
+      } else {
+        // Ensure we're using the small model path for small model
+        this.modelPath = path.join(this.modelsDir, MODEL_SPECS.small.name);
+        logger.info("Using small model path:", this.modelPath);
       }
-      await this.downloadModel();
+      
+      // Download the model and check if it was newly downloaded
+      const wasNewlyDownloaded = await this.downloadModel();
+      
+      // Add a delay to ensure file system operations are complete if the model was newly downloaded
+      if (wasNewlyDownloaded) {
+        if (modelClass === ModelClass.TEXT_LARGE) {
+          logger.info("Adding delay before loading large model to ensure download is complete...");
+          await new Promise(resolve => setTimeout(resolve, 10000)); // 60 second delay for large model
+        } else {
+          logger.info("Adding delay before loading small model to ensure download is complete...");
+          await new Promise(resolve => setTimeout(resolve, 10000)); // 15 second delay for small model
+        }
+      }
+      
+      // Verify the model file exists before trying to load it
+      if (!fs.existsSync(this.modelPath)) {
+        throw new Error(`Model file not found at path: ${this.modelPath}`);
+      }
       
       this.llama = await getLlama();
       
       // Initialize the appropriate model
       if (modelClass === ModelClass.TEXT_LARGE) {
         this.activeModelConfig = MODEL_SPECS.medium;
+        logger.info("Loading large model from:", this.modelPath);
         this.mediumModel = await this.llama.loadModel({
-          modelPath: this.mediumModelPath
+          modelPath: this.modelPath
         });
         this.ctx = await this.mediumModel.createContext({ contextSize: MODEL_SPECS.medium.contextSize });
       } else {
         this.activeModelConfig = MODEL_SPECS.small;
+        logger.info("Loading small model from:", this.modelPath);
         this.smallModel = await this.llama.loadModel({
           modelPath: this.modelPath
         });
@@ -484,7 +569,7 @@ class LocalAIManager {
       }
 
       this.sequence = this.ctx.getSequence();
-      logger.success("Model initialization complete");
+      logger.success(`Model initialization complete for ${modelClass === ModelClass.TEXT_LARGE ? 'large' : 'small'} model`);
     } catch (error) {
       logger.error("Initialization failed:", error);
       throw error;
@@ -494,17 +579,40 @@ class LocalAIManager {
   public async initializeEmbedding(): Promise<void> {
     try {
       logger.info("Initializing embedding model...");
-      logger.info("Cache directory:", this.cacheDir);
+      logger.info("Models directory:", this.modelsDir);
+      
+      // Ensure models directory exists
+      if (!fs.existsSync(this.modelsDir)) {
+        logger.warn("Models directory does not exist, creating it:", this.modelsDir);
+        fs.mkdirSync(this.modelsDir, { recursive: true });
+      }
       
       if (!this.embeddingModel) {
         logger.info("Creating new FlagEmbedding instance with BGESmallENV15 model");
+        // logger.info("Embedding model download details:", {
+        //   model: EmbeddingModel.BGESmallENV15,
+        //   modelsDir: this.modelsDir,
+        //   maxLength: 512,
+        //   timestamp: new Date().toISOString()
+        // });
+        
+        // Display initial progress bar
+        const barLength = 30;
+        const emptyBar = '▱'.repeat(barLength);
+        logger.info(`Downloading embedding model: ${emptyBar} 0%`);
+        
+        // Disable built-in progress bar and initialize the model
         this.embeddingModel = await FlagEmbedding.init({
-          cacheDir: this.cacheDir,
+          cacheDir: this.modelsDir,
           model: EmbeddingModel.BGESmallENV15,
           maxLength: 512,
-          showDownloadProgress: true
+          showDownloadProgress: false
         });
-        logger.info("FlagEmbedding instance created successfully");
+        
+        // Display completed progress bar
+        const completedBar = '▰'.repeat(barLength);
+        logger.info(`Downloading embedding model: ${completedBar} 100%`);
+        logger.success("FlagEmbedding instance created successfully");
       }
       
       // Verify the model is working with a test embedding
@@ -517,7 +625,7 @@ class LocalAIManager {
       logger.error("Embedding initialization failed with details:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        cacheDir: this.cacheDir,
+        modelsDir: this.modelsDir,
         model: EmbeddingModel.BGESmallENV15
       });
       throw error;
@@ -531,10 +639,24 @@ class LocalAIManager {
         modelSource: modelConfig.source,
         modelClass: params.modelClass,
         studioLMInitialized: this.studioLMInitialized,
-        studioLMManagerInitialized: this.studioLMManager.isInitialized()
+        ollamaInitialized: this.ollamaInitialized,
+        studioLMEnabled: process.env.USE_STUDIOLM_TEXT_MODELS === 'true',
+        ollamaEnabled: process.env.USE_OLLAMA_TEXT_MODELS === 'true'
       });
         
       if (modelConfig.source === 'studiolm') {
+        // Check if StudioLM is enabled in environment
+        if (process.env.USE_STUDIOLM_TEXT_MODELS !== 'true') {
+          logger.warn("StudioLM requested but disabled in environment, falling back to local models");
+          return this.generateText(params);
+        }
+        
+        // Check if StudioLM manager exists
+        if (!this.studioLMManager) {
+          logger.warn("StudioLM manager not initialized, falling back to local models");
+          return this.generateText(params);
+        }
+        
         // Only initialize if not already initialized
         if (!this.studioLMInitialized) {
           logger.info("StudioLM not initialized, initializing now...");
@@ -546,6 +668,18 @@ class LocalAIManager {
       }
       
       if (modelConfig.source === 'ollama') {
+        // Check if Ollama is enabled in environment
+        if (process.env.USE_OLLAMA_TEXT_MODELS !== 'true') {
+          logger.warn("Ollama requested but disabled in environment, falling back to local models");
+          return this.generateText(params);
+        }
+        
+        // Check if Ollama manager exists
+        if (!this.ollamaManager) {
+          logger.warn("Ollama manager not initialized, falling back to local models");
+          return this.generateText(params);
+        }
+        
         // Only initialize if not already initialized
         if (!this.ollamaInitialized && !this.ollamaManager.isInitialized()) {
           logger.info("Initializing Ollama in generateTextOllamaStudio");
@@ -560,7 +694,11 @@ class LocalAIManager {
       // Fallback to local models if something goes wrong
       return this.generateText(params);
     } catch (error) {
-      logger.error("Text generation with Ollama/StudioLM failed:", error);
+      logger.error("Text generation with Ollama/StudioLM failed:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        modelSource: this.getTextModelSource().source
+      });
       // Fallback to local models
       return this.generateText(params);
     }
@@ -751,10 +889,10 @@ class LocalAIManager {
             modelClass: ModelClass.TEXT_SMALL
         };
 
-        // Check environment configuration
-        if (process.env.USE_STUDIOLM_TEXT_MODELS === 'true') {
+        // Check environment configuration and manager existence
+        if (process.env.USE_STUDIOLM_TEXT_MODELS === 'true' && this.studioLMManager) {
             config.source = 'studiolm';
-        } else if (process.env.USE_OLLAMA_TEXT_MODELS === 'true') {
+        } else if (process.env.USE_OLLAMA_TEXT_MODELS === 'true' && this.ollamaManager) {
             config.source = 'ollama';
         }
 
@@ -852,10 +990,10 @@ export const localAIPlugin: Plugin = {
         // Add detailed logging of the input text and its structure
         logger.info("TEXT_EMBEDDING handler - Initial input:", {
           text,
-          type: typeof text,
-          isString: typeof text === 'string',
-          isObject: typeof text === 'object',
-          hasThinkTag: typeof text === 'string' && text.includes('<think>'),
+          // type: typeof text,
+          // isString: typeof text === 'string',
+          // isObject: typeof text === 'object',
+          // hasThinkTag: typeof text === 'string' && text.includes('<think>'),
           length: text?.length,
           rawText: text // Log the complete raw text
         });
