@@ -14,7 +14,7 @@ export class PgDatabaseAdapter extends BaseDrizzleAdapter<NodePgDatabase> {
     }
 
     protected async withDatabase<T>(operation: () => Promise<T>): Promise<T> {
-        return operation();
+        return await this.withRetry(operation);
     }
 
     async init(): Promise<void> {
