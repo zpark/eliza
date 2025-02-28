@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { type User } from '@site/src/data/users';
+import type { User } from '@site/src/data/users';
 import ShowcaseCard from '../ShowcaseCard';
 import styles from './styles.module.css';
 

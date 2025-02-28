@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit directly.
-import {type User} from './users';
+import type {User} from './users';
 
 export const registryUsers: User[] = [
   {
