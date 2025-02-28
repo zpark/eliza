@@ -1,14 +1,36 @@
 import PageTitle from "@/components/page-title";
 import { ActionCard } from "@/components/ui/action-card";
-import { useAgents } from "@/hooks/use-query-hooks";
+import { useAgents, useStartAgent } from "@/hooks/use-query-hooks";
 import { Cog } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+// Define agent type to fix linter error
+interface Agent {
+    id: string;
+    character: {
+        name: string;
+    };
+    enabled: boolean;
+}
 
 export default function Home() {
-
     const { data: agentsData, isLoading, isError, error } = useAgents();
+    const startAgentMutation = useStartAgent();
+    const navigate = useNavigate();
 
     // Extract agents properly from the response
     const agents = agentsData?.agents || [];
+
+    // Handle agent start action
+    const handleStartAgent = async (agent: Agent) => {
+        try {
+            await startAgentMutation.mutateAsync(agent.character.name);
+            // Navigate to chat after successful start
+            navigate(`/chat/${agent.id}`);
+        } catch (error) {
+            console.error("Failed to start agent:", error);
+        }
+    };
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -43,7 +65,8 @@ export default function Home() {
                         name={agent.character.name}
                         primaryText={agent.enabled ? "Chat" : "Start"}
                         primaryVariant={agent.enabled ? "default" : "secondary"}
-                        primaryLink={`/chat/${agent.id}`}
+                        primaryLink={agent.enabled ? `/chat/${agent.id}` : undefined}
+                        primaryAction={!agent.enabled ? () => handleStartAgent(agent) : undefined}
                         secondaryIcon={<Cog className="h-4 w-4" />}
                         secondaryTitle="Agent settings"
                         secondaryLink={`/settings/${agent.id}`}
