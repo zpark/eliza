@@ -176,16 +176,12 @@ export async function findEntityByName(
       template: entityResolutionTemplate
     });
 
-    console.log("*** findEntityByName context", context)
-
     // Use LLM to analyze and resolve the entity
     const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
       stopSequences: []
     });
 
-    console.log("*** findEntityByName result", result)
-    
     // Parse LLM response
     const resolution = parseJSONObjectFromText(result);
     if (!resolution) {

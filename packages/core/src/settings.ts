@@ -86,7 +86,6 @@ export async function initializeOnboardingConfig(
   config: OnboardingConfig
 ): Promise<WorldSettings | null> {
   try {
-    console.log("world.metadata", world.metadata)
     // Check if settings state already exists
     if (world.metadata?.settings) {
       logger.info(`Onboarding state already exists for server ${world.serverId}`);
@@ -96,7 +95,6 @@ export async function initializeOnboardingConfig(
     // Create new settings state
     const worldSettings: WorldSettings = {};
     
-    console.log("config.settings", config.settings)
     // Initialize settings from config
     if (config.settings) {
       for (const [key, configSetting] of Object.entries(config.settings)) {
@@ -104,7 +102,6 @@ export async function initializeOnboardingConfig(
       }
     }
     
-    console.log("world.metadata", world.metadata)
     // Save settings state to world metadata
     if (!world.metadata) {
       world.metadata = {};
@@ -113,8 +110,6 @@ export async function initializeOnboardingConfig(
     world.metadata.settings = worldSettings;
     
     await runtime.updateWorld(world);
-
-    console.log("updateWorld - world.metadata", world.metadata)
     
     logger.info(`Initialized settings config for server ${world.serverId}`);
     return worldSettings;

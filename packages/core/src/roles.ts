@@ -34,17 +34,6 @@ export async function findWorldForOwner(
     // Find world where the user is the owner
     for (const world of worlds) {
       if (world.metadata?.ownership?.ownerId === userId) {
-        logger.info(
-          `Found server ${world.serverId} for owner ${userId}`
-        );
-        return world;
-      }
-
-      // Also check original ID format
-      if (world.metadata?.ownership?.ownerId === userId) {
-        logger.info(
-          `Found server ${world.serverId} for owner ${userId} using original ID`
-        );
         return world;
       }
     }

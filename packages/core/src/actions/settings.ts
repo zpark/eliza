@@ -626,10 +626,6 @@ const updateSettingsAction: Action = {
         return false;
       }
 
-      logger.info(
-        `Found server ${world.serverId} owned by ${world.metadata.ownership.ownerId}`
-      );
-
       // Check if there's an active settings state in world metadata
       const worldSettings = world.metadata.settings;
 

@@ -97,9 +97,7 @@ export const updateEntityAction: Action = {
     
     // // Get source types from room components
     // const availableSources = new Set(roomComponents.map(c => c.type));
-  
-    // console.log("*** updateEntityAction validate:", availableSources.size > 0)
-    return true; // availableSources.size > 0;
+      return true; // availableSources.size > 0;
   },
   
   handler: async (
@@ -110,7 +108,6 @@ export const updateEntityAction: Action = {
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
-    console.log('*** updateEntityAction handler')
     try {
       // Handle initial responses
       for (const response of responses) {
@@ -144,14 +141,10 @@ export const updateEntityAction: Action = {
         template: componentTemplate,
       });
 
-      console.log("*** updateEntityAction context", context);
-
       const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
         context,
         stopSequences: []
       });
-
-      console.log("*** updateEntityAction result", result);
 
       // Parse the generated data
       let parsedResult: any;

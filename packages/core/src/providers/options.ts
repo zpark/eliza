@@ -30,7 +30,6 @@ export const optionsProvider: Provider = {
             if (tasksWithOptions.length === 0) {
                 return "";
             }
-
             // Format tasks into a readable list
             let output = "# Pending Tasks\n\n";
             output += "The following tasks are awaiting your selection:\n\n";

@@ -901,7 +901,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
         let isUnique = true;
         if (memory.embedding && Array.isArray(memory.embedding)) {
-            logger.info("Searching for similar memories:");
             const similarMemories = await this.searchMemoriesByEmbedding(
                 memory.embedding,
                 {

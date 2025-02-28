@@ -165,6 +165,17 @@ const twitterPostAction: Action = {
       throw new Error("No server ID found");
     }
 
+    // Check if there are any pending Twitter posts awaiting confirmation
+    const pendingTasks = runtime.getTasks({
+      roomId: message.roomId,
+      tags: ["TWITTER_POST"],
+    });
+
+    if (pendingTasks && pendingTasks.length > 0) {
+      // If there are already pending Twitter post tasks, don't allow another one
+      return false;
+    }
+
     // Validate Twitter configuration
     const validation = await validateTwitterConfig(runtime, serverId);
     if (!validation.isValid) {
@@ -236,18 +247,6 @@ const twitterPostAction: Action = {
           source: message.content.source,
         });
         return;
-      }
-
-      // Check if there are any pending Twitter posts awaiting confirmation
-      const pendingTasks = runtime.getTasks({
-        roomId: message.roomId,
-        tags: ["TWITTER_POST"],
-      });
-
-      if (pendingTasks && pendingTasks.length > 0) {
-        for (const task of pendingTasks) {
-          await runtime.deleteTask(task.id);
-        }
       }
 
       // Prepare response content
@@ -349,6 +348,9 @@ const twitterPostAction: Action = {
         ...responseContent,
         action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
       });
+
+      console.log("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
+      
       return responseContent;
     } catch (error) {
       logger.error("Error in TWITTER_POST action:", error);
