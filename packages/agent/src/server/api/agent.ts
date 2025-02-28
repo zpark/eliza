@@ -1,14 +1,15 @@
+import type { Character, IAgentRuntime, Media, UUID } from '@elizaos/core';
+import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
-import type { Character, IAgentRuntime, Media } from '@elizaos/core';
-import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig } from '@elizaos/core';
 import fs from 'node:fs';
 import type { AgentServer } from '..';
-import { validateUUIDParams } from './api-utils';
+
 
 import type { Content, Memory } from '@elizaos/core';
 import path from 'node:path';
 import { messageHandlerTemplate } from '../helper';
 import { upload } from '../loader';
+
 
 interface CustomRequest extends express.Request {
     file?: Express.Multer.File;
@@ -37,9 +38,12 @@ export function agentRouter(
     });
 
     router.get('/:agentId', (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
+        if (!req.params.agentId) {
+            logger.warn("[AGENT GET] Invalid agent ID format");
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
             logger.warn("[AGENT GET] Invalid agent ID format");
             return;
@@ -76,9 +80,14 @@ export function agentRouter(
     });
 
     router.delete('/:agentId', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
+        
+        if (!req.params.agentId) {
+            logger.warn("[AGENT DELETE] Invalid agent ID format");
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
+
         if (!agentId) {
             logger.warn("[AGENT DELETE] Invalid agent ID format");
             return;
@@ -113,9 +122,12 @@ export function agentRouter(
     router.post('/:agentId/message', async (req: CustomRequest, res) => {
         logger.info("[MESSAGE ENDPOINT] **ROUTE HIT** - Entering /message endpoint");
 
-        const { agentId } = validateUUIDParams(req?.params, res) ?? {
-            agentId: null,
-        };
+        if (!req.params.agentId) {
+            logger.warn("[MESSAGE ENDPOINT] Invalid agent ID format");
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
         if (!agentId) return;
 
         // Add logging to debug the request body
@@ -275,13 +287,14 @@ export function agentRouter(
     });
 
     router.post('/:agentId/set', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
+
+        const agentId = validateUuid(req.params.agentId);
+
         if (!agentId) {
             logger.warn("[AGENT UPDATE] Invalid agent ID format");
             return;
         }
+
 
         logger.info(`[AGENT UPDATE] Request to update agent: ${agentId}`);
         let agent: IAgentRuntime = agents.get(agentId);
@@ -298,19 +311,19 @@ export function agentRouter(
                 directClient.unregisterAgent(agent);
                 logger.success(`[AGENT UPDATE] Successfully unregistered existing agent: ${existingName}`);
             } catch (error) {
-                logger.error(`[AGENT UPDATE] Error stopping existing agent:`, error);
+                logger.error("[AGENT UPDATE] Error stopping existing agent:", error);
             }
         } else {
             logger.info(`[AGENT UPDATE] No existing agent found with ID: ${agentId}, will create new one`);
         }
 
         const character = req.body;
-        logger.debug(`[AGENT UPDATE] Validating character configuration`);
+        logger.debug("[AGENT UPDATE] Validating character configuration");
         try {
             validateCharacterConfig(character);
-            logger.debug("[AGENT UPDATE] Character configuration valid for: " + character.name);
+            logger.debug(`[AGENT UPDATE] Character configuration valid for: ${character.name}`);
         } catch (e) {
-            logger.error(`[AGENT UPDATE] Error validating character configuration:`, e);
+            logger.error("[AGENT UPDATE] Error validating character configuration:", e);
             res.status(400).json({
                 success: false,
                 message: e.message,
@@ -324,7 +337,7 @@ export function agentRouter(
             await agent.ensureCharacterExists(character);
             logger.success(`[AGENT UPDATE] Agent successfully updated and started: ${character.name} (${character.id})`);
         } catch (e) {
-            logger.error(`[AGENT UPDATE] Error starting updated agent:`, e);
+            logger.error("[AGENT UPDATE] Error starting updated agent:", e);
             res.status(500).json({
                 success: false,
                 message: e.message,
@@ -332,7 +345,7 @@ export function agentRouter(
             return;
         }
 
-        logger.debug("[AGENT UPDATE] Returning updated agent data for: " + character.name);
+        logger.debug(`[AGENT UPDATE] Returning updated agent data for: ${character.name}`);
         res.json({
             id: character.id,
             character: character,
@@ -340,10 +353,13 @@ export function agentRouter(
     });
 
     router.get('/:agentId/:roomId/memories', async (req, res) => {
-        const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-            roomId: null,
-        };
+        if (!req.params.agentId || !req.params.roomId) {
+            logger.warn("[MEMORIES GET] Invalid agent ID or room ID format");
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
+        const roomId = validateUuid(req.params.roomId);
         if (!agentId || !roomId) {
             logger.warn("[MEMORIES GET] Invalid agent ID or room ID format");
             return;
@@ -368,8 +384,8 @@ export function agentRouter(
         logger.debug(`[MEMORIES GET] Found agent: ${runtime.character.name}, fetching memories`);
         try {
             const { limit, before } = req.query;
-            const limitValue = limit ? parseInt(limit as string, 10) : undefined;
-            const beforeValue = before ? parseInt(before as string, 10) : undefined;
+            const limitValue = limit ? Number.parseInt(limit as string, 10) : undefined;
+            const beforeValue = before ? Number.parseInt(before as string, 10) : undefined;
             
             const memories = await runtime.messageManager.getMemories({
                 roomId,
@@ -533,10 +549,6 @@ export function agentRouter(
         if (agent) {
             // Store the agent name before stopping
             const agentName = agent.character.name;
-            const agentInfo = {
-                id: agentId,
-                name: agentName
-            };
             
             logger.info(`[AGENT SHUTDOWN] Starting shutdown process for agent ${agentName} (${agentId})`);
             logger.info(`[AGENT SHUTDOWN] Agent has ${agent.getAllClients().size} active clients to disconnect`);
@@ -597,7 +609,9 @@ export function agentRouter(
     });
 
     router.post('/:agentId/speak', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        
+
+        const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
             logger.warn("[SPEAK] Invalid agent ID format");
             return;
@@ -668,21 +682,21 @@ export function agentRouter(
                 createdAt: Date.now(),
             };
 
-            logger.debug(`[SPEAK] Creating memory for user message`);
+            logger.debug("[SPEAK] Creating memory for user message");
             await runtime.messageManager.createMemory(memory);
 
-            logger.debug(`[SPEAK] Composing state for message processing`);
+            logger.debug("[SPEAK] Composing state for message processing");
             const state = await runtime.composeState(userMessage, {
                 agentName: runtime.character.name,
             });
 
-            logger.debug(`[SPEAK] Creating context for LLM processing`);
+            logger.debug("[SPEAK] Creating context for LLM processing");
             const context = composeContext({
                 state,
                 template: messageHandlerTemplate,
             });
 
-            logger.info(`[SPEAK] Using LLM to generate response`);
+            logger.info("[SPEAK] Using LLM to generate response");
             const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
                 messages: [{
                     role: 'system',
@@ -694,14 +708,14 @@ export function agentRouter(
             });
 
             if (!response) {
-                logger.error(`[SPEAK] No response received from LLM`);
+                logger.error("[SPEAK] No response received from LLM");
                 res.status(500).send(
                     "No response from generateMessageResponse"
                 );
                 return;
             }
 
-            logger.debug(`[SPEAK] Creating memory for agent response`);
+            logger.debug("[SPEAK] Creating memory for agent response");
             // save response to memory
             const responseMessage = {
                 ...userMessage,
@@ -711,7 +725,7 @@ export function agentRouter(
 
             await runtime.messageManager.createMemory(responseMessage);
 
-            logger.debug(`[SPEAK] Evaluating and processing actions`);
+            logger.debug("[SPEAK] Evaluating and processing actions");
             await runtime.evaluate(memory, state);
 
             const _result = await runtime.processActions(
@@ -723,11 +737,11 @@ export function agentRouter(
                 }
             );
 
-            logger.info(`[SPEAK] Generating speech from text response`);
+            logger.info("[SPEAK] Generating speech from text response");
             const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, response.text);
             const audioBuffer = await speechResponse.arrayBuffer();
 
-            logger.debug(`[SPEAK] Setting response headers and sending audio data`);
+            logger.debug("[SPEAK] Setting response headers and sending audio data");
             res.set({
                 "Content-Type": "audio/mpeg",
                 "Transfer-Encoding": "chunked",
@@ -745,7 +759,7 @@ export function agentRouter(
     });
 
     router.post('/:agentId/tts', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
             logger.warn("[TTS] Invalid agent ID format");
             return;
@@ -769,11 +783,11 @@ export function agentRouter(
 
         logger.debug(`[TTS] Found agent: ${runtime.character.name}, generating speech`);
         try {
-            logger.info(`[TTS] Using text-to-speech model to generate audio`);
+            logger.info("[TTS] Using text-to-speech model to generate audio");
             const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, text);
             const audioBuffer = await speechResponse.arrayBuffer();
 
-            logger.debug(`[TTS] Setting response headers and sending audio data`);
+            logger.debug("[TTS] Setting response headers and sending audio data");
             res.set({
                 "Content-Type": "audio/mpeg",
                 "Transfer-Encoding": "chunked",
@@ -792,7 +806,12 @@ export function agentRouter(
 
     // Get rooms for an agent
     router.get('/:agentId/rooms', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!req.params.agentId) {
+            logger.warn("[ROOMS GET] Invalid agent ID format");
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
             logger.warn("[ROOMS GET] Invalid agent ID format");
             return;
@@ -835,17 +854,17 @@ export function agentRouter(
                         
                         // Get the most recent message for this room
                         const recentMemories = await runtime.databaseAdapter.getMemoriesByRoomIds({
+                            tableName: 'memories',
                             agentId: runtime.agentId,
                             roomIds: [roomId],
                             limit: 1
                         });
                         
-                        const lastMessage = recentMemories.length > 0 ? recentMemories[0].text : null;
+                        const lastMessage = recentMemories.length > 0 ? recentMemories[0].content.text : null;
                         
                         return {
                             id: roomId,
-                            name: roomData.name || `Chat ${new Date(roomData.createdAt || Date.now()).toLocaleString()}`,
-                            createdAt: roomData.createdAt,
+                            name: roomData.name || new Date().toLocaleString(),
                             source: roomData.source,
                             worldId: roomData.worldId,
                             lastMessage
@@ -860,7 +879,7 @@ export function agentRouter(
             // Filter out any null results and sort by most recent
             const validRooms = roomDetails
                 .filter(room => room !== null)
-                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                
             
             logger.debug(`[ROOMS GET] Retrieved ${validRooms.length} rooms for agent: ${agentId}`);
             res.json(validRooms);
@@ -872,7 +891,9 @@ export function agentRouter(
 
     // Create a new room for an agent
     router.post('/:agentId/rooms', async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+
+        const agentId = validateUuid(req.params.agentId);
+        
         if (!agentId) {
             logger.warn("[ROOM CREATE] Invalid agent ID format");
             return;
@@ -895,21 +916,20 @@ export function agentRouter(
         }
 
         try {
-            const { name, worldId } = req.body;
+            const { name, worldId, roomId } = req.body;
             const roomName = name || `Chat ${new Date().toLocaleString()}`;
-            const roomId = crypto.randomUUID() as UUID;
             
             // Create the room
             await runtime.ensureRoomExists({
                 id: roomId,
                 name: roomName,
                 source: "client",
-                type: 0, // Direct message
+                type: ChannelType.API, // Direct message
                 worldId, // Include the worldId from the request
             });
             
             // Add the agent to the room
-            await runtime.ensureParticipantInRoom(runtime.agentId, roomId);
+            await runtime.ensureParticipantInRoom(runtime.agentId, roomName);
             
             // Add the default user to the room
             const userId = "00000000-0000-0000-0000-000000000000" as UUID;
@@ -926,6 +946,100 @@ export function agentRouter(
         } catch (error) {
             logger.error(`[ROOM CREATE] Error creating room for agent ${agentId}:`, error);
             res.status(500).json({ message: "Failed to create room" });
+        }
+    });
+
+    router.get('/:agentId/:roomId', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        const roomId = validateUuid(req.params.roomId);
+
+        if (!agentId || !roomId) {
+            logger.warn("[ROOM MESSAGES] Invalid agent ID or room ID format");
+            return;
+        }
+
+        logger.info(`[ROOM MESSAGES] Retrieving conversation for agent: ${agentId}, room: ${roomId}`);
+        let runtime = agents.get(agentId);
+
+        if (!runtime) {
+            logger.debug(`[ROOM MESSAGES] Agent not found by ID, trying to find by name: ${agentId}`);
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            logger.warn(`[ROOM MESSAGES] Agent not found: ${agentId}`);
+            res.status(404).json({ error: 'Agent not found' });
+            return;
+        }
+
+        logger.debug(`[ROOM MESSAGES] Found agent: ${runtime.character.name}, fetching messages`);
+        try {
+            const { limit, before, after } = req.query;
+            const limitValue = limit ? Number.parseInt(limit as string, 10) : 50; // Default to 50 messages
+            const beforeValue = before ? Number.parseInt(before as string, 10) : undefined;
+            const afterValue = after ? Number.parseInt(after as string, 10) : undefined;
+            
+            const memories = await runtime.messageManager.getMemories({
+                roomId,
+                count: limitValue,
+                end: beforeValue,
+                start: afterValue,
+            });
+            
+            logger.debug(`[ROOM MESSAGES] Retrieved ${memories.length} messages for room: ${roomId}`);
+            
+            // Also get room info for additional context
+            const roomData = await runtime.databaseAdapter.getRoom(roomId, runtime.agentId);
+            
+            logger.info(`[ROOM DATA] Room data: ${JSON.stringify(roomData)}`);
+
+            const response = {
+                agentId,
+                roomId,
+                room: roomData ? {
+                    name: roomData.name,
+                    source: roomData.source,
+                    worldId: roomData.worldId,
+                } : null,
+                messages: memories.map((memory) => ({
+                    id: memory.id,
+                    userId: memory.userId,
+                    agentId: memory.agentId,
+                    createdAt: memory.createdAt,
+                    content: {
+                        text: memory.content.text,
+                        action: memory.content.action,
+                        source: memory.content.source,
+                        url: memory.content.url,
+                        inReplyTo: memory.content.inReplyTo,
+                        attachments: memory.content.attachments?.map(
+                            (attachment) => ({
+                                id: attachment.id,
+                                url: attachment.url,
+                                title: attachment.title,
+                                source: attachment.source,
+                                description: attachment.description,
+                                text: attachment.text,
+                                contentType: attachment.contentType,
+                            })
+                        ),
+                    },
+                    roomId: memory.roomId,
+                })),
+                pagination: {
+                    hasMore: memories.length >= limitValue,
+                    oldestTimestamp: memories.length > 0 ? Math.min(...memories.map(m => m.createdAt)) : null,
+                    newestTimestamp: memories.length > 0 ? Math.max(...memories.map(m => m.createdAt)) : null,
+                }
+            };
+
+            res.json(response);
+            logger.debug(`[ROOM MESSAGES] Successfully returned ${memories.length} messages`);
+        } catch (error) {
+            logger.error('[ROOM MESSAGES] Error fetching messages:', error);
+            res.status(500).json({ error: 'Failed to fetch messages' });
         }
     });
 
