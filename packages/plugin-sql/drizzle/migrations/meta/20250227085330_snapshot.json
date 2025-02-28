@@ -1,5 +1,5 @@
 {
-  "id": "fe6cf216-3ff6-4d2c-866e-9f132bc12f13",
+  "id": "c737db6d-154c-40a5-bdf2-361303475c68",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -77,7 +77,7 @@
         },
         "agentId": {
           "name": "agentId",
-          "type": "text",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -103,7 +103,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "cache_agentId_agents_id_fk": {
+          "name": "cache_agentId_agents_id_fk",
+          "tableFrom": "cache",
+          "tableTo": "agents",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "cache_key_agent_unique": {
@@ -227,6 +241,142 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.components": {
+      "name": "components",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "entityId": {
+          "name": "entityId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "roomId": {
+          "name": "roomId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "worldId": {
+          "name": "worldId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sourceEntityId": {
+          "name": "sourceEntityId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamptz",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "components_entityId_entities_id_fk": {
+          "name": "components_entityId_entities_id_fk",
+          "tableFrom": "components",
+          "tableTo": "entities",
+          "columnsFrom": [
+            "entityId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "components_agentId_agents_id_fk": {
+          "name": "components_agentId_agents_id_fk",
+          "tableFrom": "components",
+          "tableTo": "agents",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "components_roomId_rooms_id_fk": {
+          "name": "components_roomId_rooms_id_fk",
+          "tableFrom": "components",
+          "tableTo": "rooms",
+          "columnsFrom": [
+            "roomId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "components_worldId_worlds_id_fk": {
+          "name": "components_worldId_worlds_id_fk",
+          "tableFrom": "components",
+          "tableTo": "worlds",
+          "columnsFrom": [
+            "worldId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "components_sourceEntityId_entities_id_fk": {
+          "name": "components_sourceEntityId_entities_id_fk",
+          "tableFrom": "components",
+          "tableTo": "entities",
+          "columnsFrom": [
+            "sourceEntityId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -389,7 +539,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "entities_agentId_agents_id_fk": {
+          "name": "entities_agentId_agents_id_fk",
+          "tableFrom": "entities",
+          "tableTo": "agents",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "id_agent_id_unique": {
@@ -1042,14 +1206,14 @@
           "notNull": true,
           "default": "now()"
         },
-        "entityA": {
-          "name": "entityA",
+        "sourceEntityId": {
+          "name": "sourceEntityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "entityB": {
-          "name": "entityB",
+        "targetEntityId": {
+          "name": "targetEntityId",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1060,17 +1224,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "status": {
-          "name": "status",
-          "type": "text",
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
           "primaryKey": false,
           "notNull": false
         },
-        "userId": {
-          "name": "userId",
-          "type": "uuid",
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {
@@ -1078,13 +1242,13 @@
           "name": "idx_relationships_users",
           "columns": [
             {
-              "expression": "entityA",
+              "expression": "sourceEntityId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "entityB",
+              "expression": "targetEntityId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1097,12 +1261,12 @@
         }
       },
       "foreignKeys": {
-        "relationships_userA_entities_id_fk": {
-          "name": "relationships_userA_entities_id_fk",
+        "relationships_sourceEntityId_entities_id_fk": {
+          "name": "relationships_sourceEntityId_entities_id_fk",
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityA"
+            "sourceEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1110,12 +1274,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "relationships_userB_entities_id_fk": {
-          "name": "relationships_userB_entities_id_fk",
+        "relationships_targetEntityId_entities_id_fk": {
+          "name": "relationships_targetEntityId_entities_id_fk",
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityB"
+            "targetEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1136,25 +1300,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "relationships_userId_entities_id_fk": {
-          "name": "relationships_userId_entities_id_fk",
-          "tableFrom": "relationships",
-          "tableTo": "entities",
-          "columnsFrom": [
-            "userId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "fk_user_a": {
           "name": "fk_user_a",
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityA"
+            "sourceEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1167,20 +1318,7 @@
           "tableFrom": "relationships",
           "tableTo": "entities",
           "columnsFrom": [
-            "entityB"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "fk_user": {
-          "name": "fk_user",
-          "tableFrom": "relationships",
-          "tableTo": "entities",
-          "columnsFrom": [
-            "userId"
+            "targetEntityId"
           ],
           "columnsTo": [
             "id"
@@ -1190,7 +1328,17 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "unique_relationship": {
+          "name": "unique_relationship",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sourceEntityId",
+            "targetEntityId", 
+            "agentId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1341,7 +1489,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "worlds_agentId_agents_id_fk": {
+          "name": "worlds_agentId_agents_id_fk",
+          "tableFrom": "worlds",
+          "tableTo": "agents",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

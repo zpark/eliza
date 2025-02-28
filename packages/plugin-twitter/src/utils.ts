@@ -1,13 +1,11 @@
-import type { Tweet } from "./client";
-import { Content, IAgentRuntime, Memory, ModelClass, UUID, composeContext } from "@elizaos/core";
-import { ChannelType, generateText, stringToUuid } from "@elizaos/core";
-import type { ClientBase } from "./base";
-import { logger } from "@elizaos/core";
 import type { Media, State } from "@elizaos/core";
+import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelClass, type UUID, composeContext, createUniqueUuid, generateText, logger } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
+import type { ClientBase } from "./base";
+import type { Tweet } from "./client";
+import type { SttTtsPlugin } from "./sttTtsSpaces";
 import type { ActionResponse, MediaData } from "./types";
-import { SttTtsPlugin } from "./sttTtsSpaces";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -58,13 +56,11 @@ export async function buildConversationThread(
 
         // Handle memory storage
         const memory = await client.runtime.messageManager.getMemoryById(
-            stringToUuid(`${currentTweet.id}-${client.runtime.agentId}`)
+            createUniqueUuid(this.runtime, currentTweet.id)
         );
         if (!memory) {
-            const roomId = stringToUuid(
-                `${currentTweet.conversationId}-${client.runtime.agentId}`
-            );
-            const userId = stringToUuid(currentTweet.userId);
+            const roomId = createUniqueUuid(this.runtime, currentTweet.conversationId);
+            const userId = createUniqueUuid(this.runtime, currentTweet.userId);
 
             await client.runtime.ensureConnection({
                 userId,
@@ -76,9 +72,7 @@ export async function buildConversationThread(
             });
 
             await client.runtime.messageManager.createMemory({
-                id: stringToUuid(
-                    `${currentTweet.id}-${client.runtime.agentId}`
-                ),
+                id: createUniqueUuid(this.runtime, currentTweet.id),
                 agentId: client.runtime.agentId,
                 content: {
                     text: currentTweet.text,
@@ -86,9 +80,7 @@ export async function buildConversationThread(
                     url: currentTweet.permanentUrl,
                     imageUrls: currentTweet.photos.map((p) => p.url) || [],
                     inReplyTo: currentTweet.inReplyToStatusId
-                        ? stringToUuid(
-                              `${currentTweet.inReplyToStatusId}-${client.runtime.agentId}`
-                          )
+                        ? createUniqueUuid(this.runtime, currentTweet.inReplyToStatusId)
                         : undefined,
                 },
                 createdAt: currentTweet.timestamp * 1000,
@@ -96,7 +88,7 @@ export async function buildConversationThread(
                 userId:
                     currentTweet.userId === client.profile.id
                         ? client.runtime.agentId
-                        : stringToUuid(currentTweet.userId),
+                        : createUniqueUuid(this.runtime, currentTweet.userId),
             });
         }
 
@@ -267,7 +259,7 @@ export async function sendTweet(
     }
 
     const memories: Memory[] = sentTweets.map((tweet) => ({
-        id: stringToUuid(`${tweet.id}-${client.runtime.agentId}`),
+        id: createUniqueUuid(client.runtime, tweet.id),
         agentId: client.runtime.agentId,
         userId: client.runtime.agentId,
         content: {
@@ -277,9 +269,7 @@ export async function sendTweet(
             url: tweet.permanentUrl,
             imageUrls: tweet.photos.map((p) => p.url) || [],
             inReplyTo: tweet.inReplyToStatusId
-                ? stringToUuid(
-                      `${tweet.inReplyToStatusId}-${client.runtime.agentId}`
-                  )
+                ? createUniqueUuid(client.runtime, tweet.inReplyToStatusId)
                 : undefined,
         },
         roomId,
@@ -627,7 +617,7 @@ Example:
 
 export async function isAgentInSpace(client: ClientBase, spaceId: string): Promise<boolean> {
     const space = await client.twitterClient.getAudioSpaceById(spaceId);
-    const agentName = client.state["TWITTER_USERNAME"];
+    const agentName = client.state.TWITTER_USERNAME;
 
     return space.participants.listeners.some(
         (participant) => participant.twitter_screen_name === agentName

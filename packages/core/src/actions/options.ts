@@ -1,20 +1,21 @@
 import { composeContext } from "../context";
 import { logger } from "../logger";
+import { parseJSONObjectFromText } from "../parsing";
 import {
-  Action,
-  ActionExample,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type Action,
+  type ActionExample,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  State,
+  type State,
 } from "../types";
 
 const optionExtractionTemplate = `# Task: Extract selected task and option from user message
 
 # Available Tasks:
 {{#each tasks}}
-Task ${taskId}: ${name}
+Task {{taskId}}: {{name}}
 Available options:
 {{#each options}}
 - {{name}}: {{description}}
@@ -33,11 +34,14 @@ Available options:
 4. If no clear selection is made, return null for both fields
 
 Return in JSON format:
+\`\`\`json
 {
   "taskId": number | null,
   "selectedOption": "OPTION_NAME" | null
 }
-`;
+\`\`\`
+
+Make sure to include the \`\`\`json\`\`\` tags around the JSON object.`;
 
 export const selectOptionAction: Action = {
   name: "SELECT_OPTION",
@@ -125,10 +129,10 @@ export const selectOptionAction: Action = {
 
       const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         context,
-        stopSequences: ['}']
+        stopSequences: []
       });
 
-      const parsed = JSON.parse(result);
+      const parsed = parseJSONObjectFromText(result);
       const { taskId, selectedOption } = parsed;
 
       if (taskId && selectedOption) {

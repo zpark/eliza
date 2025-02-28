@@ -3,7 +3,7 @@ import { PhalaVendor } from './phala';
 import { GramineVendor } from './gramine';
 import { MarlinVendor } from './marlin';
 import { FleekVendor } from './fleek';
-import { TeeVendorNames, TeeVendorName } from './types';
+import { TeeVendorNames, type TeeVendorName } from './types';
 
 const vendors: Record<TeeVendorName, TeeVendor> = {
     [TeeVendorNames.PHALA]: new PhalaVendor(),

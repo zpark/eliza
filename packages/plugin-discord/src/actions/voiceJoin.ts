@@ -7,21 +7,21 @@ import {
     type State,
     ChannelType,
     composeContext,
+    createUniqueUuid,
     generateText,
-    HandlerCallback,
+    type HandlerCallback,
     logger,
-    ModelClass,
-    stringToUuid,
+    ModelClass
 } from "@elizaos/core";
 import {
     type Channel,
     type Guild,
-    BaseGuildVoiceChannel,
+    type BaseGuildVoiceChannel,
     ChannelType as DiscordChannelType
 } from "discord.js";
 
-import { DiscordClient } from "../index.ts";
-import { VoiceManager } from "../voice.ts";
+import type { DiscordClient } from "../index.ts";
+import type { VoiceManager } from "../voice.ts";
 
 export default {
     name: "JOIN_VOICE",
@@ -133,9 +133,7 @@ export default {
             const members = guild?.members.cache;
 
             // get the member who's stringTouuid(id) === message userId
-            const member = members?.find((member) => stringToUuid(member.id) === message.userId);
-
-            console.log("member", member);
+            const member = members?.find((member) => createUniqueUuid(runtime, member.id) === message.userId);
 
             if (member?.voice?.channel) {
                 voiceManager.joinChannel(member?.voice?.channel as BaseGuildVoiceChannel);

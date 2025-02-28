@@ -143,7 +143,6 @@ async function startAgent(
   let db: IDatabaseAdapter & IDatabaseCacheAdapter;
   try {
     character.id ??= stringToUuid(character.name);
-    character.username ??= character.name;
 
     const runtime: IAgentRuntime = await createAgent(character);
 

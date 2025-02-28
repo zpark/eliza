@@ -1,5 +1,5 @@
 import type { Character, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
-import { ChannelType, composeContext, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
+import { ChannelType, composeContext, createUniqueUuid, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -131,11 +131,6 @@ export function agentRouter(
             res.status(400).json({ error: "Text message is required" });
             return;
         }
-
-        const roomId = stringToUuid(req.body.roomId ?? `default-room-${agentId}`);
-        const userId = stringToUuid(req.body.userId ?? "user");
-        const worldId = req.body.worldId; // Extract worldId from request body
-
         let runtime = agents.get(agentId);
 
         // if runtime is null, look for runtime with the same name
@@ -152,9 +147,13 @@ export function agentRouter(
             return;
         }
 
+        const roomId = createUniqueUuid(runtime, req.body.roomId ?? `default-room-${agentId}`);
+        const userId = createUniqueUuid(runtime, req.body.userId ?? "user");
+        const worldId = req.body.worldId; // Extract worldId from request body
+
         logger.info(`[MESSAGE ENDPOINT] Runtime found: ${runtime?.character?.name}`);
 
-        try {
+        // try {
             await runtime.ensureConnection({
                 userId,
                 roomId,
@@ -167,7 +166,7 @@ export function agentRouter(
 
             logger.info(`[MESSAGE ENDPOINT] req.body: ${JSON.stringify(req.body)}`);
 
-            const messageId = stringToUuid(Date.now().toString());
+            const messageId = createUniqueUuid(runtime, Date.now().toString());
 
             const attachments: Media[] = [];
             if (req.file) {
@@ -203,7 +202,7 @@ export function agentRouter(
             };
 
             const memory: Memory = {
-                id: stringToUuid(`${messageId}-${userId}`),
+                id: createUniqueUuid(runtime, messageId),
                 ...userMessage,
                 agentId: runtime.agentId,
                 userId,
@@ -243,7 +242,7 @@ export function agentRouter(
 
             // save response to memory
             const responseMessage: Memory = {
-                id: stringToUuid(`${messageId}-${runtime.agentId}`),
+                id: createUniqueUuid(runtime, messageId),
                 ...userMessage,
                 userId: runtime.agentId,
                 content: response,
@@ -267,13 +266,14 @@ export function agentRouter(
             );
 
             await runtime.evaluate(memory, state);
-        } catch (error) {
-            logger.error("Error processing message:", error);
-            res.status(500).json({
-                error: "Error processing message",
-                details: error.message
-            });
-        }
+        // } catch (error) {
+        //     logger.error("Error processing message:", error);
+        //     console.trace(error);
+        //     res.status(500).json({
+        //         error: "Error processing message",
+        //         details: error.message
+        //     });
+        // }
     });
 
     router.post('/:agentId/set', async (req, res) => {
@@ -526,8 +526,8 @@ export function agentRouter(
 
         logger.info(`[SPEAK] Request to process speech for agent: ${agentId}`);
         const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
-        const roomId = stringToUuid(rawRoomId ?? `default-room-${agentId}`);
-        const userId = stringToUuid(rawUserId ?? "user");
+        const roomId = createUniqueUuid(this.runtime, rawRoomId ?? `default-room-${agentId}`);
+        const userId = createUniqueUuid(this.runtime, rawUserId ?? "user");
 
         if (!text) {
             logger.warn("[SPEAK] No text provided in request");

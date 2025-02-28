@@ -1,6 +1,6 @@
+import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
-import { Provider, IAgentRuntime, Memory, State, ChannelType, UUID } from "../types";
-import { stringToUuid } from "../uuid";
+import { ChannelType, type IAgentRuntime, type Memory, type Provider, type State, type UUID } from "../types";
 
 export const roleProvider: Provider = {
     get: async (
@@ -27,7 +27,7 @@ export const roleProvider: Provider = {
             logger.info(`Using server ID: ${serverId}`);
 
             // Get world data instead of using cache
-            const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+            const worldId = createUniqueUuid(runtime, serverId);
             const world = await runtime.getWorld(worldId);
             
             if (!world || !world.metadata?.ownership?.ownerId) {
@@ -46,9 +46,9 @@ export const roleProvider: Provider = {
             logger.info(`Found ${Object.keys(roles).length} roles`);
             
             // Group users by role
-            const owners: { name: string, username: string }[] = [];
-            const admins: { name: string, username: string }[] = [];
-            const members: { name: string, username: string }[] = [];
+            const owners: { name: string, username: string, names: string[] }[] = [];
+            const admins: { name: string, username: string, names: string[] }[] = [];
+            const members: { name: string, username: string, names: string[] }[] = [];
             
             // Process roles
             for (const userId in roles) {
@@ -57,8 +57,9 @@ export const roleProvider: Provider = {
                 // get the user from the database
                 const user = await runtime.getEntity(userId as UUID);
 
-                const name = user.metadata[message.content.source ?? room.source]?.name ?? user.metadata.default.name;
-                const username = user.metadata[message.content.source ?? room.source].username ?? user.metadata.default.username;
+                const name = user.metadata[room.source]?.name;
+                const username = user.metadata[room.source]?.username;
+                const names = user.names;
                 
                 // Skip duplicates (we store both UUID and original ID)
                 if (owners.some(owner => owner.username === username) || admins.some(admin => admin.username === username) || members.some(member => member.username === username)) {
@@ -68,13 +69,13 @@ export const roleProvider: Provider = {
                 // Add to appropriate group
                 switch (userRole) {
                     case "OWNER":
-                        owners.push({ name, username });
+                        owners.push({ name, username, names });
                         break;
                     case "ADMIN":
-                        admins.push({ name, username });
+                        admins.push({ name, username, names });
                         break;
                     default:
-                        members.push({ name, username });
+                        members.push({ name, username, names });
                         break;
                 }
             }
@@ -85,7 +86,7 @@ export const roleProvider: Provider = {
             if (owners.length > 0) {
                 response += "## Owners\n";
                 owners.forEach(owner => {
-                    response += `${owner.name} (${owner.username})\n`;
+                    response += `${owner.name} (${owner.names.join(", ")})\n`;
                 });
                 response += "\n";
             }
@@ -93,7 +94,7 @@ export const roleProvider: Provider = {
             if (admins.length > 0) {
                 response += "## Administrators\n";
                 admins.forEach(admin => {
-                    response += `${admin.name} (${admin.username})\n`;
+                    response += `${admin.name} (${admin.names.join(", ")}) (${admin.username})\n`;
                 });
                 response += "\n";
             }
@@ -101,7 +102,7 @@ export const roleProvider: Provider = {
             if (members.length > 0) {
                 response += "## Members\n";
                 members.forEach(member => {
-                    response += `${member.name} (${member.username})\n`;
+                    response += `${member.name} (${member.names.join(", ")}) (${member.username})\n`;
                 });
             }
             

@@ -1,7 +1,7 @@
 import { composeContext } from "../context";
 import { generateTrueOrFalse } from "../generation";
 import { booleanFooter } from "../parsing";
-import { Action, ActionExample, HandlerCallback, IAgentRuntime, Memory, ModelClass, State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
 export const shouldMuteTemplate =
     `# Task: Decide if {{agentName}} should mute this room and stop responding unless explicitly mentioned.

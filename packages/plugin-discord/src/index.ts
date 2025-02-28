@@ -1,6 +1,7 @@
 import {
   ChannelType,
   type Character,
+  createUniqueUuid,
   type Client as ElizaClient,
   type HandlerCallback,
   type IAgentRuntime,
@@ -8,9 +9,8 @@ import {
   type Memory,
   type Plugin,
   RoleName,
-  stringToUuid,
-  UUID,
-  WorldData,
+  type UUID,
+  type WorldData
 } from "@elizaos/core";
 import {
   Client,
@@ -18,7 +18,7 @@ import {
   Events,
   GatewayIntentBits,
   type Guild,
-  GuildMember,
+  type GuildMember,
   type MessageReaction,
   type OAuth2Guild,
   Partials,
@@ -103,16 +103,14 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     const guildChannels = await guild.fetch();
     // for channel in channels
     for (const [, channel] of guildChannels.channels.cache) {
-      const roomId = stringToUuid(`${channel.id}-${runtime.agentId}`);
+      const roomId = createUniqueUuid(this.runtime, channel.id)
       const room = await runtime.getRoom(roomId);
       // if the room already exists, skip
       if (room) {
         continue;
       }
-      const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
-
-      const ownerId = stringToUuid(`${guildObj.ownerId}-${runtime.agentId}`);
-      const tenantSpecificOwnerId = runtime.generateTenantUserId(ownerId);
+      const worldId = createUniqueUuid(runtime, guild.id);
+      const ownerId = createUniqueUuid(this.runtime, guildObj.ownerId);
       await runtime.ensureWorldExists({
         id: worldId,
         name: guild.name,
@@ -121,7 +119,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         metadata: {
           ownership: guildObj.ownerId ? { ownerId } : undefined,
           roles: {
-            [tenantSpecificOwnerId]: RoleName.OWNER,
+            [ownerId]: RoleName.OWNER,
           },
         },
       });
@@ -187,6 +185,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     // Emit standardized USER_JOINED event
     this.runtime.emitEvent("USER_JOINED", {
       runtime: this.runtime,
+      entityId: createUniqueUuid(this.runtime, member.id),
       user: {
         id: member.id,
         username: tag,
@@ -200,6 +199,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     this.runtime.emitEvent("DISCORD_USER_JOINED", {
       runtime: this.runtime,
+      entityId: createUniqueUuid(this.runtime, member.id),
       member,
       guild,
     });
@@ -316,13 +316,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
       // Generate IDs with timestamp to ensure uniqueness
       const timestamp = Date.now();
-      const roomId = stringToUuid(
-        `${reaction.message.channel.id}-${this.runtime.agentId}`
-      );
-      const userIdUUID = stringToUuid(`${user.id}-${this.runtime.agentId}`);
-      const reactionUUID = stringToUuid(
-        `${reaction.message.id}-${user.id}-${emoji}-${timestamp}-${this.runtime.agentId}`
-      );
+      const roomId = createUniqueUuid(this.runtime, reaction.message.channel.id)
+      const userIdUUID = createUniqueUuid(this.runtime, user.id);
+      const reactionUUID = createUniqueUuid(this.runtime, `${reaction.message.id}-${user.id}-${emoji}-${timestamp}`);
 
       // Validate IDs
       if (!userIdUUID || !roomId) {
@@ -358,6 +354,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         type: await this.getChannelType(reaction.message.channel.id),
       });
 
+      const inReplyTo = createUniqueUuid(this.runtime, reaction.message.id);
+
       const memory: Memory = {
         id: reactionUUID,
         userId: userIdUUID,
@@ -367,9 +365,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           userName,
           text: reactionMessage,
           source: "discord",
-          inReplyTo: stringToUuid(
-            `${reaction.message.id}-${this.runtime.agentId}`
-          ),
+          inReplyTo,
         },
         roomId,
         createdAt: timestamp,
@@ -427,13 +423,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
       const reactionMessage = `*Removed <${emoji}> from: "${truncatedContent}"*`;
 
-      const roomId = stringToUuid(
-        `${reaction.message.channel.id}-${this.runtime.agentId}`
-      );
-      const userIdUUID = stringToUuid(`${user.id}-${this.runtime.agentId}`);
-      const reactionUUID = stringToUuid(
-        `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
-      );
+      const roomId = createUniqueUuid(this.runtime, reaction.message.channel.id)
+
+      const userIdUUID = createUniqueUuid(this.runtime, user.id);
+      const timestamp = Date.now();
+      const reactionUUID = createUniqueUuid(this.runtime, `${reaction.message.id}-${user.id}-${emoji}-${timestamp}`);
 
       const userName = reaction.message.author?.username || "unknown";
       const name = reaction.message.author?.displayName || userName;
@@ -458,9 +452,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           userName,
           text: reactionMessage,
           source: "discord",
-          inReplyTo: stringToUuid(
-            `${reaction.message.id}-${this.runtime.agentId}`
-          ),
+          inReplyTo: createUniqueUuid(this.runtime, reaction.message.id),
         },
         roomId,
         createdAt: Date.now(),
@@ -490,14 +482,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
 
-    const ownerId = stringToUuid(
-      `${fullGuild.ownerId}-${this.runtime.agentId}`
-    );
+    const ownerId = createUniqueUuid(this.runtime, fullGuild.ownerId);
 
     // Create standardized world data structure
-    const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
-    const tenantSpecificOwnerId = this.runtime.generateTenantUserId(ownerId);
-    const standardizedData = {
+    const worldId = createUniqueUuid(this.runtime, fullGuild.id);
+      const standardizedData = {
       runtime: this.runtime,
       rooms: await this.buildStandardizedRooms(fullGuild, worldId),
       users: await this.buildStandardizedUsers(fullGuild),
@@ -507,9 +496,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         agentId: this.runtime.agentId,
         serverId: fullGuild.id,
         metadata: {
-          ownership: fullGuild.ownerId ? { ownerId: tenantSpecificOwnerId } : undefined,
+          ownership: fullGuild.ownerId ? { ownerId: ownerId } : undefined,
           roles: {
-            [tenantSpecificOwnerId]: RoleName.OWNER,
+            [ownerId]: RoleName.OWNER,
           },
         },
       } as WorldData,
@@ -545,7 +534,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
    */
   private async buildStandardizedRooms(
     guild: Guild,
-    worldId: UUID
+    _worldId: UUID
   ): Promise<any[]> {
     const rooms = [];
 
@@ -555,7 +544,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         channel.type === DiscordChannelType.GuildText ||
         channel.type === DiscordChannelType.GuildVoice
       ) {
-        const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
+        const roomId = createUniqueUuid(this.runtime, channelId)
         let channelType;
 
         switch (channel.type) {
@@ -587,7 +576,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                   ?.has(PermissionsBitField.Flags.ViewChannel)
               )
               .map((member) =>
-                stringToUuid(`${member.id}-${this.runtime.agentId}`)
+                createUniqueUuid(this.runtime, member.id)
               );
           } catch (error) {
             logger.warn(
@@ -633,7 +622,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
           if (member.id !== botId) {
             users.push({
-              id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
+              id: createUniqueUuid(this.runtime, member.id),
               names: Array.from(
                 new Set([member.user.username, member.displayName, member.user.globalName])
               ),
@@ -644,12 +633,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 discord: member.user.globalName ? {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   globalName: member.user.globalName,
                   userId: member.id,
                 } : {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   userId: member.id,
                 },
               },
@@ -665,9 +654,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
           for (const [, member] of onlineMembers) {
             if (member.id !== botId) {
-              const userId = stringToUuid(
-                `${member.id}-${this.runtime.agentId}`
-              );
+              const userId = createUniqueUuid(this.runtime, member.id);
               // Avoid duplicates
               if (!users.some((u) => u.id === userId)) {
                 const tag = member.user.bot
@@ -686,12 +673,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                     },
                     discord: member.user.globalName ? {
                       username: tag,
-                      displayName: member.displayName || member.user.username,
+                      name: member.displayName || member.user.username,
                       globalName: member.user.globalName,
                       userId: member.id,
                     } : {
                       username: tag,
-                      displayName: member.displayName || member.user.username,
+                      name: member.displayName || member.user.username,
                       userId: member.id,
                     },
                   },
@@ -718,7 +705,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
               : member.user.username;
 
             users.push({
-              id: stringToUuid(`${member.id}-${this.runtime.agentId}`),
+              id: createUniqueUuid(this.runtime, member.id),
               names: Array.from(
                 new Set([member.user.username, member.displayName, member.user.globalName])
               ),
@@ -729,12 +716,12 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
                 },
                 discord: member.user.globalName ? {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   globalName: member.user.globalName,
                   userId: member.id,
                 } : {
                   username: tag,
-                  displayName: member.displayName || member.user.username,
+                  name: member.displayName || member.user.username,
                   userId: member.id,
                 },
               },
@@ -770,12 +757,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         });
 
         // Create platform-agnostic world data structure with simplified structure
-        const worldId = stringToUuid(`${fullGuild.id}-${this.runtime.agentId}`);
-
-        const ownerId = stringToUuid(
-          `${fullGuild.ownerId}-${this.runtime.agentId}`
-        );
-        const tenantSpecificOwnerId = this.runtime.generateTenantUserId(ownerId);
+        const worldId = createUniqueUuid(this.runtime, fullGuild.id);
+        const ownerId = createUniqueUuid(this.runtime, fullGuild.ownerId);
 
         const standardizedData = {
           runtime: this.runtime,
@@ -789,7 +772,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
             metadata: {
               ownership: fullGuild.ownerId ? { ownerId } : undefined,
               roles: {
-                [tenantSpecificOwnerId]: RoleName.OWNER,
+                [ownerId]: RoleName.OWNER,
               },
             },
           } as WorldData,

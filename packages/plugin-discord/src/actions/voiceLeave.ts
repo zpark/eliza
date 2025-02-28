@@ -13,8 +13,8 @@ import {
     BaseGuildVoiceChannel
 } from "discord.js";
 
-import { DiscordClient } from "../index.ts";
-import { VoiceManager } from "../voice.ts";
+import type { DiscordClient } from "../index.ts";
+import type { VoiceManager } from "../voice.ts";
 
 
 export default {

@@ -6,10 +6,10 @@ import { findWorldForOwner } from "../roles";
 import { getWorldSettings } from "../settings";
 import {
     ChannelType,
-    IAgentRuntime,
-    Memory,
-    Provider,
-    State,
+    type IAgentRuntime,
+    type Memory,
+    type Provider,
+    type State,
     type OnboardingSetting,
     type WorldSettings
 } from "../types";
@@ -30,7 +30,7 @@ const formatSettingValue = (
  * Generates a status message based on the current settings state
  */
 function generateStatusMessage(
-  runtime: IAgentRuntime,
+  _runtime: IAgentRuntime,
   worldSettings: WorldSettings,
   isOnboarding: boolean,
   state?: State
@@ -38,7 +38,7 @@ function generateStatusMessage(
   try {
     // Format settings for display
     const formattedSettings = Object.entries(worldSettings)
-      .map(([key, setting]) => {
+      .map(([_key, setting]) => {
         if (typeof setting !== "object" || !setting.name) return null;
 
         const description = setting.description || "";
@@ -69,32 +69,24 @@ function generateStatusMessage(
     if (isOnboarding) {
       if (requiredUnconfigured > 0) {
         return (
-          `# PRIORITY TASK: Onboarding with ${state.senderName}\n${state.agentName} still needs to configure ${requiredUnconfigured} required settings:\n\n` +
-          formattedSettings
+          `# PRIORITY TASK: Onboarding with ${state.senderName}\n${state.agentName} still needs to configure ${requiredUnconfigured} required settings:\n\n${formattedSettings
             .filter((s) => s.required && !s.configured)
             .map((s) => `${s.name}: ${s.usageDescription}\nValue: ${s.value}`)
-            .join("\n\n") +
-          "\n\n" +
-          `If the user gives any information related to the settings, ${state.agentName} should use the UPDATE_SETTINGS action to update the settings with this new information. ${state.agentName} can update any, some or all settings.`
-        );
-      } else {
-        return (
-          "All required settings have been configured! Here's the current configuration:\n\n" +
-          formattedSettings.map((s) => `${s.name}: ${s.description}\nValue: ${s.value}`).join("\n")
+            .join("\n\n")}\n\nIf the user gives any information related to the settings, ${state.agentName} should use the UPDATE_SETTINGS action to update the settings with this new information. ${state.agentName} can update any, some or all settings.`
         );
       }
-    } else {
+        return (
+          `All required settings have been configured! Here's the current configuration:\n\n${formattedSettings.map((s) => `${s.name}: ${s.description}\nValue: ${s.value}`).join("\n")}`
+        );
+    }
       // Non-onboarding context - list all public settings with values and descriptions
       return (
-        "## Current Configuration\n\n" +
-        (requiredUnconfigured > 0
+        `## Current Configuration\n\n${requiredUnconfigured > 0
           ? `**Note:** ${requiredUnconfigured} required settings still need configuration.\n\n`
-          : "All required settings are configured.\n\n") +
-        formattedSettings
+          : "All required settings are configured.\n\n"}${formattedSettings
           .map((s) => `### ${s.name}\n**Value:** ${s.value}\n**Description:** ${s.description}`)
-          .join("\n\n")
+          .join("\n\n")}`
       );
-    }
   } catch (error) {
     logger.error(`Error generating status message: ${error}`);
     return "Error generating configuration status.";

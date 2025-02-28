@@ -335,7 +335,7 @@ export default function CharacterForm({
             {onDelete && (
               <Button
                 type="button"
-                variant={deleteButtonVariant}
+                variant={deleteButtonVariant as any}
                 onClick={handleDelete}
                 disabled={isDeleting}
               >

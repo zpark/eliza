@@ -1,22 +1,21 @@
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarMenuSkeleton,
-  } from "@/components/ui/sidebar";
-  import { useAgents } from "@/hooks/use-query-hooks";
-  import info from "@/lib/info.json";
-  import type { UUID } from "@elizaos/core";
-  import { Book, Cog, User } from "lucide-react";
-  import { NavLink, useLocation } from "react-router";
-  import ConnectionStatus from "./connection-status";
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+} from "@/components/ui/sidebar";
+import { useAgents } from "@/hooks/use-query-hooks";
+import info from "@/lib/info.json";
+import { Book, Cog, User } from "lucide-react";
+import { NavLink, useLocation } from "react-router";
+import ConnectionStatus from "./connection-status";
   
   export function AppSidebar() {
     const location = useLocation();

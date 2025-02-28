@@ -1,14 +1,14 @@
-import { logger, stringToUuid, type UUID, type Client, type IAgentRuntime, type Plugin } from "@elizaos/core";
+import { logger, type Client, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
 import reply from "./actions/reply.ts";
+import spaceJoin from "./actions/spaceJoin.ts";
 import { ClientBase } from "./base.ts";
 import { TWITTER_CLIENT_NAME } from "./constants.ts";
 import type { TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
 import { TwitterSpaceClient } from "./spaces.ts";
-import type { ITwitterClient } from "./types.ts";
 import { TwitterTestSuite } from "./tests.ts";
-import spaceJoin from "./actions/spaceJoin.ts";
+import type { ITwitterClient } from "./types.ts";
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -167,7 +167,7 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                await manager.createClient(runtime, stringToUuid("default"), config);
+                await manager.createClient(runtime, runtime.agentId, config);
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);

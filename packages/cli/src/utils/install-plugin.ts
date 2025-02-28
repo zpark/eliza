@@ -2,7 +2,7 @@ import { execa } from "execa";
 import path from "node:path";
 import { logger } from "@/src/utils/logger";
 import { runBunCommand } from "@/src/utils/run-bun";
-import { promises as fs } from "fs";
+import { promises as fs } from "node:fs";
 
 export async function installPlugin(
   pluginName: string,

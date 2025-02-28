@@ -2,25 +2,12 @@
 // Updated to use world metadata instead of cache
 
 import { logger } from "./logger";
-import { IAgentRuntime, WorldData } from "./types";
-import { stringToUuid } from "./uuid";
+import type { IAgentRuntime, WorldData } from "./types";
 
 export interface ServerOwnershipState {
   servers: {
     [serverId: string]: WorldData;
   };
-}
-
-/**
- * Normalizes user IDs to UUID format
- * Both stringToUuid and direct values are supported for robustness
- */
-export function normalizeUserId(id: string): string {
-  // Avoid double-conversion by checking if already a UUID format
-  if (id.includes("-") && id.length === 36) {
-    return id;
-  }
-  return stringToUuid(id);
 }
 
 /**
@@ -36,11 +23,6 @@ export async function findWorldForOwner(
       return null;
     }
 
-    const normalizedUserId = normalizeUserId(userId);
-    logger.info(
-      `Looking for server where ${normalizedUserId} is owner (original ID: ${userId})`
-    );
-
     // Get all worlds for this agent
     const worlds = await runtime.getAllWorlds();
 
@@ -51,9 +33,9 @@ export async function findWorldForOwner(
 
     // Find world where the user is the owner
     for (const world of worlds) {
-      if (world.metadata?.ownership?.ownerId === normalizedUserId) {
+      if (world.metadata?.ownership?.ownerId === userId) {
         logger.info(
-          `Found server ${world.serverId} for owner ${normalizedUserId}`
+          `Found server ${world.serverId} for owner ${userId}`
         );
         return world;
       }
@@ -67,7 +49,7 @@ export async function findWorldForOwner(
       }
     }
 
-    logger.info(`No server found for owner ${normalizedUserId}`);
+    logger.info(`No server found for owner ${userId}`);
     return null;
   } catch (error) {
     logger.error(`Error finding server for owner: ${error}`);
