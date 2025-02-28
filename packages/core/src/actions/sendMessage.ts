@@ -33,6 +33,7 @@ Analyze the conversation to identify:
 3. Any identifying information about the target
 
 Return a JSON object with:
+\`\`\`json
 {
   "targetType": "user|room",
   "source": "platform-name",
@@ -41,9 +42,10 @@ Return a JSON object with:
     // e.g. username, roomName, etc.
   }
 }
-
+\`\`\`
 Example outputs:
 1. For "send a message to @dev_guru on telegram":
+\`\`\`json
 {
   "targetType": "user",
   "source": "telegram",
@@ -51,15 +53,20 @@ Example outputs:
     "username": "dev_guru"
   }
 }
+\`\`\`
 
 2. For "post this in #announcements":
+\`\`\`json
 {
   "targetType": "room",
   "source": "discord",
   "identifiers": {
     "roomName": "announcements"
   }
-}`;
+}
+\`\`\`
+
+Make sure to include the \`\`\`json\`\`\` tags around the JSON object.`;
 
 export const sendMessageAction: Action = {
   name: "SEND_MESSAGE",
@@ -116,7 +123,7 @@ export const sendMessageAction: Action = {
 
       const targetResult = await runtime.useModel(ModelClass.TEXT_LARGE, {
         context: targetContext,
-        stopSequences: ["}"]
+        stopSequences: []
       });
 
       const targetData = parseJSONObjectFromText(targetResult);
@@ -133,7 +140,7 @@ export const sendMessageAction: Action = {
 
       if (targetData.targetType === "user") {
         // Try to find the target user entity
-        const targetEntity = await findEntityByName(runtime, JSON.stringify(targetData.identifiers), message, state);
+        const targetEntity = await findEntityByName(runtime, message, state);
         
         if (!targetEntity) {
           await callback({

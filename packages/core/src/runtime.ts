@@ -896,13 +896,13 @@ export class AgentRuntime implements IAgentRuntime {
 
       if (!created) {
         logger.error(
-          `Failed to create user ${name} for agent ${this.agentId}.`
+          `Failed to create user ${names[0]} for agent ${this.agentId}.`
         );
         return null;
       }
 
       logger.success(
-        `User ${name} created successfully for agent ${this.agentId}.`
+        `User ${names[0]} created successfully for agent ${this.agentId}.`
       );
     }
 

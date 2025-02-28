@@ -16,7 +16,7 @@ const relationshipSchema = z.object({
 });
 
 const reflectionSchema = z.object({
-    reflection: z.string(),
+    // reflection: z.string(),
     facts: z.array(z.object({
         claim: z.string(),
         type: z.string(),
@@ -46,21 +46,18 @@ Agent Name: {{agentName}}
 Room Type: {{roomType}}
 Message Sender: {{senderName}} (ID: {{senderId}})
 
-# Recent Messages:
 {{recentMessages}}
 
 # Known Facts:
 {{knownFacts}}
 
 # Instructions:
-1. Generate a self-reflection monologue about recent interactions
-2. Extract new facts from the conversation
-3. Identify and describe relationships between entities. The sourceEntityId is the UUID of the entity initiating the interaction. The targetEntityId is the UUID of the entity being interacted with. Relationships are one-direction, so a friendship would be two entity relationships where each entity is both the source and the target of the other.
+1. Extract new facts from the conversation
+2. Identify and describe relationships between entities. The sourceEntityId is the UUID of the entity initiating the interaction. The targetEntityId is the UUID of the entity being interacted with. Relationships are one-direction, so a friendship would be two entity relationships where each entity is both the source and the target of the other.
 
 Generate a response in the following format:
 \`\`\`json
 {
-    "reflection": "A thoughtful self-reflection monologue about how the interaction is going...",
     "facts": [
         {
             "claim": "factual statement",
@@ -199,20 +196,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         }
     }
 
-    // Store the reflection itself as a memory
-    const reflectionMemory = await runtime.messageManager.addEmbeddingToMemory({
-        userId: agentId,
-        agentId,
-        content: { 
-            text: `(Reflecting to self: ${reflection.reflection}`,
-            action: "REFLECTION"
-        },
-        roomId,
-        createdAt: Date.now(),
-    });
-    const memoryId = await runtime.messageManager.createMemory(reflectionMemory, true);
-
-    await runtime.cacheManager.set(`${message.roomId}-reflection-last-processed`, memoryId);
+    await runtime.cacheManager.set(`${message.roomId}-reflection-last-processed`, message.id);
 
     return reflection;
 }

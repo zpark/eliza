@@ -12,48 +12,6 @@ import {
 } from "./types.ts";
 
 const entityResolutionTemplate = `# Task: Resolve Entity Name
-
-# Examples:
-1. Query: "me"
-   Result: {
-     "entityId": "user-123",
-     "type": "EXACT_MATCH",
-     "matches": [{
-       "name": "Alice",
-       "reason": "Message sender referring to themselves"
-     }]
-   }
-
-2. Query: "you"
-   Result: {
-     "entityId": "agent-456",
-     "type": "EXACT_MATCH",
-     "matches": [{
-       "name": "Assistant",
-       "reason": "Direct reference to the agent"
-     }]
-   }
-
-3. Query: "@username"
-   Result: {
-     "entityId": null,
-     "type": "USERNAME_MATCH",
-     "matches": [{
-       "name": "username",
-       "reason": "Exact match with user's handle"
-     }]
-   }
-
-4. Query: "John"
-   Result: {
-     "entityId": null,
-     "type": "NAME_MATCH",
-     "matches": [{
-       "name": "John Smith",
-       "reason": "Name matches entity's display name"
-     }]
-   }
-
 Message Sender: {{senderName}} (ID: {{senderId}})
 Agent: {{agentName}} (ID: {{agentId}})
 
@@ -62,26 +20,18 @@ Agent: {{agentName}} (ID: {{agentId}})
 {{entitiesInRoom}}
 {{/if}}
 
-# Recent Messages:
 {{recentMessages}}
 
-# Recent Interactions:
-{{#if recentInteractions}}
-{{recentInteractions}}
-{{/if}}
-
-# Query:
-{{query}}
-
 # Instructions:
-1. Analyze the query and context to identify which entity is being referenced
-2. Consider special references like "me" (message sender) or "you" (agent)
+1. Analyze the context to identify which entity is being referenced
+2. Consider special references like "me" (the message sender) or "you" (agent the message is directed to)
 3. Look for usernames/handles in standard formats (e.g. @username, user#1234)
 4. Consider context from recent messages for pronouns and references
 5. If multiple matches exist, use context to disambiguate
 6. Consider recent interactions and relationship strength when resolving ambiguity
 
 Return a JSON object with:
+\`\`\`json
 {
   "entityId": "exact-id-if-known-otherwise-null",
   "type": "EXACT_MATCH | USERNAME_MATCH | NAME_MATCH | RELATIONSHIP_MATCH | AMBIGUOUS | UNKNOWN",
@@ -89,7 +39,11 @@ Return a JSON object with:
     "name": "matched-name",
     "reason": "why this entity matches"
   }]
-}`;
+}
+\`\`\`
+
+Make sure to include the \`\`\`json\`\`\` tags around the JSON object.
+`;
 
 async function getRecentInteractions(
   runtime: IAgentRuntime,
@@ -146,7 +100,6 @@ async function getRecentInteractions(
 
 export async function findEntityByName(
   runtime: IAgentRuntime,
-  query: string,
   message: Memory,
   state: State,
 ): Promise<Entity | null> {
@@ -210,16 +163,6 @@ export async function findEntityByName(
     // Get interaction strength data for relationship entities
     const interactionData = await getRecentInteractions(runtime, message.userId, allEntities, room.id, relationships);
 
-    // Format interaction data for LLM context
-    const recentInteractions = interactionData.map(data => ({
-      entityName: data.entity.names[0],
-      interactions: data.count,
-      recentMessages: data.interactions.map(msg => ({
-        from: msg.userId === message.userId ? "sender" : "entity",
-        text: msg.content.text
-      }))
-    }));
-
     // Compose context for LLM
     const context = composeContext({
       state: {
@@ -227,19 +170,22 @@ export async function findEntityByName(
         roomName: room.name || room.id,
         worldName: world?.name || "Unknown",
         entitiesInRoom: JSON.stringify(filteredEntities, null, 2),
-        recentInteractions: JSON.stringify(recentInteractions, null, 2),
         userId: message.userId,
-        query
+        senderId: message.userId,
       },
       template: entityResolutionTemplate
     });
 
+    console.log("*** findEntityByName context", context)
+
     // Use LLM to analyze and resolve the entity
     const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      stopSequences: ["}"]
+      stopSequences: []
     });
 
+    console.log("*** findEntityByName result", result)
+    
     // Parse LLM response
     const resolution = parseJSONObjectFromText(result);
     if (!resolution) {

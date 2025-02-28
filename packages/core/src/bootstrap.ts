@@ -237,11 +237,13 @@ const messageReceivedHandler = async ({
         runtime.character.templates?.messageHandlerTemplate ||
         messageHandlerTemplate,
     });
+    console.log('*** context', context)
     const responseContent = await generateMessageResponse({
       runtime: runtime,
       context,
       modelClass: ModelClass.TEXT_LARGE,
     });
+    console.log('*** responseContent', responseContent)
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);

@@ -7,62 +7,24 @@
 // sourceEntityId represents who is making the update, entityId is who they are talking about
 
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from "../logger";
-import { 
-  type Action, 
-  type ActionExample,
-  Component,
-  type HandlerCallback, 
-  type IAgentRuntime, 
-  type Memory, 
-  ModelClass, 
-  type State, 
-  type UUID,
-  Entity
-} from "../types";
 import { composeContext } from "../context";
 import { findEntityByName } from "../entities";
+import { logger } from "../logger";
 import { parseJSONObjectFromText } from "../parsing";
+import {
+  type Action,
+  type ActionExample,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  ModelClass,
+  type State,
+  type UUID
+} from "../types";
 
-const sourceExtractionTemplate = `# Task: Extract Source and Entity Information
+const componentTemplate = `# Task: Extract Source and Update Component Data
 
-# Recent Messages:
 {{recentMessages}}
-
-# Instructions:
-Analyze the conversation to identify:
-1. The source/platform being referenced (e.g. telegram, twitter, discord)
-2. Any specific component data being shared (e.g. username, handle, display name)
-
-Return a JSON object with:
-{
-  "source": "platform-name",
-  "data": {
-    // Relevant fields for that platform
-    // e.g. username, handle, displayName, etc.
-  }
-}
-
-Example outputs:
-1. For "my telegram username is @dev_guru":
-{
-  "source": "telegram",
-  "data": {
-    "username": "dev_guru"
-  }
-}
-
-2. For "update my twitter handle to @tech_master":
-{
-  "source": "twitter",
-  "data": {
-    "handle": "tech_master"
-  }
-}`;
-
-const componentGenerationTemplate = `# Task: Update Entity Component Data
-
-Component Type: {{componentType}}
 
 {{#if existingData}}
 # Existing Component Data:
@@ -71,30 +33,55 @@ Component Type: {{componentType}}
 \`\`\`
 {{/if}}
 
-# New Information:
+# Instructions:
+1. Analyze the conversation to identify:
+   - The source/platform being referenced (e.g. telegram, twitter, discord)
+   - Any specific component data being shared
+
+2. Generate updated component data that:
+   - Is specific to the identified platform/source
+   - Preserves existing data when appropriate
+   - Includes the new information from the conversation
+   - Contains only valid data for this component type
+
+Return a JSON object with the following structure:
 \`\`\`json
-{{newData}}
+{
+  "source": "platform-name",
+  "data": {
+    // Component-specific fields
+    // e.g. username, username, displayName, etc.
+  }
+}
 \`\`\`
 
-# Instructions:
-Generate updated component data for the {{componentType}} component. The data should:
-1. Be specific to the {{componentType}} platform/source
-2. Preserve existing data when appropriate
-3. Merge new information with existing data
-4. Return only valid data for this component type
+Example outputs:
+1. For "my telegram username is @dev_guru":
+\`\`\`json
+{
+  "source": "telegram",
+  "data": {
+    "username": "dev_guru"
+  }
+}
+\`\`\`
 
-Return a valid JSON object with data relevant to {{componentType}}.
-For example:
-- telegram: username, display_name
-- twitter: handle, display_name
-- discord: username, display_name, discriminator
+2. For "update my twitter handle to @tech_master":
+\`\`\`json
+{
+  "source": "twitter",
+  "data": {
+    "username": "tech_master"
+  }
+}
+\`\`\`
 
-Ensure the output is valid JSON and contains ONLY fields relevant to {{componentType}}.`;
+Make sure to include the \`\`\`json\`\`\` tags around the JSON object.`;
 
 export const updateEntityAction: Action = {
   name: "UPDATE_ENTITY",
-  similes: ["CREATE_ENTITY", "EDIT_ENTITY", "UPDATE_COMPONENT", "CREATE_COMPONENT"],
-  description: "Creates or updates components for entities with data organized by source type (like twitter, discord, etc.)",
+  similes: ["CREATE_ENTITY", "UPDATE_USER", "EDIT_ENTITY", "UPDATE_COMPONENT", "CREATE_COMPONENT"],
+  description: "Add or edit contact details for a user entity (like twitter, discord, email address, etc.)",
   
   validate: async (
     runtime: IAgentRuntime,
@@ -102,20 +89,17 @@ export const updateEntityAction: Action = {
     _state: State
   ): Promise<boolean> => {
     // Check if we have any registered sources or existing components that could be updated
-    const worldId = message.roomId;
-    const agentId = runtime.agentId;
+    // const worldId = message.roomId;
+    // const agentId = runtime.agentId;
     
-    // Get all components for the current room to understand available sources
-    const roomComponents = await runtime.databaseAdapter.getComponents(message.roomId, worldId, agentId);
+    // // Get all components for the current room to understand available sources
+    // const roomComponents = await runtime.databaseAdapter.getComponents(message.roomId, worldId, agentId);
     
-    // Get source types from room components
-    const availableSources = new Set(roomComponents.map(c => c.type));
-    
-    // TODO: Add ability for plugins to register their sources
-    // const registeredSources = runtime.getRegisteredSources?.() || [];
-    // availableSources.add(...registeredSources);
-    
-    return availableSources.size > 0;
+    // // Get source types from room components
+    // const availableSources = new Set(roomComponents.map(c => c.type));
+  
+    // console.log("*** updateEntityAction validate:", availableSources.size > 0)
+    return true; // availableSources.size > 0;
   },
   
   handler: async (
@@ -126,6 +110,7 @@ export const updateEntityAction: Action = {
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
+    console.log('*** updateEntityAction handler')
     try {
       // Handle initial responses
       for (const response of responses) {
@@ -139,7 +124,7 @@ export const updateEntityAction: Action = {
       const worldId = room.worldId;
 
       // First, find the entity being referenced
-      const entity = await findEntityByName(runtime, message.content.text, message, state);
+      const entity = await findEntityByName(runtime, message, state);
       
       if (!entity) {
         await callback({
@@ -150,71 +135,57 @@ export const updateEntityAction: Action = {
         return;
       }
 
-      // Extract source and component data from the message
-      const sourceContext = composeContext({
+      // Get existing component if it exists - we'll get this after the LLM identifies the source
+      let existingComponent = null;
+
+      // Generate component data using the combined template
+      const context = composeContext({
         state,
-        template: sourceExtractionTemplate,
+        template: componentTemplate,
       });
 
-      const sourceResult = await runtime.useModel(ModelClass.TEXT_LARGE, {
-        context: sourceContext,
-        stopSequences: ["}"]
+      console.log("*** updateEntityAction context", context);
+
+      const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
+        context,
+        stopSequences: []
       });
 
-      const sourceData = parseJSONObjectFromText(sourceResult);
-      if (!sourceData?.source) {
+      console.log("*** updateEntityAction result", result);
+
+      // Parse the generated data
+      let parsedResult: any;
+      try {
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON found in the LLM response");
+        }
+        
+        parsedResult = JSON.parse(jsonMatch[0]);
+        
+        if (!parsedResult.source || !parsedResult.data) {
+          throw new Error("Invalid response format - missing source or data");
+        }
+      } catch (error) {
+        logger.error(`Failed to parse component data: ${error.message}`);
         await callback({
-          text: "I couldn't determine what information you want to update. Could you please specify the platform (like telegram, twitter, etc.) and the information you want to update?",
+          text: "I couldn't properly understand the component information. Please try again with more specific information.",
           action: "UPDATE_ENTITY_ERROR",
           source: message.content.source,
         });
         return;
       }
 
-      const componentType = sourceData.source.toLowerCase();
-      
-      // Get existing component if it exists
-      const existingComponent = await runtime.databaseAdapter.getComponent(
+      const componentType = parsedResult.source.toLowerCase();
+      const componentData = parsedResult.data;
+
+      // Now that we know the component type, get the existing component if it exists
+      existingComponent = await runtime.databaseAdapter.getComponent(
         entity.id!,
         componentType,
         worldId,
         sourceEntityId
       );
-
-      // Generate updated component data
-      const context = composeContext({
-        state: {
-          ...state,
-          componentType,
-          existingData: existingComponent ? JSON.stringify(existingComponent.data, null, 2) : null,
-          newData: JSON.stringify(sourceData.data, null, 2),
-        },
-        template: componentGenerationTemplate,
-      });
-      
-      const generatedDataText = await runtime.useModel(ModelClass.TEXT_LARGE, {
-        context,
-        stopSequences: ["}"]
-      });
-      
-      // Parse the generated data
-      let componentData: any;
-      try {
-        const jsonMatch = generatedDataText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error("No valid JSON found in the LLM response");
-        }
-        
-        componentData = JSON.parse(jsonMatch[0]);
-      } catch (error) {
-        logger.error(`Failed to parse component data: ${error.message}`);
-        await callback({
-          text: "I couldn't properly generate the component data. Please try again with more specific information.",
-          action: "UPDATE_ENTITY_ERROR",
-          source: message.content.source,
-        });
-        return;
-      }
       
       // Create or update the component
       if (existingComponent) {
@@ -282,7 +253,7 @@ export const updateEntityAction: Action = {
       {
         user: "{{user1}}",
         content: {
-          text: "Set Jimmy's twitter handle to @jimmy_codes",
+          text: "Set Jimmy's twitter username to @jimmy_codes",
         },
       },
       {
