@@ -13,7 +13,7 @@ export default defineConfig({
     prefix: 'timestamp',
   },
   dbCredentials: {
-    url: process.env.POSTGRES_URL as string,
+    url: process.env.POSTGRES_URL || 'file://../../pglite',
   },
   breakpoints: true,
 });

@@ -23,6 +23,12 @@
     },
     "swarm": {
       "dependsOn": ["build"]
+    },
+    "migrate": {
+      "dependsOn": ["build"]
+    },
+    "migrate:generate": {
+      "dependsOn": ["build"]
     }
   }
 }

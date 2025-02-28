@@ -1,8 +1,15 @@
-import { type Adapter, logger, type IAgentRuntime, type Plugin, type IDatabaseAdapter, type IDatabaseCacheAdapter } from '@elizaos/core';
-import { PgDatabaseAdapter } from './pg/adapter';
-import { PgliteDatabaseAdapter } from './pg-lite/adapter';
-import { PGliteClientManager } from './pg-lite/manager';
-import { PostgresConnectionManager } from './pg/manager';
+import {
+  type Adapter,
+  logger,
+  type IAgentRuntime,
+  type Plugin,
+  type IDatabaseAdapter,
+  type IDatabaseCacheAdapter,
+} from "@elizaos/core";
+import { PgDatabaseAdapter } from "./pg/adapter";
+import { PgliteDatabaseAdapter } from "./pg-lite/adapter";
+import { PGliteClientManager } from "./pg-lite/manager";
+import { PostgresConnectionManager } from "./pg/manager";
 
 let pgLiteClientManager: PGliteClientManager;
 
@@ -10,17 +17,17 @@ export function createDatabaseAdapter(config: {
   dataDir?: string;
   postgresUrl?: string;
 }): IDatabaseAdapter & IDatabaseCacheAdapter {
-  if (config.dataDir) {
-    if (!pgLiteClientManager) {
-      pgLiteClientManager = new PGliteClientManager({ dataDir: config.dataDir });
-    }
-    return new PgliteDatabaseAdapter(pgLiteClientManager);
-  }
   if (config.postgresUrl) {
     const manager = new PostgresConnectionManager(config.postgresUrl);
     return new PgDatabaseAdapter(manager);
   }
-  throw new Error("No valid database configuration provided");
+
+  const dataDir = config.dataDir ?? "../../pgLite";
+
+  if (!pgLiteClientManager) {
+    pgLiteClientManager = new PGliteClientManager({ dataDir });
+  }
+  return new PgliteDatabaseAdapter(pgLiteClientManager);
 }
 
 const drizzleDatabaseAdapter: Adapter = {
@@ -39,7 +46,7 @@ const drizzleDatabaseAdapter: Adapter = {
       logger.error("Failed to initialize database:", error);
       throw error;
     }
-  }
+  },
 };
 
 const drizzlePlugin: Plugin = {
