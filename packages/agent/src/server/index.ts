@@ -1,7 +1,7 @@
 import {
-  logger,
-  type Character,
-  type IAgentRuntime
+    logger,
+    type Character,
+    type IAgentRuntime
 } from "@elizaos/core";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -10,6 +10,7 @@ import express from "express";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createApiRouter } from "./api/index.ts";
+import { adapter } from "./database.ts";
 import replyAction from "./reply.ts";
 
 export type ServerMiddleware = (
@@ -25,7 +26,9 @@ export interface ServerOptions {
 export class AgentServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>;
-    private server: any; 
+    public server: any; 
+    
+    public database: any;
     public startAgent!: (character: Character) => Promise<IAgentRuntime>; 
     public loadCharacterTryPath!: (characterPath: string) => Promise<Character>;
     public jsonToCharacter!: (character: unknown) => Promise<Character>;
@@ -35,6 +38,10 @@ export class AgentServer {
             logger.log("Initializing AgentServer...");
             this.app = express();
             this.agents = new Map();
+            this.database = adapter;
+
+            // Initialize the database
+            this.database.init();
 
             // Core middleware setup
             this.app.use(cors());
@@ -141,7 +148,27 @@ export class AgentServer {
     }
 
     public unregisterAgent(runtime: IAgentRuntime) {
-        this.agents.delete(runtime.agentId);
+        if (!runtime || !runtime.agentId) {
+            logger.warn("[AGENT UNREGISTER] Attempted to unregister undefined or invalid agent runtime");
+            return;
+        }
+
+        const agentName = runtime.character?.name || 'Unknown';
+        const agentId = runtime.agentId;
+        
+        logger.debug(`[AGENT UNREGISTER] Removing agent ${agentName} (${agentId}) from agents map`);
+        const removed = this.agents.delete(runtime.agentId);
+        
+        if (removed) {
+            logger.debug(`[AGENT UNREGISTER] Successfully removed agent ${agentName} (${agentId}) from registry`);
+            logger.debug(`[AGENT UNREGISTER] Updated agent count: ${this.agents.size}`);
+        } else {
+            logger.warn(`[AGENT UNREGISTER] Agent ${agentName} (${agentId}) was not found in the registry`);
+        }
+        
+        logger.debug('Agent unregistered', {
+            agent: runtime.agentId,
+        });
     }
 
     public registerMiddleware(middleware: ServerMiddleware) {
@@ -157,7 +184,7 @@ export class AgentServer {
             logger.debug(`Starting server on port ${port}...`);
             logger.debug(`Current agents count: ${this.agents.size}`);
             logger.debug(`Environment: ${process.env.NODE_ENV}`);
-            
+                    
             this.server = this.app.listen(port, () => {
                 logger.success(
                     `REST API bound to 0.0.0.0:${port}. If running locally, access it at http://localhost:${port}.`
@@ -206,10 +233,10 @@ export class AgentServer {
         }
     }
 
-    
     public async stop() {
         if (this.server) {
             this.server.close(() => {
+                this.database.stop();
                 logger.success("Server stopped");
             });
         }

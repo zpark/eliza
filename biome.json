@@ -47,7 +47,15 @@
             "**/dist/**",
             "**/node_modules/**",
             "**/coverage/**",
-            "**/*.json"
+            "**/*.md",
+            "**/.docusaurus/**",
+            "**/build/**",
+            "**/*.json",
+            "**/.turbo/**",
+            "**/.git/**",
+            "**/local_cache/**",
+            "**/cache/**",
+            "**/tmp/**"
         ]
     },
     "formatter": {

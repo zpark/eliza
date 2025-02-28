@@ -1,14 +1,7 @@
-// Community manager
-
-// The community manager greets new users and helps them get started
-// The community manager also helps moderators with moderation tasks, including banning scammers
+import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import dotenv from "dotenv";
-dotenv.config({ path: "../../.env" });
-
-import type { Character, IAgentRuntime } from "@elizaos/core";
-import type { Guild } from "discord.js";
-import { initializeAllSystems } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
+import { initCharacter } from "../settings";
+dotenv.config({ path: '../../.env' });
 
 const character: Character = {
   name: "Kelsey",
@@ -363,25 +356,5 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-  init: async (runtime: IAgentRuntime) => {
-
-    // Register runtime events
-    runtime.registerEvent(
-      "DISCORD_SERVER_JOINED",
-      async (params: { server: Guild }) => {
-        console.log("Community manager joined server");
-        // TODO: Save onboarding config to runtime
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-
-    // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent(
-      "DISCORD_SERVER_CONNECTED",
-      async (params: { server: Guild }) => {
-        console.log("Community manager connected to server");
-        await initializeAllSystems(runtime, [params.server], config);
-      }
-    );
-  },
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config}),
 };

@@ -209,11 +209,7 @@ const phalaDeriveKeyProvider: Provider = {
  * const provider = new MarlinDeriveKeyProvider();
  * ```
  */
-class MarlinDeriveKeyProvider extends DeriveKeyProvider {
-    constructor() {
-        super();
-    }
-}
+class MarlinDeriveKeyProvider extends DeriveKeyProvider {}
 
 const marlinDeriveKeyProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
@@ -228,11 +224,7 @@ const marlinDeriveKeyProvider: Provider = {
  * const provider = new FleekDeriveKeyProvider();
  * ```
  */
-class FleekDeriveKeyProvider extends DeriveKeyProvider {
-    constructor() {
-        super();
-    }
-}
+class FleekDeriveKeyProvider extends DeriveKeyProvider {}
 
 const fleekDeriveKeyProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
@@ -247,11 +239,7 @@ const fleekDeriveKeyProvider: Provider = {
  * const provider = new SgxGramineDeriveKeyProvider();
  * ```
  */
-class SgxGramineDeriveKeyProvider extends DeriveKeyProvider {
-    constructor() {
-        super();
-    }
-}
+class SgxGramineDeriveKeyProvider extends DeriveKeyProvider {}
 
 const sgxGramineDeriveKeyProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {

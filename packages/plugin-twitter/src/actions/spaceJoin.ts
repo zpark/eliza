@@ -5,10 +5,10 @@ import {
     type Memory,
     type State,
     stringToUuid,
-    HandlerCallback,
+    type HandlerCallback,
     logger
 } from "@elizaos/core";
-import { Tweet } from "../client";
+import type { Tweet } from "../client";
 import { SpaceActivity } from "../spaces";
 
 export default {
@@ -126,7 +126,7 @@ export default {
 
 
         // If the tweet author isn't hosting a Space, check if any mentioned users are currently hosting one
-        const agentName = client.state["TWITTER_USERNAME"];
+        const agentName = client.state.TWITTER_USERNAME;
         for (const mention of tweet.mentions) {
             if (mention.username !== agentName) {
                 const mentionJoined = await joinSpaceByUserName(mention.username);

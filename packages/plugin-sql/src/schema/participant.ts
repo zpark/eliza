@@ -15,7 +15,7 @@ import { agentTable } from "./agent";
 export const participantTable = pgTable(
     "participants",
     {
-        id: uuid("id").notNull(),
+        id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),

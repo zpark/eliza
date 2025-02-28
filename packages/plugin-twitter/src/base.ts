@@ -5,16 +5,16 @@ import {
   type Memory,
   type State,
   type UUID,
-  logger,
-  stringToUuid,
+  createUniqueUuid,
+  logger
 } from "@elizaos/core";
+import { EventEmitter } from "node:events";
 import {
   type QueryTweetsResponse,
   Scraper,
   SearchMode,
   type Tweet,
 } from "./client/index.ts";
-import { EventEmitter } from "node:events";
 
 export function extractAnswer(text: string): string {
   const startIndex = text.indexOf("Answer: ") + 8;
@@ -435,7 +435,7 @@ export class ClientBase extends EventEmitter {
       const existingMemories =
         await this.runtime.messageManager.getMemoriesByRoomIds({
           roomIds: cachedTimeline.map((tweet) =>
-            stringToUuid(`${tweet.conversationId}-${this.runtime.agentId}`)
+            createUniqueUuid(this.runtime, tweet.conversationId)
           ),
         });
 
@@ -449,7 +449,7 @@ export class ClientBase extends EventEmitter {
       // Check if any of the cached tweets exist in the existing memories
       const someCachedTweetsExist = cachedTimeline.some((tweet) =>
         existingMemoryIds.has(
-          stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
+          createUniqueUuid(this.runtime, tweet.id),
         )
       );
 
@@ -457,38 +457,26 @@ export class ClientBase extends EventEmitter {
         // Filter out the cached tweets that already exist in the database
         const tweetsToSave = cachedTimeline.filter(
           (tweet) =>
+            tweet.userId !== this.profile.id &&
             !existingMemoryIds.has(
-              stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
+              createUniqueUuid(this.runtime, tweet.id)
             )
         );
-
-        console.log({
-          processingTweets: tweetsToSave.map((tweet) => tweet.id).join(","),
-        });
 
         // Save the missing tweets as memories
         for (const tweet of tweetsToSave) {
           logger.log("Saving Tweet", tweet.id);
 
-          const roomId = stringToUuid(
-            `${tweet.conversationId}-${this.runtime.agentId}`
-          );
+          const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
 
-          const userId =
+          const userId = createUniqueUuid(this.runtime, 
             tweet.userId === this.profile.id
               ? this.runtime.agentId
-              : stringToUuid(tweet.userId);
+              : tweet.userId);
 
           if (tweet.userId === this.profile.id) {
-            await this.runtime.ensureConnection({
-              userId: this.runtime.agentId,
-              roomId,
-              userName: this.profile.username,
-              userScreenName: this.profile.screenName,
-              source: "twitter",
-              type: ChannelType.FEED
-            });
-          } else {
+            continue;
+          }
             await this.runtime.ensureConnection({
               userId,
               roomId,
@@ -497,16 +485,13 @@ export class ClientBase extends EventEmitter {
               source: "twitter",
               type: ChannelType.FEED
             });
-          }
 
           const content = {
             text: tweet.text,
             url: tweet.permanentUrl,
             source: "twitter",
             inReplyTo: tweet.inReplyToStatusId
-              ? stringToUuid(
-                  `${tweet.inReplyToStatusId}-${this.runtime.agentId}`
-                )
+              ? createUniqueUuid(this.runtime, tweet.inReplyToStatusId)
               : undefined,
           } as Content;
 
@@ -514,7 +499,7 @@ export class ClientBase extends EventEmitter {
 
           // check if it already exists
           const memory = await this.runtime.messageManager.getMemoryById(
-            stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
+            createUniqueUuid(this.runtime, tweet.id)
           );
 
           if (memory) {
@@ -523,7 +508,7 @@ export class ClientBase extends EventEmitter {
           }
 
           await this.runtime.messageManager.createMemory({
-            id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
+            id: createUniqueUuid(this.runtime, tweet.id),
             userId,
             content: content,
             agentId: this.runtime.agentId,
@@ -562,7 +547,7 @@ export class ClientBase extends EventEmitter {
     for (const tweet of allTweets) {
       tweetIdsToCheck.add(tweet.id);
       roomIds.add(
-        stringToUuid(`${tweet.conversationId}-${this.runtime.agentId}`)
+        createUniqueUuid(this.runtime, tweet.conversationId)
       );
     }
 
@@ -580,8 +565,9 @@ export class ClientBase extends EventEmitter {
     // Filter out the tweets that already exist in the database
     const tweetsToSave = allTweets.filter(
       (tweet) =>
+        tweet.userId !== this.profile.id &&
         !existingMemoryIds.has(
-          stringToUuid(`${tweet.id}-${this.runtime.agentId}`)
+          createUniqueUuid(this.runtime, tweet.id)
         )
     );
 
@@ -591,33 +577,29 @@ export class ClientBase extends EventEmitter {
 
     await this.runtime.getOrCreateUser(
       this.runtime.agentId,
-      this.profile.username,
-      this.runtime.character.name,
-      "twitter"
+      [this.runtime.character.name],
+      {
+        twitter: {
+          name: this.runtime.character.name,
+          userName: this.runtime.character.name,
+          originalUserId: this.runtime.agentId,
+        },
+      }
     );
-
     // Save the new tweets as memories
     for (const tweet of tweetsToSave) {
       logger.log("Saving Tweet", tweet.id);
 
-      const roomId = stringToUuid(
-        `${tweet.conversationId}-${this.runtime.agentId}`
-      );
+      const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
+
       const userId =
         tweet.userId === this.profile.id
           ? this.runtime.agentId
-          : stringToUuid(tweet.userId);
+          : createUniqueUuid(this.runtime, tweet.userId);
 
       if (tweet.userId === this.profile.id) {
-        await this.runtime.ensureConnection({
-          userId: this.runtime.agentId,
-          roomId,
-          userName: this.profile.username,
-          userScreenName: this.profile.screenName,
-          source: "twitter",
-          type: ChannelType.FEED
-        });
-      } else {
+        continue;
+      }
         await this.runtime.ensureConnection({
           userId,
           roomId,
@@ -626,19 +608,18 @@ export class ClientBase extends EventEmitter {
           source: "twitter",
           type: ChannelType.FEED
         });
-      }
 
       const content = {
         text: tweet.text,
         url: tweet.permanentUrl,
         source: "twitter",
         inReplyTo: tweet.inReplyToStatusId
-          ? stringToUuid(tweet.inReplyToStatusId)
+          ? createUniqueUuid(this.runtime, tweet.inReplyToStatusId)
           : undefined,
       } as Content;
 
       await this.runtime.messageManager.createMemory({
-        id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
+        id: createUniqueUuid(this.runtime, tweet.id),
         userId,
         content: content,
         agentId: this.runtime.agentId,

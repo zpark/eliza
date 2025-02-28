@@ -7,25 +7,25 @@ import {
     updateGoal,
 } from "../src/goals.ts";
 import {
-    Action,
-    ChannelType,
+    type Action,
+    type ChannelType,
     type Character,
-    Client,
+    type Client,
     type Goal,
     GoalStatus,
-    HandlerCallback,
+    type HandlerCallback,
     type IAgentRuntime,
     type IMemoryManager,
     type Memory,
-    ModelClass,
-    Provider,
-    RoomData,
+    type ModelClass,
+    type Provider,
+    type RoomData,
     type Service,
     type ServiceType,
     type State,
-    Task,
+    type Task,
     type UUID,
-    WorldData
+    type WorldData
 } from "../src/types.ts";
 
 // Mock the database adapter
@@ -35,7 +35,7 @@ export const mockDatabaseAdapter = {
     createGoal: mock(),
 };
 
-const services = new Map<ServiceType, Service>();
+const _services = new Map<ServiceType, Service>();
 
 // Create memory managers first
 const messageManager: IMemoryManager = {
@@ -102,91 +102,91 @@ export const mockRuntime: IAgentRuntime = {
     getMemoryManager: () => null,
     getModel: () => undefined,
     events: new Map(),
-    registerClientInterface: function (name: string, client: Client): void {
+    registerClientInterface: (_name: string, _client: Client): void => {
         throw new Error("Function not implemented.");
     },
-    transformUserId: function (userId: UUID): UUID {
+    transformUserId: (_userId: UUID): UUID => {
         throw new Error("Function not implemented.");
     },
-    registerService: function (service: Service): void {
+    registerService: (_service: Service): void => {
         throw new Error("Function not implemented.");
     },
-    setSetting: function (key: string, value: string | boolean | null | any, secret: boolean): void {
+    setSetting: (_key: string, _value: string | boolean | null | any, _secret: boolean): void => {
         throw new Error("Function not implemented.");
     },
-    getSetting: function (key: string) {
+    getSetting: (_key: string) => {
         throw new Error("Function not implemented.");
     },
-    getConversationLength: function (): number {
+    getConversationLength: (): number => {
         throw new Error("Function not implemented.");
     },
-    processActions: function (message: Memory, responses: Memory[], state?: State, callback?: HandlerCallback): Promise<void> {
+    processActions: (_message: Memory, _responses: Memory[], _state?: State, _callback?: HandlerCallback): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    evaluate: function (message: Memory, state?: State, didRespond?: boolean, callback?: HandlerCallback): Promise<string[] | null> {
+    evaluate: (_message: Memory, _state?: State, _didRespond?: boolean, _callback?: HandlerCallback): Promise<string[] | null> => {
         throw new Error("Function not implemented.");
     },
-    getOrCreateUser: function (userId: UUID, userName: string | null, name: string | null, source: string | null): Promise<UUID> {
+    getOrCreateUser: (_userId: UUID, _userName: string | null, _name: string | null, _source: string | null): Promise<UUID> => {
         throw new Error("Function not implemented.");
     },
-    registerProvider: function (provider: Provider): void {
+    registerProvider: (_provider: Provider): void => {
         throw new Error("Function not implemented.");
     },
-    registerAction: function (action: Action): void {
+    registerAction: (_action: Action): void => {
         throw new Error("Function not implemented.");
     },
-    ensureConnection: function ({ userId, roomId, userName, userScreenName, source, channelId, serverId, type, }: { userId: UUID; roomId: UUID; userName?: string; userScreenName?: string; source?: string; channelId?: string; serverId?: string; type: ChannelType; }): Promise<void> {
+    ensureConnection: ({ userId, roomId, userName, userScreenName, source, channelId, serverId, type, }: { userId: UUID; roomId: UUID; userName?: string; userScreenName?: string; source?: string; channelId?: string; serverId?: string; type: ChannelType; }): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    ensureParticipantInRoom: function (userId: UUID, roomId: UUID): Promise<void> {
+    ensureParticipantInRoom: (_userId: UUID, _roomId: UUID): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    getWorld: function (worldId: UUID): Promise<WorldData | null> {
+    getWorld: (_worldId: UUID): Promise<WorldData | null> => {
         throw new Error("Function not implemented.");
     },
-    ensureWorldExists: function ({ id, name, serverId, }: WorldData): Promise<void> {
+    ensureWorldExists: ({ id, name, serverId, }: WorldData): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    getRoom: function (roomId: UUID): Promise<RoomData | null> {
+    getRoom: (_roomId: UUID): Promise<RoomData | null> => {
         throw new Error("Function not implemented.");
     },
-    registerModel: function (modelClass: ModelClass, handler: (params: any) => Promise<any>): void {
+    registerModel: (_modelClass: ModelClass, _handler: (params: any) => Promise<any>): void => {
         throw new Error("Function not implemented.");
     },
-    registerEvent: function (event: string, handler: (params: any) => void): void {
+    registerEvent: (_event: string, _handler: (params: any) => void): void => {
         throw new Error("Function not implemented.");
     },
-    getEvent: function (event: string): ((params: any) => void)[] | undefined {
+    getEvent: (_event: string): ((params: any) => void)[] | undefined => {
         throw new Error("Function not implemented.");
     },
-    emitEvent: function (event: string | string[], params: any): void {
+    emitEvent: (_event: string | string[], _params: any): void => {
         throw new Error("Function not implemented.");
     },
-    registerTask: function (task: Task): UUID {
+    registerTask: (_task: Task): UUID => {
         throw new Error("Function not implemented.");
     },
-    getTasks: function ({ roomId, tags, }: { roomId?: UUID; tags?: string[]; }): Task[] | undefined {
+    getTasks: ({ roomId, tags, }: { roomId?: UUID; tags?: string[]; }): Task[] | undefined => {
         throw new Error("Function not implemented.");
     },
-    getTask: function (id: UUID): Task | undefined {
+    getTask: (_id: UUID): Task | undefined => {
         throw new Error("Function not implemented.");
     },
-    updateTask: function (id: UUID, task: Task): void {
+    updateTask: (_id: UUID, _task: Task): void => {
         throw new Error("Function not implemented.");
     },
-    deleteTask: function (id: UUID): void {
+    deleteTask: (_id: UUID): void => {
         throw new Error("Function not implemented.");
     },
-    stop: function (): Promise<void> {
+    stop: (): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    ensureAgentExists: function (): Promise<void> {
+    ensureAgentExists: (): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    ensureEmbeddingDimension: function (): Promise<void> {
+    ensureEmbeddingDimension: (): Promise<void> => {
         throw new Error("Function not implemented.");
     },
-    ensureCharacterExists: function (character: Character): Promise<void> {
+    ensureCharacterExists: (_character: Character): Promise<void> => {
         throw new Error("Function not implemented.");
     }
 };

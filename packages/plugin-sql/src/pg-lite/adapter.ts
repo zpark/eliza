@@ -1,7 +1,7 @@
 import { logger } from "@elizaos/core";
-import { drizzle, PgliteDatabase } from "drizzle-orm/pglite";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "../schema/embedding";
-import { type PGliteClientManager } from "./manager";
+import { drizzle, type PgliteDatabase } from "drizzle-orm/pglite";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "../schema/embedding";
+import type { PGliteClientManager } from "./manager";
 import { BaseDrizzleAdapter } from "../base";
 
 export class PgliteDatabaseAdapter extends BaseDrizzleAdapter<PgliteDatabase> {
@@ -19,7 +19,7 @@ export class PgliteDatabaseAdapter extends BaseDrizzleAdapter<PgliteDatabase> {
             logger.warn("Database is shutting down");
             return null as unknown as T;
         }
-        return this.withRetry(operation);
+        return operation();
     }
 
     async init(): Promise<void> {

@@ -1,21 +1,21 @@
-import { SearchMode, type Tweet } from "./client/index.ts";
 import {
+    ChannelType,
     composeContext,
+    type Content,
+    createUniqueUuid,
     generateMessageResponse,
     generateShouldRespond,
-    messageCompletionFooter,
-    shouldRespondFooter,
-    type Content,
     type HandlerCallback,
     type IAgentRuntime,
-    type Memory,
-    ModelClass,
-    type State,
-    stringToUuid,
     logger,
-    ChannelType,
+    type Memory,
+    messageCompletionFooter,
+    ModelClass,
+    shouldRespondFooter,
+    type State
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
+import { SearchMode, type Tweet } from "./client/index.ts";
 import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 
 export const twitterMessageHandlerTemplate =
@@ -225,7 +225,7 @@ export class TwitterInteractionClient {
             }
 
             // Sort tweet candidates by ID in ascending order
-            uniqueTweetCandidates
+            uniqueTweetCandidates = uniqueTweetCandidates
                 .sort((a, b) => a.id.localeCompare(b.id))
                 .filter((tweet) => tweet.userId !== this.client.profile.id);
 
@@ -236,9 +236,7 @@ export class TwitterInteractionClient {
                     BigInt(tweet.id) > this.client.lastCheckedTweetId
                 ) {
                     // Generate the tweetId UUID the same way it's done in handleTweet
-                    const tweetId = stringToUuid(
-                        `${tweet.id}-${this.runtime.agentId}`
-                    );
+                    const tweetId = createUniqueUuid(this.runtime, tweet.id);
 
                     // Check if we've already processed this tweet
                     const existingResponse =
@@ -254,14 +252,14 @@ export class TwitterInteractionClient {
                     }
                     logger.log("New Tweet found", tweet.permanentUrl);
 
-                    const roomId = stringToUuid(
-                        `${tweet.conversationId}-${this.runtime.agentId}`
-                    );
+                    const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
 
-                    const userIdUUID =
+                    const userIdUUID = createUniqueUuid(
+                        this.runtime,
                         tweet.userId === this.client.profile.id
                             ? this.runtime.agentId
-                            : stringToUuid(tweet.userId!);
+                            : tweet.userId
+                        );
 
                     await this.runtime.ensureConnection({
                         userId: userIdUUID,
@@ -373,14 +371,15 @@ export class TwitterInteractionClient {
         });
 
         // check if the tweet exists, save if it doesn't
-        const tweetId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
+        const tweetId = createUniqueUuid(this.runtime, tweet.id);
         const tweetExists =
             await this.runtime.messageManager.getMemoryById(tweetId);
 
         if (!tweetExists) {
             logger.log("tweet does not exist, saving");
-            const userIdUUID = stringToUuid(tweet.userId as string);
-            const roomId = stringToUuid(tweet.conversationId);
+            const userIdUUID = createUniqueUuid(this.runtime, tweet.userId);
+
+            const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
 
             await this.runtime.ensureConnection({
                 userId: userIdUUID,
@@ -399,9 +398,7 @@ export class TwitterInteractionClient {
                     url: tweet.permanentUrl,
                     imageUrls: tweet.photos?.map(photo => photo.url) || [],
                     inReplyTo: tweet.inReplyToStatusId
-                        ? stringToUuid(
-                              `${tweet.inReplyToStatusId}-${this.runtime.agentId}`
-                          )
+                        ? createUniqueUuid(this.runtime, tweet.inReplyToStatusId)
                         : undefined,
                 },
                 userId: userIdUUID,
@@ -476,9 +473,9 @@ export class TwitterInteractionClient {
         const removeQuotes = (str: string) =>
             str.replace(/^['"](.*)['"]$/, "$1");
 
-        const stringId = stringToUuid(`${tweet.id}-${this.runtime.agentId}`);
+        const replyToId = createUniqueUuid(this.runtime, tweet.id);
 
-        response.inReplyTo = stringId;
+        response.inReplyTo = replyToId;
 
         response.text = removeQuotes(response.text);
 
@@ -504,7 +501,7 @@ export class TwitterInteractionClient {
                     };
                     
                     const responseMessages = [{
-                            id: stringToUuid(`${tweet.id}-${this.runtime.agentId}`),
+                            id: createUniqueUuid(this.runtime, tweet.id),
                             userId: this.runtime.agentId,
                             agentId: this.runtime.agentId,
                             content: response,
@@ -517,14 +514,6 @@ export class TwitterInteractionClient {
                     )) as State;
 
                     for (const responseMessage of responseMessages) {
-                        if (
-                            responseMessage ===
-                            responseMessages[responseMessages.length - 1]
-                        ) {
-                            responseMessage.content.action = response.action;
-                        } else {
-                            responseMessage.content.action = "CONTINUE";
-                        }
                         await this.runtime.messageManager.createMemory(
                             responseMessage
                         );
@@ -583,13 +572,11 @@ export class TwitterInteractionClient {
 
             // Handle memory storage
             const memory = await this.runtime.messageManager.getMemoryById(
-                stringToUuid(`${currentTweet.id}-${this.runtime.agentId}`)
+                createUniqueUuid(this.runtime, currentTweet.id)
             );
             if (!memory) {
-                const roomId = stringToUuid(
-                    `${currentTweet.conversationId}-${this.runtime.agentId}`
-                );
-                const userId = stringToUuid(currentTweet.userId);
+                const roomId = createUniqueUuid(this.runtime, tweet.conversationId);
+                const userId = createUniqueUuid(this.runtime, currentTweet.userId);
 
                 await this.runtime.ensureConnection({
                     userId,
@@ -601,9 +588,7 @@ export class TwitterInteractionClient {
                 });
 
                 this.runtime.messageManager.createMemory({
-                    id: stringToUuid(
-                        `${currentTweet.id}-${this.runtime.agentId}`
-                    ),
+                    id: createUniqueUuid(this.runtime, currentTweet.id),
                     agentId: this.runtime.agentId,
                     content: {
                         text: currentTweet.text,
@@ -611,9 +596,7 @@ export class TwitterInteractionClient {
                         url: currentTweet.permanentUrl,
                         imageUrls: currentTweet.photos?.map(photo => photo.url) || [],
                         inReplyTo: currentTweet.inReplyToStatusId
-                            ? stringToUuid(
-                                  `${currentTweet.inReplyToStatusId}-${this.runtime.agentId}`
-                              )
+                            ? createUniqueUuid(this.runtime, currentTweet.inReplyToStatusId)
                             : undefined,
                     },
                     createdAt: currentTweet.timestamp * 1000,
@@ -621,7 +604,7 @@ export class TwitterInteractionClient {
                     userId:
                         currentTweet.userId === this.twitterUserId
                             ? this.runtime.agentId
-                            : stringToUuid(currentTweet.userId),
+                            : createUniqueUuid(this.runtime, currentTweet.userId),
                 });
             }
 

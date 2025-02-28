@@ -1,13 +1,16 @@
 import {
   ChannelType,
   type Character,
+  createUniqueUuid,
   type Client as ElizaClient,
   type HandlerCallback,
   type IAgentRuntime,
   logger,
   type Memory,
   type Plugin,
-  stringToUuid
+  RoleName,
+  type UUID,
+  type WorldData
 } from "@elizaos/core";
 import {
   Client,
@@ -15,7 +18,7 @@ import {
   Events,
   GatewayIntentBits,
   type Guild,
-  GuildMember,
+  type GuildMember,
   type MessageReaction,
   type OAuth2Guild,
   Partials,
@@ -83,30 +86,52 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     this.setupEventListeners();
 
-    // give it to the 
+    // give it to the
     const ensureAllServersExist = async (runtime: IAgentRuntime) => {
       const guilds = await this.client.guilds.fetch();
       for (const [, guild] of guilds) {
         await this.ensureAllChannelsExist(runtime, guild);
       }
-    }
+    };
 
     ensureAllServersExist(this.runtime);
   }
 
   async ensureAllChannelsExist(runtime: IAgentRuntime, guild: OAuth2Guild) {
+    // fetch the owning member from the OAuth2Guild object
+    const guildObj = await guild.fetch();
     const guildChannels = await guild.fetch();
     // for channel in channels
     for (const [, channel] of guildChannels.channels.cache) {
-      const roomId = stringToUuid(`${channel.id}-${runtime.agentId}`);
+      const roomId = createUniqueUuid(this.runtime, channel.id)
       const room = await runtime.getRoom(roomId);
       // if the room already exists, skip
       if (room) {
         continue;
       }
-      const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`)
-      await runtime.ensureWorldExists({id: worldId, name: guild.name, serverId: guild.id, agentId: runtime.agentId});
-      await runtime.ensureRoomExists({id: roomId, name: channel.name, source: "discord", type: ChannelType.GROUP, channelId: channel.id, serverId: guild.id, worldId});
+      const worldId = createUniqueUuid(runtime, guild.id);
+      const ownerId = createUniqueUuid(this.runtime, guildObj.ownerId);
+      await runtime.ensureWorldExists({
+        id: worldId,
+        name: guild.name,
+        serverId: guild.id,
+        agentId: runtime.agentId,
+        metadata: {
+          ownership: guildObj.ownerId ? { ownerId } : undefined,
+          roles: {
+            [ownerId]: RoleName.OWNER,
+          },
+        },
+      });
+      await runtime.ensureRoomExists({
+        id: roomId,
+        name: channel.name,
+        source: "discord",
+        type: ChannelType.GROUP,
+        channelId: channel.id,
+        serverId: guild.id,
+        worldId,
+      });
     }
   }
 
@@ -123,10 +148,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
       this.handleReactionRemove.bind(this)
     );
 
-    this.client.on(
-      Events.GuildMemberAdd,
-      this.handleGuildMemberAdd.bind(this)
-    );
+    this.client.on(Events.GuildMemberAdd, this.handleGuildMemberAdd.bind(this));
 
     // Handle voice events with the voice manager
     this.client.on(
@@ -153,42 +175,34 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
   private async handleGuildMemberAdd(member: GuildMember) {
     logger.log(`New member joined: ${member.user.username}`);
-    
+
     const guild = member.guild;
-    
+
+    const tag = member.user.bot
+      ? `${member.user.username}#${member.user.discriminator}`
+      : member.user.username;
+
     // Emit standardized USER_JOINED event
-    this.runtime.emitEvent(["DISCORD_USER_JOINED", "USER_JOINED"], {
+    this.runtime.emitEvent("USER_JOINED", {
       runtime: this.runtime,
+      entityId: createUniqueUuid(this.runtime, member.id),
       user: {
         id: member.id,
-        username: member.user.username,
-        displayName: member.displayName || member.user.username
+        username: tag,
+        displayName: member.displayName || member.user.username,
       },
       serverId: guild.id,
       channelId: null, // No specific channel for server joins
       channelType: ChannelType.WORLD,
-      source: "discord"
+      source: "discord",
     });
-    
-    // Optionally sync this user to all channels they have access to
-    for (const [channelId, channel] of guild.channels.cache) {
-      // Check if the user has access to this channel (text channels only)
-      if (channel.type === DiscordChannelType.GuildText && 
-          channel.permissionsFor(member)?.has(PermissionsBitField.Flags.ViewChannel)) {
-        this.runtime.emitEvent(["DISCORD_USER_JOINED_CHANNEL", "USER_JOINED"], {
-          runtime: this.runtime,
-          user: {
-            id: member.id,
-            username: member.user.username,
-            displayName: member.displayName || member.user.username
-          },
-          serverId: guild.id,
-          channelId: channelId,
-          channelType: ChannelType.GROUP,
-          source: "discord"
-        });
-      }
-    }
+
+    this.runtime.emitEvent("DISCORD_USER_JOINED", {
+      runtime: this.runtime,
+      entityId: createUniqueUuid(this.runtime, member.id),
+      member,
+      guild,
+    });
   }
 
   async stop() {
@@ -302,13 +316,9 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
       // Generate IDs with timestamp to ensure uniqueness
       const timestamp = Date.now();
-      const roomId = stringToUuid(
-        `${reaction.message.channel.id}-${this.runtime.agentId}`
-      );
-      const userIdUUID = stringToUuid(`${user.id}-${this.runtime.agentId}`);
-      const reactionUUID = stringToUuid(
-        `${reaction.message.id}-${user.id}-${emoji}-${timestamp}-${this.runtime.agentId}`
-      );
+      const roomId = createUniqueUuid(this.runtime, reaction.message.channel.id)
+      const userIdUUID = createUniqueUuid(this.runtime, user.id);
+      const reactionUUID = createUniqueUuid(this.runtime, `${reaction.message.id}-${user.id}-${emoji}-${timestamp}`);
 
       // Validate IDs
       if (!userIdUUID || !roomId) {
@@ -344,6 +354,8 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
         type: await this.getChannelType(reaction.message.channel.id),
       });
 
+      const inReplyTo = createUniqueUuid(this.runtime, reaction.message.id);
+
       const memory: Memory = {
         id: reactionUUID,
         userId: userIdUUID,
@@ -353,9 +365,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           userName,
           text: reactionMessage,
           source: "discord",
-          inReplyTo: stringToUuid(
-            `${reaction.message.id}-${this.runtime.agentId}`
-          ),
+          inReplyTo,
         },
         roomId,
         createdAt: timestamp,
@@ -413,17 +423,14 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
       const reactionMessage = `*Removed <${emoji}> from: "${truncatedContent}"*`;
 
-      const roomId = stringToUuid(
-        `${reaction.message.channel.id}-${this.runtime.agentId}`
-      );
-      const userIdUUID = stringToUuid(user.id);
-      const reactionUUID = stringToUuid(
-        `${reaction.message.id}-${user.id}-${emoji}-removed-${this.runtime.agentId}`
-      );
+      const roomId = createUniqueUuid(this.runtime, reaction.message.channel.id)
+
+      const userIdUUID = createUniqueUuid(this.runtime, user.id);
+      const timestamp = Date.now();
+      const reactionUUID = createUniqueUuid(this.runtime, `${reaction.message.id}-${user.id}-${emoji}-${timestamp}`);
 
       const userName = reaction.message.author?.username || "unknown";
       const name = reaction.message.author?.displayName || userName;
-
 
       await this.runtime.ensureConnection({
         userId: userIdUUID,
@@ -445,9 +452,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
           userName,
           text: reactionMessage,
           source: "discord",
-          inReplyTo: stringToUuid(
-            `${reaction.message.id}-${this.runtime.agentId}`
-          ),
+          inReplyTo: createUniqueUuid(this.runtime, reaction.message.id),
         },
         roomId,
         createdAt: Date.now(),
@@ -476,13 +481,39 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     logger.log(`Joined guild ${guild.name}`);
     const fullGuild = await guild.fetch();
     this.voiceManager.scanGuild(guild);
-    
-    // Emit both Discord-specific and standardized events
-    this.runtime.emitEvent(["DISCORD_SERVER_JOINED", "SERVER_JOINED"], {
+
+    const ownerId = createUniqueUuid(this.runtime, fullGuild.ownerId);
+
+    // Create standardized world data structure
+    const worldId = createUniqueUuid(this.runtime, fullGuild.id);
+      const standardizedData = {
+      runtime: this.runtime,
+      rooms: await this.buildStandardizedRooms(fullGuild, worldId),
+      users: await this.buildStandardizedUsers(fullGuild),
+      world: {
+        id: worldId,
+        name: fullGuild.name,
+        agentId: this.runtime.agentId,
+        serverId: fullGuild.id,
+        metadata: {
+          ownership: fullGuild.ownerId ? { ownerId: ownerId } : undefined,
+          roles: {
+            [ownerId]: RoleName.OWNER,
+          },
+        },
+      } as WorldData,
+      source: "discord",
+    };
+
+    // Emit both Discord-specific and standardized events with the same data structure
+    this.runtime.emitEvent(["DISCORD_SERVER_JOINED"], {
       runtime: this.runtime,
       server: fullGuild,
-      source: "discord"
+      source: "discord",
     });
+
+    // Emit standardized event with the same structure as SERVER_CONNECTED
+    this.runtime.emitEvent(["SERVER_JOINED"], standardizedData);
   }
 
   private async handleInteractionCreate(interaction: any) {
@@ -498,25 +529,258 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     }
   }
 
+  /**
+   * Builds a standardized list of rooms from Discord guild channels
+   */
+  private async buildStandardizedRooms(
+    guild: Guild,
+    _worldId: UUID
+  ): Promise<any[]> {
+    const rooms = [];
+
+    for (const [channelId, channel] of guild.channels.cache) {
+      // Only process text and voice channels
+      if (
+        channel.type === DiscordChannelType.GuildText ||
+        channel.type === DiscordChannelType.GuildVoice
+      ) {
+        const roomId = createUniqueUuid(this.runtime, channelId)
+        let channelType;
+
+        switch (channel.type) {
+          case DiscordChannelType.GuildText:
+            channelType = ChannelType.GROUP;
+            break;
+          case DiscordChannelType.GuildVoice:
+            channelType = ChannelType.VOICE_GROUP;
+            break;
+          default:
+            channelType = ChannelType.GROUP;
+        }
+
+        // For text channels, we could potentially get member permissions
+        // But for performance reasons, keep this light for large guilds
+        let participants: UUID[] = [];
+
+        if (
+          guild.memberCount < 1000 &&
+          channel.type === DiscordChannelType.GuildText
+        ) {
+          try {
+            // Only attempt this for smaller guilds
+            // Get members with read permissions for this channel
+            participants = Array.from(guild.members.cache.values())
+              .filter((member) =>
+                channel
+                  .permissionsFor(member)
+                  ?.has(PermissionsBitField.Flags.ViewChannel)
+              )
+              .map((member) =>
+                createUniqueUuid(this.runtime, member.id)
+              );
+          } catch (error) {
+            logger.warn(
+              `Failed to get participants for channel ${channel.name}:`,
+              error
+            );
+          }
+        }
+
+        rooms.push({
+          id: roomId,
+          name: channel.name,
+          type: channelType,
+          channelId: channel.id,
+          participants,
+        });
+      }
+    }
+
+    return rooms;
+  }
+
+  /**
+   * Builds a standardized list of users from Discord guild members
+   */
+  private async buildStandardizedUsers(guild: Guild): Promise<any[]> {
+    const users = [];
+    const botId = this.client.user?.id;
+
+    // Strategy based on guild size
+    if (guild.memberCount > 1000) {
+      logger.info(
+        `Using optimized user sync for large guild ${guild.name} (${guild.memberCount} members)`
+      );
+
+      // For large guilds, prioritize members already in cache + online members
+      try {
+        // Use cache first
+        for (const [, member] of guild.members.cache) {
+          const tag = member.user.bot
+            ? `${member.user.username}#${member.user.discriminator}`
+            : member.user.username;
+
+          if (member.id !== botId) {
+            users.push({
+              id: createUniqueUuid(this.runtime, member.id),
+              names: Array.from(
+                new Set([member.user.username, member.displayName, member.user.globalName])
+              ),
+              metadata: {
+                default: {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                },
+                discord: member.user.globalName ? {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                  globalName: member.user.globalName,
+                  userId: member.id,
+                } : {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                  userId: member.id,
+                },
+              },
+            });
+          }
+        }
+
+        // If cache has very few members, try to get online members
+        if (users.length < 100) {
+          logger.info(`Adding online members for ${guild.name}`);
+          // This is a more targeted fetch that is less likely to hit rate limits
+          const onlineMembers = await guild.members.fetch({ limit: 100 });
+
+          for (const [, member] of onlineMembers) {
+            if (member.id !== botId) {
+              const userId = createUniqueUuid(this.runtime, member.id);
+              // Avoid duplicates
+              if (!users.some((u) => u.id === userId)) {
+                const tag = member.user.bot
+                  ? `${member.user.username}#${member.user.discriminator}`
+                  : member.user.username;
+
+                users.push({
+                  id: userId,
+                  names: Array.from(
+                    new Set([member.user.username, member.displayName, member.user.globalName])
+                  ),
+                  metadata: {
+                    default: {
+                      username: tag,
+                      name: member.displayName || member.user.username,
+                    },
+                    discord: member.user.globalName ? {
+                      username: tag,
+                      name: member.displayName || member.user.username,
+                      globalName: member.user.globalName,
+                      userId: member.id,
+                    } : {
+                      username: tag,
+                      name: member.displayName || member.user.username,
+                      userId: member.id,
+                    },
+                  },
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        logger.error(`Error fetching members for ${guild.name}:`, error);
+      }
+    } else {
+      // For smaller guilds, we can fetch all members
+      try {
+        let members = guild.members.cache;
+        if (members.size === 0) {
+          members = await guild.members.fetch();
+        }
+
+        for (const [, member] of members) {
+          if (member.id !== botId) {
+            const tag = member.user.bot
+              ? `${member.user.username}#${member.user.discriminator}`
+              : member.user.username;
+
+            users.push({
+              id: createUniqueUuid(this.runtime, member.id),
+              names: Array.from(
+                new Set([member.user.username, member.displayName, member.user.globalName])
+              ),
+              metadata: {
+                default: {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                },
+                discord: member.user.globalName ? {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                  globalName: member.user.globalName,
+                  userId: member.id,
+                } : {
+                  username: tag,
+                  name: member.displayName || member.user.username,
+                  userId: member.id,
+                },
+              },
+            });
+          }
+        }
+      } catch (error) {
+        logger.error(`Error fetching members for ${guild.name}:`, error);
+      }
+    }
+
+    return users;
+  }
+
   private async onReady() {
     logger.log("DISCORD ON READY");
     const guilds = await this.client.guilds.fetch();
     for (const [, guild] of guilds) {
       const fullGuild = await guild.fetch();
       await this.voiceManager.scanGuild(fullGuild);
-      
+
       // Send after a brief delay
       setTimeout(async () => {
         // For each server the client is in, fire a connected event
         const fullGuild = await guild.fetch();
         logger.log("DISCORD SERVER CONNECTED", fullGuild);
-        
-        // Emit both Discord-specific and standardized events
-        this.runtime.emitEvent(["DISCORD_SERVER_CONNECTED", "SERVER_CONNECTED"], { 
-          runtime: this.runtime, 
+
+        // Emit Discord-specific event with full guild object
+        this.runtime.emitEvent(["DISCORD_SERVER_CONNECTED"], {
+          runtime: this.runtime,
           server: fullGuild,
-          source: "discord"
+          source: "discord",
         });
+
+        // Create platform-agnostic world data structure with simplified structure
+        const worldId = createUniqueUuid(this.runtime, fullGuild.id);
+        const ownerId = createUniqueUuid(this.runtime, fullGuild.ownerId);
+
+        const standardizedData = {
+          runtime: this.runtime,
+          rooms: await this.buildStandardizedRooms(fullGuild, worldId),
+          users: await this.buildStandardizedUsers(fullGuild),
+          world: {
+            id: worldId,
+            name: fullGuild.name,
+            agentId: this.runtime.agentId,
+            serverId: fullGuild.id,
+            metadata: {
+              ownership: fullGuild.ownerId ? { ownerId } : undefined,
+              roles: {
+                [ownerId]: RoleName.OWNER,
+              },
+            },
+          } as WorldData,
+          source: "discord",
+        };
+
+        // Emit standardized event
+        this.runtime.emitEvent(["SERVER_CONNECTED"], standardizedData);
       }, 1000);
     }
 

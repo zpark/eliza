@@ -1,9 +1,8 @@
-import type { Character, IAgentRuntime } from "@elizaos/core";
+import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-import { initializeAllSystems } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
 import twitterPostAction from "./actions/post";
+import { initCharacter, initializeAllSystems } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -178,7 +177,7 @@ const character: Character = {
   }
 };
 
-export const socialMediaManagerConfig: OnboardingConfig = {
+export const config: OnboardingConfig = {
   settings: {
       ORG_NAME: {
           name: "Organization Name",
@@ -248,21 +247,7 @@ export const socialMediaManagerConfig: OnboardingConfig = {
       }
   }
 };
-
-export default { 
-  character, 
-  init: async (runtime: IAgentRuntime) => {
-    runtime.registerAction(twitterPostAction);
-
-    // Register runtime events
-    runtime.registerEvent("DISCORD_SERVER_JOINED", async (params: { server: Guild }) => {
-      // TODO: Save onboarding config to runtime
-      await initializeAllSystems(runtime, [params.server], socialMediaManagerConfig);
-    });
-
-    // when booting up into a server we're in, fire a connected event
-    runtime.registerEvent("DISCORD_SERVER_CONNECTED", async (params: { server: Guild }) => {
-      await initializeAllSystems(runtime, [params.server], socialMediaManagerConfig);
-    });
-  }
+export default {
+  character,
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config, actions: [twitterPostAction]}),
 };

@@ -9,6 +9,7 @@ import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
+import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
 import type { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ import { Badge } from "./ui/badge";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useAgentMessages } from "@/hooks/use-query-hooks";
 
 type ExtraContentFields = {
     user: string;
@@ -103,9 +105,9 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
     const queryClient = useQueryClient();
-    const messages =
-        queryClient.getQueryData<ContentWithUser[]>(["messages", agentId]) ||
-        [];
+    const worldId = WorldManager.getWorldId();
+    
+    const { messages } = useAgentMessages(agentId);
 
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
@@ -116,7 +118,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
    
     useEffect(() => {
         scrollToBottom();
-    }, [queryClient.getQueryData(["messages", agentId])]);
+    }, [queryClient.getQueryData(["messages", agentId, worldId])]);
 
     useEffect(() => {
         scrollToBottom();
@@ -150,17 +152,19 @@ export default function Page({ agentId }: { agentId: UUID }) {
                 user: "user",
                 createdAt: Date.now(),
                 attachments,
+                worldId,
             },
             {
                 text: input,
                 user: "system",
                 isLoading: true,
                 createdAt: Date.now(),
+                worldId,
             },
         ];
 
         queryClient.setQueryData(
-            ["messages", agentId],
+            ["messages", agentId, worldId],
             (old: ContentWithUser[] = []) => [...old, ...newMessages]
         );
 
@@ -191,7 +195,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }) => apiClient.sendMessage(agentId, message, selectedFile),
         onSuccess: (newMessages: ContentWithUser[]) => {
             queryClient.setQueryData(
-                ["messages", agentId],
+                ["messages", agentId, worldId],
                 (old: ContentWithUser[] = []) => [
                     ...old.filter((msg) => !msg.isLoading),
                     ...newMessages.map((msg) => ({

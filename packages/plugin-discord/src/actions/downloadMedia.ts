@@ -114,8 +114,6 @@ export default {
             attachments: [],
         };
 
-        const filename = path.basename(mediaPath);
-
         const maxRetries = 3;
         let retries = 0;
 
@@ -125,7 +123,7 @@ export default {
                     {
                         ...response,
                     },
-                    [`content_cache/${filename}`]
+                    [mediaPath]
                 );
                 break;
             } catch (error) {

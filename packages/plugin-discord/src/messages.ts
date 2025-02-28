@@ -1,5 +1,7 @@
 import {
+  ChannelType,
   type Content,
+  createUniqueUuid,
   type HandlerCallback,
   type IAgentRuntime,
   type IBrowserService,
@@ -7,14 +9,11 @@ import {
   logger,
   type Media,
   type Memory,
-  ServiceType,
-  stringToUuid,
-  type UUID,
-  ChannelType
+  ServiceType
 } from "@elizaos/core";
 import {
-  ChannelType as DiscordChannelType,
   type Client,
+  ChannelType as DiscordChannelType,
   type Message as DiscordMessage,
   type TextChannel,
 } from "discord.js";
@@ -61,12 +60,14 @@ export class MessageManager {
       return;
     }
 
-    const userId = message.author.id as UUID;
-    const userIdUUID = stringToUuid(userId);
-    const userName = message.author.username;
+    const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+
+    const userName = message.author.bot
+      ? `${message.author.username}#${message.author.discriminator}`
+      : message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
-    const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
+    const roomId = createUniqueUuid(this.runtime, channelId);
 
     let type: ChannelType;
     let serverId: string | undefined;
@@ -114,8 +115,14 @@ export class MessageManager {
         attachments.push(...processedAudioAttachments);
       }
 
-      const userIdUUID = stringToUuid(userId);
-      const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
+      if (!processedContent && !attachments?.length) {
+        // Only process messages that are not empty
+        return;
+      }
+
+      const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+
+      const messageId = createUniqueUuid(this.runtime, message.id);
 
       const newMessage: Memory = {
         id: messageId,
@@ -125,12 +132,12 @@ export class MessageManager {
         content: {
           name: name,
           userName: userName,
-          text: processedContent,
+          text: processedContent || " ",
           attachments: attachments,
           source: "discord",
           url: message.url,
           inReplyTo: message.reference?.messageId
-            ? stringToUuid(message.reference.messageId)
+            ? createUniqueUuid(this.runtime, message.reference?.messageId)
             : undefined,
         },
         createdAt: message.createdTimestamp,
@@ -142,9 +149,7 @@ export class MessageManager {
       ) => {
         try {
           if (message.id && !content.inReplyTo) {
-            content.inReplyTo = stringToUuid(
-              `${message.id}-${this.runtime.agentId}`
-            );
+            content.inReplyTo = createUniqueUuid(this.runtime, message.id);
           }
           const messages = await sendMessageInChunks(
             message.channel as TextChannel,
@@ -156,12 +161,9 @@ export class MessageManager {
           const memories: Memory[] = [];
           for (const m of messages) {
             let action = content.action;
-            if (messages.length > 1 && m !== messages[messages.length - 1]) {
-              action = "CONTINUE";
-            }
 
             const memory: Memory = {
-              id: stringToUuid(`${m.id}-${this.runtime.agentId}`),
+              id: createUniqueUuid(this.runtime, m.id),
               userId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: {
@@ -186,7 +188,6 @@ export class MessageManager {
         }
       };
 
-      logger.info("**** DISCORD_MESSAGE_RECEIVED, EMITTING");
       this.runtime.emitEvent(["DISCORD_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
         runtime: this.runtime,
         message: newMessage,
@@ -309,6 +310,10 @@ export class MessageManager {
     }
 
     const data = await response.json();
-    return (data as { username: string }).username;
+    const discriminator = data.discriminator;
+    return (
+      (data as { username: string }).username +
+      (discriminator ? `#${discriminator}` : "")
+    );
   }
 }

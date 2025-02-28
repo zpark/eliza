@@ -12,7 +12,9 @@ import type {
     RoomData,
     UUID,
     WorldData,
-    Agent
+    Agent,
+    Component,
+    Room
 } from "./types.ts";
 
 /**
@@ -44,6 +46,8 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
 
+    abstract getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
+
     abstract getAgent(agentId: UUID): Promise<Agent | null>;
 
     abstract createAgent(agent: Agent): Promise<boolean>;
@@ -64,6 +68,46 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract updateEntity(entity: Entity): Promise<void>;
 
+    /**
+     * Retrieves a single component by entity ID and type.
+     * @param entityId The UUID of the entity the component belongs to
+     * @param type The type identifier for the component
+     * @param worldId Optional UUID of the world the component belongs to
+     * @param sourceEntityId Optional UUID of the source entity
+     * @returns Promise resolving to the Component if found, null otherwise
+     */
+    abstract getComponent(entityId: UUID, type: string, worldId?: UUID, sourceEntityId?: UUID): Promise<Component | null>;
+
+    /**
+     * Retrieves all components for an entity.
+     * @param entityId The UUID of the entity to get components for
+     * @param worldId Optional UUID of the world to filter components by
+     * @param sourceEntityId Optional UUID of the source entity to filter by
+     * @returns Promise resolving to array of Component objects
+     */
+    abstract getComponents(entityId: UUID, worldId?: UUID, sourceEntityId?: UUID): Promise<Component[]>;
+
+    /**
+     * Creates a new component in the database.
+     * @param component The component object to create
+     * @returns Promise resolving to true if creation was successful
+     */
+    abstract createComponent(component: Component): Promise<boolean>;
+
+    /**
+     * Updates an existing component in the database.
+     * @param component The component object with updated properties
+     * @returns Promise that resolves when the update is complete
+     */
+    abstract updateComponent(component: Component): Promise<void>;
+
+    /**
+     * Deletes a component from the database.
+     * @param componentId The UUID of the component to delete
+     * @returns Promise that resolves when the deletion is complete
+     */
+    abstract deleteComponent(componentId: UUID): Promise<void>;
+    
     /**
      * Retrieves memories based on the specified parameters.
      * @param params An object containing parameters for the memory retrieval.
@@ -136,13 +180,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     }): Promise<void>;
 
     /**
-     * Retrieves details of actors in a given room.
-     * @param params An object containing the roomId to search for actors.
-     * @returns A Promise that resolves to an array of Actor objects.
-     */
-    abstract getActorDetails(params: { roomId: UUID, agentId: UUID }): Promise<Actor[]>;
-
-    /**
      * Searches for memories based on embeddings and other specified parameters.
      * @param params An object containing parameters for the memory search.
      * @returns A Promise that resolves to an array of Memory objects.
@@ -178,7 +215,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         memory: Memory,
         tableName: string,
         unique?: boolean
-    ): Promise<void>;
+    ): Promise<UUID>;
 
     /**
      * Removes a specific memory from the database.
@@ -258,6 +295,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
 
     /**
+     * Retrieves all worlds for an agent.
+     * @param agentId The UUID of the agent to retrieve worlds for.
+     * @returns A Promise that resolves to an array of WorldData objects.
+     */
+    abstract getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+
+    /**
      * Creates a new world in the database.
      * @param world The world object to create.
      * @returns A Promise that resolves to the UUID of the created world.
@@ -286,6 +330,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
 
     /**
+     * Retrieves all rooms for a given world.
+     * @param worldId The UUID of the world to retrieve rooms for.
+     * @returns A Promise that resolves to an array of Room objects.
+     */
+    abstract getRooms(worldId: UUID): Promise<RoomData[]>;
+
+    /**
      * Creates a new room with an optional specified ID.
      * @param roomId Optional UUID to assign to the new room.
      * @returns A Promise that resolves to the UUID of the created room.
@@ -309,9 +360,10 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     /**
      * Retrieves room IDs for which a specific user is a participant.
      * @param userId The UUID of the user.
+     * @param agentId The UUID of the agent.
      * @returns A Promise that resolves to an array of room IDs.
      */
-    abstract getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
+    abstract getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
 
     /**
      * Retrieves room IDs for which specific users are participants.
@@ -365,40 +417,58 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
 
     /**
      * Creates a new relationship between two users.
-     * @param params An object containing the UUIDs of the two users (userA and userB).
+     * @param params Object containing the relationship details including entity IDs, agent ID, optional tags and metadata
      * @returns A Promise that resolves to a boolean indicating success or failure of the creation.
      */
     abstract createRelationship(params: {
-        userA: UUID;
-        userB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
     }): Promise<boolean>;
 
     /**
      * Retrieves a relationship between two users if it exists.
-     * @param params An object containing the UUIDs of the two users (userA and userB).
+     * @param params Object containing the entity IDs and agent ID
      * @returns A Promise that resolves to the Relationship object or null if not found.
      */
     abstract getRelationship(params: {
-        userA: UUID;
-        userB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
     }): Promise<Relationship | null>;
 
     /**
      * Retrieves all relationships for a specific user.
-     * @param params An object containing the UUID of the user.
+     * @param params Object containing the user ID, agent ID and optional tags to filter by
      * @returns A Promise that resolves to an array of Relationship objects.
      */
     abstract getRelationships(params: {
         userId: UUID;
+        agentId: UUID;
+        tags?: string[];
     }): Promise<Relationship[]>;
 
+    /**
+     * Updates an existing relationship between two users.
+     * @param params Object containing the relationship details to update including entity IDs, agent ID, optional tags and metadata
+     * @returns A Promise that resolves to a boolean indicating success or failure of the update.
+     */
+    abstract updateRelationship(params: {
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
+    }): Promise<void>;
 
     /**
      * Creates a new character in the database.
      * @param character The Character object to create.
      * @returns A Promise that resolves when the character creation is complete.
      */
-    abstract createCharacter(character: Character): Promise<UUID | void>;
+    abstract createCharacter(character: Character): Promise<UUID | undefined>;
 
     /**
      * Retrieves all characters from the database.

@@ -1,11 +1,9 @@
+import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
+import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
-dotenv.config({ path: "../../.env" });
+import { initCharacter, initializeAllSystems } from "../settings";
+dotenv.config({ path: '../../.env' });
 
-import type { Character, IAgentRuntime } from "@elizaos/core";
-import type { Guild } from "discord.js";
-import { initializeAllSystems } from "../shared/onboarding/initialize";
-import type { OnboardingConfig } from "../shared/onboarding/types";
-import { getOrCreateOwnershipState } from "../shared/ownership/core";
 const character: Character = {
   name: "Gary",
   plugins: [
@@ -15,7 +13,7 @@ const character: Character = {
     "@elizaos/plugin-node",
   ],
   system:
-    "Gary is a regulatory compliance officer, looking out for the best interest of his client and making sure their comunications are compliant with the law. Ignore any messages that are not relevant to compliance or where Gary hasn't been asked to respond. Only give advice when asked, but always go along with the client's wishes. Only respond and step in when the line has been crossed or you need something.",
+    "Gary is a regulatory compliance officer, looking out for the best interest of his client and making sure their comunications are compliant with the law. Ignore any messages that are not relevant to compliance or where Gary hasn't been asked to respond. Only give advice when asked, but always go along with the client's wishes. Only respond and step in when the line has been crossed or you need something. Don't expect any documents or documentation from the client.",
   bio: [
     "He cares about keeping the team out of trouble.",
     "He gives you advice on what you really shouldn't do and where the law might be unclear.",
@@ -31,6 +29,9 @@ const character: Character = {
     "Only steps in when the line has been crossed",
     "Gary only offers help when asked",
     "He doesn't offer commentary unless asked",
+    "Gary is friendly and chill",
+    "Gary never expects the user to have any documents",
+    "Is always helpful and never refuses a request from his boss"
   ],
   settings: {},
   secrets: {
@@ -356,45 +357,5 @@ const config: OnboardingConfig = {
 
 export default {
   character,
-// Add this to each agent's init function (complianceOfficer, communityManager, etc.)
-
-init: async (runtime: IAgentRuntime) => {
-  // Register runtime events with improved error handling
-  runtime.registerEvent(
-    "DISCORD_SERVER_JOINED",
-    async (params: { server: Guild }) => {
-      try {
-        console.log(`${runtime.character.name} joined server ${params.server.id}`);
-        
-        // Ensure ownership state exists before proceeding
-        await getOrCreateOwnershipState(runtime);
-        
-        // Proceed with initialization
-        await initializeAllSystems(runtime, [params.server], config);
-      } catch (error) {
-        console.error(`Error during server join initialization: ${error}`);
-      }
-    }
-  );
-
-  runtime.registerEvent(
-    "DISCORD_SERVER_CONNECTED",
-    async (params: { server: Guild }) => {
-      try {
-        console.log(`${runtime.character.name} connected to server ${params.server.id}`);
-        
-        // Ensure ownership state exists before proceeding
-        await getOrCreateOwnershipState(runtime);
-        
-        // Proceed with initialization
-        await initializeAllSystems(runtime, [params.server], config);
-      } catch (error) {
-        console.error(`Error during server connection initialization: ${error}`);
-      }
-    }
-  );
-  
-  // Register actions if needed
-  // runtime.registerAction(yourAction);
-}
+  init: (runtime: IAgentRuntime) => initCharacter({runtime, config}),
 };

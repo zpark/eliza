@@ -7,5 +7,6 @@ export default function AgentRoute() {
 
     if (!agentId) return <div>No data.</div>;
 
+    // Go directly to the chat with the agent, skipping the room selection
     return <Chat agentId={agentId} />;
 }

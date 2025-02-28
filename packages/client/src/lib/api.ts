@@ -1,4 +1,5 @@
-import type { UUID, Character } from "@elizaos/core";
+import type { Character, UUID } from "@elizaos/core";
+import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
 
@@ -23,7 +24,7 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST") {
+    if (method === "POST" || method === "PUT") {
         if (body instanceof FormData) {
             if (options.headers && typeof options.headers === 'object') {
                 // Create new headers object without Content-Type
@@ -59,7 +60,12 @@ const fetcher = async ({
             throw new Error(errorMessage);
         }
             
-        return resp.json();
+        try {
+            return await resp.json();
+        } catch (error) {
+            console.error("JSON Parse Error:", error);
+            return null;
+        }
     });
 };
 
@@ -67,14 +73,23 @@ export const apiClient = {
     sendMessage: (
         agentId: string,
         message: string,
-        selectedFile?: File | null
+        selectedFile?: File | null,
+        roomId?: UUID
     ) => {
+        const worldId = WorldManager.getWorldId();
+        
         if (selectedFile) {
             // Use FormData only when there's a file
             const formData = new FormData();
             formData.append("text", message);
             formData.append("user", "user");
             formData.append("file", selectedFile);
+            // Add roomId if provided
+            if (roomId) {
+                formData.append("roomId", roomId);
+            }
+            // Add worldId
+            formData.append("worldId", worldId);
             
             return fetcher({
                 url: `/agents/${agentId}/message`,
@@ -88,7 +103,9 @@ export const apiClient = {
                 method: "POST",
                 body: {
                     text: message,
-                    user: "user"
+                    user: "user",
+                    roomId: roomId || undefined,
+                    worldId
                 },
             });
     },
@@ -136,51 +153,47 @@ export const apiClient = {
             url: `/agents/start/${characterName}`,
             method: "POST",
         }),
-    stopAgent: (agentId: string) =>
-        fetcher({
+    stopAgent: (agentId: string) => {
+        return fetcher({
             url: `/agents/${agentId}/stop`,
             method: "POST",
-        }),
-    getMemories: (agentId: string, roomId: string) =>
-        fetcher({ url: `/agents/${agentId}/${roomId}/memories` }),
-    
-    // Character-related routes
-    getCharacters: () => 
-        fetcher({ url: "/characters" }),
-    
-    getCharacter: (characterName: string): Promise<Character> =>
-        fetcher({ url: `/characters/${characterName}` }),
-    
-    createCharacter: (character: Character) =>
-        fetcher({
-            url: "/characters",
-            method: "POST",
-            body: character,
-        }),
-    
-    updateCharacter: (characterName: string, character: Character) =>
-        fetcher({
-            url: `/characters/${characterName}`,
-            method: "PUT",
-            body: character,
-        }),
-    
-    deleteCharacter: (characterName: string): Promise<{ success: boolean }> =>
-        fetcher({
-            url: `/characters/${characterName}`,
-            method: "DELETE",
-        }),
-    
-    importCharacter: (characterFile: File) => {
-        const formData = new FormData();
-        formData.append("file", characterFile);
+        });
+    },
+    removeAgent: (agentId: string) => {
         return fetcher({
-            url: "/characters/import",
-            method: "POST",
-            body: formData,
+            url: `/agents/${agentId}`,
+            method: "DELETE",
+        });
+    },
+    getMemories: (agentId: string, roomId: string, options?: { limit?: number; before?: number }) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({ 
+            url: `/agents/${agentId}/${roomId}/memories`,
+            method: "GET",
+            body: { worldId, ...options }
         });
     },
     
-    exportCharacter: (characterName: string) =>
-        fetcher({ url: `/characters/${characterName}/export` }),
+    // Room-related routes
+    getRooms: (agentId: string) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({ 
+            url: `/agents/${agentId}/rooms`,
+            method: "GET",
+            body: { worldId }
+        });
+    },
+    
+    createRoom: (agentId: string, roomName: string) => {
+        const worldId = WorldManager.getWorldId();
+        return fetcher({
+            url: `/agents/${agentId}/rooms`,
+            method: "POST",
+            body: {
+                name: roomName,
+                worldId
+            }
+        });
+    },
+    
 };

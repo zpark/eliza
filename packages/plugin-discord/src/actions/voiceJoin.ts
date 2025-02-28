@@ -1,26 +1,27 @@
-// eslint-disable-next-line
-// @ts-nocheck
 // src/actions/joinVoice
 import {
     type Action,
     type ActionExample,
-    composeContext,
     type IAgentRuntime,
     type Memory,
     type State,
+    ChannelType,
+    composeContext,
+    createUniqueUuid,
     generateText,
-    ModelClass,
+    type HandlerCallback,
+    logger,
+    ModelClass
 } from "@elizaos/core";
 import {
     type Channel,
-    ChannelType,
-    type Client,
-    type Message as DiscordMessage,
     type Guild,
-    type GuildMember,
+    type BaseGuildVoiceChannel,
+    ChannelType as DiscordChannelType
 } from "discord.js";
 
-import { DiscordClient } from "../index.ts";
+import type { DiscordClient } from "../index.ts";
+import type { VoiceManager } from "../voice.ts";
 
 export default {
     name: "JOIN_VOICE",
@@ -39,6 +40,14 @@ export default {
     ) => {
         if (message.content.source !== "discord") {
             // not a discord message
+            return false;
+        }
+
+        const roomId = message.roomId;
+
+        const room = await runtime.getRoom(roomId);
+
+        if(room?.type !== ChannelType.GROUP) {
             return false;
         }
 
@@ -87,21 +96,24 @@ export default {
             throw new Error("No server ID found 8");
         }
 
-        const client = runtime.getClient("discord").client;
+        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const client = discordClient.client;
+        const voiceManager = discordClient.voiceManager as VoiceManager;
 
         if (!client) {
             logger.error("Discord client not found");
             return false;
         }
+
         const voiceChannels = (
-            client.client.guilds.cache.get(serverId) as Guild
+            client.guilds.cache.get(serverId) as Guild
         ).channels.cache.filter(
-            (channel: Channel) => channel.type === ChannelType.GuildVoice
+            (channel: Channel) => channel.type === DiscordChannelType.GuildVoice
         );
 
         const targetChannel = voiceChannels.find((channel) => {
             const name = (channel as { name: string }).name.toLowerCase();
-
+            const messageContent = message?.content?.text;
             // remove all non-alphanumeric characters (keep spaces between words)
             const replacedName = name.replace(/[^a-z0-9 ]/g, "");
 
@@ -114,35 +126,17 @@ export default {
         });
 
         if (targetChannel) {
-            joinVoiceChannel({
-                channelId: targetChannel.id,
-                guildId: serverId as string,
-                adapterCreator: (client.guilds.cache.get(id) as Guild)
-                    .voiceAdapterCreator,
-                selfDeaf: false,
-                selfMute: false,
-                group: client.user.id,
-            });
+            voiceManager.joinChannel(targetChannel as BaseGuildVoiceChannel);
             return true;
         }
             const guild = client.guilds.cache.get(serverId);
             const members = guild?.members.cache;
 
             // get the member who's stringTouuid(id) === message userId
-            const member = members?.find((member) => stringToUuid(member.id) === message.userId);
-
-            console.log("member", member);
+            const member = members?.find((member) => createUniqueUuid(runtime, member.id) === message.userId);
 
             if (member?.voice?.channel) {
-                joinVoiceChannel({
-                    channelId: member.voice.channel.id,
-                    guildId: serverId,
-                    adapterCreator: (client.guilds.cache.get(id) as Guild)
-                        .voiceAdapterCreator,
-                    selfDeaf: false,
-                    selfMute: false,
-                    group: client.user.id,
-                });
+                voiceManager.joinChannel(member?.voice?.channel as BaseGuildVoiceChannel);
                 return true;
             }
 
@@ -197,15 +191,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 });
 
                 if (targetChannel) {
-                    joinVoiceChannel({
-                        channelId: targetChannel.id,
-                        guildId: serverId,
-                        adapterCreator: (client.guilds.cache.get(id) as Guild)
-                            .voiceAdapterCreator,
-                        selfDeaf: false,
-                        selfMute: false,
-                        group: client.user.id,
-                    });
+                    voiceManager.joinChannel(targetChannel as BaseGuildVoiceChannel);
                     return true;
                 }
             }

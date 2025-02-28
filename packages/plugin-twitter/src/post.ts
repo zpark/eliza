@@ -2,21 +2,21 @@ import {
     ChannelType,
     cleanJsonResponse,
     composeContext,
+    createUniqueUuid,
     extractAttributes,
     generateText,
     type IAgentRuntime,
     logger,
     ModelClass,
     parseJSONObjectFromText,
-    stringToUuid,
     truncateToCompleteSentence,
     type UUID
 } from "@elizaos/core";
 import type { ClientBase } from "./base.ts";
 import type { Tweet } from "./client/index.ts";
+import { twitterPostTemplate } from "./templates.ts";
 import type { MediaData } from "./types.ts";
 import { fetchMediaData } from "./utils.ts";
-import { twitterPostTemplate } from "./templates.ts";
 
 
 export class TwitterPostClient {
@@ -162,7 +162,7 @@ export class TwitterPostClient {
 
         // Create a memory for the tweet
         await runtime.messageManager.createMemory({
-            id: stringToUuid(`${tweet.id}-${runtime.agentId}`),
+            id: createUniqueUuid(this.runtime, tweet.id),
             userId: runtime.agentId,
             agentId: runtime.agentId,
             content: {
@@ -292,14 +292,17 @@ export class TwitterPostClient {
         logger.log("Generating new tweet");
 
         try {
-            const roomId = stringToUuid(
-                `twitter_generate_room-${this.client.profile.username}`
-            );
+            const roomId = createUniqueUuid(this.runtime, 'twitter_generate');
             await this.runtime.getOrCreateUser(
                 this.runtime.agentId,
-                this.client.profile.username,
-                this.runtime.character.name,
-                "twitter"
+                [this.client.profile.username],
+                {
+                    twitter: {
+                        name: this.client.profile.username,
+                        userName: this.client.profile.username,
+                        originalUserId: this.runtime.agentId,
+                    },
+                }
             );
 
             const topics = this.runtime.character.topics

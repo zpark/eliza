@@ -2,10 +2,10 @@ import { PGlite, type PGliteOptions } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite/vector";
 import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
 import { logger } from "@elizaos/core";
-import { IDatabaseClientManager } from "../types";
+import type { IDatabaseClientManager } from "../types";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { fileURLToPath } from 'url';
-import path from "path";
+import { fileURLToPath } from 'node:url';
+import path from "node:path";
 import { drizzle } from "drizzle-orm/pglite";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -104,7 +104,7 @@ export class PGliteClientManager implements IDatabaseClientManager<PGlite> {
             logger.info("Migrations completed successfully!");
         } catch (error) {
             logger.error("Failed to run database migrations:", error);
-            throw error;
+            // throw error;
         }
     }
 }
