@@ -107,7 +107,7 @@ async function getRecentInteractions(
   });
 
   for (const entity of candidateEntities) {
-    let interactions: Memory[] = [];
+    const interactions: Memory[] = [];
     let interactionScore = 0;
 
     // First get direct replies using inReplyTo

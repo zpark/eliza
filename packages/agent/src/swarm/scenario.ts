@@ -1,10 +1,10 @@
 import {
   ChannelType,
-  Client,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
-  UUID,
+  type Client,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
+  type UUID,
   createUniqueUuid
 } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";

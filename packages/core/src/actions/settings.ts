@@ -5,16 +5,16 @@ import { logger } from "../logger";
 import { messageCompletionFooter } from "../parsing";
 import { findWorldForOwner } from "../roles";
 import {
-  Action,
-  ActionExample,
+  type Action,
+  type ActionExample,
   ChannelType,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  OnboardingSetting,
-  State,
-  WorldSettings,
+  type OnboardingSetting,
+  type State,
+  type WorldSettings,
 } from "../types";
 
 interface SettingUpdate {
@@ -164,7 +164,7 @@ function categorizeSettings(worldSettings: WorldSettings): {
  */
 async function extractSettingValues(
   runtime: IAgentRuntime,
-  message: Memory,
+  _message: Memory,
   state: State,
   worldSettings: WorldSettings
 ): Promise<SettingUpdate[]> {
@@ -328,7 +328,7 @@ const successTemplate = `# Task: Generate a response for successful setting upda
 
 Write a natural, conversational response that {{agentName}} would send about the successful update and next steps.
 Include the action "SETTING_UPDATED" in your response.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 // Template for failure responses when settings couldn't be updated
 const failureTemplate = `# Task: Generate a response for failed setting updates
@@ -357,7 +357,7 @@ const failureTemplate = `# Task: Generate a response for failed setting updates
 
 Write a natural, conversational response that {{agentName}} would send about the failed update and how to proceed.
 Include the action "SETTING_UPDATE_FAILED" in your response.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 // Template for error responses when unexpected errors occur
 const errorTemplate = `# Task: Generate a response for an error during setting updates
@@ -376,7 +376,7 @@ const errorTemplate = `# Task: Generate a response for an error during setting u
 
 Write a natural, conversational response that {{agentName}} would send about the error.
 Include the action "SETTING_UPDATE_ERROR" in your response.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 // Template for completion responses when all required settings are configured
 const completionTemplate = `# Task: Generate a response for settings completion
@@ -400,7 +400,7 @@ const completionTemplate = `# Task: Generate a response for settings completion
 
 Write a natural, conversational response that {{agentName}} would send about the successful completion of settings.
 Include the action "ONBOARDING_COMPLETE" in your response.
-` + messageCompletionFooter;
+${messageCompletionFooter}`;
 
 /**
  * Handles the completion of settings when all required settings are configured
@@ -729,7 +729,7 @@ const updateSettingsAction: Action = {
           serverId
         );
         if (!updatedWorldSettings) {
-          logger.error(`Failed to retrieve updated settings state`);
+          logger.error("Failed to retrieve updated settings state");
           await generateErrorResponse(runtime, state, callback);
           return;
         }

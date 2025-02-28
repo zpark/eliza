@@ -1,7 +1,7 @@
 import {
     Actor,
-    Agent,
-    Component,
+    type Agent,
+    type Component,
     DatabaseAdapter,
     logger,
     type Character,
@@ -43,11 +43,11 @@ import {
 import { v4 } from "uuid";
 import {
     characterToInsert,
-    StoredTemplate,
+    type StoredTemplate,
     storedToTemplate,
     templateToStored,
 } from "./schema/character";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "./schema/embedding";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     cacheTable,
     characterTable,
@@ -63,7 +63,7 @@ import {
     worldTable,
     componentTable,
 } from "./schema/index";
-import { DrizzleOperations } from "./types";
+import type { DrizzleOperations } from "./types";
 
 export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
     extends DatabaseAdapter<TDatabase>
@@ -1350,7 +1350,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         metadata?: { [key: string]: any };
     }): Promise<boolean> {
         return this.withDatabase(async () => {
-            console.log('**** creating relationship', params)
             console.trace()
             try {
                 const id = v4();
@@ -1374,7 +1373,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async updateRelationship(relationship: Relationship): Promise<void> {
-        console.log('**** updating relationship', relationship)
         return this.withDatabase(async () => {
             try {
                 await this.db.update(relationshipTable)
@@ -1441,7 +1439,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         tags?: string[];
     }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
-            console.log("*** Attempting to get relationships for ", params.userId)
             try {
                 let query = this.db
                     .select()
@@ -1460,12 +1457,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
                 const results = await query;
 
-                console.log('****** relationship results ', results)
-
-                if(results.length === 0) {
-                    console.warn("Empty results")
-                    console.trace()
-                }
                 return results.map(result => ({
                     id: result.id,
                     sourceEntityId: result.sourceEntityId,
@@ -1577,7 +1568,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             }
         });
     }
-    async createCharacter(character: Character): Promise<UUID | void> {
+    async createCharacter(character: Character): Promise<UUID | undefined> {
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {

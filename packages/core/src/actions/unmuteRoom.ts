@@ -1,7 +1,7 @@
 import { generateTrueOrFalse } from "../generation";
 import { composeContext } from "../context";
 import { booleanFooter } from "../parsing";
-import { Action, ActionExample, HandlerCallback, IAgentRuntime, Memory, ModelClass, State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
 export const shouldUnmuteTemplate =
     `# Task: Decide if {{agentName}} should unmute this previously muted room and start considering it for responses again.

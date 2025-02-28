@@ -3,7 +3,7 @@
 import {
     ChannelType,
     type Content,
-    HandlerCallback,
+    type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelClass,
@@ -12,7 +12,7 @@ import {
     logger
 } from "@elizaos/core";
 import { spawn } from "node:child_process";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import type { ClientBase } from "./base";
 import type {
     AudioDataWithUser,

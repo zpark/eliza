@@ -316,7 +316,7 @@ export class MessageManager {
     const discriminator = data.discriminator;
     return (
       (data as { username: string }).username +
-      (discriminator ? "#" + discriminator : "")
+      (discriminator ? `#${discriminator}` : "")
     );
   }
 }

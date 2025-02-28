@@ -376,12 +376,12 @@ describe("MemoryManager", () => {
         });
 
         it("should preserve semantic boundaries when possible", async () => {
-            const text = "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.";
+            const _text = "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.";
             // Test that fragments break at paragraph boundaries
         });
 
         it("should handle multilingual content properly", async () => {
-            const multilingualText = "English text. 中文文本. Русский текст.";
+            const _multilingualText = "English text. 中文文本. Русский текст.";
             // Test proper handling of different scripts
         });
     });

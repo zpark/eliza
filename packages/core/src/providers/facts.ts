@@ -1,7 +1,7 @@
 
 import { MemoryManager } from "../memory.ts";
 import { formatMessages } from "../messages.ts";
-import { IAgentRuntime, Memory, ModelClass, Provider, State } from "../types.ts";
+import { type IAgentRuntime, type Memory, ModelClass, type Provider, type State } from "../types.ts";
 
 function formatFacts(facts: Memory[]) {
     return facts

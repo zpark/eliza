@@ -1,4 +1,4 @@
-import { Action, ActionExample, IAgentRuntime, Memory } from "../types";
+import type { Action, ActionExample, IAgentRuntime, Memory } from "../types";
 
 export const ignoreAction: Action = {
     name: "IGNORE",

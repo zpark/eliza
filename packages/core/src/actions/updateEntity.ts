@@ -9,15 +9,15 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from "../logger";
 import { 
-  Action, 
-  ActionExample,
+  type Action, 
+  type ActionExample,
   Component,
-  HandlerCallback, 
-  IAgentRuntime, 
-  Memory, 
+  type HandlerCallback, 
+  type IAgentRuntime, 
+  type Memory, 
   ModelClass, 
-  State, 
-  UUID,
+  type State, 
+  type UUID,
   Entity
 } from "../types";
 import { composeContext } from "../context";
@@ -99,7 +99,7 @@ export const updateEntityAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State
+    _state: State
   ): Promise<boolean> => {
     // Check if we have any registered sources or existing components that could be updated
     const worldId = message.roomId;

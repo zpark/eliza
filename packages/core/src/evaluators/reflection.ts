@@ -2,7 +2,7 @@ import { z } from "zod";
 import { composeContext } from "../context";
 import { generateObject } from "../generation";
 import { MemoryManager } from "../memory";
-import { Evaluator, IAgentRuntime, Memory, ModelClass, UUID } from "../types";
+import { type Evaluator, type IAgentRuntime, type Memory, ModelClass, type UUID } from "../types";
 import { getActorDetails, resolveActorId } from "../messages";
 
 // Schema definitions for the reflection output
@@ -89,8 +89,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         agentId 
     });
 
-    console.log("*** existingRelationships", existingRelationships)
-
     // Get actors in the room for name resolution
     const actors = await getActorDetails({ runtime, roomId });
 
@@ -104,7 +102,9 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
     const knownFacts = await factsManager.getMemories({ 
         roomId,
-        agentId
+        agentId,
+        count: 30,
+        unique: true,
     });
 
     const context = composeContext({
@@ -113,11 +113,11 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             knownFacts: formatFacts(knownFacts),
             roomType: state.roomType || "group", // Can be "group", "voice", or "dm"
             entitiesInRoom: JSON.stringify(entitiesInRoom),
-            existingRelationships: JSON.stringify(existingRelationships)
+            existingRelationships: JSON.stringify(existingRelationships),
+            senderId: message.userId
         },
         template: runtime.character.templates?.reflectionTemplate || reflectionTemplate,
     });
-    console.log("*** reflection context\n", context)
 
     const reflection = await generateObject({
         runtime,
@@ -149,7 +149,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
     // Update or create relationships
     for (const relationship of reflection.relationships) {
-        console.log("*** resolving relationship", relationship);
         let sourceId: UUID;
         let targetId: UUID;
         
@@ -158,6 +157,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             targetId = resolveActorId(relationship.targetEntityId, actors);
         } catch (error) {
             console.warn('Failed to resolve relationship entities:', error);
+            console.warn('relationship:\n', relationship)
             continue; // Skip this relationship if we can't resolve the IDs
         }
         
@@ -167,14 +167,11 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         );
 
         if (existingRelationship) {
-            console.log('**** existingRelationship is true')
-            // Update existing relationship by creating a new one
             const updatedMetadata = {
                 ...existingRelationship.metadata,
                 interactions: (existingRelationship.metadata?.interactions || 0) + 1
             };
 
-            // Merge tags, removing duplicates
             const updatedTags = Array.from(new Set([
                 ...(existingRelationship.tags || []),
                 ...relationship.tags
@@ -189,8 +186,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
                 metadata: updatedMetadata,
             });
         } else {
-            console.log('**** existingRelationship is false')
-            // Create new relationship
             await runtime.databaseAdapter.createRelationship({
                 sourceEntityId: sourceId,
                 targetEntityId: targetId,

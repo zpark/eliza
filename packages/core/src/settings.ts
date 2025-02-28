@@ -1,6 +1,6 @@
 import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import { IAgentRuntime, OnboardingConfig, OnboardingSetting, WorldData, WorldSettings } from "./types";
+import type { IAgentRuntime, OnboardingConfig, OnboardingSetting, WorldData, WorldSettings } from "./types";
 
 function createSettingFromConfig(
   configSetting: Omit<OnboardingSetting, "value">

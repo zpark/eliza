@@ -467,7 +467,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param character The Character object to create.
      * @returns A Promise that resolves when the character creation is complete.
      */
-    abstract createCharacter(character: Character): Promise<UUID | void>;
+    abstract createCharacter(character: Character): Promise<UUID | undefined>;
 
     /**
      * Retrieves all characters from the database.

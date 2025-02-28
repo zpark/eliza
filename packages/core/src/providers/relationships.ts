@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, Provider, State, Relationship, UUID } from "../types.ts";
+import type { IAgentRuntime, Memory, Provider, State, Relationship, UUID } from "../types.ts";
 
 async function getRelationships({
     runtime,
@@ -24,7 +24,7 @@ async function formatRelationships(runtime: IAgentRuntime, relationships: Relati
     }
 
     const formattedRelationships = await Promise.all(sortedRelationships
-        .map(async (rel, index) => {
+        .map(async (rel, _index) => {
 
             const formatMetadata = (metadata: any) => {
                 return JSON.stringify(Object.entries(metadata)

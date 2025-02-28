@@ -5,10 +5,10 @@ const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 
 export const messageCompletionFooter = `\nResponse format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+{ "thought": "<string>", "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
 \`\`\`
 
-The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send.
+The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send. Do not including any thinking or internal reflection in the "text" field. "thought" should be a short description of what the agent is thinking about before responding, inlcuding a brief justification for the response.
 `;
 
 export const shouldRespondFooter = "The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.";
@@ -336,7 +336,7 @@ export function truncateToCompleteSentence(
 // Assuming ~4 tokens per character on average
 const TOKENS_PER_CHAR = 4;
 const TARGET_TOKENS = 3000;
-const TARGET_CHARS = Math.floor(TARGET_TOKENS / TOKENS_PER_CHAR); // ~750 chars
+const _TARGET_CHARS = Math.floor(TARGET_TOKENS / TOKENS_PER_CHAR); // ~750 chars
 
 export async function splitChunks(
     content: string,

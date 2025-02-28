@@ -2,7 +2,7 @@
 // Updated to use world metadata instead of cache
 
 import { logger } from "./logger";
-import { IAgentRuntime, WorldData } from "./types";
+import type { IAgentRuntime, WorldData } from "./types";
 
 export interface ServerOwnershipState {
   servers: {

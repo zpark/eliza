@@ -1,4 +1,4 @@
-import { type Actor, type Content, type IAgentRuntime, type Memory, type UUID } from "./types.ts";
+import type { Actor, Content, IAgentRuntime, Memory, UUID } from "./types.ts";
 export * as actions from "./actions";
 export * as evaluators from "./evaluators";
 export * as providers from "./providers";
@@ -33,10 +33,6 @@ export async function getActorDetails({
       return acc;
     }, {});
 
-    console.log('*** entity', entity)
-    console.log('*** mergedData', mergedData)
-    console.log('*** entity.metadata', entity.metadata)
-
     return {
       id: entity.id,
       name: entity.metadata[room.source]?.name || entity.names[0],
@@ -64,15 +60,11 @@ export async function getActorDetails({
  * @returns string
  */
 export function formatActors({ actors }: { actors: Actor[] }) {
-  console.log('*** actors', actors)
   const actorStrings = actors.map((actor: Actor) => {
-    console.log('*** actor', actor)
-    const header = `${actor.name} (${actor.names.join(" aka ")})` + `\nID: ${actor.id}` + ((actor.data && Object.entries(actor.data).length > 0) ? `\nData: ${actor.data}` : "\n");
-    console.log('*** header', header)
+    const header = `${actor.name} (${actor.names.join(" aka ")})\nID: ${actor.id}${(actor.data && Object.keys(actor.data).length > 0) ? `\nData: ${JSON.stringify(actor.data)}\n` : "\n"}`;
     return header;
   });
   const finalActorStrings = actorStrings.join("\n");
-  console.log('*** finalActorStrings', finalActorStrings)
   return finalActorStrings;
 }
 
@@ -132,12 +124,21 @@ export const formatMessages = ({
               .join(", ")})`
           : "";
 
+      const messageTime = new Date(message.createdAt);
+      const hours = messageTime.getHours().toString().padStart(2, '0');
+      const minutes = messageTime.getMinutes().toString().padStart(2, '0');
+      const timeString = `${hours}:${minutes}`;
+
       const timestamp = formatTimestamp(message.createdAt);
 
       const shortId = message.userId.slice(-5);
 
-      return `(${timestamp}) [${shortId}] ${formattedName}: ${messageContent}${attachmentString}${
-        messageAction && messageAction !== "null" ? ` (${messageAction})` : ""
+      if(messageAction === "REFLECTION") {
+        return `${timeString} (${timestamp}) [${shortId}] ${formattedName} (internal monologue) *${messageContent}*`;
+      }
+
+      return `${timeString} (${timestamp}) [${shortId}] ${formattedName}: ${messageContent}${attachmentString}${
+        messageAction && messageAction !== "null" ? ` (action: ${messageAction})` : ""
       }`;
     })
     .join("\n");

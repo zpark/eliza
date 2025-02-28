@@ -1,13 +1,13 @@
 import {
-  Action,
+  type Action,
   ChannelType,
   createUniqueUuid,
-  Evaluator,
+  type Evaluator,
   type IAgentRuntime,
   initializeOnboardingConfig,
   logger,
   type OnboardingConfig,
-  Provider,
+  type Provider,
   RoleName,
   type UUID
 } from "@elizaos/core";

@@ -1,4 +1,4 @@
-import { UUID } from "crypto";
+import type { UUID } from "node:crypto";
 import { v4 } from "uuid";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
@@ -30,16 +30,16 @@ import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
 import {
   ChannelType,
-  Entity,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type Entity,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  Plugin,
+  type Plugin,
   RoleName,
-  RoomData,
-  State,
-  WorldData,
+  type RoomData,
+  type State,
+  type WorldData,
 } from "./types.ts";
 import { createUniqueUuid } from "./entities.ts";
 
@@ -730,7 +730,7 @@ const syncMultipleUsers = async (
   source: string
 ) => {
   if (!channelId) {
-    logger.warn(`Cannot sync users without a valid channelId`);
+    logger.warn("Cannot sync users without a valid channelId");
     return;
   }
 

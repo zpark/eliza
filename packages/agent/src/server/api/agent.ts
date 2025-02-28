@@ -383,7 +383,7 @@ export function agentRouter(
             if (!character) {
                 try {
                     character = await directClient.loadCharacterTryPath(characterName);
-                } catch (e) {
+                } catch (_e) {
                     const existingAgent = Array.from(agents.values()).find(
                         (a) => a.character.name.toLowerCase() === characterName.toLowerCase()
                     );

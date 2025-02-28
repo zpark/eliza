@@ -476,7 +476,7 @@ export class ClientBase extends EventEmitter {
 
           if (tweet.userId === this.profile.id) {
             continue;
-          } else {
+          }
             await this.runtime.ensureConnection({
               userId,
               roomId,
@@ -485,7 +485,6 @@ export class ClientBase extends EventEmitter {
               source: "twitter",
               type: ChannelType.FEED
             });
-          }
 
           const content = {
             text: tweet.text,
@@ -600,7 +599,7 @@ export class ClientBase extends EventEmitter {
 
       if (tweet.userId === this.profile.id) {
         continue;
-      } else {
+      }
         await this.runtime.ensureConnection({
           userId,
           roomId,
@@ -609,7 +608,6 @@ export class ClientBase extends EventEmitter {
           source: "twitter",
           type: ChannelType.FEED
         });
-      }
 
       const content = {
         text: tweet.text,

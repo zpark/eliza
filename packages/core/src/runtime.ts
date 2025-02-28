@@ -63,7 +63,7 @@ function formatKnowledge(knowledge: KnowledgeItem[]): string {
 class KnowledgeManager {
   private runtime: AgentRuntime;
 
-  constructor(runtime: AgentRuntime, knowledgeRoot: string) {
+  constructor(runtime: AgentRuntime, _knowledgeRoot: string) {
     this.runtime = runtime;
   }
 
@@ -1235,10 +1235,9 @@ export class AgentRuntime implements IAgentRuntime {
             return example
               .map((message) => {
                 let messageString =
-                  `${message.user}: ${message.content.text}` +
-                  (message.content.action
+                  `${message.user}: ${message.content.text}${message.content.action
                     ? ` (action: ${message.content.action})`
-                    : "");
+                    : ""}`;
                 exampleNames.forEach((name, index) => {
                   const placeholder = `{{user${index + 1}}}`;
                   messageString = messageString.replaceAll(placeholder, name);

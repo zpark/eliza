@@ -4,14 +4,14 @@
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from "../logger";
 import { 
-  Action,
-  ActionExample,
+  type Action,
+  type ActionExample,
   Component,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  State,
+  type State,
   UUID,
   Entity,
   sendDirectMessage,
@@ -69,7 +69,7 @@ export const sendMessageAction: Action = {
   validate: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State
+    _state: State
   ): Promise<boolean> => {
     // Check if we have permission to send messages
     const worldId = message.roomId;
@@ -104,7 +104,7 @@ export const sendMessageAction: Action = {
 
       const sourceEntityId = message.userId;
       const roomId = message.roomId;
-      const agentId = runtime.agentId;
+      const _agentId = runtime.agentId;
       const room = await runtime.getRoom(roomId);
       const worldId = room.worldId;
 

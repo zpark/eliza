@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import { IAgentRuntime, Memory, Provider, State } from "../types";
+import type { IAgentRuntime, Memory, Provider, State } from "../types";
 
 // Define an interface for option objects
 interface OptionObject {

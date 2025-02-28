@@ -1,7 +1,7 @@
 import { createUniqueUuid, generateObjectArray } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";
-import { Action, ActionExample, ChannelType, HandlerCallback, IAgentRuntime, Memory, ModelClass, RoleName, State, UUID } from "../types";
+import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, RoleName, type State, type UUID } from "../types";
 
 // Role modification validation helper
 const canModifyRole = (
@@ -69,7 +69,7 @@ const updateRoleAction: Action = {
   name: "UPDATE_ROLE",
   similes: ["CHANGE_ROLE", "SET_ROLE", "MODIFY_ROLE"],
   description:
-    "Updates the role for a user with respect to the agent, world being the server they are in. For example, if an admin tells the agent that a user is their boss, set their role to ADMIN.",
+    "Updates the role for a user with respect to the agent, world being the server they are in. For example, if an admin tells the agent that a user is their boss, set their role to ADMIN. Can only be used to set roles to ADMIN, OWNER or NONE. Can't be used to ban.",
 
   validate: async (
     runtime: IAgentRuntime,
@@ -145,7 +145,6 @@ const updateRoleAction: Action = {
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
-    console.log("**** UPDATE_ROLE handler")
     // Handle initial responses
     for (const response of responses) {
       await callback(response.content);
@@ -182,9 +181,6 @@ const updateRoleAction: Action = {
 
     // Get all entities in the room
     const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, runtime.agentId, true);
-    
-    console.log('***** entities are')
-    console.log(entities)
 
     // Build server members context from entities
     const serverMembersContext = entities
@@ -206,8 +202,6 @@ const updateRoleAction: Action = {
       template: extractionTemplate,
     });
 
-    console.log('****** extractionContext\n', extractionContext)
-
     // Extract role assignments
     const result = (await generateObjectArray({
       runtime,
@@ -216,7 +210,6 @@ const updateRoleAction: Action = {
     })) as RoleAssignment[];
 
     if (!result?.length) {
-      console.log("No valid role assignments found in the request.");
       await callback({
         text: "No valid role assignments found in the request.",
         action: "UPDATE_ROLE",
@@ -302,6 +295,22 @@ const updateRoleAction: Action = {
         },
       },
     ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Ban @troublemaker",
+          source: "discord", 
+        }
+      },
+      {
+        user: "{{user3}}",
+        content: {
+          text: "I cannot ban users.",
+          action: "REPLY",
+        }
+      }
+    ]
   ] as ActionExample[][],
 };
 

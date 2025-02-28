@@ -9,8 +9,8 @@ import {
   type Memory,
   type Plugin,
   RoleName,
-  UUID,
-  WorldData
+  type UUID,
+  type WorldData
 } from "@elizaos/core";
 import {
   Client,
@@ -18,7 +18,7 @@ import {
   Events,
   GatewayIntentBits,
   type Guild,
-  GuildMember,
+  type GuildMember,
   type MessageReaction,
   type OAuth2Guild,
   Partials,
@@ -534,7 +534,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
    */
   private async buildStandardizedRooms(
     guild: Guild,
-    worldId: UUID
+    _worldId: UUID
   ): Promise<any[]> {
     const rooms = [];
 

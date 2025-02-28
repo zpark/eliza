@@ -396,7 +396,6 @@ export async function generateMessageResponse({
   modelClass: ModelClass;
   stopSequences?: string[];
 }): Promise<Content> {
-  console.log('*** generateMessageResponse', context)
   return await withRetry(async () => {
     const text = await runtime.useModel(modelClass, {
       runtime,

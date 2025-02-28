@@ -1,13 +1,13 @@
 import { composeContext } from "../context";
 import { logger } from "../logger";
 import {
-  Action,
-  ActionExample,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type Action,
+  type ActionExample,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  State,
+  type State,
 } from "../types";
 
 const optionExtractionTemplate = `# Task: Extract selected task and option from user message

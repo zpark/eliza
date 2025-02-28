@@ -1,10 +1,10 @@
 import type { Media, State } from "@elizaos/core";
-import { ChannelType, Content, IAgentRuntime, Memory, ModelClass, UUID, composeContext, createUniqueUuid, generateText, logger } from "@elizaos/core";
+import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelClass, type UUID, composeContext, createUniqueUuid, generateText, logger } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
 import type { ClientBase } from "./base";
 import type { Tweet } from "./client";
-import { SttTtsPlugin } from "./sttTtsSpaces";
+import type { SttTtsPlugin } from "./sttTtsSpaces";
 import type { ActionResponse, MediaData } from "./types";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
@@ -617,7 +617,7 @@ Example:
 
 export async function isAgentInSpace(client: ClientBase, spaceId: string): Promise<boolean> {
     const space = await client.twitterClient.getAudioSpaceById(spaceId);
-    const agentName = client.state["TWITTER_USERNAME"];
+    const agentName = client.state.TWITTER_USERNAME;
 
     return space.participants.listeners.some(
         (participant) => participant.twitter_screen_name === agentName
