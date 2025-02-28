@@ -1,4 +1,4 @@
-import type { Character, IAgentRuntime, Media, UUID } from '@elizaos/core';
+import type { Character, IAgentRuntime, Media } from '@elizaos/core';
 import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';
@@ -852,22 +852,11 @@ export function agentRouter(
                             return null;
                         }
                         
-                        // Get the most recent message for this room
-                        const recentMemories = await runtime.databaseAdapter.getMemoriesByRoomIds({
-                            tableName: 'memories',
-                            agentId: runtime.agentId,
-                            roomIds: [roomId],
-                            limit: 1
-                        });
-                        
-                        const lastMessage = recentMemories.length > 0 ? recentMemories[0].content.text : null;
-                        
                         return {
                             id: roomId,
                             name: roomData.name || new Date().toLocaleString(),
                             source: roomData.source,
-                            worldId: roomData.worldId,
-                            lastMessage
+                            worldId: roomData.worldId
                         };
                     } catch (error) {
                         logger.error(`[ROOMS GET] Error getting details for room ${roomId}:`, error);
@@ -876,10 +865,8 @@ export function agentRouter(
                 })
             );
             
-            // Filter out any null results and sort by most recent
-            const validRooms = roomDetails
-                .filter(room => room !== null)
-                
+            // Filter out any null results
+            const validRooms = roomDetails.filter(room => room !== null);
             
             logger.debug(`[ROOMS GET] Retrieved ${validRooms.length} rooms for agent: ${agentId}`);
             res.json(validRooms);
@@ -916,7 +903,7 @@ export function agentRouter(
         }
 
         try {
-            const { name, worldId, roomId } = req.body;
+            const { name, worldId, roomId, userId } = req.body;
             const roomName = name || `Chat ${new Date().toLocaleString()}`;
             
             // Create the room
@@ -932,7 +919,6 @@ export function agentRouter(
             await runtime.ensureParticipantInRoom(runtime.agentId, roomName);
             
             // Add the default user to the room
-            const userId = "00000000-0000-0000-0000-000000000000" as UUID;
             await runtime.ensureParticipantInRoom(userId, roomId);
             
             logger.debug(`[ROOM CREATE] Created room ${roomId} for agent: ${agentId} in world: ${worldId}`);
@@ -946,100 +932,6 @@ export function agentRouter(
         } catch (error) {
             logger.error(`[ROOM CREATE] Error creating room for agent ${agentId}:`, error);
             res.status(500).json({ message: "Failed to create room" });
-        }
-    });
-
-    router.get('/:agentId/:roomId', async (req, res) => {
-        const agentId = validateUuid(req.params.agentId);
-        const roomId = validateUuid(req.params.roomId);
-
-        if (!agentId || !roomId) {
-            logger.warn("[ROOM MESSAGES] Invalid agent ID or room ID format");
-            return;
-        }
-
-        logger.info(`[ROOM MESSAGES] Retrieving conversation for agent: ${agentId}, room: ${roomId}`);
-        let runtime = agents.get(agentId);
-
-        if (!runtime) {
-            logger.debug(`[ROOM MESSAGES] Agent not found by ID, trying to find by name: ${agentId}`);
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
-            );
-        }
-
-        if (!runtime) {
-            logger.warn(`[ROOM MESSAGES] Agent not found: ${agentId}`);
-            res.status(404).json({ error: 'Agent not found' });
-            return;
-        }
-
-        logger.debug(`[ROOM MESSAGES] Found agent: ${runtime.character.name}, fetching messages`);
-        try {
-            const { limit, before, after } = req.query;
-            const limitValue = limit ? Number.parseInt(limit as string, 10) : 50; // Default to 50 messages
-            const beforeValue = before ? Number.parseInt(before as string, 10) : undefined;
-            const afterValue = after ? Number.parseInt(after as string, 10) : undefined;
-            
-            const memories = await runtime.messageManager.getMemories({
-                roomId,
-                count: limitValue,
-                end: beforeValue,
-                start: afterValue,
-            });
-            
-            logger.debug(`[ROOM MESSAGES] Retrieved ${memories.length} messages for room: ${roomId}`);
-            
-            // Also get room info for additional context
-            const roomData = await runtime.databaseAdapter.getRoom(roomId, runtime.agentId);
-            
-            logger.info(`[ROOM DATA] Room data: ${JSON.stringify(roomData)}`);
-
-            const response = {
-                agentId,
-                roomId,
-                room: roomData ? {
-                    name: roomData.name,
-                    source: roomData.source,
-                    worldId: roomData.worldId,
-                } : null,
-                messages: memories.map((memory) => ({
-                    id: memory.id,
-                    userId: memory.userId,
-                    agentId: memory.agentId,
-                    createdAt: memory.createdAt,
-                    content: {
-                        text: memory.content.text,
-                        action: memory.content.action,
-                        source: memory.content.source,
-                        url: memory.content.url,
-                        inReplyTo: memory.content.inReplyTo,
-                        attachments: memory.content.attachments?.map(
-                            (attachment) => ({
-                                id: attachment.id,
-                                url: attachment.url,
-                                title: attachment.title,
-                                source: attachment.source,
-                                description: attachment.description,
-                                text: attachment.text,
-                                contentType: attachment.contentType,
-                            })
-                        ),
-                    },
-                    roomId: memory.roomId,
-                })),
-                pagination: {
-                    hasMore: memories.length >= limitValue,
-                    oldestTimestamp: memories.length > 0 ? Math.min(...memories.map(m => m.createdAt)) : null,
-                    newestTimestamp: memories.length > 0 ? Math.max(...memories.map(m => m.createdAt)) : null,
-                }
-            };
-
-            res.json(response);
-            logger.debug(`[ROOM MESSAGES] Successfully returned ${memories.length} messages`);
-        } catch (error) {
-            logger.error('[ROOM MESSAGES] Error fetching messages:', error);
-            res.status(500).json({ error: 'Failed to fetch messages' });
         }
     });
 

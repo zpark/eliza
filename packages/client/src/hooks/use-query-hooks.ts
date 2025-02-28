@@ -353,7 +353,22 @@ export function useDeleteCharacter() {
   });
 }
 
-// Hook for fetching messages for a specific agent and room
+// Hook for fetching messages directly for a specific agent without requiring a room
+export function useAgentMessages(agentId: UUID) {
+  const queryClient = useQueryClient();
+  const worldId = WorldManager.getWorldId();
+  
+  // Get messages from cache or set default empty array
+  const messages = queryClient.getQueryData<ContentWithUser[]>(
+    ['messages', agentId, worldId]
+  ) || [];
+  
+  return {
+    messages
+  };
+}
+
+// The original useMessages hook remains for backward compatibility
 export function useMessages(agentId: UUID, roomId: UUID): {
   data: TransformedMessage[] | undefined;
   isLoading: boolean;

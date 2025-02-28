@@ -97,10 +97,6 @@ function App() {
                                             element={<Chat />}
                                         />
                                         <Route
-                                            path="chat/:agentId/:roomId"
-                                            element={<Chat />}
-                                        />
-                                        <Route
                                             path="settings/:agentId"
                                             element={<Overview />}
                                         />
