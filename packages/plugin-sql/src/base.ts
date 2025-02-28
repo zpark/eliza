@@ -1,6 +1,6 @@
 import {
-    Actor,
-    Agent,
+    type Actor,
+    type Agent,
     DatabaseAdapter,
     logger,
     type Character,
@@ -43,11 +43,11 @@ import {
 import { v4 } from "uuid";
 import {
     characterToInsert,
-    StoredTemplate,
+    type StoredTemplate,
     storedToTemplate,
     templateToStored,
 } from "./schema/character";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "./schema/embedding";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     cacheTable,
     characterTable,
@@ -62,7 +62,7 @@ import {
     roomTable,
     worldTable,
 } from "./schema/index";
-import { DrizzleOperations } from "./types";
+import type { DrizzleOperations } from "./types";
 
 export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
     extends DatabaseAdapter<TDatabase>
@@ -208,6 +208,25 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 });
                 return false;
             }
+        });
+    }
+
+    async getAgents(): Promise<Agent[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db.select({
+                agent: agentTable,
+                character: characterTable
+            }).from(agentTable).leftJoin(characterTable, eq(agentTable.characterId, characterTable.id));
+            
+            return result.map(row => ({
+                id: row.agent.id,
+                enabled: row.agent.enabled,
+                character: {
+                    id: row.character.id,
+                    name: row.character.name,
+                    bio: row.character.bio[0]
+                }
+            }));
         });
     }
 

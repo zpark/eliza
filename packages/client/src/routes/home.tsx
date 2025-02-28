@@ -6,8 +6,9 @@ import { Cog } from "lucide-react";
 
 export default function Home() {
 
-    const { data: agentsData } = useAgents();
+    const { data: agentsData, isLoading, isError, error } = useAgents();
 
+    // Extract agents properly from the response
     const agents = agentsData?.agents || [];
 
     return (
@@ -17,17 +18,17 @@ export default function Home() {
                 
             </div>
             
-            {agentsData?.isLoading && (
+            {isLoading && (
                 <div className="text-center py-8">Loading agents...</div>
             )}
             
-            {agentsData?.isError && (
+            {isError && (
                 <div className="text-center py-8 text-destructive">
-                    Error loading agents: {agentsData?.error instanceof Error ? agentsData?.error.message : "Unknown error"}
+                    Error loading agents: {error instanceof Error ? error.message : "Unknown error"}
                 </div>
             )}
             
-            {agents.length === 0 && !agentsData?.isLoading && (
+            {agents.length === 0 && !isLoading && (
                 <div className="text-center py-8 flex flex-col items-center gap-4">
                     <p className="text-muted-foreground">
                         No agents currently running. Start a character to begin.
@@ -37,11 +38,11 @@ export default function Home() {
             )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {agents?.map((agent: { id: UUID; name: string }) => (
+                {agents?.map((agent) => (
                     <ActionCard
                         key={agent.id}
-                        name={agent?.name}
-                        primaryText="Chat"
+                        name={agent.character.name}
+                        primaryText={agent.enabled ? "Chat" : "Start"}
                         primaryVariant="default"
                         primaryLink={`/chat/${agent.id}`}
                         secondaryIcon={<Cog className="h-4 w-4" />}

@@ -63,14 +63,14 @@ import {
                 ) : (
                   <div>
                     {agentsData?.agents?.map(
-                      (agent: { id: UUID; name: string }) => (
+                      (agent) => (
                         <SidebarMenuItem key={agent.id}>
                           <NavLink to={`/chat/${agent.id}`}>
                             <SidebarMenuButton
                               isActive={location.pathname.includes(agent.id)}
                             >
                               <User />
-                              <span>{agent.name}</span>
+                              <span>{agent.character.name}</span>
                             </SidebarMenuButton>
                           </NavLink>
                         </SidebarMenuItem>

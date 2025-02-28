@@ -236,6 +236,7 @@ export class AgentServer {
     public async stop() {
         if (this.server) {
             this.server.close(() => {
+                this.database.stop();
                 logger.success("Server stopped");
             });
         }

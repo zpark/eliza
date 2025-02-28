@@ -20,23 +20,16 @@ interface CustomRequest extends express.Request {
 
 export function agentRouter(
     agents: Map<string, IAgentRuntime>,
-    directClient: AgentServer
+    server?: AgentServer
 ): express.Router {
     const router = express.Router();
 
-    router.get('/', (_req, res) => {
+    router.get('/', async (req, res) => {
         logger.debug("[AGENTS LIST] Retrieving list of all agents");
-        
-        const agentsList = Array.from(agents.values()).map((agent) => ({
-            id: agent.agentId,
-            name: agent.character.name,
-            clients: Array.from(agent.getAllClients().keys())
-        }));
-        
-        logger.debug(`[AGENTS LIST] Found ${agentsList.length} active agents`);
-        res.json({ agents: agentsList });
+        const agents = await server?.database.getAgents();
+        res.json({ agents });
     });
-
+    
     router.get('/:agentId', (req, res) => {
         if (!req.params.agentId) {
             logger.warn("[AGENT GET] Invalid agent ID format");
@@ -104,7 +97,7 @@ export function agentRouter(
                 agent.stop();
                 logger.success(`[AGENT DELETE] Agent stopped: ${agentName}`);
                 
-                directClient.unregisterAgent(agent);
+                server?.unregisterAgent(agent);
                 logger.success(`[AGENT DELETE] Agent unregistered: ${agentName}`);
                 
                 res.status(204).json({ success: true });
@@ -308,7 +301,7 @@ export function agentRouter(
                 agent.stop();
                 logger.success(`[AGENT UPDATE] Successfully stopped existing agent: ${existingName}`);
                 
-                directClient.unregisterAgent(agent);
+                server?.unregisterAgent(agent);
                 logger.success(`[AGENT UPDATE] Successfully unregistered existing agent: ${existingName}`);
             } catch (error) {
                 logger.error("[AGENT UPDATE] Error stopping existing agent:", error);
@@ -333,7 +326,7 @@ export function agentRouter(
 
         try {
             logger.info(`[AGENT UPDATE] Starting updated agent: ${character.name}`);
-            agent = await directClient.startAgent(character);
+            agent = await server?.startAgent(character);
             await agent.ensureCharacterExists(character);
             logger.success(`[AGENT UPDATE] Agent successfully updated and started: ${character.name} (${character.id})`);
         } catch (e) {
@@ -370,10 +363,10 @@ export function agentRouter(
             let character: Character;
             if (characterJson) {
                 logger.debug("[AGENT START] Parsing character from JSON");
-                character = await directClient.jsonToCharacter(characterJson);
+                character = await server?.jsonToCharacter(characterJson);
             } else if (characterPath) {
                 logger.debug(`[AGENT START] Loading character from path: ${characterPath}`);
-                character = await directClient.loadCharacterTryPath(characterPath);
+                character = await server?.loadCharacterTryPath(characterPath);
             } else {
                 const errorMessage = "No character path or JSON provided";
                 logger.error(`[AGENT START] ${errorMessage}`);
@@ -381,12 +374,12 @@ export function agentRouter(
             }
             
             logger.info(`[AGENT START] Starting agent for character: ${character.name}`);
-            const agent = await directClient.startAgent(character);
+            const agent = await server?.startAgent(character);
             logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
 
             res.json({
-                id: character.id,
-                character: character,
+                id: agent.agentId,
+                character: agent.character,
             });
             logger.debug(`[AGENT START] Successfully returned agent data for: ${character.name}`);
         } catch (e) {
@@ -408,8 +401,8 @@ export function agentRouter(
 
             logger.debug(`[AGENT START BY NAME] Looking for character in database: ${characterName}`);
             
-            if (directClient.database) {
-                character = await directClient.database.getCharacter(characterName);
+            if (server?.database) {
+                character = await server?.database.getCharacter(characterName);
                 if (character) {
                     source = "database";
                     logger.debug(`[AGENT START BY NAME] Found character in database: ${characterName}`);
@@ -419,7 +412,7 @@ export function agentRouter(
             if (!character) {
                 try {
                     logger.debug(`[AGENT START BY NAME] Trying to load character from filesystem: ${characterName}`);
-                    character = await directClient.loadCharacterTryPath(characterName);
+                    character = await server?.loadCharacterTryPath(characterName);
                     source = "filesystem";
                     logger.debug(`[AGENT START BY NAME] Found character in filesystem: ${characterName}`);
                 } catch (e) {
@@ -442,7 +435,7 @@ export function agentRouter(
             }
 
             logger.info(`[AGENT START BY NAME] Starting agent for character: ${character.name} (source: ${source})`);
-            await directClient.startAgent(character);
+            await server?.startAgent(character);
             logger.success(`[AGENT START BY NAME] Agent started successfully: ${character.name} (${character.id})`);
 
             res.json({

@@ -9,7 +9,7 @@ import { teeRouter } from './tee.ts';
 
 export function createApiRouter(
     agents: Map<string, IAgentRuntime>,
-    directClient: AgentServer
+    server?: AgentServer,
 ): express.Router {
     const router = express.Router();
 
@@ -33,8 +33,13 @@ export function createApiRouter(
     });
 
     // Mount sub-routers
-    router.use('/agents', agentRouter(agents, directClient));
+    router.use('/agents', agentRouter(agents, server));
     router.use('/tee', teeRouter(agents));
+
+    router.get('/stop', (_req, res) => {
+        server.stop();
+        res.json({ message: 'Server stopping...' });
+    });
 
     // Health check endpoints
     router.get('/health', (_req, res) => {
