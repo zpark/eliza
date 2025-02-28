@@ -345,32 +345,75 @@ export function agentRouter(
 
     router.post('/start', async (req, res) => {
         logger.info("[AGENT START] Received request to start a new agent");
-        const { characterPath, characterJson } = req.body;
+        const { characterPath, characterJson, agentId } = req.body;
         
         // Log request details
-        if (characterPath) {
+        if (agentId) {
+            logger.debug(`[AGENT START] Using agent ID: ${agentId}`);
+        } else if (characterPath) {
             logger.debug(`[AGENT START] Using character path: ${characterPath}`);
         } else if (characterJson) {
             logger.debug("[AGENT START] Using provided character JSON");
         } else {
-            logger.warn("[AGENT START] No character path or JSON provided");
+            logger.warn("[AGENT START] No agent ID, character path, or JSON provided");
         }
         
         try {
             let character: Character;
-            if (characterJson) {
-                logger.debug("[AGENT START] Parsing character from JSON");
-                character = await server?.jsonToCharacter(characterJson);
-            } else if (characterPath) {
-                logger.debug(`[AGENT START] Loading character from path: ${characterPath}`);
-                character = await server?.loadCharacterTryPath(characterPath);
-            } else {
-                const errorMessage = "No character path or JSON provided";
+            let source = "";
+
+            // Try to find agent by ID first if provided
+            if (agentId) {
+                logger.debug(`[AGENT START] Looking for agent in database: ${agentId}`);
+                const validAgentId = validateUuid(agentId);
+                
+                if (!validAgentId) {
+                    const errorMessage = "Invalid agent ID format";
+                    logger.error(`[AGENT START] ${errorMessage}`);
+                    throw new Error(errorMessage);
+                }
+                
+                if (server?.database) {
+                    const agent = await server.database.getAgent(validAgentId);
+                    if (agent) {
+                        character = agent.character;
+                        source = "database";
+                        logger.debug(`[AGENT START] Found agent in database: ${agent.character.name} (${validAgentId})`);
+                    } else {
+                        logger.warn(`[AGENT START] Agent not found in database by ID: ${validAgentId}`);
+                    }
+                }
+            }
+            
+            // If agent ID wasn't provided or agent wasn't found, fallback to other methods
+            if (!character) {
+                if (characterJson) {
+                    logger.debug("[AGENT START] Parsing character from JSON");
+                    character = await server?.jsonToCharacter(characterJson);
+                    source = "json";
+                } else if (characterPath) {
+                    logger.debug(`[AGENT START] Loading character from path: ${characterPath}`);
+                    character = await server?.loadCharacterTryPath(characterPath);
+                    source = "path";
+                } else if (!agentId) { // Only throw if agentId wasn't provided
+                    const errorMessage = "No character path or JSON provided";
+                    logger.error(`[AGENT START] ${errorMessage}`);
+                    throw new Error(errorMessage);
+                } else {
+                    const errorMessage = `Agent with ID ${agentId} not found`;
+                    logger.error(`[AGENT START] ${errorMessage}`);
+                    throw new Error(errorMessage);
+                }
+            }
+            
+            // Check if character was found
+            if (!character) {
+                const errorMessage = "No valid agent or character information provided";
                 logger.error(`[AGENT START] ${errorMessage}`);
                 throw new Error(errorMessage);
             }
             
-            logger.info(`[AGENT START] Starting agent for character: ${character.name}`);
+            logger.info(`[AGENT START] Starting agent for character: ${character.name} (source: ${source})`);
             const agent = await server?.startAgent(character);
             logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
 
@@ -444,6 +487,63 @@ export function agentRouter(
             logger.error(`[AGENT START BY NAME] Error starting character by name: ${e}`);
             res.status(400).json({
                 error: `Failed to start character '${characterName}': ${e.message}`,
+            });
+            return;
+        }
+    });
+
+    // Add dedicated endpoint for starting an agent by ID
+    router.post('/:agentId/start', async (req, res) => {
+        if (!req.params.agentId) {
+            logger.warn("[AGENT START] Invalid agent ID format");
+            res.status(400).json({ error: "Missing agent ID" });
+            return;
+        }
+
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            logger.warn("[AGENT START] Invalid agent ID format");
+            res.status(400).json({ error: "Invalid agent ID format" });
+            return;
+        }
+
+        logger.info(`[AGENT START] Request to start agent with ID: ${agentId}`);
+        
+        try {
+            let character: Character;
+            
+            if (server?.database) {
+                logger.debug(`[AGENT START] Looking for agent in database: ${agentId}`);
+                const agent = await server.database.getAgent(agentId);
+                if (agent) {
+                    character = agent.character;
+                    logger.debug(`[AGENT START] Found agent in database: ${agent.character.name} (${agentId})`);
+                } else {
+                    const errorMsg = `Agent with ID '${agentId}' not found in database`;
+                    logger.warn(`[AGENT START] ${errorMsg}`);
+                    res.status(404).json({ error: errorMsg });
+                    return;
+                }
+            } else {
+                const errorMsg = "Database not available";
+                logger.error(`[AGENT START] ${errorMsg}`);
+                res.status(500).json({ error: errorMsg });
+                return;
+            }
+
+            logger.info(`[AGENT START] Starting agent for character: ${character.name}`);
+            const agent = await server?.startAgent(character);
+            logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
+
+            res.json({
+                id: agent.agentId,
+                character: agent.character,
+            });
+            logger.debug(`[AGENT START] Successfully returned agent data for: ${character.name}`);
+        } catch (e) {
+            logger.error(`[AGENT START] Error starting agent: ${e}`);
+            res.status(400).json({
+                error: e.message,
             });
             return;
         }
