@@ -1371,6 +1371,25 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async updateRelationship(relationship: Relationship): Promise<void> {
+        return this.withDatabase(async () => {
+            try {
+                await this.db.update(relationshipTable)
+                    .set({
+                        tags: relationship.tags || [],
+                        metadata: relationship.metadata || {},
+                    })
+                    .where(eq(relationshipTable.id, relationship.id));
+            } catch (error) {
+                logger.error("Error updating relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    relationship,
+                });
+                throw error;
+            }
+        });
+    }
+
     async getRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
@@ -1419,16 +1438,14 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         tags?: string[];
     }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
+            console.log("*** Attempting to get relationships for ", params.userId)
             try {
                 let query = this.db
                     .select()
                     .from(relationshipTable)
                     .where(
                         and(
-                            or(
-                                eq(relationshipTable.sourceEntityId, params.userId),
-                                eq(relationshipTable.targetEntityId, params.userId)
-                            ),
+                            eq(relationshipTable.sourceEntityId, params.userId),
                             eq(relationshipTable.agentId, params.agentId)
                         )
                     );
@@ -1440,6 +1457,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
                 const results = await query;
 
+                console.log('****** relationship results ', results)
+
+                if(results.length === 0) {
+                    console.warn("Empty results")
+                    console.trace()
+                }
                 return results.map(result => ({
                     id: result.id,
                     sourceEntityId: result.sourceEntityId,

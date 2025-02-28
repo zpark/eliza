@@ -12,28 +12,28 @@ import {
     joinVoiceChannel,
 } from "@discordjs/voice";
 import {
+    type ChannelType,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelClass,
     type UUID,
-    logger,
-    stringToUuid,
-    type ChannelType
+    createUniqueUuid,
+    logger
 } from "@elizaos/core";
 import {
     type BaseGuildVoiceChannel,
-    ChannelType as DiscordChannelType,
     type Client,
+    ChannelType as DiscordChannelType,
     type Guild,
     type GuildMember,
     type VoiceChannel,
     type VoiceState,
 } from "discord.js";
 import EventEmitter from "node:events";
-import prism from "prism-media";
 import { type Readable, pipeline } from "node:stream";
+import prism from "prism-media";
 import type { DiscordClient } from "./index.ts";
 import { getWavHeader } from "./utils.ts";
 
@@ -635,8 +635,8 @@ export class VoiceManager extends EventEmitter {
                 return { text: "", action: "IGNORE" };
             }
 
-            const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
-            const userIdUUID = stringToUuid(`${userId}-${this.runtime.agentId}`);
+            const roomId = createUniqueUuid(this.runtime, channelId);
+            const userIdUUID = createUniqueUuid(this.runtime, userId);
             const guild = await channel.guild.fetch();
             const type = await this.getChannelType(guild.id);
 
@@ -652,7 +652,7 @@ export class VoiceManager extends EventEmitter {
             });
 
             const memory: Memory = {
-                id: stringToUuid(`${channelId}-voice-message-${Date.now()}`),
+                id: createUniqueUuid(this.runtime, `${channelId}-voice-message-${Date.now()}`),
                 agentId: this.runtime.agentId,
                 userId: userIdUUID,
                 roomId,
@@ -670,7 +670,7 @@ export class VoiceManager extends EventEmitter {
             const callback: HandlerCallback = async (content: Content, _files: any[] = []) => {
                 try {
                     const responseMemory: Memory = {
-                        id: stringToUuid(`${memory.id}-voice-response-${Date.now()}`),
+                        id: createUniqueUuid(this.runtime, `${memory.id}-voice-response-${Date.now()}`),
                         userId: this.runtime.agentId,
                         agentId: this.runtime.agentId,
                         content: {

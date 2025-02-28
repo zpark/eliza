@@ -9,11 +9,10 @@ import {
   RoleName,
   type State,
   composeContext,
+  createUniqueUuid,
   generateText,
   getWorldSettings,
-  logger,
-  normalizeUserId,
-  stringToUuid
+  logger
 } from "@elizaos/core";
 
 /**
@@ -25,18 +24,15 @@ export async function getUserServerRole(
   serverId: string
 ): Promise<RoleName> {
   try {
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(this.runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata?.roles) {
       return RoleName.NONE;
     }
 
-    // Check both formats (UUID and original ID)
-    const normalizedUserId = normalizeUserId(userId);
-
-    if (world.metadata.roles[normalizedUserId]?.role) {
-      return world.metadata.roles[normalizedUserId].role as RoleName;
+    if (world.metadata.roles[userId]?.role) {
+      return world.metadata.roles[userId].role as RoleName;
     }
 
     // Also check original ID format

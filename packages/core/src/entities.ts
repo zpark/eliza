@@ -1,5 +1,5 @@
 import { composeContext } from "./context.ts";
-import { logger } from "./index.ts";
+import { logger, stringToUuid } from "./index.ts";
 import { parseJSONObjectFromText } from "./parsing";
 import {
     type Entity,
@@ -124,8 +124,8 @@ async function getRecentInteractions(
       (rel.targetEntityId === sourceEntityId && rel.sourceEntityId === entity.id)
     );
 
-    if (relationship?.metadata?.interactionStrength) {
-      interactionScore = relationship.metadata.interactionStrength;
+    if (relationship?.metadata?.interactions) {
+      interactionScore = relationship.metadata.interactions;
     }
 
     // Add bonus points for recent direct replies
@@ -213,7 +213,7 @@ export async function findEntityByName(
     // Format interaction data for LLM context
     const recentInteractions = interactionData.map(data => ({
       entityName: data.entity.names[0],
-      interactionStrength: data.count,
+      interactions: data.count,
       recentMessages: data.interactions.map(msg => ({
         from: msg.userId === message.userId ? "sender" : "entity",
         text: msg.content.text
@@ -302,4 +302,18 @@ export async function findEntityByName(
     logger.error("Error in findEntityByName:", error);
     return null;
   }
+}
+
+export const createUniqueUuid = (runtime, baseUserId: UUID | string): UUID => {
+  // If the base user ID is the agent ID, return it directly
+  if (baseUserId === runtime.agentId) {
+    return runtime.agentId;
+  }
+
+  // Use a deterministic approach to generate a new UUID based on both IDs
+  // This creates a unique ID for each user+agent combination while still being deterministic
+  const combinedString = `${baseUserId}:${runtime.agentId}`;
+
+  // Create a namespace UUID (version 5) from the combined string
+  return stringToUuid(combinedString);
 }

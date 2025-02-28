@@ -7,11 +7,11 @@ import {
     type State,
     ChannelType,
     composeContext,
+    createUniqueUuid,
     generateText,
     HandlerCallback,
     logger,
-    ModelClass,
-    stringToUuid,
+    ModelClass
 } from "@elizaos/core";
 import {
     type Channel,
@@ -133,9 +133,7 @@ export default {
             const members = guild?.members.cache;
 
             // get the member who's stringTouuid(id) === message userId
-            const member = members?.find((member) => stringToUuid(member.id) === message.userId);
-
-            console.log("member", member);
+            const member = members?.find((member) => createUniqueUuid(runtime, member.id) === message.userId);
 
             if (member?.voice?.channel) {
                 voiceManager.joinChannel(member?.voice?.channel as BaseGuildVoiceChannel);

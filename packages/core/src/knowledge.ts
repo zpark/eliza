@@ -1,8 +1,8 @@
-import { splitChunks } from "./parsing.ts";
+import { createUniqueUuid } from "./entities.ts";
 import logger from "./logger.ts";
+import { splitChunks } from "./parsing.ts";
 import type { AgentRuntime } from "./runtime.ts";
-import { type KnowledgeItem, type Memory, ModelClass, type UUID, MemoryType } from "./types.ts";
-import { stringToUuid } from "./uuid.ts";
+import { type KnowledgeItem, type Memory, MemoryType, ModelClass, type UUID } from "./types.ts";
 
 async function get(
     runtime: AgentRuntime,
@@ -105,7 +105,7 @@ async function set(
     // Store each fragment with link to source document
     for (let i = 0; i < fragments.length; i++) {
         const fragmentMemory: Memory = {
-            id: stringToUuid(`${item.id}-fragment-${i}`),
+            id: createUniqueUuid(this.runtime, `${item.id}-fragment-${i}`),
             agentId: runtime.agentId,
             roomId: runtime.agentId,
             userId: runtime.agentId,

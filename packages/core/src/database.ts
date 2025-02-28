@@ -450,6 +450,19 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     }): Promise<Relationship[]>;
 
     /**
+     * Updates an existing relationship between two users.
+     * @param params Object containing the relationship details to update including entity IDs, agent ID, optional tags and metadata
+     * @returns A Promise that resolves to a boolean indicating success or failure of the update.
+     */
+    abstract updateRelationship(params: {
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
+    }): Promise<void>;
+
+    /**
      * Creates a new character in the database.
      * @param character The Character object to create.
      * @returns A Promise that resolves when the character creation is complete.

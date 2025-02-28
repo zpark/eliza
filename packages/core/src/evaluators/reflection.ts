@@ -19,7 +19,7 @@ const reflectionSchema = z.object({
     reflection: z.string(),
     facts: z.array(z.object({
         claim: z.string(),
-        type: z.enum(["fact", "opinion", "status"]),
+        type: z.string(),
         in_bio: z.boolean(),
         already_known: z.boolean(),
     })),
@@ -136,6 +136,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
     // Update or create relationships
     for (const relationship of reflection.relationships) {
+        console.log("*** resolving relationship", relationship);
         let sourceId: UUID;
         let targetId: UUID;
         
@@ -165,8 +166,8 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
                 ...relationship.tags
             ]));
 
-            // TODO, switch to updateRelationship
-            await runtime.databaseAdapter.createRelationship({
+            await runtime.databaseAdapter.updateRelationship({
+                id: existingRelationship.id,
                 sourceEntityId: sourceId,
                 targetEntityId: targetId,
                 agentId,

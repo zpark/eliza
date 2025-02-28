@@ -1,6 +1,6 @@
+import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import { OnboardingSetting, IAgentRuntime, WorldSettings, OnboardingConfig, WorldData } from "./types";
-import { stringToUuid } from "./uuid";
+import { IAgentRuntime, OnboardingConfig, OnboardingSetting, WorldData, WorldSettings } from "./types";
 
 function createSettingFromConfig(
   configSetting: Omit<OnboardingSetting, "value">
@@ -29,7 +29,7 @@ export async function updateWorldSettings(
   worldSettings: WorldSettings
 ): Promise<boolean> {
   try {
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world) {
@@ -63,7 +63,7 @@ export async function getWorldSettings(
   serverId: string
 ): Promise<WorldSettings | null> {
   try {
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata?.settings) {

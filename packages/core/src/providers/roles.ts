@@ -1,6 +1,6 @@
+import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
-import { Provider, IAgentRuntime, Memory, State, ChannelType, UUID } from "../types";
-import { stringToUuid } from "../uuid";
+import { ChannelType, IAgentRuntime, Memory, Provider, State, UUID } from "../types";
 
 export const roleProvider: Provider = {
     get: async (
@@ -27,7 +27,7 @@ export const roleProvider: Provider = {
             logger.info(`Using server ID: ${serverId}`);
 
             // Get world data instead of using cache
-            const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+            const worldId = createUniqueUuid(runtime, serverId);
             const world = await runtime.getWorld(worldId);
             
             if (!world || !world.metadata?.ownership?.ownerId) {

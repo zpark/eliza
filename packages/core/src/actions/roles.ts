@@ -1,8 +1,7 @@
-import { generateObjectArray } from "..";
+import { createUniqueUuid, generateObjectArray } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";
 import { Action, ActionExample, ChannelType, HandlerCallback, IAgentRuntime, Memory, ModelClass, RoleName, State, UUID } from "../types";
-import { stringToUuid } from "../uuid";
 
 // Role modification validation helper
 const canModifyRole = (
@@ -102,12 +101,11 @@ const updateRoleAction: Action = {
     }
     try {
       // Get world data instead of ownership state from cache
-      const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+      const worldId = createUniqueUuid(runtime, serverId);
       const world = await runtime.getWorld(worldId);
 
       // Get requester ID and convert to UUID for consistent lookup
       const requesterId = message.userId;
-      const tenantSpecificUserId = runtime.generateTenantUserId(requesterId);
 
       // Get roles from world metadata
       if (!world.metadata?.roles) {
@@ -116,9 +114,9 @@ const updateRoleAction: Action = {
       }
 
       // Lookup using UUID for consistency
-      const requesterRole = world.metadata.roles[tenantSpecificUserId] as RoleName
+      const requesterRole = world.metadata.roles[requesterId] as RoleName
 
-      logger.info(`Requester ${tenantSpecificUserId} role:`, requesterRole);
+      logger.info(`Requester ${requesterId} role:`, requesterRole);
 
       if (!requesterRole) {
         logger.info("Validation failed: No requester role found");
@@ -147,24 +145,21 @@ const updateRoleAction: Action = {
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
+    console.log("**** UPDATE_ROLE handler")
     // Handle initial responses
     for (const response of responses) {
       await callback(response.content);
     }
 
     const room = await runtime.getRoom(message.roomId);
+    const world = await runtime.getWorld(room.worldId);
 
     if (!room) {
       throw new Error("No room found");
     }
 
-    const serverId = room.serverId;
+    const serverId = world.serverId;
     const requesterId = message.userId;
-    const tenantSpecificRequesterId = runtime.generateTenantUserId(requesterId);
-
-    // Get world data instead of role cache
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
-    let world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata) {
       logger.error(`No world or metadata found for server ${serverId}`);
@@ -183,15 +178,22 @@ const updateRoleAction: Action = {
 
     // Get requester's role from world metadata
     const requesterRole =
-      (world.metadata.roles[tenantSpecificRequesterId] as RoleName) || RoleName.NONE;
+      (world.metadata.roles[requesterId] as RoleName) || RoleName.NONE;
 
-    const discordClient = runtime.getClient("discord").client;
-    const guild = await discordClient.guilds.fetch(serverId);
+    // Get all entities in the room
+    const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, runtime.agentId, true);
+    
+    console.log('***** entities are')
+    console.log(entities)
 
-    // Build server members context
-    const members = await guild.members.fetch();
-    const serverMembersContext = Array.from(members.values())
-      .map((member: any) => `${member.username} (${member.id})`)
+    // Build server members context from entities
+    const serverMembersContext = entities
+      .map(entity => {
+        const discordData = entity.components?.find(c => c.type === 'discord')?.data;
+        const name = discordData?.username || entity.names[0];
+        const id = entity.id;
+        return `${name} (${id})`;
+      })
       .join("\n");
 
     // Create extraction context
@@ -203,6 +205,8 @@ const updateRoleAction: Action = {
       },
       template: extractionTemplate,
     });
+
+    console.log('****** extractionContext\n', extractionContext)
 
     // Extract role assignments
     const result = (await generateObjectArray({
@@ -225,16 +229,21 @@ const updateRoleAction: Action = {
     let worldUpdated = false;
 
     for (const assignment of result) {
-      const targetUser = members.get(assignment.userId);
-      if (!targetUser) continue;
+      let targetEntity = entities.find(e => e.id === assignment.userId);
+      if(!targetEntity) {
+        targetEntity = entities.find(e => e.id === assignment.userId);
+        console.log("Trying to write to generated tenant ID")
+      }
+      if (!targetEntity) {
+        console.log("Could not find an ID ot assign to")
+      }
 
-      const tenantSpecificTargetId = runtime.generateTenantUserId(assignment.userId);
-      const currentRole = world.metadata.roles[tenantSpecificTargetId];
+      const currentRole = world.metadata.roles[assignment.userId];
 
       // Validate role modification permissions
       if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
         await callback({
-          text: `You don't have permission to change ${targetUser.user.username}'s role to ${assignment.newRole}.`,
+          text: `You don't have permission to change ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
           action: "UPDATE_ROLE",
           source: "discord",
         });
@@ -242,12 +251,12 @@ const updateRoleAction: Action = {
       }
 
       // Update role in world metadata
-      world.metadata.roles[tenantSpecificTargetId] = assignment.newRole;
+      world.metadata.roles[assignment.userId] = assignment.newRole;
 
       worldUpdated = true;
 
       await callback({
-        text: `Updated ${targetUser.user.username}'s role to ${assignment.newRole}.`,
+        text: `Updated ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
         action: "UPDATE_ROLE",
         source: "discord",
       });

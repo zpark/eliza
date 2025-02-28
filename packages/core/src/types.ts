@@ -963,6 +963,13 @@ export interface IDatabaseAdapter {
   }): Promise<boolean>;
 
   /**
+   * Updates an existing relationship between two entities.
+   * @param relationship The relationship object with updated data
+   * @returns Promise resolving to void
+   */
+  updateRelationship(relationship: Relationship): Promise<void>;
+
+  /**
    * Retrieves a relationship between two entities if it exists.
    * @param params Object containing the entity IDs and agent ID
    * @returns Promise resolving to the Relationship object or null if not found
@@ -1115,8 +1122,6 @@ export interface IAgentRuntime {
 
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
-
-  generateTenantUserId(userId: UUID): UUID;
 
   registerClientInterface(name: string, client: Client): void;
   registerClient(name: string, client: ClientInstance): void;

@@ -1,5 +1,7 @@
 import {
+  ChannelType,
   type Content,
+  createUniqueUuid,
   type HandlerCallback,
   type IAgentRuntime,
   type IBrowserService,
@@ -7,14 +9,11 @@ import {
   logger,
   type Media,
   type Memory,
-  ServiceType,
-  stringToUuid,
-  type UUID,
-  ChannelType,
+  ServiceType
 } from "@elizaos/core";
 import {
-  ChannelType as DiscordChannelType,
   type Client,
+  ChannelType as DiscordChannelType,
   type Message as DiscordMessage,
   type TextChannel,
 } from "discord.js";
@@ -61,15 +60,14 @@ export class MessageManager {
       return;
     }
 
-    const userIdUUID = stringToUuid(
-      `${message.author.id}-${this.runtime.agentId}`
-    );
+    const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
+
     const userName = message.author.bot
       ? `${message.author.username}#${message.author.discriminator}`
       : message.author.username;
     const name = message.author.displayName;
     const channelId = message.channel.id;
-    const roomId = stringToUuid(`${channelId}-${this.runtime.agentId}`);
+    const roomId = createUniqueUuid(this.runtime, channelId);
 
     let type: ChannelType;
     let serverId: string | undefined;
@@ -122,11 +120,9 @@ export class MessageManager {
         return;
       }
 
-      const userIdUUID = stringToUuid(
-        `${message.author.id}-${this.runtime.agentId}`
-      );
+      const userIdUUID = createUniqueUuid(this.runtime, message.author.id);
 
-      const messageId = stringToUuid(`${message.id}-${this.runtime.agentId}`);
+      const messageId = createUniqueUuid(this.runtime, message.id);
 
       const newMessage: Memory = {
         id: messageId,
@@ -141,7 +137,7 @@ export class MessageManager {
           source: "discord",
           url: message.url,
           inReplyTo: message.reference?.messageId
-            ? stringToUuid(message.reference.messageId)
+            ? createUniqueUuid(this.runtime, message.reference?.messageId)
             : undefined,
         },
         createdAt: message.createdTimestamp,
@@ -153,9 +149,7 @@ export class MessageManager {
       ) => {
         try {
           if (message.id && !content.inReplyTo) {
-            content.inReplyTo = stringToUuid(
-              `${message.id}-${this.runtime.agentId}`
-            );
+            content.inReplyTo = createUniqueUuid(this.runtime, message.id);
           }
           const messages = await sendMessageInChunks(
             message.channel as TextChannel,
@@ -172,7 +166,7 @@ export class MessageManager {
             }
 
             const memory: Memory = {
-              id: stringToUuid(`${m.id}-${this.runtime.agentId}`),
+              id: createUniqueUuid(this.runtime, m.id),
               userId: this.runtime.agentId,
               agentId: this.runtime.agentId,
               content: {

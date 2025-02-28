@@ -1,19 +1,19 @@
 import { UUID } from "crypto";
 import { v4 } from "uuid";
-import { updateEntityAction } from "./actions/updateEntity.ts";
-import { sendMessageAction } from "./actions/sendMessage.ts"
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
 import { selectOptionAction } from "./actions/options.ts";
 import updateRoleAction from "./actions/roles.ts";
+import { sendMessageAction } from "./actions/sendMessage.ts";
 import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
+import { updateEntityAction } from "./actions/updateEntity.ts";
 import { composeContext } from "./context.ts";
-import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
+import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import {
   formatMessages,
   generateMessageResponse,
@@ -24,6 +24,7 @@ import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { optionsProvider } from "./providers/options.ts";
+import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
@@ -40,7 +41,7 @@ import {
   State,
   WorldData,
 } from "./types.ts";
-import { stringToUuid } from "./uuid.ts";
+import { createUniqueUuid } from "./entities.ts";
 
 type ServerJoinedParams = {
   runtime: IAgentRuntime;
@@ -252,9 +253,7 @@ const messageReceivedHandler = async ({
     }
 
     responseContent.text = responseContent.text?.trim();
-    responseContent.inReplyTo = stringToUuid(
-      `${message.id}-${runtime.agentId}`
-    );
+    responseContent.inReplyTo = createUniqueUuid(runtime, message.id);
 
     const responseMessages: Memory[] = [
       {
@@ -311,9 +310,8 @@ const syncServerUsers = async (
 
   try {
     // Create/ensure the world exists for this server
-    const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
-
-    const ownerId = stringToUuid(`${server.ownerId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, server.id);
+    const ownerId = createUniqueUuid(runtime, server.ownerId);
 
     await runtime.ensureWorldExists({
       id: worldId,
@@ -476,14 +474,14 @@ const syncServerChannels = async (
   try {
     if (source === "discord") {
       const guild = await server.fetch();
-      const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
+      const worldId = createUniqueUuid(runtime, guild.id);
 
       // Loop through all channels and create room entities
       for (const [channelId, channel] of guild.channels.cache) {
         // Only process text and voice channels
         if (channel.type === 0 || channel.type === 2) {
           // GUILD_TEXT or GUILD_VOICE
-          const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
+          const roomId = createUniqueUuid(runtime, channelId);
           const room = await runtime.getRoom(roomId);
 
           // Skip if room already exists
@@ -603,8 +601,8 @@ const syncSingleUser = async (
       return;
     }
 
-    const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const roomId = createUniqueUuid(runtime, channelId);
+    const worldId = createUniqueUuid(runtime, serverId);
 
     await runtime.ensureConnection({
       userId: user.id,
@@ -739,8 +737,8 @@ const syncMultipleUsers = async (
   logger.info(`Syncing ${users.length} users for channel ${channelId}`);
 
   try {
-    const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const roomId = createUniqueUuid(runtime, channelId);
+    const worldId = createUniqueUuid(runtime, serverId);
     // Process users in batches to avoid overwhelming the system
     const batchSize = 10;
     for (let i = 0; i < users.length; i += batchSize) {
@@ -858,6 +856,7 @@ export const bootstrapPlugin: Plugin = {
     optionsProvider,
     roleProvider,
     settingsProvider,
+    relationshipsProvider,
   ],
 };
 

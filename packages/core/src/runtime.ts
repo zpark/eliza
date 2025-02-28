@@ -16,7 +16,7 @@ import {
   formatEvaluators,
 } from "./evaluators.ts";
 import { generateText } from "./generation.ts";
-import { handlePluginImporting, logger } from "./index.ts";
+import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
 import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
@@ -85,7 +85,7 @@ class KnowledgeManager {
   async processCharacterKnowledge(items: string[]) {
     for (const item of items) {
       try {
-        const knowledgeId = stringToUuid(item);
+        const knowledgeId = createUniqueUuid(this.runtime, item);
         if (await this.checkExistingKnowledge(knowledgeId)) {
           continue;
         }
@@ -436,9 +436,7 @@ export class AgentRuntime implements IAgentRuntime {
               [this.character.name].filter(Boolean)
             )
           ) as string[],
-          metadata: {
-            originalUserId: this.agentId,
-          },
+          metadata: {},
         });
 
         if (!created) {
@@ -536,7 +534,7 @@ export class AgentRuntime implements IAgentRuntime {
     // Create room for the agent
     try {
       await this.ensureRoomExists({
-        id: this.generateTenantUserId(this.agentId),
+        id: this.agentId,
         name: this.character.name,
         source: "self",
         type: ChannelType.SELF,
@@ -619,20 +617,6 @@ export class AgentRuntime implements IAgentRuntime {
         }
       )
     );
-  }
-
-  generateTenantUserId(baseUserId: UUID): UUID {
-    // If the base user ID is the agent ID, return it directly
-    if (baseUserId === this.agentId) {
-      return this.agentId;
-    }
-
-    // Use a deterministic approach to generate a new UUID based on both IDs
-    // This creates a unique ID for each user+agent combination while still being deterministic
-    const combinedString = `${baseUserId}:${this.agentId}`;
-
-    // Create a namespace UUID (version 5) from the combined string
-    return stringToUuid(combinedString);
   }
 
   async ensureAgentExists() {
@@ -895,20 +879,16 @@ export class AgentRuntime implements IAgentRuntime {
       [source: string]: {
         name: string;
         userName: string;
-        originalUserId: UUID;
       };
     }
   ) {
-    // Generate tenant-specific user ID - apply the transformation
-    const tenantSpecificUserId = this.generateTenantUserId(userId);
-
     const account = await this.databaseAdapter.getEntityById(
-      tenantSpecificUserId,
+      userId,
       this.agentId
     );
     if (!account) {
       const created = await this.databaseAdapter.createEntity({
-        id: tenantSpecificUserId,
+        id: userId,
         agentId: this.agentId,
         names,
         metadata,
@@ -926,20 +906,17 @@ export class AgentRuntime implements IAgentRuntime {
       );
     }
 
-    return tenantSpecificUserId;
+    return userId;
   }
 
   async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
-    // Always get the tenant-specific user ID using our helper method
-    const tenantSpecificUserId = this.generateTenantUserId(userId);
-
     // Make sure entity exists in database before adding as participant
     const entity = await this.databaseAdapter.getEntityById(
-      tenantSpecificUserId,
+      userId,
       this.agentId
     );
     if(!entity) {
-      throw new Error(`User ${tenantSpecificUserId} not found`);
+      throw new Error(`User ${userId} not found`);
     }
     // Get current participants
     const participants = await this.databaseAdapter.getParticipantsForRoom(
@@ -948,17 +925,17 @@ export class AgentRuntime implements IAgentRuntime {
     );
 
     // Only add if not already a participant
-    if (!participants.includes(tenantSpecificUserId)) {
+    if (!participants.includes(userId)) {
       // Add participant using the tenant-specific ID that now exists in the entities table
       const added = await this.databaseAdapter.addParticipant(
-        tenantSpecificUserId,
+        userId,
         roomId,
         this.agentId
       );
 
       if (!added) {
         throw new Error(
-          `Failed to add participant ${tenantSpecificUserId} to room ${roomId}`
+          `Failed to add participant ${userId} to room ${roomId}`
         );
       }
 
@@ -968,7 +945,7 @@ export class AgentRuntime implements IAgentRuntime {
         );
       } else {
         logger.log(
-          `User ${tenantSpecificUserId} linked to room ${roomId} successfully.`
+          `User ${userId} linked to room ${roomId} successfully.`
         );
       }
     }
@@ -984,7 +961,6 @@ export class AgentRuntime implements IAgentRuntime {
     channelId,
     serverId,
     worldId,
-    originalUserId,
   }: {
     userId: UUID;
     roomId: UUID;
@@ -995,14 +971,13 @@ export class AgentRuntime implements IAgentRuntime {
     channelId?: string;
     serverId?: string;
     worldId?: UUID;
-    originalUserId?: UUID;
   }) {
     if (userId === this.agentId) {
       throw new Error("Agent should not connect to itself");
     }
 
     if (!worldId && serverId) {
-      worldId = stringToUuid(`${serverId}-${this.agentId}`);
+      worldId = createUniqueUuid(this, serverId);
     }
 
     const names = [userScreenName, userName]
@@ -1010,7 +985,6 @@ export class AgentRuntime implements IAgentRuntime {
       [source]: {
         name: userScreenName,
         userName: userName,
-        originalUserId,
       },
     };
 
@@ -1163,12 +1137,6 @@ export class AgentRuntime implements IAgentRuntime {
     message: Memory,
     additionalKeys: { [key: string]: unknown } = {}
   ) {
-    // Convert user ID to tenant-specific ID if needed
-    const tenantSpecificUserId =
-      message.userId === this.agentId
-        ? message.userId
-        : this.generateTenantUserId(message.userId);
-
     const { roomId } = message;
 
     const conversationLength = this.getConversationLength();
@@ -1196,7 +1164,7 @@ export class AgentRuntime implements IAgentRuntime {
     });
 
     const senderName = actorsData?.find(
-      (actor: Actor) => actor.id === tenantSpecificUserId
+      (actor: Actor) => actor.id === message.userId
     )?.name;
 
     // TODO: We may wish to consolidate and just accept character.name here instead of the actor name
@@ -1285,13 +1253,9 @@ export class AgentRuntime implements IAgentRuntime {
       sourceEntityId: UUID,
       targetEntityId: UUID
     ): Promise<Memory[]> => {
-      // Convert to tenant-specific ID if needed
-      const tenantUserA =
-        sourceEntityId === this.agentId ? sourceEntityId : this.generateTenantUserId(sourceEntityId);
-
       // Find all rooms where sourceEntityId and targetEntityId are participants
       const rooms = await this.databaseAdapter.getRoomsForParticipants(
-        [tenantUserA, targetEntityId],
+        [sourceEntityId, targetEntityId],
         this.agentId
       );
 

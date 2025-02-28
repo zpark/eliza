@@ -1,21 +1,21 @@
 import { composeContext } from "../context";
+import { createUniqueUuid } from "../entities";
 import { generateMessageResponse, generateObjectArray } from "../generation";
 import { logger } from "../logger";
 import { messageCompletionFooter } from "../parsing";
-import { findWorldForOwner, normalizeUserId } from "../roles";
+import { findWorldForOwner } from "../roles";
 import {
-    Action,
-    ActionExample,
-    ChannelType,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    ModelClass,
-    OnboardingSetting,
-    WorldSettings,
-    State,
+  Action,
+  ActionExample,
+  ChannelType,
+  HandlerCallback,
+  IAgentRuntime,
+  Memory,
+  ModelClass,
+  OnboardingSetting,
+  State,
+  WorldSettings,
 } from "../types";
-import { stringToUuid } from "../uuid";
 
 interface SettingUpdate {
   key: string;
@@ -63,7 +63,7 @@ export async function getWorldSettings(
   serverId: string
 ): Promise<WorldSettings | null> {
   try {
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata?.settings) {
@@ -86,7 +86,7 @@ export async function updateWorldSettings(
   worldSettings: WorldSettings
 ): Promise<boolean> {
   try {
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, serverId);
     const world = await runtime.getWorld(worldId);
 
     if (!world) {
@@ -600,9 +600,8 @@ const updateSettingsAction: Action = {
       }
 
       // Log the user ID for debugging
-      const normalizedUserId = normalizeUserId(message.userId);
       logger.info(
-        `Validating settings action for user ${message.userId} (normalized: ${normalizedUserId})`
+        `Validating settings action for user ${message.userId} (normalized: ${message.userId})`
       );
 
       // Validate that we're in a DM channel
