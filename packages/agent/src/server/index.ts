@@ -1,9 +1,8 @@
 import {
-  logger,
-  type Character,
-  type IAgentRuntime
+    logger,
+    type Character,
+    type IAgentRuntime
 } from "@elizaos/core";
-import { count } from "drizzle-orm";
 import bodyParser from "body-parser";
 import cors from "cors";
 import express from "express";
@@ -11,6 +10,7 @@ import express from "express";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createApiRouter } from "./api/index.ts";
+import { adapter } from "./database.ts";
 import replyAction from "./reply.ts";
 
 export type ServerMiddleware = (
@@ -26,7 +26,9 @@ export interface ServerOptions {
 export class AgentServer {
     public app: express.Application;
     private agents: Map<string, IAgentRuntime>;
-    private server: any; 
+    public server: any; 
+    
+    public database: any;
     public startAgent!: (character: Character) => Promise<IAgentRuntime>; 
     public loadCharacterTryPath!: (characterPath: string) => Promise<Character>;
     public jsonToCharacter!: (character: unknown) => Promise<Character>;
@@ -36,6 +38,10 @@ export class AgentServer {
             logger.log("Initializing AgentServer...");
             this.app = express();
             this.agents = new Map();
+            this.database = adapter;
+
+            // Initialize the database
+            this.database.init();
 
             // Core middleware setup
             this.app.use(cors());

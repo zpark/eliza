@@ -407,9 +407,9 @@ export function agentRouter(
             let source = "";
 
             logger.debug(`[AGENT START BY NAME] Looking for character in database: ${characterName}`);
-            const anyAgent = Array.from(agents.values())[0];
-            if (anyAgent?.databaseAdapter) {
-                character = await anyAgent.databaseAdapter.getCharacter(characterName);
+            
+            if (directClient.database) {
+                character = await directClient.database.getCharacter(characterName);
                 if (character) {
                     source = "database";
                     logger.debug(`[AGENT START BY NAME] Found character in database: ${characterName}`);
