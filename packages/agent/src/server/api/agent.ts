@@ -1,14 +1,11 @@
+import type { Character, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
+import { ChannelType, composeContext, createUniqueUuid, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, validateCharacterConfig } from '@elizaos/core';
 import express from 'express';
-import type { Character, IAgentRuntime, Media } from '@elizaos/core';
-import { ChannelType, composeContext, generateMessageResponse, logger, ModelClass, stringToUuid, validateCharacterConfig } from '@elizaos/core';
 import fs from 'node:fs';
-import type { AgentServer } from '..';
-import { validateUUIDParams } from './api-utils';
-
-import type { Content, Memory } from '@elizaos/core';
 import path from 'node:path';
-import { messageHandlerTemplate } from '../helper';
+import type { AgentServer } from '..';
 import { upload } from '../loader';
+import { validateUUIDParams } from './api-utils';
 
 interface CustomRequest extends express.Request {
     file?: Express.Multer.File;
@@ -96,8 +93,8 @@ export function agentRouter(
             return;
         }
 
-        const roomId = stringToUuid(req.body.roomId ?? `default-room-${agentId}`);
-        const userId = stringToUuid(req.body.userId ?? "user");
+        const roomId = createUniqueUuid(this.runtime, req.body.roomId ?? `default-room-${agentId}`);
+        const userId = createUniqueUuid(this.runtime, req.body.userId ?? "user");
 
         let runtime = agents.get(agentId);
 
@@ -129,7 +126,7 @@ export function agentRouter(
 
             logger.info(`[MESSAGE ENDPOINT] req.body: ${JSON.stringify(req.body)}`);
 
-            const messageId = stringToUuid(Date.now().toString());
+            const messageId = createUniqueUuid(this.runtime, Date.now().toString());
 
             const attachments: Media[] = [];
             if (req.file) {
@@ -165,7 +162,7 @@ export function agentRouter(
             };
 
             const memory: Memory = {
-                id: stringToUuid(`${messageId}-${userId}`),
+                id: createUniqueUuid(this.runtime, messageId),
                 ...userMessage,
                 agentId: runtime.agentId,
                 userId,
@@ -205,7 +202,7 @@ export function agentRouter(
 
             // save response to memory
             const responseMessage: Memory = {
-                id: stringToUuid(`${messageId}-${runtime.agentId}`),
+                id: createUniqueUuid(runtime, messageId),
                 ...userMessage,
                 userId: runtime.agentId,
                 content: response,
@@ -386,7 +383,7 @@ export function agentRouter(
             if (!character) {
                 try {
                     character = await directClient.loadCharacterTryPath(characterName);
-                } catch (e) {
+                } catch (_e) {
                     const existingAgent = Array.from(agents.values()).find(
                         (a) => a.character.name.toLowerCase() === characterName.toLowerCase()
                     );
@@ -464,8 +461,8 @@ export function agentRouter(
         if (!agentId) return;
 
         const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
-        const roomId = stringToUuid(rawRoomId ?? `default-room-${agentId}`);
-        const userId = stringToUuid(rawUserId ?? "user");
+        const roomId = createUniqueUuid(this.runtime, rawRoomId ?? `default-room-${agentId}`);
+        const userId = createUniqueUuid(this.runtime, rawUserId ?? "user");
 
         if (!text) {
             res.status(400).send("No text provided");
@@ -495,7 +492,7 @@ export function agentRouter(
                 type: ChannelType.API,
             });
 
-            const messageId = stringToUuid(Date.now().toString());
+            const messageId = createUniqueUuid(this.runtime, Date.now().toString());
 
             const content: Content = {
                 text,

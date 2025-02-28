@@ -18,7 +18,7 @@ export interface DrizzleOperations {
     update: (...args: any[]) => any;
     delete: (...args: any[]) => any;
     transaction: <T>(cb: (tx: any) => Promise<T>) => Promise<T>;
-    execute<T = Record<string, unknown>>(
+    execute<_T = Record<string, unknown>>(
         query: SQL
     ): Promise<{ rows: any[] } & Record<string, any>>;
 }

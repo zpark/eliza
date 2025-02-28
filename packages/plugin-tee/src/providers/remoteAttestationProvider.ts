@@ -114,11 +114,7 @@ const phalaRemoteAttestationProvider: Provider = {
  * const provider = new MarlinRemoteAttestationProvider();
  * ```
  */
-class MarlinRemoteAttestationProvider extends RemoteAttestationProvider {
-    constructor() {
-        super();
-    }
-}
+class MarlinRemoteAttestationProvider extends RemoteAttestationProvider {}
 
 const marlinRemoteAttestationProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
@@ -133,11 +129,7 @@ const marlinRemoteAttestationProvider: Provider = {
  * const provider = new FleekRemoteAttestationProvider();
  * ```
  */
-class FleekRemoteAttestationProvider extends RemoteAttestationProvider {
-    constructor() {
-        super();
-    }
-}
+class FleekRemoteAttestationProvider extends RemoteAttestationProvider {}
 
 const fleekRemoteAttestationProvider: Provider = {
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {

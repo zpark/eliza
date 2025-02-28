@@ -228,7 +228,7 @@ describe("Knowledge Module", () => {
             const largeText = "test ".repeat(1000); // ~5000 chars
             
             // Mock splitChunks to return more chunks for large text
-            mockSplitChunks.mockImplementation(async (text: string) => {
+            mockSplitChunks.mockImplementation(async (_text: string) => {
                 // Create ~7 chunks for the test
                 return Array.from({ length: 7 }, (_, i) => 
                     `chunk${i + 1} of large text`
@@ -279,7 +279,7 @@ describe("Knowledge Module", () => {
             ];
 
             for (const config of configs) {
-                const result = await knowledge.set(mockRuntime, {
+                const _result = await knowledge.set(mockRuntime, {
                     id: TEST_UUID_1,
                     content: { text }
                 }, config);

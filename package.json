@@ -1,10 +1,10 @@
 {
   "name": "eliza",
   "scripts": {
-    "format": "biome format --write .",
+    "format": "biome format .",
     "cli": "bun --filter=@elizaos/cli cli",
     "lint": "turbo run lint:fix --filter=./packages/*",
-    "check": "biome check --write .",
+    "check": "biome check . --fix --unsafe --verbose",
     "preinstall": "npx only-allow bun",
     "swarm": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",
     "swarm:scenario": "turbo run build --filter=./packages/core && concurrently \"turbo run start --filter=@elizaos/agent -- --swarm --scenario \" \"turbo run start --filter=!@elizaos/agent --filter=!@elizaos/docs --filter=!@elizaos/core\"",

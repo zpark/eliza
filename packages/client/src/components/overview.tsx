@@ -251,7 +251,7 @@ export default function Overview({ character }: { character: Character }) {
         title: "Success",
         description: "Character updated successfully",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update character",

@@ -1,46 +1,47 @@
-import { UUID } from "crypto";
+import type { UUID } from "node:crypto";
 import { v4 } from "uuid";
-import { cancelTaskAction } from "./actions/cancel.ts";
-import { confirmTaskAction } from "./actions/confirm.ts";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
+import { selectOptionAction } from "./actions/options.ts";
 import updateRoleAction from "./actions/roles.ts";
+import { sendMessageAction } from "./actions/sendMessage.ts";
 import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
+import { updateEntityAction } from "./actions/updateEntity.ts";
 import { composeContext } from "./context.ts";
-import { factEvaluator } from "./evaluators/fact.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
+import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import {
-  formatActors,
   formatMessages,
   generateMessageResponse,
   generateShouldRespond,
-  getActorDetails,
+  getActorDetails
 } from "./index.ts";
 import { logger } from "./logger.ts";
 import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
-import { confirmationTasksProvider } from "./providers/confirmation.ts";
 import { factsProvider } from "./providers/facts.ts";
+import { optionsProvider } from "./providers/options.ts";
+import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
 import {
   ChannelType,
-  Entity,
-  HandlerCallback,
-  IAgentRuntime,
-  Memory,
+  type Entity,
+  type HandlerCallback,
+  type IAgentRuntime,
+  type Memory,
   ModelClass,
-  Plugin,
+  type Plugin,
   RoleName,
-  RoomData,
-  State,
-  WorldData,
+  type RoomData,
+  type State,
+  type WorldData,
 } from "./types.ts";
-import { stringToUuid } from "./uuid.ts";
+import { createUniqueUuid } from "./entities.ts";
 
 type ServerJoinedParams = {
   runtime: IAgentRuntime;
@@ -69,6 +70,8 @@ type UserJoinedParams = {
 export const shouldRespondTemplate = `{{system}}
 # Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
 
+{{actors}}
+
 About {{agentName}}:
 {{bio}}
 
@@ -77,14 +80,15 @@ About {{agentName}}:
 # INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
 ${shouldRespondFooter}`;
 
-const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
+export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
 {{system}}
 
 {{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
-# Knowledge
 {{knowledge}}
+
+{{actors}}
 
 About {{agentName}}:
 {{bio}}
@@ -233,11 +237,13 @@ const messageReceivedHandler = async ({
         runtime.character.templates?.messageHandlerTemplate ||
         messageHandlerTemplate,
     });
+    console.log('*** context', context)
     const responseContent = await generateMessageResponse({
       runtime: runtime,
       context,
       modelClass: ModelClass.TEXT_LARGE,
     });
+    console.log('*** responseContent', responseContent)
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
@@ -249,9 +255,7 @@ const messageReceivedHandler = async ({
     }
 
     responseContent.text = responseContent.text?.trim();
-    responseContent.inReplyTo = stringToUuid(
-      `${message.id}-${runtime.agentId}`
-    );
+    responseContent.inReplyTo = createUniqueUuid(runtime, message.id);
 
     const responseMessages: Memory[] = [
       {
@@ -308,9 +312,8 @@ const syncServerUsers = async (
 
   try {
     // Create/ensure the world exists for this server
-    const worldId = stringToUuid(`${server.id}-${runtime.agentId}`);
-
-    const ownerId = stringToUuid(`${server.ownerId}-${runtime.agentId}`);
+    const worldId = createUniqueUuid(runtime, server.id);
+    const ownerId = createUniqueUuid(runtime, server.ownerId);
 
     await runtime.ensureWorldExists({
       id: worldId,
@@ -473,14 +476,14 @@ const syncServerChannels = async (
   try {
     if (source === "discord") {
       const guild = await server.fetch();
-      const worldId = stringToUuid(`${guild.id}-${runtime.agentId}`);
+      const worldId = createUniqueUuid(runtime, guild.id);
 
       // Loop through all channels and create room entities
       for (const [channelId, channel] of guild.channels.cache) {
         // Only process text and voice channels
         if (channel.type === 0 || channel.type === 2) {
           // GUILD_TEXT or GUILD_VOICE
-          const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
+          const roomId = createUniqueUuid(runtime, channelId);
           const room = await runtime.getRoom(roomId);
 
           // Skip if room already exists
@@ -600,13 +603,13 @@ const syncSingleUser = async (
       return;
     }
 
-    const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const roomId = createUniqueUuid(runtime, channelId);
+    const worldId = createUniqueUuid(runtime, serverId);
 
     await runtime.ensureConnection({
       userId: user.id,
       roomId,
-      userName: user.username || `User${user.id}`,
+      userName: user.username || user.displayName || `User${user.id}`,
       userScreenName: user.displayName || user.username || `User${user.id}`,
       source,
       channelId,
@@ -670,30 +673,24 @@ const handleServerSync = async ({
       for (let i = 0; i < users.length; i += batchSize) {
         const userBatch = users.slice(i, i + batchSize);
 
-        // Find a default text channel for these users if possible
-        const defaultRoom =
-          rooms.find(
-            (room) =>
-              room.type === ChannelType.GROUP && room.name.includes("general")
-          ) || rooms.find((room) => room.type === ChannelType.GROUP);
-
-        if (defaultRoom) {
-          // Process each user in the batch
-          await Promise.all(
-            userBatch.map(async (user: Entity) => {
+        // check if user is in any of these rooms in rooms
+        const firstRoomUserIsIn = rooms.length > 0 ? rooms[0] : null;
+        
+        // Process each user in the batch
+        await Promise.all(
+          userBatch.map(async (user: Entity) => {
               try {
                 await runtime.ensureConnection({
                   userId: user.id,
-                  roomId: defaultRoom.id,
+                  roomId: firstRoomUserIsIn.id,
                   userName:
-                    user.metadata[source].username ||
-                    user.metadata.default.username,
+                    user.metadata[source].username,
                   userScreenName:
-                    user.metadata[source].name || user.metadata.default.name,
+                    user.metadata[source].name,
                   source: source,
-                  channelId: defaultRoom.channelId,
+                  channelId: firstRoomUserIsIn.channelId,
                   serverId: world.serverId,
-                  type: defaultRoom.type,
+                  type: firstRoomUserIsIn.type,
                   worldId: world.id,
                 });
               } catch (err) {
@@ -703,7 +700,6 @@ const handleServerSync = async ({
               }
             })
           );
-        }
 
         // Add a small delay between batches if not the last batch
         if (i + batchSize < users.length) {
@@ -736,15 +732,15 @@ const syncMultipleUsers = async (
   source: string
 ) => {
   if (!channelId) {
-    logger.warn(`Cannot sync users without a valid channelId`);
+    logger.warn("Cannot sync users without a valid channelId");
     return;
   }
 
   logger.info(`Syncing ${users.length} users for channel ${channelId}`);
 
   try {
-    const roomId = stringToUuid(`${channelId}-${runtime.agentId}`);
-    const worldId = stringToUuid(`${serverId}-${runtime.agentId}`);
+    const roomId = createUniqueUuid(runtime, channelId);
+    const worldId = createUniqueUuid(runtime, serverId);
     // Process users in batches to avoid overwhelming the system
     const batchSize = 10;
     for (let i = 0; i < users.length; i += batchSize) {
@@ -848,19 +844,21 @@ export const bootstrapPlugin: Plugin = {
     noneAction,
     muteRoomAction,
     unmuteRoomAction,
-    cancelTaskAction,
-    confirmTaskAction,
+    sendMessageAction,
+    updateEntityAction,
+    selectOptionAction,
     updateRoleAction,
     updateSettingsAction,
   ],
   events,
-  evaluators: [factEvaluator, goalEvaluator],
+  evaluators: [reflectionEvaluator, goalEvaluator],
   providers: [
     timeProvider,
     factsProvider,
-    confirmationTasksProvider,
+    optionsProvider,
     roleProvider,
     settingsProvider,
+    relationshipsProvider,
   ],
 };
 

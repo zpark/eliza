@@ -1,6 +1,7 @@
 import {
     Actor,
-    Agent,
+    type Agent,
+    type Component,
     DatabaseAdapter,
     logger,
     type Character,
@@ -42,11 +43,11 @@ import {
 import { v4 } from "uuid";
 import {
     characterToInsert,
-    StoredTemplate,
+    type StoredTemplate,
     storedToTemplate,
     templateToStored,
 } from "./schema/character";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "./schema/embedding";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     cacheTable,
     characterTable,
@@ -60,8 +61,9 @@ import {
     relationshipTable,
     roomTable,
     worldTable,
+    componentTable,
 } from "./schema/index";
-import { DrizzleOperations } from "./types";
+import type { DrizzleOperations } from "./types";
 
 export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
     extends DatabaseAdapter<TDatabase>
@@ -213,16 +215,84 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select()
+                .select({
+                    entity: entityTable,
+                    components: componentTable
+                })
                 .from(entityTable)
-                .where(and(eq(entityTable.id, userId), eq(entityTable.agentId, agentId)))
-                .limit(1);
+                .leftJoin(
+                    componentTable,
+                    eq(componentTable.entityId, entityTable.id)
+                )
+                .where(
+                    and(
+                        eq(entityTable.id, userId),
+                        eq(entityTable.agentId, agentId)
+                    )
+                );
 
             if (result.length === 0) return null;
 
-            const account = result[0];
+            // Group components by entity
+            const entity = result[0].entity;
+            entity.components = result
+                .filter(row => row.components)
+                .map(row => row.components);
 
-            return account;
+            return entity;
+        });
+    }
+
+    async getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]> {
+        return this.withDatabase(async () => {
+            const query = this.db
+                .select({
+                    entity: entityTable,
+                    ...(includeComponents && { components: componentTable })
+                })
+                .from(participantTable)
+                .leftJoin(
+                    entityTable,
+                    and(
+                        eq(participantTable.userId, entityTable.id),
+                        eq(entityTable.agentId, agentId)
+                    )
+                );
+
+            if (includeComponents) {
+                query.leftJoin(
+                    componentTable,
+                    eq(componentTable.entityId, entityTable.id)
+                );
+            }
+
+            const result = await query.where(eq(participantTable.roomId, roomId));
+
+            // Group components by entity if includeComponents is true
+            const entitiesByIdMap = new Map<UUID, Entity>();
+            
+            result.forEach(row => {
+                if (!row.entity) return;
+                
+                const entityId = row.entity.id as UUID;
+                if (!entitiesByIdMap.has(entityId)) {
+                    const entity: Entity = {
+                        ...row.entity,
+                        components: includeComponents ? [] : undefined
+                    };
+                    entitiesByIdMap.set(entityId, entity);
+                }
+
+                if (includeComponents && row.components) {
+                    const entity = entitiesByIdMap.get(entityId)!;
+                    if (!entity.components) {
+                        entity.components = [];
+                    }
+                    entity.components.push(row.components);
+                }
+            });
+
+            return Array.from(entitiesByIdMap.values());
         });
     }
 
@@ -252,6 +322,78 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(entityTable).set(entity).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
+        });
+    }
+
+    async getComponent(entityId: UUID, type: string, worldId?: UUID, sourceEntityId?: UUID): Promise<Component | null> {
+        return this.withDatabase(async () => {
+            const conditions = [
+                eq(componentTable.entityId, entityId),
+                eq(componentTable.type, type)
+            ];
+
+            if (worldId) {
+                conditions.push(eq(componentTable.worldId, worldId));
+            }
+
+            if (sourceEntityId) {
+                conditions.push(eq(componentTable.sourceEntityId, sourceEntityId));
+            }
+
+            const result = await this.db
+                .select()
+                .from(componentTable)
+                .where(and(...conditions));
+            return result.length > 0 ? result[0] : null;
+        });
+    }
+
+    async getComponents(entityId: UUID, worldId?: UUID, sourceEntityId?: UUID): Promise<Component[]> {
+        return this.withDatabase(async () => {
+            const conditions = [
+                eq(componentTable.entityId, entityId)
+            ];
+
+            if (worldId) {
+                conditions.push(eq(componentTable.worldId, worldId));
+            }
+
+            if (sourceEntityId) {
+                conditions.push(eq(componentTable.sourceEntityId, sourceEntityId));
+            }
+
+            const result = await this.db
+                .select({
+                    id: componentTable.id,
+                    entityId: componentTable.entityId,
+                    type: componentTable.type,
+                    data: componentTable.data,
+                    worldId: componentTable.worldId,
+                    sourceEntityId: componentTable.sourceEntityId,
+                    createdAt: componentTable.createdAt,
+                })
+                .from(componentTable)
+                .where(and(...conditions));
+            return result;
+        });
+    }
+
+    async createComponent(component: Component): Promise<boolean> {
+        return this.withDatabase(async () => {
+            await this.db.insert(componentTable).values(component);
+            return true;
+        });
+    }
+
+    async updateComponent(component: Component): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.update(componentTable).set(component).where(eq(componentTable.id, component.id));
+        });
+    }
+
+    async deleteComponent(componentId: UUID): Promise<void> {
+        return this.withDatabase(async () => {
+            await this.db.delete(componentTable).where(eq(componentTable.id, componentId));
         });
     }
 
@@ -683,85 +825,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getActorDetails(params: { roomId: string }): Promise<Actor[]> {
-        if (!params.roomId) {
-            throw new Error("roomId is required");
-        }
-
-        return this.withDatabase(async () => {
-            try {
-                const result = await this.db
-                    .select({
-                        id: entityTable.id,
-                        metadata: entityTable.metadata,
-                    })
-                    .from(participantTable)
-                    .leftJoin(
-                        entityTable,
-                        eq(participantTable.userId, entityTable.id)
-                    )
-                    .where(eq(participantTable.roomId, params.roomId))
-                    .orderBy(entityTable.metadata?.name ?? entityTable.id);
-
-                logger.debug("Retrieved actor details:", {
-                    roomId: params.roomId,
-                    actorCount: result.length,
-                });
-
-                return result.map((row) => {
-                    try {
-                        const details =
-                            typeof row.details === "string"
-                                ? JSON.parse(row.details)
-                                : row.details || {};
-
-                        return {
-                            id: row.id as UUID,
-                            name: row.name ?? "",
-                            username: row.username ?? "",
-                            details: {
-                                tagline: details.tagline ?? "",
-                                summary: details.summary ?? "",
-                                quote: details.quote ?? "",
-                            },
-                        };
-                    } catch (error) {
-                        logger.warn("Failed to parse actor details:", {
-                            actorId: row.id,
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error),
-                        });
-
-                        return {
-                            id: row.id as UUID,
-                            name: row.name ?? "",
-                            username: row.username ?? "",
-                            details: {
-                                tagline: "",
-                                summary: "",
-                                quote: "",
-                            },
-                        };
-                    }
-                });
-            } catch (error) {
-                logger.error("Failed to fetch actor details:", {
-                    roomId: params.roomId,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                });
-                throw new Error(
-                    `Failed to fetch actor details: ${
-                        error instanceof Error ? error.message : String(error)
-                    }`
-                );
-            }
-        });
-    }
-
-    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<void> {
+    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<UUID> {
         logger.debug("DrizzleAdapter createMemory:", {
             memoryId: memory.id,
             embeddingLength: memory.embedding?.length,
@@ -788,7 +852,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 ? JSON.parse(memory.content)
                 : memory.content;
 
-        const memoryId = memory.id ?? v4();
+        const memoryId = memory.id ?? v4() as UUID;
 
         await this.db.transaction(async (tx) => {
             await tx.insert(memoryTable).values([{
@@ -819,6 +883,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await tx.insert(embeddingTable).values([embeddingValues]);
             }
         });
+
+        return memoryId;
     }
 
     async removeMemory(memoryId: UUID, tableName: string): Promise<void> {
@@ -1053,6 +1119,16 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getRooms(worldId: UUID): Promise<RoomData[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select()
+                .from(roomTable)
+                .where(eq(roomTable.worldId, worldId));
+            return result;
+        });
+    }
+
     async updateRoom(room: RoomData): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(roomTable).set(room).where(eq(roomTable.id, room.id));
@@ -1267,135 +1343,135 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async createRelationship(params: {
-        userA: UUID;
-        userB: UUID;
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+        tags?: string[];
+        metadata?: { [key: string]: any };
     }): Promise<boolean> {
-        if (!params.userA || !params.userB) {
-            throw new Error("userA and userB are required");
-        }
-    
         return this.withDatabase(async () => {
+            console.trace()
             try {
-                return await this.db.transaction(async (tx) => {
-                    const relationshipId = v4();
-                    await tx.insert(relationshipTable).values({
-                        id: relationshipId,
-                        userA: params.userA,
-                        userB: params.userB,
-                        userId: params.userA,
-                    });
-    
-                    logger.debug("Relationship created successfully:", {
-                        relationshipId,
-                        userA: params.userA,
-                        userB: params.userB,
-                    });
-    
-                    return true;
+                const id = v4();
+                await this.db.insert(relationshipTable).values({
+                    id,
+                    sourceEntityId: params.sourceEntityId,
+                    targetEntityId: params.targetEntityId,
+                    agentId: params.agentId,
+                    tags: params.tags || [],
+                    metadata: params.metadata || {},
                 });
+                return true;
             } catch (error) {
-                if ((error as { code?: string }).code === "23505") {
-                    logger.warn("Relationship already exists:", {
-                        userA: params.userA,
-                        userB: params.userB,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    });
-                } else {
-                    logger.error("Failed to create relationship:", {
-                        userA: params.userA,
-                        userB: params.userB,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    });
-                }
+                logger.error("Error creating relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
+                });
                 return false;
             }
         });
     }
 
-    async getRelationship(params: {
-        userA: UUID;
-        userB: UUID;
-    }): Promise<Relationship | null> {
-        if (!params.userA || !params.userB) {
-            throw new Error("userA and userB are required");
-        }
-
+    async updateRelationship(relationship: Relationship): Promise<void> {
         return this.withDatabase(async () => {
             try {
-                const result = await this.db
-                    .select()
-                    .from(relationshipTable)
-                    .where(
-                        or(
-                            and(
-                                eq(relationshipTable.userA, params.userA),
-                                eq(relationshipTable.userB, params.userB)
-                            ),
-                            and(
-                                eq(relationshipTable.userA, params.userB),
-                                eq(relationshipTable.userB, params.userA)
-                            )
-                        )
-                    )
-                    .limit(1);
-
-                if (result.length > 0) {
-                    return result[0] as unknown as Relationship;
-                }
-
-                logger.debug("No relationship found between users:", {
-                    userA: params.userA,
-                    userB: params.userB,
-                });
-                return null;
+                await this.db.update(relationshipTable)
+                    .set({
+                        tags: relationship.tags || [],
+                        metadata: relationship.metadata || {},
+                    })
+                    .where(eq(relationshipTable.id, relationship.id));
             } catch (error) {
-                logger.error("Error fetching relationship:", {
-                    userA: params.userA,
-                    userB: params.userB,
-                    error:
-                        error instanceof Error ? error.message : String(error),
+                logger.error("Error updating relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    relationship,
                 });
                 throw error;
             }
         });
     }
 
-    async getRelationships(params: { userId: UUID }): Promise<Relationship[]> {
-        if (!params.userId) {
-            throw new Error("userId is required");
-        }
+    async getRelationship(params: {
+        sourceEntityId: UUID;
+        targetEntityId: UUID;
+        agentId: UUID;
+    }): Promise<Relationship | null> {
         return this.withDatabase(async () => {
             try {
                 const result = await this.db
                     .select()
                     .from(relationshipTable)
                     .where(
-                        or(
-                            eq(relationshipTable.userA, params.userId),
-                            eq(relationshipTable.userB, params.userId)
+                        and(
+                            eq(relationshipTable.sourceEntityId, params.sourceEntityId),
+                            eq(relationshipTable.targetEntityId, params.targetEntityId),
+                            eq(relationshipTable.agentId, params.agentId)
                         )
                     )
-                    .orderBy(desc(relationshipTable.createdAt));
+                    .limit(1);
 
-                logger.debug("Retrieved relationships:", {
-                    userId: params.userId,
-                    count: result.length,
-                });
+                if (result.length === 0) {
+                    return null;
+                }
 
-                return result as unknown as Relationship[];
+                return {
+                    id: result[0].id,
+                    sourceEntityId: result[0].sourceEntityId,
+                    targetEntityId: result[0].targetEntityId,
+                    agentId: result[0].agentId,
+                    tags: result[0].tags || [],
+                    metadata: result[0].metadata || {},
+                    createdAt: result[0].createdAt?.toString()
+                };
             } catch (error) {
-                logger.error("Failed to fetch relationships:", {
-                    userId: params.userId,
-                    error:
-                        error instanceof Error ? error.message : String(error),
+                logger.error("Error getting relationship:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
                 });
-                throw error;
+                return null;
+            }
+        });
+    }
+
+    async getRelationships(params: { 
+        userId: UUID;
+        agentId: UUID;
+        tags?: string[];
+    }): Promise<Relationship[]> {
+        return this.withDatabase(async () => {
+            try {
+                let query = this.db
+                    .select()
+                    .from(relationshipTable)
+                    .where(
+                        and(
+                            eq(relationshipTable.sourceEntityId, params.userId),
+                            eq(relationshipTable.agentId, params.agentId)
+                        )
+                    );
+
+                // Filter by tags if provided
+                if (params.tags && params.tags.length > 0) {
+                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags)}]::text[]`);
+                }
+
+                const results = await query;
+
+                return results.map(result => ({
+                    id: result.id,
+                    sourceEntityId: result.sourceEntityId,
+                    targetEntityId: result.targetEntityId,
+                    agentId: result.agentId,
+                    tags: result.tags || [],
+                    metadata: result.metadata || {},
+                    createdAt: result.createdAt?.toString()
+                }));
+            } catch (error) {
+                logger.error("Error getting relationships:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    params,
+                });
+                return [];
             }
         });
     }
@@ -1492,7 +1568,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             }
         });
     }
-    async createCharacter(character: Character): Promise<UUID | void> {
+    async createCharacter(character: Character): Promise<UUID | undefined> {
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {

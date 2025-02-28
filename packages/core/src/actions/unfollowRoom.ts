@@ -1,7 +1,7 @@
 import { generateTrueOrFalse } from "..";
 import { composeContext } from "../context";
 import { booleanFooter } from "../parsing";
-import { Action, ActionExample, HandlerCallback, IAgentRuntime, Memory, ModelClass, State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
 const shouldUnfollowTemplate =
     `# Task: Decide if {{agentName}} should stop closely following this previously followed room and only respond when mentioned.

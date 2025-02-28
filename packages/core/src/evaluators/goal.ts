@@ -2,7 +2,7 @@ import { composeContext } from "../context";
 import { generateText } from "../generation";
 import { getGoals } from "../goals";
 import { parseJsonArrayFromText } from "../parsing";
-import { Evaluator, Goal, IAgentRuntime, Memory, ModelClass, State } from "../types";
+import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
 
 const goalsTemplate = `# TASK: Update Goal

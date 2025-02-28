@@ -1,6 +1,5 @@
+import { type ClientInstance, type IAgentRuntime, logger } from "@elizaos/core";
 import { type Context, Telegraf } from "telegraf";
-import { message } from "telegraf/filters";
-import { type IAgentRuntime, logger, type ClientInstance, stringToUuid, Memory, HandlerCallback, Content } from "@elizaos/core";
 import { MessageManager } from "./messageManager.ts";
 
 export class TelegramClient implements ClientInstance {

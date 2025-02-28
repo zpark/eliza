@@ -35,9 +35,9 @@ const voiceStateProvider: Provider = {
             throw new Error("No world found");
         }
 
-        const worldName = world.name;
+        const _worldName = world.name;
 
-        const roomType = room.type;
+        const _roomType = room.type;
 
         const channelId = room.channelId
 

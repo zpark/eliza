@@ -1,2 +1,2 @@
-export * from "./fact.ts";
+export * from "./reflection.ts";
 export * from "./goal.ts";

@@ -192,7 +192,7 @@ class TestRunner {
         if (!this.testResults.has(file)) {
             this.testResults.set(file, []);
         }
-        this.testResults.get(file)!.push({ file, suite, name, status, error });
+        this.testResults.get(file)?.push({ file, suite, name, status, error });
     }
 
     private async runTestSuite(suite: TestSuite, file: string): Promise<void> {
@@ -275,7 +275,7 @@ class TestRunner {
                     if (!groupedBySuite.has(t.suite)) {
                         groupedBySuite.set(t.suite, []);
                     }
-                    groupedBySuite.get(t.suite)!.push(t);
+                    groupedBySuite.get(t.suite)?.push(t);
                 });
     
                 groupedBySuite.forEach((suiteTests, suite) => {
@@ -302,8 +302,8 @@ class TestRunner {
                 tests.forEach(test => {
                     if (test.status === "failed") {
                         console.log(` ${colorize("FAIL", "red")} ${test.file} > ${test.suite} > ${test.name}`);
-                        console.log(` ${colorize("AssertionError: " + test.error!.message, "red")}`);
-                        console.log("\n" + colorize("⎯".repeat(66), "red") + "\n");
+                        console.log(` ${colorize(`AssertionError: ${test.error?.message}`, "red")}`);
+                        console.log(`\n${colorize("⎯".repeat(66), "red")}\n`);
                     }
                 });
             });
@@ -312,8 +312,8 @@ class TestRunner {
         const printTestSummary = (failedTestSuites: number) => {
             printSectionHeader("Test Summary", "cyan");
     
-            console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(failedTestSuites + " failed | ", "red") : ""}${colorize((this.testResults.size - failedTestSuites) + " passed", "green")} (${this.testResults.size})`);
-            console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(this.stats.failed + " failed | ", "red") : ""}${colorize(this.stats.passed + " passed", "green")} (${this.stats.total})`);
+            console.log(` ${colorize("Test Suites:", "gray")} ${failedTestSuites > 0 ? colorize(`${failedTestSuites} failed | `, "red") : ""}${colorize(`${this.testResults.size - failedTestSuites} passed`, "green")} (${this.testResults.size})`);
+            console.log(` ${colorize("      Tests:", "gray")} ${this.stats.failed > 0 ? colorize(`${this.stats.failed} failed | `, "red") : ""}${colorize(`${this.stats.passed} passed`, "green")} (${this.stats.total})`);
         };
     
         const failedTestSuites = printTestSuiteSummary();
