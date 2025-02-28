@@ -1,5 +1,4 @@
-import type { UUID, Character } from "@elizaos/core";
-import { characterNameToUrl, urlToCharacterName } from "./utils";
+import type { Character, UUID } from "@elizaos/core";
 import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
@@ -197,55 +196,4 @@ export const apiClient = {
         });
     },
     
-    // Character-related routes
-    getCharacters: () => 
-        fetcher({ url: "/characters" }),
-    
-    getCharacter: (characterName: string, isUrlEncoded: boolean = false): Promise<Character> => {
-        // Convert from URL format if needed
-        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
-        return fetcher({ url: `/characters/${actualName}` });
-    },
-    
-    createCharacter: (character: Character) =>
-        fetcher({
-            url: "/characters",
-            method: "POST",
-            body: character,
-        }),
-    
-    updateCharacter: (characterName: string, character: Character, isUrlEncoded: boolean = false) => {
-        // Convert from URL format if needed
-        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
-        return fetcher({
-            url: `/characters/${actualName}`,
-            method: "PUT",
-            body: character,
-        });
-    },
-    
-    removeCharacter: (characterName: string, isUrlEncoded: boolean = false): Promise<{ success: boolean }> => {
-        // Convert from URL format if needed
-        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
-        return fetcher({
-            url: `/characters/${actualName}`,
-            method: "DELETE",
-        });
-    },
-    
-    importCharacter: (characterFile: File) => {
-        const formData = new FormData();
-        formData.append("file", characterFile);
-        return fetcher({
-            url: "/characters/import",
-            method: "POST",
-            body: formData,
-        });
-    },
-    
-    exportCharacter: (characterName: string, isUrlEncoded: boolean = false) => {
-        // Convert from URL format if needed
-        const actualName = isUrlEncoded ? urlToCharacterName(characterName) : characterName;
-        return fetcher({ url: `/characters/${actualName}/export` });
-    },
 };

@@ -1,5 +1,3 @@
-import React from "react";
-import type { ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -8,8 +6,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatAgentName } from "@/lib/utils";
-import { CardActions } from "./card-actions";
+import type { ReactNode } from "react";
 import type { CardActionProps } from "./card-actions";
+import { CardActions } from "./card-actions";
 
 export interface ActionCardProps extends CardActionProps {
   /**

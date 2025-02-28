@@ -1,18 +1,14 @@
 import PageTitle from "@/components/page-title";
 import { ActionCard } from "@/components/ui/action-card";
-import { Button } from "@/components/ui/button";
-import { useAgents, useCharacters } from "@/hooks/use-query-hooks";
+import { useAgents } from "@/hooks/use-query-hooks";
 import type { UUID } from "@elizaos/core";
-import { Cog, Users } from "lucide-react";
-import { NavLink } from "react-router";
+import { Cog } from "lucide-react";
 
 export default function Home() {
 
     const { data: agentsData } = useAgents();
-    const { data: charactersData } = useCharacters();
 
     const agents = agentsData?.agents || [];
-    const characterCount = charactersData?.characters?.length || 0;
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -36,14 +32,7 @@ export default function Home() {
                     <p className="text-muted-foreground">
                         No agents currently running. Start a character to begin.
                     </p>
-                    {characterCount > 0 && (
-                        <NavLink to="/characters">
-                            <Button>
-                                <Users className="h-4 w-4 mr-2" />
-                                Go to Characters
-                            </Button>
-                        </NavLink>
-                    )}
+                    
                 </div>
             )}
             

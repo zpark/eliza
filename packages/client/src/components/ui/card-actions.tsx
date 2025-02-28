@@ -1,6 +1,5 @@
-import React from "react";
-import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 
 export type CardActionProps = {
