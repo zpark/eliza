@@ -137,40 +137,8 @@ export class PostgresConnectionManager implements IDatabaseClientManager<PgPool>
         }
     }
 
-    private async ensureExtensions(): Promise<void> {
-        const client = await this.pool.connect();
-        try {
-            // Check and create vector extension
-            await client.query(`
-                DO $$ 
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1 FROM pg_extension WHERE extname = 'vector'
-                    ) THEN
-                        CREATE EXTENSION IF NOT EXISTS vector;
-                    END IF;
-                    
-                    IF NOT EXISTS (
-                        SELECT 1 FROM pg_extension WHERE extname = 'fuzzystrmatch'
-                    ) THEN
-                        CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
-                    END IF;
-                END $$;
-            `);
-            logger.info("Required PostgreSQL extensions verified");
-        } catch (error) {
-            logger.error("Failed to create required extensions:", error);
-            throw new Error(`Failed to create required extensions: ${error instanceof Error ? error.message : String(error)}`);
-        } finally {
-            client.release();
-        }
-    }
-
     async runMigrations(): Promise<void> {
         try {
-            // Ensure extensions exist before running migrations
-            await this.ensureExtensions();
-            
             const db = drizzle(this.pool);
             await migrate(db, {
                 migrationsFolder: path.resolve(__dirname, "../drizzle/migrations"),
