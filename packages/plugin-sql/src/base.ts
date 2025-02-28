@@ -1350,6 +1350,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         metadata?: { [key: string]: any };
     }): Promise<boolean> {
         return this.withDatabase(async () => {
+            console.log('**** creating relationship', params)
+            console.trace()
             try {
                 const id = v4();
                 await this.db.insert(relationshipTable).values({
@@ -1372,6 +1374,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async updateRelationship(relationship: Relationship): Promise<void> {
+        console.log('**** updating relationship', relationship)
         return this.withDatabase(async () => {
             try {
                 await this.db.update(relationshipTable)

@@ -1,7 +1,16 @@
-import { getRelationships } from "../relationships.ts";
-import { IAgentRuntime, Memory, Provider, State, Relationship } from "../types.ts";
+import { IAgentRuntime, Memory, Provider, State, Relationship, UUID } from "../types.ts";
 
-function formatRelationships(relationships: Relationship[]) {
+async function getRelationships({
+    runtime,
+    userId,
+}: {
+    runtime: IAgentRuntime;
+    userId: UUID;
+}) {
+    return runtime.databaseAdapter.getRelationships({ userId, agentId: runtime.agentId });
+}
+
+async function formatRelationships(runtime: IAgentRuntime, relationships: Relationship[]) {
     // Sort relationships by interaction strength (descending)
     const sortedRelationships = relationships
         .filter(rel => rel.metadata?.interactions)
@@ -14,16 +23,31 @@ function formatRelationships(relationships: Relationship[]) {
         return "";
     }
 
-    console.log("*** sortedRelationships", sortedRelationships)
+    const formattedRelationships = await Promise.all(sortedRelationships
+        .map(async (rel, index) => {
 
-    return sortedRelationships
-        .map((rel, index) => {
-            const strength = rel.metadata?.interactions || 0;
-            const name = rel.metadata?.name || "Unknown";
-            const description = rel.metadata?.description || "";
-            return `${index + 1}. ${name} (Interaction Strength: ${strength})${description ? ` - ${description}` : ""}`;
+            const formatMetadata = (metadata: any) => {
+                return JSON.stringify(Object.entries(metadata)
+                    .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+                    .join("\n"));
+            }
+
+            // get the targetEntityId
+            const targetEntityId = rel.targetEntityId;
+            
+            // get the entity
+            const entity = await runtime.getEntity(targetEntityId);
+
+            if(!entity) {
+                return null;
+            }
+
+            const names = entity.names.join(" aka ");
+            return `${names}\n${rel.tags ? rel.tags.join(", ") : ""}\n${formatMetadata(entity.metadata)}\n`;
         })
-        .join("\n");
+    );
+
+    return formattedRelationships.filter(Boolean).join("\n");
 }
 
 const relationshipsProvider: Provider = {
@@ -34,23 +58,17 @@ const relationshipsProvider: Provider = {
             userId: message.userId,
         });
 
-        console.log("*** relationships", relationships)
-
         if (!relationships || relationships.length === 0) {
             return "";
         }
 
-        const formattedRelationships = formatRelationships(relationships);
-
-        console.log("*** formattedRelationships", formattedRelationships)
+        const formattedRelationships = await formatRelationships(runtime, relationships);
 
         if (!formattedRelationships) {
             return "";
         }
 
-        console.log('******* formattedRelationships', formattedRelationships)
-
-        return `Top relationships that ${runtime.character.name} has observed:\n${formattedRelationships}`;
+        return `${runtime.character.name} has observed ${state.senderName} interacting with these people:\n${formattedRelationships}`;
     },
 };
 

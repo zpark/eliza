@@ -19,7 +19,6 @@ export * from "./messages.ts";
 export * from "./parsing.ts";
 export * from "./posts.ts";
 export * from "./providers.ts";
-export * from "./relationships.ts";
 export * from "./roles.ts";
 export * from "./runtime.ts";
 export * from "./settings.ts";

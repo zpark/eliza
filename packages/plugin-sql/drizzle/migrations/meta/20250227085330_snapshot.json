@@ -1328,7 +1328,17 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "unique_relationship": {
+          "name": "unique_relationship",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sourceEntityId",
+            "targetEntityId", 
+            "agentId"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

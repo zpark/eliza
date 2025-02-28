@@ -35,6 +35,12 @@ const reflectionTemplate = `# Task: Generate Agent Reflection, Extract Facts and
 
 {{bio}}
 
+# Entities in Room
+{{entitiesInRoom}}
+
+# Existing Relationships
+{{existingRelationships}}
+
 # Current Context:
 Agent Name: {{agentName}}
 Room Type: {{roomType}}
@@ -49,7 +55,7 @@ Message Sender: {{senderName}} (ID: {{senderId}})
 # Instructions:
 1. Generate a self-reflection monologue about recent interactions
 2. Extract new facts from the conversation
-3. Identify and describe relationships between entities
+3. Identify and describe relationships between entities. The sourceEntityId is the UUID of the entity initiating the interaction. The targetEntityId is the UUID of the entity being interacted with. Relationships are one-direction, so a friendship would be two entity relationships where each entity is both the source and the target of the other.
 
 Generate a response in the following format:
 \`\`\`json
@@ -83,8 +89,12 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         agentId 
     });
 
+    console.log("*** existingRelationships", existingRelationships)
+
     // Get actors in the room for name resolution
     const actors = await getActorDetails({ runtime, roomId });
+
+    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(roomId, agentId);
 
     // Get known facts
     const factsManager = new MemoryManager({
@@ -102,9 +112,12 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             ...state,
             knownFacts: formatFacts(knownFacts),
             roomType: state.roomType || "group", // Can be "group", "voice", or "dm"
+            entitiesInRoom: JSON.stringify(entitiesInRoom),
+            existingRelationships: JSON.stringify(existingRelationships)
         },
         template: runtime.character.templates?.reflectionTemplate || reflectionTemplate,
     });
+    console.log("*** reflection context\n", context)
 
     const reflection = await generateObject({
         runtime,
@@ -154,6 +167,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         );
 
         if (existingRelationship) {
+            console.log('**** existingRelationship is true')
             // Update existing relationship by creating a new one
             const updatedMetadata = {
                 ...existingRelationship.metadata,
@@ -175,6 +189,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
                 metadata: updatedMetadata,
             });
         } else {
+            console.log('**** existingRelationship is false')
             // Create new relationship
             await runtime.databaseAdapter.createRelationship({
                 sourceEntityId: sourceId,

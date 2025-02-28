@@ -5,6 +5,7 @@ import {
     index,
     foreignKey,
     jsonb,
+    unique,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
@@ -32,6 +33,7 @@ export const relationshipTable = pgTable(
     },
     (table) => [
         index("idx_relationships_users").on(table.sourceEntityId, table.targetEntityId),
+        unique("unique_relationship").on(table.sourceEntityId, table.targetEntityId, table.agentId),
         foreignKey({
             name: "fk_user_a",
             columns: [table.sourceEntityId],

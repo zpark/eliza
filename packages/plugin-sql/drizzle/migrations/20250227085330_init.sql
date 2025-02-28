@@ -131,7 +131,8 @@ CREATE TABLE "relationships" (
 	"targetEntityId" uuid NOT NULL,
 	"agentId" uuid NOT NULL,
 	"tags" text[],
-	"metadata" jsonb
+	"metadata" jsonb,
+	CONSTRAINT "unique_relationship" UNIQUE("sourceEntityId","targetEntityId","agentId")
 );
 --> statement-breakpoint
 CREATE TABLE "rooms" (

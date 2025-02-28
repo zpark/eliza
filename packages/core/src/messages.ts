@@ -33,11 +33,15 @@ export async function getActorDetails({
       return acc;
     }, {});
 
+    console.log('*** entity', entity)
+    console.log('*** mergedData', mergedData)
+    console.log('*** entity.metadata', entity.metadata)
+
     return {
       id: entity.id,
       name: entity.metadata[room.source]?.name || entity.names[0],
       names: entity.names,
-      data: JSON.stringify(mergedData)
+      data: JSON.stringify({...mergedData, ...entity.metadata})
     };
   });
 
@@ -60,11 +64,15 @@ export async function getActorDetails({
  * @returns string
  */
 export function formatActors({ actors }: { actors: Actor[] }) {
+  console.log('*** actors', actors)
   const actorStrings = actors.map((actor: Actor) => {
-    const header = `${actor.name} (${actor.names.join(" aka ")})` + (actor.data && Object.entries(actor.data).length > 0) ? `\nData: ${actor.data}` : "";
+    console.log('*** actor', actor)
+    const header = `${actor.name} (${actor.names.join(" aka ")})` + `\nID: ${actor.id}` + ((actor.data && Object.entries(actor.data).length > 0) ? `\nData: ${actor.data}` : "\n");
+    console.log('*** header', header)
     return header;
   });
   const finalActorStrings = actorStrings.join("\n");
+  console.log('*** finalActorStrings', finalActorStrings)
   return finalActorStrings;
 }
 
