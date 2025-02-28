@@ -1,6 +1,5 @@
-import { TeeType } from '../types';
-import type { TeeVendor } from './types';
 import { sgxAttestationProvider } from '../providers/remoteAttestationProvider';
+import type { TeeVendor } from './types';
 import { TeeVendorNames } from './types';
 
 export class GramineVendor implements TeeVendor {

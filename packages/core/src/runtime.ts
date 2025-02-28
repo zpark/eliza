@@ -408,10 +408,12 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async stop() {
-    logger.debug("runtime::stop - character", this.character.name);
+    logger.debug(`runtime::stop - character ${this.character.name}`);
+
     // Stop all registered clients
     for (const [clientName, client] of this.clients) {
       logger.log(`runtime::stop - requesting client stop for ${clientName}`);
+      await this.ensureAgentIsDisabled();
       await client.stop(this);
     }
   }
@@ -620,6 +622,7 @@ export class AgentRuntime implements IAgentRuntime {
       Array.from(this.clientInterfaces.values()).map(
         async (clientInterface) => {
           const startedClient = await clientInterface.start(this);
+          await this.ensureAgentIsEnabled();
           this.registerClient(clientInterface.name, startedClient);
         }
       )
@@ -664,6 +667,29 @@ export class AgentRuntime implements IAgentRuntime {
       const out = { id: this.agentId, characterId, enabled: true };
 
       await this.databaseAdapter.createAgent(out);
+    }
+  }
+
+
+
+  private  async ensureAgentIsEnabled() {
+    const agent = await this.databaseAdapter.getAgent(this.agentId);
+    if (!agent) {
+      throw new Error(`Agent ${this.agentId} does not exist`);
+    }
+
+    if (!agent.enabled) {
+      await this.databaseAdapter.updateAgent({
+        ...agent,
+        enabled: true,
+      });
+    }
+  }
+
+  private async ensureAgentIsDisabled() {
+    const agent = await this.databaseAdapter.getAgent(this.agentId);
+    if (agent) {
+      await this.databaseAdapter.updateAgent({ ...agent, enabled: false });
     }
   }
 

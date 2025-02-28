@@ -124,24 +124,15 @@ function initializeCache(
   }
 }
 
-async function findDatabaseAdapter(runtime: IAgentRuntime) {
-  const { adapters } = runtime;
-  let adapter: Adapter | undefined;
-  // if not found, default to drizzle
-  if (adapters.length === 0) {
-    const drizzleAdapterPlugin = await import('@elizaos/plugin-sql');
-    const drizzleAdapterPluginDefault = drizzleAdapterPlugin.default;
-    adapter = drizzleAdapterPluginDefault.adapters[0];
-    if (!adapter) {
-      throw new Error("Internal error: No database adapter found for default plugin-sql");
-    }
-  } else if (adapters.length === 1) {
-    adapter = adapters[0];
-  } else {
-    throw new Error("Multiple database adapters found. You must have no more than one. Adjust your plugins configuration.");
-    }
-  const adapterInterface = await adapter?.init(runtime);
-  return adapterInterface;
+async function findDatabaseAdapter(server?: AgentServer, runtime?: IAgentRuntime) {
+  if (server) {
+    return server.database;
+  }
+  if (runtime) {
+    return runtime.databaseAdapter;
+  }
+  
+  throw new Error("No database adapter found");
 }
 
 async function startAgent(
@@ -162,7 +153,7 @@ async function startAgent(
 
     // initialize database
     // find a db from the plugins
-    db = await findDatabaseAdapter(runtime);
+    db = await findDatabaseAdapter(server, runtime);
     runtime.databaseAdapter = db;
 
     // Make sure character exists in database
@@ -185,6 +176,7 @@ async function startAgent(
 
     // add to container
     server.registerAgent(runtime);
+    
 
     // report to console
     logger.debug(`Started ${character.name} as ${runtime.agentId}`);

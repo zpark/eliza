@@ -4,22 +4,65 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/app-sidebar";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/toaster";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
 import useVersion from "./hooks/use-version";
+import { useEffect } from "react";
+import { apiClient } from "./lib/api";
+import { STALE_TIMES } from "./hooks/use-query-hooks";
 
+// Create a query client with optimized settings
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: Number.POSITIVE_INFINITY,
+            staleTime: STALE_TIMES.STANDARD,
+            // Default to no polling unless specifically configured
+            refetchInterval: false,
+            // Make queries retry 3 times with exponential backoff
+            retry: 3,
+            retryDelay: attemptIndex => Math.min(1000 * (2 ** attemptIndex), 30000),
+            // Refetch query on window focus
+            refetchOnWindowFocus: true,
+            // Enable refetch on reconnect
+            refetchOnReconnect: true,
+            // Fail queries that take too long
+        },
+        mutations: {
+            // Default to 3 retries for mutations too
+            retry: 3,
+            retryDelay: attemptIndex => Math.min(1000 * (2 ** attemptIndex), 30000),
         },
     },
 });
 
+// Prefetch initial data with smarter error handling
+const prefetchInitialData = async () => {
+  try {
+    // Prefetch agents (real-time data so shorter stale time)
+    await queryClient.prefetchQuery({
+      queryKey: ["agents"],
+      queryFn: () => apiClient.getAgents(),
+      staleTime: STALE_TIMES.FREQUENT,
+    });
+  } catch (error) {
+    console.error("Error prefetching initial data:", error);
+    // Don't throw, let the app continue loading with fallbacks
+  }
+};
+
+// Execute prefetch immediately
+prefetchInitialData();
+
 function App() {
     useVersion();
+    
+    // Also prefetch when the component mounts (helps with HMR and refreshes)
+    useEffect(() => {
+      prefetchInitialData();
+    }, []);
+    
     return (
         <QueryClientProvider client={queryClient}>
             <div

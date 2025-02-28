@@ -1,6 +1,6 @@
 import {
-    Actor,
-    Agent,
+    type Actor,
+    type Agent,
     DatabaseAdapter,
     logger,
     type Character,
@@ -38,15 +38,16 @@ import {
     lte,
     or,
     sql,
+    count
 } from "drizzle-orm";
 import { v4 } from "uuid";
 import {
     characterToInsert,
-    StoredTemplate,
+    type StoredTemplate,
     storedToTemplate,
     templateToStored,
 } from "./schema/character";
-import { DIMENSION_MAP, EmbeddingDimensionColumn } from "./schema/embedding";
+import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     cacheTable,
     characterTable,
@@ -61,7 +62,7 @@ import {
     roomTable,
     worldTable,
 } from "./schema/index";
-import { DrizzleOperations } from "./types";
+import type { DrizzleOperations } from "./types";
 
 export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
     extends DatabaseAdapter<TDatabase>
@@ -154,16 +155,25 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         this.embeddingDimension = DIMENSION_MAP[dimension];
     }
 
-    async getAgent(agentId: UUID): Promise<Agent | null> {
+    async getAgent(agentId: UUID): Promise<Agent & { character: Character } | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select()
+                .select({
+                    agent: agentTable,
+                    character: characterTable
+                })
                 .from(agentTable)
+                .leftJoin(characterTable, eq(agentTable.characterId, characterTable.id))
                 .where(eq(agentTable.id, agentId))
                 .limit(1);
 
             if (result.length === 0) return null;
-            return result[0];
+            return {
+                ...result[0].agent,
+                character: {
+                    ...result[0].character,
+                }
+            };
         });
     }
 
@@ -206,6 +216,65 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     agentId: agent.id
                 });
                 return false;
+            }
+        });
+    }
+
+    async getAgents(): Promise<Agent[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db.select({
+                agent: agentTable,
+                character: characterTable
+            }).from(agentTable).leftJoin(characterTable, eq(agentTable.characterId, characterTable.id));
+            
+            return result.map(row => ({
+                id: row.agent.id,
+                enabled: row.agent.enabled,
+                character: {
+                    id: row.character.id,
+                    name: row.character.name,
+                    bio: row.character.bio[0]
+                }
+            }));
+        });
+    }
+
+    /**
+     * Count all agents in the database
+     * Used primarily for maintenance and cleanup operations
+     */
+    async countAgents(): Promise<number> {
+        return this.withDatabase(async () => {
+            try {
+                const result = await this.db
+                    .select({ count: count() })
+                    .from(agentTable);
+                
+                return result[0]?.count || 0;
+            } catch (error) {
+                logger.error("Error counting agents:", {
+                    error: error instanceof Error ? error.message : String(error)
+                });
+                return 0;
+            }
+        });
+    }
+
+    /**
+     * Clean up the agents table by removing all agents
+     * This is used during server startup to ensure no orphaned agents exist
+     * from previous crashes or improper shutdowns
+     */
+    async cleanupAgents(): Promise<void> {
+        return this.withDatabase(async () => {
+            try {
+                await this.db.delete(agentTable);
+                logger.success("Successfully cleaned up agent table");
+            } catch (error) {
+                logger.error("Error cleaning up agent table:", {
+                    error: error instanceof Error ? error.message : String(error)
+                });
+                throw error;
             }
         });
     }
@@ -1086,12 +1155,18 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRoomsForParticipant(userId: UUID): Promise<UUID[]> {
+    async getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({ roomId: participantTable.roomId })
                 .from(participantTable)
-                .where(eq(participantTable.userId, userId));
+                .innerJoin(roomTable, eq(participantTable.roomId, roomTable.id))
+                .where(
+                    and(
+                        eq(participantTable.userId, userId),
+                        eq(roomTable.agentId, agentId)
+                    )
+                );
 
             return result.map((row) => row.roomId as UUID);
         });

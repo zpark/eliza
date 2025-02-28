@@ -112,14 +112,15 @@ export default {
     ): Promise<boolean> => {
         logger.log('Starting TRANSFER handler...');
 
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
+        let currentState = state;
+        if (!currentState) {
+            currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.updateRecentMessageState(state);
+            currentState = await runtime.updateRecentMessageState(currentState);
         }
 
         const transferContext = composeContext({
-            state,
+            state: currentState,
             template: transferTemplate,
         });
 
