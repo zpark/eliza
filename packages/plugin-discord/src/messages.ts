@@ -161,9 +161,6 @@ export class MessageManager {
           const memories: Memory[] = [];
           for (const m of messages) {
             let action = content.action;
-            if (messages.length > 1 && m !== messages[messages.length - 1]) {
-              action = "CONTINUE";
-            }
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),

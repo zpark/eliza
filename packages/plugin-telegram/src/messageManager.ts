@@ -355,7 +355,6 @@ export class MessageManager {
                                 ...content,
                                 text: sentMessage.text,
                                 inReplyTo: messageId,
-                                action: !isLastMessage ? "CONTINUE" : content.action
                             },
                             createdAt: sentMessage.date * 1000
                         };

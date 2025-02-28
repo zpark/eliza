@@ -514,14 +514,6 @@ export class TwitterInteractionClient {
                     )) as State;
 
                     for (const responseMessage of responseMessages) {
-                        if (
-                            responseMessage ===
-                            responseMessages[responseMessages.length - 1]
-                        ) {
-                            responseMessage.content.action = response.action;
-                        } else {
-                            responseMessage.content.action = "CONTINUE";
-                        }
                         await this.runtime.messageManager.createMemory(
                             responseMessage
                         );

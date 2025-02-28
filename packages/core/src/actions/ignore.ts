@@ -109,7 +109,7 @@ export const ignoreAction: Action = {
             },
             {
                 user: "{{user1}}",
-                content: { text: "Yeah", action: "CONTINUE" },
+                content: { text: "Yeah" },
             },
             {
                 user: "{{user1}}",
