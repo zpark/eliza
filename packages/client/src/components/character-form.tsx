@@ -301,7 +301,7 @@ export default function CharacterForm({
             style={{ gridTemplateColumns: `repeat(${customComponents.length + 3}, minmax(0, 1fr))` }}
           >
             {CHARACTER_FORM_SCHEMA.map((section) => (
-              <TabsTrigger value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
+              <TabsTrigger key={section.sectionValue} value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
             ))}
             {customComponents.map((component, index) => (
               <TabsTrigger key={`custom-${index}`} value={`custom-${index}`}>{component.name}</TabsTrigger>
