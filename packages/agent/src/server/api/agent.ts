@@ -50,15 +50,15 @@ export function agentRouter(
         logger.debug(`[AGENT GET] Found agent: ${agent.character.name} (${agentId})`);
         
         // Sanitize sensitive data
-        const character = agent?.character;
-        if (character?.settings?.secrets) {
-            character.settings.secrets = undefined;
-            logger.debug("[AGENT GET] Sanitized secrets from agent settings");
-        }
-        if (character?.secrets) {
-            character.secrets = undefined;
-            logger.debug("[AGENT GET] Sanitized top-level secrets from agent");
-        }
+        // const character = agent?.character;
+        // if (character?.settings?.secrets) {
+        //     character.settings.secrets = undefined;
+        //     logger.debug("[AGENT GET] Sanitized secrets from agent settings");
+        // }
+        // if (character?.secrets) {
+        //     character.secrets = undefined;
+        //     logger.debug("[AGENT GET] Sanitized top-level secrets from agent");
+        // }
 
         res.json({
             id: agentId,
