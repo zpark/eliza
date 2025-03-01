@@ -6,7 +6,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/toaster";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Chat from "./routes/chat";
-import Overview from "./routes/overview";
+import Settings from "./routes/settings";
 import Home from "./routes/home";
 import useVersion from "./hooks/use-version";
 import { useEffect } from "react";
@@ -85,7 +85,7 @@ function App() {
                                         />
                                         <Route
                                             path="settings/:agentId"
-                                            element={<Overview />}
+                                            element={<Settings />}
                                         />
                                     </Routes>
                                 </div>
