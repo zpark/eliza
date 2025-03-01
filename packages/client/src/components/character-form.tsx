@@ -156,7 +156,6 @@ export default function CharacterForm({
 }: CharacterFormProps) {
   const { toast } = useToast();
 
-  // const [characterValue, setCharacterValue] = useState<Character>(character);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
