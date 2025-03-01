@@ -1493,19 +1493,13 @@ export function splitText(
 
     while (start < content.length) {
         const end = Math.min(start + chunkSize, content.length);
-
         // Ensure we're not creating empty or invalid chunks
         if (end > start) {
             chunks.push(content.substring(start, end));
         }
 
-        // Ensure forward progress and prevent infinite loops
-        const nextStart = end - bleed;
-        if (nextStart <= start) {
-            start = end; // If no progress would be made, skip the bleed
-        } else {
-            start = nextStart;
-        }
+        // Ensure forward progress while preventing infinite loops
+        start = Math.max(end - bleed, start + 1);
     }
 
     return chunks;
