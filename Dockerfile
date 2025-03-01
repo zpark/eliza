@@ -34,8 +34,8 @@ RUN bun install
 RUN bun add better-sqlite3
 
 # Build the project
-RUN turbo run build --filter=./packages/core
-RUN turbo run build --filter=./packages/*
+RUN bun run build:core
+RUN bun run build:docker
 
 # Create a new stage for the final image
 FROM node:23.3.0-slim
@@ -57,6 +57,7 @@ COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/turbo.json ./
 COPY --from=builder /app/lerna.json ./
 COPY --from=builder /app/renovate.json ./
+COPY --from=builder /app/biome.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/scripts ./scripts
@@ -68,4 +69,4 @@ ENV NODE_ENV=production
 EXPOSE 3000 5173
 
 # Start the application
-CMD ["turbo", "run", "dev", "--filter=!./packages/core", "--filter=!./packages/docs", "--concurrency=20"] 
+CMD ["bun", "run", "swarm"] 

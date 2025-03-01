@@ -13,7 +13,7 @@ import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
 import type { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Play, Send, Square, X } from "lucide-react";
+import { Paperclip, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AIWriter from "react-aiwriter";
 import { AudioRecorder } from "./audio-recorder";
@@ -108,7 +108,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
-    const { data: agentData, isLoading: isAgentLoading } = useAgent(agentId);
+    const { data: agentData, isLoading: _isAgentLoading } = useAgent(agentId);
     const startAgentMutation = useStartAgent();
     const stopAgentMutation = useStopAgent();
 
