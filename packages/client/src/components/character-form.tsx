@@ -125,7 +125,6 @@ type customComponent = {
 }
 
 export type CharacterFormProps = {
-  character: Character;
   title: string;
   description: string;
   onSubmit: (character: Character) => Promise<void>;

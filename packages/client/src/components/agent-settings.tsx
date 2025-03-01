@@ -117,7 +117,6 @@ export default function AgentSettings({ character, agentId }: { character: Chara
 
   return (
     <CharacterForm
-      character={character}
       characterValue={characterValue} 
       setCharacterValue={setCharacterValue} 
       title="Character Settings" 

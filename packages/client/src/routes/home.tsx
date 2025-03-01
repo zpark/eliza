@@ -91,7 +91,7 @@ export default function Home() {
                             ]}
                         />
                     ))}
-                    <Card className="flex justify-center items-center">
+                    <Card className="flex justify-center items-center" onClick={() => navigate('/agents/new')}>
                         <Button 
                             variant="ghost" 
                             className="h-24 w-24 rounded-full flex items-center justify-center"
