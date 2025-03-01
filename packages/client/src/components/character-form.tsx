@@ -137,10 +137,13 @@ export type CharacterFormProps = {
   deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
+  characterValue: Character;
+  setCharacterValue: (value: (prev: Character) => Character) => void;
 };
 
 export default function CharacterForm({
-  character,
+  characterValue, 
+  setCharacterValue,
   title,
   description,
   onSubmit,
@@ -154,7 +157,7 @@ export default function CharacterForm({
 }: CharacterFormProps) {
   const { toast } = useToast();
 
-  const [characterValue, setCharacterValue] = useState<Character>(character);
+  // const [characterValue, setCharacterValue] = useState<Character>(character);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -350,7 +353,7 @@ export default function CharacterForm({
               variant="outline"
               onClick={() => {
                 onReset && onReset();
-                setCharacterValue(character)
+                // setCharacterValue(character)
               }}
             >
               Reset Changes
