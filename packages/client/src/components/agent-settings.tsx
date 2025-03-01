@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import CharacterForm from "@/components/character-form";
 import { useAgent } from "@/hooks/use-query-hooks";
 import PluginsPanel from "./plugins-panel";
+import SecretPanel from "./secret-panel";
 
 // Define interface for agent data response that includes enabled property
 interface AgentResponse {
@@ -117,6 +118,8 @@ export default function AgentSettings({ character, agentId }: { character: Chara
   return (
     <CharacterForm
       character={character}
+      characterValue={characterValue} 
+      setCharacterValue={setCharacterValue} 
       title="Character Settings" 
       description="Configure your AI character's behavior and capabilities"
       onSubmit={handleSubmit}
@@ -130,6 +133,13 @@ export default function AgentSettings({ character, agentId }: { character: Chara
         {
           name: "Plugins",
           component: <PluginsPanel 
+            characterValue={characterValue} 
+            setCharacterValue={setCharacterValue} 
+          />
+        },
+        {
+          name: "Secret",
+          component: <SecretPanel 
             characterValue={characterValue} 
             setCharacterValue={setCharacterValue} 
           />
