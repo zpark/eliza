@@ -21,7 +21,7 @@ export default function AgentCreator() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [characterValue, setCharacterValue] = useState({...defaultCharacter});
+    const [characterValue, setCharacterValue] = useState<Character>({...defaultCharacter});
 
     const ensureRequiredFields = (character: Character): Character => {
         return {
