@@ -13,7 +13,7 @@ import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
 import type { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Send, X } from "lucide-react";
+import { Paperclip, Play, Send, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AIWriter from "react-aiwriter";
 import { AudioRecorder } from "./audio-recorder";
@@ -23,7 +23,7 @@ import { Badge } from "./ui/badge";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useAgentMessages } from "@/hooks/use-query-hooks";
+import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
 
 type ExtraContentFields = {
     user: string;
@@ -108,6 +108,9 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
+    const { data: agentData, isLoading: isAgentLoading } = useAgent(agentId);
+    const startAgentMutation = useStartAgent();
+    const stopAgentMutation = useStopAgent();
 
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
@@ -221,8 +224,91 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     };
 
+    const handleStartAgent = async () => {
+        if (!agentData?.character?.name) return;
+        
+        try {
+            await startAgentMutation.mutateAsync(agentData.character.name);
+        } catch (error) {
+            console.error("Failed to start agent:", error);
+        }
+    };
+
+    const handleStopAgent = async () => {
+        try {
+            await stopAgentMutation.mutateAsync(agentId);
+        } catch (error) {
+            console.error("Failed to stop agent:", error);
+        }
+    };
+
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
+            {/* Agent Header */}
+            <div className="flex items-center justify-between mb-4 p-3 bg-card rounded-lg border">
+                <div className="flex items-center gap-3">
+                    <Avatar className="size-10 border rounded-full">
+                        <AvatarImage src="/elizaos-icon.png" />
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                            <h2 className="font-semibold text-lg">
+                                {agentData?.character?.name || "Agent"}
+                            </h2>
+                            {agentData?.enabled ? (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="size-2.5 rounded-full bg-green-500 ring-2 ring-green-500/20 animate-pulse" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                        <p>Agent is active</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="size-2.5 rounded-full bg-gray-300 ring-2 ring-gray-300/20" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                        <p>Agent is inactive</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </div>
+                        {agentData?.character?.bio && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                                {Array.isArray(agentData.character.bio) 
+                                    ? agentData.character.bio[0] 
+                                    : agentData.character.bio}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div>
+                    {agentData?.enabled ? (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            className="gap-1"
+                            onClick={handleStopAgent}
+                            disabled={stopAgentMutation.isPending}
+                        >
+                            {stopAgentMutation.isPending ? "Stopping..." : "Stop"}
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="gap-1"
+                            onClick={handleStartAgent}
+                            disabled={startAgentMutation.isPending}
+                        >
+                            {startAgentMutation.isPending ? "Starting..." : "Start"}
+                        </Button>
+                    )}
+                </div>
+            </div>
+            
             <div className="flex-1 overflow-y-auto">
                 <ChatMessageList 
                     scrollRef={scrollRef}

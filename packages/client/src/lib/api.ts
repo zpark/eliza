@@ -110,7 +110,7 @@ export const apiClient = {
             });
     },
     getAgents: () => fetcher({ url: "/agents" }),
-    getAgent: (agentId: string): Promise<{ id: UUID; character: Character }> =>
+    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean }> =>
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>
         fetcher({
