@@ -112,7 +112,7 @@ export const sendMessageAction: Action = {
       const sourceEntityId = message.userId;
       const roomId = message.roomId;
       const _agentId = runtime.agentId;
-      const room = await runtime.getRoom(roomId);
+      const room = await runtime.databaseAdapter.getRoom(roomId);
       const worldId = room.worldId;
 
       // Extract target and source information

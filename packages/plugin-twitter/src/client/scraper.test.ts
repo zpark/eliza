@@ -1,34 +1,34 @@
-import { Scraper } from './scraper';
-import { getScraper } from './test-utils';
+import { Client } from './client';
+import { getClient } from './test-utils';
 
-test('scraper can fetch home timeline', async () => {
-  const scraper = await getScraper();
+test('client can fetch home timeline', async () => {
+  const client = await getClient();
 
   const count = 20;
   const seenTweetIds: string[] = [];
 
-  const homeTimeline = await scraper.fetchHomeTimeline(count, seenTweetIds);
+  const homeTimeline = await client.fetchHomeTimeline(count, seenTweetIds);
   console.log(homeTimeline);
   expect(homeTimeline).toBeDefined();
   expect(homeTimeline?.length).toBeGreaterThan(0);
   expect(homeTimeline[0]?.rest_id).toBeDefined();
 }, 30000);
 
-test('scraper can fetch following timeline', async () => {
-  const scraper = await getScraper();
+test('client can fetch following timeline', async () => {
+  const client = await getClient();
 
   const count = 20;
   const seenTweetIds: string[] = [];
 
-  const homeTimeline = await scraper.fetchFollowingTimeline(count, seenTweetIds);
+  const homeTimeline = await client.fetchFollowingTimeline(count, seenTweetIds);
   console.log(homeTimeline);
   expect(homeTimeline).toBeDefined();
   expect(homeTimeline?.length).toBeGreaterThan(0);
   expect(homeTimeline[0]?.rest_id).toBeDefined();
 }, 30000);
 
-test('scraper uses response transform when provided', async () => {
-  const scraper = new Scraper({
+test('client uses response transform when provided', async () => {
+  const client = new Client({
     transform: {
       response: (response) =>
         new Proxy(response, {
@@ -47,5 +47,5 @@ test('scraper uses response transform when provided', async () => {
     },
   });
 
-  await expect(scraper.getLatestTweet('twitter')).rejects.toThrow();
+  await expect(client.getLatestTweet('twitter')).rejects.toThrow();
 });

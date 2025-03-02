@@ -1,5 +1,4 @@
 import { composeContext } from "../context";
-import { generateText } from "../generation";
 import { getGoals } from "../goals";
 import { parseJsonArrayFromText } from "../parsing";
 import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
@@ -54,12 +53,10 @@ async function handler(
         template: runtime.character.templates?.goalsTemplate || goalsTemplate,
     });
 
-    // Request generateText from OpenAI to analyze conversation and suggest goal updates
-    const response = await generateText({
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
         runtime,
         context,
-        modelClass: ModelClass.TEXT_LARGE,
-    });
+      });
 
     // Parse the JSON response to extract goal updates
     const updates = parseJsonArrayFromText(response);

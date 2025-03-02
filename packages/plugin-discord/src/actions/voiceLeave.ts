@@ -58,7 +58,7 @@ export default {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }

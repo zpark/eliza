@@ -104,7 +104,7 @@ export const settingsProvider: Provider = {
     state?: State
   ): Promise<string> => {
     try {
-      const room = await runtime.getRoom(message.roomId);
+      const room = await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         logger.error("No room found for settings provider");
         return "Error: Room not found";
@@ -123,7 +123,7 @@ export const settingsProvider: Provider = {
         }
         serverId = world.serverId;
       } else {
-        world = await runtime.getWorld(room.worldId);
+        world = await runtime.databaseAdapter.getWorld(room.worldId);
         serverId = world.serverId;
       }
 

@@ -1,4 +1,4 @@
-import { generateText, trimTokens } from "@elizaos/core";
+import { trimTokens } from "@elizaos/core";
 import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type IAgentRuntime,
@@ -33,10 +33,8 @@ async function generateSummary(
   }
   \`\`\``;
 
-    const response = await generateText({
-        runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
         context: prompt,
-        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);

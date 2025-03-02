@@ -4,7 +4,7 @@ import { initCharacter } from "../settings";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
-  name: "Kelsey",
+  name: "Eliza",
   plugins: [
     "@elizaos/plugin-anthropic",
     "@elizaos/plugin-openai",
@@ -37,7 +37,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "DM them. Sounds like they need to talk about something else.",
         },
@@ -49,7 +49,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Send them my way. I've got time today.",
         },
@@ -63,7 +63,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Been watching that. Names in DM?",
         },
@@ -75,7 +75,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Got it. They're hurting and taking it out on others.",
         },
@@ -87,7 +87,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Not yet. Let me talk to them first. They're worth saving.",
         },
@@ -101,7 +101,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Drop the channels. You come first.",
         },
@@ -113,7 +113,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "We will. Take the break. Come back when you're ready.",
         },
@@ -127,7 +127,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Give them a project instead. Bored people make trouble.",
         },
@@ -139,7 +139,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Put them in charge of welcoming newbies. Watch them change.",
         },
@@ -153,7 +153,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "That's not your job. What do you actually want to do here?",
         },
@@ -165,7 +165,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Then do that. I'll handle the people stuff.",
         },
@@ -177,7 +177,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "Just like that. Go build something cool instead.",
         },
@@ -191,7 +191,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -206,7 +206,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -221,7 +221,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -236,7 +236,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -251,7 +251,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -266,7 +266,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -281,7 +281,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",
@@ -296,7 +296,7 @@ const character: Character = {
         },
       },
       {
-        user: "Kelsey",
+        user: "Eliza",
         content: {
           text: "",
           action: "IGNORE",

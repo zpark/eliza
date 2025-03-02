@@ -1,13 +1,13 @@
 import type { Profile } from './profile';
-import { getScraper } from './test-utils';
+import { getClient } from './test-utils';
 
-test('scraper can get screen name by user id', async () => {
-  const scraper = await getScraper();
-  const screenName = await scraper.getScreenNameByUserId('1586562503865008129');
+test('client can get screen name by user id', async () => {
+  const client = await getClient();
+  const screenName = await client.getScreenNameByUserId('1586562503865008129');
   expect(screenName).toEqual('ligma__sigma');
 });
 
-test('scraper can get profile', async () => {
+test('client can get profile', async () => {
   const expected: Profile = {
     avatar:
       'https://pbs.twimg.com/profile_images/436075027193004032/XlDa2oaz.jpeg',
@@ -25,9 +25,9 @@ test('scraper can get profile', async () => {
     website: 'https://nomadic.name',
   };
 
-  const scraper = await getScraper();
+  const client = await getClient();
 
-  const actual = await scraper.getProfile('nomadic_ua');
+  const actual = await client.getProfile('nomadic_ua');
   expect(actual.avatar).toEqual(expected.avatar);
   expect(actual.banner).toEqual(expected.banner);
   expect(actual.biography).toEqual(expected.biography);
@@ -43,7 +43,7 @@ test('scraper can get profile', async () => {
   expect(actual.website).toEqual(expected.website);
 });
 
-test('scraper can get partial private profile', async () => {
+test('client can get partial private profile', async () => {
   const expected: Profile = {
     avatar:
       'https://pbs.twimg.com/profile_images/1612213936082030594/_HEsjv7Q.jpg',
@@ -62,9 +62,9 @@ test('scraper can get partial private profile', async () => {
     website: undefined,
   };
 
-  const scraper = await getScraper();
+  const client = await getClient();
 
-  const actual = await scraper.getProfile('tomdumont');
+  const actual = await client.getProfile('tomdumont');
   expect(actual.avatar).toEqual(expected.avatar);
   expect(actual.banner).toEqual(expected.banner);
   expect(actual.biography).toEqual(expected.biography);
@@ -80,18 +80,18 @@ test('scraper can get partial private profile', async () => {
   expect(actual.website).toEqual(expected.website);
 });
 
-test('scraper cannot get suspended profile', async () => {
-  const scraper = await getScraper();
+test('client cannot get suspended profile', async () => {
+  const client = await getClient();
   // taken from https://en.wikipedia.org/wiki/Twitter_suspensions#List_of_notable_suspensions
-  expect(scraper.getProfile('RobertC20041800')).rejects.toThrow();
+  expect(client.getProfile('RobertC20041800')).rejects.toThrow();
 });
 
-test('scraper cannot get not found profile', async () => {
-  const scraper = await getScraper();
-  expect(scraper.getProfile('sample3123131')).rejects.toThrow();
+test('client cannot get not found profile', async () => {
+  const client = await getClient();
+  expect(client.getProfile('sample3123131')).rejects.toThrow();
 });
 
-test('scraper can get profile by screen name', async () => {
-  const scraper = await getScraper();
-  await scraper.getProfile('Twitter');
+test('client can get profile by screen name', async () => {
+  const client = await getClient();
+  await client.getProfile('Twitter');
 });

@@ -1,5 +1,5 @@
 // Your existing imports
-import { Scraper } from './scraper';
+import { Client } from './client';
 import type { Photo, Tweet } from './tweets';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,8 +9,8 @@ import dotenv from 'dotenv';
 // Load environment variables from .env file
 dotenv.config();
 
-// Create a new Scraper instance
-const scraper = new Scraper();
+// Create a new Client instance
+const client = new Client();
 
 // Create readline interface for CLI
 const rl = readline.createInterface({
@@ -23,14 +23,14 @@ const rl = readline.createInterface({
 async function loginAndSaveCookies() {
   try {
     // Log in using credentials from environment variables
-    await scraper.login(
+    await client.login(
       process.env.TWITTER_USERNAME!,
       process.env.TWITTER_PASSWORD!,
       process.env.TWITTER_EMAIL
     );
 
     // Retrieve the current session cookies
-    const cookies = await scraper.getCookies();
+    const cookies = await client.getCookies();
 
     // Save the cookies to a JSON file for future sessions
     fs.writeFileSync(
@@ -64,7 +64,7 @@ async function loadCookies() {
     });
 
     // Set the cookies for the current session
-    await scraper.setCookies(cookieStrings);
+    await client.setCookies(cookieStrings);
 
     console.log('Cookies loaded from file.');
   } catch (error) {
@@ -72,7 +72,7 @@ async function loadCookies() {
   }
 }
 
-// Function to ensure the scraper is authenticated
+// Function to ensure the client is authenticated
 async function ensureAuthenticated() {
   // Check if cookies.json exists to decide whether to log in or load cookies
   if (fs.existsSync(path.resolve(__dirname, 'cookies.json'))) {
@@ -110,7 +110,7 @@ async function sendTweetCommand(
     }
 
     // Send the tweet using the updated sendTweet function
-    const response = await scraper.sendTweet(text, replyToTweetId, mediaData);
+    const response = await client.sendTweet(text, replyToTweetId, mediaData);
 
     // Parse the response to extract the tweet ID
     const responseData = await response.json();
@@ -157,7 +157,7 @@ async function getRepliesToTweet(tweetId: string): Promise<Tweet[]> {
     const searchMode = 1; // SearchMode.Latest
 
     // Fetch replies matching the query
-    for await (const tweet of scraper.searchTweets(query, maxReplies, searchMode)) {
+    for await (const tweet of client.searchTweets(query, maxReplies, searchMode)) {
       // Check if the tweet is a direct reply to the original tweet
       if (tweet.inReplyToStatusId === tweetId) {
         replies.push(tweet);
@@ -189,7 +189,7 @@ async function replyToTweet(tweetId: string, text: string) {
 async function getPhotosFromTweet(tweetId: string) {
   try {
     // Fetch the tweet by its ID
-    const tweet = await scraper.getTweet(tweetId);
+    const tweet = await client.getTweet(tweetId);
 
     // Check if the tweet exists and contains photos
     if (tweet && tweet.photos.length > 0) {
@@ -292,7 +292,7 @@ async function executeCommand(commandLine: string) {
         try {
           const maxTweets = 20; // Maximum number of tweets to fetch
           const tweets: Tweet[] = [];
-          for await (const tweet of scraper.getTweets(username, maxTweets)) {
+          for await (const tweet of client.getTweets(username, maxTweets)) {
             tweets.push(tweet);
           }
           console.log(`Fetched ${tweets.length} tweets from @${username}:`);
@@ -342,7 +342,7 @@ async function executeCommand(commandLine: string) {
         const searchMode = 1; // SearchMode.Latest
 
         // Fetch recent mentions
-        for await (const tweet of scraper.searchTweets(query, maxTweets, searchMode)) {
+        for await (const tweet of client.searchTweets(query, maxTweets, searchMode)) {
           // Exclude your own tweets
           if (tweet.username !== process.env.TWITTER_USERNAME) {
             mentions.push(tweet);
@@ -432,7 +432,7 @@ async function executeCommand(commandLine: string) {
       } else {
         try {
           // Attempt to like the tweet
-          await scraper.likeTweet(tweetId);
+          await client.likeTweet(tweetId);
           console.log(`Tweet ID ${tweetId} liked successfully.`);
         } catch (error) {
           console.error('Error liking tweet:', error);
@@ -449,7 +449,7 @@ async function executeCommand(commandLine: string) {
       } else {
         try {
           // Attempt to retweet the tweet
-          await scraper.retweet(retweetId);
+          await client.retweet(retweetId);
           console.log(`Tweet ID ${retweetId} retweeted successfully.`);
         } catch (error) {
           console.error('Error retweeting tweet:', error);
@@ -466,7 +466,7 @@ async function executeCommand(commandLine: string) {
       } else {
         try {
           // Attempt to follow the user
-          await scraper.followUser(usernameToFollow);
+          await client.followUser(usernameToFollow);
           console.log(`Successfully followed user @${usernameToFollow}.`);
         } catch (error) {
           console.error('Error following user:', error);
@@ -504,7 +504,7 @@ async function sendLongTweetCommand(
     }
 
     // Send the long tweet using the sendLongTweet function
-    const response = await scraper.sendLongTweet(text, replyToTweetId, mediaData);
+    const response = await client.sendLongTweet(text, replyToTweetId, mediaData);
 
     // Parse the response to extract the tweet ID
     const responseData = await response.json();

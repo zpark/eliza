@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { composeContext } from "../context";
-import { generateObject } from "../generation";
 import { MemoryManager } from "../memory";
 import { type Evaluator, type IAgentRuntime, type Memory, ModelClass, type UUID } from "../types";
 import { getActorDetails, resolveActorId } from "../messages";
+import logger from "../logger";
 
 // Schema definitions for the reflection output
 const relationshipSchema = z.object({
@@ -76,6 +76,98 @@ Generate a response in the following format:
 }
 \`\`\``;
 
+export const generateObject = async ({
+    runtime,
+    context,
+    modelClass = ModelClass.TEXT_LARGE,
+    stopSequences = [],
+    output = "object",
+    enumValues = [],
+    schema,
+  }): Promise<any> => {
+    if (!context) {
+      const errorMessage = "generateObject context is empty";
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  
+    // Special handling for enum output type
+    if (output === "enum" && enumValues) {
+      const response = await runtime.useModel(modelClass, {
+        runtime,
+        context,
+        modelClass,
+        stopSequences,
+        maxTokens: 8,
+        object: true,
+      });
+  
+      // Clean up the response to extract just the enum value
+      const cleanedResponse = response.trim();
+      
+      // Verify the response is one of the allowed enum values
+      if (enumValues.includes(cleanedResponse)) {
+        return cleanedResponse;
+      }
+      
+      // If the response includes one of the enum values (case insensitive)
+      const matchedValue = enumValues.find(value => 
+        cleanedResponse.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      if (matchedValue) {
+        return matchedValue;
+      }
+  
+      logger.error(`Invalid enum value received: ${cleanedResponse}`);
+      logger.error(`Expected one of: ${enumValues.join(", ")}`);
+      return null;
+    }
+  
+    // Regular object/array generation
+    const response = await runtime.useModel(modelClass, {
+      runtime,
+      context,
+      modelClass,
+      stopSequences,
+      object: true,
+    });
+  
+    let jsonString = response;
+  
+    // Find appropriate brackets based on expected output type
+    const firstChar = output === "array" ? "[" : "{";
+    const lastChar = output === "array" ? "]" : "}";
+    
+    const firstBracket = response.indexOf(firstChar);
+    const lastBracket = response.lastIndexOf(lastChar);
+    
+    if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
+      jsonString = response.slice(firstBracket, lastBracket + 1);
+    }
+  
+    if (jsonString.length === 0) {
+      logger.error(`Failed to extract JSON ${output} from model response`);
+      return null;
+    }
+  
+    // Parse the JSON string
+    try {
+      const json = JSON.parse(jsonString);
+      
+      // Validate against schema if provided
+      if (schema) {
+        return schema.parse(json);
+      }
+      
+      return json;
+    } catch (_error) {
+      logger.error(`Failed to parse JSON ${output}`);
+      logger.error(jsonString);
+      return null;
+    }
+  };
+  
 async function handler(runtime: IAgentRuntime, message: Memory) {
     const state = await runtime.composeState(message);
     const { agentId, roomId } = state;
@@ -83,13 +175,12 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     // Get existing relationships for the room
     const existingRelationships = await runtime.databaseAdapter.getRelationships({ 
         userId: message.userId,
-        agentId 
     });
 
     // Get actors in the room for name resolution
     const actors = await getActorDetails({ runtime, roomId });
 
-    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(roomId, agentId);
+    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(roomId);
 
     // Get known facts
     const factsManager = new MemoryManager({
@@ -120,9 +211,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         runtime,
         context,
         modelClass: ModelClass.TEXT_LARGE,
-        schema: reflectionSchema,
-        schemaName: "Reflection",
-        schemaDescription: "Agent reflection including facts and relationships",
+        schema: reflectionSchema
     });
 
     // Store new facts
@@ -186,7 +275,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             await runtime.databaseAdapter.createRelationship({
                 sourceEntityId: sourceId,
                 targetEntityId: targetId,
-                agentId,
                 tags: relationship.tags,
                 metadata: {
                     interactions: 1,
@@ -196,7 +284,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         }
     }
 
-    await runtime.cacheManager.set(`${message.roomId}-reflection-last-processed`, message.id);
+    await runtime.databaseAdapter.setCache(`${message.roomId}-reflection-last-processed`, message.id);
 
     return reflection;
 }
@@ -213,7 +301,7 @@ export const reflectionEvaluator: Evaluator = {
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
-        const lastMessageId = await runtime.cacheManager.get(`${message.roomId}-reflection-last-processed`)
+        const lastMessageId = await runtime.databaseAdapter.getCache(`${message.roomId}-reflection-last-processed`)
         const messages = await runtime.messageManager.getMemories({ roomId: message.roomId, count: runtime.getConversationLength() })
 
         if (lastMessageId) {

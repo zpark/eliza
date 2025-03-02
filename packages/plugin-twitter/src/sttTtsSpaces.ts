@@ -350,17 +350,14 @@ export class SttTtsPlugin implements Plugin {
         // Create consistent UUID for the user
         const userUuid = createUniqueUuid(this.runtime, numericId);
 
-        // Ensure the user exists in the accounts table
-        await this.runtime.getOrCreateUser(
-            userUuid,
-            [userId],
-            {
-                twitter: {
-                    name: userId,
-                    userName: userId,
-                },
-            },
-        );
+        const entity = await this.runtime.databaseAdapter.getEntityById(userUuid);
+        if(!entity) {
+            await this.runtime.databaseAdapter.createEntity({
+                id: userUuid,
+                names: [userId],
+                agentId: this.runtime.agentId,
+            });
+        }
 
         // Ensure room exists and user is in it
         await this.runtime.ensureRoomExists({id: roomId, name: "Twitter Space", source: "twitter", type: ChannelType.VOICE_GROUP, channelId: null, serverId: this.spaceId});

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAgents } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
-import { Book, Bot, BotIcon, Cog, User } from "lucide-react";
+import { Book, Cog, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import ConnectionStatus from "./connection-status";
   

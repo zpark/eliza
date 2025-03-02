@@ -785,7 +785,7 @@ export async function fetchLikedTweets(
   auth: TwitterAuth,
 ): Promise<QueryTweetsResponse> {
   if (!auth.isLoggedIn()) {
-    throw new Error('Scraper is not logged-in for fetching liked tweets.');
+    throw new Error('Client is not logged-in for fetching liked tweets.');
   }
 
   if (maxTweets > 200) {

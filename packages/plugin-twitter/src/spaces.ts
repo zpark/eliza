@@ -8,7 +8,7 @@ import {
     IdleMonitorPlugin,
     Space,
     SpaceParticipant,
-    type Scraper,
+    type Client,
     type SpaceConfig,
     type SpeakerRequest
 } from "./client/index.ts";
@@ -51,7 +51,7 @@ export enum ParticipantActivity {
 export class TwitterSpaceClient {
     private runtime: IAgentRuntime;
     private client: ClientBase;
-    private scraper: Scraper;
+    private twitterClient: Client;
     private currentSpace?: Space;
     private spaceId?: string;
     private startedAt?: number;
@@ -72,7 +72,7 @@ export class TwitterSpaceClient {
 
     constructor(client: ClientBase, runtime: IAgentRuntime) {
         this.client = client;
-        this.scraper = client.twitterClient;
+        this.twitterClient = client.twitterClient;
         this.runtime = runtime;
 
         this.sttTtsPlugin = new SttTtsPlugin();
@@ -185,7 +185,7 @@ export class TwitterSpaceClient {
         logger.log("[Space] Starting a new Twitter Space...");
 
         try {
-            this.currentSpace = new Space(this.scraper);
+            this.currentSpace = new Space(this.twitterClient);
             this.spaceStatus = SpaceActivity.IDLE;
             this.spaceId = undefined;
             this.startedAt = Date.now();
@@ -219,7 +219,7 @@ export class TwitterSpaceClient {
                 );
             }
             this.spaceStatus = SpaceActivity.HOSTING;
-            await this.scraper.sendTweet(
+            await this.twitterClient.sendTweet(
                 broadcastInfo.share_url.replace("broadcasts", "spaces")
             );
 
@@ -288,7 +288,7 @@ export class TwitterSpaceClient {
     private async manageCurrentSpace() {
         if (!this.spaceId || !this.currentSpace) return;
         try {
-            const audioSpace = await this.scraper.getAudioSpaceById(
+            const audioSpace = await this.twitterClient.getAudioSpaceById(
                 this.spaceId
             );
             const { participants } = audioSpace;
@@ -379,7 +379,7 @@ export class TwitterSpaceClient {
     private async handleSpeakerRequest(req: SpeakerRequest) {
         if (!this.spaceId || !this.currentSpace) return;
 
-        const audioSpace = await this.scraper.getAudioSpaceById(this.spaceId);
+        const audioSpace = await this.twitterClient.getAudioSpaceById(this.spaceId);
         const janusSpeakers = audioSpace?.participants?.speakers || [];
 
         // If we haven't reached maxSpeakers, accept immediately

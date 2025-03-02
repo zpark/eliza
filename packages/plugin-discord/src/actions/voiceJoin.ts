@@ -8,7 +8,6 @@ import {
     ChannelType,
     composeContext,
     createUniqueUuid,
-    generateText,
     type HandlerCallback,
     logger,
     ModelClass
@@ -45,7 +44,7 @@ export default {
 
         const roomId = message.roomId;
 
-        const room = await runtime.getRoom(roomId);
+        const room = await runtime.databaseAdapter.getRoom(roomId);
 
         if(room?.type !== ChannelType.GROUP) {
             return false;
@@ -78,7 +77,7 @@ export default {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -164,10 +163,8 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const responseContent = await generateText({
-                runtime,
+            const responseContent = await runtime.useModel(ModelClass.TEXT_SMALL, {
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             if (responseContent && responseContent.trim().length > 0) {
