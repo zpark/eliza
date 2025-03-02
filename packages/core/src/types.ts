@@ -148,59 +148,6 @@ export enum ServiceType {
 }
 
 /**
- * Model settings
- */
-export type TextModelSettings = {
-  /** Model name */
-  name: string;
-
-  /** Maximum input tokens */
-  maxInputTokens: number;
-
-  /** Maximum output tokens */
-  maxOutputTokens: number;
-
-  /** Optional frequency penalty */
-  frequency_penalty?: number;
-
-  /** Optional presence penalty */
-  presence_penalty?: number;
-
-  /** Optional repetition penalty */
-  repetition_penalty?: number;
-
-  /** Stop sequences */
-  stop: string[];
-
-  /** Temperature setting */
-  temperature: number;
-};
-
-/** Image model settings */
-export type ImageModelSettings = {
-  prompt: string;
-  width: number;
-  height: number;
-  count?: number;
-  negativePrompt?: string;
-  numIterations?: number;
-  guidanceScale?: number;
-  seed?: number;
-  modelId?: string;
-  jobId?: string;
-  stylePreset?: string;
-  hideWatermark?: boolean;
-  safeMode?: boolean;
-  cfgScale?: number;
-};
-
-/** Embedding model settings */
-export type EmbeddingModelSettings = {
-  text: string;
-  dimensions?: number;
-};
-
-/**
  * Represents the current state/context of a conversation
  */
 export interface State {
@@ -630,7 +577,8 @@ export type Adapter = {
 export type Route = {
   type: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
-  handler: (req: Request, res: Response) => Promise<void>;
+  // TODO: give me strong types
+  handler: (req: any, res: any) => Promise<void>;
 };
 
 /**
@@ -1505,13 +1453,17 @@ export interface Task {
   id?: UUID;
   name: string;
   metadata?: {
+    updatedAt?: number;
+    updateInterval?: number;
     options?: {
       name: string;
       description: string;
     }[];
+    [key: string]: unknown;
   };
   description: string;
-  roomId: UUID;
+  roomId?: UUID;
+  worldId?: UUID;
   tags: string[];
   handler: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
   validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
