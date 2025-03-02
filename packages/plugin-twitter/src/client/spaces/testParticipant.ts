@@ -1,7 +1,7 @@
 // src/testParticipant.ts
 
 import 'dotenv/config';
-import { Scraper } from '../scraper';
+import { Client } from '../client';
 import { SpaceParticipant } from './core/SpaceParticipant';
 import { SttTtsPlugin } from './plugins/SttTtsPlugin';
 
@@ -16,9 +16,9 @@ import { SttTtsPlugin } from './plugins/SttTtsPlugin';
 async function main() {
   console.log('[TestParticipant] Starting...');
 
-  // 1) Twitter login via Scraper
-  const scraper = new Scraper();
-  await scraper.login(
+  // 1) Twitter login via Client
+  const client = new Client();
+  await client.login(
     process.env.TWITTER_USERNAME!,
     process.env.TWITTER_PASSWORD!,
   );
@@ -26,7 +26,7 @@ async function main() {
   // 2) Create the participant
   // Replace with your target AudioSpace ID
   const audioSpaceId = '1eaKbaNYanvxX';
-  const participant = new SpaceParticipant(scraper, {
+  const participant = new SpaceParticipant(client, {
     spaceId: audioSpaceId,
     debug: false,
   });

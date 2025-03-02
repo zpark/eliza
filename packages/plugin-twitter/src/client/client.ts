@@ -106,7 +106,7 @@ const twUrl = 'https://twitter.com';
 const UserTweetsUrl =
   'https://twitter.com/i/api/graphql/E3opETHurmVJflFsUBVuUQ/UserTweets';
 
-export interface ScraperOptions {
+export interface ClientOptions {
   /**
    * An alternative fetch function to use instead of the default fetch function. This may be useful
    * in nonstandard runtime environments, such as edge workers.
@@ -122,19 +122,19 @@ export interface ScraperOptions {
 
 /**
  * An interface to Twitter's undocumented API.
- * - Reusing Scraper objects is recommended to minimize the time spent authenticating unnecessarily.
+ * - Reusing Client objects is recommended to minimize the time spent authenticating unnecessarily.
  */
-export class Scraper {
+export class Client {
   private auth!: TwitterAuth;
   private authTrends!: TwitterAuth;
   private token: string;
 
   /**
-   * Creates a new Scraper object.
-   * - Scrapers maintain their own guest tokens for Twitter's internal API.
-   * - Reusing Scraper objects is recommended to minimize the time spent authenticating unnecessarily.
+   * Creates a new Client object.
+   * - Clients maintain their own guest tokens for Twitter's internal API.
+   * - Reusing Client objects is recommended to minimize the time spent authenticating unnecessarily.
    */
-  constructor(private readonly options?: Partial<ScraperOptions>) {
+  constructor(private readonly options?: Partial<ClientOptions>) {
     this.token = bearerToken;
     this.useGuestAuth();
   }
@@ -582,8 +582,8 @@ export class Scraper {
    *
    * Example:
    * ```js
-   * const timeline = scraper.getTweets('user', 200);
-   * const retweet = await scraper.getTweetWhere(timeline, { isRetweet: true });
+   * const timeline = client.getTweets('user', 200);
+   * const retweet = await client.getTweetWhere(timeline, { isRetweet: true });
    * ```
    * @param tweets The {@link AsyncIterable} of tweets to search through.
    * @param query A query to test **all** tweets against. This may be either an
@@ -605,8 +605,8 @@ export class Scraper {
    *
    * Example:
    * ```js
-   * const timeline = scraper.getTweets('user', 200);
-   * const retweets = await scraper.getTweetsWhere(timeline, { isRetweet: true });
+   * const timeline = client.getTweets('user', 200);
+   * const retweets = await client.getTweetsWhere(timeline, { isRetweet: true });
    * ```
    * @param tweets The {@link AsyncIterable} of tweets to search through.
    * @param query A query to test **all** tweets against. This may be either an
@@ -706,16 +706,16 @@ export class Scraper {
   }
 
   /**
-   * Returns if the scraper has a guest token. The token may not be valid.
-   * @returns `true` if the scraper has a guest token; otherwise `false`.
+   * Returns if the client has a guest token. The token may not be valid.
+   * @returns `true` if the client has a guest token; otherwise `false`.
    */
   public hasGuestToken(): boolean {
     return this.auth.hasToken() || this.authTrends.hasToken();
   }
 
   /**
-   * Returns if the scraper is logged in as a real user.
-   * @returns `true` if the scraper is logged in with a real user account; otherwise `false`.
+   * Returns if the client is logged in as a real user.
+   * @returns `true` if the client is logged in with a real user account; otherwise `false`.
    */
   public async isLoggedIn(): Promise<boolean> {
     return (
@@ -814,12 +814,12 @@ export class Scraper {
    * Sets the optional cookie to be used in requests.
    * @param _cookie The cookie to be used in requests.
    * @deprecated This function no longer represents any part of Twitter's auth flow.
-   * @returns This scraper instance.
+   * @returns This client instance.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public withCookie(_cookie: string): Scraper {
+  public withCookie(_cookie: string): Client {
     console.warn(
-      'Warning: Scraper#withCookie is deprecated and will be removed in a later version. Use Scraper#login or Scraper#setCookies instead.',
+      'Warning: Client#withCookie is deprecated and will be removed in a later version. Use Client#login or Client#setCookies instead.',
     );
     return this;
   }
@@ -828,12 +828,12 @@ export class Scraper {
    * Sets the optional CSRF token to be used in requests.
    * @param _token The CSRF token to be used in requests.
    * @deprecated This function no longer represents any part of Twitter's auth flow.
-   * @returns This scraper instance.
+   * @returns This client instance.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public withXCsrfToken(_token: string): Scraper {
+  public withXCsrfToken(_token: string): Client {
     console.warn(
-      'Warning: Scraper#withXCsrfToken is deprecated and will be removed in a later version.',
+      'Warning: Client#withXCsrfToken is deprecated and will be removed in a later version.',
     );
     return this;
   }

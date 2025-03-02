@@ -86,7 +86,7 @@ async function getSearchTimeline(
   cursor?: string,
 ): Promise<SearchTimeline> {
   if (!auth.isLoggedIn()) {
-    throw new Error('Scraper is not logged-in for search.');
+    throw new Error('Client is not logged-in for search.');
   }
 
   if (maxItems > 50) {

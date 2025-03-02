@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import { Logger } from '../logger';
 import { ChatClient } from './ChatClient';
 import { JanusClient } from './JanusClient';
-import type { Scraper } from '../../scraper';
+import type { Client } from '../../client';
 import type {
   TurnServersInfo,
   Plugin,
@@ -65,7 +65,7 @@ export class SpaceParticipant extends EventEmitter {
   private plugins = new Set<PluginRegistration>();
 
   constructor(
-    private readonly scraper: Scraper,
+    private readonly client: Client,
     config: SpaceParticipantConfig,
   ) {
     super();
@@ -108,11 +108,11 @@ export class SpaceParticipant extends EventEmitter {
     );
 
     // 1) Get cookie and authorize
-    this.cookie = await this.scraper.getPeriscopeCookie();
+    this.cookie = await this.client.getPeriscopeCookie();
     this.authToken = await authorizeToken(this.cookie);
 
     // 2) Retrieve the space metadata for mediaKey
-    const spaceMeta = await this.scraper.getAudioSpaceById(this.spaceId);
+    const spaceMeta = await this.client.getAudioSpaceById(this.spaceId);
     const mediaKey = spaceMeta?.metadata?.media_key;
     if (!mediaKey) {
       throw new Error('[SpaceParticipant] No mediaKey found in metadata');
@@ -120,7 +120,7 @@ export class SpaceParticipant extends EventEmitter {
     this.logger.debug('[SpaceParticipant] mediaKey =>', mediaKey);
 
     // 3) Query live_video_stream/status for HLS URL and chat token
-    const status = await this.scraper.getAudioSpaceStreamStatus(mediaKey);
+    const status = await this.client.getAudioSpaceStreamStatus(mediaKey);
     this.hlsUrl = status?.source?.location;
     this.chatJwtToken = status?.chatToken;
     this.lifecycleToken = status?.lifecycleToken;

@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from "node:events";
 import {
   type QueryTweetsResponse,
-  Scraper,
+  Client,
   SearchMode,
   type Tweet,
 } from "./client/index.ts";
@@ -81,8 +81,8 @@ class RequestQueue {
 }
 
 export class ClientBase extends EventEmitter {
-  static _twitterClients: { [accountIdentifier: string]: Scraper } = {};
-  twitterClient: Scraper;
+  static _twitterClients: { [accountIdentifier: string]: Client } = {};
+  twitterClient: Client;
   runtime: IAgentRuntime;
   lastCheckedTweetId: bigint | null = null;
   temperature = 0.5;
@@ -240,7 +240,7 @@ export class ClientBase extends EventEmitter {
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
-      this.twitterClient = new Scraper();
+      this.twitterClient = new Client();
       ClientBase._twitterClients[username] = this.twitterClient;
     }
   }

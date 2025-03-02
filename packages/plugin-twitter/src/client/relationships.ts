@@ -69,7 +69,7 @@ async function getFollowingTimeline(
   cursor?: string,
 ): Promise<RelationshipTimeline> {
   if (!auth.isLoggedIn()) {
-    throw new Error('Scraper is not logged-in for profile following.');
+    throw new Error('Client is not logged-in for profile following.');
   }
 
   if (maxItems > 50) {
@@ -117,7 +117,7 @@ async function getFollowersTimeline(
   cursor?: string,
 ): Promise<RelationshipTimeline> {
   if (!auth.isLoggedIn()) {
-    throw new Error('Scraper is not logged-in for profile followers.');
+    throw new Error('Client is not logged-in for profile followers.');
   }
 
   if (maxItems > 50) {
