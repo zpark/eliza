@@ -1,5 +1,5 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useStartAgent } from "@/hooks/use-query-hooks";
+import { useAgents, useAgentStatus } from "@/hooks/use-query-hooks";
 import { Cog, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
@@ -18,7 +18,7 @@ interface Agent {
 
 export default function Home() {
     const { data: agentsData, isLoading, isError, error } = useAgents();
-    const startAgentMutation = useStartAgent();
+    const agentStatusMutation = useAgentStatus();
     const navigate = useNavigate();
 
     // Extract agents properly from the response
@@ -27,7 +27,7 @@ export default function Home() {
     // Handle agent start action
     const handleStartAgent = async (agent: Agent) => {
         try {
-            await startAgentMutation.mutateAsync(agent.character.name);
+            await agentStatusMutation.mutateAsync({ agentId: agent.id, status: 'active' });
             // Navigate to chat after successful start
             navigate(`/chat/${agent.id}`);
         } catch (error) {

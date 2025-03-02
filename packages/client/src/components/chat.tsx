@@ -23,7 +23,7 @@ import { Badge } from "./ui/badge";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
+import { useAgent, useAgentMessages, useAgentStatus, useSendMessage } from "@/hooks/use-query-hooks";
 
 type ExtraContentFields = {
     user: string;
@@ -109,8 +109,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
     
     const { messages } = useAgentMessages(agentId);
     const { data: agentData, isLoading: isAgentLoading } = useAgent(agentId);
-    const startAgentMutation = useStartAgent();
-    const stopAgentMutation = useStopAgent();
+    const agentStatusMutation = useAgentStatus();
+    const sendMessageMutation = useSendMessage(agentId);
 
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
@@ -172,8 +172,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
         );
 
         sendMessageMutation.mutate({
-            message: input,
-            selectedFile: selectedFile ? selectedFile : null,
+            text: input,
+            file: selectedFile || undefined,
         });
 
         setSelectedFile(null);
@@ -187,36 +187,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     }, []);
 
-    const sendMessageMutation = useMutation({
-        mutationKey: ["send_message", agentId],
-        mutationFn: ({
-            message,
-            selectedFile,
-        }: {
-            message: string;
-            selectedFile?: File | null;
-        }) => apiClient.sendMessage(agentId, message, selectedFile),
-        onSuccess: (newMessages: ContentWithUser[]) => {
-            queryClient.setQueryData(
-                ["messages", agentId, worldId],
-                (old: ContentWithUser[] = []) => [
-                    ...old.filter((msg) => !msg.isLoading),
-                    ...newMessages.map((msg) => ({
-                        ...msg,
-                        createdAt: Date.now(),
-                    })),
-                ]
-            );
-        },
-        onError: (e) => {
-            toast({
-                variant: "destructive",
-                title: "Unable to send message",
-                description: e.message,
-            });
-        },
-    });
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file?.type.startsWith("image/")) {
@@ -225,10 +195,13 @@ export default function Page({ agentId }: { agentId: UUID }) {
     };
 
     const handleStartAgent = async () => {
-        if (!agentData?.character?.name) return;
+        if (!agentData?.id) return;
         
         try {
-            await startAgentMutation.mutateAsync(agentData.character.name);
+            await agentStatusMutation.mutateAsync({
+                agentId: agentData.id,
+                status: 'active'
+            });
         } catch (error) {
             console.error("Failed to start agent:", error);
         }
@@ -236,7 +209,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
 
     const handleStopAgent = async () => {
         try {
-            await stopAgentMutation.mutateAsync(agentId);
+            await agentStatusMutation.mutateAsync({
+                agentId,
+                status: 'inactive'
+            });
         } catch (error) {
             console.error("Failed to stop agent:", error);
         }
@@ -291,9 +267,9 @@ export default function Page({ agentId }: { agentId: UUID }) {
                             size="sm"
                             className="gap-1"
                             onClick={handleStopAgent}
-                            disabled={stopAgentMutation.isPending}
+                            disabled={agentStatusMutation.isPending}
                         >
-                            {stopAgentMutation.isPending ? "Stopping..." : "Stop"}
+                            {agentStatusMutation.isPending ? "Stopping..." : "Stop"}
                         </Button>
                     ) : (
                         <Button
@@ -301,9 +277,9 @@ export default function Page({ agentId }: { agentId: UUID }) {
                             size="sm"
                             className="gap-1"
                             onClick={handleStartAgent}
-                            disabled={startAgentMutation.isPending}
+                            disabled={agentStatusMutation.isPending}
                         >
-                            {startAgentMutation.isPending ? "Starting..." : "Start"}
+                            {agentStatusMutation.isPending ? "Starting..." : "Start"}
                         </Button>
                     )}
                 </div>

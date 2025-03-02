@@ -1,4 +1,4 @@
-import type { Character, UUID } from "@elizaos/core";
+import type { Character, Content, UUID } from "@elizaos/core";
 import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
@@ -10,7 +10,7 @@ const fetcher = async ({
     headers,
 }: {
     url: string;
-    method?: "GET" | "POST" | "DELETE" | "PUT";
+    method?: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
     body?: object | FormData;
     headers?: HeadersInit;
 }) => {
@@ -24,7 +24,7 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST" || method === "PUT") {
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
         if (body instanceof FormData) {
             if (options.headers && typeof options.headers === 'object') {
                 // Create new headers object without Content-Type
@@ -70,54 +70,112 @@ const fetcher = async ({
 };
 
 export const apiClient = {
+    // Core Agent CRUD Operations
+    getAgents: () => fetcher({ url: "/agents" }),
+    
+    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean; status?: 'active' | 'inactive' }> =>
+        fetcher({ url: `/agents/${agentId}` }),
+    
+    createAgent: (params: { characterPath?: string; characterJson?: Character; remotePath?: string }) =>
+        fetcher({
+            url: "/agents",
+            method: "POST",
+            body: params,
+        }),
+    
+    updateAgent: (agentId: string, character: Character) =>
+        fetcher({
+            url: `/agents/${agentId}`,
+            method: "PUT",
+            body: character,
+        }),
+    
+    deleteAgent: (agentId: string) =>
+        fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
+
+    // Agent Status Management
+    updateAgentStatus: (agentId: string, status: 'active' | 'inactive') =>
+        fetcher({
+            url: `/agents/${agentId}/status`,
+            method: "PATCH",
+            body: { status },
+        }),
+
+    // Communication (Messages & Speech)
     sendMessage: (
         agentId: string,
-        message: string,
-        selectedFile?: File | null,
-        roomId?: UUID
+        text: string,
+        options?: {
+            roomId?: UUID;
+            userId?: string;
+            userName?: string;
+            name?: string;
+            worldId?: string;
+            file?: File;
+        }
     ) => {
         const worldId = WorldManager.getWorldId();
         
-        if (selectedFile) {
-            // Use FormData only when there's a file
+        if (options?.file) {
             const formData = new FormData();
-            formData.append("text", message);
-            formData.append("user", "user");
-            formData.append("file", selectedFile);
-            // Add roomId if provided
-            if (roomId) {
-                formData.append("roomId", roomId);
-            }
-            // Add worldId
+            formData.append("text", text);
+            formData.append("file", options.file);
+            if (options.roomId) formData.append("roomId", options.roomId);
+            if (options.userId) formData.append("userId", options.userId);
+            if (options.userName) formData.append("userName", options.userName);
+            if (options.name) formData.append("name", options.name);
             formData.append("worldId", worldId);
             
             return fetcher({
-                url: `/agents/${agentId}/message`,
+                url: `/agents/${agentId}/messages`,
                 method: "POST",
                 body: formData,
             });
         }
-            // Use JSON when there's no file
-            return fetcher({
-                url: `/agents/${agentId}/message`,
-                method: "POST",
-                body: {
-                    text: message,
-                    user: "user",
-                    roomId: roomId || undefined,
-                    worldId
-                },
-            });
-    },
-    getAgents: () => fetcher({ url: "/agents" }),
-    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean }> =>
-        fetcher({ url: `/agents/${agentId}` }),
-    tts: (agentId: string, text: string) =>
-        fetcher({
-            url: `/agents/${agentId}/tts`,
+
+        return fetcher({
+            url: `/agents/${agentId}/messages`,
             method: "POST",
             body: {
                 text,
+                roomId: options?.roomId,
+                userId: options?.userId,
+                userName: options?.userName,
+                name: options?.name,
+                worldId
+            },
+        });
+    },
+
+    // Speech Generation and Conversation
+    generateSpeech: (agentId: string, text: string) =>
+        fetcher({
+            url: `/agents/${agentId}/speech/generate`,
+            method: "POST",
+            body: { text },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "audio/mpeg",
+                "Transfer-Encoding": "chunked",
+            },
+        }),
+
+    speechConversation: (
+        agentId: string,
+        text: string,
+        options?: {
+            roomId?: UUID;
+            userId?: string;
+            userName?: string;
+            name?: string;
+        }
+    ) =>
+        fetcher({
+            url: `/agents/${agentId}/speech/conversation`,
+            method: "POST",
+            body: {
+                text,
+                ...options
             },
             headers: {
                 "Content-Type": "application/json",
@@ -125,81 +183,45 @@ export const apiClient = {
                 "Transfer-Encoding": "chunked",
             },
         }),
-    whisper: async (agentId: string, audioBlob: Blob) => {
-        const formData = new FormData();
-        formData.append("file", audioBlob, "recording.wav");
-        return fetcher({
-            url: `/agents/${agentId}/whisper`,
-            method: "POST",
-            body: formData,
-        });
-    },
-    deleteAgent: (agentId: string): Promise<{ success: boolean }> =>
-        fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
-    updateAgent: (agentId: string, character: Character) =>
-        fetcher({
-            url: `/agents/${agentId}`,
-            method: "PUT",
-            body: character,
-        }),
-    createAgent: (params: { characterPath?: string; characterJson?: Character }) =>
-        fetcher({
-            url: `/agents/`,
-            method: "POST",
-            body: params,
-        }),
-    startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
-        fetcher({
-            url: "/agents/start",
-            method: "POST",
-            body: params,
-        }),
-    startAgentByName: (characterName: string) =>
-        fetcher({
-            url: `/agents/start/${characterName}`,
-            method: "POST",
-        }),
-    stopAgent: (agentId: string) => {
-        return fetcher({
-            url: `/agents/${agentId}/stop`,
-            method: "POST",
-        });
-    },
-    removeAgent: (agentId: string) => {
-        return fetcher({
-            url: `/agents/${agentId}`,
-            method: "DELETE",
-        });
-    },
-    getMemories: (agentId: string, roomId: string, options?: { limit?: number; before?: number }) => {
-        const worldId = WorldManager.getWorldId();
-        return fetcher({ 
-            url: `/agents/${agentId}/${roomId}/memories`,
-            method: "GET",
-            body: { worldId, ...options }
-        });
-    },
-    
-    // Room-related routes
+
+    // Room Management
     getRooms: (agentId: string) => {
         const worldId = WorldManager.getWorldId();
-        return fetcher({ 
+        return fetcher({
             url: `/agents/${agentId}/rooms`,
             method: "GET",
             body: { worldId }
         });
     },
-    
-    createRoom: (agentId: string, roomName: string) => {
+
+    createRoom: (
+        agentId: string,
+        options: {
+            name?: string;
+            worldId?: string;
+            roomId?: UUID;
+            userId?: string;
+        }
+    ) => {
         const worldId = WorldManager.getWorldId();
         return fetcher({
             url: `/agents/${agentId}/rooms`,
             method: "POST",
             body: {
-                name: roomName,
-                worldId
+                ...options,
+                worldId: options.worldId || worldId
             }
         });
     },
-    
+
+    // Audio Processing
+    transcribeAudio: (agentId: string, audioFile: File) => {
+        const formData = new FormData();
+        formData.append("file", audioFile);
+        return fetcher({
+            url: `/agents/${agentId}/transcriptions`,
+            method: "POST",
+            body: formData,
+        });
+    },
 };

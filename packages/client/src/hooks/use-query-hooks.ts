@@ -98,18 +98,12 @@ export function useAgents(options = {}) {
   return useQuery<{ agents: AgentData[] }>({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
-    staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
-    // Use more frequent polling for real-time updates
-    refetchInterval: !network.isOffline 
-      ? STALE_TIMES.FREQUENT 
-      : false,
-    // Disable polling when the tab is not active
+    staleTime: STALE_TIMES.FREQUENT,
+    refetchInterval: !network.isOffline ? STALE_TIMES.FREQUENT : false,
     refetchIntervalInBackground: false,
-    // Configure based on network conditions
     ...(!network.isOffline && network.effectiveType === 'slow-2g' && {
-      refetchInterval: STALE_TIMES.STANDARD // Poll less frequently on slow connections
+      refetchInterval: STALE_TIMES.STANDARD
     }),
-    // Allow overriding any options
     ...options
   });
 }
@@ -121,97 +115,141 @@ export function useAgent(agentId: UUID | undefined | null, options = {}) {
   return useQuery({
     queryKey: ['agent', agentId],
     queryFn: () => apiClient.getAgent(agentId || ''),
-    staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
+    staleTime: STALE_TIMES.FREQUENT,
     enabled: Boolean(agentId),
-    // Use more frequent polling for real-time updates
-    refetchInterval: !network.isOffline && Boolean(agentId) 
-      ? STALE_TIMES.FREQUENT 
-      : false,
-    // Disable polling when the tab is not active
+    refetchInterval: !network.isOffline && Boolean(agentId) ? STALE_TIMES.FREQUENT : false,
     refetchIntervalInBackground: false,
-    // Configure based on network conditions
     ...(!network.isOffline && network.effectiveType === 'slow-2g' && {
-      refetchInterval: STALE_TIMES.STANDARD // Poll less frequently on slow connections
+      refetchInterval: STALE_TIMES.STANDARD
     }),
-    // Allow overriding any options
     ...options
   });
 }
 
-// Hook for starting an agent with optimistic updates
-export function useStartAgent() {
+// Hook for managing agent status
+export function useAgentStatus() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (characterName: string) => apiClient.startAgentByName(characterName),
-    onSuccess: (data) => {
-      // Immediately invalidate the queries for fresh data
+    mutationFn: ({ agentId, status }: { agentId: string; status: 'active' | 'inactive' }) => 
+      apiClient.updateAgentStatus(agentId, status),
+    onSuccess: (data, variables) => {
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['agents'] });
-      if (data?.id) {
-        queryClient.invalidateQueries({ queryKey: ['agent', data.id] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['agent', variables.agentId] });
       
       toast({
-        title: 'Agent Started',
-        description: `${data?.name || 'Agent'} is now running`,
+        title: variables.status === 'active' ? 'Agent Started' : 'Agent Stopped',
+        description: `Agent is now ${variables.status}`,
       });
     },
     onError: (error) => {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to start agent',
+        description: error instanceof Error ? error.message : 'Failed to update agent status',
         variant: 'destructive',
       });
     }
   });
 }
 
-// Hook for stopping an agent with optimistic updates
-export function useStopAgent() {
+// Hook for sending messages
+export function useSendMessage(agentId: UUID) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const worldId = WorldManager.getWorldId();
+
+  return useMutation({
+    mutationFn: ({ 
+      text, 
+      file,
+      roomId,
+      userId,
+      userName,
+      name 
+    }: { 
+      text: string;
+      file?: File;
+      roomId?: UUID;
+      userId?: string;
+      userName?: string;
+      name?: string;
+    }) => apiClient.sendMessage(agentId, text, {
+      file,
+      roomId,
+      userId,
+      userName,
+      name,
+      worldId
+    }),
+    onSuccess: (response, variables) => {
+      // Update messages in cache
+      queryClient.setQueryData(
+        ['messages', agentId, variables.roomId || 'default', worldId],
+        (old: ContentWithUser[] = []) => [
+          ...old.filter(msg => !msg.isLoading),
+          ...Array.isArray(response) ? response : [response]
+        ]
+      );
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send message',
+        variant: 'destructive',
+      });
+    }
+  });
+}
+
+// Hook for room management
+export function useRooms(agentId: UUID) {
+  const network = useNetworkStatus();
+  
+  return useQuery({
+    queryKey: ['rooms', agentId],
+    queryFn: () => apiClient.getRooms(agentId),
+    staleTime: STALE_TIMES.STANDARD,
+    refetchInterval: !network.isOffline ? STALE_TIMES.STANDARD : false,
+    enabled: Boolean(agentId)
+  });
+}
+
+export function useCreateRoom() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (agentId: string) => apiClient.stopAgent(agentId),
-    onMutate: async (agentId) => {
-      // Optimistically update the UI
-      // Get the agent data from the cache
-      const agent = queryClient.getQueryData<{ id: string; character: Character }>(['agent', agentId]);
-      
-      if (agent) {
-        toast({
-          title: 'Stopping Agent',
-          description: `Stopping ${agent.character.name}...`,
-        });
-      }
-    },
-    onSuccess: (_, agentId) => {
-      // Immediately invalidate the queries for fresh data
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
-      queryClient.invalidateQueries({ queryKey: ['agent', agentId] });
-      
+    mutationFn: ({ 
+      agentId, 
+      name,
+      worldId,
+      roomId,
+      userId 
+    }: {
+      agentId: string;
+      name?: string;
+      worldId?: string;
+      roomId?: UUID;
+      userId?: string;
+    }) => apiClient.createRoom(agentId, { name, worldId, roomId, userId }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['rooms', variables.agentId] });
       toast({
-        title: 'Agent Stopped',
-        description: 'The agent has been successfully stopped',
+        title: 'Room Created',
+        description: 'New chat room has been created',
       });
     },
-    onError: (error, agentId) => {
-      // Force invalidate on error
-      queryClient.invalidateQueries({ queryKey: ['agents'] });
-      queryClient.invalidateQueries({ queryKey: ['agent', agentId] });
-      
+    onError: (error) => {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to stop agent',
+        description: error instanceof Error ? error.message : 'Failed to create room',
         variant: 'destructive',
       });
     }
   });
 }
-
-
-
 
 // Hook for fetching messages directly for a specific agent without requiring a room
 export function useAgentMessages(agentId: UUID) {
@@ -228,139 +266,50 @@ export function useAgentMessages(agentId: UUID) {
   };
 }
 
-// The original useMessages hook remains for backward compatibility
+// The original useMessages hook updated for new API
 export function useMessages(agentId: UUID, roomId: UUID): {
   data: TransformedMessage[] | undefined;
   isLoading: boolean;
   isError: boolean;
   error: unknown;
-  loadOlderMessages: () => Promise<boolean>;
   hasOlderMessages: boolean;
   isLoadingMore: boolean;
 } {
   const queryClient = useQueryClient();
   const worldId = WorldManager.getWorldId();
-  const [oldestMessageTimestamp, setOldestMessageTimestamp] = useState<number | null>(null);
-  const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(true);
+  const [hasMoreMessages, setHasMoreMessages] = useState<boolean>(false);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   
   // Initial fetch of messages
   const messagesQuery = useQuery({
     queryKey: ['messages', agentId, roomId, worldId],
-    queryFn: () => apiClient.getMemories(agentId, roomId),
-    select: (data: { memories: Memory[] }): TransformedMessage[] => {
-      if (!data?.memories) return [];
-      
-      // Transform the memories into the ContentWithUser format expected by the chat component
-      const transformedMessages: TransformedMessage[] = data.memories.map((memory: Memory): TransformedMessage => {
-        const transformed: TransformedMessage = {
-          text: memory.content.text,
-          user: memory.userId === agentId ? 'system' : 'user',
-          createdAt: memory.createdAt,
-          attachments: memory.content.attachments,
-          source: memory.content.source,
-          action: memory.content.action,
-          worldId: memory.worldId || worldId, // Include worldId in the transformed messages
-          id: generateMessageId(memory) // Generate a unique ID
-        };
-        return transformed;
-      });
-
-      // Update the oldest message timestamp if we have messages
-      if (transformedMessages.length > 0) {
-        const timestamps: number[] = transformedMessages.map((msg: TransformedMessage): number => msg.createdAt);
-        const oldest: number = Math.min(...timestamps);
-        setOldestMessageTimestamp(oldest);
-        
-        // If we got less than the expected page size, there are probably no more messages
-        setHasMoreMessages(data.memories.length >= 20); // Assuming default page size is 20
-      } else {
-        setHasMoreMessages(false);
-      }
-
-      return transformedMessages;
+    queryFn: async () => {
+      // Since we don't have a direct getMessages endpoint anymore,
+      // we'll return the cached messages or an empty array
+      return queryClient.getQueryData<ContentWithUser[]>(
+        ['messages', agentId, roomId, worldId]
+      ) || [];
     },
     staleTime: STALE_TIMES.FREQUENT
   });
 
-  // Function to load older messages
-  const loadOlderMessages = async (): Promise<boolean> => {
-    if (!oldestMessageTimestamp || !hasMoreMessages || isLoadingMore) return false;
-    
-    try {
-      setIsLoadingMore(true);
-      
-      // Fetch messages older than the oldest one we currently have
-      const response = await apiClient.getMemories(agentId, roomId, {
-        before: oldestMessageTimestamp,
-        limit: 20 // Fetch up to 20 older messages
-      });
-      
-      if (response?.memories && response.memories.length > 0) {
-        // Transform the memories
-        const transformedMessages: TransformedMessage[] = response.memories.map((memory: Memory): TransformedMessage => {
-          const transformed: TransformedMessage = {
-            text: memory.content.text,
-            user: memory.userId === agentId ? 'system' : 'user',
-            createdAt: memory.createdAt,
-            attachments: memory.content.attachments,
-            source: memory.content.source,
-            action: memory.content.action,
-            worldId: memory.worldId || worldId,
-            id: generateMessageId(memory) // Generate a unique ID
-          };
-          return transformed;
-        });
-        
-        // Update the oldest message timestamp
-        const timestamps: number[] = transformedMessages.map((msg: TransformedMessage): number => msg.createdAt);
-        const oldest: number = Math.min(...timestamps);
-        setOldestMessageTimestamp(oldest);
-        
-        // Merge with existing messages
-        const existingMessages: TransformedMessage[] = queryClient.getQueryData<TransformedMessage[]>(['messages', agentId, roomId, worldId]) || [];
-        
-        // Create a Map with message ID as key to filter out any potential duplicates
-        const messageMap = new Map<string, TransformedMessage>();
-        
-        // Add existing messages to the map
-        existingMessages.forEach((msg: TransformedMessage): void => {
-          messageMap.set(msg.id, msg);
-        });
-        
-        // Add new messages to the map, overwriting any with the same ID
-        transformedMessages.forEach((msg: TransformedMessage): void => {
-          messageMap.set(msg.id, msg);
-        });
-        
-        // Convert back to array and sort
-        const mergedMessages: TransformedMessage[] = Array.from(messageMap.values());
-        mergedMessages.sort((a: TransformedMessage, b: TransformedMessage): number => a.createdAt - b.createdAt);
-        
-        // Update the cache
-        queryClient.setQueryData(['messages', agentId, roomId, worldId], mergedMessages);
-        
-        // Update hasMoreMessages based on the number of messages received
-        // If we received fewer messages than requested, we've likely reached the end
-        setHasMoreMessages(response.memories.length >= 20);
-        
-        return true;
-      }
-      
-      // No more messages to load
-      setHasMoreMessages(false);
-      return false;
-    } catch (error: unknown) {
-      console.error("Error loading older messages:", error);
-      return false;
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+  // Transform messages to the expected format
+  const transformedMessages = messagesQuery.data?.map((msg: ContentWithUser): TransformedMessage => ({
+    text: msg.text,
+    user: msg.user,
+    createdAt: msg.createdAt,
+    attachments: msg.attachments,
+    source: msg.source,
+    action: msg.action,
+    worldId: msg.worldId,
+    id: msg.id || generateMessageId({ ...msg, id: `${msg.createdAt}-${msg.user}` }) // Ensure id is always present
+  }));
 
   return {
-    ...messagesQuery,
-    loadOlderMessages,
+    data: transformedMessages,
+    isLoading: messagesQuery.isLoading,
+    isError: messagesQuery.isError,
+    error: messagesQuery.error,
     hasOlderMessages: hasMoreMessages,
     isLoadingMore
   };

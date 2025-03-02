@@ -345,6 +345,12 @@ export function agentRouter(
         }
 
         const { status } = req.body;
+            
+
+        logger.info(`[STATUS] Updating agent status: ${agentId} to ${status}`);
+
+        logger.info(`[STATUS] Status: ${!status || !['active', 'inactive'].includes(status)}`);
+
         if (!status || !['active', 'inactive'].includes(status)) {
             logger.warn("[STATUS] Invalid status value");
             res.status(400).json({ error: "Status must be 'active' or 'inactive'" });
@@ -355,15 +361,15 @@ export function agentRouter(
             if (status === 'active') {
                 // Start agent
                 logger.info(`[STATUS] Starting agent: ${agentId}`);
-                const character = await server?.database.getCharacter(agentId);
-                if (!character) {
-                    logger.warn(`[STATUS] Character not found: ${agentId}`);
-                    res.status(404).json({ error: "Character not found" });
+                const agentData = await server?.database.getAgent(agentId);
+                if (!agentData) {
+                    logger.warn(`[STATUS] Agent not found: ${agentId}`);
+                    res.status(404).json({ error: "Agent not found" });
                     return;
                 }
 
-                const agent = await server?.startAgent(character);
-                logger.success(`[STATUS] Agent started: ${character.name} (${agentId})`);
+                const agent = await server?.startAgent(agentData.character);
+                logger.success(`[STATUS] Agent started: ${agentData.character.name} (${agentId})`);
 
                 const response: AgentResponse = {
                     id: agent.agentId,
