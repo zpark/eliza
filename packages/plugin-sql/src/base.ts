@@ -1742,6 +1742,45 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async getCharacterByName(name: string): Promise<Character | null> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select()
+                .from(characterTable)
+                .where(eq(characterTable.name, name))
+                .limit(1);
+
+            if (result.length === 0) return null;
+
+            const char = result[0];
+            return {
+                id: char.id,
+                name: char.name,
+                username: char.username ?? undefined,
+                system: char.system ?? undefined,
+                templates: char.templates
+                    ? Object.fromEntries(
+                          Object.entries(char.templates).map(
+                              ([key, stored]) => [
+                                  key,
+                                  storedToTemplate(stored as StoredTemplate),
+                              ]
+                          )
+                      )
+                    : undefined,
+                bio: char.bio,
+                messageExamples: char.messageExamples || undefined,
+                postExamples: char.postExamples || undefined,
+                topics: char.topics || undefined,
+                adjectives: char.adjectives || undefined,
+                knowledge: char.knowledge || undefined,
+                plugins: char.plugins || undefined,
+                settings: char.settings || undefined,
+                style: char.style || undefined,
+            };
+        });
+    }
+
     async updateCharacter(
         name: string,
         updates: Partial<Character>

@@ -484,6 +484,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getCharacter(characterId: UUID): Promise<Character | null>;
 
     /**
+     * Retrieves a character by their name.
+     * @param name The name of the character to retrieve.
+     * @returns A Promise that resolves to the Character object or null if not found.
+     */
+    abstract getCharacterByName(name: string): Promise<Character | null>;
+
+    /**
      * Updates an existing character in the database.
      * @param characterId The UUID of the character to update.
      * @param updates Partial Character object containing the fields to update.
