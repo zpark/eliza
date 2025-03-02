@@ -406,6 +406,7 @@ export class AgentRuntime implements IAgentRuntime {
     // Stop all registered clients
     for (const [clientName, client] of this.clients) {
       logger.log(`runtime::stop - requesting client stop for ${clientName}`);
+      await this.ensureAgentIsDisabled();
       await client.stop(this);
     }
   }
@@ -618,7 +619,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     if (!agent.enabled) {
-      await this.databaseAdapter.updateAgent({
+      await this.databaseAdapter.updateAgent(this.agentId, {
         ...agent,
         enabled: true,
       });
@@ -628,7 +629,7 @@ export class AgentRuntime implements IAgentRuntime {
   private async ensureAgentIsDisabled() {
     const agent = await this.databaseAdapter.getAgent(this.agentId);
     if (agent) {
-      await this.databaseAdapter.updateAgent({ ...agent, enabled: false });
+      await this.databaseAdapter.toggleAgent(this.agentId, false);
     }
   }
 

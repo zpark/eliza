@@ -464,10 +464,11 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
 
     /**
      * Updates an existing agent in the database.
+     * @param agentId The UUID of the agent to update.
      * @param agent The agent object with updated properties.
      * @returns A Promise that resolves to a boolean indicating success or failure of the update.
      */
-    abstract updateAgent(agent: Agent): Promise<boolean>;
+    abstract updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean>;
 
     /**
      * Deletes an agent from the database.

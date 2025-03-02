@@ -731,7 +731,7 @@ export interface IDatabaseAdapter {
 
   createAgent(agent: Partial<Agent>): Promise<boolean>;
 
-  updateAgent(agent: Agent): Promise<boolean>;
+  updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean>;
 
   toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean>;
 
