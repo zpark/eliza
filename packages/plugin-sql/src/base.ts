@@ -155,26 +155,16 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         this.embeddingDimension = DIMENSION_MAP[dimension];
     }
 
-    async getAgent(agentId: UUID): Promise<Agent & { character: Character } | null> {
+    async getAgent(agentId: UUID): Promise<Agent | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select({
-                    agent: agentTable,
-                    character: characterTable
-                })
+                .select()
                 .from(agentTable)
-                .leftJoin(characterTable, eq(agentTable.characterId, characterTable.id))
                 .where(eq(agentTable.id, agentId))
                 .limit(1);
 
             if (result.length === 0) return null;
-            return {
-                ...result[0].agent,
-                characterId: result[0].character.id,
-                character: {
-                    ...result[0].character,
-                }
-            };
+            return result[0];
         });
     }
 
@@ -182,7 +172,22 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         return this.withDatabase(async () => {
             try {
                 return await this.db.transaction(async (tx) => {
-                    await tx.insert(agentTable).values(agent);
+                    await tx.insert(agentTable).values({
+                        id: agent.id,
+                        enabled: agent.enabled,
+                        name: agent.name,
+                        username: agent.username,
+                        system: agent.system,
+                        bio: agent.bio,
+                        messageExamples: agent.messageExamples,
+                        postExamples: agent.postExamples,
+                        topics: agent.topics,
+                        adjectives: agent.adjectives,
+                        knowledge: agent.knowledge,
+                        plugins: agent.plugins,
+                        settings: agent.settings,
+                        style: agent.style
+                    });
                     logger.debug("Agent created successfully:", {
                         agentId: agent.id
                     });
@@ -194,7 +199,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     agentId: agent.id,
                     agent
                 });
-                console.trace();
                 return false;
             }
         });
@@ -206,8 +210,19 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await this.db
                     .update(agentTable)
                     .set({
-                        characterId: agent.characterId,
-                        enabled: agent.enabled
+                        enabled: agent.enabled,
+                        name: agent.name,
+                        username: agent.username,
+                        system: agent.system,
+                        bio: agent.bio,
+                        messageExamples: agent.messageExamples,
+                        postExamples: agent.postExamples,
+                        topics: agent.topics,
+                        adjectives: agent.adjectives,
+                        knowledge: agent.knowledge,
+                        plugins: agent.plugins,
+                        settings: agent.settings,
+                        style: agent.style
                     })
                     .where(eq(agentTable.id, agent.id));
                 return true;
@@ -223,21 +238,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async getAgents(): Promise<Agent[]> {
         return this.withDatabase(async () => {
-            const result = await this.db.select({
-                agent: agentTable,
-                character: characterTable
-            }).from(agentTable).leftJoin(characterTable, eq(agentTable.characterId, characterTable.id));
+            const result = await this.db
+                .select()
+                .from(agentTable)
+                .orderBy(desc(agentTable.createdAt));
             
-            return result.map(row => ({
-                id: row.agent.id,
-                enabled: row.agent.enabled,
-                characterId: row.character.id,
-                character: {
-                    id: row.character.id,
-                    name: row.character.name,
-                    bio: row.character.bio[0]
-                }
-            }));
+            return result;
         });
     }
 
