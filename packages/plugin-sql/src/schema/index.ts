@@ -1,6 +1,5 @@
 export { agentTable } from "./agent";
 export { cacheTable } from "./cache";
-export { characterTable } from "./character";
 export { componentTable } from "./component";
 export { embeddingTable } from "./embedding";
 export { entityTable } from "./entity";
