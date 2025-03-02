@@ -1,15 +1,15 @@
-import { getClient } from './test-utils';
+import { getScraper } from './test-utils';
 import { SearchMode } from './search';
 import type { QueryTweetsResponse } from './timeline-v1';
 
-test('client can process search cursor', async () => {
-  const client = await getClient();
+test('scraper can process search cursor', async () => {
+  const scraper = await getScraper();
 
   let cursor: string | undefined = undefined;
   const maxTweets = 30;
   let nTweets = 0;
   while (nTweets < maxTweets) {
-    const res: QueryTweetsResponse = await client.fetchSearchTweets(
+    const res: QueryTweetsResponse = await scraper.fetchSearchTweets(
       'twitter',
       maxTweets,
       SearchMode.Top,
@@ -23,14 +23,14 @@ test('client can process search cursor', async () => {
   }
 }, 30000);
 
-test('client can search profiles', async () => {
-  const client = await getClient();
+test('scraper can search profiles', async () => {
+  const scraper = await getScraper();
 
   const seenProfiles = new Map<string, boolean>();
   const maxProfiles = 150;
   let nProfiles = 0;
 
-  const profiles = client.searchProfiles('Twitter', maxProfiles);
+  const profiles = scraper.searchProfiles('Twitter', maxProfiles);
   for await (const profile of profiles) {
     nProfiles++;
 
@@ -46,14 +46,14 @@ test('client can search profiles', async () => {
   expect(nProfiles).toEqual(maxProfiles);
 }, 30000);
 
-test('client can search tweets', async () => {
-  const client = await getClient();
+test('scraper can search tweets', async () => {
+  const scraper = await getScraper();
 
   const seenTweets = new Map<string, boolean>();
   const maxTweets = 150;
   let nTweets = 0;
 
-  const profiles = client.searchTweets(
+  const profiles = scraper.searchTweets(
     'twitter',
     maxTweets,
     SearchMode.Latest,

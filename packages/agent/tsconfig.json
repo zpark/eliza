@@ -5,8 +5,7 @@
         "rootDir": ".",
         "module": "ESNext",
         "moduleResolution": "Bundler",
-        "types": ["node"],
-        "jsx": "react-jsx"
+        "types": ["node"]
     },
     "ts-node": {
         "experimentalSpecifierResolution": "node",

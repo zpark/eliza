@@ -1,4 +1,4 @@
-import { getClient } from './test-utils';
+import { getScraper } from './test-utils';
 import { jest } from '@jest/globals';
 
 let shouldSkipV2Tests = false;
@@ -30,8 +30,8 @@ beforeAll(async () => {
 
   try {
     // Get the user ID from username
-    const client = await getClient();
-    const profile = await client.getProfile(TWITTER_USERNAME);
+    const scraper = await getScraper();
+    const profile = await scraper.getProfile(TWITTER_USERNAME);
 
     if (!profile.userId) {
       throw new Error('User ID not found');
@@ -40,7 +40,7 @@ beforeAll(async () => {
     testUserId = profile.userId;
 
     // Get first conversation ID for testing
-    const conversations = await client.getDirectMessageConversations(
+    const conversations = await scraper.getDirectMessageConversations(
       testUserId,
     );
 
@@ -70,8 +70,8 @@ describe('Direct Message Tests', () => {
   test('should get DM conversations', async () => {
     if (shouldSkipV2Tests) return;
 
-    const client = await getClient();
-    const conversations = await client.getDirectMessageConversations(
+    const scraper = await getScraper();
+    const conversations = await scraper.getDirectMessageConversations(
       testUserId,
     );
 
@@ -83,19 +83,19 @@ describe('Direct Message Tests', () => {
   test('should handle DM send failure gracefully', async () => {
     if (shouldSkipV2Tests) return;
 
-    const client = await getClient();
+    const scraper = await getScraper();
     const invalidConversationId = 'invalid-id';
 
     await expect(
-      client.sendDirectMessage(invalidConversationId, 'test message'),
+      scraper.sendDirectMessage(invalidConversationId, 'test message'),
     ).rejects.toThrow();
   }, 30000);
 
   test('should verify DM conversation structure', async () => {
     if (shouldSkipV2Tests) return;
 
-    const client = await getClient();
-    const conversations = await client.getDirectMessageConversations(
+    const scraper = await getScraper();
+    const conversations = await scraper.getDirectMessageConversations(
       testUserId,
     );
 

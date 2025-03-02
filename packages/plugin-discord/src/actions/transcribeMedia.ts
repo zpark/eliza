@@ -1,10 +1,15 @@
+import { composeContext } from "@elizaos/core";
+import { generateText } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type Action,
-    type ActionExample, composeContext, type Content,
+    type ActionExample,
+    type Content,
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass, parseJSONObjectFromText, type State
+    ModelClass,
+    type State,
 } from "@elizaos/core";
 
 export const transcriptionTemplate = `# Transcription of media file
@@ -39,8 +44,10 @@ const getMediaAttachmentId = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await generateText({
+            runtime,
             context,
+            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
 
@@ -166,7 +173,7 @@ ${mediaTranscript.trim()}
             const transcriptFilename = `content/transcript_${Date.now()}`;
 
             // save the transcript to a file
-            await runtime.databaseAdapter.setCache(
+            await runtime.cacheManager.set(
                 transcriptFilename,
                 callbackData.text
             );

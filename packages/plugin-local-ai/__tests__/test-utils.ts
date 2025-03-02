@@ -1,17 +1,18 @@
-import {
-  logger,
-  ModelClass,
+import { 
+  type IAgentRuntime, 
+  ModelClass, 
   type Character,
-  type IAgentRuntime,
-  type IDatabaseAdapter,
   type IMemoryManager,
-  type State
+  type ICacheManager,
+  type State,
+  type IDatabaseAdapter
 } from '@elizaos/core';
-import fs from 'node:fs';
 import path from 'node:path';
-import { Readable } from 'node:stream';
 import { vi } from 'vitest';
 import { MODEL_SPECS } from '../src/types';
+import fs from 'node:fs';
+import { logger } from '@elizaos/core';
+import { Readable } from 'node:stream';
 
 // Get the workspace root by going up from the current file location
 const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
@@ -43,6 +44,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   descriptionManager: {} as IMemoryManager,
   documentsManager: {} as IMemoryManager,
   knowledgeManager: {} as IMemoryManager,
+  cacheManager: {} as ICacheManager,
   getClient: () => null,
   getAllClients: () => new Map(),
   registerClient: () => {},
@@ -57,6 +59,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   getConversationLength: () => 0,
   processActions: async () => {},
   evaluate: async () => null,
+  getOrCreateUser: async () => {},
   registerProvider: () => {},
   registerAction: () => {},
   ensureConnection: async () => {},

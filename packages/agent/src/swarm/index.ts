@@ -4,19 +4,19 @@ dotenv.config({ path: '../../.env' });
 
 import type { Character, IAgentRuntime } from "@elizaos/core";
 import communityManager from "./communityManager";
-import devRel from "./devRel";
-import investmentManager from "./investmentManager";
+import complianceOfficer from "./complianceOfficer";
+import socialMediaManager from "./socialMediaManager";
 import liaison from "./liaison";
 import projectManager from "./projectManager";
-import socialMediaManager from "./socialMediaManager";
+import devSupport from "./devSupport";
 
 export const swarm: {character: Character, init: (runtime: IAgentRuntime) => void}[] = [
-  investmentManager,
+  complianceOfficer,
   communityManager,
   socialMediaManager,
   liaison,
   projectManager,
-  devRel,
+  devSupport,
 ];
 
 export default swarm;

@@ -93,7 +93,7 @@ export async function initializeAllSystems(
         }
       });
 
-      const world = await runtime.databaseAdapter.getWorld(worldId);    
+      const world = await runtime.getWorld(worldId);    
       
       if(world.metadata?.settings) {
         continue;
@@ -127,7 +127,7 @@ export async function startOnboardingDM(
   guild: Guild,
   worldId: UUID
 ): Promise<void> {
-  logger.info("startOnboardingDM - worldId", worldId);
+  console.log("startOnboardingDM - worldId", worldId);
   try {
     const owner = await guild.members.fetch(guild.ownerId);
     if (!owner) {
@@ -158,15 +158,17 @@ export async function startOnboardingDM(
       worldId: worldId,
     });
 
-    const entity = await runtime.databaseAdapter.getEntityById(runtime.agentId);
-    
-    if(!entity) {
-      await runtime.databaseAdapter.createEntity({
-        id: runtime.agentId,
-        names: [runtime.character.name],
-        agentId: runtime.agentId,
-      });
-    }
+    await runtime.getOrCreateUser(
+      runtime.agentId,
+      [runtime.character.name],
+      {
+        default: {
+          name: runtime.character.name,
+          userName: runtime.character.name,
+        },
+      },
+    );
+
     // Create memory of the initial message
     await runtime.messageManager.createMemory({
       agentId: runtime.agentId as UUID,

@@ -6,7 +6,7 @@ import {
   ModelClass,
   type TokenizeTextParams,
 } from "@elizaos/core";
-import { generateText } from "ai";
+import { generateText as aiGenerateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
 
@@ -157,7 +157,7 @@ export const openaiPlugin: Plugin = {
         console.log("generating text")
         console.log(context)
 
-      const { text: openaiResponse } = await generateText({
+      const { text: openaiResponse } = await aiGenerateText({
         model: openai.languageModel(model),
         prompt: context,
         system: runtime.character.system ?? undefined,
@@ -191,7 +191,7 @@ export const openaiPlugin: Plugin = {
       const model =
         runtime.getSetting("OPENAI_LARGE_MODEL") ?? runtime.getSetting("LARGE_MODEL") ?? "gpt-4o";
 
-      const { text: openaiResponse } = await generateText({
+      const { text: openaiResponse } = await aiGenerateText({
         model: openai.languageModel(model),
         prompt: context,
         system: runtime.character.system ?? undefined,
@@ -240,7 +240,7 @@ export const openaiPlugin: Plugin = {
         baseURL,
       });
       
-      const { text } = await generateText({
+      const { text } = await aiGenerateText({
         model: openai.languageModel(
           runtime.getSetting("OPENAI_SMALL_MODEL") ?? "gpt-4o-mini"
         ),
@@ -402,10 +402,9 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             console.log("openai_test_transcription");
             try {
-              const response = await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg");
-              const arrayBuffer = await response.arrayBuffer();
               const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, 
-                Buffer.from(new Uint8Array(arrayBuffer)));
+                Buffer.from(await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg")
+                  .then(res => res.arrayBuffer())));
               console.log("generated with test_transcription:", transcription);
             } catch (error) {
               console.error("Error in test_transcription:", error);

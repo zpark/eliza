@@ -1,10 +1,10 @@
 import { ProxyAgent,setGlobalDispatcher } from 'undici';
-import { Client } from './client';
+import { Scraper } from './scraper';
 import fs from 'node:fs';
 
-export interface ClientTestOptions {
+export interface ScraperTestOptions {
   /**
-   * Authentication method preference for the client.
+   * Authentication method preference for the scraper.
    * - 'api': Use Twitter API keys and tokens.
    * - 'cookies': Resume session using cookies.
    * - 'password': Use username/password for login.
@@ -13,8 +13,8 @@ export interface ClientTestOptions {
   authMethod: 'api' | 'cookies' | 'password' | 'anonymous';
 }
 
-export async function getClient(
-  options: Partial<ClientTestOptions> = { authMethod: 'cookies' },
+export async function getScraper(
+  options: Partial<ScraperTestOptions> = { authMethod: 'cookies' },
 ) {
   const username = process.env.TWITTER_USERNAME;
   const password = process.env.TWITTER_PASSWORD;
@@ -100,7 +100,7 @@ export async function getClient(
     setGlobalDispatcher(agent)
   }
 
-  const client = new Client({
+  const scraper = new Scraper({
     transform: {
       request: (input, init) => {
         if (agent) {
@@ -120,7 +120,7 @@ export async function getClient(
     accessToken &&
     accessTokenSecret
   ) {
-    await client.login(
+    await scraper.login(
       username,
       password,
       email,
@@ -131,14 +131,14 @@ export async function getClient(
       accessTokenSecret,
     );
   } else if (options.authMethod === 'cookies' && cookieStrings?.length) {
-    await client.setCookies(cookieStrings);
+    await scraper.setCookies(cookieStrings);
   } else if (options.authMethod === 'password' && username && password) {
-    await client.login(username, password, email, twoFactorSecret);
+    await scraper.login(username, password, email, twoFactorSecret);
   } else {
     console.warn(
       'No valid authentication method available. Ensure at least one of the following is configured: API credentials, cookies, or username/password.',
     );
   }
 
-  return client;
+  return scraper;
 }

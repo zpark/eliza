@@ -136,6 +136,7 @@ export class MemoryManager implements IMemoryManager {
             count: opts.count,
             unique: opts.unique,
             tableName: this.tableName,
+            agentId: opts.agentId,
             start: opts.start,
             end: opts.end,
         });
@@ -189,6 +190,7 @@ export class MemoryManager implements IMemoryManager {
         return await this.runtime.databaseAdapter.searchMemories({
             tableName: this.tableName,
             roomId,
+            agentId,
             embedding,
             match_threshold,
             count,
@@ -258,6 +260,7 @@ export class MemoryManager implements IMemoryManager {
     async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; agentId?: UUID }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemoriesByRoomIds({
             tableName: this.tableName,
+            agentId: params.agentId,
             roomIds: params.roomIds,
             limit: params.limit
         });

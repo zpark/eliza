@@ -1,100 +1,7 @@
-import { ZodSchema, z } from "zod";
-import { createUniqueUuid } from "..";
+import { createUniqueUuid, generateObjectArray } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";
 import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, RoleName, type State, type UUID } from "../types";
-
-export const generateObject = async ({
-  runtime,
-  context,
-  modelClass = ModelClass.TEXT_LARGE,
-  stopSequences = [],
-  output = "object",
-  enumValues = [],
-  schema,
-}): Promise<any> => {
-  if (!context) {
-    const errorMessage = "generateObject context is empty";
-    console.error(errorMessage);
-    throw new Error(errorMessage);
-  }
-
-  // Special handling for enum output type
-  if (output === "enum" && enumValues) {
-    const response = await runtime.useModel(modelClass, {
-      runtime,
-      context,
-      modelClass,
-      stopSequences,
-      maxTokens: 8,
-      object: true,
-    });
-
-    // Clean up the response to extract just the enum value
-    const cleanedResponse = response.trim();
-    
-    // Verify the response is one of the allowed enum values
-    if (enumValues.includes(cleanedResponse)) {
-      return cleanedResponse;
-    }
-    
-    // If the response includes one of the enum values (case insensitive)
-    const matchedValue = enumValues.find(value => 
-      cleanedResponse.toLowerCase().includes(value.toLowerCase())
-    );
-    
-    if (matchedValue) {
-      return matchedValue;
-    }
-
-    logger.error(`Invalid enum value received: ${cleanedResponse}`);
-    logger.error(`Expected one of: ${enumValues.join(", ")}`);
-    return null;
-  }
-
-  // Regular object/array generation
-  const response = await runtime.useModel(modelClass, {
-    runtime,
-    context,
-    modelClass,
-    stopSequences,
-    object: true,
-  });
-
-  let jsonString = response;
-
-  // Find appropriate brackets based on expected output type
-  const firstChar = output === "array" ? "[" : "{";
-  const lastChar = output === "array" ? "]" : "}";
-  
-  const firstBracket = response.indexOf(firstChar);
-  const lastBracket = response.lastIndexOf(lastChar);
-  
-  if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
-    jsonString = response.slice(firstBracket, lastBracket + 1);
-  }
-
-  if (jsonString.length === 0) {
-    logger.error(`Failed to extract JSON ${output} from model response`);
-    return null;
-  }
-
-  // Parse the JSON string
-  try {
-    const json = JSON.parse(jsonString);
-    
-    // Validate against schema if provided
-    if (schema) {
-      return schema.parse(json);
-    }
-    
-    return json;
-  } catch (_error) {
-    logger.error(`Failed to parse JSON ${output}`);
-    logger.error(jsonString);
-    return null;
-  }
-};
 
 // Role modification validation helper
 const canModifyRole = (
@@ -150,43 +57,8 @@ Return the results in this JSON format:
 ]
 }
 
-If no valid role assignments are found, return an empty array.`;
-
-async function generateObjectArray({
-  runtime,
-  context,
-  modelClass = ModelClass.TEXT_SMALL,
-  schema,
-  schemaName,
-  schemaDescription,
-}: {
-  runtime: IAgentRuntime;
-  context: string;
-  modelClass: ModelClass;
-  schema?: ZodSchema;
-  schemaName?: string;
-  schemaDescription?: string;
-}): Promise<z.infer<typeof schema>[]> {
-  if (!context) {
-    logger.error("generateObjectArray context is empty");
-    return [];
-  }
-  
-  const result = await generateObject({
-    runtime,
-    context,
-    modelClass,
-    output: "array",
-    schema,
-  });
-  
-  if (!Array.isArray(result)) {
-    logger.error("Generated result is not an array");
-    return [];
-  }
-  
-  return schema ? schema.parse(result) : result;
-}
+If no valid role assignments are found, return an empty array.
+`;
 
 interface RoleAssignment {
   userId: UUID;
@@ -212,7 +84,7 @@ const updateRoleAction: Action = {
       return false;
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = await runtime.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -230,7 +102,7 @@ const updateRoleAction: Action = {
     try {
       // Get world data instead of ownership state from cache
       const worldId = createUniqueUuid(runtime, serverId);
-      const world = await runtime.databaseAdapter.getWorld(worldId);
+      const world = await runtime.getWorld(worldId);
 
       // Get requester ID and convert to UUID for consistent lookup
       const requesterId = message.userId;
@@ -278,8 +150,8 @@ const updateRoleAction: Action = {
       await callback(response.content);
     }
 
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
-    const world = await runtime.databaseAdapter.getWorld(room.worldId);
+    const room = await runtime.getRoom(message.roomId);
+    const world = await runtime.getWorld(room.worldId);
 
     if (!room) {
       throw new Error("No room found");

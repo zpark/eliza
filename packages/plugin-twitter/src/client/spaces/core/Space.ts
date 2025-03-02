@@ -21,7 +21,7 @@ import type {
   SpeakerInfo,
   SpaceConfig,
 } from '../types';
-import type { Client } from '../../client';
+import type { Scraper } from '../../scraper';
 import { Logger } from '../logger';
 
 /**
@@ -46,7 +46,7 @@ export class Space extends EventEmitter {
   private speakers = new Map<string, SpeakerInfo>();
 
   constructor(
-    private readonly client: Client,
+    private readonly scraper: Scraper,
     options?: { debug?: boolean },
   ) {
     super();
@@ -84,7 +84,7 @@ export class Space extends EventEmitter {
     this.logger.debug('[Space] Initializing...');
 
     // 1) Obtain the Periscope cookie + region
-    const cookie = await this.client.getPeriscopeCookie();
+    const cookie = await this.scraper.getPeriscopeCookie();
     const region = await getRegion();
     this.logger.debug('[Space] Got region =>', region);
 

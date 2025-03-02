@@ -24,9 +24,9 @@ It is important to use Twitter cookies to avoid sending a new login request to T
 In your application, you will likely want to check for existing cookies. If cookies are not available, log in with user authentication credentials and cache the cookies for future use.
 
 ```ts
-const client = await getClient({ authMethod: 'password' });
+const scraper = await getScraper({ authMethod: 'password' });
 
-client.getCookies().then((cookies) => {
+scraper.getCookies().then((cookies) => {
   console.log(cookies);
   // Remove 'Cookies' and save the cookies as a JSON array
 });
@@ -35,11 +35,11 @@ client.getCookies().then((cookies) => {
 ## Getting Started
 
 ```ts
-const client = new Client();
-await client.login('username', 'password');
+const scraper = new Scraper();
+await scraper.login('username', 'password');
 
 // If using v2 functionality (currently required to support polls)
-await client.login(
+await scraper.login(
   'username',
   'password',
   'email',
@@ -49,14 +49,14 @@ await client.login(
   'accessSecret',
 );
 
-const tweets = await client.getTweets('elonmusk', 10);
-const tweetsAndReplies = client.getTweetsAndReplies('elonmusk');
-const latestTweet = await client.getLatestTweet('elonmusk');
-const tweet = await client.getTweet('1234567890123456789');
-await client.sendTweet('Hello world!');
+const tweets = await scraper.getTweets('elonmusk', 10);
+const tweetsAndReplies = scraper.getTweetsAndReplies('elonmusk');
+const latestTweet = await scraper.getLatestTweet('elonmusk');
+const tweet = await scraper.getTweet('1234567890123456789');
+await scraper.sendTweet('Hello world!');
 
 // Create a poll
-await client.sendTweetV2(
+await scraper.sendTweetV2(
   `What's got you most hyped? Let us know! 🤖💸`,
   undefined,
   {
@@ -77,14 +77,14 @@ await client.sendTweetV2(
 
 ```ts
 // Fetch a single tweet with poll details
-const tweet = await client.getTweetV2('1856441982811529619', {
+const tweet = await scraper.getTweetV2('1856441982811529619', {
   expansions: ['attachments.poll_ids'],
   pollFields: ['options', 'end_datetime'],
 });
 console.log('tweet', tweet);
 
 // Fetch multiple tweets with poll and media details
-const tweets = await client.getTweetsV2(
+const tweets = await scraper.getTweetsV2(
   ['1856441982811529619', '1856429655215260130'],
   {
     expansions: ['attachments.poll_ids', 'attachments.media_keys'],
@@ -101,35 +101,35 @@ console.log('tweets', tweets);
 
 ```ts
 // Log in
-await client.login('username', 'password');
+await scraper.login('username', 'password');
 
 // Log out
-await client.logout();
+await scraper.logout();
 
 // Check if logged in
-const isLoggedIn = await client.isLoggedIn();
+const isLoggedIn = await scraper.isLoggedIn();
 
 // Get current session cookies
-const cookies = await client.getCookies();
+const cookies = await scraper.getCookies();
 
 // Set current session cookies
-await client.setCookies(cookies);
+await scraper.setCookies(cookies);
 
 // Clear current cookies
-await client.clearCookies();
+await scraper.clearCookies();
 ```
 
 ### Profile
 
 ```ts
 // Get a user's profile
-const profile = await client.getProfile('TwitterDev');
+const profile = await scraper.getProfile('TwitterDev');
 
 // Get a user ID from their screen name
-const userId = await client.getUserIdByScreenName('TwitterDev');
+const userId = await scraper.getUserIdByScreenName('TwitterDev');
 
 // Get logged-in user's profile
-const me = await client.me();
+const me = await scraper.me();
 ```
 
 ### Search
@@ -138,101 +138,101 @@ const me = await client.me();
 import { SearchMode } from 'agent-twitter-client';
 
 // Search for recent tweets
-const tweets = client.searchTweets('#nodejs', 20, SearchMode.Latest);
+const tweets = scraper.searchTweets('#nodejs', 20, SearchMode.Latest);
 
 // Search for profiles
-const profiles = client.searchProfiles('John', 10);
+const profiles = scraper.searchProfiles('John', 10);
 
 // Fetch a page of tweet results
-const results = await client.fetchSearchTweets('#nodejs', 20, SearchMode.Top);
+const results = await scraper.fetchSearchTweets('#nodejs', 20, SearchMode.Top);
 
 // Fetch a page of profile results
-const profileResults = await client.fetchSearchProfiles('John', 10);
+const profileResults = await scraper.fetchSearchProfiles('John', 10);
 ```
 
 ### Relationships
 
 ```ts
 // Get a user's followers
-const followers = client.getFollowers('12345', 100);
+const followers = scraper.getFollowers('12345', 100);
 
 // Get who a user is following
-const following = client.getFollowing('12345', 100);
+const following = scraper.getFollowing('12345', 100);
 
 // Fetch a page of a user's followers
-const followerResults = await client.fetchProfileFollowers('12345', 100);
+const followerResults = await scraper.fetchProfileFollowers('12345', 100);
 
 // Fetch a page of who a user is following
-const followingResults = await client.fetchProfileFollowing('12345', 100);
+const followingResults = await scraper.fetchProfileFollowing('12345', 100);
 
 // Follow a user
-const followUserResults = await client.followUser('elonmusk');
+const followUserResults = await scraper.followUser('elonmusk');
 ```
 
 ### Trends
 
 ```ts
 // Get current trends
-const trends = await client.getTrends();
+const trends = await scraper.getTrends();
 
 // Fetch tweets from a list
-const listTweets = await client.fetchListTweets('1234567890', 50);
+const listTweets = await scraper.fetchListTweets('1234567890', 50);
 ```
 
 ### Tweets
 
 ```ts
 // Get a user's tweets
-const tweets = client.getTweets('TwitterDev');
+const tweets = scraper.getTweets('TwitterDev');
 
 // Fetch the home timeline
-const homeTimeline = await client.fetchHomeTimeline(10, ['seenTweetId1','seenTweetId2']);
+const homeTimeline = await scraper.fetchHomeTimeline(10, ['seenTweetId1','seenTweetId2']);
 
 // Get a user's liked tweets
-const likedTweets = client.getLikedTweets('TwitterDev');
+const likedTweets = scraper.getLikedTweets('TwitterDev');
 
 // Get a user's tweets and replies
-const tweetsAndReplies = client.getTweetsAndReplies('TwitterDev');
+const tweetsAndReplies = scraper.getTweetsAndReplies('TwitterDev');
 
 // Get tweets matching specific criteria
-const timeline = client.getTweets('TwitterDev', 100);
-const retweets = await client.getTweetsWhere(
+const timeline = scraper.getTweets('TwitterDev', 100);
+const retweets = await scraper.getTweetsWhere(
   timeline,
   (tweet) => tweet.isRetweet,
 );
 
 // Get a user's latest tweet
-const latestTweet = await client.getLatestTweet('TwitterDev');
+const latestTweet = await scraper.getLatestTweet('TwitterDev');
 
 // Get a specific tweet by ID
-const tweet = await client.getTweet('1234567890123456789');
+const tweet = await scraper.getTweet('1234567890123456789');
 
 // Send a tweet
-const sendTweetResults = await client.sendTweet('Hello world!');
+const sendTweetResults = await scraper.sendTweet('Hello world!');
 
 // Send a quote tweet - Media files are optional
-const sendQuoteTweetResults = await client.sendQuoteTweet(
+const sendQuoteTweetResults = await scraper.sendQuoteTweet(
   'Hello world!',
   '1234567890123456789',
   ['mediaFile1', 'mediaFile2'],
 );
 
 // Retweet a tweet
-const retweetResults = await client.retweet('1234567890123456789');
+const retweetResults = await scraper.retweet('1234567890123456789');
 
 // Like a tweet
-const likeTweetResults = await client.likeTweet('1234567890123456789');
+const likeTweetResults = await scraper.likeTweet('1234567890123456789');
 ```
 
 ## Sending Tweets with Media
 
 ### Media Handling
 
-The client requires media files to be processed into a specific format before sending:
+The scraper requires media files to be processed into a specific format before sending:
 
 - Media must be converted to Buffer format
 - Each media file needs its MIME type specified
-- This helps the client distinguish between image and video processing models
+- This helps the scraper distinguish between image and video processing models
 
 ### Basic Tweet with Media
 
@@ -249,7 +249,7 @@ const mediaData = [
   },
 ];
 
-await client.sendTweet('Hello world!', undefined, mediaData);
+await scraper.sendTweet('Hello world!', undefined, mediaData);
 ```
 
 ### Supported Media Types
@@ -284,11 +284,11 @@ This client provides programmatic access to Grok through Twitter's interface, of
 ### Basic Usage
 
 ```ts
-const client = new Client();
-await client.login('username', 'password');
+const scraper = new Scraper();
+await scraper.login('username', 'password');
 
 // Start a new conversation
-const response = await client.grokChat({
+const response = await scraper.grokChat({
   messages: [{ role: 'user', content: 'What are your thoughts on AI?' }],
 });
 
@@ -303,7 +303,7 @@ If no `conversationId` is provided, the client will automatically create a new c
 Grok has rate limits of 25 messages every 2 hours for non-premium accounts. The client provides rate limit information in the response:
 
 ```ts
-const response = await client.grokChat({
+const response = await scraper.grokChat({
   messages: [{ role: 'user', content: 'Hello!' }],
 });
 
@@ -338,7 +338,7 @@ interface GrokChatResponse {
 ### Advanced Usage
 
 ```ts
-const response = await client.grokChat({
+const response = await scraper.grokChat({
   messages: [{ role: 'user', content: 'Research quantum computing' }],
   returnSearchResults: true, // Include web search results
   returnCitations: true, // Include citations for information

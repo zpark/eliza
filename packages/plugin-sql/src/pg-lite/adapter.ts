@@ -1,15 +1,15 @@
-import { logger, UUID } from "@elizaos/core";
+import { logger } from "@elizaos/core";
 import { drizzle, type PgliteDatabase } from "drizzle-orm/pglite";
-import { BaseDrizzleAdapter } from "../base";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "../schema/embedding";
 import type { PGliteClientManager } from "./manager";
+import { BaseDrizzleAdapter } from "../base";
 
 export class PgliteDatabaseAdapter extends BaseDrizzleAdapter<PgliteDatabase> {
     private manager: PGliteClientManager;
     protected embeddingDimension: EmbeddingDimensionColumn = DIMENSION_MAP[384];
 
-    constructor(agentId: UUID, manager: PGliteClientManager) {
-        super(agentId);
+    constructor(manager: PGliteClientManager) {
+        super();
         this.manager = manager;
         this.db = drizzle(this.manager.getConnection());
     }

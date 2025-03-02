@@ -1,28 +1,25 @@
 import {
   type Adapter,
-  type IAgentRuntime,
-  type IDatabaseAdapter,
   logger,
+  type IAgentRuntime,
   type Plugin,
-  UUID,
+  type IDatabaseAdapter,
+  type IDatabaseCacheAdapter,
 } from "@elizaos/core";
+import { PgDatabaseAdapter } from "./pg/adapter";
 import { PgliteDatabaseAdapter } from "./pg-lite/adapter";
 import { PGliteClientManager } from "./pg-lite/manager";
-import { PgDatabaseAdapter } from "./pg/adapter";
 import { PostgresConnectionManager } from "./pg/manager";
 
 let pgLiteClientManager: PGliteClientManager;
 
-export function createDatabaseAdapter(
-  config: {
-    dataDir?: string;
-    postgresUrl?: string;
-  },
-  agentId: UUID
-): IDatabaseAdapter {
+export function createDatabaseAdapter(config: {
+  dataDir?: string;
+  postgresUrl?: string;
+}): IDatabaseAdapter & IDatabaseCacheAdapter {
   if (config.postgresUrl) {
     const manager = new PostgresConnectionManager(config.postgresUrl);
-    return new PgDatabaseAdapter(agentId, manager);
+    return new PgDatabaseAdapter(manager);
   }
 
   const dataDir = config.dataDir ?? "../../pgLite";
@@ -30,7 +27,7 @@ export function createDatabaseAdapter(
   if (!pgLiteClientManager) {
     pgLiteClientManager = new PGliteClientManager({ dataDir });
   }
-  return new PgliteDatabaseAdapter(agentId, pgLiteClientManager);
+  return new PgliteDatabaseAdapter(pgLiteClientManager);
 }
 
 const drizzleDatabaseAdapter: Adapter = {
@@ -41,7 +38,7 @@ const drizzleDatabaseAdapter: Adapter = {
     };
 
     try {
-      const db = createDatabaseAdapter(config, runtime.agentId);
+      const db = createDatabaseAdapter(config);
       await db.init();
       logger.success("Database connection established successfully");
       return db;

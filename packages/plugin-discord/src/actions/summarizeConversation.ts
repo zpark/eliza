@@ -1,10 +1,17 @@
+import { composeContext } from "@elizaos/core";
+import { generateText, splitChunks, trimTokens } from "@elizaos/core";
+import { getActorDetails } from "@elizaos/core";
+import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type Action,
-    type ActionExample, composeContext, type Content, getActorDetails, type HandlerCallback,
+    type ActionExample,
+    type Content,
+    type HandlerCallback,
     type IAgentRuntime,
     type Media,
     type Memory,
-    ModelClass, parseJSONObjectFromText, splitChunks, type State, trimTokens
+    ModelClass,
+    type State,
 } from "@elizaos/core";
 import * as fs from "node:fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
@@ -49,8 +56,10 @@ const getDateRange = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await generateText({
+            runtime,
             context,
+            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -266,8 +275,10 @@ const summarizeAction = {
                 template,
             });
 
-            const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const summary = await generateText({
+                runtime,
                 context,
+                modelClass: ModelClass.TEXT_SMALL,
             });
 
             currentSummary = `${currentSummary}\n${summary}`;
@@ -293,7 +304,7 @@ ${currentSummary.trim()}
         } else if (currentSummary.trim()) {
             const summaryDir = "content";
             const summaryFilename = `${summaryDir}/conversation_summary_${Date.now()}`;
-            await runtime.databaseAdapter.setCache(summaryFilename, currentSummary);
+            await runtime.cacheManager.set(summaryFilename, currentSummary);
             await fs.promises.mkdir(summaryDir, { recursive: true });
 
             await fs.promises.writeFile(

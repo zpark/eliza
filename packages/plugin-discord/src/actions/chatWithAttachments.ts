@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content, type HandlerCallback,
+    type ActionExample, composeContext, type Content, generateText, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelClass, parseJSONObjectFromText, type State, trimTokens
@@ -46,8 +46,10 @@ const getAttachmentIds = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await generateText({
+            runtime,
             context,
+            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -192,8 +194,10 @@ const summarizeAction = {
             template,
         });
 
-        const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const summary = await generateText({
+            runtime,
             context,
+            modelClass: ModelClass.TEXT_SMALL,
         });
 
         currentSummary = `${currentSummary}\n${summary}`;
@@ -235,7 +239,7 @@ ${currentSummary.trim()}
                 console.log("File written successfully");
 
                 // Then cache it
-                await runtime.databaseAdapter.setCache(summaryFilename, currentSummary);
+                await runtime.cacheManager.set(summaryFilename, currentSummary);
                 console.log("Cache set operation completed");
 
                 await callback(

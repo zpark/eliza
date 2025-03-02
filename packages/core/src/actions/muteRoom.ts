@@ -1,5 +1,5 @@
 import { composeContext } from "../context";
-import logger from "../logger";
+import { generateTrueOrFalse } from "../generation";
 import { booleanFooter } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
@@ -34,6 +34,7 @@ export const muteRoomAction: Action = {
         const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
             runtime.agentId,
+            runtime.agentId
         );
         return roomState !== "MUTED";
     },
@@ -44,35 +45,13 @@ export const muteRoomAction: Action = {
                 template: shouldMuteTemplate, // Define this template separately
             });
 
-            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const response = await generateTrueOrFalse({
                 runtime,
                 context: shouldMuteContext,
-                stopSequences: ["\n"],
+                modelClass: ModelClass.TEXT_LARGE,
             });
-            
-            const cleanedResponse = response.trim().toLowerCase();
-            
-            // Handle various affirmative responses
-            if (cleanedResponse === "true" || 
-                cleanedResponse === "yes" || 
-                cleanedResponse === "y" ||
-                cleanedResponse.includes("true") ||
-                cleanedResponse.includes("yes")) {
-                return true;
-            }
-            
-            // Handle various negative responses
-            if (cleanedResponse === "false" || 
-                cleanedResponse === "no" || 
-                cleanedResponse === "n" ||
-                cleanedResponse.includes("false") ||
-                cleanedResponse.includes("no")) {
-                return false;
-            }
-            
-            // Default to false if response is unclear
-            logger.warn(`Unclear boolean response: ${response}, defaulting to false`);
-            return false;
+
+            return response;
         }
 
         state = await runtime.composeState(message);

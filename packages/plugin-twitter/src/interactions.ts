@@ -3,13 +3,14 @@ import {
     composeContext,
     type Content,
     createUniqueUuid,
+    generateMessageResponse,
+    generateShouldRespond,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
     type Memory,
     messageCompletionFooter,
     ModelClass,
-    parseJSONObjectFromText,
     shouldRespondFooter,
     type State
 } from "@elizaos/core";
@@ -424,11 +425,14 @@ export class TwitterInteractionClient {
                 twitterShouldRespondTemplate(validTargetUsersStr),
         });
 
-        const shouldRespond = await this.runtime.useModel(ModelClass.TEXT_SMALL, {
+        const shouldRespond = await generateShouldRespond({
+            runtime: this.runtime,
             context: shouldRespondContext,
-          });
-        
-          if (!shouldRespond.includes("RESPOND")) {
+            modelClass: ModelClass.MEDIUM,
+        });
+
+        // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
+        if (shouldRespond !== "RESPOND") {
             logger.log("Not responding to message");
             return { text: "Response Decision:", action: shouldRespond };
         }
@@ -460,11 +464,11 @@ export class TwitterInteractionClient {
                 twitterMessageHandlerTemplate,
         });
 
-        const responseText = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+        const response = await generateMessageResponse({
+            runtime: this.runtime,
             context,
-          });
-      
-        const response = parseJSONObjectFromText(responseText) as Content;
+            modelClass: ModelClass.TEXT_LARGE,
+        });
 
         const removeQuotes = (str: string) =>
             str.replace(/^['"](.*)['"]$/, "$1");
@@ -530,7 +534,7 @@ export class TwitterInteractionClient {
 
                     const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
 
-                    await this.runtime.databaseAdapter.setCache(
+                    await this.runtime.cacheManager.set(
                         `twitter/tweet_generation_${tweet.id}.txt`,
                         responseInfo
                     );

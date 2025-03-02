@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from "node:events";
 import {
   type QueryTweetsResponse,
-  Client,
+  Scraper,
   SearchMode,
   type Tweet,
 } from "./client/index.ts";
@@ -81,8 +81,8 @@ class RequestQueue {
 }
 
 export class ClientBase extends EventEmitter {
-  static _twitterClients: { [accountIdentifier: string]: Client } = {};
-  twitterClient: Client;
+  static _twitterClients: { [accountIdentifier: string]: Scraper } = {};
+  twitterClient: Scraper;
   runtime: IAgentRuntime;
   lastCheckedTweetId: bigint | null = null;
   temperature = 0.5;
@@ -97,19 +97,15 @@ export class ClientBase extends EventEmitter {
       return;
     }
 
-    this.runtime.databaseAdapter.setCache(`twitter/tweets/${tweet.id}`, JSON.stringify(tweet));
+    this.runtime.cacheManager.set(`twitter/tweets/${tweet.id}`, tweet);
   }
 
   async getCachedTweet(tweetId: string): Promise<Tweet | undefined> {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    const cached = await this.runtime.cacheManager.get<Tweet>(
       `twitter/tweets/${tweetId}`
     );
 
-    if(!cached) {
-      return undefined;
-    }
-
-    return JSON.parse(cached) as Tweet;
+    return cached;
   }
 
   async getTweet(tweetId: string): Promise<Tweet> {
@@ -244,7 +240,7 @@ export class ClientBase extends EventEmitter {
     if (ClientBase._twitterClients[username]) {
       this.twitterClient = ClientBase._twitterClients[username];
     } else {
-      this.twitterClient = new Client();
+      this.twitterClient = new Scraper();
       ClientBase._twitterClients[username] = this.twitterClient;
     }
   }
@@ -579,6 +575,17 @@ export class ClientBase extends EventEmitter {
       processingTweets: tweetsToSave.map((tweet) => tweet.id).join(","),
     });
 
+    await this.runtime.getOrCreateUser(
+      this.runtime.agentId,
+      [this.runtime.character.name],
+      {
+        twitter: {
+          name: this.runtime.character.name,
+          userName: this.runtime.character.name,
+          originalUserId: this.runtime.agentId,
+        },
+      }
+    );
     // Save the new tweets as memories
     for (const tweet of tweetsToSave) {
       logger.log("Saving Tweet", tweet.id);
@@ -665,7 +672,7 @@ export class ClientBase extends EventEmitter {
   }
 
   async loadLatestCheckedTweetId(): Promise<void> {
-    const latestCheckedTweetId = await this.runtime.databaseAdapter.getCache(
+    const latestCheckedTweetId = await this.runtime.cacheManager.get<string>(
       `twitter/${this.profile.username}/latest_checked_tweet_id`
     );
 
@@ -676,7 +683,7 @@ export class ClientBase extends EventEmitter {
 
   async cacheLatestCheckedTweetId() {
     if (this.lastCheckedTweetId) {
-      await this.runtime.databaseAdapter.setCache(
+      await this.runtime.cacheManager.set(
         `twitter/${this.profile.username}/latest_checked_tweet_id`,
         this.lastCheckedTweetId.toString()
       );
@@ -684,45 +691,33 @@ export class ClientBase extends EventEmitter {
   }
 
   async getCachedTimeline(): Promise<Tweet[] | undefined> {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    return await this.runtime.cacheManager.get<Tweet[]>(
       `twitter/${this.profile.username}/timeline`
     );
-
-    if(!cached) {
-      return undefined;
-    }
-
-    return JSON.parse(cached) as Tweet[];
   }
 
   async cacheTimeline(timeline: Tweet[]) {
-    await this.runtime.databaseAdapter.setCache(
+    await this.runtime.cacheManager.set(
       `twitter/${this.profile.username}/timeline`,
-      JSON.stringify(timeline)
+      timeline
     );
   }
 
   async cacheMentions(mentions: Tweet[]) {
-    await this.runtime.databaseAdapter.setCache(
+    await this.runtime.cacheManager.set(
       `twitter/${this.profile.username}/mentions`,
-      JSON.stringify(mentions)
+      mentions
     );
   }
 
   async getCachedCookies(username: string) {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    return await this.runtime.cacheManager.get<any[]>(
       `twitter/${username}/cookies`
     );
-
-    if(!cached) {
-      return undefined;
-    }
-
-    return JSON.parse(cached);
   }
 
   async cacheCookies(username: string, cookies: any[]) {
-    await this.runtime.databaseAdapter.setCache(`twitter/${username}/cookies`, JSON.stringify(cookies));
+    await this.runtime.cacheManager.set(`twitter/${username}/cookies`, cookies);
   }
 
   async fetchProfile(username: string): Promise<TwitterProfile> {

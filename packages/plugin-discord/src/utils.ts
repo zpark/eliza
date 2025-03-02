@@ -2,6 +2,7 @@ import {
     type IAgentRuntime,
     ModelClass,
     logger,
+    generateText,
     trimTokens,
     parseJSONObjectFromText,
 } from "@elizaos/core";
@@ -62,8 +63,10 @@ export async function generateSummary(
   }
   \`\`\``;
 
-    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+    const response = await generateText({
+        runtime,
         context: prompt,
+        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);

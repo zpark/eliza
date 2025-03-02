@@ -15,6 +15,7 @@ import {
   formatEvaluatorNames,
   formatEvaluators,
 } from "./evaluators.ts";
+import { generateText } from "./generation.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
@@ -33,6 +34,7 @@ import {
   type Evaluator,
   type HandlerCallback,
   type IAgentRuntime,
+  type ICacheManager,
   type IDatabaseAdapter,
   type IMemoryManager,
   type KnowledgeItem,
@@ -40,7 +42,7 @@ import {
   ModelClass,
   type Plugin,
   type Provider,
-  RoomData,
+  type RoomData,
   type Route,
   type Service,
   type ServiceType,
@@ -234,6 +236,7 @@ export class AgentRuntime implements IAgentRuntime {
   tasks = new Map<UUID, Task>();
 
   readonly fetch = fetch;
+  public cacheManager!: ICacheManager;
   private clients: Map<string, ClientInstance> = new Map();
   private clientInterfaces: Map<string, Client> = new Map();
   services: Map<ServiceType, Service> = new Map();
@@ -253,6 +256,7 @@ export class AgentRuntime implements IAgentRuntime {
     plugins?: Plugin[];
     fetch?: typeof fetch;
     databaseAdapter?: IDatabaseAdapter;
+    cacheManager?: ICacheManager;
     adapters?: Adapter[];
     events?: { [key: string]: ((params: any) => void)[] };
     ignoreBootstrap?: boolean;
@@ -283,6 +287,10 @@ export class AgentRuntime implements IAgentRuntime {
     logger.success(`Agent ID: ${this.agentId}`);
 
     this.fetch = (opts.fetch as typeof fetch) ?? this.fetch;
+
+    if (opts.cacheManager) {
+      this.cacheManager = opts.cacheManager;
+    }
 
     this.memoryManagerService = new MemoryManagerService(
       this,
@@ -417,6 +425,7 @@ export class AgentRuntime implements IAgentRuntime {
 
       // No need to transform agent's own ID
       const agentEntity = await this.databaseAdapter.getEntityById(
+        this.agentId,
         this.agentId
       );
 
@@ -545,10 +554,12 @@ export class AgentRuntime implements IAgentRuntime {
     try {
       // No need to transform agent ID
       const participants = await this.databaseAdapter.getParticipantsForRoom(
+        this.agentId,
         this.agentId
       );
       if (!participants.includes(this.agentId)) {
         const added = await this.databaseAdapter.addParticipant(
+          this.agentId,
           this.agentId,
           this.agentId
         );
@@ -612,7 +623,6 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async ensureAgentExists() {
-    console.log("this.character.name", this.character.name, this.agentId)
     const agent = await this.databaseAdapter.getAgent(this.agentId);
     if (!agent) {
       if (!this.character.id) {
@@ -844,8 +854,10 @@ export class AgentRuntime implements IAgentRuntime {
         this.character.templates?.evaluationTemplate || evaluationTemplate,
     });
 
-    const result = await this.useModel(ModelClass.TEXT_SMALL, {
+    const result = await generateText({
+      runtime: this,
       context,
+      modelClass: ModelClass.TEXT_SMALL,
     });
 
     const evaluators = parseJsonArrayFromText(result) as unknown as string[];
@@ -860,10 +872,63 @@ export class AgentRuntime implements IAgentRuntime {
     return evaluators;
   }
 
+  /**
+   * Get an entity by ID.
+   * @param userId - The ID of the entity to get.
+   * @returns The entity.
+   */
+  async getEntity(userId: UUID) {
+    return await this.databaseAdapter.getEntityById(userId, this.agentId);
+  }
+
+  /**
+   * Ensure the existence of a user in the database. If the user does not exist, they are added to the database.
+   * @param userId - The user ID to ensure the existence of.
+   * @param userName - The user name to ensure the existence of.
+   * @returns
+   */
+  async getOrCreateUser(
+    userId: UUID,
+    names: string[],
+    metadata: {
+      [source: string]: {
+        name: string;
+        userName: string;
+      };
+    }
+  ) {
+    const account = await this.databaseAdapter.getEntityById(
+      userId,
+      this.agentId
+    );
+    if (!account) {
+      const created = await this.databaseAdapter.createEntity({
+        id: userId,
+        agentId: this.agentId,
+        names,
+        metadata,
+      });
+
+      if (!created) {
+        logger.error(
+          `Failed to create user ${names[0]} for agent ${this.agentId}.`
+        );
+        return null;
+      }
+
+      logger.success(
+        `User ${names[0]} created successfully for agent ${this.agentId}.`
+      );
+    }
+
+    return userId;
+  }
+
   async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
     // Make sure entity exists in database before adding as participant
     const entity = await this.databaseAdapter.getEntityById(
       userId,
+      this.agentId
     );
     if(!entity) {
       throw new Error(`User ${userId} not found`);
@@ -871,6 +936,7 @@ export class AgentRuntime implements IAgentRuntime {
     // Get current participants
     const participants = await this.databaseAdapter.getParticipantsForRoom(
       roomId,
+      this.agentId
     );
 
     // Only add if not already a participant
@@ -879,6 +945,7 @@ export class AgentRuntime implements IAgentRuntime {
       const added = await this.databaseAdapter.addParticipant(
         userId,
         roomId,
+        this.agentId
       );
 
       if (!added) {
@@ -936,17 +1003,17 @@ export class AgentRuntime implements IAgentRuntime {
       },
     };
 
-    const entity = await this.databaseAdapter.getEntityById(
+    // Get tenant-specific user ID and ensure the user exists
+    const tenantSpecificUserId = await this.getOrCreateUser(
       userId,
+      names,
+      metadata,
     );
 
-    if (!entity) {
-      await this.databaseAdapter.createEntity({
-        id: userId,
-        names,
-        metadata,
-        agentId: this.agentId,
-      });
+    if (!tenantSpecificUserId) {
+      throw new Error(
+        `Failed to create user ${userName ?? userId} for connection`
+      );
     }
 
     // Ensure world exists if worldId is provided
@@ -987,11 +1054,28 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   /**
+   * Get a world by ID.
+   * @param worldId - The ID of the world to get.
+   * @returns The world.
+   */
+  async getWorld(worldId: UUID) {
+    return await this.databaseAdapter.getWorld(worldId, this.agentId);
+  }
+
+  async getAllWorlds() {
+    return await this.databaseAdapter.getAllWorlds(this.agentId);
+  }
+
+  async updateWorld(world: WorldData) {
+    await this.databaseAdapter.updateWorld(world, this.agentId);
+  }
+
+  /**
    * Ensure the existence of a world.
    */
   async ensureWorldExists({ id, name, serverId, metadata }: WorldData) {
     try {
-      const world = await this.databaseAdapter.getWorld(id);
+      const world = await this.databaseAdapter.getWorld(id, this.agentId);
       if (!world) {
         logger.info("Creating world:", {
           id,
@@ -1018,37 +1102,46 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-    /**
+  /**
    * Ensure the existence of a room between the agent and a user. If no room exists, a new room is created and the user
    * and agent are added as participants. The room ID is returned.
    * @param userId - The user ID to create a room with.
    * @returns The room ID of the room between the agent and the user.
    * @throws An error if the room cannot be created.
    */
-    async ensureRoomExists({
-      id,
-      name,
-      source,
-      type,
-      channelId,
-      serverId,
-      worldId,
-    }: RoomData) {
-      const room = await this.databaseAdapter.getRoom(id);
-      if (!room) {
-        await this.databaseAdapter.createRoom({
-          id,
-          name,
-          agentId: this.agentId,
-          source,
-          type,
-          channelId,
-          serverId,
-          worldId,
-        });
-        logger.log(`Room ${id} created successfully.`);
-      }
+  async ensureRoomExists({
+    id,
+    name,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData) {
+    const room = await this.databaseAdapter.getRoom(id, this.agentId);
+    if (!room) {
+      await this.databaseAdapter.createRoom({
+        id,
+        name,
+        agentId: this.agentId,
+        source,
+        type,
+        channelId,
+        serverId,
+        worldId,
+      });
+      logger.log(`Room ${id} created successfully.`);
     }
+  }
+
+  /**
+   * Get the room ID of the room between the agent and a user.
+   * @param userId - The user ID to get the room ID of.
+   * @returns The room ID of the room between the agent and the user.
+   */
+  async getRoom(userId: UUID) {
+    return await this.databaseAdapter.getRoom(userId, this.agentId);
+  }
 
   /**
    * Compose the state of the agent into an object that can be passed or used for response generation.
@@ -1177,6 +1270,7 @@ export class AgentRuntime implements IAgentRuntime {
       // Find all rooms where sourceEntityId and targetEntityId are participants
       const rooms = await this.databaseAdapter.getRoomsForParticipants(
         [sourceEntityId, targetEntityId],
+        this.agentId
       );
 
       // Check the existing memories in the database
@@ -1206,6 +1300,7 @@ export class AgentRuntime implements IAgentRuntime {
             // Lookup by tenant-specific ID since that's what's stored in the memory
             const accountId = await this.databaseAdapter.getEntityById(
               message.userId,
+              this.agentId
             );
             sender = accountId?.metadata?.username || "unknown";
           }
@@ -1496,7 +1591,7 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async registerService(service: Service): Promise<void> {
-    const serviceType = service.serviceType as ServiceType;
+    const serviceType = service.serviceType;
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,
       serviceType
@@ -1637,6 +1732,7 @@ export class AgentRuntime implements IAgentRuntime {
       );
       await this.databaseAdapter.ensureEmbeddingDimension(
         embedding.length,
+        this.agentId
       );
       logger.info(
         `[AgentRuntime][${this.character.name}] Successfully set embedding dimension`

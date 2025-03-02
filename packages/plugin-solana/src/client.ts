@@ -1,14 +1,15 @@
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import {
+    type ClientInstance,
     logger,
     type Client,
-    type ClientInstance,
-    type IAgentRuntime
+    type IAgentRuntime,
+    type ICacheManager,
 } from '@elizaos/core';
-import { Connection, PublicKey } from '@solana/web3.js';
-import BigNumber from 'bignumber.js';
-import { SOLANA_CLIENT_NAME } from './constants';
 import { getWalletKey } from './keypairUtils';
-import type { ISolanaClient, Item, Prices, WalletPortfolio } from './types';
+import BigNumber from 'bignumber.js';
+import type { Item, WalletPortfolio, Prices, ISolanaClient } from './types';
+import { SOLANA_CLIENT_NAME } from './constants';
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: 'https://public-api.birdeye.so',
@@ -32,7 +33,8 @@ class SolanaClient implements ISolanaClient, ClientInstance {
 
     constructor(
         private runtime: IAgentRuntime,
-        connection: ConnOection,
+        private cacheManager: ICacheManager,
+        connection: Connection,
         publicKey: PublicKey,
     ) {
         this.connection = connection;
@@ -105,7 +107,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
 
     private async fetchPrices(): Promise<Prices> {
         const cacheKey = 'prices';
-        const cachedValue = await this.runtime.databaseAdapter.getCache<Prices>(cacheKey);
+        const cachedValue = await this.cacheManager.get<Prices>(cacheKey);
 
         if (cachedValue) {
             logger.log('Cache hit for fetchPrices');
@@ -133,7 +135,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
             }
         }
 
-        await this.runtime.databaseAdapter.setCache(cacheKey, prices);
+        await this.cacheManager.set(cacheKey, prices);
         return prices;
     }
 
@@ -191,7 +193,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                         })),
                     };
 
-                    await this.runtime.databaseAdapter.setCache(this.CACHE_KEY, portfolio);
+                    await this.cacheManager.set(this.CACHE_KEY, portfolio);
                     this.lastUpdate = now;
                     return portfolio;
                 }
@@ -217,7 +219,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                 items,
             };
 
-            await this.runtime.databaseAdapter.setCache(this.CACHE_KEY, portfolio);
+            await this.cacheManager.set(this.CACHE_KEY, portfolio);
             this.lastUpdate = now;
             return portfolio;
         } catch (error) {
@@ -227,7 +229,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
     }
 
     public async getCachedData(): Promise<WalletPortfolio | null> {
-        return await this.runtime.databaseAdapter.getCache<WalletPortfolio>(this.CACHE_KEY);
+        return await this.cacheManager.get<WalletPortfolio>(this.CACHE_KEY);
     }
 
     public async forceUpdate(): Promise<WalletPortfolio> {
@@ -254,6 +256,6 @@ export const SolanaClientInterface: Client = {
 
         const { publicKey } = await getWalletKey(runtime, false);
 
-        return new SolanaClient(runtime, connection, publicKey);
+        return new SolanaClient(runtime, runtime.cacheManager, connection, publicKey);
     },
 };

@@ -10,6 +10,7 @@ import {
   type State,
   composeContext,
   createUniqueUuid,
+  generateText,
   getWorldSettings,
   logger
 } from "@elizaos/core";
@@ -24,7 +25,7 @@ export async function getUserServerRole(
 ): Promise<RoleName> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.databaseAdapter.getWorld(worldId);
+    const world = await runtime.getWorld(worldId);
 
     if (!world || !world.metadata?.roles) {
       return RoleName.NONE;
@@ -148,7 +149,7 @@ const twitterPostAction: Action = {
     message: Memory,
     _state: State
   ): Promise<boolean> => {
-    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const room = await runtime.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -162,17 +163,6 @@ const twitterPostAction: Action = {
 
     if (!serverId) {
       throw new Error("No server ID found");
-    }
-
-    // Check if there are any pending Twitter posts awaiting confirmation
-    const pendingTasks = runtime.getTasks({
-      roomId: message.roomId,
-      tags: ["TWITTER_POST"],
-    });
-
-    if (pendingTasks && pendingTasks.length > 0) {
-      // If there are already pending Twitter post tasks, don't allow another one
-      return false;
     }
 
     // Validate Twitter configuration
@@ -193,7 +183,7 @@ const twitterPostAction: Action = {
     _responses: Memory[]
   ) => {
     try {
-      const room = await runtime.databaseAdapter.getRoom(message.roomId);
+      const room = await runtime.getRoom(message.roomId);
       if (!room) {
         throw new Error("No room found");
       }
@@ -221,8 +211,10 @@ const twitterPostAction: Action = {
         template: tweetGenerationTemplate,
       });
 
-      const tweetContent = await runtime.useModel(ModelClass.TEXT_SMALL, {
+      const tweetContent = await generateText({
+        runtime,
         context,
+        modelClass: ModelClass.TEXT_SMALL,
       });
 
       // Clean up the generated content
@@ -244,6 +236,18 @@ const twitterPostAction: Action = {
           source: message.content.source,
         });
         return;
+      }
+
+      // Check if there are any pending Twitter posts awaiting confirmation
+      const pendingTasks = runtime.getTasks({
+        roomId: message.roomId,
+        tags: ["TWITTER_POST"],
+      });
+
+      if (pendingTasks && pendingTasks.length > 0) {
+        for (const task of pendingTasks) {
+          await runtime.deleteTask(task.id);
+        }
       }
 
       // Prepare response content
@@ -345,9 +349,6 @@ const twitterPostAction: Action = {
         ...responseContent,
         action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
       });
-
-      logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
-      
       return responseContent;
     } catch (error) {
       logger.error("Error in TWITTER_POST action:", error);
