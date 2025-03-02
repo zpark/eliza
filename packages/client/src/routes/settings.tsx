@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import Overview from "@/components/overview";
+import AgentSettings from "@/components/agent-settings";
 import { useParams } from "react-router";
 import type { UUID } from "@elizaos/core";
 import { STALE_TIMES } from "@/hooks/use-query-hooks";
@@ -23,5 +23,5 @@ export default function AgentRoute() {
 
     if (!character) return null;
 
-    return <Overview character={character} />;
+    return <AgentSettings character={character} agentId={agentId}/>;
 }

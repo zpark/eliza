@@ -125,7 +125,6 @@ type customComponent = {
 }
 
 export type CharacterFormProps = {
-  character: Character;
   title: string;
   description: string;
   onSubmit: (character: Character) => Promise<void>;
@@ -137,10 +136,13 @@ export type CharacterFormProps = {
   deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
+  characterValue: Character;
+  setCharacterValue: (value: (prev: Character) => Character) => void;
 };
 
 export default function CharacterForm({
-  character,
+  characterValue, 
+  setCharacterValue,
   title,
   description,
   onSubmit,
@@ -154,7 +156,6 @@ export default function CharacterForm({
 }: CharacterFormProps) {
   const { toast } = useToast();
 
-  const [characterValue, setCharacterValue] = useState<Character>(character);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -301,7 +302,7 @@ export default function CharacterForm({
             style={{ gridTemplateColumns: `repeat(${customComponents.length + 3}, minmax(0, 1fr))` }}
           >
             {CHARACTER_FORM_SCHEMA.map((section) => (
-              <TabsTrigger value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
+              <TabsTrigger key={section.sectionValue} value={section.sectionValue}>{section.sectionTitle}</TabsTrigger>
             ))}
             {customComponents.map((component, index) => (
               <TabsTrigger key={`custom-${index}`} value={`custom-${index}`}>{component.name}</TabsTrigger>
@@ -350,7 +351,7 @@ export default function CharacterForm({
               variant="outline"
               onClick={() => {
                 onReset && onReset();
-                setCharacterValue(character)
+                // setCharacterValue(character)
               }}
             >
               Reset Changes
