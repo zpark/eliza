@@ -138,9 +138,15 @@ export const apiClient = {
         fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
     updateAgent: (agentId: string, character: Character) =>
         fetcher({
-            url: `/agents/${agentId}/set`,
-            method: "POST",
+            url: `/agents/${agentId}`,
+            method: "PUT",
             body: character,
+        }),
+    createAgent: (params: { characterPath?: string; characterJson?: Character }) =>
+        fetcher({
+            url: `/agents/`,
+            method: "POST",
+            body: params,
         }),
     startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
         fetcher({
