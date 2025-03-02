@@ -4,7 +4,7 @@ import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
-import { selectOptionAction } from "./actions/options.ts";
+import { choiceAction } from "./actions/choice.ts";
 import updateRoleAction from "./actions/roles.ts";
 import { sendMessageAction } from "./actions/sendMessage.ts";
 import updateSettingsAction from "./actions/settings.ts";
@@ -845,7 +845,7 @@ export const bootstrapPlugin: Plugin = {
     unmuteRoomAction,
     sendMessageAction,
     updateEntityAction,
-    selectOptionAction,
+    choiceAction,
     updateRoleAction,
     updateSettingsAction,
   ],

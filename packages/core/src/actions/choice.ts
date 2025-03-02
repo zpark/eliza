@@ -43,9 +43,9 @@ Return in JSON format:
 
 Make sure to include the \`\`\`json\`\`\` tags around the JSON object.`;
 
-export const selectOptionAction: Action = {
-  name: "SELECT_OPTION",
-  similes: ["CHOOSE_OPTION", "SELECT", "PICK", "CHOOSE"],
+export const choiceAction: Action = {
+  name: "CHOOSE_OPTION",
+  similes: ["SELECT_OPTION", "SELECT", "PICK", "CHOOSE"],
   description: "Selects an option for a pending task that has multiple options",
 
   validate: async (
@@ -89,7 +89,7 @@ export const selectOptionAction: Action = {
       if (!pendingTasks?.length) {
         await callback({
           text: "No tasks currently awaiting options selection.",
-          action: "SELECT_OPTION",
+          action: "CHOOSE_OPTION",
           source: message.content.source,
         });
         return;
@@ -102,7 +102,7 @@ export const selectOptionAction: Action = {
       if (!tasksWithOptions.length) {
         await callback({
           text: "No tasks currently have options to select from.",
-          action: "SELECT_OPTION",
+          action: "CHOOSE_OPTION",
           source: message.content.source,
         });
         return;
@@ -142,7 +142,7 @@ export const selectOptionAction: Action = {
           runtime.deleteTask(selectedTask.id);
           await callback({
             text: `Task "${selectedTask.name}" has been cancelled.`,
-            action: "SELECT_OPTION",
+            action: "CHOOSE_OPTION",
             source: message.content.source,
           });
           return;
@@ -153,7 +153,7 @@ export const selectOptionAction: Action = {
           runtime.deleteTask(selectedTask.id);
           await callback({
             text: `Selected option: ${selectedOption} for task: ${selectedTask.name}`,
-            action: "SELECT_OPTION",
+            action: "CHOOSE_OPTION",
             source: message.content.source,
           });
           return;
@@ -208,7 +208,7 @@ export const selectOptionAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Selected option: post for task: Confirm Twitter Post",
-          action: "SELECT_OPTION",
+          action: "CHOOSE_OPTION",
         },
       },
     ],
@@ -223,11 +223,11 @@ export const selectOptionAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Selected option: cancel for task: Confirm Twitter Post",
-          action: "SELECT_OPTION",
+          action: "CHOOSE_OPTION",
         },
       },
     ],
   ] as ActionExample[][],
 };
 
-export default selectOptionAction;
+export default choiceAction;
