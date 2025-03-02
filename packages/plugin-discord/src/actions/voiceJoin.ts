@@ -8,7 +8,6 @@ import {
     ChannelType,
     composeContext,
     createUniqueUuid,
-    generateText,
     type HandlerCallback,
     logger,
     ModelClass
@@ -164,10 +163,8 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const responseContent = await generateText({
-                runtime,
+            const responseContent = await runtime.useModel(ModelClass.TEXT_SMALL, {
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             if (responseContent && responseContent.trim().length > 0) {

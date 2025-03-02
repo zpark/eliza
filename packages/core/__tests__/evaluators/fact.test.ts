@@ -1,4 +1,4 @@
-import { composeContext, generateObjectArray } from '@elizaos/core';
+import { composeContext } from '@elizaos/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { factEvaluator } from '../../src/evaluators/fact';
 
@@ -101,12 +101,12 @@ describe('factEvaluator', () => {
             ];
 
             vi.mocked(composeContext).mockReturnValue('mock-context');
-            vi.mocked(generateObjectArray).mockResolvedValue(mockFacts);
+            // vi.mocked(generateObjectArray).mockResolvedValue(mockFacts);
 
             const result = await factEvaluator.handler(mockRuntime, mockMessage);
 
             expect(composeContext).toHaveBeenCalled();
-            expect(generateObjectArray).toHaveBeenCalled();
+            // expect(generateObjectArray).toHaveBeenCalled();
             expect(result).toBeDefined();
         });
     });

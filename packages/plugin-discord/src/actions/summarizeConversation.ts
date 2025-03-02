@@ -1,17 +1,10 @@
-import { composeContext } from "@elizaos/core";
-import { generateText, splitChunks, trimTokens } from "@elizaos/core";
-import { getActorDetails } from "@elizaos/core";
-import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type Action,
-    type ActionExample,
-    type Content,
-    type HandlerCallback,
+    type ActionExample, composeContext, type Content, getActorDetails, type HandlerCallback,
     type IAgentRuntime,
     type Media,
     type Memory,
-    ModelClass,
-    type State,
+    ModelClass, parseJSONObjectFromText, splitChunks, type State, trimTokens
 } from "@elizaos/core";
 import * as fs from "node:fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
@@ -56,10 +49,8 @@ const getDateRange = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -275,10 +266,8 @@ const summarizeAction = {
                 template,
             });
 
-            const summary = await generateText({
-                runtime,
+            const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             currentSummary = `${currentSummary}\n${summary}`;

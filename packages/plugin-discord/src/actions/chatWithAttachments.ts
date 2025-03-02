@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content, generateText, type HandlerCallback,
+    type ActionExample, composeContext, type Content, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelClass, parseJSONObjectFromText, type State, trimTokens
@@ -46,10 +46,8 @@ const getAttachmentIds = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -194,10 +192,8 @@ const summarizeAction = {
             template,
         });
 
-        const summary = await generateText({
-            runtime,
+        const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
 
         currentSummary = `${currentSummary}\n${summary}`;

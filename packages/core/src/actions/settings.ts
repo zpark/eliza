@@ -1,6 +1,5 @@
 import { composeContext } from "../context";
 import { createUniqueUuid } from "../entities";
-import { generateMessageResponse, generateObjectArray } from "../generation";
 import { logger } from "../logger";
 import { messageCompletionFooter } from "../parsing";
 import { findWorldForOwner } from "../roles";
@@ -54,6 +53,138 @@ Return ONLY a JSON array of objects with 'key' and 'value' properties. Format:
 ]
 
 IMPORTANT: Only include settings from the Available Settings list above. Ignore any other potential settings.`;
+
+const generateObject = async ({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_LARGE,
+  stopSequences,
+  output = "object",
+  enumValues,
+  schema,
+  mode,
+}): Promise<any> => {
+  if (!context) {
+    const errorMessage = "generateObject context is empty";
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  // Special handling for enum output type
+  if (output === "enum" && enumValues) {
+    const response = await runtime.useModel(modelClass, {
+      runtime,
+      context,
+      modelClass,
+      stopSequences,
+      maxTokens: 8,
+      object: true,
+    });
+
+    // Clean up the response to extract just the enum value
+    const cleanedResponse = response.trim();
+    
+    // Verify the response is one of the allowed enum values
+    if (enumValues.includes(cleanedResponse)) {
+      return cleanedResponse;
+    }
+    
+    // If the response includes one of the enum values (case insensitive)
+    const matchedValue = enumValues.find(value => 
+      cleanedResponse.toLowerCase().includes(value.toLowerCase())
+    );
+    
+    if (matchedValue) {
+      return matchedValue;
+    }
+
+    logger.error(`Invalid enum value received: ${cleanedResponse}`);
+    logger.error(`Expected one of: ${enumValues.join(", ")}`);
+    return null;
+  }
+
+  // Regular object/array generation
+  const response = await runtime.useModel(modelClass, {
+    runtime,
+    context,
+    modelClass,
+    stopSequences,
+    object: true,
+  });
+
+  let jsonString = response;
+
+  // Find appropriate brackets based on expected output type
+  const firstChar = output === "array" ? "[" : "{";
+  const lastChar = output === "array" ? "]" : "}";
+  
+  const firstBracket = response.indexOf(firstChar);
+  const lastBracket = response.lastIndexOf(lastChar);
+  
+  if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
+    jsonString = response.slice(firstBracket, lastBracket + 1);
+  }
+
+  if (jsonString.length === 0) {
+    logger.error(`Failed to extract JSON ${output} from model response`);
+    return null;
+  }
+
+  // Parse the JSON string
+  try {
+    const json = JSON.parse(jsonString);
+    
+    // Validate against schema if provided
+    if (schema) {
+      return schema.parse(json);
+    }
+    
+    return json;
+  } catch (_error) {
+    logger.error(`Failed to parse JSON ${output}`);
+    logger.error(jsonString);
+    return null;
+  }
+};
+
+async function generateObjectArray({
+  runtime,
+  context,
+  modelClass = ModelClass.TEXT_SMALL,
+  schema,
+  schemaName,
+  schemaDescription,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelClass: ModelClass;
+  schema?: ZodSchema;
+  schemaName?: string;
+  schemaDescription?: string;
+}): Promise<z.infer<typeof schema>[]> {
+  if (!context) {
+    logger.error("generateObjectArray context is empty");
+    return [];
+  }
+  
+  const result = await generateObject({
+    runtime,
+    context,
+    modelClass,
+    output: "array",
+    schema,
+    schemaName,
+    schemaDescription,
+    mode: "json",
+  });
+  
+  if (!Array.isArray(result)) {
+    logger.error("Generated result is not an array");
+    return [];
+  }
+  
+  return schema ? schema.parse(result) : result;
+}
 
 /**
  * Gets settings state from world metadata

@@ -15,7 +15,6 @@ import {
   formatEvaluatorNames,
   formatEvaluators,
 } from "./evaluators.ts";
-import { generateText } from "./generation.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
@@ -865,10 +864,8 @@ export class AgentRuntime implements IAgentRuntime {
         this.character.templates?.evaluationTemplate || evaluationTemplate,
     });
 
-    const result = await generateText({
-      runtime: this,
+    const result = await this.useModel(ModelClass.TEXT_SMALL, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
     const evaluators = parseJsonArrayFromText(result) as unknown as string[];

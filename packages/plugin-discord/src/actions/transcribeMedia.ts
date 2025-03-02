@@ -1,15 +1,10 @@
-import { composeContext } from "@elizaos/core";
-import { generateText } from "@elizaos/core";
-import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type Action,
-    type ActionExample,
-    type Content,
+    type ActionExample, composeContext, type Content,
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
-    type State,
+    ModelClass, parseJSONObjectFromText, type State
 } from "@elizaos/core";
 
 export const transcriptionTemplate = `# Transcription of media file
@@ -44,10 +39,8 @@ const getMediaAttachmentId = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
 

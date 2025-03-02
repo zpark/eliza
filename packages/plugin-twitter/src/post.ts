@@ -4,7 +4,6 @@ import {
     composeContext,
     createUniqueUuid,
     extractAttributes,
-    generateText,
     type IAgentRuntime,
     logger,
     ModelClass,
@@ -333,10 +332,8 @@ export class TwitterPostClient {
 
             logger.debug(`generate post prompt:\n${context}`);
 
-            const response = await generateText({
-                runtime: this.runtime,
+            const response = await this.runtime.useModel(ModelClass.TEXT_SMALL, {
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             const rawTweetContent = cleanJsonResponse(response);
