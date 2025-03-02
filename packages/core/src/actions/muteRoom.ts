@@ -34,7 +34,6 @@ export const muteRoomAction: Action = {
         const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
             runtime.agentId,
-            runtime.agentId
         );
         return roomState !== "MUTED";
     },

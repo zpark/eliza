@@ -1,12 +1,13 @@
 import { composeContext } from "../context";
 import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
-import { messageCompletionFooter } from "../parsing";
+import { messageCompletionFooter, parseJSONObjectFromText } from "../parsing";
 import { findWorldForOwner } from "../roles";
 import {
   type Action,
   type ActionExample,
   ChannelType,
+  Content,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
@@ -195,7 +196,7 @@ export async function getWorldSettings(
 ): Promise<WorldSettings | null> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world || !world.metadata?.settings) {
       return null;
@@ -218,7 +219,7 @@ export async function updateWorldSettings(
 ): Promise<boolean> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world) {
       logger.error(`No world found for server ${serverId}`);
@@ -552,14 +553,14 @@ async function handleOnboardingComplete(
       template: completionTemplate,
     });
 
-    const completionMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: completionMessage.text,
+      text: responseContent.text,
       action: "ONBOARDING_COMPLETE",
       source: "discord",
     });
@@ -604,14 +605,14 @@ async function generateSuccessResponse(
       template: successTemplate,
     });
 
-    const successMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: successMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATED",
       source: "discord",
     });
@@ -654,14 +655,14 @@ async function generateFailureResponse(
       template: failureTemplate,
     });
 
-    const failureMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: failureMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATE_FAILED",
       source: "discord",
     });
@@ -689,14 +690,14 @@ async function generateErrorResponse(
       template: errorTemplate,
     });
 
-    const errorMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: errorMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATE_ERROR",
       source: "discord",
     });
@@ -736,7 +737,7 @@ const updateSettingsAction: Action = {
       );
 
       // Validate that we're in a DM channel
-      const room = await runtime.getRoom(message.roomId);
+      const room = await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         logger.error(`No room found for ID ${message.roomId}`);
         return false;

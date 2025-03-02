@@ -571,7 +571,7 @@ export type Client = {
 
 export type Adapter = {
   /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter & IDatabaseCacheAdapter>;
+  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter>;
 };
 
 export type Route = {
@@ -731,10 +731,10 @@ export interface IDatabaseAdapter {
   updateAgent(agent: Agent): Promise<boolean>;
 
   /** Get entity by ID */
-  getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
+  getEntityById(userId: UUID): Promise<Entity | null>;
 
   /** Get entities for room */
-  getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
+  getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]>;
 
   /** Create new entity */
   createEntity(entity: Entity): Promise<boolean>;
@@ -763,7 +763,6 @@ export interface IDatabaseAdapter {
     count?: number;
     unique?: boolean;
     tableName: string;
-    agentId: UUID;
     start?: number;
     end?: number;
   }): Promise<Memory[]>;
@@ -774,7 +773,6 @@ export interface IDatabaseAdapter {
 
   getMemoriesByRoomIds(params: {
     tableName: string;
-    agentId: UUID;
     roomIds: UUID[];
     limit?: number;
   }): Promise<Memory[]>;
@@ -802,7 +800,6 @@ export interface IDatabaseAdapter {
     match_threshold?: number;
     count?: number;
     roomId?: UUID;
-    agentId?: UUID;
     unique?: boolean;
     tableName: string;
   }): Promise<Memory[]>;
@@ -824,7 +821,6 @@ export interface IDatabaseAdapter {
   ): Promise<number>;
 
   getGoals(params: {
-    agentId: UUID;
     roomId: UUID;
     userId?: UUID | null;
     onlyInProgress?: boolean;
@@ -842,23 +838,21 @@ export interface IDatabaseAdapter {
   createWorld({
     id,
     name,
-    agentId,
     serverId,
     metadata
   }: WorldData): Promise<UUID>;
 
-  getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
+  getWorld(id: UUID): Promise<WorldData | null>;
 
-  getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+  getAllWorlds(): Promise<WorldData[]>;
 
-  updateWorld(world: WorldData, agentId: UUID): Promise<void>;
+  updateWorld(world: WorldData): Promise<void>;
 
-  getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+  getRoom(roomId: UUID): Promise<RoomData | null>;
 
   createRoom({
     id,
     name,
-    agentId,
     source,
     type,
     channelId,
@@ -866,34 +860,32 @@ export interface IDatabaseAdapter {
     worldId,
   }: RoomData): Promise<UUID>;
 
-  removeRoom(roomId: UUID, agentId: UUID): Promise<void>;
+  removeRoom(roomId: UUID): Promise<void>;
 
-  updateRoom(room: RoomData, agentId: UUID): Promise<void>;
+  updateRoom(room: RoomData): Promise<void>;
 
-  getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
+  getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
 
-  getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
+  getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
   getRooms(worldId: UUID): Promise<RoomData[]>;
   
-  addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+  addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
-  removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+  removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
-  getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
+  getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
 
-  getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
+  getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
 
   getParticipantUserState(
     roomId: UUID,
-    userId: UUID,
-    agentId: UUID
+    userId: UUID
   ): Promise<"FOLLOWED" | "MUTED" | null>;
 
   setParticipantUserState(
     roomId: UUID,
     userId: UUID,
-    agentId: UUID,
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
@@ -905,7 +897,6 @@ export interface IDatabaseAdapter {
   createRelationship(params: {
     sourceEntityId: UUID;
     targetEntityId: UUID;
-    agentId: UUID;
     tags?: string[];
     metadata?: { [key: string]: any };
   }): Promise<boolean>;
@@ -925,7 +916,6 @@ export interface IDatabaseAdapter {
   getRelationship(params: {
     sourceEntityId: UUID;
     targetEntityId: UUID;
-    agentId: UUID;
   }): Promise<Relationship | null>;
 
   /**
@@ -935,7 +925,6 @@ export interface IDatabaseAdapter {
    */
   getRelationships(params: {
     userId: UUID;
-    agentId: UUID;
     tags?: string[];
   }): Promise<Relationship[]>;
 
@@ -949,19 +938,13 @@ export interface IDatabaseAdapter {
   
   removeCharacter(name: string): Promise<void>;
 
-  ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
-}
+  ensureEmbeddingDimension(dimension: number): void;
 
-export interface IDatabaseCacheAdapter {
-  getCache(params: { agentId: UUID; key: string }): Promise<string | undefined>;
+  getCache(key: string): Promise<string | undefined>;
 
-  setCache(params: {
-    agentId: UUID;
-    key: string;
-    value: string;
-  }): Promise<boolean>;
+  setCache(key: string, value: string,): Promise<boolean>;
 
-  deleteCache(params: { agentId: UUID; key: string }): Promise<boolean>;
+  deleteCache(key: string): Promise<boolean>;
 }
 
 export interface IMemoryManager {
@@ -984,7 +967,6 @@ export interface IMemoryManager {
     match_threshold?: number;
     count?: number;
     roomId?: UUID;
-    agentId?: UUID;
     unique?: boolean;
     metadata?: KnowledgeMetadata;
   }): Promise<Memory[]>;
@@ -1011,18 +993,6 @@ export interface IMemoryManager {
 export type CacheOptions = {
   expires?: number;
 };
-
-export enum CacheStore {
-  REDIS = "redis",
-  DATABASE = "database",
-  FILESYSTEM = "filesystem",
-}
-
-export interface ICacheManager {
-  get<T = unknown>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
-  delete(key: string): Promise<void>;
-}
 
 export abstract class Service {
   private static instance: Service | null = null;
@@ -1065,8 +1035,6 @@ export interface IAgentRuntime {
   descriptionManager: IMemoryManager;
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
-
-  cacheManager: ICacheManager;
 
   getClient(name: string): ClientInstance | null;
   getAllClients(): Map<string, ClientInstance>;
@@ -1111,18 +1079,6 @@ export interface IAgentRuntime {
     callback?: HandlerCallback
   ): Promise<string[] | null>;
 
-  getOrCreateUser(
-    userId: UUID,
-    names: string[],
-    metadata: {
-      [source: string]: {
-        name: string;
-        userName: string;
-        [key: string]: unknown;
-      };
-    }
-  ): Promise<UUID>;
-
   registerProvider(provider: Provider): void;
 
   registerAction(action: Action): void;
@@ -1153,20 +1109,12 @@ export interface IAgentRuntime {
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
-  getWorld(worldId: UUID): Promise<WorldData | null>;
-
-  getAllWorlds(): Promise<WorldData[]>;
-
-  updateWorld(world: WorldData): Promise<void>;
-
   ensureWorldExists({
     id,
     name,
     serverId,
     metadata
   }: WorldData): Promise<void>;
-
-  getEntity(userId: UUID): Promise<Entity | null>;
 
   ensureRoomExists({
     id,
@@ -1177,8 +1125,6 @@ export interface IAgentRuntime {
     serverId,
     worldId,
   }: RoomData): Promise<void>;
-
-  getRoom(roomId: UUID): Promise<RoomData | null>;
 
   composeState(
     message: Memory,

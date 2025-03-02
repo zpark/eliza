@@ -19,7 +19,6 @@ export const getGoals = async ({
     count?: number;
 }) => {
     return runtime.databaseAdapter.getGoals({
-        agentId: runtime.agentId,
         roomId,
         userId,
         onlyInProgress,

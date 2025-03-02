@@ -1,6 +1,5 @@
-import { generateTrueOrFalse } from "..";
 import { composeContext } from "../context";
-import { booleanFooter } from "../parsing";
+import { booleanFooter, parseBooleanFromText } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
 
 const shouldUnfollowTemplate =
@@ -32,7 +31,6 @@ export const unfollowRoomAction: Action = {
         const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
             runtime.agentId,
-            runtime.agentId,
         );
         return roomState === "FOLLOWED";
     },
@@ -43,13 +41,13 @@ export const unfollowRoomAction: Action = {
                 template: shouldUnfollowTemplate, // Define this template separately
             });
 
-            const response = await generateTrueOrFalse({
-                runtime,
+            const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
                 context: shouldUnfollowContext,
-                modelClass: ModelClass.TEXT_LARGE,
             });
 
-            return response;
+            const parsedResponse = parseBooleanFromText(response.trim());
+           
+            return parsedResponse;
         }
 
         state = await runtime.composeState(message);
@@ -57,7 +55,6 @@ export const unfollowRoomAction: Action = {
         if (await _shouldUnfollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
-                runtime.agentId,
                 runtime.agentId,
                 null
             );

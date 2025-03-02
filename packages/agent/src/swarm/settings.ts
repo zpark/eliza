@@ -93,7 +93,7 @@ export async function initializeAllSystems(
         }
       });
 
-      const world = await runtime.getWorld(worldId);    
+      const world = await runtime.databaseAdapter.getWorld(worldId);    
       
       if(world.metadata?.settings) {
         continue;
@@ -158,17 +158,15 @@ export async function startOnboardingDM(
       worldId: worldId,
     });
 
-    await runtime.getOrCreateUser(
-      runtime.agentId,
-      [runtime.character.name],
-      {
-        default: {
-          name: runtime.character.name,
-          userName: runtime.character.name,
-        },
-      },
-    );
-
+    const entity = await runtime.databaseAdapter.getEntityById(runtime.agentId);
+    
+    if(!entity) {
+      await runtime.databaseAdapter.createEntity({
+        id: runtime.agentId,
+        names: [runtime.character.name],
+        agentId: runtime.agentId,
+      });
+    }
     // Create memory of the initial message
     await runtime.messageManager.createMemory({
       agentId: runtime.agentId as UUID,

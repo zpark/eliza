@@ -1,4 +1,4 @@
-import { CacheOptions, IAgentRuntime, ICacheManager } from "@elizaos/core";
+import { CacheOptions, IAgentRuntime } from "@elizaos/core";
 import BigNumber from "bignumber.js";
 import * as dotenv from "dotenv";
 import { toBN } from "./bignumber";
@@ -320,10 +320,10 @@ type DexscreenerOptions = {
 };
 
 export class DexscreenerClient {
-    constructor(private cache: ICacheManager) {}
+    constructor(private runtime: IAgentRuntime) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
-        return new this(runtime.cacheManager);
+        return new this(runtime);
     }
 
     async request<T = any>(
@@ -339,7 +339,7 @@ export class DexscreenerClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.cache.get<T>(cacheKey);
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
             if (cached) return cached;
         }
 
@@ -351,7 +351,7 @@ export class DexscreenerClient {
         );
 
         if (options?.expires) {
-            await this.cache.set(cacheKey, res, {
+            await this.runtime.databaseAdapter.setCache(cacheKey, res, {
                 expires: Date.now() + parseExpires(options.expires),
             });
         }
@@ -411,9 +411,11 @@ export class DexscreenerClient {
 }
 
 export class HeliusClient {
+    private runtime: IAgentRuntime;
+    
     constructor(
         private readonly apiKey: string,
-        private cache: ICacheManager
+        runtime: IAgentRuntime
     ) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
@@ -423,7 +425,7 @@ export class HeliusClient {
             throw new Error("missing HELIUS_API_KEY");
         }
 
-        return new this(apiKey, runtime.cacheManager);
+        return new this(apiKey, runtime);
     }
 
     async fetchHolderList(
@@ -431,7 +433,7 @@ export class HeliusClient {
         options?: { expires?: string | CacheOptions["expires"] }
     ): Promise<HolderData[]> {
         if (options?.expires) {
-            const cached = await this.cache.get<HolderData[]>(
+            const cached = await this.runtime.databaseAdapter.getCache<HolderData[]>(
                 `helius/token-holders/${address}`
             );
 
@@ -515,7 +517,7 @@ export class HeliusClient {
             console.log(`Total unique holders fetched: ${holders.length}`);
 
             if (options?.expires)
-                await this.cache.set(
+                await this.runtime.databaseAdapter.setCache(
                     `helius/token-holders/${address}`,
                     holders,
                     {
@@ -538,7 +540,7 @@ type CoingeckoOptions = {
 export class CoingeckoClient {
     constructor(
         private readonly apiKey: string,
-        private readonly cache: ICacheManager
+        private readonly runtime: IAgentRuntime
     ) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
@@ -548,7 +550,7 @@ export class CoingeckoClient {
             throw new Error("missing COINGECKO_API_KEY");
         }
 
-        return new this(apiKey, runtime.cacheManager);
+        return new this(apiKey, runtime);
     }
 
     async request<T = any>(
@@ -561,7 +563,7 @@ export class CoingeckoClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.cache.get<T>(cacheKey);
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
             if (cached) return cached;
         }
 
@@ -581,7 +583,7 @@ export class CoingeckoClient {
         );
 
         if (options?.expires) {
-            await this.cache.set(cacheKey, res);
+            await this.runtime.databaseAdapter.setCache(cacheKey, res);
         }
 
         return res;
@@ -681,7 +683,7 @@ export class BirdeyeClient {
 
     constructor(
         private readonly apiKey: string,
-        private readonly cache: ICacheManager
+        private readonly runtime: IAgentRuntime
     ) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
@@ -691,7 +693,7 @@ export class BirdeyeClient {
             throw new Error("missing BIRDEYE_API_KEY");
         }
 
-        return new this(apiKey, runtime.cacheManager);
+        return new this(apiKey, runtime);
     }
 
     async request<T = any>(
@@ -705,7 +707,7 @@ export class BirdeyeClient {
             .join("/");
 
         if (options?.expires && !forceRefresh) {
-            const cached = await this.cache.get<T>(cacheKey);
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
             if (cached) return cached;
         }
 
@@ -726,7 +728,7 @@ export class BirdeyeClient {
         );
 
         if (options?.expires) {
-            await this.cache.set(cacheKey, response, {
+            await this.runtime.databaseAdapter.setCache(cacheKey, response, {
                 expires: Date.now() + parseExpires(options.expires),
             });
         }

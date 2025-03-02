@@ -3,14 +3,13 @@ import {
     composeContext,
     type Content,
     createUniqueUuid,
-    generateMessageResponse,
-    generateShouldRespond,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
     type Memory,
     messageCompletionFooter,
     ModelClass,
+    parseJSONObjectFromText,
     shouldRespondFooter,
     type State
 } from "@elizaos/core";
@@ -425,14 +424,11 @@ export class TwitterInteractionClient {
                 twitterShouldRespondTemplate(validTargetUsersStr),
         });
 
-        const shouldRespond = await generateShouldRespond({
-            runtime: this.runtime,
+        const shouldRespond = await this.runtime.useModel(ModelClass.TEXT_SMALL, {
             context: shouldRespondContext,
-            modelClass: ModelClass.MEDIUM,
-        });
-
-        // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-        if (shouldRespond !== "RESPOND") {
+          });
+        
+          if (!shouldRespond.includes("RESPOND")) {
             logger.log("Not responding to message");
             return { text: "Response Decision:", action: shouldRespond };
         }
@@ -464,11 +460,11 @@ export class TwitterInteractionClient {
                 twitterMessageHandlerTemplate,
         });
 
-        const response = await generateMessageResponse({
-            runtime: this.runtime,
+        const responseText = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
             context,
-            modelClass: ModelClass.TEXT_LARGE,
-        });
+          });
+      
+        const response = parseJSONObjectFromText(responseText) as Content;
 
         const removeQuotes = (str: string) =>
             str.replace(/^['"](.*)['"]$/, "$1");
@@ -534,7 +530,7 @@ export class TwitterInteractionClient {
 
                     const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
 
-                    await this.runtime.cacheManager.set(
+                    await this.runtime.databaseAdapter.setCache(
                         `twitter/tweet_generation_${tweet.id}.txt`,
                         responseInfo
                     );

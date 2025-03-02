@@ -1,10 +1,5 @@
-import { generateText, type IBrowserService, trimTokens } from "@elizaos/core";
-import { parseJSONObjectFromText } from "@elizaos/core";
-import { Service } from "@elizaos/core";
-import { settings } from "@elizaos/core";
-import { type IAgentRuntime, ModelClass, ServiceType } from "@elizaos/core";
-import { stringToUuid } from "@elizaos/core";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
+import { type IAgentRuntime, type IBrowserService, logger, ModelClass, parseJSONObjectFromText, Service, ServiceType, settings, stringToUuid, trimTokens } from "@elizaos/core";
 import CaptchaSolver from "capsolver-npm";
 import {
     type Browser,
@@ -12,7 +7,6 @@ import {
     chromium,
     type Page,
 } from "playwright";
-import { logger } from "@elizaos/core";
 
 async function generateSummary(
     runtime: IAgentRuntime,
@@ -35,10 +29,8 @@ async function generateSummary(
   }
   \`\`\``;
 
-    const response = await generateText({
-        runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
         context: prompt,
-        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);
@@ -163,13 +155,10 @@ export class BrowserService extends Service implements IBrowserService {
         runtime: IAgentRuntime
     ): Promise<PageContent> {
         const cacheKey = this.getCacheKey(url);
-        const cached = await runtime.cacheManager.get<{
-            url: string;
-            content: PageContent;
-        }>(`${this.cacheKey}/${cacheKey}`);
+        const cached = await runtime.databaseAdapter.getCache(`${this.cacheKey}/${cacheKey}`);
 
         if (cached) {
-            return cached.content;
+            return JSON.parse(cached).content;
         }
 
         let page: Page | undefined;
@@ -217,10 +206,10 @@ export class BrowserService extends Service implements IBrowserService {
                 `${documentTitle}\n${bodyContent}`
             );
             const content = { title: parsedTitle, description, bodyContent };
-            await runtime.cacheManager.set(`${this.cacheKey}/${cacheKey}`, {
+            await runtime.databaseAdapter.setCache(`${this.cacheKey}/${cacheKey}`, JSON.stringify({
                 url,
                 content,
-            });
+            }));
             return content;
         } catch (error) {
             logger.error("Error:", error);

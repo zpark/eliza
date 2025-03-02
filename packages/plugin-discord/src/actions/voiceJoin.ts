@@ -44,7 +44,7 @@ export default {
 
         const roomId = message.roomId;
 
-        const room = await runtime.getRoom(roomId);
+        const room = await runtime.databaseAdapter.getRoom(roomId);
 
         if(room?.type !== ChannelType.GROUP) {
             return false;
@@ -77,7 +77,7 @@ export default {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }

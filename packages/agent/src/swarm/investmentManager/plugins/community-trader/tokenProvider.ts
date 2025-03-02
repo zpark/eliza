@@ -1,18 +1,12 @@
-import { IAgentRuntime } from "@elizaos/core";
-import {
-    DexscreenerClient,
-} from "./clients";
-import { ITrustTokenProvider, TokenMarketData, TokenMetadata } from "./types";
-
-import {
-    elizaLogger,
-    ICacheManager,
-    settings
-} from "@elizaos/core";
+import { logger, IAgentRuntime, settings } from "@elizaos/core";
 import { Connection } from "@solana/web3.js";
 import NodeCache from "node-cache";
 import * as path from "path";
 import { toBN } from "./bignumber.ts";
+import {
+    DexscreenerClient,
+} from "./clients";
+import { ITrustTokenProvider, TokenMarketData, TokenMetadata } from "./types";
 import {
     CalculatedBuyAmounts,
     DexScreenerData,
@@ -44,7 +38,6 @@ const PROVIDER_CONFIG = {
 };
 
 export class SolanaTokenProvider {
-    private cache: NodeCache;
     private cacheKey: string = "solana/tokens";
     private NETWORK_ID = 1399811149;
     private GRAPHQL_ENDPOINT = "https://graph.codex.io/graphql";
@@ -53,27 +46,27 @@ export class SolanaTokenProvider {
         //  private connection: Connection,
         private tokenAddress: string,
         private walletProvider: WalletProvider,
-        private cacheManager: ICacheManager
+        private runtime: IAgentRuntime
     ) {
-        this.cache = new NodeCache({ stdTTL: 300 }); // 5 minutes cache
+        
     }
 
     private async readFromCache<T>(key: string): Promise<T | null> {
-        const cached = await this.cacheManager.get<T>(
+        const cached = await this.runtime.databaseAdapter.getCache<T>(
             path.join(this.cacheKey, key)
         );
         return cached;
     }
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
-        await this.cacheManager.set(path.join(this.cacheKey, key), data, {
+        await this.runtime.databaseAdapter.setCache(path.join(this.cacheKey, key), data, {
             expires: Date.now() + 5 * 60 * 1000,
         });
     }
 
     private async getCachedData<T>(key: string): Promise<T | null> {
         // Check in-memory cache first
-        const cachedData = this.cache.get<T>(key);
+        const cachedData = await this.runtime.databaseAdapter.getCache<T>(key);
         if (cachedData) {
             return cachedData;
         }
@@ -82,7 +75,7 @@ export class SolanaTokenProvider {
         const fileCachedData = await this.readFromCache<T>(key);
         if (fileCachedData) {
             // Populate in-memory cache
-            this.cache.set(key, fileCachedData);
+            await this.runtime.databaseAdapter.setCache(key, fileCachedData);
             return fileCachedData;
         }
 
@@ -91,7 +84,7 @@ export class SolanaTokenProvider {
 
     private async setCachedData<T>(cacheKey: string, data: T): Promise<void> {
         // Set in-memory cache
-        this.cache.set(cacheKey, data);
+        await this.runtime.databaseAdapter.setCache(cacheKey, data);
 
         // Write to file-based cache
         await this.writeToCache(cacheKey, data);
@@ -125,18 +118,18 @@ export class SolanaTokenProvider {
                 const data = await response.json();
                 return data;
             } catch (error) {
-                elizaLogger.error(`Attempt ${i + 1} failed:`, error);
+                logger.error(`Attempt ${i + 1} failed:`, error);
                 lastError = error as Error;
                 if (i < PROVIDER_CONFIG.MAX_RETRIES - 1) {
                     const delay = PROVIDER_CONFIG.RETRY_DELAY * Math.pow(2, i);
-                    elizaLogger.log(`Waiting ${delay}ms before retrying...`);
+                    logger.log(`Waiting ${delay}ms before retrying...`);
                     await new Promise((resolve) => setTimeout(resolve, delay));
                     continue;
                 }
             }
         }
 
-        elizaLogger.error(
+        logger.error(
             "All attempts failed. Throwing the last error:",
             lastError
         );
@@ -162,7 +155,7 @@ export class SolanaTokenProvider {
                 return null;
             }
         } catch (error) {
-            elizaLogger.error("Error checking token in wallet:", error);
+            logger.error("Error checking token in wallet:", error);
             return null;
         }
     }
@@ -172,7 +165,7 @@ export class SolanaTokenProvider {
             const cacheKey = `token_${this.tokenAddress}`;
             const cachedData = await this.getCachedData<TokenCodex>(cacheKey);
             if (cachedData) {
-                elizaLogger.log(
+                logger.log(
                     `Returning cached token data for ${this.tokenAddress}.`
                 );
                 return cachedData;
@@ -240,7 +233,7 @@ export class SolanaTokenProvider {
                 isScam: token.isScam ? true : false,
             };
         } catch (error) {
-            elizaLogger.error(
+            logger.error(
                 "Error fetching token data from Codex:",
                 error.message
             );
@@ -253,7 +246,7 @@ export class SolanaTokenProvider {
             const cacheKey = "prices";
             const cachedData = await this.getCachedData<Prices>(cacheKey);
             if (cachedData) {
-                elizaLogger.log("Returning cached prices.");
+                logger.log("Returning cached prices.");
                 return cachedData;
             }
             const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
@@ -284,7 +277,7 @@ export class SolanaTokenProvider {
                               : "ethereum"
                     ].usd = price;
                 } else {
-                    elizaLogger.warn(
+                    logger.warn(
                         `No price data available for token: ${token}`
                     );
                 }
@@ -292,7 +285,7 @@ export class SolanaTokenProvider {
             this.setCachedData(cacheKey, prices);
             return prices;
         } catch (error) {
-            elizaLogger.error("Error fetching prices:", error);
+            logger.error("Error fetching prices:", error);
             throw error;
         }
     }
@@ -353,7 +346,7 @@ export class SolanaTokenProvider {
         const cachedData =
             await this.getCachedData<TokenSecurityData>(cacheKey);
         if (cachedData) {
-            elizaLogger.log(
+            logger.log(
                 `Returning cached token security data for ${this.tokenAddress}.`
             );
             return cachedData;
@@ -374,7 +367,7 @@ export class SolanaTokenProvider {
             top10HolderPercent: data.data.top10HolderPercent,
         };
         this.setCachedData(cacheKey, security);
-        elizaLogger.log(`Token security data cached for ${this.tokenAddress}.`);
+        logger.log(`Token security data cached for ${this.tokenAddress}.`);
 
         return security;
     }
@@ -383,7 +376,7 @@ export class SolanaTokenProvider {
         const cacheKey = `tokenTradeData_${this.tokenAddress}`;
         const cachedData = await this.getCachedData<TokenTradeData>(cacheKey);
         if (cachedData) {
-            elizaLogger.log(
+            logger.log(
                 `Returning cached token trade data for ${this.tokenAddress}.`
             );
             return cachedData;
@@ -400,7 +393,7 @@ export class SolanaTokenProvider {
 
         const data = await fetch(url, options)
             .then((res) => res.json())
-            .catch((err) => elizaLogger.error(err));
+            .catch((err) => logger.error(err));
 
         if (!data?.success || !data?.data) {
             throw new Error("No token trade data available");
@@ -618,19 +611,19 @@ export class SolanaTokenProvider {
         const cacheKey = `dexScreenerData_${this.tokenAddress}`;
         const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
         if (cachedData) {
-            elizaLogger.log("Returning cached DexScreener data.");
+            logger.log("Returning cached DexScreener data.");
             return cachedData;
         }
 
         const url = `https://api.dexscreener.com/latest/dex/search?q=${this.tokenAddress}`;
         try {
-            elizaLogger.log(
+            logger.log(
                 `Fetching DexScreener data for token: ${this.tokenAddress}`
             );
             const data = await fetch(url)
                 .then((res) => res.json())
                 .catch((err) => {
-                    elizaLogger.error(err);
+                    logger.error(err);
                 });
 
             if (!data || !data.pairs) {
@@ -647,7 +640,7 @@ export class SolanaTokenProvider {
 
             return dexData;
         } catch (error) {
-            elizaLogger.error(`Error fetching DexScreener data:`, error);
+            logger.error(`Error fetching DexScreener data:`, error);
             return {
                 schemaVersion: "1.0.0",
                 pairs: [],
@@ -661,17 +654,17 @@ export class SolanaTokenProvider {
         const cacheKey = `dexScreenerData_search_${symbol}`;
         const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
         if (cachedData) {
-            elizaLogger.log("Returning cached search DexScreener data.");
+            logger.log("Returning cached search DexScreener data.");
             return this.getHighestLiquidityPair(cachedData);
         }
 
         const url = `https://api.dexscreener.com/latest/dex/search?q=${symbol}`;
         try {
-            elizaLogger.log(`Fetching DexScreener data for symbol: ${symbol}`);
+            logger.log(`Fetching DexScreener data for symbol: ${symbol}`);
             const data = await fetch(url)
                 .then((res) => res.json())
                 .catch((err) => {
-                    elizaLogger.error(err);
+                    logger.error(err);
                     return null;
                 });
 
@@ -690,7 +683,7 @@ export class SolanaTokenProvider {
             // Return the pair with the highest liquidity and market cap
             return this.getHighestLiquidityPair(dexData);
         } catch (error) {
-            elizaLogger.error(`Error fetching DexScreener data:`, error);
+            logger.error(`Error fetching DexScreener data:`, error);
             return null;
         }
     }
@@ -759,7 +752,7 @@ export class SolanaTokenProvider {
         const cacheKey = `holderList_${this.tokenAddress}`;
         const cachedData = await this.getCachedData<HolderData[]>(cacheKey);
         if (cachedData) {
-            elizaLogger.log("Returning cached holder list.");
+            logger.log("Returning cached holder list.");
             return cachedData;
         }
 
@@ -769,7 +762,7 @@ export class SolanaTokenProvider {
         let cursor;
         //HELIOUS_API_KEY needs to be added
         const url = `https://mainnet.helius-rpc.com/?api-key=${settings.HELIUS_API_KEY || ""}`;
-        elizaLogger.log({ url });
+        logger.log({ url });
 
         try {
             while (true) {
@@ -782,7 +775,7 @@ export class SolanaTokenProvider {
                 if (cursor != undefined) {
                     params.cursor = cursor;
                 }
-                elizaLogger.log(`Fetching holders - Page ${page}`);
+                logger.log(`Fetching holders - Page ${page}`);
                 if (page > 2) {
                     break;
                 }
@@ -807,13 +800,13 @@ export class SolanaTokenProvider {
                     !data.result.token_accounts ||
                     data.result.token_accounts.length === 0
                 ) {
-                    elizaLogger.log(
+                    logger.log(
                         `No more holders found. Total pages fetched: ${page - 1}`
                     );
                     break;
                 }
 
-                elizaLogger.log(
+                logger.log(
                     `Processing ${data.result.token_accounts.length} holders from page ${page}`
                 );
 
@@ -841,14 +834,14 @@ export class SolanaTokenProvider {
                 balance: balance.toString(),
             }));
 
-            elizaLogger.log(`Total unique holders fetched: ${holders.length}`);
+            logger.log(`Total unique holders fetched: ${holders.length}`);
 
             // Cache the result
             this.setCachedData(cacheKey, holders);
 
             return holders;
         } catch (error) {
-            elizaLogger.error("Error fetching holder list from Helius:", error);
+            logger.error("Error fetching holder list from Helius:", error);
             throw new Error("Failed to fetch holder list from Helius.");
         }
     }
@@ -897,54 +890,54 @@ export class SolanaTokenProvider {
             ).length;
             return highSupplyHoldersCount;
         } catch (error) {
-            elizaLogger.error("Error counting high supply holders:", error);
+            logger.error("Error counting high supply holders:", error);
             return 0;
         }
     }
 
     async getProcessedTokenData(): Promise<ProcessedTokenData> {
         try {
-            elizaLogger.log(
+            logger.log(
                 `Fetching security data for token: ${this.tokenAddress}`
             );
             const security = await this.fetchTokenSecurity();
 
             const tokenCodex = await this.fetchTokenCodex();
 
-            elizaLogger.log(
+            logger.log(
                 `Fetching trade data for token: ${this.tokenAddress}`
             );
             const tradeData = await this.fetchTokenTradeData();
 
-            elizaLogger.log(
+            logger.log(
                 `Fetching DexScreener data for token: ${this.tokenAddress}`
             );
             const dexData = await this.fetchDexScreenerData();
 
-            elizaLogger.log(
+            logger.log(
                 `Analyzing holder distribution for token: ${this.tokenAddress}`
             );
             const holderDistributionTrend =
                 await this.analyzeHolderDistribution(tradeData);
 
-            elizaLogger.log(
+            logger.log(
                 `Filtering high-value holders for token: ${this.tokenAddress}`
             );
             const highValueHolders =
                 await this.filterHighValueHolders(tradeData);
 
-            elizaLogger.log(
+            logger.log(
                 `Checking recent trades for token: ${this.tokenAddress}`
             );
             const recentTrades = await this.checkRecentTrades(tradeData);
 
-            elizaLogger.log(
+            logger.log(
                 `Counting high-supply holders for token: ${this.tokenAddress}`
             );
             const highSupplyHoldersCount =
                 await this.countHighSupplyHolders(security);
 
-            elizaLogger.log(
+            logger.log(
                 `Determining DexScreener listing status for token: ${this.tokenAddress}`
             );
             const isDexScreenerListed = dexData.pairs.length > 0;
@@ -965,10 +958,10 @@ export class SolanaTokenProvider {
                 tokenCodex,
             };
 
-            // elizaLogger.log("Processed token data:", processedData);
+            // logger.log("Processed token data:", processedData);
             return processedData;
         } catch (error) {
-            elizaLogger.error("Error processing token data:", error);
+            logger.error("Error processing token data:", error);
             throw error;
         }
     }
@@ -1025,7 +1018,7 @@ export class SolanaTokenProvider {
                 isMarketCapTooLow
             );
         } catch (error) {
-            elizaLogger.error("Error processing token data:", error);
+            logger.error("Error processing token data:", error);
             throw error;
         }
     }
@@ -1090,17 +1083,17 @@ export class SolanaTokenProvider {
         }
         output += `\n`;
 
-        elizaLogger.log("Formatted token data:", output);
+        logger.log("Formatted token data:", output);
         return output;
     }
 
     async getFormattedTokenReport(): Promise<string> {
         try {
-            elizaLogger.log("Generating formatted token report...");
+            logger.log("Generating formatted token report...");
             const processedData = await this.getProcessedTokenData();
             return this.formatTokenData(processedData);
         } catch (error) {
-            elizaLogger.error("Error generating token report:", error);
+            logger.error("Error generating token report:", error);
             return "Unable to fetch token information. Please try again later.";
         }
     }
@@ -1122,7 +1115,7 @@ export class TrustTokenProvider implements ITrustTokenProvider {
         return new SolanaTokenProvider(
             tokenAddress,
             new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
-            this.runtime.cacheManager
+            this.runtime
         ).shouldTradeToken();
     }
 
@@ -1136,7 +1129,7 @@ export class TrustTokenProvider implements ITrustTokenProvider {
         const data = await new SolanaTokenProvider(
             tokenAddress,
             new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
-            this.runtime.cacheManager
+            this.runtime
         ).getProcessedTokenData();
 
         const top3Pairs = data.dexScreenerData.pairs

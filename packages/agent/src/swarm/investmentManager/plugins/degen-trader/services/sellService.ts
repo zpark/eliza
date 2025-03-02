@@ -1,4 +1,4 @@
-import { elizaLogger, IAgentRuntime } from "@elizaos/core";
+import { logger, IAgentRuntime } from "@elizaos/core";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { TrustScoreDatabase } from "../../community-trader/db";
 import { SonarClient } from "../services/sonarClient";
@@ -37,7 +37,7 @@ export async function handleSellSignal(
       });
 
       // Log the quote details for debugging
-      elizaLogger.info('Quote details:', {
+      logger.info('Quote details:', {
         inputAmount: signal.amount,
         currentBalance: signal.currentBalance,
         quoteAmount: quoteResponse.quoteData.inAmount,
@@ -56,7 +56,7 @@ export async function handleSellSignal(
       const signature = await connection.sendTransaction(transaction);
 
       if (signature) {
-        elizaLogger.info('Sell trade executed successfully:', {
+        logger.info('Sell trade executed successfully:', {
           signature,
           tokenAddress,
           amount: signal.amount
@@ -77,7 +77,7 @@ export async function handleSellSignal(
           );
 
           if (confirmation.value.err) {
-            elizaLogger.error('Transaction confirmation failed:', {
+            logger.error('Transaction confirmation failed:', {
               error: confirmation.value.err,
               signature: signature
             });
@@ -136,7 +136,7 @@ export async function handleSellSignal(
 
             return { success: true, signature: signature };
           } catch (error) {
-            elizaLogger.error('Error in post-trade processing:', {
+            logger.error('Error in post-trade processing:', {
               error: error instanceof Error ? error.message : error,
               signature: signature
             });
@@ -144,14 +144,14 @@ export async function handleSellSignal(
             return { success: true, signature: signature };
           }
         } catch (error) {
-          elizaLogger.error('Error confirming transaction:', {
+          logger.error('Error confirming transaction:', {
             error: error instanceof Error ? error.message : error,
             signature: signature
           });
           return { success: false, error: 'Transaction confirmation error' };
         }
       } else {
-        elizaLogger.warn('Sell execution failed:', {
+        logger.warn('Sell execution failed:', {
           signal,
           error: 'Transaction signature is undefined'
         });
@@ -165,7 +165,7 @@ export async function handleSellSignal(
       }
     }
   } catch (error) {
-    elizaLogger.error('Failed to process sell signal:', error);
+    logger.error('Failed to process sell signal:', error);
     return {success: false};
   }
 }

@@ -104,16 +104,16 @@ export async function findEntityByName(
   state: State,
 ): Promise<Entity | null> {
   try {
-    const room = await runtime.getRoom(message.roomId);
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       logger.warn("Room not found for entity search");
       return null;
     }
 
-    const world = room.worldId ? await runtime.getWorld(room.worldId) : null;
+    const world = room.worldId ? await runtime.databaseAdapter.getWorld(room.worldId) : null;
 
     // Get all entities in the room with their components
-    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(room.id, runtime.agentId, true);
+    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(room.id, true);
 
     // Filter components for each entity based on permissions
     const filteredEntities = await Promise.all(entitiesInRoom.map(async entity => {
@@ -146,14 +146,13 @@ export async function findEntityByName(
     // Get relationships for the message sender
     const relationships = await runtime.databaseAdapter.getRelationships({
       userId: message.userId,
-      agentId: runtime.agentId
     });
 
     // Get entities from relationships
     const relationshipEntities = await Promise.all(
       relationships.map(async rel => {
         const entityId = rel.sourceEntityId === message.userId ? rel.targetEntityId : rel.sourceEntityId;
-        return runtime.databaseAdapter.getEntityById(entityId, runtime.agentId);
+        return runtime.databaseAdapter.getEntityById(entityId);
       })
     );
 
@@ -191,7 +190,7 @@ export async function findEntityByName(
 
     // If we got an exact entity ID match
     if (resolution.type === "EXACT_MATCH" && resolution.entityId) {
-      const entity = await runtime.databaseAdapter.getEntityById(resolution.entityId as UUID, runtime.agentId);
+      const entity = await runtime.databaseAdapter.getEntityById(resolution.entityId as UUID);
       if (entity) {
         // Filter components again for the returned entity
         if (entity.components) {

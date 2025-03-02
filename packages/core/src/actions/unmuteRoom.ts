@@ -32,7 +32,6 @@ export const unmuteRoomAction: Action = {
         const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
             runtime.agentId,
-            runtime.agentId
         );
         return roomState === "MUTED";
     },
@@ -79,7 +78,6 @@ export const unmuteRoomAction: Action = {
         if (await _shouldUnmute(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
-                runtime.agentId,
                 runtime.agentId,
                 null
             );

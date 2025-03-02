@@ -1,5 +1,5 @@
 import type { Character, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
-import { ChannelType, composeContext, createUniqueUuid, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
+import { ChannelType, composeContext, createUniqueUuid, logger, messageHandlerTemplate, ModelClass, parseJSONObjectFromText, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -223,19 +223,20 @@ export function agentRouter(
                 template: messageHandlerTemplate,
             });
 
-            logger.info("[MESSAGE ENDPOINT] Before generateMessageResponse");
+            logger.info("[MESSAGE ENDPOINT] Before useModel");
 
-            const response = await generateMessageResponse({
-                runtime: runtime,
+            const responseText = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
                 context,
-                modelClass: ModelClass.TEXT_LARGE,
-            });
+              });
+          
+            const response = parseJSONObjectFromText(responseText) as Content;
+              
 
-            logger.info(`[MESSAGE ENDPOINT] After generateMessageResponse, response: ${JSON.stringify(response)}`);
+            logger.info(`[MESSAGE ENDPOINT] After useModel, response: ${JSON.stringify(response)}`);
 
             if (!response) {
                 res.status(500).json({
-                    error: "No response from generateMessageResponse"
+                    error: "No response from useModel"
                 });
                 return;
             }
@@ -717,7 +718,7 @@ export function agentRouter(
             if (!response) {
                 logger.error("[SPEAK] No response received from LLM");
                 res.status(500).send(
-                    "No response from generateMessageResponse"
+                    "No response from useModel"
                 );
                 return;
             }

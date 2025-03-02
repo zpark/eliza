@@ -1,12 +1,9 @@
 import {
     Action,
-    IAgentRuntime,
     Memory,
-    State,
-    elizaLogger,
+    logger
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
-import { db as trustDb } from "@ai16z/db";
 import { formatRecommenderReport } from "../reports";
 
 export const getRecommenderReport: Action = {
@@ -48,7 +45,7 @@ export const getRecommenderReport: Action = {
 
     async handler(runtime, message, state, options, callback: any) {
         if (!callback) {
-            elizaLogger.error(
+            logger.error(
                 "No callback provided, no recommender score can be generated"
             );
             return;
@@ -60,7 +57,7 @@ export const getRecommenderReport: Action = {
         );
 
         if (!user) {
-            elizaLogger.error(
+            logger.error(
                 "No User Found, no recommender score can be generated"
             );
             return;
@@ -101,7 +98,7 @@ export const getRecommenderReport: Action = {
             return true;
         }
 
-        elizaLogger.info(
+        logger.info(
             `Recommender report for ${recommender?.id}: ${metrics?.trustScore}`
         );
         const recommenderReport =
@@ -112,7 +109,7 @@ export const getRecommenderReport: Action = {
                       await db.getRecommenderMetricsHistory(recommender.id)
                   )
                 : "";
-        elizaLogger.info(`Recommender report: ${recommenderReport}`);
+        logger.info(`Recommender report: ${recommenderReport}`);
         const responseMemory: Memory = {
             content: {
                 text: recommenderReport,

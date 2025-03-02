@@ -1,4 +1,4 @@
-import { elizaLogger, IAgentRuntime } from "@elizaos/core";
+import { logger, IAgentRuntime } from "@elizaos/core";
 import { PublicKey } from "@solana/web3.js";
 
 /**
@@ -26,7 +26,7 @@ export async function fetchWithRetry(
 
   for (let i = 0; i < maxRetries; i++) {
     try {
-      elizaLogger.log(`API request attempt ${i + 1} for ${chain}:`, {
+      logger.log(`API request attempt ${i + 1} for ${chain}:`, {
         url,
         attempt: i + 1
       });
@@ -53,7 +53,7 @@ export async function fetchWithRetry(
       return JSON.parse(responseText);
 
     } catch (error) {
-      elizaLogger.error(`Request attempt ${i + 1} failed:`, {
+      logger.error(`Request attempt ${i + 1} failed:`, {
         error: error instanceof Error ? error.message : String(error),
         url,
         chain,
@@ -132,7 +132,7 @@ export async function manageAnalyzedTokens(
           history = parsed;
         }
       } catch (e) {
-        elizaLogger.warn("Failed to parse token history:", e);
+        logger.warn("Failed to parse token history:", e);
       }
     }
 
@@ -145,7 +145,7 @@ export async function manageAnalyzedTokens(
 
     if (newToken) {
       history.push(newToken);
-      elizaLogger.log("Added new token to analysis history:", {
+      logger.log("Added new token to analysis history:", {
         address: newToken.address,
         symbol: newToken.symbol,
         historySize: history.length
@@ -169,7 +169,7 @@ export async function manageAnalyzedTokens(
     return history;
 
   } catch (error) {
-    elizaLogger.error("Failed to manage token history:", {
+    logger.error("Failed to manage token history:", {
       error: error instanceof Error ? error.message : "Unknown error",
       errorStack: error instanceof Error ? error.stack : undefined
     });

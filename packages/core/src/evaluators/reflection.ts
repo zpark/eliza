@@ -175,13 +175,12 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     // Get existing relationships for the room
     const existingRelationships = await runtime.databaseAdapter.getRelationships({ 
         userId: message.userId,
-        agentId 
     });
 
     // Get actors in the room for name resolution
     const actors = await getActorDetails({ runtime, roomId });
 
-    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(roomId, agentId);
+    const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(roomId);
 
     // Get known facts
     const factsManager = new MemoryManager({
@@ -276,7 +275,6 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
             await runtime.databaseAdapter.createRelationship({
                 sourceEntityId: sourceId,
                 targetEntityId: targetId,
-                agentId,
                 tags: relationship.tags,
                 metadata: {
                     interactions: 1,
@@ -286,7 +284,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
         }
     }
 
-    await runtime.cacheManager.set(`${message.roomId}-reflection-last-processed`, message.id);
+    await runtime.databaseAdapter.setCache(`${message.roomId}-reflection-last-processed`, message.id);
 
     return reflection;
 }
@@ -303,7 +301,7 @@ export const reflectionEvaluator: Evaluator = {
         runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
-        const lastMessageId = await runtime.cacheManager.get(`${message.roomId}-reflection-last-processed`)
+        const lastMessageId = await runtime.databaseAdapter.getCache(`${message.roomId}-reflection-last-processed`)
         const messages = await runtime.messageManager.getMemories({ roomId: message.roomId, count: runtime.getConversationLength() })
 
         if (lastMessageId) {

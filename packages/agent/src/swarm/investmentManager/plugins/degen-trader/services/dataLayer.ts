@@ -1,4 +1,4 @@
-import { elizaLogger } from "@elizaos/core";
+import { logger } from "@elizaos/core";
 
 interface TokenRecommendation {
   recommended_buy: string;
@@ -22,11 +22,11 @@ export class DataLayer {
       }
 
       const data = await response.json();
-      elizaLogger.info('Received token recommendation from API:', data);
+      logger.info('Received token recommendation from API:', data);
 
       return data as TokenRecommendation;
     } catch (error) {
-      elizaLogger.error('Failed to fetch token recommendation:', error);
+      logger.error('Failed to fetch token recommendation:', error);
       throw error;
     }
   }

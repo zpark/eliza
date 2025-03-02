@@ -8,9 +8,9 @@ export const generateObject = async ({
   runtime,
   context,
   modelClass = ModelClass.TEXT_LARGE,
-  stopSequences,
+  stopSequences = [],
   output = "object",
-  enumValues,
+  enumValues = [],
   schema,
 }): Promise<any> => {
   if (!context) {
@@ -178,9 +178,6 @@ async function generateObjectArray({
     modelClass,
     output: "array",
     schema,
-    schemaName,
-    schemaDescription,
-    mode: "json",
   });
   
   if (!Array.isArray(result)) {
@@ -215,7 +212,7 @@ const updateRoleAction: Action = {
       return false;
     }
 
-    const room = await runtime.getRoom(message.roomId);
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -233,7 +230,7 @@ const updateRoleAction: Action = {
     try {
       // Get world data instead of ownership state from cache
       const worldId = createUniqueUuid(runtime, serverId);
-      const world = await runtime.getWorld(worldId);
+      const world = await runtime.databaseAdapter.getWorld(worldId);
 
       // Get requester ID and convert to UUID for consistent lookup
       const requesterId = message.userId;
@@ -281,8 +278,8 @@ const updateRoleAction: Action = {
       await callback(response.content);
     }
 
-    const room = await runtime.getRoom(message.roomId);
-    const world = await runtime.getWorld(room.worldId);
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+    const world = await runtime.databaseAdapter.getWorld(room.worldId);
 
     if (!room) {
       throw new Error("No room found");

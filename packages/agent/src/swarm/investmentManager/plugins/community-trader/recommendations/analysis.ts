@@ -1,6 +1,6 @@
 import {
     composeContext,
-    elizaLogger,
+    logger,
     Memory,
     ModelClass,
     State,
@@ -190,7 +190,7 @@ export const getTokenDetails: any = {
         );
 
         if (!rawMessages.length) {
-            elizaLogger.error(`No messages found for user ${message.userId}`);
+            logger.error(`No messages found for user ${message.userId}`);
             return;
         }
 
@@ -231,7 +231,7 @@ export const getTokenDetails: any = {
         }
 
         if (!results.tokenAddress) {
-            elizaLogger.error(`No token address found for ${results.ticker}`);
+            logger.error(`No token address found for ${results.ticker}`);
             return;
         }
 

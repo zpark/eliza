@@ -3,7 +3,6 @@ export * from "./types.ts";
 
 // Then all other exports
 export * from "./actions.ts";
-export * from "./cache.ts";
 export * from "./context.ts";
 export * from "./database.ts";
 export * from "./environment.ts";

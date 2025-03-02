@@ -3,7 +3,7 @@ import {
     Memory,
     Provider,
     State,
-    elizaLogger,
+    logger,
 } from "@elizaos/core";
 import { Connection, Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
@@ -41,16 +41,16 @@ export async function getWalletKey(
             const secretKey = bs58.decode(privateKeyString);
             return { keypair: Keypair.fromSecretKey(secretKey) };
         } catch (e) {
-            elizaLogger.log("Error decoding base58 private key:", e);
+            logger.log("Error decoding base58 private key:", e);
             try {
                 // Then try base64
-                elizaLogger.log("Try decoding base64 instead");
+                logger.log("Try decoding base64 instead");
                 const secretKey = Uint8Array.from(
                     Buffer.from(privateKeyString, "base64")
                 );
                 return { keypair: Keypair.fromSecretKey(secretKey) };
             } catch (e2) {
-                elizaLogger.error("Error decoding private key: ", e2);
+                logger.error("Error decoding private key: ", e2);
                 throw new Error("Invalid private key format");
             }
         }

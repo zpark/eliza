@@ -1,6 +1,6 @@
 import {
     Action,
-    elizaLogger,
+    logger,
     IAgentRuntime,
     Memory
 } from "@elizaos/core";
@@ -51,7 +51,7 @@ export const getPositions: Action = {
             // console.log("Positions:", positions);
 
             if (!user) {
-                elizaLogger.error(
+                logger.error(
                     "No User Found, no recommender score can be generated"
                 );
                 return;

@@ -2,15 +2,10 @@ import dotenv from "dotenv";
 dotenv.config({ path: "../../.env" });
 
 import {
-  type Adapter,
   AgentRuntime,
-  CacheManager,
-  CacheStore,
   type Character,
-  DbCacheAdapter,
   type IAgentRuntime,
   type IDatabaseAdapter,
-  type IDatabaseCacheAdapter,
   logger,
   parseBooleanFromText,
   settings,
@@ -31,6 +26,7 @@ import { startScenario } from "./swarm/scenario.ts";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import swarm from "./swarm/index";
+import { createDatabaseAdapter } from "@elizaos/plugin-sql";
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
   const waitTime =
@@ -91,56 +87,12 @@ export async function createAgent(
   });
 }
 
-function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
-  if (!character?.id) {
-    throw new Error(
-      "initializeFsCache requires id to be set in character definition"
-    );
-  }
-  const cache = new CacheManager(new DbCacheAdapter(db, character.id));
-  return cache;
-}
-
-function initializeCache(
-  cacheStore: string,
-  character: Character,
-  _baseDir?: string,
-  db?: IDatabaseCacheAdapter
-) {
-  switch (cacheStore) {
-    case CacheStore.DATABASE:
-      if (db) {
-        logger.info("Using Database Cache...");
-        return initializeDbCache(character, db);
-      }
-      throw new Error(
-        "Database adapter is not provided for CacheStore.Database."
-      );
-
-    default:
-      throw new Error(
-        `Invalid cache store: ${cacheStore} or required configuration missing.`
-      );
-  }
-}
-
-async function findDatabaseAdapter(server?: AgentServer, runtime?: IAgentRuntime) {
-  if (server) {
-    return server.database;
-  }
-  if (runtime) {
-    return runtime.databaseAdapter;
-  }
-  
-  throw new Error("No database adapter found");
-}
-
 async function startAgent(
   character: Character,
   server: AgentServer,
-  init?: (runtime: IAgentRuntime) => Promise<void>
+  init?: (runtime: IAgentRuntime) => void
 ): Promise<IAgentRuntime> {
-  let db: IDatabaseAdapter & IDatabaseCacheAdapter;
+  let db: IDatabaseAdapter;
   try {
     character.id ??= stringToUuid(character.name);
 
@@ -152,23 +104,14 @@ async function startAgent(
 
     // initialize database
     // find a db from the plugins
-    db = await findDatabaseAdapter(server, runtime);
+    db = await createDatabaseAdapter({
+      dataDir: path.join(process.cwd(), "data"),
+      postgresUrl: process.env.POSTGRES_URL,
+    }, runtime.agentId);
     runtime.databaseAdapter = db;
 
     // Make sure character exists in database
     await runtime.ensureCharacterExists(character);
-
-    // Make sure agent points to character in database
-    // TODO
-
-    // initialize cache
-    const cache = initializeCache(
-      runtime.getSetting("CACHE_STORE") ?? CacheStore.DATABASE,
-      character,
-      "",
-      db
-    ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
-    runtime.cacheManager = cache;
 
     // start services/plugins/process knowledge    
     await runtime.initialize();

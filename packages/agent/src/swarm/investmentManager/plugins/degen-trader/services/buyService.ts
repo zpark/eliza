@@ -1,4 +1,4 @@
-import { composeContext, Content, elizaLogger, IAgentRuntime, Memory, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
+import { composeContext, Content, logger, IAgentRuntime, Memory, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 import { TrustScoreDatabase } from "../../community-trader/db";
 import { BuySignalMessage } from "../types";
@@ -19,7 +19,7 @@ async function analyzeTradingAmount({
 }): Promise<number> {
   try {
     // Log input parameters
-    elizaLogger.info('Starting trade analysis with:', {
+    logger.info('Starting trade analysis with:', {
       walletBalance,
       tokenAddress,
       defaultPercentage
@@ -54,13 +54,13 @@ async function analyzeTradingAmount({
     });
 
     // Remove or update the analysisData object since we're not using it anymore
-    elizaLogger.info('Analysis data being sent:', { tokenRecommendation });
+    logger.info('Analysis data being sent:', { tokenRecommendation });
 
     // Log context
-    elizaLogger.info('Generated context:', { context });
+    logger.info('Generated context:', { context });
 
     // Log context with interpolated template
-    elizaLogger.info('Final interpolated template:', {
+    logger.info('Final interpolated template:', {
       interpolated: context.replace('{{walletBalance}}', walletBalance.toString())
     });
 
@@ -70,23 +70,23 @@ async function analyzeTradingAmount({
     });
 
     // Log generated content
-    elizaLogger.info('Generated analysis content:', { content });
+    logger.info('Generated analysis content:', { content });
 
     if (!content) {
-      elizaLogger.warn('No analysis generated, using default percentage');
+      logger.warn('No analysis generated, using default percentage');
       return walletBalance * defaultPercentage;
     }
 
     // Log parsed recommendation
     const recommendation = parseJSONObjectFromText(content);
-    elizaLogger.info('Parsed recommendation:', { recommendation });
+    logger.info('Parsed recommendation:', { recommendation });
 
     const suggestedAmount = recommendation.suggestedAmount || walletBalance * defaultPercentage;
-    elizaLogger.info('Final suggested amount:', { suggestedAmount });
+    logger.info('Final suggested amount:', { suggestedAmount });
 
     return Math.min(suggestedAmount, walletBalance);
   } catch (error) {
-    elizaLogger.error('Trade analysis failed:', {
+    logger.error('Trade analysis failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
@@ -105,7 +105,7 @@ export async function handleBuySignal(
   swapUsdValue?: string;
   recommenderId?: string;
 }> {
-  elizaLogger.info('Buy signal received by worker:', signal);
+  logger.info('Buy signal received by worker:', signal);
 
   const TRADER_KUMA = runtime.getSetting('TRADER_KUMA')
   if (TRADER_KUMA) {
@@ -117,7 +117,7 @@ export async function handleBuySignal(
   try {
     // Get current wallet balance
     const walletBalance = await getWalletBalance(runtime);
-    elizaLogger.info('Current wallet balance:', { walletBalance });
+    logger.info('Current wallet balance:', { walletBalance });
 
     // Analyze and determine trade amount based on wallet balance
     const tradeAmount = await analyzeTradingAmount({
@@ -132,7 +132,7 @@ export async function handleBuySignal(
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
-        elizaLogger.info('Attempting to get quote (attempt ' + (i + 1) + '):', {
+        logger.info('Attempting to get quote (attempt ' + (i + 1) + '):', {
           inputMint: 'So11111111111111111111111111111111111111112',
           outputMint: signal.tokenAddress,
           amount: tradeAmount * 1e9,
@@ -145,7 +145,7 @@ export async function handleBuySignal(
 
         if (!quoteResponse.ok) {
           const errorText = await quoteResponse.text();
-          elizaLogger.error('Quote API error response:', {
+          logger.error('Quote API error response:', {
             status: quoteResponse.status,
             statusText: quoteResponse.statusText,
           });
@@ -153,16 +153,16 @@ export async function handleBuySignal(
         }
 
         quoteData = await quoteResponse.json();
-        elizaLogger.info('Raw quote response:', quoteData);
+        logger.info('Raw quote response:', quoteData);
 
         if (!quoteData.outAmount || !quoteData.routePlan) {
           throw new Error(`Invalid quote response: ${JSON.stringify(quoteData)}`);
         }
 
-        elizaLogger.info('Quote received successfully:', quoteData);
+        logger.info('Quote received successfully:', quoteData);
         break;
       } catch (error) {
-        elizaLogger.error(`Quote attempt ${i + 1} failed:`, {
+        logger.error(`Quote attempt ${i + 1} failed:`, {
           error: error instanceof Error ? error.message : error,
           stack: error instanceof Error ? error.stack : undefined
         });
@@ -184,7 +184,7 @@ export async function handleBuySignal(
     });
 
     if (tradeResult.success) {
-      elizaLogger.info('Trade executed successfully:', {
+      logger.info('Trade executed successfully:', {
         signature: tradeResult.signature,
         tokenAddress: signal.tokenAddress,
         amount: tradeAmount
@@ -264,13 +264,13 @@ export async function handleBuySignal(
         rapidDump: false
       }, false);
 
-      elizaLogger.info('Trustdb added successfully:', {
+      logger.info('Trustdb added successfully:', {
         uuid,
         recommender,
         tradePerformance
       });
 
-      elizaLogger.info('Buy execution completed successfully:', {
+      logger.info('Buy execution completed successfully:', {
         signal,
         signature: tradeResult.signature,
         amount: tradeAmount
@@ -282,14 +282,14 @@ export async function handleBuySignal(
         swapUsdValue: quoteData.swapUsdValue
       };
     } else {
-      elizaLogger.warn('Buy execution failed or was rejected:', {
+      logger.warn('Buy execution failed or was rejected:', {
         signal,
         error: tradeResult.error
       });
       return {success: false};
     }
   } catch (error) {
-    elizaLogger.error('Failed to process buy signal:', error);
+    logger.error('Failed to process buy signal:', error);
     return {success: false};
   }
 }

@@ -8,7 +8,7 @@ export const roleProvider: Provider = {
         message: Memory,
         _state?: State
     ): Promise<string> => {
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -28,7 +28,7 @@ export const roleProvider: Provider = {
 
             // Get world data instead of using cache
             const worldId = createUniqueUuid(runtime, serverId);
-            const world = await runtime.getWorld(worldId);
+            const world = await runtime.databaseAdapter.getWorld(worldId);
             
             if (!world || !world.metadata?.ownership?.ownerId) {
                 logger.info(`No ownership data found for server ${serverId}, initializing empty role hierarchy`);

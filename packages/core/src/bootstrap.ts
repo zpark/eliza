@@ -1,10 +1,10 @@
 import type { UUID } from "node:crypto";
 import { v4 } from "uuid";
+import { choiceAction } from "./actions/choice.ts";
 import { followRoomAction } from "./actions/followRoom.ts";
 import { ignoreAction } from "./actions/ignore.ts";
 import { muteRoomAction } from "./actions/muteRoom.ts";
 import { noneAction } from "./actions/none.ts";
-import { choiceAction } from "./actions/choice.ts";
 import updateRoleAction from "./actions/roles.ts";
 import { sendMessageAction } from "./actions/sendMessage.ts";
 import updateSettingsAction from "./actions/settings.ts";
@@ -12,16 +12,15 @@ import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { updateEntityAction } from "./actions/updateEntity.ts";
 import { composeContext } from "./context.ts";
+import { createUniqueUuid } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import {
   formatMessages,
-  generateMessageResponse,
-  generateShouldRespond,
   getActorDetails
 } from "./index.ts";
 import { logger } from "./logger.ts";
-import { messageCompletionFooter, shouldRespondFooter } from "./parsing.ts";
+import { messageCompletionFooter, parseJSONObjectFromText, shouldRespondFooter } from "./parsing.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { optionsProvider } from "./providers/options.ts";
 import { relationshipsProvider } from "./providers/relationships.ts";
@@ -30,6 +29,7 @@ import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
 import {
   ChannelType,
+  Content,
   type Entity,
   type HandlerCallback,
   type IAgentRuntime,
@@ -41,7 +41,6 @@ import {
   type State,
   type WorldData,
 } from "./types.ts";
-import { createUniqueUuid } from "./entities.ts";
 
 type ServerJoinedParams = {
   runtime: IAgentRuntime;
@@ -126,7 +125,6 @@ const checkShouldRespond = async (
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
-    message.agentId,
     runtime.agentId
   );
 
@@ -182,10 +180,8 @@ const checkShouldRespond = async (
       shouldRespondTemplate,
   });
 
-  const response = await generateShouldRespond({
-    runtime: runtime,
+  const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
     context: shouldRespondContext,
-    modelClass: ModelClass.TEXT_SMALL,
   });
 
   if (response.includes("RESPOND")) {
@@ -238,11 +234,11 @@ const messageReceivedHandler = async ({
         messageHandlerTemplate,
     });
 
-    const responseContent = await generateMessageResponse({
-      runtime: runtime,
+    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_LARGE,
     });
+
+    const responseContent = parseJSONObjectFromText(response) as Content;
 
     // Check if this is still the latest response ID for this agent+room
     const currentResponseId = agentResponses.get(message.roomId);
@@ -483,7 +479,7 @@ const syncServerChannels = async (
         if (channel.type === 0 || channel.type === 2) {
           // GUILD_TEXT or GUILD_VOICE
           const roomId = createUniqueUuid(runtime, channelId);
-          const room = await runtime.getRoom(roomId);
+          const room = await runtime.databaseAdapter.getRoom(roomId);
 
           // Skip if room already exists
           if (room) continue;

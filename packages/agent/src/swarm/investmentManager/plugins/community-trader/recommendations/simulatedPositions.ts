@@ -1,8 +1,7 @@
-import { db as trustDb } from "@ai16z/db";
 import {
     Action,
-    elizaLogger,
     IAgentRuntime,
+    logger,
     Memory
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
@@ -65,7 +64,7 @@ export const getSimulatedPositions: Action = {
             ]);
 
             if (!user) {
-                elizaLogger.error(
+                logger.error(
                     "No User Found, no recommender score can be generated"
                 );
                 return;

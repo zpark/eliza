@@ -72,11 +72,15 @@ export class TwitterPostClient {
         }
 
         const generateNewTweetLoop = async () => {
-            const lastPost = await this.runtime.cacheManager.get<{
-                timestamp: number;
-            }>(`twitter/${this.twitterUsername}/lastPost`);
+            let lastPost = await this.runtime.databaseAdapter.getCache(`twitter/${this.twitterUsername}/lastPost`);
 
-            const lastPostTimestamp = lastPost?.timestamp ?? 0;
+            if(!lastPost) {
+                lastPost = JSON.stringify({
+                    timestamp: 0
+                });
+            }
+
+            const lastPostTimestamp = JSON.parse(lastPost).timestamp ?? 0;
             const minMinutes = (this.state?.TWITTER_POST_INTERVAL_MIN || this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN") as number) ?? 90;
             const maxMinutes = (this.state?.TWITTER_POST_INTERVAL_MAX || this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX") as number) ?? 180;
             const randomMinutes =
@@ -141,12 +145,12 @@ export class TwitterPostClient {
         rawTweetContent: string
     ) {
         // Cache the last post details
-        await runtime.cacheManager.set(
+        await runtime.databaseAdapter.setCache(
             `twitter/${client.profile.username}/lastPost`,
-            {
+            JSON.stringify({
                 id: tweet.id,
                 timestamp: Date.now(),
-            }
+            })
         );
 
         // Cache the tweet
@@ -292,18 +296,6 @@ export class TwitterPostClient {
 
         try {
             const roomId = createUniqueUuid(this.runtime, 'twitter_generate');
-            await this.runtime.getOrCreateUser(
-                this.runtime.agentId,
-                [this.client.profile.username],
-                {
-                    twitter: {
-                        name: this.client.profile.username,
-                        userName: this.client.profile.username,
-                        originalUserId: this.runtime.agentId,
-                    },
-                }
-            );
-
             const topics = this.runtime.character.topics
                 .sort(() => 0.5 - Math.random())
                 .slice(0, 10)

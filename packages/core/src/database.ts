@@ -1,8 +1,8 @@
 import type {
-    Entity,
-    Actor,
-    ChannelType,
+    Agent,
     Character,
+    Component,
+    Entity,
     Goal,
     GoalStatus,
     IDatabaseAdapter,
@@ -11,10 +11,7 @@ import type {
     Relationship,
     RoomData,
     UUID,
-    WorldData,
-    Agent,
-    Component,
-    Room
+    WorldData
 } from "./types.ts";
 
 /**
@@ -44,9 +41,9 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param userId The UUID of the user account to retrieve.
      * @returns A Promise that resolves to the Entity object or null if not found.
      */
-    abstract getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
+    abstract getEntityById(userId: UUID): Promise<Entity | null>;
 
-    abstract getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
+    abstract getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]>;
 
     abstract getAgent(agentId: UUID): Promise<Agent | null>;
 
@@ -114,7 +111,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @returns A Promise that resolves to an array of Memory objects.
      */
     abstract getMemories(params: {
-        agentId: UUID;
         roomId: UUID;
         count?: number;
         unique?: boolean;
@@ -122,7 +118,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     }): Promise<Memory[]>;
 
     abstract getMemoriesByRoomIds(params: {
-        agentId: UUID;
         roomIds: UUID[];
         tableName: string;
         limit?: number;
@@ -186,7 +181,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract searchMemories(params: {
         tableName: string;
-        agentId: UUID;
         roomId: UUID;
         embedding: number[];
         match_threshold: number;
@@ -252,7 +246,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @returns A Promise that resolves to an array of Goal objects.
      */
     abstract getGoals(params: {
-        agentId: UUID;
         roomId: UUID;
         userId?: UUID | null;
         onlyInProgress?: boolean;
@@ -292,14 +285,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param id The UUID of the world to retrieve.
      * @returns A Promise that resolves to the WorldData object or null if not found.
      */
-    abstract getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
+    abstract getWorld(id: UUID): Promise<WorldData | null>;
 
     /**
      * Retrieves all worlds for an agent.
-     * @param agentId The UUID of the agent to retrieve worlds for.
      * @returns A Promise that resolves to an array of WorldData objects.
      */
-    abstract getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+    abstract getAllWorlds(): Promise<WorldData[]>;
 
     /**
      * Creates a new world in the database.
@@ -313,21 +305,21 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param world The world object with updated properties.
      * @returns A Promise that resolves when the world has been updated.
      */
-    abstract updateWorld(world: WorldData, agentId: UUID): Promise<void>;
+    abstract updateWorld(world: WorldData): Promise<void>;
 
     /**
      * Removes a specific world from the database.
      * @param id The UUID of the world to remove.
      * @returns A Promise that resolves when the world has been removed.
      */
-    abstract removeWorld(id: UUID, agentId: UUID): Promise<void>;
+    abstract removeWorld(id: UUID): Promise<void>;
 
     /**
      * Retrieves the room ID for a given room, if it exists.
      * @param roomId The UUID of the room to retrieve.
      * @returns A Promise that resolves to the room ID or null if not found.
      */
-    abstract getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+    abstract getRoom(roomId: UUID): Promise<RoomData | null>;
 
     /**
      * Retrieves all rooms for a given world.
@@ -341,7 +333,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId Optional UUID to assign to the new room.
      * @returns A Promise that resolves to the UUID of the created room.
      */
-    abstract createRoom({id, agentId, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID>;
+    abstract createRoom({id, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID>;
 
     /**
      * Updates a specific room in the database.
@@ -360,17 +352,16 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     /**
      * Retrieves room IDs for which a specific user is a participant.
      * @param userId The UUID of the user.
-     * @param agentId The UUID of the agent.
      * @returns A Promise that resolves to an array of room IDs.
      */
-    abstract getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
+    abstract getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
 
     /**
      * Retrieves room IDs for which specific users are participants.
      * @param userIds An array of UUIDs of the users.
      * @returns A Promise that resolves to an array of room IDs.
      */
-    abstract getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
+    abstract getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
     /**
      * Adds a user as a participant to a specific room.
@@ -378,7 +369,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room to which the user will be added.
      * @returns A Promise that resolves to a boolean indicating success or failure.
      */
-    abstract addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+    abstract addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
     /**
      * Removes a user as a participant from a specific room.
@@ -386,32 +377,30 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param roomId The UUID of the room from which the user will be removed.
      * @returns A Promise that resolves to a boolean indicating success or failure.
      */
-    abstract removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+    abstract removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
     /**
      * Retrieves participants associated with a specific account.
      * @param userId The UUID of the account.
      * @returns A Promise that resolves to an array of Participant objects.
      */
-    abstract getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
+    abstract getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
 
     /**
      * Retrieves participants for a specific room.
      * @param roomId The UUID of the room for which to retrieve participants.
      * @returns A Promise that resolves to an array of UUIDs representing the participants.
      */
-    abstract getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
+    abstract getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
 
     abstract getParticipantUserState(
         roomId: UUID,
         userId: UUID,
-        agentId: UUID
     ): Promise<"FOLLOWED" | "MUTED" | null>;
 
     abstract setParticipantUserState(
         roomId: UUID,
         userId: UUID,
-        agentId: UUID,
         state: "FOLLOWED" | "MUTED" | null
     ): Promise<void>;
 
@@ -423,7 +412,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract createRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
         tags?: string[];
         metadata?: { [key: string]: any };
     }): Promise<boolean>;
@@ -436,7 +424,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
     }): Promise<Relationship | null>;
 
     /**
@@ -446,7 +433,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      */
     abstract getRelationships(params: {
         userId: UUID;
-        agentId: UUID;
         tags?: string[];
     }): Promise<Relationship[]>;
 
@@ -458,7 +444,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract updateRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
         tags?: string[];
         metadata?: { [key: string]: any };
     }): Promise<void>;
@@ -503,5 +488,28 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @param dimension The dimension number to ensure.
      * @returns void
      */
-    abstract ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
+    abstract ensureEmbeddingDimension(dimension: number): void;
+
+    /**
+     * Retrieves a cached value by key from the database.
+     * @param key The key to look up in the cache
+     * @returns Promise resolving to the cached string value
+     */
+    abstract getCache(key: string): Promise<string | undefined>;
+
+    /**
+     * Sets a value in the cache with the given key.
+     * @param params Object containing the cache key and value
+     * @param key The key to store the value under
+     * @param value The string value to cache
+     * @returns Promise resolving to true if the cache was set successfully
+     */
+    abstract setCache(key: string, value: string): Promise<boolean>;
+
+    /**
+     * Deletes a value from the cache by key.
+     * @param key The key to delete from the cache
+     * @returns Promise resolving to true if the value was successfully deleted
+     */
+    abstract deleteCache(key: string): Promise<boolean>;
 }

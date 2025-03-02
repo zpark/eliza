@@ -24,7 +24,7 @@ export async function getUserServerRole(
 ): Promise<RoleName> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world || !world.metadata?.roles) {
       return RoleName.NONE;
@@ -148,7 +148,7 @@ const twitterPostAction: Action = {
     message: Memory,
     _state: State
   ): Promise<boolean> => {
-    const room = await runtime.getRoom(message.roomId);
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -193,7 +193,7 @@ const twitterPostAction: Action = {
     _responses: Memory[]
   ) => {
     try {
-      const room = await runtime.getRoom(message.roomId);
+      const room = await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         throw new Error("No room found");
       }

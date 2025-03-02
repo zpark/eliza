@@ -1,6 +1,6 @@
 import {
     Action,
-    elizaLogger,
+    logger,
     Memory,
     ServiceType,
     UUID
@@ -156,7 +156,7 @@ export const confirmRecommendation: Action = {
         ];
 
         if (!Array.isArray(tokens) || tokens[0] === "") return;
-        elizaLogger.info(tokens);
+        logger.info(tokens);
 
         try {
             const participants =

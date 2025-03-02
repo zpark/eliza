@@ -1,4 +1,4 @@
-import { elizaLogger, IAgentRuntime } from "@elizaos/core";
+import { logger, IAgentRuntime } from "@elizaos/core";
 import {
   Connection,
   Keypair,
@@ -24,7 +24,7 @@ export function getWalletKeypair(runtime?: IAgentRuntime): Keypair {
     const privateKeyBytes = decodeBase58(privateKeyString);
     return Keypair.fromSecretKey(privateKeyBytes);
   } catch (error) {
-    elizaLogger.error("Failed to create wallet keypair:", error);
+    logger.error("Failed to create wallet keypair:", error);
     throw error;
   }
 }
@@ -41,14 +41,14 @@ export async function getWalletBalance(runtime: IAgentRuntime): Promise<number> 
     const balance = await connection.getBalance(walletKeypair.publicKey);
     const solBalance = balance / 1e9;
 
-    elizaLogger.log("Fetched wallet balance:", {
+    logger.log("Fetched wallet balance:", {
       address: walletKeypair.publicKey.toBase58(),
       solBalance
     });
 
     return solBalance;
   } catch (error) {
-    elizaLogger.error("Failed to get wallet balance:", error);
+    logger.error("Failed to get wallet balance:", error);
     return 0;
   }
 }
@@ -111,7 +111,7 @@ export async function executeTrade(
   }
 ): Promise<{success: boolean; signature?: string; error?: string}> {
   const actionStr = action === 'SELL' ? 'sell' : 'buy';
-  elizaLogger.info(`Executing ${actionStr} trade using ${dex}:`, {
+  logger.info(`Executing ${actionStr} trade using ${dex}:`, {
     tokenAddress,
     amount,
     slippage
@@ -139,7 +139,7 @@ export async function executeTrade(
 
     if (!quoteResponse.ok) {
       const error = await quoteResponse.text();
-      elizaLogger.warn("Quote request failed:", {
+      logger.warn("Quote request failed:", {
         status: quoteResponse.status,
         error
       });
@@ -150,11 +150,11 @@ export async function executeTrade(
     }
 
     const quoteData = await quoteResponse.json();
-    elizaLogger.log("Quote received:", quoteData);
+    logger.log("Quote received:", quoteData);
 
     // Calculate dynamic slippage based on market conditions
     const dynamicSlippage = calculateDynamicSlippage(amount.toString(), quoteData);
-    elizaLogger.info("Using dynamic slippage:", {
+    logger.info("Using dynamic slippage:", {
       baseSlippage: slippage,
       dynamicSlippage,
       priceImpact: quoteData?.priceImpactPct
@@ -178,7 +178,7 @@ export async function executeTrade(
 
     if (!swapResponse.ok) {
       const error = await swapResponse.text();
-      elizaLogger.error("Swap request failed:", {
+      logger.error("Swap request failed:", {
         status: swapResponse.status,
         error
       });
@@ -186,10 +186,10 @@ export async function executeTrade(
     }
 
     const swapData = await swapResponse.json();
-    elizaLogger.log("Swap response received:", swapData);
+    logger.log("Swap response received:", swapData);
 
     if (!swapData?.swapTransaction) {
-      elizaLogger.error("Invalid swap response:", swapData);
+      logger.error("Invalid swap response:", swapData);
       throw new Error("No swap transaction returned in response");
     }
 
@@ -209,7 +209,7 @@ export async function executeTrade(
       preflightCommitment: 'processed'
     });
 
-    elizaLogger.log("Transaction sent with high priority:", {
+    logger.log("Transaction sent with high priority:", {
       signature,
       explorer: `https://solscan.io/tx/${signature}`
     });
@@ -222,7 +222,7 @@ export async function executeTrade(
         if (status.value?.confirmationStatus === 'confirmed' ||
             status.value?.confirmationStatus === 'finalized') {
           confirmed = true;
-          elizaLogger.log("Transaction confirmed:", {
+          logger.log("Transaction confirmed:", {
             signature,
             confirmationStatus: status.value.confirmationStatus,
             slot: status.context.slot,
@@ -233,11 +233,11 @@ export async function executeTrade(
 
         // Calculate delay with exponential backoff
         const delay = CONFIRMATION_CONFIG.getDelayForAttempt(i);
-        elizaLogger.info(`Waiting ${delay}ms before next confirmation check (attempt ${i + 1}/${CONFIRMATION_CONFIG.MAX_ATTEMPTS})`);
+        logger.info(`Waiting ${delay}ms before next confirmation check (attempt ${i + 1}/${CONFIRMATION_CONFIG.MAX_ATTEMPTS})`);
         await new Promise(resolve => setTimeout(resolve, delay));
 
       } catch (error) {
-        elizaLogger.warn(`Confirmation check ${i + 1} failed:`, error);
+        logger.warn(`Confirmation check ${i + 1} failed:`, error);
 
         if (i === CONFIRMATION_CONFIG.MAX_ATTEMPTS - 1) {
           throw new Error("Could not confirm transaction status");
@@ -253,7 +253,7 @@ export async function executeTrade(
       throw new Error("Could not confirm transaction status");
     }
 
-    elizaLogger.log(`Trade executed successfully:`, {
+    logger.log(`Trade executed successfully:`, {
       type: action === 'SELL' ? 'sell' : 'buy',
       tokenAddress,
       amount,
@@ -267,7 +267,7 @@ export async function executeTrade(
     };
 
   } catch (error) {
-    elizaLogger.error("Trade execution failed:", {
+    logger.error("Trade execution failed:", {
       error: error instanceof Error ? error.message : "Unknown error",
       params: { tokenAddress, amount, slippage, dex, action },
       errorStack: error instanceof Error ? error.stack : undefined
@@ -313,7 +313,7 @@ async function executeRaydiumTrade(
     }
 
     const quoteData = await quoteResponse.json();
-    elizaLogger.log("Raydium quote received:", quoteData);
+    logger.log("Raydium quote received:", quoteData);
 
     // Get swap transaction
     const swapResponse = await fetch("https://api.raydium.io/v2/main/swap", {
@@ -347,7 +347,7 @@ async function executeRaydiumTrade(
       preflightCommitment: 'processed'
     });
 
-    elizaLogger.log("Transaction sent with high priority:", {
+    logger.log("Transaction sent with high priority:", {
       signature,
       explorer: `https://solscan.io/tx/${signature}`
     });
@@ -360,7 +360,7 @@ async function executeRaydiumTrade(
         if (status.value?.confirmationStatus === 'confirmed' ||
             status.value?.confirmationStatus === 'finalized') {
           confirmed = true;
-          elizaLogger.log("Transaction confirmed:", {
+          logger.log("Transaction confirmed:", {
             signature,
             confirmationStatus: status.value.confirmationStatus,
             slot: status.context.slot
@@ -372,7 +372,7 @@ async function executeRaydiumTrade(
         await new Promise(resolve => setTimeout(resolve, delay));
 
       } catch (error) {
-        elizaLogger.warn(`Confirmation check ${i + 1} failed:`, error);
+        logger.warn(`Confirmation check ${i + 1} failed:`, error);
       }
     }
 
@@ -380,7 +380,7 @@ async function executeRaydiumTrade(
       throw new Error("Could not confirm transaction status");
     }
 
-    elizaLogger.log(`Trade executed successfully:`, {
+    logger.log(`Trade executed successfully:`, {
       type: params.isSell ? 'sell' : 'buy',
       tokenAddress: params.tokenAddress,
       amount: params.amount,
@@ -394,7 +394,7 @@ async function executeRaydiumTrade(
     };
 
   } catch (error) {
-    elizaLogger.error("Raydium trade execution failed:", error);
+    logger.error("Raydium trade execution failed:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error"
@@ -463,11 +463,11 @@ export async function getWalletBalances(runtime: IAgentRuntime) {
       }))
     };
 
-    elizaLogger.log("Fetched wallet balances:", balances);
+    logger.log("Fetched wallet balances:", balances);
     return balances;
 
   } catch (error) {
-    elizaLogger.error("Failed to get wallet balances:", error);
+    logger.error("Failed to get wallet balances:", error);
     return {
       solBalance: 0,
       tokens: []

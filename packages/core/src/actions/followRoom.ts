@@ -47,7 +47,6 @@ export const followRoomAction: Action = {
         const roomState = await runtime.databaseAdapter.getParticipantUserState(
             roomId,
             runtime.agentId,
-            runtime.agentId,
         );
         return roomState !== "FOLLOWED" && roomState !== "MUTED";
     },
