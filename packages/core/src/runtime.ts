@@ -625,31 +625,25 @@ export class AgentRuntime implements IAgentRuntime {
   async ensureAgentExists() {
     const agent = await this.databaseAdapter.getAgent(this.agentId);
     if (!agent) {
-      // find a character that has the same name as the agent id
-      const character = await this.databaseAdapter.getCharacter(
-        this.character.name
-      );
-      let characterId = character?.id;
-      if (character && !characterId) {
-        characterId = uuidv4() as UUID;
-        // save the character with the new id
-        await this.databaseAdapter.updateCharacter(character.name, {
-          ...character,
-          id: characterId,
-        });
-      } else if (!character) {
-        characterId = (await this.databaseAdapter.createCharacter(
-          this.character
-        )) as UUID;
+      // find a character by ID if it exists, otherwise create a new one
+      let characterId: UUID;
+      if (this.character.id) {
+        const character = await this.databaseAdapter.getCharacter(this.character.id);
+        if (character) {
+          characterId = this.character.id;
+        } else {
+          characterId = (await this.databaseAdapter.createCharacter(this.character)) as UUID;
+        }
+      } else {
+        characterId = (await this.databaseAdapter.createCharacter(this.character)) as UUID;
+        // Update our character reference with the new ID
+        this.character.id = characterId;
       }
 
       const out = { id: this.agentId, characterId, enabled: true };
-
       await this.databaseAdapter.createAgent(out);
     }
   }
-
-
 
   private  async ensureAgentIsEnabled() {
     const agent = await this.databaseAdapter.getAgent(this.agentId);
@@ -1697,12 +1691,19 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async ensureCharacterExists(character: Character): Promise<void> {
-    const characterExists = await this.databaseAdapter.getCharacter(
-      character.name
-    );
-    if (!characterExists) {
-      logger.log(`[AgentRuntime][${this.character.name}] Creating character`);
-      await this.databaseAdapter.createCharacter(character);
+    if (!character.id) {
+      // Create new character and get its ID
+      const characterId = await this.databaseAdapter.createCharacter(character);
+      if (characterId) {
+        character.id = characterId;
+      }
+    } else {
+      // Check if character exists by ID
+      const characterExists = await this.databaseAdapter.getCharacter(character.id);
+      if (!characterExists) {
+        logger.log(`[AgentRuntime][${character.name}] Creating character`);
+        await this.databaseAdapter.createCharacter(character);
+      }
     }
   }
 

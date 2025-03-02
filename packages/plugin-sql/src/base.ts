@@ -170,6 +170,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             if (result.length === 0) return null;
             return {
                 ...result[0].agent,
+                characterId: result[0].character.id,
                 character: {
                     ...result[0].character,
                 }
@@ -230,6 +231,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             return result.map(row => ({
                 id: row.agent.id,
                 enabled: row.agent.enabled,
+                characterId: row.character.id,
                 character: {
                     id: row.character.id,
                     name: row.character.name,
@@ -1699,12 +1701,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getCharacter(name: string): Promise<Character | null> {
+    async getCharacter(characterId: UUID): Promise<Character | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select()
                 .from(characterTable)
-                .where(eq(characterTable.name, name))
+                .where(eq(characterTable.id, characterId))
                 .limit(1);
 
             if (result.length === 0) return null;

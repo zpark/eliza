@@ -1,6 +1,6 @@
 import type { Character, Content, IAgentRuntime, Memory } from '@elizaos/core';
 import { ChannelType, composeContext, createUniqueUuid, generateMessageResponse, logger, messageHandlerTemplate, ModelClass, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
-import express, { type Request, type RequestHandler, type Response } from 'express';
+import express, { response, type Request, type RequestHandler, type Response } from 'express';
 import fs from 'node:fs';
 import type { AgentServer } from '..';
 import { upload } from '../loader';
@@ -129,7 +129,7 @@ export function agentRouter(
     // ===== Core Agent CRUD Operations =====
 
     // List all agents
-    router.get('/', (async (req: Request, res: Response) => {
+    router.get('/', (async (_, res: Response) => {
         logger.debug("[AGENTS LIST] Retrieving list of all agents");
         try {
             const agents = await server?.database.getAgents();
@@ -164,14 +164,7 @@ export function agentRouter(
                 res.status(404).json({ error: 'Agent not found' });
                 return;
             }
-
-            const response: AgentResponse = {
-                id: agentId,
-                enabled: agent.enabled,
-                character: agent.character,
-            };
-
-            res.status(200).json(response);
+            res.status(200).json(agent);
             logger.debug(`[AGENT GET] Successfully returned agent data for: ${agent.character.name}`);
         } catch (error) {
             logger.error(`[AGENT GET] Error retrieving agent: ${error}`);

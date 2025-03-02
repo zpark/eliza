@@ -466,7 +466,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     /**
      * Creates a new character in the database.
      * @param character The Character object to create.
-     * @returns A Promise that resolves when the character creation is complete.
+     * @returns A Promise that resolves to the character's UUID when creation is complete.
      */
     abstract createCharacter(character: Character): Promise<UUID | undefined>;
 
@@ -477,26 +477,26 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract listCharacters(): Promise<Character[]>;
 
     /**
-     * Retrieves a character by their name.
-     * @param name The name of the character to retrieve.
+     * Retrieves a character by their ID.
+     * @param characterId The UUID of the character to retrieve.
      * @returns A Promise that resolves to the Character object or null if not found.
      */
-    abstract getCharacter(name: string): Promise<Character | null>;
+    abstract getCharacter(characterId: UUID): Promise<Character | null>;
 
     /**
      * Updates an existing character in the database.
-     * @param name The name of the character to update.
+     * @param characterId The UUID of the character to update.
      * @param updates Partial Character object containing the fields to update.
      * @returns A Promise that resolves when the character update is complete.
      */
-    abstract updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+    abstract updateCharacter(characterId: UUID, updates: Partial<Character>): Promise<void>;
 
     /**
      * Removes a character from the database.
-     * @param name The name of the character to remove.
+     * @param characterId The UUID of the character to remove.
      * @returns A Promise that resolves when the character removal is complete.
      */
-    abstract removeCharacter(name: string): Promise<void>;
+    abstract removeCharacter(characterId: UUID): Promise<void>;
 
     /**
      * Ensures the embedding dimension is properly set for the database.

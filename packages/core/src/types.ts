@@ -761,6 +761,7 @@ export interface Agent {
   id: UUID;
   characterId: UUID;
   enabled: boolean;
+  character?: Character;
 }
 
 /**
@@ -995,11 +996,11 @@ export interface IDatabaseAdapter {
 
   listCharacters(): Promise<Character[]>;
 
-  getCharacter(name: string): Promise<Character | null>;
+  getCharacter(characterId: UUID): Promise<Character | null>;
 
-  updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+  updateCharacter(characterId: UUID, updates: Partial<Character>): Promise<void>;
   
-  removeCharacter(name: string): Promise<void>;
+  removeCharacter(characterId: UUID): Promise<void>;
 
   ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
 }
