@@ -111,7 +111,7 @@ async function startAgent(
     runtime.databaseAdapter = db;
 
     // Make sure character exists in database
-    await runtime.ensureCharacterExists(character);
+    await runtime.databaseAdapter.ensureAgentExists(character);
 
     // start services/plugins/process knowledge    
     await runtime.initialize();

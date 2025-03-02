@@ -58,10 +58,7 @@ export class AgentServer {
             const agents = await this.database.getAgents();
             for (const agent of agents) {
                 if (!this.agents.has(agent.id)) {
-                    await this.database.updateAgent({
-                        ...agent,
-                        enabled: false
-                    });
+                    await this.database.toggleAgent(agent.id, false);
                 }
             }
             

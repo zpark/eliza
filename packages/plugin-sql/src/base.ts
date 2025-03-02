@@ -11,6 +11,7 @@ import {
     type Participant,
     type Relationship,
     type RoomData,
+    stringToUuid,
     type UUID,
     type WorldData
 } from "@elizaos/core";
@@ -125,9 +126,15 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async ensureAgentExists(agent: Partial<Agent>) {
-        const agentExists = await this.getAgent(agent?.id as UUID);
+        if (!agent.name) {
+            throw new Error("Agent name is required");
+        }
+        const agentExists = await this.getAgent(stringToUuid(agent.name));
         if (!agentExists || !agent.id) {
-            await this.createAgent(agent);
+            await this.createAgent({
+                ...agent,
+                id: stringToUuid(agent.name),
+            });
         }
     }
 
@@ -231,6 +238,22 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 logger.error("Error updating agent:", {
                     error: error instanceof Error ? error.message : String(error),
                     agentId
+                });
+                return false;
+            }
+        });
+    }
+
+
+    async updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean> {
+        return this.withDatabase(async () => {
+            try {
+                await this.db.update(agentTable).set(agent).where(eq(agentTable.id, agentId));
+                return true;
+            } catch (error) {
+                logger.error("Error updating agent:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    agentId: agent.id
                 });
                 return false;
             }
