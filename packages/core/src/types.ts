@@ -729,7 +729,7 @@ export interface IDatabaseAdapter {
   /** Get all agents */
   getAgents(): Promise<Agent[]>;
 
-  createAgent(agent: Agent): Promise<boolean>;
+  createAgent(agent: Partial<Agent>): Promise<boolean>;
 
   updateAgent(agent: Agent): Promise<boolean>;
 

@@ -413,7 +413,7 @@ export class AgentRuntime implements IAgentRuntime {
   async initialize() {
     // First create the agent entity directly
     try {
-      await this.databaseAdapter.ensureAgentExists(this.character);
+      await this.databaseAdapter.ensureAgentExists(this.character as Partial<Agent>);
 
       // No need to transform agent's own ID
       const agentEntity = await this.databaseAdapter.getEntityById(

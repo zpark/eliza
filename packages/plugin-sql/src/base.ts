@@ -125,7 +125,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     }
 
     async ensureAgentExists(agent: Partial<Agent>) {
-        const agentExists = await this.getAgent(agent?.id);
+        const agentExists = await this.getAgent(agent?.id as UUID);
         if (!agentExists || !agent.id) {
             await this.createAgent(agent);
         }
@@ -183,7 +183,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async createAgent(agent: Agent): Promise<boolean> {
+    async createAgent(agent: Partial<Agent>): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {

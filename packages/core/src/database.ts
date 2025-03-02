@@ -460,7 +460,7 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
      * @param agent The agent object to create.
      * @returns A Promise that resolves to a boolean indicating success or failure of the creation.
      */
-    abstract createAgent(agent: Agent): Promise<boolean>;
+    abstract createAgent(agent: Partial<Agent>): Promise<boolean>;
 
     /**
      * Updates an existing agent in the database.
