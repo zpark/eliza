@@ -114,7 +114,7 @@ export const apiClient = {
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>
         fetcher({
-            url: `/agents/${agentId}/tts`,
+            url: `/agents/${agentId}/speech/generate`,
             method: "POST",
             body: {
                 text,
@@ -129,9 +129,24 @@ export const apiClient = {
         const formData = new FormData();
         formData.append("file", audioBlob, "recording.wav");
         return fetcher({
-            url: `/agents/${agentId}/whisper`,
+            url: `/agents/${agentId}/transcriptions`,
             method: "POST",
             body: formData,
+        });
+    },
+    speechConversation: async (agentId: string, text: string, options?: { roomId?: string; userId?: string; userName?: string; name?: string }) => {
+        return fetcher({
+            url: `/agents/${agentId}/speech/conversation`,
+            method: "POST",
+            body: {
+                text,
+                ...options
+            },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "audio/mpeg",
+                "Transfer-Encoding": "chunked",
+            },
         });
     },
     deleteAgent: (agentId: string): Promise<{ success: boolean }> =>

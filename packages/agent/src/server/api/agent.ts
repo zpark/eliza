@@ -669,74 +669,125 @@ export function agentRouter(
         }
     });
 
-    
-    router.post('/:agentId/whisper', upload.single('file'), async (req: CustomRequest, res: express.Response) => {
-        const audioFile = req.file;
-        const agentId = req.params.agentId;
-
-        if (!audioFile) {
-            res.status(400).send("No audio file provided");
-            return;
-        }
-
-        let runtime = agents.get(agentId);
-
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
-            );
-        }
-
-        if (!runtime) {
-            res.status(404).send("Agent not found");
-            return;
-        }
-
-        const audioBuffer = fs.readFileSync(audioFile.path);
-        const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
-        
-        res.json({text: transcription});
-    });
-
-    router.post('/:agentId/speak', async (req, res) => {
-        
-
+    // Speech-related endpoints
+    router.post('/:agentId/speech/generate', async (req, res) => {
+        logger.info("[SPEECH GENERATE] Request to generate speech from text");
         const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
-            logger.warn("[SPEAK] Invalid agent ID format");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
             return;
         }
 
-        logger.info(`[SPEAK] Request to process speech for agent: ${agentId}`);
-        const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
-        const roomId = createUniqueUuid(this.runtime, rawRoomId ?? 'default-room-' + agentId);
-        const userId = createUniqueUuid(this.runtime, rawUserId ?? "user");
-
+        const { text } = req.body;
         if (!text) {
-            logger.warn("[SPEAK] No text provided in request");
-            res.status(400).send("No text provided");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_REQUEST',
+                    message: 'Text is required for speech synthesis'
+                }
+            });
             return;
         }
 
-        logger.debug(`[SPEAK] Looking up agent: ${agentId} for text processing`);
         let runtime = agents.get(agentId);
         if (!runtime) {
-            logger.debug(`[SPEAK] Agent not found by ID, trying to find by name: ${agentId}`);
             runtime = Array.from(agents.values()).find(
                 (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
             );
         }
 
         if (!runtime) {
-            logger.warn(`[SPEAK] Agent not found: ${agentId}`);
-            res.status(404).send("Agent not found");
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
             return;
         }
 
-        logger.debug(`[SPEAK] Found agent: ${runtime.character.name}, processing speech request`);
         try {
-            // Process message through agent
-            logger.debug(`[SPEAK] Ensuring connection for user: ${userId} in room: ${roomId}`);
+            logger.info("[SPEECH GENERATE] Using text-to-speech model");
+            const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, text);
+            const audioBuffer = await speechResponse.arrayBuffer();
+
+            logger.debug("[SPEECH GENERATE] Setting response headers");
+            res.set({
+                'Content-Type': 'audio/mpeg',
+                'Transfer-Encoding': 'chunked'
+            });
+
+            res.send(Buffer.from(audioBuffer));
+            logger.success(`[SPEECH GENERATE] Successfully generated speech for: ${runtime.character.name}`);
+        } catch (error) {
+            logger.error("[SPEECH GENERATE] Error generating speech:", error);
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'PROCESSING_ERROR',
+                    message: 'Error generating speech',
+                    details: error.message
+                }
+            });
+        }
+    });
+
+    router.post('/:agentId/speech/conversation', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
+            return;
+        }
+
+        const { text, roomId: rawRoomId, userId: rawUserId } = req.body;
+        if (!text) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_REQUEST',
+                    message: 'Text is required for conversation'
+                }
+            });
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        try {
+            const roomId = createUniqueUuid(runtime, rawRoomId ?? `default-room-${agentId}`);
+            const userId = createUniqueUuid(runtime, rawUserId ?? "user");
+
+            logger.debug("[SPEECH CONVERSATION] Ensuring connection");
             await runtime.ensureConnection({
                 userId,
                 roomId,
@@ -746,9 +797,7 @@ export function agentRouter(
                 type: ChannelType.API,
             });
 
-            const messageId = stringToUuid(Date.now().toString());
-            logger.debug(`[SPEAK] Creating content object for message: ${messageId}`);
-
+            const messageId = createUniqueUuid(runtime, Date.now().toString());
             const content: Content = {
                 text,
                 attachments: [],
@@ -772,41 +821,43 @@ export function agentRouter(
                 createdAt: Date.now(),
             };
 
-            logger.debug("[SPEAK] Creating memory for user message");
+            logger.debug("[SPEECH CONVERSATION] Creating memory");
             await runtime.messageManager.createMemory(memory);
 
-            logger.debug("[SPEAK] Composing state for message processing");
+            logger.debug("[SPEECH CONVERSATION] Composing state");
             const state = await runtime.composeState(userMessage, {
                 agentName: runtime.character.name,
             });
 
-            logger.debug("[SPEAK] Creating context for LLM processing");
+            logger.debug("[SPEECH CONVERSATION] Creating context");
             const context = composeContext({
                 state,
                 template: messageHandlerTemplate,
             });
 
-            logger.info("[SPEAK] Using LLM to generate response");
+            logger.info("[SPEECH CONVERSATION] Using LLM for response");
             const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
                 messages: [{
                     role: 'system',
                     content: messageHandlerTemplate
                 }, {
-                    role: 'user', 
+                    role: 'user',
                     content: context
                 }]
             });
 
             if (!response) {
-                logger.error("[SPEAK] No response received from LLM");
-                res.status(500).send(
-                    "No response from useModel"
-                );
+                res.status(500).json({
+                    success: false,
+                    error: {
+                        code: 'MODEL_ERROR',
+                        message: 'No response from model'
+                    }
+                });
                 return;
             }
 
-            logger.debug("[SPEAK] Creating memory for agent response");
-            // save response to memory
+            logger.debug("[SPEECH CONVERSATION] Creating response memory");
             const responseMessage = {
                 ...userMessage,
                 userId: runtime.agentId,
@@ -814,82 +865,126 @@ export function agentRouter(
             };
 
             await runtime.messageManager.createMemory(responseMessage);
-
-            logger.debug("[SPEAK] Evaluating and processing actions");
             await runtime.evaluate(memory, state);
 
-            const _result = await runtime.processActions(
+            await runtime.processActions(
                 memory,
                 [responseMessage],
                 state,
-                async () => {
-                    return [memory];
-                }
+                async () => [memory]
             );
 
-            logger.info("[SPEAK] Generating speech from text response");
+            logger.info("[SPEECH CONVERSATION] Generating speech response");
             const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, response.text);
             const audioBuffer = await speechResponse.arrayBuffer();
 
-            logger.debug("[SPEAK] Setting response headers and sending audio data");
+            logger.debug("[SPEECH CONVERSATION] Setting response headers");
             res.set({
-                "Content-Type": "audio/mpeg",
-                "Transfer-Encoding": "chunked",
+                'Content-Type': 'audio/mpeg',
+                'Transfer-Encoding': 'chunked'
             });
 
             res.send(Buffer.from(audioBuffer));
-            logger.success(`[SPEAK] Successfully processed and sent speech response for: ${runtime.character.name}`);
+            logger.success(`[SPEECH CONVERSATION] Successfully processed conversation for: ${runtime.character.name}`);
         } catch (error) {
-            logger.error("[SPEAK] Error processing message or generating speech:", error);
+            logger.error("[SPEECH CONVERSATION] Error processing conversation:", error);
             res.status(500).json({
-                error: "Error processing message or generating speech",
-                details: error.message,
+                success: false,
+                error: {
+                    code: 'PROCESSING_ERROR',
+                    message: 'Error processing conversation',
+                    details: error.message
+                }
             });
         }
     });
 
-    router.post('/:agentId/tts', async (req, res) => {
+    router.post('/:agentId/transcriptions', upload.single('file'), async (req: CustomRequest, res) => {
+        logger.info("[TRANSCRIPTION] Request to transcribe audio");
         const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
-            logger.warn("[TTS] Invalid agent ID format");
-            return;
-        }
-
-        logger.info(`[TTS] Request to convert text to speech for agent: ${agentId}`);
-        const { text } = req.body;
-        if (!text) {
-            logger.warn("[TTS] No text provided in request");
-            res.status(400).send("No text provided");
-            return;
-        }
-
-        logger.debug(`[TTS] Looking up agent: ${agentId}`);
-        const runtime = agents.get(agentId);
-        if (!runtime) {
-            logger.warn(`[TTS] Agent not found: ${agentId}`);
-            res.status(404).send("Agent not found");
-            return;
-        }
-
-        logger.debug(`[TTS] Found agent: ${runtime.character.name}, generating speech`);
-        try {
-            logger.info("[TTS] Using text-to-speech model to generate audio");
-            const speechResponse = await runtime.useModel(ModelClass.TEXT_TO_SPEECH, text);
-            const audioBuffer = await speechResponse.arrayBuffer();
-
-            logger.debug("[TTS] Setting response headers and sending audio data");
-            res.set({
-                "Content-Type": "audio/mpeg",
-                "Transfer-Encoding": "chunked",
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
             });
+            return;
+        }
 
-            res.send(Buffer.from(audioBuffer));
-            logger.success(`[TTS] Successfully generated and sent speech for: ${runtime.character.name}`);
+        const audioFile = req.file;
+        if (!audioFile) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_REQUEST',
+                    message: 'No audio file provided'
+                }
+            });
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        try {
+            logger.debug("[TRANSCRIPTION] Reading audio file");
+            const audioBuffer = fs.readFileSync(audioFile.path);
+            
+            logger.info("[TRANSCRIPTION] Transcribing audio");
+            const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+            
+            // Clean up the temporary file
+            fs.unlinkSync(audioFile.path);
+            
+            if (!transcription) {
+                res.status(500).json({
+                    success: false,
+                    error: {
+                        code: 'PROCESSING_ERROR',
+                        message: 'Failed to transcribe audio'
+                    }
+                });
+                return;
+            }
+
+            logger.success("[TRANSCRIPTION] Successfully transcribed audio");
+            res.json({
+                success: true,
+                data: {
+                    text: transcription
+                }
+            });
         } catch (error) {
-            logger.error("[TTS] Error generating speech:", error);
+            logger.error("[TRANSCRIPTION] Error transcribing audio:", error);
+            // Clean up the temporary file in case of error
+            if (audioFile.path && fs.existsSync(audioFile.path)) {
+                fs.unlinkSync(audioFile.path);
+            }
+            
             res.status(500).json({
-                error: "Error generating speech",
-                details: error.message,
+                success: false,
+                error: {
+                    code: 'PROCESSING_ERROR',
+                    message: 'Error transcribing audio',
+                    details: error.message
+                }
             });
         }
     });
