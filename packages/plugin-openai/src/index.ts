@@ -402,9 +402,10 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             console.log("openai_test_transcription");
             try {
+              const response = await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg");
+              const arrayBuffer = await response.arrayBuffer();
               const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, 
-                Buffer.from(await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg")
-                  .then(res => res.arrayBuffer())));
+                Buffer.from(new Uint8Array(arrayBuffer)));
               console.log("generated with test_transcription:", transcription);
             } catch (error) {
               console.error("Error in test_transcription:", error);

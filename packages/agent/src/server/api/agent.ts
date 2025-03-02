@@ -225,7 +225,7 @@ export function agentRouter(
 
             logger.info("[MESSAGE ENDPOINT] Before useModel");
 
-            const responseText = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+            const responseText = await runtime.useModel(ModelClass.TEXT_LARGE, {
                 context,
               });
           
