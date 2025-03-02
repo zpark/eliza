@@ -148,11 +148,11 @@ export class ScenarioClient implements Client {
       })
     );
 
-    console.log("\nConversation logs per agent:");
+    logger.info("\nConversation logs per agent:");
     conversations.forEach((convo, i) => {
-      console.log(`\n${participants[i].character.name}'s perspective:`);
+      logger.info(`\n${participants[i].character.name}'s perspective:`);
       convo.forEach((msg) =>
-        console.log(`${msg.content.name}: ${msg.content.text}`)
+        logger.info(`${msg.content.name}: ${msg.content.text}`)
       );
     });
 

@@ -167,7 +167,12 @@ const config: OnboardingConfig = {
   },
 };
 
+// TODO: Import plugins
+
 export default {
+  plugins: [
+
+  ],
   character,
   init: (runtime: IAgentRuntime) => initCharacter({ runtime, config }),
 };

@@ -349,7 +349,7 @@ const twitterPostAction: Action = {
         action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
       });
 
-      console.log("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
+      logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
       
       return responseContent;
     } catch (error) {

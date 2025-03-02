@@ -127,7 +127,7 @@ export async function startOnboardingDM(
   guild: Guild,
   worldId: UUID
 ): Promise<void> {
-  console.log("startOnboardingDM - worldId", worldId);
+  logger.info("startOnboardingDM - worldId", worldId);
   try {
     const owner = await guild.members.fetch(guild.ownerId);
     if (!owner) {
