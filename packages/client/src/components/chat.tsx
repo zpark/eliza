@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
+import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
@@ -13,7 +14,7 @@ import { WorldManager } from "@/lib/world-manager";
 import type { IAttachment } from "@/types";
 import type { Content, UUID } from "@elizaos/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Paperclip, Play, Send, Square, X } from "lucide-react";
+import { Paperclip, Send, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import AIWriter from "react-aiwriter";
 import { AudioRecorder } from "./audio-recorder";
@@ -23,7 +24,6 @@ import { Badge } from "./ui/badge";
 import ChatTtsButton from "./ui/chat/chat-tts-button";
 import { useAutoScroll } from "./ui/chat/hooks/useAutoScroll";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
 
 type ExtraContentFields = {
     user: string;
@@ -108,7 +108,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
-    const { data: agentData, isLoading: isAgentLoading } = useAgent(agentId);
+    const { data: agentData } = useAgent(agentId);
     const startAgentMutation = useStartAgent();
     const stopAgentMutation = useStopAgent();
 
