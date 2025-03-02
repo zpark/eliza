@@ -705,10 +705,11 @@ export interface Character {
   };
 }
 
-export interface Agent {
+export interface Agent extends Character {
   id: UUID;
-  characterId: UUID;
   enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 /**
