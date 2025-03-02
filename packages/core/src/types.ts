@@ -738,6 +738,10 @@ export interface IDatabaseAdapter {
 
   deleteAgent(agentId: UUID): Promise<boolean>;
 
+  ensureAgentExists(agent: Partial<Agent>): Promise<void>;
+
+  ensureEmbeddingDimension(dimension: number): Promise<void>;
+
   /** Get entity by ID */
   getEntityById(userId: UUID): Promise<Entity | null>;
 
@@ -1158,11 +1162,7 @@ export interface IAgentRuntime {
 
   stop(): Promise<void>;
 
-  ensureAgentExists(): Promise<void>;
-
   ensureEmbeddingDimension(): Promise<void>;
-
-  ensureCharacterExists(character: Character): Promise<void>;
 }
 
 export enum LoggingLevel {

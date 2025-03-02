@@ -124,6 +124,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
+    async ensureAgentExists(agent: Partial<Agent>) {
+        const agentExists = await this.getAgent(agent?.id);
+        if (!agentExists || !agent.id) {
+            await this.createAgent(agent);
+        }
+    }
+
     async ensureEmbeddingDimension(dimension: number) {
         const existingMemory = await this.db
             .select({

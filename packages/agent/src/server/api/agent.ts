@@ -1,4 +1,4 @@
-import type { Character, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
+import type { Character, Agent, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
 import { ChannelType, composeContext, createUniqueUuid, logger, messageHandlerTemplate, ModelClass, parseJSONObjectFromText, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';

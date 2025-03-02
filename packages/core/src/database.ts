@@ -18,7 +18,7 @@ import type {
  * An abstract class representing a database adapter for managing various entities
  * like entities, memories, actors, goals, and rooms.
  */
-export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
+export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter {
     /**
      * The database instance.
      */
@@ -44,12 +44,6 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract getEntityById(userId: UUID): Promise<Entity | null>;
 
     abstract getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]>;
-
-    abstract getAgent(agentId: UUID): Promise<Agent | null>;
-
-    abstract createAgent(agent: Agent): Promise<boolean>;
-
-    abstract updateAgent(agent: Agent): Promise<boolean>;
 
     /**
      * Creates a new account in the database.
@@ -413,7 +407,7 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         sourceEntityId: UUID;
         targetEntityId: UUID;
         tags?: string[];
-        metadata?: { [key: string]: any };
+        metadata?: Record<string, unknown>;
     }): Promise<boolean>;
 
     /**
@@ -445,50 +439,64 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
         sourceEntityId: UUID;
         targetEntityId: UUID;
         tags?: string[];
-        metadata?: { [key: string]: any };
+        metadata?: Record<string, unknown>;
     }): Promise<void>;
 
     /**
-     * Creates a new character in the database.
-     * @param character The Character object to create.
-     * @returns A Promise that resolves when the character creation is complete.
+     * Retrieves an agent by its ID.
+     * @param agentId The UUID of the agent to retrieve.
+     * @returns A Promise that resolves to the Agent object or null if not found.
      */
-    abstract createCharacter(character: Character): Promise<UUID | undefined>;
+    abstract getAgent(agentId: UUID): Promise<Agent | null>;
 
     /**
-     * Retrieves all characters from the database.
-     * @returns A Promise that resolves to an array of Character objects.
+     * Retrieves all agents from the database.
+     * @returns A Promise that resolves to an array of Agent objects.
      */
-    abstract listCharacters(): Promise<Character[]>;
+    abstract getAgents(): Promise<Agent[]>;
 
     /**
-     * Retrieves a character by their name.
-     * @param name The name of the character to retrieve.
-     * @returns A Promise that resolves to the Character object or null if not found.
+     * Creates a new agent in the database.
+     * @param agent The agent object to create.
+     * @returns A Promise that resolves to a boolean indicating success or failure of the creation.
      */
-    abstract getCharacter(name: string): Promise<Character | null>;
+    abstract createAgent(agent: Agent): Promise<boolean>;
 
     /**
-     * Updates an existing character in the database.
-     * @param name The name of the character to update.
-     * @param updates Partial Character object containing the fields to update.
-     * @returns A Promise that resolves when the character update is complete.
+     * Updates an existing agent in the database.
+     * @param agent The agent object with updated properties.
+     * @returns A Promise that resolves to a boolean indicating success or failure of the update.
      */
-    abstract updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+    abstract updateAgent(agent: Agent): Promise<boolean>;
 
     /**
-     * Removes a character from the database.
-     * @param name The name of the character to remove.
-     * @returns A Promise that resolves when the character removal is complete.
+     * Deletes an agent from the database.
+     * @param agentId The UUID of the agent to delete.
+     * @returns A Promise that resolves to a boolean indicating success or failure of the deletion.
      */
-    abstract removeCharacter(name: string): Promise<void>;
+    abstract deleteAgent(agentId: UUID): Promise<boolean>;
 
     /**
-     * Ensures the embedding dimension is properly set for the database.
-     * @param dimension The dimension number to ensure.
-     * @returns void
+     * Toggle an agent's enabled status
+     * @param agentId UUID of the agent to toggle
+     * @param enabled New enabled status
+     * @returns Promise resolving to true if successful
      */
-    abstract ensureEmbeddingDimension(dimension: number): void;
+    abstract toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean>;
+    
+    /**
+     * Ensures an agent exists in the database.
+     * @param agent The agent object to ensure exists.
+     * @returns A Promise that resolves when the agent has been ensured to exist.
+     */
+    abstract ensureAgentExists(agent: Partial<Agent>): Promise<void>;
+
+    /**
+     * Ensures an embedding dimension exists in the database.
+     * @param dimension The dimension to ensure exists.
+     * @returns A Promise that resolves when the embedding dimension has been ensured to exist.
+     */
+    abstract ensureEmbeddingDimension(dimension: number): Promise<void>;
 
     /**
      * Retrieves a cached value by key from the database.
