@@ -39,9 +39,9 @@ export default function AgentCreator() {
     const handleSubmit = async (character: Character) => {
         try {
             const completeCharacter = ensureRequiredFields(character);
-            await apiClient.startAgent(
+            await apiClient.createAgent(
                 {
-                    characterJson: completeCharacter
+                  characterJson: completeCharacter
                 }
             );
 
@@ -49,11 +49,11 @@ export default function AgentCreator() {
             queryClient.invalidateQueries({ queryKey: ["characters"] });
             
             toast({
-                title: "Success",
-                description: "Character created successfully!",
+              title: "Success",
+              description: "Character created successfully!",
             });
-            
-            navigate("/characters");
+            queryClient.invalidateQueries({ queryKey: ['agents'] });
+            navigate("/");
         } catch (error) {
             toast({
                 title: "Error",
