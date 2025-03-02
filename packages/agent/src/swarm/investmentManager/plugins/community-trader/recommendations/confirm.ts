@@ -1,21 +1,13 @@
 import {
     Action,
-    composeContext,
     elizaLogger,
-    generateText,
     Memory,
-    ModelClass,
     ServiceType,
-    UUID,
+    UUID
 } from "@elizaos/core";
-import { formatRecommendations } from "./evaluator";
-import extractConfirmationsTemplate from "../prompts/recommendations-extract-confirmations.md";
-import { MessageRecommendation } from "./schema";
-import { TrustTradingService } from "../tradingService";
 import { v4 as uuid } from "uuid";
-import { RecommendationMemory } from "../types";
-import { parseRecommendationsResponse, parseTokensResponse } from "../utils";
-import { extractXMLFromResponse } from "../utils";
+import { TrustTradingService } from "../tradingService";
+import { MessageRecommendation } from "./schema";
 
 export const confirmRecommendation: Action = {
     name: "TRUST_CONFIRM_RECOMMENDATION",

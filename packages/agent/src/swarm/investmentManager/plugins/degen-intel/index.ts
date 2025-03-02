@@ -3,8 +3,8 @@ import { IAgentRuntime, Plugin } from "@elizaos/core";
 import { registerTasks } from "./tasks";
 
 // create a new plugin
-export const intelPlugin: Plugin = {
-	name: "intel",
+export const degenIntelPlugin: Plugin = {
+	name: "degen-intel",
     description: "Degen Intel plugin",
 	routes,
 	init: async (_, runtime: IAgentRuntime) => {

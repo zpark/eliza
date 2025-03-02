@@ -1,7 +1,13 @@
-// TODO: Replace Anthropic with runtime.useModel
+import { IAgentRuntime, logger, ModelClass } from "@elizaos/core";
+import SentimentModel from "../models/sentiment";
+import TokenModel from "../models/token";
+import DataModel from "../models/data";
 
-import { IAgentRuntime, logger } from "@elizaos/core";
-import DB from "../database";
+const DB = {
+	Sentiment: SentimentModel,
+	Token: TokenModel,
+	Data: DataModel
+};
 
 const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
 const rolePrompt = "You are a buy signal analyzer.";
@@ -77,17 +83,16 @@ export default class BuySignal {
 
 		const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
-		const params: Anthropic.MessageCreateParams = {
-			max_tokens: 4096,
+		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+			context: finalPrompt,
 			system: rolePrompt,
-			messages: [{ role: "user", content: finalPrompt }],
 			temperature: 0.2,
-			model: "claude-3-5-sonnet-latest",
-		};
+			maxTokens: 4096,
+			object: true
+		});
 
-		const message: Anthropic.Message = await this.client.messages.create(params);
-		// @ts-ignore
-		const json = JSON.parse(message?.content?.[0]?.text || "{}") as IBuySignalOutput;
+		// Parse the JSON response
+		const json = JSON.parse(response || "{}") as IBuySignalOutput;
 
 		/** Fetch the recommended buys current marketcap */
 		const options = {

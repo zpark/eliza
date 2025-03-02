@@ -1,24 +1,23 @@
-import { elizaLogger, IAgentRuntime, Service, ServiceType } from "@elizaos/core";
+// TODO: Set up registerTasks to actually register the tasks
+// Should first obliterate any existing tasks with same tags for this agent
+
+import { elizaLogger, IAgentRuntime, Service } from "@elizaos/core";
 import { REQUIRED_SETTINGS } from "../config/config";
+import { BuySignalMessage, SellSignalMessage } from "../types";
 import { getWalletBalance } from "../utils/wallet";
 import { handleBuySignal } from "./buyService";
 import { DataLayer } from "./dataLayer";
 import { handlePriceSignal } from "./priceService";
-import { TradeScheduler } from "./scheduler";
+import { handleSellSignal } from "./sellService";
 import { SonarClient } from "./sonarClient";
-import { TradeWorker } from "./worker";
-import { WorkerPool } from "./workerpool";
 
 export class TradingService extends Service {
   private isRunning = false;
   private sonarClient: SonarClient;
   private processId: string;
   private runtime: IAgentRuntime;
-  private workerPool: WorkerPool;
-  private worker: TradeWorker;
-  private scheduler: TradeScheduler;
 
-  static serviceType: ServiceType = ServiceType.TRADING;
+  static serviceType: "trading";
 
   constructor() {
     super();
@@ -63,21 +62,19 @@ export class TradingService extends Service {
       // Modify signal handlers to use worker pool
       this.sonarClient.onBuySignal(async (signal) => {
         elizaLogger.info('Adding buy signal to worker queue:', signal);
-        const job = await this.workerPool.addBuyTask(signal);
+        const job = await this.addBuyTask(signal);
         elizaLogger.info('Buy job added to queue:', { jobId: job.id });
       });
 
       this.sonarClient.onSellSignal(async (signal) => {
-        await this.workerPool.addSellTask(signal);
+        await this.addSellTask(signal);
       });
 
       this.sonarClient.onPriceSignal(async (signal) => {
         await handlePriceSignal(signal, this.runtime, this.sonarClient);
       });
 
-      // Initialize scheduler
-      this.scheduler = new TradeScheduler(runtime);
-      await this.scheduler.initialize();
+      await this.registerTasks();
 
       elizaLogger.info('Trading service initialized and connected to Sonar', {
         processId: this.processId
@@ -91,6 +88,172 @@ export class TradingService extends Service {
       elizaLogger.error('Failed to initialize trading service:', error);
       throw error;
     }
+  }
+
+  private async processBuyJob(job: Job) {
+    elizaLogger.info('Worker processing buy job:', {
+      jobId: job.id,
+      data: job.data
+    });
+
+    const result = await handleBuySignal(job.data, this.runtime);
+    if (!result.success) {
+      throw new Error('Buy operation failed');
+    }
+
+    elizaLogger.info('Worker completed buy job:', {
+      jobId: job.id,
+      result
+    });
+
+    return result;
+  }
+
+  private async processSellJob(job: Job) {
+    const signal = job.data;
+
+    // Validate amounts before executing sell
+    if (!signal.amount || Number(signal.amount) <= 0) {
+      elizaLogger.warn('Invalid sell amount:', {
+        amount: signal.amount,
+        currentBalance: signal.currentBalance
+      });
+      return { success: false, error: 'Invalid sell amount' };
+    }
+
+    // Verify we have enough balance
+    if (Number(signal.amount) > Number(signal.currentBalance)) {
+      elizaLogger.warn('Insufficient balance for sell:', {
+        sellAmount: signal.amount,
+        currentBalance: signal.currentBalance
+      });
+      return { success: false, error: 'Insufficient balance' };
+    }
+
+    const result = await handleSellSignal(signal, this.runtime, this.sonarClient);
+    if (!result.success) {
+      throw new Error('Sell failed');
+    }
+    return result;
+  }
+
+  private async generateBuySignal(job: Job) {
+    elizaLogger.info('Generating scheduled buy signal');
+
+    try {
+      const walletBalance = await getWalletBalance(this.runtime);
+      if (walletBalance < 0.1) {
+        elizaLogger.info('Insufficient balance for scheduled buy', { walletBalance });
+        return { success: true };
+      }
+
+      // Get token recommendation from DataLayer
+      const recommendation = await DataLayer.getTokenRecommendation();
+
+      if (!recommendation) {
+        elizaLogger.info('No token recommendation available');
+        return { success: true };
+      }
+
+      // Use handleBuySignal directly like tradingService
+      const buySignal: BuySignalMessage = {
+        positionId: `sol-process-${Date.now()}`,
+        tokenAddress: recommendation.recommend_buy_address,
+        recommenderId: "default",
+      };
+
+      const result = await handleBuySignal(buySignal, this.runtime);
+      elizaLogger.info('Scheduled buy signal processed:', result);
+      return result;
+    } catch (error) {
+      elizaLogger.error('Failed to process scheduled buy signal:', error);
+      throw error;
+    }
+  }
+
+  private async syncWallet(job: Job) {
+    elizaLogger.info('Syncing wallet');
+    const balance = await getWalletBalance(this.runtime);
+    elizaLogger.info('Wallet synced:', { balance });
+    return { success: true };
+  }
+
+  async addBuyTask(data: BuySignalMessage) {
+    return this.queue.add(
+      "EXECUTE_BUY",
+      data,
+      {
+        jobId: `buy-${data.tokenAddress}-${Date.now()}`,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        }
+      }
+    );
+  }
+
+  async addSellTask(data: SellSignalMessage) {
+    return this.queue.add(
+      "EXECUTE_SELL",
+      data,
+      {
+        jobId: `sell-${data.tokenAddress}-${Date.now()}`,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        }
+      }
+    );
+  }
+
+  // TODO: replace this with tasks and handlers
+  async registerTasks() {
+    elizaLogger.info("Initializing trade scheduler...");
+
+    // Clear existing schedules
+    await this.queue.obliterate({ force: true });
+
+    // Schedule buy signal generation every 10 minutes
+    await this.queue.add(
+      "GENERATE_BUY_SIGNAL",
+      {},
+      {
+        jobId: "scheduled-buy-signal",
+        repeat: {
+          pattern: "*/10 * * * *" // Every 10 minutes
+        }
+      }
+    );
+
+    // Optional: Add wallet sync schedule
+    await this.queue.add(
+      "SYNC_WALLET",
+      {},
+      {
+        jobId: "wallet-sync",
+        repeat: {
+          pattern: "*/10 * * * *"
+        }
+      }
+    );
+
+    // TODO: replace this with tasks and handlers
+    // switch (job.name) {
+    //   case "EXECUTE_BUY":
+    //     return this.processBuyJob(job);
+    //   case "EXECUTE_SELL":
+    //     return this.processSellJob(job);
+    //   case "GENERATE_BUY_SIGNAL":
+    //     return this.generateBuySignal(job);
+    //   case "SYNC_WALLET":
+    //     return this.syncWallet(job);
+    //   default:
+    //     throw new Error(`Unknown job type: ${job.name}`);
+    // }
+
+    elizaLogger.info("Trade scheduler initialized successfully");
   }
 
   async start(): Promise<void> {
@@ -191,8 +354,6 @@ export class TradingService extends Service {
       this.sonarClient.disconnect();
       this.isRunning = false;
       elizaLogger.info('Trading service stopped', { processId: this.processId });
-      await this.worker.close();
-      await this.scheduler.stop();
     } catch (error) {
       elizaLogger.error('Error stopping trading service:', error);
       throw error;

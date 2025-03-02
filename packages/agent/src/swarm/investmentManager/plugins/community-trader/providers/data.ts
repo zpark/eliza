@@ -6,18 +6,87 @@ import {
     Provider,
     State,
     formatMessages,
-    generateText,
 } from "@elizaos/core";
 import { z } from "zod";
 import { TrustScoreDatabase } from "../db";
-import dataLoaderTemplate from "../prompts/data-loader.md";
-import dataProviderTemplate from "../prompts/data-provider.md";
 import { formatFullReport, formatRecommenderReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
 import { PositionWithBalance, TokenPerformance, Transaction } from "../types";
 import { getZodJsonSchema, render } from "../utils";
 
+const dataProviderTemplate = `<data_provider>
+
+<instructions>
+Always give a full details report if user ask anything about the positions, tokens, recommenders.
+Write the report to be display in telegram.
+Always Include links for the token addresses and accounts(wallets, creators) using solscan.
+Include links to the tradings pairs using defined.fi
+Links:
+
+- Token: https://solscan.io/token/[tokenAddress]
+- Account: https://solscan.io/account/[accountAddress]
+- Tx: https://solscan.io/tx/[txHash]
+- Pair: https://www.defined.fi/sol/[pairAddress]
+
+</instructions>
+
+<token_reports>
+{{tokenReports}}
+</token_reports>
+
+<positions_summary>
+Total Current Value: {{totalCurrentValue}}
+Total Realized P&L: {{totalRealizedPnL}}
+Total Unrealized P&L: {{totalUnrealizedPnL}}
+Total P&L: {{totalPnL}}
+<positions_summary>
+
+<recommender>
+{{recommender}}
+</recommender>
+
+<global_market_data>
+{{globalMarketData}}
+</global_market_data>
+
+</data_provider>`
+
+const dataLoaderTemplate = `You are a data provider system for a memecoin trading platform. Your task is to detect necessary data operations from messages and output required actions.
+
+<available_actions>
+{{actions}}
+</available_actions>
+
+Current data state:
+<tokens>
+{{tokens}}
+</tokens>
+
+<positions>
+{{positions}}
+</positions>
+
+Analyze the following messages and output any required actions:
+<messages>
+{{messages}}
+</messages>
+
+Rules:
+
+- Detect any new token addresses mentioned in messages
+- Do not modify the contract address, even if it contains words like "pump" or "meme" (i.e. BtNpKW19V1vefFvVzjcRsCTj8cwwc1arJcuMrnaApump)
+- Compare mentioned tokens against current data state
+- Consider data freshness when tokens or positions are queried
+- Order actions by dependency (loading new data before refreshing)
+- Only output necessary actions
+
+Output structure:
+<output>
+[List of actions to be taken if applicable]
+<action name="[action name]">[action parameters as JSON]</action>
+</output>
+`
 type DataActionState = {
     runtime: IAgentRuntime;
     db: TrustScoreDatabase;
@@ -260,9 +329,7 @@ export const dataProvider = {
                 positions: JSON.stringify(positions, jsonFormatter),
             });
 
-            const dataProviderResponse = await generateText({
-                modelClass: ModelClass.LARGE,
-                runtime,
+            const dataProviderResponse = await runtime.useModel(ModelClass.LARGE, {
                 context: context + "<output>",
                 stopSequences: ["</output>"],
             });

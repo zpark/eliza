@@ -1,3 +1,8 @@
+// TODO: This needs to be rewritten entirely
+// Recommenders are entities
+// Any discord, telegram etc data is stored as components
+// Metrics are stored as memories or cache items
+
 import { UUID, Memory } from "@elizaos/core";
 import { Database } from "better-sqlite3";
 // Remove drizzle ORM, use existing database manager stuff

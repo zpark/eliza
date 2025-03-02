@@ -1,15 +1,19 @@
 // TODO: Replace anthropic with runtime.useModel
 // replace moment with helper functions
 
-import Anthropic from "@anthropic-ai/sdk";
-import DB from "../database";
-import { IAgentRuntime, logger } from "@elizaos/core";
-import { getEnvVariable } from "../secrets";
+import { IAgentRuntime, logger, ModelClass } from "@elizaos/core";
 import moment from "moment";
+import SentimentModel from "../models/sentiment";
+import RawTweetModel from "../models/raw-tweets";
+
+const DB = {
+	Sentiment: SentimentModel,
+	RawTweet: RawTweetModel
+};
 
 const makeBulletpointList = (array: string[]) => {
 	return array.map((a) => ` - ${a}`).join("\n");
-  };
+};
 
 const examples = [
 	"$KUDAI 87% retention rate after 30 days. smart engagement up 1333% week over week. arbitrum expansion next with full gmx integration",
@@ -191,19 +195,16 @@ export default class TwitterParser {
 		const bulletpointTweets = makeBulletpointList(tweetArray);
 		const prompt = template.replace("{{tweets}}", bulletpointTweets);
 
-		const params: Anthropic.MessageCreateParams = {
-			max_tokens: 4096,
+		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+			context: prompt,
 			system: rolePrompt,
-			messages: [{ role: "user", content: prompt }],
 			temperature: 0.2,
-			model: "claude-3-5-sonnet-latest",
-		};
+			maxTokens: 4096,
+			object: true
+		});
 
-		// TODO: replace anthropic with runtime.useModel
-
-		const message: Anthropic.Message = await this.client.messages.create(params);
-		// @ts-ignore
-		const json = JSON.parse(message?.content?.[0]?.text || "{}");
+		// Parse the JSON response
+		const json = JSON.parse(response || "{}");
 
 		const updateResult = await DB.Sentiment.updateOne(
 			{ _id: sentiment._id },

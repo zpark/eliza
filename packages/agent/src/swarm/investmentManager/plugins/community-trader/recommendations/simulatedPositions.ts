@@ -1,22 +1,15 @@
+import { db as trustDb } from "@ai16z/db";
 import {
     Action,
-    composeContext,
     elizaLogger,
-    generateText,
-    ModelClass,
-    ServiceType,
-    UUID,
     IAgentRuntime,
-    Memory,
-    State,
-    HandlerCallback,
+    Memory
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
+import { formatFullReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
 import { TokenPerformance } from "../types";
-import { formatFullReport } from "../reports";
-import { db as trustDb } from "@ai16z/db";
 
 export const getSimulatedPositions: Action = {
     name: "TRUST_GET_SIMULATED_POSITIONS",

@@ -2,7 +2,23 @@ import { IAgentRuntime, Memory, State } from "@elizaos/core";
 import { dataProvider } from "./providers/data";
 import { recommendationsProvider } from "./providers/recommendations";
 import { render } from "./utils";
-import template from "./prompts/trust-plugin-provider.md";
+
+const template = `<trust_plugin>
+
+<documentation>
+<!-- Trust Plugin Documentation -->
+</documentation>
+
+<instructions>
+
+</instructions>
+
+<providers>
+{{providers}}
+</providers>
+
+</trust_plugin>
+`
 
 const providers = [dataProvider, recommendationsProvider];
 

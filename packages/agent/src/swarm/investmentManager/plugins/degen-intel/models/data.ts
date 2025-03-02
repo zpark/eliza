@@ -1,4 +1,5 @@
 // TODO: Store in cache, replace mongoose with cache adapter
+// this could just be a cache item
 
 import type { IData } from "../types";
 import Mongoose, { Schema } from "mongoose";

@@ -10,7 +10,6 @@ import {
   type State,
   composeContext,
   createUniqueUuid,
-  generateText,
   getWorldSettings,
   logger
 } from "@elizaos/core";
@@ -222,10 +221,8 @@ const twitterPostAction: Action = {
         template: tweetGenerationTemplate,
       });
 
-      const tweetContent = await generateText({
-        runtime,
+      const tweetContent = await runtime.useModel(ModelClass.TEXT_SMALL, {
         context,
-        modelClass: ModelClass.TEXT_SMALL,
       });
 
       // Clean up the generated content

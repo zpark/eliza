@@ -1,22 +1,14 @@
 import {
     Action,
-    composeContext,
     elizaLogger,
-    generateText,
-    ModelClass,
-    ServiceType,
-    UUID,
     IAgentRuntime,
-    Memory,
-    State,
-    HandlerCallback,
+    Memory
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
+import { formatFullReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
 import { TokenPerformance } from "../types";
-import { formatFullReport } from "../reports";
-import { db as trustDb } from "../db";
 
 export const getPositions: Action = {
     name: "TRUST_GET_POSITIONS",

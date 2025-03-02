@@ -1,8 +1,8 @@
 // todo: replace Client reference with client reference
 // Set up cache adapter for loading cookies
 // This action should be able to run on a schedule
+// store tweets as memories in db, no reason really to get twitter here
 
-import DB from "../database";
 import type { IRawTweet } from "../types";
 import { IAgentRuntime, logger } from "@elizaos/core";
 

@@ -1,5 +1,7 @@
+// TODO: Replace with cache adapter
+
 import { Route } from "@elizaos/core";
-import DB from "./database";
+
 import {
   SentimentArraySchema,
   TweetArraySchema

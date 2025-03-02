@@ -1,3 +1,6 @@
+// remove the mutex and socket io client
+// just have our own signal
+
 import { Mutex } from "async-mutex";
 import { io, Socket } from "socket.io-client";
 

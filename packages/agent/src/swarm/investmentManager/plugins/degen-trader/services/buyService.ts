@@ -1,9 +1,9 @@
-import { elizaLogger, IAgentRuntime, Memory, Content, composeContext, generateText, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
-import { BuySignalMessage } from "../types";
-import { executeTrade, getWalletBalance } from "../utils/wallet";
-import { tradeAnalysisTemplate } from "../utils/analyzeTrade";
-import { TrustScoreDatabase } from "@elizaos/plugin-trustdb";
+import { composeContext, Content, elizaLogger, IAgentRuntime, Memory, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
+import { TrustScoreDatabase } from "../../community-trader/db";
+import { BuySignalMessage } from "../types";
+import { tradeAnalysisTemplate } from "../utils/analyzeTrade";
+import { executeTrade, getWalletBalance } from "../utils/wallet";
 import { DataLayer } from './dataLayer';
 
 async function analyzeTradingAmount({
@@ -65,10 +65,8 @@ async function analyzeTradingAmount({
     });
 
     // Generate analysis
-    const content = await generateText({
-      runtime,
+    const content = await runtime.useModel(ModelClass.LARGE, {
       context,
-      modelClass: ModelClass.LARGE,
     });
 
     // Log generated content
