@@ -1,10 +1,9 @@
-import { elizaLogger, IAgentRuntime, Memory, Content } from "@elizaos/core";
-import { SellSignalMessage } from "../types";
+import { elizaLogger, IAgentRuntime } from "@elizaos/core";
+import { Connection, VersionedTransaction } from "@solana/web3.js";
+import { TrustScoreDatabase } from "../../community-trader/db";
 import { SonarClient } from "../services/sonarClient";
-import { executeTrade, getWalletKeypair } from "../utils/wallet";
-import {Connection} from "@solana/web3.js";
-import { TrustScoreDatabase } from "@elizaos/plugin-trustdb";
-import { VersionedTransaction } from "@solana/web3.js";
+import { SellSignalMessage } from "../types";
+import { getWalletKeypair } from "../utils/wallet";
 
 // Add balance tracking
 let pendingSells: { [tokenAddress: string]: bigint } = {};

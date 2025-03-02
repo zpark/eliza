@@ -10,7 +10,6 @@ import { TradeWorker } from "./worker";
 import { WorkerPool } from "./workerpool";
 
 export class TradingService extends Service {
-  //serviceType = ServiceType.TRADING;
   private isRunning = false;
   private sonarClient: SonarClient;
   private processId: string;
@@ -77,7 +76,7 @@ export class TradingService extends Service {
       });
 
       // Initialize scheduler
-      this.scheduler = new TradeScheduler("degen-trader-queue", runtime);
+      this.scheduler = new TradeScheduler(runtime);
       await this.scheduler.initialize();
 
       elizaLogger.info('Trading service initialized and connected to Sonar', {

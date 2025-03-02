@@ -1027,7 +1027,7 @@ export interface ICacheManager {
 export abstract class Service {
   private static instance: Service | null = null;
 
-  static get serviceType(): ServiceType {
+  static get serviceType(): ServiceType | string {
     throw new Error("Service must implement static serviceType getter");
   }
 
@@ -1038,7 +1038,7 @@ export abstract class Service {
     return Service.instance as T;
   }
 
-  get serviceType(): ServiceType {
+  get serviceType(): ServiceType | string {
     return (this.constructor as typeof Service).serviceType;
   }
 
