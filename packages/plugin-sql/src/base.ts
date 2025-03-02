@@ -1643,27 +1643,29 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             }
         });
     }
+
     async createCharacter(character: Character): Promise<UUID | undefined> {
         return this.withDatabase(async () => {
             try {
-                await this.db.transaction(async (tx) => {
-                    const insertData = characterToInsert({ ...character });
-                    await tx.insert(characterTable).values(insertData);
-                    return character.id;
-                });
-    
-                logger.debug("Character created successfully:", {
-                    name: character.name,
-                });
+                // Only check by ID
+                if (character.id) {
+                    const existing = await this.getCharacter(character.id);
+                    if (existing) {
+                        return character.id;
+                    }
+                }
 
-                return character.id;
+                const result = await this.db.insert(characterTable).values(characterToInsert(character)).returning();
+                if (result.length > 0) {
+                    return result[0].id;
+                }
             } catch (error) {
-                logger.error("Failed to create character:", {
+                logger.error("Error creating character:", {
                     error: error instanceof Error ? error.message : String(error),
-                    characterName: character.name,
+                    characterId: character.id
                 });
-                throw error;
             }
+            return undefined;
         });
     }
 
@@ -1713,6 +1715,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
             const char = result[0];
             return {
+                id: char.id,
                 name: char.name,
                 username: char.username ?? undefined,
                 system: char.system ?? undefined,

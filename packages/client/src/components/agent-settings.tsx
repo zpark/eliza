@@ -66,7 +66,7 @@ export default function AgentSettings({ character, agentId }: { character: Chara
         throw new Error("Agent ID is missing");
       }
       
-      await apiClient.stopAgent(agentId);
+      await apiClient.updateAgentStatus({ agentId, status: 'inactive' });
       
       // Invalidate queries before showing toast and navigating
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
@@ -95,7 +95,7 @@ export default function AgentSettings({ character, agentId }: { character: Chara
         throw new Error("Agent ID is missing");
       }
       
-      await apiClient.startAgentByName(character.name);
+      await apiClient.updateAgentStatus({ agentId, status: 'active' });
       
       // Invalidate queries for fresh data
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });

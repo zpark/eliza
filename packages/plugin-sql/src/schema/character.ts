@@ -18,7 +18,7 @@ export type StoredTemplates = {
 
 export const characterTable = pgTable("characters", {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name"),
+    name: text("name").unique().notNull(),
     username: text("username"),
     system: text("system"),
     templates: jsonb("templates").$type<StoredTemplates>().default(sql`'{}'::jsonb`),

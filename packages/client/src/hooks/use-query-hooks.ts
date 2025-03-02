@@ -133,7 +133,7 @@ export function useAgentStatus() {
   
   return useMutation({
     mutationFn: ({ agentId, status }: { agentId: string; status: 'active' | 'inactive' }) => 
-      apiClient.updateAgentStatus(agentId, status),
+      apiClient.updateAgentStatus({ agentId, status }),
     onSuccess: (data, variables) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['agents'] });
@@ -141,7 +141,7 @@ export function useAgentStatus() {
       
       toast({
         title: variables.status === 'active' ? 'Agent Started' : 'Agent Stopped',
-        description: `Agent is now ${variables.status}`,
+        description: `Agent ${data.character.name} is now ${variables.status}`,
       });
     },
     onError: (error) => {

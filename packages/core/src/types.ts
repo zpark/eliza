@@ -998,6 +998,8 @@ export interface IDatabaseAdapter {
 
   getCharacter(characterId: UUID): Promise<Character | null>;
 
+  getCharacterByName(name: string): Promise<Character | null>;
+
   updateCharacter(characterId: UUID, updates: Partial<Character>): Promise<void>;
   
   removeCharacter(characterId: UUID): Promise<void>;

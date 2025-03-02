@@ -69,37 +69,100 @@ const fetcher = async ({
     });
 };
 
+export interface RoomResponse {
+    id: UUID;
+    name: string;
+    source: string;
+    worldId?: string;
+    createdAt?: number;
+}
+
+export interface AgentResponse {
+    id: UUID;
+    enabled?: boolean;
+    character: Character;
+    status?: 'active' | 'inactive';
+}
+
+export interface MessageResponse extends Content {
+    id: UUID;
+    agentId: UUID;
+    userId: UUID;
+    roomId: UUID;
+    createdAt: number;
+}
+
+export interface TranscriptionResponse {
+    text: string;
+}
+
+export interface AgentStatusUpdateParams {
+    agentId: string;
+    status: 'active' | 'inactive';
+}
+
+export interface AgentStatusResponse extends AgentResponse {
+    enabled: boolean;
+    status: 'active' | 'inactive';
+}
+
 export const apiClient = {
     // Core Agent CRUD Operations
-    getAgents: () => fetcher({ url: "/agents" }),
+    getAgents: (): Promise<{ agents: AgentResponse[] }> => 
+        fetcher({ url: "/agents" }),
     
-    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean; status?: 'active' | 'inactive' }> =>
+    getAgent: (agentId: string): Promise<AgentResponse> =>
         fetcher({ url: `/agents/${agentId}` }),
     
-    createAgent: (params: { characterPath?: string; characterJson?: Character; remotePath?: string }) =>
+    createAgent: (params: { characterPath?: string; characterJson?: Character; remotePath?: string }): Promise<AgentResponse> =>
         fetcher({
             url: "/agents",
             method: "POST",
             body: params,
         }),
     
-    updateAgent: (agentId: string, character: Character) =>
+    updateAgent: (agentId: string, character: Character): Promise<AgentResponse> =>
         fetcher({
             url: `/agents/${agentId}`,
             method: "PUT",
             body: character,
         }),
     
-    deleteAgent: (agentId: string) =>
+    deleteAgent: (agentId: string): Promise<void> =>
         fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
 
     // Agent Status Management
-    updateAgentStatus: (agentId: string, status: 'active' | 'inactive') =>
-        fetcher({
+    updateAgentStatus: async ({ agentId, status }: AgentStatusUpdateParams): Promise<AgentStatusResponse> => {
+        if (!agentId) {
+            throw new Error('Agent ID is required');
+        }
+        
+        if (!['active', 'inactive'].includes(status)) {
+            throw new Error("Status must be 'active' or 'inactive'");
+        }
+
+        const response = await fetcher({
             url: `/agents/${agentId}/status`,
             method: "PATCH",
             body: { status },
-        }),
+        });
+
+        // Ensure the response matches our expected format
+        if (!response || typeof response !== 'object') {
+            throw new Error('Invalid response from server');
+        }
+
+        // Ensure the response has the required fields
+        if (!response.id || !response.character || !response.status) {
+            throw new Error('Invalid agent status response format');
+        }
+
+        return {
+            ...response,
+            enabled: status === 'active',
+            status: status
+        };
+    },
 
     // Communication (Messages & Speech)
     sendMessage: (
@@ -113,7 +176,7 @@ export const apiClient = {
             worldId?: string;
             file?: File;
         }
-    ) => {
+    ): Promise<MessageResponse[]> => {
         const worldId = WorldManager.getWorldId();
         
         if (options?.file) {
@@ -147,8 +210,7 @@ export const apiClient = {
         });
     },
 
-    // Speech Generation and Conversation
-    generateSpeech: (agentId: string, text: string) =>
+    generateSpeech: (agentId: string, text: string): Promise<Blob> =>
         fetcher({
             url: `/agents/${agentId}/speech/generate`,
             method: "POST",
@@ -169,7 +231,7 @@ export const apiClient = {
             userName?: string;
             name?: string;
         }
-    ) =>
+    ): Promise<Blob> =>
         fetcher({
             url: `/agents/${agentId}/speech/conversation`,
             method: "POST",
@@ -185,7 +247,7 @@ export const apiClient = {
         }),
 
     // Room Management
-    getRooms: (agentId: string) => {
+    getRooms: (agentId: string): Promise<RoomResponse[]> => {
         const worldId = WorldManager.getWorldId();
         return fetcher({
             url: `/agents/${agentId}/rooms`,
@@ -202,7 +264,7 @@ export const apiClient = {
             roomId?: UUID;
             userId?: string;
         }
-    ) => {
+    ): Promise<RoomResponse> => {
         const worldId = WorldManager.getWorldId();
         return fetcher({
             url: `/agents/${agentId}/rooms`,
@@ -215,7 +277,7 @@ export const apiClient = {
     },
 
     // Audio Processing
-    transcribeAudio: (agentId: string, audioFile: File) => {
+    transcribeAudio: (agentId: string, audioFile: File): Promise<TranscriptionResponse> => {
         const formData = new FormData();
         formData.append("file", audioFile);
         return fetcher({

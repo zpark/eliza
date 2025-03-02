@@ -17,7 +17,7 @@ CREATE TABLE "cache" (
 --> statement-breakpoint
 CREATE TABLE "characters" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text,
+	"name" text UNIQUE NOT NULL,
 	"username" text,
 	"system" text,
 	"templates" jsonb DEFAULT '{}'::jsonb,
