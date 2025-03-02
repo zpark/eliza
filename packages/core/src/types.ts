@@ -706,7 +706,6 @@ export interface Character {
 }
 
 export interface Agent extends Character {
-  id: UUID;
   enabled: boolean;
   createdAt: number;
   updatedAt: number;
