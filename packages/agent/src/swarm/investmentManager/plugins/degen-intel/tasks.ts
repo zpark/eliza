@@ -13,7 +13,18 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 		worldId = runtime.agentId;
 	}
 
-	runtime.registerTask({
+	runtime.registerTaskHandler({
+		name: "BIRDEYE_SYNC_TRENDING",
+		validate: async (runtime, message, state) => {
+			return true; // TODO: validate after certain time
+		},
+		execute: async (runtime, options) => {
+			const birdeye = new Birdeye(runtime);
+			await birdeye.syncTrendingTokens("solana");
+		}
+	});
+
+	runtime.createTask({
 		name: "BIRDEYE_SYNC_TRENDING",
 		description: "Sync trending tokens from Birdeye",
 		worldId,
@@ -22,16 +33,20 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 60, // 1 hour
 		},
 		tags: ["queue", "repeat"],
+	});
+
+	runtime.registerTaskHandler({	
+		name: "COINMARKETCAP_SYNC",
 		validate: async (runtime, message, state) => {
 			return true; // TODO: validate after certain time
 		},
-		handler: async (runtime, options) => {
-			const birdeye = new Birdeye(runtime);
-			await birdeye.syncTrendingTokens("solana");
+		execute: async (runtime, options) => {
+			const cmc = new CoinmarketCap(runtime);
+			await cmc.syncTokens();
 		}
 	});
 
-	runtime.registerTask({
+	runtime.createTask({
 		name: "COINMARKETCAP_SYNC",
 		description: "Sync tokens from Coinmarketcap",
 		worldId,
@@ -40,13 +55,20 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
 		tags: ["queue", "repeat"],
-		handler: async () => {
-			const cmc = new CoinmarketCap(runtime);
-			await cmc.syncTokens();
+	});
+
+	runtime.registerTaskHandler({
+		name: "SYNC_RAW_TWEETS",
+		validate: async (runtime, message, state) => {
+			return true; // TODO: validate after certain time
+		},
+		execute: async (runtime, options) => {
+			const twitter = new Twitter(runtime);
+			await twitter.syncRawTweets();
 		}
 	});
 
-	runtime.registerTask({
+	runtime.createTask({
 		name: "SYNC_RAW_TWEETS",
 		description: "Sync raw tweets from Twitter",
 		worldId,
@@ -55,13 +77,20 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 15, // 15 minutes
 		},
 		tags: ["queue", "repeat"],
-		handler: async () => {
-			const twitter = new Twitter(runtime);
-			await twitter.syncRawTweets();
+	});
+
+	runtime.registerTaskHandler({
+		name: "SYNC_WALLET",
+		validate: async (runtime, message, state) => {
+			return true; // TODO: validate after certain time
+		},
+		execute: async (runtime, options) => {
+			const birdeye = new Birdeye(runtime);
+			await birdeye.syncWallet();
 		}
 	});
 
-	runtime.registerTask({
+	runtime.createTask({
 		name: "SYNC_WALLET",
 		description: "Sync wallet from Birdeye",
 		worldId,
@@ -70,13 +99,20 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
 		tags: ["queue", "repeat"],
-		handler: async () => {
-			const birdeye = new Birdeye(runtime);
-			await birdeye.syncWallet();
+	});
+
+	runtime.registerTaskHandler({
+		name: "GENERATE_BUY_SIGNAL",
+		validate: async (runtime, message, state) => {
+			return true; // TODO: validate after certain time
+		},
+		execute: async (runtime, options) => {
+			const signal = new BuySignal(runtime);
+			await signal.generateSignal();
 		}
 	});
 
-	runtime.registerTask({
+	runtime.createTask({
 		name: "GENERATE_BUY_SIGNAL",
 		description: "Generate a buy signal",
 		worldId,
@@ -85,13 +121,20 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
 		tags: ["queue"],
-		handler: async () => {
-			const signal = new BuySignal(runtime);
-			await signal.generateSignal();
+	});
+
+	runtime.registerTaskHandler({
+		name: "PARSE_TWEETS",
+		validate: async (runtime, message, state) => {
+			return true; // TODO: validate after certain time
+		},
+		execute: async (runtime, options) => {
+			const twitterParser = new TwitterParser(runtime);
+			await twitterParser.parseTweets();
 		}
 	});
 
-	runtime.registerTask({
+	runtime.createTask({
 		name: "PARSE_TWEETS",
 		description: "Parse tweets",
 		worldId,
@@ -100,9 +143,5 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updateInterval: 1000 * 60 * 60 * 24, // 24 hours
 		},
 		tags: ["queue"],
-		handler: async () => {
-			const twitterParser = new TwitterParser(runtime);
-			await twitterParser.parseTweets();
-		}
 	});
 };

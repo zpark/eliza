@@ -1,13 +1,47 @@
 // File: /swarm/shared/ownership/core.ts
 // Updated to use world metadata instead of cache
 
+import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import type { IAgentRuntime, WorldData } from "./types";
+import { RoleName, type IAgentRuntime, type WorldData } from "./types";
 
 export interface ServerOwnershipState {
   servers: {
     [serverId: string]: WorldData;
   };
+}
+
+
+/**
+ * Gets a user's role from world metadata
+ */
+export async function getUserServerRole(
+  runtime: IAgentRuntime,
+  userId: string,
+  serverId: string
+): Promise<RoleName> {
+  try {
+    const worldId = createUniqueUuid(runtime, serverId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
+
+    if (!world || !world.metadata?.roles) {
+      return RoleName.NONE;
+    }
+
+    if (world.metadata.roles[userId]?.role) {
+      return world.metadata.roles[userId].role as RoleName;
+    }
+
+    // Also check original ID format
+    if (world.metadata.roles[userId]?.role) {
+      return world.metadata.roles[userId].role as RoleName;
+    }
+
+    return RoleName.NONE;
+  } catch (error) {
+    logger.error(`Error getting user role: ${error}`);
+    return RoleName.NONE;
+  }
 }
 
 /**

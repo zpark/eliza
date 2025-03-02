@@ -1,3 +1,5 @@
+import logger from "./logger";
+
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -945,6 +947,13 @@ export interface IDatabaseAdapter {
   setCache(key: string, value: string,): Promise<boolean>;
 
   deleteCache(key: string): Promise<boolean>;
+
+  // Only task instance methods - definitions are in-memory
+  createTask(task: Task): Promise<UUID>;
+  getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]>;
+  getTask(id: UUID): Promise<Task | null>;
+  updateTask(id: UUID, task: Partial<Task>): Promise<void>;
+  deleteTask(id: UUID): Promise<void>;
 }
 
 export interface IMemoryManager {
@@ -1146,17 +1155,16 @@ export interface IAgentRuntime {
   getEvent(event: string): ((params: any) => void)[] | undefined;
   emitEvent(event: string | string[], params: any): void;
 
-  registerTask(task: Task): UUID;
-  getTasks({
-    roomId,
-    tags,
-  }: {
-    roomId?: UUID;
-    tags?: string[];
-  }): Task[] | undefined;
-  getTask(id: UUID): Task | undefined;
-  updateTask(id: UUID, task: Task): void;
-  deleteTask(id: UUID): void;
+  // In-memory task definition methods
+  registerTaskHandler(taskHandler: TaskHandler): void;
+  getTaskHandler(name: string): TaskHandler | undefined;
+  
+  // Database-backed task instance methods
+  createTask(task: Task): Promise<UUID>;
+  getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]>;
+  getTask(id: UUID): Promise<Task | null>;
+  updateTask(id: UUID, task: Partial<Task>): Promise<void>;
+  deleteTask(id: UUID): Promise<void>;
 
   stop(): Promise<void>;
 
@@ -1395,6 +1403,12 @@ export interface TeePluginConfig {
   vendorConfig?: TeeVendorConfig;
 }
 
+export interface TaskHandler {
+  name: string;
+  execute: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
+  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
+}
+
 export interface Task {
   id?: UUID;
   name: string;
@@ -1411,8 +1425,6 @@ export interface Task {
   roomId?: UUID;
   worldId?: UUID;
   tags: string[];
-  handler: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
-  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
 export type WorldData = {

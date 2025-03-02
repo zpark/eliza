@@ -10,41 +10,10 @@ import {
   type State,
   composeContext,
   createUniqueUuid,
+  getUserServerRole,
   getWorldSettings,
   logger
 } from "@elizaos/core";
-
-/**
- * Gets a user's role from world metadata
- */
-export async function getUserServerRole(
-  runtime: IAgentRuntime,
-  userId: string,
-  serverId: string
-): Promise<RoleName> {
-  try {
-    const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.databaseAdapter.getWorld(worldId);
-
-    if (!world || !world.metadata?.roles) {
-      return RoleName.NONE;
-    }
-
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
-    }
-
-    // Also check original ID format
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
-    }
-
-    return RoleName.NONE;
-  } catch (error) {
-    logger.error(`Error getting user role: ${error}`);
-    return RoleName.NONE;
-  }
-}
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -236,7 +205,7 @@ const twitterPostAction: Action = {
         message.userId,
         serverId
       );
-      if (!userRole) {
+      if (userRole !== "OWNER" && userRole !== "ADMIN") {
         // callback and return
         await callback({
           text: "I'm sorry, but you're not authorized to post tweets on behalf of this org.",
@@ -253,8 +222,14 @@ const twitterPostAction: Action = {
         source: message.content.source,
       };
 
+      // if a task already exists, we need to cancel it
+      const existingTask = runtime.getTask(message.roomId);
+      if (existingTask) {
+        await runtime.deleteTask(existingTask.id);
+      }
+
       // Register approval task
-      runtime.registerTask({
+      runtime.createTask({
         roomId: message.roomId,
         name: "Confirm Twitter Post",
         description: "Confirm the tweet to be posted.",
@@ -329,9 +304,6 @@ const twitterPostAction: Action = {
             message.userId,
             serverId
           );
-          if (!userRole) {
-            return false;
-          }
 
           return userRole === "OWNER" || userRole === "ADMIN";
         },

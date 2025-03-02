@@ -11,3 +11,4 @@ export { participantTable } from "./participant";
 export { relationshipTable } from "./relationship";
 export { roomTable } from "./room";
 export { worldTable } from "./worldTable";
+export { taskTable } from "./tasks";

@@ -1,6 +1,7 @@
 import { composeContext } from "../context";
 import { logger } from "../logger";
 import { parseJSONObjectFromText } from "../parsing";
+import { getUserServerRole } from "../roles";
 import {
   type Action,
   type ActionExample,
@@ -58,6 +59,18 @@ export const choiceAction: Action = {
       roomId: message.roomId,
       tags: ["AWAITING_CHOICE"],
     });
+
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+
+    const userRole = await getUserServerRole(
+      runtime,
+      message.userId,
+      room.serverId
+    );
+
+    if (userRole !== "OWNER" && userRole !== "ADMIN") {
+      return false;
+    }
 
     // Only validate if there are pending tasks with options
     return (

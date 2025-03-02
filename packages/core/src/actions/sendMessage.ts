@@ -1,25 +1,21 @@
 // action: SEND_MESSAGE
 // send message to a user or room (other than this room we are in)
 
-import { v4 as uuidv4 } from 'uuid';
+import { composeContext } from "../context";
+import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { 
+import { parseJSONObjectFromText } from "../parsing";
+import {
   type Action,
   type ActionExample,
-  Component,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
   ModelClass,
-  type State,
-  UUID,
-  Entity,
   sendDirectMessage,
-  sendRoomMessage
+  sendRoomMessage,
+  type State
 } from "../types";
-import { composeContext } from "../context";
-import { findEntityByName } from "../entities";
-import { parseJSONObjectFromText } from "../parsing";
 
 const targetExtractionTemplate = `# Task: Extract Target and Source Information
 

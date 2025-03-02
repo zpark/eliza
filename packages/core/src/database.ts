@@ -10,6 +10,7 @@ import type {
     Participant,
     Relationship,
     RoomData,
+    Task,
     UUID,
     WorldData
 } from "./types.ts";
@@ -512,4 +513,40 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
      * @returns Promise resolving to true if the value was successfully deleted
      */
     abstract deleteCache(key: string): Promise<boolean>;
+
+    /**
+     * Creates a new task instance in the database.
+     * @param task The task object to create
+     * @returns Promise resolving to the UUID of the created task
+     */
+    abstract createTask(task: Task): Promise<UUID>;
+
+    /**
+     * Retrieves tasks based on specified parameters.
+     * @param params Object containing optional roomId and tags to filter tasks
+     * @returns Promise resolving to an array of Task objects
+     */
+    abstract getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]>;
+
+    /**
+     * Retrieves a specific task by its ID.
+     * @param id The UUID of the task to retrieve
+     * @returns Promise resolving to the Task object if found, null otherwise
+     */
+    abstract getTask(id: UUID): Promise<Task | null>;
+
+    /**
+     * Updates an existing task in the database.
+     * @param id The UUID of the task to update
+     * @param task Partial Task object containing the fields to update
+     * @returns Promise resolving when the update is complete
+     */
+    abstract updateTask(id: UUID, task: Partial<Task>): Promise<void>;
+
+    /**
+     * Deletes a task from the database.
+     * @param id The UUID of the task to delete
+     * @returns Promise resolving when the deletion is complete
+     */
+    abstract deleteTask(id: UUID): Promise<void>;
 }

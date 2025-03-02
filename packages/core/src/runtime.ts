@@ -46,6 +46,7 @@ import {
   type ServiceType,
   type State,
   type Task,
+  TaskHandler,
   type UUID,
   type WorldData
 } from "./types.ts";
@@ -231,7 +232,6 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
-  tasks = new Map<UUID, Task>();
 
   readonly fetch = fetch;
   private clients: Map<string, ClientInstance> = new Map();
@@ -245,6 +245,8 @@ export class AgentRuntime implements IAgentRuntime {
 
   models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
   routes: Route[] = [];
+
+  private taskHandlers = new Map<string, TaskHandler>();
 
   constructor(opts: {
     conversationLength?: number;
@@ -967,7 +969,7 @@ export class AgentRuntime implements IAgentRuntime {
           : `World for room ${roomId}`,
         agentId: this.agentId,
         serverId: serverId || "default",
-        metadata: {},
+        metadata,
       });
     }
 
@@ -1657,44 +1659,55 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  registerTask(task: Task): UUID {
-    // if task doesn't have an id, generate one
-    if (!task.id) {
-      task.id = uuidv4() as UUID;
+  // Task definition methods
+  registerTaskHandler(taskHandler: TaskHandler): void {
+    if (this.taskHandlers.has(taskHandler.name)) {
+      logger.warn(`Task definition ${taskHandler.name} already registered. Will be overwritten.`);
     }
-    this.tasks.set(task.id, task);
-    return task.id;
+    this.taskHandlers.set(taskHandler.name, taskHandler);
   }
 
-  getTasks({
-    roomId,
-    tags,
-  }: {
-    roomId?: UUID;
-    tags?: string[];
-  }): Task[] | undefined {
-    // filter tasks by roomId, type, or both
-    const tasks = this.tasks;
-    if (!tasks) {
-      return undefined;
+  getTaskHandler(name: string): TaskHandler | undefined {
+    return this.taskHandlers.get(name);
+  }
+
+  // Task instance methods
+  async createTask(task: Task): Promise<UUID> {
+    const taskHandler = this.taskHandlers.get(task.name);
+    if (!taskHandler) {
+      throw new Error(`Cannot create task: No task definition found for '${task.name}'`);
     }
-    const values = Array.from(tasks.values());
-    return values.filter(
-      (task) =>
-        (!roomId || task.roomId === roomId) &&
-        (!tags || task.tags.some((tag) => tags.includes(tag)))
-    );
+
+    const id = await this.databaseAdapter.createTask(task);
+    return id;
   }
 
-  getTask(id: UUID): Task | undefined {
-    return this.tasks.get(id);
+  async getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]> {
+    return this.databaseAdapter.getTasks(params);
   }
 
-  updateTask(id: UUID, task: Task) {
-    this.tasks.set(id, task);
+  async getTask(id: UUID): Promise<Task | null> {
+    return this.databaseAdapter.getTask(id);
   }
 
-  deleteTask(id: UUID) {
-    this.tasks.delete(id);
+  async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
+    const existing = await this.databaseAdapter.getTask(id);
+    if (!existing) {
+      throw new Error(`Task ${id} not found`);
+    }
+
+    // If name is being changed, verify new task definition exists
+    if (task.name && task.name !== existing.name) {
+      const taskHandler = this.taskHandlers.get(task.name);
+      if (!taskHandler) {
+        throw new Error(`Cannot update task: No task definition found for '${task.name}'`);
+      }
+    }
+
+    await this.databaseAdapter.updateTask(id, task);
+  }
+
+  async deleteTask(id: UUID): Promise<void> {
+    await this.databaseAdapter.deleteTask(id);
   }
 }
