@@ -65,7 +65,7 @@ const SLIPPAGE_BPS = 50; // 0.5% TODO: move this to config
 const FORCE_SIMULATION = true; // TODO: add this to config?
 
 export class TrustTradingService extends Service {
-    static serviceType: ServiceType = ServiceType.TRADING;
+    serviceType: string = "trust_trading";
 
     public readonly scoreManager: TrustScoreManager;
     public readonly db: TrustScoreDatabase;

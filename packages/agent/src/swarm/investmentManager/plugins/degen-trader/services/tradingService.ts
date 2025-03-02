@@ -17,7 +17,7 @@ export class TradingService extends Service {
   private processId: string;
   private runtime: IAgentRuntime;
 
-  static serviceType: "trading";
+  serviceType: string = "degen_trading";
 
   constructor() {
     super();

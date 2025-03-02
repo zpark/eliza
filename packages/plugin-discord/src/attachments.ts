@@ -210,12 +210,8 @@ export class AttachmentManager {
         try {
             const response = await fetch(attachment.url);
             const pdfBuffer = await response.arrayBuffer();
-            console.log("service")
-            console.log(this.runtime
-                .getService<IPdfService>(ServiceType.PDF))
             const text = await this.runtime
                 .getService<IPdfService>(ServiceType.PDF)
-                .getInstance()
                 .convertPdfToText(Buffer.from(pdfBuffer));
             const { title, description } = await generateSummary(
                 this.runtime,

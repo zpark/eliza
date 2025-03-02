@@ -46,7 +46,7 @@ import {
   type ServiceType,
   type State,
   type Task,
-  TaskHandler,
+  TaskWorker,
   type UUID,
   type WorldData
 } from "./types.ts";
@@ -246,7 +246,7 @@ export class AgentRuntime implements IAgentRuntime {
   models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
   routes: Route[] = [];
 
-  private taskHandlers = new Map<string, TaskHandler>();
+  private taskWorkers = new Map<string, TaskWorker>();
 
   constructor(opts: {
     conversationLength?: number;
@@ -1659,55 +1659,14 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  // Task definition methods
-  registerTaskHandler(taskHandler: TaskHandler): void {
-    if (this.taskHandlers.has(taskHandler.name)) {
+  registerTaskWorker(taskHandler: TaskWorker): void {
+    if (this.taskWorkers.has(taskHandler.name)) {
       logger.warn(`Task definition ${taskHandler.name} already registered. Will be overwritten.`);
     }
-    this.taskHandlers.set(taskHandler.name, taskHandler);
+    this.taskWorkers.set(taskHandler.name, taskHandler);
   }
 
-  getTaskHandler(name: string): TaskHandler | undefined {
-    return this.taskHandlers.get(name);
-  }
-
-  // Task instance methods
-  async createTask(task: Task): Promise<UUID> {
-    const taskHandler = this.taskHandlers.get(task.name);
-    if (!taskHandler) {
-      throw new Error(`Cannot create task: No task definition found for '${task.name}'`);
-    }
-
-    const id = await this.databaseAdapter.createTask(task);
-    return id;
-  }
-
-  async getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]> {
-    return this.databaseAdapter.getTasks(params);
-  }
-
-  async getTask(id: UUID): Promise<Task | null> {
-    return this.databaseAdapter.getTask(id);
-  }
-
-  async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
-    const existing = await this.databaseAdapter.getTask(id);
-    if (!existing) {
-      throw new Error(`Task ${id} not found`);
-    }
-
-    // If name is being changed, verify new task definition exists
-    if (task.name && task.name !== existing.name) {
-      const taskHandler = this.taskHandlers.get(task.name);
-      if (!taskHandler) {
-        throw new Error(`Cannot update task: No task definition found for '${task.name}'`);
-      }
-    }
-
-    await this.databaseAdapter.updateTask(id, task);
-  }
-
-  async deleteTask(id: UUID): Promise<void> {
-    await this.databaseAdapter.deleteTask(id);
+  getTaskWorker(name: string): TaskWorker | undefined {
+    return this.taskWorkers.get(name);
   }
 }

@@ -61,15 +61,11 @@ export class BrowserService extends Service implements IBrowserService {
     private captchaSolver: CaptchaSolver;
     private cacheKey = "content/browser";
 
-    static serviceType: ServiceType = ServiceType.BROWSER;
+    serviceType: ServiceType = ServiceType.BROWSER;
 
     static register(runtime: IAgentRuntime): IAgentRuntime {
         // since we are lazy loading, do nothing
         return runtime;
-    }
-
-    getInstance(): IBrowserService {
-        return BrowserService.getInstance();
     }
 
     constructor() {

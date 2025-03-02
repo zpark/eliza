@@ -43,10 +43,6 @@ export class VideoService extends Service implements IVideoService {
         this.ensureDataDirectoryExists();
     }
 
-    getInstance(): IVideoService {
-        return VideoService.getInstance();
-    }
-
     async initialize(_runtime: IAgentRuntime): Promise<void> {}
 
     private ensureDataDirectoryExists() {
