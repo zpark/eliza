@@ -6,10 +6,33 @@ sidebar_position: 3
 
 Clients are core components in Eliza that enable AI agents to interact with external platforms and services. Each client provides a specialized interface for communication while maintaining consistent agent behavior across different platforms.
 
+---
+
+## Supported Clients
+
+| Client | Type | Key Features | Use Cases |
+|--------|------|--------------|------------|
+| [Discord](https://github.com/elizaos-plugins/client-discord) | Communication | • Voice channels • Server management • Moderation tools • Channel management | • Community management • Gaming servers • Event coordination |
+| [Twitter](https://github.com/elizaos-plugins/client-twitter) | Social Media | • Post scheduling • Timeline monitoring • Engagement analytics • Content automation | • Brand management • Content creation • Social engagement |
+| [Telegram](https://github.com/elizaos-plugins/client-telegram) | Messaging | • Bot API • Group chat • Media handling • Command system | • Customer support • Community engagement • Broadcast messaging |
+| [Direct](https://github.com/elizaOS/eliza/tree/develop/packages/client-direct/src) | API | • REST endpoints • Web integration • Custom applications • Real-time communication | • Backend integration • Web apps • Custom interfaces |
+| [GitHub](https://github.com/elizaos-plugins/client-github) | Development | • Repository management • Issue tracking • Pull requests • Code review | • Development workflow • Project management • Team collaboration |
+| [Slack](https://github.com/elizaos-plugins/client-slack) | Enterprise | • Channel management • Conversation analysis • Workspace tools • Integration hooks | • Team collaboration • Process automation • Internal tools |
+| [Lens](https://github.com/elizaos-plugins/client-lens) | Web3 | • Decentralized networking • Content publishing • Memory management • Web3 integration | • Web3 social networking • Content distribution • Decentralized apps |
+| [Farcaster](https://github.com/elizaos-plugins/client-farcaster) | Web3 | • Decentralized social • Content publishing • Community engagement | • Web3 communities • Content creation • Social networking |
+| [Auto](https://github.com/elizaos-plugins/client-auto) | Automation | • Workload management • Task scheduling • Process automation | • Background jobs • Automated tasks • System maintenance |
+
+***Additional clients**:
+- Instagram: Social media content and engagement
+- XMTP: Web3 messaging and communications
+- Alexa: Voice interface and smart device control
+- Home Assistant: Home automation OS 
+- Devai.me: AI first social client
+- Simsai: Jeeter / Social media platform for AI
 
 ---
 
-## Overview
+## System Overview
 
 Clients serve as bridges between Eliza agents and various platforms, providing core capabilities:
 
@@ -32,33 +55,10 @@ Clients serve as bridges between Eliza agents and various platforms, providing c
    - Platform-specific feature support
 
 
----
-
-## Supported Clients
-
-| Client | Type | Key Features | Use Cases |
-|--------|------|--------------|------------|
-| [Discord](https://github.com/elizaos-plugins/client-discord) | Communication | • Voice channels • Server management • Moderation tools • Channel management | • Community management • Gaming servers • Event coordination |
-| [Twitter](https://github.com/elizaos-plugins/client-twitter) | Social Media | • Post scheduling • Timeline monitoring • Engagement analytics • Content automation | • Brand management • Content creation • Social engagement |
-| [Telegram](https://github.com/elizaos-plugins/client-telegram) | Messaging | • Bot API • Group chat • Media handling • Command system | • Customer support • Community engagement • Broadcast messaging |
-| [Direct](https://github.com/elizaOS/eliza/tree/develop/packages/client-direct/src) | API | • REST endpoints • Web integration • Custom applications • Real-time communication | • Backend integration • Web apps • Custom interfaces |
-| [GitHub](https://github.com/elizaos-plugins/client-github) | Development | • Repository management • Issue tracking • Pull requests • Code review | • Development workflow • Project management • Team collaboration |
-| [Slack](https://github.com/elizaos-plugins/client-slack) | Enterprise | • Channel management • Conversation analysis • Workspace tools • Integration hooks | • Team collaboration • Process automation • Internal tools |
-| [Lens](https://github.com/elizaos-plugins/client-lens) | Web3 | • Decentralized networking • Content publishing • Memory management • Web3 integration | • Web3 social networking • Content distribution • Decentralized apps |
-| [Farcaster](https://github.com/elizaos-plugins/client-farcaster) | Web3 | • Decentralized social • Content publishing • Community engagement | • Web3 communities • Content creation • Social networking |
-| [Auto](https://github.com/elizaos-plugins/client-auto) | Automation | • Workload management • Task scheduling • Process automation | • Background jobs • Automated tasks • System maintenance |
-
-***Additional clients**:
-- Instagram: Social media content and engagement
-- XMTP: Web3 messaging and communications
-- Alexa: Voice interface and smart device control
-
----
-
 
 ## Client Configuration
 
-Clients are configured through the [`Character`](api/type-aliases/Character) configuration's `clientConfig` property:
+Clients are configured through the [`Character`](/api/type-aliases/Character) configuration's [`clientConfig`](/api/type-aliases/Character/#clientconfig) property:
 
 ```typescript
 export type Character = {
@@ -176,7 +176,7 @@ const recentMessages = await runtime.messageManager.getMemories({
 
 ## Direct Client Example
 
-The [Direct client](https://github.com/elizaOS/eliza/tree/develop/packages/client-direct) provides message processing, webhook integration, and a REST API interfacefor Eliza agents. It's the primary client used for testing and development.
+The [Direct client](https://github.com/elizaOS/eliza/tree/develop/packages/client-direct) provides message processing, webhook integration, and a REST API interface for Eliza agents. It's the primary client used for testing and development.
 
 
 Key features of the Direct client:

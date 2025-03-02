@@ -1,5 +1,5 @@
 import express from "express";
-import { Router } from 'express';
+import type { Router } from 'express';
 import bodyParser from "body-parser";
 import cors from "cors";
 
@@ -98,7 +98,7 @@ export function createVerifiableLogApiRouter(
                     .getService<VerifiableLogService>(
                         ServiceType.VERIFIABLE_LOGGING
                     )
-                    .pageQueryLogs(verifiableLogQuery, page, pageSize);
+                    ?.pageQueryLogs(verifiableLogQuery, page, pageSize);
 
                 res.json({
                     success: true,

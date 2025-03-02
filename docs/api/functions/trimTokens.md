@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / trimTokens
+[@elizaos/core v0.25.8](../index.md) / trimTokens
 
 # Function: trimTokens()
 
@@ -49,4 +49,4 @@ console.log(trimmedText); // Output will be a truncated version of the input tex
 
 ## Defined in
 
-[packages/core/src/generation.ts:82](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L82)
+[packages/core/src/generation.ts:101](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L101)

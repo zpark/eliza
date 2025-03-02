@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / TwitterSpaceDecisionOptions
+[@elizaos/core v0.25.8](../index.md) / TwitterSpaceDecisionOptions
 
 # Interface: TwitterSpaceDecisionOptions
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:952](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L952)
+[packages/core/src/types.ts:968](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L968)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:953](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L953)
+[packages/core/src/types.ts:969](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L969)
 
 ***
 
@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:954](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L954)
+[packages/core/src/types.ts:970](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L970)
 
 ***
 
@@ -40,7 +40,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:955](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L955)
+[packages/core/src/types.ts:971](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L971)
 
 ***
 
@@ -50,7 +50,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:956](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L956)
+[packages/core/src/types.ts:972](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L972)
 
 ***
 
@@ -60,7 +60,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:957](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L957)
+[packages/core/src/types.ts:973](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L973)
 
 ***
 
@@ -70,7 +70,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:958](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L958)
+[packages/core/src/types.ts:974](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L974)
 
 ***
 
@@ -80,7 +80,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:959](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L959)
+[packages/core/src/types.ts:975](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L975)
 
 ***
 
@@ -90,7 +90,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:960](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L960)
+[packages/core/src/types.ts:976](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L976)
 
 ***
 
@@ -100,7 +100,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:961](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L961)
+[packages/core/src/types.ts:977](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L977)
 
 ***
 
@@ -110,7 +110,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:962](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L962)
+[packages/core/src/types.ts:978](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L978)
 
 ***
 
@@ -120,7 +120,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:963](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L963)
+[packages/core/src/types.ts:979](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L979)
 
 ***
 
@@ -130,4 +130,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:964](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L964)
+[packages/core/src/types.ts:980](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L980)

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / GraphQLTag
+[@elizaos/core v0.25.8](../index.md) / GraphQLTag
 
 # Interface: GraphQLTag
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1451](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1451)
+[packages/core/src/types.ts:1467](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1467)
 
 ***
 
@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1452](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1452)
+[packages/core/src/types.ts:1468](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1468)

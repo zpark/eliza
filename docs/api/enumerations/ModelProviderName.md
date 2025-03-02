@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ModelProviderName
+[@elizaos/core v0.25.8](../index.md) / ModelProviderName
 
 # Enumeration: ModelProviderName
 
@@ -12,7 +12,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:242](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L242)
+[packages/core/src/types.ts:244](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L244)
 
 ***
 
@@ -22,7 +22,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:243](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L243)
+[packages/core/src/types.ts:245](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L245)
 
 ***
 
@@ -32,7 +32,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:244](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L244)
+[packages/core/src/types.ts:246](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L246)
 
 ***
 
@@ -42,7 +42,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:245](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L245)
+[packages/core/src/types.ts:247](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L247)
 
 ***
 
@@ -52,7 +52,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:246](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L246)
+[packages/core/src/types.ts:248](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L248)
 
 ***
 
@@ -62,7 +62,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:247](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L247)
+[packages/core/src/types.ts:249](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L249)
 
 ***
 
@@ -72,7 +72,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:248](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L248)
+[packages/core/src/types.ts:250](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L250)
 
 ***
 
@@ -82,7 +82,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:249](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L249)
+[packages/core/src/types.ts:251](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L251)
 
 ***
 
@@ -92,7 +92,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:250](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L250)
+[packages/core/src/types.ts:252](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L252)
 
 ***
 
@@ -102,7 +102,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:251](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L251)
+[packages/core/src/types.ts:253](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L253)
 
 ***
 
@@ -112,7 +112,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:252](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L252)
+[packages/core/src/types.ts:254](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L254)
 
 ***
 
@@ -122,7 +122,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:253](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L253)
+[packages/core/src/types.ts:255](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L255)
 
 ***
 
@@ -132,7 +132,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:254](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L254)
+[packages/core/src/types.ts:256](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L256)
 
 ***
 
@@ -142,7 +142,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:255](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L255)
+[packages/core/src/types.ts:257](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L257)
 
 ***
 
@@ -152,7 +152,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:256](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L256)
+[packages/core/src/types.ts:258](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L258)
 
 ***
 
@@ -162,7 +162,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:257](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L257)
+[packages/core/src/types.ts:259](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L259)
 
 ***
 
@@ -172,7 +172,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:258](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L258)
+[packages/core/src/types.ts:260](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L260)
 
 ***
 
@@ -182,7 +182,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:259](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L259)
+[packages/core/src/types.ts:261](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L261)
 
 ***
 
@@ -192,7 +192,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:260](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L260)
+[packages/core/src/types.ts:262](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L262)
 
 ***
 
@@ -202,7 +202,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:261](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L261)
+[packages/core/src/types.ts:263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L263)
 
 ***
 
@@ -212,7 +212,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:262](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L262)
+[packages/core/src/types.ts:264](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L264)
 
 ***
 
@@ -222,7 +222,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L263)
+[packages/core/src/types.ts:265](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L265)
 
 ***
 
@@ -232,7 +232,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:264](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L264)
+[packages/core/src/types.ts:266](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L266)
 
 ***
 
@@ -242,7 +242,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:265](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L265)
+[packages/core/src/types.ts:267](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L267)
 
 ***
 
@@ -252,7 +252,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:266](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L266)
+[packages/core/src/types.ts:268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L268)
 
 ***
 
@@ -262,7 +262,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:267](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L267)
+[packages/core/src/types.ts:269](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L269)
 
 ***
 
@@ -272,7 +272,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L268)
+[packages/core/src/types.ts:270](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L270)
 
 ***
 
@@ -282,15 +282,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:245](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L245)
-
-### NEARAI
-
-> **NEARAI**: `"nearai"`
-
-#### Defined in
-
-[packages/core/src/types.ts:242](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L275)
+[packages/core/src/types.ts:271](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L271)
 
 ***
 
@@ -300,7 +292,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:270](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L270)
+[packages/core/src/types.ts:272](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L272)
 
 ***
 
@@ -310,7 +302,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:271](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L271)
+[packages/core/src/types.ts:273](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L273)
 
 ***
 
@@ -320,7 +312,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:272](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L272)
+[packages/core/src/types.ts:274](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L274)
 
 ***
 
@@ -330,7 +322,7 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:273](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L273)
+[packages/core/src/types.ts:275](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L275)
 
 ***
 
@@ -340,4 +332,24 @@ Available model providers
 
 #### Defined in
 
-[packages/core/src/types.ts:274](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L274)
+[packages/core/src/types.ts:276](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L276)
+
+***
+
+### SECRETAI
+
+> **SECRETAI**: `"secret_ai"`
+
+#### Defined in
+
+[packages/core/src/types.ts:277](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L277)
+
+***
+
+### NEARAI
+
+> **NEARAI**: `"nearai"`
+
+#### Defined in
+
+[packages/core/src/types.ts:278](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L278)

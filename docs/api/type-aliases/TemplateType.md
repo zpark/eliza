@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / TemplateType
+[@elizaos/core v0.25.8](../index.md) / TemplateType
 
 # Type Alias: TemplateType
 
@@ -6,4 +6,4 @@
 
 ## Defined in
 
-[packages/core/src/types.ts:710](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L710)
+[packages/core/src/types.ts:723](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L723)

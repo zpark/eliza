@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / generateTrueOrFalse
+[@elizaos/core v0.25.8](../index.md) / generateTrueOrFalse
 
 # Function: generateTrueOrFalse()
 
@@ -28,4 +28,4 @@ Promise resolving to a boolean value parsed from the model's response
 
 ## Defined in
 
-[packages/core/src/generation.ts:1432](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1432)
+[packages/core/src/generation.ts:1489](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L1489)

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / IImageDescriptionService
+[@elizaos/core v0.25.8](../index.md) / IImageDescriptionService
 
 # Interface: IImageDescriptionService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1263)
+[packages/core/src/types.ts:1279](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1279)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1268)
+[packages/core/src/types.ts:1284](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1284)
 
 ***
 
@@ -74,4 +74,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1363](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1363)
+[packages/core/src/types.ts:1379](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1379)

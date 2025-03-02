@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ITextGenerationService
+[@elizaos/core v0.25.8](../index.md) / ITextGenerationService
 
 # Interface: ITextGenerationService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1263)
+[packages/core/src/types.ts:1279](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1279)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1268)
+[packages/core/src/types.ts:1284](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1284)
 
 ***
 
@@ -62,7 +62,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1385](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1385)
+[packages/core/src/types.ts:1401](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1401)
 
 ***
 
@@ -90,7 +90,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1386](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1386)
+[packages/core/src/types.ts:1402](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1402)
 
 ***
 
@@ -118,7 +118,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1394](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1394)
+[packages/core/src/types.ts:1410](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1410)
 
 ***
 
@@ -136,4 +136,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1402](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1402)
+[packages/core/src/types.ts:1418](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1418)

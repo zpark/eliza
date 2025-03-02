@@ -159,6 +159,48 @@ pnpm install --include=optional sharp
 
 ---
 
+## Using Your Custom Plugins
+Plugins that are not in the official registry for ElizaOS can be used as well. Here's how:
+
+### Installation
+
+1. Upload the custom plugin to the packages folder:
+
+```
+packages/
+├─plugin-example/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── index.ts        # Main plugin entry
+│   ├── actions/        # Custom actions
+│   ├── providers/      # Data providers
+│   ├── types.ts        # Type definitions
+│   └── environment.ts  # Configuration
+├── README.md
+└── LICENSE
+```
+
+2. Add the custom plugin to your project's dependencies in the agent's package.json:
+
+```json
+{
+  "dependencies": {
+    "@elizaos/plugin-example": "workspace:*"
+  }
+}
+```
+
+3. Import the custom plugin to your agent's character.json
+
+```json
+  "plugins": [
+    "@elizaos/plugin-example",
+  ],
+```
+
+---
+
 ### Start Eliza with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/elizaos/eliza/tree/main)

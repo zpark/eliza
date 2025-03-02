@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / ITranscriptionService
+[@elizaos/core v0.25.8](../index.md) / ITranscriptionService
 
 # Interface: ITranscriptionService
 
@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1263](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1263)
+[packages/core/src/types.ts:1279](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1279)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1268](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1268)
+[packages/core/src/types.ts:1284](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1284)
 
 ***
 
@@ -66,7 +66,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1369](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1369)
+[packages/core/src/types.ts:1385](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1385)
 
 ***
 
@@ -84,7 +84,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1370](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1370)
+[packages/core/src/types.ts:1386](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1386)
 
 ***
 
@@ -102,7 +102,7 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1373](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1373)
+[packages/core/src/types.ts:1389](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1389)
 
 ***
 
@@ -120,4 +120,4 @@ Add abstract initialize method that must be implemented by derived classes
 
 #### Defined in
 
-[packages/core/src/types.ts:1374](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1374)
+[packages/core/src/types.ts:1390](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1390)

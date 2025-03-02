@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / CacheKeyPrefix
+[@elizaos/core v0.25.8](../index.md) / CacheKeyPrefix
 
 # Enumeration: CacheKeyPrefix
 
@@ -10,4 +10,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1593](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1593)
+[packages/core/src/types.ts:1610](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1610)

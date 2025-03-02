@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / IrysMessageType
+[@elizaos/core v0.25.8](../index.md) / IrysMessageType
 
 # Enumeration: IrysMessageType
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1456](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1456)
+[packages/core/src/types.ts:1472](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1472)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1457](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1457)
+[packages/core/src/types.ts:1473](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1473)
 
 ***
 
@@ -30,4 +30,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1458](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1458)
+[packages/core/src/types.ts:1474](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1474)

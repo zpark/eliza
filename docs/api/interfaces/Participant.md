@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / Participant
+[@elizaos/core v0.25.8](../index.md) / Participant
 
 # Interface: Participant
 
@@ -14,7 +14,7 @@ Unique identifier
 
 #### Defined in
 
-[packages/core/src/types.ts:567](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L567)
+[packages/core/src/types.ts:571](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L571)
 
 ***
 
@@ -26,4 +26,4 @@ Associated account
 
 #### Defined in
 
-[packages/core/src/types.ts:570](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L570)
+[packages/core/src/types.ts:574](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L574)

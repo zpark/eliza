@@ -4,15 +4,14 @@ This guide walks you through creating a custom plugin for the Eliza AI framework
 
 ## Video Tutorial
 
-<iframe
-  width="100%"
-  height="360"
-  src="https://www.youtube.com/embed/25FxjscBHuo" 
-  title="YouTube video player"
-  frameBorder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowFullScreen
-></iframe>
+<div className="responsive-iframe">                                                                                               
+  <iframe                                                                                                                         
+    src="https://www.youtube.com/embed/25FxjscBHuo" 
+    title="YouTube video player"                                                                                                  
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                              
+    allowFullScreen                                                                                                               
+  />                                                                                                                              
+</div> 
 Code: https://github.com/dabit3/eliza-nasa-plugin
 
 

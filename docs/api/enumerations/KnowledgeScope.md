@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / KnowledgeScope
+[@elizaos/core v0.25.8](../index.md) / KnowledgeScope
 
 # Enumeration: KnowledgeScope
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1588](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1588)
+[packages/core/src/types.ts:1605](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1605)
 
 ***
 
@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1589](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1589)
+[packages/core/src/types.ts:1606](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1606)

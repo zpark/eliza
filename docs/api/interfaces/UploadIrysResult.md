@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / UploadIrysResult
+[@elizaos/core v0.25.8](../index.md) / UploadIrysResult
 
 # Interface: UploadIrysResult
 
@@ -10,7 +10,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1438](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1438)
+[packages/core/src/types.ts:1454](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1454)
 
 ***
 
@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1439](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1439)
+[packages/core/src/types.ts:1455](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1455)
 
 ***
 
@@ -30,7 +30,7 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1440](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1440)
+[packages/core/src/types.ts:1456](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1456)
 
 ***
 
@@ -40,4 +40,4 @@
 
 #### Defined in
 
-[packages/core/src/types.ts:1441](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1441)
+[packages/core/src/types.ts:1457](https://github.com/elizaOS/eliza/blob/main/packages/core/src/types.ts#L1457)

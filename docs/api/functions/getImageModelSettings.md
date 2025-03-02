@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.7](../index.md) / getImageModelSettings
+[@elizaos/core v0.25.8](../index.md) / getImageModelSettings
 
 # Function: getImageModelSettings()
 
@@ -14,4 +14,4 @@
 
 ## Defined in
 
-[packages/core/src/models.ts:1163](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1163)
+[packages/core/src/models.ts:1233](https://github.com/elizaOS/eliza/blob/main/packages/core/src/models.ts#L1233)
