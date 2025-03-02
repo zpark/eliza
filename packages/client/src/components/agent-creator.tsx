@@ -32,7 +32,11 @@ export default function AgentCreator() {
             topics: character.topics ?? [],
             adjectives: character.adjectives ?? [],
             plugins: character.plugins ?? [],
-            style: character.style ?? { all: [], chat: [], post: [] },
+            style: {
+              all: character.style?.all ?? [],
+              chat: character.style?.chat ?? [],
+              post: character.style?.post ?? [],
+            },
         };
     };    
 
