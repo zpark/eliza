@@ -846,13 +846,13 @@ export function agentRouter(
             const worldId = req.body.worldId || req.query.worldId as string;
             
             // Get rooms where this agent is a participant
-            const rooms = await runtime.databaseAdapter.getRoomsForParticipant(agentId, runtime.agentId);
+            const rooms = await runtime.databaseAdapter.getRoomsForParticipant(agentId);
             
             // Get details for each room
             const roomDetails = await Promise.all(
                 rooms.map(async (roomId) => {
                     try {
-                        const roomData = await runtime.databaseAdapter.getRoom(roomId, runtime.agentId);
+                        const roomData = await runtime.databaseAdapter.getRoom(roomId);
                         if (!roomData) return null;
                         
                         // Filter by worldId if provided
