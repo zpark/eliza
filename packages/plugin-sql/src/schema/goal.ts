@@ -12,12 +12,12 @@ export const goalTable = pgTable(
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),
-        userId: uuid("userId").references(() => entityTable.id),
-        agentId: uuid("agentId").references(() => agentTable.id),
+        userId: uuid("userId").references(() => entityTable.id, { onDelete: "cascade" }),
+        agentId: uuid("agentId").references(() => agentTable.id, { onDelete: "cascade" }),
         name: text("name"),
         status: text("status"),
         description: text("description"),
-        roomId: uuid("roomId").references(() => roomTable.id),
+        roomId: uuid("roomId").references(() => roomTable.id, { onDelete: "cascade" }),
         objectives: jsonb("objectives").default("[]").notNull(),
     },
     (table) => [

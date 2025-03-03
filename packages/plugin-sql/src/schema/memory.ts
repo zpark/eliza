@@ -28,9 +28,9 @@ export const memoryTable = pgTable(
             .default(sql`now()`)
             .notNull(),
         content: jsonb("content").notNull(),
-        userId: uuid("userId").references(() => entityTable.id),
-        agentId: uuid("agentId").references(() => agentTable.id),
-        roomId: uuid("roomId").references(() => roomTable.id),
+        userId: uuid("userId").references(() => entityTable.id, { onDelete: "cascade" }),
+        agentId: uuid("agentId").references(() => agentTable.id, { onDelete: "cascade" }),
+        roomId: uuid("roomId").references(() => roomTable.id, { onDelete: "cascade" }),
         unique: boolean("unique").default(true).notNull(),
         metadata: jsonb("metadata").default({}).notNull(),
     },
