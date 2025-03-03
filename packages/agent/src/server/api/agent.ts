@@ -220,6 +220,46 @@ export function agentRouter(
         }
     });
 
+    // Stop an existing agent
+    router.put('/:agentId', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            logger.warn("[AGENT STOP] Invalid agent ID format");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
+            return;
+        }
+
+        // get agent runtime
+        const runtime = agents.get(agentId);
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        // stop existing runtime
+        server?.unregisterAgent(agentId);
+
+        // return success
+        res.json({
+            success: true,
+            data: {
+                message: 'Agent stopped'
+            }
+        });
+    });
+
     // Delete agent
     router.delete('/:agentId', async (req, res) => {
         const agentId = validateUuid(req.params.agentId);
