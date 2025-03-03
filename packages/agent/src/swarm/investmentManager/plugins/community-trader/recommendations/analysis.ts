@@ -182,7 +182,7 @@ export const getTokenDetails: any = {
 
         const tradingService = runtime.getService(SERVICE_TYPE)!;
 
-        const db = new TrustScoreDatabase(trustDb);
+        const db = new TrustScoreDatabase(runtime);
         // Get a users most recent message containing a token
         const rawMessages = await db.getMessagesByUserId(
             message.userId as UUID,
@@ -269,8 +269,8 @@ export const getTokenDetails: any = {
             const responseMemory: Memory = {
                 content: {
                     text: finalResponse,
-                    inReplyTo: message.metadata.msgId
-                        ? message.metadata.msgId
+                    inReplyTo: message.id
+                        ? message.id
                         : undefined,
                 },
                 userId: message.userId,

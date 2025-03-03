@@ -73,16 +73,14 @@ export const getPositions: Action = {
                 const responseMemory: Memory = {
                     content: {
                         text: "No open positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_POSITIONS",
                     },
                     userId: message.userId,
                     agentId: message.agentId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     roomId: message.roomId,
                     createdAt: Date.now() * 1000,
                 };
@@ -163,15 +161,13 @@ export const getPositions: Action = {
                             positionsWithBalance.length > 0
                                 ? `${summary}\n\n${formattedPositions}`
                                 : "No open positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_POSITIONS"
                     },
                     userId: message.userId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     createdAt: Date.now() * 1000,

@@ -81,17 +81,15 @@ export const getRecommenderReport: Action = {
             const responseMemory: Memory = {
                 content: {
                     text: "You don't have a recommender score yet. Please start recommending tokens to earn a score.",
-                    inReplyTo: message.metadata?.msgId
-                        ? message.metadata.msgId
+                    inReplyTo: message.id
+                        ? message.id
                         : undefined,
+                    action: "GET_RECOMMENDER_REPORT"
                 },
                 userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                metadata: {
-                    ...message.metadata,
-                    action: "GET_RECOMMENDER_REPORT",
-                },
+                metadata: message.metadata,
                 createdAt: Date.now() * 1000,
             };
             await callback(responseMemory);
@@ -113,14 +111,12 @@ export const getRecommenderReport: Action = {
         const responseMemory: Memory = {
             content: {
                 text: recommenderReport,
+                action: "GET_RECOMMENDER_REPORT"
             },
             userId: message.userId,
             agentId: message.agentId,
             roomId: message.roomId,
-            metadata: {
-                ...message.metadata,
-                action: "GET_RECOMMENDER_REPORT",
-            },
+            metadata: message.metadata,
             createdAt: Date.now() * 1000,
         };
         await callback(responseMemory);

@@ -583,56 +583,43 @@ export type Route = {
 /**
  * Plugin for extending agent functionality
  */
-export type Plugin = {
-  /** Plugin name */
+export interface Plugin {
   name: string;
-
-  /** Initialization function */
-  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
-
-  /** Plugin configuration */
-  config?: { [key: string]: any };
-
-  /** Plugin description */
   description: string;
-
-  /** Optional actions */
-  actions?: Action[];
-
-  /** Optional providers */
-  providers?: Provider[];
-
-  /** Optional evaluators */
-  evaluators?: Evaluator[];
-
-  /** Optional clients */
-  clients?: Client[];
-
-  /** Optional services */
-  services?: Service[];
-
-  /** Optional adapters */
-  adapters?: Adapter[];
-
-  /** Optional memory managers */
+  
+  // Initialize plugin with runtime services
+  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
+  
+  // Configuration
+  config?: { [key: string]: any };
+  
+  // Core plugin components
   memoryManagers?: IMemoryManager[];
-
-  /** Optional models */
+  
+  services?: Service[];
+  
+  // Entity component definitions
+  componentTypes?: {
+    name: string;
+    schema: Record<string, unknown>;
+    validator?: (data: any) => boolean;
+  }[];
+  
+  // Optional plugin features
+  actions?: Action[];
+  providers?: Provider[];
+  evaluators?: Evaluator[];
+  clients?: Client[];
+  adapters?: Adapter[];
   models?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
-
-  /** Optional events */
   events?: {
     [key: string]: ((params: any) => Promise<any>)[];
   };
-
-  /** Optional tests */
-  tests?: TestSuite[];
-
-  /** Optional routes */
   routes?: Route[];
-};
+  tests?: TestSuite[];
+}
 
 export interface ModelConfiguration {
   temperature?: number;
@@ -1027,6 +1014,7 @@ export interface IAgentRuntime {
   knowledgeManager: IMemoryManager;
 
   getClient(name: string): Client | null;
+  
   getAllClients(): Map<string, Client>;
 
   registerClient(client: Client): void;

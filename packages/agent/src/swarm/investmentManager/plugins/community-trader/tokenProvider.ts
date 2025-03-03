@@ -52,42 +52,14 @@ export class SolanaTokenProvider {
     }
 
     private async readFromCache<T>(key: string): Promise<T | null> {
-        const cached = await this.runtime.databaseAdapter.getCache<T>(
+        const cached = await this.runtime.databaseAdapter.getCache(
             path.join(this.cacheKey, key)
         );
-        return cached;
+        return cached ? JSON.parse(cached) : null as T | null;
     }
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
-        await this.runtime.databaseAdapter.setCache(path.join(this.cacheKey, key), data, {
-            expires: Date.now() + 5 * 60 * 1000,
-        });
-    }
-
-    private async getCachedData<T>(key: string): Promise<T | null> {
-        // Check in-memory cache first
-        const cachedData = await this.runtime.databaseAdapter.getCache<T>(key);
-        if (cachedData) {
-            return cachedData;
-        }
-
-        // Check file-based cache
-        const fileCachedData = await this.readFromCache<T>(key);
-        if (fileCachedData) {
-            // Populate in-memory cache
-            await this.runtime.databaseAdapter.setCache(key, fileCachedData);
-            return fileCachedData;
-        }
-
-        return null;
-    }
-
-    private async setCachedData<T>(cacheKey: string, data: T): Promise<void> {
-        // Set in-memory cache
-        await this.runtime.databaseAdapter.setCache(cacheKey, data);
-
-        // Write to file-based cache
-        await this.writeToCache(cacheKey, data);
+        await this.runtime.databaseAdapter.setCache(path.join(this.cacheKey, key), JSON.stringify(data));
     }
 
     private async fetchWithRetry(
@@ -136,8 +108,7 @@ export class SolanaTokenProvider {
     }
 
     async getTokensInWallet(runtime: IAgentRuntime): Promise<Item[]> {
-        const walletInfo =
-            await this.walletProvider.fetchPortfolioValue(runtime);
+        const walletInfo = await this.walletProvider.fetchPortfolioValue();
         const items = walletInfo.items;
         return items;
     }
@@ -161,7 +132,7 @@ export class SolanaTokenProvider {
     async fetchTokenCodex(): Promise<TokenCodex> {
         try {
             const cacheKey = `token_${this.tokenAddress}`;
-            const cachedData = await this.getCachedData<TokenCodex>(cacheKey);
+            const cachedData = await this.readFromCache<TokenCodex>(cacheKey);
             if (cachedData) {
                 logger.log(
                     `Returning cached token data for ${this.tokenAddress}.`
@@ -212,10 +183,10 @@ export class SolanaTokenProvider {
             const token = response.data?.data?.token;
 
             if (!token) {
-                throw new Error(`No data returned for token ${tokenAddress}`);
+                throw new Error(`No data returned for token ${this.tokenAddress}`);
             }
 
-            this.setCachedData(cacheKey, token);
+            this.writeToCache(cacheKey, token);
 
             return {
                 id: token.id,
@@ -242,7 +213,7 @@ export class SolanaTokenProvider {
     async fetchPrices(): Promise<Prices> {
         try {
             const cacheKey = "prices";
-            const cachedData = await this.getCachedData<Prices>(cacheKey);
+            const cachedData = await this.readFromCache<Prices>(cacheKey);
             if (cachedData) {
                 logger.log("Returning cached prices.");
                 return cachedData;
@@ -280,7 +251,7 @@ export class SolanaTokenProvider {
                     );
                 }
             }
-            this.setCachedData(cacheKey, prices);
+            this.writeToCache(cacheKey, prices);
             return prices;
         } catch (error) {
             logger.error("Error fetching prices:", error);
@@ -342,7 +313,7 @@ export class SolanaTokenProvider {
     async fetchTokenSecurity(): Promise<TokenSecurityData> {
         const cacheKey = `tokenSecurity_${this.tokenAddress}`;
         const cachedData =
-            await this.getCachedData<TokenSecurityData>(cacheKey);
+            await this.readFromCache<TokenSecurityData>(cacheKey);
         if (cachedData) {
             logger.log(
                 `Returning cached token security data for ${this.tokenAddress}.`
@@ -364,7 +335,7 @@ export class SolanaTokenProvider {
             top10HolderBalance: data.data.top10HolderBalance,
             top10HolderPercent: data.data.top10HolderPercent,
         };
-        this.setCachedData(cacheKey, security);
+        this.writeToCache(cacheKey, security);
         logger.log(`Token security data cached for ${this.tokenAddress}.`);
 
         return security;
@@ -372,7 +343,7 @@ export class SolanaTokenProvider {
 
     async fetchTokenTradeData(): Promise<TokenTradeData> {
         const cacheKey = `tokenTradeData_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<TokenTradeData>(cacheKey);
+        const cachedData = await this.readFromCache<TokenTradeData>(cacheKey);
         if (cachedData) {
             logger.log(
                 `Returning cached token trade data for ${this.tokenAddress}.`
@@ -601,13 +572,13 @@ export class SolanaTokenProvider {
             volume_sell_24h_change_percent:
                 data.data.volume_sell_24h_change_percent,
         };
-        this.setCachedData(cacheKey, tradeData);
+        this.writeToCache(cacheKey, tradeData);
         return tradeData;
     }
 
     async fetchDexScreenerData(): Promise<DexScreenerData> {
         const cacheKey = `dexScreenerData_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
+        const cachedData = await this.readFromCache<DexScreenerData>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached DexScreener data.");
             return cachedData;
@@ -634,7 +605,7 @@ export class SolanaTokenProvider {
             };
 
             // Cache the result
-            this.setCachedData(cacheKey, dexData);
+            this.writeToCache(cacheKey, dexData);
 
             return dexData;
         } catch (error) {
@@ -650,7 +621,7 @@ export class SolanaTokenProvider {
         symbol: string
     ): Promise<DexScreenerPair | null> {
         const cacheKey = `dexScreenerData_search_${symbol}`;
-        const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
+        const cachedData = await this.readFromCache<DexScreenerData>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached search DexScreener data.");
             return this.getHighestLiquidityPair(cachedData);
@@ -676,7 +647,7 @@ export class SolanaTokenProvider {
             };
 
             // Cache the result
-            this.setCachedData(cacheKey, dexData);
+            this.writeToCache(cacheKey, dexData);
 
             // Return the pair with the highest liquidity and market cap
             return this.getHighestLiquidityPair(dexData);
@@ -747,7 +718,7 @@ export class SolanaTokenProvider {
 
     async fetchHolderList(): Promise<HolderData[]> {
         const cacheKey = `holderList_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<HolderData[]>(cacheKey);
+        const cachedData = await this.readFromCache<HolderData[]>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached holder list.");
             return cachedData;
@@ -834,7 +805,7 @@ export class SolanaTokenProvider {
             logger.log(`Total unique holders fetched: ${holders.length}`);
 
             // Cache the result
-            this.setCachedData(cacheKey, holders);
+            this.writeToCache(cacheKey, holders);
 
             return holders;
         } catch (error) {
@@ -943,6 +914,13 @@ export class SolanaTokenProvider {
             );
 
             const processedData: ProcessedTokenData = {
+                token: {
+                    address: this.tokenAddress,
+                    name: tokenCodex.name,
+                    symbol: tokenCodex.symbol,
+                    decimals: tokenCodex.decimals,
+                    logoURI: tokenCodex.imageThumbUrl || ''
+                },
                 security,
                 tradeData,
                 holderDistributionTrend,
@@ -952,7 +930,6 @@ export class SolanaTokenProvider {
                 dexScreenerData: dexData,
                 isDexScreenerListed,
                 isDexScreenerPaid,
-                tokenCodex,
             };
 
             // logger.log("Processed token data:", processedData);
@@ -1111,7 +1088,7 @@ export class TrustTokenProvider implements ITrustTokenProvider {
 
         return new SolanaTokenProvider(
             tokenAddress,
-            new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
+            WalletProvider.createFromRuntime(this.runtime),
             this.runtime
         ).shouldTradeToken();
     }
@@ -1125,7 +1102,7 @@ export class TrustTokenProvider implements ITrustTokenProvider {
 
         const data = await new SolanaTokenProvider(
             tokenAddress,
-            new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
+            WalletProvider.createFromRuntime(this.runtime),
             this.runtime
         ).getProcessedTokenData();
 
@@ -1174,7 +1151,7 @@ export class TrustTokenProvider implements ITrustTokenProvider {
 
             marketCap: data.dexScreenerData.pairs[0]?.marketCap ?? 0,
             liquidityUsd: data.dexScreenerData.pairs[0]?.liquidity?.usd ?? 0,
-            priceUsd: data.dexScreenerData.pairs[0]?.priceUsd ?? 0,
+            priceUsd: data.dexScreenerData.pairs[0]?.priceUsd?.toString() ?? "0",
 
             price: data.tradeData.price,
             price24hChange: data.tradeData.price_change_24h_percent,

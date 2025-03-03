@@ -1,13 +1,4 @@
 import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
-import SentimentModel from "../models/sentiment";
-import TokenModel from "../models/token";
-import DataModel from "../models/data";
-
-const DB = {
-	Sentiment: SentimentModel,
-	Token: TokenModel,
-	Data: DataModel
-};
 
 const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
 const rolePrompt = "You are a buy signal analyzer.";
@@ -53,12 +44,12 @@ export default class BuySignal {
 	async generateSignal(): Promise<boolean> {
 		logger.info("Updating latest buy signal");
 		/** Get all sentiments */
-		const sentimentsData = await DB.Sentiment.find().sort("-timeslot").limit(5).lean();
+		const sentimentsData = await this.runtime.databaseAdapter.getCache("sentiments") || [];
 		let sentiments = "";
 
 		let idx = 1;
 		for (const sentiment of sentimentsData) {
-			if (sentiment?.occuringTokens?.length <= 0) continue;
+			if (!sentiment?.occuringTokens?.length) continue;
 			sentiments += `ENTRY ${idx}\nTIME: ${sentiment.timeslot}\nTOKEN ANALYSIS:\n`;
 			for (const token of sentiment.occuringTokens) {
 				sentiments += `${token.token} - Sentiment: ${token.sentiment}\n${token.reason}\n`;
@@ -70,7 +61,7 @@ export default class BuySignal {
 		const prompt = template.replace("{{sentiment}}", sentiments);
 
 		/** Get all trending tokens */
-		const trendingData = await DB.Token.find({ provider: "birdeye", chain: "solana" }).limit(100).sort("rank").lean();
+		const trendingData = await this.runtime.databaseAdapter.getCache("tokens") || [];
 		let tokens = "";
 		let index = 1;
 		for (const token of trendingData) {
@@ -115,20 +106,10 @@ export default class BuySignal {
 			marketcap: Number(marketcap),
 		};
 
-		await DB.Data.updateOne(
-			{
-				key: "BUY_SIGNAL",
-			},
-			{
-				$set: {
-					key: "BUY_SIGNAL",
-					data,
-				},
-			},
-			{
-				upsert: true,
-			},
-		);
+		await this.runtime.databaseAdapter.setCache("buy_signals", JSON.stringify({
+			key: "BUY_SIGNAL",
+			data
+		}));
 
 		return true;
 	}

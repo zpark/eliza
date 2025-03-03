@@ -339,8 +339,8 @@ export class DexscreenerClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
-            if (cached) return cached;
+            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
+            if (cached) return JSON.parse(cached) as T;
         }
 
         console.log("Fetching DexScreener: ", { path, params });
@@ -351,9 +351,7 @@ export class DexscreenerClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, res, {
-                expires: Date.now() + parseExpires(options.expires),
-            });
+            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(res));
         }
 
         return res;
@@ -433,11 +431,11 @@ export class HeliusClient {
         options?: { expires?: string | CacheOptions["expires"] }
     ): Promise<HolderData[]> {
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache<HolderData[]>(
+            const cached = await this.runtime.databaseAdapter.getCache(
                 `helius/token-holders/${address}`
             );
 
-            if (cached) return cached;
+            if (cached) return JSON.parse(cached) as HolderData[];
         }
 
         console.log("fetching holder list for:", address);
@@ -519,10 +517,7 @@ export class HeliusClient {
             if (options?.expires)
                 await this.runtime.databaseAdapter.setCache(
                     `helius/token-holders/${address}`,
-                    holders,
-                    {
-                        expires: Date.now() + parseExpires(options.expires),
-                    }
+                    JSON.stringify(holders)
                 );
 
             return holders;
@@ -563,8 +558,8 @@ export class CoingeckoClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
-            if (cached) return cached;
+            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
+            if (cached) return JSON.parse(cached) as T;
         }
 
         console.log("fetching coingecko", {
@@ -583,7 +578,7 @@ export class CoingeckoClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, res);
+            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(res));
         }
 
         return res;
@@ -707,8 +702,8 @@ export class BirdeyeClient {
             .join("/");
 
         if (options?.expires && !forceRefresh) {
-            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
-            if (cached) return cached;
+            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
+            if (cached) return JSON.parse(cached) as T;
         }
 
         console.log("fetching birdeye", {
@@ -728,9 +723,7 @@ export class BirdeyeClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, response, {
-                expires: Date.now() + parseExpires(options.expires),
-            });
+            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(response));
         }
 
         return response;

@@ -3,7 +3,6 @@ import {
     type IAgentRuntime,
     logger,
     type Memory,
-    ServiceType,
     type UUID
 } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
@@ -79,17 +78,15 @@ export const confirmRecommendation: Action = {
                         type: [{ type: "emoji", emoji: "👍" }],
                         onlyReaction: true,
                     },
-                    inReplyTo: message.metadata?.msgId
-                        ? message.metadata.msgId
+                    inReplyTo: message.id
+                        ? message.id
                         : undefined,
+                    action: "TRUST_CONFIRM_RECOMMENDATION",
                 },
                 userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                metadata: {
-                    ...message.metadata,
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
-                },
+                metadata: message.metadata,
                 createdAt: Date.now() * 1000,
             };
             await callback(responseMemory);
@@ -185,8 +182,8 @@ export const confirmRecommendation: Action = {
 
                 const user = users.find((user) => {
                     return (
-                        user.name.toLowerCase().trim() ===
-                            recommendation.username.toLowerCase().trim() ||
+                        user.names.map((name) => name.toLowerCase().trim())
+                            .includes(recommendation.username.toLowerCase().trim()) ||
                         user.id === message.userId
                     );
                 });
@@ -201,7 +198,7 @@ export const confirmRecommendation: Action = {
 
                 const recommender =
                     await tradingService.scoreManager.getOrCreateRecommender({
-                        platform: message.metadata?.client ?? "unknown",
+                        platform: message.content.source ?? "unknown",
                         username:
                             message.metadata?.clientUsername ?? user.username,
                         userId: user.id ?? message.metadata?.clientUserId,
@@ -252,17 +249,15 @@ export const confirmRecommendation: Action = {
                                 id: newUUID,
                                 content: {
                                     text: `Simulation buy started for token: ${recommendation.ticker} (${recommendation.tokenAddress})`,
-                                    inReplyTo: message.metadata?.msgId
-                                        ? message.metadata.msgId
+                                    inReplyTo: message.id
+                                        ? message.id
                                         : undefined,
+                                    action: "TRUST_CONFIRM_RECOMMENDATION",
                                 },
                                 userId: user.id,
                                 agentId: message.agentId,
                                 roomId: message.roomId,
-                                metadata: {
-                                    ...message.metadata,
-                                    action: "TRUST_CONFIRM_RECOMMENDATION",
-                                },
+                                metadata: message.metadata,
                                 createdAt: Date.now() * 1000,
                             };
                             await callback(responseMemory);

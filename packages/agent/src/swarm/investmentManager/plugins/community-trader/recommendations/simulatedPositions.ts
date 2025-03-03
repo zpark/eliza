@@ -86,17 +86,15 @@ export const getSimulatedPositions: Action = {
                 const responseMemory: Memory = {
                     content: {
                         text: "No simulated positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_SIMULATED_POSITIONS"
                     },
                     userId: message.userId,
                     agentId: message.agentId,
                     roomId: message.roomId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_SIMULATED_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     createdAt: Date.now() * 1000,
                 };
                 await callback(responseMemory);
@@ -176,17 +174,15 @@ export const getSimulatedPositions: Action = {
                             positionsWithBalance.length > 0
                                 ? `${summary}\n\n${formattedPositions}`
                                 : "No simulated positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_SIMULATED_POSITIONS"
                     },
                     userId: message.userId,
                     agentId: message.agentId,
                     roomId: message.roomId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_SIMULATED_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     createdAt: Date.now() * 1000,
                 };
                 await callback(responseMemory);

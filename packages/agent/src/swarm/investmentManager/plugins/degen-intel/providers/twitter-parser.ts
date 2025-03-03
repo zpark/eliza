@@ -1,19 +1,41 @@
 // TODO: Replace anthropic with runtime.useModel
 // replace moment with helper functions
 
-import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
-import moment from "moment";
-import SentimentModel from "../models/sentiment";
-import RawTweetModel from "../models/raw-tweets";
-
-const DB = {
-	Sentiment: SentimentModel,
-	RawTweet: RawTweetModel
-};
+import { type IAgentRuntime, logger, ModelClass, type Memory, type UUID, createUniqueUuid, type Content } from "@elizaos/core";
 
 const makeBulletpointList = (array: string[]) => {
 	return array.map((a) => ` - ${a}`).join("\n");
 };
+
+interface Sentiment {
+	timeslot: string;
+	processed: boolean;
+	text?: string;
+	occuringTokens?: Array<{
+		token: string;
+		sentiment: number;
+		reason: string;
+	}>;
+}
+
+interface Tweet {
+	text: string;
+	username: string;
+	likes?: number;
+	retweets?: number;
+	timestamp: number;
+}
+
+interface TwitterContent extends Content {
+	text: string;
+	source: "twitter";
+	url?: string;
+	tweet?: {
+		username: string;
+		likes?: number;
+		retweets?: number;
+	};
+}
 
 const examples = [
 	"$KUDAI 87% retention rate after 30 days. smart engagement up 1333% week over week. arbitrum expansion next with full gmx integration",
@@ -90,106 +112,127 @@ Strictly return the following json:
 
 export default class TwitterParser {
 	runtime: IAgentRuntime;
+	roomId: UUID;
 
 	constructor(runtime: IAgentRuntime) {
-		this.runtime = runtime;	
+		this.runtime = runtime;
+		// Create a consistent room ID for all sentiment analysis
+		this.roomId = createUniqueUuid(runtime, 'twitter-sentiment-analysis');
 	}
 
 	async fillTimeframe() {
 		/** Each timeframe is always 1 hour. */
-		const lookUpDate = await DB.Sentiment.findOne().sort("-timeslot").select("timeslot").lean();
+		const cachedSentiments = await this.runtime.databaseAdapter.getCache("sentiments");
+		const sentiments: Sentiment[] = cachedSentiments ? JSON.parse(cachedSentiments) : [];
+		
+		const lookUpDate = sentiments.length > 0 ? 
+			sentiments.sort((a, b) => new Date(b.timeslot).getTime() - new Date(a.timeslot).getTime())[0].timeslot : 
+			null;
 
-		const start = moment(lookUpDate?.timeslot ? lookUpDate?.timeslot : "2025-01-01T00:00:00.000+00:00")
-			.utc()
-			.startOf("day");
+		const start = new Date(lookUpDate || "2025-01-01T00:00:00.000Z");
+		start.setUTCHours(0, 0, 0, 0);
 
-		const today = moment().utc().endOf("day");
+		const today = new Date();
+		today.setUTCHours(23, 59, 59, 999);
 
-		const diff = today.diff(start, "days");
-
-		const ops = [];
+		const diff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+		const timeSlots: Sentiment[] = [];
 
 		for (let day = 0; day <= diff; day++) {
-			const now = start.clone().add(day, "days");
+			const now = new Date(start);
+			now.setUTCDate(start.getUTCDate() + day);
+			
 			for (let hour = 0; hour <= 23; hour++) {
-				const timeslotMoment = now.clone().add(hour, "hours");
-				const timeslot = timeslotMoment.toDate();
+				const timeslotDate = new Date(now);
+				timeslotDate.setUTCHours(hour, 0, 0, 0);
+				const timeslot = timeslotDate.toISOString();
 
-				const rightNow = moment();
+				const rightNow = new Date();
 
 				/** If it is a timeslot in the future, there is no point in filling it in */
-				if (timeslotMoment.isAfter(rightNow)) {
+				if (timeslotDate > rightNow) {
 					break;
 				}
 
-				ops.push({
-					updateOne: {
-						filter: {
-							timeslot,
-						},
-						update: {
-							$set: {
-								timeslot,
-							},
-						},
-						upsert: true,
-					},
-				});
+				// Check if this timeslot already exists
+				const exists = sentiments.some(s => new Date(s.timeslot).getTime() === timeslotDate.getTime());
+				if (!exists) {
+					timeSlots.push({
+						timeslot,
+						processed: false
+					});
+				}
 			}
 		}
 
-		const result = await DB.Sentiment.bulkWrite(ops);
+		if (timeSlots.length > 0) {
+			const updatedSentiments = [...sentiments, ...timeSlots];
+			await this.runtime.databaseAdapter.setCache("sentiments", JSON.stringify(updatedSentiments));
+		}
 
-		logger.info(result, "Updating fill timeframe result in:");
+		logger.info(`Updated timeframes, added ${timeSlots.length} new slots`);
 	}
 
 	async parseTweets() {
 		await this.fillTimeframe();
 
-		/** Ensure we correctly update the processed field */
-		await DB.RawTweet.deleteMany({ timestamp: { $lt: new Date("2025-01-01T00:00:00.000+00:00") } });
-		/** Find the next unprocessed timeslot */
-		const sentiment = await DB.Sentiment.findOne({
-			processed: { $ne: true },
-			timeslot: { $lte: moment().subtract(1, "hour").endOf("hour").toDate(), $gte: moment().subtract(2, "days").toDate() },
-		})
-			.sort("timeslot")
-			.lean();
+		// Get sentiments
+		const cachedSentiments = await this.runtime.databaseAdapter.getCache("sentiments");
+		const sentiments: Sentiment[] = cachedSentiments ? JSON.parse(cachedSentiments) : [];
+		
+		const now = new Date();
+		const oneHourAgo = new Date(now);
+		oneHourAgo.setUTCHours(now.getUTCHours() - 1);
+		
+		const twoDaysAgo = new Date(now);
+		twoDaysAgo.setUTCDate(now.getUTCDate() - 2);
 
-		if (!sentiment) {
+		const unprocessedSentiment = sentiments.find(s => 
+			!s.processed && 
+			new Date(s.timeslot) <= oneHourAgo &&
+			new Date(s.timeslot) >= twoDaysAgo
+		);
+
+		if (!unprocessedSentiment) {
 			logger.info("No unprocessed timeslots available.");
 			return true;
 		}
 
-		logger.info(`Trying to process ${new Date(sentiment?.timeslot).toISOString()}`);
+		logger.info(`Trying to process ${new Date(unprocessedSentiment.timeslot).toISOString()}`);
 
-		const timeslot = sentiment.timeslot;
-		const fromDate = moment(timeslot).subtract(1, "hour").add(1, "second").toDate();
-		const toDate = moment(timeslot).toDate();
+		const timeslot = new Date(unprocessedSentiment.timeslot);
+		const fromDate = new Date(timeslot);
+		fromDate.setUTCHours(timeslot.getUTCHours() - 1);
+		fromDate.setUTCSeconds(fromDate.getUTCSeconds() + 1);
 
-		/** Retrieve tweets in the given timeframe */
-		const tweets = await DB.RawTweet.find({
-			timestamp: { $gte: fromDate, $lte: toDate },
-		})
-			.sort("-timestamp")
-			.lean();
+		/** Retrieve tweets from message manager */
+		const memories = await this.runtime.messageManager.getMemories({
+			roomId: this.roomId,
+			start: fromDate.getTime(),
+			end: timeslot.getTime()
+		});
+
+		// Filter for twitter messages only
+		const tweets = memories
+			.filter((memory): memory is Memory & { content: TwitterContent } => 
+				memory.content.source === "twitter"
+			)
+			.sort((a, b) => b.createdAt - a.createdAt);
 
 		if (!tweets || tweets.length === 0) {
-			logger.info(`No tweets to process for timeslot ${timeslot}`);
+			logger.info(`No tweets to process for timeslot ${timeslot.toISOString()}`);
 
-			await DB.Sentiment.updateOne(
-				{ _id: sentiment._id },
-				{
-					$set: {
-						processed: true,
-					},
-				},
+			// Mark as processed
+			const updatedSentiments = sentiments.map(s => 
+				s.timeslot === unprocessedSentiment.timeslot ? { ...s, processed: true } : s
 			);
+			await this.runtime.databaseAdapter.setCache("sentiments", JSON.stringify(updatedSentiments));
 			return true;
 		}
 
-		const tweetArray = tweets.map((tweet: { username: any; text: any; likes: any; retweets: any; }) => {
-			return `username: ${tweet.username} tweeted: ${tweet.text} with ${tweet.likes} likes and ${tweet.retweets} retweets.`;
+		const tweetArray = tweets.map(memory => {
+			const tweet = memory.content;
+			return `username: ${tweet.tweet?.username || 'unknown'} tweeted: ${tweet.text}${tweet.tweet?.likes ? ` with ${tweet.tweet.likes} likes` : ''}${tweet.tweet?.retweets ? ` and ${tweet.tweet.retweets} retweets` : ''}.`;
 		});
 
 		const bulletpointTweets = makeBulletpointList(tweetArray);
@@ -206,20 +249,19 @@ export default class TwitterParser {
 		// Parse the JSON response
 		const json = JSON.parse(response || "{}");
 
-		const updateResult = await DB.Sentiment.updateOne(
-			{ _id: sentiment._id },
-			{
-				$set: {
-					text: json.text,
-					occuringTokens: json.occuringTokens,
-					processed: true,
-				},
-			},
+		// Update sentiment with analysis results
+		const updatedSentiments = sentiments.map(s => 
+			s.timeslot === unprocessedSentiment.timeslot ? 
+			{ 
+				...s, 
+				text: json.text,
+				occuringTokens: json.occuringTokens,
+				processed: true 
+			} : s
 		);
+		await this.runtime.databaseAdapter.setCache("sentiments", JSON.stringify(updatedSentiments));
 
-		logger.info(updateResult, "MongoDB Update Result:");
-
-		logger.info(`Successfully processed timeslot ${new Date(sentiment?.timeslot).toISOString()}`);
+		logger.info(`Successfully processed timeslot ${new Date(unprocessedSentiment.timeslot).toISOString()}`);
 		return true;
 	}
 }

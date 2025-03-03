@@ -1,10 +1,61 @@
-import { type IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelClass, createUniqueUuid, type UUID, type Memory, type Content } from "@elizaos/core";
 import type { IToken } from "../types";
 
-const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
+export interface TransactionHistory {
+	txHash: string;
+	blockTime: Date;
+	data: any;
+}
+
+export interface Portfolio {
+	key: string;
+	data: any;
+}
+
+export interface SentimentContent extends Content {
+	text: string;
+	source: "sentiment-analysis";
+	metadata: {
+		timeslot: string;
+		processed: boolean;
+		occuringTokens?: Array<{
+			token: string;
+			sentiment: number;
+			reason: string;
+		}>;
+	};
+}
+
+const rolePrompt = "You are a sentiment analyzer for cryptocurrency and market data.";
+
+const template = `Write a summary of what is happening in the tweets. The main topic is the cryptocurrency market.
+You will also be analyzing the tokens that occur in the tweet and tell us whether their sentiment is positive or negative.
+
+## Analyze the followings tweets:
+{{tweets}}
+
+Strictly return the following json:
+
+{
+   "text":"the summary of what has happened in those tweets, with a max length of 200 characters",
+   "occuringTokens":[
+      {
+         "token":"the token symbol, like: ETH, SOL, BTC etc.",
+         "sentiment":"positive is between 1 and 100 and negative is from -1 to -100",
+         "reason":"a short sentence explaining the reason for this sentiment score"
+      }
+   ]
+}`;
+
+function makeBulletpointList(array: string[]): string {
+	return array.map((a) => ` - ${a}`).join("\n");
+}
 
 export default class Birdeye {
 	apiKey: string;
+	sentimentRoomId: UUID;
+	twitterFeedRoomId: UUID;
+	runtime: IAgentRuntime;
 
 	constructor(runtime: IAgentRuntime) {
 		const apiKey = runtime.getSetting("BIRDEYE_API_KEY");
@@ -12,6 +63,9 @@ export default class Birdeye {
 			throw new Error("Failed to initialize Birdeye provider due to missing API key.");
 		}
 		this.apiKey = apiKey;
+		this.sentimentRoomId = createUniqueUuid(runtime, "sentiment-analysis");
+		this.twitterFeedRoomId = createUniqueUuid(runtime, "twitter-feed");
+		this.runtime = runtime;
 	}
 
 	private async syncWalletHistory() {
@@ -21,35 +75,38 @@ export default class Birdeye {
 			headers: { accept: "application/json", "x-chain": "solana", "X-API-KEY": this.apiKey },
 		};
 
-		const res = await fetch(`https://public-api.birdeye.so/v1/wallet/tx_list?wallet=${DEGEN_WALLET}&limit=100`, options);
+		const publicKey = this.runtime.getSetting("SOLANA_PUBLIC_KEY") || "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
+
+		const res = await fetch(`https://public-api.birdeye.so/v1/wallet/tx_list?wallet=${publicKey}&limit=100`, options);
 
 		const resp = await res.json();
 		const data = resp?.data?.solana;
 
-		const ops = [];
+		// Get existing transactions
+		const cachedTxs = await this.runtime.databaseAdapter.getCache("transaction_history");
+		const transactions: TransactionHistory[] = cachedTxs ? JSON.parse(cachedTxs) : [];
 
+		// Update transactions
 		for (const tx of data) {
-			ops.push({
-				updateOne: {
-					filter: {
-						txHash: tx.txHash,
-					},
-					update: {
-						$set: {
-							txHash: tx.txHash,
-							blockTime: new Date(tx.blockTime),
-							data: tx,
-						},
-					},
-					upsert: true,
-				},
-			});
+			const existingIndex = transactions.findIndex(t => t.txHash === tx.txHash);
+			const newTx = {
+				txHash: tx.txHash,
+				blockTime: new Date(tx.blockTime),
+				data: tx
+			};
+
+			if (existingIndex >= 0) {
+				transactions[existingIndex] = newTx;
+			} else {
+				transactions.push(newTx);
+			}
 		}
 
-		const writeResult = await DB.TransactionHistory.bulkWrite(ops);
+		await this.runtime.databaseAdapter.setCache("transaction_history", JSON.stringify(transactions));
 
-		logger.info(writeResult, "Birdeye Transaction History resulted in:");
+		logger.info(`Updated transaction history with ${data.length} transactions`);
 	}
+
 	private async syncWalletPortfolio() {
 		/** Get entire portfolio */
 		const options = {
@@ -57,14 +114,14 @@ export default class Birdeye {
 			headers: { accept: "application/json", "x-chain": "solana", "X-API-KEY": this.apiKey },
 		};
 
-		const res = await fetch(`https://public-api.birdeye.so/v1/wallet/token_list?wallet=${DEGEN_WALLET}`, options);
+		const publicKey = this.runtime.getSetting("SOLANA_PUBLIC_KEY") || "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
+
+		const res = await fetch(`https://public-api.birdeye.so/v1/wallet/token_list?wallet=${publicKey}`, options);
 
 		const resp = await res.json();
 		const data = resp?.data;
 
-		const key = "PORTFOLIO";
-
-		await DB.Data.updateOne({ key: "PORTFOLIO" }, { $set: { data, key } }, { upsert: true });
+		await this.runtime.databaseAdapter.setCache("portfolio", JSON.stringify({ key: "PORTFOLIO", data }));
 	}
 
 	async syncWallet() {
@@ -80,7 +137,9 @@ export default class Birdeye {
 			headers: { accept: "application/json", "x-chain": chain, "X-API-KEY": this.apiKey },
 		};
 
-		const ops = [];
+		// Get existing tokens
+		const cachedTokens = await this.runtime.databaseAdapter.getCache(`tokens_${chain}`);
+		const tokens: IToken[] = cachedTokens ? JSON.parse(cachedTokens) : [];
 
 		/** Fetch top 100 in batches of 20 (which is the limit) */
 		for (let batch = 0; batch < 5; batch++) {
@@ -95,7 +154,7 @@ export default class Birdeye {
 			const newTokens = data?.tokens;
 
 			for (const token of newTokens) {
-				const data: IToken = {
+				const tokenData: IToken = {
 					address: token?.address,
 					chain: chain,
 					provider: "birdeye",
@@ -112,29 +171,174 @@ export default class Birdeye {
 					last_updated,
 				};
 
-				ops.push({
-					updateOne: {
-						filter: {
-							provider: "birdeye",
-							rank: token.rank,
-							chain,
-						},
-						update: {
-							$set: data,
-						},
-						upsert: true,
-					},
-				});
+				const existingIndex = tokens.findIndex(t => t.provider === "birdeye" && t.rank === token.rank && t.chain === chain);
+				if (existingIndex >= 0) {
+					tokens[existingIndex] = tokenData;
+				} else {
+					tokens.push(tokenData);
+				}
 			}
 
 			/** Add extra delay */
 			await new Promise((resolve) => setTimeout(resolve, 250));
 		}
 
-		const writeResult = await DB.Token.bulkWrite(ops);
+		await this.runtime.databaseAdapter.setCache(`tokens_${chain}`, JSON.stringify(tokens));
 
-		logger.info(writeResult, `Birdeye sync [chain: ${chain}] resulted in:`);
+		logger.info(`Updated ${chain} tokens cache with ${tokens.length} tokens`);
 
+		return true;
+	}
+
+	async fillTimeframe() {
+		// Get the latest sentiment analysis
+		const memories = await this.runtime.messageManager.getMemories({
+			roomId: this.sentimentRoomId,
+			end: Date.now(),
+			count: 1
+		});
+
+		const lastMemory = memories[0] as Memory & { content: SentimentContent };
+		const lookUpDate = lastMemory?.content?.metadata?.timeslot;
+		
+		const start = new Date(lookUpDate || "2025-01-01T00:00:00.000Z");
+		start.setUTCHours(0, 0, 0, 0);
+
+		const today = new Date();
+		today.setUTCHours(23, 59, 59, 999);
+
+		const diff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+		// Create memories for each timeslot
+		for (let day = 0; day <= diff; day++) {
+			const now = new Date(start);
+			now.setUTCDate(start.getUTCDate() + day);
+			
+			for (let hour = 0; hour <= 23; hour++) {
+				const timeslot = new Date(now);
+				timeslot.setUTCHours(hour, 0, 0, 0);
+
+				const rightNow = new Date();
+
+				if (timeslot > rightNow) {
+					break;
+				}
+
+				// Create memory for this timeslot
+				await this.runtime.messageManager.createMemory({
+					id: createUniqueUuid(this.runtime, `sentiment-${timeslot.toISOString()}`),
+					userId: this.runtime.agentId,
+					agentId: this.runtime.agentId,
+					content: {
+						text: "",
+						source: "sentiment-analysis",
+						metadata: {
+							timeslot: timeslot.toISOString(),
+							processed: false
+						}
+					},
+					roomId: this.sentimentRoomId,
+					createdAt: timeslot.getTime()
+				});
+			}
+		}
+
+		logger.info("Filled timeframe slots for sentiment analysis");
+	}
+
+	async parseTweets() {
+		await this.fillTimeframe();
+
+		// Find the next unprocessed sentiment timeslot
+		const now = new Date();
+		const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+		const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+
+		const memories = await this.runtime.messageManager.getMemories({
+			roomId: this.sentimentRoomId,
+			start: twoDaysAgo.getTime(),
+			end: oneHourAgo.getTime()
+		});
+
+		const sentiment = (memories as Array<Memory & { content: SentimentContent }>).find(m => !m.content.metadata.processed);
+
+		if (!sentiment) {
+			logger.info("No unprocessed timeslots available.");
+			return true;
+		}
+
+		logger.info(`Trying to process ${sentiment.content.metadata.timeslot}`);
+
+		const timeslot = new Date(sentiment.content.metadata.timeslot);
+		const fromDate = new Date(timeslot.getTime() - 60 * 60 * 1000 + 1000);
+		const toDate = timeslot;
+
+		// Get tweets from the twitter feed room
+		const tweets = await this.runtime.messageManager.getMemories({
+			roomId: this.twitterFeedRoomId,
+			start: fromDate.getTime(),
+			end: toDate.getTime()
+		});
+
+		if (!tweets || tweets.length === 0) {
+			logger.info(`No tweets to process for timeslot ${timeslot.toISOString()}`);
+
+			// Mark as processed even if no tweets
+			await this.runtime.messageManager.createMemory({
+				id: sentiment.id,
+				userId: sentiment.userId,
+				agentId: sentiment.agentId,
+				content: {
+					...sentiment.content,
+					metadata: {
+						...sentiment.content.metadata,
+						processed: true
+					}
+				},
+				roomId: sentiment.roomId,
+				createdAt: sentiment.createdAt
+			});
+			return true;
+		}
+
+		const tweetArray = tweets.map((tweet) => {
+			const content = tweet.content as Content & { tweet?: { username: string; likes?: number; retweets?: number; }; };
+			return `username: ${content.tweet?.username || 'unknown'} tweeted: ${content.text}${content.tweet?.likes ? ` with ${content.tweet.likes} likes` : ''}${content.tweet?.retweets ? ` and ${content.tweet.retweets} retweets` : ''}.`;
+		});
+
+		const bulletpointTweets = makeBulletpointList(tweetArray);
+		const prompt = template.replace("{{tweets}}", bulletpointTweets);
+
+		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+			context: prompt,
+			system: rolePrompt,
+			temperature: 0.2,
+			maxTokens: 4096,
+			object: true
+		});
+
+		// Parse the JSON response
+		const json = JSON.parse(response || "{}");
+
+		// Update the sentiment analysis
+		await this.runtime.messageManager.createMemory({
+			id: sentiment.id,
+			userId: sentiment.userId,
+			agentId: sentiment.agentId,
+			content: {
+				text: json.text,
+				source: "sentiment-analysis",
+				metadata: {
+					...sentiment.content.metadata,
+					occuringTokens: json.occuringTokens,
+					processed: true
+				}
+			},
+			roomId: sentiment.roomId,
+			createdAt: sentiment.createdAt
+		});
+
+		logger.info(`Successfully processed timeslot ${sentiment.content.metadata.timeslot}`);
 		return true;
 	}
 }

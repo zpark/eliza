@@ -1,4 +1,4 @@
-import { type Content, type Memory, stringToUuid, type UUID } from "@elizaos/core";
+import { type Content, type Memory, type UUID } from "@elizaos/core";
 import type { MessageRecommendation } from "./recommendations/schema";
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -707,7 +707,6 @@ export type ProcessedTokenData = {
 
     isDexScreenerListed: boolean;
     isDexScreenerPaid: boolean;
-    // tokenCodex: TokenCodex;
 };
 
 export type DexScreenerPair = {

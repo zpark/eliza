@@ -73,8 +73,8 @@ export const getAgentPositions: any = {
                 const responseMemory: Memory = {
                     content: {
                         text: "No open positions found.",
-                        inReplyTo: message.metadata.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                     },
                     userId: message.userId,
@@ -163,8 +163,8 @@ export const getAgentPositions: any = {
                             positionsWithBalance.length > 0
                                 ? `${summary}\n\n${formattedPositions}`
                                 : "No open positions found.",
-                        inReplyTo: message.metadata.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                     },
                     userId: message.userId,
