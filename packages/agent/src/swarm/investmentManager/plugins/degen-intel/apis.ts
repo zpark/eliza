@@ -10,11 +10,11 @@ import {
 import type { IToken } from "./types";
 import type { TransactionHistory, Portfolio, SentimentContent } from "./providers/birdeye";
 
-export const createRoutes = (runtime: IAgentRuntime): Route[] => [
+export const routes: Route[] = [
   {
     type: "POST",
     path: "/trending",
-    handler: async (_req: any, res: any) => {
+    handler: async (_req: any, res: any, runtime) => {
       try {
         const cachedTokens = await runtime.databaseAdapter.getCache<IToken[]>("tokens_solana");
         const tokens: IToken[] = cachedTokens ? cachedTokens : [];
@@ -28,7 +28,7 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
   {
     type: "POST",
     path: "/wallet",
-    handler: async (_req: any, res: any) => {
+    handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
         // Get transaction history
         const cachedTxs = await runtime.databaseAdapter.getCache<TransactionHistory[]>("transaction_history");
@@ -51,7 +51,7 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
   {
     type: "GET",
     path: "/tweets",
-    handler: async (_req: any, res: any) => {
+    handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
         const memories = await runtime.messageManager.getMemories({
           roomId: createUniqueUuid(runtime, "twitter-feed"),
@@ -78,7 +78,7 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
   {
     type: "GET",
     path: "/sentiment",
-    handler: async (_req: any, res: any) => {
+    handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
         const memories = await runtime.messageManager.getMemories({
           roomId: createUniqueUuid(runtime, "sentiment-analysis"),
@@ -118,7 +118,7 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
   {
     type: "POST",
     path: "/signal",
-    handler: async (_req: any, res: any) => {
+    handler: async (_req: any, res: any, runtime: IAgentRuntime) => {
       try {
         const cachedSignal = await runtime.databaseAdapter.getCache<any>("BUY_SIGNAL");
         const signal = cachedSignal ? cachedSignal : {};
@@ -130,4 +130,4 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
   }
 ];
 
-export default createRoutes;
+export default routes;

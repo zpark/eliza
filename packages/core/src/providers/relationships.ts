@@ -1,15 +1,5 @@
 import type { IAgentRuntime, Memory, Provider, State, Relationship, UUID } from "../types.ts";
 
-async function getRelationships({
-    runtime,
-    userId,
-}: {
-    runtime: IAgentRuntime;
-    userId: UUID;
-}) {
-    return runtime.databaseAdapter.getRelationships({ userId, agentId: runtime.agentId });
-}
-
 async function formatRelationships(runtime: IAgentRuntime, relationships: Relationship[]) {
     // Sort relationships by interaction strength (descending)
     const sortedRelationships = relationships
@@ -36,7 +26,7 @@ async function formatRelationships(runtime: IAgentRuntime, relationships: Relati
             const targetEntityId = rel.targetEntityId;
             
             // get the entity
-            const entity = await runtime.getEntity(targetEntityId);
+            const entity = await runtime.databaseAdapter.getEntityById(targetEntityId as UUID);
 
             if(!entity) {
                 return null;
@@ -54,8 +44,7 @@ const relationshipsProvider: Provider = {
     name: "relationships",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         // Get all relationships for the current user
-        const relationships = await getRelationships({
-            runtime,
+        const relationships = await runtime.databaseAdapter.getRelationships({
             userId: message.userId,
         });
 

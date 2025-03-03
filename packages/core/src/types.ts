@@ -588,7 +588,7 @@ export type Route = {
   type: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
   // TODO: give me strong types
-  handler: (req: any, res: any) => Promise<void>;
+  handler: (req: any, res: any, runtime: IAgentRuntime) => Promise<void>;
 };
 
 /**
