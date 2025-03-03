@@ -128,12 +128,9 @@ export type CharacterFormProps = {
   title: string;
   description: string;
   onSubmit: (character: Agent) => Promise<void>;
-  onDelete?: () => Promise<void>;
   onCancel?: () => void;
   onReset?: () => void;
   submitButtonText?: string;
-  deleteButtonText?: string;
-  deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
   characterValue: Agent;
@@ -146,18 +143,14 @@ export default function CharacterForm({
   title,
   description,
   onSubmit,
-  onDelete,
   onCancel,
   onReset,
   submitButtonText = "Save Changes",
-  deleteButtonText = "Delete",
-  deleteButtonVariant = "destructive",
   customComponents = []
 }: CharacterFormProps) {
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -226,23 +219,6 @@ export default function CharacterForm({
     }
   };
 
-  const handleDelete = async () => {
-    if (!onDelete) return;
-    
-    setIsDeleting(true);
-    
-    try {
-      await onDelete();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
 
   const renderInputField = (field: InputField) => (
@@ -330,17 +306,6 @@ export default function CharacterForm({
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
-              </Button>
-            )}
-            
-            {onDelete && (
-              <Button
-                type="button"
-                variant={deleteButtonVariant as any}
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : deleteButtonText}
               </Button>
             )}
           </div>

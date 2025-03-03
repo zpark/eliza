@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
+import { useAgent, useAgentMessages } from "@/hooks/use-query-hooks";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
@@ -109,9 +109,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
     
     const { messages } = useAgentMessages(agentId);
     const agentData = useAgent(agentId)?.data?.data;
-    const startAgentMutation = useStartAgent();
-    const stopAgentMutation = useStopAgent();
-
+    
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
 
@@ -224,24 +222,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     };
 
-    const handleStartAgent = async () => {
-        if (!agentData?.name) return;
-        
-        try {
-            await startAgentMutation.mutateAsync(agentData.id as UUID);
-        } catch (error) {
-            console.error("Failed to start agent:", error);
-        }
-    };
-
-    const handleStopAgent = async () => {
-        try {
-            await stopAgentMutation.mutateAsync(agentId);
-        } catch (error) {
-            console.error("Failed to stop agent:", error);
-        }
-    };
-
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             {/* Agent Header */}
@@ -283,29 +263,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
                             </p>
                         )}
                     </div>
-                </div>
-                <div>
-                    {agentData?.enabled ? (
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            className="gap-1"
-                            onClick={handleStopAgent}
-                            disabled={stopAgentMutation.isPending}
-                        >
-                            {stopAgentMutation.isPending ? "Stopping..." : "Stop"}
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="default"
-                            size="sm"
-                            className="gap-1"
-                            onClick={handleStartAgent}
-                            disabled={startAgentMutation.isPending}
-                        >
-                            {startAgentMutation.isPending ? "Starting..." : "Start"}
-                        </Button>
-                    )}
                 </div>
             </div>
             
