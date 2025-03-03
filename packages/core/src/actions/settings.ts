@@ -235,7 +235,7 @@ export async function updateWorldSettings(
     world.metadata.settings = worldSettings;
 
     // Save updated world
-    await runtime.updateWorld(world);
+    await runtime.databaseAdapter.updateWorld(world);
 
     return true;
   } catch (error) {
