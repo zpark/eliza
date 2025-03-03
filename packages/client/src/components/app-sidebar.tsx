@@ -121,7 +121,7 @@ export function AppSidebar() {
                         {inactiveAgents.map((agent) => (
                           <SidebarMenuItem key={agent.id}>
                             <div
-                              className="transition-colors px-4 py-2 my-1 rounded-md"
+                              className="px-4 py-2 my-1 rounded-md"
                             >
                               <div className="flex items-center gap-2">
                                 <User className="size-5" />
