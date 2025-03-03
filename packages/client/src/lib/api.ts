@@ -10,7 +10,7 @@ const fetcher = async ({
     headers,
 }: {
     url: string;
-    method?: "GET" | "POST" | "DELETE" | "PUT";
+    method?: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
     body?: object | FormData;
     headers?: HeadersInit;
 }) => {
@@ -24,7 +24,7 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST" || method === "PUT") {
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
         if (body instanceof FormData) {
             if (options.headers && typeof options.headers === 'object') {
                 // Create new headers object without Content-Type
@@ -151,11 +151,11 @@ export const apiClient = {
     },
     deleteAgent: (agentId: string): Promise<{ success: boolean }> =>
         fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
-    updateAgent: (agentId: string, character: Character) =>
+    updateAgent: (agentId: string, agent: Agent) =>
         fetcher({
             url: `/agents/${agentId}`,
-            method: "PUT",
-            body: character,
+            method: "PATCH",
+            body: agent,
         }),
     createAgent: (params: { characterPath?: string; characterJson?: Character }) =>
         fetcher({

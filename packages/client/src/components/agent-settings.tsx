@@ -26,7 +26,7 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
   const isAgentEnabled = Boolean((agentData as unknown as AgentResponse)?.enabled);
   const [characterValue, setCharacterValue] = useState<Agent>(agent);
 
-  const handleSubmit = async (updatedChar: Agent) => {
+  const handleSubmit = async (updatedAgent: Agent) => {
     try {
       // Call the API to update the agent's character
       if (!agentId) {
@@ -34,13 +34,13 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
       }
 
       // Make sure plugins are preserved
-      const mergedChar = {
-        ...updatedChar,
+      const mergedAgent = {
+        ...updatedAgent,
         plugins: characterValue.plugins // Preserve the plugins from our local state
       };
 
       // Send the character update request to the agent endpoint
-      await apiClient.updateAgent(agentId, mergedChar);
+      await apiClient.updateAgent(agentId, mergedAgent);
       
       // Invalidate both the agent query and the agents list
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
