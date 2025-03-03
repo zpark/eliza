@@ -543,6 +543,9 @@ export function agentRouter(
             );
 
             await runtime.evaluate(memory, state);
+            
+            res.status(202).json();
+
         } catch (error) {
             logger.error("Error processing message:", error);
             res.status(500).json({

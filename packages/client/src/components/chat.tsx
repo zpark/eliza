@@ -194,17 +194,24 @@ export default function Page({ agentId }: { agentId: UUID }) {
             message: string;
             selectedFile?: File | null;
         }) => apiClient.sendMessage(agentId, message, selectedFile),
-        onSuccess: (newMessages: ContentWithUser[]) => {
-            queryClient.setQueryData(
-                ["messages", agentId, worldId],
-                (old: ContentWithUser[] = []) => [
-                    ...old.filter((msg) => !msg.isLoading),
-                    ...newMessages.map((msg) => ({
-                        ...msg,
-                        createdAt: Date.now(),
-                    })),
-                ]
-            );
+        onSuccess: (newMessages: {data: ContentWithUser}) => {
+            if (newMessages) {
+                queryClient.setQueryData(
+                    ["messages", agentId, worldId],
+                    (old: ContentWithUser[] = []) => [
+                        ...old.filter((msg) => !msg.isLoading),
+                        {...newMessages.data.message, createdAt: Date.now()},
+                    ]
+                );
+            } else {
+                queryClient.setQueryData(
+                    ["messages", agentId, worldId],
+                    (old: ContentWithUser[] = []) => [
+                        ...old.filter((msg) => !msg.isLoading)
+                    ]
+                );
+            }
+            
         },
         onError: (e) => {
             toast({
@@ -276,7 +283,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     {messages.map((message: ContentWithUser) => {
                         return (
                             <div
-                                key={message.createdAt}
+                                key={message.user + message.createdAt}
                                 style={{
                                     display: "flex",
                                     flexDirection: "column",

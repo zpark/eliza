@@ -68,7 +68,7 @@ export default function Home() {
                             buttonIcon = <Loader2 className="animate-spin" />;
                         } else if (isActive) {
                             buttonLabel = "Stop";
-                            buttonIcon = <Square size={16} />;
+                            buttonIcon = <Square fill="#EF4444" size={16} />;
                         }
                         
                         return <ProfileCard
