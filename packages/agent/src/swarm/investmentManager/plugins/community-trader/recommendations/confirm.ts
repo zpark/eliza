@@ -1,5 +1,6 @@
 import {
     Action,
+    IAgentRuntime,
     logger,
     Memory,
     ServiceType,
@@ -59,9 +60,9 @@ export const confirmRecommendation: Action = {
     ],
     similes: ["CONFIRM_RECOMMENDATION"],
 
-    async handler(runtime, message, state, options, callback: any) {
+    async handler(runtime: IAgentRuntime, message, state, options, callback: any) {
         console.log("confirmRecommendation is running");
-        if (!runtime.services.has(ServiceType.TRADING)) {
+        if (!runtime.getService("trust_trading")) {
             console.log("no trading service");
             return;
         }
@@ -95,7 +96,7 @@ export const confirmRecommendation: Action = {
         }
 
         const tradingService = runtime.getService<TrustTradingService>(
-            ServiceType.TRADING
+            "trust_trading"
         )!;
 
         if (!tradingService.hasWallet("solana")) {

@@ -54,8 +54,6 @@ export interface TokenAccountInfo {
 }
 
 export interface ISolanaClient {
-    start: () => void;
-    stop: (runtime: IAgentRuntime) => Promise<void>;
     getCachedData: () => Promise<WalletPortfolio | null>;
     forceUpdate: () => Promise<WalletPortfolio>;
 }

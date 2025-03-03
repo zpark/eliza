@@ -5,7 +5,6 @@ import {
     Memory,
     MemoryManager,
     ModelClass,
-    ServiceType,
     State,
     UUID
 } from "@elizaos/core";
@@ -385,13 +384,13 @@ async function handler(
 
     const { agentId, roomId } = state;
 
-    if (!runtime.services.has(ServiceType.TRADING)) {
+    if (!runtime.getService("trust_trading")) {
         console.log("no trading service");
         return;
     }
 
     const tradingService = runtime.getService<TrustTradingService>(
-        ServiceType.TRADING
+         "trust_trading"
     )!;
 
     if (!tradingService.hasWallet("solana")) {
@@ -445,7 +444,7 @@ async function handler(
         return;
     }
 
-    if (!runtime.memoryManagers.has("recommendations")) {
+    if (!runtime.getMemoryManager("recommendations")) {
         runtime.registerMemoryManager(
             new MemoryManager({
                 runtime,
@@ -478,7 +477,8 @@ async function handler(
                 text: message.content.text,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                username: message.metadata?.clientUsername,
+                // TODO: userScreenName vs userName is bad
+                username: message.metadata[message.content.source].username ?? message.metadata[message.content.source].userScreenName,
             }),
         } as unknown as State,
         template: recommendationTemplate,

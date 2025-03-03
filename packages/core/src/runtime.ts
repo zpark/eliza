@@ -29,7 +29,6 @@ import {
   ChannelType,
   type Character,
   type Client,
-  type ClientInstance,
   type Evaluator,
   type HandlerCallback,
   type IAgentRuntime,
@@ -234,7 +233,7 @@ export class AgentRuntime implements IAgentRuntime {
   events: Map<string, ((params: any) => void)[]> = new Map();
 
   readonly fetch = fetch;
-  private clients: Map<string, ClientInstance> = new Map();
+  private clients: Map<string, Client> = new Map();
   private clientInterfaces: Map<string, Client> = new Map();
   services: Map<ServiceType, Service> = new Map();
 
@@ -331,7 +330,7 @@ export class AgentRuntime implements IAgentRuntime {
       }
 
       for (const client of plugin.clients ?? []) {
-        this.registerClientInterface(client.name, client);
+        this.registerClient(client.name, client);
       }
     }
 
@@ -349,20 +348,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  registerClientInterface(clientName: string, client: Client): void {
-    if (this.clientInterfaces.has(clientName)) {
-      logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
-      );
-      return;
-    }
-    this.clientInterfaces.set(clientName, client);
-    logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`
-    );
-  }
-
-  registerClient(clientName: string, client: ClientInstance): void {
+  registerClient(clientName: string, client: Client): void {
     if (this.clients.has(clientName)) {
       logger.warn(
         `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
@@ -388,7 +374,7 @@ export class AgentRuntime implements IAgentRuntime {
     );
   }
 
-  getClient(clientName: string): ClientInstance | null {
+  getClient(clientName: string): Client | null {
     const client = this.clients.get(clientName);
     if (!client) {
       logger.error(`Client ${clientName} not found`);
@@ -397,7 +383,7 @@ export class AgentRuntime implements IAgentRuntime {
     return client;
   }
 
-  getAllClients(): Map<string, ClientInstance> {
+  getAllClients(): Map<string, Client> {
     return this.clients;
   }
 
@@ -464,7 +450,7 @@ export class AgentRuntime implements IAgentRuntime {
 
           if (plugin.clients) {
             for (const client of plugin.clients) {
-              this.registerClientInterface(client.name, client);
+              this.registerClient(client.name, client);
             }
           }
 
@@ -600,17 +586,6 @@ export class AgentRuntime implements IAgentRuntime {
         await service.initialize(this);
       }
     }
-
-    // Start clients
-    await Promise.all(
-      Array.from(this.clientInterfaces.values()).map(
-        async (clientInterface) => {
-          const startedClient = await clientInterface.start(this);
-          await this.ensureAgentIsEnabled();
-          this.registerClient(clientInterface.name, startedClient);
-        }
-      )
-    );
   }
 
   async ensureAgentExists() {
@@ -1508,6 +1483,9 @@ export class AgentRuntime implements IAgentRuntime {
 
   async registerService(service: Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
+    if(!serviceType) {
+      throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
+    }
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,
       serviceType

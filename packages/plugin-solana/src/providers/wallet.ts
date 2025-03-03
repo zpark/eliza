@@ -1,6 +1,7 @@
 import type { IAgentRuntime, Memory, Provider, State } from '@elizaos/core';
 import BigNumber from 'bignumber.js';
 import type { WalletPortfolio } from '../types';
+import { SOLANA_WALLET_DATA_CACHE_KEY } from '../constants';
 
 export const walletProvider: Provider = {
     get: async (
@@ -9,10 +10,12 @@ export const walletProvider: Provider = {
         state?: State,
     ): Promise<string | null> => {
         try {
-            const portfolio = await runtime.databaseAdapter.getCache<WalletPortfolio>('solana/walletData');
-            if (!portfolio) {
+            const portfolioCache = await runtime.databaseAdapter.getCache(SOLANA_WALLET_DATA_CACHE_KEY);
+            if (!portfolioCache) {
                 return null;
             }
+
+            const portfolio = JSON.parse(portfolioCache) as WalletPortfolio;
 
             const agentName = state?.agentName || 'The agent';
             let output = `${agentName}'s Solana Wallet\n`;

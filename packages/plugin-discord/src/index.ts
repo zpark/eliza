@@ -1,8 +1,8 @@
 import {
   ChannelType,
   type Character,
+  Client,
   createUniqueUuid,
-  type Client as ElizaClient,
   type HandlerCallback,
   type IAgentRuntime,
   logger,
@@ -13,8 +13,8 @@ import {
   type WorldData
 } from "@elizaos/core";
 import {
-  Client,
   ChannelType as DiscordChannelType,
+  Client as DiscordJsClient,
   Events,
   GatewayIntentBits,
   type Guild,
@@ -42,9 +42,9 @@ import { DiscordTestSuite } from "./tests.ts";
 import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
-export class DiscordClient extends EventEmitter implements IDiscordClient {
-  apiToken: string;
-  client: Client;
+export class DiscordClient extends EventEmitter implements IDiscordClient, Client {
+  name: string = DISCORD_CLIENT_NAME;
+  client: DiscordJsClient;
   runtime: IAgentRuntime;
   character: Character;
   messageManager: MessageManager;
@@ -55,8 +55,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
 
     logger.log("Discord client constructor was engaged");
 
-    this.apiToken = runtime.getSetting("DISCORD_API_TOKEN") as string;
-    this.client = new Client({
+    this.client = new DiscordJsClient({
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
@@ -82,7 +81,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
-    this.client.login(this.apiToken);
+    this.client.login(runtime.getSetting("DISCORD_API_TOKEN") as string);
 
     this.setupEventListeners();
 
@@ -205,11 +204,21 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     });
   }
 
-  async stop() {
+  static async start(runtime: IAgentRuntime) {
+    const client = new DiscordClient(runtime);
+    return client;
+  }
+
+  static async stop(runtime: IAgentRuntime) {
+    const client = runtime.getClient(DISCORD_CLIENT_NAME);
+    if (!client) {
+      logger.error("DiscordClient not found");
+      return;
+    }
     try {
       // disconnect websocket
       // this unbinds all the listeners
-      await this.client.destroy();
+      await client.client.destroy();
     } catch (e) {
       logger.error("client-discord instance stop err", e);
     }
@@ -789,15 +798,10 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 }
 
-const DiscordClientInterface: ElizaClient = {
-  name: DISCORD_CLIENT_NAME,
-  start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
-};
-
 const discordPlugin: Plugin = {
   name: "discord",
   description: "Discord client plugin",
-  clients: [DiscordClientInterface],
+  clients: [DiscordClient],
   actions: [
     reply,
     chatWithAttachments,

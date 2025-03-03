@@ -1,8 +1,8 @@
 // registered to runtime through plugin
 
-import { IAgentRuntime, ITaskService, ServiceType, UUID } from "../types";
+import { IAgentRuntime, Service, ITaskService, ServiceType, UUID } from "../types";
 
-export class TaskService implements ITaskService {
+export class TaskService extends Service implements ITaskService {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
   runtime: IAgentRuntime;
@@ -36,6 +36,7 @@ export class TaskService implements ITaskService {
       for (const task of tasks) {
         // Skip if no duration set
         if (!task.metadata?.duration) {
+            console.log(`*** Task ${task.name} has no duration`);
           continue;
         }
 

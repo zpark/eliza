@@ -156,6 +156,21 @@ CREATE TABLE "worlds" (
 	"serverId" text NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL
 );
+
+--> statement-breakpoint
+CREATE TABLE "tasks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"description" text NOT NULL,
+	"room_id" uuid,
+	"world_id" uuid,
+	"agent_id" uuid NOT NULL,
+	"tags" text[],
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now()
+);
+
 --> statement-breakpoint
 ALTER TABLE "agents" ADD CONSTRAINT "agents_characterId_characters_id_fk" FOREIGN KEY ("characterId") REFERENCES "public"."characters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cache" ADD CONSTRAINT "cache_agentId_agents_id_fk" FOREIGN KEY ("agentId") REFERENCES "public"."agents"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

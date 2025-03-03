@@ -53,15 +53,15 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract updateAgent(agent: Agent): Promise<boolean>;
 
     /**
-     * Creates a new account in the database.
-     * @param account The account object to create.
+     * Creates a new entity in the database.
+     * @param entity The entity object to create.
      * @returns A Promise that resolves when the account creation is complete.
      */
     abstract createEntity(entity: Entity): Promise<boolean>;
 
     /**
-     * Updates an existing account in the database.
-     * @param account The account object with updated properties.
+     * Updates an existing entity in the database.
+     * @param entity The entity object with updated properties.
      * @returns A Promise that resolves when the account update is complete.
      */
     abstract updateEntity(entity: Entity): Promise<void>;

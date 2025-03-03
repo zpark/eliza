@@ -6,6 +6,7 @@ export const taskTable = pgTable('tasks', {
   description: text('description').notNull(),
   roomId: uuid('room_id'),
   worldId: uuid('world_id'),
+  agentId: uuid('agent_id').notNull(),
   tags: text('tags').array(),
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at').defaultNow(),

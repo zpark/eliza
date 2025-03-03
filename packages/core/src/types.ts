@@ -545,23 +545,12 @@ export enum ChannelType {
   FORUM = "FORUM",
 }
 
-export type PostClient = {
-  getPost: (roomId: UUID) => Promise<string | UUID | null>;
-};
-
 /**
  * Client instance
  */
-export type ClientInstance = {
+export abstract class Client {
   [key: string]: any;
-  /** Stop client connection */
-  stop: (runtime: IAgentRuntime) => Promise<unknown>;
-};
 
-/**
- * Client interface for platform connections
- */
-export type Client = {
   /** Client name */
   name: string;
 
@@ -569,8 +558,15 @@ export type Client = {
   config?: { [key: string]: any };
 
   /** Start client connection */
-  start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
-};
+  static async start(runtime: IAgentRuntime): Promise<Client> {
+    throw new Error('Not implemented');
+  }
+
+  /** Stop client connection */
+  static async stop(runtime: IAgentRuntime): Promise<unknown> {
+    throw new Error('Not implemented');
+  }
+}
 
 export type Adapter = {
   /** Initialize adapter */
@@ -1015,9 +1011,8 @@ export interface IAgentRuntime {
   actions: Action[];
   evaluators: Evaluator[];
   plugins: Plugin[];
-
+  services: Map<string, Service>;
   events: Map<string, ((params: any) => void)[]>;
-
   fetch?: typeof fetch | null;
   routes: Route[];
   messageManager: IMemoryManager;
@@ -1025,11 +1020,10 @@ export interface IAgentRuntime {
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
 
-  getClient(name: string): ClientInstance | null;
-  getAllClients(): Map<string, ClientInstance>;
+  getClient(name: string): Client | null;
+  getAllClients(): Map<string, Client>;
 
-  registerClientInterface(name: string, client: Client): void;
-  registerClient(name: string, client: ClientInstance): void;
+  registerClient(name: string, client: Client): void;
 
   unregisterClient(name: string): void;
 
@@ -1039,7 +1033,7 @@ export interface IAgentRuntime {
 
   getMemoryManager(tableName: string): IMemoryManager | null;
 
-  getService<T extends Service>(service: ServiceType): T | null;
+  getService<T extends Service>(service: ServiceType | string): T | null;
 
   registerService(service: Service): void;
 

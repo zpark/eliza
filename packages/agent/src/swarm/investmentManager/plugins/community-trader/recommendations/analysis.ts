@@ -175,7 +175,7 @@ export const getTokenDetails: any = {
     similes: ["TOKEN_DETAILS"],
 
     async handler(runtime, message, state, options, callback: any) {
-        if (!runtime.services.has(SERVICE_TYPE)) {
+        if (!runtime.getService("trust_trading")) {
             console.log("no trading service");
             return;
         }
