@@ -5,7 +5,8 @@ import {
   type IAgentRuntime,
   type Memory,
   type UUID,
-  createUniqueUuid
+  createUniqueUuid,
+  logger
 } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
@@ -166,7 +167,7 @@ const scenarios = [
     // Create and register test client
     const client = new ScenarioClient();
     await client.start(members[0]);
-    members[0].registerClient("scenario", client);
+    members[0].registerClient(client);
 
     // Create rooms for all members
     for (const member of members) {
