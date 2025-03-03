@@ -141,7 +141,8 @@ async function stopAgent(
   runtime: IAgentRuntime,
   server: AgentServer
 ) {
-  server.unregisterAgent(runtime);
+  await runtime.databaseAdapter.close();
+  server.unregisterAgent(runtime.agentId);
 }
 
 const checkPortAvailable = (port: number): Promise<boolean> => {

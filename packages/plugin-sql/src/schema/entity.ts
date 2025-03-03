@@ -5,7 +5,9 @@ import { numberTimestamp } from "./types";
 
 export const entityTable = pgTable("entities", {
     id: uuid("id").notNull().primaryKey(),
-    agentId: uuid("agentId").notNull().references(() => agentTable.id),
+    agentId: uuid("agentId").notNull().references(() => agentTable.id, {
+        onDelete: "cascade",
+    }),
     createdAt: numberTimestamp("createdAt")
         .default(sql`now()`)
         .notNull(),
