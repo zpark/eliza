@@ -13,6 +13,9 @@ Eliza is a framework for creating AI agents that can interact across multiple pl
 - **Multi-Agent Support**: Supports running multiple agents with distinct configurations.
 - **Multi-Platform Support**: Integrates with various clients (e.g., Discord, Telegram).
 
+![](/img/overview.png)
+Source: https://x.com/gelatonetwork/status/1894408632915169618
+
 This document provides a high-level overview of the system architecture and how components work together.
 
 ---
