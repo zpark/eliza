@@ -51,6 +51,16 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
     }
   };
 
+  const handleDelete = async (agent: Agent) => {
+    try {
+      await apiClient.deleteAgent(agent.id as UUID);
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting agent:", error);
+    }
+  };
+  
+
   return (
     <CharacterForm
       characterValue={characterValue} 
@@ -59,6 +69,7 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
       description="Configure your AI character's behavior and capabilities"
       onSubmit={handleSubmit}
       onReset={() => setCharacterValue(agent)}
+      onDelete={() => handleDelete(agent)}
       isAgent={true}
       customComponents={[
         {
