@@ -12,9 +12,9 @@ import {
     type Relationship,
     type RoomData,
     stringToUuid,
+    type Task,
     type UUID,
-    type WorldData,
-    type Task
+    type WorldData
 } from "@elizaos/core";
 
 // Define the metadata type inline since we can't import it
@@ -38,11 +38,7 @@ import {
     gte,
     inArray,
     lte,
-    sql,
-    asc,
-    or,
-    isNull,
-    isNotNull
+    sql
 } from "drizzle-orm";
 import { v4 } from "uuid";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
@@ -58,8 +54,8 @@ import {
     participantTable,
     relationshipTable,
     roomTable,
-    worldTable,
-    taskTable
+    taskTable,
+    worldTable
 } from "./schema/index";
 import type { DrizzleOperations } from "./types";
 
@@ -227,26 +223,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await tx.delete(agentTable).where(eq(agentTable.id, agentId));
             });
             return true;
-        });
-    }
-
-    async toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db
-                    .update(agentTable)
-                    .set({
-                        enabled
-                    })
-                    .where(eq(agentTable.id, agentId));
-                return true;
-            } catch (error) {
-                logger.error("Error updating agent:", {
-                    error: error instanceof Error ? error.message : String(error),
-                    agentId
-                });
-                return false;
-            }
         });
     }
 
