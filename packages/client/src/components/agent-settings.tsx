@@ -1,6 +1,6 @@
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
-import type { Character, UUID } from "@elizaos/core";
+import type { Agent, UUID } from "@elizaos/core";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,21 +12,21 @@ import SecretPanel from "./secret-panel";
 // Define interface for agent data response that includes enabled property
 interface AgentResponse {
   id: UUID;
-  character: Character;
+  character: Agent;
   enabled: boolean;
 }
 
-export default function AgentSettings({ character, agentId }: { character: Character, agentId: UUID }) {
+export default function AgentSettings({ agent, agentId }: { agent: Agent, agentId: UUID }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: agentData } = useAgent(agentId);
+  const agentData = useAgent(agentId)?.data?.data;
 
   // The API actually returns an enabled property even though the type doesn't include it
   const isAgentEnabled = Boolean((agentData as unknown as AgentResponse)?.enabled);
-  const [characterValue, setCharacterValue] = useState<Character>(character);
+  const [characterValue, setCharacterValue] = useState<Agent>(agent);
 
-  const handleSubmit = async (updatedChar: Character) => {
+  const handleSubmit = async (updatedChar: Agent) => {
     try {
       // Call the API to update the agent's character
       if (!agentId) {
@@ -95,7 +95,7 @@ export default function AgentSettings({ character, agentId }: { character: Chara
         throw new Error("Agent ID is missing");
       }
       
-      await apiClient.startAgentByName(character.name);
+      await apiClient.startAgentByName(agent.name);
       
       // Invalidate queries for fresh data
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
@@ -122,7 +122,7 @@ export default function AgentSettings({ character, agentId }: { character: Chara
       title="Character Settings" 
       description="Configure your AI character's behavior and capabilities"
       onSubmit={handleSubmit}
-      onReset={() => setCharacterValue(character)}
+      onReset={() => setCharacterValue(agent)}
       submitButtonText="Save Changes"
       deleteButtonText={isAgentEnabled ? "Stop Agent" : "Start Agent"}
       deleteButtonVariant={isAgentEnabled ? "destructive" : "default"}

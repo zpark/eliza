@@ -1,4 +1,4 @@
-import type { Character, UUID } from "@elizaos/core";
+import type { Agent, Character, UUID } from "@elizaos/core";
 import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
@@ -110,7 +110,7 @@ export const apiClient = {
             });
     },
     getAgents: () => fetcher({ url: "/agents" }),
-    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean }> =>
+    getAgent: (agentId: string): Promise<{ data: Agent }> =>
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>
         fetcher({

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import type { Character } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
 import React, { useState, type FormEvent, type ReactNode } from "react";
 
 type FieldType = "text" | "textarea" | "number" | "checkbox" | "select";
@@ -15,7 +15,7 @@ type InputField = {
   title: string;
   name: string;
   description?: string;
-  getValue: (char: Character) => string;
+  getValue: (char: Agent) => string;
   fieldType: FieldType
 };
 
@@ -23,7 +23,7 @@ type ArrayField = {
   title: string;
   description?: string;
   path: string;
-  getData: (char: Character) => string[];
+  getData: (char: Agent) => string[];
 };
 
 enum SECTION_TYPE {
@@ -127,7 +127,7 @@ type customComponent = {
 export type CharacterFormProps = {
   title: string;
   description: string;
-  onSubmit: (character: Character) => Promise<void>;
+  onSubmit: (character: Agent) => Promise<void>;
   onDelete?: () => Promise<void>;
   onCancel?: () => void;
   onReset?: () => void;
@@ -136,8 +136,8 @@ export type CharacterFormProps = {
   deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
-  characterValue: Character;
-  setCharacterValue: (value: (prev: Character) => Character) => void;
+  characterValue: Agent;
+  setCharacterValue: (value: (prev: Agent) => Agent) => void;
 };
 
 export default function CharacterForm({
