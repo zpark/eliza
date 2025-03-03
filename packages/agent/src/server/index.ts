@@ -25,7 +25,7 @@ export interface ServerOptions {
 
 export class AgentServer {
     public app: express.Application;
-    private agents: Map<string, IAgentRuntime>;
+    public agents: Map<string, IAgentRuntime>;
     public server: any; 
 
 

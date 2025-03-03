@@ -128,6 +128,27 @@ export function useAgent(agentId: UUID | undefined | null, options = {}) {
   });
 }
 
+export function useActiveAgents(options = {}) {
+  return useQuery<{ data: { agents: Agent[] } }>({
+    queryKey: ['active-agents'],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.getActiveAgents();
+        return response;
+      } catch (error) {
+        console.error('Error fetching active agents:', error);
+        throw error;
+      }
+    },
+    staleTime: STALE_TIMES.STANDARD, // Prevents unnecessary refetches
+    refetchInterval: false, // Disable polling
+    refetchOnWindowFocus: false, // Prevent refetching when switching tabs
+    refetchOnReconnect: false, // Prevent automatic refetching when regaining connection
+    refetchIntervalInBackground: false, // Prevent background polling
+    ...options,
+  });
+}
+
 // Hook for starting an agent with optimistic updates
 export function useStartAgent() {
   const queryClient = useQueryClient();

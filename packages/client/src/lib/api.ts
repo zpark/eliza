@@ -211,5 +211,5 @@ export const apiClient = {
             }
         });
     },
-    
+    getActiveAgents: () => fetcher({ url: "/active-agents" }),
 };
