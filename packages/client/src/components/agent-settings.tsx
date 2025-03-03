@@ -59,7 +59,6 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
       description="Configure your AI character's behavior and capabilities"
       onSubmit={handleSubmit}
       onReset={() => setCharacterValue(agent)}
-      submitButtonText="Save Changes"
       isAgent={true}
       customComponents={[
         {

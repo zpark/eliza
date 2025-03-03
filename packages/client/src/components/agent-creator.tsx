@@ -75,7 +75,6 @@ export default function AgentCreator() {
           description="Configure your AI character's behavior and capabilities"
           onSubmit={handleSubmit}
           onReset={() => setCharacterValue(defaultCharacter)}
-          submitButtonText="Save Changes"
           isAgent={true}
           customComponents={[
             {

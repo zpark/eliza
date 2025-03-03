@@ -130,7 +130,6 @@ export type CharacterFormProps = {
   onSubmit: (character: Agent) => Promise<void>;
   onCancel?: () => void;
   onReset?: () => void;
-  submitButtonText?: string;
   isAgent?: boolean;
   customComponents?: customComponent[];
   characterValue: Agent;
@@ -145,7 +144,6 @@ export default function CharacterForm({
   onSubmit,
   onCancel,
   onReset,
-  submitButtonText = "Save Changes",
   customComponents = []
 }: CharacterFormProps) {
   const { toast } = useToast();
@@ -325,7 +323,7 @@ export default function CharacterForm({
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Saving...' : submitButtonText}
+              {isSubmitting ? 'Saving...' : "Save Changes"}
             </Button>
           </div>
         </div>
