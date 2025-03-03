@@ -4,15 +4,29 @@ import { logger } from "@/src/utils/logger"
 import { Command } from "commander"
 import fs from "node:fs"
 import path from "node:path"
+import type { Agent } from "@elizaos/core"
 
 const AGENT_RUNTIME_URL = process.env.AGENT_RUNTIME_URL?.replace(/\/$/, '') || 'http://localhost:3000'
 const AGENTS_BASE_URL = `${AGENT_RUNTIME_URL}/agents`
+
+// Define basic agent interface for type safety
+interface AgentBasic {
+  id: string;
+  name: string;
+  status?: string;
+  [key: string]: unknown;
+}
 
 // Utility function to resolve agent ID from name, index, or direct ID
 async function resolveAgentId(nameOrIndex: string): Promise<string> {
   // First try to get all agents to find by name
   const listResponse = await fetch(`${AGENTS_BASE_URL}`);
-  const { agents } = await listResponse.json();
+  if (!listResponse.ok) {
+    throw new Error(`Failed to fetch agents list: ${listResponse.statusText}`);
+  }
+  
+  const data = await listResponse.json();
+  const agents = (data.data?.agents || []) as AgentBasic[];
       
   // Try to find agent by name (case insensitive)
   const agentByName = agents.find(
@@ -35,21 +49,36 @@ interface AgentStartPayload {
   characterJson?: Record<string, unknown>;
 }
 
-interface AgentErrorResponse {
-  error: string;
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+interface AgentData {
+  id: string;
+  name: string;
+  status?: string;
+  character: Partial<Agent>;
 }
 
 interface AgentStartResponse {
   id: string;
-  character: {
-    name: string;
-    [key: string]: unknown;
-  };
+  character: Partial<Agent>;
 }
 
 async function getAgentIdFromIndex(index: number): Promise<string> {
   const listResponse = await fetch(`${AGENTS_BASE_URL}`)
-  const { agents } = await listResponse.json()
+  if (!listResponse.ok) {
+    throw new Error(`Failed to fetch agents list: ${listResponse.statusText}`);
+  }
+  
+  const data = await listResponse.json();
+  const agents = (data.data?.agents || []) as AgentBasic[];
   
   const sortedAgents = agents.sort((a, b) => a.name.localeCompare(b.name))
   
@@ -67,17 +96,25 @@ agent
   .option("-j, --json", "output as JSON")
   .action(async (opts) => {
     try {
+      // API Endpoint: GET /agents
       const response = await fetch(`${AGENTS_BASE_URL}`)
-      const { agents } = await response.json()
+      if (!response.ok) {
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to list agents: ${response.statusText}`);
+      }
+      
+      const data = await response.json() as ApiResponse<{ agents: AgentBasic[] }>;
+      const agents = data.data?.agents || [];
 
       // Sort agents by name
       const sortedAgents = agents.sort((a, b) => a.name.localeCompare(b.name))
       
       // Format data for table
-      const agentData = sortedAgents.map(agent => ({
+      const agentData = sortedAgents.map((agent, index) => ({
+        Index: index,
         Name: agent.name,
         ID: agent.id,
-        Clients: agent.clients.join(", ")
+        Status: agent.status || "unknown"
       }))
 
       if (opts.json) {
@@ -110,21 +147,30 @@ agent
       
       logger.info(`Getting agent ${resolvedAgentId}`)
 
+      // API Endpoint: GET /agents/:agentId
       const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`)
       if (!response.ok) {
-        throw new Error(`Failed to get agent: ${response.statusText}`)
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to get agent: ${response.statusText}`);
       }
       
-      const agent = await response.json()
+      const data = await response.json() as ApiResponse<AgentData>;
+      const agentData = data.data || { 
+        id: '', 
+        name: '', 
+        character: {} 
+      };
 
-      displayCharacter(agent.character, "Agent Details")
+      // The displayAgent function expects a character object
+      displayAgent(agentData.character, "Agent Details")
 
       // check if json argument is provided
       if (opts.json) {
-        const jsonPath = opts.output || path.join(process.cwd(), `${agent.character.name}.json`)
+        const jsonPath = opts.output || path.join(process.cwd(), `${agentData.character.name || 'agent'}.json`)
         // exclude .id field from the json
-        const { id, ...character } = agent.character
+        const { id, ...character } = agentData.character
         fs.writeFileSync(jsonPath, JSON.stringify(character, null, 2))
+        logger.success(`Saved agent configuration to ${jsonPath}`)
       }
 
       process.exit(0)
@@ -144,8 +190,10 @@ agent
   .option("-r, --remote <url>", "remote URL to character JSON file")
   .action(async (opts) => {
     try {
+      // API Endpoint: POST /agents
       const response: Response = await (async () => {
         const payload: AgentStartPayload = {};
+        const headers = { 'Content-Type': 'application/json' };
 
         // Determine which start option to use
         const startOption = opts.json ? 'json'
@@ -156,21 +204,25 @@ agent
 
         switch (startOption) {
           case 'json':
-            payload.characterJson = JSON.parse(opts.json);
-            return await fetch(`${AGENTS_BASE_URL}/start`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
+            try {
+              payload.characterJson = JSON.parse(opts.json);
+              return await fetch(`${AGENTS_BASE_URL}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload)
+              });
+            } catch (error) {
+              throw new Error(`Failed to parse JSON string: ${error.message}`);
+            }
 
           case 'remote':
             if (!opts.remote.startsWith('http://') && !opts.remote.startsWith('https://')) {
               throw new Error('Remote URL must start with http:// or https://');
             }
             payload.characterPath = opts.remote;
-            return await fetch(`${AGENTS_BASE_URL}/start`, {
+            return await fetch(`${AGENTS_BASE_URL}`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify(payload)
             });
 
@@ -178,9 +230,9 @@ agent
             try {
               const fileContent = fs.readFileSync(opts.path, 'utf8');
               payload.characterJson = JSON.parse(fileContent);
-              return await fetch(`${AGENTS_BASE_URL}/start`, {
+              return await fetch(`${AGENTS_BASE_URL}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(payload)
               });
             } catch (error) {
@@ -188,9 +240,25 @@ agent
             }
 
           case 'name':
-            return await fetch(`${AGENTS_BASE_URL}/start/${encodeURIComponent(opts.name)}`, {
-              method: 'POST'
-            });
+            // For starting by name, we need to handle this differently
+            // First check if there's a built-in character with this name
+            try {
+              // This is a custom implementation as there's no direct API endpoint
+              // We'll try to load a character by name from a predefined location
+              const characterPath = path.join(process.cwd(), 'characters', `${opts.name}.json`);
+              if (fs.existsSync(characterPath)) {
+                const fileContent = fs.readFileSync(characterPath, 'utf8');
+                payload.characterJson = JSON.parse(fileContent);
+                return await fetch(`${AGENTS_BASE_URL}`, {
+                  method: 'POST',
+                  headers,
+                  body: JSON.stringify(payload)
+                });
+              }
+              throw new Error(`Character '${opts.name}' not found. Please provide a valid character name or use another start option.`);
+            } catch (error) {
+              throw new Error(`Failed to start agent by name: ${error.message}`);
+            }
 
           default:
             throw new Error("Please provide either a character name, path to JSON file, remote URL, or character JSON string");
@@ -198,11 +266,17 @@ agent
       })();
 
       if (!response.ok) {
-        const errorData = await response.json() as AgentErrorResponse;
-        throw new Error(errorData.error || `Failed to start agent: ${response.statusText}`);
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to start agent: ${response.statusText}`);
       }
 
-      const result = await response.json() as AgentStartResponse;
+      const data = await response.json() as ApiResponse<AgentStartResponse>;
+      const result = data.data;
+      
+      if (!result) {
+        throw new Error("Failed to start agent: No data returned from server");
+      }
+      
       logger.success(`Successfully started agent ${result.character.name} (${result.id})`);
     } catch (error) {
       handleError(error);
@@ -217,14 +291,17 @@ agent
   .action(async (opts) => {
     try {
       const resolvedAgentId = await resolveAgentId(opts.name);
+      
+      logger.info(`Stopping agent ${resolvedAgentId}`);
 
-      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}/stop`, {
-        method: 'POST'
+      // API Endpoint: PUT /agents/:agentId
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`, {
+        method: 'PUT'
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to stop agent: ${response.statusText}`);
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to stop agent: ${response.statusText}`);
       }
 
       logger.success(`Successfully stopped agent ${opts.name}`);
@@ -241,14 +318,17 @@ agent
   .action(async (opts) => {
     try {
       const resolvedAgentId = await resolveAgentId(opts.name);
+      
+      logger.info(`Removing agent ${resolvedAgentId}`);
 
+      // API Endpoint: DELETE /agents/:agentId
       const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`, {
         method: 'DELETE'
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to remove agent: ${response.statusText}`);
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to remove agent: ${response.statusText}`);
       }
 
       logger.success(`Successfully removed agent ${opts.name}`);
@@ -266,29 +346,42 @@ agent
   .action(async (opts) => {
     try {
       const resolvedAgentId = await resolveAgentId(opts.name);
+      
+      logger.info(`Updating configuration for agent ${resolvedAgentId}`);
 
       let config: Record<string, unknown>;
       if (opts.config) {
-        config = JSON.parse(opts.config);
+        try {
+          config = JSON.parse(opts.config);
+        } catch (error) {
+          throw new Error(`Failed to parse config JSON string: ${error.message}`);
+        }
       } else if (opts.file) {
-        config = JSON.parse(fs.readFileSync(opts.file, 'utf8'));
+        try {
+          config = JSON.parse(fs.readFileSync(opts.file, 'utf8'));
+        } catch (error) {
+          throw new Error(`Failed to read or parse config file: ${error.message}`);
+        }
       } else {
         throw new Error("Please provide either a config JSON string (-c) or a config file path (-f)");
       }
 
-      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}/set`, {
-        method: 'POST',
+      // API Endpoint: PATCH /agents/:agentId
+      const response = await fetch(`${AGENTS_BASE_URL}/${resolvedAgentId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify({ updates: config })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to update agent configuration: ${response.statusText}`);
+        const errorData = await response.json() as ApiResponse<unknown>;
+        throw new Error(errorData.error?.message || `Failed to update agent configuration: ${response.statusText}`);
       }
 
-      const result = await response.json();
-      logger.success(`Successfully updated configuration for agent ${result.id}`);
+      const data = await response.json() as ApiResponse<{ id: string }>;
+      const result = data.data;
+      
+      logger.success(`Successfully updated configuration for agent ${result?.id || resolvedAgentId}`);
     } catch (error) {
       handleError(error);
     }
