@@ -1,4 +1,4 @@
-import {
+    import {
     pgTable,
     uuid,
     text,
@@ -6,7 +6,7 @@ import {
     foreignKey,
     jsonb,
     unique,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/pg-core";   
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
 import { entityTable } from "./entity";
@@ -21,13 +21,13 @@ export const relationshipTable = pgTable(
             .notNull(),
         sourceEntityId: uuid("sourceEntityId")
             .notNull()
-            .references(() => entityTable.id),
+            .references(() => entityTable.id, { onDelete: "cascade" }),
         targetEntityId: uuid("targetEntityId")
             .notNull()
-            .references(() => entityTable.id),
+            .references(() => entityTable.id, { onDelete: "cascade" }),
         agentId: uuid("agentId")
             .notNull()
-            .references(() => agentTable.id),
+            .references(() => agentTable.id, { onDelete: "cascade" }),
         tags: text("tags").array(),
         metadata: jsonb("metadata"),
     },
