@@ -137,16 +137,16 @@ export class AgentServer {
                 try {
                     switch (route.type) {
                         case "GET":
-                            this.app.get(routePath, (req, res) => route.handler(req, res));
+                            this.app.get(routePath, (req, res) => route.handler(req, res, runtime));
                             break;
                         case "POST":
-                            this.app.post(routePath, (req, res) => route.handler(req, res));
+                            this.app.post(routePath, (req, res) => route.handler(req, res, runtime));
                             break;
                         case "PUT":
-                            this.app.put(routePath, (req, res) => route.handler(req, res));
+                            this.app.put(routePath, (req, res) => route.handler(req, res, runtime));
                             break;
                         case "DELETE":
-                            this.app.delete(routePath, (req, res) => route.handler(req, res));
+                            this.app.delete(routePath, (req, res) => route.handler(req, res, runtime));
                             break;
                         default:
                             logger.error(`Unknown route type: ${route.type} for path ${routePath}`);

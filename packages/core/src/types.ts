@@ -426,6 +426,8 @@ export interface Evaluator {
  * Provider for external data/services
  */
 export interface Provider {
+  /** Provider name */
+  name: string;
   /** Data retrieval function */
   get: (runtime: IAgentRuntime, message: Memory, state?: State) => Promise<any>;
 }

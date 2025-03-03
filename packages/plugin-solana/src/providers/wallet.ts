@@ -4,6 +4,7 @@ import type { WalletPortfolio } from '../types';
 import { SOLANA_WALLET_DATA_CACHE_KEY } from '../constants';
 
 export const walletProvider: Provider = {
+    name: "solana-wallet",
     get: async (
         runtime: IAgentRuntime,
         _message: Memory,

@@ -51,6 +51,7 @@ async function formatRelationships(runtime: IAgentRuntime, relationships: Relati
 }
 
 const relationshipsProvider: Provider = {
+    name: "relationships",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         // Get all relationships for the current user
         const relationships = await getRelationships({

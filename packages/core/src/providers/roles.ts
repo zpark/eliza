@@ -3,6 +3,7 @@ import { logger } from "../logger";
 import { ChannelType, type IAgentRuntime, type Memory, type Provider, type State, type UUID } from "../types";
 
 export const roleProvider: Provider = {
+    name: "roles",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,

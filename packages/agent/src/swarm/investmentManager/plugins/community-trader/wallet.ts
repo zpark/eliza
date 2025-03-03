@@ -252,6 +252,7 @@ export class WalletProvider {
 }
 
 export const walletProvider: Provider = {
+    name: "degen-solana-wallet",
     get: async (
         runtime: IAgentRuntime,
         _message: Memory,

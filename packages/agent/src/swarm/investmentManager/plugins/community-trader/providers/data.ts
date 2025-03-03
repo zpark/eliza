@@ -249,6 +249,7 @@ async function runActions(
 }
 
 export const dataProvider: Provider = {
+    name: "data",
     async get(
         runtime: IAgentRuntime,
         message: Memory,
