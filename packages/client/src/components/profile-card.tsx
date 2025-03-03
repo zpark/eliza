@@ -7,7 +7,8 @@ interface ButtonConfig {
     action?: () => void;
     className?: string;
     variant?: "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined;
-    size?: "default" | "sm" | "lg" | "icon" | null | undefined
+    size?: "default" | "sm" | "lg" | "icon" | null | undefined;
+    disabled?: boolean;
 }
 
 interface ProfileCardProps {
@@ -37,13 +38,14 @@ export default function ProfileCard({
             </CardContent>
             <CardFooter className="p-3 pb-4">
                 <div className="flex items-center gap-4 w-full">
-                    {buttons.map(({ label, icon, action, className, variant, size }, index) => (
+                    {buttons.map(({ label, icon, action, className, variant, size, disabled }, index) => (
                         <Button
                             key={index}
                             variant={variant}
                             className={className}
                             onClick={action}
                             size={size}
+                            disabled={disabled}
                         >
                             {icon}
                             {label && <span>{label}</span>}

@@ -196,7 +196,7 @@ export function agentRouter(
             });
             logger.success(`[AGENT CREATE] Successfully created agent: ${character.name}`);
         } catch (error) {
-            logger.error(`[AGENT CREATE] Error creating agent:`, error);
+            logger.error('[AGENT CREATE] Error creating agent:', error);
             res.status(400).json({
                 success: false,
                 error: {
@@ -302,6 +302,82 @@ export function agentRouter(
                 message: 'Agent stopped'
             }
         });
+    });
+
+    // Start an existing agent
+    router.post('/:agentId', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            logger.warn("[AGENT START] Invalid agent ID format");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
+            return;
+        }
+
+        try {
+            // Check if agent exists
+            const agent = await db.getAgent(agentId);
+            if (!agent) {
+                logger.warn("[AGENT START] Agent not found");
+                res.status(404).json({
+                    success: false,
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: 'Agent not found'
+                    }
+                });
+                return;
+            }
+
+            // Check if agent is already running
+            const runtime = agents.get(agentId);
+            if (runtime) {
+                logger.info(`[AGENT START] Agent ${agentId} is already running`);
+                res.json({
+                    success: true,
+                    data: {
+                        id: agentId,
+                        name: agent.name,
+                        status: "active"
+                    }
+                });
+                return;
+            }
+
+            // Start the agent
+            await server?.startAgent(agent);
+            
+            // Verify agent started successfully
+            const newRuntime = agents.get(agentId);
+            if (!newRuntime) {
+                throw new Error("Failed to start agent");
+            }
+
+            logger.success(`[AGENT START] Successfully started agent: ${agent.name}`);
+            res.json({
+                success: true,
+                data: {
+                    id: agentId,
+                    name: agent.name,
+                    status: "active"
+                }
+            });
+        } catch (error) {
+            logger.error("[AGENT START] Error starting agent:", error);
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'START_ERROR',
+                    message: 'Error starting agent',
+                    details: error instanceof Error ? error.message : String(error)
+                }
+            });
+        }
     });
 
     // Delete agent
@@ -1262,6 +1338,70 @@ export function agentRouter(
                 error: {
                     code: 'DELETE_ERROR',
                     message: 'Failed to delete room',
+                    details: error.message
+                }
+            });
+        }
+    });
+
+    // Get memories for a specific room
+    router.get('/:agentId/rooms/:roomId/memories', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        const roomId = validateUuid(req.params.roomId);
+
+        if (!agentId || !roomId) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID or room ID format'
+                }
+            });
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        try {
+            const limit = req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 20;
+            const before = req.query.before ? Number.parseInt(req.query.before as string, 10) : Date.now();
+            const worldId = req.query.worldId as string;
+
+            const memories = await runtime.messageManager.getMemories({
+                roomId,
+                count: limit,
+                end: before
+            });
+
+            res.json({
+                success: true,
+                data: {
+                    memories
+                }
+            });
+        } catch (error) {
+            logger.error('[MEMORIES GET] Error retrieving memories for room:', error);
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'FETCH_ERROR',
+                    message: 'Failed to retrieve memories',
                     details: error.message
                 }
             });

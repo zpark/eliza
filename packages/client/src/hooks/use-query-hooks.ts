@@ -155,10 +155,36 @@ export function useStartAgent() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (agentId: UUID) => apiClient.startAgent({ agentId }),
+    mutationFn: async (agentId: UUID) => {
+      try {
+        return await apiClient.startAgent(agentId);
+      } catch (error) {
+        // Capture specific error types
+        if (error instanceof Error) {
+          if (error.message.includes('network')) {
+            throw new Error('Network error: Please check your connection and try again.');
+          } 
+          if (error.message.includes('already running')) {
+            throw new Error('Agent is already running.');
+          }
+        }
+        throw error; // Re-throw if not a specific case we handle
+      }
+    },
+    onMutate: async (agentId) => {
+      // Optimistically update UI to show agent is starting
+      toast({
+        title: 'Starting Agent',
+        description: 'Initializing agent...',
+      });
+      
+      // Return context for potential rollback
+      return { agentId };
+    },
     onSuccess: (data) => {
       // Immediately invalidate the queries for fresh data
       queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['active-agents'] });
       if (data?.id) {
         queryClient.invalidateQueries({ queryKey: ['agent', data.id] });
       }
@@ -169,9 +195,12 @@ export function useStartAgent() {
       });
     },
     onError: (error) => {
+      // Handle specific error cases
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start agent';
+      
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to start agent',
+        title: 'Error Starting Agent',
+        description: `${errorMessage}. Please try again.`,
         variant: 'destructive',
       });
     }

@@ -92,14 +92,14 @@ export const apiClient = {
             formData.append("worldId", worldId);
             
             return fetcher({
-                url: `/agents/${agentId}/message`,
+                url: `/agents/${agentId}/messages`,
                 method: "POST",
                 body: formData,
             });
         }
             // Use JSON when there's no file
             return fetcher({
-                url: `/agents/${agentId}/message`,
+                url: `/agents/${agentId}/messages`,
                 method: "POST",
                 body: {
                     text: message,
@@ -134,6 +134,23 @@ export const apiClient = {
             body: formData,
         });
     },
+    sendAudioMessage: async (agentId: string, audioBlob: Blob, options?: { roomId?: string; userId?: string; userName?: string; name?: string }) => {
+        const formData = new FormData();
+        formData.append("file", audioBlob, "recording.wav");
+        
+        // Add optional parameters if provided
+        if (options) {
+            for (const [key, value] of Object.entries(options)) {
+                if (value) formData.append(key, value);
+            }
+        }
+        
+        return fetcher({
+            url: `/agents/${agentId}/audio-messages`,
+            method: "POST",
+            body: formData,
+        });
+    },
     speechConversation: async (agentId: string, text: string, options?: { roomId?: string; userId?: string; userName?: string; name?: string }) => {
         return fetcher({
             url: `/agents/${agentId}/speech/conversation`,
@@ -163,30 +180,34 @@ export const apiClient = {
             method: "POST",
             body: params,
         }),
-    startAgent: (params: { agentId: UUID }) =>
+    startAgent: (agentId: UUID) =>
         fetcher({
-            url: `/agents/${params.agentId}/start`,
+            url: `/agents/${agentId}`,
             method: "POST",
-            body: params,
+            body: { start: true },
         }),
     stopAgent: (agentId: string) => {
         return fetcher({
-            url: `/agents/${agentId}/stop`,
-            method: "POST",
-        });
-    },
-    removeAgent: (agentId: string) => {
-        return fetcher({
             url: `/agents/${agentId}`,
-            method: "DELETE",
+            method: "PUT",
         });
     },
     getMemories: (agentId: string, roomId: string, options?: { limit?: number; before?: number }) => {
         const worldId = WorldManager.getWorldId();
+        const params: Record<string, string | number> = { worldId };
+        
+        if (options?.limit) {
+            params.limit = options.limit;
+        }
+        
+        if (options?.before) {
+            params.end = options.before;
+        }
+        
         return fetcher({ 
-            url: `/agents/${agentId}/${roomId}/memories`,
+            url: `/agents/${agentId}/rooms/${roomId}/memories`,
             method: "GET",
-            body: { worldId, ...options }
+            body: params
         });
     },
     
@@ -211,5 +232,29 @@ export const apiClient = {
             }
         });
     },
+    
+    // Room management functions
+    getRoom: (agentId: string, roomId: string) => {
+        return fetcher({
+            url: `/agents/${agentId}/rooms/${roomId}`,
+            method: "GET"
+        });
+    },
+    
+    updateRoom: (agentId: string, roomId: string, updates: { name?: string; worldId?: string }) => {
+        return fetcher({
+            url: `/agents/${agentId}/rooms/${roomId}`,
+            method: "PATCH",
+            body: updates
+        });
+    },
+    
+    deleteRoom: (agentId: string, roomId: string) => {
+        return fetcher({
+            url: `/agents/${agentId}/rooms/${roomId}`,
+            method: "DELETE"
+        });
+    },
+    
     getActiveAgents: () => fetcher({ url: "/active-agents" }),
 };

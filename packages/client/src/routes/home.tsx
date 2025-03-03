@@ -1,47 +1,29 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useStartAgent, useActiveAgents, useStopAgent } from "@/hooks/use-query-hooks";
-import { Cog, Play, Plus } from "lucide-react";
+import { useAgents, useActiveAgents } from "@/hooks/use-query-hooks";
+import { Cog, Loader2, Play, Plus, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Agent, UUID } from "@elizaos/core";
-import { useQueryClient } from "@tanstack/react-query";
+import { useAgentManagement } from "@/hooks/use-agent-management";
 
 export default function Home() {
     const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
     const { data: activeAgentsData } = useActiveAgents();
     const activeAgents: UUID[] = Array.isArray(activeAgentsData) ? activeAgentsData : [];
-
-    const startAgentMutation = useStartAgent();
-    const stopAgentMutation = useStopAgent();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
+    
+    // Use the agent management hook
+    const { 
+        startAgent, 
+        stopAgent, 
+        isAgentStarting, 
+        isAgentStopping 
+    } = useAgentManagement();
 
     // Extract agents properly from the response
     const agents = agentsData?.agents || [];
-
-    // Handle agent start action
-    const handleStartAgent = async (agent: Agent) => {
-        try {
-            await startAgentMutation.mutateAsync(agent.id as UUID);
-            // Navigate to chat after successful start
-            queryClient.invalidateQueries({ queryKey: ["active-agents"] });
-            navigate(`/chat/${agent.id}`);
-        } catch (error) {
-            console.error("Failed to start agent:", error);
-        }
-    };
-
-    const handleStopAgent = async(agent: Agent) => {
-        try {
-            await stopAgentMutation.mutateAsync(agent.id as UUID);
-            queryClient.refetchQueries({ queryKey: ["active-agents"] });
-        } catch (error) {
-            console.error("Failed to stop agent:", error);
-        }
-    }
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -72,23 +54,44 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
                         const isActive = activeAgents.includes(agent.id as UUID);
+                        const isStarting = isAgentStarting(agent.id);
+                        const isStopping = isAgentStopping(agent.id);
+                        const isProcessing = isStarting || isStopping;
+                        
+                        let buttonLabel = "Start";
+                        let buttonIcon = <Play />;
+                        
+                        if (isStarting) {
+                            buttonLabel = "Starting...";
+                            buttonIcon = <Loader2 className="animate-spin" />;
+                        } else if (isStopping) {
+                            buttonLabel = "Stopping...";
+                            buttonIcon = <Loader2 className="animate-spin" />;
+                        } else if (isActive) {
+                            buttonLabel = "Stop";
+                            buttonIcon = <Square size={16} />;
+                        }
+                        
                         return <ProfileCard
                             key={agent.id}
                             title={agent.name}
                             content={formatAgentName(agent.name)}
                             buttons={[
                                 {
-                                    label: isActive ? "Stop" : "Start",
-                                    icon: isActive ? undefined : <Play />,
+                                    label: buttonLabel,
+                                    icon: buttonIcon,
                                     action: () => {
+                                        if (isProcessing) return; // Prevent action while processing
+                                        
                                         if (!isActive) {
-                                            handleStartAgent(agent);
+                                            startAgent(agent);
                                         } else {
-                                            handleStopAgent(agent);
+                                            stopAgent(agent);
                                         }
                                     },
-                                    className: `w-full grow ${isActive ? "text-red-500" : ""}`,
+                                    className: `w-full grow ${isActive ? "text-red-500" : ""} ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`,
                                     variant: !isActive ? "default" : "secondary",
+                                    disabled: isProcessing,
                                 },
                                 {
                                     icon: <Cog />,
@@ -98,15 +101,16 @@ export default function Home() {
                                     size: "icon"
                                 }
                             ]}
-                        />
-                        })}
-                    <Card className="flex justify-center items-center" onClick={() => navigate('/agents/new')}>
-                        <Button 
-                            variant="ghost" 
-                            className="h-24 w-24 rounded-full flex items-center justify-center"
-                        >
-                            <Plus style={{ width: 40, height: 40 }} />
-                        </Button>
+                        />;
+                    })}
+                    
+                    {/* Create new agent card */}
+                    <Card className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-accent/50 transition-colors"
+                        onClick={() => navigate("/create")}>
+                        <div className="flex flex-col items-center justify-center gap-2 p-8">
+                            <Plus size={40} className="text-muted-foreground" />
+                            <span className="text-muted-foreground">Create New Agent</span>
+                        </div>
                     </Card>
                 </div>
             )}
