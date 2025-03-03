@@ -1,5 +1,5 @@
 import { handleError } from "@/src/utils/handle-error"
-import { displayCharacter } from "@/src/utils/helpers"
+import { displayAgent } from "@/src/utils/helpers"
 import { logger } from "@/src/utils/logger"
 import { Command } from "commander"
 import fs from "node:fs"

@@ -1,5 +1,5 @@
 // src/commands/character.ts
-import type { Character, MessageExample } from "@elizaos/core";
+import type { Agent, MessageExample } from "@elizaos/core";
 import { MessageExampleSchema } from "@elizaos/core";
 import { Command } from "commander";
 import fs from "node:fs";
@@ -7,7 +7,7 @@ import prompts from "prompts";
 import { z } from "zod";
 import { adapter } from "../database";
 import { handleError } from "../utils/handle-error";
-import { displayCharacter, formatMessageExamples } from "../utils/helpers";
+import { displayAgent, formatMessageExamples } from "../utils/helpers";
 import { logger } from "../utils/logger";
 import { getRegistryIndex } from "../utils/registry";
 import { 
@@ -21,11 +21,11 @@ import {
 import { withConnection } from "../utils/with-connection";
 
 
-const characterSchema = z.object({
+const agentSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string(),
   plugins: z.array(z.string()).optional(),
-  secrets: z.record(z.string(), z.string()).optional(),
+  // secrets: z.record(z.string(), z.string()).optional(),
   bio: z.array(z.string()).optional(),
   adjectives: z.array(z.string()).optional(),
   postExamples: z.array(z.string()).optional(),
@@ -36,9 +36,12 @@ const characterSchema = z.object({
     chat: z.array(z.string()).optional(),
     post: z.array(z.string()).optional(),
   }).optional(),
+  enabled: z.boolean().optional(),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
 });
 
-type CharacterFormData = z.infer<typeof characterSchema>;
+type AgentFormData = z.infer<typeof agentSchema>;
 
 export const character = new Command()
   .name("character")
@@ -120,8 +123,8 @@ async function collectMessageExamples(characterName: string, initial: MessageExa
 /**
  * Collect character data with navigation.
  */
-async function collectCharacterData(initialData?: Partial<CharacterFormData>): Promise<CharacterFormData | null> {
-  const data: Partial<CharacterFormData> = { ...initialData };
+async function collectCharacterData(initialData?: Partial<AgentFormData>): Promise<AgentFormData | null> {
+  const data: Partial<AgentFormData> = { ...initialData };
   
   // Fetch plugin registry in advance
   let pluginRegistry: Record<string, string>;
@@ -139,7 +142,7 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
   logger.info("- Type 'cancel' to abort at any time");
   logger.info("----------------------------------------\n");
   
-  type Field = { key: keyof CharacterFormData; prompt: () => Promise<"success" | typeof NAV_BACK | typeof NAV_NEXT | "cancel"> };
+  type Field = { key: keyof AgentFormData; prompt: () => Promise<"success" | typeof NAV_BACK | typeof NAV_NEXT | "cancel"> };
   const fields: Field[] = [
     { key: "name", prompt: async () => {
         const inp = await promptWithNav("Name:", data.name || "", (val) => val.length >= 2 ? true : "Min 2 chars");
@@ -239,7 +242,7 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
         
         for (const field of fieldsStyle) {
           try {
-            logger.info(`\n${field.toUpperCase()} STYLE TRAITS:`);
+            logger.info(`\n${String(field).toUpperCase()} STYLE TRAITS:`);
             if (field === "all") {
               logger.info("These traits apply to all interactions");
             } else if (field === "chat") {
@@ -248,11 +251,11 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
               logger.info("These traits apply only to social media posts");
             }
             
-            const items = await promptForMultipleItems(`${field} style`, data.style[field] || []);
+            const items = await promptForMultipleItems(`${String(field)} style`, data.style[field] || []);
             data.style[field] = items || [];
-            logger.info(`${field} style: ${items.length} traits added`);
+            logger.info(`${String(field)} style: ${items.length} traits added`);
           } catch {
-            logger.error(`Error in ${field} style input, skipping...`);
+            logger.error(`Error in ${String(field)} style input, skipping...`);
             data.style[field] = [];
           }
         }
@@ -290,10 +293,10 @@ async function collectCharacterData(initialData?: Partial<CharacterFormData>): P
       idx++;
     }
   }
-  return data as CharacterFormData;
+  return data as AgentFormData;
 }
 
-function getDefaultCharacterFields(existing?: Partial<Character>) {
+function getDefaultCharacterFields(existing?: Partial<Agent>) {
   return {
     topics: existing?.topics || [],
     style: {
@@ -311,13 +314,13 @@ function getDefaultCharacterFields(existing?: Partial<Character>) {
 /**
  * Display character data for review and get confirmation
  */
-async function reviewCharacter(data: Partial<Character>): Promise<boolean> {
-  displayCharacter(data);
+async function reviewCharacter(data: Partial<Agent>): Promise<boolean> {
+  displayAgent(data);
 
   const { confirmed } = await prompts({
     type: "confirm",
     name: "confirmed",
-    message: "Save this character?",
+    message: "Save this agent?",
     initial: true
   });
 
@@ -330,18 +333,20 @@ async function reviewCharacter(data: Partial<Character>): Promise<boolean> {
 
 character.command("list")
   .alias("ls")
-  .description("list all characters")
+  .description("list all agents")
   .option("-j, --json", "output as JSON")
   .action(async (opts) => {
     await withConnection(async () => {
-      const chars = await adapter.listCharacters();
-      if (chars.length === 0) {
-        logger.info("No characters found");
+      
+      const agents = await adapter.getAgents();
+
+      if (agents.length === 0) {
+        logger.info("No agents found");
       } else if (opts.json) {
-        logger.info(JSON.stringify(chars, null, 2));
+        logger.info(JSON.stringify(agents, null, 2));
       } else {
-        logger.info("\nCharacters:");
-        console.table(chars.map(c => ({ name: c.name, bio: c.bio[0] })));
+        logger.info("\nAgents:");
+        console.table(agents.map(a => ({ name: a.name, bio: a.bio[0] })));
       }
     });
   });
@@ -353,12 +358,12 @@ character.command("create")
   .option("-y, --yes", "skip confirmation")
   .action(async (opts) => {
     await withConnection(async () => {
-      let formData: CharacterFormData | null = null;
+      let formData: AgentFormData | null = null;
       
       if (opts.import) {
         try {
           const raw = await fs.promises.readFile(opts.import, "utf8");
-          formData = characterSchema.parse(JSON.parse(raw));
+          formData = agentSchema.parse(JSON.parse(raw));
         } catch (error) {
           logger.error(`Failed to import file: ${error.message}`);
           return;
@@ -391,10 +396,10 @@ character.command("create")
           chat: formData.style?.chat || [],
           post: formData.style?.post || []
         }
-      } as Character;
+      } as Partial<Agent>;
 
       if (opts.yes || await reviewCharacter(charData)) {
-        await adapter.createCharacter(charData);
+        await adapter.createAgent(charData);
         logger.success(`Created character ${charData.name}`);
       } else {
         logger.info("Creation cancelled");
@@ -410,14 +415,16 @@ character.command("edit")
   .option("-f, --field <field>", "edit specific field (bio, adjectives, topics, style, plugins, examples)")
   .action(async (opts) => {
     await withConnection(async () => {
-      const existing = await adapter.getCharacter(opts.name);
+      const agents = await adapter.getAgents();
+      const agentId = agents.find(a => a.name === opts.name)?.id;
+      const existing = await adapter.getAgent(agentId);
       if (!existing) {
-        logger.error(`Character ${opts.name} not found`);
+        logger.error(`Agent ${opts.name} not found`);
         return;
       }
 
       // Show current values before editing
-      displayCharacter(existing, "Current Character Values");
+      displayAgent(existing, "Current Character Values");
       
       logger.info("\n=== Starting Edit Mode ===");
       logger.info("Press Enter to keep existing values, or type new ones");
@@ -463,11 +470,11 @@ character.command("edit")
           chat: formData.style?.chat || [],
           post: formData.style?.post || []
         }
-      } as Character;
+      } as Agent;
 
       if (opts.yes || await reviewCharacter(updated)) {
-        await adapter.updateCharacter(opts.name, updated);
-        logger.success(`Updated character ${formData.name} successfully`);
+        await adapter.updateAgent(existing.id, updated);
+        logger.success(`Updated agent ${formData.name} successfully`);
       } else {
         logger.info("Update cancelled");
       }
@@ -483,8 +490,8 @@ character.command("import")
     await withConnection(async () => {
       try {
         const raw = await fs.promises.readFile(file, "utf8");
-        const parsed = characterSchema.parse(JSON.parse(raw));
-        const charData = {
+        const parsed = agentSchema.parse(JSON.parse(raw));
+        const agentData = {
           name: parsed.name,
           bio: parsed.bio || [],
           adjectives: parsed.adjectives || [],
@@ -499,10 +506,13 @@ character.command("import")
           plugins: parsed.plugins || [],
         };
 
+
+        const agents = await adapter.getAgents();
+
         // Check if a character with the same name already exists.
-        const existing = await adapter.getCharacter(parsed.name);
+        const existing = agents.find(a => a.name === parsed.name);
         if (existing) {
-          logger.warn(`Character "${parsed.name}" already exists.`);
+          logger.warn(`Agent "${parsed.name}" already exists.`);
           let proceed: boolean;
           if (opts.yes) {
             proceed = true;
@@ -515,16 +525,17 @@ character.command("import")
           }
 
           // Optionally review the character before replacing if not skipping confirmation.
-          if (!(opts.yes || await reviewCharacter(charData))) {
+          if (!(opts.yes || await reviewCharacter(agentData))) {
             logger.info("Replacement cancelled");
             return;
           }
-          await adapter.updateCharacter(parsed.name, charData);
-          logger.success(`Replaced character "${parsed.name}" successfully`);
+    
+          await adapter.updateAgent(existing.id, agentData);
+          logger.success(`Replaced agent "${parsed.name}" successfully`);
         } else {
-          if (opts.yes || await reviewCharacter(charData)) {
-            await adapter.createCharacter(charData);
-            logger.success(`Imported character "${parsed.name}" successfully`);
+          if (opts.yes || await reviewCharacter(agentData)) {
+            await adapter.createAgent(agentData);
+            logger.success(`Imported agent "${parsed.name}" successfully`);
           } else {
             logger.info("Import cancelled");
           }
@@ -543,17 +554,22 @@ character.command("export")
   .option("-p, --pretty", "pretty print JSON")
   .action(async (opts) => {
     await withConnection(async () => {
-      const characterData = await adapter.getCharacter(opts.name);
-      if (!characterData) {
-        logger.error(`Character ${opts.name} not found`);
+      const agents = await adapter.getAgents();
+      if (agents.length === 0) {
+        logger.info("No agents found");
         return;
       }
-      const outputPath = opts.output || `${characterData.name}.json`;
+      const agent = agents.find(a => a.name === opts.name);
+      if (!agent) {
+        logger.error(`Agent ${opts.name} not found`);
+        return;
+      }
+      const outputPath = opts.output || `${agent.name}.json`;
       await fs.promises.writeFile(
         outputPath, 
-        JSON.stringify(characterData, null, opts.pretty ? 2 : undefined)
+        JSON.stringify(agent, null, opts.pretty ? 2 : undefined)
       );
-      logger.success(`Exported character to ${outputPath}`);
+      logger.success(`Exported agent to ${outputPath}`);
     });
   });
 
@@ -564,15 +580,23 @@ character.command("remove")
   .option("-f, --force", "skip confirmation")
   .action(async (opts) => {
     await withConnection(async () => {
-      const exists = await adapter.getCharacter(opts.name);
-      if (!exists) {
-        logger.error(`Character ${opts.name} not found`);
+
+      const agents = await adapter.getAgents();
+      if (agents.length === 0) {
+        logger.info("No agents found");
         return;
       }
 
-      if (opts.force || await confirmAction(`Are you sure you want to remove character "${opts.name}"?`)) {
-        await adapter.removeCharacter(opts.name);
-        logger.success(`Removed character ${opts.name}`);
+      const agent = agents.find(a => a.name === opts.name);
+
+      if (!agent) {
+        logger.error(`Agent ${agent.id} not found`);
+        return;
+      }
+
+      if (opts.force || await confirmAction(`Are you sure you want to remove agent "${opts.name}"?`)) {
+        await adapter.deleteAgent(opts.name);
+        logger.success(`Removed agent ${opts.name}`);
       } else {
         logger.info("Removal cancelled");
       }
