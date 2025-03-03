@@ -435,6 +435,9 @@ importers:
 
   packages/cli:
     dependencies:
+      axios:
+        specifier: ^1.8.1
+        version: 1.8.1
       commander:
         specifier: ^13.1.0
         version: 13.1.0
