@@ -130,7 +130,7 @@ export type CharacterFormProps = {
   title: string;
   description: string;
   onSubmit: (character: Agent) => Promise<void>;
-  onCancel?: () => void;
+  onDelete?: () => void;
   onReset?: () => void;
   isAgent?: boolean;
   customComponents?: customComponent[];
@@ -144,7 +144,7 @@ export default function CharacterForm({
   title,
   description,
   onSubmit,
-  onCancel,
+  onDelete,
   onReset,
   customComponents = []
 }: CharacterFormProps) {
@@ -302,12 +302,12 @@ export default function CharacterForm({
         </Tabs>
 
         <div className="flex justify-between gap-4 mt-6">
-          <div className="flex gap-4">
-            {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
+          <div className="flex gap-4 text-red-500">
+            <Button type="button" variant="outline" onClick={() => {
+              onDelete?.();
+            }}>
+              Delete Character
+            </Button>
           </div>
           
           <div className="flex gap-4">

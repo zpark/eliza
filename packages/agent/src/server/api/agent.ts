@@ -69,53 +69,6 @@ export function agentRouter(
     });
 
 
-    // Create new agent and start it
-    // Pass agent data or character path or character json in body
-    router.post('/', async (req, res) => {
-        logger.info("[AGENT START] Received request to start a new agent");
-        const { characterPath, characterJson } = req.body;
-        
-        if (!characterPath && !characterJson) {
-            res.status(400).json({
-                success: false,
-                error: {
-                    code: 'INVALID_REQUEST',
-                    message: 'Character path or character json is required'
-                }
-            });
-            return;
-        }
-
-        const character = characterPath 
-            ? await loadCharacter(characterPath)
-            : await jsonToCharacter(characterJson);
-
-
-
-
-        const existingAgents = await db.getAgents();
-        const existingAgent = existingAgents.find((agent) => agent.name === character.name);
-        if(existingAgent) {
-            logger.error(`[AGENT START] Character name ${character.name} already taken`);
-            res.status(400).json({
-                success: false,
-                error: {
-                    code: 'INVALID_REQUEST',
-                    message: 'Character name already taken'
-                }
-            });
-            return;
-        }
-
-        const agent = await db.createAgent(character);
-        await server?.startAgent(agent.id);
-
-        res.json({
-            success: true,
-            data: agent
-        });
-    });
-
     // Get specific agent details
     router.get('/:agentId', async (req, res) => {
         const agentId = validateUuid(req.params.agentId);
@@ -227,8 +180,8 @@ export function agentRouter(
             return;
         }
 
-        const { updates } = req.body;
-        
+        const updates = req.body;
+
         try {
             // Handle other updates if any
             if (Object.keys(updates).length > 0) {
