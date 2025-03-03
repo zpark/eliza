@@ -120,10 +120,17 @@ export function AppSidebar() {
                         {/* Render disabled agents */}
                         {inactiveAgents.map((agent) => (
                           <SidebarMenuItem key={agent.id}>
-                              <div className="flex gap-2 transition-colors px-4 py-2 my-1 rounded-md text-muted-foreground">
-                                <User className="size-5" />
-                                <span className="text-base">{agent.name}</span>
-                              </div>
+                            <NavLink to={`/chat/${agent.id}`}>
+                              <SidebarMenuButton
+                                isActive={location.pathname.includes(agent.id as string)}
+                                className="transition-colors px-4 py-2 my-1 rounded-md"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <User className="size-5" />
+                                  <span className="text-base">{agent.name}</span>
+                                </div>
+                              </SidebarMenuButton>
+                            </NavLink>
                           </SidebarMenuItem>
                         ))}
                       </>

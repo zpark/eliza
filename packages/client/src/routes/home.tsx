@@ -51,7 +51,8 @@ export default function Home() {
             {!isLoading && !isError &&(
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
-                        const isActive = agent.status == 'active';
+                        // Use type assertion to access status property
+                        const isActive = (agent as Agent & { status?: string }).status === 'active';
                         const isStarting = isAgentStarting(agent.id);
                         const isStopping = isAgentStopping(agent.id);
                         const isProcessing = isStarting || isStopping;

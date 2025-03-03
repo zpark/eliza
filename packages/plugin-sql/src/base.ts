@@ -5,6 +5,7 @@ import {
     DatabaseAdapter,
     type Entity,
     type Goal,
+    type GoalStatus,
     logger,
     type Memory,
     type Participant,
@@ -125,19 +126,20 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
-    async ensureAgentExists(agent: Partial<Agent>) {
+
+    async ensureAgentExists(agent: Partial<Agent>): Promise<void> {
         if (!agent.name) {
             throw new Error("Agent name is required");
         }
-        const agentExists = await this.getAgent(stringToUuid(agent.name));
-        if (!agentExists || !agent.id) {
-            await this.createAgent({
-                ...agent,
-                id: stringToUuid(agent.name),
-            });
+
+        const agents = await this.getAgents();
+        const existingAgent = agents.find((a: Partial<Agent & { status: string }>) => a.name === agent.name);
+
+        if (!existingAgent) {
+            await this.createAgent(agent);
         }
     }
-
+    
     async ensureEmbeddingDimension(dimension: number) {
         const existingMemory = await this.db
             .select({
@@ -214,6 +216,38 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    async updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean> {
+        return this.withDatabase(async () => {
+            try {
+                if (!agent.id) {
+                    throw new Error("Agent ID is required for update");
+                }
+                
+                await this.db.transaction(async (tx) => {
+                    await tx
+                        .update(agentTable)
+                        .set({
+                            ...agent,
+                            updatedAt: Date.now(),
+                        })
+                        .where(eq(agentTable.id, agentId));
+                });
+                
+                logger.debug("Agent updated successfully:", {
+                    agentId
+                });
+                return true;
+            } catch (error) {
+                logger.error("Error updating agent:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    agentId,
+                    agent
+                });
+                return false;
+            }
+        });
+    }
+
     async deleteAgent(agentId: UUID): Promise<boolean> {
         // casacade delete all related for the agent
         return this.withDatabase(async () => {
@@ -221,22 +255,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 await tx.delete(agentTable).where(eq(agentTable.id, agentId));
             });
             return true;
-        });
-    }
-
-
-    async updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db.update(agentTable).set(agent).where(eq(agentTable.id, agentId));
-                return true;
-            } catch (error) {
-                logger.error("Error updating agent:", {
-                    error: error instanceof Error ? error.message : String(error),
-                    agentId: agent.id
-                });
-                return false;
-            }
         });
     }
 
@@ -1074,7 +1092,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 name: row.name ?? "",
                 status: (row.status ?? "NOT_STARTED") as GoalStatus,
                 description: row.description ?? "",
-                objectives: row.objectives as any[],
+                objectives: row.objectives as unknown[],
                 createdAt: row.createdAt,
             }));
         });
@@ -1165,13 +1183,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
-                    id: roomTable.id as any,
-                    channelId: roomTable.channelId as any,
-                    agentId: roomTable.agentId as any,
-                    serverId: roomTable.serverId as any,
-                    worldId: roomTable.worldId as any,
-                    type: roomTable.type as any,
-                    source: roomTable.source as any,
+                    id: roomTable.id,
+                    channelId: roomTable.channelId,
+                    agentId: roomTable.agentId,
+                    serverId: roomTable.serverId,
+                    worldId: roomTable.worldId,
+                    type: roomTable.type,
+                    source: roomTable.source,
                 })
                 .from(roomTable)
                 .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, this.agentId)))
@@ -1328,9 +1346,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
             const account = await this.getEntityById(userId);
 
+            if (!account) {
+                return [];
+            }
+
             return result.map((row) => ({
                 id: row.id as UUID,
-                account: account!,
+                account: account,
             }));
         });
     }
@@ -1409,7 +1431,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         sourceEntityId: UUID;
         targetEntityId: UUID;
         tags?: string[];
-        metadata?: { [key: string]: any };
+        metadata?: { [key: string]: unknown };
     }): Promise<boolean> {
         return this.withDatabase(async () => {
             console.trace()
@@ -1621,155 +1643,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async createCharacter(character: Character): Promise<UUID | undefined> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db.transaction(async (tx) => {
-                    const insertData = characterToInsert({ ...character });
-                    await tx.insert(characterTable).values(insertData);
-                    return character.id;
-                });
-    
-                logger.debug("Character created successfully:", {
-                    name: character.name,
-                });
-
-                return character.id;
-            } catch (error) {
-                logger.error("Failed to create character:", {
-                    error: error instanceof Error ? error.message : String(error),
-                    characterName: character.name,
-                });
-                throw error;
-            }
-        });
-    }
-
-    async listCharacters(): Promise<Character[]> {
-        return this.withDatabase(async () => {
-            const characters = await this.db
-                .select()
-                .from(characterTable)
-                .orderBy(desc(characterTable.createdAt));
-
-            return characters.map((char) => ({
-                name: char.name,
-                username: char.username ?? undefined,
-                system: char.system ?? undefined,
-                templates: char.templates
-                    ? Object.fromEntries(
-                          Object.entries(char.templates).map(
-                              ([key, stored]) => [
-                                  key,
-                                  storedToTemplate(stored as StoredTemplate),
-                              ]
-                          )
-                      )
-                    : undefined,
-                bio: char.bio,
-                messageExamples: char.messageExamples || undefined,
-                postExamples: char.postExamples || undefined,
-                topics: char.topics || undefined,
-                adjectives: char.adjectives || undefined,
-                knowledge: char.knowledge || undefined,
-                plugins: char.plugins || undefined,
-                settings: char.settings || undefined,
-                style: char.style || undefined,
-            }));
-        });
-    }
-
-    async getCharacter(name: string): Promise<Character | null> {
-        return this.withDatabase(async () => {
-            const result = await this.db
-                .select()
-                .from(characterTable)
-                .where(eq(characterTable.name, name))
-                .limit(1);
-
-            if (result.length === 0) return null;
-
-            const char = result[0];
-            return {
-                name: char.name,
-                username: char.username ?? undefined,
-                system: char.system ?? undefined,
-                templates: char.templates
-                    ? Object.fromEntries(
-                          Object.entries(char.templates).map(
-                              ([key, stored]) => [
-                                  key,
-                                  storedToTemplate(stored as StoredTemplate),
-                              ]
-                          )
-                      )
-                    : undefined,
-                bio: char.bio,
-                messageExamples: char.messageExamples || undefined,
-                postExamples: char.postExamples || undefined,
-                topics: char.topics || undefined,
-                adjectives: char.adjectives || undefined,
-                knowledge: char.knowledge || undefined,
-                plugins: char.plugins || undefined,
-                settings: char.settings || undefined,
-                style: char.style || undefined,
-            };
-        });
-    }
-
-    async updateCharacter(
-        name: string,
-        updates: Partial<Character>
-    ): Promise<void> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db.transaction(async (tx) => {
-                    const { templates, ...restUpdates } = updates;
-    
-                    const updateData: Partial<typeof characterTable.$inferInsert> = {
-                        ...restUpdates,
-                        ...(templates && {
-                            templates: Object.fromEntries(
-                                Object.entries(templates).map(([key, value]) => [
-                                    key,
-                                    templateToStored(value),
-                                ])
-                            ),
-                        }),
-                    };
-    
-                    await tx
-                        .update(characterTable)
-                        .set(updateData)
-                        .where(eq(characterTable.name, name));
-                });
-    
-                logger.debug("Character updated successfully:", {
-                    name,
-                    updatedFields: Object.keys(updates),
-                });
-            } catch (error) {
-                logger.error("Failed to update character:", {
-                    name,
-                    error: error instanceof Error ? error.message : String(error),
-                    updatedFields: Object.keys(updates),
-                });
-                throw error;
-            }
-        });
-    }
-
-    async removeCharacter(name: string): Promise<void> {
-        return this.withDatabase(async () => {
-            await this.db.transaction(async (tx) => {
-                await tx
-                    .delete(characterTable)
-                    .where(eq(characterTable.name, name));
-
-                logger.debug("Character removed successfully:", { name });
-            });
-        });
-    }
 
     async createWorld(world: WorldData): Promise<UUID> {
         return this.withDatabase(async () => {
@@ -1928,8 +1801,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
         await this.withRetry(async () => {
             await this.withDatabase(async () => {
-                const updateValues: any = {
-                    updatedAt: new Date()
+                const updateValues : Partial<Task> & { updatedAt?: number } = {
+                    updatedAt: Date.now()
                 };
                 
                 // Add fields to update if they exist in the partial task object
