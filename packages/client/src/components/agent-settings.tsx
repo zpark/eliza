@@ -45,6 +45,8 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
       // Invalidate both the agent query and the agents list
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });
       queryClient.invalidateQueries({ queryKey: ["agents"] });
+
+      navigate("/");
       
       toast({
         title: "Success",
