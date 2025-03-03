@@ -13,7 +13,8 @@ import {
     type RoomData,
     stringToUuid,
     type UUID,
-    type WorldData
+    type WorldData,
+    type Task
 } from "@elizaos/core";
 
 // Define the metadata type inline since we can't import it
@@ -37,7 +38,11 @@ import {
     gte,
     inArray,
     lte,
-    sql
+    sql,
+    asc,
+    or,
+    isNull,
+    isNotNull
 } from "drizzle-orm";
 import { v4 } from "uuid";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
@@ -54,6 +59,7 @@ import {
     relationshipTable,
     roomTable,
     worldTable,
+    taskTable
 } from "./schema/index";
 import type { DrizzleOperations } from "./types";
 
@@ -1281,21 +1287,20 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async addParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                await this.db.transaction(async (tx) => {
-                    await tx.insert(participantTable).values({
-                        id: v4(),
-                        userId,
-                        roomId,
-                        agentId: this.agentId
-                    });
-                });
+                await this.db.insert(participantTable).values({
+                    userId,
+                    roomId,
+                    agentId: this.agentId,
+                })
+                .onConflictDoNothing();
                 return true;
             } catch (error) {
-                logger.error("Failed to add participant:", {
+                logger.error("Error adding participant", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     userId,
                     roomId,
+                    agentId: this.agentId,
                 });
                 return false;
             }
@@ -1313,12 +1318,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                                 eq(participantTable.userId, userId),
                                 eq(participantTable.roomId, roomId)
                             )
-                        )
-                        .returning();
+                        ).returning();
                 });
                 
                 const removed = result.length > 0;
-                
                 logger.debug(`Participant ${removed ? 'removed' : 'not found'}:`, {
                     userId,
                     roomId,
@@ -1431,7 +1434,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async createRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
         tags?: string[];
         metadata?: { [key: string]: any };
     }): Promise<boolean> {
@@ -1443,7 +1445,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     id,
                     sourceEntityId: params.sourceEntityId,
                     targetEntityId: params.targetEntityId,
-                    agentId: params.agentId,
+                    agentId: this.agentId,
                     tags: params.tags || [],
                     metadata: params.metadata || {},
                 });
@@ -1538,7 +1540,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
                 // Filter by tags if provided
                 if (params.tags && params.tags.length > 0) {
-                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags)}]::text[]`);
+                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags, ', ')}]::text[]`);
                 }
 
                 const results = await query;
@@ -1644,6 +1646,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             }
         });
     }
+
     async createCharacter(character: Character): Promise<UUID | undefined> {
         return this.withDatabase(async () => {
             try {
@@ -1828,6 +1831,188 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async removeWorld(id: UUID): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.delete(worldTable).where(eq(worldTable.id, id));
+        });
+    }
+
+    /**
+     * Creates a new task in the database.
+     * @param task The task object to create
+     * @returns Promise resolving to the UUID of the created task
+     */
+    async createTask(task: Task): Promise<UUID> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                const now = new Date();
+                const metadata = task.metadata || {};
+                
+                // Ensure updatedAt is set in metadata
+                if (!metadata.updatedAt) {
+                    metadata.updatedAt = now.getTime();
+                }
+                
+                const result = await this.db.insert(taskTable)
+                    .values({
+                        id: task.id as UUID,
+                        name: task.name,
+                        description: task.description,
+                        roomId: task.roomId,
+                        worldId: task.worldId,
+                        tags: task.tags,
+                        metadata: metadata,
+                        createdAt: now,
+                        updatedAt: now,
+                        agentId: this.agentId
+                    })
+                    .returning({ id: taskTable.id });
+                
+                return result[0].id;
+            });
+        });
+    }
+
+    /**
+     * Retrieves tasks based on specified parameters.
+     * @param params Object containing optional roomId and tags to filter tasks
+     * @returns Promise resolving to an array of Task objects
+     */
+    async getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                let query = this.db.select()
+                    .from(taskTable)
+                    .where(eq(taskTable.agentId, this.agentId));
+                
+                // Apply filters if provided
+                if (params.roomId) {
+                    query = query.where(eq(taskTable.roomId, params.roomId));
+                }
+                
+                if (params.tags && params.tags.length > 0) {
+                    // Filter by tags - tasks that have at least one of the specified tags
+                    query = query.where(
+                        sql`${taskTable.tags} && ARRAY[${params.tags.map(tag => sql`${tag}`).join(', ')}]::text[]`
+                    );
+                }
+                
+                const results = await query;
+                
+                return results.map(row => ({
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    roomId: row.roomId,
+                    worldId: row.worldId,
+                    tags: row.tags || [],
+                    metadata: row.metadata || {}
+                }));
+            });
+        });
+    }
+
+    /**
+     * Retrieves a specific task by its ID.
+     * @param id The UUID of the task to retrieve
+     * @returns Promise resolving to the Task object if found, null otherwise
+     */
+    async getTask(id: UUID): Promise<Task | null> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                const result = await this.db.select()
+                    .from(taskTable)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    )
+                    .limit(1);
+                
+                if (result.length === 0) {
+                    return null;
+                }
+                
+                const row = result[0];
+                return {
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    roomId: row.roomId,
+                    worldId: row.worldId,
+                    tags: row.tags || [],
+                    metadata: row.metadata || {}
+                };
+            });
+        });
+    }
+
+    /**
+     * Updates an existing task in the database.
+     * @param id The UUID of the task to update
+     * @param task Partial Task object containing the fields to update
+     * @returns Promise resolving when the update is complete
+     */
+    async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
+        await this.withRetry(async () => {
+            await this.withDatabase(async () => {
+                const updateValues: any = {
+                    updatedAt: new Date()
+                };
+                
+                // Add fields to update if they exist in the partial task object
+                if (task.name !== undefined) updateValues.name = task.name;
+                if (task.description !== undefined) updateValues.description = task.description;
+                if (task.roomId !== undefined) updateValues.roomId = task.roomId;
+                if (task.worldId !== undefined) updateValues.worldId = task.worldId;
+                if (task.tags !== undefined) updateValues.tags = task.tags;
+                
+                // Handle metadata updates
+                if (task.metadata) {
+                    // Get current task to merge metadata
+                    const currentTask = await this.getTask(id);
+                    if (currentTask) {
+                        const currentMetadata = currentTask.metadata || {};
+                        const newMetadata = {
+                            ...currentMetadata,
+                            ...task.metadata,
+                            updatedAt: Date.now()
+                        };
+                        updateValues.metadata = newMetadata;
+                    } else {
+                        updateValues.metadata = {
+                            ...task.metadata,
+                            updatedAt: Date.now()
+                        };
+                    }
+                }
+                
+                await this.db.update(taskTable)
+                    .set(updateValues)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    );
+            });
+        });
+    }
+
+    /**
+     * Deletes a task from the database.
+     * @param id The UUID of the task to delete
+     * @returns Promise resolving when the deletion is complete
+     */
+    async deleteTask(id: UUID): Promise<void> {
+        await this.withRetry(async () => {
+            await this.withDatabase(async () => {
+                await this.db.delete(taskTable)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    );
+            });
         });
     }
 }

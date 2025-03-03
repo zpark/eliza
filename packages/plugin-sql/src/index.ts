@@ -4,7 +4,7 @@ import {
   type IDatabaseAdapter,
   logger,
   type Plugin,
-  UUID,
+  type UUID,
 } from "@elizaos/core";
 import { PgliteDatabaseAdapter } from "./pg-lite/adapter";
 import { PGliteClientManager } from "./pg-lite/manager";

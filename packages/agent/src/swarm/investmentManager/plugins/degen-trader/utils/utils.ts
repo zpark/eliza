@@ -1,4 +1,4 @@
-import { logger, IAgentRuntime } from "@elizaos/core";
+import { logger, type IAgentRuntime } from "@elizaos/core";
 import { PublicKey } from "@solana/web3.js";
 
 /**
@@ -63,8 +63,7 @@ export async function fetchWithRetry(
       lastError = error instanceof Error ? error : new Error(String(error));
 
       if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, i)));
-        continue;
+        await new Promise(resolve => setTimeout(resolve, 2000 * 2 ** i));
       }
     }
   }
@@ -138,8 +137,7 @@ export async function manageAnalyzedTokens(
 
     const now = Date.now();
     history = history.filter(token =>
-      token &&
-      token.timestamp &&
+      token?.timestamp &&
       now - token.timestamp < 24 * 60 * 60 * 1000 // 24 hours
     );
 

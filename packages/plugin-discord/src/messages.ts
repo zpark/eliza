@@ -160,7 +160,7 @@ export class MessageManager {
 
           const memories: Memory[] = [];
           for (const m of messages) {
-            let action = content.action;
+            const action = content.action;
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),

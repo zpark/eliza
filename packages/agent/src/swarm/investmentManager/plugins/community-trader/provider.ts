@@ -1,4 +1,4 @@
-import { IAgentRuntime, Memory, State } from "@elizaos/core";
+import type { IAgentRuntime, Memory, State } from "@elizaos/core";
 import { dataProvider } from "./providers/data";
 import { recommendationsProvider } from "./providers/recommendations";
 import { render } from "./utils";

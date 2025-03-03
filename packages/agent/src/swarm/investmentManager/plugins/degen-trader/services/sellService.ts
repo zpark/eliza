@@ -1,12 +1,12 @@
-import { logger, IAgentRuntime } from "@elizaos/core";
+import { logger, type IAgentRuntime } from "@elizaos/core";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { TrustScoreDatabase } from "../../community-trader/db";
-import { SonarClient } from "../services/sonarClient";
-import { SellSignalMessage } from "../types";
+import type { SonarClient } from "../services/sonarClient";
+import type { SellSignalMessage } from "../types";
 import { getWalletKeypair } from "../utils/wallet";
 
 // Add balance tracking
-let pendingSells: { [tokenAddress: string]: bigint } = {};
+const pendingSells: { [tokenAddress: string]: bigint } = {};
 
 export async function handleSellSignal(
   signal: SellSignalMessage,

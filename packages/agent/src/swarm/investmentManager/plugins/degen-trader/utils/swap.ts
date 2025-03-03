@@ -1,8 +1,8 @@
 import {
-  Connection,
+  type Connection,
   PublicKey,
   Transaction,
-  TransactionInstruction,
+  type TransactionInstruction,
   SystemProgram,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
@@ -40,7 +40,7 @@ export async function executeSwap(
 }
 
 export async function createSwapInstruction(
-  connection: Connection,
+  _connection: Connection,
   walletPubkey: PublicKey,
   params: SwapParams,
 ): Promise<TransactionInstruction> {
@@ -53,9 +53,9 @@ export async function createSwapInstruction(
 }
 
 export async function getTokenAccount(
-  connection: Connection,
+  _connection: Connection,
   walletPubkey: PublicKey,
-  mint: PublicKey,
+  _mint: PublicKey,
 ): Promise<PublicKey> {
   // For SOL transfers, just return the wallet pubkey
   return walletPubkey;

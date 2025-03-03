@@ -1,4 +1,4 @@
-import { IAgentRuntime, logger, ModelClass } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
 import SentimentModel from "../models/sentiment";
 import TokenModel from "../models/token";
 import DataModel from "../models/data";

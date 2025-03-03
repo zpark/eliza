@@ -1,5 +1,5 @@
-import { Content, Memory, stringToUuid, UUID } from "@elizaos/core";
-import { MessageRecommendation } from "./recommendations/schema";
+import { type Content, type Memory, stringToUuid, type UUID } from "@elizaos/core";
+import type { MessageRecommendation } from "./recommendations/schema";
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type Pretty<type> = { [key in keyof type]: type[key] } & unknown;

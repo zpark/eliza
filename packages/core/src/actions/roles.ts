@@ -1,4 +1,4 @@
-import { ZodSchema, z } from "zod";
+import type { ZodSchema, z } from "zod";
 import { createUniqueUuid } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";

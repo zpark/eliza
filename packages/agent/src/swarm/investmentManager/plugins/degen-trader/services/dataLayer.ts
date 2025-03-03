@@ -13,7 +13,7 @@ export class DataLayer {
 
   static async getTokenRecommendation(): Promise<TokenRecommendation> {
     try {
-      const response = await fetch(this.SIGNAL_API_URL, {
+      const response = await fetch(DataLayer.SIGNAL_API_URL, {
         method: 'POST',
       });
 

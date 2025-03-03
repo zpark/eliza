@@ -2,16 +2,16 @@
 // just have our own signal
 
 import { Mutex } from "async-mutex";
-import { io, Socket } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
-import { IAgentRuntime, Service, ServiceType, UUID } from "@elizaos/core";
+import { type IAgentRuntime, Service, ServiceType, type UUID } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
 import { Sonar, TrustScoreBeClient } from "./backend.js";
 import { TrustScoreDatabase } from "./db.js";
 import { calculatePositionPerformance } from "./performanceScore.js";
 import { calculateOverallRiskScore, TrustScoreManager } from "./scoreManager.js";
 import { TrustTokenProvider } from "./tokenProvider.js";
-import {
+import type {
     BuyData,
     ITrustTokenProvider,
     Position,
@@ -65,7 +65,7 @@ const SLIPPAGE_BPS = 50; // 0.5% TODO: move this to config
 const FORCE_SIMULATION = true; // TODO: add this to config?
 
 export class TrustTradingService extends Service {
-    static serviceType: ServiceType = ServiceType.TRADING;
+    serviceType = "trust_trading";
 
     public readonly scoreManager: TrustScoreManager;
     public readonly db: TrustScoreDatabase;
@@ -80,7 +80,7 @@ export class TrustTradingService extends Service {
         { id: UUID; chain: string; tokenAddress: string }
     > = new Map();
 
-    private initialized: boolean = false;
+    private initialized = false;
 
     private wallets: Map<string, TrustWalletProvider>;
 
@@ -116,12 +116,12 @@ export class TrustTradingService extends Service {
         let backend: TrustScoreBeClient | undefined;
         try {
             backend = TrustScoreBeClient.createFromRuntime(runtime);
-        } catch (error) {}
+        } catch (_error) {}
 
         let sonar: Sonar | undefined;
         try {
             sonar = Sonar.createFromRuntime(runtime);
-        } catch (error) {}
+        } catch (_error) {}
 
         return new TrustTradingService(
             runtime,
@@ -240,7 +240,6 @@ export class TrustTradingService extends Service {
                 console.log("Closing position", position.id);
                 await this.closePosition(position.id);
                 await this.sonar?.stopProcess(position.id);
-                continue;
             } else {
                 // resume sonar processes
                 this.sonar?.startProcess({
@@ -397,7 +396,7 @@ export class TrustTradingService extends Service {
 
             switch (recomendation.type) {
                 // for now, lets just assume buy only, but we should implement
-                case "BUY":
+                case "BUY": {
                     // eslint-disable-next-line no-case-declarations
                     const wallet = this.wallets.get(recomendation.chain);
 
@@ -451,6 +450,7 @@ export class TrustTradingService extends Service {
                     });
 
                     return true;
+                }
                 case "SELL":
                     console.warn("Not implemented");
                     break;
@@ -470,7 +470,7 @@ export class TrustTradingService extends Service {
 
         switch (recomendation.type) {
             // for now, lets just assume buy only, but we should implement
-            case "BUY":
+            case "BUY": {
                 // eslint-disable-next-line no-case-declarations
                 const wallet = this.wallets.get(recomendation.chain);
 
@@ -524,6 +524,7 @@ export class TrustTradingService extends Service {
                 });
 
                 return true;
+            }
             case "SELL":
                 console.warn("Not implemented");
                 break;
@@ -622,7 +623,7 @@ export class TrustTradingService extends Service {
         }
     }
 
-    private async validateRecommender(recommender: Recommender) {
+    private async validateRecommender(_recommender: Recommender) {
         return true;
         // const recommenderMetrics = await this.db.getRecommenderMetrics(
         //     recommender.id
@@ -682,7 +683,7 @@ export class TrustTradingService extends Service {
                         outputToken: tokenAddress,
                         amountIn: solAmount,
                         minAmountOut: minAmountOut,
-                        isSimulation: FORCE_SIMULATION ? true : false,
+                        isSimulation: !!FORCE_SIMULATION,
                         quoteData: data,
                     }
                 );
@@ -1087,7 +1088,7 @@ export class TrustTradingService extends Service {
         console.log("executing swap...", { inputToken, outputToken, amountIn });
 
         const wallet = this.wallets.get(chain);
-        if (!wallet) throw new Error("Missing wallet for chain: " + chain);
+        if (!wallet) throw new Error(`Missing wallet for chain: ${chain}`);
 
         if (isSimulation)
             return await wallet.swapIn({

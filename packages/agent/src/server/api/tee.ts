@@ -13,8 +13,7 @@ export function teeRouter(
 
             for (const agentRuntime of agents.values()) {
                 const teeLogService = agentRuntime
-                    .getService<ITeeLogService>(ServiceType.TEE)
-                    .getInstance();
+                    .getService<ITeeLogService>(ServiceType.TEE);
 
                 const agents = await teeLogService.getAllAgents();
                 allAgents.push(...agents);
@@ -22,8 +21,7 @@ export function teeRouter(
 
             const runtime: IAgentRuntime = agents.values().next().value;
             const teeLogService = runtime
-                .getService<ITeeLogService>(ServiceType.TEE)
-                .getInstance() as ITeeLogService;
+                .getService<ITeeLogService>(ServiceType.TEE);
             const attestation = await teeLogService.generateAttestation(
                 JSON.stringify(allAgents)
             );
@@ -46,8 +44,7 @@ export function teeRouter(
             }
 
             const teeLogService = agentRuntime
-                .getService<ITeeLogService>(ServiceType.TEE)
-                .getInstance();
+                .getService<ITeeLogService>(ServiceType.TEE);
 
             const teeAgent = await teeLogService.getAgent(agentId);
             const attestation = await teeLogService.generateAttestation(

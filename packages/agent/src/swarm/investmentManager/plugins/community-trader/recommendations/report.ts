@@ -1,6 +1,6 @@
 import {
-    Action,
-    Memory,
+    type Action,
+    type Memory,
     logger
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
@@ -43,7 +43,7 @@ export const getRecommenderReport: Action = {
     ],
     similes: ["RECOMMENDER_REPORT", "RECOMMENDER_SCORE"],
 
-    async handler(runtime, message, state, options, callback: any) {
+    async handler(runtime, message, _state, _options, callback: any) {
         if (!callback) {
             logger.error(
                 "No callback provided, no recommender score can be generated"

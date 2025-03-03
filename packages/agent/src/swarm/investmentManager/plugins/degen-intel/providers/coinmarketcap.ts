@@ -1,4 +1,4 @@
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger } from "@elizaos/core";
 import type { IToken } from "../types";
 
 export default class CoinmarketCap {

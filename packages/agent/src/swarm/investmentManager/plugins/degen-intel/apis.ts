@@ -1,6 +1,6 @@
 // TODO: Replace with cache adapter
 
-import { Route } from "@elizaos/core";
+import type { Route } from "@elizaos/core";
 
 import {
   SentimentArraySchema,
@@ -11,7 +11,7 @@ export const routes: Route[] = [
   {
     type: "POST",
     path: "/trending",
-    handler: async (req: any, res: any) => {
+    handler: async (_req: any, res: any) => {
       const data = await DB.Token.find()
         .sort("rank")
         .select("-_id -__v")
@@ -47,7 +47,7 @@ export const routes: Route[] = [
 
         const validatedData = TweetArraySchema.parse(data);
         res.json(validatedData);
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },
@@ -69,7 +69,7 @@ export const routes: Route[] = [
 
         const validatedData = SentimentArraySchema.parse(data);
         res.json(validatedData);
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },

@@ -27,9 +27,10 @@ import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
 import { timeProvider } from "./providers/time.ts";
+import { TaskService } from "./services/taskService.ts";
 import {
   ChannelType,
-  Content,
+  type Content,
   type Entity,
   type HandlerCallback,
   type IAgentRuntime,
@@ -855,6 +856,7 @@ export const bootstrapPlugin: Plugin = {
     settingsProvider,
     relationshipsProvider,
   ],
+  services: [new TaskService()],
 };
 
 export default bootstrapPlugin;

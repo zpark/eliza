@@ -1,4 +1,4 @@
-import { logger, UUID } from "@elizaos/core";
+import { logger, type UUID } from "@elizaos/core";
 import { drizzle, type PgliteDatabase } from "drizzle-orm/pglite";
 import { BaseDrizzleAdapter } from "../base";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "../schema/embedding";

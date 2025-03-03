@@ -1,4 +1,4 @@
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger } from "@elizaos/core";
 import type { IToken } from "../types";
 
 const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";

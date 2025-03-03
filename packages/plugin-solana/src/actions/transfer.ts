@@ -3,14 +3,13 @@ import {
     type ActionExample,
     composeContext,
     type Content,
-    logger,
-    generateObject,
     type HandlerCallback,
     type IAgentRuntime,
+    logger,
     type Memory,
     ModelClass,
-    settings,
-    type State,
+    parseJSONObjectFromText,
+    type State
 } from '@elizaos/core';
 import {
     createAssociatedTokenAccountInstruction,
@@ -124,11 +123,11 @@ export default {
             template: transferTemplate,
         });
 
-        const content = await generateObject({
-            runtime,
+        const result = await runtime.useModel(ModelClass.LARGE, {
             context: transferContext,
-            modelClass: ModelClass.LARGE,
         });
+
+        const content = parseJSONObjectFromText(result);
 
         console.log('Content:', content);
 

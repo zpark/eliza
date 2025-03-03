@@ -31,7 +31,7 @@ function getYoutubeDL() {
 
 
 export class VideoService extends Service implements IVideoService {
-    static serviceType: ServiceType = ServiceType.VIDEO;
+    serviceType: ServiceType = ServiceType.VIDEO;
     private cacheKey = "content/video";
     private dataDir = "./content_cache";
 
@@ -41,10 +41,6 @@ export class VideoService extends Service implements IVideoService {
     constructor() {
         super();
         this.ensureDataDirectoryExists();
-    }
-
-    getInstance(): IVideoService {
-        return VideoService.getInstance();
     }
 
     async initialize(_runtime: IAgentRuntime): Promise<void> {}

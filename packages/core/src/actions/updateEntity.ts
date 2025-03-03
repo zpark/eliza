@@ -84,8 +84,8 @@ export const updateEntityAction: Action = {
   description: "Add or edit contact details for a user entity (like twitter, discord, email address, etc.)",
   
   validate: async (
-    runtime: IAgentRuntime,
-    message: Memory,
+    _runtime: IAgentRuntime,
+    _message: Memory,
     _state: State
   ): Promise<boolean> => {
     // Check if we have any registered sources or existing components that could be updated

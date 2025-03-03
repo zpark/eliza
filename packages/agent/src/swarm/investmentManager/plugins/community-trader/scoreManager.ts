@@ -1,4 +1,4 @@
-import {
+import type {
     RecommenderMetrics,
     TokenPerformance,
     Recommender,
@@ -8,8 +8,8 @@ import {
     Optional,
     TokenRecommendation,
 } from "./types";
-import { TrustScoreDatabase } from "./db";
-import { UUID } from "@elizaos/core";
+import type { TrustScoreDatabase } from "./db";
+import type { UUID } from "@elizaos/core";
 
 const DECAY_RATE = 0.95;
 const MAX_DECAY_DAYS = 30;
@@ -119,10 +119,10 @@ export class TrustScoreManager {
             (now.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        const decayFactor = Math.pow(
-            DECAY_RATE,
+        const decayFactor = 
+            DECAY_RATE ** 
             Math.min(inactiveDays, MAX_DECAY_DAYS)
-        );
+        ;
 
         const trustDecay = trustScore * decayFactor;
 
@@ -150,7 +150,7 @@ export class TrustScoreManager {
         previous: TokenPerformance,
         performance: TokenPerformance
     ) {
-        const updates = {
+        const _updates = {
             rapidDump: !previous?.rapidDump && performance.rapidDump,
             isScam: !previous?.isScam && performance.isScam,
             rugPull: !previous?.rugPull && performance.rugPull,
@@ -169,7 +169,7 @@ export class TrustScoreManager {
     async updateTokenPerformance(
         chain: string,
         tokenAddress: string,
-        forceRefresh: boolean = false
+        forceRefresh = false
     ): Promise<TokenPerformance> {
         const [previousPerformance, data, validationTrust] = await Promise.all([
             this.db.getTokenPerformance(chain, tokenAddress),
@@ -287,7 +287,7 @@ export function calculateConsistencyScore(
     recommenderMetrics: RecommenderMetrics
 ): number {
     const avgTokenPerformance = recommenderMetrics.avgTokenPerformance;
-    const currentPrice = tokenPerformance.price;
+    const _currentPrice = tokenPerformance.price;
     const price24hChange = tokenPerformance.price24hChange;
 
     return Math.abs(price24hChange - avgTokenPerformance);

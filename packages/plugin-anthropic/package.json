@@ -21,7 +21,7 @@
         "@ai-sdk/anthropic": "^1.1.6",
         "fastembed": "^1.0.0",
         "@elizaos/core": "workspace:*",
-        "tsup": "8.3.5",
+        "tsup": "8.4.0",
         "zod": "3.21.4"
     },
     "scripts": {

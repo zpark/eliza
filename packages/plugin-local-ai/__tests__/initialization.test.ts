@@ -6,7 +6,7 @@ describe('LocalAI Plugin Initialization', () => {
   test('should initialize plugin with default configuration', async () => {
     // Mock runtime for testing
     const mockRuntime = {
-      useModel: async (modelClass: ModelClass, params: any) => {
+      useModel: async (modelClass: ModelClass, _params: any) => {
         if (modelClass === ModelClass.TEXT_SMALL) {
           return "Initialization successful";
         }

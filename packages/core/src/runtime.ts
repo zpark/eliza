@@ -29,7 +29,6 @@ import {
   ChannelType,
   type Character,
   type Client,
-  type ClientInstance,
   type Evaluator,
   type HandlerCallback,
   type IAgentRuntime,
@@ -46,6 +45,7 @@ import {
   type ServiceType,
   type State,
   type Task,
+  type TaskWorker,
   type UUID,
   type WorldData,
   type Agent
@@ -232,11 +232,9 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
-  tasks = new Map<UUID, Task>();
 
   readonly fetch = fetch;
-  private clients: Map<string, ClientInstance> = new Map();
-  private clientInterfaces: Map<string, Client> = new Map();
+  public clients: Map<string, Client> = new Map();
   services: Map<ServiceType, Service> = new Map();
 
   public adapters: Adapter[];
@@ -246,6 +244,8 @@ export class AgentRuntime implements IAgentRuntime {
 
   models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
   routes: Route[] = [];
+
+  private taskWorkers = new Map<string, TaskWorker>();
 
   constructor(opts: {
     conversationLength?: number;
@@ -328,10 +328,6 @@ export class AgentRuntime implements IAgentRuntime {
           this.registerEvent(eventName, eventHandler);
         }
       }
-
-      for (const client of plugin.clients ?? []) {
-        this.registerClientInterface(client.name, client);
-      }
     }
 
     this.plugins = plugins;
@@ -348,29 +344,16 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  registerClientInterface(clientName: string, client: Client): void {
-    if (this.clientInterfaces.has(clientName)) {
+  async registerClient(client: Client): Promise<void> {
+    if (this.clients.has(client.clientName)) {
       logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+        `${this.character.name}(${this.agentId}) - Client ${client.clientName} is already registered. Skipping registration.`
       );
       return;
     }
-    this.clientInterfaces.set(clientName, client);
+    this.clients.set(client.clientName, await client.start(this));
     logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`
-    );
-  }
-
-  registerClient(clientName: string, client: ClientInstance): void {
-    if (this.clients.has(clientName)) {
-      logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
-      );
-      return;
-    }
-    this.clients.set(clientName, client);
-    logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`
+      `${this.character.name}(${this.agentId}) - Client ${client.clientName} registered successfully`
     );
   }
 
@@ -387,7 +370,7 @@ export class AgentRuntime implements IAgentRuntime {
     );
   }
 
-  getClient(clientName: string): ClientInstance | null {
+  getClient(clientName: string): Client | null {
     const client = this.clients.get(clientName);
     if (!client) {
       logger.error(`Client ${clientName} not found`);
@@ -396,7 +379,7 @@ export class AgentRuntime implements IAgentRuntime {
     return client;
   }
 
-  getAllClients(): Map<string, ClientInstance> {
+  getAllClients(): Map<string, Client> {
     return this.clients;
   }
 
@@ -461,12 +444,6 @@ export class AgentRuntime implements IAgentRuntime {
             continue;
           }
 
-          if (plugin.clients) {
-            for (const client of plugin.clients) {
-              this.registerClientInterface(client.name, client);
-            }
-          }
-
           if (plugin.actions) {
             for (const action of plugin.actions) {
               this.registerAction(action);
@@ -522,6 +499,11 @@ export class AgentRuntime implements IAgentRuntime {
     for (const plugin of this.plugins) {
       if (plugin.init) {
         await plugin.init(plugin.config, this);
+      }
+      if (plugin.clients) {
+        for (const client of plugin.clients) {
+          await Promise.all(plugin.clients.map(client => this.registerClient(client)));
+        }
       }
     }
 
@@ -597,17 +579,6 @@ export class AgentRuntime implements IAgentRuntime {
         await service.initialize(this);
       }
     }
-
-    // Start clients
-    await Promise.all(
-      Array.from(this.clientInterfaces.values()).map(
-        async (clientInterface) => {
-          const startedClient = await clientInterface.start(this);
-          await this.ensureAgentIsEnabled();
-          this.registerClient(clientInterface.name, startedClient);
-        }
-      )
-    );
   }
 
   
@@ -940,7 +911,7 @@ export class AgentRuntime implements IAgentRuntime {
           : `World for room ${roomId}`,
         agentId: this.agentId,
         serverId: serverId || "default",
-        metadata: {},
+        metadata,
       });
     }
 
@@ -1479,6 +1450,9 @@ export class AgentRuntime implements IAgentRuntime {
 
   async registerService(service: Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
+    if(!serviceType) {
+      throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
+    }
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,
       serviceType
@@ -1621,44 +1595,14 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  registerTask(task: Task): UUID {
-    // if task doesn't have an id, generate one
-    if (!task.id) {
-      task.id = uuidv4() as UUID;
+  registerTaskWorker(taskHandler: TaskWorker): void {
+    if (this.taskWorkers.has(taskHandler.name)) {
+      logger.warn(`Task definition ${taskHandler.name} already registered. Will be overwritten.`);
     }
-    this.tasks.set(task.id, task);
-    return task.id;
+    this.taskWorkers.set(taskHandler.name, taskHandler);
   }
 
-  getTasks({
-    roomId,
-    tags,
-  }: {
-    roomId?: UUID;
-    tags?: string[];
-  }): Task[] | undefined {
-    // filter tasks by roomId, type, or both
-    const tasks = this.tasks;
-    if (!tasks) {
-      return undefined;
-    }
-    const values = Array.from(tasks.values());
-    return values.filter(
-      (task) =>
-        (!roomId || task.roomId === roomId) &&
-        (!tags || task.tags.some((tag) => tags.includes(tag)))
-    );
-  }
-
-  getTask(id: UUID): Task | undefined {
-    return this.tasks.get(id);
-  }
-
-  updateTask(id: UUID, task: Task) {
-    this.tasks.set(id, task);
-  }
-
-  deleteTask(id: UUID) {
-    this.tasks.delete(id);
+  getTaskWorker(name: string): TaskWorker | undefined {
+    return this.taskWorkers.get(name);
   }
 }

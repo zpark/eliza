@@ -1,21 +1,22 @@
 import {
     type Action,
     type ActionExample,
+    Client,
     composeContext,
-    logger,
-    generateObject,
     type HandlerCallback,
     type IAgentRuntime,
+    logger,
     type Memory,
     ModelClass,
+    parseJSONObjectFromText,
     settings,
-    type State,
+    type State
 } from '@elizaos/core';
 import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { getWalletKey } from '../keypairUtils';
-import type { ISolanaClient, Item } from '../types';
 import { SOLANA_CLIENT_NAME } from '../constants';
+import { getWalletKey } from '../keypairUtils';
+import type { Item } from '../types';
 
 async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
@@ -110,7 +111,7 @@ async function getTokenFromWallet(
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
+        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as Client;
         if (!solanaClient) {
             throw new Error('SolanaClient not initialized');
         }
@@ -188,7 +189,7 @@ export const executeSwap: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
 
-            const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
+            const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as Client;
             if (!solanaClient) {
                 throw new Error('SolanaClient not initialized');
             }
@@ -201,11 +202,11 @@ export const executeSwap: Action = {
                 template: swapTemplate,
             });
 
-            const response = await generateObject({
-                runtime,
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 context: swapContext,
-                modelClass: ModelClass.LARGE,
             });
+
+            const response = parseJSONObjectFromText(result);
 
             // Handle SOL addresses
             if (response.inputTokenSymbol?.toUpperCase() === 'SOL') {

@@ -7,3 +7,5 @@ export const MESSAGE_CONSTANTS = {
     INTEREST_DECAY_TIME: 5 * 60 * 1000, // 5 minutes
     PARTIAL_INTEREST_DECAY: 3 * 60 * 1000, // 3 minutes
 } as const;
+
+export const TELEGRAM_CLIENT_NAME = 'telegram';

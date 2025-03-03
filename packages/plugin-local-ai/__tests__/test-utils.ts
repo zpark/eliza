@@ -240,7 +240,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   registerEvent: () => {},
   getEvent: () => undefined,
   emitEvent: () => {},
-  registerTask: () => '12345678-1234-1234-1234-123456789012',
+  createTask: () => '12345678-1234-1234-1234-123456789012',
   getTasks: () => undefined,
   getTask: () => undefined,
   updateTask: () => {},

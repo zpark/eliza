@@ -1,4 +1,4 @@
-import { Transaction } from "./types";
+import type { Transaction } from "./types";
 
 type PerformanceWeights = {
     profitWeight: number;

@@ -6,7 +6,7 @@ import {
   stringToUuid,
   createUniqueUuid,
 } from "@elizaos/core";
-import type { TwitterClient } from "./index.ts";
+import type { TwitterClientInstance } from "./index.ts";
 import { SearchMode } from "./client/index.ts";
 import { fetchMediaData } from "./utils.ts";
 
@@ -26,7 +26,7 @@ const TEST_IMAGE = {
 
 export class TwitterTestSuite implements TestSuite {
   name = "twitter";
-  private twitterClient: TwitterClient | null = null;
+  private twitterClient: TwitterClientInstance | null = null;
   tests: { name: string; fn: (runtime: IAgentRuntime) => Promise<void> }[];
 
   constructor() {
@@ -66,9 +66,9 @@ export class TwitterTestSuite implements TestSuite {
       this.twitterClient = manager.clients.get(manager.getClientKey(clientId, runtime.agentId));
 
       if (this.twitterClient) {
-        logger.success("TwitterClient initialized successfully.");
+        logger.success("TwitterClientInstance initialized successfully.");
       } else {
-        throw new Error("TwitterClient failed to initialize.");
+        throw new Error("TwitterClientInstance failed to initialize.");
       }
     } catch (error) {
       throw new Error(`Error in initializing Twitter client: ${error}`);

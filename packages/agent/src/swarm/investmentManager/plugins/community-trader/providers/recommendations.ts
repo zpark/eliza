@@ -1,7 +1,7 @@
-import { Provider } from "@elizaos/core";
+import type { Provider } from "@elizaos/core";
 import { formatRecommendations } from "../recommendations/evaluator";
 import { render } from "../utils";
-import { RecommendationMemory } from "../types";
+import type { RecommendationMemory } from "../types";
 
 const recommendationsPrompt = `<user_recommendations_provider>
 <draft_recommendations>{{recommendations}}</draft_recommendations>

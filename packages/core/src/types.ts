@@ -1,3 +1,5 @@
+import logger from "./logger";
+
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -145,6 +147,7 @@ export enum ServiceType {
   WEB_SEARCH = "web_search",
   EMAIL = "email",
   TEE = "tee",
+  TASK = "task",
 }
 
 /**
@@ -542,32 +545,28 @@ export enum ChannelType {
   FORUM = "FORUM",
 }
 
-export type PostClient = {
-  getPost: (roomId: UUID) => Promise<string | UUID | null>;
-};
-
 /**
  * Client instance
  */
-export type ClientInstance = {
+export abstract class Client {
   [key: string]: any;
-  /** Stop client connection */
-  stop: (runtime: IAgentRuntime) => Promise<unknown>;
-};
 
-/**
- * Client interface for platform connections
- */
-export type Client = {
   /** Client name */
-  name: string;
+  static clientName: string;
 
   /** Client configuration */
   config?: { [key: string]: any };
 
   /** Start client connection */
-  start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
-};
+  static async start(_runtime: IAgentRuntime): Promise<Client> {
+    throw new Error('Not implemented');
+  }
+
+  /** Stop client connection */
+  static async stop(_runtime: IAgentRuntime): Promise<unknown> {
+    throw new Error('Not implemented');
+  }
+}
 
 export type Adapter = {
   /** Initialize adapter */
@@ -942,10 +941,15 @@ export interface IDatabaseAdapter {
   ensureEmbeddingDimension(dimension: number): void;
 
   getCache(key: string): Promise<string | undefined>;
-
   setCache(key: string, value: string,): Promise<boolean>;
-
   deleteCache(key: string): Promise<boolean>;
+
+  // Only task instance methods - definitions are in-memory
+  createTask(task: Task): Promise<UUID>;
+  getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]>;
+  getTask(id: UUID): Promise<Task | null>;
+  updateTask(id: UUID, task: Partial<Task>): Promise<void>;
+  deleteTask(id: UUID): Promise<void>;
 }
 
 export interface IMemoryManager {
@@ -996,22 +1000,7 @@ export type CacheOptions = {
 };
 
 export abstract class Service {
-  private static instance: Service | null = null;
-
-  static get serviceType(): ServiceType | string {
-    throw new Error("Service must implement static serviceType getter");
-  }
-
-  public static getInstance<T extends Service>(): T {
-    if (!Service.instance) {
-      Service.instance = new (Service as any)();
-    }
-    return Service.instance as T;
-  }
-
-  get serviceType(): ServiceType | string {
-    return (this.constructor as typeof Service).serviceType;
-  }
+  serviceType: ServiceType | string;
 
   // Add abstract initialize method that must be implemented by derived classes
   abstract initialize(runtime: IAgentRuntime): Promise<void>;
@@ -1025,11 +1014,11 @@ export interface IAgentRuntime {
   character: Character;
   providers: Provider[];
   actions: Action[];
+  clients: Map<string, Client>;
   evaluators: Evaluator[];
   plugins: Plugin[];
-
+  services: Map<string, Service>;
   events: Map<string, ((params: any) => void)[]>;
-
   fetch?: typeof fetch | null;
   routes: Route[];
   messageManager: IMemoryManager;
@@ -1037,11 +1026,10 @@ export interface IAgentRuntime {
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
 
-  getClient(name: string): ClientInstance | null;
-  getAllClients(): Map<string, ClientInstance>;
+  getClient(name: string): Client | null;
+  getAllClients(): Map<string, Client>;
 
-  registerClientInterface(name: string, client: Client): void;
-  registerClient(name: string, client: ClientInstance): void;
+  registerClient(client: Client): void;
 
   unregisterClient(name: string): void;
 
@@ -1051,7 +1039,7 @@ export interface IAgentRuntime {
 
   getMemoryManager(tableName: string): IMemoryManager | null;
 
-  getService<T extends Service>(service: ServiceType): T | null;
+  getService<T extends Service>(service: ServiceType | string): T | null;
 
   registerService(service: Service): void;
 
@@ -1147,17 +1135,9 @@ export interface IAgentRuntime {
   getEvent(event: string): ((params: any) => void)[] | undefined;
   emitEvent(event: string | string[], params: any): void;
 
-  registerTask(task: Task): UUID;
-  getTasks({
-    roomId,
-    tags,
-  }: {
-    roomId?: UUID;
-    tags?: string[];
-  }): Task[] | undefined;
-  getTask(id: UUID): Task | undefined;
-  updateTask(id: UUID, task: Task): void;
-  deleteTask(id: UUID): void;
+  // In-memory task definition methods
+  registerTaskWorker(taskHandler: TaskWorker): void;
+  getTaskWorker(name: string): TaskWorker | undefined;
 
   stop(): Promise<void>;
 
@@ -1215,6 +1195,11 @@ export interface DetokenizeTextParams {
   modelClass: ModelClass;
 }
 
+export interface ITaskService extends Service {
+  initialize(runtime: IAgentRuntime): Promise<void>;
+  stop(): void;
+}
+
 export interface IVideoService extends Service {
   isVideoUrl(url: string): boolean;
   fetchVideoInfo(url: string): Promise<Media>;
@@ -1231,7 +1216,6 @@ export interface IBrowserService extends Service {
 }
 
 export interface IPdfService extends Service {
-  getInstance(): IPdfService;
   convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
 
@@ -1250,7 +1234,6 @@ export interface IFileService extends Service {
 }
 
 export interface ITeeLogService extends Service {
-  getInstance(): ITeeLogService;
   log(
     agentId: string,
     roomId: string,
@@ -1392,6 +1375,12 @@ export interface TeePluginConfig {
   vendorConfig?: TeeVendorConfig;
 }
 
+export interface TaskWorker {
+  name: string;
+  execute: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
+  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
+}
+
 export interface Task {
   id?: UUID;
   name: string;
@@ -1408,8 +1397,6 @@ export interface Task {
   roomId?: UUID;
   worldId?: UUID;
   tags: string[];
-  handler: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
-  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
 export type WorldData = {
@@ -1468,50 +1455,4 @@ export interface OnboardingConfig {
   settings: { 
       [key: string]: Omit<OnboardingSetting, 'value'>; 
   };
-}
-
-/**
- * Send a direct message to a user
- * @param runtime The agent runtime instance
- * @param targetEntityId The ID of the user to send the message to
- * @param source The platform/source to send on (e.g. telegram, discord)
- * @param message The message content to send
- * @param worldId The world ID context
- */
-export async function sendDirectMessage(
-  runtime: IAgentRuntime,
-  targetEntityId: UUID,
-  source: string,
-  message: string,
-  worldId: UUID
-): Promise<void> {
-  const client = runtime.getClient(source);
-  if (!client) {
-    throw new Error(`No client found for source: ${source}`);
-  }
-  
-  await client.sendDirectMessage?.(targetEntityId, message, worldId);
-}
-
-/**
- * Send a message to a room
- * @param runtime The agent runtime instance
- * @param roomId The ID of the room to send to
- * @param source The platform/source to send on (e.g. telegram, discord)
- * @param message The message content to send
- * @param worldId The world ID context
- */
-export async function sendRoomMessage(
-  runtime: IAgentRuntime,
-  roomId: UUID,
-  source: string,
-  message: string,
-  worldId: UUID
-): Promise<void> {
-  const client = runtime.getClient(source);
-  if (!client) {
-    throw new Error(`No client found for source: ${source}`);
-  }
-  
-  await client.sendRoomMessage?.(roomId, message, worldId);
 }

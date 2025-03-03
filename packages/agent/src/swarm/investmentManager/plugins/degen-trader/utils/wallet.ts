@@ -1,4 +1,4 @@
-import { logger, IAgentRuntime } from "@elizaos/core";
+import { logger, type IAgentRuntime } from "@elizaos/core";
 import {
   Connection,
   Keypair,
@@ -67,7 +67,7 @@ const CONFIRMATION_CONFIG = {
   MAX_TIMEOUT: 20000, // 20 seconds
   // Exponential backoff between retries
   getDelayForAttempt: (attempt: number) => Math.min(
-    2000 * Math.pow(1.5, attempt),
+    2000 * 1.5 ** attempt,
     20000
   )
 };
@@ -75,7 +75,7 @@ const CONFIRMATION_CONFIG = {
 // Add function to calculate dynamic slippage
 function calculateDynamicSlippage(amount: string, quoteData: any): number {
   const baseSlippage = 0.45;
-  const priceImpact = parseFloat(quoteData?.priceImpactPct || '0');
+  const priceImpact = Number.parseFloat(quoteData?.priceImpactPct || '0');
   const amountNum = Number(amount);
 
   let dynamicSlippage = baseSlippage;
@@ -253,7 +253,7 @@ export async function executeTrade(
       throw new Error("Could not confirm transaction status");
     }
 
-    logger.log(`Trade executed successfully:`, {
+    logger.log("Trade executed successfully:", {
       type: action === 'SELL' ? 'sell' : 'buy',
       tokenAddress,
       amount,
@@ -296,7 +296,7 @@ async function executeRaydiumTrade(
 
     // Get quote from Raydium API
     const quoteResponse = await fetch(
-      `https://api.raydium.io/v2/main/quote`, {
+      "https://api.raydium.io/v2/main/quote", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -368,7 +368,7 @@ async function executeRaydiumTrade(
           break;
         }
 
-        const delay = Math.min(1000 * Math.pow(1.5, i), 10000);
+        const delay = Math.min(1000 * 1.5 ** i, 10000);
         await new Promise(resolve => setTimeout(resolve, delay));
 
       } catch (error) {
@@ -380,7 +380,7 @@ async function executeRaydiumTrade(
       throw new Error("Could not confirm transaction status");
     }
 
-    logger.log(`Trade executed successfully:`, {
+    logger.log("Trade executed successfully:", {
       type: params.isSell ? 'sell' : 'buy',
       tokenAddress: params.tokenAddress,
       amount: params.amount,
@@ -404,7 +404,7 @@ async function executeRaydiumTrade(
 
 export async function getChainWalletBalance(
   runtime: IAgentRuntime,
-  tokenAddress: string,
+  _tokenAddress: string,
 ): Promise<number> {
      // Get Solana balance
     return await getWalletBalance(runtime);

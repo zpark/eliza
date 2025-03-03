@@ -1,17 +1,17 @@
-import { z, ZodType } from "zod";
+import { z, type ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
-import { TemplateVariables } from "./types";
+import type { TemplateVariables } from "./types";
 import { XMLParser } from "fast-xml-parser";
 
 export function render<Template extends string>(
     str: Template,
     data: TemplateVariables<Template>
 ) {
-    return str.replace(/\{\{(\w+)\}\}/g, (match, key) => data[key] || "");
+    return str.replace(/\{\{(\w+)\}\}/g, (_match, key) => data[key] || "");
 }
 
 export function getZodJsonSchema(schema: ZodType<any>) {
-    return zodToJsonSchema(schema, "schema").definitions!.schema;
+    return zodToJsonSchema(schema, "schema").definitions?.schema;
 }
 
 export function prompt<Template extends string>(t: Template) {
@@ -100,16 +100,15 @@ export function getMarketCapMultiplier(currentMarketCap: number): number {
 
     if (currentMarketCap <= BuyAmountConfig.MARKET_CAP_LOWER_BOUND) {
         return 1;
-    } else if (currentMarketCap >= BuyAmountConfig.MARKET_CAP_UPPER_BOUND) {
+    }if (currentMarketCap >= BuyAmountConfig.MARKET_CAP_UPPER_BOUND) {
         return BuyAmountConfig.HIGH_MARKET_CAP_MULTIPLIER;
-    } else {
+    }
         // Linear interpolation between 1 and HIGH_MARKET_CAP_MULTIPLIER.
         const fraction =
             (currentMarketCap - BuyAmountConfig.MARKET_CAP_LOWER_BOUND) /
             (BuyAmountConfig.MARKET_CAP_UPPER_BOUND -
                 BuyAmountConfig.MARKET_CAP_LOWER_BOUND);
         return 1 + fraction * (BuyAmountConfig.HIGH_MARKET_CAP_MULTIPLIER - 1);
-    }
 }
 
 export function getConvictionMultiplier(

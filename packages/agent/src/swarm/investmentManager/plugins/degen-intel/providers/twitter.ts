@@ -4,7 +4,7 @@
 // store tweets as memories in db, no reason really to get twitter here
 
 import type { IRawTweet } from "../types";
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger } from "@elizaos/core";
 
 export default class Twitter {
 	runtime: IAgentRuntime;
@@ -17,7 +17,7 @@ export default class Twitter {
 		const username = this.runtime.getSetting("TWITTER_USERNAME");
 
 		// get the twitterClient from runtime
-		const twitterClient = this.runtime.getClient("twitter").client;
+		const twitterClient = this.runtime.getClient("twitter");
 
 		const list = twitterClient.getTweets(username as string, 200);
 		const ops = [];

@@ -33,7 +33,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord").client;
+        const client = runtime.getClient("discord");
 
         if (!client) {
             logger.error("Discord client not found");
@@ -41,7 +41,7 @@ export default {
         }
 
         // Check if the client is connected to any voice channel
-        const isConnectedToVoice = client.voice.adapters.size > 0;
+        const isConnectedToVoice = client.client.voice.adapters.size > 0;
 
         return isConnectedToVoice;
     },

@@ -1,4 +1,4 @@
-import { Plugin } from "@elizaos/core";
+import type { Plugin } from "@elizaos/core";
 import { trustProvider } from "./provider";
 import { getAgentPositions } from "./recommendations/agentPositions";
 import { getTokenDetails } from "./recommendations/analysis";

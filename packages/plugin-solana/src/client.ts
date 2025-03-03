@@ -1,14 +1,9 @@
-import {
-    logger,
-    type Client,
-    type ClientInstance,
-    type IAgentRuntime
-} from '@elizaos/core';
+import { Client, type IAgentRuntime, logger } from '@elizaos/core';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { SOLANA_CLIENT_NAME } from './constants';
+import { SOLANA_CLIENT_NAME, SOLANA_WALLET_DATA_CACHE_KEY } from './constants';
 import { getWalletKey } from './keypairUtils';
-import type { ISolanaClient, Item, Prices, WalletPortfolio } from './types';
+import type { Item, Prices, WalletPortfolio } from './types';
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: 'https://public-api.birdeye.so',
@@ -22,43 +17,60 @@ const PROVIDER_CONFIG = {
     },
 };
 
-class SolanaClient implements ISolanaClient, ClientInstance {
+export class SolanaClient extends Client {
+    static clientName: string = SOLANA_CLIENT_NAME;
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
-    private readonly CACHE_KEY = 'solana/walletData';
     private connection: Connection;
     private publicKey: PublicKey;
 
     constructor(
         private runtime: IAgentRuntime,
-        connection: ConnOection,
+        connection: Connection,
         publicKey: PublicKey,
     ) {
+        super()
         this.connection = connection;
         this.publicKey = publicKey;
-        this.start();
     }
 
-    start() {
+    static async start(runtime: IAgentRuntime): Promise<SolanaClient> {
+        logger.log('initSolanaClient');
+
+        const connection = new Connection(
+            runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
+        );
+
+        const { publicKey } = await getWalletKey(runtime, false);
+
+        const solanaClient = new SolanaClient(runtime, connection, publicKey);
+
         logger.log('SolanaClient start');
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
+        if (solanaClient.updateInterval) {
+            clearInterval(solanaClient.updateInterval);
         }
 
-        this.updateInterval = setInterval(async () => {
+        solanaClient.updateInterval = setInterval(async () => {
             logger.log('Updating wallet data');
-            await this.updateWalletData();
-        }, this.UPDATE_INTERVAL);
+            await solanaClient.updateWalletData();
+        }, solanaClient.UPDATE_INTERVAL);
 
         // Initial update
-        this.updateWalletData().catch(console.error);
+        solanaClient.updateWalletData().catch(console.error);
+
+        return solanaClient;
     }
 
-    public stop(runtime: IAgentRuntime) {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
+    static async stop(runtime: IAgentRuntime) {
+        const client = runtime.getClient(SOLANA_CLIENT_NAME);
+        if (!client) {
+            logger.error('SolanaClient not found');
+            return;
+        }
+        if (client.updateInterval) {
+            clearInterval(client.updateInterval);
+            client.updateInterval = null;
         }
 
         runtime.unregisterClient(SOLANA_CLIENT_NAME);
@@ -105,11 +117,12 @@ class SolanaClient implements ISolanaClient, ClientInstance {
 
     private async fetchPrices(): Promise<Prices> {
         const cacheKey = 'prices';
-        const cachedValue = await this.runtime.databaseAdapter.getCache<Prices>(cacheKey);
+        const cachedValue = await this.runtime.databaseAdapter.getCache(cacheKey);
 
+        // if cachedValue is JSON, parse it
         if (cachedValue) {
             logger.log('Cache hit for fetchPrices');
-            return cachedValue;
+            return JSON.parse(cachedValue);
         }
 
         logger.log('Cache miss for fetchPrices');
@@ -133,7 +146,7 @@ class SolanaClient implements ISolanaClient, ClientInstance {
             }
         }
 
-        await this.runtime.databaseAdapter.setCache(cacheKey, prices);
+        await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(prices));
         return prices;
     }
 
@@ -191,7 +204,10 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                         })),
                     };
 
-                    await this.runtime.databaseAdapter.setCache(this.CACHE_KEY, portfolio);
+                    await this.runtime.databaseAdapter.setCache(
+                        SOLANA_WALLET_DATA_CACHE_KEY,
+                        JSON.stringify(portfolio),
+                    );
                     this.lastUpdate = now;
                     return portfolio;
                 }
@@ -217,7 +233,10 @@ class SolanaClient implements ISolanaClient, ClientInstance {
                 items,
             };
 
-            await this.runtime.databaseAdapter.setCache(this.CACHE_KEY, portfolio);
+            await this.runtime.databaseAdapter.setCache(
+                SOLANA_WALLET_DATA_CACHE_KEY,
+                JSON.stringify(portfolio),
+            );
             this.lastUpdate = now;
             return portfolio;
         } catch (error) {
@@ -227,7 +246,13 @@ class SolanaClient implements ISolanaClient, ClientInstance {
     }
 
     public async getCachedData(): Promise<WalletPortfolio | null> {
-        return await this.runtime.databaseAdapter.getCache<WalletPortfolio>(this.CACHE_KEY);
+        const cachedValue = await this.runtime.databaseAdapter.getCache(
+            SOLANA_WALLET_DATA_CACHE_KEY,
+        );
+        if (cachedValue) {
+            return JSON.parse(cachedValue);
+        }
+        return null;
     }
 
     public async forceUpdate(): Promise<WalletPortfolio> {
@@ -242,18 +267,3 @@ class SolanaClient implements ISolanaClient, ClientInstance {
         return this.connection;
     }
 }
-
-export const SolanaClientInterface: Client = {
-    name: 'solana',
-    start: async (runtime: IAgentRuntime) => {
-        logger.log('initSolanaClient');
-
-        const connection = new Connection(
-            runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
-        );
-
-        const { publicKey } = await getWalletKey(runtime, false);
-
-        return new SolanaClient(runtime, connection, publicKey);
-    },
-};

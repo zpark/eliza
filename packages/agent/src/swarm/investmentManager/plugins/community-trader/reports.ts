@@ -1,4 +1,4 @@
-import {
+import type {
     PositionWithBalance,
     Pretty,
     Recommender,
@@ -70,7 +70,7 @@ function normalizeBalance(
 ): number {
     const balance =
         typeof balanceStr === "string" ? BigInt(balanceStr) : balanceStr;
-    return Number(balance) / Math.pow(10, decimals);
+    return Number(balance) / 10 ** decimals;
 }
 
 function calculateTradeMetrics(
@@ -89,7 +89,7 @@ function calculateTradeMetrics(
 
     for (const tx of transactions) {
         const normalizedAmount = normalizeBalance(tx.amount, token.decimals);
-        const price = tx.price ? parseFloat(tx.price) : 0;
+        const price = tx.price ? Number.parseFloat(tx.price) : 0;
         const value = normalizedAmount * price;
 
         if (tx.timestamp < firstTradeTime)
@@ -152,7 +152,7 @@ function calculatePositionPerformance(
         position.balance,
         token.decimals
     );
-    const initialPrice = parseFloat(position.initialPrice);
+    const initialPrice = Number.parseFloat(position.initialPrice);
     const currentPrice = token.price;
 
     const trades = calculateTradeMetrics(transactions, token);
@@ -233,9 +233,9 @@ function formatTransactionHistory(
                 tx.amount,
                 token.decimals
             );
-            const price = tx.price ? formatPrice(parseFloat(tx.price)) : "N/A";
+            const price = tx.price ? formatPrice(Number.parseFloat(tx.price)) : "N/A";
             const value = tx.valueUsd
-                ? formatPrice(parseFloat(tx.valueUsd))
+                ? formatPrice(Number.parseFloat(tx.valueUsd))
                 : "N/A";
 
             return `
@@ -277,7 +277,7 @@ function formatPositionPerformance(
 
   Performance Metrics:
   - Current Price: ${formatPrice(token.price)}
-  - Initial Price: ${formatPrice(parseFloat(position.initialPrice))}
+  - Initial Price: ${formatPrice(Number.parseFloat(position.initialPrice))}
   - Price Change: ${formatPrice(perfData.priceChange)} (${formatPercent(perfData.priceChangePercentage)})
 
   Position Value:
@@ -288,8 +288,8 @@ function formatPositionPerformance(
   - Total P&L: ${formatPrice(perfData.totalPnL)} (${formatPercent(perfData.totalPnLPercent)})
 
   Market Info:
-  - Initial Market Cap: ${formatPrice(parseFloat(position.initialMarketCap))}
-  - Initial Liquidity: ${formatPrice(parseFloat(position.initialLiquidity))}
+  - Initial Market Cap: ${formatPrice(Number.parseFloat(position.initialMarketCap))}
+  - Initial Liquidity: ${formatPrice(Number.parseFloat(position.initialLiquidity))}
   - Current Liquidity: ${formatPrice(token.liquidity)}
   - 24h Volume: ${formatPrice(token.volume)}
 
@@ -311,7 +311,7 @@ export function formatFullReport(
         if (!txMap.has(tx.positionId)) {
             txMap.set(tx.positionId, []);
         }
-        txMap.get(tx.positionId)!.push(tx);
+        txMap.get(tx.positionId)?.push(tx);
     });
 
     const tokenReports = tokens.map((token) => formatTokenPerformance(token));

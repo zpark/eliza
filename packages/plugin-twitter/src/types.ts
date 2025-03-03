@@ -1,4 +1,4 @@
-import type { ClientInstance } from "@elizaos/core";
+import type { Client } from "@elizaos/core";
 import type { ClientBase } from "./base";
 import type { TwitterInteractionClient } from "./interactions";
 import type { TwitterPostClient } from "./post";
@@ -16,9 +16,10 @@ export interface ActionResponse {
     reply?: boolean;
 }
 
-export interface ITwitterClient extends ClientInstance {
-    client: ClientBase;
+export interface ITwitterClient {
+    clientBase: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
+    client: Client;
 }

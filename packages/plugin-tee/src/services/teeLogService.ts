@@ -27,13 +27,7 @@ export class TeeLogService extends Service implements ITeeLogService {
     private teeLogDAO: TeeLogDAO;
     private teeLogManager: TeeLogManager;
 
-    getInstance(): ITeeLogService {
-        return this;
-    }
-
-    static get serviceType(): ServiceType {
-        return ServiceType.TEE;
-    }
+    serviceType: ServiceType = ServiceType.TEE;
 
     async initialize(runtime: IAgentRuntime): Promise<void> {
         if (this.initialized) {

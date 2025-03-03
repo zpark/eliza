@@ -1,5 +1,5 @@
 import routes from "./apis";
-import { IAgentRuntime, Plugin } from "@elizaos/core";
+import type { IAgentRuntime, Plugin } from "@elizaos/core";
 import { registerTasks } from "./tasks";
 
 // create a new plugin

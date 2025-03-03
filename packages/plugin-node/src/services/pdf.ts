@@ -8,12 +8,8 @@ import { getDocument, type PDFDocumentProxy } from "pdfjs-dist";
 import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/api";
 
 export class PdfService extends Service implements IPdfService {
-    static serviceType: ServiceType = ServiceType.PDF;
-
-    getInstance(): IPdfService {
-        return PdfService.getInstance();
-    }
-
+    serviceType: ServiceType = ServiceType.PDF;
+    
     async initialize(_runtime: IAgentRuntime): Promise<void> {}
 
     async convertPdfToText(pdfBuffer: Buffer): Promise<string> {
