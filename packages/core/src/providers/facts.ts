@@ -11,6 +11,7 @@ function formatFacts(facts: Memory[]) {
 }
 
 const factsProvider: Provider = {
+    name: "facts",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         const recentMessagesData = state?.recentMessagesData?.slice(-10);
 

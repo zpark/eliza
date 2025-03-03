@@ -166,6 +166,7 @@ class PhalaDeriveKeyProvider extends DeriveKeyProvider {
 }
 
 const phalaDeriveKeyProvider: Provider = {
+    name: "phala-derive-key",
     get: async (runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaDeriveKeyProvider(teeMode);
@@ -212,6 +213,7 @@ const phalaDeriveKeyProvider: Provider = {
 class MarlinDeriveKeyProvider extends DeriveKeyProvider {}
 
 const marlinDeriveKeyProvider: Provider = {
+    name: "marlin-derive-key",
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'Marlin Derive Key Provider';
     },
@@ -227,6 +229,7 @@ const marlinDeriveKeyProvider: Provider = {
 class FleekDeriveKeyProvider extends DeriveKeyProvider {}
 
 const fleekDeriveKeyProvider: Provider = {
+    name: "fleek-derive-key",
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'Fleek Derive Key Provider';
     },
@@ -242,6 +245,7 @@ const fleekDeriveKeyProvider: Provider = {
 class SgxGramineDeriveKeyProvider extends DeriveKeyProvider {}
 
 const sgxGramineDeriveKeyProvider: Provider = {
+    name: "sgx-gramine-derive-key",
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'SGX Gramine Derive Key Provider';
     },

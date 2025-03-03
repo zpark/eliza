@@ -4,20 +4,21 @@ import type { WalletPortfolio } from '../types';
 import { SOLANA_WALLET_DATA_CACHE_KEY } from '../constants';
 
 export const walletProvider: Provider = {
+    name: "solana-wallet",
     get: async (
         runtime: IAgentRuntime,
         _message: Memory,
         state?: State,
     ): Promise<string | null> => {
         try {
-            const portfolioCache = await runtime.databaseAdapter.getCache(
+            const portfolioCache = await runtime.databaseAdapter.getCache<WalletPortfolio>(
                 SOLANA_WALLET_DATA_CACHE_KEY,
             );
             if (!portfolioCache) {
                 return null;
             }
 
-            const portfolio = JSON.parse(portfolioCache) as WalletPortfolio;
+            const portfolio = portfolioCache;
 
             const agentName = state?.agentName || 'The agent';
             let output = `${agentName}'s Solana Wallet\n`;

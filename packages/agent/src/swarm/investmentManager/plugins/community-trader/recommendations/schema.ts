@@ -27,7 +27,7 @@ export const recommendationSchema = z
             ),
 
         type: z
-            .enum(["BUY", "SELL", "DONT_BUY", "DONT_SELL", "NONE"])
+            .enum(["buy", "sell", "DONT_BUY", "DONT_SELL", "NONE"])
             .describe(
                 "The type of trading recommendation being made. This captures both positive recommendations (buy/sell) and explicit warnings against actions"
             ),

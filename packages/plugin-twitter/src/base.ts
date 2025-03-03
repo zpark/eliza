@@ -97,11 +97,11 @@ export class ClientBase extends EventEmitter {
       return;
     }
 
-    this.runtime.databaseAdapter.setCache(`twitter/tweets/${tweet.id}`, JSON.stringify(tweet));
+    this.runtime.databaseAdapter.setCache<Tweet>(`twitter/tweets/${tweet.id}`, tweet);
   }
 
   async getCachedTweet(tweetId: string): Promise<Tweet | undefined> {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    const cached = await this.runtime.databaseAdapter.getCache<Tweet>(
       `twitter/tweets/${tweetId}`
     );
 
@@ -109,7 +109,7 @@ export class ClientBase extends EventEmitter {
       return undefined;
     }
 
-    return JSON.parse(cached) as Tweet;
+    return cached;
   }
 
   async getTweet(tweetId: string): Promise<Tweet> {
@@ -665,7 +665,7 @@ export class ClientBase extends EventEmitter {
   }
 
   async loadLatestCheckedTweetId(): Promise<void> {
-    const latestCheckedTweetId = await this.runtime.databaseAdapter.getCache(
+    const latestCheckedTweetId = await this.runtime.databaseAdapter.getCache<string>(
       `twitter/${this.profile.username}/latest_checked_tweet_id`
     );
 
@@ -676,7 +676,7 @@ export class ClientBase extends EventEmitter {
 
   async cacheLatestCheckedTweetId() {
     if (this.lastCheckedTweetId) {
-      await this.runtime.databaseAdapter.setCache(
+      await this.runtime.databaseAdapter.setCache<string>(
         `twitter/${this.profile.username}/latest_checked_tweet_id`,
         this.lastCheckedTweetId.toString()
       );
@@ -684,7 +684,7 @@ export class ClientBase extends EventEmitter {
   }
 
   async getCachedTimeline(): Promise<Tweet[] | undefined> {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    const cached = await this.runtime.databaseAdapter.getCache<Tweet[]>(
       `twitter/${this.profile.username}/timeline`
     );
 
@@ -692,25 +692,25 @@ export class ClientBase extends EventEmitter {
       return undefined;
     }
 
-    return JSON.parse(cached) as Tweet[];
+    return cached;
   }
 
   async cacheTimeline(timeline: Tweet[]) {
-    await this.runtime.databaseAdapter.setCache(
+    await this.runtime.databaseAdapter.setCache<Tweet[]>(
       `twitter/${this.profile.username}/timeline`,
-      JSON.stringify(timeline)
+      timeline
     );
   }
 
   async cacheMentions(mentions: Tweet[]) {
-    await this.runtime.databaseAdapter.setCache(
+    await this.runtime.databaseAdapter.setCache<Tweet[]>(
       `twitter/${this.profile.username}/mentions`,
-      JSON.stringify(mentions)
+      mentions
     );
   }
 
   async getCachedCookies(username: string) {
-    const cached = await this.runtime.databaseAdapter.getCache(
+    const cached = await this.runtime.databaseAdapter.getCache<any[]>(
       `twitter/${username}/cookies`
     );
 
@@ -718,11 +718,11 @@ export class ClientBase extends EventEmitter {
       return undefined;
     }
 
-    return JSON.parse(cached);
+    return cached;
   }
 
   async cacheCookies(username: string, cookies: any[]) {
-    await this.runtime.databaseAdapter.setCache(`twitter/${username}/cookies`, JSON.stringify(cookies));
+    await this.runtime.databaseAdapter.setCache<any[]>(`twitter/${username}/cookies`, cookies);
   }
 
   async fetchProfile(username: string): Promise<TwitterProfile> {

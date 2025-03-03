@@ -10,7 +10,7 @@ export type UUID = `${string}-${string}-${string}-${string}-${string}`;
  */
 export interface Content {
   /** The main text content */
-  text: string;
+  text?: string;
 
   /** Optional action associated with the message */
   action?: string;
@@ -235,15 +235,18 @@ export interface State {
   [key: string]: unknown;
 }
 
+export type MemoryTypeAlias = string
+
 export enum MemoryType {
     DOCUMENT = "document",
     FRAGMENT = "fragment",
     MESSAGE = "message",
-    DESCRIPTION = "description"
+    DESCRIPTION = "description",
+    CUSTOM = "custom"
 }
 
 export interface BaseMetadata {
-    type: MemoryType;          
+    type: MemoryTypeAlias;          
     source?: string;           
     sourceId?: UUID;           
     scope?: string;            
@@ -269,11 +272,17 @@ export interface DescriptionMetadata extends BaseMetadata {
     type: MemoryType.DESCRIPTION;
 }
 
-export type KnowledgeMetadata = 
+export interface CustomMetadata extends BaseMetadata {
+    type: MemoryTypeAlias;
+    [key: string]: unknown;
+}
+
+export type MemoryMetadata = 
     | DocumentMetadata 
     | FragmentMetadata 
     | MessageMetadata 
-    | DescriptionMetadata;
+    | DescriptionMetadata
+    | CustomMetadata;
 
 /**
  * Represents a stored memory/message
@@ -307,7 +316,7 @@ export interface Memory {
   similarity?: number;
 
   /** Metadata for the knowledge */
-  metadata?: KnowledgeMetadata;
+  metadata?: MemoryMetadata;
 }
 
 /**
@@ -417,6 +426,8 @@ export interface Evaluator {
  * Provider for external data/services
  */
 export interface Provider {
+  /** Provider name */
+  name: string;
   /** Data retrieval function */
   get: (runtime: IAgentRuntime, message: Memory, state?: State) => Promise<any>;
 }
@@ -577,62 +588,49 @@ export type Route = {
   type: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
   // TODO: give me strong types
-  handler: (req: any, res: any) => Promise<void>;
+  handler: (req: any, res: any, runtime: IAgentRuntime) => Promise<void>;
 };
 
 /**
  * Plugin for extending agent functionality
  */
-export type Plugin = {
-  /** Plugin name */
+export interface Plugin {
   name: string;
-
-  /** Initialization function */
-  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
-
-  /** Plugin configuration */
-  config?: { [key: string]: any };
-
-  /** Plugin description */
   description: string;
-
-  /** Optional actions */
-  actions?: Action[];
-
-  /** Optional providers */
-  providers?: Provider[];
-
-  /** Optional evaluators */
-  evaluators?: Evaluator[];
-
-  /** Optional clients */
-  clients?: Client[];
-
-  /** Optional services */
-  services?: Service[];
-
-  /** Optional adapters */
-  adapters?: Adapter[];
-
-  /** Optional memory managers */
+  
+  // Initialize plugin with runtime services
+  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
+  
+  // Configuration
+  config?: { [key: string]: any };
+  
+  // Core plugin components
   memoryManagers?: IMemoryManager[];
-
-  /** Optional models */
+  
+  services?: Service[];
+  
+  // Entity component definitions
+  componentTypes?: {
+    name: string;
+    schema: Record<string, unknown>;
+    validator?: (data: any) => boolean;
+  }[];
+  
+  // Optional plugin features
+  actions?: Action[];
+  providers?: Provider[];
+  evaluators?: Evaluator[];
+  clients?: Client[];
+  adapters?: Adapter[];
   models?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
-
-  /** Optional events */
   events?: {
     [key: string]: ((params: any) => Promise<any>)[];
   };
-
-  /** Optional tests */
-  tests?: TestSuite[];
-
-  /** Optional routes */
   routes?: Route[];
-};
+  tests?: TestSuite[];
+}
 
 export interface ModelConfiguration {
   temperature?: number;
@@ -937,9 +935,9 @@ export interface IDatabaseAdapter {
   }): Promise<Relationship[]>;
 
   ensureEmbeddingDimension(dimension: number): void;
-
-  getCache(key: string): Promise<string | undefined>;
-  setCache(key: string, value: string,): Promise<boolean>;
+  
+  getCache<T>(key: string): Promise<T | undefined>;
+  setCache<T>(key: string, value: T): Promise<boolean>;
   deleteCache(key: string): Promise<boolean>;
 
   // Only task instance methods - definitions are in-memory
@@ -971,7 +969,7 @@ export interface IMemoryManager {
     count?: number;
     roomId?: UUID;
     unique?: boolean;
-    metadata?: KnowledgeMetadata;
+    metadata?: MemoryMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(
@@ -1025,6 +1023,7 @@ export interface IAgentRuntime {
   knowledgeManager: IMemoryManager;
 
   getClient(name: string): Client | null;
+  
   getAllClients(): Map<string, Client>;
 
   registerClient(client: Client): void;

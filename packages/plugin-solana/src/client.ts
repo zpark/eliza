@@ -117,12 +117,12 @@ export class SolanaClient extends Client {
 
     private async fetchPrices(): Promise<Prices> {
         const cacheKey = 'prices';
-        const cachedValue = await this.runtime.databaseAdapter.getCache(cacheKey);
+        const cachedValue = await this.runtime.databaseAdapter.getCache<Prices>(cacheKey);
 
         // if cachedValue is JSON, parse it
         if (cachedValue) {
             logger.log('Cache hit for fetchPrices');
-            return JSON.parse(cachedValue);
+            return cachedValue;
         }
 
         logger.log('Cache miss for fetchPrices');
@@ -146,7 +146,7 @@ export class SolanaClient extends Client {
             }
         }
 
-        await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(prices));
+        await this.runtime.databaseAdapter.setCache<Prices>(cacheKey, prices);
         return prices;
     }
 
@@ -204,9 +204,9 @@ export class SolanaClient extends Client {
                         })),
                     };
 
-                    await this.runtime.databaseAdapter.setCache(
+                    await this.runtime.databaseAdapter.setCache<WalletPortfolio>(
                         SOLANA_WALLET_DATA_CACHE_KEY,
-                        JSON.stringify(portfolio),
+                        portfolio,
                     );
                     this.lastUpdate = now;
                     return portfolio;
@@ -233,9 +233,9 @@ export class SolanaClient extends Client {
                 items,
             };
 
-            await this.runtime.databaseAdapter.setCache(
+            await this.runtime.databaseAdapter.setCache<WalletPortfolio>(
                 SOLANA_WALLET_DATA_CACHE_KEY,
-                JSON.stringify(portfolio),
+                portfolio,
             );
             this.lastUpdate = now;
             return portfolio;
@@ -246,11 +246,11 @@ export class SolanaClient extends Client {
     }
 
     public async getCachedData(): Promise<WalletPortfolio | null> {
-        const cachedValue = await this.runtime.databaseAdapter.getCache(
+        const cachedValue = await this.runtime.databaseAdapter.getCache<WalletPortfolio>(
             SOLANA_WALLET_DATA_CACHE_KEY,
         );
         if (cachedValue) {
-            return JSON.parse(cachedValue);
+            return cachedValue;
         }
         return null;
     }

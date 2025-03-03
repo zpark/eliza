@@ -1,14 +1,14 @@
 import {
-    type Action,
     logger,
+    type Action,
     type IAgentRuntime,
-    type Memory
+    type Memory,
+    type UUID
 } from "@elizaos/core";
-import { TrustScoreDatabase } from "../db";
+import { v4 as uuidv4 } from 'uuid';
 import { formatFullReport } from "../reports";
-import { TrustScoreManager } from "../scoreManager";
-import { TrustTokenProvider } from "../tokenProvider";
-import type { TokenPerformance } from "../types";
+import type { TokenPerformance, Transaction } from "../types";
+import type { TrustTradingService } from "../tradingService";
 
 export const getPositions: Action = {
     name: "TRUST_GET_POSITIONS",
@@ -35,37 +35,27 @@ export const getPositions: Action = {
 
     async handler(runtime, message, _state, _options, callback: any) {
         console.log("getPositions is running");
+        const tradingService = runtime.getService("trust_trading") as TrustTradingService;
 
         try {
-            const db = new TrustScoreDatabase(trustDb);
-
-            const _scoreManager = new TrustScoreManager(
-                db,
-                new TrustTokenProvider(runtime)
-            );
-
             const [positions, user] = await Promise.all([
-                db.getOpenPositionsWithBalance(),
+                tradingService.getOpenPositionsWithBalance(),
                 runtime.databaseAdapter.getEntityById(message.userId),
             ]);
             // console.log("Positions:", positions);
 
             if (!user) {
                 logger.error(
-                    "No User Found, no recommender score can be generated"
+                    "No User Found, no entity score can be generated"
                 );
                 return;
             }
 
-            const recommender = await db.getRecommenderByPlatform(
-                // id: message.userId,
-                message.content.source ?? "unknown",
-                user.id
-            );
+            const entity = await runtime.databaseAdapter.getEntityById(user.id);
 
             const filteredPositions = positions.filter(
                 (pos) =>
-                    pos.recommenderId === recommender?.id &&
+                    pos.entityId === entity?.id &&
                     pos.isSimulation === false
             );
 
@@ -73,16 +63,14 @@ export const getPositions: Action = {
                 const responseMemory: Memory = {
                     content: {
                         text: "No open positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_POSITIONS",
                     },
                     userId: message.userId,
                     agentId: message.agentId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     roomId: message.roomId,
                     createdAt: Date.now() * 1000,
                 };
@@ -92,7 +80,7 @@ export const getPositions: Action = {
 
             const transactions =
                 filteredPositions.length > 0
-                    ? await db.getPositionsTransactions(
+                    ? await tradingService.getPositionsTransactions(
                           filteredPositions.map((p) => p.id)
                       )
                     : [];
@@ -104,15 +92,39 @@ export const getPositions: Action = {
                 if (tokenSet.has(`${position.chain}:${position.tokenAddress}`))
                     continue;
 
-                const tokenPerformance = await db.getTokenPerformance(
+                const tokenPerformance = await tradingService.getTokenPerformance(
                     position.chain,
                     position.tokenAddress
                 );
 
-                if (tokenPerformance) tokens.push(tokenPerformance);
+                if (tokenPerformance) {
+                    // Ensure all required fields are present
+                    tokens.push({
+                        chain: position.chain,
+                        address: position.tokenAddress,
+                        ...tokenPerformance
+                    });
+                }
 
                 tokenSet.add(`${position.chain}:${position.tokenAddress}`);
             }
+
+            // Map transactions to the expected type
+            const mappedTransactions = transactions.map(tx => {
+                const position = filteredPositions.find(p => p.tokenAddress === tx.tokenAddress);
+                return {
+                    id: uuidv4() as UUID,
+                    positionId: position?.id as UUID || uuidv4() as UUID,
+                    chain: position?.chain || '',
+                    type: tx.type.toUpperCase() as "buy" | "sell" | "transfer_in" | "transfer_out",
+                    tokenAddress: tx.tokenAddress,
+                    transactionHash: tx.transactionHash,
+                    amount: BigInt(tx.amount),
+                    price: tx.price?.toString(),
+                    isSimulation: tx.isSimulation,
+                    timestamp: new Date(tx.timestamp)
+                } as unknown as Transaction;
+            });
 
             const {
                 positionReports,
@@ -122,7 +134,7 @@ export const getPositions: Action = {
                 totalRealizedPnL,
                 totalUnrealizedPnL,
                 positionsWithBalance,
-            } = formatFullReport(tokens, filteredPositions, transactions);
+            } = formatFullReport(tokens, filteredPositions, mappedTransactions);
 
             if (callback) {
                 const formattedPositions = positionsWithBalance
@@ -163,15 +175,13 @@ export const getPositions: Action = {
                             positionsWithBalance.length > 0
                                 ? `${summary}\n\n${formattedPositions}`
                                 : "No open positions found.",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
+                        action: "TRUST_GET_POSITIONS"
                     },
                     userId: message.userId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_GET_POSITIONS",
-                    },
+                    metadata: message.metadata,
                     agentId: message.agentId,
                     roomId: message.roomId,
                     createdAt: Date.now() * 1000,

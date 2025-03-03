@@ -20,7 +20,7 @@ Analyze the following data:
 Provide a JSON response with the following format:
 {
   "shouldTrade": boolean,
-  "recommendedAction": "BUY" | "SKIP",
+  "recommendedAction": "buy" | "SKIP",
   "suggestedAmount": number,
   "reason": string
 }

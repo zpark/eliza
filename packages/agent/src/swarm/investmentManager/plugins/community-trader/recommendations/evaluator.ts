@@ -422,8 +422,8 @@ async function handler(
         const responseMemory: Memory = {
             content: {
                 text: "Please provide a token address!",
-                inReplyTo: message.metadata?.msgId
-                    ? message.metadata.msgId
+                inReplyTo: message.id
+                    ? message.id
                     : undefined,
                 buttons: [],
             },
@@ -556,7 +556,7 @@ async function handler(
 
         if (!recommendation.tokenAddress) continue;
 
-        const token = await tradingService.tokenProvider.getTokenOverview(
+        const token = await tradingService.getTokenOverview(
             "solana",
             recommendation.tokenAddress!
         );
@@ -568,8 +568,8 @@ async function handler(
         // find the first user Id from a user with the username that we extracted
         const user = users.find((user) => {
             return (
-                user.name.toLowerCase().trim() ===
-                    recommendation.username.toLowerCase().trim() ||
+                user.names.map((name) => name.toLowerCase().trim())
+                    .includes(recommendation.username.toLowerCase().trim()) ||
                 user.id === message.userId
             );
         });
@@ -606,15 +606,13 @@ async function handler(
                             text: formattedResponse,
                             buttons: [],
                             channelId: TELEGRAM_CHANNEL_ID,
+                            source: "telegram",
+                            action: "TRUST_CONFIRM_RECOMMENDATION",
                         },
                         userId: message.userId,
                         agentId: message.agentId,
                         roomId: message.roomId,
-                        metadata: {
-                            ...message.metadata,
-                            client: "telegram",
-                            action: "TRUST_CONFIRM_RECOMMENDATION",
-                        },
+                        metadata: message.metadata,
                         createdAt: Date.now() * 1000,
                     };
                     callback(responseMemory);
@@ -647,17 +645,16 @@ async function handler(
                 const responseMemory: Memory = {
                     content: {
                         text: "Are you just looking for details, or are you recommending this token?",
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                         buttons: [],
+                        action: "TRUST_CONFIRM_RECOMMENDATION",
+                        source: "telegram",
                     },
                     userId: user.id,
                     agentId: message.agentId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_CONFIRM_RECOMMENDATION",
-                    },
+                    metadata: message.metadata,
                     roomId: message.roomId,
                     createdAt: Date.now() * 1000,
                 };
@@ -709,18 +706,17 @@ async function handler(
                 const responseMemory: Memory = {
                     content: {
                         text: question,
-                        inReplyTo: message.metadata?.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                         buttons: [],
+                        action: "TRUST_CONFIRM_RECOMMENDATION",
+                        source: "telegram",
                     },
                     userId: user.id,
                     agentId: message.agentId,
                     roomId: message.roomId,
-                    metadata: {
-                        ...message.metadata,
-                        action: "TRUST_CONFIRM_RECOMMENDATION",
-                    },
+                    metadata: message.metadata,
                     createdAt: Date.now() * 1000,
                 };
                 await callback(responseMemory);

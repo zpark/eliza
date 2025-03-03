@@ -27,7 +27,7 @@ export class ScenarioClient implements Client {
 
   // Create a room for an agent
   async createRoom(agentId: string, name?: string) {
-    const roomId = uuidv4();
+    const roomId = uuidv4() as UUID;
 
     await this.runtime.ensureRoomExists({
       id: roomId as UUID,

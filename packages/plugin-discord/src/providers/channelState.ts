@@ -5,6 +5,7 @@ import type {
 } from "discord.js";
 
 const channelStateProvider: Provider = {
+    name: "channelState",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {

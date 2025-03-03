@@ -26,6 +26,7 @@ import {
   type Action,
   type Actor,
   type Adapter,
+  type Agent,
   ChannelType,
   type Character,
   type Client,
@@ -44,11 +45,9 @@ import {
   type Service,
   type ServiceType,
   type State,
-  type Task,
   type TaskWorker,
   type UUID,
-  type WorldData,
-  type Agent
+  type WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -500,7 +499,7 @@ export class AgentRuntime implements IAgentRuntime {
         await plugin.init(plugin.config, this);
       }
       if (plugin.clients) {
-        for (const client of plugin.clients) {
+        for (const _client of plugin.clients) {
           await Promise.all(plugin.clients.map(client => this.registerClient(client)));
         }
       }

@@ -4,7 +4,7 @@ import {
     ModelClass,
     type IAgentRuntime,
     type IMemoryManager,
-    type KnowledgeMetadata,
+    type MemoryMetadata,
     type Memory,
     type UUID
 } from "./types.ts";
@@ -37,7 +37,7 @@ export class MemoryManager implements IMemoryManager {
         this.tableName = opts.tableName;
     }
 
-    private validateMetadata(metadata: KnowledgeMetadata): void {
+    private validateMetadata(metadata: MemoryMetadata): void {
         // Check type first before any other validation
         if (!metadata.type) {
             throw new Error('Metadata type is required');
@@ -61,7 +61,7 @@ export class MemoryManager implements IMemoryManager {
         }
     }
 
-    private validateMetadataTransition(oldMetadata: KnowledgeMetadata | undefined, newMetadata: KnowledgeMetadata) {
+    private validateMetadataTransition(oldMetadata: MemoryMetadata | undefined, newMetadata: MemoryMetadata) {
         if (oldMetadata?.type && oldMetadata.type !== newMetadata.type) {
             throw new Error(`Cannot change memory type from ${oldMetadata.type} to ${newMetadata.type}`);
         }
@@ -221,7 +221,7 @@ export class MemoryManager implements IMemoryManager {
                 type: this.tableName,
                 scope: memory.agentId ? 'private' : 'shared',
                 timestamp: Date.now()
-            } as KnowledgeMetadata;
+            } as MemoryMetadata;
         }
 
         // Handle metadata if present
@@ -307,7 +307,7 @@ export class MemoryManager implements IMemoryManager {
         );
     }
 
-    private validateMetadataRequirements(metadata: KnowledgeMetadata) {
+    private validateMetadataRequirements(metadata: MemoryMetadata) {
         if (metadata.type === MemoryType.FRAGMENT) {
             if (!metadata.documentId) {
                 throw new Error("Fragment metadata must include documentId");

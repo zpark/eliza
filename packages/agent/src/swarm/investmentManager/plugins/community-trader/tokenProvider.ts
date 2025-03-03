@@ -1,12 +1,6 @@
-import { logger, type IAgentRuntime, settings } from "@elizaos/core";
-import { Connection } from "@solana/web3.js";
-import NodeCache from "node-cache";
+import { type IAgentRuntime, logger, settings } from "@elizaos/core";
 import * as path from "node:path";
 import { toBN } from "./bignumber.ts";
-import {
-    DexscreenerClient,
-} from "./clients";
-import type { ITrustTokenProvider, TokenMarketData, TokenMetadata } from "./types";
 import type {
     CalculatedBuyAmounts,
     DexScreenerData,
@@ -14,11 +8,10 @@ import type {
     HolderData,
     Prices,
     ProcessedTokenData,
-    TokenCodex,
     TokenSecurityData,
-    TokenTradeData,
+    TokenTradeData
 } from "./types.ts";
-import { type Item, WalletProvider } from "./wallet.ts";
+import type { Item, WalletProvider } from "./wallet.ts";
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
@@ -40,7 +33,6 @@ const PROVIDER_CONFIG = {
 export class SolanaTokenProvider {
     private cacheKey = "solana/tokens";
     private NETWORK_ID = 1399811149;
-    private GRAPHQL_ENDPOINT = "https://graph.codex.io/graphql";
 
     constructor(
         //  private connection: Connection,
@@ -55,39 +47,11 @@ export class SolanaTokenProvider {
         const cached = await this.runtime.databaseAdapter.getCache<T>(
             path.join(this.cacheKey, key)
         );
-        return cached;
+        return cached ? cached : null as T | null;
     }
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
-        await this.runtime.databaseAdapter.setCache(path.join(this.cacheKey, key), data, {
-            expires: Date.now() + 5 * 60 * 1000,
-        });
-    }
-
-    private async getCachedData<T>(key: string): Promise<T | null> {
-        // Check in-memory cache first
-        const cachedData = await this.runtime.databaseAdapter.getCache<T>(key);
-        if (cachedData) {
-            return cachedData;
-        }
-
-        // Check file-based cache
-        const fileCachedData = await this.readFromCache<T>(key);
-        if (fileCachedData) {
-            // Populate in-memory cache
-            await this.runtime.databaseAdapter.setCache(key, fileCachedData);
-            return fileCachedData;
-        }
-
-        return null;
-    }
-
-    private async setCachedData<T>(cacheKey: string, data: T): Promise<void> {
-        // Set in-memory cache
-        await this.runtime.databaseAdapter.setCache(cacheKey, data);
-
-        // Write to file-based cache
-        await this.writeToCache(cacheKey, data);
+        await this.runtime.databaseAdapter.setCache<T>(path.join(this.cacheKey, key), data);
     }
 
     private async fetchWithRetry(
@@ -135,9 +99,8 @@ export class SolanaTokenProvider {
         throw lastError;
     }
 
-    async getTokensInWallet(runtime: IAgentRuntime): Promise<Item[]> {
-        const walletInfo =
-            await this.walletProvider.fetchPortfolioValue(runtime);
+    async getTokensInWallet(_runtime: IAgentRuntime): Promise<Item[]> {
+        const walletInfo = await this.walletProvider.fetchPortfolioValue();
         const items = walletInfo.items;
         return items;
     }
@@ -158,91 +121,10 @@ export class SolanaTokenProvider {
         }
     }
 
-    async fetchTokenCodex(): Promise<TokenCodex> {
-        try {
-            const cacheKey = `token_${this.tokenAddress}`;
-            const cachedData = await this.getCachedData<TokenCodex>(cacheKey);
-            if (cachedData) {
-                logger.log(
-                    `Returning cached token data for ${this.tokenAddress}.`
-                );
-                return cachedData;
-            }
-            const query = `
-            query Token($address: String!, $networkId: Int!) {
-              token(input: { address: $address, networkId: $networkId }) {
-                id
-                address
-                cmcId
-                decimals
-                name
-                symbol
-                totalSupply
-                isScam
-                info {
-                  circulatingSupply
-                  imageThumbUrl
-                }
-                explorerData {
-                  blueCheckmark
-                  description
-                  tokenType
-                }
-              }
-            }
-          `;
-
-            const variables = {
-                address: this.tokenAddress,
-                networkId: this.NETWORK_ID, // Replace with your network ID
-            };
-
-            const response = await fetch(this.GRAPHQL_ENDPOINT, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: settings.CODEX_API_KEY,
-                },
-                body: JSON.stringify({
-                    query,
-                    variables,
-                }),
-            }).then((res) => res.json());
-
-            const token = response.data?.data?.token;
-
-            if (!token) {
-                throw new Error(`No data returned for token ${tokenAddress}`);
-            }
-
-            this.setCachedData(cacheKey, token);
-
-            return {
-                id: token.id,
-                address: token.address,
-                cmcId: token.cmcId,
-                decimals: token.decimals,
-                name: token.name,
-                symbol: token.symbol,
-                totalSupply: token.totalSupply,
-                circulatingSupply: token.info?.circulatingSupply,
-                imageThumbUrl: token.info?.imageThumbUrl,
-                blueCheckmark: token.explorerData?.blueCheckmark,
-                isScam: !!token.isScam,
-            };
-        } catch (error) {
-            logger.error(
-                "Error fetching token data from Codex:",
-                error.message
-            );
-            return {} as TokenCodex;
-        }
-    }
-
     async fetchPrices(): Promise<Prices> {
         try {
             const cacheKey = "prices";
-            const cachedData = await this.getCachedData<Prices>(cacheKey);
+            const cachedData = await this.readFromCache<Prices>(cacheKey);
             if (cachedData) {
                 logger.log("Returning cached prices.");
                 return cachedData;
@@ -280,7 +162,7 @@ export class SolanaTokenProvider {
                     );
                 }
             }
-            this.setCachedData(cacheKey, prices);
+            this.writeToCache(cacheKey, prices);
             return prices;
         } catch (error) {
             logger.error("Error fetching prices:", error);
@@ -342,7 +224,7 @@ export class SolanaTokenProvider {
     async fetchTokenSecurity(): Promise<TokenSecurityData> {
         const cacheKey = `tokenSecurity_${this.tokenAddress}`;
         const cachedData =
-            await this.getCachedData<TokenSecurityData>(cacheKey);
+            await this.readFromCache<TokenSecurityData>(cacheKey);
         if (cachedData) {
             logger.log(
                 `Returning cached token security data for ${this.tokenAddress}.`
@@ -364,7 +246,7 @@ export class SolanaTokenProvider {
             top10HolderBalance: data.data.top10HolderBalance,
             top10HolderPercent: data.data.top10HolderPercent,
         };
-        this.setCachedData(cacheKey, security);
+        this.writeToCache(cacheKey, security);
         logger.log(`Token security data cached for ${this.tokenAddress}.`);
 
         return security;
@@ -372,7 +254,7 @@ export class SolanaTokenProvider {
 
     async fetchTokenTradeData(): Promise<TokenTradeData> {
         const cacheKey = `tokenTradeData_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<TokenTradeData>(cacheKey);
+        const cachedData = await this.readFromCache<TokenTradeData>(cacheKey);
         if (cachedData) {
             logger.log(
                 `Returning cached token trade data for ${this.tokenAddress}.`
@@ -601,13 +483,13 @@ export class SolanaTokenProvider {
             volume_sell_24h_change_percent:
                 data.data.volume_sell_24h_change_percent,
         };
-        this.setCachedData(cacheKey, tradeData);
+        this.writeToCache(cacheKey, tradeData);
         return tradeData;
     }
 
     async fetchDexScreenerData(): Promise<DexScreenerData> {
         const cacheKey = `dexScreenerData_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
+        const cachedData = await this.readFromCache<DexScreenerData>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached DexScreener data.");
             return cachedData;
@@ -634,7 +516,7 @@ export class SolanaTokenProvider {
             };
 
             // Cache the result
-            this.setCachedData(cacheKey, dexData);
+            this.writeToCache(cacheKey, dexData);
 
             return dexData;
         } catch (error) {
@@ -650,7 +532,7 @@ export class SolanaTokenProvider {
         symbol: string
     ): Promise<DexScreenerPair | null> {
         const cacheKey = `dexScreenerData_search_${symbol}`;
-        const cachedData = await this.getCachedData<DexScreenerData>(cacheKey);
+        const cachedData = await this.readFromCache<DexScreenerData>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached search DexScreener data.");
             return this.getHighestLiquidityPair(cachedData);
@@ -676,7 +558,7 @@ export class SolanaTokenProvider {
             };
 
             // Cache the result
-            this.setCachedData(cacheKey, dexData);
+            this.writeToCache(cacheKey, dexData);
 
             // Return the pair with the highest liquidity and market cap
             return this.getHighestLiquidityPair(dexData);
@@ -747,7 +629,7 @@ export class SolanaTokenProvider {
 
     async fetchHolderList(): Promise<HolderData[]> {
         const cacheKey = `holderList_${this.tokenAddress}`;
-        const cachedData = await this.getCachedData<HolderData[]>(cacheKey);
+        const cachedData = await this.readFromCache<HolderData[]>(cacheKey);
         if (cachedData) {
             logger.log("Returning cached holder list.");
             return cachedData;
@@ -834,7 +716,7 @@ export class SolanaTokenProvider {
             logger.log(`Total unique holders fetched: ${holders.length}`);
 
             // Cache the result
-            this.setCachedData(cacheKey, holders);
+            this.writeToCache(cacheKey, holders);
 
             return holders;
         } catch (error) {
@@ -899,8 +781,6 @@ export class SolanaTokenProvider {
             );
             const security = await this.fetchTokenSecurity();
 
-            const tokenCodex = await this.fetchTokenCodex();
-
             logger.log(
                 `Fetching trade data for token: ${this.tokenAddress}`
             );
@@ -942,7 +822,17 @@ export class SolanaTokenProvider {
                 (pair) => pair.boosts && pair.boosts.active > 0
             );
 
+            // get name, symbol, decimals etc from dexData
+            const tokenDexData = dexData.pairs[0];
+
             const processedData: ProcessedTokenData = {
+                token: {
+                    address: this.tokenAddress,
+                    name: tokenDexData.baseToken.name,
+                    symbol: tokenDexData.baseToken.symbol,
+                    // decimals: tokenDexData.baseToken.decimals,
+                    // logoURI: tokenDexData.baseToken.imageThumbUrl || ''
+                },
                 security,
                 tradeData,
                 holderDistributionTrend,
@@ -952,7 +842,6 @@ export class SolanaTokenProvider {
                 dexScreenerData: dexData,
                 isDexScreenerListed,
                 isDexScreenerPaid,
-                tokenCodex,
             };
 
             // logger.log("Processed token data:", processedData);
@@ -1093,114 +982,5 @@ export class SolanaTokenProvider {
             logger.error("Error generating token report:", error);
             return "Unable to fetch token information. Please try again later.";
         }
-    }
-}
-
-const tokenAddress = PROVIDER_CONFIG.TOKEN_ADDRESSES.Example;
-
-const connection = new Connection(PROVIDER_CONFIG.DEFAULT_RPC);
-
-export class TrustTokenProvider implements ITrustTokenProvider {
-    constructor(private readonly runtime: IAgentRuntime) {}
-
-    async shouldTradeToken(
-        chain: string,
-        tokenAddress: string
-    ): Promise<boolean> {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        return new SolanaTokenProvider(
-            tokenAddress,
-            new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
-            this.runtime
-        ).shouldTradeToken();
-    }
-
-    async getTokenOverview(
-        chain: string,
-        tokenAddress: string,
-        _forceRefresh?: boolean
-    ): Promise<TokenMetadata & TokenMarketData> {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        const data = await new SolanaTokenProvider(
-            tokenAddress,
-            new WalletProvider(connection, this.runtime.getSetting("SOLANA_PUBLIC_KEY")),
-            this.runtime
-        ).getProcessedTokenData();
-
-        const top3Pairs = data.dexScreenerData.pairs
-            .slice()
-            .sort((a, b) => {
-                const liquidityA = a.liquidity?.usd ?? 0;
-                const liquidityB = b.liquidity?.usd ?? 0;
-                return liquidityB < liquidityA ? -1 : 1;
-            })
-            .slice(0, 3)
-            .map((pair) => ({
-                pairAddress: pair.pairAddress,
-                baseToken: pair.baseToken,
-                quote: pair.quoteToken,
-                priceUsd: pair.priceUsd,
-                liquidityUsd: pair.liquidity?.usd,
-                volume: pair.volume.h24,
-            }));
-
-        // volume 24h is the sum of the top 3 pairs
-        const dexscreen24hVolume = top3Pairs.reduce((acc, pair) => {
-            return acc + pair.volume;
-        }, 0);
-
-        return {
-            chain,
-            address: data.token.address,
-            name: data.token.name,
-            symbol: data.token.symbol,
-            decimals: data.token.decimals,
-
-            metadata: {
-                logoURI: data.token.logoURI,
-
-                dexScreener: {
-                    isListed: data.isDexScreenerListed,
-                    isPaid: data.isDexScreenerPaid,
-                },
-
-                highSupplyHoldersCount: data.highSupplyHoldersCount,
-                security: data.security,
-
-                top3Pairs: top3Pairs,
-            },
-
-            marketCap: data.dexScreenerData.pairs[0]?.marketCap ?? 0,
-            liquidityUsd: data.dexScreenerData.pairs[0]?.liquidity?.usd ?? 0,
-            priceUsd: data.dexScreenerData.pairs[0]?.priceUsd ?? 0,
-
-            price: data.tradeData.price,
-            price24hChange: data.tradeData.price_change_24h_percent,
-
-            trades: data.tradeData.trade_24h,
-            trades24hChange: data.tradeData.trade_24h_change_percent ?? 0,
-
-            holders: data.tradeData.holder,
-            uniqueWallet24h: data.tradeData.unique_wallet_24h,
-            uniqueWallet24hChange:
-                data.tradeData.unique_wallet_24h_change_percent ?? 0,
-
-            volume24h: dexscreen24hVolume ?? data.tradeData.volume_24h_usd ?? 0,
-            volume24hChange: data.tradeData.volume_24h_change_percent ?? 0,
-        };
-    }
-
-    async resolveTicker(chain: string, ticker: string) {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        const result = await DexscreenerClient.createFromRuntime(
-            this.runtime
-        ).searchForHighestLiquidityPair(ticker, chain, {
-            expires: "5m",
-        });
-
-        return result?.baseToken?.address ?? null;
     }
 }

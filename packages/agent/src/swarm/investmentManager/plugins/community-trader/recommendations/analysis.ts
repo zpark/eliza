@@ -1,17 +1,18 @@
 import {
     composeContext,
+    type IAgentRuntime,
     logger,
     type Memory,
     ModelClass,
     type State,
     type UUID
 } from "@elizaos/core";
-import { TrustScoreDatabase } from "../db.js";
 import {
     extractXMLFromResponse,
     parseConfirmationResponse,
     parseTokenResponse
 } from "../utils.js";
+import type { TrustTradingService } from "../tradingService.js";
 
 const tokenDetailsTemplate = `You are a crypto expert.
 
@@ -174,20 +175,20 @@ export const getTokenDetails: any = {
     ],
     similes: ["TOKEN_DETAILS"],
 
-    async handler(runtime, message, _state, _options, callback: any) {
+    async handler(runtime: IAgentRuntime, message: Memory, _state: State, _options, callback: any) {
         if (!runtime.getService("trust_trading")) {
             console.log("no trading service");
             return;
         }
 
-        const tradingService = runtime.getService(SERVICE_TYPE)!;
+        const tradingService = runtime.getService(SERVICE_TYPE) as TrustTradingService;
 
-        const db = new TrustScoreDatabase(trustDb);
         // Get a users most recent message containing a token
-        const rawMessages = await db.getMessagesByUserId(
-            message.userId as UUID,
-            10
-        );
+        const rawMessages = await runtime.messageManager.getMemories({
+            roomId: message.roomId,
+            count: 10,
+            unique: true,
+        });
 
         if (!rawMessages.length) {
             logger.error(`No messages found for user ${message.userId}`);
@@ -224,7 +225,7 @@ export const getTokenDetails: any = {
 
         if (!results.tokenAddress) {
             results.tokenAddress =
-                await tradingService.tokenProvider.resolveTicker(
+                await tradingService.resolveTicker(
                     "solana", // todo: extract from recommendation?
                     results.ticker
                 );
@@ -236,7 +237,7 @@ export const getTokenDetails: any = {
         }
 
         const tokenOverview =
-            await tradingService.tokenProvider.getTokenOverview(
+            await tradingService.getTokenOverview(
                 "solana",
                 results.tokenAddress
             );
@@ -269,17 +270,15 @@ export const getTokenDetails: any = {
             const responseMemory: Memory = {
                 content: {
                     text: finalResponse,
-                    inReplyTo: message.metadata.msgId
-                        ? message.metadata.msgId
+                    inReplyTo: message.id
+                        ? message.id
                         : undefined,
+                        action: "GET_TOKEN_DETAILS",
                 },
                 userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                metadata: {
-                    ...message.metadata,
-                    action: "GET_TOKEN_DETAILS",
-                },
+                metadata: message.metadata,
                 createdAt: Date.now() * 1000,
             };
             await callback(responseMemory);

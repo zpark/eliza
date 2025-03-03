@@ -1,20 +1,22 @@
 import {
     type Action,
     type Memory,
+    type UUID,
     logger
 } from "@elizaos/core";
-import { TrustScoreDatabase } from "../db";
+import { v4 as uuidv4 } from 'uuid';
 import { formatRecommenderReport } from "../reports";
+import type { TrustTradingService } from "../tradingService";
 
 export const getRecommenderReport: Action = {
     name: "GET_RECOMMENDER_REPORT",
-    description: "Gets a recommender's report scoring their recommendations",
+    description: "Gets a entity's report scoring their recommendations",
     examples: [
         [
             {
                 user: "{{user1}}",
                 content: {
-                    text: "what is my recommender score?",
+                    text: "what is my entity score?",
                 },
             },
             {
@@ -29,7 +31,7 @@ export const getRecommenderReport: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "please provide my recommender report",
+                    text: "please provide my entity report",
                 },
             },
             {
@@ -46,31 +48,32 @@ export const getRecommenderReport: Action = {
     async handler(runtime, message, _state, _options, callback: any) {
         if (!callback) {
             logger.error(
-                "No callback provided, no recommender score can be generated"
+                "No callback provided, no entity score can be generated"
             );
             return;
         }
 
-        const db = new TrustScoreDatabase(trustDb);
         const user = await runtime.databaseAdapter.getEntityById(
             message.userId
         );
 
         if (!user) {
             logger.error(
-                "No User Found, no recommender score can be generated"
+                "No User Found, no entity score can be generated"
             );
             return;
         }
 
-        const recommender = await db.getRecommenderByPlatform(
-            // id: message.userId,
-            message.content.source ?? "unknown",
-            user.id
-        );
+        const entity = await runtime.databaseAdapter.getEntityById(user.id);
 
-        const metrics = recommender
-            ? await db.getRecommenderMetrics(recommender.id)
+        if (!entity) {
+            logger.error("No entity found, no entity score can be generated");
+            return;
+        }
+        const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+
+        const metrics = entity
+            ? await tradingService.getRecommenderMetrics(entity.id)
             : undefined;
 
         if (
@@ -80,18 +83,16 @@ export const getRecommenderReport: Action = {
         ) {
             const responseMemory: Memory = {
                 content: {
-                    text: "You don't have a recommender score yet. Please start recommending tokens to earn a score.",
-                    inReplyTo: message.metadata?.msgId
-                        ? message.metadata.msgId
+                    text: "You don't have a entity score yet. Please start recommending tokens to earn a score.",
+                    inReplyTo: message.id
+                        ? message.id
                         : undefined,
+                    action: "GET_RECOMMENDER_REPORT"
                 },
                 userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                metadata: {
-                    ...message.metadata,
-                    action: "GET_RECOMMENDER_REPORT",
-                },
+                metadata: message.metadata,
                 createdAt: Date.now() * 1000,
             };
             await callback(responseMemory);
@@ -99,28 +100,39 @@ export const getRecommenderReport: Action = {
         }
 
         logger.info(
-            `Recommender report for ${recommender?.id}: ${metrics?.trustScore}`
+            `Recommender report for ${entity?.id}: ${metrics?.trustScore}`
         );
         const recommenderReport =
-            recommender && metrics
+            entity && metrics
                 ? formatRecommenderReport(
-                      recommender,
+                      {
+                          ...entity,
+                          id: entity.id as UUID, // Ensure id is not undefined
+                      },
                       metrics,
-                      await db.getRecommenderMetricsHistory(recommender.id)
+                      (await tradingService.getRecommenderMetricsHistory(entity.id)).map(history => ({
+                          ...history,
+                          historyId: history.entityId || uuidv4(), // Ensure historyId is a valid UUID
+                          entityId: history.entityId || '',
+                          trustScore: history.metrics.trustScore || 0,
+                          totalRecommendations: history.metrics.totalRecommendations || 0,
+                          successfulRecs: history.metrics.successfulRecs || 0,
+                          avgTokenPerformance: history.metrics.avgTokenPerformance || 0,
+                          consistencyScore: history.metrics.consistencyScore || 0,
+                          lastUpdated: history.timestamp || new Date()
+                      })) as import("../types").RecommenderMetricsHistory[]
                   )
                 : "";
         logger.info(`Recommender report: ${recommenderReport}`);
         const responseMemory: Memory = {
             content: {
                 text: recommenderReport,
+                action: "GET_RECOMMENDER_REPORT"
             },
             userId: message.userId,
             agentId: message.agentId,
             roomId: message.roomId,
-            metadata: {
-                ...message.metadata,
-                action: "GET_RECOMMENDER_REPORT",
-            },
+            metadata: message.metadata,
             createdAt: Date.now() * 1000,
         };
         await callback(responseMemory);

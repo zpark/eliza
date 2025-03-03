@@ -1,7 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    Client,
+    type Client,
     composeContext,
     type HandlerCallback,
     type IAgentRuntime,

@@ -1,7 +1,7 @@
-import { z, type ZodType } from "zod";
+import { XMLParser } from "fast-xml-parser";
+import type { ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import type { TemplateVariables } from "./types";
-import { XMLParser } from "fast-xml-parser";
 
 export function render<Template extends string>(
     str: Template,

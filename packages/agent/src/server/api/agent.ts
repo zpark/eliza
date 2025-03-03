@@ -163,8 +163,52 @@ export function agentRouter(
         }
     });
 
-    
-    // Update an existing agent details
+    // Create new agent
+    router.post('/', async (req, res) => {
+        logger.info("[AGENT CREATE] Creating new agent");
+        const { characterPath, characterJson } = req.body;
+        
+        try {
+            let character: Character;
+            
+            if (characterJson) {
+                logger.debug("[AGENT CREATE] Parsing character from JSON");
+                character = await server?.jsonToCharacter(characterJson);
+            } else if (characterPath) {
+                logger.debug(`[AGENT CREATE] Loading character from path: ${characterPath}`);
+                character = await server?.loadCharacterTryPath(characterPath);
+            } else {
+                throw new Error("No character configuration provided");
+            }
+
+            if (!character) {
+                throw new Error("Failed to create character configuration");
+            }
+
+            const agent = await server?.startAgent(character);
+            
+            res.status(201).json({
+                success: true,
+                data: {
+                    id: agent.agentId,
+                    character: agent.character,
+                }
+            });
+            logger.success(`[AGENT CREATE] Successfully created agent: ${character.name}`);
+        } catch (error) {
+            logger.error(`[AGENT CREATE] Error creating agent:`, error);
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'CREATE_ERROR',
+                    message: 'Error creating agent',
+                    details: error.message
+                }
+            });
+        }
+    });
+
+    // Update agent
     router.patch('/:agentId', async (req, res) => {
         const agentId = validateUuid(req.params.agentId);
         if (!agentId) {

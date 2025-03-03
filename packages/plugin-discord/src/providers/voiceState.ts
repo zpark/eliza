@@ -2,6 +2,7 @@ import { getVoiceConnection } from "@discordjs/voice";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { ChannelType } from "@elizaos/core";
 const voiceStateProvider: Provider = {
+    name: "voiceState",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         // Voice doesn't get a discord message, so we need to use the channel for guild data
         const room = await runtime.databaseAdapter.getRoom(message.roomId);

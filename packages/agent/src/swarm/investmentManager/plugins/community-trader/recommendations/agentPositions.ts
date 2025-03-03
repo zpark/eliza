@@ -2,11 +2,8 @@ import type {
     IAgentRuntime,
     Memory
 } from "@elizaos/core";
-import { TrustScoreDatabase } from "../db";
 import { formatFullReport } from "../reports";
-import { TrustScoreManager } from "../scoreManager";
-import { TrustTokenProvider } from "../tokenProvider";
-import type { TokenPerformance } from "../types";
+import type { TokenPerformance, Transaction } from "../types";
 
 export const getAgentPositions: any = {
     name: "TRUST_GET_AGENT_POSITIONS",
@@ -55,15 +52,10 @@ export const getAgentPositions: any = {
     ) {
         console.log("getAgentPositions is running");
 
+        const tradingService = runtime.getService("trust_trading");
+
         try {
-            const db = new TrustScoreDatabase(trustDb);
-
-            const _scoreManager = new TrustScoreManager(
-                db,
-                new TrustTokenProvider(runtime)
-            );
-
-            const positions = await db.getOpenPositionsWithBalance();
+            const positions = await tradingService.getOpenPositionsWithBalance();
 
             const filteredPositions = positions.filter(
                 (pos) => pos.isSimulation === false
@@ -73,8 +65,8 @@ export const getAgentPositions: any = {
                 const responseMemory: Memory = {
                     content: {
                         text: "No open positions found.",
-                        inReplyTo: message.metadata.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                     },
                     userId: message.userId,
@@ -90,13 +82,9 @@ export const getAgentPositions: any = {
                 return;
             }
 
-            const transactions =
-                filteredPositions.length > 0
-                    ? await db.getPositionsTransactions(
-                          filteredPositions.map((p) => p.id)
-                      )
-                    : [];
-
+            const positionIds = filteredPositions.map((p) => p.id);
+            const transactions = await tradingService.getPositionsTransactions(positionIds);
+            
             const tokens: TokenPerformance[] = [];
 
             const tokenSet = new Set<string>();
@@ -104,7 +92,7 @@ export const getAgentPositions: any = {
                 if (tokenSet.has(`${position.chain}:${position.tokenAddress}`))
                     continue;
 
-                const tokenPerformance = await db.getTokenPerformance(
+                const tokenPerformance = await tradingService.getTokenPerformance(
                     position.chain,
                     position.tokenAddress
                 );
@@ -122,7 +110,7 @@ export const getAgentPositions: any = {
                 totalRealizedPnL,
                 totalUnrealizedPnL,
                 positionsWithBalance,
-            } = formatFullReport(tokens, filteredPositions, transactions);
+            } = formatFullReport(tokens, filteredPositions, transactions as unknown as Transaction[]);
 
             if (callback) {
                 const formattedPositions = positionsWithBalance
@@ -163,8 +151,8 @@ export const getAgentPositions: any = {
                             positionsWithBalance.length > 0
                                 ? `${summary}\n\n${formattedPositions}`
                                 : "No open positions found.",
-                        inReplyTo: message.metadata.msgId
-                            ? message.metadata.msgId
+                        inReplyTo: message.id
+                            ? message.id
                             : undefined,
                     },
                     userId: message.userId,

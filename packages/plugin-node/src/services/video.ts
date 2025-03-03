@@ -152,11 +152,11 @@ export class VideoService extends Service implements IVideoService {
         const videoUuid = this.getVideoId(videoId);
         const cacheKey = `${this.cacheKey}/${videoUuid}`;
 
-        const cached = await runtime.databaseAdapter.getCache(cacheKey);
+        const cached = await runtime.databaseAdapter.getCache<Media>(cacheKey);
 
         if (cached) {
             logger.log("Returning cached video file");
-            return JSON.parse(cached) as Media;
+            return cached;
         }
 
         try {
@@ -175,7 +175,7 @@ export class VideoService extends Service implements IVideoService {
                 text: transcript,
             };
     
-            await runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(result));
+            await runtime.databaseAdapter.setCache<Media>(cacheKey, result);
     
             return result;
         } catch(error) {

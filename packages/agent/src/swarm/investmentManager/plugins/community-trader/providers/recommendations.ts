@@ -8,6 +8,7 @@ const recommendationsPrompt = `<user_recommendations_provider>
 </user_recommendations_provider>` as const;
 
 export const recommendationsProvider: Provider = {
+    name: "recommendations",
     async get(runtime, message) {
         const recommendationsManager =
             runtime.getMemoryManager("recommendations")!;

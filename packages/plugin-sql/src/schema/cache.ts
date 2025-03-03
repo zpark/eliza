@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, unique, uuid } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, unique, uuid } from "drizzle-orm/pg-core";
 import { agentTable } from "./agent";
-import { numberTimestamp, stringJsonb } from "./types";
+import { numberTimestamp } from "./types";
 
 export const cacheTable = pgTable(
     "cache",
@@ -9,7 +9,7 @@ export const cacheTable = pgTable(
         id: uuid("id").notNull().primaryKey().default(sql`gen_random_uuid()`),
         key: text("key").notNull(),
         agentId: uuid("agentId").notNull().references(() => agentTable.id),
-        value: stringJsonb("value").default(sql`'{}'::jsonb`),
+        value: jsonb("value").notNull(),
         createdAt: numberTimestamp("createdAt")
             .default(sql`now()`)
             .notNull(),

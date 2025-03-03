@@ -18,15 +18,6 @@ export interface IToken {
 	last_updated: Date;
 }
 
-export interface IRawTweet {
-	id: string;
-	timestamp: Date;
-	text: string;
-	username: string;
-	likes: number;
-	retweets: number;
-}
-
 export interface ISentimentToken {
 	token: string;
 	sentiment: number;

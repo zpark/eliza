@@ -3,6 +3,7 @@ import { logger } from "../logger";
 import { ChannelType, type IAgentRuntime, type Memory, type Provider, type State, type UUID } from "../types";
 
 export const roleProvider: Provider = {
+    name: "roles",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -55,7 +56,7 @@ export const roleProvider: Provider = {
                 const userRole = roles[userId];
 
                 // get the user from the database
-                const user = await runtime.getEntity(userId as UUID);
+                const user = await runtime.databaseAdapter.getEntityById(userId as UUID);
 
                 const name = user.metadata[room.source]?.name;
                 const username = user.metadata[room.source]?.username;
