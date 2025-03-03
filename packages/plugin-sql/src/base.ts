@@ -126,7 +126,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
-
     async ensureAgentExists(agent: Partial<Agent>): Promise<void> {
         if (!agent.name) {
             throw new Error("Agent name is required");
@@ -1462,7 +1461,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         metadata?: { [key: string]: unknown };
     }): Promise<boolean> {
         return this.withDatabase(async () => {
-            console.trace()
             try {
                 const id = v4();
                 await this.db.insert(relationshipTable).values({
