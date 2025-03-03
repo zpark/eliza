@@ -126,7 +126,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
-
     async ensureAgentExists(agent: Partial<Agent>): Promise<void> {
         if (!agent.name) {
             throw new Error("Agent name is required");
@@ -405,6 +404,34 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 return false;
             }
         });
+    }
+
+    /**
+     * Ensures an entity exists, creating it if it doesn't
+     * @param entity The entity to ensure exists
+     * @returns Promise resolving to boolean indicating success
+     */
+    protected async ensureEntityExists(entity: Entity): Promise<boolean> {
+        if (!entity.id) {
+            logger.error("Entity ID is required for ensureEntityExists");
+            return false;
+        }
+
+        try {
+            const existingEntity = await this.getEntityById(entity.id);
+            
+            if (!existingEntity) {
+                return await this.createEntity(entity);
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error("Error ensuring entity exists:", {
+                error: error instanceof Error ? error.message : String(error),
+                entityId: entity.id,
+            });
+            return false;
+        }
     }
 
     async updateEntity(entity: Entity): Promise<void> {
@@ -1434,7 +1461,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         metadata?: { [key: string]: unknown };
     }): Promise<boolean> {
         return this.withDatabase(async () => {
-            console.trace()
             try {
                 const id = v4();
                 await this.db.insert(relationshipTable).values({

@@ -10,11 +10,20 @@ export class PgDatabaseAdapter extends BaseDrizzleAdapter<NodePgDatabase> {
     constructor(agentId: UUID, private manager: PostgresConnectionManager) {
         super(agentId);
         this.manager = manager;
-        this.db = drizzle(this.manager.getConnection());
     }
 
     protected async withDatabase<T>(operation: () => Promise<T>): Promise<T> {
-        return await this.withRetry(operation);
+        return await this.withRetry(async () => {
+            const client = await this.manager.getClient();
+            try {
+                const db = drizzle(client);
+                this.db = db;
+                
+                return await operation();
+            } finally {
+                client.release();
+            }
+        });
     }
 
     async init(): Promise<void> {

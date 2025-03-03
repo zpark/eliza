@@ -114,6 +114,15 @@ export class PostgresConnectionManager implements IDatabaseClientManager<PgPool>
         }
     }
 
+    public async getClient(): Promise<pkg.PoolClient> {
+        try {
+            return await this.pool.connect();
+        } catch (error) {
+            logger.error("Failed to acquire a database client:", error);
+            throw error;
+        }
+    }
+
     public async initialize(): Promise<void> {
         try {
             await this.testConnection();
