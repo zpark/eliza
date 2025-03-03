@@ -6,18 +6,10 @@ import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-// Define agent type to fix linter error
-interface Agent {
-    id: string;
-    character: {
-        name: string;
-    };
-    enabled: boolean;
-}
+import { Agent } from "@elizaos/core";
 
 export default function Home() {
-    const { data: agentsData, isLoading, isError, error } = useAgents();
+    const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
     const startAgentMutation = useStartAgent();
     const navigate = useNavigate();
 
@@ -27,7 +19,7 @@ export default function Home() {
     // Handle agent start action
     const handleStartAgent = async (agent: Agent) => {
         try {
-            await startAgentMutation.mutateAsync(agent.character.name);
+            await startAgentMutation.mutateAsync(agent.name);
             // Navigate to chat after successful start
             navigate(`/chat/${agent.id}`);
         } catch (error) {
@@ -62,11 +54,11 @@ export default function Home() {
 
             {!isLoading && !isError &&(
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {agents?.sort((a, b) => Number(b?.enabled) - Number(a?.enabled)).map((agent) => (
+                    {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => (
                         <ProfileCard
                             key={agent.id}
-                            title={agent.character.name}
-                            content={formatAgentName(agent.character.name)}
+                            title={agent.name}
+                            content={formatAgentName(agent.name)}
                             buttons={[
                                 {
                                     label: agent.enabled ? "Chat" : "Start",

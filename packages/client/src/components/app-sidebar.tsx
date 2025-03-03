@@ -19,7 +19,7 @@ import ConnectionStatus from "./connection-status";
   
 export function AppSidebar() {
   const location = useLocation();
-  const { data: agentsData, isPending: isAgentsPending } = useAgents();
+  const { data: { data: agentsData } = {}, isPending: isAgentsPending } = useAgents();
 
   return (
     <Sidebar className="bg-background">
@@ -69,7 +69,7 @@ export function AppSidebar() {
                       if (a.enabled && !b.enabled) return -1;
                       if (!a.enabled && b.enabled) return 1;
                       // If both have same enabled status, sort alphabetically by name
-                      return a.character.name.localeCompare(b.character.name);
+                      return a.name.localeCompare(b.name);
                     });
                     
                     // Split into enabled and disabled groups
@@ -93,14 +93,14 @@ export function AppSidebar() {
                           <SidebarMenuItem key={agent.id}>
                             <NavLink to={`/chat/${agent.id}`}>
                               <SidebarMenuButton
-                                isActive={location.pathname.includes(agent.id)}
+                                isActive={location.pathname.includes(agent.id as string)}
                                 className="transition-colors px-4 py-2 my-1 rounded-md"
                               >
                                 <div className="flex items-center gap-2">
                                   
                                   <User className="size-5" />
                                   
-                                  <span className="text-base">{agent.character.name}</span>
+                                  <span className="text-base">{agent.name}</span>
                                 </div>
                               </SidebarMenuButton>
                             </NavLink>
@@ -122,11 +122,11 @@ export function AppSidebar() {
                           <SidebarMenuItem key={agent.id}>
                             <NavLink to={`/chat/${agent.id}`}>
                               <SidebarMenuButton
-                                isActive={location.pathname.includes(agent.id)}
+                                isActive={location.pathname.includes(agent.id as string)}
                                 className="transition-colors px-4 py-2 my-1 rounded-md text-muted-foreground"
                               >
                                 <User className="size-5" />
-                                <span className="text-base">{agent.character.name}</span>
+                                <span className="text-base">{agent.name}</span>
                               </SidebarMenuButton>
                             </NavLink>
                           </SidebarMenuItem>

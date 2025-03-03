@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api';
 import { WorldManager } from '@/lib/world-manager';
-import type { Character, Content, Media, UUID } from '@elizaos/core';
+import type { Agent, Character, Content, Media, UUID } from '@elizaos/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
@@ -81,21 +81,11 @@ const useNetworkStatus = () => {
   };
 };
 
-// Add AgentData interface
-interface AgentData {
-  id: string;
-  character: { 
-    name: string;
-    // Include other character properties as needed
-  };
-  enabled: boolean;
-}
-
 // Hook for fetching agents with smart polling
 export function useAgents(options = {}) {
   const network = useNetworkStatus();
   
-  return useQuery<{ agents: AgentData[] }>({
+  return useQuery<{ data: {agents: Agent[]} }>({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
     staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
