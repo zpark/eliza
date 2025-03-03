@@ -79,9 +79,9 @@ export const AudioRecorder = ({
     const mutation = useMutation({
         mutationKey: ["whisper"],
         mutationFn: (file: Blob) => apiClient.whisper(agentId, file),
-        onSuccess: (data: { text: string }) => {
-            if (data?.text) {
-                onChange(data.text);
+        onSuccess: (data: { data: { text: string } }) => {
+            if (data?.data?.text) {
+                onChange(data.data.text);
             }
         },
         onError: (e) => {
