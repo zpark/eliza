@@ -77,7 +77,7 @@ export function AppSidebar() {
                     
                     // Split into enabled and disabled groups
                     const activeAgents = sortedAgents.filter((agent: Agent) => activeAgentsList.includes(agent.id as UUID));
-                    const disabledAgents = sortedAgents.filter((agent: Agent) => !activeAgentsList.includes(agent.id as UUID));
+                    const inactiveAgents = sortedAgents.filter((agent: Agent) => !activeAgentsList.includes(agent.id as UUID));
                     
                     return (
                       <>
@@ -111,7 +111,7 @@ export function AppSidebar() {
                         ))}
                         
                         {/* Render inactive section */}
-                        {disabledAgents.length > 0 && (
+                        {inactiveAgents.length > 0 && (
                           <div className="px-4 py-2 mt-4">
                             <div className="flex items-center space-x-2">
                               <div className="size-2.5 rounded-full bg-muted-foreground/50" />
@@ -121,7 +121,7 @@ export function AppSidebar() {
                         )}
 
                         {/* Render disabled agents */}
-                        {disabledAgents.map((agent) => (
+                        {inactiveAgents.map((agent) => (
                           <SidebarMenuItem key={agent.id}>
                               <div className="flex gap-2 transition-colors px-4 py-2 my-1 rounded-md text-muted-foreground">
                                 <User className="size-5" />
