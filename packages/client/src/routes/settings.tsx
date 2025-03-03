@@ -19,9 +19,9 @@ export default function AgentRoute() {
 
     if (!agentId) return <div>No data.</div>;
 
-    const character = query?.data?.character;
+    const agent = query?.data?.data;
 
-    if (!character) return null;
+    if (!agent) return null;
 
-    return <AgentSettings character={character} agentId={agentId}/>;
+    return <AgentSettings agent={agent} agentId={agentId}/>;
 }

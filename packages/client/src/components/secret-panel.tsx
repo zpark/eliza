@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EyeOff, Eye, MoreVertical, Check, X } from "lucide-react";
-import type { Character } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
+
 
 type EnvVariable = {
     name: string;
@@ -10,8 +11,8 @@ type EnvVariable = {
 };
 
 interface SecretPanelProps {
-    characterValue: Character;
-    setCharacterValue: (value: (prev: Character) => Character) => void;
+    characterValue: Agent;
+    setCharacterValue: (value: (prev: Agent) => Agent) => void;
 }
 
 export default function EnvSettingsPanel({ characterValue, setCharacterValue }: SecretPanelProps) {

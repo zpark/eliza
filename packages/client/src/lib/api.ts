@@ -1,4 +1,4 @@
-import type { Character, UUID } from "@elizaos/core";
+import type { Agent, Character, UUID } from "@elizaos/core";
 import { WorldManager } from "./world-manager";
 
 const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT}`;
@@ -10,7 +10,7 @@ const fetcher = async ({
     headers,
 }: {
     url: string;
-    method?: "GET" | "POST" | "DELETE" | "PUT";
+    method?: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
     body?: object | FormData;
     headers?: HeadersInit;
 }) => {
@@ -24,7 +24,7 @@ const fetcher = async ({
               },
     };
 
-    if (method === "POST" || method === "PUT") {
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
         if (body instanceof FormData) {
             if (options.headers && typeof options.headers === 'object') {
                 // Create new headers object without Content-Type
@@ -110,7 +110,7 @@ export const apiClient = {
             });
     },
     getAgents: () => fetcher({ url: "/agents" }),
-    getAgent: (agentId: string): Promise<{ id: UUID; character: Character; enabled: boolean }> =>
+    getAgent: (agentId: string): Promise<{ data: Agent }> =>
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>
         fetcher({
@@ -151,11 +151,11 @@ export const apiClient = {
     },
     deleteAgent: (agentId: string): Promise<{ success: boolean }> =>
         fetcher({ url: `/agents/${agentId}`, method: "DELETE" }),
-    updateAgent: (agentId: string, character: Character) =>
+    updateAgent: (agentId: string, agent: Agent) =>
         fetcher({
             url: `/agents/${agentId}`,
-            method: "PUT",
-            body: character,
+            method: "PATCH",
+            body: agent,
         }),
     createAgent: (params: { characterPath?: string; characterJson?: Character }) =>
         fetcher({
@@ -163,16 +163,11 @@ export const apiClient = {
             method: "POST",
             body: params,
         }),
-    startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
+    startAgent: (params: { agentId: UUID }) =>
         fetcher({
-            url: "/agents/start",
+            url: `/agents/${params.agentId}/start`,
             method: "POST",
             body: params,
-        }),
-    startAgentByName: (characterName: string) =>
-        fetcher({
-            url: `/agents/start/${characterName}`,
-            method: "POST",
         }),
     stopAgent: (agentId: string) => {
         return fetcher({
@@ -216,5 +211,5 @@ export const apiClient = {
             }
         });
     },
-    
+    getActiveAgents: () => fetcher({ url: "/active-agents" }),
 };

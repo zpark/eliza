@@ -1,25 +1,23 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useStartAgent } from "@/hooks/use-query-hooks";
+import { useAgents, useStartAgent, useActiveAgents, useStopAgent } from "@/hooks/use-query-hooks";
 import { Cog, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-// Define agent type to fix linter error
-interface Agent {
-    id: string;
-    character: {
-        name: string;
-    };
-    enabled: boolean;
-}
+import { Agent, UUID } from "@elizaos/core";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Home() {
-    const { data: agentsData, isLoading, isError, error } = useAgents();
+    const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
+    const { data: activeAgentsData } = useActiveAgents();
+    const activeAgents: UUID[] = Array.isArray(activeAgentsData) ? activeAgentsData : [];
+
     const startAgentMutation = useStartAgent();
+    const stopAgentMutation = useStopAgent();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     // Extract agents properly from the response
     const agents = agentsData?.agents || [];
@@ -27,13 +25,23 @@ export default function Home() {
     // Handle agent start action
     const handleStartAgent = async (agent: Agent) => {
         try {
-            await startAgentMutation.mutateAsync(agent.character.name);
+            await startAgentMutation.mutateAsync(agent.id as UUID);
             // Navigate to chat after successful start
+            queryClient.invalidateQueries({ queryKey: ["active-agents"] });
             navigate(`/chat/${agent.id}`);
         } catch (error) {
             console.error("Failed to start agent:", error);
         }
     };
+
+    const handleStopAgent = async(agent: Agent) => {
+        try {
+            await stopAgentMutation.mutateAsync(agent.id as UUID);
+            queryClient.refetchQueries({ queryKey: ["active-agents"] });
+        } catch (error) {
+            console.error("Failed to stop agent:", error);
+        }
+    }
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -62,24 +70,25 @@ export default function Home() {
 
             {!isLoading && !isError &&(
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {agents?.sort((a, b) => Number(b?.enabled) - Number(a?.enabled)).map((agent) => (
-                        <ProfileCard
+                    {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
+                        const isActive = activeAgents.includes(agent.id as UUID);
+                        return <ProfileCard
                             key={agent.id}
-                            title={agent.character.name}
-                            content={formatAgentName(agent.character.name)}
+                            title={agent.name}
+                            content={formatAgentName(agent.name)}
                             buttons={[
                                 {
-                                    label: agent.enabled ? "Chat" : "Start",
-                                    icon: agent.enabled ? undefined : <Play />,
+                                    label: isActive ? "Stop" : "Start",
+                                    icon: isActive ? undefined : <Play />,
                                     action: () => {
-                                        if (!agent.enabled) {
+                                        if (!isActive) {
                                             handleStartAgent(agent);
                                         } else {
-                                            navigate(`/chat/${agent.id}`)
+                                            handleStopAgent(agent);
                                         }
                                     },
-                                    className: "w-full grow",
-                                    variant: agent.enabled ? "default" : "secondary",
+                                    className: `w-full grow ${isActive ? "text-red-500" : ""}`,
+                                    variant: !isActive ? "default" : "secondary",
                                 },
                                 {
                                     icon: <Cog />,
@@ -90,7 +99,7 @@ export default function Home() {
                                 }
                             ]}
                         />
-                    ))}
+                        })}
                     <Card className="flex justify-center items-center" onClick={() => navigate('/agents/new')}>
                         <Button 
                             variant="ghost" 

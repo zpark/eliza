@@ -32,6 +32,7 @@ export class AgentServer {
 
     public database: any;
     public startAgent!: (character: Character) => Promise<IAgentRuntime>; 
+    public stopAgent!: (runtime: IAgentRuntime) => void;
     public loadCharacterTryPath!: (characterPath: string) => Promise<Character>;
     public jsonToCharacter!: (character: unknown) => Promise<Character>;
 

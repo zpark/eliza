@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/chat/chat-bubble";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { useAgent, useAgentMessages, useStartAgent, useStopAgent } from "@/hooks/use-query-hooks";
+import { useAgent, useAgentMessages } from "@/hooks/use-query-hooks";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/lib/api";
 import { cn, moment } from "@/lib/utils";
@@ -108,10 +108,8 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
-    const { data: agentData } = useAgent(agentId);
-    const startAgentMutation = useStartAgent();
-    const stopAgentMutation = useStopAgent();
-
+    const agentData = useAgent(agentId)?.data?.data;
+    
     const getMessageVariant = (role: string) =>
         role !== "user" ? "received" : "sent";
 
@@ -224,24 +222,6 @@ export default function Page({ agentId }: { agentId: UUID }) {
         }
     };
 
-    const handleStartAgent = async () => {
-        if (!agentData?.character?.name) return;
-        
-        try {
-            await startAgentMutation.mutateAsync(agentData.character.name);
-        } catch (error) {
-            console.error("Failed to start agent:", error);
-        }
-    };
-
-    const handleStopAgent = async () => {
-        try {
-            await stopAgentMutation.mutateAsync(agentId);
-        } catch (error) {
-            console.error("Failed to stop agent:", error);
-        }
-    };
-
     return (
         <div className="flex flex-col w-full h-[calc(100dvh)] p-4">
             {/* Agent Header */}
@@ -253,7 +233,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                             <h2 className="font-semibold text-lg">
-                                {agentData?.character?.name || "Agent"}
+                                {agentData?.name || "Agent"}
                             </h2>
                             {agentData?.enabled ? (
                                 <Tooltip>
@@ -275,37 +255,14 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                 </Tooltip>
                             )}
                         </div>
-                        {agentData?.character?.bio && (
+                        {agentData?.bio && (
                             <p className="text-sm text-muted-foreground line-clamp-1">
-                                {Array.isArray(agentData.character.bio) 
-                                    ? agentData.character.bio[0] 
-                                    : agentData.character.bio}
+                                {Array.isArray(agentData.bio) 
+                                    ? agentData.bio[0] 
+                                    : agentData.bio}
                             </p>
                         )}
                     </div>
-                </div>
-                <div>
-                    {agentData?.enabled ? (
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            className="gap-1"
-                            onClick={handleStopAgent}
-                            disabled={stopAgentMutation.isPending}
-                        >
-                            {stopAgentMutation.isPending ? "Stopping..." : "Stop"}
-                        </Button>
-                    ) : (
-                        <Button
-                            variant="default"
-                            size="sm"
-                            className="gap-1"
-                            onClick={handleStartAgent}
-                            disabled={startAgentMutation.isPending}
-                        >
-                            {startAgentMutation.isPending ? "Starting..." : "Start"}
-                        </Button>
-                    )}
                 </div>
             </div>
             

@@ -137,6 +137,13 @@ async function startAgent(
   }
 }
 
+async function stopAgent(
+  runtime: IAgentRuntime,
+  server: AgentServer
+) {
+  server.unregisterAgent(runtime);
+}
+
 const checkPortAvailable = (port: number): Promise<boolean> => {
   return new Promise((resolve) => {
     const server = net.createServer();
@@ -163,6 +170,9 @@ const startAgents = async () => {
     logger.info(`Starting agent for character ${character.name}`);
     return startAgent(character, server);
   };
+  server.stopAgent = (runtime: IAgentRuntime) => {
+    stopAgent(runtime, server);
+  }
   server.loadCharacterTryPath = loadCharacterTryPath;
   server.jsonToCharacter = jsonToCharacter;
 

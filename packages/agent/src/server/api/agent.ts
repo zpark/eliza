@@ -619,9 +619,6 @@ export function agentRouter(
         }
     });
 
-   
-
-    
 
     // Speech-related endpoints
     router.post('/:agentId/speech/generate', async (req, res) => {

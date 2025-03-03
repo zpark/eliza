@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api';
 import { WorldManager } from '@/lib/world-manager';
-import type { Character, Content, Media, UUID } from '@elizaos/core';
+import type { Agent, Content, Media, UUID } from '@elizaos/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
@@ -81,21 +81,11 @@ const useNetworkStatus = () => {
   };
 };
 
-// Add AgentData interface
-interface AgentData {
-  id: string;
-  character: { 
-    name: string;
-    // Include other character properties as needed
-  };
-  enabled: boolean;
-}
-
 // Hook for fetching agents with smart polling
 export function useAgents(options = {}) {
   const network = useNetworkStatus();
   
-  return useQuery<{ agents: AgentData[] }>({
+  return useQuery<{ data: {agents: Agent[]} }>({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
     staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
@@ -138,13 +128,34 @@ export function useAgent(agentId: UUID | undefined | null, options = {}) {
   });
 }
 
+export function useActiveAgents(options = {}) {
+  return useQuery<{ data: { agents: Agent[] } }>({
+    queryKey: ['active-agents'],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.getActiveAgents();
+        return response;
+      } catch (error) {
+        console.error('Error fetching active agents:', error);
+        throw error;
+      }
+    },
+    staleTime: STALE_TIMES.STANDARD, // Prevents unnecessary refetches
+    refetchInterval: false, // Disable polling
+    refetchOnWindowFocus: false, // Prevent refetching when switching tabs
+    refetchOnReconnect: false, // Prevent automatic refetching when regaining connection
+    refetchIntervalInBackground: false, // Prevent background polling
+    ...options,
+  });
+}
+
 // Hook for starting an agent with optimistic updates
 export function useStartAgent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (characterName: string) => apiClient.startAgentByName(characterName),
+    mutationFn: (agentId: UUID) => apiClient.startAgent({ agentId }),
     onSuccess: (data) => {
       // Immediately invalidate the queries for fresh data
       queryClient.invalidateQueries({ queryKey: ['agents'] });
@@ -177,12 +188,12 @@ export function useStopAgent() {
     onMutate: async (agentId) => {
       // Optimistically update the UI
       // Get the agent data from the cache
-      const agent = queryClient.getQueryData<{ id: string; character: Character }>(['agent', agentId]);
+      const agent = queryClient.getQueryData<Agent>(['agent', agentId]);
       
       if (agent) {
         toast({
           title: 'Stopping Agent',
-          description: `Stopping ${agent.character.name}...`,
+          description: `Stopping ${agent.name}...`,
         });
       }
     },

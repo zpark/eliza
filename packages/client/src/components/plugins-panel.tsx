@@ -1,6 +1,6 @@
 import { usePlugins } from "@/hooks/use-plugins";
 import { useMemo, useState } from "react";
-import type { Character } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
 import { Button } from "./ui/button";
 import {
     Dialog,
@@ -12,8 +12,8 @@ import {
   import { Input } from "@/components/ui/input";
 
 interface PluginsPanelProps {
-    characterValue: Character;
-    setCharacterValue: (value: (prev: Character) => Character) => void;
+    characterValue: Agent;
+    setCharacterValue: (value: (prev: Agent) => Agent) => void;
 }
 
 export default function PluginsPanel({ characterValue, setCharacterValue }: PluginsPanelProps) {
