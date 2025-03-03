@@ -602,6 +602,29 @@ export function agentRouter(
         }
     });
 
+    router.post('/:agentId/stop', (req, res) => {
+        const agentId = req.params.agentId;
+        const validAgentId = validateUuid(agentId);
+    
+        if (!validAgentId) {
+            const errorMessage = "Invalid agent ID format";
+            logger.error(`[AGENT STOP] ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const agentRuntime = server.agents.get(validAgentId);
+
+        if (!agentRuntime) {
+            const errorMessage = "Failed to find agent runtime";
+            logger.error(`[AGENT STOP] ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const response = server.stopAgent(agentRuntime);
+        logger.success(`[AGENT STOP] Agent stoped successfully)`);
+        res.json(response);
+    });
+
     router.post('/:agentId/status', async (req, res) => {
         const agentId = validateUuid(req.params.agentId);
         if (!agentId) {

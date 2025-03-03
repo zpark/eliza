@@ -1,5 +1,5 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useStartAgent, useActiveAgents } from "@/hooks/use-query-hooks";
+import { useAgents, useStartAgent, useActiveAgents, useStopAgent } from "@/hooks/use-query-hooks";
 import { Cog, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
@@ -15,6 +15,7 @@ export default function Home() {
     const activeAgents: UUID[] = Array.isArray(activeAgentsData) ? activeAgentsData : [];
 
     const startAgentMutation = useStartAgent();
+    const stopAgentMutation = useStopAgent();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -32,6 +33,15 @@ export default function Home() {
             console.error("Failed to start agent:", error);
         }
     };
+
+    const handleStopAgent = async(agent: Agent) => {
+        try {
+            await stopAgentMutation.mutateAsync(agent.id as UUID);
+            queryClient.refetchQueries({ queryKey: ["active-agents"] });
+        } catch (error) {
+            console.error("Failed to stop agent:", error);
+        }
+    }
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -68,17 +78,17 @@ export default function Home() {
                             content={formatAgentName(agent.name)}
                             buttons={[
                                 {
-                                    label: isActive ? "Chat" : "Start",
+                                    label: isActive ? "Stop" : "Start",
                                     icon: isActive ? undefined : <Play />,
                                     action: () => {
                                         if (!isActive) {
                                             handleStartAgent(agent);
                                         } else {
-                                            navigate(`/chat/${agent.id}`)
+                                            handleStopAgent(agent);
                                         }
                                     },
-                                    className: "w-full grow",
-                                    variant: isActive ? "default" : "secondary",
+                                    className: `w-full grow ${isActive ? "text-red-500" : ""}`,
+                                    variant: !isActive ? "default" : "secondary",
                                 },
                                 {
                                     icon: <Cog />,

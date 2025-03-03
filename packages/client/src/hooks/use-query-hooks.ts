@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api';
 import { WorldManager } from '@/lib/world-manager';
-import type { Agent, Character, Content, Media, UUID } from '@elizaos/core';
+import type { Agent, Content, Media, UUID } from '@elizaos/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
@@ -188,12 +188,12 @@ export function useStopAgent() {
     onMutate: async (agentId) => {
       // Optimistically update the UI
       // Get the agent data from the cache
-      const agent = queryClient.getQueryData<{ id: string; character: Character }>(['agent', agentId]);
+      const agent = queryClient.getQueryData<Agent>(['agent', agentId]);
       
       if (agent) {
         toast({
           title: 'Stopping Agent',
-          description: `Stopping ${agent.character.name}...`,
+          description: `Stopping ${agent.name}...`,
         });
       }
     },
