@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Character } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
 import CharacterForm from "@/components/character-form";
 import PluginsPanel from "./plugins-panel";
 import SecretPanel from "./secret-panel";
@@ -15,15 +15,15 @@ const defaultCharacter = {
     bio: [] as string[],
     topics: [] as string[],
     adjectives: [] as string[],
-}
+} as Agent
 
 export default function AgentCreator() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [characterValue, setCharacterValue] = useState<Character>({...defaultCharacter});
+    const [characterValue, setCharacterValue] = useState<Agent>({...defaultCharacter});
 
-    const ensureRequiredFields = (character: Character): Character => {
+    const ensureRequiredFields = (character: Agent): Agent => {
         return {
             ...character,
             bio: character.bio ?? [],
@@ -40,7 +40,7 @@ export default function AgentCreator() {
         };
     };    
 
-    const handleSubmit = async (character: Character) => {
+    const handleSubmit = async (character: Agent) => {
         try {
             const completeCharacter = ensureRequiredFields(character);
             await apiClient.createAgent(
