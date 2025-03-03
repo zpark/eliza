@@ -41,7 +41,7 @@ const ChatBubble = React.forwardRef<HTMLDivElement, ChatBubbleProps>(
             {...props}
         >
             {React.Children.map(children, (child) =>
-                React.isValidElement(child) && typeof child.type !== "string"
+                React.isValidElement(child) && typeof child.type !== "string" && child.type !== React.Fragment
                     ? React.cloneElement(child, {
                           variant,
                           layout,
