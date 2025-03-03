@@ -1,39 +1,27 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useStartAgent } from "@/hooks/use-query-hooks";
-import { Cog, Play, Plus } from "lucide-react";
+import { useAgents } from "@/hooks/use-query-hooks";
+import { Cog, Loader2, Play, Plus, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
-// Define agent type to fix linter error
-interface Agent {
-    id: string;
-    character: {
-        name: string;
-    };
-    enabled: boolean;
-}
+import type { Agent } from "@elizaos/core";
+import { useAgentManagement } from "@/hooks/use-agent-management";
 
 export default function Home() {
-    const { data: agentsData, isLoading, isError, error } = useAgents();
-    const startAgentMutation = useStartAgent();
+    const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
     const navigate = useNavigate();
+    
+    // Use the agent management hook
+    const { 
+        startAgent, 
+        stopAgent, 
+        isAgentStarting, 
+        isAgentStopping 
+    } = useAgentManagement();
 
     // Extract agents properly from the response
     const agents = agentsData?.agents || [];
-
-    // Handle agent start action
-    const handleStartAgent = async (agent: Agent) => {
-        try {
-            await startAgentMutation.mutateAsync(agent.character.name);
-            // Navigate to chat after successful start
-            navigate(`/chat/${agent.id}`);
-        } catch (error) {
-            console.error("Failed to start agent:", error);
-        }
-    };
 
     return (
         <div className="flex flex-col gap-4 h-full p-4">
@@ -62,24 +50,47 @@ export default function Home() {
 
             {!isLoading && !isError &&(
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {agents?.sort((a, b) => Number(b?.enabled) - Number(a?.enabled)).map((agent) => (
-                        <ProfileCard
+                    {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
+                        // Use type assertion to access status property
+                        const isActive = (agent as Agent & { status?: string }).status === 'active';
+                        const isStarting = isAgentStarting(agent.id);
+                        const isStopping = isAgentStopping(agent.id);
+                        const isProcessing = isStarting || isStopping;
+                        
+                        let buttonLabel = "Start";
+                        let buttonIcon = <Play />;
+                        
+                        if (isStarting) {
+                            buttonLabel = "Starting...";
+                            buttonIcon = <Loader2 className="animate-spin" />;
+                        } else if (isStopping) {
+                            buttonLabel = "Stopping...";
+                            buttonIcon = <Loader2 className="animate-spin" />;
+                        } else if (isActive) {
+                            buttonLabel = "Stop";
+                            buttonIcon = <Square size={16} />;
+                        }
+                        
+                        return <ProfileCard
                             key={agent.id}
-                            title={agent.character.name}
-                            content={formatAgentName(agent.character.name)}
+                            title={agent.name}
+                            content={formatAgentName(agent.name)}
                             buttons={[
                                 {
-                                    label: agent.enabled ? "Chat" : "Start",
-                                    icon: agent.enabled ? undefined : <Play />,
+                                    label: buttonLabel,
+                                    icon: buttonIcon,
                                     action: () => {
-                                        if (!agent.enabled) {
-                                            handleStartAgent(agent);
+                                        if (isProcessing) return; // Prevent action while processing
+                                        
+                                        if (!isActive) {
+                                            startAgent(agent);
                                         } else {
-                                            navigate(`/chat/${agent.id}`)
+                                            stopAgent(agent);
                                         }
                                     },
-                                    className: "w-full grow",
-                                    variant: agent.enabled ? "default" : "secondary",
+                                    className: `w-full grow ${isActive ? "text-red-500" : ""} ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`,
+                                    variant: !isActive ? "default" : "secondary",
+                                    disabled: isProcessing,
                                 },
                                 {
                                     icon: <Cog />,
@@ -89,15 +100,16 @@ export default function Home() {
                                     size: "icon"
                                 }
                             ]}
-                        />
-                    ))}
-                    <Card className="flex justify-center items-center" onClick={() => navigate('/agents/new')}>
-                        <Button 
-                            variant="ghost" 
-                            className="h-24 w-24 rounded-full flex items-center justify-center"
-                        >
-                            <Plus style={{ width: 40, height: 40 }} />
-                        </Button>
+                        />;
+                    })}
+                    
+                    {/* Create new agent card */}
+                    <Card className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-accent/50 transition-colors"
+                        onClick={() => navigate("/create")}>
+                        <div className="flex flex-col items-center justify-center gap-2 p-8">
+                            <Plus size={40} className="text-muted-foreground" />
+                            <span className="text-muted-foreground">Create New Agent</span>
+                        </div>
                     </Card>
                 </div>
             )}

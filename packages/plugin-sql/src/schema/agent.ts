@@ -1,4 +1,4 @@
-import { boolean, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { boolean, jsonb, pgTable, text, uuid, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { numberTimestamp } from "./types";
 import type { MessageExample } from "@elizaos/core";
@@ -29,11 +29,15 @@ export const agentTable = pgTable("agents", {
     plugins: jsonb("plugins").$type<string[]>().default(sql`'[]'::jsonb`),
     settings: jsonb("settings").$type<{
         secrets?: { [key: string]: string | boolean | number };
-        [key: string]: any;
+        [key: string]: unknown;
     }>().default(sql`'{}'::jsonb`),
     style: jsonb("style").$type<{
         all?: string[];
         chat?: string[];
         post?: string[];
     }>().default(sql`'{}'::jsonb`),
+}, (table) => {
+    return {
+        nameUnique: unique("name_unique").on(table.name)
+    };
 });

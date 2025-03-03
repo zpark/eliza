@@ -730,8 +730,6 @@ export interface IDatabaseAdapter {
 
   updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean>;
 
-  toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean>;
-
   deleteAgent(agentId: UUID): Promise<boolean>;
 
   ensureAgentExists(agent: Partial<Agent>): Promise<void>;

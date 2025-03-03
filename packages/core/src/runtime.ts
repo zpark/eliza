@@ -388,7 +388,6 @@ export class AgentRuntime implements IAgentRuntime {
     // Stop all registered clients
     for (const [clientName, client] of this.clients) {
       logger.log(`runtime::stop - requesting client stop for ${clientName}`);
-      await this.ensureAgentIsDisabled();
       await client.stop(this);
     }
   }
@@ -580,28 +579,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  
 
-  private  async ensureAgentIsEnabled() {
-    const agent = await this.databaseAdapter.getAgent(this.agentId);
-    if (!agent) {
-      throw new Error(`Agent ${this.agentId} does not exist`);
-    }
-
-    if (!agent.enabled) {
-      await this.databaseAdapter.updateAgent(this.agentId, {
-        ...agent,
-        enabled: true,
-      });
-    }
-  }
-
-  private async ensureAgentIsDisabled() {
-    const agent = await this.databaseAdapter.getAgent(this.agentId);
-    if (agent) {
-      await this.databaseAdapter.toggleAgent(this.agentId, false);
-    }
-  }
 
   private async processCharacterKnowledge(items: string[]) {
     const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);

@@ -1,10 +1,10 @@
-import type { Character, Agent, Content, IAgentRuntime, Media, Memory } from '@elizaos/core';
+import type { Character, Agent, Content, IAgentRuntime, Media, Memory, UUID } from '@elizaos/core';
 import { ChannelType, composeContext, createUniqueUuid, logger, messageHandlerTemplate, ModelClass, parseJSONObjectFromText, stringToUuid, validateCharacterConfig, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AgentServer } from '..';
-import { upload } from '../loader';
+import { jsonToCharacter, loadCharacter, upload } from '../loader';
 
 interface ApiError {
     code: string;
@@ -26,7 +26,7 @@ interface CustomRequest extends express.Request {
 }
 
 export function agentRouter(
-    agents: Map<string, IAgentRuntime>,
+    agents: Map<UUID, IAgentRuntime>,
     server?: AgentServer
 ): express.Router {
     const router = express.Router();
@@ -36,12 +36,16 @@ export function agentRouter(
     router.get('/', async (_, res) => {
         logger.debug("[AGENTS LIST] Retrieving list of all agents");
         try {
-            const agents = await db.getAgents();
+            const allAgents = await db.getAgents();
 
-            const response = agents.map((agent) => ({
+            // find running agents
+            const runningAgents = Array.from(agents.keys());
+
+            // returns minimal agent data
+            const response = allAgents.map((agent) => ({
                 id: agent.id,
                 name: agent.name,
-                status: agent.status,
+                status: runningAgents.includes(agent.id) ? "active" : "inactive",
                 bio: agent.bio[0],
                 createdAt: agent.createdAt,
                 updatedAt: agent.updatedAt,
@@ -63,8 +67,56 @@ export function agentRouter(
             });
         }
     });
-    
-    // Get specific agent
+
+
+    // Create new agent and start it
+    // Pass agent data or character path or character json in body
+    router.post('/', async (req, res) => {
+        logger.info("[AGENT START] Received request to start a new agent");
+        const { characterPath, characterJson } = req.body;
+        
+        if (!characterPath && !characterJson) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_REQUEST',
+                    message: 'Character path or character json is required'
+                }
+            });
+            return;
+        }
+
+        const character = characterPath 
+            ? await loadCharacter(characterPath)
+            : await jsonToCharacter(characterJson);
+
+
+
+
+        const existingAgents = await db.getAgents();
+        const existingAgent = existingAgents.find((agent) => agent.name === character.name);
+        if(existingAgent) {
+            logger.error(`[AGENT START] Character name ${character.name} already taken`);
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_REQUEST',
+                    message: 'Character name already taken'
+                }
+            });
+            return;
+        }
+
+        const agent = await db.createAgent(character);
+        await server?.startAgent(agent.id);
+
+        res.json({
+            success: true,
+            data: agent
+        });
+    });
+
+    // Get specific agent details
     router.get('/:agentId', async (req, res) => {
         const agentId = validateUuid(req.params.agentId);
         if (!agentId) {
@@ -79,6 +131,7 @@ export function agentRouter(
             return;
         }
 
+
         try {
             const agent = await db.getAgent(agentId);
             if (!agent) {
@@ -92,9 +145,14 @@ export function agentRouter(
                 });
                 return;
             }
+
+            // check if agent is running
+            const runtime = agents.get(agentId);
+            const status = runtime ? "active" : "inactive";
+
             res.json({
                 success: true,
-                data: agent
+                data: {...agent, status}
             });
         } catch (error) {
             logger.error("[AGENT GET] Error getting agent:", error);
@@ -142,7 +200,7 @@ export function agentRouter(
             });
             logger.success(`[AGENT CREATE] Successfully created agent: ${character.name}`);
         } catch (error) {
-            logger.error("[AGENT CREATE] Error creating agent:", error);
+            logger.error('[AGENT CREATE] Error creating agent:', error);
             res.status(400).json({
                 success: false,
                 error: {
@@ -169,23 +227,33 @@ export function agentRouter(
             return;
         }
 
-        const { status, ...updates } = req.body;
+        const { updates } = req.body;
         
         try {
-            // Handle status update
-            if (status !== undefined) {
-                await db.toggleAgent(agentId, status === "active");
-            }
-            
             // Handle other updates if any
             if (Object.keys(updates).length > 0) {
                 await db.updateAgent(agentId, updates);
             }
 
             const updatedAgent = await db.getAgent(agentId);
+            
+            // check if agent is running
+            const runtime = agents.get(agentId);
+                
+            if (runtime) {
+                // stop existing runtime
+                server?.unregisterAgent(agentId);
+                // start new runtime
+                server?.startAgent(updatedAgent);
+            }
+        
+            // check if agent got started successfully
+            const newRuntime = agents.get(agentId);
+            const status = newRuntime ? "active" : "inactive";
+
             res.json({
                 success: true,
-                data: updatedAgent
+                data: {...updatedAgent, status}
             });
         } catch (error) {
             logger.error("[AGENT UPDATE] Error updating agent:", error);
@@ -195,6 +263,122 @@ export function agentRouter(
                     code: 'UPDATE_ERROR',
                     message: 'Error updating agent',
                     details: error.message
+                }
+            });
+        }
+    });
+
+    // Stop an existing agent
+    router.put('/:agentId', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            logger.warn("[AGENT STOP] Invalid agent ID format");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
+            return;
+        }
+
+        // get agent runtime
+        const runtime = agents.get(agentId);
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        // stop existing runtime
+        server?.unregisterAgent(agentId);
+
+        // return success
+        res.json({
+            success: true,
+            data: {
+                message: 'Agent stopped'
+            }
+        });
+    });
+
+    // Start an existing agent
+    router.post('/:agentId', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        if (!agentId) {
+            logger.warn("[AGENT START] Invalid agent ID format");
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID format'
+                }
+            });
+            return;
+        }
+
+        try {
+            // Check if agent exists
+            const agent = await db.getAgent(agentId);
+            if (!agent) {
+                logger.warn("[AGENT START] Agent not found");
+                res.status(404).json({
+                    success: false,
+                    error: {
+                        code: 'NOT_FOUND',
+                        message: 'Agent not found'
+                    }
+                });
+                return;
+            }
+
+            // Check if agent is already running
+            const runtime = agents.get(agentId);
+            if (runtime) {
+                logger.info(`[AGENT START] Agent ${agentId} is already running`);
+                res.json({
+                    success: true,
+                    data: {
+                        id: agentId,
+                        name: agent.name,
+                        status: "active"
+                    }
+                });
+                return;
+            }
+
+            // Start the agent
+            await server?.startAgent(agent);
+            
+            // Verify agent started successfully
+            const newRuntime = agents.get(agentId);
+            if (!newRuntime) {
+                throw new Error("Failed to start agent");
+            }
+
+            logger.success(`[AGENT START] Successfully started agent: ${agent.name}`);
+            res.json({
+                success: true,
+                data: {
+                    id: agentId,
+                    name: agent.name,
+                    status: "active"
+                }
+            });
+        } catch (error) {
+            logger.error("[AGENT START] Error starting agent:", error);
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'START_ERROR',
+                    message: 'Error starting agent',
+                    details: error instanceof Error ? error.message : String(error)
                 }
             });
         }
@@ -216,6 +400,12 @@ export function agentRouter(
         }
         try {
             await db.deleteAgent(agentId);
+
+            // if agent is running, stop it
+            const runtime = agents.get(agentId);
+            if (runtime) {
+                server?.unregisterAgent(agentId);
+            }
             res.status(204).send();
         } catch (error) {
             logger.error("[AGENT DELETE] Error deleting agent:", error);
@@ -245,6 +435,19 @@ export function agentRouter(
             return;
         }
 
+        // get runtime
+        const runtime = agents.get(agentId);
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
         const text = req.body?.text?.trim();
         if (!text) {
             res.status(400).json({
@@ -252,24 +455,6 @@ export function agentRouter(
                 error: {
                     code: 'INVALID_REQUEST',
                     message: 'Text message is required'
-                }
-            });
-            return;
-        }
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
-            );
-        }
-
-        if (!runtime) {
-            res.status(404).json({
-                success: false,
-                error: {
-                    code: 'NOT_FOUND',
-                    message: 'Agent not found'
                 }
             });
             return;
@@ -292,7 +477,7 @@ export function agentRouter(
 
             await db.createRelationship({
                 sourceEntityId: userId,
-                targetEntityId: agentId,
+                targetEntityId: runtime.agentId,
                 agentId: runtime.agentId,
                 tags: ["message_interaction"],
                 metadata: {
@@ -558,116 +743,6 @@ export function agentRouter(
         }
     });
 
-    router.post('/start', async (req, res) => {
-        logger.info("[AGENT START] Received request to start a new agent");
-        const { characterPath, characterJson, agentId } = req.body;
-        
-        // Log request details
-        if (agentId) {
-            logger.debug(`[AGENT START] Using agent ID: ${agentId}`);
-        } else if (characterPath) {
-            logger.debug(`[AGENT START] Using character path: ${characterPath}`);
-        } else if (characterJson) {
-            logger.debug("[AGENT START] Using provided character JSON");
-        } else {
-            logger.warn("[AGENT START] No agent ID, character path, or JSON provided");
-        }
-        
-        try {
-            let character: Character;
-            let source = "";
-
-            // Try to find agent by ID first if provided
-            if (agentId) {
-                logger.debug(`[AGENT START] Looking for agent in database: ${agentId}`);
-                const validAgentId = validateUuid(agentId);
-                
-                if (!validAgentId) {
-                    const errorMessage = "Invalid agent ID format";
-                    logger.error(`[AGENT START] ${errorMessage}`);
-                    throw new Error(errorMessage);
-                }
-                
-                if (server?.database) {
-                    const agent = await server.database.getAgent(validAgentId);
-                    if (agent) {
-                        character = agent.character;
-                        source = "database";
-                        logger.debug(`[AGENT START] Found agent in database: ${agent.character.name} (${validAgentId})`);
-                    } else {
-                        logger.warn(`[AGENT START] Agent not found in database by ID: ${validAgentId}`);
-                    }
-                }
-            }
-            
-            // If agent ID wasn't provided or agent wasn't found, fallback to other methods
-            if (!character) {
-                if (characterJson) {
-                    logger.debug("[AGENT START] Parsing character from JSON");
-                    character = await server?.jsonToCharacter(characterJson);
-                    source = "json";
-                } else if (characterPath) {
-                    logger.debug(`[AGENT START] Loading character from path: ${characterPath}`);
-                    character = await server?.loadCharacterTryPath(characterPath);
-                    source = "path";
-                } else if (!agentId) { // Only throw if agentId wasn't provided
-                    const errorMessage = "No character path or JSON provided";
-                    logger.error(`[AGENT START] ${errorMessage}`);
-                    throw new Error(errorMessage);
-                } else {
-                    const errorMessage = `Agent with ID ${agentId} not found`;
-                    logger.error(`[AGENT START] ${errorMessage}`);
-                    throw new Error(errorMessage);
-                }
-            }
-            
-            // Check if character was found
-            if (!character) {
-                const errorMessage = "No valid agent or character information provided";
-                logger.error(`[AGENT START] ${errorMessage}`);
-                throw new Error(errorMessage);
-            }
-            
-            logger.info(`[AGENT START] Starting agent for character: ${character.name} (source: ${source})`);
-            const agent = await server?.startAgent(character);
-            logger.success(`[AGENT START] Agent started successfully: ${character.name} (${character.id})`);
-
-            res.json({
-                id: agent.agentId,
-                character: agent.character,
-            });
-            logger.debug(`[AGENT START] Successfully returned agent data for: ${character.name}`);
-        } catch (e) {
-            logger.error(`[AGENT START] Error starting agent: ${e}`);
-            res.status(400).json({
-                error: e.message,
-            });
-            return;
-        }
-    });
-
-    router.post('/:agentId/status', async (req, res) => {
-        const agentId = validateUuid(req.params.agentId);
-        if (!agentId) {
-            logger.warn("[AGENT STATUS] Invalid agent ID format");
-            return;
-        }
-        const { status } = req.body;
-
-        // check if status is valid
-        if (status !== "active" && status !== "inactive") {
-            logger.warn("[AGENT STATUS] Invalid status provided");
-            res.status(400).json({ error: 'Invalid request' });
-            return;
-        }
-        try {
-            await db.toggleAgent(agentId, status === "active");
-            res.status(200).json({ success: true });
-        } catch (error) {
-            logger.error("[AGENT STATUS] Error toggling agent:", error);
-            res.status(500).json({ error: 'Error toggling agent' });
-        }
-    });
 
     // Speech-related endpoints
     router.post('/:agentId/speech/generate', async (req, res) => {
@@ -1267,6 +1342,70 @@ export function agentRouter(
                 error: {
                     code: 'DELETE_ERROR',
                     message: 'Failed to delete room',
+                    details: error.message
+                }
+            });
+        }
+    });
+
+    // Get memories for a specific room
+    router.get('/:agentId/rooms/:roomId/memories', async (req, res) => {
+        const agentId = validateUuid(req.params.agentId);
+        const roomId = validateUuid(req.params.roomId);
+
+        if (!agentId || !roomId) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_ID',
+                    message: 'Invalid agent ID or room ID format'
+                }
+            });
+            return;
+        }
+
+        let runtime = agents.get(agentId);
+        if (!runtime) {
+            runtime = Array.from(agents.values()).find(
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+            );
+        }
+
+        if (!runtime) {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: 'Agent not found'
+                }
+            });
+            return;
+        }
+
+        try {
+            const limit = req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 20;
+            const before = req.query.before ? Number.parseInt(req.query.before as string, 10) : Date.now();
+            const worldId = req.query.worldId as string;
+
+            const memories = await runtime.messageManager.getMemories({
+                roomId,
+                count: limit,
+                end: before
+            });
+
+            res.json({
+                success: true,
+                data: {
+                    memories
+                }
+            });
+        } catch (error) {
+            logger.error('[MEMORIES GET] Error retrieving memories for room:', error);
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'FETCH_ERROR',
+                    message: 'Failed to retrieve memories',
                     details: error.message
                 }
             });

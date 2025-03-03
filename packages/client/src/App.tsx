@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { apiClient } from "./lib/api";
 import { STALE_TIMES } from "./hooks/use-query-hooks";
 import AgentCreatorRoute from "./routes/createAgent";
+import AgentCreator from './components/agent-creator';
 
 // Create a query client with optimized settings
 const queryClient = new QueryClient({
@@ -92,6 +93,7 @@ function App() {
                                             path="agents/new"
                                             element={<AgentCreatorRoute />}
                                         />
+                                        <Route path="/create" element={<AgentCreator />} />
                                     </Routes>
                                 </div>
                             </SidebarInset>
