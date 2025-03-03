@@ -406,6 +406,34 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    /**
+     * Ensures an entity exists, creating it if it doesn't
+     * @param entity The entity to ensure exists
+     * @returns Promise resolving to boolean indicating success
+     */
+    protected async ensureEntityExists(entity: Entity): Promise<boolean> {
+        if (!entity.id) {
+            logger.error("Entity ID is required for ensureEntityExists");
+            return false;
+        }
+
+        try {
+            const existingEntity = await this.getEntityById(entity.id);
+            
+            if (!existingEntity) {
+                return await this.createEntity(entity);
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error("Error ensuring entity exists:", {
+                error: error instanceof Error ? error.message : String(error),
+                entityId: entity.id,
+            });
+            return false;
+        }
+    }
+
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.update(entityTable).set(entity)
