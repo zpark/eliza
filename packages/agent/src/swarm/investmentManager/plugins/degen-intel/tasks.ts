@@ -1,4 +1,4 @@
-import { IAgentRuntime, UUID } from "@elizaos/core";
+import type { IAgentRuntime, UUID } from "@elizaos/core";
 
 import Birdeye from "./providers/birdeye";
 import CoinmarketCap from "./providers/coinmarketcap";
@@ -15,10 +15,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({
 		name: "BIRDEYE_SYNC_TRENDING",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const birdeye = new Birdeye(runtime);
 			await birdeye.syncTrendingTokens("solana");
 		}
@@ -37,10 +37,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({	
 		name: "COINMARKETCAP_SYNC",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const cmc = new CoinmarketCap(runtime);
 			await cmc.syncTokens();
 		}
@@ -59,10 +59,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({
 		name: "SYNC_RAW_TWEETS",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const twitter = new Twitter(runtime);
 			await twitter.syncRawTweets();
 		}
@@ -81,10 +81,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({
 		name: "SYNC_WALLET",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const birdeye = new Birdeye(runtime);
 			await birdeye.syncWallet();
 		}
@@ -103,10 +103,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({
 		name: "GENERATE_BUY_SIGNAL",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const signal = new BuySignal(runtime);
 			await signal.generateSignal();
 		}
@@ -125,10 +125,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 
 	runtime.registerTaskWorker({
 		name: "PARSE_TWEETS",
-		validate: async (runtime, message, state) => {
+		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
-		execute: async (runtime, options) => {
+		execute: async (runtime, _options) => {
 			const twitterParser = new TwitterParser(runtime);
 			await twitterParser.parseTweets();
 		}

@@ -1,9 +1,9 @@
 // TODO: Set up registerTasks to actually register the tasks
 // Should first obliterate any existing tasks with same tags for this agent
 
-import { logger, IAgentRuntime, Service } from "@elizaos/core";
+import { logger, type IAgentRuntime, Service } from "@elizaos/core";
 import { REQUIRED_SETTINGS } from "../config/config";
-import { BuySignalMessage, SellSignalMessage } from "../types";
+import type { BuySignalMessage, SellSignalMessage } from "../types";
 import { getWalletBalance } from "../utils/wallet";
 import { handleBuySignal } from "./buyService";
 import { DataLayer } from "./dataLayer";
@@ -17,7 +17,7 @@ export class TradingService extends Service {
   private processId: string;
   private runtime: IAgentRuntime;
 
-  serviceType: string = "degen_trading";
+  serviceType = "degen_trading";
 
   constructor() {
     super();
@@ -137,7 +137,7 @@ export class TradingService extends Service {
     return result;
   }
 
-  private async generateBuySignal(job: Job) {
+  private async generateBuySignal(_job: Job) {
     logger.info('Generating scheduled buy signal');
 
     try {
@@ -171,7 +171,7 @@ export class TradingService extends Service {
     }
   }
 
-  private async syncWallet(job: Job) {
+  private async syncWallet(_job: Job) {
     logger.info('Syncing wallet');
     const balance = await getWalletBalance(this.runtime);
     logger.info('Wallet synced:', { balance });

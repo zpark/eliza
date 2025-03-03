@@ -49,7 +49,7 @@ export class TelegramClient implements Client {
         return tg;
     }
 
-    static async stop(runtime: IAgentRuntime) {
+    static async stop(_runtime: IAgentRuntime) {
         // Implement shutdown if necessary
     }
     

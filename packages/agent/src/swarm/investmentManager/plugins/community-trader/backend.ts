@@ -1,6 +1,6 @@
-import { IAgentRuntime, UUID } from "@elizaos/core";
+import type { IAgentRuntime, UUID } from "@elizaos/core";
 import { http } from "./clients"
-import {
+import type {
     BuyData,
     Position,
     Recommender,
@@ -22,7 +22,7 @@ export class TrustScoreBeClient {
             throw new Error("Missing key BACKEND_TOKEN");
         }
 
-        return new this(url, apiKey);
+        return new TrustScoreBeClient(url, apiKey);
     }
 
     constructor(
@@ -134,7 +134,7 @@ export class Sonar {
             throw new Error("Missing key SONAR_TOKEN");
         }
 
-        return new this(url, apiKey);
+        return new Sonar(url, apiKey);
     }
 
     constructor(
@@ -154,17 +154,17 @@ export class Sonar {
                 },
             });
         } catch (error) {
-            console.error(`Error sending message to sonar:`, { path, body });
+            console.error("Error sending message to sonar:", { path, body });
             throw error;
         }
     }
 
     async startProcess(process: SonarProcessData) {
-        return this.request(`/ai16z-sol/startProcess`, process);
+        return this.request("/ai16z-sol/startProcess", process);
     }
 
     async stopProcess(id: UUID) {
-        return this.request(`/ai16z-sol/stopProcess`, {
+        return this.request("/ai16z-sol/stopProcess", {
             id,
         });
     }
@@ -179,7 +179,7 @@ export class Sonar {
         marketCap: number;
         txHash: string;
     }) {
-        return this.request(`/ai16z-sol/addTransaction`, tx);
+        return this.request("/ai16z-sol/addTransaction", tx);
     }
 
     async quote(params: {

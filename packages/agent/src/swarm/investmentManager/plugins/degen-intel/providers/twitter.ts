@@ -4,7 +4,7 @@
 // store tweets as memories in db, no reason really to get twitter here
 
 import type { IRawTweet } from "../types";
-import { IAgentRuntime, logger } from "@elizaos/core";
+import { type IAgentRuntime, logger } from "@elizaos/core";
 
 export default class Twitter {
 	runtime: IAgentRuntime;

@@ -20,7 +20,7 @@ export function agentRouter(
 ): express.Router {
     const router = express.Router();
 
-    router.get('/', async (req, res) => {
+    router.get('/', async (_req, res) => {
         logger.debug("[AGENTS LIST] Retrieving list of all agents");
         const agents = await server?.database.getAgents();
         res.json({ agents });
@@ -456,7 +456,7 @@ export function agentRouter(
                     character = await server?.loadCharacterTryPath(characterName);
                     source = "filesystem";
                     logger.debug(`[AGENT START BY NAME] Found character in filesystem: ${characterName}`);
-                } catch (e) {
+                } catch (_e) {
                     logger.debug(`[AGENT START BY NAME] Character not found in filesystem, checking running agents: ${characterName}`);
                     const existingAgent = Array.from(agents.values()).find(
                         (a) => a.character.name.toLowerCase() === characterName.toLowerCase()

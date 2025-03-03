@@ -1,8 +1,4 @@
-import {
-    logger,
-    type Client,
-    type IAgentRuntime
-} from '@elizaos/core';
+import { logger, type Client, type IAgentRuntime } from '@elizaos/core';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { SOLANA_CLIENT_NAME, SOLANA_WALLET_DATA_CACHE_KEY } from './constants';
@@ -205,7 +201,10 @@ export class SolanaClient implements ISolanaClient, Client {
                         })),
                     };
 
-                    await this.runtime.databaseAdapter.setCache(SOLANA_WALLET_DATA_CACHE_KEY, JSON.stringify(portfolio));
+                    await this.runtime.databaseAdapter.setCache(
+                        SOLANA_WALLET_DATA_CACHE_KEY,
+                        JSON.stringify(portfolio),
+                    );
                     this.lastUpdate = now;
                     return portfolio;
                 }
@@ -231,7 +230,10 @@ export class SolanaClient implements ISolanaClient, Client {
                 items,
             };
 
-            await this.runtime.databaseAdapter.setCache(SOLANA_WALLET_DATA_CACHE_KEY, JSON.stringify(portfolio));
+            await this.runtime.databaseAdapter.setCache(
+                SOLANA_WALLET_DATA_CACHE_KEY,
+                JSON.stringify(portfolio),
+            );
             this.lastUpdate = now;
             return portfolio;
         } catch (error) {
@@ -241,7 +243,9 @@ export class SolanaClient implements ISolanaClient, Client {
     }
 
     public async getCachedData(): Promise<WalletPortfolio | null> {
-        const cachedValue = await this.runtime.databaseAdapter.getCache(SOLANA_WALLET_DATA_CACHE_KEY);
+        const cachedValue = await this.runtime.databaseAdapter.getCache(
+            SOLANA_WALLET_DATA_CACHE_KEY,
+        );
         if (cachedValue) {
             return JSON.parse(cachedValue);
         }

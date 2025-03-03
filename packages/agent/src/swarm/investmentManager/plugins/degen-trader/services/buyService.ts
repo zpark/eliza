@@ -1,7 +1,7 @@
-import { composeContext, Content, logger, IAgentRuntime, Memory, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
+import { composeContext, type Content, logger, type IAgentRuntime, type Memory, ModelClass, parseJSONObjectFromText } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 import { TrustScoreDatabase } from "../../community-trader/db";
-import { BuySignalMessage } from "../types";
+import type { BuySignalMessage } from "../types";
 import { tradeAnalysisTemplate } from "../utils/analyzeTrade";
 import { executeTrade, getWalletBalance } from "../utils/wallet";
 import { DataLayer } from './dataLayer';
@@ -132,7 +132,7 @@ export async function handleBuySignal(
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
-        logger.info('Attempting to get quote (attempt ' + (i + 1) + '):', {
+        logger.info(`Attempting to get quote (attempt ${i + 1}):`, {
           inputMint: 'So11111111111111111111111111111111111111112',
           outputMint: signal.tokenAddress,
           amount: tradeAmount * 1e9,
@@ -170,7 +170,7 @@ export async function handleBuySignal(
           throw new Error(`Failed to get quote after ${maxRetries} attempts: ${error.message}`);
         }
         // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+        await new Promise(resolve => setTimeout(resolve, 2 ** i * 1000));
       }
     }
 
@@ -281,13 +281,12 @@ export async function handleBuySignal(
         outAmount: quoteData.outAmount,
         swapUsdValue: quoteData.swapUsdValue
       };
-    } else {
+    }
       logger.warn('Buy execution failed or was rejected:', {
         signal,
         error: tradeResult.error
       });
       return {success: false};
-    }
   } catch (error) {
     logger.error('Failed to process buy signal:', error);
     return {success: false};

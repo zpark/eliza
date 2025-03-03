@@ -1,15 +1,15 @@
 import {
-    IAgentRuntime,
-    Memory,
-    Provider,
-    State,
+    type IAgentRuntime,
+    type Memory,
+    type Provider,
+    type State,
     logger,
 } from "@elizaos/core";
-import { Connection, Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, type VersionedTransaction } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import bs58 from "bs58";
 import { BirdeyeClient } from "./clients";
-import { WalletPortfolioItem } from "./types";
+import type { WalletPortfolioItem } from "./types";
 
 export interface KeypairResult {
     keypair?: Keypair;
@@ -24,7 +24,7 @@ export interface KeypairResult {
  */
 export async function getWalletKey(
     runtime: IAgentRuntime,
-    requirePrivateKey: boolean = true
+    requirePrivateKey = true
 ): Promise<KeypairResult> {
     // TEE mode is OFF
     if (requirePrivateKey) {
@@ -69,7 +69,7 @@ export async function getWalletKey(
 
 
 // Provider configuration
-const PROVIDER_CONFIG = {
+const _PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
     MAX_RETRIES: 3,
     RETRY_DELAY: 2000,
@@ -160,7 +160,7 @@ export class WalletProvider {
             throw new Error("SOLANA_PUBLIC_KEY not configured");
         }
 
-        return new this(runtime, new PublicKey(address));
+        return new WalletProvider(runtime, new PublicKey(address));
     }
 
     constructor(
@@ -224,9 +224,8 @@ export class WalletProvider {
 
             if (token) {
                 return token.address;
-            } else {
-                return null;
             }
+                return null;
         } catch (error) {
             console.error("Error checking token in wallet:", error);
             return null;

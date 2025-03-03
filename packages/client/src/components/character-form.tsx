@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Character } from "@elizaos/core";
-import React, { useState, type FormEvent, type ReactNode } from "react";
+import type React from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 
 type FieldType = "text" | "textarea" | "number" | "checkbox" | "select";
 
@@ -298,7 +299,7 @@ export default function CharacterForm({
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="w-full">
           <TabsList 
-            className={`grid w-full mb-6`}
+            className={"grid w-full mb-6"}
             style={{ gridTemplateColumns: `repeat(${customComponents.length + 3}, minmax(0, 1fr))` }}
           >
             {CHARACTER_FORM_SCHEMA.map((section) => (
@@ -350,7 +351,7 @@ export default function CharacterForm({
               type="button"
               variant="outline"
               onClick={() => {
-                onReset && onReset();
+                onReset?.();
                 // setCharacterValue(character)
               }}
             >

@@ -10,7 +10,9 @@ export const walletProvider: Provider = {
         state?: State,
     ): Promise<string | null> => {
         try {
-            const portfolioCache = await runtime.databaseAdapter.getCache(SOLANA_WALLET_DATA_CACHE_KEY);
+            const portfolioCache = await runtime.databaseAdapter.getCache(
+                SOLANA_WALLET_DATA_CACHE_KEY,
+            );
             if (!portfolioCache) {
                 return null;
             }

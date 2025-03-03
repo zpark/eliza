@@ -179,7 +179,7 @@ export class TTSManager {
       const maxTokens = inputTokens.length * 2;
       logger.info("Starting token generation with optimized limit:", { maxTokens });
       const responseTokens: Token[] = [];
-      const startTime = Date.now();
+      const _startTime = Date.now();
 
       try {
         for await (const token of this.sequence.evaluate(inputTokens, {

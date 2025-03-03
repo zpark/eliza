@@ -1,14 +1,14 @@
 import {
-    Action,
+    type Action,
     logger,
-    IAgentRuntime,
-    Memory
+    type IAgentRuntime,
+    type Memory
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db";
 import { formatFullReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
-import { TokenPerformance } from "../types";
+import type { TokenPerformance } from "../types";
 
 export const getPositions: Action = {
     name: "TRUST_GET_POSITIONS",
@@ -33,13 +33,13 @@ export const getPositions: Action = {
     ],
     similes: ["GET_POSITIONS", "SHOW_PORTFOLIO"],
 
-    async handler(runtime, message, state, options, callback: any) {
+    async handler(runtime, message, _state, _options, callback: any) {
         console.log("getPositions is running");
 
         try {
             const db = new TrustScoreDatabase(trustDb);
 
-            const scoreManager = new TrustScoreManager(
+            const _scoreManager = new TrustScoreManager(
                 db,
                 new TrustTokenProvider(runtime)
             );
@@ -127,7 +127,7 @@ export const getPositions: Action = {
             if (callback) {
                 const formattedPositions = positionsWithBalance
                     .map(({ position, token, transactions }) => {
-                        const latestTx = transactions[transactions.length - 1];
+                        const _latestTx = transactions[transactions.length - 1];
                         const currentValue = token.price
                             ? (
                                   Number(position.balance) * token.price
@@ -155,11 +155,7 @@ export const getPositions: Action = {
                     .join("\n\n");
 
                 const summary =
-                    `💰 **Your Portfolio Summary**\n` +
-                    `Total Value: ${totalCurrentValue}\n` +
-                    `Total P&L: ${totalPnL}\n` +
-                    `Realized: ${totalRealizedPnL}\n` +
-                    `Unrealized: ${totalUnrealizedPnL}`;
+                    `💰 **Your Portfolio Summary**\nTotal Value: ${totalCurrentValue}\nTotal P&L: ${totalPnL}\nRealized: ${totalRealizedPnL}\nUnrealized: ${totalUnrealizedPnL}`;
 
                 const responseMemory: Memory = {
                     content: {
@@ -188,7 +184,7 @@ export const getPositions: Action = {
         }
     },
 
-    async validate(runtime: IAgentRuntime, message: Memory) {
+    async validate(_runtime: IAgentRuntime, message: Memory) {
         if (message.agentId === message.userId) return false;
         return true;
     },

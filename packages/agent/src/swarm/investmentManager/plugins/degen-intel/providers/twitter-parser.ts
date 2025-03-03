@@ -1,7 +1,7 @@
 // TODO: Replace anthropic with runtime.useModel
 // replace moment with helper functions
 
-import { IAgentRuntime, logger, ModelClass } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
 import moment from "moment";
 import SentimentModel from "../models/sentiment";
 import RawTweetModel from "../models/raw-tweets";

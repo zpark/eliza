@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EyeOff, Eye, MoreVertical, Check, X } from "lucide-react";
-import { Character } from "@elizaos/core";
+import type { Character } from "@elizaos/core";
 
 type EnvVariable = {
     name: string;

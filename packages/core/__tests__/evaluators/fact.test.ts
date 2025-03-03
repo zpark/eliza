@@ -85,7 +85,7 @@ describe('factEvaluator', () => {
 
     describe('fact extraction', () => {
         it('should handle fact extraction', async () => {
-            const mockFacts = [
+            const _mockFacts = [
                 {
                     claim: 'User lives in New York',
                     type: 'fact',

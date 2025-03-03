@@ -1,7 +1,7 @@
 import {
   ChannelType,
   type Character,
-  Client,
+  type Client,
   createUniqueUuid,
   type HandlerCallback,
   type IAgentRuntime,

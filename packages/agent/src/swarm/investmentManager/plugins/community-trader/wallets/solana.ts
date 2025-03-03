@@ -8,15 +8,15 @@ import {
 import {
     SOL_ADDRESS,
 } from "../constants";
-import { IAgentRuntime } from "@elizaos/core";
+import type { IAgentRuntime } from "@elizaos/core";
 import {
     Connection,
     Keypair,
-    ParsedTransactionWithMeta,
+    type ParsedTransactionWithMeta,
     VersionedTransaction,
 } from "@solana/web3.js";
 import bs58 from "bs58";
-import {
+import type {
     QuoteInParams,
     QuoteResult,
     SwapInParams,
@@ -43,14 +43,14 @@ export function loadPrivateKey(runtime: IAgentRuntime) {
         // First try to decode as base58
         secretKey = bs58.decode(privateKeyString);
         // eslint-disable-next-line
-    } catch (e) {
+    } catch (_e) {
         try {
             // If that fails, try base64
             secretKey = Uint8Array.from(
                 Buffer.from(privateKeyString, "base64")
             );
             // eslint-disable-next-line
-        } catch (e2) {
+        } catch (_e2) {
             throw new Error("Invalid private key format");
         }
     }
@@ -106,7 +106,7 @@ export class SolanaTrustWalletProvider
     static createFromRuntime(runtime: IAgentRuntime) {
         const wallet = WalletProvider.createFromRuntime(runtime);
         const connection = new Connection(runtime.getSetting("RPC_URL")!);
-        return new this(runtime, wallet, connection);
+        return new SolanaTrustWalletProvider(runtime, wallet, connection);
     }
 
     constructor(

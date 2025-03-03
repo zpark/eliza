@@ -1,4 +1,4 @@
-import {
+import type {
     IAgentRuntime,
     Memory
 } from "@elizaos/core";
@@ -6,7 +6,7 @@ import { TrustScoreDatabase } from "../db";
 import { formatFullReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
-import { TokenPerformance } from "../types";
+import type { TokenPerformance } from "../types";
 
 export const getAgentPositions: any = {
     name: "TRUST_GET_AGENT_POSITIONS",
@@ -49,8 +49,8 @@ export const getAgentPositions: any = {
     async handler(
         runtime,
         message,
-        state,
-        options,
+        _state,
+        _options,
         callback: (memory: Memory) => Promise<Memory>
     ) {
         console.log("getAgentPositions is running");
@@ -58,7 +58,7 @@ export const getAgentPositions: any = {
         try {
             const db = new TrustScoreDatabase(trustDb);
 
-            const scoreManager = new TrustScoreManager(
+            const _scoreManager = new TrustScoreManager(
                 db,
                 new TrustTokenProvider(runtime)
             );
@@ -127,7 +127,7 @@ export const getAgentPositions: any = {
             if (callback) {
                 const formattedPositions = positionsWithBalance
                     .map(({ position, token, transactions }) => {
-                        const latestTx = transactions[transactions.length - 1];
+                        const _latestTx = transactions[transactions.length - 1];
                         const currentValue = token.price
                             ? (
                                   Number(position.balance) * token.price
@@ -155,11 +155,7 @@ export const getAgentPositions: any = {
                     .join("\n\n");
 
                 const summary =
-                    `💰 **Agent Portfolio Summary**\n` +
-                    `Total Value: ${totalCurrentValue}\n` +
-                    `Total P&L: ${totalPnL}\n` +
-                    `Realized: ${totalRealizedPnL}\n` +
-                    `Unrealized: ${totalUnrealizedPnL}`;
+                    `💰 **Agent Portfolio Summary**\nTotal Value: ${totalCurrentValue}\nTotal P&L: ${totalPnL}\nRealized: ${totalRealizedPnL}\nUnrealized: ${totalUnrealizedPnL}`;
 
                 await callback({
                     content: {
@@ -187,7 +183,7 @@ export const getAgentPositions: any = {
         }
     },
 
-    async validate(runtime: IAgentRuntime, message: Memory) {
+    async validate(_runtime: IAgentRuntime, message: Memory) {
         if (message.agentId === message.userId) return false;
         return true;
     },

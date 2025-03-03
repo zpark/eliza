@@ -3,8 +3,8 @@
 // Any discord, telegram etc data is stored as components
 // Metrics are stored as memories or cache items
 
-import { UUID, Memory } from "@elizaos/core";
-import { Database } from "better-sqlite3";
+import type { UUID, Memory } from "@elizaos/core";
+import type { Database } from "better-sqlite3";
 // Remove drizzle ORM, use existing database manager stuff
 import {
     and,
@@ -17,7 +17,7 @@ import {
 } from "drizzle-orm";
 
 import { v4 as uuidv4 } from "uuid";
-import { Position } from "./types";
+import type { Position } from "./types";
 
 export interface Recommender {
     id: string; // UUID
@@ -176,7 +176,7 @@ export class TrustScoreDatabase {
 
     private initializeSchema() {
         // Enable Foreign Key Support
-        this.db.exec(`PRAGMA foreign_keys = ON;`);
+        this.db.exec("PRAGMA foreign_keys = ON;");
 
         // Create Recommenders Table
         this.db.exec(`
@@ -603,7 +603,7 @@ export class TrustScoreDatabase {
      * @returns RecommenderMetrics object or null
      */
     getRecommenderMetrics(recommenderId: string): RecommenderMetrics | null {
-        const sql = `SELECT * FROM recommender_metrics WHERE recommender_id = ?;`;
+        const sql = "SELECT * FROM recommender_metrics WHERE recommender_id = ?;";
         const row = this.db.prepare(sql).get(recommenderId) as
             | RecommenderMetricsRow
             | undefined;
@@ -831,7 +831,7 @@ export class TrustScoreDatabase {
      * @returns TokenPerformance object or null
      */
     getTokenPerformance(tokenAddress: string): TokenPerformance | null {
-        const sql = `SELECT * FROM token_performance WHERE token_address = ?;`;
+        const sql = "SELECT * FROM token_performance WHERE token_address = ?;";
         const row = this.db.prepare(sql).get(tokenAddress) as
             | TokenPerformanceRow
             | undefined;
@@ -861,7 +861,7 @@ export class TrustScoreDatabase {
 
     //getTokenBalance
     getTokenBalance(tokenAddress: string): number {
-        const sql = `SELECT balance FROM token_performance WHERE token_address = ?;`;
+        const sql = "SELECT balance FROM token_performance WHERE token_address = ?;";
         const row = this.db.prepare(sql).get(tokenAddress) as {
             balance: number;
         };
@@ -869,7 +869,7 @@ export class TrustScoreDatabase {
     }
 
     getAllTokenPerformancesWithBalance(): TokenPerformance[] {
-        const sql = `SELECT * FROM token_performance WHERE balance > 0;`;
+        const sql = "SELECT * FROM token_performance WHERE balance > 0;";
         const rows = this.db.prepare(sql).all() as TokenPerformanceRow[];
 
         return rows.map((row) => ({
@@ -963,7 +963,7 @@ export class TrustScoreDatabase {
     getRecommendationsByRecommender(
         recommenderId: string
     ): TokenRecommendation[] {
-        const sql = `SELECT * FROM token_recommendations WHERE recommender_id = ? ORDER BY timestamp DESC;`;
+        const sql = "SELECT * FROM token_recommendations WHERE recommender_id = ? ORDER BY timestamp DESC;";
         const rows = this.db.prepare(sql).all(recommenderId) as Array<{
             id: string;
             recommender_id: string;
@@ -991,7 +991,7 @@ export class TrustScoreDatabase {
      * @returns Array of TokenRecommendation objects
      */
     getRecommendationsByToken(tokenAddress: string): TokenRecommendation[] {
-        const sql = `SELECT * FROM token_recommendations WHERE token_address = ? ORDER BY timestamp DESC;`;
+        const sql = "SELECT * FROM token_recommendations WHERE token_address = ? ORDER BY timestamp DESC;";
         const rows = this.db.prepare(sql).all(tokenAddress) as Array<{
             id: string;
             recommender_id: string;
@@ -1398,7 +1398,7 @@ export class TrustScoreDatabase {
      * @returns Array of Transaction objects
      */
     getTransactionsByToken(tokenAddress: string): Transaction[] {
-        const sql = `SELECT * FROM transactions WHERE token_address = ? ORDER BY timestamp DESC;`;
+        const sql = "SELECT * FROM transactions WHERE token_address = ? ORDER BY timestamp DESC;";
         const rows = this.db.prepare(sql).all(tokenAddress) as Array<{
             token_address: string;
             transaction_hash: string;
@@ -1647,10 +1647,10 @@ export class TrustScoreDatabase {
                     updatedAt: position.updatedAt,
                 })
                 .where(eq(schema.positions.id, position.id));
-            console.log(`Updated position`, position);
+            console.log("Updated position", position);
             return true;
         } catch (error) {
-            console.error(`Error updating position`, error);
+            console.error("Error updating position", error);
             return false;
         }
     }
@@ -1663,7 +1663,7 @@ export class TrustScoreDatabase {
                     updatedAt: new Date(),
                 })
                 .where(eq(schema.positions.id, id));
-        } catch (error) {}
+        } catch (_error) {}
     }
 
     async closePosition(id: UUID) {
@@ -1674,7 +1674,7 @@ export class TrustScoreDatabase {
                     closedAt: new Date(),
                 })
                 .where(eq(schema.positions.id, id));
-        } catch (error) {}
+        } catch (_error) {}
     }
 
     async closePositions(ids: UUID[]) {
@@ -1685,12 +1685,12 @@ export class TrustScoreDatabase {
                     closedAt: new Date(),
                 })
                 .where(inArray(schema.positions.id, ids));
-        } catch (error) {}
+        } catch (_error) {}
     }
 
     async getMessagesByUserId(
         userId: UUID,
-        limit: number = 10
+        limit = 10
     ): Promise<Memory[]> {
         const rows = await this.db
             .select()

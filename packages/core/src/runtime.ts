@@ -39,13 +39,13 @@ import {
   ModelClass,
   type Plugin,
   type Provider,
-  RoomData,
+  type RoomData,
   type Route,
   type Service,
   type ServiceType,
   type State,
   type Task,
-  TaskWorker,
+  type TaskWorker,
   type UUID,
   type WorldData
 } from "./types.ts";

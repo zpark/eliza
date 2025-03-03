@@ -1,6 +1,6 @@
 // registered to runtime through plugin
 
-import { IAgentRuntime, Service, ITaskService, ServiceType, UUID } from "../types";
+import { type IAgentRuntime, Service, type ITaskService, ServiceType, type UUID } from "../types";
 
 export class TaskService extends Service implements ITaskService {
   private timer: NodeJS.Timer | null = null;

@@ -144,7 +144,7 @@ export const apiClient = {
         }),
     createAgent: (params: { characterPath?: string; characterJson?: Character }) =>
         fetcher({
-            url: `/agents/`,
+            url: "/agents/",
             method: "POST",
             body: params,
         }),

@@ -1,10 +1,10 @@
 import {
     composeContext,
     logger,
-    Memory,
+    type Memory,
     ModelClass,
-    State,
-    UUID
+    type State,
+    type UUID
 } from "@elizaos/core";
 import { TrustScoreDatabase } from "../db.js";
 import {
@@ -174,7 +174,7 @@ export const getTokenDetails: any = {
     ],
     similes: ["TOKEN_DETAILS"],
 
-    async handler(runtime, message, state, options, callback: any) {
+    async handler(runtime, message, _state, _options, callback: any) {
         if (!runtime.getService("trust_trading")) {
             console.log("no trading service");
             return;
@@ -220,7 +220,7 @@ export const getTokenDetails: any = {
 
         const extractXML = extractXMLFromResponse(text, "token");
 
-        let results = parseTokenResponse(extractXML);
+        const results = parseTokenResponse(extractXML);
 
         if (!results.tokenAddress) {
             results.tokenAddress =

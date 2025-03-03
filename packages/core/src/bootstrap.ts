@@ -30,7 +30,7 @@ import { timeProvider } from "./providers/time.ts";
 import { TaskService } from "./services/taskService.ts";
 import {
   ChannelType,
-  Content,
+  type Content,
   type Entity,
   type HandlerCallback,
   type IAgentRuntime,

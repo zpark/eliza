@@ -1,6 +1,6 @@
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import logger from "./logger.ts";
-import { IAgentRuntime, ModelClass } from "./types.ts";
+import { type IAgentRuntime, ModelClass } from "./types.ts";
 
 const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 

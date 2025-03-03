@@ -1,6 +1,6 @@
-import { io, Socket } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
 import { logger } from "@elizaos/core";
-import {
+import type {
   SellSignalMessage,
   BuySignalMessage,
   QuoteParams,
@@ -13,8 +13,8 @@ import {
 export class SonarClient {
   private socket: Socket | null = null;
   private apiKey: string;
-  private baseUrl: string = 'https://sonar-ai16z-test.up.railway.app';
-  private wsUrl: string = 'wss://sonar-ai16z-test.up.railway.app';
+  private baseUrl = 'https://sonar-ai16z-test.up.railway.app';
+  private wsUrl = 'wss://sonar-ai16z-test.up.railway.app';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;

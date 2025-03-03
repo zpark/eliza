@@ -1,4 +1,4 @@
-import { CacheOptions, IAgentRuntime } from "@elizaos/core";
+import type { CacheOptions, IAgentRuntime } from "@elizaos/core";
 import BigNumber from "bignumber.js";
 import * as dotenv from "dotenv";
 import { toBN } from "./bignumber";
@@ -8,7 +8,7 @@ import {
     SOL_ADDRESS,
     SOLANA_NETWORK_ID,
 } from "./constants";
-import {
+import type {
     DexScreenerData,
     DexScreenerPair,
     HolderData,
@@ -67,7 +67,7 @@ const calculateDelay = (
     options: Required<RetryOptions>
 ): number => {
     const delay =
-        options.initialDelay * Math.pow(options.backoffFactor, attempt - 1);
+        options.initialDelay * options.backoffFactor ** (attempt - 1);
     return Math.min(delay, options.maxDelay);
 };
 
@@ -201,7 +201,7 @@ export const http = {
         },
     },
 
-    async jsonrpc<ReturnType = any, Params extends object = object>(
+    async jsonrpc<_ReturnType = any, Params extends object = object>(
         url: string,
         method: string,
         params: Params,
@@ -219,7 +219,7 @@ export const http = {
         );
     },
 
-    async graphql<ReturnType = any, Variables extends object = object>(
+    async graphql<_ReturnType = any, Variables extends object = object>(
         url: string,
         query: string,
         variables: Variables,
@@ -247,11 +247,11 @@ export class JupiterClient {
         inputMint: string,
         outputMint: string,
         amount: string,
-        slippageBps: number = 50
+        slippageBps = 50
     ) {
         const headers: Record<string, string> = {};
-        if (this.xApiKey) {
-            headers["x-api-key"] = this.xApiKey;
+        if (JupiterClient.xApiKey) {
+            headers["x-api-key"] = JupiterClient.xApiKey;
         }
 
         const quote = await http.get.json<
@@ -264,7 +264,7 @@ export class JupiterClient {
               }
             | { error: unknown }
         >(
-            `${this.baseUrl}/quote`,
+            `${JupiterClient.baseUrl}/quote`,
             {
                 inputMint,
                 outputMint,
@@ -286,8 +286,8 @@ export class JupiterClient {
 
     static async swap(quoteData: any, walletPublicKey: string) {
         const headers: Record<string, string> = {};
-        if (this.xApiKey) {
-            headers["x-api-key"] = this.xApiKey;
+        if (JupiterClient.xApiKey) {
+            headers["x-api-key"] = JupiterClient.xApiKey;
         }
 
         const swapRequestBody = {
@@ -299,7 +299,7 @@ export class JupiterClient {
         };
 
         const swapData = await http.post.json(
-            `${this.baseUrl}/swap`,
+            `${JupiterClient.baseUrl}/swap`,
             swapRequestBody,
             { headers }
         );
@@ -323,7 +323,7 @@ export class DexscreenerClient {
     constructor(private runtime: IAgentRuntime) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
-        return new this(runtime);
+        return new DexscreenerClient(runtime);
     }
 
     async request<T = any>(
@@ -343,7 +343,7 @@ export class DexscreenerClient {
             if (cached) return cached;
         }
 
-        console.log(`Fetching DexScreener: `, { path, params });
+        console.log("Fetching DexScreener: ", { path, params });
 
         const res = await http.get.json<T>(
             `https://api.dexscreener.com/${path}`,
@@ -365,7 +365,7 @@ export class DexscreenerClient {
     ): Promise<DexScreenerData> {
         try {
             const data = await this.request<DexScreenerData>(
-                `latest/dex/search`,
+                "latest/dex/search",
                 {
                     q: address,
                 },
@@ -378,7 +378,7 @@ export class DexscreenerClient {
 
             return data;
         } catch (error) {
-            console.error(`Error fetching DexScreener data:`, error);
+            console.error("Error fetching DexScreener data:", error);
             return {
                 schemaVersion: "1.0.0",
                 pairs: [],
@@ -415,7 +415,7 @@ export class HeliusClient {
     
     constructor(
         private readonly apiKey: string,
-        runtime: IAgentRuntime
+        _runtime: IAgentRuntime
     ) {}
 
     static createFromRuntime(runtime: IAgentRuntime) {
@@ -425,7 +425,7 @@ export class HeliusClient {
             throw new Error("missing HELIUS_API_KEY");
         }
 
-        return new this(apiKey, runtime);
+        return new HeliusClient(apiKey, runtime);
     }
 
     async fetchHolderList(
@@ -458,7 +458,7 @@ export class HeliusClient {
                     cursor: cursor,
                 };
 
-                if (cursor != undefined) {
+                if (cursor !== undefined) {
                     params.cursor = cursor;
                 }
 
@@ -492,7 +492,7 @@ export class HeliusClient {
 
                 data.result.token_accounts.forEach((account: any) => {
                     const owner = account.owner;
-                    const balance = parseFloat(account.amount);
+                    const balance = Number.parseFloat(account.amount);
 
                     if (allHoldersMap.has(owner)) {
                         allHoldersMap.set(
@@ -550,7 +550,7 @@ export class CoingeckoClient {
             throw new Error("missing COINGECKO_API_KEY");
         }
 
-        return new this(apiKey, runtime);
+        return new CoingeckoClient(apiKey, runtime);
     }
 
     async request<T = any>(
@@ -663,7 +663,7 @@ export class BirdeyeClient {
         headers?: BirdeyeClientHeaders
     ): Promise<T> {
         const res = await http.get.json<{ success: boolean; data?: T }>(
-            this.url + path,
+            BirdeyeClient.url + path,
             params,
             {
                 headers: {
@@ -675,7 +675,7 @@ export class BirdeyeClient {
 
         if (!res.success || !res.data) {
             console.error({ res });
-            throw new Error("Birdeye request failed:" + path);
+            throw new Error(`Birdeye request failed:${path}`);
         }
 
         return res.data;
@@ -693,7 +693,7 @@ export class BirdeyeClient {
             throw new Error("missing BIRDEYE_API_KEY");
         }
 
-        return new this(apiKey, runtime);
+        return new BirdeyeClient(apiKey, runtime);
     }
 
     async request<T = any>(
@@ -769,7 +769,7 @@ export class BirdeyeClient {
     async fetchTokenOverview(
         address: string,
         options?: BirdeyeRequestOptions,
-        forceRefresh: boolean = false
+        forceRefresh = false
     ): Promise<TokenOverview> {
         const token = await this.request<TokenOverview>(
             "defi/token_overview",
@@ -896,7 +896,7 @@ export class CodexClient {
         variables?: any
     ): Promise<T> {
         const res = await http.graphql<{ data: T }>(
-            this.url,
+            CodexClient.url,
             query,
             variables,
             apiKey
@@ -922,7 +922,7 @@ export class CodexClient {
             throw new Error("missing CODEX_API_KEY");
         }
 
-        return new this(apiKey);
+        return new CodexClient(apiKey);
     }
 
     request<T = any>(query: string, variables?: any) {
@@ -1119,7 +1119,7 @@ function parseTimeToMs(timeStr: string) {
     if (!match) return 0;
 
     const [_, value, unit] = match;
-    return units[unit.toLowerCase()] * parseInt(value);
+    return units[unit.toLowerCase()] * Number.parseInt(value);
 }
 
 function parseExpires(expires: string | number) {

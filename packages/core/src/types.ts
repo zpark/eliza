@@ -558,12 +558,12 @@ export abstract class Client {
   config?: { [key: string]: any };
 
   /** Start client connection */
-  static async start(runtime: IAgentRuntime): Promise<Client> {
+  static async start(_runtime: IAgentRuntime): Promise<Client> {
     throw new Error('Not implemented');
   }
 
   /** Stop client connection */
-  static async stop(runtime: IAgentRuntime): Promise<unknown> {
+  static async stop(_runtime: IAgentRuntime): Promise<unknown> {
     throw new Error('Not implemented');
   }
 }

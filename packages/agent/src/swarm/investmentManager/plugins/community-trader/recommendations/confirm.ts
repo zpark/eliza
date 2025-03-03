@@ -1,14 +1,14 @@
 import {
-    Action,
-    IAgentRuntime,
+    type Action,
+    type IAgentRuntime,
     logger,
-    Memory,
+    type Memory,
     ServiceType,
-    UUID
+    type UUID
 } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
-import { TrustTradingService } from "../tradingService";
-import { MessageRecommendation } from "./schema";
+import type { TrustTradingService } from "../tradingService";
+import type { MessageRecommendation } from "./schema";
 
 export const confirmRecommendation: Action = {
     name: "TRUST_CONFIRM_RECOMMENDATION",
@@ -60,7 +60,7 @@ export const confirmRecommendation: Action = {
     ],
     similes: ["CONFIRM_RECOMMENDATION"],
 
-    async handler(runtime: IAgentRuntime, message, state, options, callback: any) {
+    async handler(runtime: IAgentRuntime, message, _state, _options, callback: any) {
         console.log("confirmRecommendation is running");
         if (!runtime.getService("trust_trading")) {
             console.log("no trading service");
@@ -247,7 +247,7 @@ export const confirmRecommendation: Action = {
 
                 if (callback && result) {
                     switch (recommendation.type) {
-                        case "BUY":
+                        case "BUY": {
                             const responseMemory: Memory = {
                                 id: newUUID,
                                 content: {
@@ -267,6 +267,7 @@ export const confirmRecommendation: Action = {
                             };
                             await callback(responseMemory);
                             break;
+                        }
                         case "DONT_BUY":
                         case "SELL":
                         case "DONT_SELL":
@@ -279,7 +280,7 @@ export const confirmRecommendation: Action = {
         }
     },
 
-    async validate(runtime, message) {
+    async validate(_runtime, message) {
         if (message.agentId === message.userId) return false;
         return true;
     },

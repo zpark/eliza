@@ -1,17 +1,17 @@
 import {
     composeContext,
-    Evaluator,
-    IAgentRuntime,
-    Memory,
+    type Evaluator,
+    type IAgentRuntime,
+    type Memory,
     MemoryManager,
     ModelClass,
-    State,
-    UUID
+    type State,
+    type UUID
 } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
-import { TrustTradingService } from "../tradingService.js";
-import { RecommendationMemory } from "../types.js";
+import type { TrustTradingService } from "../tradingService.js";
+import type { RecommendationMemory } from "../types.js";
 import {
     extractXMLFromResponse,
     getZodJsonSchema,
@@ -343,7 +343,7 @@ export const recommendationEvaluator: Evaluator = {
     similes: [],
     alwaysRun: true,
     validate: async (
-        runtime: IAgentRuntime,
+        _runtime: IAgentRuntime,
         message: Memory
     ): Promise<boolean> => {
         console.log(
@@ -376,7 +376,7 @@ async function handler(
     runtime: IAgentRuntime,
     message: Memory,
     state?: State,
-    options?: { [key: string]: unknown },
+    _options?: { [key: string]: unknown },
     callback?: any
 ) {
     console.log("Running the evaluator");
@@ -546,7 +546,7 @@ async function handler(
             recommendation.ticker !== "null" &&
             recommendation.ticker
         ) {
-            let tokenAddress = await tradingService.resolveTicker(
+            const tokenAddress = await tradingService.resolveTicker(
                 "solana", // todo: extract from recommendation?
                 recommendation.ticker
             );
@@ -663,7 +663,7 @@ async function handler(
                 };
                 await callback(responseMemory);
                 return;
-            } else {
+            }
                 if (
                     recommendation.conviction === "MEDIUM" ||
                     recommendation.conviction === "HIGH"
@@ -724,7 +724,6 @@ async function handler(
                     createdAt: Date.now() * 1000,
                 };
                 await callback(responseMemory);
-            }
             hasAgentRepliedTo = true;
         }
     }

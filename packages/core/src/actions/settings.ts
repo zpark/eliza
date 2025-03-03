@@ -7,7 +7,7 @@ import {
   type Action,
   type ActionExample,
   ChannelType,
-  Content,
+  type Content,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,

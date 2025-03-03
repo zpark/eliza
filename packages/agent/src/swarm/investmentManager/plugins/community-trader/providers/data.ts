@@ -1,10 +1,10 @@
 import { BirdeyeClient, CoingeckoClient } from "../clients";
 import {
-    IAgentRuntime,
-    Memory,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    Provider,
-    State,
+    type Provider,
+    type State,
     formatMessages,
 } from "@elizaos/core";
 import { z } from "zod";
@@ -12,7 +12,7 @@ import { TrustScoreDatabase } from "../db";
 import { formatFullReport, formatRecommenderReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
 import { TrustTokenProvider } from "../tokenProvider";
-import { PositionWithBalance, TokenPerformance, Transaction } from "../types";
+import type { PositionWithBalance, TokenPerformance, Transaction } from "../types";
 import { getZodJsonSchema, render } from "../utils";
 
 const dataProviderTemplate = `<data_provider>
@@ -145,7 +145,7 @@ const loadToken = createAction({
     },
 });
 
-const findPositions = createAction({
+const _findPositions = createAction({
     name: "findPositions",
     description: "Find Positions",
     params: z.object({
@@ -153,7 +153,7 @@ const findPositions = createAction({
         recommenderId: z.string().uuid().optional(),
         closed: z.boolean().default(false),
     }),
-    async handler(state, { tokenAddress, recommenderId, closed }) {},
+    async handler(_state, { tokenAddress, recommenderId, closed }) {},
 });
 
 const refreshPosition = createAction({
@@ -237,7 +237,7 @@ function extractActions(text: string) {
                 name: match[1],
                 params: actionParams,
             });
-        } catch (e) {
+        } catch (_e) {
             console.error(`Failed to parse action parameters: ${match[2]}`);
         }
     }
@@ -247,7 +247,7 @@ function extractActions(text: string) {
     return actions;
 }
 
-function jsonFormatter(key: any, value: any) {
+function jsonFormatter(_key: any, value: any) {
     if (typeof value === "bigint") return value.toString();
     return value;
 }
@@ -330,7 +330,7 @@ export const dataProvider = {
             });
 
             const dataProviderResponse = await runtime.useModel(ModelClass.LARGE, {
-                context: context + "<output>",
+                context: `${context}<output>`,
                 stopSequences: ["</output>"],
             });
 

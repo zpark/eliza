@@ -34,7 +34,7 @@ export class Codex {
     private async queryWithRetry(
         query: string,
         variables: any,
-        retries: number = 3
+        retries = 3
     ) {
         for (let i = 0; i < retries; i++) {
             try {
@@ -42,7 +42,7 @@ export class Codex {
             } catch (error) {
                 console.error(`Retry ${i + 1} failed: ${error}`);
                 if (i < retries - 1) {
-                    const backoffMs = Math.pow(2, i) * 1000;
+                    const backoffMs = 2 ** i * 1000;
                     await new Promise((resolve) =>
                         setTimeout(resolve, backoffMs)
                     );
@@ -203,7 +203,7 @@ export class Codex {
             | "240"
             | "720"
             | "1D" = "1D",
-        limit: number = 50
+        limit = 50
     ) {
         const query = `
             query TopTokens($networkFilter: [Int!], $resolution: String, $limit: Int) {
