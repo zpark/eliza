@@ -1,4 +1,4 @@
-import { Entity } from "@elizaos/core";
+import type { Entity } from "@elizaos/core";
 import type {
     PositionWithBalance,
     Pretty,

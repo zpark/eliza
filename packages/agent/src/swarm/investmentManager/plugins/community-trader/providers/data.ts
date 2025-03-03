@@ -5,13 +5,13 @@ import {
     ModelClass,
     type Provider,
     type State,
-    UUID
+    type UUID
 } from "@elizaos/core";
 import { z } from "zod";
 import { CoingeckoClient } from "../clients";
 import { formatRecommenderReport } from "../reports";
-import { TrustScoreManager } from "../scoreManager";
-import { TrustTradingService } from "../tradingService";
+import type { TrustScoreManager } from "../scoreManager";
+import type { TrustTradingService } from "../tradingService";
 import type {
     PositionWithBalance,
     TokenPerformance,
@@ -253,7 +253,7 @@ export const dataProvider: Provider = {
     async get(
         runtime: IAgentRuntime,
         message: Memory,
-        state?: State
+        _state?: State
     ): Promise<string> {
         try {
             // Extract token addresses from message and recent context
@@ -453,7 +453,7 @@ export const dataProvider: Provider = {
                     const totalRealizedPnL = "$0.00";
                     const totalUnrealizedPnL = "$0.00";
                     const totalPnL = "$0.00";
-                    const positionReports: string[] = [];
+                    const _positionReports: string[] = [];
 
                     return render(dataProviderTemplate, {
                         tokenReports: tokenReports.join("\n"),

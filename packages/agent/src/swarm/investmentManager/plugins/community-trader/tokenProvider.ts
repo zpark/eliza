@@ -11,7 +11,7 @@ import type {
     TokenSecurityData,
     TokenTradeData
 } from "./types.ts";
-import { type Item, WalletProvider } from "./wallet.ts";
+import type { Item, WalletProvider } from "./wallet.ts";
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: "https://public-api.birdeye.so",
@@ -99,7 +99,7 @@ export class SolanaTokenProvider {
         throw lastError;
     }
 
-    async getTokensInWallet(runtime: IAgentRuntime): Promise<Item[]> {
+    async getTokensInWallet(_runtime: IAgentRuntime): Promise<Item[]> {
         const walletInfo = await this.walletProvider.fetchPortfolioValue();
         const items = walletInfo.items;
         return items;

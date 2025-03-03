@@ -8,7 +8,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { formatFullReport } from "../reports";
 import type { TokenPerformance, Transaction } from "../types";
-import { TrustTradingService } from "../tradingService";
+import type { TrustTradingService } from "../tradingService";
 
 export const getSimulatedPositions: Action = {
     name: "TRUST_GET_SIMULATED_POSITIONS",

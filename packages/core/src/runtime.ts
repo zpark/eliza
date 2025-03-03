@@ -500,7 +500,7 @@ export class AgentRuntime implements IAgentRuntime {
         await plugin.init(plugin.config, this);
       }
       if (plugin.clients) {
-        for (const client of plugin.clients) {
+        for (const _client of plugin.clients) {
           await Promise.all(plugin.clients.map(client => this.registerClient(client)));
         }
       }

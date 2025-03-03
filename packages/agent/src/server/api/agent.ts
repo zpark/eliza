@@ -142,7 +142,7 @@ export function agentRouter(
             });
             logger.success(`[AGENT CREATE] Successfully created agent: ${character.name}`);
         } catch (error) {
-            logger.error(`[AGENT CREATE] Error creating agent:`, error);
+            logger.error("[AGENT CREATE] Error creating agent:", error);
             res.status(400).json({
                 success: false,
                 error: {
@@ -275,7 +275,7 @@ export function agentRouter(
             return;
         }
 
-        const roomId = createUniqueUuid(runtime, req.body.roomId ?? 'default-room-' + agentId);
+        const roomId = createUniqueUuid(runtime, req.body.roomId ?? `default-room-${agentId}`);
         const userId = createUniqueUuid(runtime, req.body.userId ?? "user");
         const worldId = req.body.worldId;
 

@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 import { BirdeyeClient, CoingeckoClient, DexscreenerClient, HeliusClient } from "./clients";
 import {
     DEFAULT_TRADING_CONFIG,
-    TradingConfig,
+    type TradingConfig,
     getConvictionMultiplier,
     getLiquidityMultiplier,
     getMarketCapMultiplier,
@@ -21,21 +21,21 @@ import {
 } from "./config";
 import { formatFullReport } from "./reports";
 import {
-    BuySignalMessage,
+    type BuySignalMessage,
     Conviction,
-    Position,
-    PositionWithBalance,
-    ProcessedTokenData,
+    type Position,
+    type PositionWithBalance,
+    type ProcessedTokenData,
     RecommendationType,
-    RecommenderMetrics,
-    RecommenderMetricsHistory,
-    TokenMarketData,
-    TokenMetadata,
-    TokenPerformance,
-    TokenRecommendation,
-    TokenSecurityData,
-    TokenTradeData,
-    Transaction,
+    type RecommenderMetrics,
+    type RecommenderMetricsHistory,
+    type TokenMarketData,
+    type TokenMetadata,
+    type TokenPerformance,
+    type TokenRecommendation,
+    type TokenSecurityData,
+    type TokenTradeData,
+    type Transaction,
     TransactionType
 } from "./types";
 
@@ -250,7 +250,7 @@ export class TrustTradingService extends Service {
      */
     async processSellSignal(
         positionId: UUID,
-        sellRecommenderId: UUID
+        _sellRecommenderId: UUID
     ): Promise<boolean> {
         try {
             // Get position
@@ -278,7 +278,7 @@ export class TrustTradingService extends Service {
             }
             
             // Calculate performance metrics
-            const initialPrice = parseFloat(position.initialPrice);
+            const initialPrice = Number.parseFloat(position.initialPrice);
             const currentPrice = tokenPerformance.price || 0;
             const priceChange = initialPrice > 0 ? (currentPrice - initialPrice) / initialPrice : 0;
             
@@ -478,7 +478,7 @@ export class TrustTradingService extends Service {
                         pairAddress: dexScreenerData?.pairAddress || "",
                         dexId: dexScreenerData?.dexId || ""
                     },
-                    price: parseFloat(dexScreenerData?.priceUsd || "0"),
+                    price: Number.parseFloat(dexScreenerData?.priceUsd || "0"),
                     priceUsd: dexScreenerData?.priceUsd || "0",
                     price24hChange: dexScreenerData?.priceChange?.h24 || 0,
                     marketCap: dexScreenerData?.marketCap || 0,
@@ -497,9 +497,8 @@ export class TrustTradingService extends Service {
                 await this.runtime.databaseAdapter.setCache<TokenMetadata & TokenMarketData>(cacheKey, tokenData); // Cache for 5 minutes
                 
                 return tokenData;
-            } else {
-                throw new Error(`Chain ${chain} not supported`);
             }
+                throw new Error(`Chain ${chain} not supported`);
         } catch (error) {
             logger.error(`Error fetching token overview for ${tokenAddress}:`, error);
             throw error;
@@ -531,9 +530,8 @@ export class TrustTradingService extends Service {
             }
             
             return address;
-        } else {
-            throw new Error(`Chain ${chain} not supported for ticker resolution`);
         }
+            throw new Error(`Chain ${chain} not supported for ticker resolution`);
     }
 
     /**
@@ -546,7 +544,7 @@ export class TrustTradingService extends Service {
             const cachedPrice = await this.runtime.databaseAdapter.getCache<string>(cacheKey);
             
             if (cachedPrice) {
-                return parseFloat(cachedPrice);
+                return Number.parseFloat(cachedPrice);
             }
             
             // Try to get from token performance
@@ -567,9 +565,8 @@ export class TrustTradingService extends Service {
                 await this.runtime.databaseAdapter.setCache<string>(cacheKey, price.toString()); // Cache for 1 minute
                 
                 return price;
-            } else {
-                throw new Error(`Chain ${chain} not supported for price fetching`);
             }
+                throw new Error(`Chain ${chain} not supported for price fetching`);
         } catch (error) {
             logger.error(`Error fetching current price for ${tokenAddress}:`, error);
             return 0;
@@ -677,22 +674,22 @@ export class TrustTradingService extends Service {
                         });
                         
                         // Calculate high value holders
-                        const tokenPrice = parseFloat(tokenTradeData.price.toString());
+                        const tokenPrice = Number.parseFloat(tokenTradeData.price.toString());
                         highValueHolders = holders
                             .filter(holder => {
-                                const balance = parseFloat(holder.balance);
+                                const balance = Number.parseFloat(holder.balance);
                                 const balanceUsd = balance * tokenPrice;
                                 return balanceUsd > 5; // More than $5 USD
                             })
                             .map(holder => ({
                                 holderAddress: holder.address,
-                                balanceUsd: (parseFloat(holder.balance) * tokenPrice).toFixed(2)
+                                balanceUsd: (Number.parseFloat(holder.balance) * tokenPrice).toFixed(2)
                             }));
                         
                         // Calculate high supply holders
                         const totalSupply = tokenInfo?.totalSupply || "0";
                         highSupplyHoldersCount = holders.filter(holder => {
-                            const holderRatio = parseFloat(holder.balance) / parseFloat(totalSupply);
+                            const holderRatio = Number.parseFloat(holder.balance) / Number.parseFloat(totalSupply);
                             return holderRatio > 0.02; // More than 2% of supply
                         }).length;
                     } catch (error) {
@@ -733,9 +730,8 @@ export class TrustTradingService extends Service {
                 await this.runtime.databaseAdapter.setCache<ProcessedTokenData>(cacheKey, processedData); // Cache for 5 minutes
                 
                 return processedData;
-            } else {
-                throw new Error(`Chain ${chain} not supported for processed token data`);
             }
+                throw new Error(`Chain ${chain} not supported for processed token data`);
         } catch (error) {
             logger.error(`Error fetching processed token data for ${tokenAddress}:`, error);
             return null;
@@ -806,7 +802,7 @@ export class TrustTradingService extends Service {
                 name: tokenData.name,
                 symbol: tokenData.symbol,
                 decimals: tokenData.decimals,
-                price: parseFloat(tokenData.priceUsd),
+                price: Number.parseFloat(tokenData.priceUsd),
                 volume: tokenData.volume24h,
                 liquidity: tokenData.liquidityUsd,
                 currentMarketCap: tokenData.marketCap,
@@ -865,7 +861,7 @@ export class TrustTradingService extends Service {
     /**
      * Update entity metrics based on their recommendation performance
      */
-    async updateRecommenderMetrics(entityId: UUID, performance: number = 0): Promise<void> {
+    async updateRecommenderMetrics(entityId: UUID, performance = 0): Promise<void> {
         const metrics = await this.getRecommenderMetrics(entityId);
         
         if (!metrics) {
@@ -950,7 +946,7 @@ export class TrustTradingService extends Service {
                     name: tokenOverview.name,
                     symbol: tokenOverview.symbol,
                     decimals: tokenOverview.decimals,
-                    price: parseFloat(tokenOverview.priceUsd),
+                    price: Number.parseFloat(tokenOverview.priceUsd),
                     volume: tokenOverview.volume24h,
                     price24hChange: tokenOverview.price24hChange,
                     liquidity: tokenOverview.liquidityUsd,
@@ -1387,7 +1383,7 @@ export class TrustTradingService extends Service {
         const sellTxs = transactions.filter(t => t.type === TransactionType.SELL);
 
         const totalBuyAmount = buyTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
-        const totalSellAmount = sellTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
+        const _totalSellAmount = sellTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
 
         position.amount = totalBuyAmount.toString();
         
@@ -1778,7 +1774,7 @@ export class TrustTradingService extends Service {
     async getOpenPositionsWithBalance(): Promise<PositionWithBalance[]> {
         try {
             // Check cache first
-            const cacheKey = `positions:open:with-balance`;
+            const cacheKey = "positions:open:with-balance";
             const cachedPositions = await this.runtime.databaseAdapter.getCache<PositionWithBalance[]>(cacheKey);
             
             if (cachedPositions) {
@@ -1786,7 +1782,7 @@ export class TrustTradingService extends Service {
             }
             
             // Search for open positions in memory
-            const query = `open positions with balance`;
+            const query = "open positions with balance";
             const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
             
             const memories = await this.positionMemoryManager.searchMemories({

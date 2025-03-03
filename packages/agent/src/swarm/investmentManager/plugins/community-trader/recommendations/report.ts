@@ -1,12 +1,12 @@
 import {
     type Action,
     type Memory,
-    UUID,
+    type UUID,
     logger
 } from "@elizaos/core";
 import { v4 as uuidv4 } from 'uuid';
 import { formatRecommenderReport } from "../reports";
-import { TrustTradingService } from "../tradingService";
+import type { TrustTradingService } from "../tradingService";
 
 export const getRecommenderReport: Action = {
     name: "GET_RECOMMENDER_REPORT",

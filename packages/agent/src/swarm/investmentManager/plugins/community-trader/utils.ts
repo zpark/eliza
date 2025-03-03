@@ -1,5 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
-import { type ZodType } from "zod";
+import type { ZodType } from "zod";
 import zodToJsonSchema from "zod-to-json-schema";
 import type { TemplateVariables } from "./types";
 

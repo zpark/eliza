@@ -1,6 +1,6 @@
 // Combined DegenTradingService that integrates all functionality
 
-import { composeContext, type Content, type IAgentRuntime, logger, type Memory, MemoryType, ModelClass, parseJSONObjectFromText, Service, UUID } from "@elizaos/core";
+import { composeContext, type Content, type IAgentRuntime, logger, type Memory, MemoryType, ModelClass, parseJSONObjectFromText, Service, type UUID } from "@elizaos/core";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { v4 as uuidv4 } from "uuid";
 import { REQUIRED_SETTINGS } from "./config/config";
@@ -794,7 +794,7 @@ export class DegenTradingService extends Service {
     // Register BUY task worker
     this.runtime.registerTaskWorker({
       name: "EXECUTE_BUY",
-      execute: async (runtime: IAgentRuntime, options: any) => {
+      execute: async (_runtime: IAgentRuntime, options: any) => {
         await this.executeBuyTask(options);
       },
       validate: async () => true
@@ -803,7 +803,7 @@ export class DegenTradingService extends Service {
     // Register SELL task worker
     this.runtime.registerTaskWorker({
       name: "EXECUTE_SELL",
-      execute: async (runtime: IAgentRuntime, options: any) => {
+      execute: async (_runtime: IAgentRuntime, options: any) => {
         await this.executeSellTask(options);
       },
       validate: async () => true
@@ -830,7 +830,7 @@ export class DegenTradingService extends Service {
     // Register MONITOR_TOKEN task worker
     this.runtime.registerTaskWorker({
       name: "MONITOR_TOKEN",
-      execute: async (runtime: IAgentRuntime, options: any) => {
+      execute: async (_runtime: IAgentRuntime, options: any) => {
         await this.monitorToken(options);
       },
       validate: async () => true
@@ -1166,8 +1166,8 @@ export class DegenTradingService extends Service {
       const currentMarketCap = data?.data?.marketCap?.toString() || "0";
       
       // Calculate price change
-      const initialPriceNum = parseFloat(initialPrice);
-      const currentPriceNum = parseFloat(currentPrice);
+      const initialPriceNum = Number.parseFloat(initialPrice);
+      const currentPriceNum = Number.parseFloat(currentPrice);
       const priceChange = initialPriceNum > 0 
         ? ((currentPriceNum - initialPriceNum) / initialPriceNum) * 100 
         : 0;
@@ -1218,7 +1218,7 @@ export class DegenTradingService extends Service {
         
         // Get token balance from cache
         const tokenMonitor = await this.runtime.databaseAdapter.getCache<any>(`token_monitor:${tokenAddress}`);
-        if (tokenMonitor && tokenMonitor.balance) {
+        if (tokenMonitor?.balance) {
           // Create sell signal
           const sellSignal: SellSignalMessage = {
             tokenAddress,
@@ -1372,7 +1372,7 @@ export class DegenTradingService extends Service {
       await this.runtime.databaseAdapter.setCache<any>(`trade_performance:${id}`, tradePerformanceData);
       
       // Add to performance index
-      let performanceIndex = await this.runtime.databaseAdapter.getCache<any>('trade_performance_index') || [];
+      const performanceIndex = await this.runtime.databaseAdapter.getCache<any>('trade_performance_index') || [];
       performanceIndex.push({
         id,
         token_address: data.token_address,

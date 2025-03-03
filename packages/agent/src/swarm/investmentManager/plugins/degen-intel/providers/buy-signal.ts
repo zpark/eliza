@@ -1,6 +1,6 @@
 import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
-import { Sentiment } from "../schemas";
-import { IToken } from "../types";
+import type { Sentiment } from "../schemas";
+import type { IToken } from "../types";
 
 const DEGEN_WALLET = "BzsJQeZ7cvk3pTHmKeuvdhNDkDxcZ6uCXxW2rjwC7RTq";
 const rolePrompt = "You are a buy signal analyzer.";

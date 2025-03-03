@@ -4,7 +4,7 @@
  * This file centralizes all configuration options for the trading system.
  */
 
-import { UUID } from './types';
+import type { UUID } from './types';
 
 /**
  * Buy amount configuration

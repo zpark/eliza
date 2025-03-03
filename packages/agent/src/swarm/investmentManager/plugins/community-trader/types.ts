@@ -1,4 +1,4 @@
-import { type Content, type Memory, type UUID as CoreUUID, type Entity as CoreEntity } from "@elizaos/core";
+import type { Content, Memory, UUID as CoreUUID, Entity as CoreEntity } from "@elizaos/core";
 import type { MessageRecommendation } from "./recommendations/schema";
 
 // Re-export UUID type for use in other files

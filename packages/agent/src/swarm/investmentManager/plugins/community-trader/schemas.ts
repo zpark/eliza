@@ -133,7 +133,7 @@ export type TokenRecommendation = z.infer<typeof tokenRecommendationSchema>;
  * Transform functions to convert database objects to schema-validated objects
  */
 
-export function transformTokenPerformance(dbToken: any, chain: string = "unknown"): TokenPerformance {
+export function transformTokenPerformance(dbToken: any, chain = "unknown"): TokenPerformance {
   const input = {
     chain,
     address: dbToken.tokenAddress || dbToken.token_address,
@@ -163,7 +163,7 @@ export function transformTokenPerformance(dbToken: any, chain: string = "unknown
   return tokenPerformanceSchema.parse(input);
 }
 
-export function transformTransaction(dbTx: any, positionId: string = "unknown", chain: string = "unknown"): Transaction {
+export function transformTransaction(dbTx: any, positionId = "unknown", chain = "unknown"): Transaction {
   const type = typeof dbTx.type === 'string' 
     ? dbTx.type.toLowerCase() 
     : TransactionType.BUY;

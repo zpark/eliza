@@ -1,6 +1,6 @@
 // TODO: Replace with cache adapter
 
-import { Route, IAgentRuntime, createUniqueUuid, Memory } from "@elizaos/core";
+import { type Route, type IAgentRuntime, createUniqueUuid, type Memory } from "@elizaos/core";
 
 import {
   SentimentArraySchema,
@@ -20,7 +20,7 @@ export const routes: Route[] = [
         const tokens: IToken[] = cachedTokens ? cachedTokens : [];
         const sortedTokens = tokens.sort((a, b) => (a.rank || 0) - (b.rank || 0));
         res.json(sortedTokens);
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },
@@ -43,7 +43,7 @@ export const routes: Route[] = [
         const portfolio: Portfolio = cachedPortfolio ? cachedPortfolio : { key: "PORTFOLIO", data: null };
 
         res.json({ history, portfolio: portfolio.data });
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },
@@ -70,7 +70,7 @@ export const routes: Route[] = [
 
         const validatedData = TweetArraySchema.parse(tweets);
         res.json(validatedData);
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },
@@ -110,7 +110,7 @@ export const routes: Route[] = [
 
         const validatedData = SentimentArraySchema.parse(sentiments);
         res.json(validatedData);
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },
@@ -123,7 +123,7 @@ export const routes: Route[] = [
         const cachedSignal = await runtime.databaseAdapter.getCache<any>("BUY_SIGNAL");
         const signal = cachedSignal ? cachedSignal : {};
         res.json(signal?.data || {});
-      } catch (error) {
+      } catch (_error) {
         res.status(500).json({ error: "Internal server error" });
       }
     },

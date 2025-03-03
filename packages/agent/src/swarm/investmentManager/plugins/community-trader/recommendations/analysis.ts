@@ -1,6 +1,6 @@
 import {
     composeContext,
-    IAgentRuntime,
+    type IAgentRuntime,
     logger,
     type Memory,
     ModelClass,
@@ -12,7 +12,7 @@ import {
     parseConfirmationResponse,
     parseTokenResponse
 } from "../utils.js";
-import { TrustTradingService } from "../tradingService.js";
+import type { TrustTradingService } from "../tradingService.js";
 
 const tokenDetailsTemplate = `You are a crypto expert.
 
