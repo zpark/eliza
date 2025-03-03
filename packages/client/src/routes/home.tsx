@@ -6,7 +6,7 @@ import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Agent } from "@elizaos/core";
+import { Agent, UUID } from "@elizaos/core";
 
 export default function Home() {
     const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
@@ -19,7 +19,7 @@ export default function Home() {
     // Handle agent start action
     const handleStartAgent = async (agent: Agent) => {
         try {
-            await startAgentMutation.mutateAsync(agent.name);
+            await startAgentMutation.mutateAsync(agent.id as UUID);
             // Navigate to chat after successful start
             navigate(`/chat/${agent.id}`);
         } catch (error) {

@@ -108,7 +108,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
-    const { data: agentData } = useAgent(agentId);
+    const agentData = useAgent(agentId)?.data?.data;
     const startAgentMutation = useStartAgent();
     const stopAgentMutation = useStopAgent();
 
@@ -225,10 +225,10 @@ export default function Page({ agentId }: { agentId: UUID }) {
     };
 
     const handleStartAgent = async () => {
-        if (!agentData?.character?.name) return;
+        if (!agentData?.name) return;
         
         try {
-            await startAgentMutation.mutateAsync(agentData.character.name);
+            await startAgentMutation.mutateAsync(agentData.id as UUID);
         } catch (error) {
             console.error("Failed to start agent:", error);
         }
@@ -253,7 +253,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                             <h2 className="font-semibold text-lg">
-                                {agentData?.character?.name || "Agent"}
+                                {agentData?.name || "Agent"}
                             </h2>
                             {agentData?.enabled ? (
                                 <Tooltip>
@@ -275,11 +275,11 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                 </Tooltip>
                             )}
                         </div>
-                        {agentData?.character?.bio && (
+                        {agentData?.bio && (
                             <p className="text-sm text-muted-foreground line-clamp-1">
-                                {Array.isArray(agentData.character.bio) 
-                                    ? agentData.character.bio[0] 
-                                    : agentData.character.bio}
+                                {Array.isArray(agentData.bio) 
+                                    ? agentData.bio[0] 
+                                    : agentData.bio}
                             </p>
                         )}
                     </div>

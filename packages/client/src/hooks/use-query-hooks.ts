@@ -134,7 +134,7 @@ export function useStartAgent() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (characterName: string) => apiClient.startAgentByName(characterName),
+    mutationFn: (agentId: UUID) => apiClient.startAgent({ agentId }),
     onSuccess: (data) => {
       // Immediately invalidate the queries for fresh data
       queryClient.invalidateQueries({ queryKey: ['agents'] });

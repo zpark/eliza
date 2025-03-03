@@ -97,7 +97,7 @@ export default function AgentSettings({ agent, agentId }: { agent: Agent, agentI
         throw new Error("Agent ID is missing");
       }
       
-      await apiClient.startAgentByName(agent.name);
+      await apiClient.startAgent({ agentId });
       
       // Invalidate queries for fresh data
       queryClient.invalidateQueries({ queryKey: ["agent", agentId] });

@@ -163,16 +163,11 @@ export const apiClient = {
             method: "POST",
             body: params,
         }),
-    startAgent: (params: { characterPath?: string; characterJson?: Character }) =>
+    startAgent: (params: { agentId: UUID }) =>
         fetcher({
-            url: "/agents/start",
+            url: `/agents/${params.agentId}/start`,
             method: "POST",
             body: params,
-        }),
-    startAgentByName: (characterName: string) =>
-        fetcher({
-            url: `/agents/start/${characterName}`,
-            method: "POST",
         }),
     stopAgent: (agentId: string) => {
         return fetcher({
