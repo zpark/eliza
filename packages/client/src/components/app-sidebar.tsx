@@ -11,19 +11,16 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { useActiveAgents, useAgents } from "@/hooks/use-query-hooks";
+import { useAgents } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
+import type { Agent } from "@elizaos/core";
 import { Book, Cog, User } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import ConnectionStatus from "./connection-status";
-import { Agent, UUID } from "@elizaos/core";
   
 export function AppSidebar() {
   const location = useLocation();
   const { data: { data: agentsData } = {}, isPending: isAgentsPending } = useAgents();
-  const { data: activeAgentsData } = useActiveAgents();
-  const activeAgentsList: UUID[] = Array.isArray(activeAgentsData) ? activeAgentsData : [];
-
   return (
     <Sidebar className="bg-background">
       <SidebarHeader className="pb-4">
@@ -76,8 +73,8 @@ export function AppSidebar() {
                     });
                     
                     // Split into enabled and disabled groups
-                    const activeAgents = sortedAgents.filter((agent: Agent) => activeAgentsList.includes(agent.id as UUID));
-                    const inactiveAgents = sortedAgents.filter((agent: Agent) => !activeAgentsList.includes(agent.id as UUID));
+                    const activeAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status == 'active');
+                    const inactiveAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status == 'inactive');
                     
                     return (
                       <>

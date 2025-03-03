@@ -90,7 +90,11 @@ export function agentRouter(
             ? await loadCharacter(characterPath)
             : await jsonToCharacter(characterJson);
 
-        const existingAgent = await db.getAgentByName(character.name);
+
+
+
+        const existingAgents = await db.getAgents();
+        const existingAgent = existingAgents.find((agent) => agent.name === character.name);
         if(existingAgent) {
             logger.error(`[AGENT START] Character name ${character.name} already taken`);
             res.status(400).json({

@@ -121,7 +121,7 @@ async function startAgent(
     
 
     // report to console
-    logger.debug(`Started ${character.name} as ${runtime.agentId}`);
+    logger.debug(`Started ${runtime.character.name} as ${runtime.agentId}`);
 
     return runtime;
   } catch (error) {

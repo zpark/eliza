@@ -74,12 +74,6 @@ export function createApiRouter(
         });
     });
 
-    router.get('/active-agents', (_req, res) => {
-        const activeAgentIds = [...server.agents.entries()]
-            .map(([id]) => id); 
-
-        res.json(activeAgentIds);
-    });
 
     return router;
 }

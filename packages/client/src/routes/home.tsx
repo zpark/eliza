@@ -1,17 +1,15 @@
 import PageTitle from "@/components/page-title";
-import { useAgents, useActiveAgents } from "@/hooks/use-query-hooks";
+import { useAgents } from "@/hooks/use-query-hooks";
 import { Cog, Loader2, Play, Plus, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { Agent, UUID } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
 import { useAgentManagement } from "@/hooks/use-agent-management";
 
 export default function Home() {
     const { data: { data: agentsData } = {}, isLoading, isError, error } = useAgents();
-    const { data: activeAgentsData } = useActiveAgents();
-    const activeAgents: UUID[] = Array.isArray(activeAgentsData) ? activeAgentsData : [];
     const navigate = useNavigate();
     
     // Use the agent management hook
@@ -53,7 +51,7 @@ export default function Home() {
             {!isLoading && !isError &&(
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
-                        const isActive = activeAgents.includes(agent.id as UUID);
+                        const isActive = agent.status == 'active';
                         const isStarting = isAgentStarting(agent.id);
                         const isStopping = isAgentStopping(agent.id);
                         const isProcessing = isStarting || isStopping;
