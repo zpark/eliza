@@ -428,16 +428,16 @@ export function agentRouter(
                 worldId,
             });
 
-            await db.createRelationship({
-                sourceEntityId: userId,
-                targetEntityId: runtime.agentId,
-                agentId: runtime.agentId,
-                tags: ["message_interaction"],
-                metadata: {
-                    lastInteraction: Date.now(),
-                    channel: "direct"
-                }
-            });
+            // await db.createRelationship({
+            //     sourceEntityId: userId,
+            //     targetEntityId: runtime.agentId,
+            //     agentId: runtime.agentId,
+            //     tags: ["message_interaction"],
+            //     metadata: {
+            //         lastInteraction: Date.now(),
+            //         channel: "direct"
+            //     }
+            // });
 
             const messageId = createUniqueUuid(runtime, Date.now().toString());
             const attachments: Media[] = [];
@@ -543,6 +543,8 @@ export function agentRouter(
             );
 
             await runtime.evaluate(memory, state);
+            res.status(202).json();
+
         } catch (error) {
             logger.error("Error processing message:", error);
             res.status(500).json({
