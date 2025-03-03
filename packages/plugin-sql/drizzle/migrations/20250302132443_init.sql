@@ -1,8 +1,25 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+--> statement-breakpoint				
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+--> statement-breakpoint
+
 CREATE TABLE "agents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
-	"characterId" uuid,
-	"enabled" boolean DEFAULT true NOT NULL
+	"updatedAt" timestamptz DEFAULT now() NOT NULL,
+	"enabled" boolean DEFAULT true NOT NULL,
+	"name" text,
+	"username" text,
+	"system" text,
+	"bio" jsonb NOT NULL,
+	"message_examples" jsonb DEFAULT '[]'::jsonb,
+	"post_examples" jsonb DEFAULT '[]'::jsonb,
+	"topics" jsonb DEFAULT '[]'::jsonb,
+	"adjectives" jsonb DEFAULT '[]'::jsonb,
+	"knowledge" jsonb DEFAULT '[]'::jsonb,
+	"plugins" jsonb DEFAULT '[]'::jsonb,
+	"settings" jsonb DEFAULT '{}'::jsonb,
+	"style" jsonb DEFAULT '{}'::jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "cache" (
@@ -13,24 +30,6 @@ CREATE TABLE "cache" (
 	"createdAt" timestamptz DEFAULT now() NOT NULL,
 	"expiresAt" timestamptz,
 	CONSTRAINT "cache_key_agent_unique" UNIQUE("key","agentId")
-);
---> statement-breakpoint
-CREATE TABLE "characters" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" text,
-	"username" text,
-	"system" text,
-	"templates" jsonb DEFAULT '{}'::jsonb,
-	"bio" jsonb NOT NULL,
-	"message_examples" jsonb DEFAULT '[]'::jsonb,
-	"post_examples" jsonb DEFAULT '[]'::jsonb,
-	"topics" jsonb DEFAULT '[]'::jsonb,
-	"adjectives" jsonb DEFAULT '[]'::jsonb,
-	"knowledge" jsonb DEFAULT '[]'::jsonb,
-	"plugins" jsonb DEFAULT '[]'::jsonb,
-	"settings" jsonb DEFAULT '{}'::jsonb,
-	"style" jsonb DEFAULT '{}'::jsonb,
-	"created_at" timestamptz DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "components" (
@@ -172,7 +171,6 @@ CREATE TABLE "tasks" (
 );
 
 --> statement-breakpoint
-ALTER TABLE "agents" ADD CONSTRAINT "agents_characterId_characters_id_fk" FOREIGN KEY ("characterId") REFERENCES "public"."characters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "cache" ADD CONSTRAINT "cache_agentId_agents_id_fk" FOREIGN KEY ("agentId") REFERENCES "public"."agents"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "components" ADD CONSTRAINT "components_entityId_entities_id_fk" FOREIGN KEY ("entityId") REFERENCES "public"."entities"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "components" ADD CONSTRAINT "components_agentId_agents_id_fk" FOREIGN KEY ("agentId") REFERENCES "public"."agents"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

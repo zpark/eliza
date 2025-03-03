@@ -47,7 +47,8 @@ import {
   type Task,
   type TaskWorker,
   type UUID,
-  type WorldData
+  type WorldData,
+  type Agent
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -401,7 +402,7 @@ export class AgentRuntime implements IAgentRuntime {
   async initialize() {
     // First create the agent entity directly
     try {
-      await this.ensureAgentExists();
+      await this.databaseAdapter.ensureAgentExists(this.character as Partial<Agent>);
 
       // No need to transform agent's own ID
       const agentEntity = await this.databaseAdapter.getEntityById(
@@ -558,8 +559,6 @@ export class AgentRuntime implements IAgentRuntime {
       throw error;
     }
 
-    // Rest of initialization...
-    await this.ensureCharacterExists(this.character);
 
     // Process character knowledge
     if (this.character?.knowledge && this.character.knowledge.length > 0) {
@@ -588,33 +587,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  async ensureAgentExists() {
-    console.log("this.character.name", this.character.name, this.agentId)
-    const agent = await this.databaseAdapter.getAgent(this.agentId);
-    if (!agent) {
-      // find a character that has the same name as the agent id
-      const character = await this.databaseAdapter.getCharacter(
-        this.character.name
-      );
-      let characterId = character?.id;
-      if (character && !characterId) {
-        characterId = uuidv4() as UUID;
-        // save the character with the new id
-        await this.databaseAdapter.updateCharacter(character.name, {
-          ...character,
-          id: characterId,
-        });
-      } else if (!character) {
-        characterId = (await this.databaseAdapter.createCharacter(
-          this.character
-        )) as UUID;
-      }
-
-      const out = { id: this.agentId, characterId, enabled: true };
-
-      await this.databaseAdapter.createAgent(out);
-    }
-  }
+  
 
   private  async ensureAgentIsEnabled() {
     const agent = await this.databaseAdapter.getAgent(this.agentId);
@@ -623,7 +596,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     if (!agent.enabled) {
-      await this.databaseAdapter.updateAgent({
+      await this.databaseAdapter.updateAgent(this.agentId, {
         ...agent,
         enabled: true,
       });
@@ -633,7 +606,7 @@ export class AgentRuntime implements IAgentRuntime {
   private async ensureAgentIsDisabled() {
     const agent = await this.databaseAdapter.getAgent(this.agentId);
     if (agent) {
-      await this.databaseAdapter.updateAgent({ ...agent, enabled: false });
+      await this.databaseAdapter.toggleAgent(this.agentId, false);
     }
   }
 
@@ -1579,15 +1552,6 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  async ensureCharacterExists(character: Character): Promise<void> {
-    const characterExists = await this.databaseAdapter.getCharacter(
-      character.name
-    );
-    if (!characterExists) {
-      logger.log(`[AgentRuntime][${this.character.name}] Creating character`);
-      await this.databaseAdapter.createCharacter(character);
-    }
-  }
 
   async ensureEmbeddingDimension() {
     logger.log(

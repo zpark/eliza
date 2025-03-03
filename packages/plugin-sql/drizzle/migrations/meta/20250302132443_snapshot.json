@@ -1,5 +1,5 @@
 {
-  "id": "01775ae5-8791-484f-9831-e1cf8979f6af",
+  "id": "e868cf2d-10a2-406f-a31e-9342a0f29c35",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -22,11 +22,12 @@
           "notNull": true,
           "default": "now()"
         },
-        "characterId": {
-          "name": "characterId",
-          "type": "uuid",
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamptz",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         },
         "enabled": {
           "name": "enabled",
@@ -34,24 +35,90 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "system": {
+          "name": "system",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message_examples": {
+          "name": "message_examples",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "post_examples": {
+          "name": "post_examples",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "topics": {
+          "name": "topics",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "adjectives": {
+          "name": "adjectives",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "knowledge": {
+          "name": "knowledge",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "plugins": {
+          "name": "plugins",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::jsonb"
+        },
+        "style": {
+          "name": "style",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::jsonb"
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "agents_characterId_characters_id_fk": {
-          "name": "agents_characterId_characters_id_fk",
-          "tableFrom": "agents",
-          "tableTo": "characters",
-          "columnsFrom": [
-            "characterId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -129,120 +196,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.characters": {
-      "name": "characters",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "username": {
-          "name": "username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "system": {
-          "name": "system",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "templates": {
-          "name": "templates",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'::jsonb"
-        },
-        "bio": {
-          "name": "bio",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "message_examples": {
-          "name": "message_examples",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "post_examples": {
-          "name": "post_examples",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "topics": {
-          "name": "topics",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "adjectives": {
-          "name": "adjectives",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "knowledge": {
-          "name": "knowledge",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "plugins": {
-          "name": "plugins",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'[]'::jsonb"
-        },
-        "settings": {
-          "name": "settings",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'::jsonb"
-        },
-        "style": {
-          "name": "style",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'{}'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

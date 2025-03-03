@@ -11,6 +11,7 @@ import {
     type Participant,
     type Relationship,
     type RoomData,
+    stringToUuid,
     type UUID,
     type WorldData,
     type Task
@@ -44,17 +45,10 @@ import {
     isNotNull
 } from "drizzle-orm";
 import { v4 } from "uuid";
-import {
-    characterToInsert,
-    type StoredTemplate,
-    storedToTemplate,
-    templateToStored,
-} from "./schema/character";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     agentTable,
     cacheTable,
-    characterTable,
     componentTable,
     embeddingTable,
     entityTable,
@@ -137,6 +131,19 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
+    async ensureAgentExists(agent: Partial<Agent>) {
+        if (!agent.name) {
+            throw new Error("Agent name is required");
+        }
+        const agentExists = await this.getAgent(stringToUuid(agent.name));
+        if (!agentExists || !agent.id) {
+            await this.createAgent({
+                ...agent,
+                id: stringToUuid(agent.name),
+            });
+        }
+    }
+
     async ensureEmbeddingDimension(dimension: number) {
         const existingMemory = await this.db
             .select({
@@ -166,60 +173,88 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         this.embeddingDimension = DIMENSION_MAP[dimension];
     }
 
-    async getAgent(agentId: UUID): Promise<Agent & { character: Character } | null> {
+    async getAgent(agentId: UUID): Promise<Agent | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select({
-                    agent: agentTable,
-                    character: characterTable
-                })
+                .select()
                 .from(agentTable)
-                .leftJoin(characterTable, eq(agentTable.characterId, characterTable.id))
                 .where(eq(agentTable.id, agentId))
                 .limit(1);
 
             if (result.length === 0) return null;
-            return {
-                ...result[0].agent,
-                character: {
-                    ...result[0].character,
-                }
-            };
+            return result[0];
         });
     }
 
-    async createAgent(agent: Agent): Promise<boolean> {
+    async getAgents(): Promise<Agent[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select()
+                .from(agentTable);
+            
+            return result;
+        });
+    }
+
+    async createAgent(agent: Partial<Agent>): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                return await this.db.transaction(async (tx) => {
-                    await tx.insert(agentTable).values(agent);
-                    logger.debug("Agent created successfully:", {
-                        agentId: agent.id
+                await this.db.transaction(async (tx) => {
+                    await tx.insert(agentTable).values({
+                       ...agent,
                     });
-                    return true;
                 });
+                
+                logger.debug("Agent created successfully:", {
+                    agentId: agent.id
+                });
+                return true;
             } catch (error) {
                 logger.error("Error creating agent:", {
                     error: error instanceof Error ? error.message : String(error),
                     agentId: agent.id,
                     agent
                 });
-                console.trace();
                 return false;
             }
         });
     }
-  
-    async updateAgent(agent: Agent): Promise<boolean> {
+
+    async deleteAgent(agentId: UUID): Promise<boolean> {
+        // casacade delete all related for the agent
+        return this.withDatabase(async () => {
+            await this.db.transaction(async (tx) => {
+                await tx.delete(agentTable).where(eq(agentTable.id, agentId));
+            });
+            return true;
+        });
+    }
+
+    async toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
                 await this.db
                     .update(agentTable)
                     .set({
-                        characterId: agent.characterId,
-                        enabled: agent.enabled
+                        enabled
                     })
-                    .where(eq(agentTable.id, agent.id));
+                    .where(eq(agentTable.id, agentId));
+                return true;
+            } catch (error) {
+                logger.error("Error updating agent:", {
+                    error: error instanceof Error ? error.message : String(error),
+                    agentId
+                });
+                return false;
+            }
+        });
+    }
+
+
+    async updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean> {
+        return this.withDatabase(async () => {
+            try {
+                await this.db.update(agentTable).set(agent).where(eq(agentTable.id, agentId));
                 return true;
             } catch (error) {
                 logger.error("Error updating agent:", {
@@ -228,25 +263,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 });
                 return false;
             }
-        });
-    }
-
-    async getAgents(): Promise<Agent[]> {
-        return this.withDatabase(async () => {
-            const result = await this.db.select({
-                agent: agentTable,
-                character: characterTable
-            }).from(agentTable).leftJoin(characterTable, eq(agentTable.characterId, characterTable.id));
-            
-            return result.map(row => ({
-                id: row.agent.id,
-                enabled: row.agent.enabled,
-                character: {
-                    id: row.character.id,
-                    name: row.character.name,
-                    bio: row.character.bio[0]
-                }
-            }));
         });
     }
 
@@ -349,8 +365,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             // Group components by entity if includeComponents is true
             const entitiesByIdMap = new Map<UUID, Entity>();
             
-            result.forEach(row => {
-                if (!row.entity) return;
+            for (const row of result) {
+                if (!row.entity) continue;
                 
                 const entityId = row.entity.id as UUID;
                 if (!entitiesByIdMap.has(entityId)) {
@@ -362,13 +378,15 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 }
 
                 if (includeComponents && row.components) {
-                    const entity = entitiesByIdMap.get(entityId)!;
-                    if (!entity.components) {
-                        entity.components = [];
+                    const entity = entitiesByIdMap.get(entityId);
+                    if (entity) {
+                        if (!entity.components) {
+                            entity.components = [];
+                        }
+                        entity.components.push(row.components);
                     }
-                    entity.components.push(row.components);
                 }
-            });
+            }
 
             return Array.from(entitiesByIdMap.values());
         });
@@ -399,7 +417,9 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.update(entityTable).set(entity).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
+            await this.db.update(entityTable).set(entity)
+            .where(and(eq(entityTable.id, entity.id),
+             eq(entityTable.agentId, entity.agentId)));
         });
     }
 
