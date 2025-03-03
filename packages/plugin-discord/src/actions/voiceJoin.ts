@@ -50,7 +50,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord").client;
+        const client = runtime.getClient("discord");
 
         if (!client) {
             logger.error("Discord client not found");

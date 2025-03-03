@@ -43,7 +43,7 @@ import type { IDiscordClient } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
 export class DiscordClient extends EventEmitter implements IDiscordClient, Client {
-  name: string = DISCORD_CLIENT_NAME;
+  static clientName: string = DISCORD_CLIENT_NAME;
   client: DiscordJsClient;
   runtime: IAgentRuntime;
   character: Character;

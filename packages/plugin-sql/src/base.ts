@@ -1434,7 +1434,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async createRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
         tags?: string[];
         metadata?: { [key: string]: any };
     }): Promise<boolean> {
@@ -1446,7 +1445,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     id,
                     sourceEntityId: params.sourceEntityId,
                     targetEntityId: params.targetEntityId,
-                    agentId: params.agentId,
+                    agentId: this.agentId,
                     tags: params.tags || [],
                     metadata: params.metadata || {},
                 });

@@ -234,8 +234,7 @@ export class AgentRuntime implements IAgentRuntime {
   events: Map<string, ((params: any) => void)[]> = new Map();
 
   readonly fetch = fetch;
-  private clients: Map<string, Client> = new Map();
-  private clientInterfaces: Map<string, Client> = new Map();
+  public clients: Map<string, Client> = new Map();
   services: Map<ServiceType, Service> = new Map();
 
   public adapters: Adapter[];
@@ -329,10 +328,6 @@ export class AgentRuntime implements IAgentRuntime {
           this.registerEvent(eventName, eventHandler);
         }
       }
-
-      for (const client of plugin.clients ?? []) {
-        this.registerClient(client.name, client);
-      }
     }
 
     this.plugins = plugins;
@@ -349,16 +344,16 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  registerClient(clientName: string, client: Client): void {
-    if (this.clients.has(clientName)) {
+  async registerClient(client: Client): Promise<void> {
+    if (this.clients.has(client.clientName)) {
       logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${clientName} is already registered. Skipping registration.`
+        `${this.character.name}(${this.agentId}) - Client ${client.clientName} is already registered. Skipping registration.`
       );
       return;
     }
-    this.clients.set(clientName, client);
+    this.clients.set(client.clientName, await client.start(this));
     logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${clientName} registered successfully`
+      `${this.character.name}(${this.agentId}) - Client ${client.clientName} registered successfully`
     );
   }
 
@@ -449,12 +444,6 @@ export class AgentRuntime implements IAgentRuntime {
             continue;
           }
 
-          if (plugin.clients) {
-            for (const client of plugin.clients) {
-              this.registerClient(client.name, client);
-            }
-          }
-
           if (plugin.actions) {
             for (const action of plugin.actions) {
               this.registerAction(action);
@@ -510,6 +499,11 @@ export class AgentRuntime implements IAgentRuntime {
     for (const plugin of this.plugins) {
       if (plugin.init) {
         await plugin.init(plugin.config, this);
+      }
+      if (plugin.clients) {
+        for (const client of plugin.clients) {
+          await Promise.all(plugin.clients.map(client => this.registerClient(client)));
+        }
       }
     }
 

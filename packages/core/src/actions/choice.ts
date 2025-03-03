@@ -55,7 +55,7 @@ export const choiceAction: Action = {
     _state: State
   ): Promise<boolean> => {
     // Get all tasks with options metadata
-    const pendingTasks = runtime.getTasks({
+    const pendingTasks = runtime.databaseAdapter.getTasks({
       roomId: message.roomId,
       tags: ["AWAITING_CHOICE"],
     });
@@ -94,7 +94,7 @@ export const choiceAction: Action = {
         await callback(response.content);
       }
 
-      const pendingTasks = runtime.getTasks({
+      const pendingTasks = runtime.databaseAdapter.getTasks({
         roomId: message.roomId,
         tags: ["AWAITING_CHOICE"],
       });

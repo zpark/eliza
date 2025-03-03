@@ -552,7 +552,7 @@ export abstract class Client {
   [key: string]: any;
 
   /** Client name */
-  name: string;
+  static clientName: string;
 
   /** Client configuration */
   config?: { [key: string]: any };
@@ -1014,6 +1014,7 @@ export interface IAgentRuntime {
   character: Character;
   providers: Provider[];
   actions: Action[];
+  clients: Map<string, Client>;
   evaluators: Evaluator[];
   plugins: Plugin[];
   services: Map<string, Service>;
@@ -1028,7 +1029,7 @@ export interface IAgentRuntime {
   getClient(name: string): Client | null;
   getAllClients(): Map<string, Client>;
 
-  registerClient(name: string, client: Client): void;
+  registerClient(client: Client): void;
 
   unregisterClient(name: string): void;
 

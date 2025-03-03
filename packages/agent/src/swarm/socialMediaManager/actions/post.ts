@@ -134,7 +134,7 @@ const twitterPostAction: Action = {
     }
 
     // Check if there are any pending Twitter posts awaiting confirmation
-    const pendingTasks = runtime.getTasks({
+    const pendingTasks = runtime.databaseAdapter.getTasks({
       roomId: message.roomId,
       tags: ["TWITTER_POST"],
     });
@@ -318,7 +318,7 @@ const twitterPostAction: Action = {
         action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
       });
 
-      logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
+      logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.databaseAdapter.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
       
       return responseContent;
     } catch (error) {

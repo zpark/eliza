@@ -1,9 +1,9 @@
-import { logger, type Client, type IAgentRuntime } from '@elizaos/core';
+import { Client, type IAgentRuntime, logger } from '@elizaos/core';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { SOLANA_CLIENT_NAME, SOLANA_WALLET_DATA_CACHE_KEY } from './constants';
 import { getWalletKey } from './keypairUtils';
-import type { ISolanaClient, Item, Prices, WalletPortfolio } from './types';
+import type { Item, Prices, WalletPortfolio } from './types';
 
 const PROVIDER_CONFIG = {
     BIRDEYE_API: 'https://public-api.birdeye.so',
@@ -17,24 +17,25 @@ const PROVIDER_CONFIG = {
     },
 };
 
-export class SolanaClient implements ISolanaClient, Client {
+export class SolanaClient extends Client {
+    static clientName: string = SOLANA_CLIENT_NAME;
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
     private connection: Connection;
     private publicKey: PublicKey;
-    name: string = SOLANA_CLIENT_NAME;
 
     constructor(
         private runtime: IAgentRuntime,
         connection: Connection,
         publicKey: PublicKey,
     ) {
+        super()
         this.connection = connection;
         this.publicKey = publicKey;
     }
 
-    static async start(runtime: IAgentRuntime) {
+    static async start(runtime: IAgentRuntime): Promise<SolanaClient> {
         logger.log('initSolanaClient');
 
         const connection = new Connection(
@@ -57,6 +58,8 @@ export class SolanaClient implements ISolanaClient, Client {
 
         // Initial update
         solanaClient.updateWalletData().catch(console.error);
+
+        return solanaClient;
     }
 
     static async stop(runtime: IAgentRuntime) {

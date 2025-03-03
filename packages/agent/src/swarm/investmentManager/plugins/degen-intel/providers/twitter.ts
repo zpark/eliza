@@ -17,7 +17,7 @@ export default class Twitter {
 		const username = this.runtime.getSetting("TWITTER_USERNAME");
 
 		// get the twitterClient from runtime
-		const twitterClient = this.runtime.getClient("twitter").client;
+		const twitterClient = this.runtime.getClient("twitter");
 
 		const list = twitterClient.getTweets(username as string, 200);
 		const ops = [];

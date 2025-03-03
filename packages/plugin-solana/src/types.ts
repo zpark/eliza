@@ -1,4 +1,3 @@
-import type { IAgentRuntime } from '@elizaos/core';
 import type { PublicKey } from '@solana/web3.js';
 
 export interface Item {
@@ -51,9 +50,4 @@ export interface TokenAccountInfo {
         executable: boolean;
         rentEpoch: number;
     };
-}
-
-export interface ISolanaClient {
-    getCachedData: () => Promise<WalletPortfolio | null>;
-    forceUpdate: () => Promise<WalletPortfolio>;
 }

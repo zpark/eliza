@@ -1,4 +1,4 @@
-import { logger, type Client, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
+import { logger, Client, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import spaceJoin from "./actions/spaceJoin.ts";
 import { ClientBase } from "./base.ts";
@@ -44,8 +44,8 @@ export class TwitterClientInstance implements ITwitterClient {
     }
 }
 
-export class TwitterClient implements Client {
-    name = TWITTER_CLIENT_NAME;
+export class TwitterClient extends Client {
+    static clientName: string = TWITTER_CLIENT_NAME;
     private static instance: TwitterClient;
     private clients: Map<string, TwitterClientInstance> = new Map();
 
