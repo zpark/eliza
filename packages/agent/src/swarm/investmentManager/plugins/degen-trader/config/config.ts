@@ -62,8 +62,7 @@ export const ZEROEX_CONFIG = {
 
 // Add required settings configuration
 export const REQUIRED_SETTINGS = {
-  SOLANA_PUBLIC_KEY: "Public key of the trading wallet",
-  SONAR_API_KEY: "API key for Sonar integration",
+  SOLANA_PUBLIC_KEY: "Public key of the trading wallet"
 };
 
 export const SAFETY_LIMITS = {

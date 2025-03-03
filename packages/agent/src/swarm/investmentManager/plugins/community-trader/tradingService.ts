@@ -1,1152 +1,1900 @@
-/**
- * TODO: This file needs major refactoring:
- * 
- * 1. External Dependencies to Remove/Replace:
- *    - socket.io-client (Socket, io)
- *    - async-mutex (Mutex)
- * 
- * 2. Internal Implementation Issues:
- *    - Replace mutex locking with a simpler mechanism
- *    - Replace socket.io event handling with a custom event system
- *    - Fix type mismatches with Recommender (UUID compatibility)
- *    - Fix type mismatches with Transaction (enum values and field types)
- * 
- * 3. Database Access Issues:
- *    - Replace direct DB calls with runtime.databaseAdapter or memoryManager
- *    - Missing methods in TrustScoreDatabase that need to be implemented:
- *      - getPositionBalance
- *      - getOpenPositionsByRecommenderAndToken
- *      - transaction
- *      - getPosition
- *      - getPositionInvestment
- *      - createPosition
- * 
- * 4. Type Conversion Issues:
- *    - Fix "BUY" to "buy" enum value conversions
- *    - Fix bigint to number type conversions
- *    - Fix Date to string conversions
- *
- * This file should eventually be rewritten according to the architecture 
- * guidelines in the comments at the top of the file.
- */
-
-// TODO: This file needs major refactoring:
-// 1. Remove the mutex and socket.io client
-// 2. Replace with event-based approach
-// 3. Use runtime.databaseAdapter or memoryManager instead of direct DB calls
-// 4. Fix type mismatches with Recommender and Transaction types
-
-import { type IAgentRuntime, Service, type UUID } from "@elizaos/core";
-import { v4 as uuid } from "uuid";
-import { Sonar, TrustScoreBeClient } from "./backend.js";
-import { TrustScoreDatabase } from "./db.js";
-import { calculatePositionPerformance } from "./performanceScore.js";
-import { calculateOverallRiskScore, TrustScoreManager } from "./scoreManager.js";
-import { TrustTokenProvider } from "./tokenProvider.js";
-import type {
-    BuyData,
-    ITrustTokenProvider,
-    Position,
-    QuoteResult,
-    Recommender,
-    SellData,
-    TokenPerformance,
-    Transaction,
-    TrustWalletProvider
-} from "./types.js";
 import {
-    BuyAmountConfig,
+    type Entity,
+    type IAgentRuntime,
+    type IMemoryManager,
+    type Memory,
+    MemoryManager,
+    ModelClass,
+    Service,
+    type UUID,
+    logger
+} from "@elizaos/core";
+import { v4 as uuidv4 } from "uuid";
+import { BirdeyeClient, CoingeckoClient, DexscreenerClient, HeliusClient } from "./clients";
+import {
+    DEFAULT_TRADING_CONFIG,
+    TradingConfig,
     getConvictionMultiplier,
     getLiquidityMultiplier,
     getMarketCapMultiplier,
-    getVolumeMultiplier,
-} from "./utils.js";
-type SellSignalMessage = {
-    positionId: UUID;
-    tokenAddress: string;
-    pairId: string;
-    amount: string;
-    currentBalance: string;
-    sellRecommenderId: UUID;
-    walletAddress: string;
-    isSimulation: boolean;
-};
+    getVolumeMultiplier
+} from "./config";
+import { formatFullReport } from "./reports";
+import {
+    BuySignalMessage,
+    Conviction,
+    Position,
+    PositionWithBalance,
+    ProcessedTokenData,
+    RecommendationType,
+    RecommenderMetrics,
+    RecommenderMetricsHistory,
+    TokenMarketData,
+    TokenMetadata,
+    TokenPerformance,
+    TokenRecommendation,
+    TokenSecurityData,
+    TokenTradeData,
+    Transaction,
+    TransactionType
+} from "./types";
 
-type PriceData = {
-    initialPrice: string;
-    currentPrice: string;
-    priceChange: number;
-    tokenAddress: string;
-    positionId: UUID;
-};
+// Event types
+export type TradingEvent = 
+    | { type: 'position_opened', position: Position }
+    | { type: 'position_closed', position: Position }
+    | { type: 'transaction_added', transaction: Transaction }
+    | { type: 'recommendation_added', recommendation: TokenRecommendation }
+    | { type: 'token_performance_updated', performance: TokenPerformance };
 
-type BuySignalMessage = {
-    positionId: UUID;
-    tokenAddress: string;
-    recommenderId: UUID;
-};
-
-// Replace mutex with simple lock tracking
-type LockInfo = {
-    isLocked: boolean;
-    lastUsed: number;
-};
-
-type SocketHandler<T> = (data: T) => void;
-
-const SLIPPAGE_BPS = 50; // 0.5% TODO: move this to config
-const FORCE_SIMULATION = true; // TODO: add this to config?
-
+/**
+ * Unified Trading Service that centralizes all trading operations
+ */
 export class TrustTradingService extends Service {
-    serviceType = "trust_trading";
+    serviceType = "trading";
 
-    public readonly scoreManager: TrustScoreManager;
-    public readonly db: TrustScoreDatabase;
+    // Memory managers
+    private tokenMemoryManager: IMemoryManager;
+    private positionMemoryManager: IMemoryManager;
+    private transactionMemoryManager: IMemoryManager;
+    private recommendationMemoryManager: IMemoryManager;
+    private recommenderMemoryManager: IMemoryManager;
+    
+    // Client instances
+    private birdeyeClient: BirdeyeClient;
+    private dexscreenerClient: DexscreenerClient;
+    private coingeckoClient: CoingeckoClient | null = null;
+    private heliusClient: HeliusClient | null = null;
+    
+    // Configuration
+    private readonly config: TradingConfig;
+    
+    // Event listeners
+    private eventListeners: Map<string, ((event: TradingEvent) => void)[]> = new Map();
 
-    public readonly tokenProvider: ITrustTokenProvider;
+    constructor(
+        private readonly runtime: IAgentRuntime,
+        config: Partial<TradingConfig> = {}
+    ) {
+        super();
+        
+        // Register memory managers
+        this.tokenMemoryManager = this.registerMemoryManager("tokens");
+        this.positionMemoryManager = this.registerMemoryManager("positions");
+        this.transactionMemoryManager = this.registerMemoryManager("transactions");
+        this.recommendationMemoryManager = this.registerMemoryManager("recommendations");
+        this.recommenderMemoryManager = this.registerMemoryManager("recommenders");
+        
+        // Initialize API clients
+        this.birdeyeClient = BirdeyeClient.createFromRuntime(runtime);
+        this.dexscreenerClient = DexscreenerClient.createFromRuntime(runtime);
+        
+        try {
+            this.coingeckoClient = CoingeckoClient.createFromRuntime(runtime);
+        } catch (error) {
+            logger.warn("Failed to initialize Coingecko client, prices may be limited:", error);
+        }
+        
+        try {
+            this.heliusClient = HeliusClient.createFromRuntime(runtime);
+        } catch (error) {
+            logger.warn("Failed to initialize Helius client, holder data will be limited:", error);
+        }
+        
+        // Merge provided config with defaults
+        this.config = {
+            ...DEFAULT_TRADING_CONFIG,
+            ...config
+        };
+    }
 
-    private readonly backend?: TrustScoreBeClient;
-    private readonly sonar?: Sonar;
+    initialize(): Promise<void> {
+        console.log("*** Initializing Trading Service");
+        return Promise.resolve();
+    }
 
-    private positions: Map<
-        string,
-        { id: UUID; chain: string; tokenAddress: string }
-    > = new Map();
+    /**
+     * Register a memory manager
+     */
+    private registerMemoryManager(name: string): IMemoryManager {
+        const existingManager = this.runtime.getMemoryManager(name);
+        if (existingManager) {
+            return existingManager;
+        }
 
-    private initialized = false;
+        const memoryManager = new MemoryManager({
+            tableName: name,
+            runtime: this.runtime,
+        });
+        
+        
+        this.runtime.registerMemoryManager(memoryManager);
+        return memoryManager;
+    }
 
-    private wallets: Map<string, TrustWalletProvider>;
+    /**
+     * Add an event listener for trading events
+     */
+    addEventListener(eventId: string, listener: (event: TradingEvent) => void): void {
+        if (!this.eventListeners.has(eventId)) {
+            this.eventListeners.set(eventId, []);
+        }
+        this.eventListeners.get(eventId).push(listener);
+    }
 
-    // Replace socket with simpler implementation
-    private eventHandlers: Map<string, (data: any) => void> = new Map();
+    /**
+     * Remove an event listener
+     */
+    removeEventListener(eventId: string): void {
+        this.eventListeners.delete(eventId);
+    }
 
-    // sell signal map
-    private sellSignalMutexMap: Map<string, LockInfo> = new Map();
-    // buy signal transaction lock
-    private transactionLocked = false;
-
-    private runtime: IAgentRuntime;
-
-    //Cleans up expired mutexes from the sellSignalMutexMap.
-    private cleanupExpiredSellMutexes() {
-        const now = Date.now();
-        for (const [key, lockInfo] of this.sellSignalMutexMap.entries()) {
-            // cleanup after 2 hours
-            if (now - lockInfo.lastUsed > 2 * 60 * 60 * 1000) {
-                this.sellSignalMutexMap.delete(key);
+    /**
+     * Emit a trading event to all listeners
+     */
+    private emitEvent(event: TradingEvent): void {
+        for (const listeners of this.eventListeners.values()) {
+            for (const listener of listeners) {
+                try {
+                    listener(event);
+                } catch (error) {
+                    logger.error("Error in event listener:", error);
+                }
             }
+        }
+    }
+
+    /**
+     * Process a buy signal from an entity
+     */
+    async processBuySignal(
+        buySignal: BuySignalMessage,
+        entity: Entity
+    ): Promise<Position | null> {
+        try {
+            // Validate the token
+            const tokenPerformance = await this.getOrFetchTokenPerformance(
+                buySignal.tokenAddress,
+                buySignal.chain || this.config.defaultChain
+            );
+            
+            if (!tokenPerformance) {
+                logger.error(`Token not found: ${buySignal.tokenAddress}`);
+                return null;
+            }
+            
+            // Check if token meets criteria
+            if (!this.validateToken(tokenPerformance)) {
+                logger.error(`Token failed validation: ${buySignal.tokenAddress}`);
+                return null;
+            }
+            
+            // Create recommendation
+            const recommendation = await this.createTokenRecommendation(
+                entity.id,
+                tokenPerformance,
+                buySignal.conviction || Conviction.MEDIUM,
+                RecommendationType.BUY
+            );
+            
+            if (!recommendation) {
+                logger.error(`Failed to create recommendation for token: ${buySignal.tokenAddress}`);
+                return null;
+            }
+            
+            // Calculate buy amount
+            const buyAmount = this.calculateBuyAmount(
+                entity,
+                buySignal.conviction || Conviction.MEDIUM,
+                tokenPerformance
+            );
+            
+            // Create position
+            const position = await this.createPosition(
+                recommendation.id,
+                entity.id,
+                buySignal.tokenAddress,
+                buySignal.walletAddress || "simulation",
+                buyAmount,
+                tokenPerformance.price?.toString() || "0",
+                buySignal.isSimulation || this.config.forceSimulation
+            );
+            
+            if (!position) {
+                logger.error(`Failed to create position for token: ${buySignal.tokenAddress}`);
+                return null;
+            }
+            
+            // Record transaction
+            await this.recordTransaction(
+                position.id as UUID,
+                buySignal.tokenAddress,
+                TransactionType.BUY,
+                buyAmount,
+                tokenPerformance.price || 0,
+                position.isSimulation
+            );
+            
+            // Emit event
+            this.emitEvent({ type: 'position_opened', position });
+            
+            return position;
+        } catch (error) {
+            logger.error("Error processing buy signal:", error);
+            return null;
+        }
+    }
+
+    /**
+     * Process a sell signal for an existing position
+     */
+    async processSellSignal(
+        positionId: UUID,
+        sellRecommenderId: UUID
+    ): Promise<boolean> {
+        try {
+            // Get position
+            const position = await this.getPosition(positionId);
+            if (!position) {
+                logger.error(`Position not found: ${positionId}`);
+                return false;
+            }
+            
+            // Check if position is already closed
+            if (position.closedAt) {
+                logger.error(`Position already closed: ${positionId}`);
+                return false;
+            }
+            
+            // Get token performance
+            const tokenPerformance = await this.getOrFetchTokenPerformance(
+                position.tokenAddress,
+                position.chain
+            );
+            
+            if (!tokenPerformance) {
+                logger.error(`Token not found: ${position.tokenAddress}`);
+                return false;
+            }
+            
+            // Calculate performance metrics
+            const initialPrice = parseFloat(position.initialPrice);
+            const currentPrice = tokenPerformance.price || 0;
+            const priceChange = initialPrice > 0 ? (currentPrice - initialPrice) / initialPrice : 0;
+            
+            // Update position
+            const updatedPosition: Position = {
+                ...position,
+                currentPrice: currentPrice.toString(),
+                closedAt: new Date(),
+            };
+            
+            // Store updated position
+            await this.storePosition(updatedPosition);
+            
+            // Record transaction
+            await this.recordTransaction(
+                position.id as UUID,
+                position.tokenAddress,
+                TransactionType.SELL,
+                BigInt(position.amount),
+                currentPrice,
+                position.isSimulation
+            );
+            
+            // Update entity metrics
+            await this.updateRecommenderMetrics(position.entityId, priceChange * 100);
+            
+            // Emit event
+            this.emitEvent({ type: 'position_closed', position: updatedPosition });
+            
+            return true;
+        } catch (error) {
+            logger.error("Error processing sell signal:", error);
+            return false;
+        }
+    }
+
+    /**
+     * Handle a recommendation from a entity
+     */
+    async handleRecommendation(
+        entity: Entity,
+        recommendation: {
+            chain: string;
+            tokenAddress: string;
+            conviction: Conviction;
+            type: RecommendationType;
+            timestamp: Date;
+            metadata?: Record<string, any>;
+        }
+    ): Promise<Position | null> {
+        try {
+            // Get token performance
+            const tokenPerformance = await this.getOrFetchTokenPerformance(
+                recommendation.tokenAddress,
+                recommendation.chain
+            );
+            
+            if (!tokenPerformance) {
+                logger.error(`Token not found: ${recommendation.tokenAddress}`);
+                return null;
+            }
+            
+            // Create recommendation
+            const tokenRecommendation = await this.createTokenRecommendation(
+                entity.id,
+                tokenPerformance,
+                recommendation.conviction,
+                recommendation.type
+            );
+            
+            if (!tokenRecommendation) {
+                logger.error(`Failed to create recommendation for token: ${recommendation.tokenAddress}`);
+                return null;
+            }
+            
+            // For buy recommendations, create a position
+            if (recommendation.type === RecommendationType.BUY) {
+                // Calculate buy amount
+                const buyAmount = this.calculateBuyAmount(
+                    entity,
+                    recommendation.conviction,
+                    tokenPerformance
+                );
+                
+                // Create position
+                const position = await this.createPosition(
+                    tokenRecommendation.id,
+                    entity.id,
+                    recommendation.tokenAddress,
+                    "simulation", // Use simulation wallet by default
+                    buyAmount,
+                    tokenPerformance.price?.toString() || "0",
+                    true // Simulation by default
+                );
+                
+                if (!position) {
+                    logger.error(`Failed to create position for token: ${recommendation.tokenAddress}`);
+                    return null;
+                }
+                
+                // Record transaction
+                await this.recordTransaction(
+                    position.id as UUID,
+                    recommendation.tokenAddress,
+                    TransactionType.BUY,
+                    buyAmount,
+                    tokenPerformance.price || 0,
+                    true // Simulation by default
+                );
+                
+                // Return position
+                return position;
+            }
+            
+            return null;
+        } catch (error) {
+            logger.error("Error handling recommendation:", error);
+            return null;
+        }
+    }
+
+    /**
+     * Check if a wallet is registered for a chain
+     */
+    hasWallet(chain: string): boolean {
+        // This implementation would check if a wallet config exists for the specified chain
+        return chain.toLowerCase() === "solana"; // Assuming Solana is always supported
+    }
+
+    // ===================== TOKEN PROVIDER METHODS =====================
+
+    /**
+     * Get token overview data
+     */
+    async getTokenOverview(
+        chain: string, 
+        tokenAddress: string, 
+        forceRefresh = false
+    ): Promise<TokenMetadata & TokenMarketData> {
+        try {
+            // Check cache first unless force refresh is requested
+            if (!forceRefresh) {
+                const cacheKey = `token:${chain}:${tokenAddress}:overview`;
+                const cachedData = await this.runtime.databaseAdapter.getCache<TokenMetadata & TokenMarketData>(cacheKey);
+                
+                if (cachedData) {
+                    return cachedData;
+                }
+                
+                // Also check in memory
+                const tokenPerformance = await this.getTokenPerformance(tokenAddress, chain);
+                if (tokenPerformance) {
+                    const tokenData = {
+                        chain: tokenPerformance.chain || chain,
+                        address: tokenPerformance.address || tokenAddress,
+                        name: tokenPerformance.name || "",
+                        symbol: tokenPerformance.symbol || "",
+                        decimals: tokenPerformance.decimals || 0,
+                        metadata: tokenPerformance.metadata || {},
+                        price: tokenPerformance.price || 0,
+                        priceUsd: tokenPerformance.price?.toString() || "0",
+                        price24hChange: tokenPerformance.price24hChange || 0,
+                        marketCap: tokenPerformance.currentMarketCap || 0,
+                        liquidityUsd: tokenPerformance.liquidity || 0,
+                        volume24h: tokenPerformance.volume || 0,
+                        volume24hChange: tokenPerformance.volume24hChange || 0,
+                        trades: tokenPerformance.trades || 0,
+                        trades24hChange: tokenPerformance.trades24hChange || 0,
+                        uniqueWallet24h: 0, // Would need to be fetched 
+                        uniqueWallet24hChange: 0, // Would need to be fetched
+                        holders: tokenPerformance.holders || 0
+                    };
+                    
+                    // Cache the token data
+                    await this.runtime.databaseAdapter.setCache<TokenMetadata & TokenMarketData>(cacheKey, tokenData); // Cache for 5 minutes
+                    
+                    return tokenData;
+                }
+            }
+            
+            // Need to fetch fresh data
+            if (chain.toLowerCase() === "solana") {
+                const [dexScreenerData, birdeyeData] = await Promise.all([
+                    this.dexscreenerClient.searchForHighestLiquidityPair(tokenAddress, chain, { expires: "5m" }),
+                    this.birdeyeClient.fetchTokenOverview(tokenAddress, { expires: "5m" }, forceRefresh)
+                ]);
+                
+                // If we have DexScreener data, it's typically more reliable for prices and liquidity
+                const tokenData = {
+                    chain,
+                    address: tokenAddress,
+                    name: birdeyeData?.name || dexScreenerData?.baseToken?.name || "",
+                    symbol: birdeyeData?.symbol || dexScreenerData?.baseToken?.symbol || "",
+                    decimals: birdeyeData?.decimals || 9, // Default for Solana tokens
+                    metadata: {
+                        logoURI: birdeyeData?.logoURI || "",
+                        pairAddress: dexScreenerData?.pairAddress || "",
+                        dexId: dexScreenerData?.dexId || ""
+                    },
+                    price: parseFloat(dexScreenerData?.priceUsd || "0"),
+                    priceUsd: dexScreenerData?.priceUsd || "0",
+                    price24hChange: dexScreenerData?.priceChange?.h24 || 0,
+                    marketCap: dexScreenerData?.marketCap || 0,
+                    liquidityUsd: dexScreenerData?.liquidity?.usd || 0,
+                    volume24h: dexScreenerData?.volume?.h24 || 0,
+                    volume24hChange: 0, // Need to calculate from historical data
+                    trades: 0, // Would need additional data
+                    trades24hChange: 0, // Would need additional data
+                    uniqueWallet24h: 0, // Would need additional data
+                    uniqueWallet24hChange: 0, // Would need additional data
+                    holders: 0
+                };
+                
+                // Cache the token data
+                const cacheKey = `token:${chain}:${tokenAddress}:overview`;
+                await this.runtime.databaseAdapter.setCache<TokenMetadata & TokenMarketData>(cacheKey, tokenData); // Cache for 5 minutes
+                
+                return tokenData;
+            } else {
+                throw new Error(`Chain ${chain} not supported`);
+            }
+        } catch (error) {
+            logger.error(`Error fetching token overview for ${tokenAddress}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Resolve a ticker to a token address
+     */
+    async resolveTicker(chain: string, ticker: string): Promise<string | null> {
+        // Check cache first
+        const cacheKey = `ticker:${chain}:${ticker}`;
+        const cachedAddress = await this.runtime.databaseAdapter.getCache<string>(cacheKey);
+        
+        if (cachedAddress) {
+            return cachedAddress;
+        }
+        
+        if (chain.toLowerCase() === "solana") {
+            const result = await this.dexscreenerClient.searchForHighestLiquidityPair(ticker, chain, {
+                expires: "5m"
+            });
+            
+            const address = result?.baseToken?.address || null;
+            
+            // Cache the result if found
+            if (address) {
+                await this.runtime.databaseAdapter.setCache<string>(cacheKey, address); // Cache for 1 hour
+            }
+            
+            return address;
+        } else {
+            throw new Error(`Chain ${chain} not supported for ticker resolution`);
+        }
+    }
+
+    /**
+     * Get current price for a token
+     */
+    async getCurrentPrice(chain: string, tokenAddress: string): Promise<number> {
+        try {
+            // Check cache first
+            const cacheKey = `token:${chain}:${tokenAddress}:price`;
+            const cachedPrice = await this.runtime.databaseAdapter.getCache<string>(cacheKey);
+            
+            if (cachedPrice) {
+                return parseFloat(cachedPrice);
+            }
+            
+            // Try to get from token performance
+            const token = await this.getTokenPerformance(tokenAddress, chain);
+            if (token?.price) {
+                // Cache the price
+                await this.runtime.databaseAdapter.setCache<string>(cacheKey, token.price.toString()); // Cache for 1 minute
+                return token.price;
+            }
+            
+            // Fetch fresh price
+            if (chain.toLowerCase() === "solana") {
+                const price = await this.birdeyeClient.fetchPrice(tokenAddress, {
+                    chain: "solana"
+                });
+                
+                // Cache the price
+                await this.runtime.databaseAdapter.setCache<string>(cacheKey, price.toString()); // Cache for 1 minute
+                
+                return price;
+            } else {
+                throw new Error(`Chain ${chain} not supported for price fetching`);
+            }
+        } catch (error) {
+            logger.error(`Error fetching current price for ${tokenAddress}:`, error);
+            return 0;
+        }
+    }
+
+    /**
+     * Determine if a token should be traded
+     */
+    async shouldTradeToken(chain: string, tokenAddress: string): Promise<boolean> {
+        try {
+            const tokenData = await this.getProcessedTokenData(chain, tokenAddress);
+            
+            if (!tokenData) return false;
+            
+            // Get the key metrics
+            const { tradeData, security, dexScreenerData } = tokenData;
+            
+            if (!dexScreenerData || !dexScreenerData.pairs || dexScreenerData.pairs.length === 0) {
+                return false;
+            }
+            
+            const pair = dexScreenerData.pairs[0];
+            
+            // Check liquidity
+            if (!pair.liquidity || pair.liquidity.usd < this.config.minLiquidityUsd) {
+                return false;
+            }
+            
+            // Check market cap
+            if (!pair.marketCap || pair.marketCap > this.config.maxMarketCapUsd) {
+                return false;
+            }
+            
+            // Check for suspicious holder distribution
+            if (security && security.top10HolderPercent > 80) {
+                return false;
+            }
+            
+            // Check for suspicious volume
+            if (tradeData && tradeData.volume_24h_usd < 1000) {
+                return false;
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error(`Error checking if token ${tokenAddress} should be traded:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Get processed token data with security and trade information
+     */
+    async getProcessedTokenData(chain: string, tokenAddress: string): Promise<ProcessedTokenData | null> {
+        try {
+            // Check cache first
+            const cacheKey = `token:${chain}:${tokenAddress}:processed`;
+            const cachedData = await this.runtime.databaseAdapter.getCache<ProcessedTokenData>(cacheKey);
+            
+            if (cachedData) {
+                return cachedData;
+            }
+            
+            // Use token provider functionality to get complete token data
+            if (chain.toLowerCase() === "solana") {
+                // Get DexScreener data
+                const dexScreenerData = await this.dexscreenerClient.search(tokenAddress, {
+                    expires: "5m"
+                });
+                
+                // Try to get token data from Birdeye
+                let tokenTradeData: TokenTradeData;
+                let tokenSecurityData: TokenSecurityData;
+                
+                try {
+                    tokenTradeData = await this.birdeyeClient.fetchTokenTradeData(tokenAddress, {
+                        chain: "solana",
+                        expires: "5m"
+                    });
+                    
+                    tokenSecurityData = await this.birdeyeClient.fetchTokenSecurity(tokenAddress, {
+                        chain: "solana",
+                        expires: "5m"
+                    });
+                } catch (error) {
+                    logger.error(`Error fetching token data for ${tokenAddress}:`, error);
+                    return null;
+                }
+                
+                // Get token info from Codex
+                let tokenInfo;
+                
+                // Analyze holder distribution
+                const holderDistributionTrend = await this.analyzeHolderDistribution(tokenTradeData);
+                
+                // Try to get holder data if Helius client is available
+                let highValueHolders = [];
+                let highSupplyHoldersCount = 0;
+                
+                if (this.heliusClient) {
+                    try {
+                        const holders = await this.heliusClient.fetchHolderList(tokenAddress, {
+                            expires: "30m"
+                        });
+                        
+                        // Calculate high value holders
+                        const tokenPrice = parseFloat(tokenTradeData.price.toString());
+                        highValueHolders = holders
+                            .filter(holder => {
+                                const balance = parseFloat(holder.balance);
+                                const balanceUsd = balance * tokenPrice;
+                                return balanceUsd > 5; // More than $5 USD
+                            })
+                            .map(holder => ({
+                                holderAddress: holder.address,
+                                balanceUsd: (parseFloat(holder.balance) * tokenPrice).toFixed(2)
+                            }));
+                        
+                        // Calculate high supply holders
+                        const totalSupply = tokenInfo?.totalSupply || "0";
+                        highSupplyHoldersCount = holders.filter(holder => {
+                            const holderRatio = parseFloat(holder.balance) / parseFloat(totalSupply);
+                            return holderRatio > 0.02; // More than 2% of supply
+                        }).length;
+                    } catch (error) {
+                        logger.warn(`Error fetching holder data for ${tokenAddress}:`, error);
+                        // Continue without holder data
+                    }
+                }
+                
+                // Check if there were any trades in last 24h
+                const recentTrades = tokenTradeData.volume_24h > 0;
+                
+                // Check if token is listed on DexScreener
+                const isDexScreenerListed = dexScreenerData.pairs.length > 0;
+                const isDexScreenerPaid = dexScreenerData.pairs.some(
+                    pair => pair.boosts && pair.boosts.active > 0
+                );
+                
+                const processedData: ProcessedTokenData = {
+                    token: {
+                        address: tokenAddress,
+                        name: tokenInfo?.name || dexScreenerData.pairs[0]?.baseToken?.name || "",
+                        symbol: tokenInfo?.symbol || dexScreenerData.pairs[0]?.baseToken?.symbol || "",
+                        decimals: tokenInfo?.decimals || 9, // Default for Solana
+                        logoURI: tokenInfo?.info?.imageThumbUrl || ""
+                    },
+                    security: tokenSecurityData,
+                    tradeData: tokenTradeData,
+                    holderDistributionTrend,
+                    highValueHolders,
+                    recentTrades,
+                    highSupplyHoldersCount,
+                    dexScreenerData,
+                    isDexScreenerListed,
+                    isDexScreenerPaid
+                };
+                
+                // Cache the processed data
+                await this.runtime.databaseAdapter.setCache<ProcessedTokenData>(cacheKey, processedData); // Cache for 5 minutes
+                
+                return processedData;
+            } else {
+                throw new Error(`Chain ${chain} not supported for processed token data`);
+            }
+        } catch (error) {
+            logger.error(`Error fetching processed token data for ${tokenAddress}:`, error);
+            return null;
         }
     }
     
-    // Simple locking mechanism
-    private async withLock(action: () => Promise<void>): Promise<void> {
-        // Wait until we can acquire the lock
-        while (this.transactionLocked) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+    /**
+     * Analyze holder distribution trend
+     */
+    private async analyzeHolderDistribution(tradeData: TokenTradeData): Promise<string> {
+        // Define the time intervals to consider
+        const intervals = [
+            {
+                period: "30m",
+                change: tradeData.unique_wallet_30m_change_percent,
+            },
+            { period: "1h", change: tradeData.unique_wallet_1h_change_percent },
+            { period: "2h", change: tradeData.unique_wallet_2h_change_percent },
+            { period: "4h", change: tradeData.unique_wallet_4h_change_percent },
+            { period: "8h", change: tradeData.unique_wallet_8h_change_percent },
+            {
+                period: "24h",
+                change: tradeData.unique_wallet_24h_change_percent,
+            },
+        ];
+
+        // Calculate the average change percentage
+        const validChanges = intervals
+            .map((interval) => interval.change)
+            .filter(
+                (change) => change !== null && change !== undefined
+            ) as number[];
+
+        if (validChanges.length === 0) {
+            return "stable";
         }
-        
-        try {
-            this.transactionLocked = true;
-            await action();
-        } finally {
-            this.transactionLocked = false;
+
+        const averageChange =
+            validChanges.reduce((acc, curr) => acc + curr, 0) /
+            validChanges.length;
+
+        const increaseThreshold = 10; // e.g., average change > 10%
+        const decreaseThreshold = -10; // e.g., average change < -10%
+
+        if (averageChange > increaseThreshold) {
+            return "increasing";
+        } if (averageChange < decreaseThreshold) {
+            return "decreasing";
         }
+            return "stable";
     }
 
-    static createFromRuntime(runtime: IAgentRuntime) {
-        const tokenProvider = new TrustTokenProvider(runtime);
-        const db = new TrustScoreDatabase(runtime);
-        const trustScoreManager = new TrustScoreManager(db, tokenProvider);
+    // ===================== SCORE MANAGER METHODS =====================
 
-        let backend: TrustScoreBeClient | undefined;
+    /**
+     * Update token performance data
+     */
+    async updateTokenPerformance(
+        chain: string,
+        tokenAddress: string
+    ): Promise<TokenPerformance> {
         try {
-            backend = TrustScoreBeClient.createFromRuntime(runtime);
-        } catch (_error) {}
-
-        let sonar: Sonar | undefined;
-        try {
-            sonar = Sonar.createFromRuntime(runtime);
-        } catch (_error) {}
-
-        return new TrustTradingService(
-            runtime,
-            trustScoreManager,
-            db,
-            tokenProvider,
-            backend,
-            sonar
-        );
-    }
-
-    constructor(
-        runtime: IAgentRuntime,
-        scoreManager: TrustScoreManager,
-        db: TrustScoreDatabase,
-        tokenProvider: ITrustTokenProvider,
-        backend?: TrustScoreBeClient,
-        sonar?: Sonar
-    ) {
-        super();
-        this.wallets = new Map();
-        this.runtime = runtime;
-        this.scoreManager = scoreManager;
-        this.db = db;
-        this.tokenProvider = tokenProvider;
-        this.backend = backend;
-        this.sonar = sonar;
-
-        // Set the default interval to clean up expired mutexes every hour
-        setInterval(() => {
-            this.cleanupExpiredSellMutexes();
-        }, 1000 * 60 * 60);
-    }
-
-    registerWallet(chain: string, wallet: TrustWalletProvider) {
-        this.wallets.set(chain, wallet);
-    }
-
-    hasWallet(chain: string) {
-        return this.wallets.has(chain);
-    }
-
-    async resolveTicker(chain: string, ticker: string): Promise<string | null> {
-        const tokenAddress = await this.tokenProvider.resolveTicker(
-            chain,
-            ticker
-        );
-
-        if (tokenAddress) return tokenAddress;
-
-        const wallet = this.wallets.get(chain);
-        return wallet ? await wallet.getTokenFromWallet(ticker) : null;
-    }
-
-    async initialize(): Promise<void> {
-        if (this.initialized) return;
-        this.initialized = true;
-        console.log("trading service initialized");
-        await this.startListeners();
-    }
-
-    private async startListeners() {
-        // Instead of using socket.io, we'll use runtime events or polling
-        
-        // Register event handlers for signals
-        this.addEventListener("buySignal", (data: BuySignalMessage) => {
-            this.handleBuySignal(data);
-        });
-
-        this.addEventListener("sellSignal", (data: SellSignalMessage) => {
-            this.handleSellSignal(data);
-        });
-
-        this.addEventListener("priceSignal", (data: PriceData) => {
-            this.handlePriceSignal(data);
-        });
-
-        // Use runtime database adapter to get positions
-        // This comment matches the code comments at the top of the file:
-        // "remove this.db and calls to the db - old mongoose stuff
-        // instead, use the runtime.databaseAdapter or memoryManager / messageManager"
-        
-        // Use a cache query approach instead since findMany might not be available
-        const positionsCache = await this.runtime.cacheManager.get("positions") || [];
-        const positions = Array.isArray(positionsCache) ? positionsCache.filter(p => !p.closed) : [];
-
-        for (const position of positions) {
-            this.positions.set(position.id, {
-                id: position.id,
-                chain: position.chain,
-                tokenAddress: position.tokenAddress,
+            const tokenData = await this.getTokenOverview(chain, tokenAddress, true);
+            
+            const performance: TokenPerformance = {
+                chain,
+                address: tokenAddress,
+                name: tokenData.name,
+                symbol: tokenData.symbol,
+                decimals: tokenData.decimals,
+                price: parseFloat(tokenData.priceUsd),
+                volume: tokenData.volume24h,
+                liquidity: tokenData.liquidityUsd,
+                currentMarketCap: tokenData.marketCap,
+                holders: tokenData.holders,
+                price24hChange: tokenData.price24hChange,
+                volume24hChange: tokenData.volume24hChange,
+                metadata: tokenData.metadata,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            
+            // Store in memory
+            await this.storeTokenPerformance(performance);
+            
+            // Emit event
+            this.emitEvent({ 
+                type: 'token_performance_updated', 
+                performance 
             });
+            
+            return performance;
+        } catch (error) {
+            logger.error(`Error updating token performance for ${tokenAddress}:`, error);
+            throw error;
         }
     }
 
-    public async handleRecommendation(
-        recommender: Recommender,
-        recomendation: {
-            chain: string;
-            tokenAddress: string;
-            type: "BUY" | "DONT_BUY" | "SELL" | "DONT_SELL" | "NONE";
-            conviction: "NONE" | "LOW" | "MEDIUM" | "HIGH";
-            timestamp: Date;
-            metadata: Record<string, any>;
+    /**
+     * Calculate risk score for a token
+     */
+    calculateRiskScore(token: TokenPerformance): number {
+        let score = 50; // Base score
+        
+        // Adjust based on liquidity
+        const liquidity = token.liquidity || 0;
+        score -= getLiquidityMultiplier(liquidity);
+        
+        // Adjust based on market cap
+        const marketCap = token.currentMarketCap || 0;
+        score += getMarketCapMultiplier(marketCap);
+        
+        // Adjust based on volume
+        const volume = token.volume || 0;
+        score -= getVolumeMultiplier(volume);
+        
+        // Risk adjustments for known issues
+        if (token.rugPull) score += 30;
+        if (token.isScam) score += 30;
+        if (token.rapidDump) score += 15;
+        if (token.suspiciousVolume) score += 15;
+        
+        // Clamp between 0-100
+        return Math.max(0, Math.min(100, score));
+    }
+
+    /**
+     * Update entity metrics based on their recommendation performance
+     */
+    async updateRecommenderMetrics(entityId: UUID, performance: number = 0): Promise<void> {
+        const metrics = await this.getRecommenderMetrics(entityId);
+        
+        if (!metrics) {
+            // Initialize metrics if they don't exist
+            await this.initializeRecommenderMetrics(entityId, "default");
+            return;
         }
-    ): Promise<boolean> {
-        const userOpenPositions =
-            await this.db.getOpenPositionsByRecommenderAndToken(
-                recommender.id,
-                recomendation.tokenAddress
-            );
-        if (userOpenPositions.length > 0) {
-            console.log(
-                `User has open position for ${recomendation.tokenAddress}, skipping recommendation`
-            );
-            return false;
-        }
-        const { tokenRecommendation, alreadyRecommended, tokenPerformance } =
-            await this.db.transaction(async (tx) => {
-                const tokenPerformance =
-                    await this.scoreManager.updateTokenPerformance(
-                        recomendation.chain,
-                        recomendation.tokenAddress
-                    );
+        
+        // Update metrics
+        const updatedMetrics: RecommenderMetrics = {
+            ...metrics,
+            totalRecommendations: metrics.totalRecommendations + 1,
+            successfulRecs: performance > 0 ? metrics.successfulRecs + 1 : metrics.successfulRecs,
+            avgTokenPerformance: ((metrics.avgTokenPerformance * metrics.totalRecommendations) + performance) / (metrics.totalRecommendations + 1),
+            trustScore: this.calculateTrustScore(metrics, performance)
+        };
+        
+        // Store updated metrics
+        await this.storeRecommenderMetrics(updatedMetrics);
+        
+        // Also store in history
+        const historyEntry: RecommenderMetricsHistory = {
+            entityId,
+            metrics: updatedMetrics,
+            timestamp: new Date()
+        };
+        
+        await this.storeRecommenderMetricsHistory(historyEntry);
+    }
+    
+    /**
+     * Calculate trust score based on metrics and new performance
+     */
+    private calculateTrustScore(metrics: RecommenderMetrics, newPerformance: number): number {
+        // Weight factors
+        const HISTORY_WEIGHT = 0.7;
+        const NEW_PERFORMANCE_WEIGHT = 0.3;
+        
+        // Calculate success rate
+        const newSuccessRate = (metrics.successfulRecs + (newPerformance > 0 ? 1 : 0)) / 
+                               (metrics.totalRecommendations + 1);
+        
+        // Calculate consistency (based on standard deviation of performance) 
+        // This is a simplified approach
+        const consistencyScore = metrics.consistencyScore || 50;
+        
+        // Calculate new trust score
+        const newTrustScore = (metrics.trustScore * HISTORY_WEIGHT) + 
+                              (newPerformance > 0 ? 100 : 0) * NEW_PERFORMANCE_WEIGHT;
+        
+        // Adjust based on success rate
+        const successFactor = newSuccessRate * 100;
+        
+        // Combine scores with weights
+        const combinedScore = (newTrustScore * 0.6) + (successFactor * 0.3) + (consistencyScore * 0.1);
+        
+        // Clamp between 0-100
+        return Math.max(0, Math.min(100, combinedScore));
+    }
 
-                // Only create recommendation if it doesn't exists from that user and token address
-                const existingRecommendations =
-                    await this.db.getRecommendationsByRecommender(
-                        recommender.id,
-                        tx
-                    );
+    // ===================== POSITION METHODS =====================
 
-                const alreadyRecommended = userAlreadyRecommended(
-                    existingRecommendations,
-                    recomendation.tokenAddress
-                );
-
-                const tokenRecommendation = alreadyRecommended
-                    ? // Update token recommendation here
-                      await this.scoreManager.updateTokenRecommendation(
-                          {
-                              ...alreadyRecommended,
-                              marketCap:
-                                  tokenPerformance.currentMarketCap.toString(),
-                              liquidity: tokenPerformance.liquidity.toString(),
-                              price: tokenPerformance.price.toString(),
-                              metadata: recomendation.metadata,
-                          },
-                          tx
-                      )
-                    : await this.scoreManager.createTokenRecommendation(
-                          {
-                              id: uuid() as UUID,
-                              chain: recomendation.chain,
-                              recommenderId: recommender.id,
-                              tokenAddress: recomendation.tokenAddress,
-                              createdAt: recomendation.timestamp,
-                              conviction: recomendation.conviction as
-                                  | "NONE"
-                                  | "LOW"
-                                  | "MEDIUM"
-                                  | "HIGH",
-                              type: recomendation.type as
-                                  | "BUY"
-                                  | "DONT_BUY"
-                                  | "SELL"
-                                  | "DONT_SELL"
-                                  | "NONE",
-                              marketCap:
-                                  tokenPerformance.currentMarketCap.toString(),
-                              liquidity: tokenPerformance.liquidity.toString(),
-                              price: tokenPerformance.price.toString(),
-                              metadata: recomendation.metadata,
-                              status: "ACTIVE",
-                              isScam: tokenPerformance.isScam,
-                              rugPull: tokenPerformance.rugPull,
-
-                              riskScore: 0,
-                              performanceScore: 0,
-                          },
-                          tx
-                      );
-
-                await this.backend?.createRecommendation(
-                    recommender,
-                    tokenRecommendation
-                );
-                console.log("created recommendation");
-
-                return {
-                    tokenRecommendation,
-                    alreadyRecommended,
-                    tokenPerformance,
+    /**
+     * Get or fetch token performance data
+     */
+    private async getOrFetchTokenPerformance(
+        tokenAddress: string,
+        chain: string
+    ): Promise<TokenPerformance | null> {
+        try {
+            // Try to get from memory first
+            let tokenPerformance = await this.getTokenPerformance(tokenAddress, chain);
+            
+            // If not found, fetch from API
+            if (!tokenPerformance) {
+                const tokenOverview = await this.getTokenOverview(chain, tokenAddress);
+                
+                // Convert token overview to token performance
+                tokenPerformance = {
+                    chain,
+                    address: tokenAddress,
+                    name: tokenOverview.name,
+                    symbol: tokenOverview.symbol,
+                    decimals: tokenOverview.decimals,
+                    price: parseFloat(tokenOverview.priceUsd),
+                    volume: tokenOverview.volume24h,
+                    price24hChange: tokenOverview.price24hChange,
+                    liquidity: tokenOverview.liquidityUsd,
+                    holders: tokenOverview.holders,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 };
-            });
-
-        const shouldTrade = await this.tokenProvider.shouldTradeToken(
-            recomendation.chain,
-            recomendation.tokenAddress
-        );
-        console.log({ shouldTrade });
-
-        if (!shouldTrade) {
-            console.warn(
-                "There might be a problem with the token, not trading."
-            );
-
-            switch (recomendation.type) {
-                // for now, lets just assume buy only, but we should implement
-                case "BUY": {
-                    // eslint-disable-next-line no-case-declarations
-                    const wallet = this.wallets.get(recomendation.chain);
-
-                    if (!wallet) return false;
-
-                    // eslint-disable-next-line no-case-declarations
-                    const solAmount = await this.getBuyAmount({
-                        chain: recomendation.chain,
-                        tokenPerformance: tokenPerformance,
-                        conviction: recomendation.conviction,
-                        recommender: recommender,
-                        socialSentiment: null, // To Do - when we add socialSentiment
-                    });
-
-                    // eslint-disable-next-line no-case-declarations
-                    const { amountOut: minAmountOut, data } =
-                        await wallet.getQuoteIn({
-                            amountIn: solAmount,
-                            inputToken: wallet.getCurrencyAddress(),
-                            outputToken: recomendation.tokenAddress,
-                            slippageBps: SLIPPAGE_BPS,
-                        });
-
-                    console.log({ minAmountOut, data });
-
-                    // eslint-disable-next-line no-case-declarations
-                    const { txHash, amountOut, timestamp } =
-                        await this.executeSwap({
-                            isSimulation: true,
-                            chain: recomendation.chain,
-                            inputToken: wallet.getCurrencyAddress(),
-                            outputToken: recomendation.tokenAddress,
-                            amountIn: solAmount,
-                            minAmountOut,
-                            quoteData: data,
-                        });
-
-                    await this.processBuy({
-                        positionId: uuid() as UUID,
-                        isSimulation: true,
-                        chain: recomendation.chain,
-                        tokenAddress: recomendation.tokenAddress,
-                        recommender,
-                        recommendationId: tokenRecommendation.id,
-                        solAmount,
-                        buyAmount: amountOut,
-                        timestamp,
-                        walletAddress: wallet.getAddress(),
-                        txHash,
-                        initialTokenPriceUsd: tokenPerformance.price.toString(),
-                    });
-
-                    return true;
+                
+                // Store in memory if found
+                if (tokenPerformance) {
+                    await this.storeTokenPerformance(tokenPerformance);
                 }
-                case "SELL":
-                    console.warn("Not implemented");
-                    break;
-                case "DONT_SELL":
-                    console.warn("Not implemented");
-                    break;
-                case "DONT_BUY":
-                    console.warn("Not implemented");
-                    break;
-                case "NONE":
-                    console.warn("Not implemented");
-                    break;
             }
+            
+            return tokenPerformance;
+        } catch (error) {
+            logger.error(`Error fetching token performance for ${tokenAddress}:`, error);
+            return null;
+        }
+    }
 
+    /**
+     * Validate if a token meets trading criteria
+     */
+    private validateToken(token: TokenPerformance): boolean {
+        // Skip validation for simulation tokens
+        if (token.address?.startsWith("sim_")) {
+            return true;
+        }
+        
+        // Check for scam or rug pull flags
+        if (token.isScam || token.rugPull) {
             return false;
         }
-
-        switch (recomendation.type) {
-            // for now, lets just assume buy only, but we should implement
-            case "BUY": {
-                // eslint-disable-next-line no-case-declarations
-                const wallet = this.wallets.get(recomendation.chain);
-
-                if (!wallet) return false;
-
-                // eslint-disable-next-line no-case-declarations
-                const solAmount = await this.getBuyAmount({
-                    chain: recomendation.chain,
-                    tokenPerformance: tokenPerformance,
-                    conviction: recomendation.conviction,
-                    recommender: recommender,
-                    socialSentiment: null, // To Do - when we add socialSentiment
-                });
-
-                // eslint-disable-next-line no-case-declarations
-                const { amountOut: minAmountOut, data } =
-                    await wallet.getQuoteIn({
-                        amountIn:
-                            solAmount === 0n ? BigInt(1000000000) : solAmount,
-                        inputToken: wallet.getCurrencyAddress(),
-                        outputToken: recomendation.tokenAddress,
-                        slippageBps: SLIPPAGE_BPS,
-                    });
-
-                // eslint-disable-next-line no-case-declarations
-                const { txHash, amountOut, timestamp } = await this.executeSwap(
-                    {
-                        isSimulation: true,
-                        chain: recomendation.chain,
-                        inputToken: wallet.getCurrencyAddress(),
-                        outputToken: recomendation.tokenAddress,
-                        amountIn: solAmount,
-                        minAmountOut,
-                        quoteData: data,
-                    }
-                );
-
-                await this.processBuy({
-                    positionId: uuid() as UUID,
-                    isSimulation: true,
-                    chain: recomendation.chain,
-                    tokenAddress: recomendation.tokenAddress,
-                    recommender,
-                    recommendationId: tokenRecommendation.id,
-                    solAmount,
-                    buyAmount: amountOut,
-                    timestamp,
-                    walletAddress: wallet.getAddress(),
-                    txHash,
-                    initialTokenPriceUsd: tokenPerformance.price.toString(),
-                });
-
-                return true;
-            }
-            case "SELL":
-                console.warn("Not implemented");
-                break;
-            case "DONT_SELL":
-                console.warn("Not implemented");
-                break;
-            case "DONT_BUY":
-                console.warn("Not implemented");
-                break;
-            case "NONE":
-                console.warn("Not implemented");
-                break;
+        
+        // Check liquidity
+        const liquidity = token.liquidity || 0;
+        if (liquidity < this.config.minLiquidityUsd) {
+            return false;
         }
-
-        return false;
-    }
-
-    async getBuyAmount({
-        chain,
-        tokenPerformance,
-        conviction,
-        recommender,
-        socialSentiment,
-    }: {
-        chain: string;
-        tokenPerformance: TokenPerformance;
-        conviction: "NONE" | "LOW" | "MEDIUM" | "HIGH";
-        recommender: Recommender;
-        socialSentiment?: number | null;
-    }): Promise<bigint> {
-        try {
-            const wallet = this.wallets.get(chain);
-            if (!wallet) return 0n;
-
-            const accountBalance = await wallet.getAccountBalance();
-
-            // Early exit if the account balance is too low.
-            if (accountBalance < BuyAmountConfig.MIN_BUY_LAMPORTS) return 0n;
-
-            // Get recommender trust metrics.
-            const recommenderMetrics = await this.db.getRecommenderMetrics(
-                recommender.id
-            );
-            const trustScore = recommenderMetrics?.trustScore ?? 0;
-            const trustScoreMultiplier = 1 + trustScore / 100;
-            const socialSentimentMultiplier = socialSentiment
-                ? 1 + socialSentiment / 100
-                : 1;
-
-            // Calculate the base buy amountd based on a percentage of the account balance.
-            const baseBuyAmount = BigInt(
-                Math.floor(
-                    Number(accountBalance) *
-                        BuyAmountConfig.MAX_ACCOUNT_PERCENTAGE
-                )
-            );
-
-            // Compute multipliers.
-            const liquidityMultiplier = getLiquidityMultiplier(
-                tokenPerformance.liquidity
-            );
-            const volumeMultiplier = getVolumeMultiplier(
-                tokenPerformance.volume
-            );
-            const marketCapMultiplier = getMarketCapMultiplier(
-                tokenPerformance.currentMarketCap
-            );
-            const convictionMultiplier = getConvictionMultiplier(conviction);
-
-            // Calculate the final buy amount by applying multipliers.
-            let buyAmount = BigInt(
-                Math.floor(
-                    Number(baseBuyAmount) *
-                        liquidityMultiplier *
-                        volumeMultiplier *
-                        marketCapMultiplier *
-                        convictionMultiplier *
-                        trustScoreMultiplier *
-                        socialSentimentMultiplier
-                )
-            );
-
-            // Enforce the minimum and maximum constraints.
-            if (buyAmount < BuyAmountConfig.MIN_BUY_LAMPORTS)
-                buyAmount = BuyAmountConfig.MIN_BUY_LAMPORTS;
-            if (buyAmount > BuyAmountConfig.MAX_BUY_LAMPORTS)
-                buyAmount = BuyAmountConfig.MAX_BUY_LAMPORTS;
-
-            return buyAmount;
-        } catch (error) {
-            console.error(
-                `Error calculating buy amount for chain ${chain}:`,
-                error
-            );
-            return 0n;
+        
+        // Check market cap
+        const marketCap = token.currentMarketCap || 0;
+        if (marketCap > this.config.maxMarketCapUsd) {
+            return false;
         }
-    }
-
-    private async validateRecommender(_recommender: Recommender) {
+        
         return true;
-        // const recommenderMetrics = await this.db.getRecommenderMetrics(
-        //     recommender.id
-        // );
-        // return recommenderMetrics?.trustScore >= 70;
     }
 
-    private async handleBuySignal({
-        positionId,
-        tokenAddress,
-        recommenderId,
-    }: BuySignalMessage) {
-        const recommender = await this.db.getRecommender(recommenderId);
-        if (!recommender) return;
-
-        if (!(await this.validateRecommender(recommender))) return;
-
-        const position = await this.db.getPosition(positionId);
-        if (!position) {
-            await this.sonar?.stopProcess(positionId);
-            return;
-        }
-
-        if (!position.isSimulation) return;
-
-        const wallet = this.wallets.get(position.chain);
-
-        if (!wallet) return;
-
-        // todo: use initialAmount?
-        const solAmount = await this.db.getPositionInvestment(positionId);
-        if (solAmount === 0n) return;
-
-        // Update to handle multiple chains
-        const tokenPerformance = await this.scoreManager.updateTokenPerformance(
-            "solana",
-            position.tokenAddress,
-            true
-        );
-
-        // close simulation position
-        await this.closePosition(position.id);
+    /**
+     * Create a token recommendation
+     */
+    private async createTokenRecommendation(
+        entityId: UUID,
+        token: TokenPerformance,
+        conviction: Conviction = Conviction.MEDIUM,
+        type: RecommendationType = RecommendationType.BUY
+    ): Promise<TokenRecommendation | null> {
         try {
-            await this.withLock(async () => {
-                const { amountOut: minAmountOut, data } =
-                    await wallet.getQuoteIn({
-                        amountIn: solAmount,
-                        inputToken: wallet.getCurrencyAddress(),
-                        outputToken: tokenAddress,
-                        slippageBps: SLIPPAGE_BPS,
-                    });
-
-                const { txHash, amountOut, timestamp } = await this.executeSwap(
-                    {
-                        chain: position.chain,
-                        inputToken: wallet.getCurrencyAddress(),
-                        outputToken: tokenAddress,
-                        amountIn: solAmount,
-                        minAmountOut: minAmountOut,
-                        isSimulation: !!FORCE_SIMULATION,
-                        quoteData: data,
-                    }
-                );
-
-                await this.processBuy({
-                    positionId: uuid() as UUID,
-                    isSimulation: false,
-                    chain: position.chain,
-                    recommender,
-                    recommendationId: position.recommendationId,
-                    solAmount,
-                    buyAmount: amountOut,
-                    tokenAddress,
-                    txHash,
-                    timestamp,
-                    walletAddress: wallet.getAddress(),
-                    initialTokenPriceUsd: tokenPerformance.price.toString(),
-                });
+            const recommendation: TokenRecommendation = {
+                id: uuidv4() as UUID,
+                entityId,
+                chain: token.chain || this.config.defaultChain,
+                tokenAddress: token.address || "",
+                type,
+                conviction,
+                initialMarketCap: (token.initialMarketCap || 0).toString(),
+                initialLiquidity: (token.liquidity || 0).toString(),
+                initialPrice: (token.price || 0).toString(),
+                marketCap: (token.currentMarketCap || 0).toString(),
+                liquidity: (token.liquidity || 0).toString(),
+                price: (token.price || 0).toString(),
+                rugPull: token.rugPull || false,
+                isScam: token.isScam || false,
+                riskScore: this.calculateRiskScore(token),
+                performanceScore: 0,
+                metadata: {},
+                status: "ACTIVE",
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            
+            // Store in memory
+            await this.storeTokenRecommendation(recommendation);
+            
+            // Emit event
+            this.emitEvent({ 
+                type: 'recommendation_added', 
+                recommendation 
             });
+            
+            return recommendation;
         } catch (error) {
-            console.error("Error processing buy signal", error);
+            logger.error("Error creating token recommendation:", error);
+            return null;
         }
     }
 
-    private async processBuy(data: BuyData) {
-        const { recommender, tokenAddress } = data;
-
-        const position = await this.savePosition(data);
-
-        await this.backend?.createPosition(position, data);
-
-        const process = await this.sonar?.startProcess({
-            id: data.positionId,
-            tokenAddress: tokenAddress,
-            balance: data.buyAmount.toString(),
-            isSimulation: data.isSimulation,
-            recommenderId: recommender.id,
-            initialMarketCap: position.initialMarketCap,
-            walletAddress: data.walletAddress,
-            txHash: data.txHash,
-            initialPrice: data.initialTokenPriceUsd,
+    /**
+     * Calculate buy amount based on entity trust score and conviction
+     */
+    private calculateBuyAmount(
+        entity: Entity,
+        conviction: Conviction,
+        token: TokenPerformance
+    ): bigint {
+        // Get entity trust score from metrics
+        let trustScore = 50; // Default value
+        
+        // Try to get actual metrics
+        const metricsPromise = this.getRecommenderMetrics(entity.id);
+        metricsPromise.then(metrics => {
+            if (metrics) {
+                trustScore = metrics.trustScore;
+            }
+        }).catch(error => {
+            logger.error(`Error getting entity metrics for ${entity.id}:`, error);
         });
-
-        if (process) {
-            this.positions.set(position.id, {
-                id: position.id,
-                chain: position.chain,
-                tokenAddress: position.tokenAddress,
-            });
+        
+        // Get base amount from config
+        const { baseAmount, minAmount, maxAmount, trustScoreMultiplier, convictionMultiplier } = 
+            this.config.buyAmountConfig;
+        
+        // Calculate multipliers
+        const trustMultiplier = 1 + (trustScore / 100) * trustScoreMultiplier;
+        const convMultiplier = getConvictionMultiplier(conviction);
+        
+        // Apply multipliers to base amount
+        let amount = baseAmount * trustMultiplier * convMultiplier;
+        
+        // Apply token-specific multipliers
+        if (token.liquidity) {
+            amount *= getLiquidityMultiplier(token.liquidity);
         }
+        
+        // Ensure amount is within bounds
+        amount = Math.max(minAmount, Math.min(maxAmount, amount));
+        
+        // Convert to bigint (in smallest units)
+        return BigInt(Math.floor(amount * 1e9)); // Convert to lamports (SOL smallest unit)
     }
 
-    private async savePosition(data: BuyData): Promise<Position> {
-        const { chain, tokenAddress, recommender, recommendationId } = data;
-
-        const tokenPerformance = await this.scoreManager.updateTokenPerformance(
-            chain,
-            tokenAddress
-        );
-
-        const price = tokenPerformance.price.toString();
-        const marketCap = tokenPerformance.currentMarketCap.toString();
-        const liquidity = tokenPerformance.liquidity.toString();
-
-        const position: Position = {
-            id: data.positionId,
-            walletAddress: data.walletAddress,
-            isSimulation: data.isSimulation,
-            chain: data.chain,
-            tokenAddress: tokenAddress,
-            recommenderId: recommender.id,
-            recommendationId,
-            initialPrice: price,
-            initialMarketCap: marketCap,
-            initialLiquidity: liquidity,
-            openedAt: data.timestamp,
-            updatedAt: data.timestamp,
-            rapidDump: false,
-            performanceScore: 0,
-        };
-
-        await this.db.createPosition(position);
-
-        await this.db.addTransaction({
-            id: uuid() as UUID,
-            type: "BUY",
-            chain: data.chain,
-            tokenAddress: data.tokenAddress,
-            transactionHash: data.txHash,
-            positionId: position.id,
-            amount: data.buyAmount,
-            solAmount: data.solAmount,
-            marketCap,
-            liquidity,
-            price,
-            isSimulation: data.isSimulation,
-            timestamp: data.timestamp,
-        });
-
-        return position;
-    }
-
-    private async handlePriceSignal(data: PriceData) {
-        if (!this.sonar) return;
+    /**
+     * Create a new position
+     */
+    private async createPosition(
+        recommendationId: UUID,
+        entityId: UUID,
+        tokenAddress: string,
+        walletAddress: string,
+        amount: bigint,
+        price: string,
+        isSimulation: boolean
+    ): Promise<Position | null> {
         try {
-            const {
-                positionId,
+            const position: Position = {
+                id: uuidv4() as UUID,
+                chain: this.config.defaultChain,
                 tokenAddress,
-                // currentPrice,
-                priceChange,
-                // initialPrice,
-            } = data;
-            if (priceChange !== 0) {
-                const position = await this.db.getPosition(positionId);
+                walletAddress,
+                isSimulation,
+                entityId,
+                recommendationId,
+                initialPrice: price,
+                balance: "0",
+                status: "OPEN",
+                amount: amount.toString(),
+                createdAt: new Date(),
+            };
+            
+            // Store in memory
+            await this.storePosition(position);
+            
+            return position;
+        } catch (error) {
+            logger.error("Error creating position:", error);
+            return null;
+        }
+    }
 
-                if (!position) {
-                    await this.sonar?.stopProcess(positionId);
-                    return;
-                }
+    /**
+     * Record a transaction
+     */
+    private async recordTransaction(
+        positionId: UUID,
+        tokenAddress: string,
+        type: TransactionType,
+        amount: bigint,
+        price: number,
+        isSimulation: boolean
+    ): Promise<boolean> {
+        try {
+            const transaction: Transaction = {
+                id: uuidv4() as UUID,
+                positionId,
+                chain: this.config.defaultChain,
+                tokenAddress,
+                type,
+                amount: amount.toString(),
+                price: price.toString(),
+                isSimulation,
+                timestamp: new Date()
+            };
+            
+            // Store in memory
+            await this.storeTransaction(transaction);
+            
+            // Emit event
+            this.emitEvent({ type: 'transaction_added', transaction });
+            
+            return true;
+        } catch (error) {
+            logger.error("Error recording transaction:", error);
+            return false;
+        }
+    }
 
-                // check if the position has been closed
-                if (position.closedAt) {
-                    await this.sonar?.stopProcess(positionId);
-                    return;
-                }
-                // update token performance
-
-                const tokenPerformance =
-                    await this.scoreManager.updateTokenPerformance(
-                        position.chain,
-                        tokenAddress
-                    );
-
-                // get recommendation and update price, marketCap, liquidity
-                const existingRecommendations =
-                    await this.db.getRecommendationsByRecommender(
-                        position.recommenderId
-                    );
-
-                const recommendation = userAlreadyRecommended(
-                    existingRecommendations,
-                    tokenAddress
+    /**
+     * Get all positions for an entity
+     */
+    async getPositionsByRecommender(entityId: UUID): Promise<Position[]> {
+        try {
+            const recommendations = await this.getRecommendationsByRecommender(entityId);
+            const positions: Position[] = [];
+            
+            for (const recommendation of recommendations) {
+                const positionMatches = await this.getPositionsByToken(recommendation.tokenAddress);
+                
+                // Filter for positions associated with this entity
+                const entityPositions = positionMatches.filter(
+                    position => position.entityId === entityId
                 );
-                await this.scoreManager.updateTokenRecommendation({
-                    ...recommendation,
-                    marketCap: tokenPerformance.currentMarketCap.toString(),
-                    liquidity: tokenPerformance.liquidity.toString(),
-                    price: tokenPerformance.price.toString(),
-                });
+                
+                positions.push(...entityPositions);
+            }
+            
+            return positions;
+        } catch (error) {
+            logger.error("Error getting positions by entity:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get all positions for a token
+     */
+    private async getPositionsByToken(tokenAddress: string): Promise<Position[]> {
+        try {
+            // This is a simplified implementation
+            // In a real-world scenario, you'd query the database
+            const positions = await this.getOpenPositionsWithBalance();
+            return positions.filter(position => position.tokenAddress === tokenAddress);
+        } catch (error) {
+            logger.error("Error getting positions by token:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get all transactions for a position
+     */
+    async getTransactionsByPosition(positionId: UUID): Promise<Transaction[]> {
+        try {
+            // Search for transactions with this position ID
+            const query = `transactions for position ${positionId}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.transactionMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 20
+            });
+            
+            const transactions: Transaction[] = [];
+            
+            for (const memory of memories) {
+                if (memory.content.transaction && 
+                    (memory.content.transaction as Transaction).positionId === positionId) {
+                    transactions.push(memory.content.transaction as Transaction);
+                }
+            }
+            
+            return transactions;
+        } catch (error) {
+            logger.error("Error getting transactions by position:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get all transactions for a token
+     */
+    async getTransactionsByToken(tokenAddress: string): Promise<Transaction[]> {
+        try {
+            // Search for transactions with this token address
+            const query = `transactions for token ${tokenAddress}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.transactionMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 50
+            });
+            
+            const transactions: Transaction[] = [];
+            
+            for (const memory of memories) {
+                if (memory.content.transaction && 
+                    (memory.content.transaction as Transaction).tokenAddress === tokenAddress) {
+                    transactions.push(memory.content.transaction as Transaction);
+                }
+            }
+            
+            return transactions;
+        } catch (error) {
+            logger.error("Error getting transactions by token:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Get a position by ID
+     */
+    async getPosition(positionId: UUID): Promise<Position | null> {
+        try {
+            // Check cache first
+            const cacheKey = `position:${positionId}`;
+            const cachedPosition = await this.runtime.databaseAdapter.getCache<Position>(cacheKey);
+            
+            if (cachedPosition) {
+                return cachedPosition;
+            }
+            
+            // Search for position in memory
+            const query = `position with ID ${positionId}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.positionMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 1
+            });
+            
+            if (memories.length > 0 && memories[0].content.position) {
+                const position = memories[0].content.position as Position;
+                
+                // Cache the position
+                await this.runtime.databaseAdapter.setCache<Position>(cacheKey, position); // Cache for 5 minutes
+                
+                return position;
+            }
+            
+            return null;
+        } catch (error) {
+            logger.error("Error getting position:", error);
+            return null;
+        }
+    }
+
+    /**
+     * Get all recommendations by a entity
+     */
+    async getRecommendationsByRecommender(entityId: UUID): Promise<TokenRecommendation[]> {
+        try {
+            // Search for recommendations by this entity
+            const query = `recommendations by entity ${entityId}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.recommendationMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 50
+            });
+            
+            const recommendations: TokenRecommendation[] = [];
+            
+            for (const memory of memories) {
+                if (memory.content.recommendation && 
+                    (memory.content.recommendation as TokenRecommendation).entityId === entityId) {
+                    recommendations.push(memory.content.recommendation as TokenRecommendation);
+                }
+            }
+            
+            return recommendations;
+        } catch (error) {
+            logger.error("Error getting recommendations by entity:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Close a position and update metrics
+     */
+    async closePosition(positionId: UUID): Promise<boolean> {
+        try {
+            const position = await this.getPosition(positionId);
+            if (!position) {
+                logger.error(`Position ${positionId} not found`);
+                return false;
+            }
+
+            // Update position status
+            position.status = 'CLOSED';
+            position.closedAt = new Date();
+
+            // Calculate final metrics
+            const transactions = await this.getTransactionsByPosition(positionId);
+            const performance = await this.calculatePositionPerformance(position, transactions);
+
+            // Update entity metrics
+            await this.updateRecommenderMetrics(position.entityId, performance);
+
+            // Store in memory
+            await this.storePosition(position);
+
+            // Emit event
+            this.emitEvent({ type: 'position_closed', position });
+
+            return true;
+        } catch (error) {
+            logger.error(`Failed to close position ${positionId}:`, error);
+            return false;
+        }
+    }
+
+    /**
+     * Calculate position performance
+     */
+    private async calculatePositionPerformance(position: Position, transactions: Transaction[]): Promise<number> {
+        if (!transactions.length) return 0;
+
+        const buyTxs = transactions.filter(t => t.type === TransactionType.BUY);
+        const sellTxs = transactions.filter(t => t.type === TransactionType.SELL);
+
+        const totalBuyAmount = buyTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
+        const totalSellAmount = sellTxs.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
+
+        position.amount = totalBuyAmount.toString();
+        
+        const avgBuyPrice = buyTxs.reduce((sum, tx) => sum + Number(tx.price), 0) / buyTxs.length;
+        const avgSellPrice = sellTxs.length ? 
+            sellTxs.reduce((sum, tx) => sum + Number(tx.price), 0) / sellTxs.length :
+            await this.getCurrentPrice(position.chain, position.tokenAddress);
+
+        position.currentPrice = avgSellPrice.toString();
+
+        return ((avgSellPrice - avgBuyPrice) / avgBuyPrice) * 100;
+    }
+
+    /**
+     * Store token performance data
+     */
+    private async storeTokenPerformance(token: TokenPerformance): Promise<void> {
+        try {
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Token performance data for ${token.symbol || token.address} on ${token.chain}`,
+                    token
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.tokenMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also cache for quick access
+            const cacheKey = `token:${token.chain}:${token.address}:performance`;
+            await this.runtime.databaseAdapter.setCache<TokenPerformance>(cacheKey, token); // Cache for 5 minutes
+        } catch (error) {
+            logger.error(`Error storing token performance for ${token.address}:`, error);
+        }
+    }
+
+    /**
+     * Store position data
+     */
+    private async storePosition(position: Position): Promise<void> {
+        try {
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Position data for token ${position.tokenAddress} by entity ${position.entityId}`,
+                    position
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.positionMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also cache for quick access
+            const cacheKey = `position:${position.id}`;
+            await this.runtime.databaseAdapter.setCache<Position>(cacheKey, position); 
+        } catch (error) {
+            logger.error(`Error storing position for ${position.tokenAddress}:`, error);
+        }
+    }
+
+    /**
+     * Store transaction data
+     */
+    private async storeTransaction(transaction: Transaction): Promise<void> {
+        try {
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Transaction data for position ${transaction.positionId} token ${transaction.tokenAddress} ${transaction.type}`,
+                    transaction
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.transactionMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also cache transaction list for position
+            const cacheKey = `position:${transaction.positionId}:transactions`;
+            const cachedTxs = await this.runtime.databaseAdapter.getCache<Transaction[]>(cacheKey);
+            
+            if (cachedTxs) {
+                const txs = cachedTxs as Transaction[];
+                txs.push(transaction);
+                await this.runtime.databaseAdapter.setCache<Transaction[]>(cacheKey, txs); // Cache for 5 minutes
+            } else {
+                await this.runtime.databaseAdapter.setCache<Transaction[]>(cacheKey, [transaction]); // Cache for 5 minutes
             }
         } catch (error) {
-            console.error("Error processing price signal", error);
+            logger.error(`Error storing transaction for position ${transaction.positionId}:`, error);
         }
     }
 
-    private async handleSellSignal(signal: SellSignalMessage) {
-        if (!this.sonar) return;
-
-        const { positionId, tokenAddress, amount, sellRecommenderId } = signal;
-
-        const position = await this.db.getPosition(positionId);
-
-        if (!position) {
-            await this.sonar?.stopProcess(positionId);
-            return;
-        }
-
-        const wallet = this.wallets.get(position.chain);
-        if (!wallet) return;
-
-        const type = position.isSimulation ? "simulation" : "transaction";
-
-        console.log(
-            `Received ${type} message for token ${tokenAddress} to sell ${amount}`
-        );
-
-        const cacheKey = `${positionId}:${tokenAddress}`;
-        let sellSignalMutex = this.sellSignalMutexMap.get(cacheKey);
-        if (!sellSignalMutex) {
-            sellSignalMutex = { isLocked: false, lastUsed: Date.now() };
-            this.sellSignalMutexMap.set(cacheKey, sellSignalMutex);
-        }
-
+    /**
+     * Store token recommendation data
+     */
+    private async storeTokenRecommendation(recommendation: TokenRecommendation): Promise<void> {
         try {
-            await this.withLock(async () => {
-                const recommender =
-                    await this.db.getRecommender(sellRecommenderId);
-                if (!recommender) return;
-
-                const tokenPerformance =
-                    await this.scoreManager.updateTokenPerformance(
-                        position.chain,
-                        tokenAddress,
-                        true
-                    );
-
-                const amountIn = BigInt(amount);
-
-                const quoteResponse = await this.sonar?.quote({
-                    chain: position.chain,
-                    walletAddress: wallet.getAddress(),
-                    inputToken: tokenAddress,
-                    outputToken: wallet.getCurrencyAddress(),
-                    amountIn,
-                    slippageBps: SLIPPAGE_BPS, // 0.5% slippage
-                });
-                if (!quoteResponse) {
-                    console.error("Error getting quote for sell signal");
-                    return;
-                }
-                const { quoteData, swapTransaction } = quoteResponse ?? {};
-
-                // TODO: verify swap data using quoteData
-                const { txHash, amountOut, timestamp } = await this.executeSwap(
-                    {
-                        isSimulation: FORCE_SIMULATION
-                            ? true
-                            : position.isSimulation,
-                        chain: position.chain,
-                        inputToken: tokenAddress,
-                        outputToken: wallet.getCurrencyAddress(),
-                        amountIn,
-                        minAmountOut: 0n,
-                        quoteData,
-                        swapData: { swapTransaction },
-                    }
-                );
-
-                await this.processSell({
-                    tokenPerformance,
-                    position,
-                    amountToSell: amountIn,
-                    recommender,
-                    amountOut,
-                    txHash,
-                    timestamp,
-                });
-            });
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Token recommendation for ${recommendation.tokenAddress} by entity ${recommendation.entityId}`,
+                    recommendation
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.recommendationMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also cache for quick access
+            const cacheKey = `recommendation:${recommendation.id}`;
+            await this.runtime.databaseAdapter.setCache<TokenRecommendation>(cacheKey, recommendation); // Cache for 5 minutes
         } catch (error) {
-            console.error("Error processing sell signal", error);
-        } finally {
-            // Clean up expired mutex entries after processing the sell signal
-            this.cleanupExpiredSellMutexes();
+            logger.error(`Error storing recommendation for ${recommendation.tokenAddress}:`, error);
         }
     }
 
-    private async updatePositionOnSell(position: Position, data: SellData) {
-        const { chain, positionId, tokenAddress, isSimulation } = data;
-        const trade = await this.db.getPosition(positionId);
+    /**
+     * Store entity metrics
+     */
+    private async storeRecommenderMetrics(metrics: RecommenderMetrics): Promise<void> {
+        try {
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Recommender metrics for ${metrics.entityId}`,
+                    metrics
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.recommenderMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also cache for quick access
+            const cacheKey = `entity:${metrics.entityId}:metrics`;
+            await this.runtime.databaseAdapter.setCache<RecommenderMetrics>(cacheKey, metrics); // Cache for 5 minutes
+        } catch (error) {
+            logger.error(`Error storing entity metrics for ${metrics.entityId}:`, error);
+        }
+    }
 
-        if (!trade) return;
+    /**
+     * Store entity metrics history
+     */
+    private async storeRecommenderMetricsHistory(history: RecommenderMetricsHistory): Promise<void> {
+        try {
+            // Create memory object
+            const memory: Memory = {
+                id: uuidv4() as UUID,
+                userId: this.runtime.agentId as UUID,
+                roomId: "global" as UUID,
+                content: {
+                    text: `Recommender metrics history for ${history.entityId}`,
+                    history
+                },
+                createdAt: Date.now()
+            };
+            
+            // Add embedding to memory
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const memoryWithEmbedding = { ...memory, embedding };
+            
+            // Store in memory manager
+            await this.recommenderMemoryManager.createMemory(memoryWithEmbedding, true);
+            
+            // Also update history list in cache
+            const cacheKey = `entity:${history.entityId}:history`;
+            const cachedHistory = await this.runtime.databaseAdapter.getCache<RecommenderMetricsHistory[]>(cacheKey);
+            
+            if (cachedHistory) {
+                const histories = cachedHistory as RecommenderMetricsHistory[];
+                histories.push(history);
+                // Keep only the last 10 entries
+                const recentHistories = histories.sort((a, b) => 
+                    b.timestamp.getTime() - a.timestamp.getTime()
+                ).slice(0, 10);
+                await this.runtime.databaseAdapter.setCache<RecommenderMetricsHistory[]>(cacheKey, recentHistories); // Cache for 1 hour
+            } else {
+                await this.runtime.databaseAdapter.setCache<RecommenderMetricsHistory[]>(cacheKey, [history]); // Cache for 1 hour
+            }
+        } catch (error) {
+            logger.error(`Error storing entity metrics history for ${history.entityId}:`, error);
+        }
+    }
 
-        const tokenPerformance = await this.scoreManager.updateTokenPerformance(
-            chain,
-            tokenAddress,
-            true
-        );
+    /**
+     * Get entity metrics
+     */
+    async getRecommenderMetrics(entityId: UUID): Promise<RecommenderMetrics | null> {
+        try {
+            // Check cache first
+            const cacheKey = `entity:${entityId}:metrics`;
+            const cachedMetrics = await this.runtime.databaseAdapter.getCache<RecommenderMetrics>(cacheKey);
+            
+            if (cachedMetrics) {
+                return cachedMetrics as RecommenderMetrics;
+            }
+            
+            // Search for metrics in memory
+            const query = `entity metrics for entity ${entityId}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.recommenderMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 1
+            });
+            
+            if (memories.length > 0 && memories[0].content.metrics) {
+                const metrics = memories[0].content.metrics as RecommenderMetrics;
+                
+                // Cache the metrics
+                await this.runtime.databaseAdapter.setCache<RecommenderMetrics>(cacheKey, metrics); // Cache for 5 minutes
+                
+                return metrics;
+            }
+            
+            return null;
+        } catch (error) {
+            logger.error(`Error getting entity metrics for ${entityId}:`, error);
+            return null;
+        }
+    }
 
-        const price = tokenPerformance.price.toString();
-        const marketCap = tokenPerformance.currentMarketCap.toString();
-        const liquidity = tokenPerformance.liquidity.toString();
-
-        const tx: Transaction = {
-            id: uuid() as UUID,
-            type: "SELL",
-            chain,
-            tokenAddress,
-            positionId,
-            isSimulation,
-            transactionHash: data.txHash,
-            amount: data.sellAmount,
-            solAmount: data.solAmount,
-            price,
-            liquidity,
-            marketCap,
-            timestamp: data.timestamp,
-        };
-
-        await this.db.addTransaction(tx);
-
-        const { performanceScore } = calculatePositionPerformance(
-            await this.db.getPositionTransactions(positionId)
-        );
-
-        await this.db.updatePosition({
-            ...position,
-            updatedAt: tx.timestamp,
-            performanceScore,
-        });
-
-        const existingRecommendations =
-            await this.db.getRecommendationsByRecommender(
-                position.recommenderId
+    /**
+     * Get entity metrics history
+     */
+    async getRecommenderMetricsHistory(entityId: UUID): Promise<RecommenderMetricsHistory[]> {
+        try {
+            // Check cache first
+            const cacheKey = `entity:${entityId}:history`;
+            const cachedHistory = await this.runtime.databaseAdapter.getCache<RecommenderMetricsHistory[]>(cacheKey);
+            
+            if (cachedHistory) {
+                return cachedHistory as RecommenderMetricsHistory[];
+            }
+            
+            // Search for history in memory
+            const query = `entity metrics history for entity ${entityId}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.recommenderMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 10
+            });
+            
+            const historyEntries: RecommenderMetricsHistory[] = [];
+            
+            for (const memory of memories) {
+                if (memory.content.history && 
+                    (memory.content.history as RecommenderMetricsHistory).entityId === entityId) {
+                    historyEntries.push(memory.content.history as RecommenderMetricsHistory);
+                }
+            }
+            
+            // Sort by timestamp, newest first
+            const sortedEntries = historyEntries.sort((a, b) => 
+                b.timestamp.getTime() - a.timestamp.getTime()
             );
-
-        const recommendation = userAlreadyRecommended(
-            existingRecommendations,
-            tokenAddress
-        );
-        const recommenderMetrics = await this.db.getRecommenderMetrics(
-            position.recommenderId
-        );
-
-        if (!recommenderMetrics) return;
-
-        const riskScore = calculateOverallRiskScore(
-            tokenPerformance,
-            existingRecommendations
-        );
-
-        await this.scoreManager.updateTokenRecommendation({
-            ...recommendation,
-            performanceScore,
-            riskScore,
-        });
-
-        await this.scoreManager.updateRecommenderMetrics(data.recommender.id);
-    }
-
-    private async processSell(params: {
-        tokenPerformance: TokenPerformance;
-        position: Position;
-        amountToSell: bigint;
-        amountOut: bigint;
-        txHash: string;
-        recommender: Recommender;
-        timestamp: Date;
-    }) {
-        const {
-            tokenPerformance,
-            position,
-            amountToSell,
-            recommender,
-            amountOut,
-            txHash,
-            timestamp,
-        } = params;
-
-        const { tokenAddress } = position;
-
-        console.log(
-            `Executing sell for token ${tokenPerformance.symbol}: ${amountToSell}`
-        );
-
-        const sellData: SellData = {
-            chain: position.chain,
-            positionId: position.id,
-            tokenAddress,
-            sellAmount: amountToSell,
-            solAmount: amountOut,
-            recommender,
-            timestamp,
-            isSimulation: position.isSimulation,
-            walletAddress: position.walletAddress,
-            txHash,
-        };
-
-        await this.updatePositionOnSell(position, sellData);
-
-        const balance = await this.db.getPositionBalance(position.id);
-
-        await this.sonar?.saveTransaction({
-            id: position.id,
-            address: position.tokenAddress,
-            isSimulation: position.isSimulation,
-            amount: sellData.sellAmount.toString(),
-            marketCap: tokenPerformance.currentMarketCap,
-            recommenderId: recommender.id,
-            walletAddress: position.walletAddress,
-            txHash: sellData.txHash,
-        });
-
-        const closePosition = balance <= 0n;
-        console.log({ balance, closePosition });
-
-        await this.backend?.updatePosition(position, sellData, closePosition);
-
-        if (closePosition) {
-            await this.closePosition(position.id);
+            
+            // Cache the history
+            await this.runtime.databaseAdapter.setCache<RecommenderMetricsHistory[]>(cacheKey, sortedEntries); // Cache for 1 hour
+            
+            return sortedEntries;
+        } catch (error) {
+            logger.error(`Error getting entity metrics history for ${entityId}:`, error);
+            return [];
         }
     }
 
-    async executeSwap<QuoteData = any, SwapData = any>({
-        chain,
-        inputToken,
-        outputToken,
-        amountIn,
-        minAmountOut,
-        isSimulation,
-        quoteData,
-        swapData,
-    }: {
-        chain: string;
-        inputToken: string;
-        outputToken: string;
-        amountIn: bigint;
-        minAmountOut?: bigint;
-        isSimulation?: boolean;
-        quoteData?: QuoteResult<QuoteData>;
-        swapData?: SwapData;
-    }) {
-        console.log("executing swap...", { inputToken, outputToken, amountIn });
+    /**
+     * Initialize entity metrics
+     */
+    async initializeRecommenderMetrics(entityId: UUID, platform: string): Promise<void> {
+        try {
+            const initialMetrics: RecommenderMetrics = {
+                entityId,
+                platform,
+                totalRecommendations: 0,
+                successfulRecs: 0,
+                consistencyScore: 50,
+                trustScore: 50,
+                failedTrades: 0,
+                totalProfit: 0,
+                avgTokenPerformance: 0,
+                lastUpdated: new Date(),
+                createdAt: new Date()
+            };
+            
+            await this.storeRecommenderMetrics(initialMetrics);
+            
+            // Also create initial history entry
+            const historyEntry: RecommenderMetricsHistory = {
+                entityId,
+                metrics: initialMetrics,
+                timestamp: new Date()
+            };
+            
+            await this.storeRecommenderMetricsHistory(historyEntry);
+        } catch (error) {
+            logger.error(`Error initializing entity metrics for ${entityId}:`, error);
+        }
+    }
 
-        const wallet = this.wallets.get(chain);
-        if (!wallet) throw new Error(`Missing wallet for chain: ${chain}`);
-
-        if (isSimulation)
-            return await wallet.swapIn({
-                inputToken,
-                outputToken,
-                amountIn,
-                minAmountOut: minAmountOut ?? 0n,
-                isSimulation,
-                data: quoteData,
+    /**
+     * Get token performance
+     */
+    async getTokenPerformance(tokenAddress: string, chain: string): Promise<TokenPerformance | null> {
+        try {
+            // Check cache first
+            const cacheKey = `token:${chain}:${tokenAddress}:performance`;
+            const cachedToken = await this.runtime.databaseAdapter.getCache<TokenPerformance>(cacheKey);
+            
+            if (cachedToken) {
+                return cachedToken as TokenPerformance;
+            }
+            
+            // Search for token in memory
+            const query = `token performance for ${tokenAddress}`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.tokenMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 1
             });
+            
+            if (memories.length > 0 && memories[0].content.token) {
+                const token = memories[0].content.token as TokenPerformance;
+                
+                // Cache the token
+                await this.runtime.databaseAdapter.setCache<TokenPerformance>(cacheKey, token); // Cache for 5 minutes
+                
+                return token;
+            }
+            
+            return null;
+        } catch (error) {
+            logger.error(`Error getting token performance for ${tokenAddress}:`, error);
+            return null;
+        }
+    }
 
-        if (swapData) {
-            return await wallet.executeSwap({
-                inputToken,
-                outputToken,
-                swapData,
+    /**
+     * Get open positions with balance
+     */
+    async getOpenPositionsWithBalance(): Promise<PositionWithBalance[]> {
+        try {
+            // Check cache first
+            const cacheKey = `positions:open:with-balance`;
+            const cachedPositions = await this.runtime.databaseAdapter.getCache<PositionWithBalance[]>(cacheKey);
+            
+            if (cachedPositions) {
+                return cachedPositions as PositionWithBalance[];
+            }
+            
+            // Search for open positions in memory
+            const query = `open positions with balance`;
+            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            
+            const memories = await this.positionMemoryManager.searchMemories({
+                embedding,
+                match_threshold: 0.7,
+                count: 50
             });
-        }
-
-        const { amountOut, data } =
-            quoteData ??
-            (await wallet.getQuoteIn({
-                inputToken,
-                outputToken,
-                amountIn,
-                slippageBps: SLIPPAGE_BPS,
-            }));
-
-        if (minAmountOut && minAmountOut > amountOut) {
-            throw new Error("minAmountOut");
-        }
-
-        return await wallet.swapIn({
-            inputToken,
-            outputToken,
-            amountIn,
-            minAmountOut: amountOut,
-            isSimulation: isSimulation ?? false,
-            data,
-        });
-    }
-
-    async closePosition(positionId: UUID) {
-        this.positions.delete(positionId);
-        await this.db.closePosition(positionId);
-        await this.sonar?.stopProcess(positionId);
-    }
-
-    async stopAllSonarProccess() {
-        console.log("stopAllSonarProccess");
-        for (const { id, tokenAddress } of this.positions.values()) {
-            console.log({ id, tokenAddress });
-            await this.sonar?.stopProcess(id);
+            
+            const positions: PositionWithBalance[] = [];
+            
+            for (const memory of memories) {
+                if (memory.content.position) {
+                    const position = memory.content.position as Position;
+                    
+                    // Check if position is open
+                    if (position.status === 'OPEN') {
+                        // Convert to PositionWithBalance
+                        positions.push({
+                            ...position,
+                            balance: BigInt(position.balance || "0") as never
+                        });
+                    }
+                }
+            }
+            
+            // Cache the positions
+            await this.runtime.databaseAdapter.setCache<PositionWithBalance[]>(cacheKey, positions); // Cache for 5 minutes
+            
+            return positions;
+        } catch (error) {
+            logger.error("Error getting open positions with balance:", error);
+            return [];
         }
     }
 
-    // Helper method to add event listeners
-    private addEventListener(event: string, handler: (data: any) => void) {
-        this.eventHandlers.set(event, handler);
-    }
-
-    // Helper method to emit events (for testing or internal use)
-    private emitEvent(event: string, data: any) {
-        const handler = this.eventHandlers.get(event);
-        if (handler) {
-            handler(data);
+    /**
+     * Get positions transactions
+     */
+    async getPositionsTransactions(positionIds: UUID[]): Promise<Transaction[]> {
+        try {
+            const allTransactions: Transaction[] = [];
+            
+            for (const positionId of positionIds) {
+                const transactions = await this.getTransactionsByPosition(positionId);
+                allTransactions.push(...transactions);
+            }
+            
+            return allTransactions;
+        } catch (error) {
+            logger.error("Error getting transactions for positions:", error);
+            return [];
         }
     }
-}
 
-export function userAlreadyRecommended(
-    recommendations: any[],
-    tokenAddress: string
-) {
-    // fix issue where we were using address instead of tokenAddress
-    return recommendations.find(
-        (r) =>
-            r.tokenAddress.trim().toLowerCase() ===
-            tokenAddress.trim().toLowerCase()
-    );
+    /**
+     * Get formatted portfolio report
+     */
+    async getFormattedPortfolioReport(entityId?: UUID): Promise<string> {
+        try {
+            // Get positions
+            const positions = await this.getOpenPositionsWithBalance();
+            
+            // Filter by entity if provided
+            const filteredPositions = entityId ? 
+                positions.filter(p => p.entityId === entityId) : 
+                positions;
+            
+            if (filteredPositions.length === 0) {
+                return "No open positions found.";
+            }
+            
+            // Get tokens and transactions
+            const tokens: TokenPerformance[] = [];
+            const tokenSet = new Set<string>();
+            
+            for (const position of filteredPositions) {
+                if (tokenSet.has(`${position.chain}:${position.tokenAddress}`)) continue;
+                
+                const token = await this.getTokenPerformance(position.tokenAddress, position.chain);
+                if (token) tokens.push(token);
+                
+                tokenSet.add(`${position.chain}:${position.tokenAddress}`);
+            }
+            
+            // Get transactions
+            const transactions = await this.getPositionsTransactions(
+                filteredPositions.map(p => p.id)
+            );
+            
+            // Format the report
+            const report = formatFullReport(tokens, filteredPositions, transactions);
+            
+            return `
+Portfolio Summary:
+Total Current Value: ${report.totalCurrentValue}
+Total Realized P&L: ${report.totalRealizedPnL}
+Total Unrealized P&L: ${report.totalUnrealizedPnL}
+Total P&L: ${report.totalPnL}
+
+Positions:
+${report.positionReports.join("\n\n")}
+
+Tokens:
+${report.tokenReports.join("\n\n")}
+            `.trim();
+        } catch (error) {
+            logger.error("Error generating portfolio report:", error);
+            return "Error generating portfolio report.";
+        }
+    }
 }

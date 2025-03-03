@@ -556,7 +556,7 @@ async function handler(
 
         if (!recommendation.tokenAddress) continue;
 
-        const token = await tradingService.tokenProvider.getTokenOverview(
+        const token = await tradingService.getTokenOverview(
             "solana",
             recommendation.tokenAddress!
         );

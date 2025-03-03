@@ -33,8 +33,8 @@ type PositionPerformance = {
 export function calculatePositionPerformance(
     txs: Transaction[]
 ): PositionPerformance {
-    const buyTx = txs.find((tx) => tx.type === "BUY");
-    const sellTxs = txs.filter((tx) => tx.type === "SELL");
+    const buyTx = txs.find((tx) => tx.type === "buy");
+    const sellTxs = txs.filter((tx) => tx.type === "sell");
 
     const totalInvestment = buyTx?.amount ?? 0n;
     const totalInvestmentUsd = Number(buyTx?.valueUsd ?? 0);
@@ -50,21 +50,22 @@ export function calculatePositionPerformance(
     // Calculate profits from all sells
     for (const sell of sortedSells) {
         // Skip if not enough remaining amount
+        if (typeof remainingAmount === 'string') {
+            remainingAmount = BigInt(remainingAmount);
+        }
         if (remainingAmount <= BigInt(0)) break;
 
         // Calculate portion of this sell
-        const sellAmount =
-            sell.amount > remainingAmount ? remainingAmount : sell.amount;
+        const sellAmount = BigInt(sell.amount) > remainingAmount ? remainingAmount : BigInt(sell.amount);
         const sellRatio = Number(sellAmount) / Number(sell.amount);
 
         // Calculate profit for this portion
         const sellProfitUsd = Number(sell.valueUsd ?? 0) * sellRatio;
         const buyPriceForPortion =
             (totalInvestmentUsd * Number(sellAmount)) / Number(totalInvestment);
-
         totalProfitUsd += sellProfitUsd - buyPriceForPortion;
-        totalProfitAmount += sellAmount;
-        remainingAmount -= sellAmount;
+        totalProfitAmount = totalProfitAmount + BigInt(sellAmount);
+        remainingAmount = BigInt(remainingAmount) - BigInt(sellAmount);
     }
 
     // Calculate market metrics using the last sell
@@ -109,11 +110,10 @@ export function calculatePositionPerformance(
         liquidityChange,
         holdingPeriodHours,
     });
-
     return {
-        totalInvestment,
+        totalInvestment: BigInt(totalInvestment),
         totalInvestmentUsd,
-        remainingAmount,
+        remainingAmount: BigInt(remainingAmount),
         totalProfitAmount,
         totalProfitUsd,
         roi,
@@ -144,12 +144,12 @@ function calculatePerformanceScore(
     );
 
     // ROI: Normalize between -100% to +300%
-    const normalizedRoi = Math.max(Math.min(metrics.roiUsd, 300), -100);
+    const normalizedRoi = Math.max(Math.min(metrics.roiUsd), -100);
     const mappedRoi = ((normalizedRoi + 100) / 400) * 100;
 
     // Market Cap: Normalize between -100% to +300%
     const normalizedMarketCap = Math.max(
-        Math.min(metrics.marketCapChange, 300),
+        Math.min(metrics.marketCapChange),
         -100
     );
 

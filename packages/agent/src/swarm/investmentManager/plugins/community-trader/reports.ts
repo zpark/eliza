@@ -1,7 +1,7 @@
+import { Entity } from "@elizaos/core";
 import type {
     PositionWithBalance,
     Pretty,
-    Recommender,
     RecommenderMetrics,
     RecommenderMetricsHistory,
     TokenPerformance,
@@ -89,7 +89,7 @@ function calculateTradeMetrics(
 
     for (const tx of transactions) {
         const normalizedAmount = normalizeBalance(tx.amount, token.decimals);
-        const price = tx.price ? Number.parseFloat(tx.price) : 0;
+        const price = tx.price ? Number.parseFloat(tx.price as unknown as string) : 0;
         const value = normalizedAmount * price;
 
         if (tx.timestamp < firstTradeTime)
@@ -98,20 +98,20 @@ function calculateTradeMetrics(
             lastTradeTime = new Date(tx.timestamp);
 
         switch (tx.type) {
-            case "BUY":
+            case "buy":
                 totalBought += normalizedAmount;
                 totalBoughtValue += value;
                 volumeUsd += value;
                 break;
-            case "SELL":
+            case "sell":
                 totalSold += normalizedAmount;
                 totalSoldValue += value;
                 volumeUsd += value;
                 break;
-            case "TRANSFER_IN":
+            case "transfer_in":
                 totalTransferIn += normalizedAmount;
                 break;
-            case "TRANSFER_OUT":
+            case "transfer_out":
                 totalTransferOut += normalizedAmount;
                 break;
         }
@@ -233,9 +233,9 @@ function formatTransactionHistory(
                 tx.amount,
                 token.decimals
             );
-            const price = tx.price ? formatPrice(Number.parseFloat(tx.price)) : "N/A";
+            const price = tx.price ? formatPrice(Number.parseFloat(tx.price as unknown as string)) : "N/A";
             const value = tx.valueUsd
-                ? formatPrice(Number.parseFloat(tx.valueUsd))
+                ? formatPrice(Number.parseFloat(tx.valueUsd as unknown as string))
                 : "N/A";
 
             return `
@@ -264,7 +264,6 @@ function formatPositionPerformance(
   Type: ${position.isSimulation ? "Simulation" : "Real"}
   Token: ${token.name} (${token.symbol})
   Wallet: ${position.walletAddress}
-  Last Updated: ${formatDate(position.updatedAt)}
 
   Trading Summary:
   - Total Bought: ${formatNumber(perfData.trades.totalBought)} ${token.symbol}
@@ -288,8 +287,6 @@ function formatPositionPerformance(
   - Total P&L: ${formatPrice(perfData.totalPnL)} (${formatPercent(perfData.totalPnLPercent)})
 
   Market Info:
-  - Initial Market Cap: ${formatPrice(Number.parseFloat(position.initialMarketCap))}
-  - Initial Liquidity: ${formatPrice(Number.parseFloat(position.initialLiquidity))}
   - Current Liquidity: ${formatPrice(token.liquidity)}
   - 24h Volume: ${formatPrice(token.volume)}
 
@@ -401,11 +398,11 @@ function calculateMetricTrend<Metric extends RecommenderNumericMetrics>(
         .slice()
         .sort(
             (a, b) =>
-                new Date(b.recordedAt).getTime() -
-                new Date(a.recordedAt).getTime()
+                new Date(b.timestamp).getTime() -
+                new Date(a.timestamp).getTime()
         );
 
-    const previousValue = sortedHistory[0][metric];
+    const previousValue = sortedHistory[0].metrics[metric];
     const trend = ((current[metric] - previousValue) / previousValue) * 100;
 
     let description = "stable";
@@ -445,7 +442,7 @@ function calculatePeriodTrends(
     if (!period) {
         const monthlyData = history.reduce(
             (acc, record) => {
-                const month = new Date(record.recordedAt)
+                const month = new Date(record.timestamp)
                     .toISOString()
                     .slice(0, 7);
 
@@ -458,10 +455,10 @@ function calculatePeriodTrends(
                 acc.set(month, {
                     performances: [
                         ...currentData.performances,
-                        record.avgTokenPerformance,
+                        record.metrics.avgTokenPerformance,
                     ],
-                    successes: currentData.successes + record.successfulRecs,
-                    total: currentData.total + record.totalRecommendations,
+                    successes: currentData.successes + record.metrics.successfulRecs,
+                    total: currentData.total + record.metrics.totalRecommendations,
                 });
 
                 return acc;
@@ -493,7 +490,7 @@ function calculatePeriodTrends(
     cutoffDate.setDate(cutoffDate.getDate() - period.days);
 
     const periodData = history.filter(
-        (record) => new Date(record.recordedAt) >= cutoffDate
+        (record) => new Date(record.timestamp) >= cutoffDate
     );
 
     if (periodData.length === 0) {
@@ -507,13 +504,13 @@ function calculatePeriodTrends(
         ];
     }
 
-    const performances = periodData.map((record) => record.avgTokenPerformance);
-    const totalRecs = periodData.reduce(
-        (sum, record) => sum + record.totalRecommendations,
+    const performances = periodData.map((record) => record.metrics.avgTokenPerformance);
+    const totalRecommendations = periodData.reduce(
+        (sum, record) => sum + record.metrics.totalRecommendations,
         0
     );
     const successfulRecs = periodData.reduce(
-        (sum, record) => sum + record.successfulRecs,
+        (sum, record) => sum + record.metrics.successfulRecs,
         0
     );
 
@@ -522,8 +519,8 @@ function calculatePeriodTrends(
             period: period.label,
             avgPerformance:
                 performances.reduce((a, b) => a + b, 0) / performances.length,
-            successRate: totalRecs > 0 ? successfulRecs / totalRecs : 0,
-            recommendations: totalRecs,
+            successRate: totalRecommendations > 0 ? successfulRecs / totalRecommendations : 0,
+            recommendations: totalRecommendations,
         },
     ];
 }
@@ -548,7 +545,7 @@ ${trend.period}:
 }
 
 export function formatRecommenderProfile(
-    recommender: Recommender,
+    entity: Entity,
     metrics: RecommenderMetrics,
     history: RecommenderMetricsHistory[]
 ): string {
@@ -561,9 +558,9 @@ export function formatRecommenderProfile(
     );
 
     return `
-Recommender Profile: ${recommender.username}
-Platform: ${recommender.platform}
-ID: ${recommender.id}
+Entity Profile: ${entity.metadata.username}
+Platform: ${entity.metadata.platform}
+ID: ${entity.id}
 
 Performance Metrics:
 - Trust Score: ${formatScore(metrics.trustScore)} (${formatPercent(trustTrend.trend)} ${trustTrend.description})
@@ -572,48 +569,21 @@ Performance Metrics:
 - Avg Token Performance: ${formatPercent(metrics.avgTokenPerformance)} (${formatPercent(performanceTrend.trend)} ${performanceTrend.description})
 
 Risk Assessment:
-- Risk Score: ${formatScore(metrics.riskScore)}
 - Consistency Score: ${formatScore(metrics.consistencyScore)}
-- Virtual Confidence: ${formatPercentMetric(metrics.virtualConfidence)}
-- Trust Decay: ${formatPercentMetric(metrics.trustDecay)}
 
 Activity:
-- Last Active: ${formatDate(metrics.lastActiveDate)}
-- Last Updated: ${formatDate(metrics.updatedAt)}
+- Last Active: ${formatDate(metrics.lastUpdated)}
     `.trim();
 }
 
-function formatMetricsHistory(history: RecommenderMetricsHistory[]): string {
-    const sortedHistory = [...history]
-        .sort(
-            (a, b) =>
-                new Date(b.recordedAt).getTime() -
-                new Date(a.recordedAt).getTime()
-        )
-        .slice(0, 1);
-
-    return sortedHistory
-        .map((record) =>
-            `
-${formatDate(record.recordedAt)}:
-- Trust Score: ${formatScore(record.trustScore)}
-- Success Rate: ${formatPercentMetric(record.successfulRecs / record.totalRecommendations)}
-- Token Performance: ${formatPercent(record.avgTokenPerformance)}
-- Risk Score: ${formatScore(record.riskScore)}
-- Consistency: ${formatScore(record.consistencyScore)}
-    `.trim()
-        )
-        .join("\n\n");
-}
-
 export function formatRecommenderReport(
-    recommender: Recommender,
+    entity: Entity,
     metrics: RecommenderMetrics,
     history: RecommenderMetricsHistory[]
 ): string {
     const sortedHistory = [...history].sort(
         (a, b) =>
-            new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
 
     // Calculate performance trends for different time periods
@@ -630,19 +600,19 @@ export function formatRecommenderReport(
     // Calculate success trend
     const successTrend = calculateTrend(
         metrics.successfulRecs / metrics.totalRecommendations,
-        sortedHistory.map((h) => h.successfulRecs / h.totalRecommendations)
+        sortedHistory.map((h) => h.metrics.successfulRecs / h.metrics.totalRecommendations)
     );
 
     // Calculate performance trend
     const performanceTrend = calculateTrend(
         metrics.avgTokenPerformance,
-        sortedHistory.map((h) => h.avgTokenPerformance)
+        sortedHistory.map((h) => h.metrics.avgTokenPerformance)
     );
 
     return `
-Username: ${recommender.username}
-Platform: ${recommender.platform}
-ID: ${recommender.id}
+Username: ${entity.metadata.username}
+Platform: ${entity.metadata.platform}
+ID: ${entity.id}
 
 === CURRENT METRICS ===
 Trust Score: ${formatScore(metrics.trustScore)}
@@ -651,14 +621,10 @@ Total Recommendations: ${metrics.totalRecommendations}
 Average Token Performance: ${formatPercent(metrics.avgTokenPerformance)} (${formatTrendArrow(performanceTrend)})
 
 Risk Analysis:
-- Risk Score: ${formatScore(metrics.riskScore)}
 - Consistency: ${formatScore(metrics.consistencyScore)}
-- Confidence: ${formatPercentMetric(metrics.virtualConfidence)}
-- Trust Decay: ${formatPercentMetric(metrics.trustDecay)}
 
 Activity Status:
-- Last Active: ${formatDate(metrics.lastActiveDate)}
-- Last Updated: ${formatDate(metrics.updatedAt)}
+- Last Active: ${formatDate(metrics.lastUpdated)}
 
 === PERFORMANCE TRENDS ===
 ${formatTrends(dailyTrends)}
@@ -670,7 +636,7 @@ ${formatTrends(monthlyTrends)}`.trim();
 }
 
 export function formatTopRecommendersOverview(
-    recommenders: Recommender[],
+    recommenders: Entity[],
     metrics: Map<string, RecommenderMetrics>,
     history: Map<string, RecommenderMetricsHistory[]>
 ): string {
@@ -684,10 +650,10 @@ export function formatTopRecommendersOverview(
     return `
 <top_recommenders>
 ${sortedRecommenders
-    .map((recommender) => {
-        const metric = metrics.get(recommender.id);
+    .map((entity) => {
+        const metric = metrics.get(entity.id);
         if (!metric) return null;
-        const historicalData = history.get(recommender.id) || [];
+        const historicalData = history.get(entity.id) || [];
         const trustTrend = calculateMetricTrend(
             metric,
             "trustScore",
@@ -701,12 +667,11 @@ ${sortedRecommenders
         );
 
         return `
-${recommender.username} (${recommender.platform})
+${entity.metadata.username} (${entity.metadata.platform})
 Trust Score: ${formatScore(metric.trustScore)} (${formatPercent(trustTrend.trend)} ${trustTrend.description})
 Performance Score: ${formatScore(metric.avgTokenPerformance)} (${formatPercent(performanceTrend.trend)} ${performanceTrend.description})
 Success Rate: ${formatPercentMetric(metric.successfulRecs / metric.totalRecommendations)}
-Risk Score: ${formatScore(metric.riskScore)}
-Last Active: ${formatDate(metric.lastActiveDate)}
+Last Active: ${formatDate(metric.lastUpdated)}
   `.trim();
     })
     .filter((report) => report !== null)

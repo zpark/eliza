@@ -235,7 +235,7 @@ ${currentSummary.trim()}
                 console.log("File written successfully");
 
                 // Then cache it
-                await runtime.databaseAdapter.setCache(summaryFilename, currentSummary);
+                await runtime.databaseAdapter.setCache<string>(summaryFilename, currentSummary);
                 console.log("Cache set operation completed");
 
                 await callback(

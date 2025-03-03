@@ -1,5 +1,8 @@
-import { type Content, type Memory, type UUID } from "@elizaos/core";
+import { type Content, type Memory, type UUID as CoreUUID, type Entity as CoreEntity } from "@elizaos/core";
 import type { MessageRecommendation } from "./recommendations/schema";
+
+// Re-export UUID type for use in other files
+export type UUID = CoreUUID;
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type Pretty<type> = { [key in keyof type]: type[key] } & unknown;
@@ -38,174 +41,152 @@ export type TokenPerformanceRow = ToSQLiteRecord<TokenPerformance>;
 export type PositionRow = ToSQLiteRecord<Position>;
 export type TransactionRow = ToSQLiteRecord<Transaction>;
 
-export type Recommender = {
-    id: UUID;
+export interface RecommenderMetrics {
+    entityId: UUID;
     platform: string;
-    userId: string;
-    username: string;
-    clientId?: string;
-    msg?: string;
-};
-
-export type RecommenderMetrics = {
-    recommenderId: UUID;
-    trustScore: number;
     totalRecommendations: number;
     successfulRecs: number;
+    failedTrades: number;
+    totalProfit: number;
     avgTokenPerformance: number;
-    riskScore: number;
     consistencyScore: number;
-    virtualConfidence: number;
-    lastActiveDate: Date;
-    trustDecay: number;
-    updatedAt: Date;
-};
-
-export type TokenPerformance = {
-    chain: string;
-    address: string;
-
-    name: string;
-    symbol: string;
-    decimals: number;
-
-    metadata: Record<string, any>;
-
-    price: number;
-    price24hChange: number;
-
-    volume: number;
-    volume24hChange: number;
-
-    trades: number;
-    trades24hChange: number;
-
-    liquidity: number;
-    // liquidity24hChange: number;
-
-    holders: number;
-    holders24hChange: number;
-
-    initialMarketCap: number;
-    currentMarketCap: number;
-    // marketCap24hChange: number;
-
-    rugPull: boolean;
-    isScam: boolean;
-    sustainedGrowth: boolean;
-    rapidDump: boolean;
-    suspiciousVolume: boolean;
-    validationTrust: number;
-
+    trustScore: number;
+    lastUpdated: Date;
     createdAt: Date;
-    updatedAt: Date;
-};
+}
+
+export interface RecommenderMetricsHistory {
+    entityId: UUID;
+    metrics: RecommenderMetrics;
+    timestamp: Date;
+}
+
+export interface TokenPerformance {
+    chain?: string;
+    address?: string;
+    name?: string;
+    symbol?: string;
+    decimals?: number;
+    metadata?: Record<string, any>;
+    price?: number;
+    price24hChange?: number;
+    volume?: number;
+    volume24hChange?: number;
+    trades?: number;
+    trades24hChange?: number;
+    liquidity?: number;
+    holders?: number;
+    holders24hChange?: number;
+    initialMarketCap?: number;
+    currentMarketCap?: number;
+    rugPull?: boolean;
+    isScam?: boolean;
+    sustainedGrowth?: boolean;
+    rapidDump?: boolean;
+    suspiciousVolume?: boolean;
+    validationTrust?: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+/**
+ * Conviction levels for recommendations
+ * IMPORTANT: Must match the enum in config.ts
+ */
+export enum Conviction {
+    NONE = "NONE",
+    LOW = "LOW",
+    MEDIUM = "MEDIUM",
+    HIGH = "HIGH",
+    VERY_HIGH = "VERY_HIGH"
+}
+
+/**
+ * Recommendation types
+ * IMPORTANT: Must match the enum in config.ts
+ */
+export enum RecommendationType {
+    BUY = "buy",
+    DONT_BUY = "DONT_BUY",
+    SELL = "sell",
+    DONT_SELL = "DONT_SELL",
+    NONE = "NONE",
+    HOLD = "HOLD"
+}
 
 export type TokenRecommendation = {
     id: UUID;
-    recommenderId: UUID;
+    entityId: UUID;
     chain: string;
     tokenAddress: string;
-
-    conviction: "NONE" | "LOW" | "MEDIUM" | "HIGH";
-    type: "BUY" | "DONT_BUY" | "SELL" | "DONT_SELL" | "NONE";
-
+    conviction: Conviction;
+    type: RecommendationType;
     initialMarketCap: string;
     initialLiquidity: string;
     initialPrice: string;
-
     marketCap: string;
     liquidity: string;
     price: string;
-
     rugPull: boolean;
     isScam: boolean;
     riskScore: number;
     performanceScore: number;
-
     metadata: Record<string, any>;
-
     status: "ACTIVE" | "COMPLETED" | "EXPIRED" | "WITHDRAWN";
-    // statusReason?: string;
-    // completedAt: Date;
-
     createdAt: Date;
     updatedAt: Date;
 };
 
-export type RecommenderMetricsHistory = {
-    historyId: UUID;
-    recommenderId: string;
-
-    // max 100, min -100; +1/10 on the performace score when closing position - 1/10 riskScore
-
-    trustScore: number;
-
-    totalRecommendations: number;
-
-    successfulRecs: number; // performance score > 0
-
-    avgTokenPerformance: number; // avg(performance)
-    riskScore: number; // avg(riskscore)
-
-    consistencyScore: number; // successfulRecs / totalRecommendations
-    virtualConfidence: number; //
-
-    trustDecay: number;
-
-    recordedAt: Date;
-};
-
-export type Position = {
+export interface Position {
     id: UUID;
-    chain: string;
+    entityId: UUID;
     tokenAddress: string;
+    chain: string;
     walletAddress: string;
-
-    isSimulation: boolean;
-
-    recommenderId: UUID;
-    recommendationId: UUID;
-
-    initialPrice: string;
-    initialMarketCap: string;
-    initialLiquidity: string;
-
-    performanceScore: number;
-
-    rapidDump: boolean;
-    openedAt: Date;
+    balance: string;
+    status: 'OPEN' | 'CLOSED';
+    createdAt: Date;
     closedAt?: Date;
-    updatedAt: Date;
-};
+    isSimulation: boolean;
+    amount: string;
+    initialPrice: string;
+    currentPrice?: string;
+    recommendationId: UUID;
+}
 
 export type PositionWithBalance = Position & {
     balance: bigint;
 };
 
-export type Transaction = {
+/**
+ * Unified transaction type enums to ensure consistency
+ * IMPORTANT: Must match the enum in config.ts
+ */
+export enum TransactionType {
+    BUY = "buy",
+    SELL = "sell",
+    TRANSFER_IN = "transfer_in",
+    TRANSFER_OUT = "transfer_out"
+}
+
+/**
+ * Complete transaction interface with all possible fields
+ */
+export interface Transaction {
     id: UUID;
-    type: "BUY" | "SELL" | "TRANSFER_IN" | "TRANSFER_OUT";
     positionId: UUID;
-    isSimulation: boolean;
-
-    chain: string;
     tokenAddress: string;
-    transactionHash: string;
-    //
-    amount: bigint;
-    valueUsd?: string;
-    price?: string;
-    //
-    solAmount?: bigint;
-    solValueUsd?: string;
-    solPrice?: string;
-    //
-    marketCap?: string;
-    liquidity?: string;
-
+    type: TransactionType;
+    amount: string;
+    valueUsd?: number;
+    marketCap?: number;
+    liquidity?: number;
+    price: string;
+    isSimulation: boolean;
     timestamp: Date;
-};
+    chain?: string;
+    transactionHash?: string;
+}
 
 export type SellDetails = {
     price: number;
@@ -220,87 +201,16 @@ export type SellDetails = {
     liquidity: number;
     liquidityChange: number;
     rapidDump: boolean;
-    recommenderId: string;
+    entityId: string;
 };
 
-export interface TrustScoreAdapter {
-    // Recommender Methods
-    addRecommender(recommender: Recommender): Promise<string | null>;
-    getRecommender(identifier: string): Promise<Recommender | null>;
-    getOrCreateRecommender(recommender: Recommender): Promise<Recommender>;
-    getOrCreateRecommenderWithDiscordId(
-        discordId: string
-    ): Promise<Recommender | null>;
-    getOrCreateRecommenderWithTelegramId(
-        telegramId: string
-    ): Promise<Recommender | null>;
-
-    // Recommender Metrics Methods
-    initializeRecommenderMetrics(recommenderId: UUID): Promise<boolean>;
-    getRecommenderMetrics(
-        recommenderId: UUID
-    ): Promise<RecommenderMetrics | null>;
-    updateRecommenderMetrics(metrics: RecommenderMetrics): Promise<void>;
-    logRecommenderMetricsHistory(recommenderId: UUID): Promise<void>;
-    getRecommenderMetricsHistory(
-        recommenderId: UUID
-    ): Promise<RecommenderMetricsHistory[]>;
-
-    // Token Performance Methods
-    upsertTokenPerformance(performance: TokenPerformance): Promise<boolean>;
-    getTokenPerformance(tokenAddress: string): Promise<TokenPerformance | null>;
-    calculateValidationTrust(tokenAddress: string): Promise<number>;
-
-    // Token Recommendations Methods
-    addTokenRecommendation(
-        recommendation: TokenRecommendation
-    ): Promise<boolean>;
-    getRecommendationsByRecommender(
-        recommenderId: UUID
-    ): Promise<TokenRecommendation[]>;
-    getRecommendationsByToken(
-        tokenAddress: string
-    ): Promise<TokenRecommendation[]>;
-    getRecommendationsByDateRange(
-        startDate: Date,
-        endDate: Date
-    ): Promise<TokenRecommendation[]>;
-
-    // // Trade Performance Methods
-    // addTradePerformance(trade: TradePerformance): Promise<boolean>;
-    // updateTradePerformanceOnSell(props: {
-    //     tradePerformanceId: string;
-    //     tokenAddress: string;
-    //     recommenderId: UUID;
-    //     sellDetails: SellDetails;
-    // }): Promise<boolean>;
-    // getTradePerformance(
-    //     tokenAddress: string,
-    //     recommenderId: string,
-    //     buyTimestamp: string,
-    //     isSimulation: boolean
-    // ): Promise<TradePerformance | null>;
-    // getLatestTradePerformance(
-    //     tokenAddress: string,
-    //     recommenderId: string,
-    //     isSimulation: boolean
-    // ): Promise<TradePerformance | null>;
-
-    // Transaction Methods
-    addTransaction(transaction: Transaction): Promise<boolean>;
-    getTransactionsByToken(tokenAddress: string): Promise<Transaction[]>;
-
-    // Cleanup
-    close(): Promise<void>;
-}
-
 export type BuyData = {
-    positionId: UUID;
+    positionId: string;
     chain: string;
     tokenAddress: string;
     walletAddress: string;
-    recommender: Recommender;
-    recommendationId: UUID;
+    entityID: UUID;
+    recommendationId: string;
     solAmount: bigint;
     buyAmount: bigint;
     timestamp: Date;
@@ -310,11 +220,11 @@ export type BuyData = {
 };
 
 export type SellData = {
-    positionId: UUID;
+    positionId: string;
     chain: string;
     tokenAddress: string;
     walletAddress: string;
-    recommender: Recommender;
+    entityID: UUID;
     solAmount: bigint;
     sellAmount: bigint;
     timestamp: Date;
@@ -323,7 +233,7 @@ export type SellData = {
 };
 
 export type RecommenderAnalytics = {
-    recommenderId: string;
+    entityId: string;
     trustScore: number;
     riskScore: number;
     consistencyScore: number;
@@ -431,29 +341,6 @@ export type TokenMarketData = {
     holders: number;
 };
 
-// wip
-export interface ITrustTokenProvider {
-    // getTokenMetadata(
-    //     chain: string,
-    //     tokenAddress: string
-    // ): Promise<TokenMetadata>;
-    // getTokenMarketData(
-    //     chain: string,
-    //     tokenAddress: string
-    // ): Promise<TokenMarketData>;
-
-    getTokenOverview(
-        chain: string,
-        tokenAddress: string,
-        forceRefresh?: boolean
-    ): Promise<TokenMetadata & TokenMarketData>;
-
-    shouldTradeToken(chain: string, tokenAddress: string): Promise<boolean>;
-
-    //TODO: return metadata?
-    resolveTicker(chain: string, ticker: string): Promise<string | null>;
-}
-
 export interface RecommendationMemory extends Memory {
     content: Content & {
         recommendation: MessageRecommendation & {
@@ -471,24 +358,6 @@ export type Account = {
     avatarUrl: string;
     telegramId: string;
     discordId: string;
-};
-
-export type TokenCodex = {
-    id: string;
-    address: string;
-    cmcId: number;
-    decimals: number;
-    name: string;
-    symbol: string;
-    imageThumbUrl: string;
-    blueCheckmark: boolean;
-    totalSupply: string;
-    circulatingSupply: string;
-    info?: { circulatingSupply: string; imageThumbUrl: string };
-    explorerData?: {
-        blueCheckmark: boolean;
-    };
-    isScam: boolean;
 };
 
 export type TokenTradeData = {
@@ -802,6 +671,61 @@ export type TokenOverview = {
     address: string;
     name: string;
     symbol: string;
-    decimals: number;
-    logoURI: string;
+    decimals?: number;
+    logoURI?: string;
 };
+
+export interface BuySignalMessage {
+    positionId?: string;
+    tokenAddress: string;
+    chain: string;
+    walletAddress: string;
+    isSimulation: boolean;
+    entityId: string;
+    recommendationId: string;
+    price: string;
+    marketCap: string;
+    liquidity: string;
+    amount: string;
+    type: RecommendationType;
+    conviction: Conviction;
+}
+
+export interface Trade {
+    id: string;
+    positionId: string;
+    type: TransactionType.BUY | TransactionType.SELL;
+    amount: bigint;
+    price: bigint;
+    timestamp: Date;
+    txHash: string;
+}
+
+export interface TradePerformance {
+    token_address: string;
+    recommender_id: string;
+    buy_price: number;
+    sell_price: number;
+    buy_timeStamp: string;
+    sell_timeStamp: string;
+    buy_amount: number;
+    sell_amount: number;
+    buy_sol: number;
+    received_sol: number;
+    buy_value_usd: number;
+    sell_value_usd: number;
+    profit_usd: number;
+    profit_percent: number;
+    buy_market_cap: number;
+    sell_market_cap: number;
+    market_cap_change: number;
+    buy_liquidity: number;
+    sell_liquidity: number;
+    liquidity_change: number;
+    last_updated: string;
+    rapidDump: boolean;
+}
+
+export interface Entity extends CoreEntity {
+    platform?: string;
+}

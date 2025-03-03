@@ -3,11 +3,20 @@ import {
     type IAgentRuntime,
     logger,
     type Memory,
-    type UUID
+    type UUID,
+    type MemoryMetadata
 } from "@elizaos/core";
 import { v4 as uuid } from "uuid";
 import type { TrustTradingService } from "../tradingService";
 import type { MessageRecommendation } from "./schema";
+import { RecommendationType, Conviction } from "../types";
+
+// Use type intersection for extended metadata
+type ExtendedMetadata = MemoryMetadata & {
+    clientUsername?: string;
+    clientUserId?: string;
+    clientChatId?: string;
+};
 
 export const confirmRecommendation: Action = {
     name: "TRUST_CONFIRM_RECOMMENDATION",
@@ -196,29 +205,25 @@ export const confirmRecommendation: Action = {
                     continue;
                 }
 
-                const recommender =
-                    await tradingService.scoreManager.getOrCreateRecommender({
-                        platform: message.content.source ?? "unknown",
-                        username:
-                            message.metadata?.clientUsername ?? user.username,
-                        userId: user.id ?? message.metadata?.clientUserId,
-                        clientId: message.metadata?.clientUserId,
-                    });
+                const entity = await runtime.databaseAdapter.getEntityById(user.id);
 
                 const result = await tradingService.handleRecommendation(
-                    recommender,
+                    entity,
                     {
                         chain: "solana", // TODO: handle multichain
-                        conviction: recommendation.conviction,
+                        conviction: recommendation.conviction === "HIGH" ? Conviction.HIGH :
+                            recommendation.conviction === "MEDIUM" ? Conviction.MEDIUM :
+                            Conviction.LOW,
                         tokenAddress: recommendation.tokenAddress!,
-                        type: recommendation.type,
+                        type: recommendation.type === "buy" ? RecommendationType.BUY :
+                            RecommendationType.SELL,
                         timestamp: message.createdAt
                             ? new Date(message.createdAt)
                             : new Date(),
                         metadata: {
                             msg: message.content.text ?? "CONFIRMATION",
                             msgId: message.id!,
-                            chatId: message.metadata?.clientChatId,
+                            chatId: (message.metadata as ExtendedMetadata)?.clientChatId,
                         },
                     }
                 );
@@ -244,7 +249,7 @@ export const confirmRecommendation: Action = {
 
                 if (callback && result) {
                     switch (recommendation.type) {
-                        case "BUY": {
+                        case "buy": {
                             const responseMemory: Memory = {
                                 id: newUUID,
                                 content: {
@@ -264,7 +269,7 @@ export const confirmRecommendation: Action = {
                             break;
                         }
                         case "DONT_BUY":
-                        case "SELL":
+                        case "sell":
                         case "DONT_SELL":
                             break;
                     }

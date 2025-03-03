@@ -1,12 +1,6 @@
-import { logger, type IAgentRuntime, settings } from "@elizaos/core";
-import { Connection } from "@solana/web3.js";
-import NodeCache from "node-cache";
+import { type IAgentRuntime, logger, settings } from "@elizaos/core";
 import * as path from "node:path";
 import { toBN } from "./bignumber.ts";
-import {
-    DexscreenerClient,
-} from "./clients";
-import type { ITrustTokenProvider, TokenMarketData, TokenMetadata } from "./types";
 import type {
     CalculatedBuyAmounts,
     DexScreenerData,
@@ -14,9 +8,8 @@ import type {
     HolderData,
     Prices,
     ProcessedTokenData,
-    TokenCodex,
     TokenSecurityData,
-    TokenTradeData,
+    TokenTradeData
 } from "./types.ts";
 import { type Item, WalletProvider } from "./wallet.ts";
 
@@ -40,7 +33,6 @@ const PROVIDER_CONFIG = {
 export class SolanaTokenProvider {
     private cacheKey = "solana/tokens";
     private NETWORK_ID = 1399811149;
-    private GRAPHQL_ENDPOINT = "https://graph.codex.io/graphql";
 
     constructor(
         //  private connection: Connection,
@@ -52,14 +44,14 @@ export class SolanaTokenProvider {
     }
 
     private async readFromCache<T>(key: string): Promise<T | null> {
-        const cached = await this.runtime.databaseAdapter.getCache(
+        const cached = await this.runtime.databaseAdapter.getCache<T>(
             path.join(this.cacheKey, key)
         );
-        return cached ? JSON.parse(cached) : null as T | null;
+        return cached ? cached : null as T | null;
     }
 
     private async writeToCache<T>(key: string, data: T): Promise<void> {
-        await this.runtime.databaseAdapter.setCache(path.join(this.cacheKey, key), JSON.stringify(data));
+        await this.runtime.databaseAdapter.setCache<T>(path.join(this.cacheKey, key), data);
     }
 
     private async fetchWithRetry(
@@ -126,87 +118,6 @@ export class SolanaTokenProvider {
         } catch (error) {
             logger.error("Error checking token in wallet:", error);
             return null;
-        }
-    }
-
-    async fetchTokenCodex(): Promise<TokenCodex> {
-        try {
-            const cacheKey = `token_${this.tokenAddress}`;
-            const cachedData = await this.readFromCache<TokenCodex>(cacheKey);
-            if (cachedData) {
-                logger.log(
-                    `Returning cached token data for ${this.tokenAddress}.`
-                );
-                return cachedData;
-            }
-            const query = `
-            query Token($address: String!, $networkId: Int!) {
-              token(input: { address: $address, networkId: $networkId }) {
-                id
-                address
-                cmcId
-                decimals
-                name
-                symbol
-                totalSupply
-                isScam
-                info {
-                  circulatingSupply
-                  imageThumbUrl
-                }
-                explorerData {
-                  blueCheckmark
-                  description
-                  tokenType
-                }
-              }
-            }
-          `;
-
-            const variables = {
-                address: this.tokenAddress,
-                networkId: this.NETWORK_ID, // Replace with your network ID
-            };
-
-            const response = await fetch(this.GRAPHQL_ENDPOINT, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: settings.CODEX_API_KEY,
-                },
-                body: JSON.stringify({
-                    query,
-                    variables,
-                }),
-            }).then((res) => res.json());
-
-            const token = response.data?.data?.token;
-
-            if (!token) {
-                throw new Error(`No data returned for token ${this.tokenAddress}`);
-            }
-
-            this.writeToCache(cacheKey, token);
-
-            return {
-                id: token.id,
-                address: token.address,
-                cmcId: token.cmcId,
-                decimals: token.decimals,
-                name: token.name,
-                symbol: token.symbol,
-                totalSupply: token.totalSupply,
-                circulatingSupply: token.info?.circulatingSupply,
-                imageThumbUrl: token.info?.imageThumbUrl,
-                blueCheckmark: token.explorerData?.blueCheckmark,
-                isScam: !!token.isScam,
-            };
-        } catch (error) {
-            logger.error(
-                "Error fetching token data from Codex:",
-                error.message
-            );
-            return {} as TokenCodex;
         }
     }
 
@@ -870,8 +781,6 @@ export class SolanaTokenProvider {
             );
             const security = await this.fetchTokenSecurity();
 
-            const tokenCodex = await this.fetchTokenCodex();
-
             logger.log(
                 `Fetching trade data for token: ${this.tokenAddress}`
             );
@@ -913,13 +822,16 @@ export class SolanaTokenProvider {
                 (pair) => pair.boosts && pair.boosts.active > 0
             );
 
+            // get name, symbol, decimals etc from dexData
+            const tokenDexData = dexData.pairs[0];
+
             const processedData: ProcessedTokenData = {
                 token: {
                     address: this.tokenAddress,
-                    name: tokenCodex.name,
-                    symbol: tokenCodex.symbol,
-                    decimals: tokenCodex.decimals,
-                    logoURI: tokenCodex.imageThumbUrl || ''
+                    name: tokenDexData.baseToken.name,
+                    symbol: tokenDexData.baseToken.symbol,
+                    // decimals: tokenDexData.baseToken.decimals,
+                    // logoURI: tokenDexData.baseToken.imageThumbUrl || ''
                 },
                 security,
                 tradeData,
@@ -1070,114 +982,5 @@ export class SolanaTokenProvider {
             logger.error("Error generating token report:", error);
             return "Unable to fetch token information. Please try again later.";
         }
-    }
-}
-
-const tokenAddress = PROVIDER_CONFIG.TOKEN_ADDRESSES.Example;
-
-const connection = new Connection(PROVIDER_CONFIG.DEFAULT_RPC);
-
-export class TrustTokenProvider implements ITrustTokenProvider {
-    constructor(private readonly runtime: IAgentRuntime) {}
-
-    async shouldTradeToken(
-        chain: string,
-        tokenAddress: string
-    ): Promise<boolean> {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        return new SolanaTokenProvider(
-            tokenAddress,
-            WalletProvider.createFromRuntime(this.runtime),
-            this.runtime
-        ).shouldTradeToken();
-    }
-
-    async getTokenOverview(
-        chain: string,
-        tokenAddress: string,
-        _forceRefresh?: boolean
-    ): Promise<TokenMetadata & TokenMarketData> {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        const data = await new SolanaTokenProvider(
-            tokenAddress,
-            WalletProvider.createFromRuntime(this.runtime),
-            this.runtime
-        ).getProcessedTokenData();
-
-        const top3Pairs = data.dexScreenerData.pairs
-            .slice()
-            .sort((a, b) => {
-                const liquidityA = a.liquidity?.usd ?? 0;
-                const liquidityB = b.liquidity?.usd ?? 0;
-                return liquidityB < liquidityA ? -1 : 1;
-            })
-            .slice(0, 3)
-            .map((pair) => ({
-                pairAddress: pair.pairAddress,
-                baseToken: pair.baseToken,
-                quote: pair.quoteToken,
-                priceUsd: pair.priceUsd,
-                liquidityUsd: pair.liquidity?.usd,
-                volume: pair.volume.h24,
-            }));
-
-        // volume 24h is the sum of the top 3 pairs
-        const dexscreen24hVolume = top3Pairs.reduce((acc, pair) => {
-            return acc + pair.volume;
-        }, 0);
-
-        return {
-            chain,
-            address: data.token.address,
-            name: data.token.name,
-            symbol: data.token.symbol,
-            decimals: data.token.decimals,
-
-            metadata: {
-                logoURI: data.token.logoURI,
-
-                dexScreener: {
-                    isListed: data.isDexScreenerListed,
-                    isPaid: data.isDexScreenerPaid,
-                },
-
-                highSupplyHoldersCount: data.highSupplyHoldersCount,
-                security: data.security,
-
-                top3Pairs: top3Pairs,
-            },
-
-            marketCap: data.dexScreenerData.pairs[0]?.marketCap ?? 0,
-            liquidityUsd: data.dexScreenerData.pairs[0]?.liquidity?.usd ?? 0,
-            priceUsd: data.dexScreenerData.pairs[0]?.priceUsd?.toString() ?? "0",
-
-            price: data.tradeData.price,
-            price24hChange: data.tradeData.price_change_24h_percent,
-
-            trades: data.tradeData.trade_24h,
-            trades24hChange: data.tradeData.trade_24h_change_percent ?? 0,
-
-            holders: data.tradeData.holder,
-            uniqueWallet24h: data.tradeData.unique_wallet_24h,
-            uniqueWallet24hChange:
-                data.tradeData.unique_wallet_24h_change_percent ?? 0,
-
-            volume24h: dexscreen24hVolume ?? data.tradeData.volume_24h_usd ?? 0,
-            volume24hChange: data.tradeData.volume_24h_change_percent ?? 0,
-        };
-    }
-
-    async resolveTicker(chain: string, ticker: string) {
-        if (chain !== "solana") throw new Error("chain not implemented yet");
-
-        const result = await DexscreenerClient.createFromRuntime(
-            this.runtime
-        ).searchForHighestLiquidityPair(ticker, chain, {
-            expires: "5m",
-        });
-
-        return result?.baseToken?.address ?? null;
     }
 }

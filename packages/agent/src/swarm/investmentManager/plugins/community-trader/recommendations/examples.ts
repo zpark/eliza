@@ -31,7 +31,7 @@ None`,
         outcome: `\`\`\`json
 [
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "SOLARUG",
 "tokenAddress": "FCweoTfJ128jGgNEXgdfTXdEZVk58Bz9trCemr6sXNx9",
 "type": "buy",
@@ -71,21 +71,21 @@ Recommendations about the actors:
         outcome: `\`\`\`json
 [
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "COPETOKEN",
 "tokenAddress": null,
 "type": "sell",
 "conviction": "low",
 },
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "SOYLENT",
 "tokenAddress": null,
 "type": "sell",
 "conviction": "low",
 },
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "SOLVAULT",
 "tokenAddress": "7tRzKud6FBVFEhYqZS3CuQ2orLRM21bdisGykL5Sr4Dx",
 "type": "buy",
@@ -119,7 +119,7 @@ None`,
         outcome: `\`\`\`json
 [
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "ROULETTE",
 "tokenAddress": "48vV5y4DRH1Adr1bpvSgFWYCjLLPtHYBqUSwNc2cmCK2",
 "type": "buy",
@@ -172,7 +172,7 @@ None
         outcome: `\`\`\`json
 [
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "PIXELAPE",
 "tokenAddress": "3hAKKmR6XyBooQBPezCbUMhrmcyTkt38sRJm2thKytWc",
 "type": "buy",
@@ -218,14 +218,14 @@ None`,
         outcome: `\`\`\`json
 [
 {
-"recommender": "{{user2}}",
+"entity": "{{user2}}",
 "ticker": "SAMOYED",
 "tokenAddress": "5TQwHyZbedaH4Pcthj1Hxf5GqcigL6qWuB7YEsBtqvhr",
 "type": "buy",
 "conviction": "medium",
 },
 {
-"recommender": "{{user1}}",
+"entity": "{{user1}}",
 "ticker": "SAMOYED",
 "tokenAddress": "5TQwHyZbedaH4Pcthj1Hxf5GqcigL6qWuB7YEsBtqvhr",
 "type": "dont_buy",

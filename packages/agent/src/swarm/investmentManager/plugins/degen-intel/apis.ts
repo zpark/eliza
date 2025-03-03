@@ -16,8 +16,8 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
     path: "/trending",
     handler: async (_req: any, res: any) => {
       try {
-        const cachedTokens = await runtime.databaseAdapter.getCache("tokens_solana");
-        const tokens: IToken[] = cachedTokens ? JSON.parse(cachedTokens) : [];
+        const cachedTokens = await runtime.databaseAdapter.getCache<IToken[]>("tokens_solana");
+        const tokens: IToken[] = cachedTokens ? cachedTokens : [];
         const sortedTokens = tokens.sort((a, b) => (a.rank || 0) - (b.rank || 0));
         res.json(sortedTokens);
       } catch (error) {
@@ -31,16 +31,16 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
     handler: async (_req: any, res: any) => {
       try {
         // Get transaction history
-        const cachedTxs = await runtime.databaseAdapter.getCache("transaction_history");
-        const transactions: TransactionHistory[] = cachedTxs ? JSON.parse(cachedTxs) : [];
+        const cachedTxs = await runtime.databaseAdapter.getCache<TransactionHistory[]>("transaction_history");
+        const transactions: TransactionHistory[] = cachedTxs ? cachedTxs : [];
         const history = transactions
           .filter(tx => tx.data.mainAction === "received")
           .sort((a, b) => new Date(b.blockTime).getTime() - new Date(a.blockTime).getTime())
           .slice(0, 100);
 
         // Get portfolio
-        const cachedPortfolio = await runtime.databaseAdapter.getCache("portfolio");
-        const portfolio: Portfolio = cachedPortfolio ? JSON.parse(cachedPortfolio) : { key: "PORTFOLIO", data: null };
+        const cachedPortfolio = await runtime.databaseAdapter.getCache<Portfolio>("portfolio");
+        const portfolio: Portfolio = cachedPortfolio ? cachedPortfolio : { key: "PORTFOLIO", data: null };
 
         res.json({ history, portfolio: portfolio.data });
       } catch (error) {
@@ -120,8 +120,8 @@ export const createRoutes = (runtime: IAgentRuntime): Route[] => [
     path: "/signal",
     handler: async (_req: any, res: any) => {
       try {
-        const cachedSignal = await runtime.databaseAdapter.getCache("BUY_SIGNAL");
-        const signal = cachedSignal ? JSON.parse(cachedSignal) : {};
+        const cachedSignal = await runtime.databaseAdapter.getCache<any>("BUY_SIGNAL");
+        const signal = cachedSignal ? cachedSignal : {};
         res.json(signal?.data || {});
       } catch (error) {
         res.status(500).json({ error: "Internal server error" });

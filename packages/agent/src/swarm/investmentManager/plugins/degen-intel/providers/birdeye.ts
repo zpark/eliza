@@ -83,8 +83,8 @@ export default class Birdeye {
 		const data = resp?.data?.solana;
 
 		// Get existing transactions
-		const cachedTxs = await this.runtime.databaseAdapter.getCache("transaction_history");
-		const transactions: TransactionHistory[] = cachedTxs ? JSON.parse(cachedTxs) : [];
+		const cachedTxs = await this.runtime.databaseAdapter.getCache<TransactionHistory[]>("transaction_history");
+		const transactions: TransactionHistory[] = cachedTxs ? cachedTxs : [];
 
 		// Update transactions
 		for (const tx of data) {
@@ -102,7 +102,7 @@ export default class Birdeye {
 			}
 		}
 
-		await this.runtime.databaseAdapter.setCache("transaction_history", JSON.stringify(transactions));
+		await this.runtime.databaseAdapter.setCache<TransactionHistory[]>("transaction_history", transactions);
 
 		logger.info(`Updated transaction history with ${data.length} transactions`);
 	}
@@ -121,7 +121,7 @@ export default class Birdeye {
 		const resp = await res.json();
 		const data = resp?.data;
 
-		await this.runtime.databaseAdapter.setCache("portfolio", JSON.stringify({ key: "PORTFOLIO", data }));
+		await this.runtime.databaseAdapter.setCache<Portfolio>("portfolio", { key: "PORTFOLIO", data });
 	}
 
 	async syncWallet() {
@@ -138,8 +138,8 @@ export default class Birdeye {
 		};
 
 		// Get existing tokens
-		const cachedTokens = await this.runtime.databaseAdapter.getCache(`tokens_${chain}`);
-		const tokens: IToken[] = cachedTokens ? JSON.parse(cachedTokens) : [];
+		const cachedTokens = await this.runtime.databaseAdapter.getCache<IToken[]>(`tokens_${chain}`);
+		const tokens: IToken[] = cachedTokens ? cachedTokens : [];
 
 		/** Fetch top 100 in batches of 20 (which is the limit) */
 		for (let batch = 0; batch < 5; batch++) {
@@ -183,7 +183,7 @@ export default class Birdeye {
 			await new Promise((resolve) => setTimeout(resolve, 250));
 		}
 
-		await this.runtime.databaseAdapter.setCache(`tokens_${chain}`, JSON.stringify(tokens));
+		await this.runtime.databaseAdapter.setCache<IToken[]>(`tokens_${chain}`, tokens);
 
 		logger.info(`Updated ${chain} tokens cache with ${tokens.length} tokens`);
 

@@ -1,24 +1,21 @@
 import type { CacheOptions, IAgentRuntime } from "@elizaos/core";
 import BigNumber from "bignumber.js";
 import * as dotenv from "dotenv";
-import { toBN } from "./bignumber";
 import {
     BTC_ADDRESS,
     ETH_ADDRESS,
-    SOL_ADDRESS,
-    SOLANA_NETWORK_ID,
+    SOL_ADDRESS
 } from "./constants";
 import type {
     DexScreenerData,
     DexScreenerPair,
     HolderData,
     Prices,
-    TokenCodex,
     TokenOverview,
     TokenSecurityData,
     TokenTradeData,
     WalletPortfolio,
-    WalletPortfolioItem,
+    WalletPortfolioItem
 } from "./types";
 dotenv.config();
 
@@ -237,11 +234,8 @@ export const http = {
 };
 
 export class JupiterClient {
-    static defaultBaseUrl = "https://api.jup.ag/swap/v1";
-    static baseUrl = process.env.SONAR_URL
-        ? `${process.env.SONAR_URL}/jup`
-        : "";
-    static xApiKey = process.env.SONAR_TOKEN || "";
+    static baseUrl = "https://api.jup.ag/swap/v1";
+    static xApiKey = process.env.JUPITER_API_KEY || "";
 
     static async getQuote(
         inputMint: string,
@@ -339,8 +333,8 @@ export class DexscreenerClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
-            if (cached) return JSON.parse(cached) as T;
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
+            if (cached) return cached;
         }
 
         console.log("Fetching DexScreener: ", { path, params });
@@ -351,7 +345,7 @@ export class DexscreenerClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(res));
+            await this.runtime.databaseAdapter.setCache<T>(cacheKey, res);
         }
 
         return res;
@@ -431,11 +425,11 @@ export class HeliusClient {
         options?: { expires?: string | CacheOptions["expires"] }
     ): Promise<HolderData[]> {
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache(
+            const cached = await this.runtime.databaseAdapter.getCache<HolderData[]>(
                 `helius/token-holders/${address}`
             );
 
-            if (cached) return JSON.parse(cached) as HolderData[];
+            if (cached) return cached;
         }
 
         console.log("fetching holder list for:", address);
@@ -515,9 +509,9 @@ export class HeliusClient {
             console.log(`Total unique holders fetched: ${holders.length}`);
 
             if (options?.expires)
-                await this.runtime.databaseAdapter.setCache(
+                await this.runtime.databaseAdapter.setCache<HolderData[]>(
                     `helius/token-holders/${address}`,
-                    JSON.stringify(holders)
+                    holders
                 );
 
             return holders;
@@ -558,8 +552,8 @@ export class CoingeckoClient {
             .join("/");
 
         if (options?.expires) {
-            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
-            if (cached) return JSON.parse(cached) as T;
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
+            if (cached) return cached;
         }
 
         console.log("fetching coingecko", {
@@ -578,7 +572,7 @@ export class CoingeckoClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(res));
+            await this.runtime.databaseAdapter.setCache<T>(cacheKey, res);
         }
 
         return res;
@@ -702,8 +696,8 @@ export class BirdeyeClient {
             .join("/");
 
         if (options?.expires && !forceRefresh) {
-            const cached = await this.runtime.databaseAdapter.getCache(cacheKey);
-            if (cached) return JSON.parse(cached) as T;
+            const cached = await this.runtime.databaseAdapter.getCache<T>(cacheKey);
+            if (cached) return cached;
         }
 
         console.log("fetching birdeye", {
@@ -723,7 +717,7 @@ export class BirdeyeClient {
         );
 
         if (options?.expires) {
-            await this.runtime.databaseAdapter.setCache(cacheKey, JSON.stringify(response));
+            await this.runtime.databaseAdapter.setCache<T>(cacheKey, response);
         }
 
         return response;
@@ -856,239 +850,6 @@ export class BirdeyeClient {
                     .minus(new BigNumber(a.valueUsd))
                     .toNumber()
             );
-
-            return portfolio;
-        } catch (error) {
-            console.error("Error fetching portfolio:", error);
-            throw error;
-        }
-    }
-}
-
-type CodexPrice = {
-    address: string;
-    networkId: number;
-    priceUsd: string;
-    poolAddress: string;
-};
-
-type CodexBalance = {
-    walletId: string;
-    tokenId: string;
-    balance: string;
-    shiftedBalance: number;
-};
-
-//TODO: add caching
-export class CodexClient {
-    static readonly url = "https://graph.codex.io/graphql";
-
-    static async request<T = any>(
-        apiKey: string,
-        query: string,
-        variables?: any
-    ): Promise<T> {
-        const res = await http.graphql<{ data: T }>(
-            CodexClient.url,
-            query,
-            variables,
-            apiKey
-                ? {
-                      Authorization: apiKey,
-                  }
-                : undefined
-        );
-
-        if (!res.data) {
-            throw new Error("Failed");
-        }
-
-        return res.data;
-    }
-
-    constructor(private readonly apiKey: string) {}
-
-    static createFromRuntime(runtime: IAgentRuntime) {
-        const apiKey = runtime.getSetting("CODEX_API_KEY");
-
-        if (!apiKey) {
-            throw new Error("missing CODEX_API_KEY");
-        }
-
-        return new CodexClient(apiKey);
-    }
-
-    request<T = any>(query: string, variables?: any) {
-        return CodexClient.request<T>(this.apiKey, query, variables);
-    }
-
-    async fetchToken(address: string, networkId: number): Promise<TokenCodex> {
-        try {
-            const query = `
-                query Token($address: String!, $networkId: Int!) {
-                    token(input: { address: $address, networkId: $networkId }) {
-                        id
-                        address
-                        cmcId
-                        decimals
-                        name
-                        symbol
-                        totalSupply
-                        isScam
-                        info {
-                            circulatingSupply
-                            imageThumbUrl
-                        }
-                        explorerData {
-                            blueCheckmark
-                        }
-                    }
-                }
-          `;
-
-            const variables = {
-                address,
-                networkId, // Replace with your network ID
-            };
-
-            const { token } = await this.request<{
-                token?: TokenCodex;
-            }>(query, variables);
-
-            if (!token) {
-                throw new Error(`No data returned for token ${address}`);
-            }
-
-            return token;
-        } catch (error: any) {
-            console.error(
-                "Error fetching token data from Codex:",
-                error.message
-            );
-            throw error;
-        }
-    }
-
-    async fetchPrices(inputs: { address: string; networkId: number }[]) {
-        const query = `
-            query($inputs:[GetPriceInput]){
-                getTokenPrices(
-                    inputs: inputs
-                ) {
-                    address
-                    priceUsd
-                }
-            }
-        `;
-
-        const { getTokenPrices: prices } = await this.request<{
-            getTokenPrices: CodexPrice[];
-        }>(query, {
-            inputs,
-        });
-
-        return prices;
-    }
-
-    async fetchPortfolioValue(
-        address: string,
-        chainId: number
-    ): Promise<WalletPortfolio> {
-        try {
-            // TODO: get token data
-            const query = `
-              query Balances($walletId: String!, $cursor: String) {
-                balances(input: { walletId: $walletId, cursor: $cursor }) {
-                  cursor
-                  items {
-                    walletId
-                    tokenId
-                    balance
-                    shiftedBalance
-                  }
-                }
-              }
-            `;
-
-            const variables = {
-                walletId: `${address}:${chainId}`,
-                cursor: null,
-            };
-
-            const { balances } = await this.request<{
-                balances?: {
-                    items: CodexBalance[];
-                };
-            }>(query, variables);
-
-            const data = balances?.items;
-
-            if (!data || data.length === 0) {
-                console.error("No portfolio data available", data);
-                return {
-                    totalUsd: "0",
-                    totalSol: "0",
-                    items: [],
-                };
-            }
-
-            // Fetch token prices
-            const prices = await this.fetchPrices([
-                {
-                    address: SOL_ADDRESS,
-                    networkId: SOLANA_NETWORK_ID,
-                },
-                ...data.map((item) => {
-                    const [address, networkId] = item.tokenId.split(":");
-                    return {
-                        address,
-                        networkId: Number(networkId),
-                    };
-                }),
-            ]);
-
-            const solPrice =
-                prices.find((price) => price.address === SOL_ADDRESS)
-                    ?.priceUsd ?? "0";
-
-            // Reformat items
-            const items: WalletPortfolioItem[] = data.map((item) => {
-                const priceUsd =
-                    prices.find(
-                        (price) => price.address === item.tokenId.split(":")[0]
-                    )?.priceUsd ?? "0";
-
-                const valueUsd = toBN(item.balance).multipliedBy(priceUsd);
-                return {
-                    name: "Unknown",
-                    address: item.tokenId.split(":")[0],
-                    symbol: item.tokenId.split(":")[0],
-                    decimals: 6, // TODO
-                    balance: item.balance,
-                    uiAmount: item.shiftedBalance.toString(),
-                    priceUsd,
-                    valueUsd: valueUsd.toFixed(2),
-                    valueSol: valueUsd.div(solPrice).toFixed(2),
-                };
-            });
-
-            // Calculate total portfolio value
-            const totalUsd = items.reduce(
-                (sum, item) => sum.plus(new BigNumber(item.valueUsd)),
-                new BigNumber(0)
-            );
-
-            const totalSol = totalUsd.div(solPrice);
-
-            const portfolio: WalletPortfolio = {
-                totalUsd: totalUsd.toFixed(6),
-                totalSol: totalSol.toFixed(6),
-                items: items.sort((a, b) =>
-                    new BigNumber(b.valueUsd)
-                        .minus(new BigNumber(a.valueUsd))
-                        .toNumber()
-                ),
-            };
 
             return portfolio;
         } catch (error) {

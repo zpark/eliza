@@ -15,7 +15,7 @@ export const optionsProvider: Provider = {
     ): Promise<string> => {
         try {
             // Get all pending tasks for this room with options
-            const pendingTasks = runtime.databaseAdapter.getTasks({
+            const pendingTasks = await runtime.databaseAdapter.getTasks({
                 roomId: message.roomId,
                 tags: ["AWAITING_CHOICE"]
             });

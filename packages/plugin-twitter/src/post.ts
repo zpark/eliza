@@ -72,7 +72,7 @@ export class TwitterPostClient {
         }
 
         const generateNewTweetLoop = async () => {
-            let lastPost = await this.runtime.databaseAdapter.getCache(`twitter/${this.twitterUsername}/lastPost`);
+            let lastPost = await this.runtime.databaseAdapter.getCache<any>(`twitter/${this.twitterUsername}/lastPost`);
 
             if(!lastPost) {
                 lastPost = JSON.stringify({
@@ -80,7 +80,7 @@ export class TwitterPostClient {
                 });
             }
 
-            const lastPostTimestamp = JSON.parse(lastPost).timestamp ?? 0;
+            const lastPostTimestamp = lastPost.timestamp ?? 0;
             const minMinutes = (this.state?.TWITTER_POST_INTERVAL_MIN || this.runtime.getSetting("TWITTER_POST_INTERVAL_MIN") as number) ?? 90;
             const maxMinutes = (this.state?.TWITTER_POST_INTERVAL_MAX || this.runtime.getSetting("TWITTER_POST_INTERVAL_MAX") as number) ?? 180;
             const randomMinutes =
@@ -145,12 +145,12 @@ export class TwitterPostClient {
         rawTweetContent: string
     ) {
         // Cache the last post details
-        await runtime.databaseAdapter.setCache(
+        await runtime.databaseAdapter.setCache<any>(
             `twitter/${client.profile.username}/lastPost`,
-            JSON.stringify({
+            {
                 id: tweet.id,
                 timestamp: Date.now(),
-            })
+            }
         );
 
         // Cache the tweet

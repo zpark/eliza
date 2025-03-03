@@ -10,7 +10,7 @@ export type UUID = `${string}-${string}-${string}-${string}-${string}`;
  */
 export interface Content {
   /** The main text content */
-  text: string;
+  text?: string;
 
   /** Optional action associated with the message */
   action?: string;
@@ -235,15 +235,18 @@ export interface State {
   [key: string]: unknown;
 }
 
+export type MemoryTypeAlias = string
+
 export enum MemoryType {
     DOCUMENT = "document",
     FRAGMENT = "fragment",
     MESSAGE = "message",
-    DESCRIPTION = "description"
+    DESCRIPTION = "description",
+    CUSTOM = "custom"
 }
 
 export interface BaseMetadata {
-    type: MemoryType;          
+    type: MemoryTypeAlias;          
     source?: string;           
     sourceId?: UUID;           
     scope?: string;            
@@ -269,11 +272,17 @@ export interface DescriptionMetadata extends BaseMetadata {
     type: MemoryType.DESCRIPTION;
 }
 
-export type KnowledgeMetadata = 
+export interface CustomMetadata extends BaseMetadata {
+    type: MemoryTypeAlias;
+    [key: string]: unknown;
+}
+
+export type MemoryMetadata = 
     | DocumentMetadata 
     | FragmentMetadata 
     | MessageMetadata 
-    | DescriptionMetadata;
+    | DescriptionMetadata
+    | CustomMetadata;
 
 /**
  * Represents a stored memory/message
@@ -307,7 +316,7 @@ export interface Memory {
   similarity?: number;
 
   /** Metadata for the knowledge */
-  metadata?: KnowledgeMetadata;
+  metadata?: MemoryMetadata;
 }
 
 /**
@@ -926,9 +935,9 @@ export interface IDatabaseAdapter {
   }): Promise<Relationship[]>;
 
   ensureEmbeddingDimension(dimension: number): void;
-
-  getCache(key: string): Promise<string | undefined>;
-  setCache(key: string, value: string,): Promise<boolean>;
+  
+  getCache<T>(key: string): Promise<T | undefined>;
+  setCache<T>(key: string, value: T): Promise<boolean>;
   deleteCache(key: string): Promise<boolean>;
 
   // Only task instance methods - definitions are in-memory
@@ -960,7 +969,7 @@ export interface IMemoryManager {
     count?: number;
     roomId?: UUID;
     unique?: boolean;
-    metadata?: KnowledgeMetadata;
+    metadata?: MemoryMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(

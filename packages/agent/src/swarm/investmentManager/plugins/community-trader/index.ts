@@ -1,5 +1,4 @@
 import type { Plugin } from "@elizaos/core";
-import { trustProvider } from "./provider";
 import { getAgentPositions } from "./recommendations/agentPositions";
 import { getTokenDetails } from "./recommendations/analysis";
 import { confirmRecommendation } from "./recommendations/confirm";
@@ -12,7 +11,7 @@ export const communityTraderPlugin: Plugin = {
     name: "community-trader",
     description: "Community Trader Plugin for Eliza",
     evaluators: [recommendationEvaluator],
-    providers: [trustProvider],
+    providers: [],
     actions: [
         confirmRecommendation,
         getTokenDetails,

@@ -530,7 +530,7 @@ export class TwitterInteractionClient {
 
                     const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
 
-                    await this.runtime.databaseAdapter.setCache(
+                    await this.runtime.databaseAdapter.setCache<string>(
                         `twitter/tweet_generation_${tweet.id}.txt`,
                         responseInfo
                     );

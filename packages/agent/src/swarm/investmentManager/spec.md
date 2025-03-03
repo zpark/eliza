@@ -73,5 +73,6 @@ Spartan
   -> Community investing / trust marketplace model
 -> LP management with Orca (maybe also Raydium and Meteora)
 
+https://github.com/warp-id/solana-trading-bot
 https://github.com/TopTrenDev/copy-trading-bot
 https://github.com/vladmeer/copy-trading-bot

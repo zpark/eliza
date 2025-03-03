@@ -1,52 +1,25 @@
-import { BirdeyeClient, CoingeckoClient } from "../clients";
 import {
+    formatMessages,
     type IAgentRuntime,
     type Memory,
     ModelClass,
     type Provider,
     type State,
-    formatMessages,
     UUID
 } from "@elizaos/core";
 import { z } from "zod";
-import { TrustScoreDatabase } from "../db";
-import { formatFullReport, formatRecommenderReport } from "../reports";
+import { CoingeckoClient } from "../clients";
+import { formatRecommenderReport } from "../reports";
 import { TrustScoreManager } from "../scoreManager";
-import { TrustTokenProvider } from "../tokenProvider";
-import type { PositionWithBalance, TokenPerformance as TypesTokenPerformance, Transaction as TypesTransaction, RecommenderMetrics as TypesRecommenderMetrics } from "../types";
+import { TrustTradingService } from "../tradingService";
+import type {
+    PositionWithBalance,
+    TokenPerformance,
+    RecommenderMetrics as TypesRecommenderMetrics,
+    TokenPerformance as TypesTokenPerformance,
+    Transaction as TypesTransaction
+} from "../types";
 import { getZodJsonSchema, render } from "../utils";
-import { TokenPerformance, Transaction, transformTokenPerformance, transformTransaction, CacheManager } from "../schemas";
-
-// Define these types since they're not exported from db.ts
-type TokenPerformanceRow = {
-    token_address: string;
-    symbol: string;
-    liquidity?: number;
-    price_change_24h?: number;
-    volume_change_24h?: number;
-    trade_24h_change?: number;
-    holder_change_24h?: number;
-    sustained_growth?: boolean;
-    rapid_dump?: boolean;
-    suspicious_volume?: boolean;
-    is_scam?: boolean;
-    rug_pull?: boolean;
-    validation_trust?: number;
-    initial_market_cap?: number;
-    last_updated?: string | Date;
-};
-
-// Define Transaction type for adapter function
-type DBTransaction = {
-    tokenAddress: string;
-    transactionHash?: string;
-    type: "BUY" | "SELL" | "TRANSFER_IN" | "TRANSFER_OUT"; // Fixed valid transaction types
-    amount: bigint; // Fixed for bigint type
-    price: string; // Fixed for string type
-    isSimulation: boolean;
-    timestamp: string | Date;
-};
-
 // Create a simple formatter module inline if it doesn't exist
 // This will be used until a proper formatters.ts file is created
 const formatters = {
@@ -94,9 +67,9 @@ Total Unrealized P&L: {{totalUnrealizedPnL}}
 Total P&L: {{totalPnL}}
 </positions_summary>
 
-<recommender>
-{{recommender}}
-</recommender>
+<entity>
+{{entity}}
+</entity>
 
 <global_market_data>
 {{globalMarketData}}
@@ -142,7 +115,7 @@ Output structure:
 
 type DataActionState = {
     runtime: IAgentRuntime;
-    db: TrustScoreDatabase;
+    message: Memory;
     scoreManager: TrustScoreManager;
     tokens: TypesTokenPerformance[];
     positions: PositionWithBalance[];
@@ -194,19 +167,23 @@ const actions = [
         params: z.object({
             positionIds: z.array(z.string().uuid()).describe("Position IDs to close"),
         }),
-        async handler(state, { positionIds }) {
-            await state.db.closePositions(positionIds as UUID[]);
+        async handler({runtime}, { positionIds }) {
+            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+            for (const positionId of positionIds) {
+                await tradingService.closePosition(positionId as UUID);
+            }
         },
     }),
     createAction({
         name: "update_trust_score",
-        description: "Update trust score for a recommender",
+        description: "Update trust score for a entity",
         params: z.object({
-            recommenderId: z.string().describe("Recommender ID to update"),
+            entityId: z.string().uuid().describe("Entity ID to update"),
         }),
-        async handler(state, { recommenderId }) {
+        async handler({runtime, message}, { entityId }) {
+            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
             // Use db method instead - assuming this is the correct replacement
-            await state.db.initializeRecommenderMetrics(recommenderId);
+            await tradingService.initializeRecommenderMetrics(entityId as UUID, message.content.source);
         },
     }),
     createAction({
@@ -215,22 +192,19 @@ const actions = [
         params: z.object({
             positionIds: z.array(z.string().uuid()).describe("Position IDs to update"),
         }),
-        async handler(state, { positionIds }) {
+        async handler({ runtime, tokens, positions, transactions }, { positionIds }) {
             // Use the correct method for updating positions
             for (const positionId of positionIds) {
                 // Get token address from position
-                const position = state.positions.find(p => p.id === positionId);
+                const position = positions.find(p => p.id === positionId);
                 if (position) {
-                    await state.scoreManager.updateTokenPerformance(position.chain, position.tokenAddress);
+                    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+                    await tradingService.updateTokenPerformance(position.chain, position.tokenAddress);
                 }
             }
         },
     }),
 ];
-
-function isValidUUID(uuid: string): boolean {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
-}
 
 function extractActions(text: string) {
     const regex = /<action name="([^"]+)">([^<]+)<\/action>/g;
@@ -255,76 +229,20 @@ function jsonFormatter(_key: any, value: any) {
     return value;
 }
 
-/**
- * Adapter to convert DB TokenPerformance to Types TokenPerformance
- */
-function adaptTokenPerformance(token: TokenPerformanceRow, chain: string = "unknown"): TypesTokenPerformance {
-    return {
-        chain,
-        address: token.token_address,
-        name: token.symbol,
-        symbol: token.symbol,
-        price: 0, // Add default values for fields that don't exist in DB representation
-        liquidity: token.liquidity || 0,
-        volume: 0,
-        trades: 0,
-        holders: 0,
-        price24hChange: token.price_change_24h || 0,
-        volume24hChange: token.volume_change_24h || 0,
-        trades24hChange: token.trade_24h_change || 0,
-        holders24hChange: token.holder_change_24h || 0,
-        sustainedGrowth: Boolean(token.sustained_growth),
-        rapidDump: Boolean(token.rapid_dump),
-        suspiciousVolume: Boolean(token.suspicious_volume),
-        isScam: Boolean(token.is_scam),
-        rugPull: Boolean(token.rug_pull),
-        validationTrust: token.validation_trust || 0,
-        initialMarketCap: token.initial_market_cap || 0,
-        currentMarketCap: 0,
-        metadata: {},
-        decimals: 9, // Default for Solana tokens
-        createdAt: new Date(),
-        updatedAt: new Date(token.last_updated || Date.now())
-    };
-}
-
-function adaptTransaction(tx: DBTransaction, positionId: string = "unknown", chain: string = "unknown"): TypesTransaction {
-    // Convert UUID string to UUID type
-    const uuid = positionId as UUID;
-    
-    return {
-        // Cast to any to bypass the UUID template literal type check
-        id: (tx.transactionHash || "") as any,
-        positionId: uuid,
-        chain,
-        tokenAddress: tx.tokenAddress,
-        transactionHash: tx.transactionHash,
-        type: tx.type,
-        amount: tx.amount,
-        price: tx.price,
-        isSimulation: tx.isSimulation,
-        timestamp: new Date(tx.timestamp)
-    };
-}
-
 async function runActions(
     actions: any[],
     runtime: IAgentRuntime,
+    message: Memory,
     tokens: TypesTokenPerformance[],
     positions: PositionWithBalance[],
     transactions: TypesTransaction[]
 ) {
-    const db = new TrustScoreDatabase(runtime);
-    // Create a TrustTokenProvider for the TrustScoreManager
-    const tokenProvider = new TrustTokenProvider(runtime);
-    const scoreManager = new TrustScoreManager(db, tokenProvider);
-
     return Promise.all(
         actions.map(async (actionCall) => {
             const action = actions.find((a) => a.name === actionCall.name);
             if (action) {
                 const params = action.params.parse(actionCall.params);
-                await action.handler({ runtime, db, scoreManager, tokens, positions, transactions }, params);
+                await action.handler({ runtime, message, tokens, positions, transactions }, params);
             }
         })
     );
@@ -338,20 +256,7 @@ export const dataProvider: Provider = {
     ): Promise<string> {
         try {
             // Extract token addresses from message and recent context
-            const recentMessagesText = state?.recentMessages || "";
-            const tokenAddressRegex = /\b[a-zA-Z0-9]{32,44}\b/g;
             const messageContent = message.content.text;
-            const tokenAddressMatches = [
-                ...(messageContent.match(tokenAddressRegex) || []),
-                ...(recentMessagesText.match(tokenAddressRegex) || []),
-            ];
-
-            // Initialize database and score manager
-            const db = new TrustScoreDatabase(runtime);
-            // Create a TrustTokenProvider for the TrustScoreManager
-            const tokenProvider = new TrustTokenProvider(runtime);
-            const scoreManager = new TrustScoreManager(db, tokenProvider);
-            const { agentId } = runtime;
 
             // Extract actions from message content
             const extractedText = messageContent.match(
@@ -366,12 +271,9 @@ export const dataProvider: Provider = {
             const positions: PositionWithBalance[] = [];
             const transactions: TypesTransaction[] = [];
 
-            // Get open positions
-            const openPositions = await db.getOpenPositionsWithBalance();
-
             // Run extracted actions with a safe environment
             if (actions.length > 0) {
-                await runActions(actions, runtime, tokens as TypesTokenPerformance[], positions, transactions);
+                await runActions(actions, runtime, message, tokens as TypesTokenPerformance[], positions, transactions);
             }
 
             // Generate token reports
@@ -379,16 +281,14 @@ export const dataProvider: Provider = {
                 tokens.map(async (token) => formatTokenPerformance(token as TypesTokenPerformance))
             );
 
-            // Get recommender info if message is from a user
+            // Get entity info if message is from a user
             const clientUserId = message.userId === message.agentId ? "" : message.userId;
-            const recommender = await db.getRecommenderByPlatform(
-                message.content.source ?? "unknown", 
-                clientUserId as string
-            );
+            const entity = await runtime.databaseAdapter.getEntityById(clientUserId as UUID);
+            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
 
             // Add updatedAt to RecommenderMetrics to make it compatible
-            const recommenderMetrics = recommender
-                ? await db.getRecommenderMetrics(recommender.id)
+            const recommenderMetrics = entity
+                ? await tradingService.getRecommenderMetrics(entity.id)
                 : undefined;
                 
             const metrics = recommenderMetrics
@@ -398,20 +298,20 @@ export const dataProvider: Provider = {
                   } as TypesRecommenderMetrics
                 : undefined;
 
-            const metricsHistory = recommender
-                ? await db.getRecommenderMetricsHistory(recommender.id)
+            const metricsHistory = entity
+                ? await tradingService.getRecommenderMetricsHistory(entity.id)
                 : [];
                 
             // Convert metrics history to compatible type
             const typedMetricsHistory = metricsHistory.map(history => ({
                 ...history,
-                historyId: history.historyId as UUID
+                historyId: history.entityId
             }));
 
             const recommenderReport =
-                recommender && metrics
+                entity && metrics
                     ? formatRecommenderReport(
-                          recommender as any,
+                          entity as any,
                           metrics,
                           typedMetricsHistory
                       )
@@ -427,7 +327,6 @@ export const dataProvider: Provider = {
             const totalPnL = "$0.00";
             const prices = priceData?.data?.market_data?.prices || {};
             const marketCapPercentage = priceData?.data?.market_data?.market_cap_percentage || {};
-            const positionReports: string[] = [];
 
             return render(dataProviderTemplate, {
                 tokenReports: tokenReports.join("\n"),
@@ -435,27 +334,27 @@ export const dataProvider: Provider = {
                 totalRealizedPnL,
                 totalUnrealizedPnL,
                 totalPnL,
-                recommender: recommenderReport,
+                entity: recommenderReport,
                 globalMarketData: JSON.stringify({
                     prices,
                     marketCapPercentage,
                 }),
             });
         } catch (error) {
-            const db = new TrustScoreDatabase(runtime);
             const tokenSet = new Set<string>();
             const tokens: TokenPerformance[] = [];
             const positions: PositionWithBalance[] = [];
             const transactions: TypesTransaction[] = [];
-            
+            const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+
             // Get open positions
-            const openPositions = await db.getOpenPositionsWithBalance();
+            const openPositions = await tradingService.getOpenPositionsWithBalance();
             
             for (const position of openPositions) {
                 if (tokenSet.has(`${position.chain}:${position.tokenAddress}`))
                     continue;
 
-                const tokenPerformance = await db.getTokenPerformance(
+                const tokenPerformance = await tradingService.getTokenPerformance(
                     position.chain,
                     position.tokenAddress
                 );
@@ -464,19 +363,6 @@ export const dataProvider: Provider = {
 
                 tokenSet.add(`${position.chain}:${position.tokenAddress}`);
             }
-
-            // Need LLM to extract what user wants to see
-            // Create a TrustTokenProvider for the TrustScoreManager
-            const tokenProvider = new TrustTokenProvider(runtime);
-            const scoreManager = new TrustScoreManager(db, tokenProvider);
-            const dataState: DataActionState = {
-                runtime,
-                db,
-                scoreManager,
-                positions,
-                tokens: tokens as TypesTokenPerformance[],
-                transactions: [] as TypesTransaction[]
-            };
 
             const context = render(dataLoaderTemplate, {
                 actions: actions
@@ -520,21 +406,20 @@ export const dataProvider: Provider = {
 
                 try {
                     if (actions.length > 0) {
-                        await runActions(actions, runtime, tokens as TypesTokenPerformance[], positions, transactions);
+                        await runActions(actions, runtime, message, tokens as TypesTokenPerformance[], positions, transactions);
                     }
 
                     const tokenReports = await Promise.all(
                         tokens.map(async (token) => formatTokenPerformance(token as TypesTokenPerformance))
                     );
 
-                    const recommender = await db.getRecommenderByPlatform(
-                        message.content.source ?? "unknown",
-                        undefined
-                    );
+                    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+
+                    const entity = await runtime.databaseAdapter.getEntityById(message.userId as UUID);
 
                     // Add updatedAt to RecommenderMetrics to make it compatible
-                    const recommenderMetrics = recommender
-                        ? await db.getRecommenderMetrics(recommender.id)
+                    const recommenderMetrics = entity
+                        ? await tradingService.getRecommenderMetrics(entity.id)
                         : undefined;
                         
                     const metrics = recommenderMetrics
@@ -544,20 +429,20 @@ export const dataProvider: Provider = {
                           } as TypesRecommenderMetrics
                         : undefined;
 
-                    const metricsHistory = recommender
-                        ? await db.getRecommenderMetricsHistory(recommender.id)
+                    const metricsHistory = entity
+                        ? await tradingService.getRecommenderMetricsHistory(entity.id)
                         : [];
                         
                     // Convert metrics history to compatible type
                     const typedMetricsHistory = metricsHistory.map(history => ({
                         ...history,
-                        historyId: history.historyId as UUID
+                        historyId: history.entityId
                     }));
 
                     const recommenderReport =
-                        recommender && metrics
+                        entity && metrics
                             ? formatRecommenderReport(
-                                  recommender as any,
+                                  entity as any,
                                   metrics,
                                   typedMetricsHistory
                               )
@@ -575,7 +460,7 @@ export const dataProvider: Provider = {
                         totalRealizedPnL,
                         totalUnrealizedPnL,
                         totalPnL,
-                        recommender: recommenderReport,
+                        entity: recommenderReport,
                         globalMarketData: JSON.stringify({
                             prices: {},
                             marketCapPercentage: {},

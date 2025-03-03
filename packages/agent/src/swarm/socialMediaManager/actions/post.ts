@@ -134,7 +134,7 @@ const twitterPostAction: Action = {
     }
 
     // Check if there are any pending Twitter posts awaiting confirmation
-    const pendingTasks = runtime.databaseAdapter.getTasks({
+    const pendingTasks = await runtime.databaseAdapter.getTasks({
       roomId: message.roomId,
       tags: ["TWITTER_POST"],
     });
@@ -223,30 +223,14 @@ const twitterPostAction: Action = {
       };
 
       // if a task already exists, we need to cancel it
-      const existingTask = runtime.getTask(message.roomId);
+      const existingTask = await runtime.databaseAdapter.getTask(message.roomId);
       if (existingTask) {
-        await runtime.deleteTask(existingTask.id);
+        await runtime.databaseAdapter.deleteTask(existingTask.id);
       }
 
-      // Register approval task
-      runtime.createTask({
-        roomId: message.roomId,
-        name: "Confirm Twitter Post",
-        description: "Confirm the tweet to be posted.",
-        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
-        metadata: {
-          options: [
-            {
-              name: "post",
-              description: "Post the tweet to Twitter",
-            },
-            {
-              name: "cancel",
-              description: "Cancel the tweet and don't post it",
-            },
-          ],
-        },
-        handler: async (runtime: IAgentRuntime, options: { option: string }) => {
+      const worker = {
+        name: "TWITTER_POST",
+        execute: async (runtime: IAgentRuntime, options: { option: string }) => {
           if (options.option === "cancel") {
             await callback({
               ...responseContent,
@@ -306,6 +290,31 @@ const twitterPostAction: Action = {
           );
 
           return userRole === "OWNER" || userRole === "ADMIN";
+        },
+      }
+
+      // if the worker is not registered, register it
+      if (!runtime.getTaskWorker("TWITTER_POST")) {
+        runtime.registerTaskWorker(worker);
+      }
+
+      // Register approval task
+      runtime.databaseAdapter.createTask({
+        roomId: message.roomId,
+        name: "Confirm Twitter Post",
+        description: "Confirm the tweet to be posted.",
+        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
+        metadata: {
+          options: [
+            {
+              name: "post",
+              description: "Post the tweet to Twitter",
+            },
+            {
+              name: "cancel",
+              description: "Cancel the tweet and don't post it",
+            },
+          ],
         },
       });
 

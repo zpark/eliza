@@ -296,7 +296,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     }
   }
 
-  await runtime.databaseAdapter.setCache(
+  await runtime.databaseAdapter.setCache<string>(
     `${message.roomId}-reflection-last-processed`,
     message.id
   );
@@ -316,7 +316,7 @@ export const reflectionEvaluator: Evaluator = {
     runtime: IAgentRuntime,
     message: Memory
   ): Promise<boolean> => {
-    const lastMessageId = await runtime.databaseAdapter.getCache(
+    const lastMessageId = await runtime.databaseAdapter.getCache<string>(
       `${message.roomId}-reflection-last-processed`
     );
     const messages = await runtime.messageManager.getMemories({

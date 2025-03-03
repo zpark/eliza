@@ -103,7 +103,7 @@ export interface TokenAnalysisState {
 export interface BuySignalMessage {
   positionId: string;
   tokenAddress: string;
-  recommenderId: string;
+  entityId: string;
 }
 
 export interface SellSignalMessage {
@@ -117,7 +117,6 @@ export interface SellSignalMessage {
   isSimulation: boolean;
 }
 
-// Sonar Client Types
 export interface QuoteParams {
   inputMint: string;
   outputMint: string;
@@ -132,7 +131,7 @@ export interface StartProcessParams {
   balance: string;
   isSimulation: boolean;
   initialMarketCap: string;
-  recommenderId: string;
+  entityId: string;
   walletAddress?: string;
   txHash?: string;
 }
@@ -144,7 +143,7 @@ export interface AddTransactionParams {
   walletAddress: string;
   isSimulation: boolean;
   marketCap: number;
-  recommenderId: string;
+  entityId: string;
   txHash: string;
 }
 
