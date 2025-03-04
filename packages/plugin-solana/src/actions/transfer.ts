@@ -9,7 +9,7 @@ import {
     type Memory,
     ModelTypes,
     parseJSONObjectFromText,
-    type State
+    type State,
 } from '@elizaos/core';
 import {
     createAssociatedTokenAccountInstruction,

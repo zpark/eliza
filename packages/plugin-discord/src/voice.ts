@@ -12,7 +12,7 @@ import {
     joinVoiceChannel,
 } from "@discordjs/voice";
 import {
-    type ChannelType,
+    ChannelType,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -148,18 +148,28 @@ export class VoiceManager extends EventEmitter {
         { channel: BaseGuildVoiceChannel; monitor: AudioMonitor }
     > = new Map();
     private ready: boolean;
-    private getChannelType: (channelId: string) => Promise<ChannelType>;
 
-    constructor(client: DiscordService) {
+    constructor(service: DiscordService, runtime: IAgentRuntime) {
         super();
-        this.client = client.client;
-        this.runtime = client.runtime;
-        this.getChannelType = client.getChannelType;
+        this.client = service.client;
+        this.runtime = runtime;
 
         this.client.on("voiceManagerReady", () => {
             this.setReady(true);
         });
     }
+
+    async getChannelType(channelId: string): Promise<ChannelType> {
+        const channel = await this.client.channels.fetch(channelId);
+        switch (channel.type) {
+          case DiscordChannelType.DM:
+            return ChannelType.DM;
+          case DiscordChannelType.GuildText:
+            return ChannelType.GROUP;
+          case DiscordChannelType.GuildVoice:
+            return ChannelType.VOICE_GROUP;
+        }
+      }
 
     private setReady(status: boolean) {
         this.ready = status;

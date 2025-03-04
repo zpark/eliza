@@ -4,7 +4,7 @@ import { composeContext, type Content, type IAgentRuntime, logger, type Memory, 
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { v4 as uuidv4 } from "uuid";
 import { REQUIRED_SETTINGS } from "./config/config";
-import { BuySignalMessage, PriceSignalMessage, SellSignalMessage, ServiceTypes } from "./types";
+import { type BuySignalMessage, type PriceSignalMessage, type SellSignalMessage, ServiceTypes } from "./types";
 import { tradeAnalysisTemplate } from "./utils/analyzeTrade";
 import { executeTrade, getWalletBalance, getWalletKeypair } from "./utils/wallet";
 

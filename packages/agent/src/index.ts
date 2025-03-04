@@ -10,7 +10,7 @@ import {
   parseBooleanFromText,
   settings,
   stringToUuid,
-  Plugin
+  type Plugin
 } from "@elizaos/core";
 import net from "node:net";
 import yargs from "yargs";

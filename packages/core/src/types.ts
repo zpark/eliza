@@ -1,3 +1,5 @@
+import EventEmitter from "node:events";
+
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -561,7 +563,7 @@ export enum ChannelType {
 /**
  * Client instance
  */
-export abstract class Service {
+export abstract class Service extends EventEmitter {
   /** Additional keys */
   [key: string]: any;
 
@@ -569,10 +571,12 @@ export abstract class Service {
   protected runtime!: IAgentRuntime;
 
   constructor(runtime?: IAgentRuntime) {
+    super();
     if (runtime) {
       this.runtime = runtime;
     }
   }
+  
 
   /** Service type */
   static serviceType: string;

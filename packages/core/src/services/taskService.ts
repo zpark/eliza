@@ -1,15 +1,11 @@
 // registered to runtime through plugin
 
-import { type IAgentRuntime, Service, ServiceTypes, type UUID, ServiceType } from "../types";
+import { type IAgentRuntime, Service, ServiceTypes, type UUID, type ServiceType } from "../types";
 
 export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
   static serviceType: ServiceType = ServiceTypes.TASK;
-
-  constructor(runtime: IAgentRuntime) {
-    super(runtime);
-  }
 
   static async start(runtime: IAgentRuntime): Promise<TaskService> {
     const service = new TaskService(runtime);

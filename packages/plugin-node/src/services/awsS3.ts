@@ -2,7 +2,7 @@ import {
     type IAgentRuntime,
     type IFileService,
     Service,
-    ServiceType,
+    type ServiceType,
     ServiceTypes,
     logger,
 } from "@elizaos/core";

@@ -1,4 +1,4 @@
-import { z, ZodSchema } from "zod";
+import type { z, ZodSchema } from "zod";
 import { composeContext } from "../context";
 import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
@@ -12,7 +12,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelType,
+  type ModelType,
   ModelTypes,
   type OnboardingSetting,
   type State,

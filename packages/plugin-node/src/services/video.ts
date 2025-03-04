@@ -4,7 +4,7 @@ import {
     type Media,
     Service,
     ServiceTypes,
-    ServiceType,
+    type ServiceType,
     stringToUuid,
     logger,
     ModelTypes,

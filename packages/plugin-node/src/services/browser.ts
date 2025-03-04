@@ -1,5 +1,5 @@
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
-import { type IAgentRuntime, type IBrowserService, logger, ModelTypes, parseJSONObjectFromText, Service, ServiceType, ServiceTypes, settings, stringToUuid, trimTokens } from "@elizaos/core";
+import { type IAgentRuntime, type IBrowserService, logger, ModelTypes, parseJSONObjectFromText, Service, type ServiceType, ServiceTypes, settings, stringToUuid, trimTokens } from "@elizaos/core";
 import CaptchaSolver from "capsolver-npm";
 import {
     type Browser,

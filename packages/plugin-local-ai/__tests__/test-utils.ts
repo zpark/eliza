@@ -1,7 +1,7 @@
 import {
   logger,
   ModelTypes,
-  ModelType,
+  type ModelType,
   type Character,
   type IAgentRuntime,
   type IDatabaseAdapter,
