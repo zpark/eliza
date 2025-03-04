@@ -119,9 +119,8 @@ async function startAgent(
     // add to container
     server.registerAgent(runtime);
     
-
     // report to console
-    logger.debug(`Started ${character.name} as ${runtime.agentId}`);
+    logger.debug(`Started ${runtime.character.name} as ${runtime.agentId}`);
 
     return runtime;
   } catch (error) {
@@ -135,6 +134,14 @@ async function startAgent(
     }
     throw error;
   }
+}
+
+async function stopAgent(
+  runtime: IAgentRuntime,
+  server: AgentServer
+) {
+  await runtime.databaseAdapter.close();
+  server.unregisterAgent(runtime.agentId);
 }
 
 const checkPortAvailable = (port: number): Promise<boolean> => {
@@ -163,6 +170,9 @@ const startAgents = async () => {
     logger.info(`Starting agent for character ${character.name}`);
     return startAgent(character, server);
   };
+  server.stopAgent = (runtime: IAgentRuntime) => {
+    stopAgent(runtime, server);
+  }
   server.loadCharacterTryPath = loadCharacterTryPath;
   server.jsonToCharacter = jsonToCharacter;
 

@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import type { Character } from "@elizaos/core";
+import type { Agent } from "@elizaos/core";
 import type React from "react";
 import { useState, type FormEvent, type ReactNode } from "react";
+
 
 type FieldType = "text" | "textarea" | "number" | "checkbox" | "select";
 
@@ -16,7 +17,7 @@ type InputField = {
   title: string;
   name: string;
   description?: string;
-  getValue: (char: Character) => string;
+  getValue: (char: Agent) => string;
   fieldType: FieldType
 };
 
@@ -24,7 +25,7 @@ type ArrayField = {
   title: string;
   description?: string;
   path: string;
-  getData: (char: Character) => string[];
+  getData: (char: Agent) => string[];
 };
 
 enum SECTION_TYPE {
@@ -128,17 +129,13 @@ type customComponent = {
 export type CharacterFormProps = {
   title: string;
   description: string;
-  onSubmit: (character: Character) => Promise<void>;
-  onDelete?: () => Promise<void>;
-  onCancel?: () => void;
+  onSubmit: (character: Agent) => Promise<void>;
+  onDelete?: () => void;
   onReset?: () => void;
-  submitButtonText?: string;
-  deleteButtonText?: string;
-  deleteButtonVariant?: "destructive" | "default" | "outline" | "secondary" | "ghost" | "link" | "primary";
   isAgent?: boolean;
   customComponents?: customComponent[];
-  characterValue: Character;
-  setCharacterValue: (value: (prev: Character) => Character) => void;
+  characterValue: Agent;
+  setCharacterValue: (value: (prev: Agent) => Agent) => void;
 };
 
 export default function CharacterForm({
@@ -148,17 +145,12 @@ export default function CharacterForm({
   description,
   onSubmit,
   onDelete,
-  onCancel,
   onReset,
-  submitButtonText = "Save Changes",
-  deleteButtonText = "Delete",
-  deleteButtonVariant = "destructive",
   customComponents = []
 }: CharacterFormProps) {
   const { toast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -227,23 +219,6 @@ export default function CharacterForm({
     }
   };
 
-  const handleDelete = async () => {
-    if (!onDelete) return;
-    
-    setIsDeleting(true);
-    
-    try {
-      await onDelete();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
 
   const renderInputField = (field: InputField) => (
@@ -327,23 +302,12 @@ export default function CharacterForm({
         </Tabs>
 
         <div className="flex justify-between gap-4 mt-6">
-          <div className="flex gap-4">
-            {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-            )}
-            
-            {onDelete && (
-              <Button
-                type="button"
-                variant={deleteButtonVariant as any}
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : deleteButtonText}
-              </Button>
-            )}
+          <div className="flex gap-4 text-red-500">
+            <Button type="button" variant="outline" onClick={() => {
+              onDelete?.();
+            }}>
+              Delete Character
+            </Button>
           </div>
           
           <div className="flex gap-4">
@@ -361,7 +325,7 @@ export default function CharacterForm({
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Saving...' : submitButtonText}
+              {isSubmitting ? 'Saving...' : "Save Changes"}
             </Button>
           </div>
         </div>

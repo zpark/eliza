@@ -724,8 +724,6 @@ export interface IDatabaseAdapter {
 
   updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean>;
 
-  toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean>;
-
   deleteAgent(agentId: UUID): Promise<boolean>;
 
   ensureAgentExists(agent: Partial<Agent>): Promise<void>;
@@ -862,7 +860,7 @@ export interface IDatabaseAdapter {
     worldId,
   }: RoomData): Promise<UUID>;
 
-  removeRoom(roomId: UUID): Promise<void>;
+  deleteRoom(roomId: UUID): Promise<void>;
 
   updateRoom(room: RoomData): Promise<void>;
 

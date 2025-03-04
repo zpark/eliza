@@ -336,7 +336,7 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
      * @param roomId The UUID of the room to remove.
      * @returns A Promise that resolves when the room has been removed.
      */
-    abstract removeRoom(roomId: UUID): Promise<void>;
+    abstract deleteRoom(roomId: UUID): Promise<void>;
 
     /**
      * Retrieves room IDs for which a specific user is a participant.
@@ -472,13 +472,6 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
      */
     abstract deleteAgent(agentId: UUID): Promise<boolean>;
 
-    /**
-     * Toggle an agent's enabled status
-     * @param agentId UUID of the agent to toggle
-     * @param enabled New enabled status
-     * @returns Promise resolving to true if successful
-     */
-    abstract toggleAgent(agentId: UUID, enabled: boolean): Promise<boolean>;
     
     /**
      * Ensures an agent exists in the database.
