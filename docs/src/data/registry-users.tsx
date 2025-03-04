@@ -1120,7 +1120,7 @@ export const registryUsers: User[] = [
     ]
   },
   {
-    "title": "@elizaos Plugins/cache Redis",
+    "title": "cache Redis",
     "description": "Unmaintained cache plugin that originally lived in @elizaos/core and needs a maintainer.",
     "preview": "/eliza/logos/redis.jpg",
     "website": "https://github.com/elizaos-plugins/cache-redis",

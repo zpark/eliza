@@ -27,7 +27,7 @@
     "custom_preview": "/eliza/logos/supabase.jpg",
     "description": "Database adapter for Supabase with PostgreSQL and realtime capabilities."
   },
-  "@elizaos-plugins/cache-redis": {
+  "@elizaos-plugins/plugin-cache-redis": {
     "custom_preview": "/eliza/logos/redis.jpg",
     "description": "Unmaintained cache plugin that originally lived in @elizaos/core and needs a maintainer."
   },

@@ -67,6 +67,48 @@ const config = {
             },
         ],
         [
+          "@docusaurus/plugin-content-docs",
+          {
+            id: "packages",
+            path: "packages",
+            routeBasePath: "packages",
+            includeCurrentVersion: true,
+            sidebarItemsGenerator: async ({
+              defaultSidebarItemsGenerator,
+              ...args
+            }) => {
+              const sidebarItems = await defaultSidebarItemsGenerator(args);
+              // Add icons to categories
+              return sidebarItems
+                .map((item) => {
+                  if (item.type === "category") {
+                    switch (item.label.toLowerCase()) {        
+                      case "adapters":
+                        item.label = "🔌 " + item.label;
+                        break;
+                      case "clients":
+                        item.label = "🔗 " + item.label;
+                        break;
+                      case "plugins":
+                        item.label = "🧩 " + item.label;
+                        break;
+                      default:
+                        item.label = "📦 " + item.label;
+                    }
+                  }
+                  return item;                            
+                })
+                .sort((a, b) => {
+                  const labelA = a.label || "";
+                  const labelB = b.label || "";
+                  return labelA.localeCompare(labelB, undefined, {
+                    numeric: true,
+                  });
+                });
+            },
+          },
+        ],
+        [
             "docusaurus-plugin-typedoc",
             {
                 entryPoints: ["../packages/core/src/index.ts"],
@@ -202,9 +244,11 @@ const config = {
                     docId: "index",
                 },
                 {
-                  to: 'showcase',
-                  label: 'Packages',
-                  position: 'left'
+                  type: "doc",
+                  docsPluginId: "packages",
+                  position: "left",
+                  label: "Packages",
+                  docId: "index", // You'll need to create packages/index.md
                 },
                 {
                   to: 'blog',
