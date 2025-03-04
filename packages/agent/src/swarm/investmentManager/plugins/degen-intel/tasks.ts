@@ -28,7 +28,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 60, // 1 hour
 		},
-		tags: ["queue", "repeat"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({	
@@ -50,7 +50,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue", "repeat"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -72,7 +72,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 15, // 15 minutes
 		},
-		tags: ["queue", "repeat"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -94,7 +94,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue", "repeat"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -116,7 +116,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 5, // 5 minutes
 		},
-		tags: ["queue"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 
 	runtime.registerTaskWorker({
@@ -138,6 +138,6 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 			updatedAt: Date.now(),
 			updateInterval: 1000 * 60 * 60 * 24, // 24 hours
 		},
-		tags: ["queue"],
+		tags: ["queue", "schedule", "degen_intel"],
 	});
 };

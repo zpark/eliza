@@ -159,5 +159,5 @@ export interface StartDegenProcessParams extends StartProcessParams {
 }
 
 export const ServiceTypes = {
-  DEGEN_TRADING: "degen_trading",
+  DEGEN_TRADING: "degen_trader",
 } as const;

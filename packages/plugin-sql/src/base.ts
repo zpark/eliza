@@ -1,6 +1,5 @@
 import {
     type Agent,
-    type Character,
     type Component,
     DatabaseAdapter,
     type Entity,
@@ -11,7 +10,6 @@ import {
     type Participant,
     type Relationship,
     type RoomData,
-    stringToUuid,
     type Task,
     type UUID,
     type WorldData
@@ -1761,7 +1759,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 if (params.tags && params.tags.length > 0) {
                     // Filter by tags - tasks that have all of the specified tags
                     query = query.where(
-                        sql`${taskTable.tags} @> ARRAY[${sql.join(params.tags, ', ')}]::text[]`
+                        sql`${taskTable.tags} && array[${params.tags.map(tag => sql`${tag}`).join(', ')}]::text[]`
                     );
                 }
                 
