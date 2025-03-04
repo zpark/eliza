@@ -9,8 +9,8 @@ import { getSimulatedPositions } from "./recommendations/simulatedPositions";
 import { TrustTradingService } from "./tradingService";
 
 export const communityTraderPlugin: Plugin = {
-    name: "community-trader",
-    description: "Community Trader Plugin for Eliza",
+    name: "community-investor",
+    description: "Community Investor Plugin for Eliza",
     evaluators: [recommendationEvaluator],
     providers: [],
     actions: [

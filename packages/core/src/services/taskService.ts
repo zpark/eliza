@@ -38,6 +38,8 @@ export class TaskService extends Service {
           continue;
         }
 
+        console.log(`*** Checking task ${task.name} with duration ${task.metadata.duration}ms`);
+
         const taskStartTime = new Date(task.metadata.updatedAt).getTime();
         const durationMs = task.metadata.updateInterval;
 

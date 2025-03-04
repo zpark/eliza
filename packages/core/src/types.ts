@@ -564,9 +564,6 @@ export enum ChannelType {
  * Client instance
  */
 export abstract class Service extends EventEmitter {
-  /** Additional keys */
-  [key: string]: any;
-
   /** Runtime instance */
   protected runtime!: IAgentRuntime;
 
@@ -577,6 +574,7 @@ export abstract class Service extends EventEmitter {
     }
   }
   
+  abstract stop(): Promise<void>;
 
   /** Service type */
   static serviceType: string;

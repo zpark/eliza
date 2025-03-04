@@ -37,7 +37,6 @@ export interface ProcessedTokenData {
   highValueHolders: any[];
   recentTrades: boolean;
   highSupplyHoldersCount: number;
-  tokenCodex: { isScam: boolean };
 }
 
 // Market and Position Types
@@ -109,12 +108,14 @@ export interface BuySignalMessage {
 export interface SellSignalMessage {
   positionId: string;
   tokenAddress: string;
-  pairId: string;
+  pairId?: string;
   amount: string;
-  currentBalance: string;
-  sellRecommenderId: string;
-  walletAddress: string;
-  isSimulation: boolean;
+  currentBalance?: string;
+  sellRecommenderId?: string;
+  walletAddress?: string;
+  isSimulation?: boolean;
+  reason?: string;
+  entityId?: string;
 }
 
 export interface QuoteParams {

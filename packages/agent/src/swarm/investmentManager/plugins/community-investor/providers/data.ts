@@ -10,7 +10,6 @@ import {
 import { z } from "zod";
 import { CoingeckoClient } from "../clients";
 import { formatRecommenderReport } from "../reports";
-import type { TrustScoreManager } from "../scoreManager";
 import type { TrustTradingService } from "../tradingService";
 import type {
     PositionWithBalance,
@@ -116,7 +115,7 @@ Output structure:
 type DataActionState = {
     runtime: IAgentRuntime;
     message: Memory;
-    scoreManager: TrustScoreManager;
+    tradingService: TrustTradingService;
     tokens: TypesTokenPerformance[];
     positions: PositionWithBalance[];
     transactions: TypesTransaction[];
@@ -144,11 +143,11 @@ const actions = [
             tokenAddress: z.string().describe("Token address to refresh"),
             chain: z.string().default("solana").describe("Chain name"),
         }),
-        async handler({ scoreManager, tokens }, params) {
+        async handler({ tradingService, tokens }, params) {
             // Normalize token address
             const tokenAddress = params.tokenAddress.toLowerCase();
-            // Update token information using the correct method signature
-            await scoreManager.updateTokenPerformance(params.chain, tokenAddress);
+            // Update token information using the TrustTradingService
+            await tradingService.updateTokenPerformance(params.chain, tokenAddress);
             // Could also update trade history, position balances, etc.
         },
     }),
@@ -237,12 +236,14 @@ async function runActions(
     positions: PositionWithBalance[],
     transactions: TypesTransaction[]
 ) {
+    const tradingService = runtime.getService("trust_trading") as TrustTradingService;
+    
     return Promise.all(
         actions.map(async (actionCall) => {
             const action = actions.find((a) => a.name === actionCall.name);
             if (action) {
                 const params = action.params.parse(actionCall.params);
-                await action.handler({ runtime, message, tokens, positions, transactions }, params);
+                await action.handler({ runtime, message, tradingService, tokens, positions, transactions }, params);
             }
         })
     );

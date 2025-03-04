@@ -308,7 +308,7 @@ export class AgentRuntime implements IAgentRuntime {
     // Stop all registered clients
     for (const [serviceName, service] of this.services) {
       logger.log(`runtime::stop - requesting service stop for ${serviceName}`);
-      await service.stop(this);
+      await service.stop();
     }
   }
 

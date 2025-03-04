@@ -664,7 +664,6 @@ export class TrustTradingService extends Service {
                     return null;
                 }
                 
-                // Get token info from Codex
                 let tokenInfo;
                 
                 // Analyze holder distribution
