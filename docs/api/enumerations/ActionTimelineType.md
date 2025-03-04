@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / ActionTimelineType
+[@elizaos/core v0.25.9](../index.md) / ActionTimelineType
 
 # Enumeration: ActionTimelineType
 

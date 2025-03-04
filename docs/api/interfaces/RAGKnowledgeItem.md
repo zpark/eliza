@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / RAGKnowledgeItem
+[@elizaos/core v0.25.9](../index.md) / RAGKnowledgeItem
 
 # Interface: RAGKnowledgeItem
 

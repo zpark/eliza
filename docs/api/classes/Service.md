@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / Service
+[@elizaos/core v0.25.9](../index.md) / Service
 
 # Class: `abstract` Service
 
