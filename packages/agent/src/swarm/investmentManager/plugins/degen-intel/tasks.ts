@@ -9,8 +9,17 @@ import BuySignal from "./providers/buy-signal";
 export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	worldId = runtime.agentId; // this is global data for the agent
 
+	// first, get all tasks with tags "queue", "schedule", "degen_intel" and delete them
+	const tasks = await runtime.databaseAdapter.getTasks({
+		tags: ["queue", "schedule", "degen_intel"]
+	});
+
+	for (const task of tasks) {
+		await runtime.databaseAdapter.deleteTask(task.id);
+	}
+
 	runtime.registerTaskWorker({
-		name: "BIRDEYE_SYNC_TRENDING",
+		name: "INTEL_BIRDEYE_SYNC_TRENDING",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -21,7 +30,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "BIRDEYE_SYNC_TRENDING",
+		name: "INTEL_BIRDEYE_SYNC_TRENDING",
 		description: "Sync trending tokens from Birdeye",
 		worldId,
 		metadata: {
@@ -32,7 +41,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.registerTaskWorker({	
-		name: "COINMARKETCAP_SYNC",
+		name: "INTEL_COINMARKETCAP_SYNC",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -43,7 +52,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "COINMARKETCAP_SYNC",
+		name: "INTEL_COINMARKETCAP_SYNC",
 		description: "Sync tokens from Coinmarketcap",
 		worldId,
 		metadata: {
@@ -54,7 +63,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.registerTaskWorker({
-		name: "SYNC_RAW_TWEETS",
+		name: "INTEL_SYNC_RAW_TWEETS",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -65,7 +74,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "SYNC_RAW_TWEETS",
+		name: "INTEL_SYNC_RAW_TWEETS",
 		description: "Sync raw tweets from Twitter",
 		worldId,
 		metadata: {
@@ -76,7 +85,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.registerTaskWorker({
-		name: "SYNC_WALLET",
+		name: "INTEL_SYNC_WALLET",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -87,7 +96,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "SYNC_WALLET",
+		name: "INTEL_SYNC_WALLET",
 		description: "Sync wallet from Birdeye",
 		worldId,
 		metadata: {
@@ -98,7 +107,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.registerTaskWorker({
-		name: "GENERATE_BUY_SIGNAL",
+		name: "INTEL_GENERATE_BUY_SIGNAL",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -109,7 +118,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "GENERATE_BUY_SIGNAL",
+		name: "INTEL_GENERATE_BUY_SIGNAL",
 		description: "Generate a buy signal",
 		worldId,
 		metadata: {
@@ -120,7 +129,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.registerTaskWorker({
-		name: "PARSE_TWEETS",
+		name: "INTEL_PARSE_TWEETS",
 		validate: async (_runtime, _message, _state) => {
 			return true; // TODO: validate after certain time
 		},
@@ -131,7 +140,7 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
 	});
 
 	runtime.databaseAdapter.createTask({
-		name: "PARSE_TWEETS",
+		name: "INTEL_PARSE_TWEETS",
 		description: "Parse tweets",
 		worldId,
 		metadata: {
