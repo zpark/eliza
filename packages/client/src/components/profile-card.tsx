@@ -37,7 +37,7 @@ export default function ProfileCard({
                 </div>
             </CardContent>
             <CardFooter className="p-3 pb-4">
-                <div className="flex items-center gap-4 w-full">
+                <div className="flex items-center gap-2 w-full">
                     {buttons.map(({ label, icon, action, className, variant, size, disabled }, index) => (
                         <Button
                             key={index}
