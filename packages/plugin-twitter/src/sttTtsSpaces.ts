@@ -6,7 +6,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    ModelTypes,
     type Plugin,
     createUniqueUuid,
     logger
@@ -248,7 +248,7 @@ export class SttTtsPlugin implements Plugin {
             const wavBuffer = await this.convertPcmToWavInMemory(merged, 48000);
 
             // Whisper STT
-            const sttText = await this.runtime.useModel(ModelClass.TRANSCRIPTION, wavBuffer);
+            const sttText = await this.runtime.useModel(ModelTypes.TRANSCRIPTION, wavBuffer);
 
             logger.log(
                 `[SttTtsPlugin] Transcription result: "${sttText}"`,
@@ -303,7 +303,7 @@ export class SttTtsPlugin implements Plugin {
 
             try {
                 const responseStream = await this.runtime.useModel(
-                    ModelClass.TEXT_TO_SPEECH,
+                    ModelTypes.TEXT_TO_SPEECH,
                     text
                 );
                 if (!responseStream) {

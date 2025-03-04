@@ -2,7 +2,7 @@ import {
     formatMessages,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    ModelTypes,
     type Provider,
     type State,
     type UUID
@@ -380,7 +380,7 @@ export const dataProvider: Provider = {
                 messages: message.content.text,
             });
 
-            const dataProviderResponse = await runtime.useModel(ModelClass.LARGE, {
+            const dataProviderResponse = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 messages: [
                     {
                         role: "system",

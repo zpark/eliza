@@ -1,16 +1,17 @@
 import {
   ChannelType,
-  type Client,
+  type Service,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
   type UUID,
-  createUniqueUuid
+  createUniqueUuid,
+  logger
 } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
-export class ScenarioClient implements Client {
-  name = "scenario";
+export class ScenarioService implements Service {
+  serviceType = "scenario";
   runtime: IAgentRuntime;
   private messageHandlers: Map<UUID, HandlerCallback[]> = new Map();
   private rooms: Map<string, { roomId: UUID }> = new Map();
@@ -164,20 +165,20 @@ export class ScenarioClient implements Client {
 const scenarios = [
   async function scenario1(members: IAgentRuntime[]) {
     // Create and register test client
-    const client = new ScenarioClient();
-    await client.start(members[0]);
-    members[0].registerClient("scenario", client);
+    const service = new ScenarioService();
+    await service.start(members[0]);
+    members[0].registerService(service);
 
     // Create rooms for all members
     for (const member of members) {
-      await client.createRoom(
+      await service.createRoom(
         member.agentId,
         `Test Room for ${member.character.name}`
       );
     }
 
     // Set up conversation history
-    await client.saveMessage(
+    await service.saveMessage(
       members[0],
       members,
       "Earlier message from conversation..."

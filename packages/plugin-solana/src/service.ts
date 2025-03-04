@@ -1,7 +1,7 @@
-import { Client, type IAgentRuntime, logger } from '@elizaos/core';
+import { type IAgentRuntime, logger, Service } from '@elizaos/core';
 import { Connection, PublicKey } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { SOLANA_CLIENT_NAME, SOLANA_WALLET_DATA_CACHE_KEY } from './constants';
+import { SOLANA_SERVICE_NAME, SOLANA_WALLET_DATA_CACHE_KEY } from './constants';
 import { getWalletKey } from './keypairUtils';
 import type { Item, Prices, WalletPortfolio } from './types';
 
@@ -17,8 +17,8 @@ const PROVIDER_CONFIG = {
     },
 };
 
-export class SolanaClient extends Client {
-    static clientName: string = SOLANA_CLIENT_NAME;
+export class SolanaService extends Service {
+    static serviceType: string = SOLANA_SERVICE_NAME;
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
@@ -35,8 +35,8 @@ export class SolanaClient extends Client {
         this.publicKey = publicKey;
     }
 
-    static async start(runtime: IAgentRuntime): Promise<SolanaClient> {
-        logger.log('initSolanaClient');
+    static async start(runtime: IAgentRuntime): Promise<SolanaService> {
+        logger.log('initSolanaService');
 
         const connection = new Connection(
             runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
@@ -44,9 +44,9 @@ export class SolanaClient extends Client {
 
         const { publicKey } = await getWalletKey(runtime, false);
 
-        const solanaClient = new SolanaClient(runtime, connection, publicKey);
+        const solanaClient = new SolanaService(runtime, connection, publicKey);
 
-        logger.log('SolanaClient start');
+        logger.log('SolanaService start');
         if (solanaClient.updateInterval) {
             clearInterval(solanaClient.updateInterval);
         }
@@ -63,17 +63,15 @@ export class SolanaClient extends Client {
     }
 
     static async stop(runtime: IAgentRuntime) {
-        const client = runtime.getClient(SOLANA_CLIENT_NAME);
+        const client = runtime.getService(SOLANA_SERVICE_NAME);
         if (!client) {
-            logger.error('SolanaClient not found');
+            logger.error('SolanaService not found');
             return;
         }
         if (client.updateInterval) {
             clearInterval(client.updateInterval);
             client.updateInterval = null;
         }
-
-        runtime.unregisterClient(SOLANA_CLIENT_NAME);
 
         return Promise.resolve();
     }

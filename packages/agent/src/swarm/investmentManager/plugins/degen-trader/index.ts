@@ -7,7 +7,7 @@ export const degenTraderPlugin: Plugin = {
   evaluators: [],
   providers: [],
   actions: [],
-  services: [new DegenTradingService()]
+  services: [DegenTradingService]
 }
 
 export default degenTraderPlugin;

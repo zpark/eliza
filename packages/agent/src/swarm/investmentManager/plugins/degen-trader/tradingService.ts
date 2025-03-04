@@ -1,6 +1,6 @@
 // Combined DegenTradingService that integrates all functionality
 
-import { composeContext, type Content, type IAgentRuntime, logger, type Memory, MemoryType, ModelClass, parseJSONObjectFromText, Service, type UUID } from "@elizaos/core";
+import { composeContext, type Content, type IAgentRuntime, logger, type Memory, MemoryType, ModelTypes, parseJSONObjectFromText, Service, type UUID } from "@elizaos/core";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { v4 as uuidv4 } from "uuid";
 import { REQUIRED_SETTINGS } from "./config/config";
@@ -16,7 +16,7 @@ export class DegenTradingService extends Service {
   // For tracking pending sells
   private pendingSells: { [tokenAddress: string]: bigint } = {};
 
-  serviceType = "degen_trading";
+  static serviceType = "degen_trading";
 
   constructor() {
     super();
@@ -193,7 +193,7 @@ export class DegenTradingService extends Service {
       logger.info('Generated context:', { context });
 
       // Generate analysis
-      const content = await this.runtime.useModel(ModelClass.LARGE, {
+      const content = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
         context,
       });
 

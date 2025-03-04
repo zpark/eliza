@@ -4,7 +4,7 @@ import {
     type IAgentRuntime,
     type Media,
     type Memory,
-    ModelClass, parseJSONObjectFromText, splitChunks, type State, trimTokens
+    ModelTypes, parseJSONObjectFromText, splitChunks, type State, trimTokens
 } from "@elizaos/core";
 import * as fs from "node:fs";
 export const summarizationTemplate = `# Summarized so far (we are adding to this)
@@ -49,7 +49,7 @@ const getDateRange = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
         console.log("response", response);
@@ -266,7 +266,7 @@ const summarizeAction = {
                 template,
             });
 
-            const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const summary = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context,
             });
 

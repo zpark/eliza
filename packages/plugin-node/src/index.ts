@@ -13,10 +13,10 @@ export const nodePlugin: Plugin = {
     name: "default",
     description: "Default plugin, with basic actions and evaluators",
     services: [
-        new BrowserService(),
-        new PdfService(),
-        new VideoService(),
-        new AwsS3Service(),
+        BrowserService,
+        PdfService,
+        VideoService,
+        AwsS3Service,
     ],
     actions: [],
 }

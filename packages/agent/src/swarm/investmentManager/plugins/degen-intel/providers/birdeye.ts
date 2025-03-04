@@ -1,4 +1,4 @@
-import { type IAgentRuntime, logger, ModelClass, createUniqueUuid, type UUID, type Memory, type Content } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelTypes, createUniqueUuid, type UUID, type Memory, type Content } from "@elizaos/core";
 import type { IToken } from "../types";
 
 export interface TransactionHistory {
@@ -309,7 +309,7 @@ export default class Birdeye {
 		const bulletpointTweets = makeBulletpointList(tweetArray);
 		const prompt = template.replace("{{tweets}}", bulletpointTweets);
 
-		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
 			context: prompt,
 			system: rolePrompt,
 			temperature: 0.2,

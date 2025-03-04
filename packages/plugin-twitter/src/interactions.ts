@@ -8,7 +8,7 @@ import {
     logger,
     type Memory,
     messageCompletionFooter,
-    ModelClass,
+    ModelTypes,
     parseJSONObjectFromText,
     shouldRespondFooter,
     type State
@@ -351,7 +351,7 @@ export class TwitterInteractionClient {
         const imageDescriptionsArray = [];
         try{
             for (const photo of tweet.photos) {
-                const description = await this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, photo.url)
+                const description = await this.runtime.useModel(ModelTypes.IMAGE_DESCRIPTION, photo.url)
                 imageDescriptionsArray.push(description);
             }
         } catch (error) {
@@ -424,7 +424,7 @@ export class TwitterInteractionClient {
                 twitterShouldRespondTemplate(validTargetUsersStr),
         });
 
-        const shouldRespond = await this.runtime.useModel(ModelClass.TEXT_SMALL, {
+        const shouldRespond = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
             context: shouldRespondContext,
           });
         
@@ -460,7 +460,7 @@ export class TwitterInteractionClient {
                 twitterMessageHandlerTemplate,
         });
 
-        const responseText = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+        const responseText = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
             context,
           });
       

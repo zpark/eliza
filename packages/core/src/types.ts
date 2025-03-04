@@ -1,5 +1,3 @@
-import logger from "./logger";
-
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -116,39 +114,43 @@ export interface Goal {
   objectives: Objective[];
 }
 
+export type ModelType = typeof ModelTypes[keyof typeof ModelTypes] | string;
+
 /**
  * Model size/type classification
  */
-export enum ModelClass {
-  SMALL = "text_small", // for backwards compatibility
-  MEDIUM = "text_large", // for backwards compatibility
-  LARGE = "text_large", // for backwards compatibility
-  TEXT_SMALL = "text_small",
-  TEXT_LARGE = "text_large",
-  TEXT_EMBEDDING = "text_embedding",
-  TEXT_TOKENIZER_ENCODE = "TEXT_TOKENIZER_ENCODE",
-  TEXT_TOKENIZER_DECODE = "TEXT_TOKENIZER_DECODE",
-  TEXT_REASONING_SMALL = "reasoning_small",
-  TEXT_REASONING_LARGE = "reasoning_large",
-  IMAGE = "image",
-  IMAGE_DESCRIPTION = "image_description",
-  TRANSCRIPTION = "transcription",
-  TEXT_TO_SPEECH = "text_to_speech",
-  AUDIO = "audio",
-  VIDEO = "video",
-}
+export const ModelTypes = {
+  SMALL: "text_small", // kept for backwards compatibility
+  MEDIUM: "text_large", // kept for backwards compatibility
+  LARGE: "text_large", // kept for backwards compatibility
+  TEXT_SMALL: "text_small",
+  TEXT_LARGE: "text_large",
+  TEXT_EMBEDDING: "text_embedding",
+  TEXT_TOKENIZER_ENCODE: "TEXT_TOKENIZER_ENCODE",
+  TEXT_TOKENIZER_DECODE: "TEXT_TOKENIZER_DECODE",
+  TEXT_REASONING_SMALL: "reasoning_small",
+  TEXT_REASONING_LARGE: "reasoning_large",
+  IMAGE: "image",
+  IMAGE_DESCRIPTION: "image_description",
+  TRANSCRIPTION: "transcription",
+  TEXT_TO_SPEECH: "text_to_speech",
+  AUDIO: "audio",
+  VIDEO: "video",
+} as const;
 
-export enum ServiceType {
-  TRANSCRIPTION = "transcription",
-  VIDEO = "video",
-  BROWSER = "browser",
-  PDF = "pdf",
-  REMOTE_FILES = "aws_s3",
-  WEB_SEARCH = "web_search",
-  EMAIL = "email",
-  TEE = "tee",
-  TASK = "task",
-}
+export type ServiceType = typeof ServiceTypes[keyof typeof ServiceTypes];
+
+export const ServiceTypes = {
+    TRANSCRIPTION: "transcription",
+    VIDEO: "video",
+    BROWSER: "browser",
+    PDF: "pdf",
+    REMOTE_FILES: "aws_s3",
+    WEB_SEARCH: "web_search",
+    EMAIL: "email",
+    TEE: "tee",
+    TASK: "task",
+} as const;
 
 /**
  * Represents the current state/context of a conversation
@@ -559,30 +561,26 @@ export enum ChannelType {
 /**
  * Client instance
  */
-export abstract class Client {
+export abstract class Service {
+  /** Additional keys */
   [key: string]: any;
 
-  /** Client name */
-  static clientName: string;
+  /** Service type */
+  static serviceType: string;
 
-  /** Client configuration */
+  /** Service configuration */
   config?: { [key: string]: any };
 
-  /** Start client connection */
-  static async start(_runtime: IAgentRuntime): Promise<Client> {
+  /** Start service connection */
+  static async start(_runtime: IAgentRuntime): Promise<Service> {
     throw new Error('Not implemented');
   }
 
-  /** Stop client connection */
+  /** Stop service connection */
   static async stop(_runtime: IAgentRuntime): Promise<unknown> {
     throw new Error('Not implemented');
   }
 }
-
-export type Adapter = {
-  /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter>;
-};
 
 export type Route = {
   type: "GET" | "POST" | "PUT" | "DELETE";
@@ -620,8 +618,7 @@ export interface Plugin {
   actions?: Action[];
   providers?: Provider[];
   evaluators?: Evaluator[];
-  clients?: Client[];
-  adapters?: Adapter[];
+  adapters?: IDatabaseAdapter[];
   models?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
@@ -714,9 +711,6 @@ export interface Agent extends Character {
 export interface IDatabaseAdapter {
   /** Database instance */
   db: any;
-
-  /** Optional initialization */
-  init(): Promise<void>;
 
   /** Close database connection */
   close(): Promise<void>;
@@ -997,25 +991,16 @@ export type CacheOptions = {
   expires?: number;
 };
 
-export abstract class Service {
-  serviceType: ServiceType | string;
-
-  // Add abstract initialize method that must be implemented by derived classes
-  abstract initialize(runtime: IAgentRuntime): Promise<void>;
-}
-
 export interface IAgentRuntime {
   // Properties
   agentId: UUID;
   databaseAdapter: IDatabaseAdapter;
-  adapters: Adapter[];
   character: Character;
   providers: Provider[];
   actions: Action[];
-  clients: Map<string, Client>;
   evaluators: Evaluator[];
   plugins: Plugin[];
-  services: Map<string, Service>;
+  services: Map<ServiceType, Service>;
   events: Map<string, ((params: any) => void)[]>;
   fetch?: typeof fetch | null;
   routes: Route[];
@@ -1023,14 +1008,6 @@ export interface IAgentRuntime {
   descriptionManager: IMemoryManager;
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
-
-  getClient(name: string): Client | null;
-  
-  getAllClients(): Map<string, Client>;
-
-  registerClient(client: Client): void;
-
-  unregisterClient(name: string): void;
 
   initialize(): Promise<void>;
 
@@ -1040,7 +1017,15 @@ export interface IAgentRuntime {
 
   getService<T extends Service>(service: ServiceType | string): T | null;
 
+  getAllServices(): Map<ServiceType, Service>;
+
   registerService(service: Service): void;
+
+  registerDatabaseAdapter(adapter: IDatabaseAdapter): void;
+
+  getDatabaseAdapters(): IDatabaseAdapter[];
+
+  getDatabaseAdapter(): IDatabaseAdapter | null;
 
   setSetting(
     key: string,
@@ -1121,13 +1106,13 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
+  useModel<T = any>(modelType: ModelType | string, params: T): Promise<any>;
   registerModel(
-    modelClass: ModelClass,
+    modelType: ModelType | string,
     handler: (params: any) => Promise<any>
   ): void;
   getModel(
-    modelClass: ModelClass
+    modelType: ModelType | string
   ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
 
   registerEvent(event: string, handler: (params: any) => void): void;
@@ -1176,7 +1161,7 @@ export interface ChunkRow {
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   maxTokens?: number;
   temperature?: number;
   frequencyPenalty?: number;
@@ -1186,17 +1171,12 @@ export type GenerateTextParams = {
 
 export interface TokenizeTextParams {
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
 }
 
 export interface DetokenizeTextParams {
   tokens: number[];
-  modelClass: ModelClass;
-}
-
-export interface ITaskService extends Service {
-  initialize(runtime: IAgentRuntime): Promise<void>;
-  stop(): void;
+  modelType: ModelType;
 }
 
 export interface IVideoService extends Service {
@@ -1207,7 +1187,6 @@ export interface IVideoService extends Service {
 }
 
 export interface IBrowserService extends Service {
-  closeBrowser(): Promise<void>;
   getPageContent(
     url: string,
     runtime: IAgentRuntime

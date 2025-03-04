@@ -3,7 +3,7 @@ import {
     type IAgentRuntime,
     logger,
     type Memory,
-    ModelClass,
+    ModelTypes,
     type State,
     type UUID
 } from "@elizaos/core";
@@ -215,7 +215,7 @@ export const getTokenDetails: any = {
         });
         
 
-        const text = await runtime.useModel(ModelClass.SMALL, {
+        const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
 
@@ -255,7 +255,7 @@ export const getTokenDetails: any = {
             template: tokenDetailsTemplate,
         });
 
-        const tokenDetails = await runtime.useModel(ModelClass.MEDIUM, {
+        const tokenDetails = await runtime.useModel(ModelTypes.TEXT_LARGE, {
             context: tokenDetailsContext,
         });
 

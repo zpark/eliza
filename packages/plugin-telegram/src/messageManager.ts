@@ -7,7 +7,7 @@ import {
     logger,
     type Media,
     type Memory,
-    ModelClass,
+    ModelTypes,
     RoleName,
     type UUID
 } from "@elizaos/core";
@@ -63,7 +63,7 @@ export class MessageManager {
 
             if (imageUrl) {
                 const { title, description } =
-                    await this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, imageUrl)
+                    await this.runtime.useModel(ModelTypes.IMAGE_DESCRIPTION, imageUrl)
                 return { description: `[Image: ${title}\n${description}]` };
             }
         } catch (error) {

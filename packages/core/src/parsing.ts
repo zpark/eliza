@@ -1,6 +1,6 @@
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import logger from "./logger.ts";
-import { type IAgentRuntime, ModelClass } from "./types.ts";
+import { type IAgentRuntime, ModelTypes } from "./types.ts";
 
 const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 
@@ -376,7 +376,7 @@ export async function trimTokens(
     if (maxTokens <= 0) throw new Error("maxTokens must be positive");
   
     try {
-        const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+        const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, { context });
   
         // If already within limits, return unchanged
         if (tokens.length <= maxTokens) {
@@ -387,7 +387,7 @@ export async function trimTokens(
         const truncatedTokens = tokens.slice(-maxTokens);
   
         // Decode back to text
-        return await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
+        return await runtime.useModel(ModelTypes.TEXT_TOKENIZER_DECODE, { tokens: truncatedTokens });
     } catch (error) {
         logger.error("Error in trimTokens:", error);
         // Return truncated string if tokenization fails

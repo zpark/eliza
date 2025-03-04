@@ -25,11 +25,9 @@ import { getProviders } from "./providers.ts";
 import {
   type Action,
   type Actor,
-  type Adapter,
   type Agent,
   ChannelType,
   type Character,
-  type Client,
   type Evaluator,
   type HandlerCallback,
   type IAgentRuntime,
@@ -37,13 +35,14 @@ import {
   type IMemoryManager,
   type KnowledgeItem,
   type Memory,
-  ModelClass,
+  ModelType,
+  ModelTypes,
   type Plugin,
   type Provider,
   type RoomData,
   type Route,
   type Service,
-  type ServiceType,
+  ServiceType,
   type State,
   type TaskWorker,
   type UUID,
@@ -233,15 +232,14 @@ export class AgentRuntime implements IAgentRuntime {
   events: Map<string, ((params: any) => void)[]> = new Map();
 
   readonly fetch = fetch;
-  public clients: Map<string, Client> = new Map();
   services: Map<ServiceType, Service> = new Map();
 
-  public adapters: Adapter[];
+  public adapters: IDatabaseAdapter[];
 
   private readonly knowledgeRoot: string;
   private readonly memoryManagerService: MemoryManagerService;
 
-  models = new Map<ModelClass, ((params: any) => Promise<any>)[]>();
+  models = new Map<string, ((params: any) => Promise<any>)[]>();
   routes: Route[] = [];
 
   private taskWorkers = new Map<string, TaskWorker>();
@@ -253,7 +251,7 @@ export class AgentRuntime implements IAgentRuntime {
     plugins?: Plugin[];
     fetch?: typeof fetch;
     databaseAdapter?: IDatabaseAdapter;
-    adapters?: Adapter[];
+    adapters?: IDatabaseAdapter[];
     events?: { [key: string]: ((params: any) => void)[] };
     ignoreBootstrap?: boolean;
   }) {
@@ -294,102 +292,24 @@ export class AgentRuntime implements IAgentRuntime {
       plugins.push(bootstrapPlugin);
     }
 
-    for (const plugin of plugins) {
-      for (const action of plugin.actions ?? []) {
-        this.registerAction(action);
-      }
-
-      for (const evaluator of plugin.evaluators ?? []) {
-        this.registerEvaluator(evaluator);
-      }
-
-      for (const provider of plugin.providers ?? []) {
-        this.registerContextProvider(provider);
-      }
-
-      for (const manager of plugin.memoryManagers ?? []) {
-        this.registerMemoryManager(manager);
-      }
-
-      for (const service of plugin.services ?? []) {
-        this.registerService(service);
-      }
-
-      for (const route of plugin.routes ?? []) {
-        this.routes.push(route);
-      }
-
-      // plugin.events is an object with keys as event names and values as event handlers
-      for (const [eventName, eventHandlers] of Object.entries(
-        plugin.events ?? {}
-      )) {
-        for (const eventHandler of eventHandlers) {
-          this.registerEvent(eventName, eventHandler);
-        }
-      }
-    }
-
     this.plugins = plugins;
 
     // Initialize adapters from options or empty array if not provided
     this.adapters = opts.adapters ?? [];
-
-    for (const plugin of plugins) {
-      if (plugin.adapters) {
-        for (const adapter of plugin.adapters) {
-          this.adapters.push(adapter);
-        }
-      }
-    }
   }
 
-  async registerClient(client: Client): Promise<void> {
-    if (this.clients.has(client.clientName)) {
-      logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${client.clientName} is already registered. Skipping registration.`
-      );
-      return;
-    }
-    this.clients.set(client.clientName, await client.start(this));
-    logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${client.clientName} registered successfully`
-    );
-  }
-
-  unregisterClient(clientName: string): void {
-    if (!this.clients.has(clientName)) {
-      logger.warn(
-        `${this.character.name}(${this.agentId}) - Client ${clientName} is not registered. Skipping unregistration.`
-      );
-      return;
-    }
-    this.clients.delete(clientName);
-    logger.success(
-      `${this.character.name}(${this.agentId}) - Client ${clientName} unregistered successfully`
-    );
-  }
-
-  getClient(clientName: string): Client | null {
-    const client = this.clients.get(clientName);
-    if (!client) {
-      logger.error(`Client ${clientName} not found`);
-      return null;
-    }
-    return client;
-  }
-
-  getAllClients(): Map<string, Client> {
-    return this.clients;
+  getAllServices(): Map<ServiceType, Service> {
+    return this.services;
   }
 
   async stop() {
     logger.debug(`runtime::stop - character ${this.character.name}`);
 
-    // Stop all registered clients
-    for (const [clientName, client] of this.clients) {
-      logger.log(`runtime::stop - requesting client stop for ${clientName}`);
+    // Stop all registered services
+    for (const [serviceType, service] of this.services) {
+      logger.log(`runtime::stop - requesting service stop for ${serviceType}`);
       await this.ensureAgentIsDisabled();
-      await client.stop(this);
+      await service.stop(this);
     }
   }
 
@@ -434,13 +354,19 @@ export class AgentRuntime implements IAgentRuntime {
 
     // Load plugins before trying to access models or services
     if (this.character.plugins) {
-      const plugins = (await handlePluginImporting(
+      const characterPlugins = (await handlePluginImporting(
         this.character.plugins
       )) as Plugin[];
+      const plugins = [...this.plugins, ...characterPlugins];
       if (plugins?.length > 0) {
         for (const plugin of plugins) {
           if (!plugin) {
             continue;
+          }
+          if (plugin.adapters) {
+            for (const adapter of plugin.adapters) {
+              this.adapters.push(adapter);
+            }
           }
 
           if (plugin.actions) {
@@ -462,16 +388,11 @@ export class AgentRuntime implements IAgentRuntime {
           }
 
           if (plugin.models) {
-            for (const [modelClass, handler] of Object.entries(plugin.models)) {
+            for (const [modelType, handler] of Object.entries(plugin.models)) {
               this.registerModel(
-                modelClass as ModelClass,
+                modelType as ModelType,
                 handler as (params: any) => Promise<any>
               );
-            }
-          }
-          if (plugin.services) {
-            for (const service of plugin.services) {
-              this.registerService(service);
             }
           }
           if (plugin.routes) {
@@ -499,10 +420,8 @@ export class AgentRuntime implements IAgentRuntime {
       if (plugin.init) {
         await plugin.init(plugin.config, this);
       }
-      if (plugin.clients) {
-        for (const _client of plugin.clients) {
-          await Promise.all(plugin.clients.map(client => this.registerClient(client)));
-        }
+      if (plugin.services) {
+          await Promise.all(plugin.services.map(service => this.registerService(service)));
       }
     }
 
@@ -562,7 +481,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     // Check if TEXT_EMBEDDING model is registered
-    const embeddingModel = this.getModel(ModelClass.TEXT_EMBEDDING);
+    const embeddingModel = this.getModel(ModelTypes.TEXT_EMBEDDING);
     if (!embeddingModel) {
       logger.warn(
         `[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered. Skipping embedding dimension setup.`
@@ -570,13 +489,6 @@ export class AgentRuntime implements IAgentRuntime {
     } else {
       // Only run ensureEmbeddingDimension if we have an embedding model
       await this.ensureEmbeddingDimension();
-    }
-
-    // Initialize services
-    if (this.services) {
-      for (const [_, service] of this.services.entries()) {
-        await service.initialize(this);
-      }
     }
   }
 
@@ -638,6 +550,18 @@ export class AgentRuntime implements IAgentRuntime {
    */
   getConversationLength() {
     return this.#conversationLength;
+  }
+
+  registerDatabaseAdapter(adapter: IDatabaseAdapter) {
+    this.adapters.push(adapter);
+  }
+
+  getDatabaseAdapters() {
+    return this.adapters;
+  }
+
+  getDatabaseAdapter() {
+    return this.adapters[0];
   }
 
   /**
@@ -796,7 +720,7 @@ export class AgentRuntime implements IAgentRuntime {
         this.character.templates?.evaluationTemplate || evaluationTemplate,
     });
 
-    const result = await this.useModel(ModelClass.TEXT_SMALL, {
+    const result = await this.useModel(ModelTypes.TEXT_SMALL, {
       context,
     });
 
@@ -1450,7 +1374,9 @@ export class AgentRuntime implements IAgentRuntime {
   async registerService(service: Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
     if(!serviceType) {
-      throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
+      console.log("*** service has no serviceType", service);
+      return;
+      // throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
     }
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,
@@ -1464,8 +1390,10 @@ export class AgentRuntime implements IAgentRuntime {
       return;
     }
 
+    const serviceInstance = await service.start(this);
+
     // Add the service to the services map
-    this.services.set(serviceType, service);
+    this.services.set(serviceType, serviceInstance);
     logger.success(
       `${this.character.name}(${this.agentId}) - Service ${serviceType} registered successfully`
     );
@@ -1489,29 +1417,32 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   registerModel(
-    modelClass: ModelClass,
+    modelType: ModelType,
     handler: (params: any) => Promise<any>
   ) {
-    if (!this.models.has(modelClass)) {
-      this.models.set(modelClass, []);
+    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+    if (!this.models.has(modelKey)) {
+      this.models.set(modelKey, []);
     }
-    this.models.get(modelClass)?.push(handler);
+    this.models.get(modelKey)?.push(handler);
   }
 
   getModel(
-    modelClass: ModelClass
+    modelType: ModelType
   ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined {
-    const models = this.models.get(modelClass);
+    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+    const models = this.models.get(modelKey);
     if (!models?.length) {
       return undefined;
     }
     return models[0];
   }
 
-  async useModel(modelClass: ModelClass, params: any): Promise<any> {
-    const model = this.getModel(modelClass);
+  async useModel(modelType: ModelType, params: any): Promise<any> {
+    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+    const model = this.getModel(modelKey);
     if (!model) {
-      throw new Error(`No handler found for delegate type: ${modelClass}`);
+      throw new Error(`No handler found for delegate type: ${modelKey}`);
     }
 
     const response = await model(this, params);
@@ -1558,7 +1489,7 @@ export class AgentRuntime implements IAgentRuntime {
     }
 
     try {
-      const model = this.getModel(ModelClass.TEXT_EMBEDDING);
+      const model = this.getModel(ModelTypes.TEXT_EMBEDDING);
       if (!model) {
         throw new Error(
           `[AgentRuntime][${this.character.name}] No TEXT_EMBEDDING model registered`
@@ -1568,7 +1499,7 @@ export class AgentRuntime implements IAgentRuntime {
       logger.info(
         `[AgentRuntime][${this.character.name}] Getting embedding dimensions`
       );
-      const embedding = await this.useModel(ModelClass.TEXT_EMBEDDING, null);
+      const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, null);
 
       if (!embedding || !embedding.length) {
         throw new Error(

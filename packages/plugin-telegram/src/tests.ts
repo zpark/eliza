@@ -2,14 +2,14 @@ import { logger, type TestSuite, type IAgentRuntime } from "@elizaos/core";
 import type { Telegraf } from "telegraf";
 import type { MessageManager } from "./messageManager";
 import type { Context } from "telegraf";
-import type { TelegramClient } from ".";
+import type { TelegramService } from ".";
 
 const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
 
 export class TelegramTestSuite implements TestSuite {
   name = "telegram";
-  private telegramClient: TelegramClient = null;
+  private telegramClient: TelegramService = null;
   private bot: Telegraf<Context> | null = null;
   private messageManager: MessageManager | null = null;
   tests: { name: string; fn: (runtime: IAgentRuntime) => Promise<void> }[];
@@ -70,7 +70,7 @@ export class TelegramTestSuite implements TestSuite {
   
 
   async testCreatingTelegramBot(runtime: IAgentRuntime) {
-    this.telegramClient = runtime.getClient("telegram") as TelegramClient;
+    this.telegramClient = runtime.getService("telegram") as TelegramService;
     this.bot = this.telegramClient.messageManager.bot;
     this.messageManager = this.telegramClient.messageManager;
     logger.success("Telegram bot initialized successfully.");

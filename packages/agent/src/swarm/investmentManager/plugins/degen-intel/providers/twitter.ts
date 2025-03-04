@@ -28,7 +28,7 @@ export default class Twitter {
 			});
 
 			// get the twitterClient from runtime
-			const twitterClient = this.runtime.getClient("twitter");
+			const twitterClient = this.runtime.getService(ServiceTypes.TWITTER);
 			if (!twitterClient) {
 				logger.error("Twitter client not found");
 				return false;

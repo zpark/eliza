@@ -5,7 +5,7 @@ import {
     type IAgentRuntime,
     type IVideoService,
     type Memory,
-    ModelClass, parseJSONObjectFromText, ServiceType,
+    ModelTypes, parseJSONObjectFromText, ServiceTypes,
     type State
 } from "@elizaos/core";
 
@@ -38,7 +38,7 @@ const getMediaUrl = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
 
@@ -85,7 +85,7 @@ export default {
             await callback(response.content);
         }
         const videoService = runtime
-            .getService<IVideoService>(ServiceType.VIDEO);
+            .getService<IVideoService>(ServiceTypes.VIDEO);
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         }

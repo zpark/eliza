@@ -1,7 +1,7 @@
 
 import { MemoryManager } from "../memory.ts";
 import { formatMessages } from "../messages.ts";
-import { type IAgentRuntime, type Memory, ModelClass, type Provider, type State } from "../types.ts";
+import { type IAgentRuntime, type Memory, ModelTypes, type Provider, type State } from "../types.ts";
 
 function formatFacts(facts: Memory[]) {
     return facts
@@ -20,7 +20,7 @@ const factsProvider: Provider = {
             actors: state?.actorsData,
         });
 
-        const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, recentMessages);
+        const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, recentMessages);
 
         const memoryManager = new MemoryManager({
             runtime,

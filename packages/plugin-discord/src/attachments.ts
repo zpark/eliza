@@ -5,8 +5,8 @@ import {
     type IPdfService,
     type IVideoService,
     type Media,
-    ModelClass,
-    ServiceType,
+    ModelTypes,
+    ServiceTypes,
 } from "@elizaos/core";
 import { type Attachment, Collection } from "discord.js";
 import ffmpeg from "fluent-ffmpeg";
@@ -33,7 +33,7 @@ async function generateSummary(
   }
   \`\`\``;
 
-    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+    const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         context: prompt,
     });
 
@@ -99,7 +99,7 @@ export class AttachmentManager {
         } else if (
             attachment.contentType?.startsWith("video/") ||
             this.runtime
-                .getService<IVideoService>(ServiceType.VIDEO)
+                .getService<IVideoService>(ServiceTypes.VIDEO)
                 .isVideoUrl(attachment.url)
         ) {
             media = await this.processVideoAttachment(attachment);
@@ -131,7 +131,7 @@ export class AttachmentManager {
                 throw new Error("Unsupported audio/video format");
             }
 
-            const transcription = await this.runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+            const transcription = await this.runtime.useModel(ModelTypes.TRANSCRIPTION, audioBuffer);
             const { title, description } = await generateSummary(
                 this.runtime,
                 transcription
@@ -211,7 +211,7 @@ export class AttachmentManager {
             const response = await fetch(attachment.url);
             const pdfBuffer = await response.arrayBuffer();
             const text = await this.runtime
-                .getService<IPdfService>(ServiceType.PDF)
+                .getService<IPdfService>(ServiceTypes.PDF)
                 .convertPdfToText(Buffer.from(pdfBuffer));
             const { title, description } = await generateSummary(
                 this.runtime,
@@ -279,7 +279,7 @@ export class AttachmentManager {
     ): Promise<Media> {
         try {
             const { description, title } = await
-                this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, attachment.url);
+                this.runtime.useModel(ModelTypes.IMAGE_DESCRIPTION, attachment.url);
             return {
                 id: attachment.id,
                 url: attachment.url,
@@ -311,7 +311,7 @@ export class AttachmentManager {
         attachment: Attachment
     ): Promise<Media> {
         const videoService = this.runtime.getService<IVideoService>(
-            ServiceType.VIDEO
+            ServiceTypes.VIDEO
         );
 
         if (!videoService) {
