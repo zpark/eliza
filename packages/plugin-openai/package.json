@@ -23,7 +23,7 @@
         "@elizaos/core": "workspace:*",
         "ai": "^4.1.25",
         "js-tiktoken": "^1.0.18",
-        "tsup": "8.3.5",
+        "tsup": "8.4.0",
         "zod": "3.21.4"
     },
     "scripts": {

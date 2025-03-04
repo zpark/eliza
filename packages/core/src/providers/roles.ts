@@ -3,12 +3,13 @@ import { logger } from "../logger";
 import { ChannelType, type IAgentRuntime, type Memory, type Provider, type State, type UUID } from "../types";
 
 export const roleProvider: Provider = {
+    name: "roles",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
         _state?: State
     ): Promise<string> => {
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -28,7 +29,7 @@ export const roleProvider: Provider = {
 
             // Get world data instead of using cache
             const worldId = createUniqueUuid(runtime, serverId);
-            const world = await runtime.getWorld(worldId);
+            const world = await runtime.databaseAdapter.getWorld(worldId);
             
             if (!world || !world.metadata?.ownership?.ownerId) {
                 logger.info(`No ownership data found for server ${serverId}, initializing empty role hierarchy`);
@@ -55,7 +56,7 @@ export const roleProvider: Provider = {
                 const userRole = roles[userId];
 
                 // get the user from the database
-                const user = await runtime.getEntity(userId as UUID);
+                const user = await runtime.databaseAdapter.getEntityById(userId as UUID);
 
                 const name = user.metadata[room.source]?.name;
                 const username = user.metadata[room.source]?.username;

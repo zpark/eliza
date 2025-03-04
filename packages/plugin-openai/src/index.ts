@@ -1,18 +1,18 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import type { IAgentRuntime, Plugin } from "@elizaos/core";
+import type { IAgentRuntime, ModelType, Plugin } from "@elizaos/core";
 import {
   type DetokenizeTextParams,
   type GenerateTextParams,
-  ModelClass,
+  ModelTypes,
   type TokenizeTextParams,
 } from "@elizaos/core";
-import { generateText as aiGenerateText } from "ai";
+import { generateText } from "ai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
 import { z } from "zod";
 
-async function tokenizeText(model: ModelClass, context: string) {
+async function tokenizeText(model: ModelType, context: string) {
   const modelName =
-    model === ModelClass.TEXT_SMALL
+    model === ModelTypes.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -22,9 +22,9 @@ async function tokenizeText(model: ModelClass, context: string) {
   return tokens;
 }
 
-async function detokenizeText(model: ModelClass, tokens: number[]) {
+async function detokenizeText(model: ModelType, tokens: number[]) {
   const modelName =
-    model === ModelClass.TEXT_SMALL
+    model === ModelTypes.TEXT_SMALL
       ? process.env.OPENAI_SMALL_MODEL ??
         process.env.SMALL_MODEL ??
         "gpt-4o-mini"
@@ -86,7 +86,7 @@ export const openaiPlugin: Plugin = {
     }
   },
   models: {
-    [ModelClass.TEXT_EMBEDDING]: async (_runtime: IAgentRuntime, text: string | null) => {
+    [ModelTypes.TEXT_EMBEDDING]: async (_runtime: IAgentRuntime, text: string | null) => {
       if (!text) {
         // Return zero vector of appropriate length for model
         return new Array(1536).fill(0);
@@ -114,23 +114,23 @@ export const openaiPlugin: Plugin = {
       const data = await response.json() as { data: [{ embedding: number[] }] };
       return data.data[0].embedding;
     },
-    [ModelClass.TEXT_TOKENIZER_ENCODE]: async (
+    [ModelTypes.TEXT_TOKENIZER_ENCODE]: async (
       _runtime,
       {
       context,
-      modelClass = ModelClass.TEXT_LARGE,
+      modelType = ModelTypes.TEXT_LARGE,
     }: TokenizeTextParams) => {
-      return await tokenizeText(modelClass ?? ModelClass.TEXT_LARGE, context);
+      return await tokenizeText(modelType ?? ModelTypes.TEXT_LARGE, context);
     },
-    [ModelClass.TEXT_TOKENIZER_DECODE]: async (
+    [ModelTypes.TEXT_TOKENIZER_DECODE]: async (
       _runtime,
       {
       tokens,
-      modelClass = ModelClass.TEXT_LARGE,
+      modelType = ModelTypes.TEXT_LARGE,
     }: DetokenizeTextParams) => {
-      return await detokenizeText(modelClass ?? ModelClass.TEXT_LARGE, tokens);
+      return await detokenizeText(modelType ?? ModelTypes.TEXT_LARGE, tokens);
     },
-    [ModelClass.TEXT_SMALL]: async (
+    [ModelTypes.TEXT_SMALL]: async (
       runtime,
       {
       context,
@@ -157,7 +157,7 @@ export const openaiPlugin: Plugin = {
         console.log("generating text")
         console.log(context)
 
-      const { text: openaiResponse } = await aiGenerateText({
+      const { text: openaiResponse } = await generateText({
         model: openai.languageModel(model),
         prompt: context,
         system: runtime.character.system ?? undefined,
@@ -170,7 +170,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelClass.TEXT_LARGE]: async (
+    [ModelTypes.TEXT_LARGE]: async (
       runtime,
       {
       context,
@@ -191,7 +191,7 @@ export const openaiPlugin: Plugin = {
       const model =
         runtime.getSetting("OPENAI_LARGE_MODEL") ?? runtime.getSetting("LARGE_MODEL") ?? "gpt-4o";
 
-      const { text: openaiResponse } = await aiGenerateText({
+      const { text: openaiResponse } = await generateText({
         model: openai.languageModel(model),
         prompt: context,
         system: runtime.character.system ?? undefined,
@@ -204,7 +204,7 @@ export const openaiPlugin: Plugin = {
 
       return openaiResponse;
     },
-    [ModelClass.IMAGE]: async (runtime, params: {
+    [ModelTypes.IMAGE]: async (runtime, params: {
       prompt: string;
       n?: number;
       size?: string;
@@ -230,7 +230,7 @@ export const openaiPlugin: Plugin = {
       const typedData = data as { data: { url: string }[] };
       return typedData.data;
     },
-    [ModelClass.IMAGE_DESCRIPTION]: async (runtime, imageUrl) => {
+    [ModelTypes.IMAGE_DESCRIPTION]: async (runtime, imageUrl) => {
       console.log("IMAGE_DESCRIPTION")
       const baseURL =
         runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
@@ -240,7 +240,7 @@ export const openaiPlugin: Plugin = {
         baseURL,
       });
       
-      const { text } = await aiGenerateText({
+      const { text } = await generateText({
         model: openai.languageModel(
           runtime.getSetting("OPENAI_SMALL_MODEL") ?? "gpt-4o-mini"
         ),
@@ -276,7 +276,7 @@ export const openaiPlugin: Plugin = {
         description: descriptionMatch[1]
       };
     },
-    [ModelClass.TRANSCRIPTION]: async (runtime, audioBuffer: Buffer) => {
+    [ModelTypes.TRANSCRIPTION]: async (runtime, audioBuffer: Buffer) => {
       console.log("audioBuffer", audioBuffer)
       const baseURL =
         runtime.getSetting("OPENAI_BASE_URL") ?? "https://api.openai.com/v1";
@@ -323,7 +323,7 @@ export const openaiPlugin: Plugin = {
           name: 'openai_test_text_embedding',
           fn: async (runtime) => {
             try {
-              const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, "Hello, world!");
+              const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, "Hello, world!");
               console.log("embedding", embedding);
             } catch (error) {
               console.error("Error in test_text_embedding:", error);
@@ -335,7 +335,7 @@ export const openaiPlugin: Plugin = {
           name: 'openai_test_text_large',
           fn: async (runtime) => {
             try {
-              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+              const text = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 context: "Debug Mode:",
                 prompt: "What is the nature of reality in 10 words?",
               });
@@ -353,7 +353,7 @@ export const openaiPlugin: Plugin = {
           name: 'openai_test_text_small',
           fn: async (runtime) => {
             try {
-              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+              const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context: "Debug Mode:",
                 prompt: "What is the nature of reality in 10 words?",
               });
@@ -372,7 +372,7 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             console.log("openai_test_image_generation");
             try {
-              const image = await runtime.useModel(ModelClass.IMAGE, {
+              const image = await runtime.useModel(ModelTypes.IMAGE, {
                 prompt: "A beautiful sunset over a calm ocean",
                 n: 1,
                 size: "1024x1024"
@@ -389,7 +389,7 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             console.log("openai_test_image_description");
             try {
-              const {title, description} = await runtime.useModel(ModelClass.IMAGE_DESCRIPTION, "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg");
+              const {title, description} = await runtime.useModel(ModelTypes.IMAGE_DESCRIPTION, "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg/537px-Vitalik_Buterin_TechCrunch_London_2015_%28cropped%29.jpg");
               console.log("generated with test_image_description:", title, description);
             } catch (error) {
               console.error("Error in test_image_description:", error);
@@ -402,10 +402,10 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             console.log("openai_test_transcription");
             try {
-              const audioData = await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg")
-                .then(res => res.arrayBuffer());
-              const transcription = await runtime.useModel(ModelClass.TRANSCRIPTION, 
-                Buffer.from(new Uint8Array(audioData)));
+              const response = await fetch("https://upload.wikimedia.org/wikipedia/en/4/40/Chris_Benoit_Voice_Message.ogg");
+              const arrayBuffer = await response.arrayBuffer();
+              const transcription = await runtime.useModel(ModelTypes.TRANSCRIPTION, 
+                Buffer.from(new Uint8Array(arrayBuffer)));
               console.log("generated with test_transcription:", transcription);
             } catch (error) {
               console.error("Error in test_transcription:", error);
@@ -417,7 +417,7 @@ export const openaiPlugin: Plugin = {
           name: 'openai_test_text_tokenizer_encode',
           fn: async (runtime) => {
             const context = "Hello tokenizer encode!";
-            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, { context });
             if (!Array.isArray(tokens) || tokens.length === 0) {
               throw new Error("Failed to tokenize text: expected non-empty array of tokens");
             }
@@ -429,9 +429,9 @@ export const openaiPlugin: Plugin = {
           fn: async (runtime) => {
             const context = "Hello tokenizer decode!";
             // Encode the string into tokens first
-            const tokens = await runtime.useModel(ModelClass.TEXT_TOKENIZER_ENCODE, { context });
+            const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, { context });
             // Now decode tokens back into text
-            const decodedText = await runtime.useModel(ModelClass.TEXT_TOKENIZER_DECODE, { tokens });
+            const decodedText = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_DECODE, { tokens });
             if (decodedText !== context) {
               throw new Error(`Decoded text does not match original. Expected "${context}", got "${decodedText}"`);
             }

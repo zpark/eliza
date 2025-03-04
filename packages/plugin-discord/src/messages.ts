@@ -9,7 +9,7 @@ import {
   logger,
   type Media,
   type Memory,
-  ServiceType
+  ServiceTypes
 } from "@elizaos/core";
 import {
   type Client,
@@ -160,7 +160,7 @@ export class MessageManager {
 
           const memories: Memory[] = [];
           for (const m of messages) {
-            let action = content.action;
+            const action = content.action;
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),
@@ -252,11 +252,11 @@ export class MessageManager {
     for (const url of urls) {
       if (
         this.runtime
-          .getService<IVideoService>(ServiceType.VIDEO)
+          .getService<IVideoService>(ServiceTypes.VIDEO)
           ?.isVideoUrl(url)
       ) {
         const videoService = this.runtime.getService<IVideoService>(
-          ServiceType.VIDEO
+          ServiceTypes.VIDEO
         );
         if (!videoService) {
           throw new Error("Video service not found");
@@ -273,7 +273,7 @@ export class MessageManager {
         });
       } else {
         const browserService = this.runtime.getService<IBrowserService>(
-          ServiceType.BROWSER
+          ServiceTypes.BROWSER
         );
         if (!browserService) {
           throw new Error("Browser service not found");

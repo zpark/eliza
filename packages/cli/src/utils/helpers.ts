@@ -1,4 +1,4 @@
-import type { Character, MessageExample } from "@elizaos/core";
+import type { Agent, MessageExample } from "@elizaos/core";
 import { logger } from "./logger";
 import chalk from "chalk";
 
@@ -21,7 +21,7 @@ export function formatMessageExamples(examples: MessageExample[][]): string {
 /**
  * Display character
  */
-export function displayCharacter(data: Partial<Character>, title = "Character Review"): void {
+export function displayAgent(data: Partial<Agent>, title = "Agent Review"): void {
   
   logHeader(title);
   

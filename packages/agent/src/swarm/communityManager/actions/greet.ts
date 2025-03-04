@@ -28,7 +28,7 @@ export const greetAction: Action = {
         message: Memory,
         _state: State
     ): Promise<boolean> => {
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -41,9 +41,7 @@ export const greetAction: Action = {
 
         try {
             // Check if greeting is enabled for this server
-            const settings = await runtime.cacheManager.get<GreetingSettings>(
-                `server_${serverId}_settings_greet`
-            );
+            const settings = await runtime.databaseAdapter.getCache<any>(`server_${serverId}_settings_greet`);
 
             if (!settings?.enabled) {
                 return false;
@@ -74,7 +72,7 @@ export const greetAction: Action = {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -87,9 +85,7 @@ export const greetAction: Action = {
 
         try {
             // Get greeting settings
-            const settings = await runtime.cacheManager.get<GreetingSettings>(
-                `server_${serverId}_settings_greet`
-            );
+            const settings = await runtime.databaseAdapter.getCache<any>(`server_${serverId}_settings_greet`);
 
             if (!settings?.enabled || !settings.channelId) {
                 logger.error("Greeting settings not properly configured");

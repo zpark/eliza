@@ -17,7 +17,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type State,
   type UUID
 } from "../types";
@@ -84,8 +84,8 @@ export const updateEntityAction: Action = {
   description: "Add or edit contact details for a user entity (like twitter, discord, email address, etc.)",
   
   validate: async (
-    runtime: IAgentRuntime,
-    message: Memory,
+    _runtime: IAgentRuntime,
+    _message: Memory,
     _state: State
   ): Promise<boolean> => {
     // Check if we have any registered sources or existing components that could be updated
@@ -97,9 +97,7 @@ export const updateEntityAction: Action = {
     
     // // Get source types from room components
     // const availableSources = new Set(roomComponents.map(c => c.type));
-  
-    // console.log("*** updateEntityAction validate:", availableSources.size > 0)
-    return true; // availableSources.size > 0;
+      return true; // availableSources.size > 0;
   },
   
   handler: async (
@@ -110,7 +108,6 @@ export const updateEntityAction: Action = {
     callback: HandlerCallback,
     responses: Memory[]
   ): Promise<void> => {
-    console.log('*** updateEntityAction handler')
     try {
       // Handle initial responses
       for (const response of responses) {
@@ -120,7 +117,7 @@ export const updateEntityAction: Action = {
       const sourceEntityId = message.userId;
       const roomId = message.roomId;
       const agentId = runtime.agentId;
-      const room = await runtime.getRoom(roomId);
+      const room = await runtime.databaseAdapter.getRoom(roomId);
       const worldId = room.worldId;
 
       // First, find the entity being referenced
@@ -144,14 +141,10 @@ export const updateEntityAction: Action = {
         template: componentTemplate,
       });
 
-      console.log("*** updateEntityAction context", context);
-
-      const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
+      const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         context,
         stopSequences: []
       });
-
-      console.log("*** updateEntityAction result", result);
 
       // Parse the generated data
       let parsedResult: any;

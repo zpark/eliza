@@ -6,28 +6,16 @@ import {
     type Entity,
     type Goal,
     type GoalStatus,
-    type IDatabaseCacheAdapter,
     logger,
     type Memory,
     type Participant,
     type Relationship,
     type RoomData,
+    stringToUuid,
+    type Task,
     type UUID,
     type WorldData
 } from "@elizaos/core";
-
-// Define the metadata type inline since we can't import it
-type KnowledgeMetadata = {
-    type: string;
-    source?: string;
-    sourceId?: UUID;
-    scope?: string;
-    timestamp?: number;
-    tags?: string[];
-    documentId?: UUID;
-    position?: number;
-};
-
 import {
     and,
     cosineDistance,
@@ -40,17 +28,10 @@ import {
     sql
 } from "drizzle-orm";
 import { v4 } from "uuid";
-import {
-    characterToInsert,
-    type StoredTemplate,
-    storedToTemplate,
-    templateToStored,
-} from "./schema/character";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "./schema/embedding";
 import {
     agentTable,
     cacheTable,
-    characterTable,
     componentTable,
     embeddingTable,
     entityTable,
@@ -60,13 +41,25 @@ import {
     participantTable,
     relationshipTable,
     roomTable,
-    worldTable,
+    taskTable,
+    worldTable
 } from "./schema/index";
 import type { DrizzleOperations } from "./types";
 
+// Define the metadata type inline since we can't import it
+type MemoryMetadata = {
+    type: string;
+    source?: string;
+    sourceId?: UUID;
+    scope?: string;
+    timestamp?: number;
+    tags?: string[];
+    documentId?: UUID;
+    position?: number;
+};
+
 export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations> 
     extends DatabaseAdapter<TDatabase>
-    implements IDatabaseCacheAdapter
 {
     protected readonly maxRetries: number = 3;
     protected readonly baseDelay: number = 1000;
@@ -77,6 +70,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     protected abstract withDatabase<T>(operation: () => Promise<T>): Promise<T>;
     public abstract init(): Promise<void>;
     public abstract close(): Promise<void>;
+
+    protected agentId: UUID;
+
+    constructor(agentId: UUID) {
+        super();
+        this.agentId = agentId;
+    }
 
     protected async withRetry<T>(operation: () => Promise<T>): Promise<T> {
         let lastError: Error = new Error("Unknown error");
@@ -126,7 +126,20 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         throw lastError;
     }
 
-    async ensureEmbeddingDimension(dimension: number, agentId: UUID) {
+    async ensureAgentExists(agent: Partial<Agent>): Promise<void> {
+        if (!agent.name) {
+            throw new Error("Agent name is required");
+        }
+
+        const agents = await this.getAgents();
+        const existingAgent = agents.find((a: Partial<Agent & { status: string }>) => a.name === agent.name);
+
+        if (!existingAgent) {
+            await this.createAgent(agent);
+        }
+    }
+    
+    async ensureEmbeddingDimension(dimension: number) {
         const existingMemory = await this.db
             .select({
                 embedding: embeddingTable,
@@ -136,7 +149,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 embeddingTable,
                 eq(embeddingTable.memoryId, memoryTable.id)
             )
-            .where(eq(memoryTable.agentId, agentId))
+            .where(eq(memoryTable.agentId, this.agentId))
             .limit(1);
 
         if (existingMemory.length > 0) {
@@ -155,87 +168,92 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         this.embeddingDimension = DIMENSION_MAP[dimension];
     }
 
-    async getAgent(agentId: UUID): Promise<Agent & { character: Character } | null> {
+    async getAgent(agentId: UUID): Promise<Agent | null> {
         return this.withDatabase(async () => {
             const result = await this.db
-                .select({
-                    agent: agentTable,
-                    character: characterTable
-                })
+                .select()
                 .from(agentTable)
-                .leftJoin(characterTable, eq(agentTable.characterId, characterTable.id))
                 .where(eq(agentTable.id, agentId))
                 .limit(1);
 
             if (result.length === 0) return null;
-            return {
-                ...result[0].agent,
-                character: {
-                    ...result[0].character,
-                }
-            };
+            return result[0];
         });
     }
 
-    async createAgent(agent: Agent): Promise<boolean> {
+    async getAgents(): Promise<Agent[]> {
+        return this.withDatabase(async () => {
+            const result = await this.db
+                .select()
+                .from(agentTable);
+            
+            return result;
+        });
+    }
+
+    async createAgent(agent: Partial<Agent>): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                return await this.db.transaction(async (tx) => {
-                    await tx.insert(agentTable).values(agent);
-                    logger.debug("Agent created successfully:", {
-                        agentId: agent.id
+                await this.db.transaction(async (tx) => {
+                    await tx.insert(agentTable).values({
+                       ...agent,
                     });
-                    return true;
                 });
+                
+                logger.debug("Agent created successfully:", {
+                    agentId: agent.id
+                });
+                return true;
             } catch (error) {
                 logger.error("Error creating agent:", {
                     error: error instanceof Error ? error.message : String(error),
                     agentId: agent.id,
                     agent
                 });
-                console.trace();
                 return false;
             }
         });
     }
-  
-    async updateAgent(agent: Agent): Promise<boolean> {
+
+    async updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                await this.db
-                    .update(agentTable)
-                    .set({
-                        characterId: agent.characterId,
-                        enabled: agent.enabled
-                    })
-                    .where(eq(agentTable.id, agent.id));
+                if (!agent.id) {
+                    throw new Error("Agent ID is required for update");
+                }
+                
+                await this.db.transaction(async (tx) => {
+                    await tx
+                        .update(agentTable)
+                        .set({
+                            ...agent,
+                            updatedAt: Date.now(),
+                        })
+                        .where(eq(agentTable.id, agentId));
+                });
+                
+                logger.debug("Agent updated successfully:", {
+                    agentId
+                });
                 return true;
             } catch (error) {
                 logger.error("Error updating agent:", {
                     error: error instanceof Error ? error.message : String(error),
-                    agentId: agent.id
+                    agentId,
+                    agent
                 });
                 return false;
             }
         });
     }
 
-    async getAgents(): Promise<Agent[]> {
+    async deleteAgent(agentId: UUID): Promise<boolean> {
+        // casacade delete all related for the agent
         return this.withDatabase(async () => {
-            const result = await this.db.select({
-                agent: agentTable,
-                character: characterTable
-            }).from(agentTable).leftJoin(characterTable, eq(agentTable.characterId, characterTable.id));
-            
-            return result.map(row => ({
-                id: row.agent.id,
-                enabled: row.agent.enabled,
-                character: {
-                    id: row.character.id,
-                    name: row.character.name,
-                    bio: row.character.bio[0]
-                }
-            }));
+            await this.db.transaction(async (tx) => {
+                await tx.delete(agentTable).where(eq(agentTable.id, agentId));
+            });
+            return true;
         });
     }
 
@@ -279,7 +297,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null> {
+    async getEntityById(userId: UUID): Promise<Entity | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
@@ -294,7 +312,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .where(
                     and(
                         eq(entityTable.id, userId),
-                        eq(entityTable.agentId, agentId)
+                        eq(entityTable.agentId, this.agentId)
                     )
                 );
 
@@ -310,7 +328,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]> {
+    async getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]> {
         return this.withDatabase(async () => {
             const query = this.db
                 .select({
@@ -322,7 +340,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     entityTable,
                     and(
                         eq(participantTable.userId, entityTable.id),
-                        eq(entityTable.agentId, agentId)
+                        eq(entityTable.agentId, this.agentId)
                     )
                 );
 
@@ -338,8 +356,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             // Group components by entity if includeComponents is true
             const entitiesByIdMap = new Map<UUID, Entity>();
             
-            result.forEach(row => {
-                if (!row.entity) return;
+            for (const row of result) {
+                if (!row.entity) continue;
                 
                 const entityId = row.entity.id as UUID;
                 if (!entitiesByIdMap.has(entityId)) {
@@ -351,13 +369,15 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 }
 
                 if (includeComponents && row.components) {
-                    const entity = entitiesByIdMap.get(entityId)!;
-                    if (!entity.components) {
-                        entity.components = [];
+                    const entity = entitiesByIdMap.get(entityId);
+                    if (entity) {
+                        if (!entity.components) {
+                            entity.components = [];
+                        }
+                        entity.components.push(row.components);
                     }
-                    entity.components.push(row.components);
                 }
-            });
+            }
 
             return Array.from(entitiesByIdMap.values());
         });
@@ -386,9 +406,39 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
+    /**
+     * Ensures an entity exists, creating it if it doesn't
+     * @param entity The entity to ensure exists
+     * @returns Promise resolving to boolean indicating success
+     */
+    protected async ensureEntityExists(entity: Entity): Promise<boolean> {
+        if (!entity.id) {
+            logger.error("Entity ID is required for ensureEntityExists");
+            return false;
+        }
+
+        try {
+            const existingEntity = await this.getEntityById(entity.id);
+            
+            if (!existingEntity) {
+                return await this.createEntity(entity);
+            }
+            
+            return true;
+        } catch (error) {
+            logger.error("Error ensuring entity exists:", {
+                error: error instanceof Error ? error.message : String(error),
+                entityId: entity.id,
+            });
+            return false;
+        }
+    }
+
     async updateEntity(entity: Entity): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.update(entityTable).set(entity).where(and(eq(entityTable.id, entity.id!), eq(entityTable.agentId, entity.agentId!)));
+            await this.db.update(entityTable).set(entity)
+            .where(and(eq(entityTable.id, entity.id as UUID),
+             eq(entityTable.agentId, entity.agentId)));
         });
     }
 
@@ -469,7 +519,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         count?: number;
         unique?: boolean;
         tableName: string;
-        agentId?: UUID;
         start?: number;
         end?: number;
     }): Promise<Memory[]> {
@@ -494,9 +543,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 conditions.push(eq(memoryTable.unique, true));
             }
 
-            if (params.agentId) {
-                conditions.push(eq(memoryTable.agentId, params.agentId));
-            }
+            conditions.push(eq(memoryTable.agentId, this.agentId));
 
             const query = this.db
                 .select({
@@ -545,7 +592,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async getMemoriesByRoomIds(params: {
         roomIds: UUID[];
-        agentId?: UUID;
         tableName: string;
         limit?: number;
     }): Promise<Memory[]> {
@@ -557,9 +603,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 inArray(memoryTable.roomId, params.roomIds),
             ];
 
-            if (params.agentId) {
-                conditions.push(eq(memoryTable.agentId, params.agentId));
-            }
+            conditions.push(eq(memoryTable.agentId, this.agentId));
 
             const query = this.db
                 .select({
@@ -780,7 +824,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async searchMemories(params: {
         tableName: string;
-        agentId: UUID;
         roomId: UUID;
         embedding: number[];
         match_threshold: number;
@@ -790,7 +833,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         return await this.searchMemoriesByEmbedding(params.embedding, {
             match_threshold: params.match_threshold,
             count: params.count,
-            agentId: params.agentId,
             roomId: params.roomId,
             unique: params.unique,
             tableName: params.tableName,
@@ -828,7 +870,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             match_threshold?: number;
             count?: number;
             roomId?: UUID;
-            agentId?: UUID;
             unique?: boolean;
             tableName: string;
         }
@@ -848,9 +889,9 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
             if (params.unique) {
                 conditions.push(eq(memoryTable.unique, true));
             }
-            if (params.agentId) {
-                conditions.push(eq(memoryTable.agentId, params.agentId));
-            }
+            
+            conditions.push(eq(memoryTable.agentId, this.agentId));
+            
             if (params.roomId) {
                 conditions.push(eq(memoryTable.roomId, params.roomId));
             }
@@ -892,7 +933,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async createMemory(memory: Memory & { metadata?: KnowledgeMetadata }, tableName: string): Promise<UUID> {
+    async createMemory(memory: Memory & { metadata?: MemoryMetadata }, tableName: string): Promise<UUID> {
         logger.debug("DrizzleAdapter createMemory:", {
             memoryId: memory.id,
             embeddingLength: memory.embedding?.length,
@@ -901,7 +942,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
         let isUnique = true;
         if (memory.embedding && Array.isArray(memory.embedding)) {
-            logger.info("Searching for similar memories:");
             const similarMemories = await this.searchMemoriesByEmbedding(
                 memory.embedding,
                 {
@@ -1079,7 +1119,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 name: row.name ?? "",
                 status: (row.status ?? "NOT_STARTED") as GoalStatus,
                 description: row.description ?? "",
-                objectives: row.objectives as any[],
+                objectives: row.objectives as unknown[],
                 createdAt: row.createdAt,
             }));
         });
@@ -1166,20 +1206,20 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null> {
+    async getRoom(roomId: UUID): Promise<RoomData | null> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
-                    id: roomTable.id as any,
-                    channelId: roomTable.channelId as any,
-                    agentId: roomTable.agentId as any,
-                    serverId: roomTable.serverId as any,
-                    worldId: roomTable.worldId as any,
-                    type: roomTable.type as any,
-                    source: roomTable.source as any,
+                    id: roomTable.id,
+                    channelId: roomTable.channelId,
+                    agentId: roomTable.agentId,
+                    serverId: roomTable.serverId,
+                    worldId: roomTable.worldId,
+                    type: roomTable.type,
+                    source: roomTable.source,
                 })
                 .from(roomTable)
-                .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, agentId)))
+                .where(and(eq(roomTable.id, roomId), eq(roomTable.agentId, this.agentId)))
                 .limit(1);
             if (result.length === 0) return null;
             return result[0]
@@ -1198,17 +1238,17 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async updateRoom(room: RoomData): Promise<void> {
         return this.withDatabase(async () => {
-            await this.db.update(roomTable).set(room).where(eq(roomTable.id, room.id));
+            await this.db.update(roomTable).set({ ...room, agentId: this.agentId }).where(eq(roomTable.id, room.id));
         });
     }
 
-    async createRoom({id, name, agentId, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID> {
+    async createRoom({id, name, source, type, channelId, serverId, worldId}: RoomData): Promise<UUID> {
         return this.withDatabase(async () => {
             const newRoomId = id || v4();
             await this.db.insert(roomTable).values({
                 id: newRoomId,
                 name,
-                agentId: agentId as UUID,
+                agentId: this.agentId,
                 source,
                 type,
                 channelId,
@@ -1220,7 +1260,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async removeRoom(roomId: UUID): Promise<void> {
+    async deleteRoom(roomId: UUID): Promise<void> {
         if (!roomId) throw new Error("Room ID is required");
         return this.withDatabase(async () => {
             await this.db.transaction(async (tx) => {
@@ -1229,7 +1269,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]> {
+    async getRoomsForParticipant(userId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({ roomId: participantTable.roomId })
@@ -1238,7 +1278,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .where(
                     and(
                         eq(participantTable.userId, userId),
-                        eq(roomTable.agentId, agentId)
+                        eq(roomTable.agentId, this.agentId)
                     )
                 );
 
@@ -1246,7 +1286,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]> {
+    async getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .selectDistinct({ roomId: participantTable.roomId })
@@ -1255,7 +1295,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .where(
                     and(
                         inArray(participantTable.userId, userIds),
-                        eq(roomTable.agentId, agentId)
+                        eq(roomTable.agentId, this.agentId)
                     )
                 );
 
@@ -1263,24 +1303,23 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean> {
+    async addParticipant(userId: UUID, roomId: UUID): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
-                await this.db.transaction(async (tx) => {
-                    await tx.insert(participantTable).values({
-                        id: v4(),
-                        userId,
-                        roomId,
-                        agentId
-                    });
-                });
+                await this.db.insert(participantTable).values({
+                    userId,
+                    roomId,
+                    agentId: this.agentId,
+                })
+                .onConflictDoNothing();
                 return true;
             } catch (error) {
-                logger.error("Failed to add participant:", {
+                logger.error("Error adding participant", {
                     error:
                         error instanceof Error ? error.message : String(error),
                     userId,
                     roomId,
+                    agentId: this.agentId,
                 });
                 return false;
             }
@@ -1298,12 +1337,10 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                                 eq(participantTable.userId, userId),
                                 eq(participantTable.roomId, roomId)
                             )
-                        )
-                        .returning();
+                        ).returning();
                 });
                 
                 const removed = result.length > 0;
-                
                 logger.debug(`Participant ${removed ? 'removed' : 'not found'}:`, {
                     userId,
                     roomId,
@@ -1323,7 +1360,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]> {
+    async getParticipantsForAccount(userId: UUID): Promise<Participant[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({
@@ -1334,16 +1371,20 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .from(participantTable)
                 .where(eq(participantTable.userId, userId));
 
-            const account = await this.getEntityById(userId, agentId);
+            const account = await this.getEntityById(userId);
+
+            if (!account) {
+                return [];
+            }
 
             return result.map((row) => ({
                 id: row.id as UUID,
-                account: account!,
+                account: account,
             }));
         });
     }
 
-    async getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]> {
+    async getParticipantsForRoom(roomId: UUID): Promise<UUID[]> {
         return this.withDatabase(async () => {
             const result = await this.db
                 .select({ userId: participantTable.userId })
@@ -1351,7 +1392,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 .where(
                     and(
                         eq(participantTable.roomId, roomId),
-                        eq(participantTable.agentId, agentId)
+                        eq(participantTable.agentId, this.agentId)
                     )
                 );
 
@@ -1362,7 +1403,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async getParticipantUserState(
         roomId: UUID,
         userId: UUID,
-        agentId: UUID
     ): Promise<"FOLLOWED" | "MUTED" | null> {
         return this.withDatabase(async () => {
             const result = await this.db
@@ -1372,7 +1412,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     and(
                         eq(participantTable.roomId, roomId),
                         eq(participantTable.userId, userId),
-                        eq(participantTable.agentId, agentId)
+                        eq(participantTable.agentId, this.agentId)
                     )
                 )
                 .limit(1);
@@ -1386,7 +1426,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async setParticipantUserState(
         roomId: UUID,
         userId: UUID,
-        agentId: UUID,
         state: "FOLLOWED" | "MUTED" | null
     ): Promise<void> {
         return this.withDatabase(async () => {
@@ -1399,7 +1438,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                             and(
                                 eq(participantTable.roomId, roomId),
                                 eq(participantTable.userId, userId),
-                                eq(participantTable.agentId, agentId)
+                                eq(participantTable.agentId, this.agentId)
                             )
                         );
                 });
@@ -1418,27 +1457,25 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async createRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
         tags?: string[];
-        metadata?: { [key: string]: any };
+        metadata?: { [key: string]: unknown };
     }): Promise<boolean> {
-        return this.withDatabase(async () => {
-            console.trace()
+        return this.withDatabase(async () => {const id = v4();
+            const saveParams = {
+                id,
+                sourceEntityId: params.sourceEntityId,
+                targetEntityId: params.targetEntityId,
+                agentId: this.agentId,
+                tags: params.tags || [],
+                metadata: params.metadata || {},
+            }
             try {
-                const id = v4();
-                await this.db.insert(relationshipTable).values({
-                    id,
-                    sourceEntityId: params.sourceEntityId,
-                    targetEntityId: params.targetEntityId,
-                    agentId: params.agentId,
-                    tags: params.tags || [],
-                    metadata: params.metadata || {},
-                });
+                await this.db.insert(relationshipTable).values(saveParams);
                 return true;
             } catch (error) {
                 logger.error("Error creating relationship:", {
                     error: error instanceof Error ? error.message : String(error),
-                    params,
+                    saveParams,
                 });
                 return false;
             }
@@ -1467,7 +1504,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async getRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
     }): Promise<Relationship | null> {
         return this.withDatabase(async () => {
             try {
@@ -1478,7 +1514,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         and(
                             eq(relationshipTable.sourceEntityId, params.sourceEntityId),
                             eq(relationshipTable.targetEntityId, params.targetEntityId),
-                            eq(relationshipTable.agentId, params.agentId)
+                            eq(relationshipTable.agentId, this.agentId)
                         )
                     )
                     .limit(1);
@@ -1508,7 +1544,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async getRelationships(params: { 
         userId: UUID;
-        agentId: UUID;
         tags?: string[];
     }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
@@ -1519,13 +1554,13 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     .where(
                         and(
                             eq(relationshipTable.sourceEntityId, params.userId),
-                            eq(relationshipTable.agentId, params.agentId)
+                            eq(relationshipTable.agentId, this.agentId)
                         )
                     );
 
                 // Filter by tags if provided
                 if (params.tags && params.tags.length > 0) {
-                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags)}]::text[]`);
+                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags, ', ')}]::text[]`);
                 }
 
                 const results = await query;
@@ -1549,10 +1584,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getCache(params: {
-        agentId: UUID;
-        key: string;
-    }): Promise<string | undefined> {
+    async getCache<T>(key: string): Promise<T | undefined> {
         return this.withDatabase(async () => {
             try {
                 const result = await this.db
@@ -1560,43 +1592,39 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     .from(cacheTable)
                     .where(
                         and(
-                            eq(cacheTable.agentId, params.agentId),
-                            eq(cacheTable.key, params.key)
+                            eq(cacheTable.agentId, this.agentId),
+                            eq(cacheTable.key, key)
                         )
                     );
 
-                return result[0]?.value || undefined;
+                return result[0]?.value as T | undefined;
             } catch (error) {
                 logger.error("Error fetching cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
-                    key: params.key,
-                    agentId: params.agentId,
+                    key: key,
+                    agentId: this.agentId,
                 });
                 return undefined;
             }
         });
     }
 
-    async setCache(params: {
-        agentId: UUID;
-        key: string;
-        value: string;
-    }): Promise<boolean> {
+    async setCache<T>(key: string, value: T): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {
                     await tx
                         .insert(cacheTable)
                         .values({
-                            key: params.key,
-                            agentId: params.agentId,
-                            value: sql`${params.value}::jsonb`,
+                            key: key,
+                            agentId: this.agentId,
+                            value: value,
                         })
                         .onConflictDoUpdate({
                             target: [cacheTable.key, cacheTable.agentId],
                             set: {
-                                value: params.value,
+                                value: value,
                             },
                         });
                 });
@@ -1605,18 +1633,15 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 logger.error("Error setting cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
-                    key: params.key,
-                    agentId: params.agentId,
+                    key: key,
+                    agentId: this.agentId,
                 });
                 return false;
             }
         });
     }
 
-    async deleteCache(params: {
-        agentId: UUID;
-        key: string;
-    }): Promise<boolean> {
+    async deleteCache(key: string): Promise<boolean> {
         return this.withDatabase(async () => {
             try {
                 await this.db.transaction(async (tx) => {
@@ -1624,8 +1649,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         .delete(cacheTable)
                         .where(
                             and(
-                                eq(cacheTable.agentId, params.agentId),
-                                eq(cacheTable.key, params.key)
+                                eq(cacheTable.agentId, this.agentId),
+                                eq(cacheTable.key, key)
                             )
                         );
                 });
@@ -1634,162 +1659,14 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 logger.error("Error deleting cache", {
                     error:
                         error instanceof Error ? error.message : String(error),
-                    key: params.key,
-                    agentId: params.agentId,
+                    key: key,
+                    agentId: this.agentId,
                 });
                 return false;
             }
         });
     }
-    async createCharacter(character: Character): Promise<UUID | undefined> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db.transaction(async (tx) => {
-                    const insertData = characterToInsert({ ...character });
-                    await tx.insert(characterTable).values(insertData);
-                    return character.id;
-                });
-    
-                logger.debug("Character created successfully:", {
-                    name: character.name,
-                });
 
-                return character.id;
-            } catch (error) {
-                logger.error("Failed to create character:", {
-                    error: error instanceof Error ? error.message : String(error),
-                    characterName: character.name,
-                });
-                throw error;
-            }
-        });
-    }
-
-    async listCharacters(): Promise<Character[]> {
-        return this.withDatabase(async () => {
-            const characters = await this.db
-                .select()
-                .from(characterTable)
-                .orderBy(desc(characterTable.createdAt));
-
-            return characters.map((char) => ({
-                name: char.name,
-                username: char.username ?? undefined,
-                system: char.system ?? undefined,
-                templates: char.templates
-                    ? Object.fromEntries(
-                          Object.entries(char.templates).map(
-                              ([key, stored]) => [
-                                  key,
-                                  storedToTemplate(stored as StoredTemplate),
-                              ]
-                          )
-                      )
-                    : undefined,
-                bio: char.bio,
-                messageExamples: char.messageExamples || undefined,
-                postExamples: char.postExamples || undefined,
-                topics: char.topics || undefined,
-                adjectives: char.adjectives || undefined,
-                knowledge: char.knowledge || undefined,
-                plugins: char.plugins || undefined,
-                settings: char.settings || undefined,
-                style: char.style || undefined,
-            }));
-        });
-    }
-
-    async getCharacter(name: string): Promise<Character | null> {
-        return this.withDatabase(async () => {
-            const result = await this.db
-                .select()
-                .from(characterTable)
-                .where(eq(characterTable.name, name))
-                .limit(1);
-
-            if (result.length === 0) return null;
-
-            const char = result[0];
-            return {
-                name: char.name,
-                username: char.username ?? undefined,
-                system: char.system ?? undefined,
-                templates: char.templates
-                    ? Object.fromEntries(
-                          Object.entries(char.templates).map(
-                              ([key, stored]) => [
-                                  key,
-                                  storedToTemplate(stored as StoredTemplate),
-                              ]
-                          )
-                      )
-                    : undefined,
-                bio: char.bio,
-                messageExamples: char.messageExamples || undefined,
-                postExamples: char.postExamples || undefined,
-                topics: char.topics || undefined,
-                adjectives: char.adjectives || undefined,
-                knowledge: char.knowledge || undefined,
-                plugins: char.plugins || undefined,
-                settings: char.settings || undefined,
-                style: char.style || undefined,
-            };
-        });
-    }
-
-    async updateCharacter(
-        name: string,
-        updates: Partial<Character>
-    ): Promise<void> {
-        return this.withDatabase(async () => {
-            try {
-                await this.db.transaction(async (tx) => {
-                    const { templates, ...restUpdates } = updates;
-    
-                    const updateData: Partial<typeof characterTable.$inferInsert> = {
-                        ...restUpdates,
-                        ...(templates && {
-                            templates: Object.fromEntries(
-                                Object.entries(templates).map(([key, value]) => [
-                                    key,
-                                    templateToStored(value),
-                                ])
-                            ),
-                        }),
-                    };
-    
-                    await tx
-                        .update(characterTable)
-                        .set(updateData)
-                        .where(eq(characterTable.name, name));
-                });
-    
-                logger.debug("Character updated successfully:", {
-                    name,
-                    updatedFields: Object.keys(updates),
-                });
-            } catch (error) {
-                logger.error("Failed to update character:", {
-                    name,
-                    error: error instanceof Error ? error.message : String(error),
-                    updatedFields: Object.keys(updates),
-                });
-                throw error;
-            }
-        });
-    }
-
-    async removeCharacter(name: string): Promise<void> {
-        return this.withDatabase(async () => {
-            await this.db.transaction(async (tx) => {
-                await tx
-                    .delete(characterTable)
-                    .where(eq(characterTable.name, name));
-
-                logger.debug("Character removed successfully:", { name });
-            });
-        });
-    }
 
     async createWorld(world: WorldData): Promise<UUID> {
         return this.withDatabase(async () => {
@@ -1809,9 +1686,9 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async getAllWorlds(agentId: UUID): Promise<WorldData[]> {
+    async getAllWorlds(): Promise<WorldData[]> {
         return this.withDatabase(async () => {
-            const result = await this.db.select().from(worldTable).where(eq(worldTable.agentId, agentId));
+            const result = await this.db.select().from(worldTable).where(eq(worldTable.agentId, this.agentId));
             return result as WorldData[];
         });
     }
@@ -1825,6 +1702,187 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async removeWorld(id: UUID): Promise<void> {
         return this.withDatabase(async () => {
             await this.db.delete(worldTable).where(eq(worldTable.id, id));
+        });
+    }
+
+    /**
+     * Creates a new task in the database.
+     * @param task The task object to create
+     * @returns Promise resolving to the UUID of the created task
+     */
+    async createTask(task: Task): Promise<UUID> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                const now = new Date();
+                const metadata = task.metadata || {};
+                
+                // Ensure updatedAt is set in metadata
+                if (!metadata.updatedAt) {
+                    metadata.updatedAt = now.getTime();
+                }
+                const values = {
+                    id: task.id as UUID,
+                    name: task.name,
+                    description: task.description,
+                    roomId: task.roomId,
+                    worldId: task.worldId,
+                    tags: task.tags,
+                    metadata: metadata,
+                    createdAt: now,
+                    updatedAt: now,
+                    agentId: this.agentId
+                }
+                const result = await this.db.insert(taskTable)
+                    .values(values)
+                    .returning({ id: taskTable.id });
+                
+                return result[0].id;
+            });
+        });
+    }
+
+    /**
+     * Retrieves tasks based on specified parameters.
+     * @param params Object containing optional roomId and tags to filter tasks
+     * @returns Promise resolving to an array of Task objects
+     */
+    async getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                let query = this.db.select()
+                    .from(taskTable)
+                    .where(eq(taskTable.agentId, this.agentId));
+                
+                // Apply filters if provided
+                if (params.roomId) {
+                    query = query.where(eq(taskTable.roomId, params.roomId));
+                }
+                
+                if (params.tags && params.tags.length > 0) {
+                    // Filter by tags - tasks that have all of the specified tags
+                    query = query.where(
+                        sql`${taskTable.tags} @> ARRAY[${sql.join(params.tags, ', ')}]::text[]`
+                    );
+                }
+                
+                const results = await query;
+                return results.map(row => ({
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    roomId: row.roomId,
+                    worldId: row.worldId,
+                    tags: row.tags || [],
+                    metadata: row.metadata || {}
+                }));
+            });
+        });
+    }
+
+    /**
+     * Retrieves a specific task by its ID.
+     * @param id The UUID of the task to retrieve
+     * @returns Promise resolving to the Task object if found, null otherwise
+     */
+    async getTask(id: UUID): Promise<Task | null> {
+        return this.withRetry(async () => {
+            return this.withDatabase(async () => {
+                const result = await this.db.select()
+                    .from(taskTable)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    )
+                    .limit(1);
+                
+                if (result.length === 0) {
+                    return null;
+                }
+                
+                const row = result[0];
+                return {
+                    id: row.id,
+                    name: row.name,
+                    description: row.description,
+                    roomId: row.roomId,
+                    worldId: row.worldId,
+                    tags: row.tags || [],
+                    metadata: row.metadata || {}
+                };
+            });
+        });
+    }
+
+    /**
+     * Updates an existing task in the database.
+     * @param id The UUID of the task to update
+     * @param task Partial Task object containing the fields to update
+     * @returns Promise resolving when the update is complete
+     */
+    async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
+        await this.withRetry(async () => {
+            await this.withDatabase(async () => {
+                const updateValues : Partial<Task> & { updatedAt?: number } = {
+                    updatedAt: Date.now()
+                };
+                
+                // Add fields to update if they exist in the partial task object
+                if (task.name !== undefined) updateValues.name = task.name;
+                if (task.description !== undefined) updateValues.description = task.description;
+                if (task.roomId !== undefined) updateValues.roomId = task.roomId;
+                if (task.worldId !== undefined) updateValues.worldId = task.worldId;
+                if (task.tags !== undefined) updateValues.tags = task.tags;
+                
+                // Handle metadata updates
+                if (task.metadata) {
+                    // Get current task to merge metadata
+                    const currentTask = await this.getTask(id);
+                    if (currentTask) {
+                        const currentMetadata = currentTask.metadata || {};
+                        const newMetadata = {
+                            ...currentMetadata,
+                            ...task.metadata,
+                            updatedAt: Date.now()
+                        };
+                        updateValues.metadata = newMetadata;
+                    } else {
+                        updateValues.metadata = {
+                            ...task.metadata,
+                            updatedAt: Date.now()
+                        };
+                    }
+                }
+                
+                await this.db.update(taskTable)
+                    .set(updateValues)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    );
+            });
+        });
+    }
+
+    /**
+     * Deletes a task from the database.
+     * @param id The UUID of the task to delete
+     * @returns Promise resolving when the deletion is complete
+     */
+    async deleteTask(id: UUID): Promise<void> {
+        await this.withRetry(async () => {
+            await this.withDatabase(async () => {
+                await this.db.delete(taskTable)
+                    .where(
+                        and(
+                            eq(taskTable.id, id),
+                            eq(taskTable.agentId, this.agentId)
+                        )
+                    );
+            });
         });
     }
 }

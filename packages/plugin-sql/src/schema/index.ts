@@ -1,6 +1,5 @@
 export { agentTable } from "./agent";
 export { cacheTable } from "./cache";
-export { characterTable } from "./character";
 export { componentTable } from "./component";
 export { embeddingTable } from "./embedding";
 export { entityTable } from "./entity";
@@ -11,3 +10,4 @@ export { participantTable } from "./participant";
 export { relationshipTable } from "./relationship";
 export { roomTable } from "./room";
 export { worldTable } from "./worldTable";
+export { taskTable } from "./tasks";

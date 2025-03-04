@@ -1,19 +1,13 @@
-import path from "node:path";
-import { composeContext } from "@elizaos/core";
-import { parseJSONObjectFromText } from "@elizaos/core";
 import {
     type Action,
-    type ActionExample,
-    type Content,
+    type ActionExample, composeContext, type Content,
     type HandlerCallback,
     type IAgentRuntime,
     type IVideoService,
     type Memory,
-    ModelClass,
-    ServiceType,
-    type State,
+    ModelTypes, parseJSONObjectFromText, ServiceTypes,
+    type State
 } from "@elizaos/core";
-import { generateText } from "@elizaos/core";
 
 export const mediaUrlTemplate = `# Messages we are searching for a media URL
 {{recentMessages}}
@@ -44,10 +38,8 @@ const getMediaUrl = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
 
         const parsedResponse = parseJSONObjectFromText(response) as {
@@ -93,7 +85,7 @@ export default {
             await callback(response.content);
         }
         const videoService = runtime
-            .getService<IVideoService>(ServiceType.VIDEO);
+            .getService<IVideoService>(ServiceTypes.VIDEO);
         if (!state) {
             state = (await runtime.composeState(message)) as State;
         }

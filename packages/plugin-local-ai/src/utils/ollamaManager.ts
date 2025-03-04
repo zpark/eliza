@@ -1,4 +1,4 @@
-import { logger, ModelClass, type GenerateTextParams } from "@elizaos/core";
+import { logger, ModelTypes, type GenerateTextParams } from "@elizaos/core";
 
 import fetch from "node-fetch";
 
@@ -205,7 +205,7 @@ export class OllamaManager {
         isInitialized,
         currentInitState: this.initialized,
         managerInitState: this.isInitialized(),
-        modelClass: params.modelClass,
+        modelType: params.modelType,
         contextLength: params.context?.length,
         timestamp: new Date().toISOString()
       });
@@ -216,7 +216,7 @@ export class OllamaManager {
       }
 
       logger.info("Ollama preparing request:", {
-        model: params.modelClass === ModelClass.TEXT_LARGE ? 
+        model: params.modelType === ModelTypes.TEXT_LARGE ? 
                this.configuredModels.medium : 
                this.configuredModels.small,
         contextLength: params.context.length,
@@ -224,7 +224,7 @@ export class OllamaManager {
       });
 
       const request = {
-        model: params.modelClass === ModelClass.TEXT_LARGE ? 
+        model: params.modelType === ModelTypes.TEXT_LARGE ? 
                this.configuredModels.medium : 
                this.configuredModels.small,
         prompt: params.context,

@@ -13,8 +13,8 @@ export async function getActorDetails({
   runtime: IAgentRuntime;
   roomId: UUID;
 }) {
-  const room = await runtime.getRoom(roomId);
-  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, runtime.agentId, true);
+  const room = await runtime.databaseAdapter.getRoom(roomId);
+  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, true);
   const actors = entities.map(entity => {
     // join all fields of all component.data together
     const allData = entity.components.reduce((acc, component) => {

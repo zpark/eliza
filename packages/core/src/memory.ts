@@ -1,10 +1,10 @@
 import logger from "./logger.ts";
 import {
     MemoryType,
-    ModelClass,
+    ModelTypes,
     type IAgentRuntime,
     type IMemoryManager,
-    type KnowledgeMetadata,
+    type MemoryMetadata,
     type Memory,
     type UUID
 } from "./types.ts";
@@ -37,7 +37,7 @@ export class MemoryManager implements IMemoryManager {
         this.tableName = opts.tableName;
     }
 
-    private validateMetadata(metadata: KnowledgeMetadata): void {
+    private validateMetadata(metadata: MemoryMetadata): void {
         // Check type first before any other validation
         if (!metadata.type) {
             throw new Error('Metadata type is required');
@@ -61,7 +61,7 @@ export class MemoryManager implements IMemoryManager {
         }
     }
 
-    private validateMetadataTransition(oldMetadata: KnowledgeMetadata | undefined, newMetadata: KnowledgeMetadata) {
+    private validateMetadataTransition(oldMetadata: MemoryMetadata | undefined, newMetadata: MemoryMetadata) {
         if (oldMetadata?.type && oldMetadata.type !== newMetadata.type) {
             throw new Error(`Cannot change memory type from ${oldMetadata.type} to ${newMetadata.type}`);
         }
@@ -105,11 +105,11 @@ export class MemoryManager implements IMemoryManager {
 
         try {
             // Generate embedding from text content
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memoryText);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memoryText);
         } catch (error) {
             logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, null);
         }
 
         return memory;
@@ -136,7 +136,6 @@ export class MemoryManager implements IMemoryManager {
             count: opts.count,
             unique: opts.unique,
             tableName: this.tableName,
-            agentId: opts.agentId,
             start: opts.start,
             end: opts.end,
         });
@@ -190,7 +189,6 @@ export class MemoryManager implements IMemoryManager {
         return await this.runtime.databaseAdapter.searchMemories({
             tableName: this.tableName,
             roomId,
-            agentId,
             embedding,
             match_threshold,
             count,
@@ -223,7 +221,7 @@ export class MemoryManager implements IMemoryManager {
                 type: this.tableName,
                 scope: memory.agentId ? 'private' : 'shared',
                 timestamp: Date.now()
-            } as KnowledgeMetadata;
+            } as MemoryMetadata;
         }
 
         // Handle metadata if present
@@ -245,7 +243,7 @@ export class MemoryManager implements IMemoryManager {
         logger.log("Creating Memory", memory.id, memory.content.text);
 
         if (!memory.embedding) {
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, null);
         }
 
         const memoryId = await this.runtime.databaseAdapter.createMemory(
@@ -260,7 +258,6 @@ export class MemoryManager implements IMemoryManager {
     async getMemoriesByRoomIds(params: { roomIds: UUID[], limit?: number; agentId?: UUID }): Promise<Memory[]> {
         return await this.runtime.databaseAdapter.getMemoriesByRoomIds({
             tableName: this.tableName,
-            agentId: params.agentId,
             roomIds: params.roomIds,
             limit: params.limit
         });
@@ -310,7 +307,7 @@ export class MemoryManager implements IMemoryManager {
         );
     }
 
-    private validateMetadataRequirements(metadata: KnowledgeMetadata) {
+    private validateMetadataRequirements(metadata: MemoryMetadata) {
         if (metadata.type === MemoryType.FRAGMENT) {
             if (!metadata.documentId) {
                 throw new Error("Fragment metadata must include documentId");

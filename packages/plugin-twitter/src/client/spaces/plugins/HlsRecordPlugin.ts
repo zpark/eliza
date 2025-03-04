@@ -10,7 +10,7 @@ import { Logger } from '../logger';
  *
  * Workflow:
  *  - Wait for occupancy > 0 (i.e., at least one listener).
- *  - Attempt to retrieve the HLS URL from Twitter (via scraper).
+ *  - Attempt to retrieve the HLS URL from Twitter (via client).
  *  - If valid (HTTP 200), spawn ffmpeg to record the stream.
  *  - If HLS not ready yet (HTTP 404), wait for next occupancy event.
  *
@@ -109,14 +109,14 @@ export class HlsRecordPlugin implements Plugin {
       `[HlsRecordPlugin] occupancy=${update.occupancy} => trying to fetch HLS URL...`,
     );
 
-    const scraper = (this.space as any).scraper;
-    if (!scraper) {
-      this.logger?.warn('[HlsRecordPlugin] No scraper found on space');
+    const client = (this.space as any).client;
+    if (!client) {
+      this.logger?.warn('[HlsRecordPlugin] No client found on space');
       return;
     }
 
     try {
-      const status = await scraper.getAudioSpaceStreamStatus(this.mediaKey);
+      const status = await client.getAudioSpaceStreamStatus(this.mediaKey);
       if (!status?.source?.location) {
         this.logger?.debug(
           '[HlsRecordPlugin] occupancy>0 but no HLS URL => wait next update',

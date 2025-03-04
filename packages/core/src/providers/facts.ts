@@ -1,7 +1,7 @@
 
 import { MemoryManager } from "../memory.ts";
 import { formatMessages } from "../messages.ts";
-import { type IAgentRuntime, type Memory, ModelClass, type Provider, type State } from "../types.ts";
+import { type IAgentRuntime, type Memory, ModelTypes, type Provider, type State } from "../types.ts";
 
 function formatFacts(facts: Memory[]) {
     return facts
@@ -11,6 +11,7 @@ function formatFacts(facts: Memory[]) {
 }
 
 const factsProvider: Provider = {
+    name: "facts",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
         const recentMessagesData = state?.recentMessagesData?.slice(-10);
 
@@ -19,26 +20,27 @@ const factsProvider: Provider = {
             actors: state?.actorsData,
         });
 
-        const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, recentMessages);
+        const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, recentMessages);
 
         const memoryManager = new MemoryManager({
             runtime,
             tableName: "facts",
         });
 
-        const relevantFacts = await memoryManager.searchMemories({
-            embedding,
-            roomId: message.roomId,
-            count: 10,
-            agentId: runtime.agentId,
-        });
-
-        const recentFactsData = await memoryManager.getMemories({
+        const [relevantFacts, recentFactsData] = await Promise.all([
+          memoryManager.searchMemories({
+              embedding,
+              roomId: message.roomId,
+              count: 10,
+              agentId: runtime.agentId,
+          }),
+          memoryManager.getMemories({
             roomId: message.roomId,
             count: 10,
             start: 0,
             end: Date.now(),
-        });
+          })
+        ])
 
         // join the two and deduplicate
         const allFacts = [...relevantFacts, ...recentFactsData].filter(

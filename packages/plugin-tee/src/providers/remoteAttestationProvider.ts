@@ -76,6 +76,7 @@ class PhalaRemoteAttestationProvider extends RemoteAttestationProvider {
 
 // Keep the original provider for backwards compatibility
 const phalaRemoteAttestationProvider: Provider = {
+    name: 'phala-remote-attestation',
     get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaRemoteAttestationProvider(teeMode);
@@ -117,6 +118,7 @@ const phalaRemoteAttestationProvider: Provider = {
 class MarlinRemoteAttestationProvider extends RemoteAttestationProvider {}
 
 const marlinRemoteAttestationProvider: Provider = {
+    name: 'marlin-remote-attestation',
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'Marlin Remote Attestation Provider';
     },
@@ -132,6 +134,7 @@ const marlinRemoteAttestationProvider: Provider = {
 class FleekRemoteAttestationProvider extends RemoteAttestationProvider {}
 
 const fleekRemoteAttestationProvider: Provider = {
+    name: 'fleek-remote-attestation',
     get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
         return 'Fleek Remote Attestation Provider';
     },
@@ -213,6 +216,7 @@ class SgxAttestationProvider extends RemoteAttestationProvider {
 }
 
 const sgxAttestationProvider: Provider = {
+    name: 'sgx-gramine-remote-attestation',
     get: async (runtime: IAgentRuntime, _message: Memory, _state?: State) => {
         const provider = new SgxAttestationProvider();
         const agentId = runtime.agentId;

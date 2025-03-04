@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import { init } from "@/src/commands/init"
 import { plugins } from "@/src/commands/plugins"
-import { character } from "@/src/commands/character"
 import { Command } from "commander"
 import { logger } from "@/src/utils/logger"
 import { teeCommand as tee } from "@/src/commands/tee"
@@ -19,7 +18,6 @@ async function main() {
   program
     .addCommand(init)
     .addCommand(plugins)
-    .addCommand(character)
     .addCommand(agent)
     .addCommand(tee)
   program.parse(process.argv)

@@ -1,37 +1,136 @@
-import {
-    logger,
-    type Client,
-    type IAgentRuntime,
-    type Plugin,
-} from "@elizaos/core";
-import { TelegramClient } from "./telegramClient.ts";
-import { validateTelegramConfig } from "./environment.ts";
-import { TelegramTestSuite } from "./tests.ts";
+import { Service, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
+import { type Context, Telegraf } from "telegraf";
 import replyAction from "./actions/reply.ts";
+import { validateTelegramConfig } from "./environment.ts";
+import { MessageManager } from "./messageManager.ts";
+import { TelegramTestSuite } from "./tests.ts";
+import { TELEGRAM_SERVICE_NAME } from "./constants.ts";
 
+export class TelegramService extends Service {
+    static serviceType = TELEGRAM_SERVICE_NAME;
+    private bot: Telegraf<Context>;
+    public messageManager: MessageManager;
+    private options;
 
-const TelegramClientInterface: Client = {
-    name: 'telegram',
-    start: async (runtime: IAgentRuntime) => {
+    constructor(runtime: IAgentRuntime) {
+        super(runtime);
+        logger.log("📱 Constructing new TelegramService...");
+        this.options = {
+            telegram: {
+                apiRoot: runtime.getSetting("TELEGRAM_API_ROOT") || process.env.TELEGRAM_API_ROOT || "https://api.telegram.org"
+            },
+        };
+        const botToken = runtime.getSetting("TELEGRAM_BOT_TOKEN");
+        this.bot = new Telegraf(botToken,this.options);
+        this.messageManager = new MessageManager(this.bot, this.runtime);
+        logger.log("✅ TelegramService constructor completed");
+    }
+
+    static async start(runtime: IAgentRuntime): Promise<TelegramService> {
         await validateTelegramConfig(runtime);
 
-        const tg = new TelegramClient(
-            runtime,
-            runtime.getSetting("TELEGRAM_BOT_TOKEN")
+        const tg = new TelegramService(
+            runtime
         );
-
-        await tg.start();
 
         logger.success(
             `✅ Telegram client successfully started for character ${runtime.character.name}`
         );
+
+        logger.log("🚀 Starting Telegram bot...");
+        try {
+            await tg.initializeBot();
+            tg.setupMessageHandlers();
+        } catch (error) {
+            logger.error("❌ Failed to launch Telegram bot:", error);
+            throw error;
+        }
         return tg;
-    },
-};
+    }
+
+    static async stop(_runtime: IAgentRuntime) {
+        // Implement shutdown if necessary
+    }
+    
+    private async initializeBot(): Promise<void> {
+        this.bot.launch({ dropPendingUpdates: true, allowedUpdates: [ "message", "message_reaction" ] });
+        logger.log("✨ Telegram bot successfully launched and is running!");
+
+        const botInfo = await this.bot.telegram.getMe();
+        this.bot.botInfo = botInfo;
+        logger.success(`Bot username: @${botInfo.username}`);
+
+        this.messageManager.bot = this.bot;
+        
+        // Emit standardized event that we've connected
+        // this.runtime.emitEvent("SERVER_CONNECTED", {
+        //     name: "Telegram",
+        //     runtime: this.runtime,
+        //     server: {
+        //         id: "telegram-main",
+        //         name: "Telegram"
+        //     },
+        //     source: "telegram"
+        // });
+    }
+
+    private async isGroupAuthorized(ctx: Context): Promise<boolean> {
+        const config = this.runtime.character.settings?.telegram;
+        if (ctx.from?.id === ctx.botInfo?.id) {
+            return false;
+        }
+
+        if (!config?.shouldOnlyJoinInAllowedGroups) {
+            return true;
+        }
+
+        const allowedGroups = config.allowedGroupIds || [];
+        const currentGroupId = ctx.chat.id.toString();
+
+        if (!allowedGroups.includes(currentGroupId)) {
+            logger.info(`Unauthorized group detected: ${currentGroupId}`);
+            try {
+                await ctx.reply("Not authorized. Leaving.");
+                await ctx.leaveChat();
+            } catch (error) {
+                logger.error(
+                    `Error leaving unauthorized group ${currentGroupId}:`,
+                    error
+                );
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private setupMessageHandlers(): void {
+        // Regular message handler
+        this.bot.on("message", async (ctx) => {
+            try {
+                if (!(await this.isGroupAuthorized(ctx))) return;
+                await this.messageManager.handleMessage(ctx);
+            } catch (error) {
+                logger.error("Error handling message:", error);
+            }
+        });
+
+        // Reaction handler
+        this.bot.on("message_reaction", async (ctx) => {
+            try {
+                if (!(await this.isGroupAuthorized(ctx))) return;
+                await this.messageManager.handleReaction(ctx);
+            } catch (error) {
+                logger.error("Error handling reaction:", error);
+            }
+        });
+    }
+}
+
 const telegramPlugin: Plugin = {
-    name: "telegram",
+    name: TELEGRAM_SERVICE_NAME,
     description: "Telegram client plugin",
-    clients: [TelegramClientInterface],
+    services: [TelegramService],
     actions: [replyAction],
     tests: [new TelegramTestSuite()]
 };

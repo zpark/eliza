@@ -21,13 +21,6 @@ const postgresConfigSchema = z.object({
   }),
 })
 
-const redisConfigSchema = z.object({
-  type: z.literal("redis"),
-  config: z.object({
-    url: z.string(),
-  }),
-})
-
 // Main config schema
 export const rawConfigSchema = z
   .object({
@@ -35,7 +28,6 @@ export const rawConfigSchema = z
     database: z.discriminatedUnion("type", [
       sqliteConfigSchema,
       postgresConfigSchema,
-      redisConfigSchema,
     ]),
     plugins: z.object({
       registry: z.string().url(),

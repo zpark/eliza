@@ -1,5 +1,5 @@
 import type { Media, State } from "@elizaos/core";
-import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelClass, type UUID, composeContext, createUniqueUuid, generateText, logger } from "@elizaos/core";
+import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelTypes, type UUID, composeContext, createUniqueUuid, logger } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
 import type { ClientBase } from "./base";
@@ -485,19 +485,17 @@ export const parseActionResponseFromText = (
 export async function generateTweetActions({
     runtime,
     context,
-    modelClass,
+    modelType,
 }: {
     runtime: IAgentRuntime;
     context: string;
-    modelClass: ModelClass;
+    modelType: ModelType;
 }): Promise<ActionResponse | null> {
     let retryDelay = 1000;
     while (true) {
         try {
-            const response = await generateText({
-                runtime,
+            const response = await runtime.useModel(modelType, {
                 context,
-                modelClass,
             });
             logger.debug(
                 "Received response from generateText for tweet actions:",
@@ -547,10 +545,8 @@ Only return the text, no additional formatting.
 ---
 `,
         });
-        const output = await generateText({
-            runtime,
+        const output = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         return output.trim();
     } catch (err) {
@@ -599,10 +595,8 @@ Example:
 ---
 `,
         });
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         const topics = response
             .split(",")

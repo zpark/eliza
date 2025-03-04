@@ -1,3 +1,5 @@
+import EventEmitter from "node:events";
+
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -8,7 +10,7 @@ export type UUID = `${string}-${string}-${string}-${string}-${string}`;
  */
 export interface Content {
   /** The main text content */
-  text: string;
+  text?: string;
 
   /** Optional action associated with the message */
   action?: string;
@@ -114,91 +116,43 @@ export interface Goal {
   objectives: Objective[];
 }
 
+export type ModelType = typeof ModelTypes[keyof typeof ModelTypes] | string;
+
 /**
  * Model size/type classification
  */
-export enum ModelClass {
-  SMALL = "text_small", // for backwards compatibility
-  MEDIUM = "text_large", // for backwards compatibility
-  LARGE = "text_large", // for backwards compatibility
-  TEXT_SMALL = "text_small",
-  TEXT_LARGE = "text_large",
-  TEXT_EMBEDDING = "text_embedding",
-  TEXT_TOKENIZER_ENCODE = "TEXT_TOKENIZER_ENCODE",
-  TEXT_TOKENIZER_DECODE = "TEXT_TOKENIZER_DECODE",
-  TEXT_REASONING_SMALL = "reasoning_small",
-  TEXT_REASONING_LARGE = "reasoning_large",
-  IMAGE = "image",
-  IMAGE_DESCRIPTION = "image_description",
-  TRANSCRIPTION = "transcription",
-  TEXT_TO_SPEECH = "text_to_speech",
-  AUDIO = "audio",
-  VIDEO = "video",
-}
+export const ModelTypes = {
+  SMALL: "text_small", // kept for backwards compatibility
+  MEDIUM: "text_large", // kept for backwards compatibility
+  LARGE: "text_large", // kept for backwards compatibility
+  TEXT_SMALL: "text_small",
+  TEXT_LARGE: "text_large",
+  TEXT_EMBEDDING: "text_embedding",
+  TEXT_TOKENIZER_ENCODE: "TEXT_TOKENIZER_ENCODE",
+  TEXT_TOKENIZER_DECODE: "TEXT_TOKENIZER_DECODE",
+  TEXT_REASONING_SMALL: "reasoning_small",
+  TEXT_REASONING_LARGE: "reasoning_large",
+  IMAGE: "image",
+  IMAGE_DESCRIPTION: "image_description",
+  TRANSCRIPTION: "transcription",
+  TEXT_TO_SPEECH: "text_to_speech",
+  AUDIO: "audio",
+  VIDEO: "video",
+} as const;
 
-export enum ServiceType {
-  TRANSCRIPTION = "transcription",
-  VIDEO = "video",
-  BROWSER = "browser",
-  PDF = "pdf",
-  REMOTE_FILES = "aws_s3",
-  WEB_SEARCH = "web_search",
-  EMAIL = "email",
-  TEE = "tee",
-}
+export type ServiceType = typeof ServiceTypes[keyof typeof ServiceTypes];
 
-/**
- * Model settings
- */
-export type TextModelSettings = {
-  /** Model name */
-  name: string;
-
-  /** Maximum input tokens */
-  maxInputTokens: number;
-
-  /** Maximum output tokens */
-  maxOutputTokens: number;
-
-  /** Optional frequency penalty */
-  frequency_penalty?: number;
-
-  /** Optional presence penalty */
-  presence_penalty?: number;
-
-  /** Optional repetition penalty */
-  repetition_penalty?: number;
-
-  /** Stop sequences */
-  stop: string[];
-
-  /** Temperature setting */
-  temperature: number;
-};
-
-/** Image model settings */
-export type ImageModelSettings = {
-  prompt: string;
-  width: number;
-  height: number;
-  count?: number;
-  negativePrompt?: string;
-  numIterations?: number;
-  guidanceScale?: number;
-  seed?: number;
-  modelId?: string;
-  jobId?: string;
-  stylePreset?: string;
-  hideWatermark?: boolean;
-  safeMode?: boolean;
-  cfgScale?: number;
-};
-
-/** Embedding model settings */
-export type EmbeddingModelSettings = {
-  text: string;
-  dimensions?: number;
-};
+export const ServiceTypes = {
+    TRANSCRIPTION: "transcription",
+    VIDEO: "video",
+    BROWSER: "browser",
+    PDF: "pdf",
+    REMOTE_FILES: "aws_s3",
+    WEB_SEARCH: "web_search",
+    EMAIL: "email",
+    TEE: "tee",
+    TASK: "task",
+} as const;
 
 /**
  * Represents the current state/context of a conversation
@@ -285,15 +239,18 @@ export interface State {
   [key: string]: unknown;
 }
 
+export type MemoryTypeAlias = string
+
 export enum MemoryType {
     DOCUMENT = "document",
     FRAGMENT = "fragment",
     MESSAGE = "message",
-    DESCRIPTION = "description"
+    DESCRIPTION = "description",
+    CUSTOM = "custom"
 }
 
 export interface BaseMetadata {
-    type: MemoryType;          
+    type: MemoryTypeAlias;          
     source?: string;           
     sourceId?: UUID;           
     scope?: string;            
@@ -319,11 +276,17 @@ export interface DescriptionMetadata extends BaseMetadata {
     type: MemoryType.DESCRIPTION;
 }
 
-export type KnowledgeMetadata = 
+export interface CustomMetadata extends BaseMetadata {
+    type: MemoryTypeAlias;
+    [key: string]: unknown;
+}
+
+export type MemoryMetadata = 
     | DocumentMetadata 
     | FragmentMetadata 
     | MessageMetadata 
-    | DescriptionMetadata;
+    | DescriptionMetadata
+    | CustomMetadata;
 
 /**
  * Represents a stored memory/message
@@ -357,7 +320,7 @@ export interface Memory {
   similarity?: number;
 
   /** Metadata for the knowledge */
-  metadata?: KnowledgeMetadata;
+  metadata?: MemoryMetadata;
 }
 
 /**
@@ -467,6 +430,8 @@ export interface Evaluator {
  * Provider for external data/services
  */
 export interface Provider {
+  /** Provider name */
+  name: string;
   /** Data retrieval function */
   get: (runtime: IAgentRuntime, message: Memory, state?: State) => Promise<any>;
 }
@@ -595,97 +560,87 @@ export enum ChannelType {
   FORUM = "FORUM",
 }
 
-export type PostClient = {
-  getPost: (roomId: UUID) => Promise<string | UUID | null>;
-};
-
 /**
  * Client instance
  */
-export type ClientInstance = {
+export abstract class Service extends EventEmitter {
+  /** Additional keys */
   [key: string]: any;
-  /** Stop client connection */
-  stop: (runtime: IAgentRuntime) => Promise<unknown>;
-};
 
-/**
- * Client interface for platform connections
- */
-export type Client = {
-  /** Client name */
-  name: string;
+  /** Runtime instance */
+  protected runtime!: IAgentRuntime;
 
-  /** Client configuration */
+  constructor(runtime?: IAgentRuntime) {
+    super();
+    if (runtime) {
+      this.runtime = runtime;
+    }
+  }
+  
+
+  /** Service type */
+  static serviceType: string;
+
+  /** Service configuration */
   config?: { [key: string]: any };
 
-  /** Start client connection */
-  start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
-};
+  /** Start service connection */
+  static async start(_runtime: IAgentRuntime): Promise<Service> {
+    throw new Error('Not implemented');
+  }
 
-export type Adapter = {
-  /** Initialize adapter */
-  init: (runtime: IAgentRuntime) => Promise<IDatabaseAdapter & IDatabaseCacheAdapter>;
-};
+  /** Stop service connection */
+  static async stop(_runtime: IAgentRuntime): Promise<unknown> {
+    throw new Error('Not implemented');
+  }
+}
 
 export type Route = {
   type: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
-  handler: (req: Request, res: Response) => Promise<void>;
+  // TODO: give me strong types
+  handler: (req: any, res: any, runtime: IAgentRuntime) => Promise<void>;
 };
 
 /**
  * Plugin for extending agent functionality
  */
-export type Plugin = {
-  /** Plugin name */
+export interface Plugin {
   name: string;
-
-  /** Initialization function */
-  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
-
-  /** Plugin configuration */
-  config?: { [key: string]: any };
-
-  /** Plugin description */
   description: string;
-
-  /** Optional actions */
-  actions?: Action[];
-
-  /** Optional providers */
-  providers?: Provider[];
-
-  /** Optional evaluators */
-  evaluators?: Evaluator[];
-
-  /** Optional clients */
-  clients?: Client[];
-
-  /** Optional services */
-  services?: Service[];
-
-  /** Optional adapters */
-  adapters?: Adapter[];
-
-  /** Optional memory managers */
+  
+  // Initialize plugin with runtime services
+  init?: (config: Record<string, string>, runtime: IAgentRuntime) => Promise<void>;
+  
+  // Configuration
+  config?: { [key: string]: any };
+  
+  // Core plugin components
   memoryManagers?: IMemoryManager[];
-
-  /** Optional models */
+  
+  services?: (typeof Service)[];
+  
+  // Entity component definitions
+  componentTypes?: {
+    name: string;
+    schema: Record<string, unknown>;
+    validator?: (data: any) => boolean;
+  }[];
+  
+  // Optional plugin features
+  actions?: Action[];
+  providers?: Provider[];
+  evaluators?: Evaluator[];
+  adapters?: IDatabaseAdapter[];
   models?: {
     [key: string]: (...args: any[]) => Promise<any>;
   };
-
-  /** Optional events */
   events?: {
     [key: string]: ((params: any) => Promise<any>)[];
   };
-
-  /** Optional tests */
-  tests?: TestSuite[];
-
-  /** Optional routes */
   routes?: Route[];
-};
+  tests?: TestSuite[];
+}
 
 export interface ModelConfiguration {
   temperature?: number;
@@ -757,10 +712,10 @@ export interface Character {
   };
 }
 
-export interface Agent {
-  id: UUID;
-  characterId: UUID;
+export interface Agent extends Character {
   enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
 
 /**
@@ -770,23 +725,29 @@ export interface IDatabaseAdapter {
   /** Database instance */
   db: any;
 
-  /** Optional initialization */
-  init(): Promise<void>;
-
   /** Close database connection */
   close(): Promise<void>;
 
   getAgent(agentId: UUID): Promise<Agent | null>;
 
-  createAgent(agent: Agent): Promise<boolean>;
+  /** Get all agents */
+  getAgents(): Promise<Agent[]>;
 
-  updateAgent(agent: Agent): Promise<boolean>;
+  createAgent(agent: Partial<Agent>): Promise<boolean>;
+
+  updateAgent(agentId: UUID, agent: Partial<Agent>): Promise<boolean>;
+
+  deleteAgent(agentId: UUID): Promise<boolean>;
+
+  ensureAgentExists(agent: Partial<Agent>): Promise<void>;
+
+  ensureEmbeddingDimension(dimension: number): Promise<void>;
 
   /** Get entity by ID */
-  getEntityById(userId: UUID, agentId: UUID): Promise<Entity | null>;
+  getEntityById(userId: UUID): Promise<Entity | null>;
 
   /** Get entities for room */
-  getEntitiesForRoom(roomId: UUID, agentId: UUID, includeComponents?: boolean): Promise<Entity[]>;
+  getEntitiesForRoom(roomId: UUID, includeComponents?: boolean): Promise<Entity[]>;
 
   /** Create new entity */
   createEntity(entity: Entity): Promise<boolean>;
@@ -815,7 +776,6 @@ export interface IDatabaseAdapter {
     count?: number;
     unique?: boolean;
     tableName: string;
-    agentId: UUID;
     start?: number;
     end?: number;
   }): Promise<Memory[]>;
@@ -826,7 +786,6 @@ export interface IDatabaseAdapter {
 
   getMemoriesByRoomIds(params: {
     tableName: string;
-    agentId: UUID;
     roomIds: UUID[];
     limit?: number;
   }): Promise<Memory[]>;
@@ -854,7 +813,6 @@ export interface IDatabaseAdapter {
     match_threshold?: number;
     count?: number;
     roomId?: UUID;
-    agentId?: UUID;
     unique?: boolean;
     tableName: string;
   }): Promise<Memory[]>;
@@ -876,7 +834,6 @@ export interface IDatabaseAdapter {
   ): Promise<number>;
 
   getGoals(params: {
-    agentId: UUID;
     roomId: UUID;
     userId?: UUID | null;
     onlyInProgress?: boolean;
@@ -894,23 +851,21 @@ export interface IDatabaseAdapter {
   createWorld({
     id,
     name,
-    agentId,
     serverId,
     metadata
   }: WorldData): Promise<UUID>;
 
-  getWorld(id: UUID, agentId: UUID): Promise<WorldData | null>;
+  getWorld(id: UUID): Promise<WorldData | null>;
 
-  getAllWorlds(agentId: UUID): Promise<WorldData[]>;
+  getAllWorlds(): Promise<WorldData[]>;
 
-  updateWorld(world: WorldData, agentId: UUID): Promise<void>;
+  updateWorld(world: WorldData): Promise<void>;
 
-  getRoom(roomId: UUID, agentId: UUID): Promise<RoomData | null>;
+  getRoom(roomId: UUID): Promise<RoomData | null>;
 
   createRoom({
     id,
     name,
-    agentId,
     source,
     type,
     channelId,
@@ -918,34 +873,32 @@ export interface IDatabaseAdapter {
     worldId,
   }: RoomData): Promise<UUID>;
 
-  removeRoom(roomId: UUID, agentId: UUID): Promise<void>;
+  deleteRoom(roomId: UUID): Promise<void>;
 
-  updateRoom(room: RoomData, agentId: UUID): Promise<void>;
+  updateRoom(room: RoomData): Promise<void>;
 
-  getRoomsForParticipant(userId: UUID, agentId: UUID): Promise<UUID[]>;
+  getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
 
-  getRoomsForParticipants(userIds: UUID[], agentId: UUID): Promise<UUID[]>;
+  getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
   getRooms(worldId: UUID): Promise<RoomData[]>;
   
-  addParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+  addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
-  removeParticipant(userId: UUID, roomId: UUID, agentId: UUID): Promise<boolean>;
+  removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
-  getParticipantsForAccount(userId: UUID, agentId: UUID): Promise<Participant[]>;
+  getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
 
-  getParticipantsForRoom(roomId: UUID, agentId: UUID): Promise<UUID[]>;
+  getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
 
   getParticipantUserState(
     roomId: UUID,
-    userId: UUID,
-    agentId: UUID
+    userId: UUID
   ): Promise<"FOLLOWED" | "MUTED" | null>;
 
   setParticipantUserState(
     roomId: UUID,
     userId: UUID,
-    agentId: UUID,
     state: "FOLLOWED" | "MUTED" | null
   ): Promise<void>;
 
@@ -957,7 +910,6 @@ export interface IDatabaseAdapter {
   createRelationship(params: {
     sourceEntityId: UUID;
     targetEntityId: UUID;
-    agentId: UUID;
     tags?: string[];
     metadata?: { [key: string]: any };
   }): Promise<boolean>;
@@ -977,7 +929,6 @@ export interface IDatabaseAdapter {
   getRelationship(params: {
     sourceEntityId: UUID;
     targetEntityId: UUID;
-    agentId: UUID;
   }): Promise<Relationship | null>;
 
   /**
@@ -987,33 +938,21 @@ export interface IDatabaseAdapter {
    */
   getRelationships(params: {
     userId: UUID;
-    agentId: UUID;
     tags?: string[];
   }): Promise<Relationship[]>;
 
-  createCharacter(character: Character): Promise<UUID | undefined>;
-
-  listCharacters(): Promise<Character[]>;
-
-  getCharacter(name: string): Promise<Character | null>;
-
-  updateCharacter(name: string, updates: Partial<Character>): Promise<void>;
+  ensureEmbeddingDimension(dimension: number): void;
   
-  removeCharacter(name: string): Promise<void>;
+  getCache<T>(key: string): Promise<T | undefined>;
+  setCache<T>(key: string, value: T): Promise<boolean>;
+  deleteCache(key: string): Promise<boolean>;
 
-  ensureEmbeddingDimension(dimension: number, agentId: UUID): void;
-}
-
-export interface IDatabaseCacheAdapter {
-  getCache(params: { agentId: UUID; key: string }): Promise<string | undefined>;
-
-  setCache(params: {
-    agentId: UUID;
-    key: string;
-    value: string;
-  }): Promise<boolean>;
-
-  deleteCache(params: { agentId: UUID; key: string }): Promise<boolean>;
+  // Only task instance methods - definitions are in-memory
+  createTask(task: Task): Promise<UUID>;
+  getTasks(params: { roomId?: UUID; tags?: string[]; }): Promise<Task[]>;
+  getTask(id: UUID): Promise<Task | null>;
+  updateTask(id: UUID, task: Partial<Task>): Promise<void>;
+  deleteTask(id: UUID): Promise<void>;
 }
 
 export interface IMemoryManager {
@@ -1036,9 +975,8 @@ export interface IMemoryManager {
     match_threshold?: number;
     count?: number;
     roomId?: UUID;
-    agentId?: UUID;
     unique?: boolean;
-    metadata?: KnowledgeMetadata;
+    metadata?: MemoryMetadata;
   }): Promise<Memory[]>;
 
   getCachedEmbeddings(
@@ -1064,53 +1002,17 @@ export type CacheOptions = {
   expires?: number;
 };
 
-export enum CacheStore {
-  REDIS = "redis",
-  DATABASE = "database",
-  FILESYSTEM = "filesystem",
-}
-
-export interface ICacheManager {
-  get<T = unknown>(key: string): Promise<T | undefined>;
-  set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
-  delete(key: string): Promise<void>;
-}
-
-export abstract class Service {
-  private static instance: Service | null = null;
-
-  static get serviceType(): ServiceType {
-    throw new Error("Service must implement static serviceType getter");
-  }
-
-  public static getInstance<T extends Service>(): T {
-    if (!Service.instance) {
-      Service.instance = new (Service as any)();
-    }
-    return Service.instance as T;
-  }
-
-  get serviceType(): ServiceType {
-    return (this.constructor as typeof Service).serviceType;
-  }
-
-  // Add abstract initialize method that must be implemented by derived classes
-  abstract initialize(runtime: IAgentRuntime): Promise<void>;
-}
-
 export interface IAgentRuntime {
   // Properties
   agentId: UUID;
   databaseAdapter: IDatabaseAdapter;
-  adapters: Adapter[];
   character: Character;
   providers: Provider[];
   actions: Action[];
   evaluators: Evaluator[];
   plugins: Plugin[];
-
+  services: Map<ServiceType, Service>;
   events: Map<string, ((params: any) => void)[]>;
-
   fetch?: typeof fetch | null;
   routes: Route[];
   messageManager: IMemoryManager;
@@ -1118,25 +1020,23 @@ export interface IAgentRuntime {
   documentsManager: IMemoryManager;
   knowledgeManager: IMemoryManager;
 
-  cacheManager: ICacheManager;
-
-  getClient(name: string): ClientInstance | null;
-  getAllClients(): Map<string, ClientInstance>;
-
-  registerClientInterface(name: string, client: Client): void;
-  registerClient(name: string, client: ClientInstance): void;
-
-  unregisterClient(name: string): void;
-
   initialize(): Promise<void>;
 
   registerMemoryManager(manager: IMemoryManager): void;
 
   getMemoryManager(tableName: string): IMemoryManager | null;
 
-  getService<T extends Service>(service: ServiceType): T | null;
+  getService<T extends Service>(service: ServiceType | string): T | null;
 
-  registerService(service: Service): void;
+  getAllServices(): Map<ServiceType, Service>;
+
+  registerService(service: typeof Service): void;
+
+  registerDatabaseAdapter(adapter: IDatabaseAdapter): void;
+
+  getDatabaseAdapters(): IDatabaseAdapter[];
+
+  getDatabaseAdapter(): IDatabaseAdapter | null;
 
   setSetting(
     key: string,
@@ -1162,18 +1062,6 @@ export interface IAgentRuntime {
     didRespond?: boolean,
     callback?: HandlerCallback
   ): Promise<string[] | null>;
-
-  getOrCreateUser(
-    userId: UUID,
-    names: string[],
-    metadata: {
-      [source: string]: {
-        name: string;
-        userName: string;
-        [key: string]: unknown;
-      };
-    }
-  ): Promise<UUID>;
 
   registerProvider(provider: Provider): void;
 
@@ -1205,20 +1093,12 @@ export interface IAgentRuntime {
 
   ensureParticipantInRoom(userId: UUID, roomId: UUID): Promise<void>;
 
-  getWorld(worldId: UUID): Promise<WorldData | null>;
-
-  getAllWorlds(): Promise<WorldData[]>;
-
-  updateWorld(world: WorldData): Promise<void>;
-
   ensureWorldExists({
     id,
     name,
     serverId,
     metadata
   }: WorldData): Promise<void>;
-
-  getEntity(userId: UUID): Promise<Entity | null>;
 
   ensureRoomExists({
     id,
@@ -1230,8 +1110,6 @@ export interface IAgentRuntime {
     worldId,
   }: RoomData): Promise<void>;
 
-  getRoom(roomId: UUID): Promise<RoomData | null>;
-
   composeState(
     message: Memory,
     additionalKeys?: { [key: string]: unknown }
@@ -1239,38 +1117,26 @@ export interface IAgentRuntime {
 
   updateRecentMessageState(state: State): Promise<State>;
 
-  useModel<T = any>(modelClass: ModelClass, params: T): Promise<any>;
+  useModel<T = any>(modelType: ModelType | string, params: T): Promise<any>;
   registerModel(
-    modelClass: ModelClass,
+    modelType: ModelType | string,
     handler: (params: any) => Promise<any>
   ): void;
   getModel(
-    modelClass: ModelClass
+    modelType: ModelType | string
   ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined;
 
   registerEvent(event: string, handler: (params: any) => void): void;
   getEvent(event: string): ((params: any) => void)[] | undefined;
   emitEvent(event: string | string[], params: any): void;
 
-  registerTask(task: Task): UUID;
-  getTasks({
-    roomId,
-    tags,
-  }: {
-    roomId?: UUID;
-    tags?: string[];
-  }): Task[] | undefined;
-  getTask(id: UUID): Task | undefined;
-  updateTask(id: UUID, task: Task): void;
-  deleteTask(id: UUID): void;
+  // In-memory task definition methods
+  registerTaskWorker(taskHandler: TaskWorker): void;
+  getTaskWorker(name: string): TaskWorker | undefined;
 
   stop(): Promise<void>;
 
-  ensureAgentExists(): Promise<void>;
-
   ensureEmbeddingDimension(): Promise<void>;
-
-  ensureCharacterExists(character: Character): Promise<void>;
 }
 
 export enum LoggingLevel {
@@ -1306,7 +1172,7 @@ export interface ChunkRow {
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   maxTokens?: number;
   temperature?: number;
   frequencyPenalty?: number;
@@ -1316,12 +1182,12 @@ export type GenerateTextParams = {
 
 export interface TokenizeTextParams {
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
 }
 
 export interface DetokenizeTextParams {
   tokens: number[];
-  modelClass: ModelClass;
+  modelType: ModelType;
 }
 
 export interface IVideoService extends Service {
@@ -1332,7 +1198,6 @@ export interface IVideoService extends Service {
 }
 
 export interface IBrowserService extends Service {
-  closeBrowser(): Promise<void>;
   getPageContent(
     url: string,
     runtime: IAgentRuntime
@@ -1340,7 +1205,6 @@ export interface IBrowserService extends Service {
 }
 
 export interface IPdfService extends Service {
-  getInstance(): IPdfService;
   convertPdfToText(pdfBuffer: Buffer): Promise<string>;
 }
 
@@ -1359,7 +1223,6 @@ export interface IFileService extends Service {
 }
 
 export interface ITeeLogService extends Service {
-  getInstance(): ITeeLogService;
   log(
     agentId: string,
     roomId: string,
@@ -1501,20 +1364,28 @@ export interface TeePluginConfig {
   vendorConfig?: TeeVendorConfig;
 }
 
+export interface TaskWorker {
+  name: string;
+  execute: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
+  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
+}
+
 export interface Task {
   id?: UUID;
   name: string;
   metadata?: {
+    updatedAt?: number;
+    updateInterval?: number;
     options?: {
       name: string;
       description: string;
     }[];
+    [key: string]: unknown;
   };
   description: string;
-  roomId: UUID;
+  roomId?: UUID;
+  worldId?: UUID;
   tags: string[];
-  handler: (runtime: IAgentRuntime, options: { [key: string]: unknown }) => Promise<void>;
-  validate?: (runtime: IAgentRuntime, message: Memory, state: State) => Promise<boolean>;
 }
 
 export type WorldData = {
@@ -1573,50 +1444,4 @@ export interface OnboardingConfig {
   settings: { 
       [key: string]: Omit<OnboardingSetting, 'value'>; 
   };
-}
-
-/**
- * Send a direct message to a user
- * @param runtime The agent runtime instance
- * @param targetEntityId The ID of the user to send the message to
- * @param source The platform/source to send on (e.g. telegram, discord)
- * @param message The message content to send
- * @param worldId The world ID context
- */
-export async function sendDirectMessage(
-  runtime: IAgentRuntime,
-  targetEntityId: UUID,
-  source: string,
-  message: string,
-  worldId: UUID
-): Promise<void> {
-  const client = runtime.getClient(source);
-  if (!client) {
-    throw new Error(`No client found for source: ${source}`);
-  }
-  
-  await client.sendDirectMessage?.(targetEntityId, message, worldId);
-}
-
-/**
- * Send a message to a room
- * @param runtime The agent runtime instance
- * @param roomId The ID of the room to send to
- * @param source The platform/source to send on (e.g. telegram, discord)
- * @param message The message content to send
- * @param worldId The world ID context
- */
-export async function sendRoomMessage(
-  runtime: IAgentRuntime,
-  roomId: UUID,
-  source: string,
-  message: string,
-  worldId: UUID
-): Promise<void> {
-  const client = runtime.getClient(source);
-  if (!client) {
-    throw new Error(`No client found for source: ${source}`);
-  }
-  
-  await client.sendRoomMessage?.(roomId, message, worldId);
 }

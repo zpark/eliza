@@ -1,12 +1,11 @@
-import { ChannelType } from "@elizaos/core";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
-import type {
-    TextChannel
-} from "discord.js";
+import { ChannelType } from "@elizaos/core";
+import { ServiceTypes } from "../types.ts";
 
 const channelStateProvider: Provider = {
+    name: "channelState",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -35,7 +34,7 @@ const channelStateProvider: Provider = {
 
         const channelId = room.channelId;
 
-        const discordClient = runtime.getClient("discord");
+        const discordClient = runtime.getService(ServiceTypes.DISCORD);
         if(!discordClient) {
             console.warn("No discord client found");
             return false;

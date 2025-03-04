@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api';
 import { WorldManager } from '@/lib/world-manager';
-import type { Character, Content, Media, UUID } from '@elizaos/core';
+import type { Agent, Content, Media, UUID } from '@elizaos/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
@@ -81,21 +81,11 @@ const useNetworkStatus = () => {
   };
 };
 
-// Add AgentData interface
-interface AgentData {
-  id: string;
-  character: { 
-    name: string;
-    // Include other character properties as needed
-  };
-  enabled: boolean;
-}
-
 // Hook for fetching agents with smart polling
 export function useAgents(options = {}) {
   const network = useNetworkStatus();
   
-  return useQuery<{ agents: AgentData[] }>({
+  return useQuery<{ data: {agents: Agent[]} }>({
     queryKey: ['agents'],
     queryFn: () => apiClient.getAgents(),
     staleTime: STALE_TIMES.FREQUENT, // Use shorter stale time for real-time data
@@ -138,16 +128,43 @@ export function useAgent(agentId: UUID | undefined | null, options = {}) {
   });
 }
 
+
 // Hook for starting an agent with optimistic updates
 export function useStartAgent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: (characterName: string) => apiClient.startAgentByName(characterName),
+    mutationFn: async (agentId: UUID) => {
+      try {
+        return await apiClient.startAgent(agentId);
+      } catch (error) {
+        // Capture specific error types
+        if (error instanceof Error) {
+          if (error.message.includes('network')) {
+            throw new Error('Network error: Please check your connection and try again.');
+          } 
+          if (error.message.includes('already running')) {
+            throw new Error('Agent is already running.');
+          }
+        }
+        throw error; // Re-throw if not a specific case we handle
+      }
+    },
+    onMutate: async (agentId) => {
+      // Optimistically update UI to show agent is starting
+      toast({
+        title: 'Starting Agent',
+        description: 'Initializing agent...',
+      });
+      
+      // Return context for potential rollback
+      return { agentId };
+    },
     onSuccess: (data) => {
       // Immediately invalidate the queries for fresh data
       queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['active-agents'] });
       if (data?.id) {
         queryClient.invalidateQueries({ queryKey: ['agent', data.id] });
       }
@@ -158,9 +175,12 @@ export function useStartAgent() {
       });
     },
     onError: (error) => {
+      // Handle specific error cases
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start agent';
+      
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to start agent',
+        title: 'Error Starting Agent',
+        description: `${errorMessage}. Please try again.`,
         variant: 'destructive',
       });
     }
@@ -177,12 +197,12 @@ export function useStopAgent() {
     onMutate: async (agentId) => {
       // Optimistically update the UI
       // Get the agent data from the cache
-      const agent = queryClient.getQueryData<{ id: string; character: Character }>(['agent', agentId]);
+      const agent = queryClient.getQueryData<Agent>(['agent', agentId]);
       
       if (agent) {
         toast({
           title: 'Stopping Agent',
-          description: `Stopping ${agent.character.name}...`,
+          description: `Stopping ${agent.name}...`,
         });
       }
     },

@@ -8,10 +8,9 @@ import {
     ChannelType,
     composeContext,
     createUniqueUuid,
-    generateText,
     type HandlerCallback,
     logger,
-    ModelClass
+    ModelTypes
 } from "@elizaos/core";
 import {
     type Channel,
@@ -19,8 +18,8 @@ import {
     type BaseGuildVoiceChannel,
     ChannelType as DiscordChannelType
 } from "discord.js";
-
-import type { DiscordClient } from "../index.ts";
+import { ServiceTypes } from "../types.ts";
+import type { DiscordService } from "../index.ts";
 import type { VoiceManager } from "../voice.ts";
 
 export default {
@@ -45,13 +44,13 @@ export default {
 
         const roomId = message.roomId;
 
-        const room = await runtime.getRoom(roomId);
+        const room = await runtime.databaseAdapter.getRoom(roomId);
 
         if(room?.type !== ChannelType.GROUP) {
             return false;
         }
 
-        const client = runtime.getClient("discord").client;
+        const client = runtime.getService(ServiceTypes.DISCORD);
 
         if (!client) {
             logger.error("Discord client not found");
@@ -78,7 +77,7 @@ export default {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -96,7 +95,7 @@ export default {
             throw new Error("No server ID found 8");
         }
 
-        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const discordClient = runtime.getService(ServiceTypes.DISCORD) as DiscordService;
         const client = discordClient.client;
         const voiceManager = discordClient.voiceManager as VoiceManager;
 
@@ -164,10 +163,8 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const responseContent = await generateText({
-                runtime,
+            const responseContent = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             if (responseContent && responseContent.trim().length > 0) {

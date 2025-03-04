@@ -6,10 +6,11 @@ import type {
     Client
 } from "discord.js";
 
-export interface IDiscordClient {
-    apiToken: string;
+export interface IDiscordService {
     client: Client;
-    runtime: IAgentRuntime;
     character: Character;
-    stop(): Promise<void>;
 }
+
+export const ServiceTypes = {
+    DISCORD: "discord",
+} as const;

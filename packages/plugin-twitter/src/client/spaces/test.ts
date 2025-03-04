@@ -2,7 +2,7 @@
 
 import 'dotenv/config';
 import { Space, type SpaceConfig } from './core/Space';
-import { Scraper } from '../scraper';
+import { Client } from '../client';
 import { RecordToDiskPlugin } from './plugins/RecordToDiskPlugin';
 import { SttTtsPlugin } from './plugins/SttTtsPlugin';
 import { IdleMonitorPlugin } from './plugins/IdleMonitorPlugin';
@@ -14,16 +14,16 @@ import { HlsRecordPlugin } from './plugins/HlsRecordPlugin';
 async function main() {
   console.log('[Test] Starting...');
 
-  // 1) Twitter login with your scraper
-  const scraper = new Scraper();
-  await scraper.login(
+  // 1) Twitter login with your client
+  const client = new Client();
+  await client.login(
     process.env.TWITTER_USERNAME!,
     process.env.TWITTER_PASSWORD!,
   );
 
   // 2) Create the Space instance
   // Set debug=true if you want more logs
-  const space = new Space(scraper, { debug: false });
+  const space = new Space(client, { debug: false });
 
   // --------------------------------------------------------------------------------
   // EXAMPLE 1: Record raw speaker audio via RecordToDiskPlugin (local plugin approach)
@@ -33,7 +33,7 @@ async function main() {
 
   // --------------------------------------------------------------------------------
   // EXAMPLE 2: HLSRecordPlugin => record final Space mix as .ts file via HLS
-  // (Requires the "scraper" to fetch the HLS URL, and ffmpeg installed.)
+  // (Requires the "client" to fetch the HLS URL, and ffmpeg installed.)
   // --------------------------------------------------------------------------------
   const hlsPlugin = new HlsRecordPlugin();
   // If you want, you can override the default output path in pluginConfig, for example:
@@ -77,7 +77,7 @@ async function main() {
   console.log('[Test] Space created =>', spaceUrl);
 
   // (Optional) Tweet out the Space link
-  await scraper.sendTweet(`${config.title} ${spaceUrl}`);
+  await client.sendTweet(`${config.title} ${spaceUrl}`);
   console.log('[Test] Tweet sent');
 
   // ---------------------------------------

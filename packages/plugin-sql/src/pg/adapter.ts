@@ -1,20 +1,29 @@
-import { logger } from "@elizaos/core";
+import { logger, type UUID } from "@elizaos/core";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { BaseDrizzleAdapter } from "../base";
 import { DIMENSION_MAP, type EmbeddingDimensionColumn } from "../schema/embedding";
 import type { PostgresConnectionManager } from "./manager";
-import { BaseDrizzleAdapter } from "../base";
 
 export class PgDatabaseAdapter extends BaseDrizzleAdapter<NodePgDatabase> {
     protected embeddingDimension: EmbeddingDimensionColumn = DIMENSION_MAP[384];
 
-    constructor(private manager: PostgresConnectionManager) {
-        super();
+    constructor(agentId: UUID, private manager: PostgresConnectionManager) {
+        super(agentId);
         this.manager = manager;
-        this.db = drizzle(this.manager.getConnection());
     }
 
     protected async withDatabase<T>(operation: () => Promise<T>): Promise<T> {
-        return await this.withRetry(operation);
+        return await this.withRetry(async () => {
+            const client = await this.manager.getClient();
+            try {
+                const db = drizzle(client);
+                this.db = db;
+                
+                return await operation();
+            } finally {
+                client.release();
+            }
+        });
     }
 
     async init(): Promise<void> {

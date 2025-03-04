@@ -3,10 +3,11 @@ import {
     type IVideoService,
     type Media,
     Service,
-    ServiceType,
+    ServiceTypes,
+    type ServiceType,
     stringToUuid,
     logger,
-    ModelClass,
+    ModelTypes,
 } from "@elizaos/core";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "node:fs";
@@ -31,23 +32,34 @@ function getYoutubeDL() {
 
 
 export class VideoService extends Service implements IVideoService {
-    static serviceType: ServiceType = ServiceType.VIDEO;
+    static serviceType: ServiceType = ServiceTypes.VIDEO;
     private cacheKey = "content/video";
     private dataDir = "./content_cache";
 
     private queue: string[] = [];
     private processing = false;
 
-    constructor() {
+    constructor(runtime: IAgentRuntime) {
         super();
+        this.runtime = runtime;
         this.ensureDataDirectoryExists();
     }
 
-    getInstance(): IVideoService {
-        return VideoService.getInstance();
+    static async start(runtime: IAgentRuntime): Promise<VideoService> {
+        const service = new VideoService(runtime);
+        return service;
     }
 
-    async initialize(_runtime: IAgentRuntime): Promise<void> {}
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.VIDEO);
+        if (service) {
+            await service.stop();
+        }
+    }
+    
+    async stop() {
+        // do nothing
+    }
 
     private ensureDataDirectoryExists() {
         if (!fs.existsSync(this.dataDir)) {
@@ -156,7 +168,7 @@ export class VideoService extends Service implements IVideoService {
         const videoUuid = this.getVideoId(videoId);
         const cacheKey = `${this.cacheKey}/${videoUuid}`;
 
-        const cached = await runtime.cacheManager.get<Media>(cacheKey);
+        const cached = await runtime.databaseAdapter.getCache<Media>(cacheKey);
 
         if (cached) {
             logger.log("Returning cached video file");
@@ -179,7 +191,7 @@ export class VideoService extends Service implements IVideoService {
                 text: transcript,
             };
     
-            await runtime.cacheManager.set(cacheKey, result);
+            await runtime.databaseAdapter.setCache<Media>(cacheKey, result);
     
             return result;
         } catch(error) {
@@ -377,7 +389,7 @@ export class VideoService extends Service implements IVideoService {
 
         logger.log("Starting transcription...");
         const startTime = Date.now();
-        const transcript = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+        const transcript = await runtime.useModel(ModelTypes.TRANSCRIPTION, audioBuffer);
 
         const endTime = Date.now();
         logger.log(

@@ -1,17 +1,19 @@
+import type { z, ZodSchema } from "zod";
 import { composeContext } from "../context";
 import { createUniqueUuid } from "../entities";
-import { generateMessageResponse, generateObjectArray } from "../generation";
 import { logger } from "../logger";
-import { messageCompletionFooter } from "../parsing";
+import { messageCompletionFooter, parseJSONObjectFromText } from "../parsing";
 import { findWorldForOwner } from "../roles";
 import {
   type Action,
   type ActionExample,
   ChannelType,
+  type Content,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  type ModelType,
+  ModelTypes,
   type OnboardingSetting,
   type State,
   type WorldSettings,
@@ -55,6 +57,134 @@ Return ONLY a JSON array of objects with 'key' and 'value' properties. Format:
 
 IMPORTANT: Only include settings from the Available Settings list above. Ignore any other potential settings.`;
 
+const generateObject = async ({
+  runtime,
+  context,
+  modelType = ModelTypes.TEXT_LARGE as ModelType,
+  stopSequences = [],
+  output = "object",
+  enumValues = [],
+  schema,
+}): Promise<any> => {
+  if (!context) {
+    const errorMessage = "generateObject context is empty";
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  // Special handling for enum output type
+  if (output === "enum" && enumValues) {
+    const response = await runtime.useModel(modelType, {
+      runtime,
+      context,
+      modelType,
+      stopSequences,
+      maxTokens: 8,
+      object: true,
+    });
+
+    // Clean up the response to extract just the enum value
+    const cleanedResponse = response.trim();
+    
+    // Verify the response is one of the allowed enum values
+    if (enumValues.includes(cleanedResponse)) {
+      return cleanedResponse;
+    }
+    
+    // If the response includes one of the enum values (case insensitive)
+    const matchedValue = enumValues.find(value => 
+      cleanedResponse.toLowerCase().includes(value.toLowerCase())
+    );
+    
+    if (matchedValue) {
+      return matchedValue;
+    }
+
+    logger.error(`Invalid enum value received: ${cleanedResponse}`);
+    logger.error(`Expected one of: ${enumValues.join(", ")}`);
+    return null;
+  }
+
+  // Regular object/array generation
+  const response = await runtime.useModel(modelType, {
+    runtime,
+    context,
+    modelType,
+    stopSequences,
+    object: true,
+  });
+
+  let jsonString = response;
+
+  // Find appropriate brackets based on expected output type
+  const firstChar = output === "array" ? "[" : "{";
+  const lastChar = output === "array" ? "]" : "}";
+  
+  const firstBracket = response.indexOf(firstChar);
+  const lastBracket = response.lastIndexOf(lastChar);
+  
+  if (firstBracket !== -1 && lastBracket !== -1 && firstBracket < lastBracket) {
+    jsonString = response.slice(firstBracket, lastBracket + 1);
+  }
+
+  if (jsonString.length === 0) {
+    logger.error(`Failed to extract JSON ${output} from model response`);
+    return null;
+  }
+
+  // Parse the JSON string
+  try {
+    const json = JSON.parse(jsonString);
+    
+    // Validate against schema if provided
+    if (schema) {
+      return schema.parse(json);
+    }
+    
+    return json;
+  } catch (_error) {
+    logger.error(`Failed to parse JSON ${output}`);
+    logger.error(jsonString);
+    return null;
+  }
+};
+
+async function generateObjectArray({
+  runtime,
+  context,
+  modelType = ModelTypes.TEXT_SMALL,
+  schema,
+  schemaName,
+  schemaDescription,
+}: {
+  runtime: IAgentRuntime;
+  context: string;
+  modelType: ModelType;
+  schema?: ZodSchema;
+  schemaName?: string;
+  schemaDescription?: string;
+}): Promise<z.infer<typeof schema>[]> {
+  if (!context) {
+    logger.error("generateObjectArray context is empty");
+    return [];
+  }
+  
+  const result = await generateObject({
+    runtime,
+    context,
+    modelType,
+    output: "array",
+    schema,
+  });
+  
+  if (!Array.isArray(result)) {
+    logger.error("Generated result is not an array");
+    return [];
+  }
+  
+  return schema ? schema.parse(result) : result;
+}
+
 /**
  * Gets settings state from world metadata
  */
@@ -64,7 +194,7 @@ export async function getWorldSettings(
 ): Promise<WorldSettings | null> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world || !world.metadata?.settings) {
       return null;
@@ -87,7 +217,7 @@ export async function updateWorldSettings(
 ): Promise<boolean> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world) {
       logger.error(`No world found for server ${serverId}`);
@@ -103,7 +233,7 @@ export async function updateWorldSettings(
     world.metadata.settings = worldSettings;
 
     // Save updated world
-    await runtime.updateWorld(world);
+    await runtime.databaseAdapter.updateWorld(world);
 
     return true;
   } catch (error) {
@@ -188,7 +318,7 @@ async function extractSettingValues(
     const extractions = (await generateObjectArray({
       runtime,
       context,
-      modelClass: ModelClass.TEXT_LARGE,
+      modelType: ModelTypes.TEXT_LARGE,
     })) as SettingUpdate[];
 
     logger.info(`Extracted ${extractions.length} potential setting updates`);
@@ -421,14 +551,14 @@ async function handleOnboardingComplete(
       template: completionTemplate,
     });
 
-    const completionMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: completionMessage.text,
+      text: responseContent.text,
       action: "ONBOARDING_COMPLETE",
       source: "discord",
     });
@@ -473,14 +603,14 @@ async function generateSuccessResponse(
       template: successTemplate,
     });
 
-    const successMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: successMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATED",
       source: "discord",
     });
@@ -523,14 +653,14 @@ async function generateFailureResponse(
       template: failureTemplate,
     });
 
-    const failureMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: failureMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATE_FAILED",
       source: "discord",
     });
@@ -558,14 +688,14 @@ async function generateErrorResponse(
       template: errorTemplate,
     });
 
-    const errorMessage = await generateMessageResponse({
-      runtime,
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
-      modelClass: ModelClass.TEXT_SMALL,
     });
 
+    const responseContent = parseJSONObjectFromText(response) as Content;
+
     await callback({
-      text: errorMessage.text,
+      text: responseContent.text,
       action: "SETTING_UPDATE_ERROR",
       source: "discord",
     });
@@ -605,7 +735,7 @@ const updateSettingsAction: Action = {
       );
 
       // Validate that we're in a DM channel
-      const room = await runtime.getRoom(message.roomId);
+      const room = await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         logger.error(`No room found for ID ${message.roomId}`);
         return false;
@@ -625,10 +755,6 @@ const updateSettingsAction: Action = {
         logger.error(`No server ownership found for user ${message.userId}`);
         return false;
       }
-
-      logger.info(
-        `Found server ${world.serverId} owned by ${world.metadata.ownership.ownerId}`
-      );
 
       // Check if there's an active settings state in world metadata
       const worldSettings = world.metadata.settings;

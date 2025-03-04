@@ -1,10 +1,5 @@
-import { generateText, type IBrowserService, trimTokens } from "@elizaos/core";
-import { parseJSONObjectFromText } from "@elizaos/core";
-import { Service } from "@elizaos/core";
-import { settings } from "@elizaos/core";
-import { type IAgentRuntime, ModelClass, ServiceType } from "@elizaos/core";
-import { stringToUuid } from "@elizaos/core";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
+import { type IAgentRuntime, type IBrowserService, logger, ModelTypes, parseJSONObjectFromText, Service, type ServiceType, ServiceTypes, settings, stringToUuid, trimTokens } from "@elizaos/core";
 import CaptchaSolver from "capsolver-npm";
 import {
     type Browser,
@@ -12,7 +7,6 @@ import {
     chromium,
     type Page,
 } from "playwright";
-import { logger } from "@elizaos/core";
 
 async function generateSummary(
     runtime: IAgentRuntime,
@@ -35,10 +29,8 @@ async function generateSummary(
   }
   \`\`\``;
 
-    const response = await generateText({
-        runtime,
+    const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         context: prompt,
-        modelClass: ModelClass.TEXT_SMALL,
     });
 
     const parsedResponse = parseJSONObjectFromText(response);
@@ -69,19 +61,11 @@ export class BrowserService extends Service implements IBrowserService {
     private captchaSolver: CaptchaSolver;
     private cacheKey = "content/browser";
 
-    static serviceType: ServiceType = ServiceType.BROWSER;
+    static serviceType: ServiceType = ServiceTypes.BROWSER;
 
-    static register(runtime: IAgentRuntime): IAgentRuntime {
-        // since we are lazy loading, do nothing
-        return runtime;
-    }
-
-    getInstance(): IBrowserService {
-        return BrowserService.getInstance();
-    }
-
-    constructor() {
+    constructor(runtime: IAgentRuntime) {
         super();
+        this.runtime = runtime;
         this.browser = undefined;
         this.context = undefined;
         this.blocker = undefined;
@@ -90,7 +74,18 @@ export class BrowserService extends Service implements IBrowserService {
         );
     }
 
-    async initialize() {}
+    static async start(runtime: IAgentRuntime): Promise<BrowserService> {
+        const service = new BrowserService(runtime);
+        await service.initializeBrowser();
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.BROWSER);
+        if (service) {
+            await service.stop();
+        }
+    }
 
     async initializeBrowser() {
         if (!this.browser) {
@@ -135,7 +130,7 @@ export class BrowserService extends Service implements IBrowserService {
         }
     }
 
-    async closeBrowser() {
+    async stop() {
         if (this.context) {
             await this.context.close();
             this.context = undefined;
@@ -163,10 +158,7 @@ export class BrowserService extends Service implements IBrowserService {
         runtime: IAgentRuntime
     ): Promise<PageContent> {
         const cacheKey = this.getCacheKey(url);
-        const cached = await runtime.cacheManager.get<{
-            url: string;
-            content: PageContent;
-        }>(`${this.cacheKey}/${cacheKey}`);
+        const cached = await runtime.databaseAdapter.getCache<any>(`${this.cacheKey}/${cacheKey}`);
 
         if (cached) {
             return cached.content;
@@ -217,7 +209,7 @@ export class BrowserService extends Service implements IBrowserService {
                 `${documentTitle}\n${bodyContent}`
             );
             const content = { title: parsedTitle, description, bodyContent };
-            await runtime.cacheManager.set(`${this.cacheKey}/${cacheKey}`, {
+            await runtime.databaseAdapter.setCache<any>(`${this.cacheKey}/${cacheKey}`, {
                 url,
                 content,
             });

@@ -1,25 +1,20 @@
 // action: SEND_MESSAGE
 // send message to a user or room (other than this room we are in)
 
-import { v4 as uuidv4 } from 'uuid';
+import { composeContext } from "../context";
+import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { 
+import { parseJSONObjectFromText } from "../parsing";
+import {
   type Action,
   type ActionExample,
-  Component,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type State,
-  UUID,
-  Entity,
-  sendDirectMessage,
-  sendRoomMessage
+  UUID
 } from "../types";
-import { composeContext } from "../context";
-import { findEntityByName } from "../entities";
-import { parseJSONObjectFromText } from "../parsing";
 
 const targetExtractionTemplate = `# Task: Extract Target and Source Information
 
@@ -67,7 +62,6 @@ Example outputs:
 \`\`\`
 
 Make sure to include the \`\`\`json\`\`\` tags around the JSON object.`;
-
 export const sendMessageAction: Action = {
   name: "SEND_MESSAGE",
   similes: ["DM", "MESSAGE", "SEND_DM", "POST_MESSAGE"],
@@ -112,7 +106,7 @@ export const sendMessageAction: Action = {
       const sourceEntityId = message.userId;
       const roomId = message.roomId;
       const _agentId = runtime.agentId;
-      const room = await runtime.getRoom(roomId);
+      const room = await runtime.databaseAdapter.getRoom(roomId);
       const worldId = room.worldId;
 
       // Extract target and source information
@@ -121,7 +115,7 @@ export const sendMessageAction: Action = {
         template: targetExtractionTemplate,
       });
 
-      const targetResult = await runtime.useModel(ModelClass.TEXT_LARGE, {
+      const targetResult = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         context: targetContext,
         stopSequences: []
       });
@@ -168,6 +162,16 @@ export const sendMessageAction: Action = {
           return;
         }
 
+        const sendDirectMessage = runtime.getService(source)?.sendDirectMessage;
+
+        if (!sendDirectMessage) {
+          await callback({
+            text: "I couldn't find the user you want me to send a message to. Could you please provide more details about who they are?",
+            action: "SEND_MESSAGE_ERROR",
+            source: message.content.source,
+          });
+          return;
+        }
         // Send the message using the appropriate client
         try {
           await sendDirectMessage(
@@ -209,6 +213,17 @@ export const sendMessageAction: Action = {
           return;
         }
 
+        const sendRoomMessage = runtime.getService(source)?.sendRoomMessage;
+
+        if (!sendRoomMessage) {
+          await callback({
+            text: "I couldn't find the room you want me to send a message to. Could you please specify the exact room name?",
+            action: "SEND_MESSAGE_ERROR",
+            source: message.content.source,
+          });
+          return;
+        }
+          
         // Send the message to the room
         try {
           await sendRoomMessage(

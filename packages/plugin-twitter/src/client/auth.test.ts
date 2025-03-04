@@ -1,42 +1,42 @@
-import { getScraper } from './test-utils';
+import { getClient } from './test-utils';
 
 const testLogin = process.env.TWITTER_PASSWORD ? test : test.skip;
 
 testLogin(
-  'scraper can log in',
+  'client can log in',
   async () => {
-    const scraper = await getScraper({ authMethod: 'password' });
-    await expect(scraper.isLoggedIn()).resolves.toBeTruthy();
+    const client = await getClient({ authMethod: 'password' });
+    await expect(client.isLoggedIn()).resolves.toBeTruthy();
   },
   15000,
 );
 
-test('scraper can log in with cookies', async () => {
-  const scraper = await getScraper();
-  await expect(scraper.isLoggedIn()).resolves.toBeTruthy();
+test('client can log in with cookies', async () => {
+  const client = await getClient();
+  await expect(client.isLoggedIn()).resolves.toBeTruthy();
 });
 
-test('scraper can restore its login state from cookies', async () => {
-  const scraper = await getScraper();
-  await expect(scraper.isLoggedIn()).resolves.toBeTruthy();
-  const scraper2 = await getScraper({ authMethod: 'anonymous' });
-  await expect(scraper2.isLoggedIn()).resolves.toBeFalsy();
+test('client can restore its login state from cookies', async () => {
+  const client = await getClient();
+  await expect(client.isLoggedIn()).resolves.toBeTruthy();
+  const client2 = await getClient({ authMethod: 'anonymous' });
+  await expect(client2.isLoggedIn()).resolves.toBeFalsy();
 
-  const cookies = await scraper.getCookies();
-  await scraper2.setCookies(cookies);
+  const cookies = await client.getCookies();
+  await client2.setCookies(cookies);
 
-  await expect(scraper2.isLoggedIn()).resolves.toBeTruthy();
+  await expect(client2.isLoggedIn()).resolves.toBeTruthy();
 });
 
 testLogin(
-  'scraper can log out',
+  'client can log out',
   async () => {
-    const scraper = await getScraper({ authMethod: 'password' });
-    await expect(scraper.isLoggedIn()).resolves.toBeTruthy();
+    const client = await getClient({ authMethod: 'password' });
+    await expect(client.isLoggedIn()).resolves.toBeTruthy();
 
-    await scraper.logout();
+    await client.logout();
 
-    await expect(scraper.isLoggedIn()).resolves.toBeFalsy();
+    await expect(client.isLoggedIn()).resolves.toBeFalsy();
   },
   15000,
 );

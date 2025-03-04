@@ -30,7 +30,7 @@ export async function updateWorldSettings(
 ): Promise<boolean> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world) {
       logger.error(`No world found for server ${serverId}`);
@@ -46,7 +46,7 @@ export async function updateWorldSettings(
     world.metadata.settings = worldSettings;
 
     // Save updated world
-    await runtime.updateWorld(world);
+    await runtime.databaseAdapter.updateWorld(world);
 
     return true;
   } catch (error) {
@@ -64,7 +64,7 @@ export async function getWorldSettings(
 ): Promise<WorldSettings | null> {
   try {
     const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
+    const world = await runtime.databaseAdapter.getWorld(worldId);
 
     if (!world || !world.metadata?.settings) {
       return null;
@@ -86,7 +86,6 @@ export async function initializeOnboardingConfig(
   config: OnboardingConfig
 ): Promise<WorldSettings | null> {
   try {
-    console.log("world.metadata", world.metadata)
     // Check if settings state already exists
     if (world.metadata?.settings) {
       logger.info(`Onboarding state already exists for server ${world.serverId}`);
@@ -96,7 +95,6 @@ export async function initializeOnboardingConfig(
     // Create new settings state
     const worldSettings: WorldSettings = {};
     
-    console.log("config.settings", config.settings)
     // Initialize settings from config
     if (config.settings) {
       for (const [key, configSetting] of Object.entries(config.settings)) {
@@ -104,7 +102,6 @@ export async function initializeOnboardingConfig(
       }
     }
     
-    console.log("world.metadata", world.metadata)
     // Save settings state to world metadata
     if (!world.metadata) {
       world.metadata = {};
@@ -112,9 +109,7 @@ export async function initializeOnboardingConfig(
     
     world.metadata.settings = worldSettings;
     
-    await runtime.updateWorld(world);
-
-    console.log("updateWorld - world.metadata", world.metadata)
+    await runtime.databaseAdapter.updateWorld(world);
     
     logger.info(`Initialized settings config for server ${world.serverId}`);
     return worldSettings;

@@ -8,6 +8,7 @@ interface OptionObject {
 }
 
 export const optionsProvider: Provider = {
+    name: "options",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
@@ -15,7 +16,7 @@ export const optionsProvider: Provider = {
     ): Promise<string> => {
         try {
             // Get all pending tasks for this room with options
-            const pendingTasks = runtime.getTasks({
+            const pendingTasks = await runtime.databaseAdapter.getTasks({
                 roomId: message.roomId,
                 tags: ["AWAITING_CHOICE"]
             });
@@ -30,7 +31,6 @@ export const optionsProvider: Provider = {
             if (tasksWithOptions.length === 0) {
                 return "";
             }
-
             // Format tasks into a readable list
             let output = "# Pending Tasks\n\n";
             output += "The following tasks are awaiting your selection:\n\n";

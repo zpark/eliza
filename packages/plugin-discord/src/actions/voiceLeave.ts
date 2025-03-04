@@ -13,8 +13,9 @@ import {
     BaseGuildVoiceChannel
 } from "discord.js";
 
-import type { DiscordClient } from "../index.ts";
+import type { DiscordService } from "../index.ts";
 import type { VoiceManager } from "../voice.ts";
+import { ServiceTypes } from "../types.ts";
 
 
 export default {
@@ -33,7 +34,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord").client;
+        const client = runtime.getService(ServiceTypes.DISCORD);
 
         if (!client) {
             logger.error("Discord client not found");
@@ -41,7 +42,7 @@ export default {
         }
 
         // Check if the client is connected to any voice channel
-        const isConnectedToVoice = client.voice.adapters.size > 0;
+        const isConnectedToVoice = client.client.voice.adapters.size > 0;
 
         return isConnectedToVoice;
     },
@@ -58,7 +59,7 @@ export default {
             await callback(response.content);
         }
 
-        const room = await runtime.getRoom(message.roomId);
+        const room = await runtime.databaseAdapter.getRoom(message.roomId);
         if(!room) {
             throw new Error("No room found");
         }
@@ -73,7 +74,7 @@ export default {
         if (!serverId) {
             throw new Error("No server ID found 9");
         }
-        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const discordClient = runtime.getService(ServiceTypes.DISCORD) as DiscordService;
         const voiceManager = discordClient.voiceManager as VoiceManager;
         const client = discordClient.client;
 

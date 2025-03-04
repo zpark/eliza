@@ -1,21 +1,22 @@
 import {
     type Action,
     type ActionExample,
+    type Client,
     composeContext,
-    logger,
-    generateObject,
     type HandlerCallback,
     type IAgentRuntime,
+    logger,
     type Memory,
-    ModelClass,
+    ModelTypes,
+    parseJSONObjectFromText,
     settings,
     type State,
 } from '@elizaos/core';
 import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
+import { SOLANA_SERVICE_NAME } from '../constants';
 import { getWalletKey } from '../keypairUtils';
-import type { ISolanaClient, Item } from '../types';
-import { SOLANA_CLIENT_NAME } from '../constants';
+import type { Item } from '../types';
 
 async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
@@ -104,15 +105,15 @@ async function swapToken(
     }
 }
 
-// Get token from wallet data using SolanaClient
+// Get token from wallet data using SolanaService
 async function getTokenFromWallet(
     runtime: IAgentRuntime,
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
         if (!solanaClient) {
-            throw new Error('SolanaClient not initialized');
+            throw new Error('SolanaService not initialized');
         }
 
         const walletData = await solanaClient.getCachedData();
@@ -169,7 +170,7 @@ export const executeSwap: Action = {
         'EXCHANGE_TOKENS_SOLANA',
     ],
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
-        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME);
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME);
         return !!solanaClient;
     },
     description:
@@ -188,9 +189,9 @@ export const executeSwap: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
 
-            const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as ISolanaClient;
+            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
             if (!solanaClient) {
-                throw new Error('SolanaClient not initialized');
+                throw new Error('SolanaService not initialized');
             }
 
             const walletData = await solanaClient.getCachedData();
@@ -201,11 +202,11 @@ export const executeSwap: Action = {
                 template: swapTemplate,
             });
 
-            const response = await generateObject({
-                runtime,
+            const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 context: swapContext,
-                modelClass: ModelClass.LARGE,
             });
+
+            const response = parseJSONObjectFromText(result);
 
             // Handle SOL addresses
             if (response.inputTokenSymbol?.toUpperCase() === 'SOL') {

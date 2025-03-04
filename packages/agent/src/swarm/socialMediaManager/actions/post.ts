@@ -5,47 +5,15 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   RoleName,
   type State,
   composeContext,
   createUniqueUuid,
-  generateText,
+  getUserServerRole,
   getWorldSettings,
   logger
 } from "@elizaos/core";
-
-/**
- * Gets a user's role from world metadata
- */
-export async function getUserServerRole(
-  runtime: IAgentRuntime,
-  userId: string,
-  serverId: string
-): Promise<RoleName> {
-  try {
-    const worldId = createUniqueUuid(runtime, serverId);
-    const world = await runtime.getWorld(worldId);
-
-    if (!world || !world.metadata?.roles) {
-      return RoleName.NONE;
-    }
-
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
-    }
-
-    // Also check original ID format
-    if (world.metadata.roles[userId]?.role) {
-      return world.metadata.roles[userId].role as RoleName;
-    }
-
-    return RoleName.NONE;
-  } catch (error) {
-    logger.error(`Error getting user role: ${error}`);
-    return RoleName.NONE;
-  }
-}
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -121,12 +89,12 @@ async function ensureTwitterClient(
   serverId: string,
   worldSettings: { [key: string]: string | boolean | number | null }
 ) {
-  const manager = runtime.getClient("twitter");
+  const manager = runtime.getService(ServiceTypes.TWITTER);
   if (!manager) {
     throw new Error("Twitter client manager not found");
   }
 
-  let client = manager.getClient(serverId, runtime.agentId);
+  let client = manager.getService(serverId, runtime.agentId);
 
   if (!client) {
     logger.info("Creating new Twitter client for server", serverId);
@@ -149,7 +117,7 @@ const twitterPostAction: Action = {
     message: Memory,
     _state: State
   ): Promise<boolean> => {
-    const room = await runtime.getRoom(message.roomId);
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {
       throw new Error("No room found");
     }
@@ -163,6 +131,17 @@ const twitterPostAction: Action = {
 
     if (!serverId) {
       throw new Error("No server ID found");
+    }
+
+    // Check if there are any pending Twitter posts awaiting confirmation
+    const pendingTasks = await runtime.databaseAdapter.getTasks({
+      roomId: message.roomId,
+      tags: ["TWITTER_POST"],
+    });
+
+    if (pendingTasks && pendingTasks.length > 0) {
+      // If there are already pending Twitter post tasks, don't allow another one
+      return false;
     }
 
     // Validate Twitter configuration
@@ -183,7 +162,7 @@ const twitterPostAction: Action = {
     _responses: Memory[]
   ) => {
     try {
-      const room = await runtime.getRoom(message.roomId);
+      const room = await runtime.databaseAdapter.getRoom(message.roomId);
       if (!room) {
         throw new Error("No room found");
       }
@@ -211,10 +190,8 @@ const twitterPostAction: Action = {
         template: tweetGenerationTemplate,
       });
 
-      const tweetContent = await generateText({
-        runtime,
+      const tweetContent = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         context,
-        modelClass: ModelClass.TEXT_SMALL,
       });
 
       // Clean up the generated content
@@ -228,7 +205,7 @@ const twitterPostAction: Action = {
         message.userId,
         serverId
       );
-      if (!userRole) {
+      if (userRole !== "OWNER" && userRole !== "ADMIN") {
         // callback and return
         await callback({
           text: "I'm sorry, but you're not authorized to post tweets on behalf of this org.",
@@ -238,18 +215,6 @@ const twitterPostAction: Action = {
         return;
       }
 
-      // Check if there are any pending Twitter posts awaiting confirmation
-      const pendingTasks = runtime.getTasks({
-        roomId: message.roomId,
-        tags: ["TWITTER_POST"],
-      });
-
-      if (pendingTasks && pendingTasks.length > 0) {
-        for (const task of pendingTasks) {
-          await runtime.deleteTask(task.id);
-        }
-      }
-
       // Prepare response content
       const responseContent: Content = {
         text: `I'll tweet this:\n\n${cleanTweet}`,
@@ -257,25 +222,15 @@ const twitterPostAction: Action = {
         source: message.content.source,
       };
 
-      // Register approval task
-      runtime.registerTask({
-        roomId: message.roomId,
-        name: "Confirm Twitter Post",
-        description: "Confirm the tweet to be posted.",
-        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
-        metadata: {
-          options: [
-            {
-              name: "post",
-              description: "Post the tweet to Twitter",
-            },
-            {
-              name: "cancel",
-              description: "Cancel the tweet and don't post it",
-            },
-          ],
-        },
-        handler: async (runtime: IAgentRuntime, options: { option: string }) => {
+      // if a task already exists, we need to cancel it
+      const existingTask = await runtime.databaseAdapter.getTask(message.roomId);
+      if (existingTask) {
+        await runtime.databaseAdapter.deleteTask(existingTask.id);
+      }
+
+      const worker = {
+        name: "TWITTER_POST",
+        execute: async (runtime: IAgentRuntime, options: { option: string }) => {
           if (options.option === "cancel") {
             await callback({
               ...responseContent,
@@ -333,11 +288,33 @@ const twitterPostAction: Action = {
             message.userId,
             serverId
           );
-          if (!userRole) {
-            return false;
-          }
 
           return userRole === "OWNER" || userRole === "ADMIN";
+        },
+      }
+
+      // if the worker is not registered, register it
+      if (!runtime.getTaskWorker("TWITTER_POST")) {
+        runtime.registerTaskWorker(worker);
+      }
+
+      // Register approval task
+      runtime.databaseAdapter.createTask({
+        roomId: message.roomId,
+        name: "Confirm Twitter Post",
+        description: "Confirm the tweet to be posted.",
+        tags: ["TWITTER_POST", "AWAITING_CHOICE"],
+        metadata: {
+          options: [
+            {
+              name: "post",
+              description: "Post the tweet to Twitter",
+            },
+            {
+              name: "cancel",
+              description: "Cancel the tweet and don't post it",
+            },
+          ],
         },
       });
 
@@ -349,6 +326,9 @@ const twitterPostAction: Action = {
         ...responseContent,
         action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
       });
+
+      logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.databaseAdapter.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
+      
       return responseContent;
     } catch (error) {
       logger.error("Error in TWITTER_POST action:", error);

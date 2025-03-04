@@ -2,19 +2,19 @@ import {
   ChannelType,
   type Character,
   createUniqueUuid,
-  type Client as ElizaClient,
   type HandlerCallback,
   type IAgentRuntime,
   logger,
   type Memory,
   type Plugin,
   RoleName,
+  Service,
   type UUID,
   type WorldData
 } from "@elizaos/core";
 import {
-  Client,
   ChannelType as DiscordChannelType,
+  Client as DiscordJsClient,
   Events,
   GatewayIntentBits,
   type Guild,
@@ -34,29 +34,27 @@ import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
 import joinVoice from "./actions/voiceJoin.ts";
 import leaveVoice from "./actions/voiceLeave.ts";
-import { DISCORD_CLIENT_NAME } from "./constants.ts";
+import { DISCORD_SERVICE_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
 import { DiscordTestSuite } from "./tests.ts";
-import type { IDiscordClient } from "./types.ts";
+import type { IDiscordService } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
-export class DiscordClient extends EventEmitter implements IDiscordClient {
-  apiToken: string;
-  client: Client;
-  runtime: IAgentRuntime;
+export class DiscordService extends Service implements IDiscordService {
+  static serviceType: string = DISCORD_SERVICE_NAME;
+  client: DiscordJsClient;
   character: Character;
   messageManager: MessageManager;
   voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime) {
-    super();
+    super(runtime);
 
     logger.log("Discord client constructor was engaged");
 
-    this.apiToken = runtime.getSetting("DISCORD_API_TOKEN") as string;
-    this.client = new Client({
+    this.client = new DiscordJsClient({
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
@@ -78,11 +76,11 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     });
 
     this.runtime = runtime;
-    this.voiceManager = new VoiceManager(this);
+    this.voiceManager = new VoiceManager(this, runtime);
     this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
-    this.client.login(this.apiToken);
+    this.client.login(runtime.getSetting("DISCORD_API_TOKEN") as string);
 
     this.setupEventListeners();
 
@@ -104,7 +102,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     // for channel in channels
     for (const [, channel] of guildChannels.channels.cache) {
       const roomId = createUniqueUuid(this.runtime, channel.id)
-      const room = await runtime.getRoom(roomId);
+      const room = await runtime.databaseAdapter.getRoom(roomId);
       // if the room already exists, skip
       if (room) {
         continue;
@@ -205,11 +203,21 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
     });
   }
 
-  async stop() {
+  static async start(runtime: IAgentRuntime): Promise<DiscordService> {
+    const client = new DiscordService(runtime);
+    return client;
+  }
+
+  static async stop(runtime: IAgentRuntime) {
+    const client = runtime.getService(DISCORD_SERVICE_NAME);
+    if (!client) {
+      logger.error("DiscordService not found");
+      return;
+    }
     try {
       // disconnect websocket
       // this unbinds all the listeners
-      await this.client.destroy();
+      await client.client.destroy();
     } catch (e) {
       logger.error("client-discord instance stop err", e);
     }
@@ -789,15 +797,10 @@ export class DiscordClient extends EventEmitter implements IDiscordClient {
   }
 }
 
-const DiscordClientInterface: ElizaClient = {
-  name: DISCORD_CLIENT_NAME,
-  start: async (runtime: IAgentRuntime) => new DiscordClient(runtime),
-};
-
 const discordPlugin: Plugin = {
   name: "discord",
   description: "Discord client plugin",
-  clients: [DiscordClientInterface],
+  services: [DiscordService],
   actions: [
     reply,
     chatWithAttachments,

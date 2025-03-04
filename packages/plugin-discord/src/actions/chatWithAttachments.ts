@@ -1,9 +1,9 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content, generateText, type HandlerCallback,
+    type ActionExample, composeContext, type Content, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass, parseJSONObjectFromText, type State, trimTokens
+    ModelTypes, parseJSONObjectFromText, type State, trimTokens
 } from "@elizaos/core";
 import * as fs from "node:fs";
 
@@ -46,10 +46,8 @@ const getAttachmentIds = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await generateText({
-            runtime,
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -194,10 +192,8 @@ const summarizeAction = {
             template,
         });
 
-        const summary = await generateText({
-            runtime,
+        const summary = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
-            modelClass: ModelClass.TEXT_SMALL,
         });
 
         currentSummary = `${currentSummary}\n${summary}`;
@@ -239,7 +235,7 @@ ${currentSummary.trim()}
                 console.log("File written successfully");
 
                 // Then cache it
-                await runtime.cacheManager.set(summaryFilename, currentSummary);
+                await runtime.databaseAdapter.setCache<string>(summaryFilename, currentSummary);
                 console.log("Cache set operation completed");
 
                 await callback(

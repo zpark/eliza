@@ -1,8 +1,8 @@
-import { logger, type Client, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
+import { logger, Service, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import spaceJoin from "./actions/spaceJoin.ts";
 import { ClientBase } from "./base.ts";
-import { TWITTER_CLIENT_NAME } from "./constants.ts";
+import { TWITTER_SERVICE_NAME } from "./constants.ts";
 import type { TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
@@ -18,12 +18,12 @@ import type { ITwitterClient } from "./types.ts";
  * - interaction: handling mentions, replies
  * - space: launching and managing Twitter Spaces (optional)
  */
-export class TwitterClient implements ITwitterClient {
-    name = "twitter";
+export class TwitterClientInstance implements ITwitterClient {
     client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
+    service: TwitterService;
 
     constructor(runtime: IAgentRuntime, state: any) {
         // Pass twitterConfig to the base client
@@ -39,39 +39,38 @@ export class TwitterClient implements ITwitterClient {
         if (runtime.getSetting("TWITTER_SPACES_ENABLE") === true) {
             this.space = new TwitterSpaceClient(this.client, runtime);
         }
-    }
 
-    async stop() {
-        logger.warn("Twitter client does not support stopping yet");
+        this.service = TwitterService.getInstance();
     }
 }
 
-export class TwitterClientManager {
-    private static instance: TwitterClientManager;
-    private clients: Map<string, TwitterClient> = new Map();
+export class TwitterService extends Service {
+    static serviceType: string = TWITTER_SERVICE_NAME;
+    private static instance: TwitterService;
+    private clients: Map<string, TwitterClientInstance> = new Map();
 
-    static getInstance(): TwitterClientManager {
-        if (!TwitterClientManager.instance) {
-            TwitterClientManager.instance = new TwitterClientManager();
+    static getInstance(): TwitterService {
+        if (!TwitterService.instance) {
+            TwitterService.instance = new TwitterService();
         }
-        return TwitterClientManager.instance;
+        return TwitterService.instance;
     }
 
-    async createClient(runtime: IAgentRuntime, clientId: string, state: any): Promise<TwitterClient> {
+    async createClient(runtime: IAgentRuntime, clientId: string, state: any): Promise<TwitterClientInstance> {
         console.log("Creating client", clientId);
         if (runtime.getSetting("TWITTER_2FA_SECRET") === null) {
             runtime.setSetting("TWITTER_2FA_SECRET", undefined, false);
         }
         try {
             // Check if client already exists
-            const existingClient = this.getClient(clientId, runtime.agentId);
+            const existingClient = this.getService(clientId, runtime.agentId);
             if (existingClient) {
                 logger.info(`Twitter client already exists for ${clientId}`);
                 return existingClient;
             }
 
             // Create new client instance
-            const client = new TwitterClient(runtime, state);
+            const client = new TwitterClientInstance(runtime, state);
 
             // Initialize the client
             await client.client.init();
@@ -100,7 +99,7 @@ export class TwitterClientManager {
         }
     }
 
-    getClient(clientId: string, agentId: UUID): TwitterClient | undefined {
+    getService(clientId: string, agentId: UUID): TwitterClientInstance | undefined {
         return this.clients.get(this.getClientKey(clientId, agentId));
     }
 
@@ -109,7 +108,7 @@ export class TwitterClientManager {
         const client = this.clients.get(key);
         if (client) {
             try {
-                await client.stop();
+                await client.service.stop();
                 this.clients.delete(key);
                 logger.info(`Stopped Twitter client for ${clientId}`);
             } catch (error) {
@@ -118,30 +117,8 @@ export class TwitterClientManager {
         }
     }
 
-    async stop(): Promise<void> {
-        await this.stopAllClients();
-    }
-
-    async stopAllClients(): Promise<void> {
-        for (const [key, client] of this.clients.entries()) {
-            try {
-                await client.stop();
-                this.clients.delete(key);
-            } catch (error) {
-                logger.error(`Error stopping Twitter client ${key}:`, error);
-            }
-        }
-    }
-
-    private getClientKey(clientId: string, agentId: UUID): string {
-        return `${clientId}-${agentId}`;
-    }
-}
-
-const TwitterClientInterface: Client = {
-    name: TWITTER_CLIENT_NAME,
-    start: async (runtime: IAgentRuntime) => {
-        const manager = TwitterClientManager.getInstance();
+    static async start(runtime: IAgentRuntime) {
+        const twitterClientManager = TwitterService.getInstance();
         
         // Check for character-level Twitter credentials
         const twitterConfig: Partial<TwitterConfig> = {
@@ -167,20 +144,39 @@ const TwitterClientInterface: Client = {
                 //  config.TWITTER_ACCESS_TOKEN && config.TWITTER_ACCESS_TOKEN_SECRET)
             )) {
                 logger.info("Creating default Twitter client from character settings");
-                await manager.createClient(runtime, runtime.agentId, config);
+                await twitterClientManager.createClient(runtime, runtime.agentId, config);
             }
         } catch (error) {
             logger.error("Failed to create default Twitter client:", error);
         }
 
-        return manager;
+        return twitterClientManager;
     }
-};
+
+    async stop(): Promise<void> {
+        await this.stopAllClients();
+    }
+
+    async stopAllClients(): Promise<void> {
+        for (const [key, client] of this.clients.entries()) {
+            try {
+                await client.service.stop();
+                this.clients.delete(key);
+            } catch (error) {
+                logger.error(`Error stopping Twitter client ${key}:`, error);
+            }
+        }
+    }
+
+    private getClientKey(clientId: string, agentId: UUID): string {
+        return `${clientId}-${agentId}`;
+    }
+}
 
 const twitterPlugin: Plugin = {
-    name: "twitter",
+    name: TWITTER_SERVICE_NAME,
     description: "Twitter client with per-server instance management",
-    clients: [TwitterClientInterface],
+    services: [TwitterService],
     actions: [reply, spaceJoin],
     tests: [new TwitterTestSuite()]
 };

@@ -1,18 +1,18 @@
-import { 
-  type IAgentRuntime, 
-  ModelClass, 
+import {
+  logger,
+  ModelTypes,
+  type ModelType,
   type Character,
+  type IAgentRuntime,
+  type IDatabaseAdapter,
   type IMemoryManager,
-  type ICacheManager,
-  type State,
-  type IDatabaseAdapter
+  type State
 } from '@elizaos/core';
+import fs from 'node:fs';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { vi } from 'vitest';
 import { MODEL_SPECS } from '../src/types';
-import fs from 'node:fs';
-import { logger } from '@elizaos/core';
-import { Readable } from 'node:stream';
 
 // Get the workspace root by going up from the current file location
 const WORKSPACE_ROOT = path.resolve(__dirname, '../../../');
@@ -44,22 +44,17 @@ export const createMockRuntime = (): IAgentRuntime => ({
   descriptionManager: {} as IMemoryManager,
   documentsManager: {} as IMemoryManager,
   knowledgeManager: {} as IMemoryManager,
-  cacheManager: {} as ICacheManager,
-  getClient: () => null,
-  getAllClients: () => new Map(),
-  registerClient: () => {},
-  unregisterClient: () => {},
+  getService: () => null,
+  getAllServices: () => new Map(),
   initialize: async () => {},
   registerMemoryManager: () => {},
   getMemoryManager: () => null,
-  getService: () => null,
   registerService: () => {},
   setSetting: () => {},
   getSetting: () => null,
   getConversationLength: () => 0,
   processActions: async () => {},
   evaluate: async () => null,
-  getOrCreateUser: async () => {},
   registerProvider: () => {},
   registerAction: () => {},
   ensureConnection: async () => {},
@@ -67,7 +62,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
   ensureRoomExists: async () => {},
   composeState: async () => ({} as State),
   updateRecentMessageState: async (state) => state,
-  useModel: async <T>(modelClass: ModelClass, params: T): Promise<string | Readable> => {
+  useModel: async <T>(modelType: ModelType, params: T): Promise<string | Readable> => {
     // Check if there are any pending mock rejections
     const mockCalls = downloadModelMock.mock.calls;
     if (mockCalls.length > 0 && downloadModelMock.mock.results[mockCalls.length - 1].type === 'throw') {
@@ -76,15 +71,15 @@ export const createMockRuntime = (): IAgentRuntime => ({
     }
 
     // Call downloadModel based on the model class
-    if (modelClass === ModelClass.TEXT_SMALL) {
+    if (modelType === ModelTypes.TEXT_SMALL) {
       await downloadModelMock(MODEL_SPECS.small, path.join(TEST_PATHS.MODELS_DIR, MODEL_SPECS.small.name));
       return "This is a test response from the small model.";
     }
-    if (modelClass === ModelClass.TEXT_LARGE) {
+    if (modelType === ModelTypes.TEXT_LARGE) {
       await downloadModelMock(MODEL_SPECS.medium, path.join(TEST_PATHS.MODELS_DIR, MODEL_SPECS.medium.name));
       return "Artificial intelligence is a transformative technology that continues to evolve.";
     }
-    if (modelClass === ModelClass.TRANSCRIPTION) {
+    if (modelType === ModelTypes.TRANSCRIPTION) {
       // For transcription, we expect a Buffer as the parameter
       const audioBuffer = params as unknown as Buffer;
       if (!Buffer.isBuffer(audioBuffer)) {
@@ -136,7 +131,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
         throw error;
       }
     }
-    if (modelClass === ModelClass.IMAGE_DESCRIPTION) {
+    if (modelType === ModelTypes.IMAGE_DESCRIPTION) {
       // For image description, we expect a URL as the parameter
       const imageUrl = params as unknown as string;
       if (typeof imageUrl !== 'string') {
@@ -191,7 +186,7 @@ export const createMockRuntime = (): IAgentRuntime => ({
         throw error;
       }
     }
-    if (modelClass === ModelClass.TEXT_TO_SPEECH) {
+    if (modelType === ModelTypes.TEXT_TO_SPEECH) {
       // For TTS, we expect a string as the parameter
       const text = params as unknown as string;
       if (typeof text !== 'string') {
@@ -236,14 +231,14 @@ export const createMockRuntime = (): IAgentRuntime => ({
         throw error;
       }
     }
-    throw new Error(`Unexpected model class: ${modelClass}`);
+    throw new Error(`Unexpected model class: ${modelType}`);
   },
   registerModel: () => {},
   getModel: () => undefined,
   registerEvent: () => {},
   getEvent: () => undefined,
   emitEvent: () => {},
-  registerTask: () => '12345678-1234-1234-1234-123456789012',
+  createTask: () => '12345678-1234-1234-1234-123456789012',
   getTasks: () => undefined,
   getTask: () => undefined,
   updateTask: () => {},

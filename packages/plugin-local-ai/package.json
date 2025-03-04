@@ -25,7 +25,7 @@
         "@huggingface/transformers": "^3.3.3",
         "outetts": "0.2.0",
         "fastembed": "^1.14.1",
-        "tsup": "8.3.5",
+        "tsup": "8.4.0",
         "zod": "3.21.4",
         "@aws-sdk/client-s3": "^3.749.0",
         "@aws-sdk/s3-request-presigner": "^3.749.0",

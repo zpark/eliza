@@ -1,7 +1,7 @@
 import {
     type IAgentRuntime,
     Service,
-    ServiceType,
+    ServiceTypes,
     type ITeeLogService,
     TeeType,
     type TeeLogDAO,
@@ -10,6 +10,7 @@ import {
     type TeeLogQuery,
     type TeePageQuery,
     TEEMode,
+    type ServiceType,
 } from '@elizaos/core';
 import { SqliteTeeLogDAO } from '../adapters/sqliteDAO';
 import { TeeLogManager } from './teeLogManager';
@@ -27,18 +28,15 @@ export class TeeLogService extends Service implements ITeeLogService {
     private teeLogDAO: TeeLogDAO;
     private teeLogManager: TeeLogManager;
 
-    getInstance(): ITeeLogService {
-        return this;
+    static serviceType: ServiceType = ServiceTypes.TEE;
+
+    constructor(runtime: IAgentRuntime) {
+        super();
+        this.runtime = runtime;
     }
 
-    static get serviceType(): ServiceType {
-        return ServiceType.TEE;
-    }
-
-    async initialize(runtime: IAgentRuntime): Promise<void> {
-        if (this.initialized) {
-            return;
-        }
+    static async start(runtime: IAgentRuntime): Promise<TeeLogService> {
+        const service = new TeeLogService(runtime);
 
         const enableValues = ['true', '1', 'yes', 'enable', 'enabled', 'on'];
 
@@ -46,8 +44,8 @@ export class TeeLogService extends Service implements ITeeLogService {
         if (enableTeeLog === null) {
             throw new Error('ENABLE_TEE_LOG is not set.');
         }
-        this.enableTeeLog = enableValues.includes(enableTeeLog.toLowerCase());
-        if (!this.enableTeeLog) {
+        service.enableTeeLog = enableValues.includes(enableTeeLog.toLowerCase());
+        if (!service.enableTeeLog) {
             console.log('TEE log is not enabled.');
             return;
         }
@@ -56,7 +54,7 @@ export class TeeLogService extends Service implements ITeeLogService {
         const teeMode = runtime.getSetting('TEE_MODE') as string;
         const walletSecretSalt = runtime.getSetting('WALLET_SECRET_SALT');
 
-        this.teeMode = teeMode ? TEEMode[teeMode as keyof typeof TEEMode] : TEEMode.OFF;
+        service.teeMode = teeMode ? TEEMode[teeMode as keyof typeof TEEMode] : TEEMode.OFF;
 
         const useSgxGramine = runInSgx && enableValues.includes(runInSgx.toLowerCase());
         const useTdxDstack = teeMode && teeMode !== TEEMode.OFF && walletSecretSalt;
@@ -65,22 +63,25 @@ export class TeeLogService extends Service implements ITeeLogService {
             throw new Error('Cannot configure both SGX and TDX at the same time.');
         }
         if (useSgxGramine) {
-            this.teeType = TeeType.SGX_GRAMINE;
+            service.teeType = TeeType.SGX_GRAMINE;
         } else if (useTdxDstack) {
-            this.teeType = TeeType.TDX_DSTACK;
+            service.teeType = TeeType.TDX_DSTACK;
         } else {
             throw new Error('Invalid TEE configuration.');
         }
 
         const dbPathSetting = runtime.getSetting('TEE_LOG_DB_PATH') as string;
-        this.dbPath = dbPathSetting || path.resolve('data/tee_log.sqlite');
+        service.dbPath = dbPathSetting || path.resolve('data/tee_log.sqlite');
 
-        const db = new Database(this.dbPath);
-        this.teeLogDAO = new SqliteTeeLogDAO(db);
-        await this.teeLogDAO.initialize();
-        this.teeLogManager = new TeeLogManager(this.teeLogDAO, this.teeType, this.teeMode);
+        const db = new Database(service.dbPath);
+        service.teeLogDAO = new SqliteTeeLogDAO(db);
+        service.teeLogManager = new TeeLogManager(
+            service.teeLogDAO,
+            service.teeType,
+            service.teeMode,
+        );
 
-        const isRegistered = await this.teeLogManager.registerAgent(
+        const isRegistered = await service.teeLogManager.registerAgent(
             runtime?.agentId,
             runtime?.character?.name,
         );
@@ -88,7 +89,19 @@ export class TeeLogService extends Service implements ITeeLogService {
             throw new Error(`Failed to register agent ${runtime.agentId}`);
         }
 
-        this.initialized = true;
+        service.initialized = true;
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.TEE);
+        if (service) {
+            await service.stop();
+        }
+    }
+
+    async stop() {
+        // do nothing
     }
 
     async log(
