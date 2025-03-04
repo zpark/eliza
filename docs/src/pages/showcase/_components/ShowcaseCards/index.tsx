@@ -1,6 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
-import { type User } from '@site/src/data/users';
+import type { User } from '@site/src/data/users';
 import ShowcaseCard from '../ShowcaseCard';
 import styles from './styles.module.css';
 
@@ -22,7 +22,7 @@ export default function ShowcaseCards({users}: {users: User[]}): JSX.Element {
   return (
     <section className="container margin-top--lg margin-bottom--xl">
       <div className={clsx('margin-bottom--md')}>
-        <h2>{uniqueUsers.length} {uniqueUsers.length === 1 ? 'Site' : 'Sites'}</h2>
+        <h2>{uniqueUsers.length} {uniqueUsers.length === 1 ? 'Site' : 'Packages'}</h2>
       </div>
       <ul className={clsx('clean-list', styles.showcaseList)}>
         {uniqueUsers.map((user) => (
