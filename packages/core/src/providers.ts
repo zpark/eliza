@@ -19,7 +19,7 @@ export async function getProviders(
                 const start = Date.now();
                 const result = await provider.get(runtime, message, state);
                 const duration = Date.now() - start;
-                logger.warn(`Provider took ${duration}ms to respond`);
+                logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
                 return result;
             })
         )
