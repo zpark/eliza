@@ -4,18 +4,6 @@
 ### What is Eliza?
 Eliza is an open-source framework for building AI agents that can interact on platforms like Twitter, Discord, and Telegram. It was created by Shaw and is maintained by the community.
 
-### What are the key components of Eliza?
-
-Eliza consists of these core components:
-- **Agents**: AI personalities that interact with users and platforms
-- **Actions**: Executable behaviors that agents can perform in response to messages
-- **Clients**: Platform connectors for services like Discord, Twitter, and Telegram 
-- **Plugins**: Modular extensions that add new features and capabilities
-- **Providers**: Services that supply contextual information to agents
-- **Evaluators**: Modules that analyze conversations and track agent goals
-- **Character Files**: JSON configurations that define agent personalities
-- **Memory System**: Database that stores and manages agent information using vector embeddings
-
 ### What's the difference between v1 and v2?
 
 Note: It's recommended for devs to keep working with v1, v2 will be mostly backwards compatible
