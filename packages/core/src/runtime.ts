@@ -46,7 +46,7 @@ import {
   type State,
   type TaskWorker,
   type UUID,
-  type WorldData
+  type WorldData,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -315,7 +315,9 @@ export class AgentRuntime implements IAgentRuntime {
   async initialize() {
     // First create the agent entity directly
     try {
-      await this.databaseAdapter.ensureAgentExists(this.character as Partial<Agent>);
+      await this.databaseAdapter.ensureAgentExists(
+        this.character as Partial<Agent>
+      );
 
       // No need to transform agent's own ID
       const agentEntity = await this.databaseAdapter.getEntityById(
@@ -327,9 +329,7 @@ export class AgentRuntime implements IAgentRuntime {
           id: this.agentId,
           agentId: this.agentId,
           names: Array.from(
-            new Set(
-              [this.character.name].filter(Boolean)
-            )
+            new Set([this.character.name].filter(Boolean))
           ) as string[],
           metadata: {},
         });
@@ -356,71 +356,72 @@ export class AgentRuntime implements IAgentRuntime {
       const characterPlugins = (await handlePluginImporting(
         this.character.plugins
       )) as Plugin[];
-      const plugins = [...this.plugins, ...characterPlugins];
-      if (plugins?.length > 0) {
-        for (const plugin of plugins) {
-          if (!plugin) {
-            continue;
-          }
-          if (plugin.adapters) {
-            for (const adapter of plugin.adapters) {
-              this.adapters.push(adapter);
-            }
-          }
-
-          if (plugin.actions) {
-            for (const action of plugin.actions) {
-              this.registerAction(action);
-            }
-          }
-
-          if (plugin.evaluators) {
-            for (const evaluator of plugin.evaluators) {
-              this.registerEvaluator(evaluator);
-            }
-          }
-
-          if (plugin.providers) {
-            for (const provider of plugin.providers) {
-              this.registerContextProvider(provider);
-            }
-          }
-
-          if (plugin.models) {
-            for (const [modelType, handler] of Object.entries(plugin.models)) {
-              this.registerModel(
-                modelType as ModelType,
-                handler as (params: any) => Promise<any>
-              );
-            }
-          }
-          if (plugin.routes) {
-            for (const route of plugin.routes) {
-              this.routes.push(route);
-            }
-          }
-
-          if (plugin.events) {
-            for (const [eventName, eventHandlers] of Object.entries(
-              plugin.events
-            )) {
-              for (const eventHandler of eventHandlers) {
-                this.registerEvent(eventName, eventHandler);
-              }
-            }
-          }
-
-          this.plugins.push(plugin);
-        }
-      }
+      // push character plugins to this.plugins
+      this.plugins.push(...characterPlugins);
     }
 
-    for (const plugin of this.plugins) {
-      if (plugin.init) {
-        await plugin.init(plugin.config, this);
-      }
-      if (plugin.services) {
-          await Promise.all(plugin.services.map(service => this.registerService(service)));
+    if (this.plugins?.length > 0) {
+      for (const plugin of this.plugins) {
+        if (!plugin) {
+          continue;
+        }
+        if (plugin.adapters) {
+          for (const adapter of plugin.adapters) {
+            this.adapters.push(adapter);
+          }
+        }
+
+        if (plugin.actions) {
+          for (const action of plugin.actions) {
+            this.registerAction(action);
+          }
+        }
+
+        if (plugin.evaluators) {
+          for (const evaluator of plugin.evaluators) {
+            this.registerEvaluator(evaluator);
+          }
+        }
+
+        if (plugin.providers) {
+          for (const provider of plugin.providers) {
+            this.registerContextProvider(provider);
+          }
+        }
+
+        if (plugin.models) {
+          for (const [modelType, handler] of Object.entries(plugin.models)) {
+            this.registerModel(
+              modelType as ModelType,
+              handler as (params: any) => Promise<any>
+            );
+          }
+        }
+        if (plugin.routes) {
+          for (const route of plugin.routes) {
+            this.routes.push(route);
+          }
+        }
+
+        if (plugin.events) {
+          for (const [eventName, eventHandlers] of Object.entries(
+            plugin.events
+          )) {
+            for (const eventHandler of eventHandlers) {
+              this.registerEvent(eventName, eventHandler);
+            }
+          }
+        }
+        if (plugin.services) {
+          console.log("plugin.services", plugin.services);
+          await Promise.all(
+            plugin.services.map((service) => this.registerService(service))
+          );
+        }
+
+        if (plugin.init) {
+          await plugin.init(plugin.config, this);
+        }
       }
     }
 
@@ -470,7 +471,6 @@ export class AgentRuntime implements IAgentRuntime {
       throw error;
     }
 
-
     // Process character knowledge
     if (this.character?.knowledge && this.character.knowledge.length > 0) {
       const stringKnowledge = this.character.knowledge.filter(
@@ -490,8 +490,6 @@ export class AgentRuntime implements IAgentRuntime {
       await this.ensureEmbeddingDimension();
     }
   }
-
-
 
   private async processCharacterKnowledge(items: string[]) {
     const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
@@ -716,24 +714,19 @@ export class AgentRuntime implements IAgentRuntime {
 
   async ensureParticipantInRoom(userId: UUID, roomId: UUID) {
     // Make sure entity exists in database before adding as participant
-    const entity = await this.databaseAdapter.getEntityById(
-      userId,
-    );
-    if(!entity) {
+    const entity = await this.databaseAdapter.getEntityById(userId);
+    if (!entity) {
       throw new Error(`User ${userId} not found`);
     }
     // Get current participants
     const participants = await this.databaseAdapter.getParticipantsForRoom(
-      roomId,
+      roomId
     );
 
     // Only add if not already a participant
     if (!participants.includes(userId)) {
       // Add participant using the tenant-specific ID that now exists in the entities table
-      const added = await this.databaseAdapter.addParticipant(
-        userId,
-        roomId,
-      );
+      const added = await this.databaseAdapter.addParticipant(userId, roomId);
 
       if (!added) {
         throw new Error(
@@ -746,9 +739,7 @@ export class AgentRuntime implements IAgentRuntime {
           `Agent ${this.character.name} linked to room ${roomId} successfully.`
         );
       } else {
-        logger.log(
-          `User ${userId} linked to room ${roomId} successfully.`
-        );
+        logger.log(`User ${userId} linked to room ${roomId} successfully.`);
       }
     }
   }
@@ -782,7 +773,7 @@ export class AgentRuntime implements IAgentRuntime {
       worldId = createUniqueUuid(this, serverId);
     }
 
-    const names = [userScreenName, userName]
+    const names = [userScreenName, userName];
     const metadata = {
       [source]: {
         name: userScreenName,
@@ -790,9 +781,7 @@ export class AgentRuntime implements IAgentRuntime {
       },
     };
 
-    const entity = await this.databaseAdapter.getEntityById(
-      userId,
-    );
+    const entity = await this.databaseAdapter.getEntityById(userId);
 
     if (!entity) {
       await this.databaseAdapter.createEntity({
@@ -872,37 +861,37 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-    /**
+  /**
    * Ensure the existence of a room between the agent and a user. If no room exists, a new room is created and the user
    * and agent are added as participants. The room ID is returned.
    * @param userId - The user ID to create a room with.
    * @returns The room ID of the room between the agent and the user.
    * @throws An error if the room cannot be created.
    */
-    async ensureRoomExists({
-      id,
-      name,
-      source,
-      type,
-      channelId,
-      serverId,
-      worldId,
-    }: RoomData) {
-      const room = await this.databaseAdapter.getRoom(id);
-      if (!room) {
-        await this.databaseAdapter.createRoom({
-          id,
-          name,
-          agentId: this.agentId,
-          source,
-          type,
-          channelId,
-          serverId,
-          worldId,
-        });
-        logger.log(`Room ${id} created successfully.`);
-      }
+  async ensureRoomExists({
+    id,
+    name,
+    source,
+    type,
+    channelId,
+    serverId,
+    worldId,
+  }: RoomData) {
+    const room = await this.databaseAdapter.getRoom(id);
+    if (!room) {
+      await this.databaseAdapter.createRoom({
+        id,
+        name,
+        agentId: this.agentId,
+        source,
+        type,
+        channelId,
+        serverId,
+        worldId,
+      });
+      logger.log(`Room ${id} created successfully.`);
     }
+  }
 
   /**
    * Compose the state of the agent into an object that can be passed or used for response generation.
@@ -1010,10 +999,11 @@ export class AgentRuntime implements IAgentRuntime {
 
             return example
               .map((message) => {
-                let messageString =
-                  `${message.user}: ${message.content.text}${message.content.action
+                let messageString = `${message.user}: ${message.content.text}${
+                  message.content.action
                     ? ` (action: ${message.content.action})`
-                    : ""}`;
+                    : ""
+                }`;
                 exampleNames.forEach((name, index) => {
                   const placeholder = `{{user${index + 1}}}`;
                   messageString = messageString.replaceAll(placeholder, name);
@@ -1029,9 +1019,10 @@ export class AgentRuntime implements IAgentRuntime {
       targetEntityId: UUID
     ): Promise<Memory[]> => {
       // Find all rooms where sourceEntityId and targetEntityId are participants
-      const rooms = await this.databaseAdapter.getRoomsForParticipants(
-        [sourceEntityId, targetEntityId],
-      );
+      const rooms = await this.databaseAdapter.getRoomsForParticipants([
+        sourceEntityId,
+        targetEntityId,
+      ]);
 
       // Check the existing memories in the database
       return this.messageManager.getMemoriesByRoomIds({
@@ -1059,7 +1050,7 @@ export class AgentRuntime implements IAgentRuntime {
           } else {
             // Lookup by tenant-specific ID since that's what's stored in the memory
             const accountId = await this.databaseAdapter.getEntityById(
-              message.userId,
+              message.userId
             );
             sender = accountId?.metadata?.username || "unknown";
           }
@@ -1198,7 +1189,10 @@ export class AgentRuntime implements IAgentRuntime {
 
       // Agent runtime stuff
       senderName,
-      actors: actors && actors.length > 0 ? addHeader("# Actors in the Room", actors) : "",
+      actors:
+        actors && actors.length > 0
+          ? addHeader("# Actors in the Room", actors)
+          : "",
       actorsData,
       roomId,
       recentMessages:
@@ -1351,7 +1345,7 @@ export class AgentRuntime implements IAgentRuntime {
 
   async registerService(service: Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
-    if(!serviceType) {
+    if (!serviceType) {
       console.log("*** service has no serviceType", service);
       return;
       // throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
@@ -1394,11 +1388,9 @@ export class AgentRuntime implements IAgentRuntime {
     return this.memoryManagerService.getKnowledgeManager();
   }
 
-  registerModel(
-    modelType: ModelType,
-    handler: (params: any) => Promise<any>
-  ) {
-    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+  registerModel(modelType: ModelType, handler: (params: any) => Promise<any>) {
+    const modelKey =
+      typeof modelType === "string" ? modelType : ModelTypes[modelType];
     if (!this.models.has(modelKey)) {
       this.models.set(modelKey, []);
     }
@@ -1408,7 +1400,8 @@ export class AgentRuntime implements IAgentRuntime {
   getModel(
     modelType: ModelType
   ): ((runtime: IAgentRuntime, params: any) => Promise<any>) | undefined {
-    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+    const modelKey =
+      typeof modelType === "string" ? modelType : ModelTypes[modelType];
     const models = this.models.get(modelKey);
     if (!models?.length) {
       return undefined;
@@ -1417,7 +1410,8 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async useModel(modelType: ModelType, params: any): Promise<any> {
-    const modelKey = typeof modelType === 'string' ? modelType : ModelTypes[modelType];
+    const modelKey =
+      typeof modelType === "string" ? modelType : ModelTypes[modelType];
     const model = this.getModel(modelKey);
     if (!model) {
       throw new Error(`No handler found for delegate type: ${modelKey}`);
@@ -1454,7 +1448,6 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-
   async ensureEmbeddingDimension() {
     logger.log(
       `[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`
@@ -1488,9 +1481,7 @@ export class AgentRuntime implements IAgentRuntime {
       logger.info(
         `[AgentRuntime][${this.character.name}] Setting embedding dimension: ${embedding.length}`
       );
-      await this.databaseAdapter.ensureEmbeddingDimension(
-        embedding.length,
-      );
+      await this.databaseAdapter.ensureEmbeddingDimension(embedding.length);
       logger.info(
         `[AgentRuntime][${this.character.name}] Successfully set embedding dimension`
       );
@@ -1505,7 +1496,9 @@ export class AgentRuntime implements IAgentRuntime {
 
   registerTaskWorker(taskHandler: TaskWorker): void {
     if (this.taskWorkers.has(taskHandler.name)) {
-      logger.warn(`Task definition ${taskHandler.name} already registered. Will be overwritten.`);
+      logger.warn(
+        `Task definition ${taskHandler.name} already registered. Will be overwritten.`
+      );
     }
     this.taskWorkers.set(taskHandler.name, taskHandler);
   }

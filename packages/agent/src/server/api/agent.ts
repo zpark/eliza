@@ -441,15 +441,21 @@ export function agentRouter(
                 worldId,
             });
 
-            await runtime.databaseAdapter.createRelationship({
+            const existingRelationship = await runtime.databaseAdapter.getRelationship({
                 sourceEntityId: userId,
                 targetEntityId: runtime.agentId,
-                tags: ["message_interaction"],
-                metadata: {
+            });
+            if (!existingRelationship) {
+                await runtime.databaseAdapter.createRelationship({
+                    sourceEntityId: userId,
+                    targetEntityId: runtime.agentId,
+                    tags: ["message_interaction"],
+                    metadata: {
                     lastInteraction: Date.now(),
                     channel: "direct"
-                }
-            });
+                    }
+                });
+            }
 
             const messageId = createUniqueUuid(runtime, Date.now().toString());
             const attachments: Media[] = [];
