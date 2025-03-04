@@ -43,7 +43,12 @@ export function agentRouter(
                 bio: agent.bio[0],
                 createdAt: agent.createdAt,
                 updatedAt: agent.updatedAt,
-            })).sort((a: Agent, b: Agent) => a.name.localeCompare(b.name));
+            })).sort((a: Agent, b: Agent) => {
+                if (a.status === b.status) {
+                    return a.name.localeCompare(b.name);
+                }
+                return a.status === "active" ? -1 : 1;
+            });
 
             res.json({
                 success: true,
