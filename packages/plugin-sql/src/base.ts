@@ -1558,7 +1558,12 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
                 // Filter by tags if provided
                 if (params.tags && params.tags.length > 0) {
-                    query = query.where(sql`${relationshipTable.tags} && ARRAY[${sql.join(params.tags, ', ')}]::text[]`);
+                    // Filter by tags - find tasks that have ALL of the specified tags
+                    // Using @> operator which checks if left array contains all elements from right array
+                    const tagParams = params.tags.map(tag => `'${tag.replace(/'/g, "''")}'`).join(', ');
+                    query = query.where(
+                        sql`${relationshipTable.tags} @> ARRAY[${sql.raw(tagParams)}]::text[]`
+                    );
                 }
 
                 const results = await query;
@@ -1757,21 +1762,24 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 }
                 
                 if (params.tags && params.tags.length > 0) {
-                    // Filter by tags - tasks that have all of the specified tags
+                    // Filter by tags - find tasks that have ALL of the specified tags
+                    // Using @> operator which checks if left array contains all elements from right array
+                    const tagParams = params.tags.map(tag => `'${tag.replace(/'/g, "''")}'`).join(', ');
                     query = query.where(
-                        sql`${taskTable.tags} && array[${params.tags.map(tag => sql`${tag}`).join(', ')}]::text[]`
+                        sql`${taskTable.tags} @> ARRAY[${sql.raw(tagParams)}]::text[]`
                     );
                 }
                 
-                const results = await query;
-                return results.map(row => ({
+                const result = await query;
+                
+                return result.map(row => ({
                     id: row.id,
                     name: row.name,
                     description: row.description,
                     roomId: row.roomId,
                     worldId: row.worldId,
-                    tags: row.tags || [],
-                    metadata: row.metadata || {}
+                    tags: row.tags,
+                    metadata: row.metadata
                 }));
             });
         });

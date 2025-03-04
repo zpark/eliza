@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { initCharacter } from "../settings";
 import { degenIntelPlugin } from "./plugins/degen-intel";
 import { degenTraderPlugin } from "./plugins/degen-trader";
-import { communityTraderPlugin } from "./plugins/community-trader";
+import { communityTraderPlugin } from "./plugins/community-investor";
 
 dotenv.config({ path: "../../.env" });
 
@@ -173,9 +173,9 @@ const config: OnboardingConfig = {
 
 export default {
   plugins: [
-    // degenIntelPlugin,
+    degenIntelPlugin,
     degenTraderPlugin,
-    // communityTraderPlugin,
+    communityTraderPlugin,
   ],
   character,
   init: (runtime: IAgentRuntime) => initCharacter({ runtime, config }),
