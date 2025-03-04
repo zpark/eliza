@@ -1,6 +1,6 @@
 import PageTitle from "@/components/page-title";
 import { useAgents } from "@/hooks/use-query-hooks";
-import { Cog, Loader2, Play, Plus, Square } from "lucide-react";
+import { Cog, Loader2, MessageSquare, Play, Plus, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProfileCard from "@/components/profile-card";
 import { formatAgentName } from "@/lib/utils";
@@ -49,7 +49,7 @@ export default function Home() {
             )}
 
             {!isLoading && !isError &&(
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {agents?.sort((a: Agent, b: Agent) => Number(b?.enabled) - Number(a?.enabled)).map((agent: Agent) => {
                         // Use type assertion to access status property
                         const isActive = (agent as Agent & { status?: string }).status === 'active';
@@ -93,11 +93,17 @@ export default function Home() {
                                     disabled: isProcessing,
                                 },
                                 {
-                                    icon: <Cog />,
-                                    className: "p-2",
+                                    icon: <MessageSquare style={{ height: 14, width: 14 }} />,
+                                    className: "w-10 h-10 rounded-full",
+                                    action: () => navigate(`/chat/${agent.id}`),
+                                    variant: "outline",
+                                    disabled: !isActive
+                                },
+                                {
+                                    icon: <Cog style={{ height: 16, width: 16 }} />,
+                                    className: "w-10 h-10 rounded-full",
                                     action: () => navigate(`/settings/${agent.id}`),
                                     variant: "outline",
-                                    size: "icon"
                                 }
                             ]}
                         />;
@@ -108,7 +114,7 @@ export default function Home() {
                         onClick={() => navigate("/create")}>
                         <div className="flex flex-col items-center justify-center gap-2 p-8">
                             <Plus size={40} className="text-muted-foreground" />
-                            <span className="text-muted-foreground">Create New Agent</span>
+                            <span className="text-muted-foreground whitespace-nowrap">Create New Agent</span>
                         </div>
                     </Card>
                 </div>
