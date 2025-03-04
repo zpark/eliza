@@ -194,7 +194,7 @@ export function agentRouter(
                 // stop existing runtime
                 server?.unregisterAgent(agentId);
                 // start new runtime
-                server?.startAgent(updatedAgent);
+                await server?.startAgent(updatedAgent);
             }
         
             // check if agent got started successfully
