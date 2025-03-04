@@ -105,7 +105,6 @@ export class TrustTradingService extends Service {
     }
 
     static async start(runtime: IAgentRuntime): Promise<TrustTradingService> {
-        console.log("*** Initializing Trading Service");
         const tradingService = new TrustTradingService(runtime);
         return tradingService;
     }
@@ -118,7 +117,6 @@ export class TrustTradingService extends Service {
     }
 
     async stop(): Promise<void> {
-        console.log("*** Stopping Trading Service");
         return Promise.resolve();
     }
 

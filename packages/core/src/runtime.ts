@@ -1346,9 +1346,7 @@ export class AgentRuntime implements IAgentRuntime {
   async registerService(service: typeof Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
     if (!serviceType) {
-      console.log("*** service has no serviceType", service);
       return;
-      // throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
     }
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,

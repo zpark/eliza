@@ -1720,7 +1720,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 if (!metadata.updatedAt) {
                     metadata.updatedAt = now.getTime();
                 }
-                console.log(`*** Creating task ${task.name}`);
                 const values = {
                     id: task.id as UUID,
                     name: task.name,
@@ -1733,7 +1732,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     updatedAt: now,
                     agentId: this.agentId
                 }
-                console.log(`*** Values: ${JSON.stringify(values)}`);
                 const result = await this.db.insert(taskTable)
                     .values(values)
                     .returning({ id: taskTable.id });
@@ -1768,7 +1766,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 }
                 
                 const results = await query;
-                console.log(`*** Results: ${JSON.stringify(results)}`);
                 return results.map(row => ({
                     id: row.id,
                     name: row.name,

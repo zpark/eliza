@@ -29,33 +29,24 @@ export class TaskService extends Service {
 
   private async checkTasks() {
     try {
-      console.log("*** Checking tasks");
       // Get all tasks with "queue" tag
       const tasks = await this.runtime.databaseAdapter.getTasks({
         tags: ["queue"],
       });
-
-      console.log(`*** Found ${tasks.length} tasks`);
 
       const now = Date.now();
 
       for (const task of tasks) {
         // Skip if no duration set
         if (!task.metadata?.duration) {
-            console.log(`*** Task ${task.name} has no duration`);
           continue;
         }
 
         const taskStartTime = new Date(task.metadata.updatedAt).getTime();
         const durationMs = task.metadata.updateInterval;
 
-        console.log(
-          `*** Checking task ${task.name} with duration ${durationMs}ms`
-        );
-
         // Check if enough time has passed
         if (now - taskStartTime >= durationMs) {
-          console.log(`*** Executing task ${task.name}`);
           await this.executeTask(task.id!);
         }
       }
