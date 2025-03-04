@@ -175,7 +175,6 @@ async function generateObjectArray({
     context,
     modelType,
     output: "array",
-    enumValues: undefined,
     schema,
   });
   
