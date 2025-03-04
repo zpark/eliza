@@ -3,10 +3,11 @@ import {
     type IVideoService,
     type Media,
     Service,
+    ServiceTypes,
     ServiceType,
     stringToUuid,
     logger,
-    ModelClass,
+    ModelTypes,
 } from "@elizaos/core";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "node:fs";
@@ -31,19 +32,34 @@ function getYoutubeDL() {
 
 
 export class VideoService extends Service implements IVideoService {
-    serviceType: ServiceType = ServiceType.VIDEO;
+    static serviceType: ServiceType = ServiceTypes.VIDEO;
     private cacheKey = "content/video";
     private dataDir = "./content_cache";
 
     private queue: string[] = [];
     private processing = false;
 
-    constructor() {
+    constructor(runtime: IAgentRuntime) {
         super();
+        this.runtime = runtime;
         this.ensureDataDirectoryExists();
     }
 
-    async initialize(_runtime: IAgentRuntime): Promise<void> {}
+    static async start(runtime: IAgentRuntime): Promise<VideoService> {
+        const service = new VideoService(runtime);
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.VIDEO);
+        if (service) {
+            await service.stop();
+        }
+    }
+    
+    async stop() {
+        // do nothing
+    }
 
     private ensureDataDirectoryExists() {
         if (!fs.existsSync(this.dataDir)) {
@@ -373,7 +389,7 @@ export class VideoService extends Service implements IVideoService {
 
         logger.log("Starting transcription...");
         const startTime = Date.now();
-        const transcript = await runtime.useModel(ModelClass.TRANSCRIPTION, audioBuffer);
+        const transcript = await runtime.useModel(ModelTypes.TRANSCRIPTION, audioBuffer);
 
         const endTime = Date.now();
         logger.log(

@@ -1,6 +1,6 @@
 import { composeContext } from "../context";
 import { booleanFooter, parseBooleanFromText } from "../parsing";
-import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 const shouldUnfollowTemplate =
     `# Task: Decide if {{agentName}} should stop closely following this previously followed room and only respond when mentioned.
@@ -41,7 +41,7 @@ export const unfollowRoomAction: Action = {
                 template: shouldUnfollowTemplate, // Define this template separately
             });
 
-            const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+            const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 context: shouldUnfollowContext,
             });
 

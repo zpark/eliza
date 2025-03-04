@@ -1,17 +1,20 @@
 // registered to runtime through plugin
 
-import { type IAgentRuntime, Service, type ITaskService, ServiceType, type UUID } from "../types";
+import { type IAgentRuntime, Service, ServiceTypes, type UUID, ServiceType } from "../types";
 
-export class TaskService extends Service implements ITaskService {
+export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
-  runtime: IAgentRuntime;
-  serviceType: ServiceType = ServiceType.TASK;
+  static serviceType: ServiceType = ServiceTypes.TASK;
 
-  initialize(runtime: IAgentRuntime): Promise<void> {
-    this.runtime = runtime;
-    this.startTimer();
-    return Promise.resolve();
+  constructor(runtime: IAgentRuntime) {
+    super(runtime);
+  }
+
+  static async start(runtime: IAgentRuntime): Promise<TaskService> {
+    const service = new TaskService(runtime);
+    await service.startTimer();
+    return service;
   }
 
   private startTimer() {
@@ -26,10 +29,13 @@ export class TaskService extends Service implements ITaskService {
 
   private async checkTasks() {
     try {
+      console.log("*** Checking tasks");
       // Get all tasks with "queue" tag
       const tasks = await this.runtime.databaseAdapter.getTasks({
         tags: ["queue"],
       });
+
+      console.log(`*** Found ${tasks.length} tasks`);
 
       const now = Date.now();
 
@@ -91,7 +97,14 @@ export class TaskService extends Service implements ITaskService {
     }
   }
 
-  public stop() {
+  static async stop(runtime: IAgentRuntime) {
+    const service = runtime.getService(ServiceTypes.TASK);
+    if (service) {
+      await service.stop();
+    }
+  }
+
+  async stop() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

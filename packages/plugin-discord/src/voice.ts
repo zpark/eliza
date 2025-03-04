@@ -17,7 +17,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass,
+    ModelTypes,
     type UUID,
     createUniqueUuid,
     logger
@@ -34,7 +34,7 @@ import {
 import EventEmitter from "node:events";
 import { type Readable, pipeline } from "node:stream";
 import prism from "prism-media";
-import type { DiscordClient } from "./index.ts";
+import type { DiscordService } from "./index.ts";
 import { getWavHeader } from "./utils.ts";
 
 // These values are chosen for compatibility with picovoice components
@@ -150,7 +150,7 @@ export class VoiceManager extends EventEmitter {
     private ready: boolean;
     private getChannelType: (channelId: string) => Promise<ChannelType>;
 
-    constructor(client: DiscordClient) {
+    constructor(client: DiscordService) {
         super();
         this.client = client.client;
         this.runtime = client.runtime;
@@ -591,7 +591,7 @@ export class VoiceManager extends EventEmitter {
             const wavBuffer = await this.convertOpusToWav(inputBuffer);
             console.log("Starting transcription...");
 
-            const transcriptionText = await this.runtime.useModel(ModelClass.TRANSCRIPTION, wavBuffer)
+            const transcriptionText = await this.runtime.useModel(ModelTypes.TRANSCRIPTION, wavBuffer)
             function isValidTranscription(text: string): boolean {
                 if (!text || text.includes("[BLANK_AUDIO]")) return false;
                 return true;
@@ -686,7 +686,7 @@ export class VoiceManager extends EventEmitter {
                     if (responseMemory.content.text?.trim()) {
                         await this.runtime.messageManager.createMemory(responseMemory);
 
-                        const responseStream = await this.runtime.useModel(ModelClass.TEXT_TO_SPEECH, content.text);
+                        const responseStream = await this.runtime.useModel(ModelTypes.TEXT_TO_SPEECH, content.text);
                         if (responseStream) {
                             await this.playAudioStream(userId, responseStream as Readable);
                         }

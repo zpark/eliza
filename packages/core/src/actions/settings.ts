@@ -1,3 +1,4 @@
+import { z, ZodSchema } from "zod";
 import { composeContext } from "../context";
 import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
@@ -11,7 +12,8 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelType,
+  ModelTypes,
   type OnboardingSetting,
   type State,
   type WorldSettings,
@@ -58,12 +60,11 @@ IMPORTANT: Only include settings from the Available Settings list above. Ignore 
 const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_LARGE,
-  stopSequences,
+  modelType = ModelTypes.TEXT_LARGE as ModelType,
+  stopSequences = [],
   output = "object",
-  enumValues,
+  enumValues = [],
   schema,
-  mode,
 }): Promise<any> => {
   if (!context) {
     const errorMessage = "generateObject context is empty";
@@ -73,10 +74,10 @@ const generateObject = async ({
 
   // Special handling for enum output type
   if (output === "enum" && enumValues) {
-    const response = await runtime.useModel(modelClass, {
+    const response = await runtime.useModel(modelType, {
       runtime,
       context,
-      modelClass,
+      modelType,
       stopSequences,
       maxTokens: 8,
       object: true,
@@ -105,10 +106,10 @@ const generateObject = async ({
   }
 
   // Regular object/array generation
-  const response = await runtime.useModel(modelClass, {
+  const response = await runtime.useModel(modelType, {
     runtime,
     context,
-    modelClass,
+    modelType,
     stopSequences,
     object: true,
   });
@@ -151,14 +152,14 @@ const generateObject = async ({
 async function generateObjectArray({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelTypes.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
@@ -171,12 +172,9 @@ async function generateObjectArray({
   const result = await generateObject({
     runtime,
     context,
-    modelClass,
+    modelType,
     output: "array",
     schema,
-    schemaName,
-    schemaDescription,
-    mode: "json",
   });
   
   if (!Array.isArray(result)) {
@@ -235,7 +233,7 @@ export async function updateWorldSettings(
     world.metadata.settings = worldSettings;
 
     // Save updated world
-    await runtime.updateWorld(world);
+    await runtime.databaseAdapter.updateWorld(world);
 
     return true;
   } catch (error) {
@@ -320,7 +318,7 @@ async function extractSettingValues(
     const extractions = (await generateObjectArray({
       runtime,
       context,
-      modelClass: ModelClass.TEXT_LARGE,
+      modelType: ModelTypes.TEXT_LARGE,
     })) as SettingUpdate[];
 
     logger.info(`Extracted ${extractions.length} potential setting updates`);
@@ -553,7 +551,7 @@ async function handleOnboardingComplete(
       template: completionTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
     });
 
@@ -605,7 +603,7 @@ async function generateSuccessResponse(
       template: successTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
     });
 
@@ -655,7 +653,7 @@ async function generateFailureResponse(
       template: failureTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
     });
 
@@ -690,7 +688,7 @@ async function generateErrorResponse(
       template: errorTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
     });
 

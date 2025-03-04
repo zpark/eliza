@@ -66,6 +66,6 @@ export const teePlugin = (config?: TeePluginConfig): Plugin => {
         actions: vendor.getActions(),
         evaluators: [],
         providers: vendor.getProviders(),
-        services: [new TeeLogService()],
+        services: [TeeLogService],
     };
 };

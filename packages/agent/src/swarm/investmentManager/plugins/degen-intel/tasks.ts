@@ -7,11 +7,7 @@ import TwitterParser from "./providers/twitter-parser";
 import BuySignal from "./providers/buy-signal";
 
 export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
-	// TODO: thinking ahead, we should get the server ID from the server we are running in
-	if(!worldId) {
-		console.warn("**** HEY! You still need to pass in a worldId to register tasks");
-		worldId = runtime.agentId;
-	}
+	worldId = runtime.agentId; // this is global data for the agent
 
 	runtime.registerTaskWorker({
 		name: "BIRDEYE_SYNC_TRENDING",

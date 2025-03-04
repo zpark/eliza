@@ -26,12 +26,6 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
     db: DB;
 
     /**
-     * Optional initialization method for the database adapter.
-     * @returns A Promise that resolves when initialization is complete.
-     */
-    abstract init(): Promise<void>;
-
-    /**
      * Optional close method for the database adapter.
      * @returns A Promise that resolves when closing is complete.
      */
@@ -342,7 +336,7 @@ export abstract class DatabaseAdapter<DB = unknown> implements IDatabaseAdapter 
      * @param roomId The UUID of the room to remove.
      * @returns A Promise that resolves when the room has been removed.
      */
-    abstract removeRoom(roomId: UUID): Promise<void>;
+    abstract deleteRoom(roomId: UUID): Promise<void>;
 
     /**
      * Retrieves room IDs for which a specific user is a participant.

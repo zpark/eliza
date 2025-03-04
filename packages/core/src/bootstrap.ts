@@ -35,7 +35,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type Plugin,
   RoleName,
   type RoomData,
@@ -181,7 +181,7 @@ const checkShouldRespond = async (
       shouldRespondTemplate,
   });
 
-  const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+  const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
     context: shouldRespondContext,
   });
 
@@ -235,7 +235,7 @@ const messageReceivedHandler = async ({
         messageHandlerTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
       context,
     });
 
@@ -856,7 +856,7 @@ export const bootstrapPlugin: Plugin = {
     settingsProvider,
     relationshipsProvider,
   ],
-  services: [new TaskService()],
+  services: [TaskService],
 };
 
 export default bootstrapPlugin;

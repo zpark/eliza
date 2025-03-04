@@ -4,7 +4,7 @@ import {
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass, parseJSONObjectFromText, type State
+    ModelTypes, parseJSONObjectFromText, type State
 } from "@elizaos/core";
 
 export const transcriptionTemplate = `# Transcription of media file
@@ -39,7 +39,7 @@ const getMediaAttachmentId = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
         console.log("response", response);

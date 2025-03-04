@@ -1,4 +1,4 @@
-import { type IAgentRuntime, type Plugin, logger, ModelClass } from "@elizaos/core";
+import { type IAgentRuntime, type Plugin, logger, ModelTypes } from "@elizaos/core";
 import { Readable } from "node:stream";
 import { prependWavHeader } from "./utils.ts";
 
@@ -62,7 +62,7 @@ export const elevenLabsPlugin: Plugin = {
   name: "elevenLabs",
   description: "ElevenLabs plugin",
   models: {
-    [ModelClass.TEXT_TO_SPEECH]: async (runtime, text) => {
+    [ModelTypes.TEXT_TO_SPEECH]: async (runtime, text) => {
       try {
         const stream = await fetchSpeech(runtime, text);
         return getVoiceSettings(runtime).outputFormat.startsWith("pcm_")

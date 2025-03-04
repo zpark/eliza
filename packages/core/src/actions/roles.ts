@@ -2,12 +2,12 @@ import type { ZodSchema, z } from "zod";
 import { createUniqueUuid } from "..";
 import { composeContext } from "../context";
 import { logger } from "../logger";
-import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, RoleName, type State, type UUID } from "../types";
+import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, RoleName, type State, type UUID } from "../types";
 
 export const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_LARGE,
+  modelType = ModelTypes.TEXT_LARGE,
   stopSequences = [],
   output = "object",
   enumValues = [],
@@ -21,10 +21,10 @@ export const generateObject = async ({
 
   // Special handling for enum output type
   if (output === "enum" && enumValues) {
-    const response = await runtime.useModel(modelClass, {
+    const response = await runtime.useModel(modelType, {
       runtime,
       context,
-      modelClass,
+      modelType,
       stopSequences,
       maxTokens: 8,
       object: true,
@@ -53,10 +53,10 @@ export const generateObject = async ({
   }
 
   // Regular object/array generation
-  const response = await runtime.useModel(modelClass, {
+  const response = await runtime.useModel(modelType, {
     runtime,
     context,
-    modelClass,
+    modelType,
     stopSequences,
     object: true,
   });
@@ -155,14 +155,14 @@ If no valid role assignments are found, return an empty array.`;
 async function generateObjectArray({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_SMALL,
+  modelType = ModelTypes.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
   context: string;
-  modelClass: ModelClass;
+  modelType: ModelType;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
@@ -175,7 +175,7 @@ async function generateObjectArray({
   const result = await generateObject({
     runtime,
     context,
-    modelClass,
+    modelType,
     output: "array",
     schema,
   });
@@ -334,7 +334,7 @@ const updateRoleAction: Action = {
     const result = (await generateObjectArray({
       runtime,
       context: extractionContext,
-      modelClass: ModelClass.SMALL,
+      modelType: ModelTypes.TEXT_SMALL,
     })) as RoleAssignment[];
 
     if (!result?.length) {

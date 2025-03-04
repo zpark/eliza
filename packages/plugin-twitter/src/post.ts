@@ -6,7 +6,7 @@ import {
     extractAttributes,
     type IAgentRuntime,
     logger,
-    ModelClass,
+    ModelTypes,
     parseJSONObjectFromText,
     truncateToCompleteSentence,
     type UUID
@@ -324,7 +324,7 @@ export class TwitterPostClient {
 
             logger.debug(`generate post prompt:\n${context}`);
 
-            const response = await this.runtime.useModel(ModelClass.TEXT_SMALL, {
+            const response = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context,
             });
 

@@ -1,6 +1,6 @@
-import express from 'express';
 import type { IAgentRuntime, ITeeLogService, TeeLogQuery } from '@elizaos/core';
-import { logger, ServiceType } from '@elizaos/core';
+import { logger, ServiceTypes } from '@elizaos/core';
+import express from 'express';
 
 export function teeRouter(
     agents: Map<string, IAgentRuntime>
@@ -13,7 +13,7 @@ export function teeRouter(
 
             for (const agentRuntime of agents.values()) {
                 const teeLogService = agentRuntime
-                    .getService<ITeeLogService>(ServiceType.TEE);
+                    .getService<ITeeLogService>(ServiceTypes.TEE);
 
                 const agents = await teeLogService.getAllAgents();
                 allAgents.push(...agents);
@@ -21,7 +21,7 @@ export function teeRouter(
 
             const runtime: IAgentRuntime = agents.values().next().value;
             const teeLogService = runtime
-                .getService<ITeeLogService>(ServiceType.TEE);
+                .getService<ITeeLogService>(ServiceTypes.TEE);
             const attestation = await teeLogService.generateAttestation(
                 JSON.stringify(allAgents)
             );
@@ -44,7 +44,7 @@ export function teeRouter(
             }
 
             const teeLogService = agentRuntime
-                .getService<ITeeLogService>(ServiceType.TEE);
+                .getService<ITeeLogService>(ServiceTypes.TEE);
 
             const teeAgent = await teeLogService.getAgent(agentId);
             const attestation = await teeLogService.generateAttestation(
@@ -76,7 +76,7 @@ export function teeRouter(
             };
             const agentRuntime: IAgentRuntime = agents.values().next().value;
             const teeLogService = agentRuntime
-                .getService<ITeeLogService>(ServiceType.TEE);
+                .getService<ITeeLogService>(ServiceTypes.TEE);
             const pageQuery = await teeLogService.getLogs(
                 teeLogQuery,
                 page,

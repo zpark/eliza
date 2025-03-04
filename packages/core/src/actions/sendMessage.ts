@@ -11,7 +11,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type State,
   UUID
 } from "../types";
@@ -115,7 +115,7 @@ export const sendMessageAction: Action = {
         template: targetExtractionTemplate,
       });
 
-      const targetResult = await runtime.useModel(ModelClass.TEXT_LARGE, {
+      const targetResult = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         context: targetContext,
         stopSequences: []
       });
@@ -162,7 +162,7 @@ export const sendMessageAction: Action = {
           return;
         }
 
-        const sendDirectMessage = runtime.getClient(source)?.sendDirectMessage;
+        const sendDirectMessage = runtime.getService(source)?.sendDirectMessage;
 
         if (!sendDirectMessage) {
           await callback({
@@ -213,7 +213,7 @@ export const sendMessageAction: Action = {
           return;
         }
 
-        const sendRoomMessage = runtime.getClient(source)?.sendRoomMessage;
+        const sendRoomMessage = runtime.getService(source)?.sendRoomMessage;
 
         if (!sendRoomMessage) {
           await callback({

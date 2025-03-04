@@ -1260,7 +1260,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         });
     }
 
-    async removeRoom(roomId: UUID): Promise<void> {
+    async deleteRoom(roomId: UUID): Promise<void> {
         if (!roomId) throw new Error("Room ID is required");
         return this.withDatabase(async () => {
             await this.db.transaction(async (tx) => {
@@ -1460,22 +1460,22 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         tags?: string[];
         metadata?: { [key: string]: unknown };
     }): Promise<boolean> {
-        return this.withDatabase(async () => {
+        return this.withDatabase(async () => {const id = v4();
+            const saveParams = {
+                id,
+                sourceEntityId: params.sourceEntityId,
+                targetEntityId: params.targetEntityId,
+                agentId: this.agentId,
+                tags: params.tags || [],
+                metadata: params.metadata || {},
+            }
             try {
-                const id = v4();
-                await this.db.insert(relationshipTable).values({
-                    id,
-                    sourceEntityId: params.sourceEntityId,
-                    targetEntityId: params.targetEntityId,
-                    agentId: this.agentId,
-                    tags: params.tags || [],
-                    metadata: params.metadata || {},
-                });
+                await this.db.insert(relationshipTable).values(saveParams);
                 return true;
             } catch (error) {
                 logger.error("Error creating relationship:", {
                     error: error instanceof Error ? error.message : String(error),
-                    params,
+                    saveParams,
                 });
                 return false;
             }
@@ -1504,7 +1504,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async getRelationship(params: {
         sourceEntityId: UUID;
         targetEntityId: UUID;
-        agentId: UUID;
     }): Promise<Relationship | null> {
         return this.withDatabase(async () => {
             try {
@@ -1515,7 +1514,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         and(
                             eq(relationshipTable.sourceEntityId, params.sourceEntityId),
                             eq(relationshipTable.targetEntityId, params.targetEntityId),
-                            eq(relationshipTable.agentId, params.agentId)
+                            eq(relationshipTable.agentId, this.agentId)
                         )
                     )
                     .limit(1);
@@ -1545,7 +1544,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
 
     async getRelationships(params: { 
         userId: UUID;
-        agentId: UUID;
         tags?: string[];
     }): Promise<Relationship[]> {
         return this.withDatabase(async () => {
@@ -1556,7 +1554,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                     .where(
                         and(
                             eq(relationshipTable.sourceEntityId, params.userId),
-                            eq(relationshipTable.agentId, params.agentId)
+                            eq(relationshipTable.agentId, this.agentId)
                         )
                     );
 
@@ -1722,20 +1720,22 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 if (!metadata.updatedAt) {
                     metadata.updatedAt = now.getTime();
                 }
-                
+                console.log(`*** Creating task ${task.name}`);
+                const values = {
+                    id: task.id as UUID,
+                    name: task.name,
+                    description: task.description,
+                    roomId: task.roomId,
+                    worldId: task.worldId,
+                    tags: task.tags,
+                    metadata: metadata,
+                    createdAt: now,
+                    updatedAt: now,
+                    agentId: this.agentId
+                }
+                console.log(`*** Values: ${JSON.stringify(values)}`);
                 const result = await this.db.insert(taskTable)
-                    .values({
-                        id: task.id as UUID,
-                        name: task.name,
-                        description: task.description,
-                        roomId: task.roomId,
-                        worldId: task.worldId,
-                        tags: task.tags,
-                        metadata: metadata,
-                        createdAt: now,
-                        updatedAt: now,
-                        agentId: this.agentId
-                    })
+                    .values(values)
                     .returning({ id: taskTable.id });
                 
                 return result[0].id;
@@ -1761,14 +1761,14 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 }
                 
                 if (params.tags && params.tags.length > 0) {
-                    // Filter by tags - tasks that have at least one of the specified tags
+                    // Filter by tags - tasks that have all of the specified tags
                     query = query.where(
-                        sql`${taskTable.tags} && ARRAY[${params.tags.map(tag => sql`${tag}`).join(', ')}]::text[]`
+                        sql`${taskTable.tags} @> ARRAY[${sql.join(params.tags, ', ')}]::text[]`
                     );
                 }
                 
                 const results = await query;
-                
+                console.log(`*** Results: ${JSON.stringify(results)}`);
                 return results.map(row => ({
                     id: row.id,
                     name: row.name,

@@ -4,7 +4,7 @@ import {
     type IMemoryManager,
     type Memory,
     MemoryManager,
-    ModelClass,
+    ModelTypes,
     Service,
     type UUID,
     logger
@@ -51,7 +51,7 @@ export type TradingEvent =
  * Unified Trading Service that centralizes all trading operations
  */
 export class TrustTradingService extends Service {
-    serviceType = "trading";
+    static serviceType = "trading";
 
     // Memory managers
     private tokenMemoryManager: IMemoryManager;
@@ -67,16 +67,15 @@ export class TrustTradingService extends Service {
     private heliusClient: HeliusClient | null = null;
     
     // Configuration
-    private readonly config: TradingConfig;
+    tradingConfig: TradingConfig;
     
     // Event listeners
     private eventListeners: Map<string, ((event: TradingEvent) => void)[]> = new Map();
 
     constructor(
-        private readonly runtime: IAgentRuntime,
-        config: Partial<TradingConfig> = {}
+        protected runtime: IAgentRuntime,
     ) {
-        super();
+        super(runtime);
         
         // Register memory managers
         this.tokenMemoryManager = this.registerMemoryManager("tokens");
@@ -102,14 +101,24 @@ export class TrustTradingService extends Service {
         }
         
         // Merge provided config with defaults
-        this.config = {
-            ...DEFAULT_TRADING_CONFIG,
-            ...config
-        };
+        this.tradingConfig = DEFAULT_TRADING_CONFIG;
     }
 
-    initialize(): Promise<void> {
+    static async start(runtime: IAgentRuntime): Promise<TrustTradingService> {
         console.log("*** Initializing Trading Service");
+        const tradingService = new TrustTradingService(runtime);
+        return tradingService;
+    }
+
+    static async stop(runtime: IAgentRuntime): Promise<void> {
+        const tradingService = runtime.getService("trading");
+        if (tradingService) {
+            await tradingService.stop();
+        }
+    }
+
+    async stop(): Promise<void> {
+        console.log("*** Stopping Trading Service");
         return Promise.resolve();
     }
 
@@ -175,7 +184,7 @@ export class TrustTradingService extends Service {
             // Validate the token
             const tokenPerformance = await this.getOrFetchTokenPerformance(
                 buySignal.tokenAddress,
-                buySignal.chain || this.config.defaultChain
+                buySignal.chain || this.tradingConfig.defaultChain
             );
             
             if (!tokenPerformance) {
@@ -217,7 +226,7 @@ export class TrustTradingService extends Service {
                 buySignal.walletAddress || "simulation",
                 buyAmount,
                 tokenPerformance.price?.toString() || "0",
-                buySignal.isSimulation || this.config.forceSimulation
+                buySignal.isSimulation || this.tradingConfig.forceSimulation
             );
             
             if (!position) {
@@ -592,12 +601,12 @@ export class TrustTradingService extends Service {
             const pair = dexScreenerData.pairs[0];
             
             // Check liquidity
-            if (!pair.liquidity || pair.liquidity.usd < this.config.minLiquidityUsd) {
+            if (!pair.liquidity || pair.liquidity.usd < this.tradingConfig.minLiquidityUsd) {
                 return false;
             }
             
             // Check market cap
-            if (!pair.marketCap || pair.marketCap > this.config.maxMarketCapUsd) {
+            if (!pair.marketCap || pair.marketCap > this.tradingConfig.maxMarketCapUsd) {
                 return false;
             }
             
@@ -984,13 +993,13 @@ export class TrustTradingService extends Service {
         
         // Check liquidity
         const liquidity = token.liquidity || 0;
-        if (liquidity < this.config.minLiquidityUsd) {
+        if (liquidity < this.tradingConfig.minLiquidityUsd) {
             return false;
         }
         
         // Check market cap
         const marketCap = token.currentMarketCap || 0;
-        if (marketCap > this.config.maxMarketCapUsd) {
+        if (marketCap > this.tradingConfig.maxMarketCapUsd) {
             return false;
         }
         
@@ -1010,7 +1019,7 @@ export class TrustTradingService extends Service {
             const recommendation: TokenRecommendation = {
                 id: uuidv4() as UUID,
                 entityId,
-                chain: token.chain || this.config.defaultChain,
+                chain: token.chain || this.tradingConfig.defaultChain,
                 tokenAddress: token.address || "",
                 type,
                 conviction,
@@ -1069,7 +1078,7 @@ export class TrustTradingService extends Service {
         
         // Get base amount from config
         const { baseAmount, minAmount, maxAmount, trustScoreMultiplier, convictionMultiplier } = 
-            this.config.buyAmountConfig;
+            this.tradingConfig.buyAmountConfig;
         
         // Calculate multipliers
         const trustMultiplier = 1 + (trustScore / 100) * trustScoreMultiplier;
@@ -1105,7 +1114,7 @@ export class TrustTradingService extends Service {
         try {
             const position: Position = {
                 id: uuidv4() as UUID,
-                chain: this.config.defaultChain,
+                chain: this.tradingConfig.defaultChain,
                 tokenAddress,
                 walletAddress,
                 isSimulation,
@@ -1143,7 +1152,7 @@ export class TrustTradingService extends Service {
             const transaction: Transaction = {
                 id: uuidv4() as UUID,
                 positionId,
-                chain: this.config.defaultChain,
+                chain: this.tradingConfig.defaultChain,
                 tokenAddress,
                 type,
                 amount: amount.toString(),
@@ -1213,7 +1222,7 @@ export class TrustTradingService extends Service {
         try {
             // Search for transactions with this position ID
             const query = `transactions for position ${positionId}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.transactionMemoryManager.searchMemories({
                 embedding,
@@ -1244,7 +1253,7 @@ export class TrustTradingService extends Service {
         try {
             // Search for transactions with this token address
             const query = `transactions for token ${tokenAddress}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.transactionMemoryManager.searchMemories({
                 embedding,
@@ -1283,7 +1292,7 @@ export class TrustTradingService extends Service {
             
             // Search for position in memory
             const query = `position with ID ${positionId}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.positionMemoryManager.searchMemories({
                 embedding,
@@ -1314,7 +1323,7 @@ export class TrustTradingService extends Service {
         try {
             // Search for recommendations by this entity
             const query = `recommendations by entity ${entityId}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.recommendationMemoryManager.searchMemories({
                 embedding,
@@ -1415,7 +1424,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1447,7 +1456,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1479,7 +1488,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1519,7 +1528,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1551,7 +1560,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1583,7 +1592,7 @@ export class TrustTradingService extends Service {
             };
             
             // Add embedding to memory
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memory.content.text);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memory.content.text);
             const memoryWithEmbedding = { ...memory, embedding };
             
             // Store in memory manager
@@ -1624,7 +1633,7 @@ export class TrustTradingService extends Service {
             
             // Search for metrics in memory
             const query = `entity metrics for entity ${entityId}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.recommenderMemoryManager.searchMemories({
                 embedding,
@@ -1663,7 +1672,7 @@ export class TrustTradingService extends Service {
             
             // Search for history in memory
             const query = `entity metrics history for entity ${entityId}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.recommenderMemoryManager.searchMemories({
                 embedding,
@@ -1744,7 +1753,7 @@ export class TrustTradingService extends Service {
             
             // Search for token in memory
             const query = `token performance for ${tokenAddress}`;
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.tokenMemoryManager.searchMemories({
                 embedding,
@@ -1783,7 +1792,7 @@ export class TrustTradingService extends Service {
             
             // Search for open positions in memory
             const query = "open positions with balance";
-            const embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, query);
+            const embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, query);
             
             const memories = await this.positionMemoryManager.searchMemories({
                 embedding,

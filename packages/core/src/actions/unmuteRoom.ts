@@ -1,7 +1,7 @@
 import { composeContext } from "../context";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
-import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 export const shouldUnmuteTemplate =
     `# Task: Decide if {{agentName}} should unmute this previously muted room and start considering it for responses again.
@@ -42,7 +42,7 @@ export const unmuteRoomAction: Action = {
                 template: shouldUnmuteTemplate, // Define this template separately
             });
 
-            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
                 context: shouldUnmuteContext,
                 stopSequences: ["\n"],

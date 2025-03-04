@@ -1,5 +1,5 @@
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
-import { type IAgentRuntime, type IBrowserService, logger, ModelClass, parseJSONObjectFromText, Service, ServiceType, settings, stringToUuid, trimTokens } from "@elizaos/core";
+import { type IAgentRuntime, type IBrowserService, logger, ModelTypes, parseJSONObjectFromText, Service, ServiceType, ServiceTypes, settings, stringToUuid, trimTokens } from "@elizaos/core";
 import CaptchaSolver from "capsolver-npm";
 import {
     type Browser,
@@ -29,7 +29,7 @@ async function generateSummary(
   }
   \`\`\``;
 
-    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+    const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         context: prompt,
     });
 
@@ -61,15 +61,11 @@ export class BrowserService extends Service implements IBrowserService {
     private captchaSolver: CaptchaSolver;
     private cacheKey = "content/browser";
 
-    serviceType: ServiceType = ServiceType.BROWSER;
+    static serviceType: ServiceType = ServiceTypes.BROWSER;
 
-    static register(runtime: IAgentRuntime): IAgentRuntime {
-        // since we are lazy loading, do nothing
-        return runtime;
-    }
-
-    constructor() {
+    constructor(runtime: IAgentRuntime) {
         super();
+        this.runtime = runtime;
         this.browser = undefined;
         this.context = undefined;
         this.blocker = undefined;
@@ -78,7 +74,18 @@ export class BrowserService extends Service implements IBrowserService {
         );
     }
 
-    async initialize() {}
+    static async start(runtime: IAgentRuntime): Promise<BrowserService> {
+        const service = new BrowserService(runtime);
+        await service.initializeBrowser();
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.BROWSER);
+        if (service) {
+            await service.stop();
+        }
+    }
 
     async initializeBrowser() {
         if (!this.browser) {
@@ -123,7 +130,7 @@ export class BrowserService extends Service implements IBrowserService {
         }
     }
 
-    async closeBrowser() {
+    async stop() {
         if (this.context) {
             await this.context.close();
             this.context = undefined;

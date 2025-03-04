@@ -174,8 +174,8 @@ const config: OnboardingConfig = {
 export default {
   plugins: [
     degenIntelPlugin,
-    degenTraderPlugin,
-    communityTraderPlugin,
+    // degenTraderPlugin,
+    // communityTraderPlugin,
   ],
   character,
   init: (runtime: IAgentRuntime) => initCharacter({ runtime, config }),

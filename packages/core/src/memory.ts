@@ -1,7 +1,7 @@
 import logger from "./logger.ts";
 import {
     MemoryType,
-    ModelClass,
+    ModelTypes,
     type IAgentRuntime,
     type IMemoryManager,
     type MemoryMetadata,
@@ -105,11 +105,11 @@ export class MemoryManager implements IMemoryManager {
 
         try {
             // Generate embedding from text content
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, memoryText);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, memoryText);
         } catch (error) {
             logger.error("Failed to generate embedding:", error);
             // Fallback to zero vector if embedding fails
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, null);
         }
 
         return memory;
@@ -243,7 +243,7 @@ export class MemoryManager implements IMemoryManager {
         logger.log("Creating Memory", memory.id, memory.content.text);
 
         if (!memory.embedding) {
-            memory.embedding = await this.runtime.useModel(ModelClass.TEXT_EMBEDDING, null);
+            memory.embedding = await this.runtime.useModel(ModelTypes.TEXT_EMBEDDING, null);
         }
 
         const memoryId = await this.runtime.databaseAdapter.createMemory(
