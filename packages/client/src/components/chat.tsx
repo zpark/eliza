@@ -114,6 +114,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
     const worldId = WorldManager.getWorldId();
     
     const { messages } = useAgentMessages(agentId);
+
     const agentData = useAgent(agentId)?.data?.data;
     
     const getMessageVariant = (role: string) =>
