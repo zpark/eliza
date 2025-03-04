@@ -27,19 +27,20 @@ const factsProvider: Provider = {
             tableName: "facts",
         });
 
-        const relevantFacts = await memoryManager.searchMemories({
-            embedding,
-            roomId: message.roomId,
-            count: 10,
-            agentId: runtime.agentId,
-        });
-
-        const recentFactsData = await memoryManager.getMemories({
+        const [relevantFacts, recentFactsData] = await Promise.all([
+          memoryManager.searchMemories({
+              embedding,
+              roomId: message.roomId,
+              count: 10,
+              agentId: runtime.agentId,
+          }),
+          memoryManager.getMemories({
             roomId: message.roomId,
             count: 10,
             start: 0,
             end: Date.now(),
-        });
+          })
+        ])
 
         // join the two and deduplicate
         const allFacts = [...relevantFacts, ...recentFactsData].filter(
