@@ -4,7 +4,6 @@ import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
 import { messageCompletionFooter, parseJSONObjectFromText } from "../parsing";
 import { findWorldForOwner } from "../roles";
-import type { ZodSchema, z } from "zod";
 import {
   type Action,
   type ActionExample,
