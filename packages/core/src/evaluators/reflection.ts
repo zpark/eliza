@@ -226,15 +226,20 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     modelClass: ModelClass.TEXT_LARGE,
     schema: reflectionSchema,
   });
+  if (!reflection) {
+    // seems like we're failing JSON parsing
+    logger.warn('generateObject failed', context);
+    return;
+  }
 
   // Store new facts
-  const newFacts = reflection.facts.filter(
+  const newFacts = reflection?.facts.filter(
     (fact) =>
       !fact.already_known &&
       !fact.in_bio &&
       fact.claim &&
       fact.claim.trim() !== ""
-  );
+  ) || [];
 
   for (const fact of newFacts) {
     const factMemory = await factsManager.addEmbeddingToMemory({
