@@ -5,7 +5,7 @@ import {
   type Evaluator,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type UUID,
 } from "../types";
 import { getActorDetails, resolveActorId } from "../messages";
@@ -89,7 +89,7 @@ Generate a response in the following format:
 const generateObject = async ({
   runtime,
   context,
-  modelClass = ModelClass.TEXT_LARGE,
+  modelType = ModelTypes.TEXT_LARGE,
   stopSequences = [],
   output = "object",
   enumValues = [],
@@ -103,10 +103,10 @@ const generateObject = async ({
 
   // Special handling for enum output type
   if (output === "enum" && enumValues) {
-    const response = await runtime.useModel(modelClass, {
+    const response = await runtime.useModel(modelType, {
       runtime,
       context,
-      modelClass,
+      modelType,
       stopSequences,
       maxTokens: 8,
       object: true,
@@ -135,10 +135,10 @@ const generateObject = async ({
   }
 
   // Regular object/array generation
-  const response = await runtime.useModel(modelClass, {
+  const response = await runtime.useModel(modelType, {
     runtime,
     context,
-    modelClass,
+    modelType,
     stopSequences,
     object: true,
   });
@@ -223,18 +223,23 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
   const reflection = await generateObject({
     runtime,
     context,
-    modelClass: ModelClass.TEXT_LARGE,
+    modelType: ModelTypes.TEXT_LARGE,
     schema: reflectionSchema,
   });
+  if (!reflection) {
+    // seems like we're failing JSON parsing
+    logger.warn('generateObject failed', context);
+    return;
+  }
 
   // Store new facts
-  const newFacts = reflection.facts.filter(
+  const newFacts = reflection?.facts.filter(
     (fact) =>
       !fact.already_known &&
       !fact.in_bio &&
       fact.claim &&
       fact.claim.trim() !== ""
-  );
+  ) || [];
 
   for (const fact of newFacts) {
     const factMemory = await factsManager.addEmbeddingToMemory({

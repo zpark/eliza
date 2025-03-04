@@ -1,7 +1,7 @@
 // TODO: Replace anthropic with runtime.useModel
 // replace moment with helper functions
 
-import { type IAgentRuntime, logger, ModelClass, type Memory, type UUID, createUniqueUuid, type Content } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelTypes, type Memory, type UUID, createUniqueUuid, type Content } from "@elizaos/core";
 
 const makeBulletpointList = (array: string[]) => {
 	return array.map((a) => ` - ${a}`).join("\n");
@@ -238,7 +238,7 @@ export default class TwitterParser {
 		const bulletpointTweets = makeBulletpointList(tweetArray);
 		const prompt = template.replace("{{tweets}}", bulletpointTweets);
 
-		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
 			context: prompt,
 			system: rolePrompt,
 			temperature: 0.2,

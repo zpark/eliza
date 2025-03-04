@@ -10,7 +10,7 @@ import {
     createUniqueUuid,
     type HandlerCallback,
     logger,
-    ModelClass
+    ModelTypes
 } from "@elizaos/core";
 import {
     type Channel,
@@ -18,8 +18,8 @@ import {
     type BaseGuildVoiceChannel,
     ChannelType as DiscordChannelType
 } from "discord.js";
-
-import type { DiscordClient } from "../index.ts";
+import { ServiceTypes } from "../types.ts";
+import type { DiscordService } from "../index.ts";
 import type { VoiceManager } from "../voice.ts";
 
 export default {
@@ -50,7 +50,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord");
+        const client = runtime.getService(ServiceTypes.DISCORD);
 
         if (!client) {
             logger.error("Discord client not found");
@@ -95,7 +95,7 @@ export default {
             throw new Error("No server ID found 8");
         }
 
-        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const discordClient = runtime.getService(ServiceTypes.DISCORD) as DiscordService;
         const client = discordClient.client;
         const voiceManager = discordClient.voiceManager as VoiceManager;
 
@@ -163,7 +163,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 state: guessState as unknown as State,
             });
 
-            const responseContent = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const responseContent = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context,
             });
 

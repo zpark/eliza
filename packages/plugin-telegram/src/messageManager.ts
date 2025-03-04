@@ -7,7 +7,7 @@ import {
     logger,
     type Media,
     type Memory,
-    ModelClass,
+    ModelTypes,
     RoleName,
     type UUID
 } from "@elizaos/core";
@@ -29,7 +29,7 @@ const MAX_MESSAGE_LENGTH = 4096; // Telegram's max message length
 
 export class MessageManager {
     public bot: Telegraf<Context>;
-    private runtime: IAgentRuntime;
+    protected runtime: IAgentRuntime;
 
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;
@@ -63,7 +63,7 @@ export class MessageManager {
 
             if (imageUrl) {
                 const { title, description } =
-                    await this.runtime.useModel(ModelClass.IMAGE_DESCRIPTION, imageUrl)
+                    await this.runtime.useModel(ModelTypes.IMAGE_DESCRIPTION, imageUrl)
                 return { description: `[Image: ${title}\n${description}]` };
             }
         } catch (error) {

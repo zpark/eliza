@@ -1,37 +1,36 @@
-import { type Client, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
+import { Service, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
 import { type Context, Telegraf } from "telegraf";
 import replyAction from "./actions/reply.ts";
 import { validateTelegramConfig } from "./environment.ts";
 import { MessageManager } from "./messageManager.ts";
 import { TelegramTestSuite } from "./tests.ts";
-import { TELEGRAM_CLIENT_NAME } from "./constants.ts";
+import { TELEGRAM_SERVICE_NAME } from "./constants.ts";
 
-export class TelegramClient implements Client {
-    name = TELEGRAM_CLIENT_NAME;
+export class TelegramService extends Service {
+    static serviceType = TELEGRAM_SERVICE_NAME;
     private bot: Telegraf<Context>;
-    private runtime: IAgentRuntime;
     public messageManager: MessageManager;
     private options;
 
-    constructor(runtime: IAgentRuntime, botToken: string) {
-        logger.log("📱 Constructing new TelegramClient...");
+    constructor(runtime: IAgentRuntime) {
+        super(runtime);
+        logger.log("📱 Constructing new TelegramService...");
         this.options = {
             telegram: {
                 apiRoot: runtime.getSetting("TELEGRAM_API_ROOT") || process.env.TELEGRAM_API_ROOT || "https://api.telegram.org"
             },
         };
-        this.runtime = runtime;
+        const botToken = runtime.getSetting("TELEGRAM_BOT_TOKEN");
         this.bot = new Telegraf(botToken,this.options);
         this.messageManager = new MessageManager(this.bot, this.runtime);
-        logger.log("✅ TelegramClient constructor completed");
+        logger.log("✅ TelegramService constructor completed");
     }
 
-    static async start(runtime: IAgentRuntime): Promise<TelegramClient> {
+    static async start(runtime: IAgentRuntime): Promise<TelegramService> {
         await validateTelegramConfig(runtime);
 
-        const tg = new TelegramClient(
-            runtime,
-            runtime.getSetting("TELEGRAM_BOT_TOKEN")
+        const tg = new TelegramService(
+            runtime
         );
 
         logger.success(
@@ -129,9 +128,9 @@ export class TelegramClient implements Client {
 }
 
 const telegramPlugin: Plugin = {
-    name: TELEGRAM_CLIENT_NAME,
+    name: TELEGRAM_SERVICE_NAME,
     description: "Telegram client plugin",
-    clients: [TelegramClient],
+    services: [TelegramService],
     actions: [replyAction],
     tests: [new TelegramTestSuite()]
 };

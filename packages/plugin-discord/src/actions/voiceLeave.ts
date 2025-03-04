@@ -13,8 +13,9 @@ import {
     BaseGuildVoiceChannel
 } from "discord.js";
 
-import type { DiscordClient } from "../index.ts";
+import type { DiscordService } from "../index.ts";
 import type { VoiceManager } from "../voice.ts";
+import { ServiceTypes } from "../types.ts";
 
 
 export default {
@@ -33,7 +34,7 @@ export default {
             return false;
         }
 
-        const client = runtime.getClient("discord");
+        const client = runtime.getService(ServiceTypes.DISCORD);
 
         if (!client) {
             logger.error("Discord client not found");
@@ -73,7 +74,7 @@ export default {
         if (!serverId) {
             throw new Error("No server ID found 9");
         }
-        const discordClient = runtime.getClient("discord") as DiscordClient;
+        const discordClient = runtime.getService(ServiceTypes.DISCORD) as DiscordService;
         const voiceManager = discordClient.voiceManager as VoiceManager;
         const client = discordClient.client;
 

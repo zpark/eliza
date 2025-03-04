@@ -2,7 +2,7 @@ import { createUniqueUuid } from "./entities.ts";
 import logger from "./logger.ts";
 import { splitChunks } from "./parsing.ts";
 import type { AgentRuntime } from "./runtime.ts";
-import { type KnowledgeItem, type Memory, MemoryType, ModelClass, type UUID } from "./types.ts";
+import { type KnowledgeItem, type Memory, MemoryType, ModelTypes, type UUID } from "./types.ts";
 
 async function get(
     runtime: AgentRuntime,
@@ -31,7 +31,7 @@ async function get(
         return [];
     }
 
-    const embedding = await runtime.useModel(ModelClass.TEXT_EMBEDDING, processed);
+    const embedding = await runtime.useModel(ModelTypes.TEXT_EMBEDDING, processed);
     const fragments = await runtime.knowledgeManager.searchMemories(
         {
             embedding,

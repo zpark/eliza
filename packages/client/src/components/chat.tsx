@@ -33,6 +33,12 @@ type ExtraContentFields = {
 
 type ContentWithUser = Content & ExtraContentFields;
 
+type NewMessagesResponse = {
+    data: {
+        message: ContentWithUser;
+    };
+};
+
 function MessageContent({
     message,
     agentId,
@@ -194,7 +200,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
             message: string;
             selectedFile?: File | null;
         }) => apiClient.sendMessage(agentId, message, selectedFile),
-        onSuccess: (newMessages: {data: ContentWithUser}) => {
+        onSuccess: (newMessages: NewMessagesResponse) => {
             if (newMessages) {
                 queryClient.setQueryData(
                     ["messages", agentId, worldId],

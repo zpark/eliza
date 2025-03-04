@@ -1,17 +1,16 @@
 // registered to runtime through plugin
 
-import { type IAgentRuntime, Service, type ITaskService, ServiceType, type UUID } from "../types";
+import { type IAgentRuntime, Service, ServiceTypes, type UUID, type ServiceType } from "../types";
 
-export class TaskService extends Service implements ITaskService {
+export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
-  runtime: IAgentRuntime;
-  serviceType: ServiceType = ServiceType.TASK;
+  static serviceType: ServiceType = ServiceTypes.TASK;
 
-  initialize(runtime: IAgentRuntime): Promise<void> {
-    this.runtime = runtime;
-    this.startTimer();
-    return Promise.resolve();
+  static async start(runtime: IAgentRuntime): Promise<TaskService> {
+    const service = new TaskService(runtime);
+    await service.startTimer();
+    return service;
   }
 
   private startTimer() {
@@ -36,20 +35,14 @@ export class TaskService extends Service implements ITaskService {
       for (const task of tasks) {
         // Skip if no duration set
         if (!task.metadata?.duration) {
-            console.log(`*** Task ${task.name} has no duration`);
           continue;
         }
 
         const taskStartTime = new Date(task.metadata.updatedAt).getTime();
         const durationMs = task.metadata.updateInterval;
 
-        console.log(
-          `*** Checking task ${task.name} with duration ${durationMs}ms`
-        );
-
         // Check if enough time has passed
         if (now - taskStartTime >= durationMs) {
-          console.log(`*** Executing task ${task.name}`);
           await this.executeTask(task.id!);
         }
       }
@@ -91,7 +84,14 @@ export class TaskService extends Service implements ITaskService {
     }
   }
 
-  public stop() {
+  static async stop(runtime: IAgentRuntime) {
+    const service = runtime.getService(ServiceTypes.TASK);
+    if (service) {
+      await service.stop();
+    }
+  }
+
+  async stop() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

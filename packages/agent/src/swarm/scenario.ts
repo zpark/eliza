@@ -1,6 +1,6 @@
 import {
   ChannelType,
-  type Client,
+  type Service,
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
@@ -10,20 +10,26 @@ import {
 } from "@elizaos/core";
 import { v4 as uuidv4 } from "uuid";
 
-export class ScenarioClient implements Client {
-  name = "scenario";
+export class ScenarioService implements Service {
+  static serviceType = "scenario";
   runtime: IAgentRuntime;
   private messageHandlers: Map<UUID, HandlerCallback[]> = new Map();
   private rooms: Map<string, { roomId: UUID }> = new Map();
 
-  async start(runtime: IAgentRuntime) {
-    this.runtime = runtime;
-    return this;
+  static async start(runtime: IAgentRuntime) {
+    const service = new ScenarioService();
+    service.runtime = runtime;
+    return service;
   }
 
-  async stop() {
-    this.messageHandlers.clear();
-    this.rooms.clear();
+  static async stop(runtime: IAgentRuntime) {
+    // get the service from the runtime
+    const service = runtime.getService(ScenarioService.serviceType);
+    if (!service) {
+      throw new Error("Scenario service not found");
+    }
+    service.messageHandlers.clear();
+    service.rooms.clear();
   }
 
   // Create a room for an agent
@@ -165,20 +171,19 @@ export class ScenarioClient implements Client {
 const scenarios = [
   async function scenario1(members: IAgentRuntime[]) {
     // Create and register test client
-    const client = new ScenarioClient();
-    await client.start(members[0]);
-    members[0].registerClient(client);
+    const service = await ScenarioService.start(members[0]);
+    members[0].registerService(ScenarioService);
 
     // Create rooms for all members
     for (const member of members) {
-      await client.createRoom(
+      await service.createRoom(
         member.agentId,
         `Test Room for ${member.character.name}`
       );
     }
 
     // Set up conversation history
-    await client.saveMessage(
+    await service.saveMessage(
       members[0],
       members,
       "Earlier message from conversation..."

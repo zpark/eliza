@@ -157,3 +157,7 @@ export interface PriceSignalMessage {
 export interface StartDegenProcessParams extends StartProcessParams {
   initialPrice: string;
 }
+
+export const ServiceTypes = {
+  DEGEN_TRADING: "degen_trading",
+} as const;

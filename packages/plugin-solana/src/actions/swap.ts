@@ -7,14 +7,14 @@ import {
     type IAgentRuntime,
     logger,
     type Memory,
-    ModelClass,
+    ModelTypes,
     parseJSONObjectFromText,
     settings,
-    type State
+    type State,
 } from '@elizaos/core';
 import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
-import { SOLANA_CLIENT_NAME } from '../constants';
+import { SOLANA_SERVICE_NAME } from '../constants';
 import { getWalletKey } from '../keypairUtils';
 import type { Item } from '../types';
 
@@ -105,15 +105,15 @@ async function swapToken(
     }
 }
 
-// Get token from wallet data using SolanaClient
+// Get token from wallet data using SolanaService
 async function getTokenFromWallet(
     runtime: IAgentRuntime,
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as Client;
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
         if (!solanaClient) {
-            throw new Error('SolanaClient not initialized');
+            throw new Error('SolanaService not initialized');
         }
 
         const walletData = await solanaClient.getCachedData();
@@ -170,7 +170,7 @@ export const executeSwap: Action = {
         'EXCHANGE_TOKENS_SOLANA',
     ],
     validate: async (runtime: IAgentRuntime, _message: Memory) => {
-        const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME);
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME);
         return !!solanaClient;
     },
     description:
@@ -189,9 +189,9 @@ export const executeSwap: Action = {
                 state = await runtime.updateRecentMessageState(state);
             }
 
-            const solanaClient = runtime.getClient(SOLANA_CLIENT_NAME) as Client;
+            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
             if (!solanaClient) {
-                throw new Error('SolanaClient not initialized');
+                throw new Error('SolanaService not initialized');
             }
 
             const walletData = await solanaClient.getCachedData();
@@ -202,7 +202,7 @@ export const executeSwap: Action = {
                 template: swapTemplate,
             });
 
-            const result = await runtime.useModel(ModelClass.LARGE, {
+            const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 context: swapContext,
             });
 

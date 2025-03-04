@@ -4,7 +4,7 @@ import {
     type IAgentRuntime,
     type Memory,
     MemoryManager,
-    ModelClass,
+    ModelTypes,
     type State,
     type UUID
 } from "@elizaos/core";
@@ -408,7 +408,7 @@ async function handler(
         state: { message: message.content.text } as unknown as State,
     });
 
-    const sentimentText = await runtime.useModel(ModelClass.MEDIUM, {
+    const sentimentText = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         context: sentimentContext,
     });
 
@@ -486,7 +486,7 @@ async function handler(
 
     // Only function slowing us down: generateText
     const [text, participants] = await Promise.all([
-        runtime.useModel(ModelClass.LARGE, {
+        runtime.useModel(ModelTypes.TEXT_LARGE, {
             context: context,
             stopSequences: [],
         }),
@@ -589,7 +589,7 @@ async function handler(
                     template: recommendationFormatTemplate,
                 });
 
-                const text = await runtime.useModel(ModelClass.SMALL, {
+                const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                     context: context,
                 });
 
@@ -697,7 +697,7 @@ async function handler(
                     token: tokenString,
                 });
 
-                const res = await runtime.useModel(ModelClass.MEDIUM, {
+                const res = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                     context: context,
                 });
 

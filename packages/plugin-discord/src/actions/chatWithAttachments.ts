@@ -3,7 +3,7 @@ import {
     type ActionExample, composeContext, type Content, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
-    ModelClass, parseJSONObjectFromText, type State, trimTokens
+    ModelTypes, parseJSONObjectFromText, type State, trimTokens
 } from "@elizaos/core";
 import * as fs from "node:fs";
 
@@ -46,7 +46,7 @@ const getAttachmentIds = async (
     });
 
     for (let i = 0; i < 5; i++) {
-        const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
         console.log("response", response);
@@ -192,7 +192,7 @@ const summarizeAction = {
             template,
         });
 
-        const summary = await runtime.useModel(ModelClass.TEXT_SMALL, {
+        const summary = await runtime.useModel(ModelTypes.TEXT_SMALL, {
             context,
         });
 

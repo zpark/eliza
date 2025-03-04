@@ -1,8 +1,8 @@
-import { logger, Client, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
+import { logger, Service, type IAgentRuntime, type Plugin, type UUID } from "@elizaos/core";
 import reply from "./actions/reply.ts";
 import spaceJoin from "./actions/spaceJoin.ts";
 import { ClientBase } from "./base.ts";
-import { TWITTER_CLIENT_NAME } from "./constants.ts";
+import { TWITTER_SERVICE_NAME } from "./constants.ts";
 import type { TwitterConfig } from "./environment.ts";
 import { TwitterInteractionClient } from "./interactions.ts";
 import { TwitterPostClient } from "./post.ts";
@@ -19,41 +19,41 @@ import type { ITwitterClient } from "./types.ts";
  * - space: launching and managing Twitter Spaces (optional)
  */
 export class TwitterClientInstance implements ITwitterClient {
-    clientBase: ClientBase;
+    client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
-    client: TwitterClient;
+    service: TwitterService;
 
     constructor(runtime: IAgentRuntime, state: any) {
         // Pass twitterConfig to the base client
-        this.clientBase = new ClientBase(runtime, state);
+        this.client = new ClientBase(runtime, state);
 
         // Posting logic
-        this.post = new TwitterPostClient(this.clientBase, runtime, state);
+        this.post = new TwitterPostClient(this.client, runtime, state);
 
         // Mentions and interactions
-        this.interaction = new TwitterInteractionClient(this.clientBase, runtime, state);
+        this.interaction = new TwitterInteractionClient(this.client, runtime, state);
 
         // Optional Spaces logic (enabled if TWITTER_SPACES_ENABLE is true)
         if (runtime.getSetting("TWITTER_SPACES_ENABLE") === true) {
-            this.space = new TwitterSpaceClient(this.clientBase, runtime);
+            this.space = new TwitterSpaceClient(this.client, runtime);
         }
 
-        this.client = TwitterClient.getInstance();
+        this.service = TwitterService.getInstance();
     }
 }
 
-export class TwitterClient extends Client {
-    static clientName: string = TWITTER_CLIENT_NAME;
-    private static instance: TwitterClient;
+export class TwitterService extends Service {
+    static serviceType: string = TWITTER_SERVICE_NAME;
+    private static instance: TwitterService;
     private clients: Map<string, TwitterClientInstance> = new Map();
 
-    static getInstance(): TwitterClient {
-        if (!TwitterClient.instance) {
-            TwitterClient.instance = new TwitterClient();
+    static getInstance(): TwitterService {
+        if (!TwitterService.instance) {
+            TwitterService.instance = new TwitterService();
         }
-        return TwitterClient.instance;
+        return TwitterService.instance;
     }
 
     async createClient(runtime: IAgentRuntime, clientId: string, state: any): Promise<TwitterClientInstance> {
@@ -63,7 +63,7 @@ export class TwitterClient extends Client {
         }
         try {
             // Check if client already exists
-            const existingClient = this.getClient(clientId, runtime.agentId);
+            const existingClient = this.getService(clientId, runtime.agentId);
             if (existingClient) {
                 logger.info(`Twitter client already exists for ${clientId}`);
                 return existingClient;
@@ -73,7 +73,7 @@ export class TwitterClient extends Client {
             const client = new TwitterClientInstance(runtime, state);
 
             // Initialize the client
-            await client.clientBase.init();
+            await client.client.init();
 
             if (client.space) {
                 client.space.startPeriodicSpaceCheck();
@@ -99,7 +99,7 @@ export class TwitterClient extends Client {
         }
     }
 
-    getClient(clientId: string, agentId: UUID): TwitterClientInstance | undefined {
+    getService(clientId: string, agentId: UUID): TwitterClientInstance | undefined {
         return this.clients.get(this.getClientKey(clientId, agentId));
     }
 
@@ -108,7 +108,7 @@ export class TwitterClient extends Client {
         const client = this.clients.get(key);
         if (client) {
             try {
-                await client.client.stop();
+                await client.service.stop();
                 this.clients.delete(key);
                 logger.info(`Stopped Twitter client for ${clientId}`);
             } catch (error) {
@@ -118,7 +118,7 @@ export class TwitterClient extends Client {
     }
 
     static async start(runtime: IAgentRuntime) {
-        const twitterClientManager = TwitterClient.getInstance();
+        const twitterClientManager = TwitterService.getInstance();
         
         // Check for character-level Twitter credentials
         const twitterConfig: Partial<TwitterConfig> = {
@@ -160,7 +160,7 @@ export class TwitterClient extends Client {
     async stopAllClients(): Promise<void> {
         for (const [key, client] of this.clients.entries()) {
             try {
-                await client.client.stop();
+                await client.service.stop();
                 this.clients.delete(key);
             } catch (error) {
                 logger.error(`Error stopping Twitter client ${key}:`, error);
@@ -174,9 +174,9 @@ export class TwitterClient extends Client {
 }
 
 const twitterPlugin: Plugin = {
-    name: TWITTER_CLIENT_NAME,
+    name: TWITTER_SERVICE_NAME,
     description: "Twitter client with per-server instance management",
-    clients: [TwitterClient],
+    services: [TwitterService],
     actions: [reply, spaceJoin],
     tests: [new TwitterTestSuite()]
 };

@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import type { Plugin } from "@elizaos/core";
 import {
   type GenerateTextParams,
-  ModelClass
+  ModelTypes
 } from "@elizaos/core";
 import { generateText } from "ai";
 import { z } from "zod";
@@ -45,7 +45,7 @@ export const anthropicPlugin: Plugin = {
     }
   },
   models: {
-    [ModelClass.TEXT_SMALL]: async (
+    [ModelTypes.TEXT_SMALL]: async (
       runtime,
       {
       context,
@@ -68,7 +68,7 @@ export const anthropicPlugin: Plugin = {
     },
 
     // TEXT_LARGE generation using Anthropics (e.g. using a "claude-3" model).
-    [ModelClass.TEXT_LARGE]: async (
+    [ModelTypes.TEXT_LARGE]: async (
       runtime,
       {
       context,
@@ -101,7 +101,7 @@ export const anthropicPlugin: Plugin = {
           name: 'anthropic_test_text_small',  
           fn: async (runtime) => {
             try {
-              const text = await runtime.useModel(ModelClass.TEXT_SMALL, {
+              const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 context: "Debug Mode:",
                 prompt: "What is the nature of reality in 10 words?",
               });
@@ -119,7 +119,7 @@ export const anthropicPlugin: Plugin = {
           name: 'anthropic_test_text_large',
           fn: async (runtime) => {
             try {
-              const text = await runtime.useModel(ModelClass.TEXT_LARGE, {
+              const text = await runtime.useModel(ModelTypes.TEXT_LARGE, {
                 context: "Debug Mode:",
                 prompt: "What is the nature of reality in 10 words?",
               });

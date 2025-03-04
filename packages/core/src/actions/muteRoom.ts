@@ -1,7 +1,7 @@
 import { composeContext } from "../context";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
-import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 export const shouldMuteTemplate =
     `# Task: Decide if {{agentName}} should mute this room and stop responding unless explicitly mentioned.
@@ -44,7 +44,7 @@ export const muteRoomAction: Action = {
                 template: shouldMuteTemplate, // Define this template separately
             });
 
-            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
                 context: shouldMuteContext,
                 stopSequences: ["\n"],

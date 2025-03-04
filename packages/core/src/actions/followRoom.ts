@@ -1,7 +1,7 @@
 import { composeContext } from "../context";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
-import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
+import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 export const shouldFollowTemplate =
     `# Task: Decide if {{agentName}} should start following this room, i.e. eagerly participating without explicit mentions.
@@ -57,7 +57,7 @@ export const followRoomAction: Action = {
                 template: shouldFollowTemplate, // Define this template separately
             });
             
-            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
+            const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
                 context: shouldFollowContext,
                 stopSequences: ["\n"],

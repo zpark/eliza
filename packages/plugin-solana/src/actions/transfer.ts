@@ -7,9 +7,9 @@ import {
     type IAgentRuntime,
     logger,
     type Memory,
-    ModelClass,
+    ModelTypes,
     parseJSONObjectFromText,
-    type State
+    type State,
 } from '@elizaos/core';
 import {
     createAssociatedTokenAccountInstruction,
@@ -123,7 +123,7 @@ export default {
             template: transferTemplate,
         });
 
-        const result = await runtime.useModel(ModelClass.LARGE, {
+        const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
             context: transferContext,
         });
 

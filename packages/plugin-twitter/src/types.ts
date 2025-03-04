@@ -1,4 +1,4 @@
-import type { Client } from "@elizaos/core";
+import type { TwitterService } from ".";
 import type { ClientBase } from "./base";
 import type { TwitterInteractionClient } from "./interactions";
 import type { TwitterPostClient } from "./post";
@@ -17,9 +17,13 @@ export interface ActionResponse {
 }
 
 export interface ITwitterClient {
-    clientBase: ClientBase;
+    client: ClientBase;
     post: TwitterPostClient;
     interaction: TwitterInteractionClient;
     space?: TwitterSpaceClient;
-    client: Client;
+    service: TwitterService;
 }
+
+export const ServiceTypes = {
+    TWITTER: "twitter",
+} as const;

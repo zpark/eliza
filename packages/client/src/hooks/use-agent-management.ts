@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Agent, UUID } from '@elizaos/core';
+import type { Agent, UUID } from '@elizaos/core';
 import { useStartAgent, useStopAgent } from './use-query-hooks';
 import { useToast } from './use-toast';
 

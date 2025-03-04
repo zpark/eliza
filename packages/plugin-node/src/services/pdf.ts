@@ -2,15 +2,35 @@ import {
     type IAgentRuntime,
     type IPdfService,
     Service,
-    ServiceType,
+    type ServiceType,
+    ServiceTypes,
 } from "@elizaos/core";
 import { getDocument, type PDFDocumentProxy } from "pdfjs-dist";
 import type { TextItem, TextMarkedContent } from "pdfjs-dist/types/src/display/api";
 
 export class PdfService extends Service implements IPdfService {
-    serviceType: ServiceType = ServiceType.PDF;
+    static serviceType: ServiceType = ServiceTypes.PDF;
+
+    constructor(runtime: IAgentRuntime) {
+        super();
+        this.runtime = runtime;
+    }
     
-    async initialize(_runtime: IAgentRuntime): Promise<void> {}
+    static async start(runtime: IAgentRuntime): Promise<PdfService> {
+        const service = new PdfService(runtime);
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.PDF);
+        if (service) {
+            await service.stop();
+        }
+    }
+
+    async stop() {
+        // do nothing
+    }
 
     async convertPdfToText(pdfBuffer: Buffer): Promise<string> {
         // Convert Buffer to Uint8Array

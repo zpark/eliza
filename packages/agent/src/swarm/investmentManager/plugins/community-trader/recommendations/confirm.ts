@@ -150,7 +150,7 @@ export const confirmRecommendation: Action = {
         //     const text = await generateText({
         //         runtime,
         //         context: context,
-        //         modelClass: ModelClass.SMALL,
+        //         modelType: ModelTypes.TEXT_SMALL,
         //         stop: [],
         //     });
         //     const xmlResponse = extractXMLFromResponse(text, "tokens");

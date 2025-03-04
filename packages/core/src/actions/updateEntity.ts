@@ -17,7 +17,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type State,
   type UUID
 } from "../types";
@@ -141,7 +141,7 @@ export const updateEntityAction: Action = {
         template: componentTemplate,
       });
 
-      const result = await runtime.useModel(ModelClass.TEXT_LARGE, {
+      const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         context,
         stopSequences: []
       });

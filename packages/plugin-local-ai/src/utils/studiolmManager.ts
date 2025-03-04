@@ -1,4 +1,4 @@
-import { logger, ModelClass, type GenerateTextParams } from "@elizaos/core";
+import { logger, ModelTypes, type GenerateTextParams } from "@elizaos/core";
 import fetch from "node-fetch";
 
 interface StudioLMModel {
@@ -219,7 +219,7 @@ export class StudioLMManager {
         isInitialized,
         currentInitState: this.initialized,
         managerInitState: this.isInitialized(),
-        modelClass: params.modelClass,
+        modelType: params.modelType,
         contextLength: params.context?.length,
         timestamp: new Date().toISOString()
       });
@@ -235,7 +235,7 @@ export class StudioLMManager {
       ];
 
       logger.info("StudioLM preparing request:", {
-        model: params.modelClass === ModelClass.TEXT_LARGE ? 
+        model: params.modelType === ModelTypes.TEXT_LARGE ? 
                this.configuredModels.medium : 
                this.configuredModels.small,
         messageCount: messages.length,
@@ -250,7 +250,7 @@ export class StudioLMManager {
       });
 
       const request: ChatCompletionRequest = {
-        model: params.modelClass === ModelClass.TEXT_LARGE ? this.configuredModels.medium : this.configuredModels.small,
+        model: params.modelType === ModelTypes.TEXT_LARGE ? this.configuredModels.medium : this.configuredModels.small,
         messages,
         temperature: 0.7,
         max_tokens: 8192,

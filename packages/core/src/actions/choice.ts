@@ -8,7 +8,7 @@ import {
   type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  ModelClass,
+  ModelTypes,
   type State,
 } from "../types";
 
@@ -140,7 +140,7 @@ export const choiceAction: Action = {
         template: optionExtractionTemplate
       });
 
-      const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
+      const result = await runtime.useModel(ModelTypes.TEXT_SMALL, {
         context,
         stopSequences: []
       });

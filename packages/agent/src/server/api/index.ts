@@ -1,4 +1,4 @@
-import type { IAgentRuntime } from '@elizaos/core';
+import type { IAgentRuntime, UUID } from '@elizaos/core';
 import { getEnvVariable } from '@elizaos/core';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -8,7 +8,7 @@ import { agentRouter } from './agent.ts';
 import { teeRouter } from './tee.ts';
 
 export function createApiRouter(
-    agents: Map<string, IAgentRuntime>,
+    agents: Map<UUID, IAgentRuntime>,
     server?: AgentServer,
 ): express.Router {
     const router = express.Router();

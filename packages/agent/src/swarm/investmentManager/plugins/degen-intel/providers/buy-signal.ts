@@ -1,4 +1,4 @@
-import { type IAgentRuntime, logger, ModelClass } from "@elizaos/core";
+import { type IAgentRuntime, logger, ModelTypes } from "@elizaos/core";
 import type { Sentiment } from "../schemas";
 import type { IToken } from "../types";
 
@@ -76,7 +76,7 @@ export default class BuySignal {
 
 		const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
-		const response = await this.runtime.useModel(ModelClass.TEXT_LARGE, {
+		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
 			context: finalPrompt,
 			system: rolePrompt,
 			temperature: 0.2,

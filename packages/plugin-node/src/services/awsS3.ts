@@ -2,7 +2,8 @@ import {
     type IAgentRuntime,
     type IFileService,
     Service,
-    ServiceType,
+    type ServiceType,
+    ServiceTypes,
     logger,
 } from "@elizaos/core";
 import {
@@ -25,17 +26,39 @@ interface JsonUploadResult extends UploadResult {
 }
 
 export class AwsS3Service extends Service implements IFileService {
-    serviceType: ServiceType = ServiceType.REMOTE_FILES;
+    static serviceType: ServiceType = ServiceTypes.REMOTE_FILES;
 
     private s3Client: S3Client | null = null;
     private bucket = "";
     private fileUploadPath = "";
-    private runtime: IAgentRuntime | null = null;
+    protected runtime: IAgentRuntime | null = null;
 
-    async initialize(runtime: IAgentRuntime): Promise<void> {
-        logger.log("Initializing AwsS3Service");
+    constructor(runtime: IAgentRuntime) {
+        super();
         this.runtime = runtime;
         this.fileUploadPath = runtime.getSetting("AWS_S3_UPLOAD_PATH") ?? "";
+    }
+
+    static async start(runtime: IAgentRuntime): Promise<AwsS3Service> {
+        logger.log("Initializing AwsS3Service");
+        const service = new AwsS3Service(runtime);
+        service.runtime = runtime;
+        service.fileUploadPath = runtime.getSetting("AWS_S3_UPLOAD_PATH") ?? "";
+        return service;
+    }
+
+    static async stop(runtime: IAgentRuntime) {
+        const service = runtime.getService(ServiceTypes.REMOTE_FILES);
+        if (service) {
+            await service.stop();
+        }
+    }
+
+    async stop() {
+        if (this.s3Client) {
+            await this.s3Client.destroy();
+            this.s3Client = null;
+        }
     }
 
     private async initializeS3Client(): Promise<boolean> {

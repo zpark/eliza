@@ -1,5 +1,5 @@
 import {
-  type Adapter,
+  type DatabaseAdapter,
   type IAgentRuntime,
   type IDatabaseAdapter,
   logger,
@@ -33,8 +33,10 @@ export function createDatabaseAdapter(
   return new PgliteDatabaseAdapter(agentId, pgLiteClientManager);
 }
 
-const drizzleDatabaseAdapter: Adapter = {
-  init: async (runtime: IAgentRuntime) => {
+const drizzlePlugin: Plugin = {
+  name: "drizzle",
+  description: "Database adapter plugin using Drizzle ORM",
+  init: async (_, runtime: IAgentRuntime) => {
     const config = {
       dataDir: runtime.getSetting("PGLITE_DATA_DIR"),
       postgresUrl: runtime.getSetting("POSTGRES_URL"),
@@ -42,20 +44,13 @@ const drizzleDatabaseAdapter: Adapter = {
 
     try {
       const db = createDatabaseAdapter(config, runtime.agentId);
-      await db.init();
       logger.success("Database connection established successfully");
-      return db;
+      runtime.registerDatabaseAdapter(db);
     } catch (error) {
       logger.error("Failed to initialize database:", error);
       throw error;
     }
   },
-};
-
-const drizzlePlugin: Plugin = {
-  name: "drizzle",
-  description: "Database adapter plugin using Drizzle ORM",
-  adapters: [drizzleDatabaseAdapter],
 };
 
 export default drizzlePlugin;

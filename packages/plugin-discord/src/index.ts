@@ -1,7 +1,6 @@
 import {
   ChannelType,
   type Character,
-  type Client,
   createUniqueUuid,
   type HandlerCallback,
   type IAgentRuntime,
@@ -9,6 +8,7 @@ import {
   type Memory,
   type Plugin,
   RoleName,
+  Service,
   type UUID,
   type WorldData
 } from "@elizaos/core";
@@ -34,24 +34,23 @@ import summarize from "./actions/summarizeConversation.ts";
 import transcribe_media from "./actions/transcribeMedia.ts";
 import joinVoice from "./actions/voiceJoin.ts";
 import leaveVoice from "./actions/voiceLeave.ts";
-import { DISCORD_CLIENT_NAME } from "./constants.ts";
+import { DISCORD_SERVICE_NAME } from "./constants.ts";
 import { MessageManager } from "./messages.ts";
 import channelStateProvider from "./providers/channelState.ts";
 import voiceStateProvider from "./providers/voiceState.ts";
 import { DiscordTestSuite } from "./tests.ts";
-import type { IDiscordClient } from "./types.ts";
+import type { IDiscordService } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
-export class DiscordClient extends EventEmitter implements IDiscordClient, Client {
-  static clientName: string = DISCORD_CLIENT_NAME;
+export class DiscordService extends Service implements IDiscordService {
+  static serviceType: string = DISCORD_SERVICE_NAME;
   client: DiscordJsClient;
-  runtime: IAgentRuntime;
   character: Character;
   messageManager: MessageManager;
   voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime) {
-    super();
+    super(runtime);
 
     logger.log("Discord client constructor was engaged");
 
@@ -77,7 +76,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient, Clien
     });
 
     this.runtime = runtime;
-    this.voiceManager = new VoiceManager(this);
+    this.voiceManager = new VoiceManager(this, runtime);
     this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
@@ -204,15 +203,15 @@ export class DiscordClient extends EventEmitter implements IDiscordClient, Clien
     });
   }
 
-  static async start(runtime: IAgentRuntime) {
-    const client = new DiscordClient(runtime);
+  static async start(runtime: IAgentRuntime): Promise<DiscordService> {
+    const client = new DiscordService(runtime);
     return client;
   }
 
   static async stop(runtime: IAgentRuntime) {
-    const client = runtime.getClient(DISCORD_CLIENT_NAME);
+    const client = runtime.getService(DISCORD_SERVICE_NAME);
     if (!client) {
-      logger.error("DiscordClient not found");
+      logger.error("DiscordService not found");
       return;
     }
     try {
@@ -801,7 +800,7 @@ export class DiscordClient extends EventEmitter implements IDiscordClient, Clien
 const discordPlugin: Plugin = {
   name: "discord",
   description: "Discord client plugin",
-  clients: [DiscordClient],
+  services: [DiscordService],
   actions: [
     reply,
     chatWithAttachments,

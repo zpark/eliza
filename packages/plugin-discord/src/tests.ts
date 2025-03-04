@@ -1,28 +1,29 @@
 import {
-  logger,
-  type TestSuite,
-  type IAgentRuntime,
-  ModelClass,
-} from "@elizaos/core";
-import type { DiscordClient } from "./index.ts";
-import { sendMessageInChunks } from "./utils.ts";
-import { ChannelType, Events, type TextChannel } from "discord.js";
-import {
-  createAudioPlayer,
-  NoSubscriberBehavior,
-  createAudioResource,
   AudioPlayerStatus,
+  NoSubscriberBehavior,
   VoiceConnectionStatus,
+  createAudioPlayer,
+  createAudioResource,
   entersState,
   type VoiceConnection,
 } from "@discordjs/voice";
+import {
+  ModelTypes,
+  logger,
+  type IAgentRuntime,
+  type TestSuite,
+} from "@elizaos/core";
+import { ChannelType, Events, type TextChannel } from "discord.js";
+import type { DiscordService } from "./index.ts";
+import { ServiceTypes } from "./types.ts";
+import { sendMessageInChunks } from "./utils.ts";
 
 const TEST_IMAGE_URL =
   "https://github.com/elizaOS/awesome-eliza/blob/main/assets/eliza-logo.jpg?raw=true";
 
 export class DiscordTestSuite implements TestSuite {
   name = "discord";
-  private discordClient: DiscordClient | null = null;
+  private discordClient: DiscordService | null = null;
   tests: { name: string; fn: (runtime: IAgentRuntime) => Promise<void> }[];
 
   constructor() {
@@ -56,13 +57,13 @@ export class DiscordTestSuite implements TestSuite {
 
   async testCreatingDiscordClient(runtime: IAgentRuntime) {
     try {
-      this.discordClient = runtime.getClient("discord") as DiscordClient;
+      this.discordClient = runtime.getService(ServiceTypes.DISCORD) as DiscordService;
 
       // Wait for the bot to be ready before proceeding
       if (this.discordClient.client.isReady()) {
-        logger.success("DiscordClient is already ready.");
+        logger.success("DiscordService is already ready.");
       } else {
-        logger.info("Waiting for DiscordClient to be ready...");
+        logger.info("Waiting for DiscordService to be ready...");
         await new Promise((resolve, reject) => {
           this.discordClient.client.once(Events.ClientReady, resolve);
           this.discordClient.client.once(Events.Error, reject);
@@ -158,7 +159,7 @@ export class DiscordTestSuite implements TestSuite {
 
       try {
         responseStream = await runtime.useModel(
-          ModelClass.TEXT_TO_SPEECH,
+          ModelTypes.TEXT_TO_SPEECH,
           `Hi! I'm ${runtime.character.name}! How are you doing today?`
         );
       } catch (_error) {
@@ -279,7 +280,7 @@ export class DiscordTestSuite implements TestSuite {
     });
   }
 
-  async getActiveGuild(discordClient: DiscordClient) {
+  async getActiveGuild(discordClient: DiscordService) {
     const guilds = await discordClient.client.guilds.fetch();
       const fullGuilds = await Promise.all(
         guilds.map((guild) => guild.fetch())
@@ -292,7 +293,7 @@ export class DiscordTestSuite implements TestSuite {
       return activeGuild;
   }
 
-  private async waitForVoiceManagerReady(discordClient: DiscordClient) {
+  private async waitForVoiceManagerReady(discordClient: DiscordService) {
     if (!discordClient) {
       throw new Error("Discord client is not initialized.");
     }

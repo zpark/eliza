@@ -1,7 +1,7 @@
 import { composeContext } from "../context";
 import { getGoals } from "../goals";
 import { parseJsonArrayFromText } from "../parsing";
-import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelClass, type State } from "../types";
+import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 
 const goalsTemplate = `# TASK: Update Goal
@@ -53,7 +53,7 @@ async function handler(
         template: runtime.character.templates?.goalsTemplate || goalsTemplate,
     });
 
-    const response = await runtime.useModel(ModelClass.TEXT_LARGE, {
+    const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         runtime,
         context,
       });
