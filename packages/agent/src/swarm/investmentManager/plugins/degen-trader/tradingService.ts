@@ -1,33 +1,32 @@
 // Combined DegenTradingService that integrates all functionality
 
-import { composeContext, type Content, type IAgentRuntime, logger, type Memory, MemoryType, ModelTypes, parseJSONObjectFromText, Service, type UUID } from "@elizaos/core";
+import { composeContext, type Content, type IAgentRuntime, logger, type Memory, ModelTypes, parseJSONObjectFromText, Service, type UUID } from "@elizaos/core";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { v4 as uuidv4 } from "uuid";
 import { REQUIRED_SETTINGS } from "./config/config";
-import type { BuySignalMessage, PriceSignalMessage, SellSignalMessage } from "./types";
+import { type BuySignalMessage, type PriceSignalMessage, type SellSignalMessage, ServiceTypes } from "./types";
 import { tradeAnalysisTemplate } from "./utils/analyzeTrade";
 import { executeTrade, getWalletBalance, getWalletKeypair } from "./utils/wallet";
 
 export class DegenTradingService extends Service {
   private isRunning = false;
   private processId: string;
-  private runtime: IAgentRuntime;
   
   // For tracking pending sells
   private pendingSells: { [tokenAddress: string]: bigint } = {};
 
   static serviceType = "degen_trading";
 
-  constructor() {
-    super();
+  constructor(protected runtime: IAgentRuntime) {
+    super(runtime);
     this.processId = `sol-process-${Date.now()}`;
   }
 
-  async initialize(runtime: IAgentRuntime): Promise<void> {
+  static async start(runtime: IAgentRuntime): Promise<DegenTradingService> {
     if (!runtime) {
       throw new Error("Runtime is required for degen trader plugin initialization");
     }
-    this.runtime = runtime;
+    const service = new DegenTradingService(runtime);
 
     // Validate settings first
     const missingSettings = Object.entries(REQUIRED_SETTINGS)
@@ -44,19 +43,28 @@ export class DegenTradingService extends Service {
 
     try {
       // Register tasks
-      await this.registerTasks();
+      await service.registerTasks();
 
       logger.info('Trading service initialized successfully', {
-        processId: this.processId
+        processId: service.processId
       });
 
       // Automatically start the trading service after initialization
       logger.info('Auto-starting trading service...');
-      await this.start();
+      await service.start();
 
     } catch (error) {
       logger.error('Failed to initialize trading service:', error);
       throw error;
+    }
+
+    return service;
+  }
+
+  static async stop(runtime: IAgentRuntime) {
+    const service = runtime.getService(ServiceTypes.DEGEN_TRADING);
+    if (service) {
+      await service.stop();
     }
   }
 

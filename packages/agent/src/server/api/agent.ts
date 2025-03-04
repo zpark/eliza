@@ -431,7 +431,8 @@ export function agentRouter(
                 sourceEntityId: userId,
                 targetEntityId: runtime.agentId,
             });
-            if (!existingRelationship) {
+            
+            if (!existingRelationship && userId !== runtime.agentId) {
                 await runtime.databaseAdapter.createRelationship({
                     sourceEntityId: userId,
                     targetEntityId: runtime.agentId,
@@ -1344,7 +1345,7 @@ export function agentRouter(
         try {
             const limit = req.query.limit ? Number.parseInt(req.query.limit as string, 10) : 20;
             const before = req.query.before ? Number.parseInt(req.query.before as string, 10) : Date.now();
-            const worldId = req.query.worldId as string;
+            const _worldId = req.query.worldId as string;
 
             const memories = await runtime.messageManager.getMemories({
                 roomId,

@@ -8,7 +8,6 @@ import type {
 
 export interface IDiscordService {
     client: Client;
-    runtime: IAgentRuntime;
     character: Character;
 }
 

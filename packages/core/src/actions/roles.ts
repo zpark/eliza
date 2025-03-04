@@ -308,7 +308,7 @@ const updateRoleAction: Action = {
       (world.metadata.roles[requesterId] as RoleName) || RoleName.NONE;
 
     // Get all entities in the room
-    const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, runtime.agentId, true);
+    const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, true);
 
     // Build server members context from entities
     const serverMembersContext = entities
@@ -385,7 +385,7 @@ const updateRoleAction: Action = {
 
     // Save updated world metadata if any changes were made
     if (worldUpdated) {
-      await runtime.updateWorld(world);
+      await runtime.databaseAdapter.updateWorld(world);
       logger.info(`Updated roles in world metadata for server ${serverId}`);
     }
   },

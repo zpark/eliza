@@ -25,26 +25,21 @@ export class SolanaService extends Service {
     private connection: Connection;
     private publicKey: PublicKey;
 
-    constructor(
-        private runtime: IAgentRuntime,
-        connection: Connection,
-        publicKey: PublicKey,
-    ) {
-        super()
+    constructor(protected runtime: IAgentRuntime) {
+        super();
+        const connection = new Connection(
+            runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
+        );
         this.connection = connection;
-        this.publicKey = publicKey;
+        getWalletKey(runtime, false).then(({ publicKey }) => {
+            this.publicKey = publicKey;
+        });
     }
 
     static async start(runtime: IAgentRuntime): Promise<SolanaService> {
         logger.log('initSolanaService');
 
-        const connection = new Connection(
-            runtime.getSetting('SOLANA_RPC_URL') || PROVIDER_CONFIG.DEFAULT_RPC,
-        );
-
-        const { publicKey } = await getWalletKey(runtime, false);
-
-        const solanaClient = new SolanaService(runtime, connection, publicKey);
+        const solanaClient = new SolanaService(runtime);
 
         logger.log('SolanaService start');
         if (solanaClient.updateInterval) {

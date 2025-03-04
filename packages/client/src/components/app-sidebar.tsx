@@ -73,8 +73,8 @@ export function AppSidebar() {
                     });
                     
                     // Split into enabled and disabled groups
-                    const activeAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status == 'active');
-                    const inactiveAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status == 'inactive');
+                    const activeAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status === 'active');
+                    const inactiveAgents = sortedAgents.filter((agent: Partial<Agent & { status: string }>) => agent.status === 'inactive');
                     
                     return (
                       <>

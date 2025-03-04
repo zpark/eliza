@@ -10,7 +10,7 @@ import {
     ModelTypes,
     parseJSONObjectFromText,
     settings,
-    type State
+    type State,
 } from '@elizaos/core';
 import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';

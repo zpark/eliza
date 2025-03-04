@@ -1,4 +1,4 @@
-import { TwitterService } from ".";
+import type { TwitterService } from ".";
 import type { ClientBase } from "./base";
 import type { TwitterInteractionClient } from "./interactions";
 import type { TwitterPostClient } from "./post";

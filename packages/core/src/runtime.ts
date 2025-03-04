@@ -35,14 +35,14 @@ import {
   type IMemoryManager,
   type KnowledgeItem,
   type Memory,
-  ModelType,
+  type ModelType,
   ModelTypes,
   type Plugin,
   type Provider,
   type RoomData,
   type Route,
   type Service,
-  ServiceType,
+  type ServiceType,
   type State,
   type TaskWorker,
   type UUID,
@@ -1343,12 +1343,10 @@ export class AgentRuntime implements IAgentRuntime {
     return serviceInstance as T;
   }
 
-  async registerService(service: Service): Promise<void> {
+  async registerService(service: typeof Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
     if (!serviceType) {
-      console.log("*** service has no serviceType", service);
       return;
-      // throw new Error(`Service type not found for service: ${service.serviceType}\n${JSON.stringify(service)}`);
     }
     logger.log(
       `${this.character.name}(${this.agentId}) - Registering service:`,

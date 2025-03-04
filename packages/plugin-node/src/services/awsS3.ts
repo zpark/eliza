@@ -2,7 +2,7 @@ import {
     type IAgentRuntime,
     type IFileService,
     Service,
-    ServiceType,
+    type ServiceType,
     ServiceTypes,
     logger,
 } from "@elizaos/core";
@@ -31,7 +31,7 @@ export class AwsS3Service extends Service implements IFileService {
     private s3Client: S3Client | null = null;
     private bucket = "";
     private fileUploadPath = "";
-    private runtime: IAgentRuntime | null = null;
+    protected runtime: IAgentRuntime | null = null;
 
     constructor(runtime: IAgentRuntime) {
         super();

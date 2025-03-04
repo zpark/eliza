@@ -1,3 +1,5 @@
+import EventEmitter from "node:events";
+
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -561,9 +563,20 @@ export enum ChannelType {
 /**
  * Client instance
  */
-export abstract class Service {
+export abstract class Service extends EventEmitter {
   /** Additional keys */
   [key: string]: any;
+
+  /** Runtime instance */
+  protected runtime!: IAgentRuntime;
+
+  constructor(runtime?: IAgentRuntime) {
+    super();
+    if (runtime) {
+      this.runtime = runtime;
+    }
+  }
+  
 
   /** Service type */
   static serviceType: string;
@@ -605,7 +618,7 @@ export interface Plugin {
   // Core plugin components
   memoryManagers?: IMemoryManager[];
   
-  services?: Service[];
+  services?: (typeof Service)[];
   
   // Entity component definitions
   componentTypes?: {
@@ -1017,7 +1030,7 @@ export interface IAgentRuntime {
 
   getAllServices(): Map<ServiceType, Service>;
 
-  registerService(service: Service): void;
+  registerService(service: typeof Service): void;
 
   registerDatabaseAdapter(adapter: IDatabaseAdapter): void;
 

@@ -42,16 +42,15 @@ import { DiscordTestSuite } from "./tests.ts";
 import type { IDiscordService } from "./types.ts";
 import { VoiceManager } from "./voice.ts";
 
-export class DiscordService extends EventEmitter implements IDiscordService, Service {
+export class DiscordService extends Service implements IDiscordService {
   static serviceType: string = DISCORD_SERVICE_NAME;
   client: DiscordJsClient;
-  runtime: IAgentRuntime;
   character: Character;
   messageManager: MessageManager;
   voiceManager: VoiceManager;
 
   constructor(runtime: IAgentRuntime) {
-    super();
+    super(runtime);
 
     logger.log("Discord client constructor was engaged");
 
@@ -77,7 +76,7 @@ export class DiscordService extends EventEmitter implements IDiscordService, Ser
     });
 
     this.runtime = runtime;
-    this.voiceManager = new VoiceManager(this);
+    this.voiceManager = new VoiceManager(this, runtime);
     this.messageManager = new MessageManager(this);
 
     this.client.once(Events.ClientReady, this.onClientReady.bind(this));
@@ -204,7 +203,7 @@ export class DiscordService extends EventEmitter implements IDiscordService, Ser
     });
   }
 
-  static async start(runtime: IAgentRuntime) {
+  static async start(runtime: IAgentRuntime): Promise<DiscordService> {
     const client = new DiscordService(runtime);
     return client;
   }

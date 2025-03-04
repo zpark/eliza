@@ -13,6 +13,7 @@
     "build": "turbo run build --filter=./packages/core && turbo run build --filter=./packages/*",
     "build:core": "turbo run build --filter=./packages/core",
     "build:cli": "turbo run build --filter=./packages/cli && cd packages/cli && bun link",
+    "build:docker": "turbo run build --filter=./packages/core && turbo run build --filter=./packages/* --filter=!./packages/docs",
     "start": "turbo run start --filter=!./packages/docs",
     "agent": "turbo run start --filter=@elizaos/agent",
     "dev": "turbo run build --filter=./packages/core && turbo run dev --filter=!./packages/core --filter=!./packages/docs --concurrency=20",

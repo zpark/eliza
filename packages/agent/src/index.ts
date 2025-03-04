@@ -9,7 +9,8 @@ import {
   logger,
   parseBooleanFromText,
   settings,
-  stringToUuid
+  stringToUuid,
+  type Plugin
 } from "@elizaos/core";
 import net from "node:net";
 import yargs from "yargs";
@@ -78,25 +79,28 @@ export function parseArguments(): {
 }
 
 export async function createAgent(
-  character: Character
+  character: Character,
+  plugins: Plugin[] = []
 ): Promise<IAgentRuntime> {
   logger.log(`Creating runtime for character ${character.name}`);
   return new AgentRuntime({
     character,
     fetch: logFetch,
+    plugins
   });
 }
 
 async function startAgent(
   character: Character,
   server: AgentServer,
-  init?: (runtime: IAgentRuntime) => void
+  init?: (runtime: IAgentRuntime) => void,
+  plugins: Plugin[] = []
 ): Promise<IAgentRuntime> {
   let db: IDatabaseAdapter;
   try {
     character.id ??= stringToUuid(character.name);
 
-    const runtime: IAgentRuntime = await createAgent(character);
+    const runtime: IAgentRuntime = await createAgent(character, plugins);
 
     if (init) {
       await init(runtime);
@@ -196,7 +200,8 @@ const startAgents = async () => {
         const runtime = await startAgent(
           swarmMember.character,
           server,
-          swarmMember.init
+          swarmMember.init,
+          swarmMember.plugins
         );
         members.push(runtime);
       }

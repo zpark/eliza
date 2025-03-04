@@ -10,7 +10,7 @@ import {
     type TeeLogQuery,
     type TeePageQuery,
     TEEMode,
-    ServiceType,
+    type ServiceType,
 } from '@elizaos/core';
 import { SqliteTeeLogDAO } from '../adapters/sqliteDAO';
 import { TeeLogManager } from './teeLogManager';
@@ -37,7 +37,7 @@ export class TeeLogService extends Service implements ITeeLogService {
 
     static async start(runtime: IAgentRuntime): Promise<TeeLogService> {
         const service = new TeeLogService(runtime);
-        
+
         const enableValues = ['true', '1', 'yes', 'enable', 'enabled', 'on'];
 
         const enableTeeLog = runtime.getSetting('ENABLE_TEE_LOG') as string;
@@ -75,7 +75,11 @@ export class TeeLogService extends Service implements ITeeLogService {
 
         const db = new Database(service.dbPath);
         service.teeLogDAO = new SqliteTeeLogDAO(db);
-        service.teeLogManager = new TeeLogManager(service.teeLogDAO, service.teeType, service.teeMode);
+        service.teeLogManager = new TeeLogManager(
+            service.teeLogDAO,
+            service.teeType,
+            service.teeMode,
+        );
 
         const isRegistered = await service.teeLogManager.registerAgent(
             runtime?.agentId,
@@ -99,7 +103,6 @@ export class TeeLogService extends Service implements ITeeLogService {
     async stop() {
         // do nothing
     }
-    
 
     async log(
         agentId: string,
