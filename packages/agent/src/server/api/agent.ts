@@ -189,7 +189,7 @@ export function agentRouter(
             const updatedAgent = await db.getAgent(agentId);
                 
 
-            const isActive = agents.get(agentId);
+            const isActive = !!agents.get(agentId);
             if (isActive) {
                 // stop existing runtime
                 server?.unregisterAgent(agentId);
@@ -288,7 +288,7 @@ export function agentRouter(
                 return;
             }
 
-            const isActive = agents.get(agentId);
+            const isActive = !!agents.get(agentId);
 
             // Check if agent is already running
             if (isActive) {
