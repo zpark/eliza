@@ -22,4 +22,4 @@ doesn't belong here
 
 ## Defined in
 
-[packages/core/src/generation.ts:2802](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2802)
+[packages/core/src/generation.ts:2817](https://github.com/elizaOS/eliza/blob/main/packages/core/src/generation.ts#L2817)

@@ -607,7 +607,7 @@ verifiableInferenceAdapter?: IVerifiableInferenceAdapter | null;
 
 #### Defined in
 
-[packages/core/src/runtime.ts:945](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L945)
+[packages/core/src/runtime.ts:959](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L959)
 
 ***
 
@@ -629,7 +629,7 @@ The number of recent messages to be kept in memory.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:967](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L967)
+[packages/core/src/runtime.ts:981](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L981)
 
 ***
 
@@ -655,7 +655,7 @@ The action to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:975](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L975)
+[packages/core/src/runtime.ts:989](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L989)
 
 ***
 
@@ -677,7 +677,7 @@ The evaluator to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:984](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L984)
+[packages/core/src/runtime.ts:998](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L998)
 
 ***
 
@@ -699,7 +699,7 @@ The context provider to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:992](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L992)
+[packages/core/src/runtime.ts:1006](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1006)
 
 ***
 
@@ -721,7 +721,7 @@ The adapter to register.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1000](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1000)
+[packages/core/src/runtime.ts:1014](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1014)
 
 ***
 
@@ -753,7 +753,7 @@ The message to process.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1009](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1009)
+[packages/core/src/runtime.ts:1023](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1023)
 
 ***
 
@@ -793,7 +793,7 @@ The results of the evaluation.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1093](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1093)
+[packages/core/src/runtime.ts:1107](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1107)
 
 ***
 
@@ -825,7 +825,7 @@ An error if the participant cannot be added.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1163](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1163)
+[packages/core/src/runtime.ts:1177](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1177)
 
 ***
 
@@ -861,7 +861,7 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1179](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1179)
+[packages/core/src/runtime.ts:1193](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1193)
 
 ***
 
@@ -885,7 +885,7 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1205](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1205)
+[packages/core/src/runtime.ts:1219](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1219)
 
 ***
 
@@ -915,7 +915,7 @@ The user name to ensure the existence of.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1222](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1222)
+[packages/core/src/runtime.ts:1236](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1236)
 
 ***
 
@@ -946,7 +946,7 @@ An error if the room cannot be created.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1258](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1258)
+[packages/core/src/runtime.ts:1272](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1272)
 
 ***
 
@@ -976,7 +976,7 @@ The state of the agent.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1271](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1271)
+[packages/core/src/runtime.ts:1285](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1285)
 
 ***
 
@@ -998,4 +998,4 @@ The state of the agent.
 
 #### Defined in
 
-[packages/core/src/runtime.ts:1728](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1728)
+[packages/core/src/runtime.ts:1742](https://github.com/elizaOS/eliza/blob/main/packages/core/src/runtime.ts#L1742)
