@@ -15,7 +15,7 @@ export class DegenTradingService extends Service {
   // For tracking pending sells
   private pendingSells: { [tokenAddress: string]: bigint } = {};
 
-  static serviceType = "degen_trading";
+  static serviceType = "degen_trader";
 
   constructor(protected runtime: IAgentRuntime) {
     super(runtime);
@@ -657,7 +657,7 @@ export class DegenTradingService extends Service {
       roomId: `trade-0000-0000-0000-${Date.now().toString(16)}`, // Generate a unique room ID
       name: "EXECUTE_BUY",
       description: `Execute buy for ${signal.tokenAddress}`,
-      tags: ["queue", "trade", "buy"],
+      tags: ["queue", "schedule", "degen_trader"],
       metadata: {
         signal,
         updatedAt: Date.now(),
@@ -678,7 +678,7 @@ export class DegenTradingService extends Service {
       roomId: `trade-0000-0000-0000-${Date.now().toString(16)}`, // Generate a unique room ID
       name: "EXECUTE_SELL",
       description: `Execute sell for ${signal.tokenAddress}`,
-      tags: ["queue", "trade", "sell"],
+      tags: ["queue", "schedule", "degen_trader"],
       metadata: {
         signal,
         updatedAt: Date.now(),
@@ -803,6 +803,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "EXECUTE_BUY",
       execute: async (_runtime: IAgentRuntime, options: any) => {
+        logger.info("*** EXECUTE_BUY ***");
         await this.executeBuyTask(options);
       },
       validate: async () => true
@@ -812,6 +813,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "EXECUTE_SELL",
       execute: async (_runtime: IAgentRuntime, options: any) => {
+        logger.info("*** EXECUTE_SELL ***");
         await this.executeSellTask(options);
       },
       validate: async () => true
@@ -821,6 +823,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "GENERATE_BUY_SIGNAL",
       execute: async () => {
+        logger.info("*** GENERATE_BUY_SIGNAL ***");
         await this.generateBuySignal();
       },
       validate: async () => true
@@ -830,6 +833,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "SYNC_WALLET",
       execute: async () => {
+        logger.info("*** SYNC_WALLET ***");
         await this.syncWallet();
       },
       validate: async () => true
@@ -839,6 +843,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "MONITOR_TOKEN",
       execute: async (_runtime: IAgentRuntime, options: any) => {
+        logger.info("*** MONITOR_TOKEN ***");
         await this.monitorToken(options);
       },
       validate: async () => true
@@ -854,9 +859,10 @@ export class DegenTradingService extends Service {
    * Creates scheduled tasks
    */
   private async createScheduledTasks() {
+    console.log("*** Creating scheduled tasks ***");
     // Clear existing schedules for this agent
     const existingTasks = await this.runtime.databaseAdapter.getTasks({
-      tags: ["queue", "schedule", "trade"]
+      tags: ["queue", "schedule", "degen_trader"],
     });
     
     for (const task of existingTasks) {
@@ -869,7 +875,7 @@ export class DegenTradingService extends Service {
       roomId: this.runtime.agentId,
       name: "GENERATE_BUY_SIGNAL",
       description: "Generate buy signal every 10 minutes",
-      tags: ["queue", "schedule", "trade"],
+      tags: ["queue", "schedule", "degen_trader"],
       metadata: {
         updatedAt: Date.now(),
         updateInterval: 600000, // 10 minutes
@@ -883,7 +889,7 @@ export class DegenTradingService extends Service {
       roomId: this.runtime.agentId,
       name: "SYNC_WALLET",
       description: "Sync wallet information every 10 minutes",
-      tags: ["queue", "schedule", "trade"],
+      tags: ["queue", "schedule", "degen_trader"],
       metadata: {
         updatedAt: Date.now(),
         updateInterval: 600000, // 10 minutes
@@ -1001,7 +1007,7 @@ export class DegenTradingService extends Service {
       
       // Cancel all scheduled tasks
       const existingTasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "schedule", "trade"]
+        tags: ["queue", "schedule", "degen_trader"],
       });
       
       for (const task of existingTasks) {
@@ -1104,7 +1110,7 @@ export class DegenTradingService extends Service {
         roomId: this.runtime.agentId,
         name: "MONITOR_TOKEN",
         description: `Monitor token ${data.tokenAddress}`,
-        tags: ["queue", "monitor", "trade"],
+        tags: ["queue", "schedule", "degen_trader"],
         metadata: {
           tokenAddress: data.tokenAddress,
           initialPrice: data.initialPrice,
@@ -1129,7 +1135,7 @@ export class DegenTradingService extends Service {
     try {
       // Find monitoring tasks for this process
       const tasks = await this.runtime.databaseAdapter.getTasks({
-        tags: ["queue", "monitor", "trade"]
+        tags: ["queue", "schedule", "degen_trader"],
       });
       
       // Delete all related monitoring tasks
