@@ -11,19 +11,25 @@ import {
 import { v4 as uuidv4 } from "uuid";
 
 export class ScenarioService implements Service {
-  serviceType = "scenario";
+  static serviceType = "scenario";
   runtime: IAgentRuntime;
   private messageHandlers: Map<UUID, HandlerCallback[]> = new Map();
   private rooms: Map<string, { roomId: UUID }> = new Map();
 
-  async start(runtime: IAgentRuntime) {
-    this.runtime = runtime;
-    return this;
+  static async start(runtime: IAgentRuntime) {
+    const service = new ScenarioService();
+    service.runtime = runtime;
+    return service;
   }
 
-  async stop() {
-    this.messageHandlers.clear();
-    this.rooms.clear();
+  static async stop(runtime: IAgentRuntime) {
+    // get the service from the runtime
+    const service = runtime.getService(ScenarioService.serviceType);
+    if (!service) {
+      throw new Error("Scenario service not found");
+    }
+    service.messageHandlers.clear();
+    service.rooms.clear();
   }
 
   // Create a room for an agent
@@ -165,9 +171,8 @@ export class ScenarioService implements Service {
 const scenarios = [
   async function scenario1(members: IAgentRuntime[]) {
     // Create and register test client
-    const service = new ScenarioService();
-    await service.start(members[0]);
-    members[0].registerService(service);
+    const service = await ScenarioService.start(members[0]);
+    members[0].registerService(ScenarioService);
 
     // Create rooms for all members
     for (const member of members) {

@@ -29,7 +29,7 @@ const MAX_MESSAGE_LENGTH = 4096; // Telegram's max message length
 
 export class MessageManager {
     public bot: Telegraf<Context>;
-    private runtime: IAgentRuntime;
+    protected runtime: IAgentRuntime;
 
     constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
         this.bot = bot;

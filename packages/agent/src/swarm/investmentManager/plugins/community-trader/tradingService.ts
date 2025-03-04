@@ -6,7 +6,6 @@ import {
     MemoryManager,
     ModelTypes,
     Service,
-    ServiceTypes,
     type UUID,
     logger
 } from "@elizaos/core";
@@ -52,7 +51,7 @@ export type TradingEvent =
  * Unified Trading Service that centralizes all trading operations
  */
 export class TrustTradingService extends Service {
-    serviceType = "trading";
+    static serviceType = "trading";
 
     // Memory managers
     private tokenMemoryManager: IMemoryManager;
@@ -68,16 +67,15 @@ export class TrustTradingService extends Service {
     private heliusClient: HeliusClient | null = null;
     
     // Configuration
-    config: TradingConfig;
+    tradingConfig: TradingConfig;
     
     // Event listeners
     private eventListeners: Map<string, ((event: TradingEvent) => void)[]> = new Map();
 
     constructor(
-        private readonly runtime: IAgentRuntime,
-        config: Partial<TradingConfig> = {}
+        protected runtime: IAgentRuntime,
     ) {
-        super();
+        super(runtime);
         
         // Register memory managers
         this.tokenMemoryManager = this.registerMemoryManager("tokens");
@@ -103,10 +101,7 @@ export class TrustTradingService extends Service {
         }
         
         // Merge provided config with defaults
-        this.config = {
-            ...DEFAULT_TRADING_CONFIG,
-            ...config
-        };
+        this.tradingConfig = DEFAULT_TRADING_CONFIG;
     }
 
     static async start(runtime: IAgentRuntime): Promise<TrustTradingService> {
@@ -189,7 +184,7 @@ export class TrustTradingService extends Service {
             // Validate the token
             const tokenPerformance = await this.getOrFetchTokenPerformance(
                 buySignal.tokenAddress,
-                buySignal.chain || this.config.defaultChain
+                buySignal.chain || this.tradingConfig.defaultChain
             );
             
             if (!tokenPerformance) {
@@ -231,7 +226,7 @@ export class TrustTradingService extends Service {
                 buySignal.walletAddress || "simulation",
                 buyAmount,
                 tokenPerformance.price?.toString() || "0",
-                buySignal.isSimulation || this.config.forceSimulation
+                buySignal.isSimulation || this.tradingConfig.forceSimulation
             );
             
             if (!position) {
@@ -606,12 +601,12 @@ export class TrustTradingService extends Service {
             const pair = dexScreenerData.pairs[0];
             
             // Check liquidity
-            if (!pair.liquidity || pair.liquidity.usd < this.config.minLiquidityUsd) {
+            if (!pair.liquidity || pair.liquidity.usd < this.tradingConfig.minLiquidityUsd) {
                 return false;
             }
             
             // Check market cap
-            if (!pair.marketCap || pair.marketCap > this.config.maxMarketCapUsd) {
+            if (!pair.marketCap || pair.marketCap > this.tradingConfig.maxMarketCapUsd) {
                 return false;
             }
             
@@ -998,13 +993,13 @@ export class TrustTradingService extends Service {
         
         // Check liquidity
         const liquidity = token.liquidity || 0;
-        if (liquidity < this.config.minLiquidityUsd) {
+        if (liquidity < this.tradingConfig.minLiquidityUsd) {
             return false;
         }
         
         // Check market cap
         const marketCap = token.currentMarketCap || 0;
-        if (marketCap > this.config.maxMarketCapUsd) {
+        if (marketCap > this.tradingConfig.maxMarketCapUsd) {
             return false;
         }
         
@@ -1024,7 +1019,7 @@ export class TrustTradingService extends Service {
             const recommendation: TokenRecommendation = {
                 id: uuidv4() as UUID,
                 entityId,
-                chain: token.chain || this.config.defaultChain,
+                chain: token.chain || this.tradingConfig.defaultChain,
                 tokenAddress: token.address || "",
                 type,
                 conviction,
@@ -1083,7 +1078,7 @@ export class TrustTradingService extends Service {
         
         // Get base amount from config
         const { baseAmount, minAmount, maxAmount, trustScoreMultiplier, convictionMultiplier } = 
-            this.config.buyAmountConfig;
+            this.tradingConfig.buyAmountConfig;
         
         // Calculate multipliers
         const trustMultiplier = 1 + (trustScore / 100) * trustScoreMultiplier;
@@ -1119,7 +1114,7 @@ export class TrustTradingService extends Service {
         try {
             const position: Position = {
                 id: uuidv4() as UUID,
-                chain: this.config.defaultChain,
+                chain: this.tradingConfig.defaultChain,
                 tokenAddress,
                 walletAddress,
                 isSimulation,
@@ -1157,7 +1152,7 @@ export class TrustTradingService extends Service {
             const transaction: Transaction = {
                 id: uuidv4() as UUID,
                 positionId,
-                chain: this.config.defaultChain,
+                chain: this.tradingConfig.defaultChain,
                 tokenAddress,
                 type,
                 amount: amount.toString(),

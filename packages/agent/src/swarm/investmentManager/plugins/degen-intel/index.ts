@@ -8,6 +8,8 @@ export const degenIntelPlugin: Plugin = {
     description: "Degen Intel plugin",
 	routes,
 	init: async (_, runtime: IAgentRuntime) => {
+		console.log("*** degenIntelPlugin init ***");
+		console.log("Registering tasks")
 		await registerTasks(runtime);
 	}
 };

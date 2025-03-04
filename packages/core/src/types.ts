@@ -565,6 +565,15 @@ export abstract class Service {
   /** Additional keys */
   [key: string]: any;
 
+  /** Runtime instance */
+  protected runtime!: IAgentRuntime;
+
+  constructor(runtime?: IAgentRuntime) {
+    if (runtime) {
+      this.runtime = runtime;
+    }
+  }
+
   /** Service type */
   static serviceType: string;
 
@@ -605,7 +614,7 @@ export interface Plugin {
   // Core plugin components
   memoryManagers?: IMemoryManager[];
   
-  services?: Service[];
+  services?: (typeof Service)[];
   
   // Entity component definitions
   componentTypes?: {
@@ -1017,7 +1026,7 @@ export interface IAgentRuntime {
 
   getAllServices(): Map<ServiceType, Service>;
 
-  registerService(service: Service): void;
+  registerService(service: typeof Service): void;
 
   registerDatabaseAdapter(adapter: IDatabaseAdapter): void;
 

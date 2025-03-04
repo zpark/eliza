@@ -1,4 +1,4 @@
-import { type Service, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
+import { Service, type IAgentRuntime, logger, type Plugin } from "@elizaos/core";
 import { type Context, Telegraf } from "telegraf";
 import replyAction from "./actions/reply.ts";
 import { validateTelegramConfig } from "./environment.ts";
@@ -6,21 +6,21 @@ import { MessageManager } from "./messageManager.ts";
 import { TelegramTestSuite } from "./tests.ts";
 import { TELEGRAM_SERVICE_NAME } from "./constants.ts";
 
-export class TelegramService implements Service {
-    name = TELEGRAM_SERVICE_NAME;
+export class TelegramService extends Service {
+    static serviceType = TELEGRAM_SERVICE_NAME;
     private bot: Telegraf<Context>;
-    private runtime: IAgentRuntime;
     public messageManager: MessageManager;
     private options;
 
-    constructor(runtime: IAgentRuntime, botToken: string) {
+    constructor(runtime: IAgentRuntime) {
+        super(runtime);
         logger.log("📱 Constructing new TelegramService...");
         this.options = {
             telegram: {
                 apiRoot: runtime.getSetting("TELEGRAM_API_ROOT") || process.env.TELEGRAM_API_ROOT || "https://api.telegram.org"
             },
         };
-        this.runtime = runtime;
+        const botToken = runtime.getSetting("TELEGRAM_BOT_TOKEN");
         this.bot = new Telegraf(botToken,this.options);
         this.messageManager = new MessageManager(this.bot, this.runtime);
         logger.log("✅ TelegramService constructor completed");
@@ -30,8 +30,7 @@ export class TelegramService implements Service {
         await validateTelegramConfig(runtime);
 
         const tg = new TelegramService(
-            runtime,
-            runtime.getSetting("TELEGRAM_BOT_TOKEN")
+            runtime
         );
 
         logger.success(

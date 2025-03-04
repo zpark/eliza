@@ -5,12 +5,10 @@ import { type IAgentRuntime, Service, ServiceTypes, type UUID, ServiceType } fro
 export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
-  runtime: IAgentRuntime;
   static serviceType: ServiceType = ServiceTypes.TASK;
 
   constructor(runtime: IAgentRuntime) {
-    super();
-    this.runtime = runtime;
+    super(runtime);
   }
 
   static async start(runtime: IAgentRuntime): Promise<TaskService> {
@@ -100,6 +98,13 @@ export class TaskService extends Service {
     const service = runtime.getService(ServiceTypes.TASK);
     if (service) {
       await service.stop();
+    }
+  }
+
+  async stop() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
     }
   }
 }

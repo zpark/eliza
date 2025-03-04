@@ -6,6 +6,7 @@ import { recommendationEvaluator } from "./recommendations/evaluator";
 import { getPositions } from "./recommendations/positions";
 import { getRecommenderReport } from "./recommendations/report";
 import { getSimulatedPositions } from "./recommendations/simulatedPositions";
+import { TrustTradingService } from "./tradingService";
 
 export const communityTraderPlugin: Plugin = {
     name: "community-trader",
@@ -20,4 +21,5 @@ export const communityTraderPlugin: Plugin = {
         getAgentPositions,
         getSimulatedPositions,
     ],
+    services: [TrustTradingService],
 };

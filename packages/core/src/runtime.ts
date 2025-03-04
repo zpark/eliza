@@ -1343,7 +1343,7 @@ export class AgentRuntime implements IAgentRuntime {
     return serviceInstance as T;
   }
 
-  async registerService(service: Service): Promise<void> {
+  async registerService(service: typeof Service): Promise<void> {
     const serviceType = service.serviceType as ServiceType;
     if (!serviceType) {
       console.log("*** service has no serviceType", service);
