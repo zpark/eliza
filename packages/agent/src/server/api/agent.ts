@@ -445,7 +445,8 @@ export function agentRouter(
                 sourceEntityId: userId,
                 targetEntityId: runtime.agentId,
             });
-            if (!existingRelationship) {
+            
+            if (!existingRelationship && userId !== runtime.agentId) {
                 await runtime.databaseAdapter.createRelationship({
                     sourceEntityId: userId,
                     targetEntityId: runtime.agentId,

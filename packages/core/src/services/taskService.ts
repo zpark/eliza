@@ -29,10 +29,13 @@ export class TaskService extends Service {
 
   private async checkTasks() {
     try {
+      console.log("*** Checking tasks");
       // Get all tasks with "queue" tag
       const tasks = await this.runtime.databaseAdapter.getTasks({
         tags: ["queue"],
       });
+
+      console.log(`*** Found ${tasks.length} tasks`);
 
       const now = Date.now();
 
