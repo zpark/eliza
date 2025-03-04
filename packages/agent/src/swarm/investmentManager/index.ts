@@ -174,7 +174,7 @@ const config: OnboardingConfig = {
 export default {
   plugins: [
     // degenIntelPlugin,
-    degenTraderPlugin,
+    // degenTraderPlugin,
     // communityTraderPlugin,
   ],
   character,
