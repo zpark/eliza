@@ -1,5 +1,5 @@
 import { composePrompt } from "../prompts";
-import { booleanFooter, parseBooleanFromText } from "../parsing";
+import { booleanFooter, parseBooleanFromText } from "../prompts";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 const shouldUnfollowTemplate =

@@ -61,7 +61,6 @@ export const createMockRuntime = (): IAgentRuntime => ({
   ensureParticipantInRoom: async () => {},
   ensureRoomExists: async () => {},
   composeState: async () => ({} as State),
-  updateRecentMessageState: async (state) => state,
   useModel: async <T>(modelType: ModelType, params: T): Promise<string | Readable> => {
     // Check if there are any pending mock rejections
     const mockCalls = downloadModelMock.mock.calls;

@@ -109,16 +109,7 @@ export const confirmRecommendation: Action = {
             console.log("no registered solana wallet in trading service");
             return;
         }
-
-        ///     if (state) {
-        ///         state = await runtime.updateRecentMessageState(state);
-        ///     } else {
-        ///         console.log(
-        ///             "no state, composing new state, this is very expensive"
-        ///         );
-        ///         state = await runtime.composeState(message);
-        ///     }
-
+        
         const recommendationsManager =
             runtime.getMemoryManager("recommendations")!;
 

@@ -186,7 +186,7 @@ export const executeSwap: Action = {
             if (!state) {
                 state = await runtime.composeState(message);
             } else {
-                state = await runtime.updateRecentMessageState(state);
+                state = await runtime.composeState(message, {}, ["recentMemories"]);
             }
 
             const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;

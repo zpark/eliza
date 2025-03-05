@@ -127,7 +127,7 @@ const transcribeMediaAction = {
             return;
         }
 
-        const attachment = state.recentMessagesData
+        const attachment = state.data.recentMessages
             .filter(
                 (msg) =>
                     msg.content.attachments &&

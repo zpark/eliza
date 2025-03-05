@@ -19,7 +19,7 @@ import {
   messageCompletionFooter,
   parseJSONObjectFromText,
   shouldRespondFooter,
-} from "./parsing.ts";
+} from "./prompts.ts";
 import { composePrompt, formatMessages } from "./prompts.ts";
 import { actionsProvider } from "./providers/actions.ts";
 import { attachmentsProvider } from "./providers/attachments.ts";
@@ -79,7 +79,7 @@ type UserJoinedParams = {
 export const shouldRespondTemplate = `{{system}}
 # Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
 
-{{actors}}
+{{entities}}
 
 About {{agentName}}:
 {{bio}}
@@ -90,31 +90,7 @@ About {{agentName}}:
 ${shouldRespondFooter}`;
 
 export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
-{{system}}
-
-{{actionExamples}}
-(Action examples are for reference only. Do not use the information from them in your response.)
-
-{{knowledge}}
-
-{{actors}}
-
-About {{agentName}}:
-{{bio}}
-
-Examples of {{agentName}}'s dialog and actions:
-{{characterMessageExamples}}
-
-{{attachments}}
-
 {{providers}}
-
-{{actions}}
-
-{{messageDirections}}
-
-{{recentMessages}}
-
 # Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
 ${messageCompletionFooter}`;
 
@@ -270,7 +246,7 @@ const messageReceivedHandler = async ({
       },
     ];
 
-    state = await runtime.updateRecentMessageState(state);
+    state = await runtime.composeState(message, {}, ["recentMemories"]);
 
     // Clean up the response ID
     agentResponses.delete(message.roomId);

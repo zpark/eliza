@@ -1,6 +1,6 @@
 import pino, { type LogFn } from "pino";
 import pretty from "pino-pretty";
-import { parseBooleanFromText } from "./parsing";
+import { parseBooleanFromText } from "./prompts";
 
 const customLevels: Record<string, number> = {
     fatal: 60,

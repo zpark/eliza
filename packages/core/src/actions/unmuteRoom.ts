@@ -1,6 +1,6 @@
 import { composePrompt } from "../prompts";
 import logger from "../logger";
-import { booleanFooter } from "../parsing";
+import { booleanFooter } from "../prompts";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 export const shouldUnmuteTemplate =

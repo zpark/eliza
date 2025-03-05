@@ -1,10 +1,10 @@
 import { getEntityDetails } from "../entities";
 import { addHeader, formatMessages, formatPosts } from "../prompts";
-import { Entity, IAgentRuntime, Memory, Provider, UUID } from "../types";
+import { ChannelType, Entity, IAgentRuntime, Memory, Provider, UUID } from "../types";
 
 export const recentMemoriesProvider: Provider = {
   name: "recentMemories",
-  description: "Recent memories",
+  description: "Recent messages, interactions and other memories",
   get: async (
     runtime: IAgentRuntime,
     message: Memory,
@@ -13,6 +13,10 @@ export const recentMemoriesProvider: Provider = {
     const conversationLength = runtime.getConversationLength();
 
     const entitiesData = await getEntityDetails({ runtime, roomId });
+    
+    const room = await runtime.databaseAdapter.getRoom(roomId);
+
+    const isPostFormat = room?.type === ChannelType.FEED || room?.type === ChannelType.THREAD;
 
     // Get recent messages
     const recentMessagesData = await runtime.messageManager.getMemories({
@@ -64,7 +68,7 @@ export const recentMemoriesProvider: Provider = {
       });
     };
 
-    const recentInteractions =
+    const recentInteractionsData =
       message.userId !== runtime.agentId
         ? await getRecentInteractions(message.userId, runtime.agentId)
         : [];
@@ -95,7 +99,7 @@ export const recentMemoriesProvider: Provider = {
     };
 
     const recentMessageInteractions = await getRecentMessageInteractions(
-      recentInteractions
+      recentInteractionsData
     );
 
     // Format recent post interactions
@@ -113,21 +117,28 @@ export const recentMemoriesProvider: Provider = {
     };
 
     const recentPostInteractions = await getRecentPostInteractions(
-      recentInteractions,
+      recentInteractionsData,
       entitiesData
     );
 
+    const data = {
+      recentMessages: recentMessagesData,
+      recentInteractions: recentInteractionsData,
+    }
+
     const values = {
-      recentMessagesData,
+      recentPosts,
+      recentMessages,
       recentMessageInteractions,
       recentPostInteractions,
-      recentInteractionsData: recentInteractions,
+      recentInteractions: isPostFormat ? recentPostInteractions : recentMessageInteractions,
     };
 
     // Combine all text sections
-    const text = [recentMessages, recentPosts].filter(Boolean).join("\n\n");
+    const text = [isPostFormat ? recentPosts : recentMessages].filter(Boolean).join("\n\n");
 
     return {
+      data,
       values,
       text,
     };

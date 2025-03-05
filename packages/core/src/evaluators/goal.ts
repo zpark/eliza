@@ -1,6 +1,6 @@
 import { composePrompt } from "../prompts";
 import { getGoals } from "../goals";
-import { parseJsonArrayFromText } from "../parsing";
+import { parseJsonArrayFromText } from "../prompts";
 import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 

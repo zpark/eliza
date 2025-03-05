@@ -2,7 +2,7 @@ import type { z, ZodSchema } from "zod";
 import { composePrompt } from "../prompts";
 import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
-import { messageCompletionFooter, parseJSONObjectFromText } from "../parsing";
+import { messageCompletionFooter, parseJSONObjectFromText } from "../prompts";
 import { findWorldForOwner } from "../roles";
 import {
   type Action,

@@ -1,15 +1,12 @@
 import {
-    formatMessages,
+    composePrompt,
     type IAgentRuntime,
     type Memory,
-    ModelTypes,
     type Provider,
     type State,
-    type UUID,
-    composePrompt
+    type UUID
 } from "@elizaos/core";
 import { z } from "zod";
-import { CoingeckoClient } from "../clients";
 import { formatRecommenderReport } from "../reports";
 import type { TrustTradingService } from "../tradingService";
 import {
@@ -20,7 +17,6 @@ import {
     type TokenPerformance as TypesTokenPerformance,
     type Transaction as TypesTransaction
 } from "../types";
-import { getZodJsonSchema } from "../utils";
 // Create a simple formatter module inline if it doesn't exist
 // This will be used until a proper formatters.ts file is created
 const formatters = {
@@ -77,42 +73,6 @@ Total P&L: {{totalPnL}}
 </global_market_data>
 
 </data_provider>`;
-
-const dataLoaderTemplate = `You are a data provider system for a memecoin trading platform. Your task is to detect necessary data operations from messages and output required actions.
-
-<available_actions>
-{{actions}}
-</available_actions>
-
-Current data state:
-<tokens>
-{{tokens}}
-</tokens>
-
-<positions>
-{{positions}}
-</positions>
-
-Analyze the following messages and output any required actions:
-<messages>
-{{messages}}
-</messages>
-
-Rules:
-
-- Detect any new token addresses mentioned in messages
-- Do not modify the contract address, even if it contains words like "pump" or "meme" (i.e. BtNpKW19V1vefFvVzjcRsCTj8cwwc1arJcuMrnaApump)
-- Compare mentioned tokens against current data state
-- Consider data freshness when tokens or positions are queried
-- Order actions by dependency (loading new data before refreshing)
-- Only output necessary actions
-
-Output structure:
-<o>
-[List of actions to be taken if applicable]
-<action name="[action name]">[action parameters as JSON]</action>
-</o>
-`;
 
 type DataActionState = {
     runtime: IAgentRuntime;

@@ -1,5 +1,5 @@
 import { logger, stringToUuid } from "./index.ts";
-import { parseJSONObjectFromText } from "./parsing";
+import { parseJSONObjectFromText } from "./prompts";
 import { composePrompt } from "./prompts.ts";
 import {
   type Entity,

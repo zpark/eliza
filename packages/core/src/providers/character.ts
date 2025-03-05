@@ -1,5 +1,5 @@
 import { addHeader } from "../prompts";
-import { IAgentRuntime, Memory, Provider } from "../types";
+import { ChannelType, IAgentRuntime, Memory, Provider } from "../types";
 
 export const characterProvider: Provider = {
   name: "character",
@@ -112,6 +112,10 @@ export const characterProvider: Provider = {
           )
         : "";
 
+    const room = await runtime.databaseAdapter.getRoom(message.roomId);
+
+    const isPostFormat = room?.type === ChannelType.FEED || room?.type === ChannelType.THREAD;
+
     // Style directions
     const postDirections =
       character?.style?.all?.length > 0 || character?.style?.post?.length > 0
@@ -137,7 +141,11 @@ export const characterProvider: Provider = {
           )
         : "";
 
+    const directions = isPostFormat ? postDirections : messageDirections;
+    const examples = isPostFormat ? characterPostExamples : characterMessageExamples;
+
     const values = {
+      agentName,
       bio,
       system,
       topic,
@@ -145,16 +153,16 @@ export const characterProvider: Provider = {
       adjective,
       messageDirections,
       postDirections,
+      directions,
+      examples,
       characterPostExamples,
       characterMessageExamples,
     };
-
+    
     // Combine all text sections
     const text = [
-      messageDirections,
-      postDirections,
-      characterPostExamples,
-      characterMessageExamples,
+      directions,
+      examples,
     ]
       .filter(Boolean)
       .join("\n\n");

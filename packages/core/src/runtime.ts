@@ -9,7 +9,7 @@ import {
 } from "./evaluators.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import { MemoryManager } from "./memory.ts";
-import { parseJsonArrayFromText, splitChunks } from "./parsing.ts";
+import { parseJsonArrayFromText, splitChunks } from "./prompts.ts";
 import { addHeader, composePrompt } from "./prompts.ts";
 import {
   type Action,
@@ -159,6 +159,7 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
+  stateCache = new Map<UUID, { values: State, data: any, providers: string }>();
 
   readonly fetch = fetch;
   services: Map<ServiceType, Service> = new Map();
@@ -970,11 +971,16 @@ async addKnowledge(
    */
   async composeState(
     message: Memory,
-    additionalKeys: { [key: string]: unknown } = {}
+    additionalKeys: { [key: string]: unknown } = {},
+    providerList: string[] | null = null
   ): Promise<State> {
+    const providersToGet = providerList ?
+      this.providers.filter((provider) => providerList.includes(provider.name))
+      : this.providers;
+
       const providerResults = (
         await Promise.all(
-            this.providers.map(async (provider) => {
+            providersToGet.map(async (provider) => {
                 const start = Date.now();
                 const result = await provider.get(this, message);
                 const duration = Date.now() - start;
@@ -984,11 +990,18 @@ async addKnowledge(
         )
     );
 
+    // get cached state for this message ID
+    const cachedState = await this.stateCache.get(message.id) || { values: {}, data: {}, providers: "" };
+
     const values = providerResults.map((result) => result.values).flat();
-    const providers = providerResults.map((result) => result.text).filter((text) => text !== "").join("\n\n");
+    const text = providerResults.map((result) => result.text).filter((text) => text !== "").join("\n\n");
     const data = providerResults.map((result) => result.data).flat();
 
-    return { ...values, ...additionalKeys, providers, data };
+    const providers = cachedState.providers + text;
+
+    const newState = { ...cachedState.values, ...values, ...cachedState.data, data, ...additionalKeys, providers };
+    this.stateCache.set(message.id, newState);
+    return newState;
   }
 
   // IAgentRuntime interface implementation

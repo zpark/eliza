@@ -4,7 +4,7 @@
 import { composePrompt } from "../prompts";
 import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { parseJSONObjectFromText } from "../parsing";
+import { parseJSONObjectFromText } from "../prompts";
 import {
   type Action,
   type ActionExample,

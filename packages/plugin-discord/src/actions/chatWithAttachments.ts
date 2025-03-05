@@ -148,7 +148,7 @@ const summarizeAction = {
         const { objective, attachmentIds } = attachmentData;
 
         // This is pretty gross but it can catch cases where the returned generated UUID is stupidly wrong for some reason
-        const attachments = state.recentMessagesData
+        const attachments = state.data.recentMessages
             .filter(
                 (msg) =>
                     msg.content.attachments &&

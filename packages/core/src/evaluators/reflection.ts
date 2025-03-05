@@ -41,7 +41,7 @@ const reflectionTemplate = `# Task: Generate Agent Reflection, Extract Facts and
 # Examples:
 {{evaluationExamples}}
 
-{{actors}}
+{{entities}}
 
 {{bio}}
 

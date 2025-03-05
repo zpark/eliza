@@ -54,11 +54,6 @@ export class TwitterPostClient {
             }`
         );
 
-        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
-        if (targetUsers) {
-            logger.log(`- Target Users: ${targetUsers}`);
-        }
-
         if (this.isDryRun) {
             logger.log(
                 "Twitter client initialized in dry run mode - no actual tweets should be posted"

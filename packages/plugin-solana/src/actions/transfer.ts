@@ -115,7 +115,7 @@ export default {
         if (!currentState) {
             currentState = (await runtime.composeState(message)) as State;
         } else {
-            currentState = await runtime.updateRecentMessageState(currentState);
+            state = await runtime.composeState(message, {}, ["recentMemories"]);
         }
 
         const transferPrompt = composePrompt({

@@ -142,7 +142,13 @@ export const ServiceTypes = {
  */
 export interface State {
   /** Additional dynamic properties */
-  [key: string]: unknown;
+  [key: string]: any;
+  values?: {
+    [key: string]: any;
+  };
+  data?: {
+    [key: string]: any;
+  };
   providers?: string;
 }
 
@@ -472,6 +478,7 @@ export enum ChannelType {
   VOICE_DM = "VOICE_DM",
   VOICE_GROUP = "VOICE_GROUP",
   FEED = "FEED",
+  THREAD = "THREAD",
   WORLD = "WORLD",
   API = "API",
   FORUM = "FORUM",
@@ -1038,7 +1045,8 @@ export interface IAgentRuntime {
 
   composeState(
     message: Memory,
-    additionalKeys?: { [key: string]: unknown }
+    additionalKeys?: { [key: string]: unknown },
+    providerList?: string[]
   ): Promise<State>;
 
   useModel<T = any>(modelType: ModelType | string, params: T): Promise<any>;

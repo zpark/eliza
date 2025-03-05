@@ -1,6 +1,6 @@
 import { composePrompt } from "../prompts";
 import { logger } from "../logger";
-import { parseJSONObjectFromText } from "../parsing";
+import { parseJSONObjectFromText } from "../prompts";
 import { getUserServerRole } from "../roles";
 import {
   type Action,

@@ -1,4 +1,4 @@
-import { messageCompletionFooter, shouldRespondFooter } from "@elizaos/core";
+import { messageCompletionFooter, postCompletionFooter, shouldRespondFooter } from "@elizaos/core";
 
 export const twitterShouldRespondTemplate =
     `# Task: Decide if {{agentName}} should respond.
@@ -68,41 +68,11 @@ If {{agentName}} is conversing with a user and they have not asked to stop, it i
 # INSTRUCTIONS: Choose the option that best describes {{agentName}}'s response to the last message.
 ${shouldRespondFooter}`;
 
-export const twitterVoiceHandlerTemplate =
-    `# Task: Generate conversational voice dialog for {{agentName}}.
-    About {{agentName}}:
-    {{bio}}
-
-    # Attachments
-    {{attachments}}
-
-    {{actions}}
-
-    {{messageDirections}}
-
-    {{recentMessages}}
-
-    # Instructions: Write the next message for {{agentName}}. Include an optional action if appropriate. {{actionNames}}
-    ${messageCompletionFooter}`;
+export const twitterVoiceHandlerTemplate = `# Task: Generate conversational voice dialog for {{agentName}}.
+{{providers}}
+${messageCompletionFooter}`;
 
 
 export const twitterPostTemplate = `# Task: Create a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
-    {{system}}
-    
-    # Areas of Expertise
-    {{knowledge}}
-    
-    # About {{agentName}} (@{{twitterUserName}}):
-    {{bio}}
-    {{topics}}
-    
-    {{providers}}
-    
-    {{characterPostExamples}}
-    
-    {{postDirections}}
-    
-    Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-    Your response should be 1, 2, or 3 sentences (choose the length at random).
-    Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 280. No emojis. Use \\n\\n (double spaces) between statements if there are multiple statements in your response.`;
-    
+{{providers}}
+${postCompletionFooter}`;

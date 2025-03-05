@@ -19,50 +19,16 @@ import { buildConversationThread, sendTweet, wait } from "./utils.ts";
 
 export const twitterMessageHandlerTemplate =
     `# Task: Generate dialog and actions for {{agentName}}.
-{{system}}
-
-# Areas of Expertise
-{{knowledge}}
-
-# About {{agentName}} (@{{twitterUserName}}):
-{{bio}}
-
-{{topics}}
-
 {{providers}}
-
-{{characterPostExamples}}
-
-Recent interactions between {{agentName}} and other users:
-{{recentPostInteractions}}
-{{recentPosts}}
-
-(Above posts are recent posts between {{agentName}} and other users. Our goal is to create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional prompt)
-
-{{postDirections}}
-
-Current Post:
-{{currentPost}}
-
-Thread of Tweets You Are Replying To:
-{{formattedConversation}}
-{{imageDescriptions}}
-
-# INSTRUCTIONS: Create a post in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}). You MUST include an action if the current post text includes a prompt that is similar to one of the available actions mentioned here:
-{{actionNames}}
-{{actions}}
-
 Here is the current post text again. Remember to include an action if the current post text includes a prompt that asks for one of the available actions mentioned above (does not need to be exact)
 {{currentPost}}
 {{imageDescriptions}}
 ${messageCompletionFooter}`;
 
-export const twitterShouldRespondTemplate = (targetUsersStr: string) =>
+export const twitterShouldRespondTemplate =
     `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
 
 Response options are RESPOND, IGNORE and STOP.
-
-PRIORITY RULE: ALWAYS RESPOND to these users regardless of topic or message content: ${targetUsersStr}. Topic relevance should be ignored for these users.
 
 For other users:
 - {{agentName}} should RESPOND to messages directed at them
@@ -134,94 +100,6 @@ export class TwitterInteractionClient {
                 mentionCandidates.length
             );
             let uniqueTweetCandidates = [...mentionCandidates];
-            // Only process target users if configured
-            if ((this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).length) {
-                const TARGET_USERS =
-                    this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[];
-
-                logger.log("Processing target users:", TARGET_USERS);
-
-                if (TARGET_USERS.length > 0) {
-                    // Create a map to store tweets by user
-                    const tweetsByUser = new Map<string, Tweet[]>();
-
-                    // Fetch tweets from all target users
-                    for (const username of TARGET_USERS) {
-                        try {
-                            const userTweets = (
-                                await this.client.fetchSearchTweets(
-                                    `from:${username}`,
-                                    3,
-                                    SearchMode.Latest
-                                )
-                            ).tweets;
-
-                            // Filter for unprocessed, non-reply, recent tweets
-                            const validTweets = userTweets.filter((tweet) => {
-                                const isUnprocessed =
-                                    !this.client.lastCheckedTweetId ||
-                                    Number.parseInt(tweet.id as string) >
-                                        this.client.lastCheckedTweetId;
-                                const isRecent =
-                                    Date.now() - (tweet.timestamp ?? 0) * 1000 <
-                                    2 * 60 * 60 * 1000;
-
-                                logger.log(`Tweet ${tweet.id} checks:`, {
-                                    isUnprocessed,
-                                    isRecent,
-                                    isReply: tweet.isReply,
-                                    isRetweet: tweet.isRetweet,
-                                });
-
-                                return (
-                                    isUnprocessed &&
-                                    !tweet.isReply &&
-                                    !tweet.isRetweet &&
-                                    isRecent
-                                );
-                            });
-
-                            if (validTweets.length > 0) {
-                                tweetsByUser.set(username, validTweets);
-                                logger.log(
-                                    `Found ${validTweets.length} valid tweets from ${username}`
-                                );
-                            }
-                        } catch (error) {
-                            logger.error(
-                                `Error fetching tweets for ${username}:`,
-                                error
-                            );
-                        }
-                    }
-
-                    // Select one tweet from each user that has tweets
-                    const selectedTweets: Tweet[] = [];
-                    for (const [username, tweets] of tweetsByUser) {
-                        if (tweets.length > 0) {
-                            // Randomly select one tweet from this user
-                            const randomTweet =
-                                tweets[
-                                    Math.floor(Math.random() * tweets.length)
-                                ];
-                            selectedTweets.push(randomTweet);
-                            logger.log(
-                                `Selected tweet from ${username}: ${randomTweet.text?.substring(0, 100)}`
-                            );
-                        }
-                    }
-
-                    // Add selected tweets to candidates
-                    uniqueTweetCandidates = [
-                        ...mentionCandidates,
-                        ...selectedTweets,
-                    ];
-                }
-            } else {
-                logger.log(
-                    "No target users configured, processing only mentions"
-                );
-            }
 
             // Sort tweet candidates by ID in ascending order
             uniqueTweetCandidates = uniqueTweetCandidates
@@ -315,12 +193,6 @@ export class TwitterInteractionClient {
         message: Memory;
         thread: Tweet[];
     }) {
-        // Only skip if tweet is from self AND not from a target user
-        if (tweet.userId === this.client.profile.id &&
-            !(this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS") as unknown as string[]).includes(tweet.username)) {
-            return;
-        }
-
         if (!message.content.text) {
             logger.log("Skipping Tweet with no text", tweet.id);
             return { text: "", action: "IGNORE" };
@@ -407,21 +279,13 @@ export class TwitterInteractionClient {
             this.client.saveRequestMessage(message, state);
         }
 
-        // get usernames into str
-        const targetUsers = this.state?.TWITTER_TARGET_USERS || this.runtime.getSetting("TWITTER_TARGET_USERS");
-        const validTargetUsersStr = Array.isArray(targetUsers)
-            ? targetUsers.join(",")
-            : typeof targetUsers === 'string'
-                ? targetUsers
-                : "";
-
         const shouldRespondPrompt = composePrompt({
             state,
             template:
                 this.runtime.character.templates
                     ?.twitterShouldRespondTemplate ||
                 this.runtime.character?.templates?.shouldRespondTemplate ||
-                twitterShouldRespondTemplate(validTargetUsersStr),
+                twitterShouldRespondTemplate,
         });
 
         const shouldRespond = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
@@ -505,9 +369,7 @@ export class TwitterInteractionClient {
                             createdAt: Date.now(),
                         }];
 
-                    state = (await this.runtime.updateRecentMessageState(
-                        state
-                    )) as State;
+                    state = await this.runtime.composeState(message, {}, ["recentMemories"]);
 
                     for (const responseMessage of responseMessages) {
                         await this.runtime.messageManager.createMemory(
