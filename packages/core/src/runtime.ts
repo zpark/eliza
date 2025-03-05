@@ -983,8 +983,25 @@ export class AgentRuntime implements IAgentRuntime {
     if (!model) {
       throw new Error(`No handler found for delegate type: ${modelKey}`);
     }
+    logger.debug(`Using model: ${modelKey} with params: ${JSON.stringify(params)}`);
 
+    // Call the model
     const response = await model(this, params);
+
+    logger.debug(`Model ${modelKey} returned: ${JSON.stringify(response)}`);
+
+    await this.databaseAdapter.log({
+      entityId: this.agentId,
+      roomId: this.agentId,
+      body: {
+        modelType,
+        modelKey,
+        params,
+        response
+      },
+      type: "useModel:" + modelType,
+    });
+    
     return response;
   }
 
