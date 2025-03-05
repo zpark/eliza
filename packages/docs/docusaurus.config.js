@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Import the EventEmitter polyfill
+require('./src/polyfills/eventEmitter.js');
+
 const config = {
     title: "eliza",
     tagline: "Flexible, scalable AI agents for everyone",
@@ -15,7 +18,16 @@ const config = {
     trailingSlash: true,
     onBrokenLinks: "ignore",
     onBrokenMarkdownLinks: "warn",
-
+    customFields: {
+        // This is a workaround for the EventEmitter issue in the docs build
+        EventEmitter: class EventEmitter {
+            constructor() {}
+            on() {}
+            once() {}
+            emit() {}
+            removeListener() {}
+        }
+    },
     i18n: {
         defaultLocale: "en",
         locales: ["en"],
@@ -24,6 +36,9 @@ const config = {
         mermaid: true,
     },
     themes: ["@docusaurus/theme-mermaid"],
+    clientModules: [
+        require.resolve('./src/polyfills/eventEmitter.js'),
+    ],
     plugins: [
         [
             "@docusaurus/plugin-content-docs",
@@ -89,15 +104,11 @@ const config = {
                 readme: "none",
                 commentStyle: "all",
                 preserveAnchorCasing: false,
-                hideBreadcrumbs: false,
-                publicPath: "/api/",
-                treatWarningsAsErrors: false,
-                treatValidationWarningsAsErrors: false,
-                searchInComments: true,
-                navigationLinks: {
-                    GitHub: "https://github.com/elizaos/eliza",
-                    Documentation: "/docs/intro",
-                },
+                externalSymbolLinkMappings: {
+                    'node:events': {
+                        'EventEmitter': 'https://nodejs.org/api/events.html#class-eventemitter'
+                    }
+                }
             },
         ],
         require.resolve("docusaurus-lunr-search"),
