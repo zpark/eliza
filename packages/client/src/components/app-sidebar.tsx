@@ -14,7 +14,7 @@ import {
 import { useAgents } from "@/hooks/use-query-hooks";
 import info from "@/lib/info.json";
 import type { Agent } from "@elizaos/core";
-import { Book, Cog, User } from "lucide-react";
+import { Book, Cog, User, Scroll } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 import ConnectionStatus from "./connection-status";
   
@@ -151,6 +151,14 @@ export function AppSidebar() {
               <SidebarMenuButton className="text-muted-foreground rounded-md">
                 <Book className="size-5" /> 
                 <span>Documentation</span>
+              </SidebarMenuButton>
+            </NavLink>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <NavLink to="/logs">
+              <SidebarMenuButton className="text-muted-foreground rounded-md">
+                <Scroll className="size-5" /> 
+                <span>Logs</span>
               </SidebarMenuButton>
             </NavLink>
           </SidebarMenuItem>
