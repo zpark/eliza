@@ -2,7 +2,7 @@ import {
     type Action,
     type ActionExample,
     type Client,
-    composeContext,
+    composePrompt,
     type HandlerCallback,
     type IAgentRuntime,
     logger,
@@ -197,13 +197,13 @@ export const executeSwap: Action = {
             const walletData = await solanaClient.getCachedData();
             state.walletInfo = walletData;
 
-            const swapContext = composeContext({
+            const swapPrompt = composePrompt({
                 state,
                 template: swapTemplate,
             });
 
             const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                context: swapContext,
+                prompt: swapPrompt,
             });
 
             const response = parseJSONObjectFromText(result);

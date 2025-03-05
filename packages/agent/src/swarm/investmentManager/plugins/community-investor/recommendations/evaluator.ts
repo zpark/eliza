@@ -1,5 +1,5 @@
 import {
-    composeContext,
+    composePrompt,
     type Evaluator,
     type IAgentRuntime,
     type Memory,
@@ -18,7 +18,6 @@ import {
     parseConfirmationResponse,
     parseRecommendationsResponse,
     parseSignalResponse,
-    render,
 } from "../utils.js";
 import { examples } from "./examples.js";
 import { recommendationSchema } from "./schema.js";
@@ -403,13 +402,13 @@ async function handler(
 
     console.log("message", message.content.text);
 
-    const sentimentContext = composeContext({
+    const sentimentPrompt = composePrompt({
         template: sentimentTemplate,
         state: { message: message.content.text } as unknown as State,
     });
 
     const sentimentText = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-        context: sentimentContext,
+        prompt: sentimentPrompt,
     });
 
     const signal = extractXMLFromResponse(sentimentText, "signal");
@@ -472,7 +471,7 @@ async function handler(
 
     console.log("message", message);
 
-    const context = composeContext({
+    const prompt = composePrompt({
         state: {
             schema: JSON.stringify(getZodJsonSchema(recommendationSchema)),
             message: JSON.stringify({
@@ -491,7 +490,7 @@ async function handler(
     // Only function slowing us down: generateText
     const [text, participants] = await Promise.all([
         runtime.useModel(ModelTypes.TEXT_LARGE, {
-            context: context,
+            prompt,
             stopSequences: [],
         }),
         runtime.databaseAdapter.getParticipantsForRoom(message.roomId),
@@ -585,7 +584,7 @@ async function handler(
 
         if (TELEGRAM_CHANNEL_ID) {
             (async () => {
-                const context = composeContext({
+                const prompt = composePrompt({
                     state: {
                         recommendation: JSON.stringify(recommendation),
                         recipientAgentName: "scarletAgent",
@@ -594,7 +593,7 @@ async function handler(
                 });
 
                 const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-                    context: context,
+                    prompt,
                 });
 
                 const extractedXML = extractXMLFromResponse(text, "message");
@@ -696,17 +695,20 @@ async function handler(
                     );
                     return;
                 }
-                const context = render(recommendationConfirmTemplate, {
-                    agentName: state.agentName!,
-                    msg: message.content.text,
-                    recommendation: JSON.stringify(recommendation),
-                    token: tokenString,
+                const prompt = composePrompt({
+                    state: {
+                        agentName: state.agentName!,
+                        msg: message.content.text,
+                        recommendation: JSON.stringify(recommendation),
+                        token: tokenString,
+                    } as unknown as State,
+                    template: recommendationConfirmTemplate,
                 });
 
-                console.log("context", context);
+                console.log("prompt", prompt);
 
                 const res = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                    context: context,
+                    prompt,
                 });
 
                 const agentResponseMsg = extractXMLFromResponse(res, "message");

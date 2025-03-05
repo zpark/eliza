@@ -6,14 +6,13 @@ import {
   type IAgentRuntime,
   type Memory,
   ModelTypes,
-  RoleName,
   type State,
-  composeContext,
-  createUniqueUuid,
+  composePrompt,
   getUserServerRole,
   getWorldSettings,
   logger
 } from "@elizaos/core";
+import { TwitterService } from "@elizaos/plugin-twitter";
 
 const tweetGenerationTemplate = `# Task: Create a post in the style and voice of {{agentName}}.
 {{system}}
@@ -89,12 +88,12 @@ async function ensureTwitterClient(
   serverId: string,
   worldSettings: { [key: string]: string | boolean | number | null }
 ) {
-  const manager = runtime.getService(ServiceTypes.TWITTER);
+  const manager = runtime.getService("twitter") as TwitterService;
   if (!manager) {
     throw new Error("Twitter client manager not found");
   }
 
-  let client = manager.getService(serverId, runtime.agentId);
+  let client = manager.getClient(serverId, runtime.agentId);
 
   if (!client) {
     logger.info("Creating new Twitter client for server", serverId);
@@ -185,13 +184,13 @@ const twitterPostAction: Action = {
       }
 
       // Generate tweet content
-      const context = composeContext({
+      const prompt = composePrompt({
         state,
         template: tweetGenerationTemplate,
       });
 
       const tweetContent = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-        context,
+        prompt,
       });
 
       // Clean up the generated content

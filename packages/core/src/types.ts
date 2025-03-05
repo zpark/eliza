@@ -54,23 +54,6 @@ export interface ConversationExample {
 }
 
 /**
- * Represents an actor/participant in a conversation
- */
-export interface Actor {
-  /** Unique identifier */
-  id: UUID;
-
-  /** Display name */
-  name: string;
-
-  /** All names for the actor */
-  names: string[];
-
-  /** Arbitrary data which can be displayed */
-  data: any;
-}
-
-/**
  * Represents a single objective within a goal
  */
 export interface Objective {
@@ -158,85 +141,9 @@ export const ServiceTypes = {
  * Represents the current state/context of a conversation
  */
 export interface State {
-  /** ID of user who sent current message */
-  userId?: UUID;
-
-  /** ID of agent in conversation */
-  agentId?: UUID;
-
-  /** System prompt */
-  system?: string;
-
-  /** Agent's biography */
-  bio: string;
-
-  /** Message handling directions */
-  messageDirections: string;
-
-  /** Post handling directions */
-  postDirections: string;
-
-  /** Current room/conversation ID */
-  roomId: UUID;
-
-  /** Optional agent name */
-  agentName?: string;
-
-  /** Optional message sender name */
-  senderName?: string;
-
-  /** String representation of conversation actors */
-  actors: string;
-
-  /** Optional array of actor objects */
-  actorsData?: Actor[];
-
-  /** Optional string representation of goals */
-  goals?: string;
-
-  /** Optional array of goal objects */
-  goalsData?: Goal[];
-
-  /** Recent message history as string */
-  recentMessages: string;
-
-  /** Recent message objects */
-  recentMessagesData: Memory[];
-
-  /** Optional valid action names */
-  actionNames?: string;
-
-  /** Optional action descriptions */
-  actions?: string;
-
-  /** Optional action objects */
-  actionsData?: Action[];
-
-  /** Optional action examples */
-  actionExamples?: string;
-
-  /** Optional provider descriptions */
-  providers?: string;
-
-  /** Optional response content */
-  responseData?: Content;
-
-  /** Optional recent interaction objects */
-  recentInteractionsData?: Memory[];
-
-  /** Optional recent interactions string */
-  recentInteractions?: string;
-
-  /** Optional formatted conversation */
-  formattedConversation?: string;
-
-  /** Optional formatted knowledge */
-  knowledge?: string;
-  /** Optional knowledge data */
-  knowledgeData?: KnowledgeItem[];
-
   /** Additional dynamic properties */
   [key: string]: unknown;
+  providers?: string;
 }
 
 export type MemoryTypeAlias = string
@@ -391,7 +298,7 @@ export interface Action {
  */
 export interface EvaluationExample {
   /** Evaluation context */
-  context: string;
+  prompt: string;
 
   /** Example messages */
   messages: Array<ActionExample>;
@@ -426,14 +333,24 @@ export interface Evaluator {
   validate: Validator;
 }
 
+export interface ProviderResult {
+  values?: any;
+  data?: any;
+  text?: string;
+}
+
 /**
  * Provider for external data/services
  */
 export interface Provider {
   /** Provider name */
   name: string;
+  
+  /** Description of the provider */
+  description?: string;
+
   /** Data retrieval function */
-  get: (runtime: IAgentRuntime, message: Memory, state?: State) => Promise<any>;
+  get: (runtime: IAgentRuntime, message: Memory) => Promise<ProviderResult>;
 }
 
 /**
@@ -1024,6 +941,13 @@ export interface IAgentRuntime {
 
   initialize(): Promise<void>;
 
+  getKnowledge(message: Memory): Promise<KnowledgeItem[]>;
+  addKnowledge(item: KnowledgeItem, options: {
+    targetTokens: number,
+    overlap: number,
+    modelContextSize: number
+}): Promise<void>;
+
   registerMemoryManager(manager: IMemoryManager): void;
 
   getMemoryManager(tableName: string): IMemoryManager | null;
@@ -1117,8 +1041,6 @@ export interface IAgentRuntime {
     additionalKeys?: { [key: string]: unknown }
   ): Promise<State>;
 
-  updateRecentMessageState(state: State): Promise<State>;
-
   useModel<T = any>(modelType: ModelType | string, params: T): Promise<any>;
   registerModel(
     modelType: ModelType | string,
@@ -1173,7 +1095,7 @@ export interface ChunkRow {
 
 export type GenerateTextParams = {
   runtime: IAgentRuntime;
-  context: string;
+  prompt: string;
   modelType: ModelType;
   maxTokens?: number;
   temperature?: number;
@@ -1183,7 +1105,7 @@ export type GenerateTextParams = {
 };
 
 export interface TokenizeTextParams {
-  context: string;
+  prompt: string;
   modelType: ModelType;
 }
 

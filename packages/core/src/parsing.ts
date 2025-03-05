@@ -361,26 +361,26 @@ export async function splitChunks(
 }
 
 /**
- * Trims the provided text context to a specified token limit using a tokenizer model and type.
+ * Trims the provided text prompt to a specified token limit using a tokenizer model and type.
  */
 export async function trimTokens(
-    context: string,
+    prompt: string,
     maxTokens: number,
     runtime: IAgentRuntime
   ) {
-    if (!context) throw new Error("Trim tokens received a null context");
+    if (!prompt) throw new Error("Trim tokens received a null prompt");
     
-    // if context is less than of maxtokens / 5, skip
-    if (context.length < (maxTokens / 5)) return context;
+    // if prompt is less than of maxtokens / 5, skip
+    if (prompt.length < (maxTokens / 5)) return prompt;
   
     if (maxTokens <= 0) throw new Error("maxTokens must be positive");
   
     try {
-        const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, { context });
+        const tokens = await runtime.useModel(ModelTypes.TEXT_TOKENIZER_ENCODE, { prompt });
   
         // If already within limits, return unchanged
         if (tokens.length <= maxTokens) {
-            return context;
+            return prompt;
         }
   
         // Keep the most recent tokens by slicing from the end
@@ -391,6 +391,6 @@ export async function trimTokens(
     } catch (error) {
         logger.error("Error in trimTokens:", error);
         // Return truncated string if tokenization fails
-        return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
+        return prompt.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
   }

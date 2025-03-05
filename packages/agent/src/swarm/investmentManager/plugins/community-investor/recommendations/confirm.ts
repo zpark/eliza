@@ -138,7 +138,7 @@ export const confirmRecommendation: Action = {
             JSON.stringify(newUserRecommendations)
         );
 
-        //     const context = composeContext({
+        //     const prompt = composePrompt({
         //         state: {
         //             ...state,
         //             recommendations: formatRecommendations(newUserRecommendations),
@@ -149,7 +149,7 @@ export const confirmRecommendation: Action = {
 
         //     const text = await generateText({
         //         runtime,
-        //         context: context,
+        //         prompt,
         //         modelType: ModelTypes.TEXT_SMALL,
         //         stop: [],
         //     });

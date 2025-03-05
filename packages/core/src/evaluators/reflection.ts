@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { composeContext } from "../context";
+import { getEntityDetails, resolveEntityId } from "../entities";
+import logger from "../logger";
 import { MemoryManager } from "../memory";
+import { composePrompt } from "../prompts";
 import {
   type Evaluator,
   type IAgentRuntime,
@@ -8,8 +10,6 @@ import {
   ModelTypes,
   type UUID,
 } from "../types";
-import { getActorDetails, resolveActorId } from "../messages";
-import logger from "../logger";
 
 // Schema definitions for the reflection output
 const relationshipSchema = z.object({
@@ -88,15 +88,15 @@ Generate a response in the following format:
 
 const generateObject = async ({
   runtime,
-  context,
+  prompt,
   modelType = ModelTypes.TEXT_LARGE,
   stopSequences = [],
   output = "object",
   enumValues = [],
   schema,
 }): Promise<any> => {
-  if (!context) {
-    const errorMessage = "generateObject context is empty";
+  if (!prompt) {
+    const errorMessage = "generateObject prompt is empty";
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -105,7 +105,7 @@ const generateObject = async ({
   if (output === "enum" && enumValues) {
     const response = await runtime.useModel(modelType, {
       runtime,
-      context,
+      prompt,
       modelType,
       stopSequences,
       maxTokens: 8,
@@ -137,7 +137,7 @@ const generateObject = async ({
   // Regular object/array generation
   const response = await runtime.useModel(modelType, {
     runtime,
-    context,
+    prompt,
     modelType,
     stopSequences,
     object: true,
@@ -188,7 +188,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
   });
 
   // Get actors in the room for name resolution
-  const actors = await getActorDetails({ runtime, roomId });
+  const actors = await getEntityDetails({ runtime, roomId });
 
   const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(
     roomId
@@ -207,7 +207,7 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     unique: true,
   });
 
-  const context = composeContext({
+  const prompt = composePrompt({
     state: {
       ...state,
       knownFacts: formatFacts(knownFacts),
@@ -222,13 +222,13 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
 
   const reflection = await generateObject({
     runtime,
-    context,
+    prompt,
     modelType: ModelTypes.TEXT_LARGE,
     schema: reflectionSchema,
   });
   if (!reflection) {
     // seems like we're failing JSON parsing
-    logger.warn('generateObject failed', context);
+    logger.warn('generateObject failed', prompt);
     return;
   }
 
@@ -258,8 +258,8 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
     let targetId: UUID;
 
     try {
-      sourceId = resolveActorId(relationship.sourceEntityId, actors);
-      targetId = resolveActorId(relationship.targetEntityId, actors);
+      sourceId = resolveEntityId(relationship.sourceEntityId, actors);
+      targetId = resolveEntityId(relationship.targetEntityId, actors);
     } catch (error) {
       console.warn("Failed to resolve relationship entities:", error);
       console.warn("relationship:\n", relationship);
@@ -347,7 +347,7 @@ export const reflectionEvaluator: Evaluator = {
   handler,
   examples: [
     {
-      context: `Agent Name: Sarah
+      prompt: `Agent Name: Sarah
 Agent Role: Community Manager
 Room Type: group
 Current Room: general-chat

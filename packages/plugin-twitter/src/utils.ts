@@ -1,5 +1,5 @@
-import type { Media, State } from "@elizaos/core";
-import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelTypes, type UUID, composeContext, createUniqueUuid, logger } from "@elizaos/core";
+import type { Media, ModelType, State } from "@elizaos/core";
+import { ChannelType, type Content, type IAgentRuntime, type Memory, ModelTypes, type UUID, composePrompt, createUniqueUuid, logger } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
 import type { ClientBase } from "./base";
@@ -484,18 +484,18 @@ export const parseActionResponseFromText = (
 
 export async function generateTweetActions({
     runtime,
-    context,
+    prompt,
     modelType,
 }: {
     runtime: IAgentRuntime;
-    context: string;
+    prompt: string;
     modelType: ModelType;
 }): Promise<ActionResponse | null> {
     let retryDelay = 1000;
     while (true) {
         try {
             const response = await runtime.useModel(modelType, {
-                context,
+                prompt,
             });
             logger.debug(
                 "Received response from generateText for tweet actions:",
@@ -534,7 +534,7 @@ export async function generateFiller(
     fillerType: string
 ): Promise<string> {
     try {
-        const context = composeContext({
+        const prompt = composePrompt({
             state: { fillerType } as any as State,
             template: `
 # INSTRUCTIONS:
@@ -546,7 +546,7 @@ Only return the text, no additional formatting.
 `,
         });
         const output = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
         return output.trim();
     } catch (err) {
@@ -583,7 +583,7 @@ export async function generateTopicsIfEmpty(
     runtime: IAgentRuntime
 ): Promise<string[]> {
     try {
-        const context = composeContext({
+        const prompt = composePrompt({
             state: {} as any,
             template: `
 # INSTRUCTIONS:
@@ -596,7 +596,7 @@ Example:
 `,
         });
         const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
         const topics = response
             .split(",")

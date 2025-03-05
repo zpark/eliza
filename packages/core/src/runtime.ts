@@ -1,30 +1,18 @@
 import { join } from "node:path";
-import { names, uniqueNamesGenerator } from "unique-names-generator";
 import { v4 as uuidv4 } from "uuid";
-import {
-  composeActionExamples,
-  formatActionNames,
-  formatActions,
-} from "./actions.ts";
 import { bootstrapPlugin } from "./bootstrap.ts";
-import { addHeader, composeContext } from "./context.ts";
 import { settings } from "./environment.ts";
 import {
   evaluationTemplate,
-  formatEvaluatorExamples,
   formatEvaluatorNames,
-  formatEvaluators,
+  formatEvaluators
 } from "./evaluators.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
-import knowledge from "./knowledge.ts";
 import { MemoryManager } from "./memory.ts";
-import { formatActors, formatMessages, getActorDetails } from "./messages.ts";
-import { parseJsonArrayFromText } from "./parsing.ts";
-import { formatPosts } from "./posts.ts";
-import { getProviders } from "./providers.ts";
+import { parseJsonArrayFromText, splitChunks } from "./parsing.ts";
+import { addHeader, composePrompt } from "./prompts.ts";
 import {
   type Action,
-  type Actor,
   type Agent,
   ChannelType,
   type Character,
@@ -35,6 +23,7 @@ import {
   type IMemoryManager,
   type KnowledgeItem,
   type Memory,
+  MemoryType,
   type ModelType,
   ModelTypes,
   type Plugin,
@@ -46,69 +35,9 @@ import {
   type State,
   type TaskWorker,
   type UUID,
-  type WorldData,
+  type WorldData
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
-
-function formatKnowledge(knowledge: KnowledgeItem[]): string {
-  return knowledge.map((knowledge) => `- ${knowledge.content.text}`).join("\n");
-}
-
-/**
- * Manages knowledge-related operations for the agent runtime
- */
-class KnowledgeManager {
-  private runtime: AgentRuntime;
-
-  constructor(runtime: AgentRuntime, _knowledgeRoot: string) {
-    this.runtime = runtime;
-  }
-
-  private async handleProcessingError(error: any, context: string) {
-    logger.error(
-      `Error ${context}:`,
-      error?.message || error || "Unknown error"
-    );
-    throw error;
-  }
-
-  private async checkExistingKnowledge(knowledgeId: UUID): Promise<boolean> {
-    const existingDocument = await this.runtime.documentsManager.getMemoryById(
-      knowledgeId
-    );
-    return !!existingDocument;
-  }
-
-  async processCharacterKnowledge(items: string[]) {
-    for (const item of items) {
-      try {
-        const knowledgeId = createUniqueUuid(this.runtime, item);
-        if (await this.checkExistingKnowledge(knowledgeId)) {
-          continue;
-        }
-
-        logger.info(
-          "Processing knowledge for ",
-          this.runtime.character.name,
-          " - ",
-          item.slice(0, 100)
-        );
-
-        await knowledge.set(this.runtime, {
-          id: knowledgeId,
-          content: {
-            text: item,
-          },
-        });
-      } catch (error) {
-        await this.handleProcessingError(
-          error,
-          "processing character knowledge"
-        );
-      }
-    }
-  }
-}
 
 /**
  * Manages memory-related operations and memory managers
@@ -490,9 +419,151 @@ export class AgentRuntime implements IAgentRuntime {
     }
   }
 
-  private async processCharacterKnowledge(items: string[]) {
-    const knowledgeManager = new KnowledgeManager(this, this.knowledgeRoot);
-    await knowledgeManager.processCharacterKnowledge(items);
+  private async handleProcessingError(error: any, context: string) {
+    logger.error(
+      `Error ${context}:`,
+      error?.message || error || "Unknown error"
+    );
+    throw error;
+  }
+
+  private async checkExistingKnowledge(knowledgeId: UUID): Promise<boolean> {
+    const existingDocument = await this.documentsManager.getMemoryById(
+      knowledgeId
+    );
+    return !!existingDocument;
+  }
+
+
+  async getKnowledge(
+    message: Memory
+): Promise<KnowledgeItem[]> {
+    // Add validation for message
+    if (!message?.content?.text) {
+        logger.warn("Invalid message for knowledge query:", {
+            message,
+            content: message?.content,
+            text: message?.content?.text,
+        });
+        return [];
+    }
+    
+    // Validate processed text
+    if (!message?.content?.text || message?.content?.text.trim().length === 0) {
+        logger.warn("Empty text for knowledge query");
+        return [];
+    }
+
+    const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, message?.content?.text);
+    const fragments = await this.knowledgeManager.searchMemories(
+        {
+            embedding,
+            roomId: message.agentId,
+            count: 5,
+            match_threshold: 0.1,
+        }
+    );
+
+    const uniqueSources = [
+        ...new Set(
+            fragments.map((memory) => {
+                logger.log(
+                    `Matched fragment: ${memory.content.text} with similarity: ${memory.similarity}`
+                );
+                return memory.content.source;
+            })
+        ),
+    ];
+
+    const knowledgeDocuments = await Promise.all(
+        uniqueSources.map((source) =>
+          this.documentsManager.getMemoryById(source as UUID)
+        )
+    );
+
+    return knowledgeDocuments
+        .filter((memory) => memory !== null)
+        .map((memory) => ({ id: memory.id, content: memory.content }));
+}
+
+async addKnowledge(
+    item: KnowledgeItem,
+    options = {
+        targetTokens: 3000,
+        overlap: 200,
+        modelContextSize: 4096
+    }
+) {
+    // First store the document
+    const documentMemory: Memory = {
+        id: item.id,
+        agentId: this.agentId,
+        roomId: this.agentId,
+        userId: this.agentId,
+        content: item.content,
+        metadata: {
+            type: MemoryType.DOCUMENT,
+            timestamp: Date.now()
+        }
+    };
+    
+    await this.documentsManager.createMemory(documentMemory);
+
+    // Create fragments using splitChunks
+    const fragments = await splitChunks(
+        item.content.text,
+        options.targetTokens,
+        options.overlap
+    );
+    
+    // Store each fragment with link to source document
+    for (let i = 0; i < fragments.length; i++) {
+        const fragmentMemory: Memory = {
+            id: createUniqueUuid(this, `${item.id}-fragment-${i}`),
+            agentId: this.agentId,
+            roomId: this.agentId,
+            userId: this.agentId,
+            content: { text: fragments[i] },
+            metadata: {
+                type: MemoryType.FRAGMENT,
+                documentId: item.id,  // Link to source document
+                position: i,          // Keep track of order
+                timestamp: Date.now()
+            }
+        };
+        
+        await this.knowledgeManager.createMemory(fragmentMemory);
+    }
+  }
+
+  async processCharacterKnowledge(items: string[]) {
+    for (const item of items) {
+      try {
+        const knowledgeId = createUniqueUuid(this, item);
+        if (await this.checkExistingKnowledge(knowledgeId)) {
+          continue;
+        }
+
+        logger.info(
+          "Processing knowledge for ",
+          this.character.name,
+          " - ",
+          item.slice(0, 100)
+        );
+
+        await this.addKnowledge({
+          id: knowledgeId,
+          content: {
+            text: item,
+          },
+        });
+      } catch (error) {
+        await this.handleProcessingError(
+          error,
+          "processing character knowledge"
+        );
+      }
+    }
   }
 
   setSetting(
@@ -685,7 +756,7 @@ export class AgentRuntime implements IAgentRuntime {
       return [];
     }
 
-    const context = composeContext({
+    const prompt = composePrompt({
       state: {
         ...state,
         evaluators: formatEvaluators(evaluatorsData),
@@ -696,7 +767,7 @@ export class AgentRuntime implements IAgentRuntime {
     });
 
     const result = await this.useModel(ModelTypes.TEXT_SMALL, {
-      context,
+      prompt,
     });
 
     const evaluators = parseJsonArrayFromText(result) as unknown as string[];
@@ -900,428 +971,24 @@ export class AgentRuntime implements IAgentRuntime {
   async composeState(
     message: Memory,
     additionalKeys: { [key: string]: unknown } = {}
-  ) {
-    const { roomId } = message;
-
-    const conversationLength = this.getConversationLength();
-
-    const [actorsData, recentMessagesData] = await Promise.all([
-      getActorDetails({ runtime: this, roomId }),
-      this.messageManager.getMemories({
-        roomId,
-        count: conversationLength,
-        unique: false,
-      }),
-    ]);
-
-    const actors = formatActors({ actors: actorsData ?? [] });
-
-    const recentMessages = formatMessages({
-      messages: recentMessagesData,
-      actors: actorsData,
-    });
-
-    const recentPosts = formatPosts({
-      messages: recentMessagesData,
-      actors: actorsData,
-      conversationHeader: false,
-    });
-
-    const senderName = actorsData?.find(
-      (actor: Actor) => actor.id === message.userId
-    )?.name;
-
-    // TODO: We may wish to consolidate and just accept character.name here instead of the actor name
-    const agentName =
-      actorsData?.find((actor: Actor) => actor.id === this.agentId)?.name ||
-      this.character.name;
-
-    let allAttachments = message.content.attachments || [];
-
-    if (recentMessagesData && Array.isArray(recentMessagesData)) {
-      const lastMessageWithAttachment = recentMessagesData.find(
-        (msg) => msg.content.attachments && msg.content.attachments.length > 0
-      );
-
-      if (lastMessageWithAttachment) {
-        const lastMessageTime =
-          lastMessageWithAttachment?.createdAt ?? Date.now();
-        const oneHourBeforeLastMessage = lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
-
-        allAttachments = recentMessagesData.reverse().flatMap((msg) => {
-          const msgTime = msg.createdAt ?? Date.now();
-          const isWithinTime = msgTime >= oneHourBeforeLastMessage;
-          const attachments = msg.content.attachments || [];
-          if (!isWithinTime) {
-            for (const attachment of attachments) {
-              attachment.text = "[Hidden]";
-            }
-          }
-          return attachments;
-        });
-      }
-    }
-
-    const formattedAttachments = allAttachments
-      .map(
-        (attachment) =>
-          `ID: ${attachment.id}
-    Name: ${attachment.title}
-    URL: ${attachment.url}
-    Type: ${attachment.source}
-    Description: ${attachment.description}
-    Text: ${attachment.text}
-    `
-      )
-      .join("\n");
-
-    const formattedCharacterPostExamples = !this.character.postExamples
-      ? ""
-      : this.character.postExamples
-          .sort(() => 0.5 - Math.random())
-          .map((post) => {
-            const messageString = `${post}`;
-            return messageString;
-          })
-          .slice(0, 50)
-          .join("\n");
-
-    const formattedCharacterMessageExamples = !this.character.messageExamples
-      ? ""
-      : this.character.messageExamples
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 5)
-          .map((example) => {
-            const exampleNames = Array.from({ length: 5 }, () =>
-              uniqueNamesGenerator({ dictionaries: [names] })
-            );
-
-            return example
-              .map((message) => {
-                let messageString = `${message.user}: ${message.content.text}${
-                  message.content.action
-                    ? ` (action: ${message.content.action})`
-                    : ""
-                }`;
-                exampleNames.forEach((name, index) => {
-                  const placeholder = `{{user${index + 1}}}`;
-                  messageString = messageString.replaceAll(placeholder, name);
-                });
-                return messageString;
-              })
-              .join("\n");
-          })
-          .join("\n\n");
-
-    const getRecentInteractions = async (
-      sourceEntityId: UUID,
-      targetEntityId: UUID
-    ): Promise<Memory[]> => {
-      // Find all rooms where sourceEntityId and targetEntityId are participants
-      const rooms = await this.databaseAdapter.getRoomsForParticipants([
-        sourceEntityId,
-        targetEntityId,
-      ]);
-
-      // Check the existing memories in the database
-      return this.messageManager.getMemoriesByRoomIds({
-        // filter out the current room id from rooms
-        roomIds: rooms.filter((room) => room !== roomId),
-        limit: 20,
-      });
-    };
-
-    const recentInteractions =
-      message.userId !== this.agentId
-        ? await getRecentInteractions(message.userId, this.agentId)
-        : [];
-
-    const getRecentMessageInteractions = async (
-      recentInteractionsData: Memory[]
-    ): Promise<string> => {
-      // Format the recent messages
-      const formattedInteractions = await Promise.all(
-        recentInteractionsData.map(async (message) => {
-          const isSelf = message.userId === this.agentId;
-          let sender: string;
-          if (isSelf) {
-            sender = this.character.name;
-          } else {
-            // Lookup by tenant-specific ID since that's what's stored in the memory
-            const accountId = await this.databaseAdapter.getEntityById(
-              message.userId
-            );
-            sender = accountId?.metadata?.username || "unknown";
-          }
-          return `${sender}: ${message.content.text}`;
-        })
-      );
-
-      return formattedInteractions.join("\n");
-    };
-
-    const formattedMessageInteractions = await getRecentMessageInteractions(
-      recentInteractions
+  ): Promise<State> {
+      const providerResults = (
+        await Promise.all(
+            this.providers.map(async (provider) => {
+                const start = Date.now();
+                const result = await provider.get(this, message);
+                const duration = Date.now() - start;
+                logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
+                return result;
+            })
+        )
     );
 
-    const getRecentPostInteractions = async (
-      recentInteractionsData: Memory[],
-      actors: Actor[]
-    ): Promise<string> => {
-      const formattedInteractions = formatPosts({
-        messages: recentInteractionsData,
-        actors,
-        conversationHeader: true,
-      });
+    const values = providerResults.map((result) => result.values).flat();
+    const providers = providerResults.map((result) => result.text).filter((text) => text !== "").join("\n\n");
+    const data = providerResults.map((result) => result.data).flat();
 
-      return formattedInteractions;
-    };
-
-    const formattedPostInteractions = await getRecentPostInteractions(
-      recentInteractions,
-      actorsData
-    );
-
-    // if bio is a string, use it. if its an array, pick one at random
-    let bio = this.character.bio || "";
-    if (Array.isArray(bio)) {
-      // get three random bio strings and join them with " "
-      bio = bio
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3)
-        .join(" ");
-    }
-
-    let knowledgeData = [];
-    let formattedKnowledge = "";
-
-    knowledgeData = await knowledge.get(this, message);
-
-    formattedKnowledge = formatKnowledge(knowledgeData);
-
-    const system = this.character.system ?? "";
-
-    const initialState = {
-      agentId: this.agentId,
-      agentName,
-      system,
-      bio,
-      adjective:
-        this.character.adjectives && this.character.adjectives.length > 0
-          ? this.character.adjectives[
-              Math.floor(Math.random() * this.character.adjectives.length)
-            ]
-          : "",
-      knowledge: addHeader("# Knowledge", formattedKnowledge),
-      knowledgeData: knowledgeData,
-      // Recent interactions between the sender and receiver, formatted as messages
-      recentMessageInteractions: formattedMessageInteractions,
-      // Recent interactions between the sender and receiver, formatted as posts
-      recentPostInteractions: formattedPostInteractions,
-      // Raw memory[] array of interactions
-      recentInteractionsData: recentInteractions,
-      // randomly pick one topic
-      topic:
-        this.character.topics && this.character.topics.length > 0
-          ? this.character.topics[
-              Math.floor(Math.random() * this.character.topics.length)
-            ]
-          : null,
-      topics:
-        this.character.topics && this.character.topics.length > 0
-          ? `${this.character.name} is interested in ${this.character.topics
-              .sort(() => 0.5 - Math.random())
-              .slice(0, 5)
-              .map((topic, index, array) => {
-                if (index === array.length - 2) {
-                  return `${topic} and `;
-                }
-                // if last topic, don't add a comma
-                if (index === array.length - 1) {
-                  return topic;
-                }
-                return `${topic}, `;
-              })
-              .join("")}`
-          : "",
-      characterPostExamples:
-        formattedCharacterPostExamples &&
-        formattedCharacterPostExamples.replaceAll("\n", "").length > 0
-          ? addHeader(
-              `# Example Posts for ${this.character.name}`,
-              formattedCharacterPostExamples
-            )
-          : "",
-      characterMessageExamples:
-        formattedCharacterMessageExamples &&
-        formattedCharacterMessageExamples.replaceAll("\n", "").length > 0
-          ? addHeader(
-              `# Example Conversations for ${this.character.name}`,
-              formattedCharacterMessageExamples
-            )
-          : "",
-      messageDirections:
-        this.character?.style?.all?.length > 0 ||
-        this.character?.style?.chat.length > 0
-          ? addHeader(
-              `# Message Directions for ${this.character.name}`,
-              (() => {
-                const all = this.character?.style?.all || [];
-                const chat = this.character?.style?.chat || [];
-                return [...all, ...chat].join("\n");
-              })()
-            )
-          : "",
-
-      postDirections:
-        this.character?.style?.all?.length > 0 ||
-        this.character?.style?.post?.length > 0
-          ? addHeader(
-              `# Post Directions for ${this.character.name}`,
-              (() => {
-                const all = this.character?.style?.all || [];
-                const post = this.character?.style?.post || [];
-                return [...all, ...post].join("\n");
-              })()
-            )
-          : "",
-
-      // Agent runtime stuff
-      senderName,
-      actors:
-        actors && actors.length > 0
-          ? addHeader("# Actors in the Room", actors)
-          : "",
-      actorsData,
-      roomId,
-      recentMessages:
-        recentMessages && recentMessages.length > 0
-          ? addHeader("# Conversation Messages", recentMessages)
-          : "",
-      recentPosts:
-        recentPosts && recentPosts.length > 0
-          ? addHeader("# Posts in Thread", recentPosts)
-          : "",
-      recentMessagesData,
-      attachments:
-        formattedAttachments && formattedAttachments.length > 0
-          ? addHeader("# Attachments", formattedAttachments)
-          : "",
-      ...additionalKeys,
-    } as State;
-
-    const actionPromises = this.actions.map(async (action: Action) => {
-      const result = await action.validate(this, message, initialState);
-      if (result) {
-        return action;
-      }
-      return null;
-    });
-
-    const evaluatorPromises = this.evaluators.map(async (evaluator) => {
-      const result = await evaluator.validate(this, message, initialState);
-      if (result) {
-        return evaluator;
-      }
-      return null;
-    });
-
-    const [resolvedEvaluators, resolvedActions, providers] = await Promise.all([
-      Promise.all(evaluatorPromises),
-      Promise.all(actionPromises),
-      getProviders(this, message, initialState),
-    ]);
-
-    const evaluatorsData = resolvedEvaluators.filter(Boolean) as Evaluator[];
-    const actionsData = resolvedActions.filter(Boolean) as Action[];
-
-    const actionState = {
-      actionNames: `Possible response actions: ${formatActionNames(
-        actionsData
-      )}`,
-      actions:
-        actionsData.length > 0
-          ? addHeader("# Available Actions", formatActions(actionsData))
-          : "",
-      actionExamples:
-        actionsData.length > 0
-          ? addHeader(
-              "# Action Examples",
-              composeActionExamples(actionsData, 10)
-            )
-          : "",
-      evaluatorsData,
-      evaluators:
-        evaluatorsData.length > 0 ? formatEvaluators(evaluatorsData) : "",
-      evaluatorNames:
-        evaluatorsData.length > 0 ? formatEvaluatorNames(evaluatorsData) : "",
-      evaluatorExamples:
-        evaluatorsData.length > 0
-          ? formatEvaluatorExamples(evaluatorsData)
-          : "",
-      providers,
-    };
-
-    return { ...initialState, ...actionState } as State;
-  }
-
-  async updateRecentMessageState(state: State): Promise<State> {
-    const conversationLength = this.getConversationLength();
-    const recentMessagesData = await this.messageManager.getMemories({
-      roomId: state.roomId,
-      count: conversationLength,
-      unique: false,
-    });
-
-    const recentMessages = formatMessages({
-      actors: state.actorsData ?? [],
-      messages: recentMessagesData.map((memory: Memory) => {
-        const newMemory = { ...memory };
-        newMemory.embedding = undefined;
-        return newMemory;
-      }),
-    });
-
-    let allAttachments = [];
-
-    if (recentMessagesData && Array.isArray(recentMessagesData)) {
-      const lastMessageWithAttachment = recentMessagesData.find(
-        (msg) => msg.content.attachments && msg.content.attachments.length > 0
-      );
-
-      if (lastMessageWithAttachment) {
-        const lastMessageTime =
-          lastMessageWithAttachment?.createdAt ?? Date.now();
-        const oneHourBeforeLastMessage = lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
-
-        allAttachments = recentMessagesData
-          .filter((msg) => {
-            const msgTime = msg.createdAt ?? Date.now();
-            return msgTime >= oneHourBeforeLastMessage;
-          })
-          .flatMap((msg) => msg.content.attachments || []);
-      }
-    }
-
-    const formattedAttachments = allAttachments
-      .map(
-        (attachment) =>
-          `ID: ${attachment.id}
-            Name: ${attachment.title}
-            URL: ${attachment.url}
-            Type: ${attachment.source}
-            Description: ${attachment.description}
-            Text: ${attachment.text}
-                `
-      )
-      .join("\n");
-
-    return {
-      ...state,
-      recentMessages: addHeader("# Conversation Messages", recentMessages),
-      recentMessagesData,
-      attachments: formattedAttachments,
-    } as State;
+    return { ...values, ...additionalKeys, providers, data };
   }
 
   // IAgentRuntime interface implementation

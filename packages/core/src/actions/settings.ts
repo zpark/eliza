@@ -1,5 +1,5 @@
 import type { z, ZodSchema } from "zod";
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { createUniqueUuid } from "../entities";
 import { logger } from "../logger";
 import { messageCompletionFooter, parseJSONObjectFromText } from "../parsing";
@@ -59,15 +59,15 @@ IMPORTANT: Only include settings from the Available Settings list above. Ignore 
 
 const generateObject = async ({
   runtime,
-  context,
+  prompt,
   modelType = ModelTypes.TEXT_LARGE as ModelType,
   stopSequences = [],
   output = "object",
   enumValues = [],
   schema,
 }): Promise<any> => {
-  if (!context) {
-    const errorMessage = "generateObject context is empty";
+  if (!prompt) {
+    const errorMessage = "generateObject prompt is empty";
     console.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -76,7 +76,7 @@ const generateObject = async ({
   if (output === "enum" && enumValues) {
     const response = await runtime.useModel(modelType, {
       runtime,
-      context,
+      prompt,
       modelType,
       stopSequences,
       maxTokens: 8,
@@ -108,7 +108,7 @@ const generateObject = async ({
   // Regular object/array generation
   const response = await runtime.useModel(modelType, {
     runtime,
-    context,
+    prompt,
     modelType,
     stopSequences,
     object: true,
@@ -151,27 +151,27 @@ const generateObject = async ({
 
 async function generateObjectArray({
   runtime,
-  context,
+  prompt,
   modelType = ModelTypes.TEXT_SMALL,
   schema,
   schemaName,
   schemaDescription,
 }: {
   runtime: IAgentRuntime;
-  context: string;
+  prompt: string;
   modelType: ModelType;
   schema?: ZodSchema;
   schemaName?: string;
   schemaDescription?: string;
 }): Promise<z.infer<typeof schema>[]> {
-  if (!context) {
-    logger.error("generateObjectArray context is empty");
+  if (!prompt) {
+    logger.error("generateObjectArray prompt is empty");
     return [];
   }
   
   const result = await generateObject({
     runtime,
-    context,
+    prompt,
     modelType,
     output: "array",
     schema,
@@ -299,8 +299,8 @@ async function extractSettingValues(
   worldSettings: WorldSettings
 ): Promise<SettingUpdate[]> {
   try {
-    // Create context with current settings status for better extraction
-    const context = composeContext({
+    // Create prompt with current settings status for better extraction
+    const prompt = composePrompt({
       state: {
         ...state,
         settings: Object.entries(worldSettings)
@@ -317,7 +317,7 @@ async function extractSettingValues(
     // Generate extractions using larger model for better comprehension
     const extractions = (await generateObjectArray({
       runtime,
-      context,
+      prompt,
       modelType: ModelTypes.TEXT_LARGE,
     })) as SettingUpdate[];
 
@@ -543,7 +543,7 @@ async function handleOnboardingComplete(
 ): Promise<void> {
   try {
     // Generate completion message
-    const context = composeContext({
+    const prompt = composePrompt({
       state: {
         ...state,
         settingsStatus: formatSettingsList(worldSettings),
@@ -552,7 +552,7 @@ async function handleOnboardingComplete(
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
     });
 
     const responseContent = parseJSONObjectFromText(response) as Content;
@@ -593,7 +593,7 @@ async function generateSuccessResponse(
     }
 
     // Generate success message
-    const context = composeContext({
+    const prompt = composePrompt({
       state: {
         ...state,
         updateMessages: messages.join("\n"),
@@ -604,7 +604,7 @@ async function generateSuccessResponse(
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
     });
 
     const responseContent = parseJSONObjectFromText(response) as Content;
@@ -644,7 +644,7 @@ async function generateFailureResponse(
     }
 
     // Generate failure message
-    const context = composeContext({
+    const prompt = composePrompt({
       state: {
         ...state,
         nextSetting: requiredUnconfigured[0][1],
@@ -654,7 +654,7 @@ async function generateFailureResponse(
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
     });
 
     const responseContent = parseJSONObjectFromText(response) as Content;
@@ -683,13 +683,13 @@ async function generateErrorResponse(
   callback: HandlerCallback
 ): Promise<void> {
   try {
-    const context = composeContext({
+    const prompt = composePrompt({
       state,
       template: errorTemplate,
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
     });
 
     const responseContent = parseJSONObjectFromText(response) as Content;

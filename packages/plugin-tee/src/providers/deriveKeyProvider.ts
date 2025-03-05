@@ -165,9 +165,16 @@ class PhalaDeriveKeyProvider extends DeriveKeyProvider {
     }
 }
 
+// Define the ProviderResult interface if not already imported
+interface ProviderResult {
+    data?: any;
+    values?: Record<string, string>;
+    text?: string;
+}
+
 const phalaDeriveKeyProvider: Provider = {
     name: 'phala-derive-key',
-    get: async (runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
+    get: async (runtime: IAgentRuntime, _message?: Memory, _state?: State): Promise<ProviderResult> => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaDeriveKeyProvider(teeMode);
         const agentId = runtime.agentId;
@@ -175,7 +182,11 @@ const phalaDeriveKeyProvider: Provider = {
             // Validate wallet configuration
             if (!runtime.getSetting('WALLET_SECRET_SALT')) {
                 logger.error('Wallet secret salt is not configured in settings');
-                return '';
+                return { 
+                    data: null, 
+                    values: {},
+                    text: 'Wallet secret salt is not configured in settings'
+                };
             }
 
             try {
@@ -186,52 +197,45 @@ const phalaDeriveKeyProvider: Provider = {
                     agentId,
                 );
                 const evmKeypair = await provider.deriveEcdsaKeypair(secretSalt, 'evm', agentId);
-                return JSON.stringify({
+                
+                // Original data structure
+                const walletData = {
                     solana: solanaKeypair.keypair.publicKey,
                     evm: evmKeypair.keypair.address,
-                });
+                };
+                
+                // Values for template injection
+                const values = {
+                    'solana_public_key': solanaKeypair.keypair.publicKey.toString(),
+                    'evm_address': evmKeypair.keypair.address,
+                };
+                
+                // Text representation
+                const text = `Solana Public Key: ${values.solana_public_key}\nEVM Address: ${values.evm_address}`;
+                
+                return {
+                    data: walletData,
+                    values: values,
+                    text: text
+                };
             } catch (error) {
                 logger.error('Error creating PublicKey:', error);
-                return '';
+                return { 
+                    data: null, 
+                    values: {},
+                    text: `Error creating PublicKey: ${error instanceof Error ? error.message : 'Unknown error'}`
+                };
             }
         } catch (error) {
             logger.error('Error in derive key provider:', error.message);
-            return `Failed to fetch derive key information: ${
-                error instanceof Error ? error.message : 'Unknown error'
-            }`;
+            return { 
+                data: null, 
+                values: {},
+                text: `Failed to fetch derive key information: ${
+                    error instanceof Error ? error.message : 'Unknown error'
+                }`
+            };
         }
-    },
-};
-
-/**
- * Marlin TEE Provider
- * @example
- * ```ts
- * const provider = new MarlinDeriveKeyProvider();
- * ```
- */
-class MarlinDeriveKeyProvider extends DeriveKeyProvider {}
-
-const marlinDeriveKeyProvider: Provider = {
-    name: 'marlin-derive-key',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
-        return 'Marlin Derive Key Provider';
-    },
-};
-
-/**
- * Fleek TEE Provider
- * @example
- * ```ts
- * const provider = new FleekDeriveKeyProvider();
- * ```
- */
-class FleekDeriveKeyProvider extends DeriveKeyProvider {}
-
-const fleekDeriveKeyProvider: Provider = {
-    name: 'fleek-derive-key',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
-        return 'Fleek Derive Key Provider';
     },
 };
 
@@ -246,18 +250,18 @@ class SgxGramineDeriveKeyProvider extends DeriveKeyProvider {}
 
 const sgxGramineDeriveKeyProvider: Provider = {
     name: 'sgx-gramine-derive-key',
-    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State) => {
-        return 'SGX Gramine Derive Key Provider';
+    get: async (_runtime: IAgentRuntime, _message?: Memory, _state?: State): Promise<ProviderResult> => {
+        return {
+            data: { provider: 'sgx-gramine' },
+            values: { 'provider_name': 'SGX Gramine' },
+            text: 'SGX Gramine Derive Key Provider'
+        };
     },
 };
 
 export {
     phalaDeriveKeyProvider,
     PhalaDeriveKeyProvider,
-    marlinDeriveKeyProvider,
-    MarlinDeriveKeyProvider,
-    fleekDeriveKeyProvider,
-    FleekDeriveKeyProvider,
     sgxGramineDeriveKeyProvider,
     SgxGramineDeriveKeyProvider,
 };

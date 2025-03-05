@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { logger } from "../logger";
 import { parseJSONObjectFromText } from "../parsing";
 import { getUserServerRole } from "../roles";
@@ -131,7 +131,7 @@ export const choiceAction: Action = {
         }))
       }));
 
-      const context = composeContext({
+      const prompt = composePrompt({
         state: {
           ...state,
           tasks: formattedTasks,
@@ -141,7 +141,7 @@ export const choiceAction: Action = {
       });
 
       const result = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-        context,
+        prompt,
         stopSequences: []
       });
 

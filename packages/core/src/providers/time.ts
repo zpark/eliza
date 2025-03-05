@@ -14,7 +14,15 @@ const timeProvider: Provider = {
         const humanReadable = new Intl.DateTimeFormat("en-US", options).format(
             currentDate
         );
-        return `The current date and time is ${humanReadable}. Please use this as your reference for any time-based operations or responses.`;
+        return {
+            data: {
+                time: currentDate,
+            },
+            values: {
+                time: humanReadable,
+            },
+            text: `The current date and time is ${humanReadable}. Please use this as your reference for any time-based operations or responses.`,
+        };
     },
 };
 export { timeProvider };

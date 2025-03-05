@@ -239,7 +239,7 @@ export default class TwitterParser {
 		const prompt = template.replace("{{tweets}}", bulletpointTweets);
 
 		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-			context: prompt,
+			prompt,
 			system: rolePrompt,
 			temperature: 0.2,
 			maxTokens: 4096,

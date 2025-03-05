@@ -6,7 +6,7 @@ import {
     type Memory,
     type State,
     ChannelType,
-    composeContext,
+    composePrompt,
     createUniqueUuid,
     type HandlerCallback,
     logger,
@@ -158,13 +158,13 @@ You should only respond with the name of the voice channel or none, no commentar
                     .join("\n"),
             };
 
-            const context = composeContext({
+            const prompt = composePrompt({
                 template: messageTemplate,
                 state: guessState as unknown as State,
             });
 
             const responseContent = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-                context,
+                prompt,
             });
 
             if (responseContent && responseContent.trim().length > 0) {

@@ -5,7 +5,8 @@ import {
     ModelTypes,
     type Provider,
     type State,
-    type UUID
+    type UUID,
+    composePrompt
 } from "@elizaos/core";
 import { z } from "zod";
 import { CoingeckoClient } from "../clients";
@@ -19,7 +20,7 @@ import {
     type TokenPerformance as TypesTokenPerformance,
     type Transaction as TypesTransaction
 } from "../types";
-import { getZodJsonSchema, render } from "../utils";
+import { getZodJsonSchema } from "../utils";
 // Create a simple formatter module inline if it doesn't exist
 // This will be used until a proper formatters.ts file is created
 const formatters = {
@@ -256,7 +257,7 @@ export const dataProvider: Provider = {
         runtime: IAgentRuntime,
         message: Memory,
         _state?: State
-    ): Promise<string> {
+    ) {
         try {
             // Extract token addresses from message and recent context
             const messageContent = message.content.text;
@@ -301,12 +302,12 @@ export const dataProvider: Provider = {
                   } as TypesRecommenderMetrics
                 : undefined;
 
+            // Process metrics history if available
             const metricsHistory = entity
                 ? await tradingService.getRecommenderMetricsHistory(entity.id)
                 : [];
                 
-            // Convert metrics history to compatible type
-            const typedMetricsHistory = metricsHistory.map(history => ({
+            const typedMetricsHistory = metricsHistory.map((history) => ({
                 ...history,
                 historyId: history.entityId
             }));
@@ -320,18 +321,13 @@ export const dataProvider: Provider = {
                       )
                     : "";
 
-            // Get market data
-            // Use the static method to create the client
-            const coingeckoClient = CoingeckoClient.createFromRuntime(runtime);
-            const priceData = await coingeckoClient.fetchGlobal();
             const totalCurrentValue = "$0.00";
             const totalRealizedPnL = "$0.00";
             const totalUnrealizedPnL = "$0.00";
             const totalPnL = "$0.00";
-            const prices = priceData?.data?.market_data?.prices || {};
-            const marketCapPercentage = priceData?.data?.market_data?.market_cap_percentage || {};
+            const _positionReports: string[] = [];
 
-            return render(dataProviderTemplate, {
+            const stateData = {
                 tokenReports: tokenReports.join("\n"),
                 totalCurrentValue,
                 totalRealizedPnL,
@@ -339,144 +335,44 @@ export const dataProvider: Provider = {
                 totalPnL,
                 entity: recommenderReport,
                 globalMarketData: JSON.stringify({
-                    prices,
-                    marketCapPercentage,
-                }),
+                    prices: {},
+                    marketCapPercentage: {},
+                })
+            };
+
+            const renderedText = composePrompt({
+                state: stateData as unknown as State,
+                template: dataProviderTemplate,
             });
+
+            return {
+                data: {
+                    tokens,
+                    positions,
+                    transactions,
+                    entity,
+                    metrics,
+                    metricsHistory: typedMetricsHistory
+                },
+                values: {
+                    tokenReports: tokenReports.join("\n"),
+                    totalCurrentValue,
+                    totalRealizedPnL,
+                    totalUnrealizedPnL,
+                    totalPnL,
+                    recommenderReport,
+                    hasTokens: tokens.length > 0 ? "true" : "false",
+                    hasPositions: positions.length > 0 ? "true" : "false"
+                },
+                text: renderedText
+            };
         } catch (error) {
-            const tokenSet = new Set<string>();
-            const tokens: TokenPerformance[] = [];
-            const positions: PositionWithBalance[] = [];
-            const transactions: TypesTransaction[] = [];
-            const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
-
-            // Get open positions
-            const openPositions = await tradingService.getOpenPositionsWithBalance();
-            
-            for (const position of openPositions) {
-                if (tokenSet.has(`${position.chain}:${position.tokenAddress}`))
-                    continue;
-
-                const tokenPerformance = await tradingService.getTokenPerformance(
-                    position.chain,
-                    position.tokenAddress
-                );
-
-                if (tokenPerformance) tokens.push(tokenPerformance);
-
-                tokenSet.add(`${position.chain}:${position.tokenAddress}`);
-            }
-
-            const context = render(dataLoaderTemplate, {
-                actions: actions
-                    .map(
-                        (a) =>
-                            `${a.name}: ${a.description}\nParams: ${JSON.stringify(
-                                getZodJsonSchema(a.params)
-                            )}`
-                    )
-                    .join("\n\n"),
-                tokens: JSON.stringify(tokens, jsonFormatter),
-                positions: JSON.stringify(positions, jsonFormatter),
-                // Add missing messages parameter
-                messages: message.content.text,
-            });
-
-            const dataProviderResponse = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                messages: [
-                    {
-                        role: "system",
-                        content: context,
-                    },
-                    {
-                        role: "user",
-                        // Fix formatMessages call by providing the required structure
-                        content: formatMessages({
-                            messages: [message],
-                            actors: [] // Provide empty actors array 
-                        }),
-                    },
-                ],
-            });
-
-            if (dataProviderResponse) {
-                const extractedText = dataProviderResponse.match(
-                    /<o>(.*?)<\/o>/s
-                );
-                const actions = extractedText
-                    ? extractActions(extractedText[1])
-                    : [];
-
-                try {
-                    if (actions.length > 0) {
-                        await runActions(actions, runtime, message, tokens as TypesTokenPerformance[], positions, transactions);
-                    }
-
-                    const tokenReports = await Promise.all(
-                        tokens.map(async (token) => formatTokenPerformance(token))
-                    );
-
-                    const tradingService = runtime.getService<TrustTradingService>(ServiceTypes.TRUST_TRADING);
-
-                    const entity = await runtime.databaseAdapter.getEntityById(message.userId as UUID);
-
-                    // Add updatedAt to RecommenderMetrics to make it compatible
-                    const recommenderMetrics = entity
-                        ? await tradingService.getRecommenderMetrics(entity.id)
-                        : undefined;
-                        
-                    const metrics = recommenderMetrics
-                        ? {
-                            ...recommenderMetrics,
-                            updatedAt: Date.now() // Add missing updatedAt property
-                          } as TypesRecommenderMetrics
-                        : undefined;
-
-                    const metricsHistory = entity
-                        ? await tradingService.getRecommenderMetricsHistory(entity.id)
-                        : [];
-                        
-                    // Convert metrics history to compatible type
-                    const typedMetricsHistory = metricsHistory.map(history => ({
-                        ...history,
-                        historyId: history.entityId
-                    }));
-
-                    const recommenderReport =
-                        entity && metrics
-                            ? formatRecommenderReport(
-                                  entity as any,
-                                  metrics,
-                                  typedMetricsHistory
-                              )
-                            : "";
-
-                    const totalCurrentValue = "$0.00";
-                    const totalRealizedPnL = "$0.00";
-                    const totalUnrealizedPnL = "$0.00";
-                    const totalPnL = "$0.00";
-                    const _positionReports: string[] = [];
-
-                    return render(dataProviderTemplate, {
-                        tokenReports: tokenReports.join("\n"),
-                        totalCurrentValue,
-                        totalRealizedPnL,
-                        totalUnrealizedPnL,
-                        totalPnL,
-                        entity: recommenderReport,
-                        globalMarketData: JSON.stringify({
-                            prices: {},
-                            marketCapPercentage: {},
-                        }),
-                    });
-                } catch (error) {
-                    console.log(error);
-                    return "";
-                }
-            }
-
             console.log(error);
-            return "";
+            return {
+                data: {},
+                values: {},
+                text: ""
+            };
         }
     },
 };

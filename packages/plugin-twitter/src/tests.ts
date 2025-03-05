@@ -247,7 +247,6 @@ export class TwitterTestSuite implements TestSuite {
     }
 
     return await runtime.useModel(ModelTypes.TEXT_SMALL, {
-      context: "Social Media Post Generation",
       prompt,
     });
   }

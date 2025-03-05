@@ -77,7 +77,7 @@ export default class BuySignal {
 		const finalPrompt = prompt.replace("{{trending_tokens}}", tokens).replace("{{solana_balance}}", String(solanaBalance));
 
 		const response = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-			context: finalPrompt,
+			prompt: finalPrompt,
 			system: rolePrompt,
 			temperature: 0.2,
 			maxTokens: 4096,

@@ -1,7 +1,7 @@
 // action: SEND_MESSAGE
 // send message to a user or room (other than this room we are in)
 
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { findEntityByName } from "../entities";
 import { logger } from "../logger";
 import { parseJSONObjectFromText } from "../parsing";
@@ -110,13 +110,13 @@ export const sendMessageAction: Action = {
       const worldId = room.worldId;
 
       // Extract target and source information
-      const targetContext = composeContext({
+      const targetPrompt = composePrompt({
         state,
         template: targetExtractionTemplate,
       });
 
       const targetResult = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-        context: targetContext,
+        prompt: targetPrompt,
         stopSequences: []
       });
 
@@ -162,7 +162,7 @@ export const sendMessageAction: Action = {
           return;
         }
 
-        const sendDirectMessage = runtime.getService(source)?.sendDirectMessage;
+        const sendDirectMessage = (runtime.getService(source) as any)?.sendDirectMessage;
 
         if (!sendDirectMessage) {
           await callback({
@@ -213,7 +213,7 @@ export const sendMessageAction: Action = {
           return;
         }
 
-        const sendRoomMessage = runtime.getService(source)?.sendRoomMessage;
+        const sendRoomMessage = (runtime.getService(source) as any)?.sendRoomMessage;
 
         if (!sendRoomMessage) {
           await callback({

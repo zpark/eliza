@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content, getActorDetails, type HandlerCallback,
+    type ActionExample, composePrompt, type Content, getEntityDetails, type HandlerCallback,
     type IAgentRuntime,
     type Media,
     type Memory,
@@ -43,14 +43,14 @@ const getDateRange = async (
 ) => {
     state = (await runtime.composeState(message)) as State;
 
-    const context = composeContext({
+    const prompt = composePrompt({
         state,
         template: dateRangeTemplate,
     });
 
     for (let i = 0; i < 5; i++) {
         const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -222,7 +222,7 @@ const summarizeAction = {
             unique: false,
         });
 
-        const actors = await getActorDetails({
+        const actors = await getEntityDetails({
             runtime: runtime as IAgentRuntime,
             roomId,
         });
@@ -260,14 +260,14 @@ const summarizeAction = {
                 chunkSize + 500,
                 runtime
             );
-            const context = composeContext({
+            const prompt = composePrompt({
                 state,
                 // make sure it fits, we can pad the tokens a bit
                 template,
             });
 
             const summary = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-                context,
+                prompt,
             });
 
             currentSummary = `${currentSummary}\n${summary}`;

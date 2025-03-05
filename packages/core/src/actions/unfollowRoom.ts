@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { booleanFooter, parseBooleanFromText } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
@@ -36,13 +36,13 @@ export const unfollowRoomAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldUnfollow(state: State): Promise<boolean> {
-            const shouldUnfollowContext = composeContext({
+            const shouldUnfollowPrompt = composePrompt({
                 state,
                 template: shouldUnfollowTemplate, // Define this template separately
             });
 
             const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                context: shouldUnfollowContext,
+                prompt: shouldUnfollowPrompt,
             });
 
             const parsedResponse = parseBooleanFromText(response.trim());

@@ -1,5 +1,5 @@
 import type { Agent, Character, Content, IAgentRuntime, Media, Memory, UUID } from '@elizaos/core';
-import { ChannelType, composeContext, createUniqueUuid, logger, messageHandlerTemplate, ModelTypes, parseJSONObjectFromText, validateUuid } from '@elizaos/core';
+import { ChannelType, composePrompt, createUniqueUuid, logger, messageHandlerTemplate, ModelTypes, parseJSONObjectFromText, validateUuid } from '@elizaos/core';
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -496,13 +496,13 @@ export function agentRouter(
                 agentName: runtime.character.name,
             });
 
-            const context = composeContext({
+            const prompt = composePrompt({
                 state,
                 template: messageHandlerTemplate,
             });
 
             const responseText = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-                context,
+                prompt,
             });
           
             const response = parseJSONObjectFromText(responseText) as Content;
@@ -846,7 +846,7 @@ export function agentRouter(
             });
 
             logger.debug("[SPEECH CONVERSATION] Creating context");
-            const context = composeContext({
+            const prompt = composePrompt({
                 state,
                 template: messageHandlerTemplate,
             });
@@ -858,7 +858,7 @@ export function agentRouter(
                     content: messageHandlerTemplate
                 }, {
                     role: 'user',
-                    content: context
+                    content: prompt
                 }]
             });
 

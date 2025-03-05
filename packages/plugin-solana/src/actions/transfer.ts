@@ -1,7 +1,7 @@
 import {
     type Action,
     type ActionExample,
-    composeContext,
+    composePrompt,
     type Content,
     type HandlerCallback,
     type IAgentRuntime,
@@ -118,13 +118,13 @@ export default {
             currentState = await runtime.updateRecentMessageState(currentState);
         }
 
-        const transferContext = composeContext({
+        const transferPrompt = composePrompt({
             state: currentState,
             template: transferTemplate,
         });
 
         const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-            context: transferContext,
+            prompt: transferPrompt,
         });
 
         const content = parseJSONObjectFromText(result);

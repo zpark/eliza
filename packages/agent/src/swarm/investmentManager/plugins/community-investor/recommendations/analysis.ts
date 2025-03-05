@@ -1,5 +1,5 @@
 import {
-    composeContext,
+    composePrompt,
     type IAgentRuntime,
     logger,
     type Memory,
@@ -211,7 +211,7 @@ export const getTokenDetails: any = {
             </message>`;
         });
 
-        const context = composeContext({
+        const prompt = composePrompt({
             state: {
                 messages: messages,
             } as unknown as State,
@@ -220,7 +220,7 @@ export const getTokenDetails: any = {
         
 
         const text = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
 
         const extractXML = extractXMLFromResponse(text, "token");
@@ -251,7 +251,7 @@ export const getTokenDetails: any = {
             return v;
         });
 
-        const tokenDetailsContext = composeContext({
+        const tokenDetailsPrompt = composePrompt({
             state: {
                 ticker: results.ticker,
                 tokenOverview: tokenOverviewString,
@@ -260,7 +260,7 @@ export const getTokenDetails: any = {
         });
 
         const tokenDetails = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-            context: tokenDetailsContext,
+            prompt: tokenDetailsPrompt,
         });
 
         // Do we want to store memory here?

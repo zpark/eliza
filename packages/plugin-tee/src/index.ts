@@ -27,16 +27,6 @@ async function initializeTEE(config: Record<string, string>, runtime: IAgentRunt
                     },
                 });
                 break;
-            case 'marlin':
-                plugin = teePlugin({
-                    vendor: TeeVendorNames.MARLIN,
-                });
-                break;
-            case 'fleek':
-                plugin = teePlugin({
-                    vendor: TeeVendorNames.FLEEK,
-                });
-                break;
             case 'sgx-gramine':
                 plugin = teePlugin({
                     vendor: TeeVendorNames.SGX_GRAMINE,

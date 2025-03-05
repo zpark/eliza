@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content,
+    type ActionExample, composePrompt, type Content,
     type HandlerCallback,
     type IAgentRuntime,
     type IVideoService,
@@ -32,14 +32,14 @@ const getMediaUrl = async (
         state = (await runtime.composeState(message)) as State;
     }
 
-    const context = composeContext({
+    const prompt = composePrompt({
         state,
         template: mediaUrlTemplate,
     });
 
     for (let i = 0; i < 5; i++) {
         const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
 
         const parsedResponse = parseJSONObjectFromText(response) as {

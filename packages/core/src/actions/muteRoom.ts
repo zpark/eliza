@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
@@ -39,14 +39,14 @@ export const muteRoomAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldMute(state: State): Promise<boolean> {
-            const shouldMuteContext = composeContext({
+            const shouldMutePrompt = composePrompt({
                 state,
                 template: shouldMuteTemplate, // Define this template separately
             });
 
             const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
-                context: shouldMuteContext,
+                prompt: shouldMutePrompt,
                 stopSequences: ["\n"],
             });
             
@@ -80,7 +80,6 @@ export const muteRoomAction: Action = {
         if (await _shouldMute(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
-                runtime.agentId,
                 runtime.agentId,
                 "MUTED"
             );

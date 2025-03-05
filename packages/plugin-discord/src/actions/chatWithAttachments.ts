@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composeContext, type Content, type HandlerCallback,
+    type ActionExample, composePrompt, type Content, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelTypes, parseJSONObjectFromText, type State, trimTokens
@@ -40,14 +40,14 @@ const getAttachmentIds = async (
 ): Promise<{ objective: string; attachmentIds: string[] } | null> => {
     state = (await runtime.composeState(message)) as State;
 
-    const context = composeContext({
+    const prompt = composePrompt({
         state,
         template: attachmentIdsTemplate,
     });
 
     for (let i = 0; i < 5; i++) {
         const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
         console.log("response", response);
         // try parsing to a json object
@@ -185,7 +185,7 @@ const summarizeAction = {
             chunkSize,
             runtime
         );
-        const context = composeContext({
+        const prompt = composePrompt({
             state,
             // make sure it fits, we can pad the tokens a bit
             // Get the model's tokenizer based on the current model being used
@@ -193,7 +193,7 @@ const summarizeAction = {
         });
 
         const summary = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context,
+            prompt,
         });
 
         currentSummary = `${currentSummary}\n${summary}`;

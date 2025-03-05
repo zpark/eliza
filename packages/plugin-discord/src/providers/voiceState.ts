@@ -1,6 +1,7 @@
 import { getVoiceConnection } from "@discordjs/voice";
 import type { IAgentRuntime, Memory, Provider, State } from "@elizaos/core";
 import { ChannelType } from "@elizaos/core";
+
 const voiceStateProvider: Provider = {
     name: "voiceState",
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
@@ -12,8 +13,18 @@ const voiceStateProvider: Provider = {
 
         if (room.type !== ChannelType.GROUP) {
             // only handle in a group scenario for now
-            return false;
-          }
+            return {
+                data: {
+                    isInVoiceChannel: false,
+                    room
+                },
+                values: {
+                    isInVoiceChannel: "false",
+                    roomType: room.type
+                },
+                text: ""
+            };
+        }
 
         const serverId = room.serverId;
 
@@ -23,8 +34,20 @@ const voiceStateProvider: Provider = {
 
         const connection = getVoiceConnection(serverId);
         const agentName = state?.agentName || "The agent";
+        
         if (!connection) {
-            return `${agentName} is not currently in a voice channel`;
+            return {
+                data: {
+                    isInVoiceChannel: false,
+                    room,
+                    serverId
+                },
+                values: {
+                    isInVoiceChannel: "false",
+                    serverId
+                },
+                text: `${agentName} is not currently in a voice channel`
+            };
         }
 
         const worldId = room.worldId;
@@ -36,19 +59,50 @@ const voiceStateProvider: Provider = {
             throw new Error("No world found");
         }
 
-        const _worldName = world.name;
-
-        const _roomType = room.type;
-
-        const channelId = room.channelId
-
+        const worldName = world.name;
+        const roomType = room.type;
+        const channelId = room.channelId;
         const channelName = room.name;
 
         if (!channelId) {
-            return `${agentName} is in an invalid voice channel`;
+            return {
+                data: {
+                    isInVoiceChannel: true,
+                    room,
+                    serverId,
+                    world,
+                    connection
+                },
+                values: {
+                    isInVoiceChannel: "true",
+                    serverId,
+                    worldName,
+                    roomType
+                },
+                text: `${agentName} is in an invalid voice channel`
+            };
         }
 
-        return `${agentName} is currently in the voice channel: ${channelName} (ID: ${channelId})`;
+        return {
+            data: {
+                isInVoiceChannel: true,
+                room,
+                serverId,
+                world,
+                connection,
+                channelId,
+                channelName
+            },
+            values: {
+                isInVoiceChannel: "true",
+                serverId,
+                worldName,
+                roomType,
+                channelId,
+                channelName
+            },
+            text: `${agentName} is currently in the voice channel: ${channelName} (ID: ${channelId})`
+        };
     },
 };
 

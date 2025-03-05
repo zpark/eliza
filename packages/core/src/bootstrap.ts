@@ -11,19 +11,27 @@ import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { updateEntityAction } from "./actions/updateEntity.ts";
-import { composeContext } from "./context.ts";
-import { createUniqueUuid } from "./entities.ts";
+import { createUniqueUuid, getEntityDetails } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
-import { capabilitiesProvider } from "./providers/capabilities.ts";
-import {
-  formatMessages,
-  getActorDetails
-} from "./index.ts";
 import { logger } from "./logger.ts";
-import { messageCompletionFooter, parseJSONObjectFromText, shouldRespondFooter } from "./parsing.ts";
+import {
+  messageCompletionFooter,
+  parseJSONObjectFromText,
+  shouldRespondFooter,
+} from "./parsing.ts";
+import { composePrompt, formatMessages } from "./prompts.ts";
+import { actionsProvider } from "./providers/actions.ts";
+import { attachmentsProvider } from "./providers/attachments.ts";
+import { capabilitiesProvider } from "./providers/capabilities.ts";
+import { characterProvider } from "./providers/character.ts";
+import { entitiesProvider } from "./providers/entities.ts";
+import { evaluatorsProvider } from "./providers/evaluators.ts";
+import { examplesProvider } from "./providers/examples.ts";
 import { factsProvider } from "./providers/facts.ts";
+import { knowledgeProvider } from "./providers/knowledge.ts";
 import { optionsProvider } from "./providers/options.ts";
+import { recentMemoriesProvider } from "./providers/recentMemories.ts";
 import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
@@ -149,8 +157,8 @@ const checkShouldRespond = async (
     return true;
   }
 
-  const [actorsData, recentMessagesData] = await Promise.all([
-    getActorDetails({ runtime: runtime, roomId: message.roomId }),
+  const [entitiesData, recentMessagesData] = await Promise.all([
+    getEntityDetails({ runtime: runtime, roomId: message.roomId }),
     runtime.messageManager.getMemories({
       roomId: message.roomId,
       count: runtime.getConversationLength(),
@@ -162,7 +170,7 @@ const checkShouldRespond = async (
 
   const recentMessages = formatMessages({
     messages: recentMessagesData,
-    actors: actorsData,
+    actors: entitiesData,
   });
 
   const state = {
@@ -172,7 +180,7 @@ const checkShouldRespond = async (
     system: runtime.character.system,
   } as State;
 
-  const shouldRespondContext = composeContext({
+  const shouldRespondPrompt = composePrompt({
     state,
     template:
       runtime.character.templates?.shouldRespondTemplate ||
@@ -180,7 +188,7 @@ const checkShouldRespond = async (
   });
 
   const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
-    context: shouldRespondContext,
+    prompt: shouldRespondPrompt,
   });
 
   if (response.includes("RESPOND")) {
@@ -226,7 +234,7 @@ const messageReceivedHandler = async ({
 
   let state = await runtime.composeState(message);
   if (shouldRespond) {
-    const context = composeContext({
+    const prompt = composePrompt({
       state,
       template:
         runtime.character.templates?.messageHandlerTemplate ||
@@ -234,7 +242,7 @@ const messageReceivedHandler = async ({
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
     });
 
     const responseContent = parseJSONObjectFromText(response) as Content;
@@ -669,31 +677,29 @@ const handleServerSync = async ({
 
         // check if user is in any of these rooms in rooms
         const firstRoomUserIsIn = rooms.length > 0 ? rooms[0] : null;
-        
+
         // Process each user in the batch
         await Promise.all(
           userBatch.map(async (user: Entity) => {
-              try {
-                await runtime.ensureConnection({
-                  userId: user.id,
-                  roomId: firstRoomUserIsIn.id,
-                  userName:
-                    user.metadata[source].username,
-                  userScreenName:
-                    user.metadata[source].name,
-                  source: source,
-                  channelId: firstRoomUserIsIn.channelId,
-                  serverId: world.serverId,
-                  type: firstRoomUserIsIn.type,
-                  worldId: world.id,
-                });
-              } catch (err) {
-                logger.warn(
-                  `Failed to sync user ${user.metadata.username}: ${err}`
-                );
-              }
-            })
-          );
+            try {
+              await runtime.ensureConnection({
+                userId: user.id,
+                roomId: firstRoomUserIsIn.id,
+                userName: user.metadata[source].username,
+                userScreenName: user.metadata[source].name,
+                source: source,
+                channelId: firstRoomUserIsIn.channelId,
+                serverId: world.serverId,
+                type: firstRoomUserIsIn.type,
+                worldId: world.id,
+              });
+            } catch (err) {
+              logger.warn(
+                `Failed to sync user ${user.metadata.username}: ${err}`
+              );
+            }
+          })
+        );
 
         // Add a small delay between batches if not the last batch
         if (i + batchSize < users.length) {
@@ -854,6 +860,14 @@ export const bootstrapPlugin: Plugin = {
     settingsProvider,
     relationshipsProvider,
     capabilitiesProvider,
+    entitiesProvider,
+    evaluatorsProvider,
+    examplesProvider,
+    recentMemoriesProvider,
+    actionsProvider,
+    attachmentsProvider,
+    characterProvider,
+    knowledgeProvider,
   ],
   services: [TaskService],
 };

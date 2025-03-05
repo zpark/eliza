@@ -1,7 +1,7 @@
 import {
     ChannelType,
     cleanJsonResponse,
-    composeContext,
+    composePrompt,
     createUniqueUuid,
     extractAttributes,
     type IAgentRuntime,
@@ -315,17 +315,17 @@ export class TwitterPostClient {
                 }
             );
 
-            const context = composeContext({
+            const prompt = composePrompt({
                 state,
                 template:
                     this.runtime.character.templates?.twitterPostTemplate ||
                     twitterPostTemplate,
             });
 
-            logger.debug(`generate post prompt:\n${context}`);
+            logger.debug(`generate post prompt:\n${prompt}`);
 
             const response = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
-                context,
+                prompt,
             });
 
             const rawTweetContent = cleanJsonResponse(response);

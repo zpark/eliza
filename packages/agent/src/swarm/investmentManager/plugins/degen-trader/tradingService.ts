@@ -1,7 +1,7 @@
 // Combined DegenTradingService that integrates all functionality
 
 import {
-  composeContext,
+  composePrompt,
   type Content,
   type IAgentRuntime,
   logger,
@@ -757,7 +757,7 @@ export class DegenTradingService extends Service {
       // Fetch token recommendation
       const tokenRecommendation = await this.getTokenRecommendation();
 
-      const context = composeContext({
+      const prompt = composePrompt({
         template: tradeAnalysisTemplate,
         state: {
           bio: "",
@@ -788,11 +788,11 @@ export class DegenTradingService extends Service {
       });
 
       // Log context
-      logger.info("Generated context:", { context });
+      logger.info("Generated prompt:", { prompt });
 
       // Generate analysis
       const content = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-        context,
+        prompt,
       });
 
       // Log generated content

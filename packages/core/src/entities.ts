@@ -1,14 +1,14 @@
-import { composeContext } from "./context.ts";
 import { logger, stringToUuid } from "./index.ts";
 import { parseJSONObjectFromText } from "./parsing";
+import { composePrompt } from "./prompts.ts";
 import {
-    type Entity,
-    type IAgentRuntime,
-    type Memory,
-    ModelTypes,
-    type State,
-    type UUID,
-    type Relationship
+  type Entity,
+  type IAgentRuntime,
+  type Memory,
+  ModelTypes,
+  type Relationship,
+  type State,
+  type UUID
 } from "./types.ts";
 
 const entityResolutionTemplate = `# Task: Resolve Entity Name
@@ -163,7 +163,7 @@ export async function findEntityByName(
     const interactionData = await getRecentInteractions(runtime, message.userId, allEntities, room.id, relationships);
 
     // Compose context for LLM
-    const context = composeContext({
+    const prompt = composePrompt({
       state: {
         ...state,
         roomName: room.name || room.id,
@@ -177,7 +177,7 @@ export async function findEntityByName(
 
     // Use LLM to analyze and resolve the entity
     const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-      context,
+      prompt,
       stopSequences: []
     });
 
@@ -257,4 +257,92 @@ export const createUniqueUuid = (runtime, baseUserId: UUID | string): UUID => {
 
   // Create a namespace UUID (version 5) from the combined string
   return stringToUuid(combinedString);
+}
+
+/**
+ * Get details for a list of actors.
+ */
+export async function getEntityDetails({
+  runtime,
+  roomId,
+}: {
+  runtime: IAgentRuntime;
+  roomId: UUID;
+}) {
+  const room = await runtime.databaseAdapter.getRoom(roomId);
+  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, true);
+  const actors = entities.map(entity => {
+    // join all fields of all component.data together
+    const allData = entity.components.reduce((acc, component) => {
+      return { ...acc, ...component.data };
+    }, {});
+
+    // combine arrays and merge the values of objects
+    const mergedData = Object.entries(allData).reduce((acc, [key, value]) => {
+      if (!acc[key]) {
+        acc[key] = value;
+      } else if (Array.isArray(acc[key]) && Array.isArray(value)) {
+        acc[key] = [...new Set([...acc[key], ...value])];
+      } else if (typeof acc[key] === 'object' && typeof value === 'object') {
+        acc[key] = { ...acc[key], ...value };
+      }
+      return acc;
+    }, {});
+
+    return {
+      id: entity.id,
+      name: entity.metadata[room.source]?.name || entity.names[0],
+      names: entity.names,
+      data: JSON.stringify({...mergedData, ...entity.metadata})
+    };
+  });
+
+  // Filter out nulls and ensure uniqueness by ID
+  const uniqueActors = new Map();
+  actors
+    .filter(actor => actor !== null)
+    .forEach(actor => {
+      if (!uniqueActors.has(actor.id)) {
+        uniqueActors.set(actor.id, actor);
+      }
+    });
+
+  return Array.from(uniqueActors.values());
+}
+
+/**
+ * Format actors into a string
+ * @param actors - list of actors
+ * @returns string
+ */
+export function formatEntities({ actors }: { actors: Entity[] }) {
+  const actorStrings = actors.map((actor: Entity) => {
+    const header = `${actor.names.join(" aka ")}\nID: ${actor.id}${(actor.metadata && Object.keys(actor.metadata).length > 0) ? `\nData: ${JSON.stringify(actor.metadata)}\n` : "\n"}`;
+    return header;
+  });
+  const finalActorStrings = actorStrings.join("\n");
+  return finalActorStrings;
+}
+
+/**
+ * Resolve an actor name to their UUID
+ * @param name - Name to resolve
+ * @param actors - List of actors to search through
+ * @returns UUID if found, throws error if not found or if input is not a valid UUID
+ */
+export function resolveEntityId(name: string, actors: Entity[]): UUID {
+  // If the name is already a valid UUID, return it
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) {
+    return name as UUID;
+  }
+
+  const actor = actors.find(a => 
+    a.names.some(n => n.toLowerCase() === name.toLowerCase())
+  );
+  
+  if (!actor) {
+    throw new Error(`Could not resolve name "${name}" to a valid UUID`);
+  }
+  
+  return actor.id;
 }

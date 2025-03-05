@@ -58,12 +58,12 @@ export function formatEvaluatorExamples(evaluators: Evaluator[]) {
                         uniqueNamesGenerator({ dictionaries: [names] })
                     );
 
-                    let formattedContext = example.context;
+                    let formattedPrompt = example.prompt;
                     let formattedOutcome = example.outcome;
 
                     exampleNames.forEach((name, index) => {
                         const placeholder = `{{user${index + 1}}}`;
-                        formattedContext = formattedContext.replaceAll(
+                        formattedPrompt = formattedPrompt.replaceAll(
                             placeholder,
                             name
                         );
@@ -92,7 +92,7 @@ export function formatEvaluatorExamples(evaluators: Evaluator[]) {
                         })
                         .join("\n");
 
-                    return `Context:\n${formattedContext}\n\nMessages:\n${formattedMessages}\n\nOutcome:\n${formattedOutcome}`;
+                    return `Prompt:\n${formattedPrompt}\n\nMessages:\n${formattedMessages}\n\nOutcome:\n${formattedOutcome}`;
                 })
                 .join("\n\n");
         })

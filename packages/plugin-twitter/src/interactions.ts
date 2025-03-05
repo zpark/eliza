@@ -1,6 +1,6 @@
 import {
     ChannelType,
-    composeContext,
+    composePrompt,
     type Content,
     createUniqueUuid,
     type HandlerCallback,
@@ -37,7 +37,7 @@ Recent interactions between {{agentName}} and other users:
 {{recentPostInteractions}}
 {{recentPosts}}
 
-(Above posts are recent posts between {{agentName}} and other users. Our goal is to create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context)
+(Above posts are recent posts between {{agentName}} and other users. Our goal is to create a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional prompt)
 
 {{postDirections}}
 
@@ -415,7 +415,7 @@ export class TwitterInteractionClient {
                 ? targetUsers
                 : "";
 
-        const shouldRespondContext = composeContext({
+        const shouldRespondPrompt = composePrompt({
             state,
             template:
                 this.runtime.character.templates
@@ -425,7 +425,7 @@ export class TwitterInteractionClient {
         });
 
         const shouldRespond = await this.runtime.useModel(ModelTypes.TEXT_SMALL, {
-            context: shouldRespondContext,
+            prompt: shouldRespondPrompt,
           });
         
           if (!shouldRespond.includes("RESPOND")) {
@@ -433,7 +433,7 @@ export class TwitterInteractionClient {
             return { text: "Response Decision:", action: shouldRespond };
         }
 
-        const context = composeContext({
+        const prompt = composePrompt({
             state: {
                 ...state,
                 // Convert actionNames array to string
@@ -461,7 +461,7 @@ export class TwitterInteractionClient {
         });
 
         const responseText = await this.runtime.useModel(ModelTypes.TEXT_LARGE, {
-            context,
+            prompt,
           });
       
         const response = parseJSONObjectFromText(responseText) as Content;
@@ -528,7 +528,7 @@ export class TwitterInteractionClient {
                         }
                     );
 
-                    const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
+                    const responseInfo = `Context:\n\n${prompt}\n\nSelected Post: ${tweet.id} - ${tweet.username}: ${tweet.text}\nAgent's Output:\n${response.text}`;
 
                     await this.runtime.databaseAdapter.setCache<string>(
                         `twitter/tweet_generation_${tweet.id}.txt`,
@@ -648,7 +648,7 @@ export class TwitterInteractionClient {
             }
         }
 
-        // Need to bind this context for the inner function
+        // Need to bind this prompt for the inner function
         await processThread.bind(this)(tweet, 0);
 
         return thread;

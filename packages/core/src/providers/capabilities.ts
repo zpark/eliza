@@ -1,5 +1,5 @@
 import { logger } from "../logger";
-import type { IAgentRuntime, Memory, Provider, Service, State } from "../types";
+import type { IAgentRuntime, Memory, Provider, ProviderResult, State } from "../types";
 
 /**
  * Provider that collects capability descriptions from all registered services
@@ -10,13 +10,15 @@ export const capabilitiesProvider: Provider = {
     runtime: IAgentRuntime,
     _message: Memory,
     _state?: State
-  ): Promise<string> => {
+  ): Promise<ProviderResult> => {
     try {
       // Get all registered services
       const services = runtime.getAllServices();
       
       if (!services || services.size === 0) {
-        return "No services are currently registered.";
+        return {
+          text: "No services are currently registered.",
+        };
       }
       
       // Extract capability descriptions from all services
@@ -29,16 +31,25 @@ export const capabilitiesProvider: Provider = {
       }
       
       if (capabilities.length === 0) {
-        return "No capability descriptions found in the registered services.";
+        return {
+          text: "No capability descriptions found in the registered services.",
+        };
       }
       
       // Format the capabilities into a readable list
       const formattedCapabilities = capabilities.join("\n");
       
-      return `# ${runtime.character.name}'s Capabilities\n\n${formattedCapabilities}`;
+      return {
+        data: {
+          capabilities,
+        },
+        text: `# ${runtime.character.name}'s Capabilities\n\n${formattedCapabilities}`,
+      };
     } catch (error) {
       logger.error("Error in capabilities provider:", error);
-      return "Error retrieving capabilities from services.";
+      return {
+        text: "Error retrieving capabilities from services.",
+      };
     }
   }
 };

@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
@@ -37,14 +37,14 @@ export const unmuteRoomAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldUnmute(state: State): Promise<boolean> {
-            const shouldUnmuteContext = composeContext({
+            const shouldUnmutePrompt = composePrompt({
                 state,
                 template: shouldUnmuteTemplate, // Define this template separately
             });
 
             const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
-                context: shouldUnmuteContext,
+                prompt: shouldUnmutePrompt,
                 stopSequences: ["\n"],
             });
             

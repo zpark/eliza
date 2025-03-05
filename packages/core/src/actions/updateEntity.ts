@@ -7,10 +7,9 @@
 // sourceEntityId represents who is making the update, entityId is who they are talking about
 
 import { v4 as uuidv4 } from 'uuid';
-import { composeContext } from "../context";
 import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { parseJSONObjectFromText } from "../parsing";
+import { composePrompt } from "../prompts";
 import {
   type Action,
   type ActionExample,
@@ -136,13 +135,13 @@ export const updateEntityAction: Action = {
       let existingComponent = null;
 
       // Generate component data using the combined template
-      const context = composeContext({
+      const prompt = composePrompt({
         state,
         template: componentTemplate,
       });
 
       const result = await runtime.useModel(ModelTypes.TEXT_LARGE, {
-        context,
+        prompt,
         stopSequences: []
       });
 

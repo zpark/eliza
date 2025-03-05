@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import { getGoals } from "../goals";
 import { parseJsonArrayFromText } from "../parsing";
 import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
@@ -48,14 +48,14 @@ async function handler(
     options: { [key: string]: unknown } = { onlyInProgress: true }
 ): Promise<Goal[]> {
     state = (await runtime.composeState(message)) as State;
-    const context = composeContext({
+    const prompt = composePrompt({
         state,
         template: runtime.character.templates?.goalsTemplate || goalsTemplate,
     });
 
     const response = await runtime.useModel(ModelTypes.TEXT_LARGE, {
         runtime,
-        context,
+        prompt,
       });
 
     // Parse the JSON response to extract goal updates
@@ -124,7 +124,7 @@ export const goalEvaluator: Evaluator = {
     handler,
     examples: [
         {
-            context: `Actors in the scene:
+            prompt: `Actors in the scene:
   {{user1}}: An avid reader and member of a book club.
   {{user2}}: The organizer of the book club.
 
@@ -170,7 +170,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            context: `Actors in the scene:
+            prompt: `Actors in the scene:
   {{user1}}: A fitness enthusiast working towards a marathon.
   {{user2}}: A personal trainer.
 
@@ -213,7 +213,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            context: `Actors in the scene:
+            prompt: `Actors in the scene:
   {{user1}}: A student working on a final year project.
   {{user2}}: The project supervisor.
 
@@ -258,7 +258,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            context: `Actors in the scene:
+            prompt: `Actors in the scene:
         {{user1}}: A project manager working on a software development project.
         {{user2}}: A software developer in the project team.
 

@@ -1,4 +1,4 @@
-import { composeContext } from "../context";
+import { composePrompt } from "../prompts";
 import logger from "../logger";
 import { booleanFooter } from "../parsing";
 import { type Action, type ActionExample, type HandlerCallback, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
@@ -52,14 +52,14 @@ export const followRoomAction: Action = {
     },
     handler: async (runtime: IAgentRuntime, message: Memory, state?: State, _options?: { [key: string]: unknown; }, callback?: HandlerCallback, responses?: Memory[] ) => {
         async function _shouldFollow(state: State): Promise<boolean> {
-            const shouldFollowContext = composeContext({
+            const shouldFollowPrompt = composePrompt({
                 state,
                 template: shouldFollowTemplate, // Define this template separately
             });
             
             const response = await runtime.useModel(ModelTypes.TEXT_SMALL, {
                 runtime,
-                context: shouldFollowContext,
+                prompt: shouldFollowPrompt,
                 stopSequences: ["\n"],
             });
             
@@ -93,7 +93,6 @@ export const followRoomAction: Action = {
         if (await _shouldFollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
-                runtime.agentId,
                 runtime.agentId,
                 "FOLLOWED"
             );

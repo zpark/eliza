@@ -1,7 +1,6 @@
 import type { Provider } from "@elizaos/core";
 import { formatRecommendations } from "../recommendations/evaluator";
 import { render } from "../utils";
-import type { RecommendationMemory } from "../types";
 
 const recommendationsPrompt = `<user_recommendations_provider>
 <draft_recommendations>{{recommendations}}</draft_recommendations>
@@ -18,7 +17,7 @@ export const recommendationsProvider: Provider = {
                 roomId: message.roomId,
                 count: 5,
             }
-        )) as RecommendationMemory[];
+        ));
 
         const newUserRecommendation = recentRecommendations.filter(
             (m) =>
@@ -26,10 +25,33 @@ export const recommendationsProvider: Provider = {
                 m.content.recommendation.confirmed !== true
         );
 
-        if (newUserRecommendation.length === 0) return "";
+        if (newUserRecommendation.length === 0) {
+            return {
+                data: {
+                    recommendations: [],
+                },
+                values: {
+                    hasRecommendations: "false",
+                },
+                text: "",
+            };
+        }
 
-        return render(recommendationsPrompt, {
-            recommendations: formatRecommendations(newUserRecommendation),
+        const formattedRecommendations = formatRecommendations(newUserRecommendation);
+        const renderedText = render(recommendationsPrompt, {
+            recommendations: formattedRecommendations,
         });
+
+        return {
+            data: {
+                recommendations: newUserRecommendation,
+                formattedRecommendations,
+            },
+            values: {
+                hasRecommendations: "true",
+                count: newUserRecommendation.length.toString(),
+            },
+            text: renderedText,
+        };
     },
 };
