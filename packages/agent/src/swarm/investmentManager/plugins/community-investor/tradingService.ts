@@ -53,7 +53,7 @@ export type TradingEvent =
  */
 export class TrustTradingService extends Service {
     static serviceType = ServiceTypes.TRUST_TRADING;
-    capabilityDescription: string = "The agent is able to trade on the Solana blockchain";
+    capabilityDescription = "The agent is able to trade on the Solana blockchain";
 
     // Memory managers
     private tokenMemoryManager: IMemoryManager;

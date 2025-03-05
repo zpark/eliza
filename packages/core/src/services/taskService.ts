@@ -7,16 +7,16 @@ import {
   ServiceTypes,
   type UUID,
   type ServiceType,
-  Memory,
-  State,
-  Task,
+  type Memory,
+  type State,
+  type Task,
 } from "../types";
 
 export class TaskService extends Service {
   private timer: NodeJS.Timer | null = null;
   private readonly TICK_INTERVAL = 1000; // Check every second
   static serviceType: ServiceType = ServiceTypes.TASK;
-  capabilityDescription: string = "The agent is able to schedule and execute tasks";
+  capabilityDescription = "The agent is able to schedule and execute tasks";
 
 
   static async start(runtime: IAgentRuntime): Promise<TaskService> {

@@ -141,7 +141,7 @@ export class DegenTradingService extends Service {
   private pendingSells: { [tokenAddress: string]: bigint } = {};
 
   static serviceType = ServiceTypes.DEGEN_TRADING;
-  capabilityDescription: string = "The agent is able to trade on the Solana blockchain";
+  capabilityDescription = "The agent is able to trade on the Solana blockchain";
 
   private tradingConfig: TradingConfig = {
     intervals: {
@@ -680,11 +680,10 @@ export class DegenTradingService extends Service {
       // Determine market condition
       if (priceChange > 5 && rsi < 70) {
         return "bullish";
-      } else if (priceChange < -5 || rsi > 70) {
+      }if (priceChange < -5 || rsi > 70) {
         return "bearish";
-      } else {
-        return "neutral";
       }
+        return "neutral";
     } catch (error) {
       logger.error("Error assessing market condition:", error);
       return "neutral"; // Default to neutral on error
@@ -964,7 +963,7 @@ export class DegenTradingService extends Service {
           swapUsdValue: extendedResult.swapUsdValue,
           entityId: signal.entityId,
         };
-      } else {
+      }
         logger.error("Buy failed", {
           error: extendedResult.error
         });
@@ -972,7 +971,6 @@ export class DegenTradingService extends Service {
           success: false,
           error: extendedResult.error,
         };
-      }
     } catch (error) {
       logger.error("Failed to process buy signal:", error);
       return {
@@ -1471,13 +1469,13 @@ export class DegenTradingService extends Service {
         amount: data.balance,
         walletAddress: data.walletAddress,
         isSimulation: data.isSimulation,
-        marketCap: parseFloat(data.initialMarketCap),
+        marketCap: Number.parseFloat(data.initialMarketCap),
         entityId: data.entityId,
         txHash: data.txHash,
       });
 
       // Calculate stop loss and take profit prices
-      const initialPrice = parseFloat(data.initialPrice);
+      const initialPrice = Number.parseFloat(data.initialPrice);
       const stopLossPrice =
         initialPrice *
         (1 - this.tradingConfig.riskLimits.stopLossPercentage / 100);
@@ -1491,7 +1489,7 @@ export class DegenTradingService extends Service {
         {
           id: data.id,
           initialPrice,
-          initialMarketCap: parseFloat(data.initialMarketCap),
+          initialMarketCap: Number.parseFloat(data.initialMarketCap),
           stopLossPrice,
           takeProfitPrice,
           amount: data.balance,
@@ -1510,7 +1508,7 @@ export class DegenTradingService extends Service {
         metadata: {
           tokenAddress: data.tokenAddress,
           initialPrice,
-          initialMarketCap: parseFloat(data.initialMarketCap),
+          initialMarketCap: Number.parseFloat(data.initialMarketCap),
           stopLossPrice,
           takeProfitPrice,
           amount: data.balance,
@@ -1605,7 +1603,7 @@ export class DegenTradingService extends Service {
         : 0;
 
       // Get token performance data
-      const performance = await this.getLatestTradePerformance(
+      const _performance = await this.getLatestTradePerformance(
         tokenAddress,
         "default", // Use default recommender for monitoring
         false // Not simulation
@@ -2298,7 +2296,7 @@ export class DegenTradingService extends Service {
 
   async updateTradePerformanceOnSell(
     tokenAddress: string,
-    recommenderId: string,
+    _recommenderId: string,
     buyTimestamp: string,
     sellData: {
       sell_price: number;
@@ -2315,7 +2313,7 @@ export class DegenTradingService extends Service {
       rapidDump: boolean;
       sell_recommender_id: string;
     },
-    isSimulation: boolean
+    _isSimulation: boolean
   ): Promise<void> {
     try {
       // Get the existing trade performance record
@@ -2477,7 +2475,7 @@ export class DegenTradingService extends Service {
 
     // Check for unusual activity (volume spike)
     const volumeStdDev = Math.sqrt(
-      volumes.reduce((sum, vol) => sum + Math.pow(vol - volumeMA, 2), 0) /
+      volumes.reduce((sum, vol) => sum + (vol - volumeMA) ** 2, 0) /
         volumes.length
     );
     const unusualActivity =
@@ -2516,7 +2514,7 @@ export class DegenTradingService extends Service {
     // Calculate standard deviation of returns
     const mean = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
     const variance =
-      returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) /
+      returns.reduce((sum, ret) => sum + (ret - mean) ** 2, 0) /
       returns.length;
 
     return Math.sqrt(variance);
@@ -3075,15 +3073,15 @@ export class DegenTradingService extends Service {
 
   private async retryWithExponentialBackoff<T>(
     operation: () => Promise<T>,
-    maxRetries: number = 3,
-    baseDelay: number = 1000
+    maxRetries = 3,
+    baseDelay = 1000
   ): Promise<T> {
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await operation();
       } catch (error) {
         if (i === maxRetries - 1) throw error;
-        const delay = baseDelay * Math.pow(2, i);
+        const delay = baseDelay * 2 ** i;
         logger.warn(`Retry ${i + 1}/${maxRetries} after ${delay}ms`, { error });
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -3459,7 +3457,7 @@ export class DegenTradingService extends Service {
   private async calculateDynamicSlippage(
     tokenAddress: string,
     tradeAmount: number,
-    isSell: boolean = false
+    isSell = false
   ): Promise<number> {
     try {
       // Get token market data
@@ -3478,7 +3476,7 @@ export class DegenTradingService extends Service {
       // Liquidity adjustment: Increase slippage as trade size approaches significant % of liquidity
       if (liquidityPercentage > 0.1) {
         // If trade is more than 0.1% of liquidity, start increasing slippage
-        const liquidityFactor = Math.pow(liquidityPercentage, 1.5) * this.tradingConfig.slippageSettings.liquidityMultiplier;
+        const liquidityFactor = liquidityPercentage ** 1.5 * this.tradingConfig.slippageSettings.liquidityMultiplier;
         slippage += liquidityFactor * 0.01; // Scale appropriately
         
         logger.info('Liquidity-based slippage adjustment', {
@@ -3572,7 +3570,7 @@ export class DegenTradingService extends Service {
       // For tax tokens, you might need higher slippage
       // This would require knowledge of token tax rates from external sources
       const taxInfo = await this.fetchTokenTaxInfo(tokenAddress);
-      if (taxInfo && taxInfo.hasTax) {
+      if (taxInfo?.hasTax) {
         return taxInfo.taxPercentage * 1.5; // Add buffer above tax rate
       }
       
@@ -3983,7 +3981,7 @@ export class DegenTradingService extends Service {
         });
         
         // Get quote
-        const quoteResponse = await this.getQuote({
+        const _quoteResponse = await this.getQuote({
           inputMint: tokenAddress,
           outputMint: "So11111111111111111111111111111111111111112",
           amount: sellAmount.toString(),
@@ -4025,12 +4023,11 @@ export class DegenTradingService extends Service {
             receivedAmount: result.receivedAmount,
             receivedValue: result.receivedValue
           };
-        } else {
+        }
           logger.error("Sell failed", {
             error: result.error
           });
           return { success: false, error: result.error };
-        }
       } finally {
         // Remove from pending sells whether successful or not
         this.pendingSells[tokenAddress] =
@@ -4179,7 +4176,7 @@ export class DegenTradingService extends Service {
         const quoteResponse = await fetch(quoteUrl);
         const quoteData = await quoteResponse.json();
         
-        if (quoteData && quoteData.outAmount) {
+        if (quoteData?.outAmount) {
           expectedReceiveAmount = quoteData.outAmount;
           logger.info("Expected receive amount for sell", { 
             expectedReceiveAmount,

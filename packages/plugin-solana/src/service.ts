@@ -19,7 +19,7 @@ const PROVIDER_CONFIG = {
 
 export class SolanaService extends Service {
     static serviceType: string = SOLANA_SERVICE_NAME;
-    capabilityDescription: string = "The agent is able to interact with the Solana blockchain, and has access to the wallet data";
+    capabilityDescription = "The agent is able to interact with the Solana blockchain, and has access to the wallet data";
     
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;

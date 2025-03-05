@@ -44,7 +44,7 @@ import { VoiceManager } from "./voice.ts";
 
 export class DiscordService extends Service implements IDiscordService {
   static serviceType: string = DISCORD_SERVICE_NAME;
-  capabilityDescription: string = "The agent is able to send and receive messages on discord";
+  capabilityDescription = "The agent is able to send and receive messages on discord";
   client: DiscordJsClient;
   character: Character;
   messageManager: MessageManager;

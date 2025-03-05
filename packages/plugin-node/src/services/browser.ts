@@ -62,7 +62,7 @@ export class BrowserService extends Service implements IBrowserService {
     private cacheKey = "content/browser";
 
     static serviceType: ServiceType = ServiceTypes.BROWSER;
-    capabilityDescription: string = "The agent is able to browse the web and fetch content";
+    capabilityDescription = "The agent is able to browse the web and fetch content";
 
     constructor(runtime: IAgentRuntime) {
         super();

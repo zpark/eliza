@@ -8,7 +8,7 @@ import { TELEGRAM_SERVICE_NAME } from "./constants.ts";
 
 export class TelegramService extends Service {
     static serviceType = TELEGRAM_SERVICE_NAME;
-    capabilityDescription: string = "The agent is able to send and receive messages on telegram";
+    capabilityDescription = "The agent is able to send and receive messages on telegram";
     private bot: Telegraf<Context>;
     public messageManager: MessageManager;
     private options;
