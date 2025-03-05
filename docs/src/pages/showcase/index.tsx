@@ -4,6 +4,7 @@ import { type User, sortedUsers } from '@site/src/data/users';
 import ShowcaseSearchBar from './_components/ShowcaseSearchBar';
 import ShowcaseCards from './_components/ShowcaseCards';
 import ShowcaseFilters from './_components/ShowcaseFilters';
+import ShowcaseLayout from './_components/ShowcaseLayout';
 import Link from '@docusaurus/Link';
 import styles from './_components/ShowcaseLayout/styles.module.css';
 
@@ -72,10 +73,6 @@ export default function Showcase(): JSX.Element {
     setOperator(op => op === 'OR' ? 'AND' : 'OR');
   };
 
-  const clearSearch = () => {
-    setSearchValue('');
-  };
-
   const filteredUsers = useMemo(() => {
     return filterUsers(sortedUsers, searchValue, selectedTags, operator);
   }, [searchValue, selectedTags, operator]);
@@ -86,26 +83,28 @@ export default function Showcase(): JSX.Element {
         <ShowcaseHeader />
         
         <div className="container">
-          <div className={styles.filtersContainer}>
-            <div className={styles.filtersRow}>
-              <ShowcaseFilters
-                selectedTags={selectedTags}
-                toggleTag={toggleTag}
-                operator={operator}
-                toggleOperator={toggleOperator}
-              />
-              <ShowcaseSearchBar 
-                onChange={setSearchValue}
-                value={searchValue}
-              />
+          <ShowcaseLayout
+            selectedTags={selectedTags}
+            toggleTag={toggleTag}
+          >
+            <div className={styles.filtersContainer}>
+              <div className={styles.filtersRow}>
+                <ShowcaseFilters
+                  selectedTags={selectedTags}
+                  toggleTag={toggleTag}
+                  operator={operator}
+                  toggleOperator={toggleOperator}
+                />
+                <ShowcaseSearchBar 
+                  onChange={setSearchValue}
+                  value={searchValue}
+                />
+              </div>
             </div>
-            <div className={styles.tagsRow}>
-              {/* Tag buttons will be rendered inside ShowcaseFilters component */}
-            </div>
-          </div>
+            
+            <ShowcaseCards users={filteredUsers} />
+          </ShowcaseLayout>
         </div>
-        
-        <ShowcaseCards users={filteredUsers} />
       </main>
     </Layout>
   );

@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / Evaluator
+[@elizaos/core v0.25.9](../index.md) / Evaluator
 
 # Interface: Evaluator
 
