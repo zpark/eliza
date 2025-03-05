@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { v4 as uuidv4 } from "uuid";
-import { bootstrapPlugin } from "./bootstrap.ts";
+import { stdlibPlugin } from "./bootstrap.ts";
 import { settings } from "./environment.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import { MemoryManager } from "./memory.ts";
@@ -104,7 +104,7 @@ export class AgentRuntime implements IAgentRuntime {
     const plugins = opts?.plugins ?? [];
 
     if (!opts?.ignoreBootstrap) {
-      plugins.push(bootstrapPlugin);
+      plugins.push(stdlibPlugin);
     }
 
     this.plugins = plugins;

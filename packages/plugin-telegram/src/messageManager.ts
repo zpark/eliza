@@ -370,7 +370,7 @@ export class MessageManager {
                 }
             };
 
-            // Let the bootstrap plugin handle the message
+            // Let the stdlib plugin handle the message
             this.runtime.emitEvent(["TELEGRAM_MESSAGE_RECEIVED", "MESSAGE_RECEIVED"], {
                 runtime: this.runtime,
                 message: memory,
@@ -437,7 +437,7 @@ export class MessageManager {
                 }
             };
 
-            // Let the bootstrap plugin handle the reaction
+            // Let the stdlib plugin handle the reaction
             this.runtime.emitEvent(["TELEGRAM_REACTION_RECEIVED", "REACTION_RECEIVED"], {
                 runtime: this.runtime,
                 message: memory,

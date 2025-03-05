@@ -437,6 +437,35 @@ export interface Entity {
   components?: Component[];
 }
 
+
+export type World = {
+  id: UUID;
+  names: string;
+  agentId: UUID;
+  serverId: string;
+  metadata?: {
+    ownership?: {
+      ownerId: string;
+    };
+    roles?: {
+      [entityId: UUID]: Role;
+    };
+    [key: string]: unknown;
+  };
+}
+
+export type Room = {
+  id: UUID;
+  name?: string;
+  agentId?: UUID;
+  source: string;
+  type: ChannelType;
+  channelId?: string;
+  serverId?: string;
+  worldId?: UUID;
+  metadata?: Record<string, unknown>;
+}
+
 /**
  * Room participant with account details
  */
@@ -1315,34 +1344,6 @@ export interface Task {
   roomId?: UUID;
   worldId?: UUID;
   tags: string[];
-}
-
-export type World = {
-  id: UUID;
-  name: string;
-  agentId: UUID;
-  serverId: string;
-  metadata?: {
-    ownership?: {
-      ownerId: string;
-    };
-    roles?: {
-      [entityId: UUID]: Role;
-    };
-    [key: string]: unknown;
-  };
-}
-
-export type Room = {
-  id: UUID;
-  name?: string;
-  agentId?: UUID;
-  source: string;
-  type: ChannelType;
-  channelId?: string;
-  serverId?: string;
-  worldId?: UUID;
-  metadata?: Record<string, unknown>;
 }
 
 export enum Role {

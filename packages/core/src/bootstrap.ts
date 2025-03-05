@@ -775,9 +775,9 @@ const events = {
   ],
 };
 
-export const bootstrapPlugin: Plugin = {
-  name: "bootstrap",
-  description: "Agent bootstrap with basic actions and evaluators",
+export const stdlibPlugin: Plugin = {
+  name: "stdlib",
+  description: "Agent stdlib with basic actions and evaluators",
   actions: [
     followRoomAction,
     unfollowRoomAction,
@@ -814,4 +814,4 @@ export const bootstrapPlugin: Plugin = {
   services: [TaskService],
 };
 
-export default bootstrapPlugin;
+export default stdlibPlugin;
