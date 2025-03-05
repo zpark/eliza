@@ -1176,46 +1176,16 @@ export class DegenTradingService extends Service {
       tags: ["queue", "repeat", "degen_trader"],
     });
 
-    if (!tasks.find((task) => task.name === "GENERATE_BUY_SIGNAL")) {
+    if (!tasks.find((task) => task.name === "BUY_SIGNAL")) {
       await this.runtime.databaseAdapter.createTask({
         id: uuidv4() as UUID,
         roomId: this.runtime.agentId,
-        name: "GENERATE_BUY_SIGNAL",
+        name: "BUY_SIGNAL",
         description: "Generate buy signals",
         tags: ["queue", "repeat", "degen_trader"],
         metadata: {
           updatedAt: Date.now(),
           updateInterval: this.tradingConfig.intervals.priceCheck,
-          repeat: true,
-        },
-      });
-    }
-
-    if (!tasks.find((task) => task.name === "SYNC_WALLET")) {
-      await this.runtime.databaseAdapter.createTask({
-        id: uuidv4() as UUID,
-        roomId: this.runtime.agentId,
-        name: "SYNC_WALLET",
-        description: "Sync wallet",
-        tags: ["queue", "repeat", "degen_trader"],
-        metadata: {
-          updatedAt: Date.now(),
-          updateInterval: this.tradingConfig.intervals.walletSync,
-          repeat: true,
-        },
-      });
-    }
-
-    if (!tasks.find((task) => task.name === "MONITOR_PERFORMANCE")) {
-      await this.runtime.databaseAdapter.createTask({
-        id: uuidv4() as UUID,
-        roomId: this.runtime.agentId,
-        name: "MONITOR_PERFORMANCE",
-        description: "Monitor portfolio performance",
-        tags: ["queue", "repeat", "degen_trader"],
-        metadata: {
-          updatedAt: Date.now(),
-          updateInterval: this.tradingConfig.intervals.performanceMonitor,
           repeat: true,
         },
       });

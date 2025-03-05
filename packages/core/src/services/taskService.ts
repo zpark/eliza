@@ -101,7 +101,6 @@ export class TaskService extends Service {
 
       // Skip if no worker found for task
       if (!worker) {
-        console.warn(`No worker found for task: ${task.name}`);
         continue;
       }
 
