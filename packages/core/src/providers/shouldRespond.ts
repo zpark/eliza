@@ -69,6 +69,7 @@ const messageExamples = [
 export const shouldRespondProvider: Provider = {
   name: "SHOULD_RESPOND",
   description: "Examples of when the agent should respond, ignore, or stop responding",
+  position: -1,
   get: async (runtime: IAgentRuntime, _message: Memory) => {
     // Get agent name
     const agentName = runtime.character.name;

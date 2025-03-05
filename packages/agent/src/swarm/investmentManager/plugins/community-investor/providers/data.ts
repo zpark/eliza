@@ -216,7 +216,6 @@ export const dataProvider: Provider = {
     async get(
         runtime: IAgentRuntime,
         message: Memory,
-        _state?: State
     ) {
         try {
             // Extract token addresses from message and recent context

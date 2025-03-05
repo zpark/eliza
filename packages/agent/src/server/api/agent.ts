@@ -444,14 +444,19 @@ export function agentRouter(
         worldId,
       });
 
+      console.log("entityId", entityId);
+      console.log("runtime.agentId", runtime.agentId);
+
       const existingRelationship =
         await runtime.databaseAdapter.getRelationship({
           sourceEntityId: entityId,
           targetEntityId: runtime.agentId,
         });
 
+      console.log("existingRelationship", existingRelationship);
+
       if (!existingRelationship && entityId !== runtime.agentId) {
-        await runtime.databaseAdapter.createRelationship({
+        const createdRelationship = await runtime.databaseAdapter.createRelationship({
           sourceEntityId: entityId,
           targetEntityId: runtime.agentId,
           tags: ["message_interaction"],
@@ -460,7 +465,9 @@ export function agentRouter(
             channel: "direct",
           },
         });
+        console.log("created relationship", createdRelationship);
       }
+
 
       const messageId = createUniqueUuid(runtime, Date.now().toString());
       const attachments: Media[] = [];
@@ -508,7 +515,9 @@ export function agentRouter(
       };
 
       await runtime.getMemoryManager("messages").addEmbeddingToMemory(memory);
+      console.log("added embedding to memory");
       await runtime.getMemoryManager("messages").createMemory(memory);
+      console.log("created memory");
 
       let state = await runtime.composeState(userMessage, {
         agentName: runtime.character.name,
@@ -523,7 +532,11 @@ export function agentRouter(
         prompt,
       });
 
+      console.log("responseText", responseText);
+
       const response = parseJSONObjectFromText(responseText) as Content;
+
+      console.log("response", response);
 
       if (!response) {
         res.status(500).json({
@@ -545,9 +558,14 @@ export function agentRouter(
       };
 
       await runtime.getMemoryManager("messages").createMemory(responseMessage);
+
+      console.log("responseMessage", responseMessage);
+
       state = await runtime.composeState(responseMessage, {}, [
         "recentMemories",
       ]);
+
+      console.log("state", state);
 
       const replyHandler = async (message: Content) => {
         res.status(201).json({
@@ -567,7 +585,11 @@ export function agentRouter(
         replyHandler
       );
 
+      console.log("processed actions");
+
       await runtime.evaluate(memory, state);
+
+      console.log("evaluated");
 
       res.status(202).json();
     } catch (error) {

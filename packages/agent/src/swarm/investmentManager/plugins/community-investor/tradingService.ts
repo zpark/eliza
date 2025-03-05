@@ -1334,9 +1334,9 @@ export class CommunityInvestorService extends Service {
             const recommendations: TokenRecommendation[] = [];
             
             for (const memory of memories) {
-                if (memory.content.recommendation && 
-                    (memory.content.recommendation as TokenRecommendation).entityId === entityId) {
-                    recommendations.push(memory.content.recommendation as TokenRecommendation);
+                if (memory.metadata.recommendation && 
+                    (memory.metadata.recommendation as TokenRecommendation).entityId === entityId) {
+                    recommendations.push(memory.metadata.recommendation as TokenRecommendation);
                 }
             }
             

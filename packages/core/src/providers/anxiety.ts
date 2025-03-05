@@ -3,7 +3,7 @@ import type { IAgentRuntime, Memory, Provider, State } from "../types";
 
 export const anxietyProvider: Provider = {
   name: "ANXIETY",
-  get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {
+  get: async (_runtime: IAgentRuntime, _message: Memory) => {
     const anxietyExamples = [
       "As an AI, your responses tend to be too long and verbose, and you respond whern you shouldn't. You also tend to repeat yourself. Please don't speak and use IGNORE instead of responding when you aren't sure what to do.",
       "You often try too hard to be helpful and end up giving unnecessary information. When in doubt, it's better to use IGNORE than to give a potentially unhelpful response.",

@@ -168,6 +168,19 @@ const twitterPostAction: Action = {
 
       if (room.type !== ChannelType.GROUP) {
         // only handle in a group scenario for now
+        await runtime.getMemoryManager("messages").createMemory({
+          entityId: message.entityId,
+          agentId: message.agentId,
+          roomId: message.roomId,
+          content: {
+              source: message.content.source,
+              thought: "I tried to post a tweet but I'm not in a group scenario.",
+              actions: ["TWITTER_POST_FAILED"],
+          },
+          metadata: {
+              type: "TWITTER_POST",
+          },
+        });
         return false;
       }
 
@@ -201,7 +214,7 @@ const twitterPostAction: Action = {
 
       const userRole = await getUserServerRole(
         runtime,
-        entityId: message.entityId,
+        message.entityId,
         serverId
       );
       if (userRole !== "OWNER" && userRole !== "ADMIN") {
@@ -233,7 +246,7 @@ const twitterPostAction: Action = {
           if (options.option === "cancel") {
             await callback({
               ...responseContent,
-              text: "Tweet cancelled. I won't post it.",
+              text: "OK, I won't post it.",
               actions: ["TWITTER_POST_CANCELLED"]
             });
             return;
@@ -242,7 +255,7 @@ const twitterPostAction: Action = {
           if(options.option !== "post") {
             await callback({
               ...responseContent,
-              text: "Invalid option. Should be 'post' or 'cancel'.",
+              text: "Bad choice. Should be 'post' or 'cancel'.",
               actions: ["TWITTER_POST_INVALID_OPTION"]
             });
             return;

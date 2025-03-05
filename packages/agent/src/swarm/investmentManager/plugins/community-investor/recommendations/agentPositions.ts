@@ -6,7 +6,7 @@ import { formatFullReport } from "../reports";
 import { ServiceTypes, type TokenPerformance, type Transaction } from "../types";
 
 export const getAgentPositions: any = {
-    name: "TRUST_GET_AGENT_POSITIONS",
+    name: "GET_AGENT_POSITIONS",
     description:
         "Retrieves and formats position data for the agent's portfolio",
     examples: [
@@ -21,7 +21,7 @@ export const getAgentPositions: any = {
                 name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    actions: ["TRUST_GET_AGENT_POSITIONS"],
+                    actions: ["GET_AGENT_POSITIONS"],
                 },
             },
         ],
@@ -36,7 +36,7 @@ export const getAgentPositions: any = {
                 name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    actions: ["TRUST_GET_AGENT_POSITIONS"],
+                    actions: ["GET_AGENT_POSITIONS"],
                 },
             },
         ],
@@ -74,7 +74,7 @@ export const getAgentPositions: any = {
                     roomId: message.roomId,
                     metadata: {
                         ...message.metadata,
-                        actions: ["TRUST_GET_AGENT_POSITIONS"],
+                        actions: ["GET_AGENT_POSITIONS"],
                     },
                     createdAt: Date.now() * 1000,
                 };
@@ -160,7 +160,7 @@ export const getAgentPositions: any = {
                     roomId: message.roomId,
                     metadata: {
                         ...message.metadata,
-                        actions: ["TRUST_GET_AGENT_POSITIONS"],
+                        actions: ["GET_AGENT_POSITIONS"],
                     },
                     createdAt: Date.now() * 1000,
                 });

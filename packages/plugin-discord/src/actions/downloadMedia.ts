@@ -28,10 +28,6 @@ const getMediaUrl = async (
     message: Memory,
     state: State
 ): Promise<string | null> => {
-    if (!state) {
-        state = (await runtime.composeState(message)) as State;
-    }
-
     const prompt = composePrompt({
         state,
         template: mediaUrlTemplate,
@@ -79,20 +75,26 @@ export default {
         state: State,
         _options: any,
         callback: HandlerCallback,
-        responses: Memory[]
     ) => {
-        for (const response of responses) {
-            await callback(response.content);
-        }
         const videoService = runtime
             .getService<IVideoService>(ServiceTypes.VIDEO);
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
-        }
 
         const mediaUrl = await getMediaUrl(runtime, message, state);
         if (!mediaUrl) {
             console.error("Couldn't get media URL from messages");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                    source: "discord",
+                    thought: `I couldn't find the media URL in the message`,
+                    actions: ["DOWNLOAD_MEDIA_FAILED"],
+                },
+                metadata: {
+                    type: "DOWNLOAD_MEDIA",
+                },
+            });
             return;
         }
 

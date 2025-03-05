@@ -11,7 +11,7 @@ import { ServiceTypes, type TokenPerformance, type Transaction } from "../types"
 import type { CommunityInvestorService } from "../tradingService";
 
 export const getPositions: Action = {
-    name: "TRUST_GET_POSITIONS",
+    name: "GET_POSITIONS",
     description:
         "Retrieves and formats position data for the agent's portfolio",
     examples: [
@@ -26,7 +26,7 @@ export const getPositions: Action = {
                 name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    actions: ["TRUST_GET_POSITIONS"],
+                    actions: ["GET_POSITIONS"],
                 },
             },
         ],
@@ -52,6 +52,12 @@ export const getPositions: Action = {
                 logger.error(
                     "No User Found, no entity score can be generated"
                 );
+                await runtime.getMemoryManager("messages").createMemory({
+                    entityId: runtime.agentId,
+                    agentId: runtime.agentId,
+                    roomId: message.roomId,
+                    content: { thought: "No user found", actions: ["GET_POSITIONS_FAILED"] },
+                });
                 return;
             }
 
@@ -70,7 +76,7 @@ export const getPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        actions: ["TRUST_GET_POSITIONS"],
+                        actions: ["GET_POSITIONS"],
                     },
                     entityId: message.entityId,
                     agentId: message.agentId,
@@ -182,7 +188,7 @@ export const getPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        actions: ["TRUST_GET_POSITIONS"]
+                        actions: ["GET_POSITIONS"]
                     },
                     entityId: message.entityId,
                     metadata: message.metadata,

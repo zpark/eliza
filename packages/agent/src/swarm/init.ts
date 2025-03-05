@@ -4,7 +4,7 @@ import {
   createUniqueUuid,
   type Evaluator,
   type IAgentRuntime,
-  initializeOnboardingConfig,
+  initializeOnboarding,
   logger,
   type OnboardingConfig,
   type Provider,
@@ -100,7 +100,7 @@ export async function initializeAllSystems(
       }
 
       // Initialize settings configuration
-      const worldSettings = await initializeOnboardingConfig(
+      const worldSettings = await initializeOnboarding(
         runtime,
         world,
         config

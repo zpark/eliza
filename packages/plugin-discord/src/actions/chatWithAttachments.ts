@@ -1,6 +1,6 @@
 import {
     type Action,
-    type ActionExample, composePrompt, type Content, type HandlerCallback,
+    type ActionExample, ChannelType, composePrompt, type Content, type HandlerCallback,
     type IAgentRuntime,
     type Memory,
     ModelTypes, parseJSONObjectFromText, type State, trimTokens
@@ -38,8 +38,6 @@ const getAttachmentIds = async (
     message: Memory,
     state: State
 ): Promise<{ objective: string; attachmentIds: string[] } | null> => {
-    state = (await runtime.composeState(message)) as State;
-
     const prompt = composePrompt({
         state,
         template: attachmentIdsTemplate,
@@ -89,7 +87,8 @@ const summarizeAction = {
         message: Memory,
         _state: State
     ) => {
-        if (message.content.source !== "discord") {
+        const room = await _runtime.databaseAdapter.getRoom(message.roomId);
+        if (room?.type !== ChannelType.GROUP) {
             return false;
         }
         // only show if one of the keywords are in the message
@@ -129,8 +128,6 @@ const summarizeAction = {
         _options: any,
         callback: HandlerCallback,
     ) => {
-        state = (await runtime.composeState(message)) as State;
-
         const callbackData: Content = {
             text: "", // fill in later
             actions: ["CHAT_WITH_ATTACHMENTS_RESPONSE"],
@@ -142,6 +139,19 @@ const summarizeAction = {
         const attachmentData = await getAttachmentIds(runtime, message, state);
         if (!attachmentData) {
             console.error("Couldn't get attachment IDs from message");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                  source: message.content.source,
+                  thought: "I tried to chat with attachments but I couldn't get attachment IDs",
+                  actions: ["CHAT_WITH_ATTACHMENTS_FAILED"],
+                },
+                metadata: {
+                  type: "CHAT_WITH_ATTACHMENTS",
+                },
+              });
             return;
         }
 
@@ -178,8 +188,8 @@ const summarizeAction = {
 
         const chunkSize = 8192;
 
-        state.attachmentsWithText = attachmentsWithText;
-        state.objective = objective;
+        state.values.attachmentsWithText = attachmentsWithText;
+        state.values.objective = objective;
         const template = await trimTokens(
             summarizationTemplate,
             chunkSize,
@@ -200,6 +210,19 @@ const summarizeAction = {
 
         if (!currentSummary) {
             console.error("No summary found, that's not good!");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                  source: message.content.source,
+                  thought: "I tried to chat with attachments but I couldn't get a summary",
+                  actions: ["CHAT_WITH_ATTACHMENTS_FAILED"],
+                },
+                metadata: {
+                  type: "CHAT_WITH_ATTACHMENTS",
+                },
+              });
             return;
         }
 

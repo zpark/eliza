@@ -56,6 +56,19 @@ export const unmuteRoomAction: Action = {
                 cleanedResponse === "y" ||
                 cleanedResponse.includes("true") ||
                 cleanedResponse.includes("yes")) {
+                    await runtime.getMemoryManager("messages").createMemory({
+                        entityId: message.entityId,
+                        agentId: message.agentId,
+                        roomId: message.roomId,
+                        content: {
+                          source: message.content.source,
+                          thought: "I will now unmute this room and start considering it for responses again",
+                          actions: ["UNMUTE_ROOM_STARTED"],
+                        },
+                        metadata: {
+                          type: "UNMUTE_ROOM",
+                        },
+                      });
                 return true;
             }
             
@@ -65,6 +78,19 @@ export const unmuteRoomAction: Action = {
                 cleanedResponse === "n" ||
                 cleanedResponse.includes("false") ||
                 cleanedResponse.includes("no")) {
+                    await runtime.getMemoryManager("messages").createMemory({
+                        entityId: message.entityId,
+                        agentId: message.agentId,
+                        roomId: message.roomId,
+                        content: {
+                          source: message.content.source,
+                          thought: "I tried to unmute a room but I decided not to",
+                          actions: ["UNMUTE_ROOM_FAILED"],
+                        },
+                        metadata: {
+                          type: "UNMUTE_ROOM",
+                        },
+                      });
                 return false;
             }
             
@@ -72,8 +98,6 @@ export const unmuteRoomAction: Action = {
             logger.warn(`Unclear boolean response: ${response}, defaulting to false`);
             return false;
         }
-
-        state = await runtime.composeState(message);
 
         if (await _shouldUnmute(state)) {
             await runtime.databaseAdapter.setParticipantUserState(

@@ -58,6 +58,19 @@ export const muteRoomAction: Action = {
                 cleanedResponse === "y" ||
                 cleanedResponse.includes("true") ||
                 cleanedResponse.includes("yes")) {
+                    await runtime.getMemoryManager("messages").createMemory({
+                        entityId: message.entityId,
+                        agentId: message.agentId,
+                        roomId: message.roomId,
+                        content: {
+                            source: message.content.source,
+                            thought: "I will now mute this room",
+                            actions: ["MUTE_ROOM_STARTED"],
+                        },
+                        metadata: {
+                            type: "MUTE_ROOM",
+                        },
+                        });
                 return true;
             }
             
@@ -67,15 +80,25 @@ export const muteRoomAction: Action = {
                 cleanedResponse === "n" ||
                 cleanedResponse.includes("false") ||
                 cleanedResponse.includes("no")) {
-                return false;
+                await runtime.getMemoryManager("messages").createMemory({
+                    entityId: message.entityId,
+                    agentId: message.agentId,
+                    roomId: message.roomId,
+                    content: {
+                        source: message.content.source,
+                        thought: "I decided to not mute this room",
+                        actions: ["MUTE_ROOM_FAILED"],
+                    },
+                    metadata: {
+                        type: "MUTE_ROOM",
+                    },
+                });
             }
             
             // Default to false if response is unclear
             logger.warn(`Unclear boolean response: ${response}, defaulting to false`);
             return false;
         }
-
-        state = await runtime.composeState(message);
 
         if (await _shouldMute(state)) {
             await runtime.databaseAdapter.setParticipantUserState(

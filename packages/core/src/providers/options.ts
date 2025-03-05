@@ -12,7 +12,6 @@ export const optionsProvider: Provider = {
     get: async (
         runtime: IAgentRuntime,
         message: Memory,
-        _state?: State
     ): Promise<ProviderResult> => {
         try {
             // Get all pending tasks for this room with options

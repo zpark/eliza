@@ -1,6 +1,7 @@
 import {
     type Action,
     type ActionExample, composePrompt, type Content,
+    createUniqueUuid,
     type HandlerCallback,
     type IAgentRuntime,
     type Memory,
@@ -31,8 +32,6 @@ const getMediaAttachmentId = async (
     message: Memory,
     state: State
 ): Promise<string | null> => {
-    state = (await runtime.composeState(message)) as State;
-
     const prompt = composePrompt({
         state,
         template: mediaAttachmentIdTemplate,
@@ -102,14 +101,7 @@ const transcribeMediaAction = {
         state: State,
         _options: any,
         callback: HandlerCallback,
-        responses: Memory[]
     ) => {
-        for (const response of responses) {
-            await callback(response.content);
-        }
-
-        state = (await runtime.composeState(message)) as State;
-
         const callbackData: Content = {
             text: "", // fill in later
             actions: ["TRANSCRIBE_MEDIA_RESPONSE"],
@@ -124,6 +116,19 @@ const transcribeMediaAction = {
         );
         if (!attachmentId) {
             console.error("Couldn't get media attachment ID from message");
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                    source: "discord",
+                    thought: `I couldn't find the media attachment ID in the message`,
+                    actions: ["TRANSCRIBE_MEDIA_FAILED"],
+                },
+                metadata: {
+                    type: "TRANSCRIBE_MEDIA",
+                },
+            });
             return;
         }
 
@@ -141,6 +146,19 @@ const transcribeMediaAction = {
 
         if (!attachment) {
             console.error(`Couldn't find attachment with ID ${attachmentId}`);
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                    source: "discord",
+                    thought: `I couldn't find the media attachment with ID ${attachmentId}`,
+                    actions: ["TRANSCRIBE_MEDIA_FAILED"],
+                },
+                metadata: {
+                    type: "TRANSCRIBE_MEDIA",
+                },
+            });
             return;
         }
 

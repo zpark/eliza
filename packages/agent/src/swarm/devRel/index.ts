@@ -1,6 +1,6 @@
 import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import dotenv from "dotenv";
-import { initCharacter } from "../settings";
+import { initCharacter } from "../init";
 dotenv.config({ path: "../../.env" });
 
 const character: Character = {

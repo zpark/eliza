@@ -23,7 +23,7 @@ import {
 } from "./prompts.ts";
 import { actionExamplesProvider } from "./providers/actionExamples.ts";
 import { actionsProvider } from "./providers/actions.ts";
-import { anxietyProvider } from "./providers/anxity.ts";
+import { anxietyProvider } from "./providers/anxiety.ts";
 import { attachmentsProvider } from "./providers/attachments.ts";
 import { capabilitiesProvider } from "./providers/capabilities.ts";
 import { characterProvider } from "./providers/character.ts";
@@ -32,7 +32,7 @@ import { evaluatorsProvider } from "./providers/evaluators.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { knowledgeProvider } from "./providers/knowledge.ts";
 import { optionsProvider } from "./providers/options.ts";
-import { recentMemoriesProvider } from "./providers/recentMemories.ts";
+import { recentMessagesProvider } from "./providers/recentMessages.ts";
 import { relationshipsProvider } from "./providers/relationships.ts";
 import { roleProvider } from "./providers/roles.ts";
 import { settingsProvider } from "./providers/settings.ts";
@@ -47,9 +47,8 @@ import {
   type Memory,
   ModelTypes,
   type Plugin,
-  Role,
   type Room,
-  type World,
+  type World
 } from "./types.ts";
 
 type ServerJoinedParams = {
@@ -90,6 +89,7 @@ const messageReceivedHandler = async ({
   message,
   callback,
 }: MessageReceivedHandlerParams) => {
+  console.log('*** messageReceivedHandler ****');
   // Generate a new response ID
   const responseId = v4();
   // Get or create the agent-specific map
@@ -100,6 +100,10 @@ const messageReceivedHandler = async ({
 
   // Set this as the latest response ID for this agent+room
   agentResponses.set(message.roomId, responseId);
+  
+  if (message.entityId === runtime.agentId) {
+    throw new Error("Message is from the agent itself");
+  }
 
   // First, save the incoming message
   await Promise.all([
@@ -107,7 +111,9 @@ const messageReceivedHandler = async ({
     runtime.getMemoryManager("messages").createMemory(message),
   ]);
 
-  if (message.entityId === runtime.agentId) return false;
+  console.log('*** messageReceivedHandler 2 ****');
+
+
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
     message.roomId,
@@ -121,40 +127,16 @@ const messageReceivedHandler = async ({
       .includes(runtime.character.name.toLowerCase())
   ) {
     console.log("Ignoring muted room");
-    return false;
-  }
-
-  if (agentUserState === "FOLLOWED") {
-    return true;
-  }
-
-  if (
-    message.content.text
-      .toLowerCase()
-      .includes(runtime.character.name.toLowerCase())
-  ) {
-    return true;
+    return;
   }
 
   let state = await runtime.composeState(message, {}, [
     "DYNAMIC_PROVIDERS",
     "SHOULD_RESPOND",
     "CHARACTER",
-    "RECENT_MEMORIES",
+    "RECENT_MESSAGES",
     "ENTITIES",
   ]);
-
-  if (!state.entities) {
-    throw new Error("No entities found");
-  }
-
-  if (!state.agentName) {
-    throw new Error("No agent name found");
-  }
-
-  if (!state.recentMessages) {
-    throw new Error("No recent messages found");
-  }
 
   const shouldRespondPrompt = composePrompt({
     state,
@@ -167,9 +149,11 @@ const messageReceivedHandler = async ({
     prompt: shouldRespondPrompt,
   });
 
-  console.log("shouldRespondPrompt", shouldRespondPrompt);
+  console.log("*** shouldRespondPrompt ****", shouldRespondPrompt);
 
   const responseObject = parseJSONObjectFromText(response);
+
+  console.log('*** responseObject ****', responseObject);
 
   const providers = responseObject.providers;
 
@@ -177,7 +161,11 @@ const messageReceivedHandler = async ({
     responseObject?.action &&
     responseObject.action === "RESPOND";
 
+  console.log('*** shouldRespond? ', shouldRespond);
+
   state = await runtime.composeState(message, {}, null, providers);
+
+  let responseMessages: Memory[] = [];
 
   if (shouldRespond) {
     const prompt = composePrompt({
@@ -205,7 +193,7 @@ const messageReceivedHandler = async ({
     responseContent.text = responseContent.text?.trim();
     responseContent.inReplyTo = createUniqueUuid(runtime, message.id);
 
-    const responseMessages: Memory[] = [
+    responseMessages = [
       {
         id: v4() as UUID,
         entityId: runtime.agentId,
@@ -216,18 +204,19 @@ const messageReceivedHandler = async ({
       },
     ];
 
-    state = await runtime.composeState(message, {}, ["RECENT_MEMORIES"]);
-
     // Clean up the response ID
     agentResponses.delete(message.roomId);
     if (agentResponses.size === 0) {
       latestResponseIds.delete(runtime.agentId);
     }
 
+    console.log('*** responseMessages ****', responseMessages);
+
     await runtime.processActions(message, responseMessages, state, callback);
+    console.log('*** processedActions ****');
   }
 
-  await runtime.evaluate(message, state, shouldRespond, callback);
+  await runtime.evaluate(message, state, shouldRespond, callback, responseMessages);
 };
 
 const reactionReceivedHandler = async ({
@@ -245,289 +234,6 @@ const reactionReceivedHandler = async ({
       return;
     }
     logger.error("Error in reaction handler:", error);
-  }
-};
-
-/**
- * Syncs all users from a server into entities with smart handling for large servers
- */
-const syncServerUsers = async (
-  runtime: IAgentRuntime,
-  server: any,
-  source: string
-) => {
-  logger.info(`Syncing users for server: ${server.name || server.id}`);
-
-  try {
-    // Create/ensure the world exists for this server
-    const worldId = createUniqueUuid(runtime, server.id);
-    const ownerId = createUniqueUuid(runtime, server.ownerId);
-
-    await runtime.ensureWorldExists({
-      id: worldId,
-      name: server.name || `Server ${server.id}`,
-      agentId: runtime.agentId,
-      serverId: server.id,
-      metadata: {
-        ownership: server.ownerId ? { ownerId } : undefined,
-        roles: {
-          [server.ownerId]: Role.OWNER,
-        },
-      },
-    });
-
-    // Always sync channels
-    await syncServerChannels(runtime, server, source);
-
-    // For Discord, use specialized sync based on server size
-    if (source === "discord") {
-      const guild = await server.fetch();
-
-      if (guild.memberCount > 1000) {
-        // Large server strategy - don't sync all users at once
-        await syncLargeServerUsers(runtime, guild, source);
-      } else {
-        // Small/medium server - can sync all users
-        await syncRegularServerUsers(runtime, guild, source);
-      }
-    } else if (source === "telegram") {
-      // Telegram-specific handling
-      // Telegram generally doesn't have the same scale issues
-    }
-
-    logger.success(
-      `Successfully synced server structure for: ${server.name || server.id}`
-    );
-  } catch (error) {
-    logger.error(
-      `Error syncing server: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-};
-
-/**
- * Handles syncing for very large servers (>1000 members)
- * Uses progressive loading and focuses on active users only
- */
-const syncLargeServerUsers = async (
-  runtime: IAgentRuntime,
-  guild: any,
-  source: string
-) => {
-  logger.info(
-    `Using large server sync strategy for ${guild.name} (${guild.memberCount} members)`
-  );
-
-  try {
-    // 1. Only sync text channels first
-    for (const [channelId, channel] of guild.channels.cache) {
-      if (channel.type === 0) {
-        // Text channel
-        // 2. For each channel, only grab a small sample of most recent active users
-        const messages = await channel.messages.fetch({ limit: 10 });
-
-        // Create a set to track unique users
-        const activeUsers = new Set();
-
-        messages.forEach((msg) => {
-          if (!msg.author.bot) {
-            activeUsers.add({
-              id: msg.author.id,
-              username: msg.author.username,
-              displayName: msg.author.displayName || msg.author.username,
-            });
-          }
-        });
-
-        // If we found active users, sync them
-        if (activeUsers.size > 0) {
-          await syncMultipleUsers(
-            runtime,
-            Array.from(activeUsers),
-            guild.id,
-            channelId,
-            ChannelType.GROUP,
-            source
-          );
-        }
-      }
-    }
-
-    // 3. In the background, sync online members (with delay to avoid rate limits)
-    setTimeout(async () => {
-      try {
-        // This gets presence data but only for online users
-        const onlineMembers = guild.members.cache.filter(
-          (member) => member.presence?.status === "online"
-        );
-
-        // Process in small batches
-        const batchSize = 50;
-        const onlineMembersArray = Array.from(onlineMembers.values());
-
-        for (let i = 0; i < onlineMembersArray.length; i += batchSize) {
-          const batch = onlineMembersArray.slice(i, i + batchSize);
-
-          const users = batch.map((member: any) => ({
-            id: member.id,
-            username: member.user.username,
-            displayName: member.displayName || member.user.username,
-          }));
-
-          // Don't sync to null channel with WORLD type - find a default channel instead
-          const generalChannel =
-            guild.channels.cache.find(
-              (ch) => ch.name === "general" && ch.type === 0
-            ) || guild.channels.cache.find((ch) => ch.type === 0);
-
-          if (generalChannel) {
-            await syncMultipleUsers(
-              runtime,
-              users,
-              guild.id,
-              generalChannel.id,
-              ChannelType.GROUP,
-              source
-            );
-          }
-
-          // Add a delay between batches to avoid rate limits
-          if (i + batchSize < onlineMembersArray.length) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-          }
-        }
-
-        logger.success(
-          `Completed background sync of ${onlineMembersArray.length} online users for ${guild.name}`
-        );
-      } catch (error) {
-        logger.error(`Error in background sync: ${error.message}`);
-      }
-    }, 5000); // Start after 5 seconds
-
-    logger.info(`Completed initial sync for large server ${guild.name}`);
-  } catch (error) {
-    logger.error(`Error in large server sync: ${error.message}`);
-  }
-};
-
-/**
- * Syncs all channels from a server
- */
-const syncServerChannels = async (
-  runtime: IAgentRuntime,
-  server: any,
-  source: string
-) => {
-  try {
-    if (source === "discord") {
-      const guild = await server.fetch();
-      const worldId = createUniqueUuid(runtime, guild.id);
-
-      // Loop through all channels and create room entities
-      for (const [channelId, channel] of guild.channels.cache) {
-        // Only process text and voice channels
-        if (channel.type === 0 || channel.type === 2) {
-          // GUILD_TEXT or GUILD_VOICE
-          const roomId = createUniqueUuid(runtime, channelId);
-          const room = await runtime.databaseAdapter.getRoom(roomId);
-
-          // Skip if room already exists
-          if (room) continue;
-
-          let channelType;
-          switch (channel.type) {
-            case 0: // GUILD_TEXT
-              channelType = ChannelType.GROUP;
-              break;
-            case 2: // GUILD_VOICE
-              channelType = ChannelType.VOICE_GROUP;
-              break;
-            default:
-              channelType = ChannelType.GROUP;
-          }
-
-          await runtime.ensureRoomExists({
-            id: roomId,
-            name: channel.name,
-            source: "discord",
-            type: channelType,
-            channelId: channel.id,
-            serverId: guild.id,
-            worldId,
-          });
-        }
-      }
-    }
-  } catch (error) {
-    logger.error(`Error syncing channels: ${error.message}`);
-  }
-};
-
-/**
- * For smaller servers, we can sync all users more comprehensively
- */
-const syncRegularServerUsers = async (
-  runtime: IAgentRuntime,
-  guild: any,
-  source: string
-) => {
-  try {
-    logger.info(`Syncing all users for guild ${guild.name}`);
-    // We can fetch all members for smaller servers
-    // Get members from cache first
-    let members = guild.members.cache;
-    // If cache is empty, fetch all members
-    if (members.size === 0) {
-      members = await guild.members.fetch();
-    }
-    logger.info(`Syncing ${members.size} members for guild ${guild.name}`);
-    // Process in batches to avoid overwhelming the system
-    const batchSize = 100;
-    const membersArray = Array.from(members.values());
-
-    // Find a default channel for user syncing
-    const defaultChannel =
-      guild.channels.cache.find(
-        (ch) => ch.name === "general" && ch.type === 0
-      ) || guild.channels.cache.find((ch) => ch.type === 0);
-
-    if (!defaultChannel) {
-      logger.warn(`No suitable text channel found for guild ${guild.name}`);
-      return;
-    }
-
-    for (let i = 0; i < membersArray.length; i += batchSize) {
-      const batch = membersArray.slice(i, i + batchSize);
-      const users = batch.map((member: any) => ({
-        id: member.id,
-        username: member.user.username,
-        displayName: member.displayName || member.user.username,
-      }));
-
-      // Use the default channel instead of null with WORLD type
-      await syncMultipleUsers(
-        runtime,
-        users,
-        guild.id,
-        defaultChannel.id,
-        ChannelType.GROUP,
-        source
-      );
-
-      // Add a small delay between batches
-      if (i + batchSize < membersArray.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-
-    logger.success(
-      `Completed sync of all ${membersArray.length} users for ${guild.name}`
-    );
-  } catch (error) {
-    logger.error(`Error in regular server sync: ${error.message}`);
   }
 };
 
@@ -667,66 +373,6 @@ const handleServerSync = async ({
   }
 };
 
-/**
- * Syncs multiple users into entities at once
- */
-const syncMultipleUsers = async (
-  runtime: IAgentRuntime,
-  users: any[],
-  serverId: string,
-  channelId: string,
-  type: ChannelType,
-  source: string
-) => {
-  if (!channelId) {
-    logger.warn("Cannot sync users without a valid channelId");
-    return;
-  }
-
-  logger.info(`Syncing ${users.length} users for channel ${channelId}`);
-
-  try {
-    const roomId = createUniqueUuid(runtime, channelId);
-    const worldId = createUniqueUuid(runtime, serverId);
-    // Process users in batches to avoid overwhelming the system
-    const batchSize = 10;
-    for (let i = 0; i < users.length; i += batchSize) {
-      const batch = users.slice(i, i + batchSize);
-
-      await Promise.all(
-        batch.map(async (user) => {
-          try {
-            await runtime.ensureConnection({
-              entityId: user.id,
-              roomId,
-              userName: user.username || `User${user.id}`,
-              name:
-                user.displayName || user.username || `User${user.id}`,
-              source,
-              channelId,
-              serverId,
-              type,
-              worldId,
-            });
-          } catch (err) {
-            logger.warn(`Failed to sync user ${user.id}: ${err}`);
-          }
-        })
-      );
-    }
-
-    logger.success(
-      `Successfully synced ${users.length} users for channel ${channelId}`
-    );
-  } catch (error) {
-    logger.error(
-      `Error syncing multiple users: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-};
-
 const events = {
   MESSAGE_RECEIVED: [
     async ({ runtime, message, callback }: MessageReceivedHandlerParams) => {
@@ -775,9 +421,9 @@ const events = {
   ],
 };
 
-export const stdlibPlugin: Plugin = {
-  name: "stdlib",
-  description: "Agent stdlib with basic actions and evaluators",
+export const bootstrapPlugin: Plugin = {
+  name: "bootstrap",
+  description: "Agent bootstrap with basic actions and evaluators",
   actions: [
     followRoomAction,
     unfollowRoomAction,
@@ -804,7 +450,7 @@ export const stdlibPlugin: Plugin = {
     entitiesProvider,
     evaluatorsProvider,
     actionExamplesProvider,
-    recentMemoriesProvider,
+    recentMessagesProvider,
     actionsProvider,
     attachmentsProvider,
     characterProvider,
@@ -814,4 +460,4 @@ export const stdlibPlugin: Plugin = {
   services: [TaskService],
 };
 
-export default stdlibPlugin;
+export default bootstrapPlugin;

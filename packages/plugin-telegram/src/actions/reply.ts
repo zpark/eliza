@@ -10,7 +10,7 @@ const replyAction = {
   name: "REPLY",
   similes: ["REPLY_TO_MESSAGE", "SEND_REPLY"],
   description:
-    "Replies to the current conversation with the text from the generated message. Default if the agent is responding with a message and no other action.",
+    "Replies to the current conversation with the text from the generated message. Default if the agent is responding with a message and no other action. Call this action before any other actions if you want to acknowledge the message before taking any other actions.",
   validate: async (_runtime: IAgentRuntime, message: Memory, _state: State) => {
     if (message.content.source !== "telegram") {
       return false;

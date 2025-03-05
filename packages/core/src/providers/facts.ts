@@ -15,7 +15,7 @@ const factsProvider: Provider = {
     description: "Key facts that {{agentName}} knows",
     dynamic: true,
     get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        const recentMessagesData = state?.recentMessagesData?.slice(-10);
+        const recentMessagesData = state?.values?.recentMessagesData?.slice(-10);
 
         const recentMessages = formatMessages({
             messages: recentMessagesData,

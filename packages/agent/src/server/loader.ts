@@ -2,7 +2,7 @@ import { type Character, logger, validateCharacterConfig } from "@elizaos/core";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { defaultCharacter } from "../single-agent/character.ts";
+import { character as defaultCharacter } from "../swarm/communityManager";
 import multer from "multer";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,35 +14,6 @@ export function tryLoadFile(filePath: string): string | null {
   } catch (e) {
     throw new Error(`Error loading file ${filePath}: ${e}`);
   }
-}
-
-export function mergeCharacters(base: Character, child: Character): Character {
-  const mergeObjects = (obj1: Record<string, unknown>, obj2: Record<string, unknown>) => {
-    const result: Record<string, unknown> = {};
-    const keys = new Set([
-      ...Object.keys(obj1 || {}),
-      ...Object.keys(obj2 || {}),
-    ]);
-    for (const key of keys) {
-      if (
-        typeof obj1[key] === "object" &&
-        typeof obj2[key] === "object" &&
-        !Array.isArray(obj1[key]) &&
-        !Array.isArray(obj2[key])
-      ) {
-        result[key] = mergeObjects(
-          obj1[key] as Record<string, unknown>, 
-          obj2[key] as Record<string, unknown>
-        );
-      } else if (Array.isArray(obj1[key]) || Array.isArray(obj2[key])) {
-        result[key] = [...(obj1[key] as unknown[] || []), ...(obj2[key] as unknown[] || [])];
-      } else {
-        result[key] = obj2[key] !== undefined ? obj2[key] : obj1[key];
-      }
-    }
-    return result;
-  };
-  return mergeObjects(base, child) as Character;
 }
 
 export async function loadCharactersFromUrl(url: string): Promise<Character[]> {

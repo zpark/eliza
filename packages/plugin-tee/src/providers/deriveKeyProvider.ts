@@ -177,7 +177,6 @@ const phalaDeriveKeyProvider: Provider = {
     get: async (
         runtime: IAgentRuntime,
         _message?: Memory,
-        _state?: State,
     ): Promise<ProviderResult> => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaDeriveKeyProvider(teeMode);
@@ -259,7 +258,6 @@ const sgxGramineDeriveKeyProvider: Provider = {
     get: async (
         _runtime: IAgentRuntime,
         _message?: Memory,
-        _state?: State,
     ): Promise<ProviderResult> => {
         return {
             data: { provider: 'sgx-gramine' },

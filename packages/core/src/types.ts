@@ -146,13 +146,13 @@ export const ServiceTypes = {
 export interface State {
   /** Additional dynamic properties */
   [key: string]: any;
-  values?: {
+  values: {
     [key: string]: any;
   };
-  data?: {
+  data: {
     [key: string]: any;
   };
-  providers?: string;
+  text: string;
 }
 
 export type MemoryTypeAlias = string
@@ -202,7 +202,8 @@ export type MemoryMetadata =
     | FragmentMetadata 
     | MessageMetadata 
     | DescriptionMetadata
-    | CustomMetadata;
+    | CustomMetadata
+    | any;
 
 /**
  * Represents a stored memory/message
@@ -365,6 +366,9 @@ export interface Provider {
   /** Whether the provider is dynamic */
   dynamic?: boolean;
 
+  /** Position of the provider in the provider list, positive or negative */
+  position?: number;
+
   /**
    * Whether the provider is private
    * 
@@ -440,7 +444,7 @@ export interface Entity {
 
 export type World = {
   id: UUID;
-  names: string;
+  name?: string;
   agentId: UUID;
   serverId: string;
   metadata?: {
@@ -804,12 +808,7 @@ export interface IDatabaseAdapter {
 
   removeAllGoals(roomId: UUID): Promise<void>;
 
-  createWorld({
-    id,
-    name,
-    serverId,
-    metadata
-  }: World): Promise<UUID>;
+  createWorld(world: World): Promise<UUID>;
 
   getWorld(id: UUID): Promise<World | null>;
 
@@ -1018,7 +1017,8 @@ export interface IAgentRuntime {
     message: Memory,
     state?: State,
     didRespond?: boolean,
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
+    responses?: Memory[]
   ): Promise<Evaluator[] | null>;
 
   registerProvider(provider: Provider): void;
@@ -1051,22 +1051,9 @@ export interface IAgentRuntime {
 
   ensureParticipantInRoom(entityId: UUID, roomId: UUID): Promise<void>;
 
-  ensureWorldExists({
-    id,
-    name,
-    serverId,
-    metadata
-  }: World): Promise<void>;
+  ensureWorldExists(world: World): Promise<void>;
 
-  ensureRoomExists({
-    id,
-    name,
-    source,
-    type,
-    channelId,
-    serverId,
-    worldId,
-  }: Room): Promise<void>;
+  ensureRoomExists(room: Room): Promise<void>;
 
   composeState(
     message: Memory,
@@ -1095,12 +1082,6 @@ export interface IAgentRuntime {
   stop(): Promise<void>;
 
   ensureEmbeddingDimension(): Promise<void>;
-}
-
-export enum LoggingLevel {
-  DEBUG = "debug",
-  VERBOSE = "verbose",
-  NONE = "none",
 }
 
 export type KnowledgeItem = {

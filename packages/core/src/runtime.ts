@@ -1,12 +1,10 @@
 import { join } from "node:path";
 import { v4 as uuidv4 } from "uuid";
-import { stdlibPlugin } from "./bootstrap.ts";
+import { bootstrapPlugin } from "./bootstrap.ts";
 import { settings } from "./environment.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import { MemoryManager } from "./memory.ts";
-import {
-  splitChunks
-} from "./prompts.ts";
+import { splitChunks } from "./prompts.ts";
 import {
   type Action,
   type Agent,
@@ -49,7 +47,7 @@ export class AgentRuntime implements IAgentRuntime {
   readonly providers: Provider[] = [];
   readonly plugins: Plugin[] = [];
   events: Map<string, ((params: any) => void)[]> = new Map();
-  stateCache = new Map<UUID, { values: State; data: any; providers: string }>();
+  stateCache = new Map<UUID, { values: { [key: string]: any }; data: { [key: string]: any }; text: string }>();
 
   readonly fetch = fetch;
   services: Map<ServiceType, Service> = new Map();
@@ -104,7 +102,7 @@ export class AgentRuntime implements IAgentRuntime {
     const plugins = opts?.plugins ?? [];
 
     if (!opts?.ignoreBootstrap) {
-      plugins.push(stdlibPlugin);
+      plugins.push(bootstrapPlugin);
     }
 
     this.plugins = plugins;
@@ -553,18 +551,22 @@ export class AgentRuntime implements IAgentRuntime {
       function normalizeAction(action: string) {
         return action.toLowerCase().replace("_", "");
       }
-      logger.success(`Found actions: ${this.actions.map((a) => normalizeAction(a.name))}`);
+      logger.success(
+        `Found actions: ${this.actions.map((a) => normalizeAction(a.name))}`
+      );
 
       for (const responseAction of actions) {
+        state = await this.composeState(message, {}, ["RECENT_MESSAGES"]);
+
         logger.success(`Calling action: ${responseAction}`);
         const normalizedResponseAction = normalizeAction(responseAction);
         let action = this.actions.find(
           (a: { name: string }) =>
             normalizeAction(a.name).includes(normalizedResponseAction) || // the || is kind of a fuzzy match
-            normalizedResponseAction.includes(normalizeAction(a.name))    // 
+            normalizedResponseAction.includes(normalizeAction(a.name)) //
         );
-        
-        if(action) {
+
+        if (action) {
           logger.success(`Found action: ${action?.name}`);
         } else {
           logger.error(`No action found for: ${responseAction}`);
@@ -579,7 +581,9 @@ export class AgentRuntime implements IAgentRuntime {
                   .toLowerCase()
                   .replace("_", "")
                   .includes(normalizedResponseAction) ||
-                normalizedResponseAction.includes(simile.toLowerCase().replace("_", ""))
+                normalizedResponseAction.includes(
+                  simile.toLowerCase().replace("_", "")
+                )
             );
             if (simileAction) {
               action = _action;
@@ -603,7 +607,22 @@ export class AgentRuntime implements IAgentRuntime {
 
         try {
           logger.info(`Executing handler for action: ${action.name}`);
+
           await action.handler(this, message, state, {}, callback, responses);
+
+          // log to database
+          await this.databaseAdapter.log({
+            entityId: message.entityId,
+            roomId: message.roomId,
+            type: "action",
+            body: {
+              action: action.name,
+              message: message.content.text,
+              messageId: message.id,
+              state,
+              responses,
+            },
+          });
         } catch (error) {
           logger.error(error);
           throw error;
@@ -624,7 +643,8 @@ export class AgentRuntime implements IAgentRuntime {
     message: Memory,
     state: State,
     didRespond?: boolean,
-    callback?: HandlerCallback
+    callback?: HandlerCallback,
+    responses?: Memory[]
   ) {
     const evaluatorPromises = this.evaluators.map(
       async (evaluator: Evaluator) => {
@@ -636,6 +656,7 @@ export class AgentRuntime implements IAgentRuntime {
           return null;
         }
         const result = await evaluator.validate(this, message, state);
+
         if (result) {
           return evaluator;
         }
@@ -643,14 +664,33 @@ export class AgentRuntime implements IAgentRuntime {
       }
     );
 
-    const evaluators = (await Promise.all(evaluatorPromises)).filter(Boolean) as Evaluator[];
+    const evaluators = (await Promise.all(evaluatorPromises)).filter(
+      Boolean
+    ) as Evaluator[];
 
     // get the evaluators that were chosen by the response handler
 
-    for (const evaluator of evaluators) {
-      if (evaluator.handler)
-        await evaluator.handler(this, message, state, {}, callback);
-    }
+    await Promise.all(
+      evaluators.map(async (evaluator) => {
+        state = await this.composeState(message, {}, ["RECENT_MESSAGES"]);
+        console.log("message is", message)
+        if (evaluator.handler) {
+          await evaluator.handler(this, message, state, {}, callback, responses);
+          // log to database
+          await this.databaseAdapter.log({
+            entityId: message.entityId,
+            roomId: message.roomId,
+            type: "evaluator",
+            body: {
+              evaluator: evaluator.name,
+              messageId: message.id,
+              message: message.content.text,
+              state,
+            },
+          });
+        }
+      })
+    );
 
     return evaluators;
   }
@@ -847,68 +887,92 @@ export class AgentRuntime implements IAgentRuntime {
   async composeState(
     message: Memory,
     additionalKeys: { [key: string]: unknown } = null,
-    filterList: string[] | null = null, // filter out providers that are not in the list
-    includeList: string[] | null = null, // include providers that are private, dynamic or otherwise not included by default
+    filterList: string[] | null = null, // only get providers that are in the filterList (this will not erase previously added providers)
+    includeList: string[] | null = null // include providers that are private, dynamic or otherwise not included by default
   ): Promise<State> {
-    const providersToGet = (filterList
-      ? this.providers.filter((provider) =>
-        filterList.includes(provider.name)
-        )
-      : this.providers).filter(provider => !provider.private && !provider.dynamic)
-      // add any providers on the includeList that aren't already in the providersToGet array
-      .concat(includeList.filter(provider => !providersToGet.includes(provider)).map(provider => this.providers.find(p => p.name === provider)));
-      
+    const providersToGet = (
+      filterList
+        ? this.providers.filter((provider) =>
+            filterList.includes(provider.name)
+          )
+        : this.providers
+    )
+      .filter((provider) => !provider.private && !provider.dynamic)
+      .concat(
+        includeList
+          ? this.providers.filter(
+              (provider) =>
+                includeList.includes(provider.name) &&
+                !providersToGet.includes(provider)
+            )
+          : []
+      )
+
     const privateProvidersToGet = includeList
-      ? this.providers.filter((provider) =>
-        includeList.includes(provider.name) ||
-        filterList?.includes(provider.name)
+      ? this.providers.filter(
+          (provider) =>
+            includeList.includes(provider.name) ||
+            filterList?.includes(provider.name)
         )
       : [];
 
-    const providerData = (await Promise.all(
-      Array.from(new Set([...providersToGet, ...privateProvidersToGet])).map(async (provider) => {
+    const allProviders = Array.from(
+      new Set([...providersToGet, ...privateProvidersToGet])
+    ).sort((a, b) => (a.position || 0) - (b.position || 0)) as Provider[];
+
+    const providerData = await Promise.all(
+      allProviders.map(async (provider) => {
         const start = Date.now();
         const result = await provider.get(this, message);
         const duration = Date.now() - start;
         logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
         return result;
       })
-    ))
+    );
 
-    const providers = providerData.flatMap((result) => result.values);
+    const combinedValues = {}
+    for (const result of providerData) {
+      for (const key in result.values) {
+        combinedValues[key] = result.values[key];
+      }
+    }
 
     // get cached state for this message ID
     const cachedState = (await this.stateCache.get(message.id)) || {
       values: {},
       data: {},
-      providers: "",
+      text: "",
     };
 
-    const providersText = cachedState.providers
-      + providers
-        .map((result) => result.text)
-        .filter((text) => text !== "")
-        .join("\n\n");
-    const data = { providers }
+
+    const currentProvidersText = (providerData
+      .map(result => result.text)
+      .filter(text => text !== "")
+      .join("\n"));
+
+    const providersText =
+      cachedState.text + "\n" +
+      currentProvidersText;
 
     const values = {
       ...cachedState.values,
-      ...providerData.flatMap((result) => result.values),
+      ...combinedValues,
       ...(additionalKeys || {}),
-    }
-
+    };
+    
     const newState = {
       values: {
         ...cachedState.values,
         ...values,
         ...(additionalKeys || {}),
+        providers: providersText,
       },
       data: {
         ...cachedState.data,
-        ...data
+        providers: combinedValues
       },
-      providers: providersText,
-    };
+      text: providersText,
+    } as State;
     this.stateCache.set(message.id, newState);
     return newState;
   }
@@ -983,12 +1047,9 @@ export class AgentRuntime implements IAgentRuntime {
     if (!model) {
       throw new Error(`No handler found for delegate type: ${modelKey}`);
     }
-    logger.debug(`Using model: ${modelKey} with params: ${JSON.stringify(params)}`);
 
     // Call the model
     const response = await model(this, params);
-
-    logger.debug(`Model ${modelKey} returned: ${JSON.stringify(response)}`);
 
     await this.databaseAdapter.log({
       entityId: this.agentId,
@@ -996,12 +1057,12 @@ export class AgentRuntime implements IAgentRuntime {
       body: {
         modelType,
         modelKey,
-        params,
-        response
+        params: params ? Object.keys(params) : [],
+        response: Array.isArray(response) && response.every(x => typeof x === 'number') ? '[array]' : response,
       },
       type: "useModel:" + modelType,
     });
-    
+
     return response;
   }
 

@@ -764,7 +764,7 @@ export class DiscordService extends Service implements IDiscordService {
       setTimeout(async () => {
         // For each server the client is in, fire a connected event
         const fullGuild = await guild.fetch();
-        logger.log("DISCORD SERVER CONNECTED", fullGuild);
+        logger.log("DISCORD SERVER CONNECTED", fullGuild.name);
 
         // Emit Discord-specific event with full guild object
         this.runtime.emitEvent(["DISCORD_SERVER_CONNECTED"], {

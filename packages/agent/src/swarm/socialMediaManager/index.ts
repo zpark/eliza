@@ -2,7 +2,7 @@ import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import type { Guild } from 'discord.js';
 import dotenv from "dotenv";
 import twitterPostAction from "./actions/post";
-import { initCharacter, initializeAllSystems } from "../settings";
+import { initCharacter, initializeAllSystems } from "../init";
 dotenv.config({ path: '../../.env' });
 
 const character: Character = {
@@ -244,6 +244,15 @@ export const config: OnboardingConfig = {
           usageDescription: "The 2FA secret associated with the Twitter account to post from.",
           required: false,
           dependsOn: []
+      },
+      // array of announcements channels on different platforms, specifically telegram, discord, slack
+      ANNOUNCEMENTS_CHANNELS: {
+        name: "Announcements Channels",
+        description: "The channels where the agent should post announcements to",
+        required: false,
+        dependsOn: [],
+        usageDescription: "The channels where the agent should post announcements to",
+        validation: (value: string[]) => value.length > 0
       }
   }
 };

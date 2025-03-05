@@ -6,6 +6,10 @@ Laura is an AI-powered marketing agent designed to handle social media communica
 
 ## 2. Core Functionality
 
+### Onboarding from existing assets
+- Give twitter account and she absorbs your brand voice, style, etc
+- website, YouTube, PDFs to knowledge
+
 ### Content Creation & Approval
 - Draft social media posts in team's brand voice
 - Generate and edit images for social media content
@@ -19,121 +23,17 @@ Laura is an AI-powered marketing agent designed to handle social media communica
 - Distribute announcements via Telegram
 - Support cross-platform content adaptation
 - Handle image attachments across platforms
+- Can schedule content posts
 
 ### Media Management
+- Advanced image generation capabilities
 - Accept uploaded images from team members
 - Store and manage media assets
 - Associate images with appropriate posts
 - Support multiple image formats
 - Track media usage across platforms
 
-## 3. Implementation
-
-### Data Models
-
-```typescript
-interface MediaAsset {
-  id: UUID;
-  type: "image" | "video" | "gif";
-  source: "uploaded" | "generated";
-  url: string;
-  uploadedBy?: string;
-  timestamp: string;
-  metadata?: {
-    width?: number;
-    height?: number;
-    format?: string;
-    size?: number;
-  };
-}
-
-interface Post {
-  id: UUID;
-  type: "announcement" | "update" | "response";
-  content: string;
-  platforms: ("discord" | "twitter" | "telegram")[];
-  status: "draft" | "pending_approval" | "approved" | "published";
-  mediaAssets?: MediaAsset[];
-  approvedBy?: string[];
-  publishedTo?: {
-    platform: string;
-    timestamp: string;
-    url?: string;
-  }[];
-}
-
-interface PostRequest {
-  type: "announcement" | "update" | "response";
-  content?: string;  // Optional if using template
-  template?: string;  // Template ID if using one
-  platforms: ("discord" | "twitter" | "telegram")[];
-  mediaAssets?: {
-    id?: UUID;  // For existing assets
-    url?: string;  // For new uploads
-  }[];
-  requiredApprovals?: number;  // Minimum approvals needed
-}
-```
-
-### Configuration
-
-```typescript
-interface PlatformConfig {
-  platform: "discord" | "twitter" | "telegram";
-  enabled: boolean;
-  credentials: {
-    [key: string]: string;  // Platform-specific auth details
-  };
-  channels?: {  // For Discord/Telegram
-    announcements?: string;
-    updates?: string;
-    media?: string;
-  };
-  postPreferences?: {
-    requireApproval: boolean;
-    minApprovals: number;
-    autoFormat: boolean;
-  };
-}
-
-const config: OnboardingConfig = {
-  settings: {
-    PLATFORMS: {
-      name: "Platform Configuration",
-      description: "Configuration for each social platform",
-      required: true,
-      public: true,
-      secret: false,
-      value: [] as PlatformConfig[],
-      validation: (value: PlatformConfig[]) => Array.isArray(value),
-    },
-    BRAND_VOICE: {
-      name: "Brand Voice",
-      description: "Guidelines for content tone and style",
-      required: true,
-      public: true,
-      secret: false,
-      value: "",
-      validation: (value: string) => value.length > 0,
-    },
-    MEDIA_STORAGE: {
-      name: "Media Storage Configuration",
-      description: "Settings for storing media assets",
-      required: false,
-      public: true,
-      secret: false,
-      value: {
-        provider: "local",  // or "s3", etc.
-        path: "./media",
-        maxSize: 10485760,  // 10MB
-        allowedTypes: ["image/jpeg", "image/png", "image/gif"],
-      },
-    }
-  }
-};
-```
-
-## 4. Workflows
+### Workflows
 
 ### Content Creation & Approval
 1. Receive post request with content/template and target platforms
@@ -159,39 +59,7 @@ const config: OnboardingConfig = {
 5. Confirm successful distribution
 6. Report any posting issues
 
-### Post Templates
-```markdown
-# Announcement Post
-[Title/Headline]
+### Future Enhancements
 
-[Main announcement content]
-
-[Key details/changes]
-
-[Call to action if applicable]
-
-# Update Post
-[Brief context]
-
-[Update details]
-
-[Next steps/expectations]
-
-# Response Template
-[Acknowledgment]
-
-[Response content]
-
-[Follow-up action if needed]
-```
-
-## 5. Future Enhancements
-
-- Advanced image generation capabilities
 - Automated content scheduling
-- Analytics and engagement tracking
-- A/B testing support
 - Campaign management
-- Automated hashtag optimization
-- Content performance analytics
-- Cross-platform engagement tracking 

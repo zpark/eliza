@@ -11,7 +11,7 @@ import { ServiceTypes, type TokenPerformance, type Transaction } from "../types"
 import type { CommunityInvestorService } from "../tradingService";
 
 export const getSimulatedPositions: Action = {
-    name: "TRUST_GET_SIMULATED_POSITIONS",
+    name: "GET_SIMULATED_POSITIONS",
     description:
         "Retrieves and formats position data for the agent's portfolio",
     examples: [
@@ -26,7 +26,7 @@ export const getSimulatedPositions: Action = {
                 name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    actions: ["TRUST_GET_SIMULATED_POSITIONS"],
+                    actions: ["GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
@@ -41,7 +41,7 @@ export const getSimulatedPositions: Action = {
                 name: "{{name2}}",
                 content: {
                     text: "<NONE>",
-                    actions: ["TRUST_GET_SIMULATED_POSITIONS"],
+                    actions: ["GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
@@ -80,7 +80,7 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        actions: ["TRUST_GET_SIMULATED_POSITIONS"]
+                        actions: ["GET_SIMULATED_POSITIONS"]
                     },
                     entityId: message.entityId,
                     agentId: message.agentId,
@@ -192,7 +192,7 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        actions: ["TRUST_GET_SIMULATED_POSITIONS"]
+                        actions: ["GET_SIMULATED_POSITIONS"]
                     },
                     entityId: message.entityId,
                     agentId: message.agentId,

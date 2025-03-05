@@ -45,7 +45,6 @@ async function handler(
     state: State | undefined,
     options: { [key: string]: unknown } = { onlyInProgress: true }
 ): Promise<Goal[]> {
-    state = (await runtime.composeState(message)) as State;
     const prompt = composePrompt({
         state,
         template: runtime.character.templates?.goalsTemplate || goalsTemplate,
@@ -120,7 +119,7 @@ export const goalEvaluator: Evaluator = {
     handler,
     examples: [
         {
-            prompt: `Actors in the scene:
+            prompt: `People in the scene:
   {{name1}}: An avid reader and member of a book club.
   {{name2}}: The organizer of the book club.
 
@@ -166,7 +165,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            prompt: `Actors in the scene:
+            prompt: `People in the scene:
   {{name1}}: A fitness enthusiast working towards a marathon.
   {{name2}}: A personal trainer.
 
@@ -209,7 +208,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            prompt: `Actors in the scene:
+            prompt: `People in the scene:
   {{name1}}: A student working on a final year project.
   {{name2}}: The project supervisor.
 
@@ -254,7 +253,7 @@ export const goalEvaluator: Evaluator = {
         },
 
         {
-            prompt: `Actors in the scene:
+            prompt: `People in the scene:
         {{name1}}: A project manager working on a software development project.
         {{name2}}: A software developer in the project team.
 

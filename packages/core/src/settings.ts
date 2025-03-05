@@ -186,7 +186,7 @@ export async function getWorldSettings(
 /**
  * Initializes settings configuration for a server
  */
-export async function initializeOnboardingConfig(
+export async function initializeOnboarding(
   runtime: IAgentRuntime,
   world: World,
   config: OnboardingConfig

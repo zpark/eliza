@@ -9,7 +9,6 @@ export const capabilitiesProvider: Provider = {
   get: async (
     runtime: IAgentRuntime,
     _message: Memory,
-    _state?: State
   ): Promise<ProviderResult> => {
     try {
       // Get all registered services

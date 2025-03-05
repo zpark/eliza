@@ -2,9 +2,10 @@ import { getEntityDetails } from "../entities";
 import { addHeader, formatMessages, formatPosts } from "../prompts";
 import { ChannelType, type Entity, type IAgentRuntime, type Memory, type Provider, type UUID } from "../types";
 
-export const recentMemoriesProvider: Provider = {
-  name: "RECENT_MEMORIES",
+export const recentMessagesProvider: Provider = {
+  name: "RECENT_MESSAGES",
   description: "Recent messages, interactions and other memories",
+  position: 100,
   get: async (
     runtime: IAgentRuntime,
     message: Memory,

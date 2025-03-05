@@ -16,7 +16,6 @@ export const roleProvider: Provider = {
   get: async (
     runtime: IAgentRuntime,
     message: Memory,
-    _state?: State
   ): Promise<ProviderResult> => {
     const room = await runtime.databaseAdapter.getRoom(message.roomId);
     if (!room) {

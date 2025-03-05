@@ -18,7 +18,7 @@ export const recommendationsProvider: Provider = {
     const newUserRecommendation = recentRecommendations.filter(
       (m) =>
         m.entityId === message.entityId &&
-        m.content.recommendation.confirmed !== true
+        m.metadata.recommendation.confirmed !== true
     );
 
     if (newUserRecommendation.length === 0) {

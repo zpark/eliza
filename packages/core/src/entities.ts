@@ -260,7 +260,7 @@ export const createUniqueUuid = (runtime, baseUserId: UUID | string): UUID => {
 }
 
 /**
- * Get details for a list of actors.
+ * Get details for a list of entities.
  */
 export async function getEntityDetails({
   runtime,
@@ -270,8 +270,8 @@ export async function getEntityDetails({
   roomId: UUID;
 }) {
   const room = await runtime.databaseAdapter.getRoom(roomId);
-  const entities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, true);
-  const actors = entities.map(entity => {
+  const roomEntities = await runtime.databaseAdapter.getEntitiesForRoom(roomId, true);
+  const entities = roomEntities.map(entity => {
     // join all fields of all component.data together
     const allData = entity.components.reduce((acc, component) => {
       return { ...acc, ...component.data };
@@ -298,51 +298,50 @@ export async function getEntityDetails({
   });
 
   // Filter out nulls and ensure uniqueness by ID
-  const uniqueActors = new Map();
-  actors
-    .filter(actor => actor !== null)
-    .forEach(actor => {
-      if (!uniqueActors.has(actor.id)) {
-        uniqueActors.set(actor.id, actor);
+  const uniqueEntities = new Map();
+  entities
+    .filter(entity => entity !== null)
+    .forEach(entity => {
+      if (!uniqueEntities.has(entity.id)) {
+        uniqueEntities.set(entity.id, entity);
       }
     });
 
-  return Array.from(uniqueActors.values());
+  return Array.from(uniqueEntities.values());
 }
 
 /**
- * Format actors into a string
- * @param actors - list of actors
+ * Format entities into a string
+ * @param entities - list of entities
  * @returns string
  */
-export function formatEntities({ actors }: { actors: Entity[] }) {
-  const actorStrings = actors.map((actor: Entity) => {
-    const header = `${actor.names.join(" aka ")}\nID: ${actor.id}${(actor.metadata && Object.keys(actor.metadata).length > 0) ? `\nData: ${JSON.stringify(actor.metadata)}\n` : "\n"}`;
+export function formatEntities({ entities }: { entities: Entity[] }) {
+  const entityStrings = entities.map((entity: Entity) => {
+    const header = `${entity.names.join(" aka ")}\nID: ${entity.id}${(entity.metadata && Object.keys(entity.metadata).length > 0) ? `\nData: ${JSON.stringify(entity.metadata)}\n` : "\n"}`;
     return header;
   });
-  const finalActorStrings = actorStrings.join("\n");
-  return finalActorStrings;
+  return entityStrings.join("\n");
 }
 
 /**
- * Resolve an actor name to their UUID
+ * Resolve an entity name to their UUID
  * @param name - Name to resolve
- * @param actors - List of actors to search through
+ * @param entities - List of entities to search through
  * @returns UUID if found, throws error if not found or if input is not a valid UUID
  */
-export function resolveEntityId(name: string, actors: Entity[]): UUID {
+export function resolveEntityId(name: string, entities: Entity[]): UUID {
   // If the name is already a valid UUID, return it
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name)) {
     return name as UUID;
   }
 
-  const actor = actors.find(a => 
+  const entity = entities.find(a => 
     a.names.some(n => n.toLowerCase() === name.toLowerCase())
   );
   
-  if (!actor) {
+  if (!entity) {
     throw new Error(`Could not resolve name "${name}" to a valid UUID`);
   }
   
-  return actor.id;
+  return entity.id;
 }

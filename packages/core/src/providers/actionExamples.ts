@@ -15,6 +15,7 @@ import type {
 export const actionExamplesProvider: Provider = {
   name: "ACTION_EXAMPLES",
   description: "Examples of response actions",
+  position: -1,
   get: async (runtime: IAgentRuntime, message: Memory) => {
     // Get actions that validate for this message
     const actionPromises = runtime.actions.map(async (action: Action) => {

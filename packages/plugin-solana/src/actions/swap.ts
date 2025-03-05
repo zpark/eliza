@@ -184,19 +184,13 @@ export const executeSwap: Action = {
         callback?: HandlerCallback,
     ): Promise<boolean> => {
         try {
-            if (!state) {
-                state = await runtime.composeState(message);
-            } else {
-                state = await runtime.composeState(message, {}, ['RECENT_MEMORIES']);
-            }
-
             const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
             if (!solanaClient) {
                 throw new Error('SolanaService not initialized');
             }
 
             const walletData = await solanaClient.getCachedData();
-            state.walletInfo = walletData;
+            state.values.walletInfo = walletData;
 
             const swapPrompt = composePrompt({
                 state,

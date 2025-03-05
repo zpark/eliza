@@ -42,9 +42,9 @@ export const composePrompt = ({
     template: TemplateType;
 }) => {
     const templateStr = typeof template === "function" ? template({ state }) : template
-
     const templateFunction = handlebars.compile(templateStr);
-    return composeRandomUser(templateFunction(state), 10);
+    const output = composeRandomUser(templateFunction(state.values), 10);
+    return output;
 };
 
 /**

@@ -31,7 +31,7 @@ const formatSettingValue = (
  * Generates a status message based on the current settings state
  */
 function generateStatusMessage(
-  _runtime: IAgentRuntime,
+  runtime: IAgentRuntime,
   worldSettings: WorldSettings,
   isOnboarding: boolean,
   state?: State
@@ -70,16 +70,16 @@ function generateStatusMessage(
     if (isOnboarding) {
       if (requiredUnconfigured > 0) {
         return `# PRIORITY TASK: Onboarding with ${state.senderName}\n${
-          state.agentName
+          runtime.character.name
         } still needs to configure ${requiredUnconfigured} required settings:\n\n${formattedSettings
           .filter((s) => s.required && !s.configured)
           .map((s) => `${s.name}: ${s.usageDescription}\nValue: ${s.value}`)
           .join(
             "\n\n"
           )}\n\nIf the user gives any information related to the settings, ${
-          state.agentName
+          runtime.character.name
         } should use the UPDATE_SETTINGS action to update the settings with this new information. ${
-          state.agentName
+          runtime.character.name
         } can update any, some or all settings.`;
       }
       return `All required settings have been configured! Here's the current configuration:\n\n${formattedSettings

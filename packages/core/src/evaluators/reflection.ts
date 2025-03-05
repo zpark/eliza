@@ -8,6 +8,7 @@ import {
   type IAgentRuntime,
   type Memory,
   ModelTypes,
+  State,
   type UUID,
 } from "../types";
 
@@ -181,40 +182,36 @@ const generateObject = async ({
   }
 };
 
-async function handler(runtime: IAgentRuntime, message: Memory) {
-  const state = await runtime.composeState(message);
-  const { agentId, roomId } = state;
+async function handler(runtime: IAgentRuntime, message: Memory, state?: State) {
+  const { agentId, roomId } = message;
+  
+    // Get known facts
+    const factsManager = new MemoryManager({
+      runtime,
+      tableName: "facts",
+    });
 
-  // Get existing relationships for the room
-  const existingRelationships = await runtime.databaseAdapter.getRelationships({
-    entityId: message.entityId,
-  });
-
-  // Get actors in the room for name resolution
-  const actors = await getEntityDetails({ runtime, roomId });
-
-  const entitiesInRoom = await runtime.databaseAdapter.getEntitiesForRoom(
-    roomId
-  );
-
-  // Get known facts
-  const factsManager = new MemoryManager({
-    runtime,
-    tableName: "facts",
-  });
-
-  const knownFacts = await factsManager.getMemories({
-    roomId,
-    agentId,
-    count: 30,
-    unique: true,
-  });
+  // Run all queries in parallel
+  const [existingRelationships, actors, entitiesInRoom, knownFacts, room] = await Promise.all([
+    runtime.databaseAdapter.getRelationships({
+      entityId: message.entityId,
+    }),
+    getEntityDetails({ runtime, roomId }),
+    runtime.databaseAdapter.getEntitiesForRoom(roomId),
+    factsManager.getMemories({
+      roomId,
+      agentId, 
+      count: 30,
+      unique: true,
+    }),
+    runtime.databaseAdapter.getRoom(roomId)
+  ]);
 
   const prompt = composePrompt({
     state: {
       ...state,
       knownFacts: formatFacts(knownFacts),
-      roomType: state.roomType || "group", // Can be "group", "voice", or "dm"
+      roomType: room.type || "group", // Can be "group", "voice", or "dm"
       entitiesInRoom: JSON.stringify(entitiesInRoom),
       existingRelationships: JSON.stringify(existingRelationships),
       senderId: message.entityId,
@@ -268,6 +265,9 @@ async function handler(runtime: IAgentRuntime, message: Memory) {
       console.warn("relationship:\n", relationship);
       continue; // Skip this relationship if we can't resolve the IDs
     }
+
+    console.log("**** existingRelationships")
+    console.log(existingRelationships)
 
     const existingRelationship = existingRelationships.find(
       (r) => r.sourceEntityId === sourceId && r.targetEntityId === targetId

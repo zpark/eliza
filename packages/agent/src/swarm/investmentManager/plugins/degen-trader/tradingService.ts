@@ -1061,6 +1061,49 @@ export class DegenTradingService extends Service {
 
       logger.info("Token recommendation:", recommendation);
 
+      // Get market data for the recommended token
+      const tokenAddress = recommendation.recommend_buy_address;
+      const marketData = await this.getTokenMarketData(tokenAddress);
+      
+      // Calculate technical signals
+      const technicalSignals = await this.calculateTechnicalSignals(marketData);
+      
+      // Create analysis object for trading decision
+      const analysis = {
+        technical: technicalSignals,
+        price: {
+          current: marketData.price,
+          history: marketData.priceHistory
+        },
+        market: {
+          marketCap: marketData.marketCap,
+          volume: marketData.volume24h,
+          liquidity: marketData.liquidity
+        },
+        recommendation: {
+          reason: recommendation.reason,
+          score: recommendation.marketcap ? recommendation.marketcap / 1000000 : 0 // Normalize market cap as a score
+        }
+      };
+      
+      // Get trading decision
+      const decision = await this.getTradingDecision(analysis);
+      
+      // Only proceed if decision is to buy
+      if (!decision.shouldAct || decision.action !== "BUY") {
+        logger.info("Trading decision does not recommend buying", {
+          tokenAddress,
+          reason: decision.reason
+        });
+        return;
+      }
+      
+      logger.info("Trading decision confirms buy recommendation", {
+        tokenAddress,
+        reason: decision.reason,
+        confidence: decision.confidence
+      });
+
       // Create buy signal
       const signal: BuySignalMessage = {
         positionId: uuidv4() as UUID,
@@ -1720,12 +1763,51 @@ export class DegenTradingService extends Service {
           marketData
         );
 
-        // Check for negative MACD crossover after being in profit
-        if (
-          technicalSignals &&
+        // Create analysis object for trading decision
+        const analysis = {
+          technical: {
+            rsi: technicalSignals.rsi,
+            macd: technicalSignals.macd,
+            volumeProfile: technicalSignals.volumeProfile,
+            volatility: technicalSignals.volatility
+          },
+          price: {
+            current: marketData.price,
+            change: priceChangePercent,
+            history: marketData.priceHistory
+          },
+          market: {
+            marketCap: marketData.marketCap,
+            volume: marketData.volume24h,
+            liquidity: marketData.liquidity
+          }
+        };
+
+        // Get trading decision based on comprehensive analysis
+        const decision = await this.getTradingDecision(analysis);
+
+        if (decision.shouldAct && decision.action === "SELL") {
+          logger.info("Trading decision recommends selling", {
+            tokenAddress,
+            reason: decision.reason,
+            confidence: decision.confidence
+          });
+
+          // Calculate sell amount based on confidence level and market context
+          const sellAmount = await this.calculateSellAmountWithMarketContext(
+            currentBalance.toString(),
+            decision.confidence,
+            tokenAddress
+          );
+
+          await this.createSellSignal(
+            tokenAddress,
+            sellAmount,
+            `Trading decision: ${decision.reason}`
+          );
+        } else if (technicalSignals &&
           technicalSignals.macd.histogram < 0 &&
-          technicalSignals.macd.value < technicalSignals.macd.signal
-        ) {
+          technicalSignals.macd.value < technicalSignals.macd.signal) {
           logger.info("Negative momentum detected while in profit", {
             tokenAddress,
             macdHistogram: technicalSignals.macd.histogram,
@@ -2578,69 +2660,238 @@ export class DegenTradingService extends Service {
       reason: "No clear signals",
     };
 
-    // RSI conditions
-    const isOverbought = analysis.technical.rsi > 70;
-    const isOversold = analysis.technical.rsi < 30;
-
-    // MACD conditions
-    const macdCrossover =
-      analysis.technical.macd.histogram > 0 &&
-      Math.abs(analysis.technical.macd.histogram) >
-        Math.abs(analysis.technical.macd.signal) * 0.1;
-
-    // Volume conditions
-    const hasVolumeSupport =
-      analysis.technical.volumeProfile.trend === "increasing" &&
-      analysis.fundamentals.volumeMarketCapRatio > 0.1;
-
-    // Volatility threshold
-    const isHighVolatility = analysis.price.volatility > 0.2;
-
-    // Determine action
-    if (isOversold && macdCrossover && hasVolumeSupport) {
-      decision = {
-        shouldAct: true,
-        action: "BUY",
-        confidence: isHighVolatility ? "medium" : "high",
-        reason: "Oversold with positive momentum and volume support",
-      };
-    } else if (isOverbought && analysis.technical.macd.histogram < 0) {
-      decision = {
-        shouldAct: true,
-        action: "SELL",
-        confidence: isHighVolatility ? "medium" : "high",
-        reason: "Overbought with negative momentum",
-      };
+    try {
+      // Extract technical indicators
+      const rsi = analysis.technical?.rsi || 50;
+      const macd = analysis.technical?.macd || { value: 0, signal: 0, histogram: 0 };
+      const volumeProfile = analysis.technical?.volumeProfile || { trend: "stable", unusualActivity: false };
+      const volatility = analysis.technical?.volatility || 0;
+      
+      // Extract price data
+      const currentPrice = analysis.price?.current || 0;
+      const priceChange = analysis.price?.change || 0;
+      
+      // Extract market data
+      const marketCap = analysis.market?.marketCap || 0;
+      const volume = analysis.market?.volume || 0;
+      const liquidity = analysis.market?.liquidity || 0;
+      
+      // Check if this is a buy or sell decision
+      const isBuyAnalysis = !!analysis.recommendation;
+      
+      if (isBuyAnalysis) {
+        // BUY DECISION LOGIC
+        let buySignals = 0;
+        let buyConfidence = 0;
+        const reasons: string[] = [];
+        
+        // RSI indicates oversold (buy opportunity)
+        if (rsi < 30) {
+          buySignals++;
+          buyConfidence += 30;
+          reasons.push("RSI indicates oversold condition");
+        }
+        
+        // MACD shows positive momentum
+        if (macd.histogram > 0 && macd.value > macd.signal) {
+          buySignals++;
+          buyConfidence += 25;
+          reasons.push("MACD shows positive momentum");
+        }
+        
+        // Volume is increasing
+        if (volumeProfile.trend === "increasing") {
+          buySignals++;
+          buyConfidence += 20;
+          reasons.push("Volume is increasing");
+        }
+        
+        // Recommendation score is high
+        if (analysis.recommendation?.score > 50) {
+          buySignals++;
+          buyConfidence += 25;
+          reasons.push("Token has strong recommendation score");
+        }
+        
+        // Market cap and liquidity checks
+        if (marketCap > this.tradingConfig.thresholds.minLiquidity * 3) {
+          buySignals++;
+          buyConfidence += 15;
+          reasons.push("Market cap is sufficient");
+        }
+        
+        if (liquidity > this.tradingConfig.thresholds.minLiquidity) {
+          buySignals++;
+          buyConfidence += 15;
+          reasons.push("Liquidity is sufficient");
+        }
+        
+        // Make buy decision based on signals and confidence
+        if (buySignals >= 3 && buyConfidence >= 60) {
+          let confidenceLevel: "low" | "medium" | "high" = "low";
+          
+          if (buyConfidence > 90) {
+            confidenceLevel = "high";
+          } else if (buyConfidence > 75) {
+            confidenceLevel = "medium";
+          }
+          
+          decision = {
+            shouldAct: true,
+            action: "BUY",
+            confidence: confidenceLevel,
+            reason: reasons.join("; ")
+          };
+        }
+      } else {
+        // SELL DECISION LOGIC
+        let sellSignals = 0;
+        let sellConfidence = 0;
+        const reasons: string[] = [];
+        
+        // RSI indicates overbought (sell opportunity)
+        if (rsi > 70) {
+          sellSignals++;
+          sellConfidence += 30;
+          reasons.push("RSI indicates overbought condition");
+        }
+        
+        // MACD shows negative momentum
+        if (macd.histogram < 0 && macd.value < macd.signal) {
+          sellSignals++;
+          sellConfidence += 25;
+          reasons.push("MACD shows negative momentum");
+        }
+        
+        // Volume is decreasing
+        if (volumeProfile.trend === "decreasing") {
+          sellSignals++;
+          sellConfidence += 20;
+          reasons.push("Volume is decreasing");
+        }
+        
+        // High volatility
+        if (volatility > 0.1) {
+          sellSignals++;
+          sellConfidence += 15;
+          reasons.push("High volatility detected");
+        }
+        
+        // Price has increased significantly
+        if (priceChange > 20) {
+          sellSignals++;
+          sellConfidence += 25;
+          reasons.push("Price has increased significantly");
+        }
+        
+        // Make sell decision based on signals and confidence
+        if (sellSignals >= 2 && sellConfidence >= 50) {
+          let confidenceLevel: "low" | "medium" | "high" = "low";
+          
+          if (sellConfidence > 80) {
+            confidenceLevel = "high";
+          } else if (sellConfidence > 65) {
+            confidenceLevel = "medium";
+          }
+          
+          decision = {
+            shouldAct: true,
+            action: "SELL",
+            confidence: confidenceLevel,
+            reason: reasons.join("; ")
+          };
+        }
+      }
+      
+      return decision;
+    } catch (error) {
+      logger.error("Error in trading decision logic", error);
+      return decision;
     }
-
-    return decision;
   }
 
   /**
-   * Calculate sell amount based on confidence
+   * Calculate sell amount based on confidence level and market conditions
    */
-  private calculateSellAmount(
+  private async calculateSellAmountWithMarketContext(
     balance: string,
-    confidence: "low" | "medium" | "high"
-  ): string {
-    const balanceNum = Number(balance);
-    let sellPercentage: number;
+    confidence: "low" | "medium" | "high",
+    tokenAddress: string
+  ): Promise<string> {
+    try {
+      const balanceNum = BigInt(balance);
+      let sellPercentage: number;
 
-    switch (confidence) {
-      case "high":
-        sellPercentage = 1.0; // Sell 100%
-        break;
-      case "medium":
-        sellPercentage = 0.5; // Sell 50%
-        break;
-      case "low":
-        sellPercentage = 0.25; // Sell 25%
-        break;
-      default:
-        sellPercentage = 0.1; // Default to 10%
+      // Base percentage based on confidence
+      switch (confidence) {
+        case "high":
+          sellPercentage = 0.9; // Sell 90% by default for high confidence
+          break;
+        case "medium":
+          sellPercentage = 0.5; // Sell 50% by default for medium confidence
+          break;
+        case "low":
+          sellPercentage = 0.25; // Sell 25% by default for low confidence
+          break;
+        default:
+          sellPercentage = 0.1; // Default to 10%
+      }
+
+      // Adjust for market condition
+      const marketCondition = await this.assessMarketCondition();
+      if (marketCondition === "bearish") {
+        // In bearish markets, sell more aggressively
+        sellPercentage = Math.min(1.0, sellPercentage * 1.5);
+        logger.info("Adjusting sell amount for bearish market", {
+          tokenAddress,
+          originalPercentage: sellPercentage / 1.5,
+          adjustedPercentage: sellPercentage
+        });
+      } else if (marketCondition === "bullish") {
+        // In bullish markets, sell more conservatively
+        sellPercentage = sellPercentage * 0.8;
+        logger.info("Adjusting sell amount for bullish market", {
+          tokenAddress,
+          originalPercentage: sellPercentage / 0.8,
+          adjustedPercentage: sellPercentage
+        });
+      }
+
+      // Get token market data to check for unusual conditions
+      const marketData = await this.getTokenMarketData(tokenAddress);
+      
+      // If token has high volatility, adjust sell percentage
+      if (marketData && marketData.priceHistory && marketData.priceHistory.length > 0) {
+        const volatility = this.calculateVolatility(marketData.priceHistory);
+        if (volatility > 0.2) {
+          // High volatility - sell more aggressively
+          sellPercentage = Math.min(1.0, sellPercentage * 1.2);
+          logger.info("Adjusting sell amount for high volatility", {
+            tokenAddress,
+            volatility,
+            adjustedPercentage: sellPercentage
+          });
+        }
+      }
+
+      // Ensure we don't sell more than available
+      const sellAmount = balanceNum * BigInt(Math.floor(sellPercentage * 100)) / BigInt(100);
+      
+      // Log the calculation
+      logger.info("Calculated sell amount with market context", {
+        balance: balance.toString(),
+        confidence,
+        marketCondition,
+        sellPercentage,
+        sellAmount: sellAmount.toString()
+      });
+      
+      return sellAmount.toString();
+    } catch (error) {
+      logger.error("Error calculating sell amount with market context", error);
+      // Fall back to the basic calculation
+      return this.calculateSellAmount(balance, confidence);
     }
-
-    return (balanceNum * sellPercentage).toString();
   }
 
   /**
@@ -3984,7 +4235,28 @@ export class DegenTradingService extends Service {
     const tokenAddress = signal.tokenAddress;
 
     try {
-      const sellAmount = BigInt(signal.amount);
+      // If amount is not specified or is 'auto', calculate it based on confidence
+      let sellAmount: bigint;
+      if (!signal.amount || signal.amount === 'auto') {
+        // Get token balance
+        const tokenBalance = await getTokenBalance(this.runtime, tokenAddress);
+        if (!tokenBalance || BigInt(tokenBalance.toString()) <= BigInt(0)) {
+          return { success: false, error: "No token balance available" };
+        }
+        
+        // Calculate sell amount based on confidence (default to medium if not specified)
+        const confidence = signal.confidence || "medium";
+        const calculatedAmount = await this.calculateSellAmountWithMarketContext(tokenBalance.toString(), confidence, tokenAddress);
+        sellAmount = BigInt(calculatedAmount);
+        
+        logger.info("Calculated sell amount based on confidence", {
+          tokenAddress,
+          confidence,
+          calculatedAmount: sellAmount.toString()
+        });
+      } else {
+        sellAmount = BigInt(signal.amount);
+      }
 
       try {
         // Record pending sell
@@ -4272,6 +4544,51 @@ export class DegenTradingService extends Service {
     } catch (error) {
       logger.error("Error creating sell task", error);
       return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Calculate sell amount based on confidence
+   */
+  private calculateSellAmount(
+    balance: string,
+    confidence: "low" | "medium" | "high"
+  ): string {
+    try {
+      const balanceNum = BigInt(balance);
+      let sellPercentage: number;
+
+      // Base percentage based on confidence
+      switch (confidence) {
+        case "high":
+          sellPercentage = 0.9; // Sell 90% by default for high confidence
+          break;
+        case "medium":
+          sellPercentage = 0.5; // Sell 50% by default for medium confidence
+          break;
+        case "low":
+          sellPercentage = 0.25; // Sell 25% by default for low confidence
+          break;
+        default:
+          sellPercentage = 0.1; // Default to 10%
+      }
+
+      // Ensure we don't sell more than available
+      const sellAmount = balanceNum * BigInt(Math.floor(sellPercentage * 100)) / BigInt(100);
+      
+      // Log the calculation
+      logger.info("Calculated sell amount", {
+        balance: balance.toString(),
+        confidence,
+        sellPercentage,
+        sellAmount: sellAmount.toString()
+      });
+      
+      return sellAmount.toString();
+    } catch (error) {
+      logger.error("Error calculating sell amount", error);
+      // Default to 10% if there's an error
+      return (BigInt(balance) * BigInt(10) / BigInt(100)).toString();
     }
   }
 }

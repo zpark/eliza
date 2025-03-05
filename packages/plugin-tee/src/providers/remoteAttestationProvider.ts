@@ -84,7 +84,7 @@ class PhalaRemoteAttestationProvider extends RemoteAttestationProvider {
 // Keep the original provider for backwards compatibility
 const phalaRemoteAttestationProvider: Provider = {
     name: 'phala-remote-attestation',
-    get: async (runtime: IAgentRuntime, message: Memory, _state?: State) => {
+    get: async (runtime: IAgentRuntime, message: Memory) => {
         const teeMode = runtime.getSetting('TEE_MODE');
         const provider = new PhalaRemoteAttestationProvider(teeMode);
         const agentId = runtime.agentId;
@@ -204,7 +204,6 @@ const sgxAttestationProvider: Provider = {
     get: async (
         runtime: IAgentRuntime,
         _message: Memory,
-        _state?: State,
     ): Promise<ProviderResult> => {
         const provider = new SgxAttestationProvider();
         const agentId = runtime.agentId;

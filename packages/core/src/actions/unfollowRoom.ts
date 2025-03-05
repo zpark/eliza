@@ -50,18 +50,30 @@ export const unfollowRoomAction: Action = {
             return parsedResponse;
         }
 
-        state = await runtime.composeState(message);
-
         if (await _shouldUnfollow(state)) {
             await runtime.databaseAdapter.setParticipantUserState(
                 message.roomId,
                 runtime.agentId,
                 null
             );
-        }
 
-        for (const response of responses) {
-            await callback?.({...response.content, actions: ["UNFOLLOW_ROOM"]});
+            for (const response of responses) {
+                await callback?.({...response.content, actions: ["UNFOLLOW_ROOM_STARTED"]});
+            }
+        } else {
+            await runtime.getMemoryManager("messages").createMemory({
+                entityId: message.entityId,
+                agentId: message.agentId,
+                roomId: message.roomId,
+                content: {
+                  source: message.content.source,
+                  thought: "I tried to unfollow a room but I'm not in a room",
+                  actions: ["UNFOLLOW_ROOM_FAILED"],
+                },
+                metadata: {
+                  type: "UNFOLLOW_ROOM",
+                },
+              });
         }
     },
     examples: [

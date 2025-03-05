@@ -100,12 +100,7 @@ export const choiceAction: Action = {
       });
 
       if (!pendingTasks?.length) {
-        await callback({
-          text: "No tasks currently awaiting options selection.",
-          actions: ["CHOOSE_OPTION"],
-          source: message.content.source,
-        });
-        return;
+        throw new Error("No pending tasks with options found");
       }
 
       const tasksWithOptions = pendingTasks.filter(
@@ -113,12 +108,7 @@ export const choiceAction: Action = {
       );
 
       if (!tasksWithOptions.length) {
-        await callback({
-          text: "No tasks currently have options to select from.",
-          actions: ["CHOOSE_OPTION"],
-          source: message.content.source,
-        });
-        return;
+        throw new Error("No tasks currently have options to select from.");
       }
 
       // Format tasks with their options for the LLM

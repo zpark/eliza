@@ -5,6 +5,7 @@ import { type Action, type IAgentRuntime, type Memory, type Provider, State } fr
 export const actionsProvider: Provider = {
   name: "ACTIONS",
   description: "List of actions that can be called",
+  position: 99,
   // Get actions that validate for this message
   get: async (runtime: IAgentRuntime, message: Memory) => {
     const actionPromises = runtime.actions.map(async (action: Action) => {

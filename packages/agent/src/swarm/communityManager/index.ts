@@ -1,9 +1,9 @@
 import type { Character, IAgentRuntime, OnboardingConfig } from "@elizaos/core";
 import dotenv from "dotenv";
-import { initCharacter } from "../settings";
+import { initCharacter } from "../init";
 dotenv.config({ path: '../../.env' });
 
-const character: Character = {
+export const character: Character = {
   name: "Eliza",
   plugins: [
     "@elizaos/plugin-anthropic",
@@ -329,7 +329,7 @@ const character: Character = {
 
 const config: OnboardingConfig = {
   settings: {
-    SHOULD_GREET_NEW_USERS: {
+    SHOULD_GREET_NEW_PERSONS: {
       name: "Greet New Users",
       description: "Should I automatically greet new users when they join?",
       usageDescription: "Should I automatically greet new users when they join?",
@@ -346,7 +346,7 @@ const config: OnboardingConfig = {
       public: false,
       secret: false,
       usageDescription: "The channel to use for greeting new users",
-      dependsOn: ["SHOULD_GREET_NEW_USERS"],
+      dependsOn: ["SHOULD_GREET_NEW_PERSONS"],
       onSetAction: (value: string) => {
         return `I will now greet new users in ${value}`;
       },

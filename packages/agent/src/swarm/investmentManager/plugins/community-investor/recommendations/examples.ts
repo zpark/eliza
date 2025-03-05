@@ -2,7 +2,7 @@ import type { ActionExample } from "@elizaos/core";
 
 export const examples = [
     {
-        prompt: `Actors in the scene:
+        prompt: `People in the scene:
 {{name1}}: Experienced DeFi degen. Constantly chasing high yield farms.
 {{name2}}: New to DeFi, learning the ropes.
 
@@ -42,7 +42,7 @@ None`,
     },
 
     {
-        prompt: `Actors in the scene:
+        prompt: `People in the scene:
 {{name1}}: Solana maximalist. Believes Solana will flip Ethereum.
 {{name2}}: Multichain proponent. Holds both SOL and ETH.
 
@@ -96,7 +96,7 @@ Recommendations about the actors:
     },
 
     {
-        prompt: `Actors in the scene:
+        prompt: `People in the scene:
 {{name1}}: Self-proclaimed Solana alpha caller. Allegedly has insider info.
 {{name2}}: Degen gambler. Will ape into any hyped token.
 
@@ -130,7 +130,7 @@ None`,
     },
 
     {
-        prompt: `Actors in the scene:
+        prompt: `People in the scene:
 {{name1}}: NFT collector and trader. Bullish on Solana NFTs.
 {{name2}}: Only invests based on fundamentals. Sees all NFTs as worthless JPEGs.
 
@@ -183,7 +183,7 @@ None
     },
 
     {
-        prompt: `Actors in the scene:
+        prompt: `People in the scene:
 {{name1}}: Contrarian investor. Bets against hyped projects.
 {{name2}}: Trend follower. Buys tokens that are currently popular.
 

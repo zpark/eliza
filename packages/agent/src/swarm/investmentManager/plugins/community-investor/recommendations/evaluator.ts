@@ -332,12 +332,12 @@ const TELEGRAM_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
 export const formatRecommendations = (recommendations: Memory[]) => {
     return recommendations
         .reverse()
-        .map((rec: Memory) => `${JSON.stringify(rec.content.recommendation)}`)
+        .map((rec: Memory) => `${JSON.stringify(rec.metadata.recommendation)}`)
         .join("\n");
 };
 
 export const recommendationEvaluator: Evaluator = {
-    name: "TRUST_EXTRACT_RECOMMENDATIONS",
+    name: "EXTRACT_RECOMMENDATIONS",
     similes: [],
     alwaysRun: true,
     validate: async (
@@ -380,7 +380,7 @@ async function handler(
     console.log("Running the evaluator");
     if (!state) return;
 
-    const { agentId, roomId } = state;
+    const { agentId, roomId } = message;
 
     if (!runtime.getService(ServiceTypes.COMMUNITY_INVESTOR)) {
         console.log("no trading service");
@@ -512,12 +512,13 @@ async function handler(
 
     const tokenRecommendationsSet = new Set(
         recentRecommendations
-            .filter((r) => r.content.recommendation.confirmed)
-            .map((r) => r.content.recommendation.tokenAddress)
+            .filter((r) => r.metadata.recommendation.confirmed)
+            .map((r) => r.metadata.recommendation.tokenAddress)
     );
 
     const filteredRecommendations = recommendations
-        .filter((rec) => rec.username !== state.agentName)
+    // TODO: Replace username with entity ID
+        .filter((rec) => rec.username !== runtime.character.name)
         .filter((rec) => !tokenRecommendationsSet.has(rec.tokenAddress));
 
     if (filteredRecommendations.length === 0) {
@@ -600,7 +601,7 @@ async function handler(
                             buttons: [],
                             channelId: TELEGRAM_CHANNEL_ID,
                             source: "telegram",
-                            actions: ["TRUST_CONFIRM_RECOMMENDATION"],
+                            actions: ["CONFIRM_RECOMMENDATION"],
                         },
                         entityId: message.entityId,
                         agentId: message.agentId,
@@ -644,7 +645,7 @@ async function handler(
                             ? message.id
                             : undefined,
                         buttons: [],
-                        actions: ["TRUST_CONFIRM_RECOMMENDATION"],
+                        actions: ["CONFIRM_RECOMMENDATION"],
                         source: "telegram",
                     },
                     entityId: message.entityId,
@@ -668,7 +669,7 @@ async function handler(
                         agentId,
                         content: {
                             text: message.content.text,
-                            actions: ["TRUST_CONFIRM_RECOMMENDATION"],
+                            actions: ["CONFIRM_RECOMMENDATION"],
                         },
                         roomId,
                         createdAt: Date.now(),
@@ -687,7 +688,7 @@ async function handler(
                 }
                 const prompt = composePrompt({
                     state: {
-                        agentName: state.agentName!,
+                        agentName: runtime.character.name,
                         msg: message.content.text,
                         recommendation: JSON.stringify(recommendation),
                         token: tokenString,
@@ -714,7 +715,7 @@ async function handler(
                             ? message.id
                             : undefined,
                         buttons: [],
-                        actions: ["TRUST_CONFIRM_RECOMMENDATION"],
+                        actions: ["CONFIRM_RECOMMENDATION"],
                         source: "telegram",
                     },
                     entityId: message.entityId,

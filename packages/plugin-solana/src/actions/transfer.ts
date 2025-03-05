@@ -111,15 +111,8 @@ export default {
     ): Promise<boolean> => {
         logger.log('Starting TRANSFER handler...');
 
-        let currentState = state;
-        if (!currentState) {
-            currentState = (await runtime.composeState(message)) as State;
-        } else {
-            state = await runtime.composeState(message, {}, ['RECENT_MEMORIES']);
-        }
-
         const transferPrompt = composePrompt({
-            state: currentState,
+            state: state,
             template: transferTemplate,
         });
 
