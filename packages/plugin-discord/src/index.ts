@@ -26,7 +26,6 @@ import {
   type TextChannel,
   type User,
 } from "discord.js";
-import { EventEmitter } from "node:events";
 import chatWithAttachments from "./actions/chatWithAttachments.ts";
 import downloadMedia from "./actions/downloadMedia.ts";
 import reply from "./actions/reply.ts";

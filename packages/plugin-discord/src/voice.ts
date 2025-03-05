@@ -31,7 +31,7 @@ import {
     type VoiceChannel,
     type VoiceState,
 } from "discord.js";
-import EventEmitter from "node:events";
+import { EventEmitter } from "node:events";
 import { type Readable, pipeline } from "node:stream";
 import prism from "prism-media";
 import type { DiscordService } from "./index.ts";
