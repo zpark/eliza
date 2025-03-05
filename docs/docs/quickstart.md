@@ -200,9 +200,22 @@ Simply click the link or open your browser to `http://localhost:5173/`. You'll s
 
 ## Additional Configuration
 
+You can load plugins or additional client support with your character file to unlock more capabilities for your agent. 
+
 ### Add Plugins and Clients
 
-You can load plugins or additional client support with your character file to unlock more capabilities for your agent. There are two ways to get a list of available plugins:
+Here's how to import and register plugins in your character file:
+
+```typescript
+{
+    "name": "Eliza",
+    "clients": ["telegram"],
+    // ... other config options
+    "plugins": ["@elizaos/plugin-image"],
+}
+```
+
+There are two ways to get a list of available plugins:
 
 1. Web Interface
 
@@ -228,16 +241,6 @@ Here's a sample list of plugins you can check out!
 | [`@elizaos/plugin-pdf`](https://github.com/elizaos-plugins/plugin-pdf) | PDF processing
 
 
-Here's how to import and register plugins in your character file:
-
-```typescript
-{
-    "name": "Eliza",
-    "clients": ["telegram"],
-    // ... other config options
-    "plugins": ["@elizaos/plugin-image"],
-}
-```
 
 ### Configure Environment
 

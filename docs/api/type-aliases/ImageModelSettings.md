@@ -1,4 +1,4 @@
-[@elizaos/core v0.25.8](../index.md) / ImageModelSettings
+[@elizaos/core v0.25.9](../index.md) / ImageModelSettings
 
 # Type Alias: ImageModelSettings
 

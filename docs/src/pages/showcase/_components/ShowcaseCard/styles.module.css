@@ -1,3 +1,26 @@
+/* In src/pages/showcase/_components/ShowcaseCard/styles.module.css */
+
+/* Add to the existing CSS file */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tagContainer {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.readmeBtn {
+  margin-left: 8px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  margin-bottom: 12px;
+  padding: 4px 8px;
+}
+
 .showcaseCardImage {
   overflow: hidden;
   width: 100%;
@@ -66,7 +89,6 @@
 /* Base tag styling */
 .tag {
   font-size: 0.675rem;
-  border: 1px solid var(--ifm-color-secondary-darkest);
   cursor: default;
   margin-right: 6px;
   margin-bottom: 6px;
