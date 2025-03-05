@@ -62,7 +62,8 @@ async function formatRelationships(
 }
 
 const relationshipsProvider: Provider = {
-  name: "relationships",
+  name: "RELATIONSHIPS",
+  description: "Relationships between {{agentName}} and other people, or between other people that {{agentName}} has observed interacting with",
   get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
     // Get all relationships for the current user
     const relationships = await runtime.databaseAdapter.getRelationships({

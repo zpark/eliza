@@ -147,14 +147,14 @@ export class TaskService extends Service {
       const now = Date.now();
 
       for (const task of tasks) {
-        const taskStartTime = new Date(task.metadata.updatedAt || 0).getTime();
+        const taskStartTime = new Date(task.updatedAt || 0).getTime();
 
         // convert updatedAt which is an ISO string to a number
         const updateIntervalMs = task.metadata.updateInterval ?? 0; // update immediately
 
         // if tags does not contain "repeat", execute immediately
         if (!task.tags?.includes("repeat")) {
-          await this.executeTask(task.id!);
+          await this.executeTask(task);
           continue;
         }
 
@@ -163,7 +163,7 @@ export class TaskService extends Service {
           logger.debug(
             `Executing task ${task.name} - interval of ${updateIntervalMs}ms has elapsed`
           );
-          await this.executeTask(task.id!);
+          await this.executeTask(task);
         }
       }
     } catch (error) {
@@ -171,11 +171,11 @@ export class TaskService extends Service {
     }
   }
 
-  private async executeTask(taskId: UUID) {
+  private async executeTask(task: Task) {
+    console.log("****** executing task", task.name);
     try {
-      const task = await this.runtime.databaseAdapter.getTask(taskId);
       if (!task) {
-        logger.debug(`Task ${taskId} not found`);
+        logger.debug(`Task ${task.id} not found`);
         return;
       }
 
@@ -185,30 +185,30 @@ export class TaskService extends Service {
         return;
       }
 
-      logger.debug(`Executing task ${task.name} (${taskId})`);
+      logger.debug(`Executing task ${task.name} (${task.id})`);
       await worker.execute(this.runtime, task.metadata || {});
       logger.debug("task.tags are", task.tags);
       // Handle repeating vs non-repeating tasks
       if (task.tags?.includes("repeat")) {
         // For repeating tasks, update the updatedAt timestamp
-        await this.runtime.databaseAdapter.updateTask(taskId, {
+        await this.runtime.databaseAdapter.updateTask(task.id, {
           metadata: {
             ...task.metadata,
             updatedAt: Date.now(),
           },
         });
         logger.debug(
-          `Updated repeating task ${task.name} (${taskId}) with new timestamp`
+          `Updated repeating task ${task.name} (${task.id}) with new timestamp`
         );
       } else {
         // For non-repeating tasks, delete the task after execution
-        await this.runtime.databaseAdapter.deleteTask(taskId);
+        await this.runtime.databaseAdapter.deleteTask(task.id);
         logger.debug(
-          `Deleted non-repeating task ${task.name} (${taskId}) after execution`
+          `Deleted non-repeating task ${task.name} (${task.id}) after execution`
         );
       }
     } catch (error) {
-      logger.error(`Error executing task ${taskId}:`, error);
+      logger.error(`Error executing task ${task.id}:`, error);
     }
   }
 

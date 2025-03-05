@@ -21,7 +21,7 @@ export const getAgentPositions: any = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_AGENT_POSITIONS",
+                    actions: ["TRUST_GET_AGENT_POSITIONS"],
                 },
             },
         ],
@@ -36,7 +36,7 @@ export const getAgentPositions: any = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_AGENT_POSITIONS",
+                    actions: ["TRUST_GET_AGENT_POSITIONS"],
                 },
             },
         ],
@@ -74,7 +74,7 @@ export const getAgentPositions: any = {
                     roomId: message.roomId,
                     metadata: {
                         ...message.metadata,
-                        action: "TRUST_GET_AGENT_POSITIONS",
+                        actions: ["TRUST_GET_AGENT_POSITIONS"],
                     },
                     createdAt: Date.now() * 1000,
                 };
@@ -160,7 +160,7 @@ export const getAgentPositions: any = {
                     roomId: message.roomId,
                     metadata: {
                         ...message.metadata,
-                        action: "TRUST_GET_AGENT_POSITIONS",
+                        actions: ["TRUST_GET_AGENT_POSITIONS"],
                     },
                     createdAt: Date.now() * 1000,
                 });

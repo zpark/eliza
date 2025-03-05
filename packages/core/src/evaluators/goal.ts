@@ -1,6 +1,4 @@
-import { composePrompt } from "../prompts";
-import { getGoals } from "../goals";
-import { parseJsonArrayFromText } from "../prompts";
+import { composePrompt, parseJsonArrayFromText } from "../prompts";
 import { type Evaluator, type Goal, type IAgentRuntime, type Memory, ModelTypes, type State } from "../types";
 
 
@@ -62,8 +60,7 @@ async function handler(
     const updates = parseJsonArrayFromText(response);
 
     // get goals
-    const goalsData = await getGoals({
-        runtime,
+    const goalsData = await runtime.databaseAdapter.getGoals({
         roomId: message.roomId,
         onlyInProgress: options.onlyInProgress as boolean,
     });
@@ -111,8 +108,7 @@ export const goalEvaluator: Evaluator = {
         message: Memory
     ): Promise<boolean> => {
         // Check if there are active goals that could potentially be updated
-        const goals = await getGoals({
-            runtime,
+        const goals = await runtime.databaseAdapter.getGoals({
             count: 1,
             onlyInProgress: true,
             roomId: message.roomId,

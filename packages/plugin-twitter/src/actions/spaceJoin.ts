@@ -152,7 +152,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "On my way",
-                    action: "JOIN_TWITTER_SPACE",
+                    actions: ["JOIN_TWITTER_SPACE"],
                 },
             },
         ],
@@ -167,7 +167,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "Joining now!",
-                    action: "JOIN_TWITTER_SPACE",
+                    actions: ["JOIN_TWITTER_SPACE"],
                 },
             },
         ],

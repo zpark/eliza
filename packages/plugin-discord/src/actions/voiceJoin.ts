@@ -211,7 +211,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "Sounds good",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -226,7 +226,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "Sure I'll join right now",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -241,7 +241,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "OK see you there",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -256,7 +256,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "kk be there in a sec",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -271,7 +271,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "Sure",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -286,7 +286,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "coming",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -301,7 +301,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "joining now",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],
@@ -316,7 +316,7 @@ You should only respond with the name of the voice channel or none, no commentar
                 user: "{{user2}}",
                 content: {
                     text: "im in",
-                    action: "JOIN_VOICE",
+                    actions: ["JOIN_VOICE"],
                 },
             },
         ],

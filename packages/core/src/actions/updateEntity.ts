@@ -125,7 +125,7 @@ export const updateEntityAction: Action = {
       if (!entity) {
         await callback({
           text: "I'm not sure which entity you're trying to update. Could you please specify who you're talking about?",
-          action: "UPDATE_ENTITY_ERROR",
+          actions: ["UPDATE_ENTITY_ERROR"],
           source: message.content.source,
         });
         return;
@@ -162,7 +162,7 @@ export const updateEntityAction: Action = {
         logger.error(`Failed to parse component data: ${error.message}`);
         await callback({
           text: "I couldn't properly understand the component information. Please try again with more specific information.",
-          action: "UPDATE_ENTITY_ERROR",
+          actions: ["UPDATE_ENTITY_ERROR"],
           source: message.content.source,
         });
         return;
@@ -194,7 +194,7 @@ export const updateEntityAction: Action = {
 
         await callback({
           text: `I've updated the ${componentType} information for ${entity.names[0]}.`,
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
           source: message.content.source,
         });
       } else {
@@ -211,7 +211,7 @@ export const updateEntityAction: Action = {
 
         await callback({
           text: `I've added new ${componentType} information for ${entity.names[0]}.`,
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
           source: message.content.source,
         });
       }
@@ -219,7 +219,7 @@ export const updateEntityAction: Action = {
       logger.error(`Error in updateEntity handler: ${error}`);
       await callback({
         text: "There was an error processing the entity information.",
-        action: "UPDATE_ENTITY_ERROR",
+        actions: ["UPDATE_ENTITY_ERROR"],
         source: message.content.source,
       });
     }
@@ -237,7 +237,7 @@ export const updateEntityAction: Action = {
         user: "{{user2}}",
         content: {
           text: "I've updated your telegram information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],
@@ -252,7 +252,7 @@ export const updateEntityAction: Action = {
         user: "{{user2}}",
         content: {
           text: "I've updated Jimmy's twitter information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],
@@ -267,7 +267,7 @@ export const updateEntityAction: Action = {
         user: "{{user2}}",
         content: {
           text: "I've updated your discord information.",
-          action: "UPDATE_ENTITY",
+          actions: ["UPDATE_ENTITY"],
         },
       },
     ],

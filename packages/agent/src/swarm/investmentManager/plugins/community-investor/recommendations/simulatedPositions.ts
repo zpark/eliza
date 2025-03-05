@@ -26,7 +26,7 @@ export const getSimulatedPositions: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_SIMULATED_POSITIONS",
+                    actions: ["TRUST_GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
@@ -41,7 +41,7 @@ export const getSimulatedPositions: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_SIMULATED_POSITIONS",
+                    actions: ["TRUST_GET_SIMULATED_POSITIONS"],
                 },
             },
         ],
@@ -80,7 +80,7 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_SIMULATED_POSITIONS"
+                        actions: ["TRUST_GET_SIMULATED_POSITIONS"]
                     },
                     userId: message.userId,
                     agentId: message.agentId,
@@ -192,7 +192,7 @@ export const getSimulatedPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_SIMULATED_POSITIONS"
+                        actions: ["TRUST_GET_SIMULATED_POSITIONS"]
                     },
                     userId: message.userId,
                     agentId: message.agentId,

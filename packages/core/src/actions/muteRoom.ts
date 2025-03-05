@@ -86,7 +86,7 @@ export const muteRoomAction: Action = {
         }
 
         for (const response of responses) {
-            await callback?.({...response.content, action: "MUTE_ROOM"});
+            await callback?.({...response.content, actions: ["MUTE_ROOM"]});
         }
     },
     examples: [
@@ -101,7 +101,7 @@ export const muteRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Got it",
-                    action: "MUTE_ROOM",
+                    actions: ["MUTE_ROOM"],
                 },
             },
             {
@@ -122,7 +122,7 @@ export const muteRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Understood",
-                    action: "MUTE_ROOM",
+                    actions: ["MUTE_ROOM"],
                 },
             },
             {
@@ -135,7 +135,7 @@ export const muteRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -150,7 +150,7 @@ export const muteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "np going silent",
-                    action: "MUTE_ROOM",
+                    actions: ["MUTE_ROOM"],
                 },
             },
             {
@@ -163,7 +163,7 @@ export const muteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -178,7 +178,7 @@ export const muteRoomAction: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "my bad ill mute",
-                    action: "MUTE_ROOM",
+                    actions: ["MUTE_ROOM"],
                 },
             },
         ],
@@ -193,7 +193,7 @@ export const muteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "sry",
-                    action: "MUTE_ROOM",
+                    actions: ["MUTE_ROOM"],
                 },
             },
         ],

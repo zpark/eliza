@@ -124,7 +124,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "Sure",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -139,7 +139,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "You too, talk to you later",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -148,14 +148,14 @@ export default {
                 user: "{{user1}}",
                 content: {
                     text: "Great call everyone, hopping off now",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
             {
                 user: "{{user2}}",
                 content: {
                     text: "Agreed, I'll hop off too",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -170,7 +170,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "No worries, I'll leave the voice channel",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -185,7 +185,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "Sounds good, see you both later",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -200,7 +200,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "ok leaving",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -215,7 +215,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "aight im out",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],
@@ -230,7 +230,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "sorry, talk to you later",
-                    action: "LEAVE_VOICE",
+                    actions: ["LEAVE_VOICE"],
                 },
             },
         ],

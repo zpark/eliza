@@ -180,7 +180,7 @@ export const formatMessages = ({
     .filter((message: Memory) => message.userId)
     .map((message: Memory) => {
       const messageContent = (message.content as Content).text;
-      const messageAction = (message.content as Content).action;
+      const messageActions = (message.content as Content).actions;
       const formattedName =
         actors.find((actor: Entity) => actor.id === message.userId)?.names[0] ||
         "Unknown User";
@@ -203,12 +203,12 @@ export const formatMessages = ({
 
       const shortId = message.userId.slice(-5);
 
-      if(messageAction === "REFLECTION") {
+      if(messageActions.includes("REFLECTION")) {
         return `${timeString} (${timestamp}) [${shortId}] ${formattedName} (internal monologue) *${messageContent}*`;
       }
 
       return `${timeString} (${timestamp}) [${shortId}] ${formattedName}: ${messageContent}${attachmentString}${
-        messageAction && messageAction !== "null" ? ` (action: ${messageAction})` : ""
+        messageActions && messageActions.length > 0 ? ` (actions: ${messageActions.join(", ")})` : ""
       }`;
     })
     .join("\n");
@@ -237,40 +237,46 @@ export const formatTimestamp = (messageDate: number) => {
 
 const jsonBlockPattern = /```json\n([\s\S]*?)\n```/;
 
-export const messageCompletionFooter = `\nResponse format should be formatted in a valid JSON block like this:
+export const shouldRespondTemplate = `# Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
+{{providers}}
+# Instructions: Decide if {{agentName}} should respond to or interact with the conversation.
+If the message is directed at or relevant to {{agentName}}, respond with RESPOND action.
+If a user asks {{agentName}} to be quiet, respond with STOP action.
+If {{agentName}} should ignore the message, respond with IGNORE action.
+If responding with the RESPOND action, include a list of optional providers that could be relevant to the response.
+Response format should be formatted in a valid JSON block like this:
 \`\`\`json
-{ "thought": "<string>", "user": "{{agentName}}", "text": "<string>", "action": "<string>" }
+{
+    "user": "{{agentName}}",
+    "action": "RESPOND" | "IGNORE" | "STOP",
+    "providers": ["<string>", "<string>", ...]
+}
+\`\`\`
+Your response should include the valid JSON block and nothing else.`;
+
+export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
+{{providers}}
+# Instructions: Write the next message for {{agentName}}.
+First, think about what you want to do next and plan your actions. Then, write the next message and include the actions you plan to take.
+"thought" should be a short description of what the agent is thinking about and planning.
+"actions" should be an array of the actions {{agentName}} plans to take based on the thought (if none, use IGNORE, if simply responding with text, use REPLY)
+"providers" should be an optional array of the providers that {{agentName}} will use to have the right context for responding and acting
+"evaluators" should be an optional array of the evaluators that {{agentName}} will use to evaluate the conversation after responding
+"text" should be the next message you want to send, if any (don't send a message if using the IGNORE action).
+These are the available valid actions: {{actionNames}}
+
+Response format should be formatted in a valid JSON block like this:
+\`\`\`json
+{
+    "thought": "<string>",
+    "user": "{{agentName}}",
+    "text": "<string>",
+    "actions": ["<string>", "<string>", ...],
+    "providers": ["<string>", "<string>", ...]
+}
 \`\`\`
 
-The "action" field should be one of the options in [Available Actions] and the "text" field should be the response you want to send. Do not including any thinking or internal reflection in the "text" field. "thought" should be a short description of what the agent is thinking about before responding, inlcuding a brief justification for the response.
-`;
-
-export const postCompletionFooter = `Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
-    Your response should be 1, 2, or 3 sentences (choose the length at random).
-    Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than 280. No emojis. Use \\n\\n (double spaces) between statements if there are multiple statements in your response.`;
-
-export const shouldRespondFooter = "The available options are RESPOND, IGNORE, or STOP. Choose the most appropriate option.";
-
-export const parseShouldRespondFromText = (
-    text: string
-): "RESPOND" | "IGNORE" | "STOP" | null => {
-    const match = text
-        .split("\n")[0]
-        .trim()
-        .replace("[", "")
-        .toUpperCase()
-        .replace("]", "")
-        .match(/^(RESPOND|IGNORE|STOP)$/i);
-    return match
-        ? (match[0].toUpperCase() as "RESPOND" | "IGNORE" | "STOP")
-        : text.includes("RESPOND")
-        ? "RESPOND"
-        : text.includes("IGNORE")
-        ? "IGNORE"
-        : text.includes("STOP")
-        ? "STOP"
-        : null;
-};
+Your response should include the valid JSON block and nothing else.`;
 
 export const booleanFooter = "Respond with only a YES or a NO.";
 
@@ -334,7 +340,7 @@ export function parseJsonArrayFromText(text: string) {
                 /(?<!\\)'([^']*)'(?=\s*[,}\]])/g,
                 '"$1"'
             );
-            jsonData = JSON.parse(normalizedJson);
+            jsonData = JSON.parse(normalizeJsonString(normalizedJson));
         } catch (_e) {
             logger.warn("Could not parse text as JSON, will try pattern matching");
         }
@@ -352,7 +358,7 @@ export function parseJsonArrayFromText(text: string) {
                     /(?<!\\)'([^']*)'(?=\s*[,}\]])/g,
                     '"$1"'
                 );
-                jsonData = JSON.parse(normalizedJson);
+                jsonData = JSON.parse(normalizeJsonString(normalizedJson));
             } catch (_e) {
                 logger.warn("Could not parse text as JSON, returning null");
             }
@@ -388,7 +394,7 @@ export function parseJSONObjectFromText(
             jsonData = JSON.parse(jsonBlockMatch[1].trim());
         } else {
             // Try to parse the text directly if it's not in a code block
-            jsonData = JSON.parse(text.trim());
+            jsonData = JSON.parse(normalizeJsonString(text.trim()));
         }
     } catch (_e) {
         logger.warn("Could not parse text as JSON, returning null");

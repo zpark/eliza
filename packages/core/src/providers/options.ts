@@ -8,7 +8,7 @@ interface OptionObject {
 }
 
 export const optionsProvider: Provider = {
-    name: "options",
+    name: "OPTIONS",
     get: async (
         runtime: IAgentRuntime,
         message: Memory,

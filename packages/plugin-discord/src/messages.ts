@@ -130,8 +130,8 @@ export class MessageManager {
         agentId: this.runtime.agentId,
         roomId: roomId,
         content: {
-          name: name,
-          userName: userName,
+          // name: name,
+          // userName: userName,
           text: processedContent || " ",
           attachments: attachments,
           source: "discord",
@@ -160,7 +160,7 @@ export class MessageManager {
 
           const memories: Memory[] = [];
           for (const m of messages) {
-            const action = content.action;
+            const actions = content.actions;
 
             const memory: Memory = {
               id: createUniqueUuid(this.runtime, m.id),
@@ -168,7 +168,7 @@ export class MessageManager {
               agentId: this.runtime.agentId,
               content: {
                 ...content,
-                action,
+                actions,
                 inReplyTo: messageId,
                 url: m.url,
               },

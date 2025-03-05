@@ -32,7 +32,7 @@ type Memory = {
     text: string;
     attachments?: Media[];
     source?: string;
-    action?: string;
+    actions?: string[];
   };
   createdAt: number;
   worldId?: string;
@@ -45,7 +45,7 @@ type TransformedMessage = {
   createdAt: number;
   attachments?: Media[];
   source?: string;
-  action?: string;
+  actions?: string[];
   worldId?: string;
   id: string; // Add ID field
 };
@@ -279,7 +279,7 @@ export function useMessages(agentId: UUID, roomId: UUID): {
           createdAt: memory.createdAt,
           attachments: memory.content.attachments,
           source: memory.content.source,
-          action: memory.content.action,
+          actions: memory.content.actions,
           worldId: memory.worldId || worldId, // Include worldId in the transformed messages
           id: generateMessageId(memory) // Generate a unique ID
         };
@@ -325,7 +325,7 @@ export function useMessages(agentId: UUID, roomId: UUID): {
             createdAt: memory.createdAt,
             attachments: memory.content.attachments,
             source: memory.content.source,
-            action: memory.content.action,
+            actions: memory.content.actions,
             worldId: memory.worldId || worldId,
             id: generateMessageId(memory) // Generate a unique ID
           };

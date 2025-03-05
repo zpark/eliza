@@ -3,7 +3,7 @@ import { formatEntities, getEntityDetails } from "../entities";
 import { Entity, IAgentRuntime, Memory, Provider } from "../types";
 
 export const entitiesProvider: Provider = {
-  name: "entities",
+  name: "ENTITIES",
   description: "Entities in the current conversation",
   get: async (runtime: IAgentRuntime, message: Memory) => {
     const { roomId, userId } = message;

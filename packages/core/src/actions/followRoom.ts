@@ -99,7 +99,7 @@ export const followRoomAction: Action = {
         }
 
         for (const response of responses) {
-            await callback?.({...response.content, action: "FOLLOW_ROOM"});
+            await callback?.({...response.content, actions: ["FOLLOW_ROOM"]});
         }
     },
     examples: [
@@ -114,7 +114,7 @@ export const followRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "Sure, I will now follow this room and chime in",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -129,7 +129,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Got it",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
             {
@@ -162,7 +162,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Sure thing, I'm on it",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
             {
@@ -175,7 +175,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Haha, okay no problem",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -190,7 +190,7 @@ export const followRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "you got it, i'm here",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -205,7 +205,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "I'M ON IT",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
             {
@@ -232,7 +232,7 @@ export const followRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "kk i'm following",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -267,7 +267,7 @@ export const followRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "On it",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
             {
@@ -280,7 +280,7 @@ export const followRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "Gladly, I'm here to participate",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -295,7 +295,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "I'm in, let's do this",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
             {
@@ -328,7 +328,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "sure",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -343,7 +343,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "I shall eagerly engage, good sir",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],
@@ -370,7 +370,7 @@ export const followRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "k",
-                    action: "FOLLOW_ROOM",
+                    actions: ["FOLLOW_ROOM"],
                 },
             },
         ],

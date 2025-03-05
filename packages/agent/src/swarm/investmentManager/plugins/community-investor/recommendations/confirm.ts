@@ -40,7 +40,7 @@ export const confirmRecommendation: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                    actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                 },
             },
         ],
@@ -61,7 +61,7 @@ export const confirmRecommendation: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                    actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                 },
             },
         ],
@@ -90,7 +90,7 @@ export const confirmRecommendation: Action = {
                     inReplyTo: message.id
                         ? message.id
                         : undefined,
-                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                    actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                 },
                 userId: message.userId,
                 agentId: message.agentId,
@@ -248,7 +248,7 @@ export const confirmRecommendation: Action = {
                                     inReplyTo: message.id
                                         ? message.id
                                         : undefined,
-                                    action: "TRUST_CONFIRM_RECOMMENDATION",
+                                    actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                                 },
                                 userId: user.id,
                                 agentId: message.agentId,

@@ -22,7 +22,7 @@ export const ignoreAction: Action = {
             },
             {
                 user: "{{user2}}",
-                content: { text: "", action: "IGNORE" },
+                content: { text: "", actions: ["IGNORE"] },
             },
         ],
 
@@ -33,7 +33,7 @@ export const ignoreAction: Action = {
             },
             {
                 user: "{{user2}}",
-                content: { text: "", action: "IGNORE" },
+                content: { text: "", actions: ["IGNORE"] },
             },
         ],
 
@@ -60,7 +60,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: { text: "See ya" },
             },
-            { user: "{{user1}}", content: { text: "" }, action: "IGNORE" },
+            { user: "{{user1}}", content: { text: "" }, actions: ["IGNORE"] },
         ],
 
         [
@@ -78,7 +78,7 @@ export const ignoreAction: Action = {
             },
             {
                 user: "{{user2}}",
-                content: { text: "", action: "IGNORE" },
+                content: { text: "", actions: ["IGNORE"] },
             },
         ],
 
@@ -93,7 +93,7 @@ export const ignoreAction: Action = {
             },
             {
                 user: "{{user1}}",
-                content: { text: "", action: "IGNORE" },
+                content: { text: "", actions: ["IGNORE"] },
             },
         ],
         [
@@ -115,7 +115,7 @@ export const ignoreAction: Action = {
                 user: "{{user1}}",
                 content: { text: "PLEASE shut up" },
             },
-            { user: "{{user2}}", content: { text: "", action: "IGNORE" } },
+            { user: "{{user2}}", content: { text: "", actions: ["IGNORE"] } },
         ],
         [
             {
@@ -128,7 +128,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -155,7 +155,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -170,7 +170,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "thats inappropriate",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -191,7 +191,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],
@@ -218,7 +218,7 @@ export const ignoreAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "",
-                    action: "IGNORE",
+                    actions: ["IGNORE"],
                 },
             },
         ],

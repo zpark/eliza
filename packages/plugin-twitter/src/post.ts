@@ -302,7 +302,7 @@ export class TwitterPostClient {
                     agentId: this.runtime.agentId,
                     content: {
                         text: topics || "",
-                        action: "TWEET",
+                        actions: ["TWEET"],
                     },
                 },
                 {

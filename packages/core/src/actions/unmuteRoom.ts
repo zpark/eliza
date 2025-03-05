@@ -84,7 +84,7 @@ export const unmuteRoomAction: Action = {
         }
 
         for (const response of responses) {
-            await callback?.({...response.content, action: "UNMUTE_ROOM"});
+            await callback?.({...response.content, actions: ["UNMUTE_ROOM"]});
         }
     },
     examples: [
@@ -99,7 +99,7 @@ export const unmuteRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Done",
-                    action: "UNMUTE_ROOM",
+                    actions: ["UNMUTE_ROOM"],
                 },
             },
             {
@@ -126,7 +126,7 @@ export const unmuteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "Sounds good",
-                    action: "UNMUTE_ROOM",
+                    actions: ["UNMUTE_ROOM"],
                 },
             },
         ],
@@ -141,7 +141,7 @@ export const unmuteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "im back",
-                    action: "UNMUTE_ROOM",
+                    actions: ["UNMUTE_ROOM"],
                 },
             },
         ],
@@ -156,7 +156,7 @@ export const unmuteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "unmuted",
-                    action: "UNMUTE_ROOM",
+                    actions: ["UNMUTE_ROOM"],
                 },
             },
         ],
@@ -171,7 +171,7 @@ export const unmuteRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "sup yall",
-                    action: "UNMUTE_ROOM",
+                    actions: ["UNMUTE_ROOM"],
                 },
             },
         ],

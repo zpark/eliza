@@ -2,8 +2,9 @@ import { addHeader } from "../prompts";
 import { IAgentRuntime, Memory, Provider } from "../types";
 
 export const knowledgeProvider: Provider = {
-  name: "knowledge",
-  description: "Knowledge from the knowledge base",
+  name: "KNOWLEDGE",
+  description: "Knowledge from the knowledge base that {{agentName}} knows",
+  dynamic: true,
   get: async (
     runtime: IAgentRuntime,
     message: Memory,

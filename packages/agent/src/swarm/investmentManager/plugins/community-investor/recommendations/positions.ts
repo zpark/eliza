@@ -26,7 +26,7 @@ export const getPositions: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "TRUST_GET_POSITIONS",
+                    actions: ["TRUST_GET_POSITIONS"],
                 },
             },
         ],
@@ -70,7 +70,7 @@ export const getPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_POSITIONS",
+                        actions: ["TRUST_GET_POSITIONS"],
                     },
                     userId: message.userId,
                     agentId: message.agentId,
@@ -182,7 +182,7 @@ export const getPositions: Action = {
                         inReplyTo: message.id
                             ? message.id
                             : undefined,
-                        action: "TRUST_GET_POSITIONS"
+                        actions: ["TRUST_GET_POSITIONS"]
                     },
                     userId: message.userId,
                     metadata: message.metadata,

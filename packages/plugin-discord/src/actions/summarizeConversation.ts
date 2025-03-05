@@ -197,7 +197,7 @@ const summarizeAction = {
 
         const callbackData: Content = {
             text: "", // fill in later
-            action: "SUMMARIZATION_RESPONSE",
+            actions: ["SUMMARIZATION_RESPONSE"],
             source: message.content.source,
             attachments: [],
         };
@@ -335,7 +335,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "sure, no problem, give me a minute to get that together for you",
-                    action: "SUMMARIZE",
+                    actions: ["SUMMARIZE"],
                 },
             },
         ],
@@ -350,7 +350,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "sure, give me a sec",
-                    action: "SUMMARIZE",
+                    actions: ["SUMMARIZE"],
                 },
             },
         ],
@@ -365,7 +365,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "Yeah, just hold on a second while I get that together for you...",
-                    action: "SUMMARIZE",
+                    actions: ["SUMMARIZE"],
                 },
             },
         ],
@@ -380,7 +380,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "no problem, give me a few minutes to read through everything",
-                    action: "SUMMARIZE",
+                    actions: ["SUMMARIZE"],
                 },
             },
         ],

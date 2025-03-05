@@ -600,7 +600,7 @@ async function handler(
                             buttons: [],
                             channelId: TELEGRAM_CHANNEL_ID,
                             source: "telegram",
-                            action: "TRUST_CONFIRM_RECOMMENDATION",
+                            actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                         },
                         userId: message.userId,
                         agentId: message.agentId,
@@ -644,7 +644,7 @@ async function handler(
                             ? message.id
                             : undefined,
                         buttons: [],
-                        action: "TRUST_CONFIRM_RECOMMENDATION",
+                        actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                         source: "telegram",
                     },
                     userId: user.id,
@@ -668,7 +668,7 @@ async function handler(
                         agentId,
                         content: {
                             text: message.content.text,
-                            action: "TRUST_CONFIRM_RECOMMENDATION",
+                            actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                         },
                         roomId,
                         createdAt: Date.now(),
@@ -677,7 +677,7 @@ async function handler(
                         {
                             ...message,
                             ...actionMemory,
-                            action: "",
+                            actions: [""],
                         } as Memory,
                         [actionMemory as Memory],
                         state,
@@ -714,7 +714,7 @@ async function handler(
                             ? message.id
                             : undefined,
                         buttons: [],
-                        action: "TRUST_CONFIRM_RECOMMENDATION",
+                        actions: ["TRUST_CONFIRM_RECOMMENDATION"],
                         source: "telegram",
                     },
                     userId: user.id,

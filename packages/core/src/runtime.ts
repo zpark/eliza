@@ -2,14 +2,11 @@ import { join } from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { bootstrapPlugin } from "./bootstrap.ts";
 import { settings } from "./environment.ts";
-import {
-  evaluationTemplate,
-  formatEvaluatorNames,
-  formatEvaluators,
-} from "./evaluators.ts";
 import { createUniqueUuid, handlePluginImporting, logger } from "./index.ts";
 import { MemoryManager } from "./memory.ts";
-import { composePrompt, parseJsonArrayFromText, splitChunks } from "./prompts.ts";
+import {
+  splitChunks
+} from "./prompts.ts";
 import {
   type Action,
   type Agent,
@@ -546,58 +543,71 @@ export class AgentRuntime implements IAgentRuntime {
     callback?: HandlerCallback
   ): Promise<void> {
     for (const response of responses) {
-      if (!response.content?.action) {
+      if (!response.content?.actions || response.content.actions.length === 0) {
         logger.warn("No action found in the response content.");
         continue;
       }
 
-      const normalizedAction = response.content.action
-        .toLowerCase()
-        .replace("_", "");
+      const actions = response.content.actions;
 
-      logger.success(`Normalized action: ${normalizedAction}`);
+      function normalizeAction(action: string) {
+        return action.toLowerCase().replace("_", "");
+      }
+      logger.success(`Found actions: ${this.actions.map((a) => normalizeAction(a.name))}`);
 
-      let action = this.actions.find(
-        (a: { name: string }) =>
-          a.name.toLowerCase().replace("_", "").includes(normalizedAction) ||
-          normalizedAction.includes(a.name.toLowerCase().replace("_", ""))
-      );
+      for (const responseAction of actions) {
+        logger.success(`Calling action: ${responseAction}`);
+        const normalizedResponseAction = normalizeAction(responseAction);
+        let action = this.actions.find(
+          (a: { name: string }) =>
+            normalizeAction(a.name).includes(normalizedResponseAction) || // the || is kind of a fuzzy match
+            normalizedResponseAction.includes(normalizeAction(a.name))    // 
+        );
+        
+        if(action) {
+          logger.success(`Found action: ${action?.name}`);
+        } else {
+          logger.error(`No action found for: ${responseAction}`);
+        }
 
-      if (!action) {
-        logger.info("Attempting to find action in similes.");
-        for (const _action of this.actions) {
-          const simileAction = _action.similes.find(
-            (simile) =>
-              simile
-                .toLowerCase()
-                .replace("_", "")
-                .includes(normalizedAction) ||
-              normalizedAction.includes(simile.toLowerCase().replace("_", ""))
-          );
-          if (simileAction) {
-            action = _action;
-            logger.success(`Action found in similes: ${action.name}`);
-            break;
+        if (!action) {
+          logger.info("Attempting to find action in similes.");
+          for (const _action of this.actions) {
+            const simileAction = _action.similes.find(
+              (simile) =>
+                simile
+                  .toLowerCase()
+                  .replace("_", "")
+                  .includes(normalizedResponseAction) ||
+                normalizedResponseAction.includes(simile.toLowerCase().replace("_", ""))
+            );
+            if (simileAction) {
+              action = _action;
+              logger.success(`Action found in similes: ${action.name}`);
+              break;
+            }
           }
         }
-      }
 
-      if (!action) {
-        logger.error("No action found for", response.content.action);
-        continue;
-      }
+        if (!action) {
+          logger.error("No action found in", JSON.stringify(response));
+          continue;
+        }
 
-      if (!action.handler) {
-        logger.error(`Action ${action.name} has no handler.`);
-        continue;
-      }
+        if (!action.handler) {
+          logger.error(`Action ${action.name} has no handler.`);
+          continue;
+        }
 
-      try {
-        logger.info(`Executing handler for action: ${action.name}`);
-        await action.handler(this, message, state, {}, callback, responses);
-      } catch (error) {
-        logger.error(error);
-        throw error;
+        logger.success(`Executing handler for action: ${action.name}`);
+
+        try {
+          logger.info(`Executing handler for action: ${action.name}`);
+          await action.handler(this, message, state, {}, callback, responses);
+        } catch (error) {
+          logger.error(error);
+          throw error;
+        }
       }
     }
   }
@@ -633,35 +643,11 @@ export class AgentRuntime implements IAgentRuntime {
       }
     );
 
-    const resolvedEvaluators = await Promise.all(evaluatorPromises);
-    const evaluatorsData = resolvedEvaluators.filter(
-      (evaluator): evaluator is Evaluator => evaluator !== null
-    );
+    const evaluators = (await Promise.all(evaluatorPromises)).filter(Boolean) as Evaluator[];
 
-    // if there are no evaluators this frame, return
-    if (!evaluatorsData || evaluatorsData.length === 0) {
-      return [];
-    }
+    // get the evaluators that were chosen by the response handler
 
-    const prompt = composePrompt({
-      state: {
-        ...state,
-        evaluators: formatEvaluators(evaluatorsData),
-        evaluatorNames: formatEvaluatorNames(evaluatorsData),
-      },
-      template:
-        this.character.templates?.evaluationTemplate || evaluationTemplate,
-    });
-
-    const result = await this.useModel(ModelTypes.TEXT_SMALL, {
-      prompt,
-    });
-
-    const evaluators = parseJsonArrayFromText(result) as unknown as string[];
-
-    for (const evaluator of this.evaluators) {
-      if (!evaluators?.includes(evaluator.name)) continue;
-
+    for (const evaluator of evaluators) {
       if (evaluator.handler)
         await evaluator.handler(this, message, state, {}, callback);
     }
@@ -851,30 +837,45 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   /**
-   * Compose the state of the agent into an object that can be passed or used for response generation.
-   * @param message The message to compose the state from.
-   * @returns The state of the agent.
+   * Composes the agent's state by gathering data from enabled providers.
+   * @param message - The message to use as context for state composition
+   * @param additionalKeys - Optional key-value pairs to include in the state
+   * @param filterList - Optional list of provider names to include, filtering out all others
+   * @param includeList - Optional list of private provider names to include that would otherwise be filtered out
+   * @returns A State object containing provider data, values, and text
    */
   async composeState(
     message: Memory,
-    additionalKeys: { [key: string]: unknown } = {},
-    providerList: string[] | null = null
+    additionalKeys: { [key: string]: unknown } = null,
+    filterList: string[] | null = null, // filter out providers that are not in the list
+    includeList: string[] | null = null, // include providers that are private, dynamic or otherwise not included by default
   ): Promise<State> {
-    const providersToGet = providerList
+    const providersToGet = (filterList
       ? this.providers.filter((provider) =>
-          providerList.includes(provider.name)
+        filterList.includes(provider.name)
         )
-      : this.providers;
+      : this.providers).filter(provider => !provider.private && !provider.dynamic)
+      // add any providers on the includeList that aren't already in the providersToGet array
+      .concat(includeList.filter(provider => !providersToGet.includes(provider)).map(provider => this.providers.find(p => p.name === provider)));
+      
+    const privateProvidersToGet = includeList
+      ? this.providers.filter((provider) =>
+        includeList.includes(provider.name) ||
+        filterList?.includes(provider.name)
+        )
+      : [];
 
-    const providerResults = await Promise.all(
-      providersToGet.map(async (provider) => {
+    const providerData = (await Promise.all(
+      Array.from(new Set([...providersToGet, ...privateProvidersToGet])).map(async (provider) => {
         const start = Date.now();
         const result = await provider.get(this, message);
         const duration = Date.now() - start;
         logger.warn(`${provider.name} Provider took ${duration}ms to respond`);
         return result;
       })
-    );
+    ))
+
+    const providers = providerData.map((result) => result.values).flat();
 
     // get cached state for this message ID
     const cachedState = (await this.stateCache.get(message.id)) || {
@@ -883,22 +884,30 @@ export class AgentRuntime implements IAgentRuntime {
       providers: "",
     };
 
-    const values = providerResults.map((result) => result.values).flat();
-    const text = providerResults
-      .map((result) => result.text)
-      .filter((text) => text !== "")
-      .join("\n\n");
-    const data = providerResults.map((result) => result.data).flat();
+    const providersText = cachedState.providers
+      + providers
+        .map((result) => result.text)
+        .filter((text) => text !== "")
+        .join("\n\n");
+    const data = { providers }
 
-    const providers = cachedState.providers + text;
+    const values = {
+      ...cachedState.values,
+      ...providerData.map((result) => result.values).flat(),
+      ...(additionalKeys || {}),
+    }
 
     const newState = {
-      ...cachedState.values,
-      ...values,
-      ...cachedState.data,
-      data,
-      ...additionalKeys,
-      providers,
+      values: {
+        ...cachedState.values,
+        ...values,
+        ...(additionalKeys || {}),
+      },
+      data: {
+        ...cachedState.data,
+        ...data
+      },
+      providers: providersText,
     };
     this.stateCache.set(message.id, newState);
     return newState;

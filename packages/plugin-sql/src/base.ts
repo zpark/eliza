@@ -105,6 +105,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         }
                     );
 
+                    console.trace("****** Database operation failure source");
+
                     await new Promise((resolve) => setTimeout(resolve, delay));
                 } else {
                     logger.error("Max retry attempts reached:", {
@@ -1719,10 +1721,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 const now = new Date();
                 const metadata = task.metadata || {};
                 
-                // Ensure updatedAt is set in metadata
-                if (!metadata.updatedAt) {
-                    metadata.updatedAt = now.getTime();
-                }
                 const values = {
                     id: task.id as UUID,
                     name: task.name,
@@ -1862,9 +1860,7 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
         await this.withRetry(async () => {
             await this.withDatabase(async () => {
                 console.log("updating task", id, task);
-                const updateValues : Partial<Task> & { updatedAt?: number } = {
-                    updatedAt: Date.now()
-                };
+                const updateValues: Partial<Task> = {};
                 
                 // Add fields to update if they exist in the partial task object
                 if (task.name !== undefined) updateValues.name = task.name;
@@ -1872,6 +1868,8 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                 if (task.roomId !== undefined) updateValues.roomId = task.roomId;
                 if (task.worldId !== undefined) updateValues.worldId = task.worldId;
                 if (task.tags !== undefined) updateValues.tags = task.tags;
+
+                task.updatedAt = Date.now();
                 
                 // Handle metadata updates
                 if (task.metadata) {
@@ -1882,13 +1880,11 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
                         const newMetadata = {
                             ...currentMetadata,
                             ...task.metadata,
-                            updatedAt: Date.now()
                         };
                         updateValues.metadata = newMetadata;
                     } else {
                         updateValues.metadata = {
                             ...task.metadata,
-                            updatedAt: Date.now()
                         };
                     }
                 }

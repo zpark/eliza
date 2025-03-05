@@ -243,7 +243,7 @@ const character: Character = {
         user: "Eddy",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -258,7 +258,7 @@ const character: Character = {
         user: "Eddy",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ]

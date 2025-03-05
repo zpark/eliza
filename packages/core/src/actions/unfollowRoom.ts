@@ -61,7 +61,7 @@ export const unfollowRoomAction: Action = {
         }
 
         for (const response of responses) {
-            await callback?.({...response.content, action: "UNFOLLOW_ROOM"});
+            await callback?.({...response.content, actions: ["UNFOLLOW_ROOM"]});
         }
     },
     examples: [
@@ -76,7 +76,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "Alright, I will stop chiming in",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -103,7 +103,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Understood",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -118,7 +118,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "I'll only respond when mentioned",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
             {
@@ -151,7 +151,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "I'll only engage when asked",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
             {
@@ -178,7 +178,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "my bad, I'll step back",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -193,7 +193,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "No problem, I've got other stuff to work on",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -208,7 +208,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "sry, ill chill",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -223,7 +223,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "No sweat",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -244,7 +244,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Noted",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -259,7 +259,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "Sorry, I'll go work on other things",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -274,7 +274,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "My apologies, I shall withdraw post-haste",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -289,7 +289,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "kk sry ill stahppp",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],
@@ -304,7 +304,7 @@ export const unfollowRoomAction: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "sry",
-                    action: "UNFOLLOW_ROOM",
+                    actions: ["UNFOLLOW_ROOM"],
                 },
             },
         ],

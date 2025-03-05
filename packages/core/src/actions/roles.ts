@@ -292,7 +292,7 @@ const updateRoleAction: Action = {
       logger.error(`No world or metadata found for server ${serverId}`);
       await callback({
         text: "Unable to process role changes due to missing server data.",
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
       return;
@@ -340,7 +340,7 @@ const updateRoleAction: Action = {
     if (!result?.length) {
       await callback({
         text: "No valid role assignments found in the request.",
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
       return;
@@ -365,7 +365,7 @@ const updateRoleAction: Action = {
       if (!canModifyRole(requesterRole, currentRole, assignment.newRole)) {
         await callback({
           text: `You don't have permission to change ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
-          action: "UPDATE_ROLE",
+          actions: ["UPDATE_ROLE"],
           source: "discord",
         });
         continue;
@@ -378,7 +378,7 @@ const updateRoleAction: Action = {
 
       await callback({
         text: `Updated ${targetEntity.names[0]}'s role to ${assignment.newRole}.`,
-        action: "UPDATE_ROLE",
+        actions: ["UPDATE_ROLE"],
         source: "discord",
       });
     }
@@ -403,7 +403,7 @@ const updateRoleAction: Action = {
         user: "{{user3}}",
         content: {
           text: "Updated {{user2}}'s role to ADMIN.",
-          action: "UPDATE_ROLE",
+          actions: ["UPDATE_ROLE"],
         },
       },
     ],
@@ -419,7 +419,7 @@ const updateRoleAction: Action = {
         user: "{{user3}}",
         content: {
           text: "Updated alice's role to ADMIN.\nUpdated bob's role to ADMIN.",
-          action: "UPDATE_ROLE",
+          actions: ["UPDATE_ROLE"],
         },
       },
     ],
@@ -435,7 +435,7 @@ const updateRoleAction: Action = {
         user: "{{user3}}",
         content: {
           text: "I cannot ban users.",
-          action: "REPLY",
+          actions: ["REPLY"],
         }
       }
     ]

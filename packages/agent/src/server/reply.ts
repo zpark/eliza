@@ -47,7 +47,7 @@ const replyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "Hi! How can I help you today?",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -62,7 +62,7 @@ const replyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "I really like deep shades of blue. They remind me of the ocean and the night sky.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -77,7 +77,7 @@ const replyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "Let me break that down for you in simple terms...",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -92,7 +92,7 @@ const replyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "Of course! Let's work through it step by step.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ]

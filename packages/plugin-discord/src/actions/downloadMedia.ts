@@ -101,7 +101,7 @@ export default {
 
         const response: Content = {
             text: `I downloaded the video "${videoInfo.title}" and attached it below.`,
-            action: "DOWNLOAD_MEDIA_RESPONSE",
+            actions: ["DOWNLOAD_MEDIA_RESPONSE"],
             source: message.content.source,
             attachments: [],
         };
@@ -151,7 +151,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "Downloading the YouTube video now, one sec",
-                    action: "DOWNLOAD_MEDIA",
+                    actions: ["DOWNLOAD_MEDIA"],
                 },
             },
         ],
@@ -166,7 +166,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "Sure thing, I'll download that Vimeo video for you",
-                    action: "DOWNLOAD_MEDIA",
+                    actions: ["DOWNLOAD_MEDIA"],
                 },
             },
         ],
@@ -181,7 +181,7 @@ export default {
                 user: "{{user2}}",
                 content: {
                     text: "No problem, I'm on it. I'll have that YouTube video downloaded in a jiffy",
-                    action: "DOWNLOAD_MEDIA",
+                    actions: ["DOWNLOAD_MEDIA"],
                 },
             },
         ],

@@ -208,7 +208,7 @@ const twitterPostAction: Action = {
         // callback and return
         await callback({
           text: "I'm sorry, but you're not authorized to post tweets on behalf of this org.",
-          action: "TWITTER_POST_FAILED",
+          actions: ["TWITTER_POST_FAILED"],
           source: message.content.source,
         });
         return;
@@ -217,7 +217,7 @@ const twitterPostAction: Action = {
       // Prepare response content
       const responseContent: Content = {
         text: `I'll tweet this:\n\n${cleanTweet}`,
-        action: "TWITTER_POST",
+        actions: ["TWITTER_POST"],
         source: message.content.source,
       };
 
@@ -234,7 +234,7 @@ const twitterPostAction: Action = {
             await callback({
               ...responseContent,
               text: "Tweet cancelled. I won't post it.",
-              action: "TWITTER_POST_CANCELLED"
+              actions: ["TWITTER_POST_CANCELLED"]
             });
             return;
           }
@@ -243,7 +243,7 @@ const twitterPostAction: Action = {
             await callback({
               ...responseContent,
               text: "Invalid option. Should be 'post' or 'cancel'.",
-              action: "TWITTER_POST_INVALID_OPTION"
+              actions: ["TWITTER_POST_INVALID_OPTION"]
             });
             return;
           }
@@ -323,7 +323,7 @@ const twitterPostAction: Action = {
 
       await callback({
         ...responseContent,
-        action: "TWITTER_POST_TASK_NEEDS_CONFIRM",
+        actions: ["TWITTER_POST_TASK_NEEDS_CONFIRM"],
       });
 
       logger.info("TWITTER_POST_TASK_NEEDS_CONFIRM", runtime.databaseAdapter.getTasks({roomId: message.roomId, tags: ["TWITTER_POST"]}));
@@ -347,7 +347,7 @@ const twitterPostAction: Action = {
         user: "{{user2}}",
         content: {
           text: "I'll tweet this:\n\nDeep learning isn't just about layers - it's about understanding how neural networks actually learn from patterns. The magic isn't in the math, it's in the emergent behaviors we're just beginning to understand.",
-          action: "TWITTER_POST",
+          actions: ["TWITTER_POST"],
         },
       },
     ],
@@ -362,7 +362,7 @@ const twitterPostAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Tweet posted!\nhttps://twitter.com/username/status/123456789",
-          action: "TWITTER_POST",
+          actions: ["TWITTER_POST"],
         },
       },
     ],

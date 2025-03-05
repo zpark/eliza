@@ -3,7 +3,7 @@ import { addHeader } from "../prompts";
 import { IAgentRuntime, Memory } from "../types";
 
 export const attachmentsProvider: Provider = {
-  name: "attachments",
+  name: "ATTACHMENTS",
   description: "List of attachments in the current conversation",
   get: async (runtime: IAgentRuntime, message: Memory) => {
     // Start with any attachments in the current message

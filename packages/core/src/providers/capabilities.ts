@@ -5,7 +5,7 @@ import type { IAgentRuntime, Memory, Provider, ProviderResult, State } from "../
  * Provider that collects capability descriptions from all registered services
  */
 export const capabilitiesProvider: Provider = {
-  name: "capabilities",
+  name: "CAPABILITIES",
   get: async (
     runtime: IAgentRuntime,
     _message: Memory,

@@ -91,8 +91,8 @@ function MessageContent({
                     {message.source ? (
                         <Badge variant="outline">{message.source}</Badge>
                     ) : null}
-                    {message.action ? (
-                        <Badge variant="outline">{message.action}</Badge>
+                    {message.actions ? (
+                        <Badge variant="outline">{message.actions.join(", ")}</Badge>
                     ) : null}
                     {message.createdAt ? (
                         <ChatBubbleTimestamp timestamp={moment(message.createdAt).format("LT")} />

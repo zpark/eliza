@@ -642,7 +642,7 @@ export class VoiceManager extends EventEmitter {
     ) {
         try {
             if (!message || message.trim() === "" || message.length < 3) {
-                return { text: "", action: "IGNORE" };
+                return { text: "", actions: ["IGNORE"] };
             }
 
             const roomId = createUniqueUuid(this.runtime, channelId);

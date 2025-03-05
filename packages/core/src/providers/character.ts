@@ -2,7 +2,7 @@ import { addHeader } from "../prompts";
 import { ChannelType, IAgentRuntime, Memory, Provider } from "../types";
 
 export const characterProvider: Provider = {
-  name: "character",
+  name: "CHARACTER",
   description: "Character information",
   get: async (runtime: IAgentRuntime, message: Memory) => {
     const character = runtime.character;
@@ -89,8 +89,8 @@ export const characterProvider: Provider = {
             return example
               .map((message) => {
                 let messageString = `${message.user}: ${message.content.text}${
-                  message.content.action
-                    ? ` (action: ${message.content.action})`
+                  message.content.actions
+                    ? ` (actions: ${message.content.actions.join(", ")})`
                     : ""
                 }`;
                 exampleNames.forEach((name, index) => {

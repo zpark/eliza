@@ -24,7 +24,7 @@ export const getRecommenderReport: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "GET_RECOMMENDER_REPORT",
+                    actions: ["GET_RECOMMENDER_REPORT"],
                 },
             },
         ],
@@ -39,7 +39,7 @@ export const getRecommenderReport: Action = {
                 user: "{{user2}}",
                 content: {
                     text: "<NONE>",
-                    action: "GET_RECOMMENDER_REPORT",
+                    actions: ["GET_RECOMMENDER_REPORT"],
                 },
             },
         ],
@@ -88,7 +88,7 @@ export const getRecommenderReport: Action = {
                     inReplyTo: message.id
                         ? message.id
                         : undefined,
-                    action: "GET_RECOMMENDER_REPORT"
+                    actions: ["GET_RECOMMENDER_REPORT"]
                 },
                 userId: message.userId,
                 agentId: message.agentId,
@@ -128,7 +128,7 @@ export const getRecommenderReport: Action = {
         const responseMemory: Memory = {
             content: {
                 text: recommenderReport,
-                action: "GET_RECOMMENDER_REPORT"
+                actions: ["GET_RECOMMENDER_REPORT"]
             },
             userId: message.userId,
             agentId: message.agentId,

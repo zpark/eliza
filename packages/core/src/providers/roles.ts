@@ -11,7 +11,8 @@ import {
 } from "../types";
 
 export const roleProvider: Provider = {
-  name: "roles",
+  name: "ROLES",
+  description: "Roles in the server, default are OWNER, ADMIN and MEMBER (as well as NONE)",
   get: async (
     runtime: IAgentRuntime,
     message: Memory,

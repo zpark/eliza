@@ -54,7 +54,7 @@ const twitterReplyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "The rapid progress in AI is fascinating! I'm particularly excited about advances in multimodal models and their practical applications.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -69,7 +69,7 @@ const twitterReplyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "Let me explain quantum computing in simple terms! Instead of classical bits that are either 0 or 1, quantum computers use quantum bits that can exist in multiple states simultaneously.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -84,7 +84,7 @@ const twitterReplyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "I love working with Python! The simplicity and readability make it perfect for both quick scripts and complex AI applications.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ],
@@ -99,7 +99,7 @@ const twitterReplyAction = {
                 user: "{{user2}}",
                 content: {
                     text: "Yes! The improvements in efficiency and context length are really promising for advancing natural language understanding.",
-                    action: "REPLY",
+                    actions: ["REPLY"],
                 },
             },
         ]

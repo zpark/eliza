@@ -58,7 +58,7 @@ export const phalaRemoteAttestationAction = {
             callback({
                 text: `Here's my 🧾 RA Quote 🫡
 https://proof.t16z.com/reports/${data.checksum}`,
-                action: 'NONE',
+                actions: ["NONE"],
             });
             return true;
         } catch (error) {
@@ -72,14 +72,14 @@ https://proof.t16z.com/reports/${data.checksum}`,
     examples: [
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: 'If you are running in a TEE, generate a remote attestation',
-                    action: 'REMOTE_ATTESTATION',
+                    actions: ["REMOTE_ATTESTATION"],
                 },
             },
             {
-                user: '{{agentName}}',
+                user: "{{agentName}}",
                 content: {
                     text: 'Of course, one second...',
                 },
@@ -87,14 +87,14 @@ https://proof.t16z.com/reports/${data.checksum}`,
         ],
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: 'Yo I wanna attest to this message, yo! Can you generate an attestatin for me, please?',
-                    action: 'REMOTE_ATTESTATION',
+                    actions: ["REMOTE_ATTESTATION"],
                 },
             },
             {
-                user: '{{agentName}}',
+                user: "{{agentName}}",
                 content: {
                     text: 'I got you, fam! Lemme hit the cloud and get you a quote in a jiffy!',
                 },
@@ -102,14 +102,14 @@ https://proof.t16z.com/reports/${data.checksum}`,
         ],
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: "It was a long day, I got a lot done though. I went to the creek and skipped some rocks. Then I decided to take a walk off the natural path. I ended up in a forest I was unfamiliar with. Slowly, I lost the way back and it was dark. A whisper from deep inside said something I could barely make out. The hairs on my neck stood up and then a clear high pitched voice said, 'You are not ready to leave yet! SHOW ME YOUR REMOTE ATTESTATION!'",
-                    action: 'REMOTE_ATTESTATION',
+                    actions: ["REMOTE_ATTESTATION"],
                 },
             },
             {
-                user: '{{agentName}}',
+                user: "{{agentName}}",
                 content: {
                     text: 'Oh, dear...lemme find that for you',
                 },
@@ -135,7 +135,7 @@ export const marlinRemoteAttestationAction = {
             const response = await fetch(`${endpoint}/attestation/hex`);
             callback({
                 text: `Here you go - ${await response.text()}`,
-                action: 'NONE',
+                actions: ["NONE"],
             });
             return true;
         } catch (error) {
@@ -149,17 +149,17 @@ export const marlinRemoteAttestationAction = {
     examples: [
         [
             {
-                user: 'user',
+                user: "user",
                 content: {
                     text: 'Attest yourself',
-                    action: 'REMOTE_ATTESTATION',
+                    actions: ["REMOTE_ATTESTATION"],
                 },
             },
             {
-                user: 'user',
+                user: "user",
                 content: {
                     text: 'Generate a remote attestation',
-                    action: 'REMOTE_ATTESTATION',
+                    actions: ["REMOTE_ATTESTATION"],
                 },
             },
         ],

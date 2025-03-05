@@ -168,7 +168,7 @@ export const getTokenDetails: any = {
                 user: "{{user1}}",
                 content: {
                     text: "Ok, here are the details...",
-                    action: "GET_TOKEN_DETAILS",
+                    actions: ["GET_TOKEN_DETAILS"],
                 },
             },
         ],
@@ -277,7 +277,7 @@ export const getTokenDetails: any = {
                     inReplyTo: message.id
                         ? message.id
                         : undefined,
-                        action: "GET_TOKEN_DETAILS",
+                        actions: ["GET_TOKEN_DETAILS"],
                 },
                 userId: message.userId,
                 agentId: message.agentId,

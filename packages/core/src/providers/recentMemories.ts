@@ -3,7 +3,7 @@ import { addHeader, formatMessages, formatPosts } from "../prompts";
 import { ChannelType, Entity, IAgentRuntime, Memory, Provider, UUID } from "../types";
 
 export const recentMemoriesProvider: Provider = {
-  name: "recentMemories",
+  name: "RECENT_MEMORIES",
   description: "Recent messages, interactions and other memories",
   get: async (
     runtime: IAgentRuntime,

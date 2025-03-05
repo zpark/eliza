@@ -102,7 +102,7 @@ export const choiceAction: Action = {
       if (!pendingTasks?.length) {
         await callback({
           text: "No tasks currently awaiting options selection.",
-          action: "CHOOSE_OPTION",
+          actions: ["CHOOSE_OPTION"],
           source: message.content.source,
         });
         return;
@@ -115,7 +115,7 @@ export const choiceAction: Action = {
       if (!tasksWithOptions.length) {
         await callback({
           text: "No tasks currently have options to select from.",
-          action: "CHOOSE_OPTION",
+          actions: ["CHOOSE_OPTION"],
           source: message.content.source,
         });
         return;
@@ -155,7 +155,7 @@ export const choiceAction: Action = {
           await runtime.databaseAdapter.deleteTask(selectedTask.id);
           await callback({
             text: `Task "${selectedTask.name}" has been cancelled.`,
-            action: "CHOOSE_OPTION",
+            actions: ["CHOOSE_OPTION"],
             source: message.content.source,
           });
           return;
@@ -167,7 +167,7 @@ export const choiceAction: Action = {
           await runtime.databaseAdapter.deleteTask(selectedTask.id);
           await callback({
             text: `Selected option: ${selectedOption} for task: ${selectedTask.name}`,
-            action: "CHOOSE_OPTION",
+            actions: ["CHOOSE_OPTION"],
             source: message.content.source,
           });
           return;
@@ -175,7 +175,7 @@ export const choiceAction: Action = {
           logger.error("Error executing task with option:", error);
           await callback({
             text: "There was an error processing your selection.",
-            action: "SELECT_OPTION_ERROR",
+            actions: ["SELECT_OPTION_ERROR"],
             source: message.content.source,
           });
           return;
@@ -196,7 +196,7 @@ export const choiceAction: Action = {
 
       await callback({
         text: optionsText,
-        action: "SELECT_OPTION_INVALID",
+        actions: ["SELECT_OPTION_INVALID"],
         source: message.content.source,
       });
 
@@ -204,7 +204,7 @@ export const choiceAction: Action = {
       logger.error("Error in select option handler:", error);
       await callback({
         text: "There was an error processing the option selection.",
-        action: "SELECT_OPTION_ERROR",
+        actions: ["SELECT_OPTION_ERROR"],
         source: message.content.source,
       });
     }
@@ -222,7 +222,7 @@ export const choiceAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Selected option: post for task: Confirm Twitter Post",
-          action: "CHOOSE_OPTION",
+          actions: ["CHOOSE_OPTION"],
         },
       },
     ],
@@ -237,7 +237,7 @@ export const choiceAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Selected option: cancel for task: Confirm Twitter Post",
-          action: "CHOOSE_OPTION",
+          actions: ["CHOOSE_OPTION"],
         },
       },
     ],

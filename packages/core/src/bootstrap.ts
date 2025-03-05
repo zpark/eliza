@@ -11,23 +11,23 @@ import updateSettingsAction from "./actions/settings.ts";
 import { unfollowRoomAction } from "./actions/unfollowRoom.ts";
 import { unmuteRoomAction } from "./actions/unmuteRoom.ts";
 import { updateEntityAction } from "./actions/updateEntity.ts";
-import { createUniqueUuid, getEntityDetails } from "./entities.ts";
+import { createUniqueUuid } from "./entities.ts";
 import { goalEvaluator } from "./evaluators/goal.ts";
 import { reflectionEvaluator } from "./evaluators/reflection.ts";
 import { logger } from "./logger.ts";
 import {
-  messageCompletionFooter,
+  composePrompt,
+  messageHandlerTemplate,
   parseJSONObjectFromText,
-  shouldRespondFooter,
+  shouldRespondTemplate
 } from "./prompts.ts";
-import { composePrompt, formatMessages } from "./prompts.ts";
+import { actionExamplesProvider } from "./providers/actionExamples.ts";
 import { actionsProvider } from "./providers/actions.ts";
 import { attachmentsProvider } from "./providers/attachments.ts";
 import { capabilitiesProvider } from "./providers/capabilities.ts";
 import { characterProvider } from "./providers/character.ts";
 import { entitiesProvider } from "./providers/entities.ts";
 import { evaluatorsProvider } from "./providers/evaluators.ts";
-import { examplesProvider } from "./providers/examples.ts";
 import { factsProvider } from "./providers/facts.ts";
 import { knowledgeProvider } from "./providers/knowledge.ts";
 import { optionsProvider } from "./providers/options.ts";
@@ -48,8 +48,7 @@ import {
   type Plugin,
   RoleName,
   type RoomData,
-  type State,
-  type WorldData,
+  type WorldData
 } from "./types.ts";
 
 type ServerJoinedParams = {
@@ -76,34 +75,36 @@ type UserJoinedParams = {
   source: string;
 };
 
-export const shouldRespondTemplate = `{{system}}
-# Task: Decide on behalf of {{agentName}} whether they should respond to the message, ignore it or stop the conversation.
-
-{{entities}}
-
-About {{agentName}}:
-{{bio}}
-
-{{recentMessages}}
-
-# INSTRUCTIONS: Respond with the word RESPOND if {{agentName}} should respond to the message. Respond with STOP if a user asks {{agentName}} to be quiet. Respond with IGNORE if {{agentName}} should ignore the message.
-${shouldRespondFooter}`;
-
-export const messageHandlerTemplate = `# Task: Generate dialog and actions for the character {{agentName}}.
-{{providers}}
-# Instructions: Write the next message for {{agentName}}. Include the appropriate action from the list: {{actionNames}}
-${messageCompletionFooter}`;
-
 type MessageReceivedHandlerParams = {
   runtime: IAgentRuntime;
   message: Memory;
   callback: HandlerCallback;
 };
 
-const checkShouldRespond = async (
-  runtime: IAgentRuntime,
-  message: Memory
-): Promise<boolean> => {
+const latestResponseIds = new Map<string, Map<string, string>>();
+
+const messageReceivedHandler = async ({
+  runtime,
+  message,
+  callback,
+}: MessageReceivedHandlerParams) => {
+  // Generate a new response ID
+  const responseId = v4();
+  // Get or create the agent-specific map
+  if (!latestResponseIds.has(runtime.agentId)) {
+    latestResponseIds.set(runtime.agentId, new Map());
+  }
+  const agentResponses = latestResponseIds.get(runtime.agentId)!;
+
+  // Set this as the latest response ID for this agent+room
+  agentResponses.set(message.roomId, responseId);
+
+  // First, save the incoming message
+  await Promise.all([
+    runtime.getMemoryManager("messages").addEmbeddingToMemory(message),
+    runtime.getMemoryManager("messages").createMemory(message),
+  ]);
+
   if (message.userId === runtime.agentId) return false;
 
   const agentUserState = await runtime.databaseAdapter.getParticipantUserState(
@@ -133,28 +134,19 @@ const checkShouldRespond = async (
     return true;
   }
 
-  const [entitiesData, recentMessagesData] = await Promise.all([
-    getEntityDetails({ runtime: runtime, roomId: message.roomId }),
-    runtime.getMemoryManager("messages").getMemories({
-      roomId: message.roomId,
-      count: runtime.getConversationLength(),
-      unique: false,
-    }),
-  ]);
+  let state = await runtime.composeState(message, {}, ["DYNAMIC_PROVIDERS", "SHOULD_RESPOND", "CHARACTER", "RECENT_MEMORIES", "ENTITIES"]);
 
-  recentMessagesData.push(message);
+  if(!state.entities) {
+    throw new Error("No entities found");
+  }
 
-  const recentMessages = formatMessages({
-    messages: recentMessagesData,
-    actors: entitiesData,
-  });
+  if(!state.agentName) {
+    throw new Error("No agent name found");
+  }
 
-  const state = {
-    recentMessages: recentMessages,
-    agentName: runtime.character.name,
-    bio: runtime.character.bio,
-    system: runtime.character.system,
-  } as State;
+  if(!state.recentMessages) {
+    throw new Error("No recent messages found");
+  }
 
   const shouldRespondPrompt = composePrompt({
     state,
@@ -167,48 +159,16 @@ const checkShouldRespond = async (
     prompt: shouldRespondPrompt,
   });
 
-  if (response.includes("RESPOND")) {
-    return true;
-  }
+  console.log("shouldRespondPrompt", shouldRespondPrompt);
 
-  if (response.includes("IGNORE")) {
-    return false;
-  }
+  const responseObject = parseJSONObjectFromText(response);
 
-  if (response.includes("STOP")) {
-    return false;
-  }
-  console.error("Invalid response from response generateText:", response);
-  return false;
-};
+  const providers = responseObject.providers;
 
-const latestResponseIds = new Map<string, Map<string, string>>();
+  const shouldRespond = responseObject && responseObject.action && responseObject.action === "RESPOND";
 
-const messageReceivedHandler = async ({
-  runtime,
-  message,
-  callback,
-}: MessageReceivedHandlerParams) => {
-  // Generate a new response ID
-  const responseId = v4();
-  // Get or create the agent-specific map
-  if (!latestResponseIds.has(runtime.agentId)) {
-    latestResponseIds.set(runtime.agentId, new Map());
-  }
-  const agentResponses = latestResponseIds.get(runtime.agentId)!;
+  state = await runtime.composeState(message, {}, null, providers);
 
-  // Set this as the latest response ID for this agent+room
-  agentResponses.set(message.roomId, responseId);
-
-  // First, save the incoming message
-  await Promise.all([
-    runtime.getMemoryManager("messages").addEmbeddingToMemory(message),
-    runtime.getMemoryManager("messages").createMemory(message),
-  ]);
-
-  const shouldRespond = await checkShouldRespond(runtime, message);
-
-  let state = await runtime.composeState(message);
   if (shouldRespond) {
     const prompt = composePrompt({
       state,
@@ -246,7 +206,7 @@ const messageReceivedHandler = async ({
       },
     ];
 
-    state = await runtime.composeState(message, {}, ["recentMemories"]);
+    state = await runtime.composeState(message, {}, ["RECENT_MEMORIES"]);
 
     // Clean up the response ID
     agentResponses.delete(message.roomId);
@@ -257,7 +217,7 @@ const messageReceivedHandler = async ({
     await runtime.processActions(message, responseMessages, state, callback);
   }
 
-  await runtime.evaluate(message, state, shouldRespond);
+  await runtime.evaluate(message, state, shouldRespond, callback);
 };
 
 const reactionReceivedHandler = async ({
@@ -838,7 +798,7 @@ export const bootstrapPlugin: Plugin = {
     capabilitiesProvider,
     entitiesProvider,
     evaluatorsProvider,
-    examplesProvider,
+    actionExamplesProvider,
     recentMemoriesProvider,
     actionsProvider,
     attachmentsProvider,

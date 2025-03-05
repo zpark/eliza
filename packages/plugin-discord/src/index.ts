@@ -374,8 +374,8 @@ export class DiscordService extends Service implements IDiscordService {
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
-          name,
-          userName,
+          // name,
+          // userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo,
@@ -461,8 +461,8 @@ export class DiscordService extends Service implements IDiscordService {
         userId: userIdUUID,
         agentId: this.runtime.agentId,
         content: {
-          name,
-          userName,
+          // name,
+          // userName,
           text: reactionMessage,
           source: "discord",
           inReplyTo: createUniqueUuid(this.runtime, reaction.message.id),

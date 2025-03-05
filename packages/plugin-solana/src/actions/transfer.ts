@@ -115,7 +115,7 @@ export default {
         if (!currentState) {
             currentState = (await runtime.composeState(message)) as State;
         } else {
-            state = await runtime.composeState(message, {}, ["recentMemories"]);
+            state = await runtime.composeState(message, {}, ["RECENT_MEMORIES"]);
         }
 
         const transferPrompt = composePrompt({
@@ -259,31 +259,31 @@ export default {
     examples: [
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: 'Send 1.5 SOL to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: '{{user2}}',
+                user: "{{user2}}",
                 content: {
                     text: 'Sending SOL now...',
-                    action: 'TRANSFER_SOLANA',
+                    actions: ["TRANSFER_SOLANA"],
                 },
             },
         ],
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: 'Send 69 $DEGENAI BieefG47jAHCGZBxi2q87RDuHyGZyYC3vAzxpyu8pump to 9jW8FPr6BSSsemWPV22UUCzSqkVdTp6HTyPqeqyuBbCa',
                 },
             },
             {
-                user: '{{user2}}',
+                user: "{{user2}}",
                 content: {
                     text: 'Sending the tokens now...',
-                    action: 'TRANSFER_SOLANA',
+                    actions: ["TRANSFER_SOLANA"],
                 },
             },
         ],

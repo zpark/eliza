@@ -133,7 +133,7 @@ const summarizeAction = {
 
         const callbackData: Content = {
             text: "", // fill in later
-            action: "CHAT_WITH_ATTACHMENTS_RESPONSE",
+            actions: ["CHAT_WITH_ATTACHMENTS_RESPONSE"],
             source: message.content.source,
             attachments: [],
         };
@@ -270,7 +270,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "Sure thing! I'll pull up those specific attachments and provide a summary of their content.",
-                    action: "CHAT_WITH_ATTACHMENTS",
+                    actions: ["CHAT_WITH_ATTACHMENTS"],
                 },
             },
         ],
@@ -285,7 +285,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "I'll take a look at those specific PDF attachments and put together a technical summary for you. Give me a few minutes to review them.",
-                    action: "CHAT_WITH_ATTACHMENTS",
+                    actions: ["CHAT_WITH_ATTACHMENTS"],
                 },
             },
         ],
@@ -300,7 +300,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "sure, no problem.",
-                    action: "CHAT_WITH_ATTACHMENTS",
+                    actions: ["CHAT_WITH_ATTACHMENTS"],
                 },
             },
         ],
@@ -315,7 +315,7 @@ ${currentSummary.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "great idea, give me a minute",
-                    action: "CHAT_WITH_ATTACHMENTS",
+                    actions: ["CHAT_WITH_ATTACHMENTS"],
                 },
             },
         ],

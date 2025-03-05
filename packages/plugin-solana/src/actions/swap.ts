@@ -187,7 +187,7 @@ export const executeSwap: Action = {
             if (!state) {
                 state = await runtime.composeState(message);
             } else {
-                state = await runtime.composeState(message, {}, ["recentMemories"]);
+                state = await runtime.composeState(message, {}, ["RECENT_MEMORIES"]);
             }
 
             const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
@@ -306,16 +306,16 @@ export const executeSwap: Action = {
     examples: [
         [
             {
-                user: '{{user1}}',
+                user: "{{user1}}",
                 content: {
                     text: 'Swap 0.1 SOL for USDC',
                 },
             },
             {
-                user: '{{user2}}',
+                user: "{{user2}}",
                 content: {
                     text: "I'll help you swap 0.1 SOL for USDC",
-                    action: 'SWAP_SOLANA',
+                    actions: ["SWAP_SOLANA"],
                 },
             },
         ],

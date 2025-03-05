@@ -98,7 +98,7 @@ export const greetAction: Action = {
 
             const content: Content = {
                 text: greeting,
-                action: "GREET_NEW_USER",
+                actions: ["GREET_NEW_USER"],
                 source: "discord",
             };
 
@@ -132,7 +132,7 @@ export const greetAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Welcome {{user2}}! I'm the community manager. Feel free to introduce yourself!",
-                    action: "GREET_NEW_USER",
+                    actions: ["GREET_NEW_USER"],
                 },
             },
         ],
@@ -148,7 +148,7 @@ export const greetAction: Action = {
                 user: "{{user3}}",
                 content: {
                     text: "Hi {{user2}}! Welcome to our community!",
-                    action: "GREET_NEW_USER",
+                    actions: ["GREET_NEW_USER"],
                 },
             },
         ],

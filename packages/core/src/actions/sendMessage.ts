@@ -1,10 +1,9 @@
 // action: SEND_MESSAGE
 // send message to a user or room (other than this room we are in)
 
-import { composePrompt } from "../prompts";
 import { findEntityByName } from "../entities";
 import { logger } from "../logger";
-import { parseJSONObjectFromText } from "../prompts";
+import { composePrompt, parseJSONObjectFromText } from "../prompts";
 import {
   type Action,
   type ActionExample,
@@ -12,8 +11,7 @@ import {
   type IAgentRuntime,
   type Memory,
   ModelTypes,
-  type State,
-  UUID
+  type State
 } from "../types";
 
 const targetExtractionTemplate = `# Task: Extract Target and Source Information
@@ -124,7 +122,7 @@ export const sendMessageAction: Action = {
       if (!targetData?.targetType || !targetData?.source) {
         await callback({
           text: "I couldn't determine where you want me to send the message. Could you please specify the target (user or room) and platform?",
-          action: "SEND_MESSAGE_ERROR",
+          actions: ["SEND_MESSAGE_ERROR"],
           source: message.content.source,
         });
         return;
@@ -139,7 +137,7 @@ export const sendMessageAction: Action = {
         if (!targetEntity) {
           await callback({
             text: "I couldn't find the user you want me to send a message to. Could you please provide more details about who they are?",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
           return;
@@ -156,7 +154,7 @@ export const sendMessageAction: Action = {
         if (!userComponent) {
           await callback({
             text: `I couldn't find ${source} information for that user. Could you please provide their ${source} details?`,
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
           return;
@@ -167,7 +165,7 @@ export const sendMessageAction: Action = {
         if (!sendDirectMessage) {
           await callback({
             text: "I couldn't find the user you want me to send a message to. Could you please provide more details about who they are?",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
           return;
@@ -184,14 +182,14 @@ export const sendMessageAction: Action = {
 
           await callback({
             text: `Message sent to ${targetEntity.names[0]} on ${source}.`,
-            action: "SEND_MESSAGE",
+            actions: ["SEND_MESSAGE"],
             source: message.content.source,
           });
         } catch (error) {
           logger.error(`Failed to send direct message: ${error.message}`);
           await callback({
             text: "I encountered an error trying to send the message. Please try again.",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
         }
@@ -207,7 +205,7 @@ export const sendMessageAction: Action = {
         if (!targetRoom) {
           await callback({
             text: "I couldn't find the room you want me to send a message to. Could you please specify the exact room name?",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
           return;
@@ -218,7 +216,7 @@ export const sendMessageAction: Action = {
         if (!sendRoomMessage) {
           await callback({
             text: "I couldn't find the room you want me to send a message to. Could you please specify the exact room name?",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
           return;
@@ -236,14 +234,14 @@ export const sendMessageAction: Action = {
 
           await callback({
             text: `Message sent to ${targetRoom.name} on ${source}.`,
-            action: "SEND_MESSAGE",
+            actions: ["SEND_MESSAGE"],
             source: message.content.source,
           });
         } catch (error) {
           logger.error(`Failed to send room message: ${error.message}`);
           await callback({
             text: "I encountered an error trying to send the message to the room. Please try again.",
-            action: "SEND_MESSAGE_ERROR",
+            actions: ["SEND_MESSAGE_ERROR"],
             source: message.content.source,
           });
         }
@@ -253,7 +251,7 @@ export const sendMessageAction: Action = {
       logger.error(`Error in sendMessage handler: ${error}`);
       await callback({
         text: "There was an error processing your message request.",
-        action: "SEND_MESSAGE_ERROR",
+        actions: ["SEND_MESSAGE_ERROR"],
         source: message.content.source,
       });
     }
@@ -271,7 +269,7 @@ export const sendMessageAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Message sent to dev_guru on telegram.",
-          action: "SEND_MESSAGE",
+          actions: ["SEND_MESSAGE"],
         },
       },
     ],
@@ -286,7 +284,7 @@ export const sendMessageAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Message sent to announcements.",
-          action: "SEND_MESSAGE",
+          actions: ["SEND_MESSAGE"],
         },
       },
     ],
@@ -301,7 +299,7 @@ export const sendMessageAction: Action = {
         user: "{{user2}}",
         content: {
           text: "Message sent to Jimmy.",
-          action: "SEND_MESSAGE",
+          actions: ["SEND_MESSAGE"],
         },
       },
     ],

@@ -258,8 +258,8 @@ export class MessageManager {
                 content: {
                     text: fullText,
                     source: "telegram",
-                    name: userName,
-                    userName: userName,
+                    // name: userName,
+                    // userName: userName,
                     // Safely access reply_to_message with type guard
                     inReplyTo: 'reply_to_message' in message && message.reply_to_message ? 
                     createUniqueUuid(this.runtime, message.reply_to_message.message_id.toString()) : 
@@ -407,8 +407,8 @@ export class MessageManager {
                 content: {
                     text: `Reacted with: ${reactionType === 'emoji' ? reactionEmoji : reactionType}`,
                     source: "telegram",
-                    name: ctx.from.first_name,
-                    userName: ctx.from.username,
+                    // name: ctx.from.first_name,
+                    // userName: ctx.from.username,
                     inReplyTo: createUniqueUuid(this.runtime, reaction.message_id.toString())
                 },
                 createdAt: Date.now()

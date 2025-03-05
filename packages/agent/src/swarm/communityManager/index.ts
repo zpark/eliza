@@ -194,7 +194,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -209,7 +209,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -224,7 +224,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -239,7 +239,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -254,7 +254,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -269,7 +269,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -284,7 +284,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],
@@ -299,7 +299,7 @@ const character: Character = {
         user: "Eliza",
         content: {
           text: "",
-          action: "IGNORE",
+          actions: ["IGNORE"],
         },
       },
     ],

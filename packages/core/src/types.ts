@@ -1,5 +1,3 @@
-import EventEmitter from "node:events";
-
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
  */
@@ -9,11 +7,16 @@ export type UUID = `${string}-${string}-${string}-${string}-${string}`;
  * Represents the content of a message or communication
  */
 export interface Content {
+  thought?: string;
+
   /** The main text content */
   text?: string;
 
   /** Optional action associated with the message */
-  action?: string;
+  actions?: string[];
+
+  /** Optional providers associated with the message */
+  providers?: string[];
 
   /** Optional source/origin of the content */
   source?: string;
@@ -340,8 +343,12 @@ export interface Evaluator {
 }
 
 export interface ProviderResult {
-  values?: any;
-  data?: any;
+  values?: {
+    [key: string]: any;
+  };
+  data?: {
+    [key: string]: any;
+  };
   text?: string;
 }
 
@@ -354,6 +361,16 @@ export interface Provider {
   
   /** Description of the provider */
   description?: string;
+
+  /** Whether the provider is dynamic */
+  dynamic?: boolean;
+
+  /**
+   * Whether the provider is private
+   * 
+   * Private providers are not displayed in the regular provider list, they have to be called explicitly
+   */
+  private?: boolean;
 
   /** Data retrieval function */
   get: (runtime: IAgentRuntime, message: Memory) => Promise<ProviderResult>;
@@ -487,12 +504,11 @@ export enum ChannelType {
 /**
  * Client instance
  */
-export abstract class Service extends EventEmitter {
+export abstract class Service {
   /** Runtime instance */
   protected runtime!: IAgentRuntime;
 
   constructor(runtime?: IAgentRuntime) {
-    super();
     if (runtime) {
       this.runtime = runtime;
     }
@@ -988,7 +1004,7 @@ export interface IAgentRuntime {
     state?: State,
     didRespond?: boolean,
     callback?: HandlerCallback
-  ): Promise<string[] | null>;
+  ): Promise<Evaluator[] | null>;
 
   registerProvider(provider: Provider): void;
 
@@ -1040,7 +1056,8 @@ export interface IAgentRuntime {
   composeState(
     message: Memory,
     additionalKeys?: { [key: string]: unknown },
-    providerList?: string[]
+    filterList?: string[],
+    includeList?: string[]
   ): Promise<State>;
 
   useModel<T = any>(modelType: ModelType | string, params: T): Promise<any>;
@@ -1299,8 +1316,8 @@ export interface TaskWorker {
 export interface Task {
   id?: UUID;
   name: string;
+  updatedAt?: number;
   metadata?: {
-    updatedAt?: number;
     updateInterval?: number;
     options?: {
       name: string;

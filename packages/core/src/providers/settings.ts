@@ -108,7 +108,8 @@ function generateStatusMessage(
  * Updated to use world metadata instead of cache
  */
 export const settingsProvider: Provider = {
-  name: "settings",
+  name: "SETTINGS",
+  description: "Current settings for the server",
   get: async (
     runtime: IAgentRuntime,
     message: Memory,

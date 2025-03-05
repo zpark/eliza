@@ -174,7 +174,7 @@ export async function startOnboardingDM(
       roomId: roomId,
       content: {
         text: randomMessage,
-        action: "BEGIN_ONBOARDING",
+        actions: ["BEGIN_ONBOARDING"],
       },
       createdAt: Date.now(),
     });

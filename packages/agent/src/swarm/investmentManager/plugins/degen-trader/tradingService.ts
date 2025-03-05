@@ -1107,9 +1107,43 @@ export class DegenTradingService extends Service {
     // Register BUY_SIGNAL task worker
     this.runtime.registerTaskWorker({
       name: "BUY_SIGNAL",
-      execute: async (_runtime: IAgentRuntime, options: any) => {
+      execute: async (_runtime: IAgentRuntime, _options: any) => {
         logger.info("*** BUY_SIGNAL ***");
-        await this.executeBuyTask(options);
+        await this.executeBuyTask();
+      },
+      validate: async () => true,
+    });
+
+    // Register EXECUTE_BUY_SIGNAL task worker
+    this.runtime.registerTaskWorker({
+      name: "EXECUTE_BUY_SIGNAL",
+      execute: async (_runtime: IAgentRuntime, options: any) => {
+        logger.info("*** EXECUTE_BUY_SIGNAL ***", options);
+        
+        const { signal, tradeAmount, reason } = options.metadata || {};
+        
+        if (!signal || !signal.tokenAddress) {
+          logger.error("Invalid buy signal data", { options });
+          return;
+        }
+        
+        logger.info("Executing buy signal", { 
+          token: signal.tokenAddress, 
+          tradeAmount, 
+          reason 
+        });
+        
+        const result = await this.handleBuySignal(signal);
+        
+        if (result.success) {
+          logger.info("Buy successful", {
+            signature: result.signature,
+            outAmount: result.outAmount,
+            swapUsdValue: result.swapUsdValue
+          });
+        } else {
+          logger.error("Buy failed", { error: result.error });
+        }
       },
       validate: async () => true,
     });
@@ -2525,13 +2559,13 @@ export class DegenTradingService extends Service {
    */
   private async getTradingDecision(analysis: any): Promise<{
     shouldAct: boolean;
-    action: "buy" | "sell" | "hold";
+    action: "BUY" | "SELL" | "HOLD";
     confidence: "low" | "medium" | "high";
     reason: string;
   }> {
     type Decision = {
       shouldAct: boolean;
-      action: "buy" | "sell" | "hold";
+      action: "BUY" | "SELL" | "HOLD";
       confidence: "low" | "medium" | "high";
       reason: string;
     };
@@ -2539,7 +2573,7 @@ export class DegenTradingService extends Service {
     // Default to hold
     let decision: Decision = {
       shouldAct: false,
-      action: "hold",
+      action: "HOLD",
       confidence: "low",
       reason: "No clear signals",
     };
@@ -2566,14 +2600,14 @@ export class DegenTradingService extends Service {
     if (isOversold && macdCrossover && hasVolumeSupport) {
       decision = {
         shouldAct: true,
-        action: "buy",
+        action: "BUY",
         confidence: isHighVolatility ? "medium" : "high",
         reason: "Oversold with positive momentum and volume support",
       };
     } else if (isOverbought && analysis.technical.macd.histogram < 0) {
       decision = {
         shouldAct: true,
-        action: "sell",
+        action: "SELL",
         confidence: isHighVolatility ? "medium" : "high",
         reason: "Overbought with negative momentum",
       };
@@ -3417,7 +3451,7 @@ export class DegenTradingService extends Service {
         logger.warn("Circuit breaker triggered", {
           priceChangePercent,
           volatility,
-          action: "pausing_trades",
+          actions: ["pausing_trades"],
         });
 
         // Pause trading
@@ -3947,13 +3981,6 @@ export class DegenTradingService extends Service {
     receivedAmount?: string;
     receivedValue?: string;
   }> {
-    const TRADER_SELL_KUMA = this.runtime.getSetting("TRADER_SELL_KUMA");
-    if (TRADER_SELL_KUMA) {
-      fetch(TRADER_SELL_KUMA).catch((e) => {
-        console.error("TRADER_SELL_KUMA err", e);
-      });
-    }
-
     const tokenAddress = signal.tokenAddress;
 
     try {
@@ -4099,61 +4126,98 @@ export class DegenTradingService extends Service {
   /**
    * Executes a buy task
    */
-  private async executeBuyTask(options: any) {
+  private async executeBuyTask() {
     try {
-      logger.info("Execute buy task", options);
+      logger.info("Executing buy task");
+
+      // Fetch pending buy tasks
+      const pendingTasks = await this.runtime.databaseAdapter.getTasks({
+        roomId: this.runtime.agentId,
+        tags: [ServiceTypes.DEGEN_TRADING, "queue"],
+        // We can't filter by name in the getTasks query, so we'll filter manually
+      });
       
-      const { signal, tradeAmount } = options;
+      // Find BUY_SIGNAL tasks
+      const buyTasks = pendingTasks.filter(task => task.name === "BUY_SIGNAL");
       
-      if (!signal) {
-        logger.error("No signal data in buy task");
-        return { success: false, error: "Missing signal data" };
+      if (buyTasks.length === 0) {
+        logger.info("No pending buy tasks found");
+        return;
+      }
+
+      // Process the first task
+      const task = buyTasks[0];
+      
+      if (!task.metadata) {
+        logger.error("Task metadata is missing");
+        return;
       }
       
+      const { signal, tradeAmount, expectedOutAmount } = task.metadata;
+      
+      if (!signal || typeof signal !== 'object') {
+        logger.error("No valid signal data in buy task");
+        return;
+      }
+      
+      if (!tradeAmount || typeof tradeAmount !== 'number' || tradeAmount <= 0) {
+        logger.warn("Invalid trade amount in buy task:", { tradeAmount });
+        return;
+      }
+      
+      // Calculate dynamic slippage based on token metrics and trade size
+      const tokenAddress = (signal as BuySignalMessage).tokenAddress;
+      if (!tokenAddress) {
+        logger.error("Missing token address in signal");
+        return;
+      }
+      
+      const slippageBps = await this.calculateDynamicSlippage(
+        tokenAddress,
+        tradeAmount
+      );
+
       // Create a complete buy signal with the trade amount
-      const buySignal = {
-        ...signal,
-        tradeAmount: tradeAmount || 0
+      const buySignal: BuySignalMessage = {
+        ...(signal as BuySignalMessage)
       };
 
-      // Define the expected result type
-      interface BuyResult {
-        success: boolean;
-        signature?: string;
-        error?: string;
-        outAmount?: string;
-        swapUsdValue?: string;
-      }
+      // Execute the buy
+      logger.info("Executing buy signal", {
+        tokenAddress,
+        tradeAmount,
+        slippageBps,
+        expectedOutAmount
+      });
 
-      const result = await this.handleBuySignal(buySignal) as BuyResult;
+      const result = await this.handleBuySignal(buySignal);
 
       if (result.success) {
         // Log the success
         logger.info("Buy successful", {
           signature: result.signature,
-          outAmount: result.outAmount
+          outAmount: result.outAmount,
+          swapUsdValue: result.swapUsdValue
         });
         
         // Track slippage impact if we have expected and actual amounts
-        if (result.outAmount && options.expectedOutAmount) {
+        if (result.outAmount && expectedOutAmount) {
           await this.trackSlippageImpact(
-            signal.tokenAddress,
-            options.expectedOutAmount,
+            tokenAddress,
+            String(expectedOutAmount),
             result.outAmount,
-            options.slippageBps || 0,
+            slippageBps || 0,
             false // not a sell
           );
         }
       } else {
+        // Log the failure
         logger.error("Buy failed", {
           error: result.error
         });
       }
-
-      return result;
     } catch (error) {
-      logger.error("Error executing buy task", error);
-      return { success: false, error: error.message };
+      logger.error("Error executing buy task:", error instanceof Error ? error.message : String(error));
     }
   }
   

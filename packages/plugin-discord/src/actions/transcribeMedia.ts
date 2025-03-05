@@ -112,7 +112,7 @@ const transcribeMediaAction = {
 
         const callbackData: Content = {
             text: "", // fill in later
-            action: "TRANSCRIBE_MEDIA_RESPONSE",
+            actions: ["TRANSCRIBE_MEDIA_RESPONSE"],
             source: message.content.source,
             attachments: [],
         };
@@ -198,7 +198,7 @@ ${mediaTranscript.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "Sure, I'll transcribe the full audio for you.",
-                    action: "TRANSCRIBE_MEDIA",
+                    actions: ["TRANSCRIBE_MEDIA"],
                 },
             },
         ],
@@ -213,7 +213,7 @@ ${mediaTranscript.trim()}
                 user: "{{user2}}",
                 content: {
                     text: "Absolutely, give me a moment to generate the full transcript of the video.",
-                    action: "TRANSCRIBE_MEDIA",
+                    actions: ["TRANSCRIBE_MEDIA"],
                 },
             },
         ],
