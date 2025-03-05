@@ -290,6 +290,7 @@ Add to your `.env`:
 TWITTER_USERNAME=  # Account username
 TWITTER_PASSWORD=  # Account password
 TWITTER_EMAIL=    # Account email
+TWITTER_2FA_SECRET=    # In order to avoid X preventing the login, it is better to activate 2fa in the target account, copy the 2fa secret and paste it here
 ```
 
 **Important:** Log in to the [Twitter Developer Portal](https://developer.twitter.com) and enable the "Automated" label for your account to avoid being flagged as inauthentic.
