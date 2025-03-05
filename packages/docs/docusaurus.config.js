@@ -94,6 +94,11 @@ const config = {
                 treatWarningsAsErrors: false,
                 treatValidationWarningsAsErrors: false,
                 searchInComments: true,
+                disableGit: false,
+                validation: {
+                    invalidLink: true,
+                    notDocumented: false
+                },
                 navigationLinks: {
                     GitHub: "https://github.com/elizaos/eliza",
                     Documentation: "/docs/intro",
@@ -109,6 +114,7 @@ const config = {
                 routeBasePath: "api",
             },
         ],
+        require.resolve("./plugin/event-emitter-polyfill"),
     ],
     presets: [
         [

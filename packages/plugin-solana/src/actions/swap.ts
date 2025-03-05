@@ -1,7 +1,6 @@
 import {
     type Action,
     type ActionExample,
-    type Client,
     composeContext,
     type HandlerCallback,
     type IAgentRuntime,
@@ -16,8 +15,9 @@ import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
 import { SOLANA_SERVICE_NAME } from '../constants';
 import { getWalletKey } from '../keypairUtils';
-import type { Item } from '../types';
+import type { SolanaService } from '../service';
 
+import type { Item } from '../types';
 async function getTokenDecimals(connection: Connection, mintAddress: string): Promise<number> {
     const mintPublicKey = new PublicKey(mintAddress);
     const tokenAccountInfo = await connection.getParsedAccountInfo(mintPublicKey);
@@ -42,7 +42,7 @@ async function swapToken(
     inputTokenCA: string,
     outputTokenCA: string,
     amount: number,
-): Promise<any> {
+): Promise<unknown> {
     try {
         const decimals =
             inputTokenCA === settings.SOL_ADDRESS
@@ -111,7 +111,7 @@ async function getTokenFromWallet(
     tokenSymbol: string,
 ): Promise<string | null> {
     try {
-        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
+        const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
         if (!solanaClient) {
             throw new Error('SolanaService not initialized');
         }
@@ -182,23 +182,25 @@ export const executeSwap: Action = {
         _options: { [key: string]: unknown },
         callback?: HandlerCallback,
     ): Promise<boolean> => {
+        let currentState = state;
+
         try {
-            if (!state) {
-                state = await runtime.composeState(message);
+            if (!currentState) {
+                currentState = await runtime.composeState(message);
             } else {
-                state = await runtime.updateRecentMessageState(state);
+                currentState = await runtime.updateRecentMessageState(currentState);
             }
 
-            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as Client;
+            const solanaClient = runtime.getService(SOLANA_SERVICE_NAME) as SolanaService;
             if (!solanaClient) {
                 throw new Error('SolanaService not initialized');
             }
 
             const walletData = await solanaClient.getCachedData();
-            state.walletInfo = walletData;
+            currentState.walletInfo = walletData;
 
             const swapContext = composeContext({
-                state,
+                state: currentState,
                 template: swapTemplate,
             });
 
@@ -249,13 +251,13 @@ export const executeSwap: Action = {
             );
             const { publicKey: walletPublicKey } = await getWalletKey(runtime, false);
 
-            const swapResult = await swapToken(
+            const swapResult = (await swapToken(
                 connection,
                 walletPublicKey,
                 response.inputTokenCA as string,
                 response.outputTokenCA as string,
                 response.amount as number,
-            );
+            )) as { swapTransaction: string };
 
             const transactionBuf = Buffer.from(swapResult.swapTransaction, 'base64');
             const transaction = VersionedTransaction.deserialize(transactionBuf);

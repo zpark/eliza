@@ -19,8 +19,9 @@ const PROVIDER_CONFIG = {
 
 export class SolanaService extends Service {
     static serviceType: string = SOLANA_SERVICE_NAME;
-    capabilityDescription = "The agent is able to interact with the Solana blockchain, and has access to the wallet data";
-    
+    capabilityDescription =
+        'The agent is able to interact with the Solana blockchain, and has access to the wallet data';
+
     private updateInterval: NodeJS.Timer | null = null;
     private lastUpdate = 0;
     private readonly UPDATE_INTERVAL = 120000; // 2 minutes
@@ -75,7 +76,7 @@ export class SolanaService extends Service {
         }
     }
 
-    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<any> {
+    private async fetchWithRetry(url: string, options: RequestInit = {}): Promise<unknown> {
         let lastError: Error;
 
         for (let i = 0; i < PROVIDER_CONFIG.MAX_RETRIES; i++) {
@@ -189,7 +190,7 @@ export class SolanaService extends Service {
                         totalSol: totalUsd.div(solPriceInUSD).toFixed(6),
                         prices,
                         lastUpdated: now,
-                        items: data.items.map((item: any) => ({
+                        items: data.items.map((item: Item) => ({
                             ...item,
                             valueSol: new BigNumber(item.valueUsd || 0)
                                 .div(solPriceInUSD)

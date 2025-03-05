@@ -152,9 +152,10 @@ export class TaskService extends Service {
         // convert updatedAt which is an ISO string to a number
         const updateIntervalMs = task.metadata.updateInterval ?? 0; // update immediately
 
+        
         // if tags does not contain "repeat", execute immediately
         if (!task.tags?.includes("repeat")) {
-          await this.executeTask(task.id!);
+          await this.executeTask(task.id);
           continue;
         }
 
@@ -163,7 +164,7 @@ export class TaskService extends Service {
           logger.debug(
             `Executing task ${task.name} - interval of ${updateIntervalMs}ms has elapsed`
           );
-          await this.executeTask(task.id!);
+          await this.executeTask(task.id);
         }
       }
     } catch (error) {
