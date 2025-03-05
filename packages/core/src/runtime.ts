@@ -24,14 +24,14 @@ import {
   ModelTypes,
   type Plugin,
   type Provider,
-  type RoomData,
+  type Room,
   type Route,
   type Service,
   type ServiceType,
   type State,
   type TaskWorker,
   type UUID,
-  type WorldData,
+  type World,
 } from "./types.ts";
 import { stringToUuid } from "./uuid.ts";
 
@@ -691,7 +691,7 @@ export class AgentRuntime implements IAgentRuntime {
     userId,
     roomId,
     userName,
-    userScreenName,
+    name,
     source,
     type,
     channelId,
@@ -701,7 +701,7 @@ export class AgentRuntime implements IAgentRuntime {
     userId: UUID;
     roomId: UUID;
     userName?: string;
-    userScreenName?: string;
+    name?: string;
     source?: string;
     type?: ChannelType;
     channelId?: string;
@@ -716,10 +716,10 @@ export class AgentRuntime implements IAgentRuntime {
       worldId = createUniqueUuid(this, serverId);
     }
 
-    const names = [userScreenName, userName];
+    const names = [name, userName];
     const metadata = {
       [source]: {
-        name: userScreenName,
+        name: name,
         userName: userName,
       },
     };
@@ -775,7 +775,7 @@ export class AgentRuntime implements IAgentRuntime {
   /**
    * Ensure the existence of a world.
    */
-  async ensureWorldExists({ id, name, serverId, metadata }: WorldData) {
+  async ensureWorldExists({ id, name, serverId, metadata }: World) {
     try {
       const world = await this.databaseAdapter.getWorld(id);
       if (!world) {
@@ -819,7 +819,7 @@ export class AgentRuntime implements IAgentRuntime {
     channelId,
     serverId,
     worldId,
-  }: RoomData) {
+  }: Room) {
     const room = await this.databaseAdapter.getRoom(id);
     if (!room) {
       await this.databaseAdapter.createRoom({

@@ -47,9 +47,9 @@ import {
   type Memory,
   ModelTypes,
   type Plugin,
-  RoleName,
-  type RoomData,
-  type WorldData,
+  Role,
+  type Room,
+  type World,
 } from "./types.ts";
 
 type ServerJoinedParams = {
@@ -61,8 +61,8 @@ type ServerJoinedParams = {
 // Add this to your types.ts file
 type ServerConnectedParams = {
   runtime: IAgentRuntime;
-  world: WorldData;
-  rooms: RoomData[];
+  world: World;
+  rooms: Room[];
   users: Entity[];
   source: string;
 };
@@ -271,7 +271,7 @@ const syncServerUsers = async (
       metadata: {
         ownership: server.ownerId ? { ownerId } : undefined,
         roles: {
-          [server.ownerId]: RoleName.OWNER,
+          [server.ownerId]: Role.OWNER,
         },
       },
     });
@@ -558,7 +558,7 @@ const syncSingleUser = async (
       userId: user.id,
       roomId,
       userName: user.username || user.displayName || `User${user.id}`,
-      userScreenName: user.displayName || user.username || `User${user.id}`,
+      name: user.displayName || user.username || `User${user.id}`,
       source,
       channelId,
       serverId,
@@ -632,7 +632,7 @@ const handleServerSync = async ({
                 userId: user.id,
                 roomId: firstRoomUserIsIn.id,
                 userName: user.metadata[source].username,
-                userScreenName: user.metadata[source].name,
+                name: user.metadata[source].name,
                 source: source,
                 channelId: firstRoomUserIsIn.channelId,
                 serverId: world.serverId,
@@ -699,7 +699,7 @@ const syncMultipleUsers = async (
               userId: user.id,
               roomId,
               userName: user.username || `User${user.id}`,
-              userScreenName:
+              name:
                 user.displayName || user.username || `User${user.id}`,
               source,
               channelId,

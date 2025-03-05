@@ -179,8 +179,9 @@ export const formatMessages = ({
     .reverse()
     .filter((message: Memory) => message.userId)
     .map((message: Memory) => {
-      const messageContent = (message.content as Content).text;
+      const messageText = (message.content as Content).text;
       const messageActions = (message.content as Content).actions;
+      const messageThought = (message.content as Content).thought
       const formattedName =
         actors.find((actor: Entity) => actor.id === message.userId)?.names[0] ||
         "Unknown User";
@@ -203,11 +204,7 @@ export const formatMessages = ({
 
       const shortId = message.userId.slice(-5);
 
-      if(messageActions.includes("REFLECTION")) {
-        return `${timeString} (${timestamp}) [${shortId}] ${formattedName} (internal monologue) *${messageContent}*`;
-      }
-
-      return `${timeString} (${timestamp}) [${shortId}] ${formattedName}: ${messageContent}${attachmentString}${
+      return `${timeString} (${timestamp}) [${shortId}] ${formattedName}: ${messageThought ? `(thinking: *${messageThought}*) ` : ""}${messageText}${attachmentString}${
         messageActions && messageActions.length > 0 ? ` (actions: ${messageActions.join(", ")})` : ""
       }`;
     })

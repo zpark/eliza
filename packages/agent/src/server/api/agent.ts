@@ -438,7 +438,7 @@ export function agentRouter(
         userId,
         roomId,
         userName: req.body.userName,
-        userScreenName: req.body.name,
+        name: req.body.name,
         source: "direct",
         type: ChannelType.API,
         worldId,
@@ -844,7 +844,7 @@ export function agentRouter(
         userId,
         roomId,
         userName: req.body.userName,
-        userScreenName: req.body.name,
+        name: req.body.name,
         source: "direct",
         type: ChannelType.API,
       });

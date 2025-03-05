@@ -449,20 +449,6 @@ export interface Participant {
 }
 
 /**
- * Represents a conversation room
- */
-export interface Room {
-  /** Unique identifier */
-  id: UUID;
-
-  /** Room name */
-  name: string;
-
-  /** Room participants */
-  participants: Participant[];
-}
-
-/**
  * Represents a media attachment
  */
 export type Media = {
@@ -794,15 +780,15 @@ export interface IDatabaseAdapter {
     name,
     serverId,
     metadata
-  }: WorldData): Promise<UUID>;
+  }: World): Promise<UUID>;
 
-  getWorld(id: UUID): Promise<WorldData | null>;
+  getWorld(id: UUID): Promise<World | null>;
 
-  getAllWorlds(): Promise<WorldData[]>;
+  getAllWorlds(): Promise<World[]>;
 
-  updateWorld(world: WorldData): Promise<void>;
+  updateWorld(world: World): Promise<void>;
 
-  getRoom(roomId: UUID): Promise<RoomData | null>;
+  getRoom(roomId: UUID): Promise<Room | null>;
 
   createRoom({
     id,
@@ -812,23 +798,23 @@ export interface IDatabaseAdapter {
     channelId,
     serverId,
     worldId,
-  }: RoomData): Promise<UUID>;
+  }: Room): Promise<UUID>;
 
   deleteRoom(roomId: UUID): Promise<void>;
 
-  updateRoom(room: RoomData): Promise<void>;
+  updateRoom(room: Room): Promise<void>;
 
   getRoomsForParticipant(userId: UUID): Promise<UUID[]>;
 
   getRoomsForParticipants(userIds: UUID[]): Promise<UUID[]>;
 
-  getRooms(worldId: UUID): Promise<RoomData[]>;
+  getRooms(worldId: UUID): Promise<Room[]>;
   
   addParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
   removeParticipant(userId: UUID, roomId: UUID): Promise<boolean>;
 
-  getParticipantsForAccount(userId: UUID): Promise<Participant[]>;
+  getParticipantsForEntity(userId: UUID): Promise<Participant[]>;
 
   getParticipantsForRoom(roomId: UUID): Promise<UUID[]>;
 
@@ -1016,7 +1002,7 @@ export interface IAgentRuntime {
     userId,
     roomId,
     userName,
-    userScreenName,
+    name,
     source,
     channelId,
     serverId,
@@ -1026,7 +1012,7 @@ export interface IAgentRuntime {
     userId: UUID;
     roomId: UUID;
     userName?: string;
-    userScreenName?: string;
+    name?: string;
     source?: string;
     channelId?: string;
     serverId?: string;
@@ -1041,7 +1027,7 @@ export interface IAgentRuntime {
     name,
     serverId,
     metadata
-  }: WorldData): Promise<void>;
+  }: World): Promise<void>;
 
   ensureRoomExists({
     id,
@@ -1051,7 +1037,7 @@ export interface IAgentRuntime {
     channelId,
     serverId,
     worldId,
-  }: RoomData): Promise<void>;
+  }: Room): Promise<void>;
 
   composeState(
     message: Memory,
@@ -1331,7 +1317,7 @@ export interface Task {
   tags: string[];
 }
 
-export type WorldData = {
+export type World = {
   id: UUID;
   name: string;
   agentId: UUID;
@@ -1341,13 +1327,13 @@ export type WorldData = {
       ownerId: string;
     };
     roles?: {
-      [userId: UUID]: RoleName;
+      [userId: UUID]: Role;
     };
     [key: string]: unknown;
   };
 }
 
-export type RoomData = {
+export type Room = {
   id: UUID;
   name?: string;
   agentId?: UUID;
@@ -1359,13 +1345,13 @@ export type RoomData = {
   metadata?: Record<string, unknown>;
 }
 
-export enum RoleName {
+export enum Role {
   OWNER = "OWNER",
   ADMIN = "ADMIN",
   NONE = "NONE"
 }
 
-export interface OnboardingSetting {
+export interface Setting {
   name: string;
   description: string;         // Used in chat context when discussing the setting
   usageDescription: string;    // Used during settings to guide users
@@ -1376,15 +1362,15 @@ export interface OnboardingSetting {
   validation?: (value: any) => boolean;
   dependsOn?: string[];
   onSetAction?: (value: any) => string;
-  visibleIf?: (settings: { [key: string]: OnboardingSetting }) => boolean;
+  visibleIf?: (settings: { [key: string]: Setting }) => boolean;
 }
 
 export interface WorldSettings {
-  [key: string]: OnboardingSetting;
+  [key: string]: Setting;
 }
 
 export interface OnboardingConfig {
   settings: { 
-      [key: string]: Omit<OnboardingSetting, 'value'>; 
+      [key: string]: Omit<Setting, 'value'>; 
   };
 }

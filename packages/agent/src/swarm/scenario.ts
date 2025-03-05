@@ -65,7 +65,7 @@ export class ScenarioService implements Service {
           userId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });
@@ -105,7 +105,7 @@ export class ScenarioService implements Service {
           userId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });
@@ -114,7 +114,7 @@ export class ScenarioService implements Service {
           userId: sender.agentId,
           roomId: roomData.roomId,
           userName: sender.character.name,
-          userScreenName: sender.character.name,
+          name: sender.character.name,
           source: "scenario",
           type: ChannelType.GROUP,
         });

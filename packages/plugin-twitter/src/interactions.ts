@@ -145,7 +145,7 @@ export class TwitterInteractionClient {
             userId: userIdUUID,
             roomId,
             userName: tweet.username,
-            userScreenName: tweet.name,
+            name: tweet.name,
             source: "twitter",
             type: ChannelType.GROUP,
           });
@@ -269,7 +269,7 @@ export class TwitterInteractionClient {
         userId: userIdUUID,
         roomId,
         userName: tweet.username,
-        userScreenName: tweet.name,
+        name: tweet.name,
         source: "twitter",
         type: ChannelType.GROUP,
       });
@@ -463,7 +463,7 @@ export class TwitterInteractionClient {
           userId,
           roomId,
           userName: currentTweet.username,
-          userScreenName: currentTweet.name,
+          name: currentTweet.name,
           source: "twitter",
           type: ChannelType.GROUP,
         });

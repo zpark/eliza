@@ -654,7 +654,7 @@ export class VoiceManager extends EventEmitter {
                 userId: userIdUUID,
                 roomId,
                 userName,
-                userScreenName: name,
+                name: name,
                 source: "discord",
                 channelId,
                 serverId: channel.guild.id,

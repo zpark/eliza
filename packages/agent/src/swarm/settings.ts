@@ -8,7 +8,7 @@ import {
   logger,
   type OnboardingConfig,
   type Provider,
-  RoleName,
+  Role,
   type UUID
 } from "@elizaos/core";
 import type { Guild } from "discord.js";
@@ -88,7 +88,7 @@ export async function initializeAllSystems(
         metadata: {
           ownership: server.ownerId ? { ownerId } : undefined,
           roles: {
-            [ownerId]: RoleName.OWNER,
+            [ownerId]: Role.OWNER,
           },
         }
       });

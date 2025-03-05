@@ -85,7 +85,7 @@ export class MessageManager {
       userId: userIdUUID,
       roomId,
       userName,
-      userScreenName: name,
+      name: name,
       source: "discord",
       channelId: message.channel.id,
       serverId,

@@ -86,10 +86,10 @@ export const recentMemoriesProvider: Provider = {
             sender = runtime.character.name;
           } else {
             // Lookup by tenant-specific ID since that's what's stored in the memory
-            const accountId = await runtime.databaseAdapter.getEntityById(
+            const entityId = await runtime.databaseAdapter.getEntityById(
               message.userId
             );
-            sender = accountId?.metadata?.username || "unknown";
+            sender = entityId?.metadata?.username || "unknown";
           }
           return `${sender}: ${message.content.text}`;
         })

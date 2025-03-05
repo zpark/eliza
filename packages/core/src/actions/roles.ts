@@ -2,7 +2,7 @@ import type { ZodSchema, z } from "zod";
 import { createUniqueUuid } from "..";
 import { composePrompt } from "../prompts";
 import { logger } from "../logger";
-import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelType, ModelTypes, RoleName, type State, type UUID } from "../types";
+import { type Action, type ActionExample, ChannelType, type HandlerCallback, type IAgentRuntime, type Memory, ModelType, ModelTypes, Role, type State, type UUID } from "../types";
 
 export const generateObject = async ({
   runtime,
@@ -98,20 +98,20 @@ export const generateObject = async ({
 
 // Role modification validation helper
 const canModifyRole = (
-  currentRole: RoleName,
-  targetRole: RoleName | null,
-  newRole: RoleName
+  currentRole: Role,
+  targetRole: Role | null,
+  newRole: Role
 ): boolean => {
   // Owners can modify any role except other owners
-  if (currentRole === RoleName.OWNER) {
-    return targetRole !== RoleName.OWNER;
+  if (currentRole === Role.OWNER) {
+    return targetRole !== Role.OWNER;
   }
 
   // Admins can only modify NONE roles and can't promote to OWNER or ADMIN
-  if (currentRole === RoleName.ADMIN) {
+  if (currentRole === Role.ADMIN) {
     return (
-      (!targetRole || targetRole === RoleName.NONE) &&
-      ![RoleName.OWNER, RoleName.ADMIN].includes(newRole)
+      (!targetRole || targetRole === Role.NONE) &&
+      ![Role.OWNER, Role.ADMIN].includes(newRole)
     );
   }
 
@@ -190,7 +190,7 @@ async function generateObjectArray({
 
 interface RoleAssignment {
   userId: UUID;
-  newRole: RoleName;
+  newRole: Role;
 }
 
 const updateRoleAction: Action = {
@@ -242,7 +242,7 @@ const updateRoleAction: Action = {
       }
 
       // Lookup using UUID for consistency
-      const requesterRole = world.metadata.roles[requesterId] as RoleName
+      const requesterRole = world.metadata.roles[requesterId] as Role
 
       logger.info(`Requester ${requesterId} role:`, requesterRole);
 
@@ -251,7 +251,7 @@ const updateRoleAction: Action = {
         return false;
       }
 
-      if (![RoleName.OWNER, RoleName.ADMIN].includes(requesterRole)) {
+      if (![Role.OWNER, Role.ADMIN].includes(requesterRole)) {
         logger.info(
           `Validation failed: Role ${requesterRole} insufficient for role management`
         );
@@ -305,7 +305,7 @@ const updateRoleAction: Action = {
 
     // Get requester's role from world metadata
     const requesterRole =
-      (world.metadata.roles[requesterId] as RoleName) || RoleName.NONE;
+      (world.metadata.roles[requesterId] as Role) || Role.NONE;
 
     // Get all entities in the room
     const entities = await runtime.databaseAdapter.getEntitiesForRoom(room.id, true);

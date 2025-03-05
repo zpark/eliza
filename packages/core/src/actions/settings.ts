@@ -13,7 +13,7 @@ import {
   type Memory,
   type ModelType,
   ModelTypes,
-  type OnboardingSetting,
+  type Setting,
   type State,
   type WorldSettings,
 } from "../types";
@@ -270,17 +270,17 @@ function formatSettingsList(worldSettings: WorldSettings): string {
  * Categorizes settings by their configuration status
  */
 function categorizeSettings(worldSettings: WorldSettings): {
-  configured: [string, OnboardingSetting][];
-  requiredUnconfigured: [string, OnboardingSetting][];
-  optionalUnconfigured: [string, OnboardingSetting][];
+  configured: [string, Setting][];
+  requiredUnconfigured: [string, Setting][];
+  optionalUnconfigured: [string, Setting][];
 } {
-  const configured: [string, OnboardingSetting][] = [];
-  const requiredUnconfigured: [string, OnboardingSetting][] = [];
-  const optionalUnconfigured: [string, OnboardingSetting][] = [];
+  const configured: [string, Setting][] = [];
+  const requiredUnconfigured: [string, Setting][] = [];
+  const optionalUnconfigured: [string, Setting][] = [];
 
   for (const [key, setting] of Object.entries(worldSettings) as [
     string,
-    OnboardingSetting
+    Setting
   ][]) {
     // Skip internal settings
     if (key.startsWith("_")) continue;

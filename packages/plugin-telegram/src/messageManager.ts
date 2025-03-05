@@ -8,7 +8,7 @@ import {
     type Media,
     type Memory,
     ModelTypes,
-    RoleName,
+    Role,
     type UUID
 } from "@elizaos/core";
 import type { Chat, Message, ReactionType, Update } from "@telegraf/types";
@@ -301,7 +301,7 @@ export class MessageManager {
                 userId,
                 roomId,
                 userName,
-                userScreenName: userName,
+                name: userName,
                 source: "telegram",
                 channelId: ctx.chat.id.toString(),
                 serverId: chat.id.toString(),
@@ -325,7 +325,7 @@ export class MessageManager {
                         ownership: chat.type === 'supergroup' ? { ownerId: chat.id.toString() } : undefined,
                         roles: {
                             // TODO: chat.id is probably wrong key for this
-                            [ownerId]: RoleName.OWNER,
+                            [ownerId]: Role.OWNER,
                         },
                     }
                 });

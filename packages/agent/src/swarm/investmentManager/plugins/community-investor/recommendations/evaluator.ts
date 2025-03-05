@@ -469,7 +469,7 @@ async function handler(
                 userId: message.userId,
                 agentId: message.agentId,
                 roomId: message.roomId,
-                // TODO: userScreenName vs userName is bad
+                // TODO: name vs userName is bad
                 // This should be handled better, especially cross platform
                 username: message.content.username ?? message.content.userName,
             }),

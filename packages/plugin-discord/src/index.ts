@@ -7,10 +7,10 @@ import {
   logger,
   type Memory,
   type Plugin,
-  RoleName,
+  Role,
   Service,
   type UUID,
-  type WorldData
+  type World
 } from "@elizaos/core";
 import {
   ChannelType as DiscordChannelType,
@@ -118,7 +118,7 @@ export class DiscordService extends Service implements IDiscordService {
         metadata: {
           ownership: guildObj.ownerId ? { ownerId } : undefined,
           roles: {
-            [ownerId]: RoleName.OWNER,
+            [ownerId]: Role.OWNER,
           },
         },
       });
@@ -360,7 +360,7 @@ export class DiscordService extends Service implements IDiscordService {
         userId: userIdUUID,
         roomId,
         userName,
-        userScreenName: name,
+        name: name,
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
@@ -449,7 +449,7 @@ export class DiscordService extends Service implements IDiscordService {
         userId: userIdUUID,
         roomId,
         userName,
-        userScreenName: name,
+        name: name,
         source: "discord",
         channelId: reaction.message.channel.id,
         serverId: reaction.message.guild?.id,
@@ -511,10 +511,10 @@ export class DiscordService extends Service implements IDiscordService {
         metadata: {
           ownership: fullGuild.ownerId ? { ownerId: ownerId } : undefined,
           roles: {
-            [ownerId]: RoleName.OWNER,
+            [ownerId]: Role.OWNER,
           },
         },
-      } as WorldData,
+      } as World,
       source: "discord",
     };
 
@@ -786,10 +786,10 @@ export class DiscordService extends Service implements IDiscordService {
             metadata: {
               ownership: fullGuild.ownerId ? { ownerId } : undefined,
               roles: {
-                [ownerId]: RoleName.OWNER,
+                [ownerId]: Role.OWNER,
               },
             },
-          } as WorldData,
+          } as World,
           source: "discord",
         };
 

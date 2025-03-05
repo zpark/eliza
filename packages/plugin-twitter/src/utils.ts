@@ -66,7 +66,7 @@ export async function buildConversationThread(
                 userId,
                 roomId,
                 userName: currentTweet.username,
-                userScreenName: currentTweet.name,
+                name: currentTweet.name,
                 source: "twitter",
                 type: ChannelType.GROUP
             });

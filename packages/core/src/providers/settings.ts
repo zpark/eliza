@@ -10,7 +10,7 @@ import {
   type Memory,
   type Provider,
   type State,
-  type OnboardingSetting,
+  type Setting,
   type WorldSettings,
   ProviderResult,
 } from "../types";
@@ -19,7 +19,7 @@ import {
  * Formats a setting value for display, respecting privacy flags
  */
 const formatSettingValue = (
-  setting: OnboardingSetting,
+  setting: Setting,
   isOnboarding: boolean
 ): string => {
   if (setting.value === null) return "Not set";

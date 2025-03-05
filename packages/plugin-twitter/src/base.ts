@@ -485,7 +485,7 @@ export class ClientBase extends EventEmitter {
               userId,
               roomId,
               userName: tweet.username,
-              userScreenName: tweet.name,
+              name: tweet.name,
               source: "twitter",
               type: ChannelType.FEED
             });
@@ -597,7 +597,7 @@ export class ClientBase extends EventEmitter {
           userId,
           roomId,
           userName: tweet.username,
-          userScreenName: tweet.name,
+          name: tweet.name,
           source: "twitter",
           type: ChannelType.FEED
         });

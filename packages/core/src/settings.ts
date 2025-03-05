@@ -1,10 +1,10 @@
 import { createUniqueUuid } from "./entities";
 import { logger } from "./logger";
-import type { IAgentRuntime, OnboardingConfig, OnboardingSetting, WorldData, WorldSettings } from "./types";
+import type { IAgentRuntime, OnboardingConfig, Setting, World, WorldSettings } from "./types";
 
 function createSettingFromConfig(
-  configSetting: Omit<OnboardingSetting, "value">
-): OnboardingSetting {
+  configSetting: Omit<Setting, "value">
+): Setting {
   return {
     name: configSetting.name,
     description: configSetting.description,
@@ -82,7 +82,7 @@ export async function getWorldSettings(
  */
 export async function initializeOnboardingConfig(
   runtime: IAgentRuntime,
-  world: WorldData,
+  world: World,
   config: OnboardingConfig
 ): Promise<WorldSettings | null> {
   try {
