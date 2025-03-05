@@ -1016,7 +1016,7 @@ export class AgentRuntime implements IAgentRuntime {
   }
 
   async ensureEmbeddingDimension() {
-    logger.log(
+    logger.debug(
       `[AgentRuntime][${this.character.name}] Starting ensureEmbeddingDimension`
     );
 
@@ -1034,7 +1034,7 @@ export class AgentRuntime implements IAgentRuntime {
         );
       }
 
-      logger.info(
+      logger.debug(
         `[AgentRuntime][${this.character.name}] Getting embedding dimensions`
       );
       const embedding = await this.useModel(ModelTypes.TEXT_EMBEDDING, null);
@@ -1045,11 +1045,11 @@ export class AgentRuntime implements IAgentRuntime {
         );
       }
 
-      logger.info(
+      logger.debug(
         `[AgentRuntime][${this.character.name}] Setting embedding dimension: ${embedding.length}`
       );
       await this.databaseAdapter.ensureEmbeddingDimension(embedding.length);
-      logger.info(
+      logger.debug(
         `[AgentRuntime][${this.character.name}] Successfully set embedding dimension`
       );
     } catch (error) {

@@ -19,10 +19,11 @@ import {
   composePrompt,
   messageHandlerTemplate,
   parseJSONObjectFromText,
-  shouldRespondTemplate
+  shouldRespondTemplate,
 } from "./prompts.ts";
 import { actionExamplesProvider } from "./providers/actionExamples.ts";
 import { actionsProvider } from "./providers/actions.ts";
+import { anxietyProvider } from "./providers/anxity.ts";
 import { attachmentsProvider } from "./providers/attachments.ts";
 import { capabilitiesProvider } from "./providers/capabilities.ts";
 import { characterProvider } from "./providers/character.ts";
@@ -48,7 +49,7 @@ import {
   type Plugin,
   RoleName,
   type RoomData,
-  type WorldData
+  type WorldData,
 } from "./types.ts";
 
 type ServerJoinedParams = {
@@ -134,17 +135,23 @@ const messageReceivedHandler = async ({
     return true;
   }
 
-  let state = await runtime.composeState(message, {}, ["DYNAMIC_PROVIDERS", "SHOULD_RESPOND", "CHARACTER", "RECENT_MEMORIES", "ENTITIES"]);
+  let state = await runtime.composeState(message, {}, [
+    "DYNAMIC_PROVIDERS",
+    "SHOULD_RESPOND",
+    "CHARACTER",
+    "RECENT_MEMORIES",
+    "ENTITIES",
+  ]);
 
-  if(!state.entities) {
+  if (!state.entities) {
     throw new Error("No entities found");
   }
 
-  if(!state.agentName) {
+  if (!state.agentName) {
     throw new Error("No agent name found");
   }
 
-  if(!state.recentMessages) {
+  if (!state.recentMessages) {
     throw new Error("No recent messages found");
   }
 
@@ -165,7 +172,10 @@ const messageReceivedHandler = async ({
 
   const providers = responseObject.providers;
 
-  const shouldRespond = responseObject && responseObject.action && responseObject.action === "RESPOND";
+  const shouldRespond =
+    responseObject &&
+    responseObject.action &&
+    responseObject.action === "RESPOND";
 
   state = await runtime.composeState(message, {}, null, providers);
 
@@ -804,6 +814,7 @@ export const bootstrapPlugin: Plugin = {
     attachmentsProvider,
     characterProvider,
     knowledgeProvider,
+    anxietyProvider,
   ],
   services: [TaskService],
 };

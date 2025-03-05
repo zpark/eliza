@@ -172,7 +172,6 @@ export class TaskService extends Service {
   }
 
   private async executeTask(task: Task) {
-    console.log("****** executing task", task.name);
     try {
       if (!task) {
         logger.debug(`Task ${task.id} not found`);

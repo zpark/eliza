@@ -1859,7 +1859,6 @@ export abstract class BaseDrizzleAdapter<TDatabase extends DrizzleOperations>
     async updateTask(id: UUID, task: Partial<Task>): Promise<void> {
         await this.withRetry(async () => {
             await this.withDatabase(async () => {
-                console.log("updating task", id, task);
                 const updateValues: Partial<Task> = {};
                 
                 // Add fields to update if they exist in the partial task object

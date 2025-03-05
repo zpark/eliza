@@ -104,7 +104,7 @@ export default class Birdeye {
 
 		await this.runtime.databaseAdapter.setCache<TransactionHistory[]>("transaction_history", transactions);
 
-		logger.info(`Updated transaction history with ${data.length} transactions`);
+		logger.debug(`Updated transaction history with ${data.length} transactions`);
 	}
 
 	private async syncWalletPortfolio() {
@@ -185,7 +185,7 @@ export default class Birdeye {
 
 		await this.runtime.databaseAdapter.setCache<IToken[]>(`tokens_${chain}`, tokens);
 
-		logger.info(`Updated ${chain} tokens cache with ${tokens.length} tokens`);
+		logger.debug(`Updated ${chain} tokens cache with ${tokens.length} tokens`);
 
 		return true;
 	}
@@ -263,7 +263,7 @@ export default class Birdeye {
 		const sentiment = (memories as Array<Memory & { content: SentimentContent }>).find(m => !m.content.metadata.processed);
 
 		if (!sentiment) {
-			logger.info("No unprocessed timeslots available.");
+			logger.debug("No unprocessed timeslots available.");
 			return true;
 		}
 

@@ -1,7 +1,7 @@
 import type { IAgentRuntime, Memory, Provider, State } from "../types";
 
-const timeProvider: Provider = {
-    name: "time",
+export const timeProvider: Provider = {
+    name: "TIME",
     get: async (_runtime: IAgentRuntime, _message: Memory, _state?: State) => {
         const currentDate = new Date();
 
@@ -25,4 +25,3 @@ const timeProvider: Provider = {
         };
     },
 };
-export { timeProvider };

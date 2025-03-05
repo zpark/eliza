@@ -1108,7 +1108,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "BUY_SIGNAL",
       execute: async (_runtime: IAgentRuntime, _options: any) => {
-        logger.info("*** BUY_SIGNAL ***");
+        logger.debug("*** BUY_SIGNAL ***");
         await this.executeBuyTask();
       },
       validate: async () => true,
@@ -1172,7 +1172,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "MONITOR_TRAILING_STOP",
       execute: async (_runtime: IAgentRuntime, options: any) => {
-        logger.info("*** MONITOR_TRAILING_STOP ***");
+        logger.debug("*** MONITOR_TRAILING_STOP ***");
         await this.monitorTrailingStop(options);
       },
       validate: async () => true,
@@ -1182,7 +1182,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "VALIDATE_DATA_SOURCES",
       execute: async (_runtime: IAgentRuntime) => {
-        logger.info("*** VALIDATE_DATA_SOURCES ***");
+        logger.debug("*** VALIDATE_DATA_SOURCES ***");
         await this.validateDataSources();
       },
       validate: async () => true,
@@ -1192,7 +1192,7 @@ export class DegenTradingService extends Service {
     this.runtime.registerTaskWorker({
       name: "CIRCUIT_BREAKER_CHECK",
       execute: async (_runtime: IAgentRuntime) => {
-        logger.info("*** CIRCUIT_BREAKER_CHECK ***");
+        logger.debug("*** CIRCUIT_BREAKER_CHECK ***");
         await this.checkCircuitBreaker();
       },
       validate: async () => true,
@@ -3165,7 +3165,7 @@ export class DegenTradingService extends Service {
    */
   async validateDataSources(): Promise<void> {
     try {
-      logger.info("Validating data sources");
+      logger.debug("Validating data sources");
 
       // Check Birdeye API
       const birdeyeStatus = await this.checkBirdeyeAPI();
@@ -3177,7 +3177,7 @@ export class DegenTradingService extends Service {
       const cmcStatus = await this.checkCMCData();
 
       // Log validation results
-      logger.info("Data source validation results", {
+      logger.debug("Data source validation results", {
         birdeye: birdeyeStatus,
         twitter: twitterStatus,
         cmc: cmcStatus,
@@ -3370,7 +3370,7 @@ export class DegenTradingService extends Service {
     cmc: { valid: boolean; issues: string[] };
   }): Promise<void> {
     try {
-      logger.warn("Handling degraded data quality", status);
+      logger.debug("Handling degraded data quality", status);
 
       // Adjust trading behavior based on which data sources are degraded
 
@@ -3414,7 +3414,7 @@ export class DegenTradingService extends Service {
    */
   async checkCircuitBreaker(): Promise<void> {
     try {
-      logger.info("Checking circuit breaker conditions");
+      logger.debug("Checking circuit breaker conditions");
 
       // Get SOL price data as main market indicator
       const solData = await this.getTokenMarketData(
@@ -4128,7 +4128,7 @@ export class DegenTradingService extends Service {
    */
   private async executeBuyTask() {
     try {
-      logger.info("Executing buy task");
+      logger.debug("Executing buy task");
 
       // Fetch pending buy tasks
       const pendingTasks = await this.runtime.databaseAdapter.getTasks({

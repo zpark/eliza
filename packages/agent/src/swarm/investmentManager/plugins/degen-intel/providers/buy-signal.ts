@@ -44,8 +44,8 @@ export default class BuySignal {
 	}
 
 	async generateSignal(): Promise<boolean> {
+		logger.debug("Updating latest buy signal");
 		try {
-			logger.info("Updating latest buy signal");
 			
 			/** Get all sentiments */
 			const sentimentsData = await this.runtime.databaseAdapter.getCache<Sentiment[]>("sentiments") || [];
