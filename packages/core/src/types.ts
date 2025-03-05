@@ -1,4 +1,4 @@
-import EventEmitter from "node:events";
+import { EventEmitter } from 'events';
 
 /**
  * Represents a UUID string in the format "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

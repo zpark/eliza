@@ -39,6 +39,9 @@ jobs:
       - name: Run tests
         run: cd packages/core && bun test:coverage
 
+      - name: Run lint
+        run: bun run lint
+
       - name: Build packages
         run: bun run build
 

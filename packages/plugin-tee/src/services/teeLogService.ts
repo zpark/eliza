@@ -25,11 +25,12 @@ export class TeeLogService extends Service implements ITeeLogService {
     private teeType: TeeType;
     private teeMode: TEEMode = TEEMode.OFF; // Only used for plugin-tee with TDX dstack
 
-    private teeLogDAO: TeeLogDAO;
+    private teeLogDAO: TeeLogDAO<Database.Database>;
     private teeLogManager: TeeLogManager;
 
     static serviceType: ServiceType = ServiceTypes.TEE;
-    capabilityDescription = "The agent is able to log TEE attestation events and is probably running in a TEE";
+    capabilityDescription =
+        'The agent is able to log TEE attestation events and is probably running in a TEE';
 
     constructor(runtime: IAgentRuntime) {
         super();
