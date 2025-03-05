@@ -69,6 +69,22 @@ const fetcher = async ({
     });
 };
 
+// Add these interfaces near the top with other types
+interface LogEntry {
+  level: number
+  time: number
+  msg: string
+  [key: string]: string | number | boolean | null | undefined
+}
+
+interface LogResponse {
+  logs: LogEntry[]
+  count: number
+  total: number
+  level: string
+  levels: string[]
+}
+
 export const apiClient = {
     sendMessage: (
         agentId: string,
@@ -256,4 +272,10 @@ export const apiClient = {
         });
     },
     
+    // Add this new method
+    getLogs: (level: string): Promise<LogResponse> => 
+        fetcher({ 
+            url: `/logs?level=${level}`,
+            method: "GET"
+        }),
 };

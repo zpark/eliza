@@ -1,11 +1,26 @@
 import type { IAgentRuntime, UUID } from '@elizaos/core';
-import { getEnvVariable } from '@elizaos/core';
+import { getEnvVariable, logger } from '@elizaos/core';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import type { AgentServer } from '..';
 import { agentRouter } from './agent.ts';
 import { teeRouter } from './tee.ts';
+
+
+// Custom levels from @elizaos/core logger
+const LOG_LEVELS = {
+    ...logger.levels.values
+} as const;
+
+type LogLevel = keyof typeof LOG_LEVELS;
+
+interface LogEntry {
+    level: number;
+    time: number;
+    msg: string;
+    [key: string]: string | number | boolean | null | undefined;
+}
 
 export function createApiRouter(
     agents: Map<UUID, IAgentRuntime>,
@@ -39,6 +54,50 @@ export function createApiRouter(
     router.get('/stop', (_req, res) => {
         server.stop();
         res.json({ message: 'Server stopping...' });
+    });
+
+
+    // Logs endpoint
+    router.get('/logs', (req, res) => {
+        const since = req.query.since ? Number(req.query.since) : Date.now() - 3600000; // Default 1 hour
+        const requestedLevel = (req.query.level?.toString().toLowerCase() || 'info') as LogLevel;
+        const limit = Math.min(Number(req.query.limit) || 100, 1000); // Max 1000 entries
+        
+        // Access the underlying logger instance
+        const destination = (logger as unknown)[Symbol.for('pino-destination')];
+        
+        if (!destination?.recentLogs) {
+            return res.status(500).json({ 
+                error: 'Logger destination not available',
+                message: 'The logger is not configured to maintain recent logs'
+            });
+        }
+
+        try {
+            // Get logs from the destination's buffer
+            const recentLogs: LogEntry[] = destination.recentLogs();
+            const requestedLevelValue = LOG_LEVELS[requestedLevel] || LOG_LEVELS.info;
+            
+            const filtered = recentLogs
+                .filter(log => {
+                    return log.time >= since && 
+                           log.level >= requestedLevelValue;
+                })
+                .slice(-limit);
+
+            res.json({
+                logs: filtered,
+                count: filtered.length,
+                total: recentLogs.length,
+                level: requestedLevel,
+                levels: Object.keys(LOG_LEVELS)
+            });
+        } catch (error) {
+            res.status(500).json({ 
+                error: 'Failed to retrieve logs',
+                message: error instanceof Error ? error.message : 'Unknown error'
+            });
+        }
     });
 
     // Health check endpoints
