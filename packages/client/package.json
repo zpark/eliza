@@ -30,6 +30,7 @@
 		"clsx": "2.1.1",
 		"cmdk": "^1.0.4",
 		"dayjs": "^1.11.13",
+		"date-fns": "^2.30.0",
 		"lucide-react": "^0.469.0",
 		"react": "^19.0.0",
 		"react-aiwriter": "^1.0.0",
@@ -47,8 +48,8 @@
 		"@types/react": "^19.0.3",
 		"@types/react-dom": "^19.0.2",
 		"@types/semver": "^7.5.8",
-		"@typescript-eslint/eslint-plugin": "^8.19.1",
-		"@typescript-eslint/parser": "^8.19.1",
+		"@typescript-eslint/eslint-plugin": "^8.25.0",
+		"@typescript-eslint/parser": "^8.25.0",
 		"@vitejs/plugin-react-swc": "^3.5.0",
 		"autoprefixer": "^10.4.19",
 		"eslint": "^9.17.0",
@@ -63,7 +64,7 @@
 		"rollup-plugin-visualizer": "^5.14.0",
 		"tailwindcss": "^3.4.4",
 		"typescript": "5.8.2",
-		"typescript-eslint": "^8.18.2",
+		"typescript-eslint": "^8.25.0",
 		"vite": "^6.0.5",
 		"vite-tsconfig-paths": "^5.1.4"
 	}
